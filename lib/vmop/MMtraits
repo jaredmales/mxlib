@@ -1,0 +1,45 @@
+/** \file MMTraits
+  * \brief Utilities for determining whether an object is an MMatrix
+  * 
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+  
+#ifndef __mx_MMtraits__
+#define __mx_MMtraits__
+
+namespace mx
+{
+
+///Test whether a type is an MMatrix by testing whether it has a typedef of "is_mmatrix"
+/** Used for compile-time determination of type
+  * Example usage:
+  * \code
+  * bool is_mm = mx::is_mmatrix<MMatrix<double, 1> >; //Evaluates to true
+  * bool is_not_mm = mx::is_mmatrix<double>; //Evaluates to false
+  * \endcode
+  */
+//This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
+template <typename T>
+struct is_mmatrix 
+{
+   // Types "yes" and "no" are guaranteed to have different sizes,
+   // specifically sizeof(yes) == 1 and sizeof(no) == 2.
+   typedef char yes[1];
+   typedef char no[2];
+ 
+   template <typename mmatrixT>
+   static yes& test(typename mmatrixT::is_mmatrix*);
+ 
+   template <typename>
+   static no& test(...);
+ 
+   // If the "sizeof" of the result of calling test<T>(0) would be equal to sizeof(yes),
+   // the first overload worked and T has a nested type named "is_mmatrix".
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+};
+
+
+} //namespace mx
+
+#endif // __mx_MMtraits__

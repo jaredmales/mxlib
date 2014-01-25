@@ -1,0 +1,142 @@
+/** \file MMaccessor
+  * \brief Declares and defines the accesor functions for MMatrices.
+  *
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+
+
+#ifndef __mx_MMaccessor__
+#define __mx_MMaccessor__
+
+namespace mx
+{
+
+template<size_t _dim>
+struct accessor_vector
+{
+   static const size_t dimension = _dim;
+   static const bool is_vector = true;
+ 
+   template<class dataT>
+   dataT & get(dataT * data, 
+               const size_t * index, 
+               const size_t * size_prod, 
+               const size_t * stride)
+   {
+      std::cerr << "Not specialized yet!\n";
+      return data[0];
+   }
+   
+   template<class dataT>
+   void set(dataT * data, 
+            const size_t * index, 
+            const size_t * size_prod, 
+            const size_t * stride,
+            const dataT & x)
+   {
+      std::cerr << "Not specialized yet!\n";
+      data[0] = x;
+   }
+   
+};
+
+template<>
+struct accessor_vector<1>
+{
+   static const size_t dimension = 1;
+   static const bool is_vector = true;
+   
+   template<class dataT>
+   dataT & get(dataT * data, 
+               const size_t * index, 
+               const size_t * size_prod, 
+               const size_t * stride) const
+   {
+       return data[index[0]];
+   }
+   
+   template<class dataT>
+   void set(dataT * data, 
+            const size_t * index, 
+            const size_t * size_prod, 
+            const size_t * stride,
+            const dataT & x)
+   {
+       data[index[0]] = x;
+   }
+   
+};
+
+template<>
+struct accessor_vector<2>
+{
+   static const size_t dimension = 1;
+   static const bool is_vector = true;
+   
+   template<class dataT>
+   dataT & get(dataT * data, 
+               const size_t * index, 
+               const size_t * size_prod, 
+               const size_t * stride)
+   {
+      return data[index[0]*size_prod[0] + index[1]];
+   }
+   
+   template<class dataT>
+   void set(dataT * data, 
+            const size_t * index, 
+            const size_t * size_prod, 
+            const size_t * stride,
+            const dataT & x )
+   {
+      data[index[0]*size_prod[0] + index[1]] = x;
+   }
+};
+
+
+
+
+
+template<size_t _dim>
+struct accessor_stride
+{
+   static const size_t dimension = _dim;
+   static const bool is_vector = false;
+   
+};
+
+template<>
+struct accessor_stride<1>
+{
+   static const size_t dimension = 1;
+   static const bool is_vector = false;
+   
+   template<class dataT>
+   dataT & get(dataT * data, 
+               const size_t * index, 
+               const size_t * size_prod, 
+               const size_t * stride) const
+   {
+       return data[ index[0]*stride[0] ];
+   }
+   
+   template<class dataT>
+   void set(dataT * data, 
+            const size_t * index, 
+            const size_t * size_prod, 
+            const size_t * stride,
+            const dataT & x)
+   {
+       data[ index[0]*stride[0] ] = x;
+   }
+   
+};
+
+
+} //namespace mx
+
+#endif //__mx_MMaccessor__
+
+
+

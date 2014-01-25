@@ -1,0 +1,231 @@
+
+#ifndef __mx_MMatrixSlice__
+#define __mx_MMatrixSlice__
+
+
+#include "MMatrixBound"
+
+namespace mx
+{
+
+
+
+template<typename dataT, size_t _dim, typename absT> class MMatrixBase;
+template<typename dataT, size_t _dim, typename absT> class MMatrixView;
+
+///Structure to hold the parameters of the slice
+template<class dataT, size_t _dim, class absT>
+struct slice_params
+{
+   MMatrixBase<dataT, _dim, absT> * _matrix;
+   size_t _offset[_dim];
+   size_t _stride[_dim];
+   size_t _end[_dim];
+};
+
+template<size_t _curr_dim, class dataT, size_t _dim, class absT> 
+class MMatrixSlice
+{
+public:
+   
+   slice_params<dataT, _dim, absT> * _slice;
+   bool _owner;
+      
+
+   MMatrixSlice(MMatrixBase<dataT, _dim, absT> *m, size_t start, size_t stride, size_t end)
+   {
+      _slice = new slice_params<dataT, _dim, absT>;
+      _owner = true;
+      
+      _slice->_matrix = m;
+      _slice->_offset[_curr_dim] = start;
+      _slice->_stride[_curr_dim] = stride;
+      _slice->_end[_curr_dim] = end;
+   }
+   
+   MMatrixSlice(MMatrixSlice<_curr_dim+1, dataT, _dim, absT> *s, size_t start, size_t stride, size_t end)
+   {
+      _slice = s->_slice;
+      _owner = false;
+         
+      _slice->_offset[_curr_dim] = start;
+      _slice->_stride[_curr_dim] = stride;
+      _slice->_end[_curr_dim] = end;
+   }
+   
+   ~MMatrixSlice()
+   {
+      if(_owner) delete _slice;
+   }
+   
+public:
+
+   ///The column operators.
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(size_t d)
+   {
+      return operator()(d,1,d+1);
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_BEG b)
+   { 
+      return operator()(0); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_LAST b)
+   { 
+      return operator()(_slice->_matrix->length(1)-1); 
+   }
+   
+   
+   ///The submatrix operator
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(size_t start, size_t stride, size_t end)
+   {
+      MMatrixSlice<_curr_dim-1, dataT, _dim, absT> s(this,start, stride, end);
+               
+      return s;
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t stride, size_t end) 
+   { 
+      return operator()(0,stride,end); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(size_t start, size_t stride, MMatrixBound_END ed) 
+   { 
+      return operator()(start,stride, _slice->_matrix->length(1)); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t stride, MMatrixBound_END ed) 
+   { 
+      return operator()(0,stride,_slice->_matrix->length(1)); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(size_t start,size_t end)
+   { 
+      return operator()(start, 1, end); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t ed) 
+   { 
+      return operator()(0,1,ed); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(size_t st, MMatrixBound_END ed) 
+   { 
+      return operator()(st,1, _slice->_matrix->length(1)); 
+   }
+   
+   MMatrixSlice<_curr_dim-1, dataT, _dim, absT> operator()(MMatrixBound_BEG st, MMatrixBound_END ed) 
+   { 
+      return operator()(0,1, _slice->_matrix->length(1)); 
+   }
+   
+};
+
+template<class dataT, size_t _dim, class absT> 
+class MMatrixSlice<1, dataT, _dim, absT>
+{
+public:
+   
+   slice_params<dataT, _dim, absT> * _slice;
+   bool _owner;
+   
+
+   MMatrixSlice(MMatrixBase<dataT, _dim, absT> *m, size_t start, size_t stride, size_t end)
+   {       
+      _slice = new slice_params<dataT, _dim, absT>;
+      _owner = true;
+    
+      _slice->_matrix = m;
+      _slice->_offset[1] = start;
+      _slice->_stride[1] = stride;
+      _slice->_end[1] = end;
+   }
+   
+   MMatrixSlice(MMatrixSlice<1, dataT, _dim, absT> *s, size_t start, size_t stride, size_t end)
+   {
+      _slice = s->_slice;
+      _owner = false;
+      
+      _slice->_offset[1] = start;
+      _slice->_stride[1] = stride;
+      _slice->_end[1] = end;
+   }
+   
+   ~MMatrixSlice()
+   {
+      if(_owner) delete _slice;
+   }
+   
+public:
+
+   ///The row operators.
+   MMatrixView<dataT, _dim, absT> operator()(size_t d)
+   {
+      return operator()(d,1,d+1);
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_BEG b)
+   { 
+      return operator()(0); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_LAST b)
+   { 
+      return operator()(_slice->_matrix->length(1)-1); 
+   }
+   
+   
+   ///The submatrix operator
+   MMatrixView<dataT, _dim, absT> operator()(size_t start, size_t stride, size_t end)
+   {
+      _slice->_offset[0] = start;
+      _slice->_stride[0] = stride;
+      _slice->_end[0] = end;
+      
+      MMatrixView<dataT, _dim, absT> v(_slice->_matrix->data(), _slice->_matrix->size(), _slice->_offset, _slice->_stride, _slice->_end);
+               
+      return v;
+      
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t stride, size_t end) 
+   { 
+      return operator()(0,stride,end); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(size_t start, size_t stride, MMatrixBound_END ed) 
+   { 
+      return operator()(start,stride,_slice->_matrix->length(1)); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t stride, MMatrixBound_END ed) 
+   { 
+      return operator()(0,stride, _slice->_matrix->length(1)); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(size_t start,size_t end)
+   { 
+      return operator()(start, 1, end); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_BEG st, size_t ed) 
+   { 
+      return operator()(0,1,ed); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(size_t st, MMatrixBound_END ed) 
+   { 
+      return operator()(st,1,_slice->_matrix->length(1)); 
+   }
+   
+   MMatrixView<dataT, _dim, absT> operator()(MMatrixBound_BEG st, MMatrixBound_END ed) 
+   { 
+      return operator()(0,1,_slice->_matrix->length(1)); 
+   }
+   
+};
+
+}//namespace mx
+
+#endif //__mx_MMatrixSlice__

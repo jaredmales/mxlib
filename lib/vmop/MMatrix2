@@ -1,0 +1,766 @@
+/** \file MMatrix2
+  * \brief Declares and defines the 2-D Matrix specialization of MMatrix
+  *
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+  
+#ifndef __mx_MMatrix2__
+#define __mx_MMatrix2__
+
+#include "MMatrixBase"
+
+
+namespace mx
+{
+
+template<typename dataT, size_t _dim, typename absT> class MMatrix;
+template<typename dataT, size_t _dim, typename absT> class MMatrixView;
+
+///The Matrix Class: Partial specialization of the MMatrix template class, for 2 dimension2.
+/** \ingroup vmop
+  * 
+  * See the \ref mmatrix2_typedefs where typedefs are provided for the fundamental arithmetic types, 
+  * e.g. mx::Vectord is a vector of doubles. 
+  *
+  * \tparam dataT is the data type being stored
+  * \tparam absT is the type of the absolute value of dataT (default is absT = dataT)
+  */
+template<typename dataT, typename absT> 
+class MMatrix<dataT, 2, absT> : public MMatrixBase<dataT, 2, absT>
+{
+
+public:
+      
+   /** @name Construction and Destruction
+     * The standard MMatrixBase constructors are provided in addition to those documented here.
+     */
+   //@{
+   
+   /** \cond */
+   //These are documented in MMatrixBase
+   
+   ///Default constructor. Initializes the members but does not allocate storage.
+   MMatrix();
+
+   ///Construct and allocate the _data array with the size of each dimension specified in an array of length 2.
+   /** 
+     * \param sizes is an array of length 2 specifying the size of each dimension
+     */
+   explicit MMatrix(const size_t *sizes);
+
+   /** \endcond */
+   
+   ///Construct and allocate the data array with the specified size.
+   /** 
+     * \param size0 is the desired number of rows
+     * \param size1 is the deisred number of columns
+     */  
+   explicit MMatrix(const size_t size0, const size_t size1);
+      
+   ///Construction from initializer list.
+   /** Example:
+     * \code
+     * MMatrix<double, 2> m = {{0.2, 0.5, 0.7, 0.8},{1.2, 1.5, 1.7, 1.8}};
+     * \endcode
+     *
+     * \param init is the initializer list
+     */
+   MMatrix(std::initializer_list<std::initializer_list<dataT> > init);
+      
+   /** \cond */
+   
+   ///Copy constructor.
+   /**
+     * \param m is the matrix to copy
+     */
+   explicit MMatrix(const MMatrix<dataT, 2, absT> & m );
+
+   ///Copy constructor.
+   /** This version probably not necessary, but I want to ensure assigment isn't bypassing this class.
+     *
+     * \param m is the matrix to copy
+     */
+   explicit MMatrix(const MMatrixBase<dataT, 2, absT> & m );
+   
+   ///Move constructor.
+   /** A shallow copy (re-point) is performed, and then ownership is taken of the storage array.
+     *
+     * \param m is an r-value reference to a matrix to copy.
+     */
+   explicit MMatrix(MMatrix<dataT, 2, absT> && m);
+
+   ///Move constructor.
+   /** A shallow copy (re-point) is performed, and then ownership is taken of the storage array.
+     * This version probably not necessary, but I want to ensure assigment isn't bypassing this class.
+     *
+     * \param m is an r-value reference to a matrix to copy.
+     */
+   explicit MMatrix(MMatrixBase<dataT, 2, absT> && m);
+   
+   ///Destructor.  If owned, the _data storage is freed.
+   virtual ~MMatrix();
+
+   //@}
+
+   /** \endcond */
+   
+   /** @name Re-sizing
+     */
+   //@{
+         
+   ///Resize the storage array
+   /** If size does not change, and the block is already owned, this does nothing.
+     *
+     * \param size0
+     * \param size1
+     */
+   virtual void resize(const size_t size0, const size_t size1);
+   
+    /** \cond */
+    
+   ///Resize the storage array
+   /** If size does not change, and the block is already owned, this does nothing.
+     * This is here to manage template base class lookup while keep virtual-ness, so it 
+     * just calls MMatrixBase::resize(size_t *).
+     *
+     * \param sizes is an array of length 1
+     */
+   virtual void resize(const size_t * sizes);
+   
+   /** \endcond */
+   //@}
+      
+   /** @name Assignment
+     */  
+   //@{
+  
+   /** \cond */
+   
+   ///Assignment operator
+   /** This must be redefined for proper template resolution.
+     *
+     * \param m the matrix to assign from
+     *
+     * \returns a reference to *this
+     */
+   MMatrixBase<dataT, 2, absT> & operator=(const MMatrixBase<dataT, 2, absT> & m);
+   
+   ///r-value assignment operator
+   /** This must be redefined for proper template resolution.
+     *
+     * \param m the matrix to assign from
+     *
+     * \returns a reference to *this
+     */
+   MMatrixBase<dataT, 2, absT> & operator=(MMatrixBase<dataT, 2, absT> && m);
+  
+   /** \endcond */
+   
+   ///Initializer list assignment
+   /** 
+     * \param init a nested initializer list of dataTs.
+     *
+     * \retval a reference to *this.
+     */
+   virtual MMatrix<dataT, 2, absT> & assign_ilist(std::initializer_list<std::initializer_list<dataT> > & init);
+  
+   ///Initializer list assignment operator
+   /** Assign from a nested initializer list. Example:
+     * \code
+     * MMatrix<double, 2> mat  = {{0.2, 0.5, 0.7, 0.8},{0.3, 0.6, 0.8, 0.9}};
+     * \endcode
+     * 
+     * This calls assign_ilist, where the work is done.
+     * 
+     * \param init is an initializer list of dataTs.
+     *
+     * \returns a reference to *this.
+     */
+   virtual MMatrix<dataT, 2, absT> & operator=(std::initializer_list<std::initializer_list<dataT> > init);
+   
+   
+   
+   //@}
+  
+   /** @name Indexed Element Access
+     * \brief Access to elements based on their 2-D coordinates
+     * \details These methods access (get or set) a particular element of the matrix.  
+     * The standard MMatrix size_t * versions are also provided.
+     */
+   //@{
+   
+   ///Get the memory offset given a coordinate.
+   /** This is the fundamental way to calculate the linear index of an array coordinate for _dim=2.
+     *
+     * \param d0 is the coordinate of dimension 0, the rows
+     * \param d1 is the coordinate of dimension 1, the columns
+     * \returns the linear index into the _data array.
+     */
+   virtual size_t idx( const size_t d0, 
+                       const size_t d1 ) const;
+   
+   /** \cond */
+   
+   ///Get the raw index given a set of coordinates, which has length 1 in this specialization.
+   /** This is overriden from MMatrixBase, and just calls the non-pointer version.
+     * 
+     * \param d is an array of length 1 which specifies the index along each dimension
+     * \returns the linear index into the _data array.
+     */
+   virtual size_t idx(const size_t * d) const;
+      
+   /** \endcond */
+   
+   ///Set the value of an element.
+   /**
+     * \param d0 specifies the row
+     * \param d1 specifies the column
+     * \param x is the value to set
+     */ 
+   virtual void  set( const size_t d0, 
+                      const size_t d1, 
+                      const dataT & x );
+   
+   ///Get the value of element d0.
+   virtual dataT & get( const size_t d0, 
+                        const size_t d1 );
+
+   ///Get the value of element d0 (const version).
+   virtual dataT get( const size_t d0, 
+                      const size_t d1 ) const;
+
+   ///Get a pointer to the element at d0.
+   virtual   dataT * get_ptr( const size_t d0, 
+                              const size_t d1 );
+   
+   /** \cond */
+   //These overloads must be re-defined for template resolution
+
+   ///Set the element d[0] to x.
+   virtual void  set( const size_t * d, 
+                      const dataT & x );
+   
+   ///Get the value of element at d[0].
+   virtual dataT & get( const size_t * d );
+   
+   ///Get the value of element at d[0].
+   virtual dataT get( const size_t * d ) const;
+      
+   ///Get a pointer to the element at d0.
+   virtual dataT * get_ptr( const size_t *d );
+
+   /** \endcond */
+   
+   //@}
+
+   /** @name Row Access Operators
+     */
+   //@{
+  
+   /// Get a single row of the matrix.
+   /** This returns a single row.
+     *
+     * \param d is the row index.
+     *
+     * \returns a vector view, of type MMatrixView<dataT, 1, absT>
+     */
+   virtual MMatrixView<dataT, 1, absT> get_row( const size_t d );
+   
+   /// Get a single row of the matrix.
+   /** This calls get_row, returning a single row.
+     *
+     * \param d is the row index.  Can also be mx::BEG or mx::LAST.
+     *
+     * \returns a vector view, of type MMatrixView<dataT, 1, absT>
+     */
+   MMatrixView<dataT, 1, absT> operator()( const size_t d );
+      
+    /** \cond */
+   //Additional overloads
+   MMatrixView<dataT, 1, absT> operator()(const MMatrixBound_BEG b);
+   
+   MMatrixView<dataT, 1, absT> operator()(const MMatrixBound_LAST l);
+
+   /** \endcond */
+   
+   //@}
+   
+   /** @name Slice Operators
+     * The Slice operators return a submatrix.
+     * A slice by itself can not be used. These operators must always be followed by another () pair.
+     */
+  //@{
+
+   /// Get a slice (submatrix).
+   /** This returns a slice from row \p start to row \p end - 1, in steps
+     * of size \p stride
+     *
+     * \param start is the first row
+     * \param stride is the stepsize
+     * \param end is one past the last row
+     *
+     * \returns an MMatrixSlice of the matrix
+     */
+   virtual MMatrixSlice<1, dataT, 2, absT> get_slice( const size_t start, 
+                                                      const size_t stride, 
+                                                      const size_t end );
+  
+   /// Get a slice (submatrix).
+   /** This returns a slice from row \p start to row \p end - 1, in steps
+     * of size \p stride
+     *
+     * \param start is the first row
+     * \param stride is the stepsize
+     * \param end is one past the last row
+     *
+     * \returns an MMatrixSlice of the matrix
+     */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const size_t start, 
+                                                      const size_t stride, 
+                                                      const size_t end );
+  /** \cond */
+   //These overrides implement BEG and END boundaries, and stride=1 versions.
+  
+  /// Get a slice (submatrix) from the first row to the last row.
+  /** This returns a slice from the first row to the last row, in steps
+    * of size \p stride
+    *
+    * \param start is an object of type MMatrixBound_BEG, which just means "first row"
+    * \param stride is the step size
+    * \param end is an object of type MMatrixBound_END, which just means "one past the last row"
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const MMatrixBound_BEG start, 
+                                                      const size_t stride, 
+                                                      const MMatrixBound_END end );
+                                          
+  /// Get a slice (submatrix) up to and including the last row.
+  /** This returns a slice from row \p start to one past the last row, in steps
+    * of size \p stride
+    *
+    * \param start is the first row
+    * \param stride is the stepsize
+    * \param end is an object of type MMatrixBound_END, which just means "one past the last row"
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const size_t start, 
+                                                      const size_t stride, 
+                                                      const MMatrixBound_END end );
+                                          
+  /// Get a slice (submatrix) starting from the first row.
+  /** This returns a slice from the first row to row \p end - 1, in steps
+    * of size \p stride
+    *
+    * \param start is an object of type MMatrixBound_BEG, which just means "first row"
+    * \param stride is the stepsize
+    * \param end is one past the last row
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const MMatrixBound_BEG start, 
+                                                      const size_t stride, 
+                                                      const size_t end );
+                                          
+  /// Get a slice (submatrix) with stride = 1.
+  /** This returns a slice from row \p start to row \p end - 1, in steps
+    * of size 1.
+    *
+    * \param start is the first row
+    * \param end is one past the last row
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const size_t start, 
+                                                      const size_t end );
+                                          
+  /// Get a slice (submatrix) from the first row to the last row with stride=1.
+  /** This returns a slice from the first row to the last row, in steps
+    * of size 1.
+    *
+    * \param start is an object of type MMatrixBound_BEG, which just means "first row"
+    * \param end is an object of type MMatrixBound_END, which just means "one past the last row"
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const MMatrixBound_BEG start, 
+                                                      const MMatrixBound_END end );
+                                          
+  /// Get a slice (submatrix) up to and including the last row with stride=1.
+  /** This returns a slice from row \p start to one past the last row, in steps
+    * of size 1.
+    *
+    * \param start is the first row
+    * \param end is an object of type MMatrixBound_END, which just means "one past the last row"
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const size_t start,  
+                                                      const MMatrixBound_END end );
+                                          
+  /// Get a slice (submatrix) starting from the first row.
+  /** This returns a slice from the first row to row \p end - 1, in steps
+    * of size 1.
+    *
+    * \param start is an object of type MMatrixBound_BEG, which just means "first row"
+    * \param end is one past the last row
+    *
+    * \returns an MMatrixSlice of the matrix
+    */
+  virtual MMatrixSlice<1, dataT, 2, absT> operator()( const MMatrixBound_BEG start, 
+                                                      const size_t end );
+      
+   /** \endcond */
+   //@}
+
+};
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix() : MMatrixBase<dataT, 2, absT>()
+{  
+}
+
+template<typename dataT, typename absT>
+MMatrix<dataT, 2, absT>::MMatrix(const size_t * sizes) : MMatrixBase<dataT, 2, absT>(sizes)
+{
+}
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(size_t size0, size_t size1) 
+{
+   size_t sizes[2];
+   
+   sizes[0] = size0;
+   sizes[1] = size1;
+   
+   resize(sizes);
+}
+
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(std::initializer_list<std::initializer_list<dataT> > init)
+{ 
+   assign_ilist(init);  
+}
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(const MMatrix<dataT, 2, absT> & m) : MMatrixBase<dataT, 2, absT>(m)
+{
+}
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(const MMatrixBase<dataT, 2, absT> & m) : MMatrixBase<dataT, 2, absT>(m)
+{
+}
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(MMatrix<dataT, 2, absT> && m) : MMatrixBase<dataT, 2, absT>(m)
+{
+}
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::MMatrix(MMatrixBase<dataT, 2, absT> && m) : MMatrixBase<dataT, 2, absT>(m)
+{
+}
+
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT>::~MMatrix()  
+{
+}
+
+template<typename dataT, typename absT> 
+void MMatrix<dataT, 2, absT>::resize(const size_t size0, const size_t size1)
+{
+   size_t sizes[2];
+   sizes[0] = size0;
+   sizes[1] = size1;
+   
+   resize(sizes);   
+}
+
+template<typename dataT, typename absT> 
+void MMatrix<dataT, 2, absT>::resize(const size_t * sizes)
+{
+   MMatrixBase<dataT, 2, absT>::resize(sizes);  
+}
+
+template<typename dataT, typename absT> 
+MMatrixBase<dataT, 2, absT> & MMatrix<dataT, 2, absT>::operator=(const MMatrixBase<dataT, 2, absT> & m)
+{ 
+   return MMatrixBase<dataT, 2, absT>::operator=(m); 
+}
+
+template<typename dataT, typename absT> 
+MMatrixBase<dataT, 2, absT> & MMatrix<dataT, 2, absT>::operator=(MMatrixBase<dataT, 2, absT> && m)
+{ 
+   return MMatrixBase<dataT, 2, absT>::operator=((MMatrixBase<dataT, 2, absT> &&) m); 
+}
+     
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT> & MMatrix<dataT, 2, absT>::assign_ilist(std::initializer_list<std::initializer_list<dataT> > & init)
+{
+   size_t rows = init.size();
+   
+   typename std::initializer_list<std::initializer_list<dataT> >::iterator it;
+   
+   it = init.begin();
+   size_t cols = (*it).size();
+   it++;
+   while(it != init.end())
+   {
+      if((*it).size() > cols) cols = (*it).size();
+      it++;
+   }
+   
+   resize(rows, cols);
+   
+   it = init.begin();
+   typename std::initializer_list<dataT>::iterator it2;
+   
+   int i, j;
+   
+   for(i=0;i<rows; i++)
+   {
+      it2 = it->begin();
+      for(j=0;j<cols; j++)
+      {
+         if(j >= (*it).size())
+         {
+            set(i, j, 0);
+         }
+         else
+         {
+            set(i, j, *it2);
+            ++it2;
+         }
+      }
+      ++it;
+   }
+   
+   
+   return *this;
+}//assign_ilist(std::initializer_list<std::initializer_list<dataT> > &)
+
+
+template<typename dataT, typename absT> 
+MMatrix<dataT, 2, absT> & MMatrix<dataT, 2, absT>::operator=(std::initializer_list<std::initializer_list<dataT> > init)
+{ 
+   std::cout << "operator=init\n";
+   return assign_ilist(init); 
+}
+
+template<typename dataT, typename absT> 
+inline size_t MMatrix<dataT, 2, absT>::idx(const size_t d0, const size_t d1) const
+{
+   return d0*this->_size_prod[0] + d1;
+}
+
+template<typename dataT, typename absT> 
+inline size_t MMatrix<dataT, 2, absT>::idx(const size_t * d) const
+{
+   return idx(d[0], d[1]);
+}
+
+template<typename dataT, typename absT> 
+inline void MMatrix<dataT, 2, absT>::set( const size_t d0, 
+                                          const size_t d1, 
+                                          const dataT & x ) 
+{
+   this->_data[idx(d0, d1)] = x;
+}
+
+template<typename dataT, typename absT> 
+inline dataT & MMatrix<dataT, 2, absT>::get( const size_t d0,
+                                             const size_t d1 )
+{
+   return this->_data[d0*this->_size_prod[0] + d1]; //idx(d0, d1)];
+   //return this->_data[idx(d0, d1)];
+}
+
+template<typename dataT, typename absT> 
+inline dataT MMatrix<dataT, 2, absT>::get( const size_t d0, 
+                                           const size_t d1 ) const
+{
+   return this->_data[idx(d0, d1)];
+}
+
+template<typename dataT, typename absT> 
+dataT * MMatrix<dataT, 2, absT>::get_ptr( const size_t d0, 
+                                          const size_t d1 )
+{
+   return &this->_data[idx(d0, d1)];
+}
+
+
+
+
+template<typename dataT, typename absT> 
+inline void MMatrix<dataT, 2, absT>::set(const size_t * d, const dataT & x)
+{
+   this->_data[idx(d[0], d[1])] = x;
+}
+
+
+template<typename dataT, typename absT> 
+inline dataT & MMatrix<dataT, 2, absT>::get(const size_t * d)
+{
+   return this->_data[idx(d[0], d[1])];
+}
+
+template<typename dataT, typename absT> 
+inline dataT MMatrix<dataT, 2, absT>::get(const size_t * d) const
+{
+   return this->_data[idx(d[0], d[1])];
+}
+
+template<typename dataT, typename absT> 
+dataT * MMatrix<dataT, 2, absT>::get_ptr(const size_t * d)
+{
+   return &this->_data[idx(d[0], d[1])];
+}
+
+template<typename dataT, typename absT> 
+inline MMatrixView<dataT, 1, absT> MMatrix<dataT, 2, absT>::get_row(const size_t d)
+{ 
+   size_t start = d*this->_size[1];
+   size_t stride = 1;
+   size_t end = (d+1)*this->_size[1];
+   
+   MMatrixView<dataT, 1, absT> vview(this->_raw_data, this->_tot_size, start, stride, end);
+   return vview; 
+}
+
+template<typename dataT, typename absT> 
+inline MMatrixView<dataT, 1, absT> MMatrix<dataT, 2, absT>::operator()(const size_t d)
+{ 
+   return get_row(d); 
+}
+   
+template<typename dataT, typename absT> 
+inline MMatrixView<dataT, 1, absT> MMatrix<dataT, 2, absT>::operator()(const MMatrixBound_BEG b)
+{ 
+   return get_row(0); 
+}
+
+template<typename dataT, typename absT> 
+inline MMatrixView<dataT, 1, absT> MMatrix<dataT, 2, absT>::operator()(const MMatrixBound_LAST l)
+{ 
+   return get_row(this->_length[0]-1); 
+}   
+
+template<typename dataT, typename absT> 
+inline MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::get_slice( const size_t start, 
+                                                                           const size_t stride, 
+                                                                           const size_t end )
+{
+   MMatrixSlice<1, dataT, 2, absT> mslice(this, start, stride, end);
+
+   return mslice;
+}
+
+   
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( size_t start, 
+                                                                     size_t stride, 
+                                                                     size_t end )
+{
+   return get_slice(start, stride, end);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( mx::MMatrixBound_BEG start, 
+                                                                     size_t stride, 
+                                                                     mx::MMatrixBound_END end )
+{
+   return get_slice(0, stride, this->_length[0]);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( size_t start, 
+                                                                     size_t stride, 
+                                                                     mx::MMatrixBound_END end )
+{
+   return get_slice(start, stride, this->_length[0]);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( mx::MMatrixBound_BEG start, 
+                                                                     size_t stride, 
+                                                                     size_t end )
+{
+   return get_slice(0, stride, end);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( size_t start, 
+                                                                     size_t end )
+{
+   return get_slice(start, 1, end);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( mx::MMatrixBound_BEG start,  
+                                                                     mx::MMatrixBound_END end )
+{
+   return get_slice(0, 1, this->_length[0]);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( size_t start, 
+                                                                     mx::MMatrixBound_END end )
+{
+   return get_slice(start, 1, this->_length[0]);
+}
+
+template<typename dataT, typename absT> 
+MMatrixSlice<1, dataT, 2, absT> MMatrix<dataT, 2, absT>::operator()( mx::MMatrixBound_BEG start, 
+                                                                     size_t end )
+{
+   return get_slice(0, 1, end);
+}
+
+
+
+/** \defgroup mmatrix2_typedefs Matrix Typedef Declarations
+  * \ingroup vmop
+  * typedefs for for MMatrix<dataT, 2, absT>
+  */
+//@{
+typedef MMatrix<bool, 2> Matrixb;///<A matrix of bools.
+typedef MMatrix<char, 2> Matrixc;///<A matrix of chars.
+typedef MMatrix<unsigned char, 2> Matrixuc; ///<A matrix of unsigned chars.
+typedef MMatrix<short, 2> Matrixs; ///<A matrix of short integers.
+typedef MMatrix<unsigned short, 2> Matrixus; ///<A matrix of unsigned shorts.
+typedef MMatrix<int, 2> Matrixi; ///<A matrix of integers.
+typedef MMatrix<unsigned int, 2> Matrixui; ///<A matrix of unsigned integers.
+typedef MMatrix<unsigned, 2> Matrixu; ///<A matrix of unsigned integers (same as Vectorui, matter of taste).
+typedef MMatrix<long, 2> Matrixl; ///<A matrix of long integers.
+typedef MMatrix<unsigned long, 2> Matrixul; ///<A matrix of unsigned longs.
+typedef MMatrix<long long, 2> Matrixll; ///<A matrix of long long integers
+typedef MMatrix<unsigned long long, 2> Matrixull; ///<A matrix of unsigned long long ints.
+typedef MMatrix<size_t, 2> Matrixsz; ///<A matrix of size_t.  Used to return and pass indices.
+typedef MMatrix<double, 2> Matrixd; ///<A matrix of doubles.
+typedef MMatrix<float, 2> Matrixf; ///<A matrix of floats.
+typedef MMatrix<long double, 2> Matrixld; ///<A matrix of long doubles.
+typedef MMatrix<std::complex<double>, 2, double> Matrixcd; ///<A matrix of complex doubles
+typedef MMatrix<std::complex<float>, 2, float> Matrixcf; ///<A matrix of complex floats
+typedef MMatrix<std::complex<long double>, 2, long double> Matrixcld; ///<A matrix of complex doubles
+
+
+
+
+//@}
+
+}; //mx
+
+#include "MMatrixView2"
+
+#endif //__mx_MMatrix1__
+
+
+
+      
+      

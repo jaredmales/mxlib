@@ -1,0 +1,204 @@
+/** \defgroup vmop Vectors and Matricies
+ */
+
+/** \page vmop_intro Introduction to the VMOP
+\ingroup vmop
+The vector/matrix operators in c++ (vmop++) are intended to be an intuitive but high performance interface to arrays (vectors and matrices) in c++.  Higher level languages, such as matlab and idl, have for a long time provided intuitive interfaces to vectors and matrices.  These interfaces allow element access and slicing (forming subvectors and submatrices) with operators such as vec(1) and mat(1:2:5, 2:7).  This results in easy to write and understand code.
+
+Such an interface does not exist natively in c and c++, however for those who write real time software (like AO control software), or software which must have high speed performance (e.g. processing the terrifyingly huge amount of image data being produced by the latest generation of telescopes), working in c and c++ is typically the best choice - they almost always win when compared to other languages in terms of execution speed.
+
+vmop++ aims to bridge this gap by using c++ operator overloading to provide intuitive matrix indexing and slicing, without sacrifing the underlying execution speed.  The c++0x standard provides several new features, most notably r-value reference handling, which allow us to do high performance vector and matrix operations while hiding the gory details of memory management.
+
+The benefit of having an easy to learn and use, standard way to interact with matrices will hopefully lead to the development of a library of useful functions that use vmop++ to operate on matrix objects. 
+
+Now for some examples.  If we have a 2 dimensional matrix m2D with 5 rows and 5 columns (we'll discuss how to create such a thing later), we can work with it as follows:
+
+To get the 2nd row: \code m2D(1) \endcode
+To get the 2nd column: \code m2D()(1) \endcode
+And to get the lower right 2x2 submatrix: \code m2D(3,5)(3,5) \endcode
+
+\note Since we are using c++, we follow the usual c convention for for-loops where we start counting from 0 instead of 1, and the first number is the starting value, and the second number is the first value to NOT use.  In terms of a for-loop:\code for(size_t i=3; i<5; i++)\endcode is how the expression \code m2D(3,5) \endcode is interpreted.
+
+Much more detail, including how to declare (create) a vector or matrix using vmop++, is provided in the following pages.  From now on we will assume these declarations:
+\code
+size_t i, j, k, l, s1, s2;
+bool b;
+double d;
+mx::Vectord v, v1, v2;
+mx::Vectori vi; //for long int
+mx::Matrixd m, m1, m2;
+\endcode
+
+\note You can drop the explicit namespace specification (mx::) by including the line \code using namespace mx; \endcode somewhere in your program.  We will remind you of this a few times since this can cause confusing compiler errors, but we will drop the mx:: for the most part for readability.
+
+\note The namespace mx contains the MMatrix template class which provides the vmop++ interface.  Someone else could develop a class which provides a vmop++ interface, but it would be in a different namespace.  The goal is to begin developing libraries which interact with matrices using vmop++, so a given function will work on anybody's matrix class.
+
+
+*/
+
+/** \page vectors_pg Introduction to Vectors
+ \ingroup vmop
+This is an introduction to 1-dimensional matrices, a.k.a. vectors.
+\section vector_creation Creating Vectors
+A vector of type double is declared as
+\code mx::Vectord v; \endcode
+
+\note The need for the leading namespace declaration (mx::) can be avoided by putting the statement
+\code using namespace mx;\endcode
+in your code.  From now on we assume this has been done.
+
+Vectors of other types can be declared by changing the last letter (e.g. change d to i for a vector of ints).  A vector with storage for n elements is created with
+\code Vectord v(10); \endcode
+for n = 10.  A vector can be created as a copy of another vector in two ways:
+\code
+Vectord v;
+Vectord v1(v); //v1 is a copy of v
+Vectord v2 = v; //v2 is a copy of v ***TEST THIS***
+\endcode
+A vector can also be created using the c++ initializer list:
+\code
+Vectord v = {1.2, 3.4, 5.6, 7.8}; //This creates a vector of size 4, with the indicated element values.
+\endcode
+
+Note that each of the constructors shown so far makes a deep copy of the source vector.  That is they cause an allocation of space, a copy of each element is made, and at the end of the process both vector objects have ownership of their respective memory blocks.  Forms of the constructors are provided which avoid this, performing a shallow copy.  At the end of these operations the new vector accesses the same memory as the source vector, and the new vector does not own this memory.
+\code
+Vectord v;
+Vectord v1(v, false); //the shallow copy constructor
+\endcode
+This is conceptually similar to a vector view.  It might be useful, especially combined with the slice operators (see below), if you want to operate on just a subvector of a larger vector, for instance.
+
+Finnally you can create a vector out of an already allocated c-array using
+\code
+double *d = new double[10];
+Vectord v(d, 10); //the c-array constructor
+\endcode
+The array is not copied, but note that the resulting vector does not take ownership of the array, so you are still responsible for free-ing it.  You can also specify a stride as the third argument.
+
+\section access Element Access:
+
+Access element i:
+\code d = v(i);  \endcode
+Subvector access, get elements i to j:
+\code v1 = v(i,j); \endcode
+Subvector with stride access, get elements i to j with stride s1:
+\code v1 = v(i,s1,j); \endcode
+Get the whole vector:
+\code 
+v1 = v(); //This is for style only, it is identical to:
+v1 = v; //same as above
+\endcode
+
+\section slice Slicing Vectors:
+A slice of a vector is a seleciton of of subset of its elements, or a subrow.  You can use the various slice operators to specify the starting and the ending elements of the subset, and a stride.
+\code
+Vectord v = {1, 2, 3, 4, 5, 6}
+Vectord v1 = v(0,4); //Get only the first 4 elements, stride=1 is the default here.
+Vectord v3 = v(0,2,5); //First to last, using stride 2.  Gets elements 0,2,4.
+\endcode
+The BEG and END structures are shortcuts for the first and last elements, you can use them as follows
+\code
+Vectord v4 = v(BEG,END); //Get all the elements.
+\endcode
+
+\section operators Operators:
+
+The tranpose operator, forms the 1xN matrix from a Nx1 vector.  Note that when it matters in terms of linear algebra vmop++ assumes that vectors are column vectors, which is consistent with BLAS.
+\code m = ~v;\endcode
+
+The circular shift operators.  Shift left by i elements:
+\code v1 = v << i \endcode
+Shift right by i elements:
+\code v1 = v >> i \endcode
+
+\section comparison Element-wise Comparison
+These operators return a vector of integers, with value 0 for each element that fails the conditional test and 1 for each element that passes it.
+
+Equal to:
+\code vi = v1 == v2  \endcode
+Not equal to:
+\code vi = v1 != v2 \endcode
+Less than:
+\code vi = v1 < v2 \endcode
+Greather than:
+\code vi = v1 > v2 \endcode
+Less than or equal to:
+\code vi = v1 <= v2 \endcode
+Greater than or equal to:
+\code vi = v1 >= v2 \endcode
+
+
+\section scalar-math Scalar arithmetic:
+
+\code v1 = v0 * d; //Scalar multiplication
+ v0 *= d; //In-place scalar multiplication 
+ v1 = v0 / d; //Scalar division 
+ v0 /= d; //In-place scalar division 
+ v1 = v0 % d; //Scalar modulus  
+ v0 %= d; //In-place scalar modulus  
+ v1 = v0 + d; //Scalar addition 
+ v0 += d; //In-place scalar addition 
+ v1 = v0 - d; //Scalar subtraction 
+ v0 -= d; //In-place scalar subtraction \endcode
+
+
+
+\section element-math Element-wise arithmetic:
+Element-wise multiplication
+\code v2 = v0 * v1; \endcode
+In-place element-wise multiplication
+\code v0 *= v1; \endcode
+Element-wise division
+\code v2 = v0 / v1; \endcode
+In-place element-wise division
+\code v0 /= v1; \endcode
+Element-wise modulus
+\code v2 = v0%v1; \endcode
+In-place element-wise modulus
+\code v0 %= v1; \endcode
+Element-wise addition
+\code v2 = v0 + v1; \endcode
+In-place element-wise addition
+\code v0 += v1; \endcode
+Element-wise subtraction
+\code v2 = v0 - v1; \endcode
+In-place element-wise subtraction
+\code v0 -= v1; \endcode
+
+\section vector-math Vector Arithmetic:
+
+The dot or inner product of two vectors:
+\code d = v0 ** v1; \endcode
+
+
+
+\section vector-advanced Some Advanced Details
+The Vectord class we have been using for the above examples is really a typedef of the \ref MMatrix template class.  Specifically:
+\code typedef MMatrix<double, 1> Vectord; \endcode
+The full declaration of the \ref MMatrix class is:
+\code template<typename dataT, size_t _dim> MMatrix \endcode
+As you can see, this means that the dimension is hardcoded into the MMatrix classes (meaning that it is set at compile time).  Using partial template specialization, MMatrix classes for the lower dimensions (1,2,3) can be specialized to optimize performance.
+*/
+/** \page  matrices_pg Introduction to Matrices
+ \ingroup vmop
+requires special matrix types, holding a pointer to matrix and provideing views on it
+
+element: - returns a dataT
+m(2)(2)
+m[2][2]
+
+row: 
+m(2)()
+
+column: - 
+m()(2)
+
+
+sub-matrices: - will also use the special matrix type
+m(0,6)(2,5)
+m(0,2,6)(2,1,5)
+m()(2,5)
+m(2,5)()
+
+
+
+**/

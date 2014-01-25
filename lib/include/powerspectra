@@ -1,0 +1,89 @@
+
+#ifndef __mx_powerspectra__
+#define __mx_powerspectra__
+
+#include <cmath>
+
+namespace mx
+{
+
+/** \ingroup psds 
+  */
+//@{
+
+
+/// Calculates the frequency sampling for a grid given maximum dimension and maximum frequency.
+/** The freq_sampling is
+  * @f$ \delta f = \frac{f_{max}}{0.5*dim} @f$
+  * where @f$ f_{max} @f$ is the maximum frequency and @f$ dim @f$ is the maximum dimension of the grid.
+  *
+  * \param dim is the maximum dimension of the grid
+  * \param f_max is the maximum frequency of the grid
+  * \returns the sampling interval @f$ \delta f @f$
+  */
+template<class realT> 
+realT freq_sampling( size_t dim, 
+                     realT f_max
+                   )
+{
+   return (f_max/(0.5*dim));
+}
+
+
+/// Generates a 2D 1/f^b power spectrum
+/** \ingroup vmop_tools
+  * Creates a 2D \ref MMatrix where each cell corresponds to the magnitude of spatial frequency
+  * and fills in the values with
+  * \f[
+  *  P(i)(j) = c |f(i)(j)]| ^{-\beta} 
+  * \f]
+  * and the 0 frequency cell is set to 0, \f$ P(0.5dim1)(0.5dim2) = 0 \f$.  The output is not
+  * shifted, so the 0 frequency cell is in the center of the array.
+  *
+  * \param dim1 the x dimension of the desired spectrum
+  * \param dim2 the y dimension of the desired spectrum
+  * \param f_max the maximum frequency of the desired spectrum
+  * \param beta the power law exponent
+  * \param c [optional] a constant to multiply the raw spectrum by.
+  * \returns the power spectrum in a 2D \ref MMatrix
+  */
+template<class vmopMatrix> 
+vmopMatrix generate_powerspectrum( size_t dim1, 
+                                   size_t dim2, 
+                                   typename vmopMatrix::data_type f_max, 
+                                   typename vmopMatrix::data_type beta, 
+                                   typename vmopMatrix::data_type c = 1
+                                 )
+{
+   vmopMatrix f(dim1, dim2);
+  
+   //Calculate frequency sampling 
+   typename vmopMatrix::data_type df = freq_sampling(std::max(dim1, dim2), f_max);
+
+   typename vmopMatrix::data_type f_x, f_y;
+   
+   for(size_t i=0; i < dim1; i++)
+   {
+      f_x = std::pow((-0.5*dim1 + i)*df,2);
+      for(size_t j=0; j < dim2; j++)
+      {
+         f_y = std::pow((-0.5*dim2 + j)*df,2);
+         
+         f(i)(j) = c*std::pow( f_x + f_y , 0.5*beta);
+      }
+   }
+
+   f(0.5*dim1)(0.5*dim2) = typename vmopMatrix::data_type(0);
+   
+   return f;
+}
+
+  
+/*group psds*/
+//@} 
+
+
+
+}//namespace mx
+
+#endif //#ifdef __mx_powerspectra__

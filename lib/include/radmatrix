@@ -1,0 +1,109 @@
+#ifndef __mx_radmatrix__
+#define __mx_radmatrix__
+
+namespace mx
+{
+
+#include <cmath>
+
+
+/// Fills in the cells of a vmop 2D Matrix with their radius from the center
+/** \ingroup vmop_tools
+  *
+  * \param m is the allocated MMatrix
+  * \param xc is the x center
+  * \param yc is the y center
+  * \param scale [optional] is a scaling to apply to each value (default = 1)
+  */  
+template<class vmopMatrix> 
+void radmatrix( vmopMatrix & m, 
+                typename vmopMatrix::data_type xc, 
+                typename vmopMatrix::data_type yc, 
+                typename vmopMatrix::data_type scale=1
+              )
+{
+   typename vmopMatrix::data_type f_x, f_y;
+
+   size_t dim1 = m.length(0);
+   size_t dim2 = m.length(1);
+   
+   for(size_t i=0; i < dim1; i++)
+   {
+      f_x = std::pow(i-xc,2);
+      for(size_t j=0; j < dim2; j++)
+      {
+         f_y = std::pow(j-yc,2);
+         
+         m(i)(j) = std::sqrt( f_x + f_y)*scale;
+      }
+   }
+   
+}
+
+/// Creates a vmop 2D Matrix and fills in the cells with their radius from the center
+/** \ingroup vmop_tools
+  *
+  * \param dim1 is the size of matrix in x
+  * \param dim2 is the size of the matrix in y
+  * \param xc is the x center
+  * \param yc is the y center
+  * \param scale [optional] is a scaling to apply to each value (default = 1)
+  */  
+template<class vmopMatrix> 
+vmopMatrix radmatrix( size_t dim1, 
+                      size_t dim2, 
+                      typename vmopMatrix::data_type xc, 
+                      typename vmopMatrix::data_type yc, 
+                      typename vmopMatrix::data_type scale=1
+                    )
+{
+   vmopMatrix m(dim1, dim2);
+   
+   radmatrix(m, xc, yc, scale);
+   
+   return m;
+}
+
+
+/// Fills in the cells of a vmop 2D Matrix with their radius from the canonical center
+/** \ingroup vmop_tools
+  *
+  * The center is @f$ (x_c, y_c) = (0.5*(dim_1-1), 0.5*(dim_2 -1)) @f$.
+  *
+  * \param m is the allocated MMatrix
+  * \param scale [optional] is a scaling to apply to each value (default = 1)
+  */  
+template<class vmopMatrix> 
+void radmatrix(vmopMatrix & m, 
+               typename vmopMatrix::data_type scale=1)
+{
+   typename vmopMatrix::data_type xc, yc;
+   
+   xc = 0.5*(m.length(0)-1);
+   yc = 0.5*(m.length(0)-1);
+
+   radmatrix(m, xc, yc, scale);
+}
+
+/// Creates a vmop 2D Matrix and fills in the cells with their radius from the canonical center
+/** \ingroup vmop_tools
+  *
+  * The center is @f$ (x_c, y_c) = (0.5*(dim_1-1), 0.5*(dim_2 -1)) @f$.
+  *
+  * \param dim1 is the size of matrix in x
+  * \param dim2 is the size of the matrix in y
+  * \param scale [optional] is a scaling to apply to each value (default = 1)
+  */  
+template<class vmopMatrix> 
+vmopMatrix radmatrix(size_t dim1, size_t dim2, typename vmopMatrix::data_type scale=1)
+{
+   vmopMatrix m(dim1, dim2);
+   
+   radmatrix(m, scale);
+   
+   return m;
+}
+
+}//namespace mx
+
+#endif //#ifndef __mx_radmatrix__
