@@ -1,12 +1,3 @@
-/************************************************************
- *    kepler.h
- *
- * Author: Jared R. Males (jrmales@email.arizona.edu)
- *
- * Declarations for the utilities related to the Kepler problem.
- *
- ************************************************************/
-
 /** \file kepler.h
  * \author Jared R. Males
  * \brief Declarations for the utilities related to the Kepler problem.
@@ -20,7 +11,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "../vmop/MMatrix"
+#include "../vmop/MMatrix1"
 
 #include "astroconstants.h"
 
@@ -29,9 +20,9 @@
 #include "astrotypes.h"
 
 
-/** \ingroup kepler 
+/** \addtogroup kepler 
+  * @{
   */
-//@{
    
 ///The default tolerance for solutions to the Kepler problem
 #define KEPLER_TOL   1e-8
@@ -53,13 +44,24 @@
 ///Calculate the eccentricity of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a> given the semi-major axis and the focal parameter
 #define eccent(a, p) (a == 0.0 ? 1e34 : (p >= 1e9 ? 0.0 : (p>0 ? (-p/(2*a)+0.5*SQRT_F(p*p/(a*a) + 4)) : (p/(2*a)+0.5*SQRT_F(p*p/(a*a) + 4)) ) ))
 
-///Calculate the period of an orbit, given the masses and semi-major axis.
+///Calculate the period of an orbit, given the masses and semi-major axis, using solar units.
 /** \param m1 is the first mass, in solar masses.
   * \param m2 is the second mass, in solar masses.
   * \param a is the semi-major axis, in AU
   * \retval T the period in days
   */ 
-floatT get_period(floatT m1, floatT m2, floatT a);//Msol, AU, days
+floatT get_period_solar(floatT m1, floatT m2, floatT a);//Msol, AU, days
+
+///Calculate the period of an orbit, given the masses and semi-major axis, using Earth units.
+/** \param m1 is the first mass, in Earth masses.
+  * \param m2 is the second mass, in Earth masses.
+  * \param a is the semi-major axis, in m
+  * \retval T the period in secs
+  */ 
+floatT get_period_earth(floatT m1, floatT m2, floatT a);//Mearth, m, secs
+
+floatT get_semimaj(floatT m1, floatT m2, floatT P);
+
 
 ///Calculate the mean anomaly at time t, given the time of pericenter passage t0 and period T.  
 #define MEANANOL(t, t0, T) (2*PI*(t-t0)/T)
@@ -150,20 +152,39 @@ long rf_elements(floatT *r, floatT *f, floatT *E, floatT *D, floatT e, floatT M,
   */
 int get_rv(floatT *rv, floatT * r, floatT *f, floatT *E, floatT *D, floatT t, floatT mstar, floatT msini, floatT a, floatT e, floatT t0, floatT w, floatT tol=KEPLER_TOL, long itmax=KEPLER_ITMAX);
 
+///Calculate the cartesian x-y-z position of an orbit given keplerian elements and a vector of times.
+/** \param nx [output] the projected x positions of the orbit.  Should be same length as t.
+  * \param ny [output] the projected y positions of the orbit.  Should be same length as t.
+  * \param nz [output] the projected z positions of the orbit.  Should be same length as t.
+  * \param t  [input] the times at which to calculate the projected positions
+  * \param a  [input] the semi-major axis of the orbit
+  * \param P  [input] the orbital period
+  * \param e  [input] the eccentricity of the orbit
+  * \param t0 [input] the time of pericenter passage of the orbit
+  * \param i  [input] the inclination of the orbit
+  * \param w  [input] the argument of pericenter of the orbit
+  * \param W  [input] the longitude of the ascending node of the orbit.
+  * \retval -1 on error calculating the orbit (from rf_elements)
+  * \retval 0 on success.
+  */
+int cartesian_orbit( mx::Vectord &nx, mx::Vectord &ny, mx::Vectord &nz, const mx::Vectord & t, double a, double P, double e, double t0, double i, double w, double W);
+
 ///Calculate the projection of an orbit onto the reference plane for a set of times.
-/** \param nx [output] the projected x positions of the orbit
- * \param ny [output] the projected y positions of the orbit
- * \param t [input] the times at which to calculate the projected positions
- * \param a [input] the semi-major axis of the orbit
- * \param P [input] the orbital period
- * \param e [input] the eccentricity of the orbit
- * \param t0 [input] the time of pericenter passage of the orbit
- * \param i [input] the inclination of the orbit
- * \param w [input] the argument of pericenter of the orbit
- * \param W [input] the longitude of the ascending node of the orbit.
- * \retval -1 on error calculating the orbit (from rf_elements)
- * \retval 0 on success.
- */
+/** NOTE: this is depreciated.  Use cartesian_orbit instead.
+  * 
+  * \param nx [output] the projected x positions of the orbit
+  * \param ny [output] the projected y positions of the orbit
+  * \param t [input] the times at which to calculate the projected positions
+  * \param a [input] the semi-major axis of the orbit
+  * \param P [input] the orbital period
+  * \param e [input] the eccentricity of the orbit
+  * \param t0 [input] the time of pericenter passage of the orbit
+  * \param i [input] the inclination of the orbit
+  * \param w [input] the argument of pericenter of the orbit
+  * \param W [input] the longitude of the ascending node of the orbit.
+  * \retval -1 on error calculating the orbit (from rf_elements)
+  * \retval 0 on success.
+  */
 int project_orbit( mx::Vectord &nx, mx::Vectord &ny, mx::Vectord &f, const mx::Vectord & t, double a, double P, double e, double t0, double i, double w, double W);
 
 ///Get the orbital phase at true anomaly f. Calculates the cos(alfa) where alfa is the orbital phase.
@@ -237,6 +258,6 @@ int get_iW_1pt(mx::Vectord &i, mx::Vectord &W, double x, double y, double rho, d
  */
 int get_W_1pt_z0(double &W, double x, double y, double r, double f, double w);
 
-//@}
+/// @}
 
 #endif //__KEPLER_H__

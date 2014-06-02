@@ -1,0 +1,496 @@
+/** \file fitsFile
+  * \brief Declares and defines a class to work with a FITS file
+  * \ingroup image_processing
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+  
+#ifndef __fitsFile__
+#define __fitsFile__
+
+
+#include "fitsUtils"
+
+#include "fitsHeader"
+#include "mxException"
+
+namespace mx
+{
+
+/** \addtogroup image_processing
+  * @{
+  */
+
+/// Class to manage interactions with a FITS file
+/** This class conveniently wraps the functionality of cfitsio.
+  *
+  * \tparam dataT the datatype to use for in-memory storage of the image.  This does not necessarily have to match the data type stored on disk.
+  * 
+  */
+template<typename dataT>
+class fitsFile
+{
+
+protected:
+   
+   ///The path to the file
+   std::string fileName;
+   
+   ///The cfitsio data structure
+   fitsfile * fptr;
+   
+   ///The status code returned by the cfitsio library
+   int fstatus;
+   
+   ///The dimensions of the image (1D, 2D, 3D etc)
+   int naxis;
+   
+   ///The size of each dimension
+   long * naxes;
+
+   ///Flag indicating whether the file is open or not
+   bool isOpen;
+
+   ///The value to replace null values with
+   dataT nulval;
+   
+   ///Records whether any null values were replaced
+   int anynul;
+   
+   ///Flag to control whether the comment string is read.
+   int noComment; 
+   
+   ///One time initialization common to all constructors
+   void construct();
+  
+public:
+   
+   ///Default constructor
+   fitsFile();
+   
+   ///Constructor with fileName, and option to open.
+   fitsFile(const std::string & fname, bool doopen = 0);
+   
+   ///Destructor
+   ~fitsFile();
+   
+   ///Set the file path, and optionally open the file.
+   void setFilename(const std::string & fname, bool doopen = 0);
+   
+   ///Open the file
+   void open();
+   
+   ///Open the file, first setting the file path.
+   void open(const std::string & fname);
+   
+   ///Close the file.
+   void close();
+
+   int getDimensions();
+   long getSize(size_t axis);
+   
+   ///Read the contents of the FITS file into an array.
+   /** The array pointed to by data must have been allocated.
+     *
+     * \param data an allocated arrray large enough to hold the entire image 
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   void read(dataT * data);
+   
+   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
+   /** 
+     *
+     * 
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   template<typename arrT>
+   void readEigen(arrT & data);
+   
+   ///Read the contents of the FITS file into an array.
+   /** The array pointed to by data must have been allocated.
+     *
+     * \param data is an allocated arrray large enough to hold the entire image 
+     * \param head is a fitsHeader object which is passed to \ref readHeader
+     * 
+     * \throws mxException is thrown on error
+     * 
+     */ 
+   void read(dataT * data, fitsHeader &head);
+   
+   ///Read the contents of the FITS file into an array.
+   /** The array pointed to by data must have been allocated.
+     *
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param data is an allocated arrray large enough to hold the entire image 
+     * 
+     * \throws mxException is thrown on error
+     * 
+     */ 
+   void read(const std::string &fname, dataT * data);
+   
+   ///Read the contents of the FITS file into an array.
+   /** The array pointed to by data must have been allocated.
+     *
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param data is an allocated arrray large enough to hold the entire image 
+     * \param head is a fitsHeader object which is passed to \ref readHeader
+     * 
+     * \throws mxException is thrown on error
+     * 
+     */ 
+   void read(const std::string &fname, dataT * data, fitsHeader &head);
+
+   ///Read the header from the fits file.
+   /** For now, nothing is done with head.  The new header is just appended.
+     * \todo If head is not empty, then read only the keywords specified in head
+     * 
+     * \param head is a fitsHeader object
+     * 
+     * \throws mxException is thrown on error
+     */
+   void readHeader(fitsHeader &head);
+   
+   ///Read the header from the fits file.
+   /**
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param head is a fitsHeader object
+     * 
+     * \throws mxException is thrown on error
+     */
+   void readHeader(const std::string &fname, fitsHeader &head);
+   
+   //Requirements on arrT:
+   // constructable
+   // has wrappers resize(arrT &), getFitsType<arrT> specialization, and has void * getData<arrT>(arrT &) specialization
+   template<typename arrT> arrT read();
+   template<typename arrT> arrT read(std::string fname);
+   
+}; // fitsFile
+
+template<typename dataT>
+void fitsFile<dataT>::construct()
+{
+   naxes = 0;
+   isOpen = 0;
+   fstatus = 0;
+   
+   nulval = 0;
+   anynul = 0;
+   
+   noComment = 0;
+}
+
+template<typename dataT>
+fitsFile<dataT>::fitsFile()
+{
+   construct();
+}
+
+template<typename dataT>
+fitsFile<dataT>::fitsFile(const std::string &fname, bool doopen)
+{
+   construct();
+   setFilename(fname, doopen);
+}
+
+template<typename dataT>
+fitsFile<dataT>::~fitsFile()
+{
+   if(isOpen) close();
+   
+   if(naxes) delete naxes;
+}
+
+template<typename dataT>
+void fitsFile<dataT>::setFilename(const std::string &fname, bool doopen)
+{
+   if(isOpen) 
+   {
+      close();
+   }
+   
+   fileName = fname;
+   
+   if(doopen)
+   {
+      open();
+   }
+
+} 
+
+template<typename dataT>
+void fitsFile<dataT>::open()
+{
+   fits_open_file(&fptr, fileName.c_str(), READONLY, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error opening file: ";
+      explan +=  fileName + ". ";
+      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      throw e;
+
+   }
+
+   fits_get_img_dim(fptr, &naxis, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error getting number of axes in file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      throw e;
+      
+
+   }
+
+   if(naxes) delete naxes;
+   naxes = new long[naxis];
+
+   fits_get_img_size(fptr, naxis, naxes, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error getting dimensions in file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      throw e;
+   }
+
+   isOpen = true; //Only set this after opening is complete.
+}
+
+template<typename dataT>
+void fitsFile<dataT>::open(const std::string & fname)
+{
+   setFilename(fname);
+   open();
+}
+
+template<typename dataT>
+void fitsFile<dataT>::close()
+{
+   int stat;
+   fstatus = 0;
+   stat = fits_close_file(fptr, &fstatus);
+   
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error closing file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      return;
+   }
+   
+   isOpen = 0;
+   fstatus = 0;
+
+   if(naxes) delete naxes;
+   naxes = 0;
+}
+
+template<typename dataT>
+int fitsFile<dataT>::getDimensions()
+{
+   if(!isOpen or !naxes) return -1;
+   
+   return naxis;
+}
+
+template<typename dataT>
+long fitsFile<dataT>::getSize(size_t axis)
+{
+   if(!isOpen or !naxes) return -1;
+
+   return naxes[axis];
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(dataT * data)
+{
+   long long nelements = 1;
+   long *fpix = new long[naxis];
+
+   for(int i=0;i<naxis; i++)
+   {
+      fpix[i] = 1;
+      nelements *= naxes[i];
+   }
+
+   fits_read_pix(fptr, getFitsType<dataT>(), fpix, nelements, (void *) &nulval, 
+                                     (void *) data, &anynul, &fstatus);
+   
+   if (fstatus && fstatus != 107)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error reading data from file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      delete fpix;
+      
+      throw e;
+   }
+
+   delete fpix;
+   
+
+   
+}
+
+
+template<typename dataT>
+template<typename arrT>
+void fitsFile<dataT>::readEigen(arrT & im)
+{
+   long long nelements = 1;
+   long *fpix = new long[naxis];
+
+   for(int i=0;i<naxis; i++)
+   {
+      fpix[i] = 1;
+      nelements *= naxes[i];
+   }
+
+   im.resize(naxes[0], naxes[1]);
+   
+   fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
+                                     (void *) im.data(), &anynul, &fstatus);
+   
+   if (fstatus && fstatus != 107)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error reading data from file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      delete fpix;
+      
+      throw e;
+   }
+
+   delete fpix;
+      
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(dataT * data, fitsHeader &head)
+{
+   read(data);
+   readHeader(head);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(const std::string &fname, dataT * data)
+{
+   setFilename(fname);
+   read(data);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(const std::string &fname, dataT * data, fitsHeader &head)
+{
+   setFilename(fname);
+   read(data);
+   readHeader(head);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::readHeader(fitsHeader & head)
+{
+   char keyword[FLEN_KEYWORD];
+   char value[FLEN_VALUE];
+   char * comment;
+   
+   //If noComment is set, then we don't read in the comment
+   if(noComment)
+   {
+      comment = 0;
+   }
+   else
+   {
+      comment = new char[FLEN_COMMENT];
+   }
+  
+   int keysexist;
+   int morekeys;
+   
+   if(!isOpen)
+   {
+      open();
+   }
+   
+   fits_get_hdrspace(fptr, &keysexist, &morekeys, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error reading header from file: ";
+      explan +=  fileName + ". ";      
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+      delete comment;
+      
+      throw e;
+   }
+   
+   for(int i=0; i<keysexist; i++)
+   {
+      fits_read_keyn(fptr, i+1, keyword, value, comment, &fstatus);
+      if (fstatus)
+      {
+         char emnem[31];
+         std::string explan;
+         fits_get_errstatus(fstatus, emnem);
+         explan = "Error reading header from file: ";
+         explan +=  fileName + ". ";      
+         mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      
+         delete comment;
+         
+         throw e;
+      }
+      
+      head.append(keyword, value, comment);
+   }
+   
+   delete comment;
+}
+
+template<typename dataT>
+void fitsFile<dataT>::readHeader(const std::string &fname, fitsHeader &head)
+{
+   setFilename(fname);
+   readHeader(head);
+}
+
+///@}
+
+} //namespace mx
+
+#endif //__fitsFile__
+
+
+

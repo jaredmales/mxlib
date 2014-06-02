@@ -1,0 +1,124 @@
+
+
+/** \defgroup signal_processing Signal Processing 
+  * \brief Tools for processing signals
+  */
+
+/** \defgroup psds Power Spectra 
+  * \brief Tools for generating and manipulating power spectra
+  * \ingroup signal_processing
+  */
+  
+/** \defgroup vmop_tools Vector Matrix Operator Tools
+  * \brief Tools which use the vmop interface.
+  * \ingroup vmop
+  */
+  
+/** \defgroup image_processing Image Processing
+  * \brief Tools for processing images
+  */
+  
+/** \defgroup plotting Plotting Data
+  * \brief Tools for plotting and displaying data
+  */
+  
+/** \defgroup genastro Astronomy
+  * \brief Tools for working with the heavens.
+  */
+  
+/** \defgroup astrodynamics Astrodynamics
+  * \brief Algorithms for astrodynamic calculations.
+  * \ingroup genastro
+  */  
+  
+/** \defgroup kepler The Kepler Problem
+  * \ingroup astrodynamics
+  * \brief Utilities for working with the Kepler problem.
+  * Provides various methods for working with the @f$ 1/r^2 @f$ central force prolem, a.k.a. Kepler's problem, of orbital dynamics.
+  */ 
+
+
+  
+/** \defgroup phyconstants Physical Constants
+ * \brief Various physical constants
+ */
+
+/** \defgroup genphyconstants General Constants
+  * \ingroup phyconstants 
+  * \brief Constants of general applicability
+  */
+  
+/** \defgroup astroconstants Astronomical Constants
+  * \ingroup genastro  
+  * \ingroup phyconstants
+  * \brief Constants for astronomy
+  */
+
+/** \defgroup geo Geometry and Geodesy
+  * Functions for basic geometry and working with earth coordinate systems
+  */
+  
+  
+/** \defgroup utils General Utilities
+  * Various miscellaneous utilities
+  */  
+  
+/** \defgroup stringutils Working with strings
+  * \ingroup utils
+  * \brief Various tools for working with strings
+  */
+  
+/** \defgroup timeutils Working with time
+  * \ingroup utils
+  * \brief Various tools for working with time
+  */
+  
+/** \defgroup ioutils Input/Output utilities
+  * \ingroup utils
+  * \brief Input/Output utilities
+  */
+  
+/** \defgroup system System Programming
+  * \ingroup utils
+  * \brief Tools for system programming
+  */
+
+/** \defgroup IPC Interprocess Communication
+  * \ingroup system
+  * \brief Tools for managing interprocess communication (IPC)
+  */
+
+/** \defgroup IPC_msgq Message Queues 
+  * \ingroup IPC
+  * \brief Tools for managing message queues
+  */  
+  
+/** \defgroup IPC_sharedmem Shared Memory 
+  * \ingroup IPC
+  * \brief Tools for managing shared memory
+  */  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+//This stuff is at the very end to make sure it is last in whatever group listings it is in.  
+  
+/** \defgroup astro_sofa The SOFA Library
+  * \ingroup genastro
+  * \brief The IAU's Standards of Fundamental Astronomy library
+  */  
+  
+  

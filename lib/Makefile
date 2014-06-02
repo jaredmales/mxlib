@@ -1,48 +1,96 @@
-INCLUDE_PATH = $(HOME)/include
-LIB_PATH = $(HOME)/lib
+INSTALL_PATH = $(HOME)
+INCLUDE_PATH = $(INSTALL_PATH)/include/mx
+LIB_PATH = $(INSTALL_PATH)/lib
 
-OPTIMIZE = -O3
+OPTIMIZE = -ggdb
 
 CPP = g++
 AR = ar -r
 RANLIB = ar -s
 
-CPPFLAGS += -std=c++0x -ggdb
+#must include path to the include directory, and to sofa
+INCLUDE = -Iinclude -I$(HOME)/include
+
+CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC
+CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC
+
 .c.o:
-	$(CC) $(OPTIMIZE) $(CFLAGS) -Iinclude -c $<
+	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -Iinclude -c $<
+	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -c $<
 
 # programs to be made
-TARGETS = libcda
-OBJS = readcolumns.o kepler.o astrodyn.o
+TARGETS = libmxlib
 
-INC_TO_INSTALL = astroconstants.h astrodyn.h astrotypes.h kepler.h geo.h readcolumns.h
-VMOP_TO_INSTALL = MatrixOp MMatrix MMatrix1 MMatrix2 MMatrixSlice MMatrixView1 MMatrixView2 vmopFitsUtils
+OBJS = readcolumns.o \
+       kepler.o \
+       astrodyn.o \
+       msgq.o \
+       sharedmem_segment.o \
+       sharedMemSegment.o \
+       process_interface.o \
+       ds9_interface.o \
+       gnuplot_interface.o
+
+
+INC_TO_INSTALL = astroconstants.h \
+                 astrodyn.h \
+                 astrotypes.h \
+                 kepler.h \
+                 geo.h \
+                 readcolumns.h \
+                 stringUtils \
+                 timeUtils \
+                 pout \
+                 IPC.h \
+                 msgq.h \
+                 msgQ \
+                 sharedmem_segment.h \
+                 sharedMemSegment \
+                 process_interface.h \
+                 ds9_interface.h \
+                 gnuplot_interface.h \
+                 fitsUtils \
+                 fitsFile \
+                 fitsHeader \
+                 fitsHeaderCard \
+                 mxException
+                 
+VMOP_TO_INSTALL = MMatrix \
+                  MMatrix1 \
+                  MMatrix2 \
+                  MMatrixSlice \
+                  MMatrixView1 \
+                  MMatrixView2
 
 all: $(TARGETS) 
 
+#dependencies:
+msgq.o: include/IPC.h include/msgq.h
+sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
+sharedMemSegment.o: include/sharedMemSegment
+process_interface.o: include/process_interface.h
+ds9_interface.o: include/ds9_interface.h
+gnuplot_interface.o: include/gnuplot_interface.h
 
-libcda: $(OBJS) vmop/MatrixOp.o vmop/vmopFitsUtils.o sofa/libsofa_c.a
-	$(AR) libcda.a $(OBJS) MatrixOp.o vmopFitsUtils.o sofa/*.o
-	$(RANLIB) libcda.a
+libmxlib: $(OBJS)
+	$(AR) libmxlib.a $(OBJS)
+	$(RANLIB) libmxlib.a
+	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jaredmales/lib/libsofa_c.a
 
-sofa/libsofa_c.a:
-	$(MAKE) -C ./sofa all
-
-install:
+install: libmxlib
 	install -d $(INCLUDE_PATH)
-	install libcda.a $(LIB_PATH)
+	install -d $(LIB_PATH)
+	install libmxlib.a $(LIB_PATH)
+	install libmxlib.so $(LIB_PATH)
 	for file in ${INC_TO_INSTALL}; do \
-	 (install include/$$file $(INCLUDE_PATH)/cDA) || break; \
+	 (install include/$$file $(INCLUDE_PATH)) || break; \
 	done
 	for file in ${VMOP_TO_INSTALL}; do \
-	 (install vmop/$$file $(INCLUDE_PATH)/cDA) || break; \
+	 (install vmop/$$file $(INCLUDE_PATH)) || break; \
 	done
-	install sofa/*.h $(INCLUDE_PATH)/cDA
 
 clean:
 	rm -f *.o *~
-	rm -f libcda.a
-	$(MAKE) -C ./sofa clean
+	rm -f libmxlib.a

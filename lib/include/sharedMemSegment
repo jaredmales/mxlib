@@ -1,0 +1,88 @@
+/** \file sharedMemSegment
+  * \author Jared R. Males (jaredmales@gmail.com)
+  * \brief Declarations for the mxlib c++ shared memory facility.
+  * 
+  * \ingroup IPC_sharedmem
+  * \ingroup IPC
+  * 
+*/
+
+#ifndef __sharedMemSegment_h__
+#define __sharedMemSegment_h__
+
+#include <sys/shm.h>
+#include <cstdint>
+#include <iostream>
+
+#include "sharedmem_segment.h"
+
+/** \addtogroup IPC_sharedmem
+  * @{
+  */
+
+namespace mx
+{
+   
+///Class wrapper for the \ref sharedmem_segment structure
+class sharedMemSegment : protected sharedmem_segment
+{
+
+public:
+
+   ///Default constructor
+   sharedMemSegment();
+
+   ///Constructor specifying the shared memory key
+   /** 
+     * \param path  is the path to use in constructing the shared memory key with ftok
+     * \param id is the id to use in constructing the shared memory key with ftok
+     * 
+     */
+   sharedMemSegment(const std::string &path, const int & id);
+
+   ///Specify the shared memory key
+   /** 
+     * \param path  is the path to use in constructing the shared memory key with ftok
+     * \param id is the id to use in constructing the shared memory key with ftok
+     * 
+     */
+   key_t setKey(const std::string &path, const int & id);
+    
+   ///Create and attach to the segment
+   /** A segment of size = sz + sizeof(uintptr_t) is actually created.
+     * 
+     * \param sz the size of the segment
+     * 
+     */
+   int create(size_t sz);
+
+   ///Attach to a segment without creating it.
+   /** 
+     * \param doNotSetAddr [default=0] if true then the address is not mapped to match that stored in the segment
+     * 
+     */
+   int attach(int doNotSetAddr = 0);
+   
+   ///Detach from the segment
+   int detach();
+   
+   ///Get the raw address of the segment
+   void * getRawAddr();
+
+   ///Get the usuable address of the segment, accounting for the address block
+   void * getAddr();
+
+   ///Get the raw size of the segment
+   size_t getRawSize();
+   
+   ///Get the usuable size of the segment, accounting for the address block.
+   size_t getSize();
+   
+};
+
+} //namespace mx
+
+/// @}
+
+#endif //__sharedMemSegment_h__
+

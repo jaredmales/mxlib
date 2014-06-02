@@ -6,11 +6,12 @@
 #include "astroconstants.h"
 #include "geo.h"
 #include "sofa.h"
+#include "../vmop/MMatrix1"
 
-/** \ingroup astrodyn
+/** \addtogroup astrodynamics
+  * @{ 
   */
 
-//@{
    
 ///Returns the Julian Day for a given Year, Month, and Day.
 /** References: J. Meeus "Astronomical Algorithms", 1991; V. Pisacane "Fundamentals of Space Systems", 2nd ed., 2005.
@@ -137,6 +138,11 @@ int get_LAST(double &LAST, int Yr, int Mo, double day, double lon);
  * \param lat is the latitude*/
 void calc_AZ_EL(double *az, double *el, double ha, double dec, double lat);
 
+
+void azel_to_hadec(double &ha, double &dec, double az, double el, double lat);
+
+void azel_to_hadec(mx::Vectord &ha, mx::Vectord &dec, const mx::Vectord &az, const mx::Vectord &el, double lat);
+
 ///Calculate the Parallactic angle, with angles in degrees
 /** \param lat is the observer latitude
  * \param dec is the object declination
@@ -151,6 +157,45 @@ double get_ParAng_deg(double lat, double dec, double ha);
  */
 double get_ParAng_rad(double lat, double dec, double ha);
 
-//@}
+
+///Convert from latitude/longitude to Earth-centered inertial x-y-z coordinates
+/**
+  * \param x [output] x coordinate (meters)
+  * \param y [output] y coordinate (meters)
+  * \param z [output] z coordinate (meters)
+  * \param lat [input] the latitude (radians)
+  * \param lon [input] the longitude (radians)
+  * \param alt [input] the altitude of RAD_EARTH (meters)
+  * \param lst [input] the local sidereal time (radians) 
+  */
+int latlon_to_ECI(double &x, double &y, double &z, double lat, double lon, double alt, double lst);
+
+///Convert from latitude/longitude to Earth-centered inertial x-y-z coordinates
+/** vmop version
+  * \param x [output] x coordinates, same length as lst (meters)
+  * \param y [output] y coordinates, same length as lst  (meters)
+  * \param z [output] z coordinate (meters)
+  * \param lat [input] the latitude (radians)
+  * \param lon [input] the longitude (radians)
+  * \param alt [input] the altitude of RAD_EARTH (meters)
+  * \param lst [input] the local sidereal time (radians) 
+  */
+int latlon_to_ECI(mx::Vectord &x, mx::Vectord &y, double &z, double lat, double lon, double alt, const mx::Vectord &lst);
+
+
+int ECI_to_TCH( mx::Vectord & az,
+                mx::Vectord & el,
+                mx::Vectord & r,
+                const double lat,
+                const mx::Vectord & lst,
+                const mx::Vectord & obs_x,
+                const mx::Vectord & obs_y,
+                const double obs_z,
+                const mx::Vectord & tgt_x,
+                const mx::Vectord & tgt_y,
+                const mx::Vectord & tgt_z ); 
+
+
+/// @}
 
 #endif //__ASTRODYN_H__

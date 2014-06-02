@@ -1,0 +1,284 @@
+/** \file fitsHeader
+  * \brief Declares and defines a class to work with a FITS header
+  * \ingroup image_processing
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+  
+#ifndef __fitsHeader__
+#define __fitsHeader__
+
+
+#include <list>
+#include <unordered_map>
+#include <iostream>
+
+#include "fitsHeaderCard"
+
+namespace mx
+{
+   
+/** \addtogroup image_processing
+  * @{
+  */
+
+
+ 
+/// Class to manage a complete fits header
+/** Manages tasks such as insertion (avoiding duplicates), and keyword lookup.
+  */ 
+class fitsHeader
+{
+
+public:
+
+   /// The iterator type for the cards list
+   typedef std::list<fitsHeaderCard>::iterator headerIterator ;
+
+   
+protected:
+   /// The storage for the FITS header cards
+   /** We use a list,  rather than forward_list, so that append (insert at end) is constant time.
+     * 
+     */
+   std::list<fitsHeaderCard> cards;
+   
+   /// This multimap allows for fast lookup by keyword.
+   /** Use unordered_multimap to handle HISTORY and COMMENT properly, and be as efficient as possible.
+     */
+   std::unordered_multimap<std::string, headerIterator> cardMap;
+   
+public:
+      
+   /// Get iterator to the beginning of the cards list
+   headerIterator begin();
+   
+   /// Get iterator to the end of the cards list
+   headerIterator end();
+   
+   /// Test whether the header is empty.
+   bool empty();
+   
+   /// Get number of cards currently stored in the header.
+   size_t size();
+   
+   /// Clear al cards from the header
+   void clear();
+   
+   /// Append a fitsHeaderCard to the end of the header
+   /**
+     * \param card is a fitsHeaderCard already populated
+     */ 
+   void append(fitsHeaderCard card);
+   
+   /// Append a card to the end of the header, from the three components of a card.
+   /**
+     * \tparam typeT is the data type of the value
+     * 
+     * \param k is the keyword string
+     * \param v is the value of typeT
+     * \param c is the comment string
+     */ 
+   template<typename typeT> void append(const std::string &k, typeT v, const std::string &c);
+   
+   /// Append a card to the end of the header, from the components of a card with no comment.
+   /**
+     * \tparam typeT is the data type of the value
+     * 
+     * \param k is the keyword string
+     * \param v is the value of typeT
+     */
+   template<typename typeT> void append(const std::string &k, typeT v);
+      
+   /// Insert a card before another card.
+   void insert_before(headerIterator it, fitsHeaderCard card);
+   template<typename typeT> void insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c);
+   //template<typename typeT> void insert_before(headerIterator it, const char *k, typeT v, const char *c);
+   template<typename typeT> void insert_before(headerIterator it, const std::string &k, typeT v);
+   //template<typename typeT> void insert_before(headerIterator it, const char *k, typeT v);
+   
+   /// Insert a card after another card.
+   void insert_after(headerIterator it, fitsHeaderCard card);
+   template<typename typeT> void insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c);
+   //template<typename typeT> void insert_after(headerIterator it, const char *k, typeT v, const char *c);
+   template<typename typeT> void insert_after(headerIterator it, const std::string &k, typeT v);
+   //template<typename typeT> void insert_after(headerIterator it, const char *k, typeT v);
+   
+   fitsHeaderCard & operator[](const std::string &);
+   //fitsHeaderCard & operator[](const char *);
+   
+};  // fitsHeader
+
+
+fitsHeader::headerIterator fitsHeader::begin() 
+{
+   return cards.begin();
+}
+
+fitsHeader::headerIterator fitsHeader::end() 
+{
+   return cards.end();
+}
+
+bool fitsHeader::empty()
+{
+   return cards.empty();
+}
+   
+size_t fitsHeader::size()
+{
+   return cards.size();
+}
+   
+void fitsHeader::clear()
+{
+   cards.clear();
+   cardMap.clear();
+}
+
+   
+void fitsHeader::append(fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   cards.push_back(card);
+   
+   //Then add to the Map.
+   headerIterator insertedIt = cards.end();
+   insertedIt--;
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   
+}
+
+template<typename typeT> void fitsHeader::append(const std::string &k, typeT v, const std::string &c)
+{
+   append(fitsHeaderCard(k,v,c));
+}
+
+// template<typename typeT> void fitsHeader::append(const char *k, typeT v, const char *c)
+// {
+//    append(fitsHeaderCard(k,v,c));
+// }
+
+template<typename typeT> void fitsHeader::append(const std::string &k, typeT v)
+{
+   append(fitsHeaderCard(k,v));
+}
+
+// template<typename typeT> void fitsHeader::append(const char *k, typeT v)
+// {
+//    append(fitsHeaderCard(k,v));
+// }
+
+void fitsHeader::insert_before(headerIterator it, fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   headerIterator insertedIt = cards.insert(it, card);
+   
+   //Then add to the Map.
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   
+   
+}
+
+template<typename typeT> void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c)
+{
+   insert_before(it, fitsHeaderCard(k,v,c));
+}
+
+// template<typename typeT> void fitsHeader::insert_before(headerIterator it, const char *k, typeT v, const char *c)
+// {
+//    insert_before(it, fitsHeaderCard(k,v,c));
+// }
+
+template<typename typeT> void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v)
+{
+   insert_before(it, fitsHeaderCard(k,v));
+}
+
+// template<typename typeT> void fitsHeader::insert_before(headerIterator it, const char *k, typeT v)
+// {
+//    insert_before(it, fitsHeaderCard(k,v));
+// }
+
+void fitsHeader::insert_after(headerIterator it, fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   headerIterator insertedIt = cards.insert(++it, card);
+   
+   //Then add to the Map.
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   
+   
+}
+
+template<typename typeT> void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c)
+{
+   insert_after(it, fitsHeaderCard(k,v,c));
+}
+
+// template<typename typeT> void fitsHeader::insert_after(headerIterator it, const char *k, typeT v, const char *c)
+// {
+//    insert_after(it, fitsHeaderCard(k,v,c));
+// }
+
+template<typename typeT> void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v)
+{
+   insert_after(it, fitsHeaderCard(k,v));
+}
+
+// template<typename typeT> void fitsHeader::insert_after(headerIterator it, const char *k, typeT v)
+// {
+//    insert_after(it, fitsHeaderCard(k,v));
+// }
+
+fitsHeaderCard & fitsHeader::operator[](const std::string & keyword)
+{
+   headerIterator it = cardMap.find(keyword)->second;
+   
+   return *it;
+}
+
+// fitsHeaderCard & fitsHeader::operator[](const char * keyword)
+// {
+//    headerIterator it = cardMap.find(std::string(keyword))->second;
+//    
+//    return *it;
+// }
+
+///@}
+
+} //namespace mx
+
+
+
+#endif //__fitsHeader__

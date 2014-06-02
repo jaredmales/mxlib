@@ -156,8 +156,6 @@ public:
    ///\endcond
    
    //@}
-
-
    
    /** @name Re-sizing
      */
@@ -226,6 +224,10 @@ public:
    template<class mmatrixT>
    void move( const mmatrixT & m );
 
+   ///In a view, move re-points but does not take ownership.
+   template<class mmatrixT>
+   void move_block( const mmatrixT & m );
+   
    //@}
    
    template<class mmatrixT>
@@ -286,7 +288,6 @@ public:
    MMatrixView<dataT, 1, absT, accessor_stride<1> > get_view( const size_t start, 
                                                               const size_t stride, 
                                                               const size_t end );
-
     
    template<class T = accessorT>
    MMatrixView<dataT, 1, absT, accessor_vector<1> > get_view( const typename std::enable_if< T::is_vector, size_t>::type start,  
@@ -384,11 +385,6 @@ public:
    MMatrixView<dataT, 1, absT, accessor_stride<1> > operator()( 
                                                   const typename std::enable_if<!T::is_vector, MMatrixBound_BEG>::type start, 
                                                   const size_t end );
-   
-    
-    
-    
-    
     
    //@}
    
@@ -424,7 +420,7 @@ MMatrixView<dataT, 1, absT, accessorT>::MMatrixView( const mmatrixT & m,
 {
    static_assert(accessorT::is_vector==false, "This MMatrixView is not stride-able.  Must use no-stride methods.");
    
-   move(m);
+   move_block(m);
    
    size_t start0 = m.offset(0) + start*m.stride(0);
    size_t stride0 = stride*m.stride(0);
@@ -442,7 +438,7 @@ MMatrixView<dataT, 1, absT, accessorT>::MMatrixView( const mmatrixT & m,
 {
    static_assert(accessorT::is_vector==false, "This MMatrixView is not stride-able.  Must use no-stride methods.");
    
-   move(m);
+   move_block(m);
    
    size_t start0 = m.offset(0) + start[0]*m.stride(0);
    size_t stride0 = stride[0]*m.stride(0);
@@ -459,7 +455,7 @@ MMatrixView<dataT, 1, absT, accessorT>::MMatrixView( const mmatrixT & m,
 {
    static_assert(accessorT::is_vector, "This MMatrixView is not a vector.  Must specify stride.");
       
-   move(m);
+   move_block(m);
    
    size_t start0 = m.offset(0) + start*m.stride(0);
    size_t end0 = m.offset(0) + end*m.stride(0);
@@ -475,7 +471,7 @@ MMatrixView<dataT, 1, absT, accessorT>::MMatrixView( const mmatrixT & m,
 {
    static_assert(accessorT::is_vector, "This MMatrixView is not a vector.  Must specify stride.");
       
-   move(m);
+   move_block(m);
    
    size_t start0 = m.offset(0) + start[0]*m.stride(0);
    size_t end0 = m.offset(0) + end[0]*m.stride(0);
@@ -516,8 +512,6 @@ typename std::enable_if< !T::is_vector, void>::type MMatrixView<dataT, 1, absT, 
       this->_meta->_size_prod[0] = 1;
    }
 
-   
-   
    this->_meta->_offset[0] = starts[0];
    
    //Calculate the first element of this view.
@@ -558,7 +552,7 @@ void MMatrixView<dataT, 1, absT, accessorT>::restride( const size_t * starts,
    this->_meta->_offset[0] = starts[0];
    
    //Calculate the first element of this view.
-   this->_meta->_data = &this->_raw_data[this->_meta->_offset[0]];
+   this->_meta->_data = &this->_block->_raw_data[this->_meta->_offset[0]];
    
    this->_meta->_length[0] = ends[0] - this->_meta->_offset[0];
    
@@ -593,6 +587,16 @@ void MMatrixView<dataT, 1, absT, accessorT>::move( const mmatrixT & m )
    this->_meta = m.meta();
    this->_owner_meta = false;
   
+}
+
+template<class dataT, class absT, class accessorT>
+template<class mmatrixT>
+void MMatrixView<dataT, 1, absT, accessorT>::move_block( const mmatrixT & m )
+{
+   MX_MM_DEBUG_TRACE("MMatrixView1::move");
+   
+   this->_block = m.block();
+   this->_owner_block = false;  
 }
 
 template<class dataT, class absT, class accessorT>

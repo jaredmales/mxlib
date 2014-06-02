@@ -1054,6 +1054,27 @@ public:
    
    //@}
    
+   /** \name  Element-wise Trigonometry
+     *  
+     * Trigonometric functions of each element in the matrix.  
+     * 
+     */
+   //@{
+  
+   ///Calculate the inverse cosine the matrix (element-wise), in-place.
+   /** 
+     * \returns a reference to this
+     */
+   MMatrixBase & acos_inplace();
+   
+   /// Calculate the square root of the matrix and return a new matrix
+   /** 
+     * \returns a new matrix
+     */
+   MMatrixBase acos() const;
+   
+   //@}
+   
    /** \name  Misc. Methods
      *  
      * Misc methods for calculating various quantities of the matrix. 
@@ -1469,8 +1490,6 @@ inline size_t MMatrixBase<dataT, _dim, absT, accessorT>::length(const size_t d) 
    
    return 0;
 }
-
-
 
 template<class dataT, size_t _dim, class absT, class accessorT>
 inline dataT * MMatrixBase<dataT, _dim, absT, accessorT>::data() const
@@ -2076,6 +2095,30 @@ MMatrixBase<dataT, _dim, absT, accessorT> MMatrixBase<dataT, _dim, absT, accesso
    
    return newmat;
 }
+
+
+
+
+//-----------------------------------------------//
+// --------      acos root     ---------------//
+
+template<class dataT, size_t _dim, class absT, class accessorT> 
+MMatrixBase<dataT, _dim, absT, accessorT> & MMatrixBase<dataT, _dim, absT, accessorT>::acos_inplace()
+{
+   loop1_inplace(*this, mx::acos<dataT>(), 0);
+}
+
+template<class dataT, size_t _dim, class absT, class accessorT> 
+MMatrixBase<dataT, _dim, absT, accessorT> MMatrixBase<dataT, _dim, absT, accessorT>::acos() const
+{
+   MMatrixBase newmat(_meta->_length);
+
+   loop1(*this, newmat, mx::acos<dataT>(), 0);
+   
+   return newmat;
+}
+
+
 
 //-----------------------------------------------//
 // --------          Max     ---------------//

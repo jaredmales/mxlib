@@ -177,12 +177,117 @@ void calc_AZ_EL(double *az, double *el, double ha, double dec, double lat)
    return;
 }
 
+void azel_to_hadec(double &ha, double &dec, double az, double el, double lat)
+{
+   dec = asin( sin(el)*sin(lat)+cos(el)*cos(az)*cos(lat) );
+   
+   ha = atan2(-sin(az)*cos(el)/cos(dec),  (sin(el)-sin(dec)*sin(lat))/(cos(dec)*cos(lat)));
+   
+   //atan2(-cos(el)*sin(az)/cos(dec), sin(el)*cos(lat)+cos(el)*cos(az)*sin(lat) );
+}
+
+// DEC = asind(sind(El).*sind(lat)+cosd(El).*cosd(lat).*cosd(Az));
+// LHA = atan2(-sind(Az).*cosd(El)./cosd(DEC), ...
+//     (sind(El)-sind(DEC).*sind(lat))./(cosd(DEC).*cosd(lat))).*(180/pi);
+
+
+
+void azel_to_hadec(mx::Vectord &ha, mx::Vectord &dec, const mx::Vectord &az, const mx::Vectord &el, double lat)
+{
+   double tha, tdec;
+   
+   for(size_t i=0; i< az.length(0); i++)
+   {
+      azel_to_hadec(tha, tdec, az(i), el(i), lat);
+      ha(i) = tha;
+      dec(i) = tdec;
+   }
+}
+
+
+
 double get_ParAng_deg(double lat, double dec, double ha)
 {
    return RTOD(atan2(cos(DTOR(lat))*sin(DTOR(ha)), sin(DTOR(lat))*cos(DTOR(dec)) - cos(DTOR(lat))*sin(DTOR(dec))*cos(DTOR(ha))));
+   
+   
+   //RTOD( atan(-sin(d2r*had), cos(d2r*dec)*tan(d2r*latitude)-sin(d2r*dec)*cos(d2r*had))
 }
 
 double get_ParAng_rad(double lat, double dec, double ha)
 {
    return atan2(cos(lat)*sin(ha), sin(lat)*cos(dec) - cos(lat)*sin(dec)*cos(ha));
 }
+
+
+int latlon_to_ECI(double &x, double &y, double &z, double lat, double lon, double alt, double lst)
+{
+
+   z = (RAD_EARTH + alt) * sin(lat);
+   double R = (RAD_EARTH + alt) * cos(lat);
+
+   x = R*cos(lst);
+   y = R*sin(lst);
+   
+   return 0;
+}
+
+
+
+int latlon_to_ECI(mx::Vectord &x, mx::Vectord &y, double &z, double lat, double lon, double alt, const mx::Vectord &lst)
+{
+   
+   z = (RAD_EARTH + alt) * sin(lat);
+   double R = (RAD_EARTH + alt) * cos(lat);
+
+   for(size_t i=0; i< lst.length(0); i++)
+   {
+      x(i) = R*cos(lst(i));
+      y(i) = R*sin(lst(i));
+   }
+   
+   return 0;
+}
+
+
+int ECI_to_TCH( mx::Vectord & az,
+                mx::Vectord & el,
+                mx::Vectord & r,
+                const double lat,
+                const mx::Vectord & lst,
+                const mx::Vectord & obs_x,
+                const mx::Vectord & obs_y,
+                const double obs_z,
+                const mx::Vectord & tgt_x,
+                const mx::Vectord & tgt_y,
+                const mx::Vectord & tgt_z )
+{
+   double cos_lat = cos(lat);
+   double sin_lat = sin(lat);
+   
+   double dx, dy, dz, rs, re, rZ;
+   
+   for( size_t i=0; i< lst.length(0); i++)
+   {
+      dx = tgt_x(i) - obs_x(i);
+      dy = tgt_y(i) - obs_y(i);
+      dz = tgt_z(i) - obs_z;
+      
+      rs = sin_lat*cos(lst(i))*dx + sin_lat*sin(lst(i))*dy - cos_lat*dz;
+      re = -sin(lst(i))*dx + cos(lst(i))*dy;
+      rZ = cos_lat*cos(lst(i))*dx + cos_lat*sin(lst(i))*dy + sin_lat*dz;
+      
+      r(i) = sqrt(rs*rs + re*re + rZ*rZ);
+      az(i) = atan2(-re, rs);
+      el(i) = asin(rZ/r(i));
+   }
+   
+   return 0;
+}
+   
+   
+
+
+
+
+

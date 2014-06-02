@@ -1,0 +1,47 @@
+/** \file timeUtils
+  * \brief utilities for working with time
+  * 
+  * \author Jared R. Males (jaredmales@gmail.com)
+  * 
+  * \ingroup timeutils
+  *
+  */
+  
+#ifndef __timeUtils__
+#define __timeUtils__
+
+
+#include "time.h"
+#include "sys/time.h"
+
+namespace mx
+{
+   
+/** \addtogroup timeutils
+  * @{
+  */
+  
+/** Get the current system time.
+  * Uses timespec, so nanosecond resolution is possible.
+  * 
+  * \tparam typeT is the type to return the time in [default=double].  
+  *               must have cast from integer types, and + and / operators defined.
+  * \tparam clk_id is the sys/time.h clock identifier [default=CLOCK_REALTIME]
+  * 
+  * \returns the current time
+  */
+template<typename typeT=double, clockid_t clk_id=CLOCK_REALTIME>
+typeT get_curr_time()
+{
+   struct timespec tsp;
+   clock_gettime(clk_id, &tsp);
+   
+   return ((typeT)tsp.tv_sec) + ((typeT)tsp.tv_nsec)/1e9;
+}
+
+
+/// @}
+
+} //namespace mx
+
+#endif //__timeUtils_h__

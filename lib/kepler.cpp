@@ -1,9 +1,20 @@
 #include "kepler.h"
 
-floatT get_period(floatT m1, floatT m2, floatT a)
+floatT get_period_solar(floatT m1, floatT m2, floatT a)
 {
    return 2*PI*SQRT_F(POW_F(a,3)/(GM_SOL_AUD*(m1+m2)));
 }
+
+floatT get_period_earth(floatT m1, floatT m2, floatT a)
+{
+   return 2*PI*SQRT_F(POW_F(a,3)/(NEWTG*(m1+m2)*MASS_EARTH));
+}
+
+floatT get_semimaj(floatT m1, floatT m2, floatT P)
+{
+   return  pow((P*P/(4.*PI*PI)) * NEWTG*(m1+m2), 1./3.);
+}
+
 
 long hyperbolic_kepler(floatT *E, floatT *D, floatT ecc, floatT mean_anom, floatT tol, long itmax)
 {
@@ -254,12 +265,46 @@ int get_rv(floatT *rv, floatT * r, floatT *f, floatT *E, floatT *D, floatT t, fl
    return its;
 }
 
+int cartesian_orbit( mx::Vectord &nx, mx::Vectord &ny, mx::Vectord &nz, const mx::Vectord & t, double a, double P, double e, double t0, double i, double w, double W)
+{
+   long rv;
+   double M;
+   floatT r, _f, E, D;
+   
+   //Just do these calcs once
+   double cos_i = cos(i);
+   double sin_i = sin(i);
+   double cos_W = cos(W);
+   double sin_W = sin(W);
+   
+   double cos_wf, sin_wf;
+   
+   for(int j=0; j<t.length(0); j++)
+   {
+      M = MEANANOL(t(j), t0, P);
+      
+      rv = rf_elements(&r, &_f, &E, &D, e, M, a);
+      
+      if(rv < 0) return -1;
+      
+      //one calc
+      cos_wf = cos(w+_f);
+      sin_wf = sin(w+_f);
+      
+      nx(j) = r*(cos_W*cos_wf-sin_W*sin_wf*cos_i);
+      ny(j) = r*(sin_W*cos_wf+cos_W*sin_wf*cos_i);
+      nz(j) = r*sin_wf*sin_i;
+      
+   }
+   return 0;
+}
+
 int project_orbit( mx::Vectord &nx, mx::Vectord &ny, mx::Vectord &f, const mx::Vectord & t, double a, double P, double e, double tau, double i, double w, double W)
 {
    long rv;
    double M;
    floatT r, _f, E, D;
-   for(int j=0; j<t.length(); j++)
+   for(int j=0; j<t.length(0); j++)
    {
       M = MEANANOL(t(j), tau, P);
       
@@ -283,9 +328,9 @@ int get_orbit_phase(double &cos_alf, double f, double w, double inc)
 
 int get_orbit_phase(mx::Vectord &cos_alf, const mx::Vectord &f, double w, double inc)
 {
-   cos_alf.resize(f.length());
+   cos_alf.allocate(f.length(0));
    
-   for(size_t i=0; i<f.length(); i++)
+   for(size_t i=0; i<f.length(0); i++)
    {
       cos_alf(i) = sin(f(i)+w)*sin(inc);
    }
@@ -302,11 +347,11 @@ int get_lambert_phasef(double &phi, double cos_alf)
 
 int get_lambert_phasef(mx::Vectord &phi, const mx::Vectord &cos_alf)
 {
-   mx::Vectord alf = acos(cos_alf);
+   mx::Vectord alf = cos_alf.acos(); //acos(cos_alf);
    
-   phi.resize(cos_alf.length());
+   phi.allocate(cos_alf.length());
    
-   for(size_t i=0;i<cos_alf.length(); i++)
+   for(size_t i=0;i<cos_alf.length(0); i++)
    {
       phi(i) = (sin(alf(i)) - (alf(i)-PI)*cos_alf(i))/PI;
    }
@@ -368,8 +413,8 @@ int get_iW_1pt(mx::Vectord &i, mx::Vectord &W, double x, double y, double rho, d
    //std::cout << "sini = " << sini << "\n";
    
    //i[0] = asin(sini);//acos(cosi);
-   i[0] = acos(cosi);
-   i[1] = PI - i[0]; //save the second acos
+   i(0) = acos(cosi);
+   i(1) = PI - i(0); //save the second acos
    //i[1] = asin(-1.*sini);//acos(-1.*cosi);
    //cosi = cos(i[0]);
    
@@ -379,12 +424,12 @@ int get_iW_1pt(mx::Vectord &i, mx::Vectord &W, double x, double y, double rho, d
    sinW = (y*coswf - x*sinwf*cosi)/bot;
    
    
-   W[0] = atan2(sinW, cosW);
+   W(0) = atan2(sinW, cosW);
    
    cosW = (-y*sinwf*cosi + x*coswf)/bot;
    sinW = (y*coswf + x*sinwf*cosi)/bot;
    
-   W[1] = atan2(sinW, cosW);
+   W(1) = atan2(sinW, cosW);
    
    return 0;
    

@@ -1,0 +1,39 @@
+
+#ifndef __mx_fft__
+#define __mx_fft__
+
+#include "vmop_fft"
+#include "../vmop/MMatrix"
+
+namespace mx
+{
+
+
+
+Matrixcd fft( Matrixd & m_in, int dir=-1)
+{
+   /** \todo check stride */
+   Matrixcd m_out(0.5*m_in.size(1)+1, m_in.size(0));
+   
+   fft(m_in, m_out, dir);
+   
+   return m_out;
+}
+
+
+
+Matrixcd fft( Matrixcd & m_in, int dir=-1)
+{
+   /** \todo check stride */
+   Matrixcd m_out(m_in.size(0), m_in.size(1));
+   
+   fft(m_in, m_out, dir);
+   
+   return m_out;
+}
+
+
+}//namespace mx
+
+#endif // __mx_vmopfft__
+

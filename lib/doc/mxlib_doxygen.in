@@ -26,7 +26,7 @@ DOXYFILE_ENCODING      = UTF-8
 # identify the project. Note that if you do not use Doxywizard you need
 # to put quotes around the project name if it contains spaces.
 
-PROJECT_NAME           = "cDA: c Data Analysis"
+PROJECT_NAME           = "mxlib"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
 # This could be handy for archiving the generated documentation or
@@ -88,7 +88,7 @@ BRIEF_MEMBER_DESC      = YES
 # Note: if both HIDE_UNDOC_MEMBERS and BRIEF_MEMBER_DESC are set to NO, the
 # brief descriptions will be completely suppressed.
 
-REPEAT_BRIEF           = YES
+REPEAT_BRIEF           = NO
 
 # This tag implements a quasi-intelligent brief description abbreviator
 # that is used to form the text in various listings. Each string
@@ -193,7 +193,7 @@ TAB_SIZE               = 3
 # will result in a user-defined paragraph with heading "Side Effects:".
 # You can put \n's in the value part of an alias to insert newlines.
 
-ALIASES                =
+ALIASES                = "isfundamental=http://www.cplusplus.com/reference/type_traits/is_fundamental/" 
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding
@@ -576,7 +576,7 @@ FILE_VERSION_FILTER    =
 # You can optionally specify a file name after the option, if omitted
 # DoxygenLayout.xml will be used as the name of the layout file.
 
-LAYOUT_FILE            =  cdaDoxygenLayout.xml
+LAYOUT_FILE            = mxlibDoxygenLayout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files
 # containing the references data. This must be a list of .bib files. The
@@ -648,9 +648,19 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ./groupdefs.txt \
+INPUT                  = ./groupdefs.dox \
+                         ./sofa.dox \
                          ../ \
                          ../include \
+                         ../include/mxException \
+                         ../include/stringUtils \
+                         ../include/timeUtils \
+                         ../include/pout \
+                         ../include/msgQ \
+                         ../include/sharedMemSegment \
+                         ../include/fitsHeaderCard \
+                         ../include/fitsHeader \
+                         ../include/fitsFile \
                          ../vmop/doc/main_page.txt \
                          ../vmop/MMatrixBase \
                          ../vmop/MMfunctional \
@@ -658,7 +668,6 @@ INPUT                  = ./groupdefs.txt \
                          ../vmop/MMatrix1 \
                          ../vmop/MMatrixView1 \
                          ../vmop/MMatrix2
-
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -676,7 +685,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.for *.vhd *.vhdl
 
-FILE_PATTERNS          = *
+FILE_PATTERNS          =
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -905,7 +914,7 @@ HTML_FOOTER            =
 # the style sheet file to the HTML output directory, so don't put your own
 # style sheet in the HTML output directory as well, or it will be erased!
 
-HTML_STYLESHEET        = 
+HTML_STYLESHEET        =
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note

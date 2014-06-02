@@ -111,6 +111,33 @@ struct sqrt
    typedef T result_type;
 };
 
+
+
+
+
+
+///Function object which finds the inverse cosine of its argument.
+/**
+  * \param x is the value to find the inverse cosine of.
+  * \param y [optional] ignored, included for compatibility.
+  * 
+  * \returns \f$ \acos{x} \f$
+  * 
+  * \tparam T is the argument and return type
+  */ 
+template <class T> 
+struct acos
+{
+   T operator() (const T& x) const {return std::acos(x);}
+   T operator() (const T& x, const T& y) const {return std::acos(x);}
+   typedef T first_argument_type;
+   typedef T second_argument_type;
+   typedef T result_type;
+};
+
+
+
+
 ///Function object which finds the natural exponential of its argument, e^x.
 /**
   * \param x is the value to find the exponential of.

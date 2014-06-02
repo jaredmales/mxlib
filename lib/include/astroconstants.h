@@ -6,9 +6,9 @@
 //Physical Constants
 
 
-/** \ingroup genphyconstants General Constants
+/** \addtogroup genphyconstants General Constants
+  * @{
   */
-//@{
 
 ///The most important constant      
 #define PI 3.14159265358979323846264338327950288
@@ -24,13 +24,13 @@
 #define NEWTG 6.67259e-11
 
 
-//@}
+/// @}
 
 
 
-/** \ingroup astroconstants 
+/** \addtogroup astroconstants 
   */
-//@{
+/// @{
 
    
 ///Astronomical Unit, units = m
@@ -101,7 +101,7 @@
   */
 #define RAD_EARTH 6378137.0
 
-//@}
+/// @}
 
 #endif //__ASTROCONSTANTS_H__
 
