@@ -18,6 +18,11 @@
   * \brief Tools for processing images
   */
   
+/** \defgroup eigen_image_processing Image Processing with Eigen 
+  * \brief Using the Eigen matrix library for image processing
+  * \ingroup image_processing
+  */
+  
 /** \defgroup plotting Plotting Data
   * \brief Tools for plotting and displaying data
   */
@@ -73,10 +78,17 @@
   * \brief Various tools for working with time
   */
   
-/** \defgroup ioutils Input/Output utilities
+/** \defgroup ioutils Input/Output Utilities
   * \ingroup utils
-  * \brief Input/Output utilities
+  * \brief Various input/output utilities
   */
+  
+/** \defgroup fileutils File System Utilities
+  * \ingroup utils
+  * \brief Various file system utilities
+  */
+  
+  
   
 /** \defgroup system System Programming
   * \ingroup utils

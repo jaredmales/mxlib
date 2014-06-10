@@ -23,6 +23,8 @@ typedef struct
    FILE * gperr;
    FILE * gpout;
    
+   int plotno;
+   
 } gnuplot_interface;
 
 int gnuplot_interface_init(gnuplot_interface * gpi);
@@ -33,7 +35,18 @@ int gnuplot_interface_geterror(gnuplot_interface *gpi, char *str, size_t len);
 
 int gnuplot_interface_command(gnuplot_interface *gpi, const char * cmd);
 
+int gnuplot_interface_plot(gnuplot_interface *gpi, double *x, double *y, int n);
+int gnuplot_interface_replot(gnuplot_interface *gpi, double *x, double *y, int n);
+
 int gnuplot_interface_shutdown(gnuplot_interface *gpi);
+
+
+int gnuplot_command(const char *cmd);
+int gnuplot_plot(double *x, double *y, int n);
+int gnuplot_replot(double *x, double *y, int n);
+
+int gnuplot_display_shutdown();
+
 
 #ifdef __cplusplus
 } //extern "C"

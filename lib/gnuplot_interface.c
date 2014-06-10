@@ -25,6 +25,8 @@ int gnuplot_interface_init(gnuplot_interface * gpi)
       }
    }
 
+   gpi->plotno = 0;
+   
    return 0;
 }
 
@@ -33,7 +35,6 @@ int gnuplot_interface_connect(gnuplot_interface *gpi)
    char cmd[512];
    snprintf(cmd, 512, "gnuplot");
    
-   printf("%s\n", cmd);
    
    if ((gpi->gnuplot = popen(cmd,"w")) == NULL) 
    {
@@ -81,6 +82,56 @@ int gnuplot_interface_command(gnuplot_interface *gpi, const char * cmd)
    return 0;
 }
 
+int gnuplot_interface_plot(gnuplot_interface *gpi, double *x, double *y, int n)
+{
+   FILE * f;
+   char fname[256];
+   char cmd[256]; 
+   
+   snprintf(fname, 256, "/tmp/gnuplot_interface_out%i.dat", gpi->plotno);
+   gpi->plotno ++;
+   
+   snprintf(cmd, 256, "plot \"%s\" using 1:2 notitle\n", fname);
+            
+   f = fopen(fname, "w");
+  
+   for(int i=0;i<n;i++)
+   {
+      fprintf(f, "%f %f\n", x[i], y[i]);
+   }
+   
+   fclose(f);
+   
+   
+   return gnuplot_interface_command(gpi, cmd);
+}
+ 
+int gnuplot_interface_replot(gnuplot_interface *gpi, double *x, double *y, int n)
+{
+   FILE * f;
+    char fname[256];
+   char cmd[256]; 
+   
+   snprintf(fname, 256, "/tmp/gnuplot_interface_out%i.dat", gpi->plotno);
+   gpi->plotno++;
+   
+   snprintf(cmd, 256, "replot \"%s\" using 1:2 notitle\n", fname);
+   
+   f = fopen(fname, "w");
+  
+   for(int i=0;i<n;i++)
+   {
+      fprintf(f, "%f %f\n", x[i], y[i]);
+   }
+   
+   fclose(f);
+   
+   
+   return gnuplot_interface_command(gpi, cmd);
+} 
+   
+
+
 int gnuplot_interface_shutdown(gnuplot_interface *gpi)
 {
    pclose(gpi->gnuplot);
@@ -92,3 +143,49 @@ int gnuplot_interface_shutdown(gnuplot_interface *gpi)
    return 0;
 }
 
+
+gnuplot_interface * static_gnuplot(int shutdown)
+{
+   static int inited = 0;
+   static gnuplot_interface gnuplot;
+   
+   if(shutdown)
+   {
+      if(!inited) return 0;
+      
+      gnuplot_interface_shutdown(&gnuplot);
+      
+      inited = 0;
+      return 0;
+   }
+   
+   if(inited) return &gnuplot;
+   
+   gnuplot_interface_init(&gnuplot);
+   gnuplot_interface_connect(&gnuplot);
+   inited = 1;
+   
+   return &gnuplot;
+}
+ 
+int gnuplot_command(const char *cmd)
+{
+   return gnuplot_interface_command(static_gnuplot(0), cmd);
+}
+
+int gnuplot_plot(double *x, double *y, int n)
+{
+   return gnuplot_interface_plot(static_gnuplot(0), x, y, n);
+}
+
+int gnuplot_replot(double *x, double *y, int n)
+{
+   return gnuplot_interface_replot(static_gnuplot(0), x, y, n);
+}
+
+int gnuplot_display_shutdown()
+{
+   static_gnuplot(1);
+   
+   return 0;
+}

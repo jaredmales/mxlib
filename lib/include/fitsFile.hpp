@@ -1,17 +1,17 @@
-/** \file fitsFile
+/** \file fitsFile.hpp
   * \brief Declares and defines a class to work with a FITS file
   * \ingroup image_processing
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
   
-#ifndef __fitsFile__
-#define __fitsFile__
+#ifndef __fitsFile_hpp__
+#define __fitsFile_hpp__
 
 
-#include "fitsUtils"
+#include "fitsUtils.hpp"
 
-#include "fitsHeader"
+#include "fitsHeader.hpp"
 #include "mxException"
 
 namespace mx
@@ -21,14 +21,14 @@ namespace mx
   * @{
   */
 
+
 /// Class to manage interactions with a FITS file
 /** This class conveniently wraps the functionality of cfitsio.
-  *
-  * \tparam dataT the datatype to use for in-memory storage of the image.  This does not necessarily have to match the data type stored on disk.
+  * 
+  * \tparam dataT the datatype to use for in-memory storage of the image.  This does not have to match the data type stored on disk.
   * 
   */
-template<typename dataT>
-class fitsFile
+template<typename dataT> class fitsFile
 {
 
 protected:
@@ -69,13 +69,13 @@ public:
    fitsFile();
    
    ///Constructor with fileName, and option to open.
-   fitsFile(const std::string & fname, bool doopen = 0);
+   fitsFile(const std::string & fname, bool doopen = 1);
    
    ///Destructor
    ~fitsFile();
    
    ///Set the file path, and optionally open the file.
-   void setFilename(const std::string & fname, bool doopen = 0);
+   void setFilename(const std::string & fname, bool doopen = 1);
    
    ///Open the file
    void open();
@@ -86,8 +86,15 @@ public:
    ///Close the file.
    void close();
 
+   ///Get the number of dimensions (i.e. naxis)
    int getDimensions();
+   
+   ///Get the size of a specific dimension
    long getSize(size_t axis);
+   
+   /** \name Reading Basic Arrays
+     * @{
+     */
    
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
@@ -98,17 +105,6 @@ public:
      * 
      */ 
    void read(dataT * data);
-   
-   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
-   /** 
-     *
-     * 
-     * 
-     * \throws mxException on error
-     * 
-     */ 
-   template<typename arrT>
-   void readEigen(arrT & data);
    
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
@@ -144,9 +140,49 @@ public:
      */ 
    void read(const std::string &fname, dataT * data, fitsHeader &head);
 
+   
+   ///@}
+   
+   /** \name Reading Eigen Arrays
+     * @{
+     */
+   
+   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
+   /** The type arrT can be any type with the following members defined:
+     * - resize(int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef arrT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param data is the array, which will be resized as necessary using its resize(int, int) member
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   template<typename arrT>
+   void read(arrT & data);
+   
+   template<typename arrT>
+   void read(arrT & data, fitsHeader &head);
+   
+   template<typename arrT>
+   void read(const std::string &fname, arrT & data);
+   
+   template<typename arrT>
+   void read(const std::string &fname, arrT & data, fitsHeader &head);
+   
+   ///@}
+   
+   
+   void read(const std::vector<std::string> & flist, dataT * im);
+   
+   void read(const std::vector<std::string> & flist, dataT * im, std::vector<fitsHeader> &heads);
+   
+   
    ///Read the header from the fits file.
-   /** For now, nothing is done with head.  The new header is just appended.
-     * \todo If head is not empty, then read only the keywords specified in head
+   /** If head is not empty, then only the keywords already in head are updated.  Otherwise
+     * the complete header is read.
      * 
      * \param head is a fitsHeader object
      * 
@@ -155,7 +191,9 @@ public:
    void readHeader(fitsHeader &head);
    
    ///Read the header from the fits file.
-   /**
+   /** If head is not empty, then only the keywords already in head are updated.  Otherwise
+     * the complete header is read.
+     * 
      * \param fname is the file path, which is passed to \ref setFilename
      * \param head is a fitsHeader object
      * 
@@ -163,13 +201,11 @@ public:
      */
    void readHeader(const std::string &fname, fitsHeader &head);
    
-   //Requirements on arrT:
-   // constructable
-   // has wrappers resize(arrT &), getFitsType<arrT> specialization, and has void * getData<arrT>(arrT &) specialization
-   template<typename arrT> arrT read();
-   template<typename arrT> arrT read(std::string fname);
+   
    
 }; // fitsFile
+
+///@}
 
 template<typename dataT>
 void fitsFile<dataT>::construct()
@@ -322,9 +358,24 @@ long fitsFile<dataT>::getSize(size_t axis)
    return naxes[axis];
 }
 
+/************************************************************/
+/***                      Basic Arrays                    ***/
+/************************************************************/
+
 template<typename dataT>
 void fitsFile<dataT>::read(dataT * data)
 {
+   if(!isOpen)
+   {
+      open();
+   
+      if(!isOpen)
+      {
+         std::cerr << "File not open.\n";
+         return;
+      }
+   }
+   
    long long nelements = 1;
    long *fpix = new long[naxis];
 
@@ -352,16 +403,49 @@ void fitsFile<dataT>::read(dataT * data)
    }
 
    delete fpix;
-   
-
-   
 }
 
+template<typename dataT>
+void fitsFile<dataT>::read(dataT * data, fitsHeader &head)
+{
+   read(data);
+   readHeader(head);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(const std::string &fname, dataT * data)
+{
+   setFilename(fname);
+   read(data);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::read(const std::string &fname, dataT * data, fitsHeader &head)
+{
+   setFilename(fname);
+   read(data);
+   readHeader(head);
+}
+
+/************************************************************/
+/***                      Eigen Arrays                    ***/
+/************************************************************/
 
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::readEigen(arrT & im)
+void fitsFile<dataT>::read(arrT & im)
 {
+   if(!isOpen)
+   {
+      open();
+   
+      if(!isOpen)
+      {
+         std::cerr << "File not open.\n";
+         return;
+      }
+   }
+   
    long long nelements = 1;
    long *fpix = new long[naxis];
 
@@ -395,26 +479,78 @@ void fitsFile<dataT>::readEigen(arrT & im)
 }
 
 template<typename dataT>
-void fitsFile<dataT>::read(dataT * data, fitsHeader &head)
+template<typename arrT>
+void fitsFile<dataT>::read(arrT & data, fitsHeader &head)
 {
    read(data);
    readHeader(head);
 }
-
+   
 template<typename dataT>
-void fitsFile<dataT>::read(const std::string &fname, dataT * data)
+template<typename arrT>
+void fitsFile<dataT>::read(const std::string &fname, arrT & data)
 {
    setFilename(fname);
    read(data);
 }
-
+   
 template<typename dataT>
-void fitsFile<dataT>::read(const std::string &fname, dataT * data, fitsHeader &head)
+template<typename arrT>
+void fitsFile<dataT>::read(const std::string &fname, arrT & data, fitsHeader &head)
 {
    setFilename(fname);
    read(data);
    readHeader(head);
 }
+   
+template<typename dataT>
+void fitsFile<dataT>::read(const std::vector<std::string> & flist, dataT * im)
+{
+   if(flist.size() == 0)
+   {
+      std::cerr << "Empty file list\n";
+      return;
+   }
+   
+   long sz0 =0, sz1=0;
+   
+   for(int i=0;i<flist.size(); ++i)
+   {
+      setFilename(flist[i], 1);
+      
+      read(im + i*sz0*sz1);
+      
+      sz0 = getSize(0);
+      sz1 = getSize(1);      
+   }
+}
+   
+template<typename dataT>
+void fitsFile<dataT>::read(const std::vector<std::string> & flist, dataT * im, std::vector<fitsHeader> &heads)
+{
+   if(flist.size() == 0)
+   {
+      std::cerr << "Empty file list\n";
+      return;
+   }
+   
+   long sz0 =0, sz1=0;
+   
+   for(int i=0;i<flist.size(); ++i)
+   {
+      setFilename(flist[i], 1);
+      
+      read(im + i*sz0*sz1);
+    
+      readHeader(heads[i]);
+      pout(heads[i]["ROTOFF"].value);
+      
+      sz0 = getSize(0);
+      sz1 = getSize(1);
+      
+   }
+}
+
 
 template<typename dataT>
 void fitsFile<dataT>::readHeader(fitsHeader & head)
@@ -422,6 +558,24 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
    char keyword[FLEN_KEYWORD];
    char value[FLEN_VALUE];
    char * comment;
+
+   //The keys to look for if head is already populated
+   std::list<fitsHeader::headerIterator> head_keys;
+   std::list<fitsHeader::headerIterator>::iterator head_keys_it;
+   int num_head_keys;
+   
+   bool head_keys_only = false;
+   if(head.size() > 0) 
+   {
+      head_keys_only = true;
+      fitsHeader::headerIterator headIt = head.begin();
+      while(headIt != head.end())
+      {
+         head_keys.push_back(headIt);
+         ++headIt;
+      }
+      num_head_keys = head.size();
+   }
    
    //If noComment is set, then we don't read in the comment
    if(noComment)
@@ -441,7 +595,9 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
       open();
    }
    
+   //This gets the number of header keys to read
    fits_get_hdrspace(fptr, &keysexist, &morekeys, &fstatus);
+   
    if (fstatus)
    {
       char emnem[31];
@@ -459,6 +615,7 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
    for(int i=0; i<keysexist; i++)
    {
       fits_read_keyn(fptr, i+1, keyword, value, comment, &fstatus);
+      
       if (fstatus)
       {
          char emnem[31];
@@ -473,8 +630,34 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
          throw e;
       }
       
-      head.append(keyword, value, comment);
+      if(!head_keys_only)
+      {
+         head.append(keyword, value, comment);
+      }
+      else
+      {
+         head_keys_it = head_keys.begin();
+         while(head_keys_it != head_keys.end())
+         {
+            if( (*(*head_keys_it)).keyword == keyword)
+            {
+               head[keyword].value = value;
+               if(comment) head[keyword].comment = comment;
+               
+               head_keys.erase(head_keys_it);
+               
+               break;
+            }
+            ++head_keys_it;
+         }
+         
+         //Quit if we're done.
+         if(head_keys.size() == 0) break;
+      }
    }
+   
+   
+   
    
    delete comment;
 }
@@ -485,6 +668,37 @@ void fitsFile<dataT>::readHeader(const std::string &fname, fitsHeader &head)
    setFilename(fname);
    readHeader(head);
 }
+
+/** \addtogroup image_processing
+  * @{
+  */
+
+/// A \ref fitsFile to work in signed characters
+typedef fitsFile<char> fitsFilec;
+
+/// A \ref fitsFile to work in unsigned characters
+typedef fitsFile<unsigned char> fitsFileuc;
+
+/// A \ref fitsFile to work in signed short integers
+typedef fitsFile<short> fitsFiles;
+
+/// A \ref fitsFile to work in unsigned short integers
+typedef fitsFile<unsigned short> fitsFileus;
+
+/// A \ref fitsFile to work in signed integers
+typedef fitsFile<int> fitsFilei;
+
+/// A \ref fitsFile to work in unsigned integers
+typedef fitsFile<unsigned int> fitsFileui;
+
+/// A \ref fitsFile to work in signed long integers
+typedef fitsFile<long> fitsFilel;
+
+/// A \ref fitsFile to work in single precision floats
+typedef fitsFile<float> fitsFilef;
+
+/// A \ref fitsFile to work in double precision
+typedef fitsFile<double> fitsFiled;
 
 ///@}
 

@@ -1,4 +1,10 @@
-#include "astrodyn.h"
+/** \file astrodyn.cpp
+ * \author Jared R. Males
+ * \brief Definitions of some astrodynamic utilities
+ *
+ */
+
+#include "astrodyn.hpp"
 
 
 static char UTCSTR[4] = "UTC";
@@ -47,7 +53,7 @@ int get_GMST(double &GMST, int Yr, int Mo, int Dy, int hr, int min, double sec)
    //Convert UTC to UT1
    rv = iauUtcut1(utc0, utc1, -.4, &ut10, &ut11); //The current DUT1 - how to keep updated?
    
-   GMST = iauGmst06(ut10, ut11, tt0, tt1)/(2.*PI)*24.;
+   GMST = iauGmst06(ut10, ut11, tt0, tt1)/(2.*DPI)*24.;
    
    return rv;
 }
@@ -78,7 +84,7 @@ int get_GAST(double &GAST, int Yr, int Mo, int Dy, int hr, int min, double sec)
    //Convert UTC to UT1
    rv = iauUtcut1(utc0, utc1, -.4, &ut10, &ut11); //The current DUT1 - how to keep updated?
    
-   GAST = iauGst06a(utc0, utc1, tt0, tt1)/(2.*PI)*24.;
+   GAST = iauGst06a(utc0, utc1, tt0, tt1)/(2.*DPI)*24.;
    
    return rv;
 }
@@ -163,16 +169,16 @@ void calc_AZ_EL(double *az, double *el, double ha, double dec, double lat)
    double ha_rad, dec_rad, lat_rad, az_rad, el_rad;
    
    //printf("%f\n", get_ha()*15.0);
-   ha_rad = ha*15.0*PI/180.0;
-   dec_rad = dec*PI/180.0;
-   lat_rad = lat*PI/180.0;
+   ha_rad = ha*15.0*DPI/180.0;
+   dec_rad = dec*DPI/180.0;
+   lat_rad = lat*DPI/180.0;
    
    az_rad = atan2(sin(ha_rad), cos(ha_rad)*sin(lat_rad)-tan(dec_rad)*cos(lat_rad));
    
    el_rad = asin(sin(lat_rad)*sin(dec_rad) + cos(lat_rad)*cos(dec_rad)*cos(ha_rad));
    
-   *az = az_rad*180.0/PI + 180.0;
-   *el = el_rad*180.0/PI;
+   *az = az_rad*180.0/DPI + 180.0;
+   *el = el_rad*180.0/DPI;
    
    return;
 }

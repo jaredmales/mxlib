@@ -1,18 +1,24 @@
-#include "kepler.h"
+/** \file kepler.cpp
+ * \author Jared R. Males
+ * \brief Definitions of some utilities for working with the Kepler problem
+ *
+ */
+
+#include "kepler.hpp"
 
 floatT get_period_solar(floatT m1, floatT m2, floatT a)
 {
-   return 2*PI*SQRT_F(POW_F(a,3)/(GM_SOL_AUD*(m1+m2)));
+   return 2*DPI*SQRT_F(POW_F(a,3)/(GM_SOL_AUD*(m1+m2)));
 }
 
 floatT get_period_earth(floatT m1, floatT m2, floatT a)
 {
-   return 2*PI*SQRT_F(POW_F(a,3)/(NEWTG*(m1+m2)*MASS_EARTH));
+   return 2*DPI*SQRT_F(POW_F(a,3)/(GRAV_G*(m1+m2)*MASS_EARTH));
 }
 
 floatT get_semimaj(floatT m1, floatT m2, floatT P)
 {
-   return  pow((P*P/(4.*PI*PI)) * NEWTG*(m1+m2), 1./3.);
+   return  pow((P*P/(4.*DPI*DPI)) * GRAV_G*(m1+m2), 1./3.);
 }
 
 
@@ -235,7 +241,7 @@ int get_rv(floatT *rv, floatT * r, floatT *f, floatT *E, floatT *D, floatT t, fl
       exit(0);
    }
 
-   m2 = 0.0;//msini/MR_JUPITER;
+   m2 = 0.0;//msini/MR_JUDPITER;
    if(e < 1.0) M = SQRT_F(GM_SOL_AUD*(mstar+m2) / POW_F(a,3))*(t-t0);
    else if(a < 0) M = SQRT_F(GM_SOL_AUD*(mstar+m2) / POW_F(-a,3))*(t-t0);
    else
@@ -255,13 +261,13 @@ int get_rv(floatT *rv, floatT * r, floatT *f, floatT *E, floatT *D, floatT t, fl
    }
    else 
    {
-      //*rv = (msini/MR_JUPITER)*SQRT_F((GM_SOL_AUD/(mstar+m2))*(2.0/(*r) - 1.0/a)) * AU_M /DAY_SEC;
-      *rv = (msini/MR_JUPITER)*SQRT_F((GM_SOL_AUD/(mstar+m2))/(a*(1-e*e))) * AU_M /DAY_SEC;
+      //*rv = (msini/MR_JUDPITER)*SQRT_F((GM_SOL_AUD/(mstar+m2))*(2.0/(*r) - 1.0/a)) * AU_M /DAY_SEC;
+      *rv = (msini/MR_JUPITER)*SQRT_F((GM_SOL_AUD/(mstar+m2))/(a*(1-e*e))) * AU_M /DAYSEC;
    }
    //fpa = ATAN_F(e*SIN_F(*f)/(1+e*COS_F(*f)));
    //*rv *= COS_F(*f + w - fpa);
    *rv *= (COS_F(w+*f) + e*COS_F(w));
-   //*rv = (msini/MR_JUPITER)*SQRT_F(GM_SOL_AUD/(mstar*a*(1-e*e)))*(cos(*f+w)+e*cos(w))*AU_M /DAY_SEC;
+   //*rv = (msini/MR_JUDPITER)*SQRT_F(GM_SOL_AUD/(mstar*a*(1-e*e)))*(cos(*f+w)+e*cos(w))*AU_M /DAY_SEC;
    return its;
 }
 
@@ -340,7 +346,7 @@ int get_orbit_phase(mx::Vectord &cos_alf, const mx::Vectord &f, double w, double
 int get_lambert_phasef(double &phi, double cos_alf)
 {
    double alf = acos(cos_alf);
-   phi = (sin(alf) + (PI-alf)*cos_alf)/PI;
+   phi = (sin(alf) + (DPI-alf)*cos_alf)/DPI;
    
    return 0;
 }
@@ -353,7 +359,7 @@ int get_lambert_phasef(mx::Vectord &phi, const mx::Vectord &cos_alf)
    
    for(size_t i=0;i<cos_alf.length(0); i++)
    {
-      phi(i) = (sin(alf(i)) - (alf(i)-PI)*cos_alf(i))/PI;
+      phi(i) = (sin(alf(i)) - (alf(i)-DPI)*cos_alf(i))/DPI;
    }
    
    return 0;
@@ -414,7 +420,7 @@ int get_iW_1pt(mx::Vectord &i, mx::Vectord &W, double x, double y, double rho, d
    
    //i[0] = asin(sini);//acos(cosi);
    i(0) = acos(cosi);
-   i(1) = PI - i(0); //save the second acos
+   i(1) = DPI - i(0); //save the second acos
    //i[1] = asin(-1.*sini);//acos(-1.*cosi);
    //cosi = cos(i[0]);
    
@@ -444,7 +450,7 @@ int get_W_1pt_z0(double &W, double x, double y, double r, double f, double w)
       sinW = y/r;
       cosW = x/r;
    }
-   else if(w == PI - f)
+   else if(w == DPI - f)
    {
       sinW = -y/r;
       cosW = -x/r;
@@ -465,11 +471,11 @@ int main()
    k.To = 2453979.5;
    k.a  = 9.222655036162030E-01;
    k.e  = 1.910572784113192E-01;
-   k.w  = 1.263964368281515E+02 * PI / 180;
-   k.W  = 2.044599682923624E+02 * PI / 180;
-   k.i  = 3.331323146322601E+00 * PI / 180;
-   k.M  = 6.141677776140474E+01 * PI / 180;
-   //k.f  = 8.260735077607306E+01 * PI / 180;
+   k.w  = 1.263964368281515E+02 * DPI / 180;
+   k.W  = 2.044599682923624E+02 * DPI / 180;
+   k.i  = 3.331323146322601E+00 * DPI / 180;
+   k.M  = 6.141677776140474E+01 * DPI / 180;
+   //k.f  = 8.260735077607306E+01 * DPI / 180;
    k.Tp = 2453924.309173170011;
 
    cartesian_elements(x, v, &k);
@@ -514,10 +520,10 @@ int main()
 }
    /*  for(int i=0; i< 1000; i++)
    {
-      //M = -25*PI + 25*PI*((floatT)i/500.0);
+      //M = -25*DPI + 25*DPI*((floatT)i/500.0);
       e = .5;//2.0*(floatT)i/1000;
-      w = -2*PI + 2*PI*((floatT)i/500.0);
-      //rf_elements(&r, &f, e, M, 1, -PI);
+      w = -2*DPI + 2*DPI*((floatT)i/500.0);
+      //rf_elements(&r, &f, e, M, 1, -DPI);
       //solve_kepler(&E, e, M, 1e-8);
       get_rv(&rv, &r, &f, 1000, 1.0, 2.0, 2.0, e, 0.0, w);
       std::cout << i << " " << w << " " << r << " " << f << " " << rv << "\n";

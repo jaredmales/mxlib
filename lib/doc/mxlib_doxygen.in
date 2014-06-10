@@ -650,17 +650,13 @@ WARN_LOGFILE           =
 
 INPUT                  = ./groupdefs.dox \
                          ./sofa.dox \
+                         ./sofa_constants.h \
                          ../ \
                          ../include \
                          ../include/mxException \
-                         ../include/stringUtils \
                          ../include/timeUtils \
-                         ../include/pout \
                          ../include/msgQ \
                          ../include/sharedMemSegment \
-                         ../include/fitsHeaderCard \
-                         ../include/fitsHeader \
-                         ../include/fitsFile \
                          ../vmop/doc/main_page.txt \
                          ../vmop/MMatrixBase \
                          ../vmop/MMfunctional \

@@ -55,7 +55,7 @@ typedef struct
 } ds9_interface;
    
 ///Initialize the ds9_interface structure
-/** The title is set to 0 length, port is set to 0, segs is set to NULL, and nsegs to 0.
+/** The title is set to "ds9", the port is set to 0, segs is set to NULL, and nsegs to 0.
   *
   * \param ds9i is the interface to initialize
   * 
@@ -67,7 +67,7 @@ int ds9_interface_init(ds9_interface * ds9i);
 ///Set the title of an ds9_interface structure
 /** The title is used as the name of the XPA access point
   *
-  * \param ds9i is the interface to initialize
+  * \param ds9i is the interface which will have its title set
   * \param new_title is the title to set.  Maximum length is \ref DS9_TITLE_LENGTH.
   * 
   * \retval 0 on sucess
@@ -77,7 +77,7 @@ int ds9_interface_set_title(ds9_interface * ds9i, const char * new_title);
 
 ///Spawn (open) the ds9 image viewer
 /**
-  * \param ds9i is the interface to initialize
+  * \param ds9i is the interface to spawn 
   * 
   * \retval 0 on sucess
   * \retval -1 on an error
@@ -87,7 +87,7 @@ int ds9_interface_spawn(ds9_interface * ds9i);
 ///Add a segment corresponding to a particular frame in ds9
 /** Nothing is done if the frame already exists.  Note that this does not open a new frame in ds9.
   * 
-  * \param ds9i is the interface to initialize
+  * \param ds9i is the interface to add a segment too
   * \param frame is the number of the new frame to initialize.  Note frame must be >= 1.
   * 
   * \retval 0 on sucess
@@ -98,7 +98,7 @@ int ds9_interface_addsegment(ds9_interface *ds9i, int frame);
 ///Open a frame in ds9
 /** Nothing is done if the frame already exists.  First calls \ref ds9_interface_addsegment.
   * 
-  * \param ds9i is the interface to initialize
+  * \param ds9i is the interface to add a frame too
   * \param frame is the number of the new frame to initialize.  Note frame must be >= 1.
   * 
   * \retval 0 on sucess
@@ -122,7 +122,7 @@ int ds9_interface_addframe(ds9_interface *ds9i, int frame);
   * \retval -1 on an error
   *
   */
-int ds9_interface_display_raw(ds9_interface *ds9i, int frame, void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix);
+int ds9_interface_display_raw(ds9_interface *ds9i, int frame, const void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix);
 
 ///Shutdown the ds9 interface
 /** Mainly detaches from the shared memory segments
@@ -145,7 +145,7 @@ int ds9_interface_shutdown(ds9_interface *ds9i);
   * \param dim3 is the thirst dimension of the image (in pixels), set to 1 if not a cube.
   * \param bitpix corresponds to the datatype, using the FITS specification.
   */
-int ds9_display(int frame, void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix);
+int ds9_display(int frame, const void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix);
 
 ///Shutdown the static ds9_interface used by ds9_display.
 int ds9_display_shutdown();

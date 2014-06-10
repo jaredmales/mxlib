@@ -1,34 +1,14 @@
-/** \file fitsUtils
-  * \brief Declares and defines utilities to work with FITS files
-  * \ingroup image_processing
+/** \file fitsUtils.cpp
+  * \brief Defines utilities to work with FITS files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
   
-#ifndef __fitsUtils__
-#define __fitsUtils__
-
-
-#include "fitsio.h"
+#include "fitsUtils.hpp"
 
 namespace mx
 {
-
-/** \addtogroup image_processing
-  * @{
-  */
-
-/** Return the cfitsio constant for a given data type.
-  *
-  * \tparam scalarT is the type 
-  * \returns a constant define in cfitsio corresponding to the native type
-  * \retval -1 if not a define type in cfitsio
-  */
-template<typename scalarT> int getFitsType()
-{
-   return -1;
-}
-
+   
 template<> int getFitsType<unsigned char>()
 {
    return TBYTE;
@@ -79,25 +59,14 @@ template<> int getFitsType<double>()
    return TDOUBLE;
 }
 
-/** Return the cfitsio BITPIX value for a given data type.
-  *
-  * \tparam scalarT is the type 
-  * \returns a constant defined in cfitsio corresponding to the native type
-  * \retval -1 if not a define type in cfitsio
-  */
-template<typename scalarT> int getFitsBITPIX()
+template<> int getFitsBITPIX<char>()
 {
-   return -1;
+   return SBYTE_IMG;
 }
 
 template<> int getFitsBITPIX<unsigned char>()
 {
    return BYTE_IMG;
-}
-
-template<> int getFitsBITPIX<char>()
-{
-   return SBYTE_IMG;
 }
 
 template<> int getFitsBITPIX<short>()
@@ -110,19 +79,19 @@ template<> int getFitsBITPIX<unsigned short>()
    return USHORT_IMG;
 }
 
+template<> int getFitsBITPIX<int>()
+{
+   return LONG_IMG; //Yes, this is right.  This returns 32
+}
+
+template<> int getFitsBITPIX<unsigned int>()
+{
+   return ULONG_IMG; //Yes, this is right, this returns 40
+}
+
 template<> int getFitsBITPIX<long>()
 {
-   return LONG_IMG;
-}
-
-template<> int getFitsBITPIX<unsigned long>()
-{
-   return ULONG_IMG;
-}
-
-template<> int getFitsBITPIX<long long>()
-{
-   return LONGLONG_IMG;
+   return LONGLONG_IMG; //Yes, this is right, this returns 64
 }
 
 template<> int getFitsBITPIX<float>()
@@ -135,9 +104,5 @@ template<> int getFitsBITPIX<double>()
    return DOUBLE_IMG;
 }
 
-///@}
-
-} //namespace mx
-
-#endif //__fitsUtils__
+}
 

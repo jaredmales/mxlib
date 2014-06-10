@@ -1,6 +1,11 @@
+/** \file astrodyn.hpp
+ * \author Jared R. Males
+ * \brief Declarations of some astrodynamic utilities
+ *
+ */
 
-#ifndef __ASTRODYN_H__
-#define __ASTRODYN_H__
+#ifndef __astrodyn_hpp__
+#define __astrodyn_hpp__
 
 #include <cmath>
 #include "astroconstants.h"
@@ -198,4 +203,4 @@ int ECI_to_TCH( mx::Vectord & az,
 
 /// @}
 
-#endif //__ASTRODYN_H__
+#endif //__astrodyn_hpp__

@@ -1,14 +1,14 @@
-/** \file fitsHeaderCard
+/** \file fitsHeaderCard.hpp
   * \brief Declares and defines a class to work with a FITS header card
   * \ingroup image_processing
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
   
-#ifndef __fitsHeaderCard__
-#define __fitsHeaderCard__
+#ifndef __fitsHeaderCard_hpp__
+#define __fitsHeaderCard_hpp__
 
-#include "stringUtils"
+#include "stringUtils.hpp"
 
 
 namespace mx
@@ -112,50 +112,7 @@ template<typename typeT> typeT fitsHeaderCard::Value()
    return convertFromString<typeT>(value);
 }
 
-int fitsHeaderCard::Int()
-{
-   return convertFromString<int>(value);
-}
 
-unsigned int fitsHeaderCard::unsignedInt()
-{
-   return convertFromString<unsigned int>(value);
-}
-
-long fitsHeaderCard::Long()
-{
-   return convertFromString<long>(value);
-}
-
-unsigned long fitsHeaderCard::unsignedLong()
-{
-   return convertFromString<unsigned long>(value);
-}
-
-long long fitsHeaderCard::longLong()
-{
-   return convertFromString<long long>(value);
-}
-   
-unsigned long long fitsHeaderCard::unsignedLongLong()
-{
-   return convertFromString<unsigned long long>(value);
-}
-
-float fitsHeaderCard::Float()
-{
-   return convertFromString<float>(value);
-}
-
-double fitsHeaderCard::Double()
-{
-   return convertFromString<double>(value);
-}   
-
-long double fitsHeaderCard::longDouble()
-{
-   return convertFromString<long double>(value);
-}
 
 ///@}
 

@@ -1,11 +1,11 @@
-/** \file kepler.h
+/** \file kepler.hpp
  * \author Jared R. Males
  * \brief Declarations for the utilities related to the Kepler problem.
  *
  */
 
-#ifndef __kepler_h__
-#define __kepler_h__
+#ifndef __kepler_hpp__
+#define __kepler_hpp__
 
 #include <iostream>
 #include <cmath>
@@ -64,7 +64,7 @@ floatT get_semimaj(floatT m1, floatT m2, floatT P);
 
 
 ///Calculate the mean anomaly at time t, given the time of pericenter passage t0 and period T.  
-#define MEANANOL(t, t0, T) (2*PI*(t-t0)/T)
+#define MEANANOL(t, t0, T) (2*DPI*(t-t0)/T)
 
 ///Solve the hyperbolic kepler equation (for e> 1).
 /** \param E [output] is the eccentric anomaly
@@ -260,4 +260,4 @@ int get_W_1pt_z0(double &W, double x, double y, double r, double f, double w);
 
 /// @}
 
-#endif //__KEPLER_H__
+#endif //__kepler_hpp__

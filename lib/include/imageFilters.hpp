@@ -1,7 +1,13 @@
 
-#include <cstdlib>
+#ifndef __imageFilters_hpp__
+#define __imageFilters_hpp__
 
-template<size_t kernW=4, typename arithT=double, typename arrT, typename fwhmT> void gaussKernel(arrT &kernel, fwhmT fwhm)
+#include <cstdlib>
+namespace mx
+{
+
+template<size_t kernW=4, typename arithT=double, typename arrT, typename fwhmT> 
+void gaussKernel(arrT &kernel, fwhmT fwhm)
 {
    size_t kernSize = fwhm*kernW; 
    
@@ -41,7 +47,7 @@ template<typename arrT> void smoothImage(arrT &smim, arrT & im, arrT & kernel)
    size_t fullW = 0.5*kernW;
    
    //First do the main part of the image as fast as possible
-   #pragma omp for
+   #pragma omp parallel for
    for(int i=fullW; i< im.rows()-fullW; i++)
    {
       for(int j=fullW; j<im.cols()-fullW; j++)
@@ -96,7 +102,9 @@ template<typename arrT> void smoothImage(arrT &smim, arrT & im, arrT & kernel)
    }
    
 }
-   
-   
+  
+} //namespace mx
+
+#endif //__imageFilters_hpp__  
 
 

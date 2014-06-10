@@ -3,34 +3,36 @@
 #ifndef __ASTROCONSTANTS_H__
 #define __ASTROCONSTANTS_H__
 
+
+#include <sofam.h>
+
 //Physical Constants
 
 
 /** \addtogroup genphyconstants General Constants
   * @{
   */
+  
+///Square-root of 2
+/** This was calculated with long double precision
+ */
+#define SQRT_2 (1.414213562373095048763788073031832936976570636034)
 
-///The most important constant      
-#define PI 3.14159265358979323846264338327950288
 
-///Speed of Light In Vacuum, units = m/s
-/** source = CODATA 2007
-  */
-#define LIGHTC_MS = 299792458
 
 ///Newtons Gravitational Constant, units = m^3 / (kg s^2)
 /** source = Report of the IAU WGAS Sub-group on Numerical Standards (1994 Values)
   */
-#define NEWTG 6.67259e-11
-
+#define GRAV_G (6.67259e-11)
 
 /// @}
-
 
 
 /** \addtogroup astroconstants 
   */
 /// @{
+
+
 
    
 ///Astronomical Unit, units = m
@@ -41,10 +43,19 @@
 ///Astronomical Unit, units = km
 #define AU_KM (AU_M / 1000.0)
 
-///Julian Day in Seconds, units = s
-/** source = ICRS
-  */
-#define DAY_SEC 86400.0
+
+///Parsec, units=m
+#define PC_M (AU_M / DAS2R) 
+
+///Parsec, units=km
+#define PC_KM (AU_KM / DAS2R) 
+
+///Light-year, units=m
+#define LY_M (CMPS*DAYSEC*DJY)
+
+
+
+
 
 
 ///Solar Gravitational Constant, units = m^3/s^2
@@ -79,7 +90,7 @@
 //Solar System Masses
 //units = kg
 //source = derived
-#define MASS_SOL     (GM_SOL/NEWTG)
+#define MASS_SOL     (GM_SOL/GRAV_G)
 #define MASS_MERCURY (MASS_SOL / MR_MERCURY)
 #define MASS_VENUS   (MASS_SOL / MR_VENUS)
 #define MASS_EARTH   (MASS_SOL / MR_EARTH)
@@ -99,7 +110,24 @@
 ///Radius of the earth, units = m
 /** source = WGS84
   */
-#define RAD_EARTH 6378137.0
+#define RAD_EARTH (6378137.0)
+
+///Radius of the Sun, units = m
+/** source = IAU 2009
+ */
+#define RAD_SUN (696000000.0)
+
+///Schwarzschild radius of the Sun, units = m
+/** Based on value in AU given in sofam.h
+ */
+#define SRS_M (SRS * AU_M)
+
+
+///Radius of Jupiter, units = m
+/** source = IAU 2009
+ */
+#define RAD_JUPITER (71492000.0)
+
 
 /// @}
 

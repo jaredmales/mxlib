@@ -97,7 +97,7 @@ int ds9_interface_addframe(ds9_interface *ds9i, int frame)
    
 }
 
-int ds9_interface_display_raw(ds9_interface *ds9i, int frame, void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix)
+int ds9_interface_display_raw(ds9_interface *ds9i, int frame, const void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix)
 {
    size_t i, tot_size;
    char cmd[DS9_CMD_MAX_LENGTH];
@@ -173,7 +173,7 @@ int ds9_interface_display_raw(ds9_interface *ds9i, int frame, void *im, size_t d
    else
    {
       snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s shm array shmid %i [xdim=%zu,ydim=%zu,zdim=%zu,bitpix=%i] &", 
-                                      ds9i->title, ds9i->segs[frame].shmemid,
+                                      ds9i->title, ds9i->segs[frame-1].shmemid,
                                      dim1, dim2, dim3, bitpix);
    }
    
@@ -219,7 +219,7 @@ ds9_interface * static_ds9(int shutdown)
    return &ds9;
 }
    
-int ds9_display(int frame, void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix)
+int ds9_display(int frame, const void *im, size_t dim1, size_t dim2, size_t dim3, int bitpix)
 {
    return ds9_interface_display_raw(static_ds9(0), frame, im, dim1, dim2, dim3, bitpix);
 }

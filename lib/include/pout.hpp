@@ -1,11 +1,11 @@
-/** \file pout
+/** \file pout.hpp
  * \author Jared R. Males
  * \brief Declaration and definition of a simple formatted output function.
  * \ingroup ioutils
  */
 
-#ifndef __pout__
-#define __pout__
+#ifndef __pout_hpp__
+#define __pout_hpp__
 
 #include <iostream>
 
@@ -78,7 +78,7 @@ void pout(valT value, const valTs&... values)
 
 } //namespace mx
 
-#endif //__pout__
+#endif //__pout_hpp__
 
 
 

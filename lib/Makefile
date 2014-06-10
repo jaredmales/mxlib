@@ -26,23 +26,29 @@ TARGETS = libmxlib
 OBJS = readcolumns.o \
        kepler.o \
        astrodyn.o \
+       fileUtils.o \
+       stringUtils.o \
        msgq.o \
        sharedmem_segment.o \
        sharedMemSegment.o \
        process_interface.o \
        ds9_interface.o \
-       gnuplot_interface.o
+       gnuplot_interface.o \
+       fitsUtils.o\
+       fitsHeaderCard.o \
+       fitsHeader.o
 
 
 INC_TO_INSTALL = astroconstants.h \
                  astrodyn.h \
                  astrotypes.h \
-                 kepler.h \
+                 kepler.hpp \
                  geo.h \
                  readcolumns.h \
-                 stringUtils \
-                 timeUtils \
-                 pout \
+                 stringUtils.hpp \
+                 timeUtils.hpp \
+                 fileUtils.hpp \
+                 pout.hpp \
                  IPC.h \
                  msgq.h \
                  msgQ \
@@ -51,10 +57,13 @@ INC_TO_INSTALL = astroconstants.h \
                  process_interface.h \
                  ds9_interface.h \
                  gnuplot_interface.h \
-                 fitsUtils \
-                 fitsFile \
-                 fitsHeader \
-                 fitsHeaderCard \
+                 fitsUtils.hpp \
+                 fitsFile.hpp \
+                 fitsHeader.hpp \
+                 fitsHeaderCard.hpp \
+                 eigenImage.hpp \
+                 imageFilters.hpp \
+                 imageTransforms.hpp \
                  mxException
                  
 VMOP_TO_INSTALL = MMatrix \
@@ -67,17 +76,24 @@ VMOP_TO_INSTALL = MMatrix \
 all: $(TARGETS) 
 
 #dependencies:
+fileUtils.o: include/fileUtils.hpp
+stringUtils.o: include/stringUtils.hpp
 msgq.o: include/IPC.h include/msgq.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 sharedMemSegment.o: include/sharedMemSegment
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 gnuplot_interface.o: include/gnuplot_interface.h
+fitsUtils.o: include/fitsUtils.hpp
+fitsHeaderCard.o: include/fitsHeaderCard.hpp
+fitsHeader.o: include/fitsHeader.hpp
+astrodyn.o: include/astrodyn.hpp
+kepler.o: include/kepler.hpp
 
 libmxlib: $(OBJS)
 	$(AR) libmxlib.a $(OBJS)
-	$(RANLIB) libmxlib.a
-	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jaredmales/lib/libsofa_c.a
+	$(RANLIB) libmxlib.a 
+	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jaredmales/lib/libsofa_c.a -lrt -lc -rdynamic
 
 install: libmxlib
 	install -d $(INCLUDE_PATH)

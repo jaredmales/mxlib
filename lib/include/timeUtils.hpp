@@ -1,5 +1,5 @@
-/** \file timeUtils
-  * \brief utilities for working with time
+/** \file timeUtils.hpp
+  * \brief Utilities for working with time
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
@@ -7,8 +7,8 @@
   *
   */
   
-#ifndef __timeUtils__
-#define __timeUtils__
+#ifndef __timeUtils_hpp__
+#define __timeUtils_hpp__
 
 
 #include "time.h"
@@ -44,4 +44,4 @@ typeT get_curr_time()
 
 } //namespace mx
 
-#endif //__timeUtils_h__
+#endif //__timeUtils_hpp__
