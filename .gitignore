@@ -1,5 +1,5 @@
-
-doc/html/*
+work/*
+lib/doc/html/*
 *.a
 *.so
 a.out

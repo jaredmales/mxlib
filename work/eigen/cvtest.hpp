@@ -99,3 +99,33 @@ void diagprodcv_ssyrk(eigenT &ims, eigenT &cv)
    
 }   
 
+
+template<typename eigenT>
+void diagprodcv_dsyrk(eigenT &ims, eigenT &cv)
+{
+   
+   double t0, t1;
+
+//    eigenImagef im1(NIMS, NPIXS);
+// 
+//    im1.setRandom();
+// 
+//    eigenImagef cv(NIMS, NIMS);
+//    cv.setZero();
+   
+   t0 = get_curr_time();
+
+   eigen_covar_dsyrk(cv, ims);
+   
+//    cblas_ssyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
+//                  /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
+//                  /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
+//                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
+   
+   t1 = get_curr_time();
+  
+   pout(t1-t0);
+  
+  //pout(cv);
+   
+}   
