@@ -116,7 +116,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
 
    int  INFO;
    
-   ssyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
+   dsyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
            &IL, &IU, &ABSTOL, M, W, Z, &LDZ, ISUPPZ,
            WORK, &LWORK, IWORK, &LIWORK, &INFO);
 

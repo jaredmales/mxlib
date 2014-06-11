@@ -11,13 +11,10 @@ namespace mx
 extern "C"
 {
 #include <cblas.h>
-<<<<<<< HEAD
 }
   
-=======
 #include <templateLapack.hpp>
-   
->>>>>>> 54f7c4d940b7e1d7667f4e7a4faf063c8bd92bd4
+
 /// Fills in the cells of an Eigen 2D Array with their radius from the center
 /** \ingroup image_processing
   *
