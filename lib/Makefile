@@ -2,7 +2,7 @@ INSTALL_PATH = $(HOME)
 INCLUDE_PATH = $(INSTALL_PATH)/include/mx
 LIB_PATH = $(INSTALL_PATH)/lib
 
-OPTIMIZE = -ggdb
+OPTIMIZE = -O3
 
 CPP = g++
 AR = ar -r
@@ -94,7 +94,7 @@ kepler.o: include/kepler.hpp
 libmxlib: $(OBJS)
 	$(AR) libmxlib.a $(OBJS)
 	$(RANLIB) libmxlib.a 
-	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jaredmales/lib/libsofa_c.a -lrt -lc -rdynamic
+	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jrmales/lib/libsofa_c.a -lrt -lc -rdynamic
 
 install: libmxlib
 	install -d $(INCLUDE_PATH)

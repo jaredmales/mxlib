@@ -10,6 +10,7 @@
 #ifndef __fileUtils_hpp__
 #define __fileUtils_hpp__
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <boost/filesystem.hpp>
