@@ -62,6 +62,7 @@ INC_TO_INSTALL = astroconstants.h \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
                  eigenImage.hpp \
+                 eigenUtils.hpp \
                  imageFilters.hpp \
                  imageTransforms.hpp \
                  mxException
@@ -110,3 +111,4 @@ install: libmxlib
 clean:
 	rm -f *.o *~
 	rm -f libmxlib.a
+	rm -f libmxlib.so

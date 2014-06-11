@@ -9,6 +9,7 @@ namespace mx
 #include <sofa.h>
 #include "geo.h"
 #include <cblas.h>
+#include <templateLapack.hpp>
    
 /// Fills in the cells of an Eigen 2D Array with their radius from the center
 /** \ingroup image_processing
@@ -300,6 +301,89 @@ void eigen_covar_ssyrk(eigenT1 &cv, eigenT2 &ims)
                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
    
 }   
+
+template<typename eigenT1, typename eigenT2>
+void eigen_covar_dsyrk(eigenT1 &cv, eigenT2 &ims)
+{
+   cv.resize(ims.rows(), ims.rows());
+   
+   cblas_dsyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
+                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
+                 /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
+                 /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
+   
+}   
+
+template<typename eigenT>
+int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval) 
+{
+        /*
+                This function calculates the eigenvalues and eigenvectors of 
+                the n*n symmetric matrix X. 
+                The matrices have to be in Fortran vector format.
+                The eigenvectors will be put columnwise in the n*n matrix eigvec,
+                where the corresponding eigenvalues will be put in the vector 
+                eigval (length n of course). Only the lower triangle of the matrix
+                X is used. The content of X is not changed.
+                
+                This function first queries the Lapack routines for optimal workspace 
+                sizes. These memoryblocks are then allocated and the decomposition is 
+                calculated using the Lapack function "dsyevr". The allocated memory 
+                is then freed. 
+        */
+
+   typedef typename eigenT::Scalar dataT;
+   
+   dataT *WORK;
+   int *ISUPPZ, *IWORK;
+   int  numeig, info, sizeWORK, sizeIWORK;
+           
+   int n = X.rows();
+   eigvec.resize(n,n);
+   eigval.resize(n,1);
+   
+   /*  Use a copy of X so we don't need to change its value or use its memoryblock */
+   eigenT Xc = X;//     Xc=malloc(n*n*sizeof(float));
+                
+   /*  The support of the eigenvectors. We will not use this but the routine needs it  */
+   ISUPPZ = (int *) malloc (2*n*sizeof(dataT));
+        
+   /*  Allocate temporarily minimally allowed size for workspace arrays */
+   WORK = (dataT *) malloc (26*n*sizeof(dataT));
+   IWORK = (int *) malloc (10*n*sizeof(int));
+                
+   /*  Check for NULL-pointers.  */
+   if ((ISUPPZ==NULL)||(WORK==NULL)||(IWORK==NULL)) 
+   {
+      printf("malloc failed in eigen_decomposition\n"); 
+      return 2;
+   }
+        
+   /*  Query the Lapack routine for optimal sizes for workspace arrays  */
+   info=syevr<dataT>('V', 'A', 'L', n, Xc.data(), n, 0, 0, 0, 0, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
+   sizeWORK = (int)WORK[0]; 
+   sizeIWORK = IWORK[0]; 
+        
+   /*  Free previous allocation and reallocate preferable workspaces, Check result  */
+   free(WORK);
+   free(IWORK);
+   WORK = (dataT *) malloc (sizeWORK*sizeof(dataT));
+   IWORK = (int *) malloc (sizeIWORK*sizeof(int));
+   if ((WORK==NULL)||(IWORK==NULL)) 
+   {
+      printf("malloc failed in eigen_decomposition\n"); 
+      return 2;
+   }
+   printf("starting\n");
+   fflush(stdout);
+        
+   /*  Now calculate the eigenvalues and vectors using optimal workspaces  */
+   info=syevr<dataT>('V', 'A', 'L', n, Xc.data(), n, 0, 0, 0, 0, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);
+        
+    /*  Cleanup and exit  */
+   free(WORK); free(IWORK); free(ISUPPZ);
+   return info;
+}       
 
 }//namespace mx
 

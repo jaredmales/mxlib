@@ -22,6 +22,7 @@ extern "C"
       
 /// Float specialization of lamch, a wrapper for Lapack SLAMCH
 template<>
+inline
 float lamch<float>(char CMACH)
 { 
    return  slamch_ (&CMACH);
@@ -29,6 +30,7 @@ float lamch<float>(char CMACH)
 
 /// Double specialization of lamch, a wrapper for Lapack DLAMCH
 template<>
+inline
 double lamch<double>(char CMACH)
 { 
    return  dlamch_ (&CMACH);
