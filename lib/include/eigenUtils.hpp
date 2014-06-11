@@ -8,8 +8,11 @@ namespace mx
 #include <cmath>
 #include <sofa.h>
 #include "geo.h"
+extern "C"
+{
 #include <cblas.h>
-   
+}
+  
 /// Fills in the cells of an Eigen 2D Array with their radius from the center
 /** \ingroup image_processing
   *

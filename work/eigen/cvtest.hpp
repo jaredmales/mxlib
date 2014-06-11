@@ -8,7 +8,7 @@
 
 extern "C"
 {
-#include "/usr/local/atlas/include/cblas.h"
+#include <cblas.h>
 }
 
 #define NIMS (1000)
