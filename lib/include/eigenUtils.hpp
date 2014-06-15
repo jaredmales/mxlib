@@ -1,19 +1,18 @@
 #ifndef __eigenUtils_hpp__
 #define __eigenUtils_hpp__
 
-namespace mx
-{
-
 #include <Eigen/Dense>
 #include <cmath>
 #include <sofa.h>
 #include "geo.h"
-extern "C"
-{
-#include <cblas.h>
-}
-  
+
+#include <templateBLAS.hpp>
 #include <templateLapack.hpp>
+
+
+namespace mx
+{
+
 
 /// Fills in the cells of an Eigen 2D Array with their radius from the center
 /** \ingroup image_processing
@@ -162,8 +161,7 @@ void radAngImage( eigenT & rIm,
 }
 
 template<typename eigenT>
-void imageRegionIndices( vector<size_t> & idx, 
-                         eigenT &rIm, 
+vector<size_t> imageRegionIndices( eigenT &rIm, 
                          eigenT &qIm,
                          typename eigenT::Scalar xcen,
                          typename eigenT::Scalar ycen,
@@ -173,6 +171,8 @@ void imageRegionIndices( vector<size_t> & idx,
                          typename eigenT::Scalar max_q)
 {
 
+   vector<size_t> idx;
+   
    int min_x = -max_r, max_x = max_r, min_y = -max_r, max_y = max_r;
 
    if(max_q == 0) max_q = 360.;
@@ -182,10 +182,14 @@ void imageRegionIndices( vector<size_t> & idx,
    //This was tested, this is slightly faster than resize with an erase.
    idx.reserve(msize);
    
-   size_t x0 = xcen+min_x;
-   size_t x1 = xcen+max_x;
-   size_t y0 = ycen+min_y;
-   size_t y1 = ycen+max_y;
+   int x0 = xcen+min_x;
+   if(x0 < 0) x0 = 0;
+   int x1 = xcen+max_x;
+   if(x1 > rIm.rows()) x1 = rIm.rows();
+   int y0 = ycen+min_y;
+   if(y0 < 0) y0 = 0;
+   int y1 = ycen+max_y;
+   if(y1 > rIm.cols()) y1 = rIm.cols();
    
    for(size_t i = x0; i< x1; ++i)
    {
@@ -193,12 +197,86 @@ void imageRegionIndices( vector<size_t> & idx,
       { 
          if(rIm(i,j) >= min_r && rIm(i,j) <= max_r && qIm(i,j) >= min_q && qIm(i,j) <= max_q) 
          {
-            idx.push_back(j*rIm.rows() + i);
+            idx.push_back(i*rIm.cols() + j);
          }
       }
    }
+   
+   
+   return idx;
 }
 
+
+
+
+
+template<typename imageTout, typename imageTin, typename coeffT>
+void cutImageRegion(imageTout & imout, const imageTin & imin,  coeffT & coeffs, bool resize = true)
+{
+   if(resize)
+   {
+      imout.resize(coeffs.size(),1);
+   }
+   
+   #pragma omp parallel for schedule(static, 1)
+   for(int i=0;i<coeffs.size();++i)
+   {
+      imout(i) = imin(coeffs[i]);
+   }
+   
+}
+ 
+template<typename imageTout, typename imageTin, typename coeffT>
+void insertImageRegion(imageTout imout, const imageTin & imin,  coeffT & coeffs)
+{
+   #pragma omp parallel for schedule(static, 1)
+   for(int i=0;i<coeffs.size();++i)
+   {
+      imout(coeffs[i]) = imin(i);
+   }
+   
+} 
+
+
+template<typename eigenT, typename eigenTin>
+void removeRowsAndCols(eigenT & out, const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows() - w, in.cols() - w);
+   
+   out.topLeftCorner(st,st) = in.topLeftCorner(st,st);
+   
+   out.bottomLeftCorner(in.rows()-(st+w), st) = in.bottomLeftCorner(in.rows()-(st+w), st);
+   
+   out.topRightCorner(st, in.cols()-(st+w))  = in.topRightCorner(st, in.cols()-(st+w));
+   
+   out.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w)) = in.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w));
+}
+
+template<typename eigenT, typename eigenTin>
+void removeRows(eigenT & out,  const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows() - w, in.cols());
+   
+   out.topLeftCorner(st,in.cols()) = in.topLeftCorner(st,in.cols());
+   
+   out.bottomLeftCorner(in.rows()-(st+w), in.cols()) = in.bottomLeftCorner(in.rows()-(st+w), in.cols());
+   
+}
+
+template<typename eigenT, typename eigenTin>
+void removeCols(eigenT & out,  const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows(), in.cols() - w);
+   
+   out.topLeftCorner(in.rows(), st) = in.topLeftCorner(in.rows(), st);
+   
+   out.topRightCorner(in.rows(),in.cols()-(st+w)) = in.topRightCorner(in.rows(),in.cols()-(st+w));
+   
+}   
+   
 template<typename dataT>
 static int eigenMedian_compare (const void * a, const void * b)
 {
@@ -209,38 +287,6 @@ static int eigenMedian_compare (const void * a, const void * b)
    
 }
 
-#if 1
-template<typename eigenT>
-typename eigenT::Scalar eigenMedian(const eigenT & mat, Eigen::Array<typename eigenT::Scalar, Eigen::Dynamic, Eigen::Dynamic> * work =0)
-{
-   typename eigenT::Scalar med;
-   
-   bool localWork = false;
-   if(work == 0) 
-   {
-      work = new Eigen::Array<typename eigenT::Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-      localWork = true;
-   }
-   
-   *work = mat;
-   
-   qsort(work->data(), mat.size(), sizeof(typename eigenT::Scalar), &eigenMedian_compare<typename eigenT::Scalar>);
-   
-   if(mat.size()%2 == 0)
-   {
-      med = 0.5*( (*work)((int) floor(0.5*mat.size()) - 1) + (*work)((int) floor(0.5*mat.size())));
-   }
-   else
-   {
-      med = (*work)((int) floor(0.5*mat.size()));
-   }
-      
-   if(localWork) delete work;
-   
-   return med;
-}
- 
-#else
 
 template<typename eigenT>
 typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eigenT::Scalar> * work =0)
@@ -262,127 +308,121 @@ typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eig
       for(int j=0; j<mat.cols();++j)
       {
          (*work)[ii] = mat(i,j);
-         ++i;
+         ++ii;
       }
    }
+
+   int n = 0.5*mat.size();
    
-   qsort(work->data(), mat.size(), sizeof(typename eigenT::Scalar), &eigenMedian_compare<typename eigenT::Scalar>);
+   nth_element(work->begin(), work->begin()+n, work->end());
+   
+   med = (*work)[n];
    
    if(mat.size()%2 == 0)
    {
-      med = 0.5*( (*work)[(int) floor(0.5*mat.size()) - 1] + (*work)[(int) floor(0.5*mat.size())]);
+      //nth_element(work->begin(), work->begin()+n-1, work->end());
+      med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
    }
-   else
-   {
-      med = (*work)[(int) floor(0.5*mat.size())];
-   }
-      
+         
    if(localWork) delete work;
    
    return med;
 } 
-#endif   
 
 
 /// Calculates the lower triangular part of the covariance matrix of ims.
-/** Uses cblas_ssyrk.  cv is resized to ims.rows() X ims.rows().
-  * Calculates \f$ cv = AA^T \f$.
+/** Uses cblas_ssyrk.  cv is resized to ims.cols() X ims.cols().
+  * Calculates \f$ cv = A^T*A\f$.
   * 
-  * \param ims is the eigen matrix/array to calculate the covariance of
+  * \param ims is the eigen matrix/array (images as columns) to calculate the covariance of
   * \param cv is the eigen matrix/array where to store the result
   *
   * \tparam eigenT1 is the eigen matrix/array type of cv.
   * \tparam eigenT2 is the eigen matrix/array type of ims
   */ 
 template<typename eigenT1, typename eigenT2>
-void eigen_covar_ssyrk(eigenT1 &cv, eigenT2 &ims)
+void eigenSYRK(eigenT1 &cv, const eigenT2 &ims)
 {
-   cv.resize(ims.rows(), ims.rows());
+   cv.resize(ims.cols(), ims.cols());
    
-   cblas_ssyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
-                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
+   syrk<typename eigenT1::Scalar>(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
+                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasTrans, /*const int N*/ims.cols(), /*const int K*/ ims.rows(),
                  /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
    
 }   
 
-template<typename eigenT1, typename eigenT2>
-void eigen_covar_dsyrk(eigenT1 &cv, eigenT2 &ims)
-{
-   cv.resize(ims.rows(), ims.rows());
-   
-   cblas_dsyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
-                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
-                 /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
-                 /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
-   
-}   
+// template<typename eigenT1, typename eigenT2>
+// void eigenDSYRK(eigenT1 &cv, eigenT2 &ims)
+// {
+//    cv.resize(ims.rows(), ims.rows());
+//    
+//    cblas_dsyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
+//                  /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
+//                  /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
+//                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
+//    
+// }   
 
 template<typename eigenT>
-int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval) 
+int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1, char UPLO = 'L') 
 {
-        /*
-                This function calculates the eigenvalues and eigenvectors of 
-                the n*n symmetric matrix X. 
-                The matrices have to be in Fortran vector format.
-                The eigenvectors will be put columnwise in the n*n matrix eigvec,
-                where the corresponding eigenvalues will be put in the vector 
-                eigval (length n of course). Only the lower triangle of the matrix
-                X is used. The content of X is not changed.
-                
-                This function first queries the Lapack routines for optimal workspace 
-                sizes. These memoryblocks are then allocated and the decomposition is 
-                calculated using the Lapack function "dsyevr". The allocated memory 
-                is then freed. 
-        */
-
    typedef typename eigenT::Scalar dataT;
    
    dataT *WORK;
    int *ISUPPZ, *IWORK;
    int  numeig, info, sizeWORK, sizeIWORK;
-           
-   int n = X.rows();
-   eigvec.resize(n,n);
-   eigval.resize(n,1);
+   char RANGE = 'A';
    
-   /*  Use a copy of X so we don't need to change its value or use its memoryblock */
-   eigenT Xc = X;//     Xc=malloc(n*n*sizeof(float));
-                
-   /*  The support of the eigenvectors. We will not use this but the routine needs it  */
-   ISUPPZ = (int *) malloc (2*n*sizeof(dataT));
-        
-   /*  Allocate temporarily minimally allowed size for workspace arrays */
-   WORK = (dataT *) malloc (26*n*sizeof(dataT));
-   IWORK = (int *) malloc (10*n*sizeof(int));
-                
-   /*  Check for NULL-pointers.  */
-   if ((ISUPPZ==NULL)||(WORK==NULL)||(IWORK==NULL)) 
+   int n = X.rows();
+   
+   int IL = 1;
+   int IU = n;
+   if(ev0 >= 0 && ev1 >= ev0)
    {
-      printf("malloc failed in eigen_decomposition\n"); 
+      RANGE = 'I';
+      IL = ev0+1; //This is FORTRAN, after all
+      IU = ev1;
+   }
+   
+   
+   eigvec.resize(n,IU-IL+1);
+   eigval.resize(IU-IL+1,1);
+   
+   //Copy X
+   eigenT Xc = X;
+                
+   ISUPPZ = (int *) malloc (2*n*sizeof(dataT));
+   if ((ISUPPZ==NULL)) 
+   {
+      printf("malloc failed in eigenSYEVR\n"); 
       return 2;
    }
-        
-   /*  Query the Lapack routine for optimal sizes for workspace arrays  */
-   info=syevr<dataT>('V', 'A', 'L', n, Xc.data(), n, 0, 0, 0, 0, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
+
+   
+   //  Allocate minimum allowed sizes for workspace
+   WORK = (dataT *) malloc (26*n*sizeof(dataT));
+   IWORK = (int *) malloc (10*n*sizeof(int));
+                     
+   //  Query for optimum sizes for workspace 
+   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
+   
    sizeWORK = (int)WORK[0]; 
    sizeIWORK = IWORK[0]; 
         
-   /*  Free previous allocation and reallocate preferable workspaces, Check result  */
+   // Now allocate optimum sizes
    free(WORK);
    free(IWORK);
    WORK = (dataT *) malloc (sizeWORK*sizeof(dataT));
    IWORK = (int *) malloc (sizeIWORK*sizeof(int));
    if ((WORK==NULL)||(IWORK==NULL)) 
    {
-      printf("malloc failed in eigen_decomposition\n"); 
+      printf("malloc failed in eigenSYVR\n"); 
       return 2;
    }
-   printf("starting\n");
-   fflush(stdout);
         
-   /*  Now calculate the eigenvalues and vectors using optimal workspaces  */
-   info=syevr<dataT>('V', 'A', 'L', n, Xc.data(), n, 0, 0, 0, 0, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);
+   // Now actually do the calculationg
+   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);
         
     /*  Cleanup and exit  */
    free(WORK); free(IWORK); free(ISUPPZ);

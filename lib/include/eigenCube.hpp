@@ -7,6 +7,9 @@
 
 using namespace Eigen;
 
+namespace mx
+{
+   
 template<typename dataT>
 class eigenCube 
 {
@@ -66,6 +69,22 @@ public:
       }
    }
 
+   void resize(int r, int c, int p)
+   {
+      if(_owner && _data)
+      {
+         delete _data;
+      }
+      
+      _rows = r;
+      _cols = c;
+      _planes = p;
+      
+      _data = new dataT[_rows*_cols*_planes];
+      _owner = true;
+   }
+   
+      
    dataT * data()
    {
       return _data;
@@ -91,6 +110,12 @@ public:
       return _planes;
    }
 
+   /// Returns a 2D Eigen::Map pointed at the entire cube.
+   Map<Array<dataT, Dynamic, Dynamic> > cube()
+   {
+      return Map<Array<dataT, Dynamic, Dynamic> >(_data, _rows*_cols, _planes);
+   }
+   
    /// Returns a 2D Eigen::Map pointed at the specified image.
    Map<Array<dataT, Dynamic, Dynamic> > image(Index n)
    {
@@ -106,7 +131,8 @@ public:
    ///Return an Eigen::Map of the cube where each image is a vector
    Map<Array<dataT, Dynamic, Dynamic> > asVectors()
    {
-      return Map<Array<dataT, Dynamic, Dynamic> >(_data, _rows*_cols, _planes);
+      //return Map<Array<dataT, Dynamic, Dynamic> >(_data,  _planes, _rows*_cols);
+      return Map<Array<dataT, Dynamic, Dynamic> >(_data,  _rows*_cols, _planes);
    }
  
    ///Calculate the covariance matrix of the images in the cube
@@ -135,11 +161,11 @@ public:
    {
       mim.resize(_rows, _cols);
       
-      #pragma omp parallel for schedule(static, 1) num_threads(Eigen::nbThreads())
+      #pragma omp parallel for schedule(static, 10) num_threads(Eigen::nbThreads())
       for(Index i=0; i < _rows; ++i)
       {
-         Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> work;
-         //std::vector<Scalar> work;
+         //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> work;
+         std::vector<Scalar> work;
          for(Index j=0;j< _cols; ++j)
          {
             mim(i,j) = eigenMedian(pixel(i,j), &work);             
@@ -181,5 +207,6 @@ struct is_eigenCube
    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
 
+} //namespace mx
 
 #endif //__eigenCube_hpp__

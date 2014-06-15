@@ -154,7 +154,7 @@ int ds9_display_shutdown();
 ///@}
 
 #ifdef __cplusplus
-} //extern "C"
+} //extern "C"ip
 #endif
    
 #endif //__ds9_interface_h__

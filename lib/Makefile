@@ -2,6 +2,8 @@ INSTALL_PATH = $(HOME)
 INCLUDE_PATH = $(INSTALL_PATH)/include/mx
 LIB_PATH = $(INSTALL_PATH)/lib
 
+LIB_SOFA = $(LIB_PATH)/libsofa_c.a
+
 OPTIMIZE = -O3
 
 CPP = g++
@@ -94,7 +96,7 @@ kepler.o: include/kepler.hpp
 libmxlib: $(OBJS)
 	$(AR) libmxlib.a $(OBJS)
 	$(RANLIB) libmxlib.a 
-	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) /home/jrmales/lib/libsofa_c.a -lrt -lc -rdynamic
+	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) $(LIB_SOFA) -lrt -lc -rdynamic
 
 install: libmxlib
 	install -d $(INCLUDE_PATH)

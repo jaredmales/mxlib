@@ -36,6 +36,63 @@ double lamch<double>(char CMACH)
    return  dlamch_ (&CMACH);
 }
 
+/// Wrapper for Lapack xSYTRD
+/** xSYTRD reduces a real symmetric matrix A to real symmetric
+  *  tridiagonal form T by an orthogonal similarity transformation:
+  *  Q**T * A * Q = T.
+  * 
+  * For more see: http://www.netlib.org/lapack/lapack-3.1.1/html/ssytrd.f.html
+  * 
+  * \tparam dataT is the data type
+  *  
+  * \param UPLO 'U':  Upper triangle of A is stored, 'L':  Lower triangle of A is stored.
+  * \param N The order of the matrix A.  N >= 0.
+  * \param A  array, dimension (LDA,N)
+  * \param LDA The leading dimension of the array A.  LDA >= max(1,N).
+  * \param D (output) array, dimension (N), the diagonal elements of the tridiagonal matrix T:
+  * \param E (output) array, dimension (N-1), the off-diagonal elements of the tridiagonal matrix T:
+  * \param TAU (output) array, dimension (N-1), the scalar factors of the elementary reflectors (see Further Details).
+  * \param WORK (workspace/output) array, dimension (MAX(1,LWORK)) On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+  * \param LWORK (input)  The dimension of the array WORK.  LWORK >= 1. For optimum performance LWORK >= N*NB, where NB is the optimal blocksize.
+  * \param INFO (output)  0:  successful exit < 0:  if INFO = -i, the i-th argument had an illegal value
+  * 
+  * \returns the value of INFO from the LAPACK routine
+  */
+template<typename dataT>
+int sytrd( char UPLO, int N, dataT * A, int LDA, dataT *D, dataT *E, dataT *TAU, dataT *WORK, int LWORK, int INFO)
+{
+   return -1;
+}
+
+//Declarations of the actual LAPACK functions
+extern "C"
+{
+   void ssytrd_( char * UPLO, int * N, float * A, int * LDA, float *D, float *E, float* TAU, float *WORK, int *LWORK, int *INFO );
+   void dsytrd_( char * UPLO, int * N, double * A, int * LDA, double *D, double *E, double* TAU, double *WORK, int *LWORK, int *INFO );
+}
+
+template<>
+inline
+int sytrd<float>( char UPLO, int N, float * A, int LDA, float *D, float *E, float *TAU, float *WORK, int LWORK, int INFO)
+{
+  
+   ssytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
+   
+   return INFO;
+}
+
+template<>
+inline
+int sytrd<double>( char UPLO, int N, double * A, int LDA, double *D, double *E, double *TAU, double *WORK, int LWORK, int INFO)
+{
+  
+   dsytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
+   
+   return INFO;
+}
+
+
+
 
 /// Wrapper for Lapack xSYEVR
 /** xSYEVR computes selected eigenvalues and, optionally, eigenvectors
@@ -46,26 +103,8 @@ double lamch<double>(char CMACH)
   * See more details: http://www.netlib.org/lapack/lapack-3.1.1/html/ssyevr.f.html.
   */
 template<typename dataT>
-int syevr (  char JOBZ, 
-             char RANGE, 
-             char UPLO, 
-             int N,
-             dataT *A, 
-             int LDA, 
-             dataT VL, 
-             dataT VU,
-             int IL, 
-             int IU, 
-             dataT ABSTOL, 
-             int *M,
-             dataT *W, 
-             dataT *Z, 
-             int LDZ, 
-             int *ISUPPZ,
-             dataT *WORK, 
-             int LWORK, 
-             int *IWORK, 
-             int LIWORK ) 
+int syevr (  char JOBZ, char RANGE, char UPLO, int N, dataT *A, int LDA, dataT VL, dataT VU, int IL, int IU, dataT ABSTOL,
+              int *M, dataT *W, dataT *Z, int LDZ, int *ISUPPZ, dataT *WORK, int LWORK, int *IWORK, int LIWORK ) 
 {
    return -1;
 }

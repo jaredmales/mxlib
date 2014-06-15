@@ -51,6 +51,9 @@ protected:
    
 public:
 
+   fitsHeader()
+   {
+   }
    ///Copy constructor
    /** Must be defined to handle creation of new iterators in the cardMap
     */
