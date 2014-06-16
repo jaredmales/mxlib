@@ -12,6 +12,7 @@
 #include "pout.hpp"
 
 
+using namespace mx;
 
 #ifndef __HCIobservation_hpp__
 #define __HCIobservation_hpp__
