@@ -179,53 +179,64 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    dcv += get_curr_time() - t5;
 
+   if(dang == 0)
+   {
+      /**** Now calculate the K-L Images ****/
+      t7 = get_curr_time();
+      calcKLIms(klims, cv, rims.cube(), evecs, evals, Nmodes);
+      t13 = get_curr_time();
+      dklims += t13 - t7;
+   }
    
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       pout("image:", imno, "/", this->Nims);
    
-      rotoff0 = 0;
-      rotoff1 = this->Nims;
-   
-      //Find first rotoff within dang
-      int j;
-      for(j=0; j< this->Nims; ++j)
+      if(dang != 0)
       {
-         if( fabs(angleDiff(this->derot[j], this->derot[imno])) <= dang )
+         rotoff0 = 0;
+         rotoff1 = this->Nims;
+   
+         //Find first rotoff within dang
+         int j;
+         for(j=0; j< this->Nims; ++j)
          {
-            rotoff0 = j;
-            break;
+            if( fabs(angleDiff(this->derot[j], this->derot[imno])) <= dang )
+            {
+               rotoff0 = j;
+               break;
+            }
          }
-      }
 
-      //Find last rotoff outside dang
-      for(; j< this->Nims; ++j)
-      {
-         if( fabs(angleDiff(this->derot[j], this->derot[imno])) >= dang )
+         //Find last rotoff outside dang
+         for(; j< this->Nims; ++j)
          {
-            rotoff1 = j;
-            break;
+            if( fabs(angleDiff(this->derot[j], this->derot[imno])) >= dang )
+            {
+               rotoff1 = j;
+               break;
+            }
          }
-      }
    
    
-      pout("rejecting", rotoff1-rotoff0, "images");
+         pout("rejecting", rotoff1-rotoff0, "images");
 
    
-      /**** Now remove the rejected images ****/
+         /**** Now remove the rejected images ****/
  
-      removeRowsAndCols(cv_cut, cv, rotoff0, rotoff1-rotoff0);
-      removeCols(rims_cut, rims.asVectors(), rotoff0, rotoff1-rotoff0);
+         removeRowsAndCols(cv_cut, cv, rotoff0, rotoff1-rotoff0);
+         removeCols(rims_cut, rims.asVectors(), rotoff0, rotoff1-rotoff0);
    
-      /**** Now calculate the K-L Images ****/
-      t7 = get_curr_time();
-      klims.setZero();
-      calcKLIms(klims, cv_cut, rims_cut, evecs, evals, Nmodes);
-      t13 = get_curr_time();
-      dklims += t13 - t7;
+         /**** Now calculate the K-L Images ****/
+         t7 = get_curr_time();
+         calcKLIms(klims, cv_cut, rims_cut, evecs, evals, Nmodes);
+         t13 = get_curr_time();
+         dklims += t13 - t7;
 
-      pout("klims:", t13-t7, "secs");
+         pout("klims:", t13-t7, "secs");
    
+      }
+      
       cfs.resize(1, klims.rows());
    
       t14 = get_curr_time();
