@@ -19,6 +19,7 @@ using namespace mx;
 
 
 
+
 template<typename _floatT>
 struct HCIobservation
 {
