@@ -160,8 +160,22 @@ void radAngImage( eigenT & rIm,
    }
 }
 
+///Get the vector indices of an annular region in an image
+/** \ingroup image_processing
+  * 
+  * \param rIm is a radius image of the type produced by \ref radiusImage
+  * \param qIm is an angle image of the type produce by \ref angleImage
+  * \param xcen is the x center of the image
+  * \param ycen is the y center of the image
+  * \param min_r is the minimum radius of the region
+  * \param max_r is the maximum radius of the region
+  * \param min_q is the minimum angle of the region
+  * \param max_q is the maximum angle of the region
+  * 
+  * \returns a vector containing the 1D indices of the region defined by the input parameters
+  */
 template<typename eigenT>
-vector<size_t> imageRegionIndices( eigenT &rIm, 
+std::vector<size_t> imageRegionIndices( eigenT &rIm, 
                          eigenT &qIm,
                          typename eigenT::Scalar xcen,
                          typename eigenT::Scalar ycen,
@@ -171,7 +185,7 @@ vector<size_t> imageRegionIndices( eigenT &rIm,
                          typename eigenT::Scalar max_q)
 {
 
-   vector<size_t> idx;
+   std::vector<size_t> idx;
    
    int min_x = -max_r, max_x = max_r, min_y = -max_r, max_y = max_r;
 

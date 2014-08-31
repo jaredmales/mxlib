@@ -38,7 +38,7 @@
 ///Astronomical Unit, units = m
 /** source = NASA/JPL Ephemeris DE-405
   */
-#define AU_M 149597870691.0
+#define AU_M (149597870691.0)
 
 ///Astronomical Unit, units = km
 #define AU_KM (AU_M / 1000.0)
@@ -61,7 +61,7 @@
 ///Solar Gravitational Constant, units = m^3/s^2
 /** source = Report of the IAU WGAS Sub-group on Numerical Standards (1994 Values)
   */
-#define GM_SOL 1.327124e+20
+#define GM_SOL (1.327124e+20)
 
 ///Solar Gravitational Constant, units = AU^3/day^2
 #define GM_SOL_AUD (0.01720209895*0.01720209895)

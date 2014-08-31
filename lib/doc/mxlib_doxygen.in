@@ -651,6 +651,7 @@ WARN_LOGFILE           =
 INPUT                  = ./groupdefs.dox \
                          ./sofa.dox \
                          ./sofa_constants.h \
+                         ./levmar.dox \
                          ../ \
                          ../include \
                          ../include/mxException \

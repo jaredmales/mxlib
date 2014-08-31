@@ -1,5 +1,13 @@
 
-
+/** \defgroup gen_math General Mathematics
+  * \brief General mathematical utilities.
+  */
+  
+/** \defgroup gen_math_gaussians The Gaussian Function
+  * \brief Utilities for working with the Gaussian function
+  * \ingroup gen_math
+  */
+  
 /** \defgroup signal_processing Signal Processing 
   * \brief Tools for processing signals
   */
@@ -60,12 +68,12 @@
   */
 
 /** \defgroup geo Geometry and Geodesy
-  * Functions for basic geometry and working with earth coordinate systems
+  * \brief Functions for basic geometry and working with earth coordinate systems
   */
   
   
 /** \defgroup utils General Utilities
-  * Various miscellaneous utilities
+  * \brief Various miscellaneous utilities
   */  
   
 /** \defgroup stringutils Working with strings
@@ -88,8 +96,6 @@
   * \brief Various file system utilities
   */
   
-  
-  
 /** \defgroup system System Programming
   * \ingroup utils
   * \brief Tools for system programming
@@ -111,11 +117,14 @@
   */  
   
   
+/** \defgroup fitting Data Fitting
+  * \brief Tools for fitting functions to data
+  */  
   
-  
-  
-  
-  
+/** \defgroup peak_fit Peak Fitting
+  * \brief Tools for fitting peaks to data
+  * \ingroup fitting
+  */
   
   
   
@@ -132,5 +141,10 @@
   * \ingroup genastro
   * \brief The IAU's Standards of Fundamental Astronomy library
   */  
+  
+/** \defgroup levmar The levmar library
+  * \ingroup fitting
+  * \brief A c language Levenberg-Marquardt facility
+  */
   
   
