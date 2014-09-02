@@ -1,3 +1,9 @@
+/** \file HCIobservation.hpp
+  * \author Jared R. Males
+  * \brief Defines he basic high contrast imaging data type.
+  * \ingroup hc_imaging
+  *
+  */
 
 #include <vector>
 #include <string>
@@ -11,18 +17,20 @@
 #include "timeUtils.hpp"
 #include "pout.hpp"
 
-
-using namespace mx;
-
 #ifndef __HCIobservation_hpp__
 #define __HCIobservation_hpp__
 
+/** \addtogroup hc_imaging
+  * @{
+  */
 
-
-
+///The basic high contrast imaging data type
+/** Why you no doc?
+ */
 template<typename _floatT>
 struct HCIobservation
 {
+   
    typedef _floatT floatT;
    
    std::string dir;
@@ -103,5 +111,8 @@ struct HCIobservation
 };
 
 
+/// @}
+
+//} //namespace mx
 
 #endif //__HCIobservation_hpp__

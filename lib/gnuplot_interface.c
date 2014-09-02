@@ -161,6 +161,8 @@ gnuplot_interface * static_gnuplot(int shutdown)
    
    if(inited) return &gnuplot;
    
+   printf("initing\n");
+   
    gnuplot_interface_init(&gnuplot);
    gnuplot_interface_connect(&gnuplot);
    inited = 1;
