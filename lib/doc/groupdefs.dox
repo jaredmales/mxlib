@@ -31,6 +31,12 @@
   * \ingroup image_processing
   */
   
+/** \defgroup hc_imaging High Contrast Imaging
+  * \brief Tools for astronomical high contrast image processing.
+  * \ingroup image_processing
+  * \ingroup genastro
+  */
+  
 /** \defgroup plotting Plotting Data
   * \brief Tools for plotting and displaying data
   */
