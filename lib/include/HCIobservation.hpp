@@ -1,6 +1,6 @@
 /** \file HCIobservation.hpp
   * \author Jared R. Males
-  * \brief Defines he basic high contrast imaging data type.
+  * \brief Defines the basic high contrast imaging data type.
   * \ingroup hc_imaging
   *
   */
@@ -20,6 +20,9 @@
 #ifndef __HCIobservation_hpp__
 #define __HCIobservation_hpp__
 
+namespace mx
+{
+   
 /** \addtogroup hc_imaging
   * @{
   */
@@ -37,6 +40,13 @@ struct HCIobservation
    std::string prefix;
    std::string ext;
    
+   bool doFinimCombine;
+   std::string finimName;
+   
+   bool doOutputPsfsub;
+   std::string psfsubPrefix;
+   
+   
    
    std::vector<std::string> keywords;
    vector<fitsHeader> heads;
@@ -53,18 +63,28 @@ struct HCIobservation
    int Ncols;
    int Npix;
    
-   HCIobservation()
+   void initialize()
    {
       filesRead = false;
+      
+      doFinimCombine = true;
+      finimName = "finim.fits";
+      
+      doOutputPsfsub = false;
+   }
+   
+   HCIobservation()
+   {
+      initialize();
    }
    
    HCIobservation(std::string odir, std::string oprefix, std::string oext)
    {
+      initialize();
+      
       dir = odir;
       prefix = oprefix;
-      ext = oext;
-      
-      filesRead = false;
+      ext = oext;      
    }
    
    void readFiles()
@@ -103,9 +123,21 @@ struct HCIobservation
       filesRead = true;
    }
     
-   void combine()
+   void combineFinim()
    {
       imc.median(finim);
+   }
+   
+   void outputPsfsub()
+   {
+      fitsFile<floatT> ff;
+      std::string fname;
+      
+      for(int i=0;i<psfsub.planes(); ++i)
+      {
+         fname = psfsubPrefix + convertToString(i) + ".fits";
+         ff.write(fname, psfsub.image(i).data(), psfsub.rows(), psfsub.cols());
+      }
    }
    
 };
@@ -113,6 +145,6 @@ struct HCIobservation
 
 /// @}
 
-//} //namespace mx
+} //namespace mx
 
 #endif //__HCIobservation_hpp__

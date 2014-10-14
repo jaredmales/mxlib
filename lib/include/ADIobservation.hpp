@@ -10,21 +10,99 @@
 #ifndef __ADIobservation_hpp__
 #define __ADIobservation_hpp__
 
-template<typename _arithT>
+namespace mx
+{
+   
+template<typename _floatT>
 struct derotVisAO
 {
-   typedef  _arithT arithT;
+   typedef  _floatT floatT;
 
-   std::string angKeyWord;
+   ///Vector of keywords to extract from the fits headers
+   std::vector<std::string> keywords;
    
+   ///Vector(s) to hold the keyword values
+   std::vector<floatT> rotoff;
+   
+   
+   ///Constructor should populate keywords
    derotVisAO()
    {
-      angKeyWord = "ROTOFF";
+      keywords.push_back("ROTOFF");
    }
    
-   arithT operator()(arithT rotoff)
+   ///Method called by DIobservation to get keyword-values
+   void extractKeywords(vector<fitsHeader> & heads)
    {
-      return rotoff+90-0.6;
+      rotoff = headersToValues<float>(heads, "ROTOFF");
+   }
+   
+   ///Calculate the derotation angle for a given image number
+   floatT derotAngle(size_t imno)
+   {
+      return DTOR(rotoff[imno]+90-0.6);
+   }
+};
+
+template<typename _floatT>
+struct derotClio
+{
+   typedef  _floatT floatT;
+
+   ///Vector of keywords to extract from the fits headers
+   std::vector<std::string> keywords;
+   
+   ///Vector(s) to hold the keyword values
+   std::vector<floatT> rotoff;
+   
+   
+   ///Constructor should populate keywords
+   derotClio()
+   {
+      keywords.push_back("ROTOFF");
+   }
+   
+   ///Method called by DIobservation to get keyword-values
+   void extractKeywords(vector<fitsHeader> & heads)
+   {
+      rotoff = headersToValues<float>(heads, "ROTOFF");
+   }
+   
+   ///Calculate the derotation angle for a given image number
+   floatT derotAngle(size_t imno)
+   {
+      return DTOR(rotoff[imno]-180-1.8);
+   }
+};
+
+template<typename _floatT>
+struct derotODI
+{
+   typedef  _floatT floatT;
+
+   ///Vector of keywords to extract from the fits headers
+   std::vector<std::string> keywords;
+   
+   ///Vector(s) to hold the keyword values
+   //none
+   
+   
+   ///Constructor should populate keywords
+   derotODI()
+   {
+      //no keywords
+   }
+   
+   ///Method called by DIobservation to get keyword-values
+   void extractKeywords(vector<fitsHeader> & heads)
+   {
+      //no keywords
+   }
+   
+   ///Calculate the derotation angle for a given image number
+   floatT derotAngle(size_t imno)
+   {
+      return 0;
    }
 };
 
@@ -68,35 +146,42 @@ struct ADIobservation : public HCIobservation<_floatT>
    typedef _derotFunctObj derotFunctObj;
    
    derotFunctObj derotF;
-   vector<floatT> derot;
+   //vector<floatT> derot;
       
    ADIobservation()
    {
-      this->keywords.push_back(derotF.angKeyWord);
    }
    
    ADIobservation(std::string odir, std::string oprefix, std::string oext) : HCIobservation<floatT>(odir,oprefix,oext)
    {
-      this->keywords.push_back(derotF.angKeyWord);
    }
    
    void readFiles()
    {      
+      this->keywords.clear();
+      for(int i=0;i<derotF.keywords.size();++i)
+      {
+         this->keywords.push_back(derotF.keywords[i]);
+      }
+      
       HCIobservation<floatT>::readFiles();
       
-      derot = headersToValues<float>(this->heads, derotF.angKeyWord);
-   
-      for(int i=0;i<derot.size(); ++i) derot[i] = derotF(derot[i]);
+      derotF.extractKeywords(this->heads);
+      
    }
    
    
    void derotate()
    {
       eigenImagef rotim;
+      floatT derot;
 
       for(int i=0; i<this->imc.planes();i++)
       {
-         imageRotate(rotim, this->psfsub.image(i), DTOR(derot[i]), cubicConvolTransform<float>());
+         derot = derotF.derotAngle(i);
+         if(derot == 0) continue;
+         
+         imageRotate(rotim, this->psfsub.image(i), derot, cubicConvolTransform<floatT>());
          this->imc.image(i) = rotim;
       }
         
@@ -105,6 +190,8 @@ struct ADIobservation : public HCIobservation<_floatT>
 };
 
 ///@}
+
+} //namespace mx
 
 #endif //__ADIobservation_hpp__
 

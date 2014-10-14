@@ -5,6 +5,9 @@
 #ifndef __KLIPreduction_hpp__
 #define __KLIPreduction_hpp__
 
+namespace mx
+{
+   
 double t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, tf;
 double dcut, dcv, dklims, dgemm, dsyevr, dcfs, drot, dread;
 
@@ -103,12 +106,14 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    
    if(!this->filesRead) this->readFiles();
    
+   pout("Files read\n");
    dread = get_curr_time()-t1;
    
    this->psfsub.resize(this->Nrows, this->Ncols, this->Nims);   
    this->psfsub.cube().setZero();
 
    
+   pout("mean subtracting\n");
    //Subtract mean image
    meanSubtract();
 
@@ -117,16 +122,20 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    eigenImagef qIm(this->Nrows,this->Ncols);
    radAngImage(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1));
 
+      pout("starting regions", minr.size());
    //******** For each region do this:
    for(int regno = 0; regno < minr.size(); ++regno)
    {
+      pout("getting indices");
       vector<size_t> idx = imageRegionIndices(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1), 
                                                     minr[regno], maxr[regno], minq[regno], maxq[regno]);
    
       //Create storage for the R-ims and psf-subbed Ims
       eigenCube<float> rims(idx.size(), 1, this->Nims);
    
+      pout("cutting regions \n");
       t3 = get_curr_time();
+      #pragma omp parallel for schedule(static, 1)
       for(int i=0;i< this->Nims; ++i)
       {
          auto rim = rims.image(i);
@@ -134,16 +143,29 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
       }
       dcut += get_curr_time() - t3;
    
+    
       //*** Dispatch the work
       worker(rims, idx);
+      pout("worker done");
       
    }
+   pout("deroting");
    
    this->derotate();
-   this->combine();
    
-   fitsFile<floatT> f;
-   f.write("finim.fits", this->finim.data(), this->finim.rows(), this->finim.cols());
+   if(this->doFinimCombine)
+   {
+      this->combineFinim();
+   
+      fitsFile<floatT> f;
+      f.write("finim.fits", this->finim.data(), this->finim.rows(), this->finim.cols());
+   }
+   
+   if(this->doOutputPsfsub)
+   {
+      pout("outputting");
+      this->outputPsfsub();
+   }
    
    tf = get_curr_time();
    pout("total time: ", tf-t0);
@@ -163,6 +185,8 @@ template<typename floatT, class derotFunctObj>
 inline
 void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vector<size_t> & idx)
 {
+   pout("beginning worker");
+   
    int rotoff0, rotoff1;
    eigenImagef cfs; //The coefficients
    eigenImagef psf;
@@ -181,6 +205,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    if(dang == 0)
    {
+      pout("calculating K-L images");
       /**** Now calculate the K-L Images ****/
       t7 = get_curr_time();
       calcKLIms(klims, cv, rims.cube(), evecs, evals, Nmodes);
@@ -201,7 +226,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          int j;
          for(j=0; j< this->Nims; ++j)
          {
-            if( fabs(angleDiff(this->derot[j], this->derot[imno])) <= dang )
+            if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) <= DTOR(dang) )
             {
                rotoff0 = j;
                break;
@@ -211,7 +236,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          //Find last rotoff outside dang
          for(; j< this->Nims; ++j)
          {
-            if( fabs(angleDiff(this->derot[j], this->derot[imno])) >= dang )
+            if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) >= DTOR(dang) )
             {
                rotoff1 = j;
                break;
@@ -237,10 +262,12 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    
       }
       
+      pout(1);
       cfs.resize(1, klims.rows());
    
       t14 = get_curr_time();
    
+      pout(2);
       #pragma omp parallel for schedule(static, 1)
       for(int j=0; j<cfs.size(); ++j)
       {
@@ -248,19 +275,28 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       }
       dcfs += get_curr_time()-t14;
   
-     
+      pout(3);
+      pout(Nmodes);
+      pout(klims.rows());
+      
       psf = cfs(Nmodes-1)*klims.row(Nmodes-1);
 
+      pout(4);
       //Count down, since eigenvalues are returned in increasing order
       for(int j=Nmodes-2; j>=0; --j)
       {
          psf += cfs(j)*klims.row(j);
       }    
-              
+            
+      pout(5);
       //***And insert the psf subtracted region into the cube.
+      pout(imno);
+      pout(this->psfsub.cube().cols());
+      pout(rims.cube().cols());
       insertImageRegion(this->psfsub.cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
-
+ pout(6);
    }
+    pout(7);
 }
 
 
@@ -328,5 +364,7 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
 
    dgemm += get_curr_time() - t11;
 } //calcKLIms
+
+} //namespace mx
 
 #endif //__KLIPreduction_hpp__
