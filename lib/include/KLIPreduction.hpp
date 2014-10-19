@@ -60,7 +60,6 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
                    eigenT & cv, 
                    const eigenT1 & Rims, 
                    eigenT & evecs, 
-                   eigenT & evals, 
                    int Nmodes = 0 );   
    
 };
@@ -109,6 +108,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    pout("Files read\n");
    dread = get_curr_time()-t1;
    
+   pout("Sizes:", this->Nrows, this->Ncols, this->Nims);
    this->psfsub.resize(this->Nrows, this->Ncols, this->Nims);   
    this->psfsub.cube().setZero();
 
@@ -188,19 +188,20 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    pout("beginning worker");
    
    int rotoff0, rotoff1;
+   eigenImagef evecs;//, evals;
    eigenImagef cfs; //The coefficients
    eigenImagef psf;
    eigenImagef rims_cut;
    eigenImagef klims;
    eigenImagef cv;
    eigenImagef cv_cut;
-   eigenImagef evecs, evals;
+   
 
    t5 = get_curr_time();
 
    //*** Form lower-triangle covariance matrix
    eigenSYRK(cv, rims.cube());
-
+   
    dcv += get_curr_time() - t5;
 
    if(dang == 0)
@@ -208,7 +209,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       pout("calculating K-L images");
       /**** Now calculate the K-L Images ****/
       t7 = get_curr_time();
-      calcKLIms(klims, cv, rims.cube(), evecs, evals, Nmodes);
+      calcKLIms(klims, cv, rims.cube(), evecs, Nmodes);
       t13 = get_curr_time();
       dklims += t13 - t7;
    }
@@ -254,7 +255,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    
          /**** Now calculate the K-L Images ****/
          t7 = get_curr_time();
-         calcKLIms(klims, cv_cut, rims_cut, evecs, evals, Nmodes);
+         calcKLIms(klims, cv_cut, rims_cut, evecs, Nmodes);
          t13 = get_curr_time();
          dklims += t13 - t7;
 
@@ -262,12 +263,12 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    
       }
       
-      pout(1);
+      //pout(1, klims.rows());
       cfs.resize(1, klims.rows());
    
       t14 = get_curr_time();
    
-      pout(2);
+      //pout(2);
       #pragma omp parallel for schedule(static, 1)
       for(int j=0; j<cfs.size(); ++j)
       {
@@ -275,28 +276,31 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       }
       dcfs += get_curr_time()-t14;
   
-      pout(3);
-      pout(Nmodes);
-      pout(klims.rows());
+      //pout(3);
+      //pout("Nmodes:", Nmodes);
+      //pout("KL rows:", klims.rows());
       
       psf = cfs(Nmodes-1)*klims.row(Nmodes-1);
 
-      pout(4);
+      //pout(4);
       //Count down, since eigenvalues are returned in increasing order
       for(int j=Nmodes-2; j>=0; --j)
       {
          psf += cfs(j)*klims.row(j);
       }    
             
-      pout(5);
+      //pout(5);
       //***And insert the psf subtracted region into the cube.
-      pout(imno);
-      pout(this->psfsub.cube().cols());
-      pout(rims.cube().cols());
+      //pout(imno);
+      //pout(this->psfsub.cube().cols());
+      //pout(rims.cube().cols());
+      //pout(idx.size());
       insertImageRegion(this->psfsub.cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
- pout(6);
+      //pout(6);
    }
-    pout(7);
+   //pout(&evals, evals.rows(), evals.cols());
+   
+   //pout(7);
 }
 
 
@@ -309,11 +313,12 @@ inline
 void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims, 
                                                       eigenT & cv, 
                                                       const eigenT1 & Rims, 
-                                                      eigenT & evecs, 
-                                                      eigenT & evals, 
+                                                      eigenT & evecs,  
                                                       int Nmodes )
 {
 
+   eigenT evals;
+   
    if(cv.rows() != cv.cols())
    {
       std::cerr << "Non-square covariance matrix input to klip_klims\n";
@@ -338,15 +343,16 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top Nmodes
     */   
    eigenSYEVR(cv, evecs, evals, tNims - Nmodes, tNims);
-
+   //evals.resize(0,0);
+   
    dsyevr += get_curr_time() - t8;
 
    //Normalize the eigenvectors
-   evals = (1./evals.sqrt());
+   //evals = (1./evals.sqrt());
 
    for(int i=0;i< Nmodes; ++i)
    {
-      evecs.col(i) = evecs.col(i)*evals(i);
+      evecs.col(i) = evecs.col(i)/sqrt(evals(i,0));
    }
 
    

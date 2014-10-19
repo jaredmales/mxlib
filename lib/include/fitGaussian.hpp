@@ -145,9 +145,11 @@ struct gaussian2D_gen_fitter
       {
          floatT a, b, c;
          gaussian2D_rot2gen(a,b,c,p[4], p[5], p[6]);
+         //std::cout << p[4] << " " << p[5] << " " << p[6] << "\n";
          p[4] = a;
          p[5] = b;
          p[6] = c;
+         //std::cout << p[4] << " " << p[5] << " " << p[6] << "\n";
          return;
       }
       
@@ -155,10 +157,13 @@ struct gaussian2D_gen_fitter
       if(dir == -1)
       {
          floatT sigma_x, sigma_y, theta;
+         //std::cout << p[4] << " " << p[5] << " " << p[6] << "\n";
          gaussian2D_gen2rot(sigma_x, sigma_y, theta, p[4], p[5], p[6]);
+
          p[4] = sigma_x;
          p[5] = sigma_y;
          p[6] = theta;
+         //std::cout << p[4] << " " << p[5] << " " << p[6] << "\n";
          return;
       }
    }

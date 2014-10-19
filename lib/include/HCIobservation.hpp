@@ -119,7 +119,6 @@ struct HCIobservation
       Ncols = imc.cols();
       Npix =  imc.rows()*imc.cols();
       
-      
       filesRead = true;
    }
     

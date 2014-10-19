@@ -179,10 +179,15 @@ struct ADIobservation : public HCIobservation<_floatT>
       for(int i=0; i<this->imc.planes();i++)
       {
          derot = derotF.derotAngle(i);
-         if(derot == 0) continue;
-         
-         imageRotate(rotim, this->psfsub.image(i), derot, cubicConvolTransform<floatT>());
-         this->imc.image(i) = rotim;
+         if(derot == 0) 
+         {
+            this->imc.image(i) = this->psfsub.image(i);
+         }
+         else
+         {
+            imageRotate(rotim, this->psfsub.image(i), derot, cubicConvolTransform<floatT>());
+            this->imc.image(i) = rotim;
+         }
       }
         
    }

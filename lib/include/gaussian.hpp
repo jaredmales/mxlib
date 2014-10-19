@@ -212,9 +212,20 @@ void gaussian2D_gen2rot( arithT & sigma_x,
 {
    arithT x1, x2, s, s2, theta0, theta1;
    
-   //There are two roots, one is 1/sigma_x^2 and one is 1/sigma_y^2
-   x2 = 0.5*(a + c) + 0.5*sqrt(a*a - 2*a*c + 4*b*b + c*c);
-   x1 = 0.5*(a + c) - 0.5*sqrt(a*a - 2*a*c + 4*b*b + c*c);
+   
+ 
+   arithT arg = a*a - 2*a*c + 4*b*b + c*c;
+   if(arg < 0)
+   {
+      x2 = 0.5*(a+c);
+      x1 = x2;
+   }
+   else
+   {
+      //There are two roots, one is 1/sigma_x^2 and one is 1/sigma_y^2
+      x2 = 0.5*(a + c) + 0.5*sqrt(arg);
+      x1 = 0.5*(a + c) - 0.5*sqrt(arg);
+   }
    
    //Our convention is that the larger width is sigma_x
    sigma_x = sqrt(1./x1);
@@ -229,6 +240,14 @@ void gaussian2D_gen2rot( arithT & sigma_x,
    //s is  (sin(theta))^2
    //s2 = (a-x2)*(a-x2)/(b*b + (a-x2)*(a-x2));
    s = (a-x1)*(a-x1)/(b*b + (a-x1)*(a-x1));
+   
+   //First check if x1-x2 will be close to zero
+   
+   if(fabs(x1-x2) < 1e-12)
+   {
+      theta = 0;
+      return;
+   }
    
    theta0 = 0.5*asin( 2*b/(x1-x2));   //This always gives the correct sign
    theta1 = asin(sqrt(s)); //This always gives the correct magnitude, and seems to be more accurate

@@ -226,7 +226,7 @@ public:
       if(naxis > 2) naxes[2] = d3;
       
       std::string forceFileName = "!"+fileName;
-      std::cout << forceFileName << "\n";
+      //std::cout << forceFileName << "\n";
       
       fits_create_file(&fptr, forceFileName.c_str(), &fstatus);
       if (fstatus)
@@ -263,7 +263,7 @@ public:
       
       for(int i=0;i<naxis;++i) nelements *= naxes[i];
       
-      std::cout << fpixel[0] << " " << fpixel[1] << " " << fpixel[2] << " " << nelements << "\n";
+      //std::cout << fpixel[0] << " " << fpixel[1] << " " << fpixel[2] << " " << nelements << "\n";
       
       fits_write_pix( fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
       if (fstatus)

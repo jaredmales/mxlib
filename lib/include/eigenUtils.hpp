@@ -378,6 +378,8 @@ void eigenSYRK(eigenT1 &cv, const eigenT2 &ims)
 //    
 // }   
 
+/** \todo eigenSYEVR eigval memory bug
+ */
 template<typename eigenT>
 int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1, char UPLO = 'L') 
 {
@@ -399,9 +401,10 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       IU = ev1;
    }
    
+   pout(IL, IU, n, ev0, ev1);
    
    eigvec.resize(n,IU-IL+1);
-   eigval.resize(IU-IL+1,1);
+   eigval.resize(IU-IL+1,2); //It seems to be necessary to pad this.  Don't know why.
    
    //Copy X
    eigenT Xc = X;
@@ -436,8 +439,13 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    }
         
    // Now actually do the calculationg
+   //pout("Xc:", Xc.rows(), Xc.cols());
+   //pout("IL,IU", IL, IU);
    info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);
         
+   //pout("numeig: ", numeig);
+   //pout("eigval: ", eigval.rows(), eigval.cols());
+   
     /*  Cleanup and exit  */
    free(WORK); free(IWORK); free(ISUPPZ);
    return info;
