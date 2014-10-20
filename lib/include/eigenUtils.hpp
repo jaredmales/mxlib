@@ -406,10 +406,11 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    eigvec.resize(n,IU-IL+1);
    eigval.resize(IU-IL+1, 1); //It seems to be necessary to pad this.  Don't know why.
    
-   eigenT evecs, evals;
+   eigenT * evecs = new eigenT;
+   eigenT * evals = new eigenT;
    
-   evecs.resize(n,IU-IL+1);
-   evals.resize(IU-IL+1, 1);
+   evecs->resize(n,IU-IL+1);
+   evals->resize(IU-IL+1, 1);
    
    //Copy X
    eigenT Xc = X;
@@ -428,7 +429,7 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
                      
    //  Query for optimum sizes for workspace 
    //info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
-   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, evals.data(), evecs.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
+   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, evals->data(), evecs->data(), n, ISUPPZ, WORK, -1, IWORK, -1);
    
    sizeWORK = (int)WORK[0]; 
    sizeIWORK = IWORK[0]; 
@@ -456,8 +457,8 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    free(WORK); free(IWORK); free(ISUPPZ);
    
    
-   eigval = evals;
-   eigvec = evecs;
+   eigval = *evals;
+   eigvec = *evecs;
    
    
    
