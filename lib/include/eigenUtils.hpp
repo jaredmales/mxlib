@@ -403,7 +403,7 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    
    pout(IL, IU, n, ev0, ev1);
    
-   eigvec.resize(n,IU-IL+1);
+   eigvec.resize(n+5,IU-IL+1);
    eigval.resize(IU-IL+1,2); //It seems to be necessary to pad this.  Don't know why.
    
    //Copy X
