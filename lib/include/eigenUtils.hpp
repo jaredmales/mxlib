@@ -456,8 +456,8 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    free(WORK); free(IWORK); free(ISUPPZ);
    
    
-   eigvals = evals;
-   eigvecs = evecs;
+   eigval = evals;
+   eigvec = evecs;
    
    
    
