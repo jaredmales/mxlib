@@ -112,7 +112,7 @@ struct HCIobservation
       
       imc.resize(im.rows(), im.cols(), flist.size());
       
-      f.read(flist, imc.data()), heads);
+      f.read(flist, imc.data(), heads);
    
       Nims =  imc.planes();
       Nrows = imc.rows();
