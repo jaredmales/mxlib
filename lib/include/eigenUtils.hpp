@@ -404,13 +404,13 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    pout(IL, IU, n, ev0, ev1);
    
    eigvec.resize(n,IU-IL+1);
-   eigval.resize(IU-IL+1, 1); //It seems to be necessary to pad this.  Don't know why.
+   eigval.resize(n, 1); //It seems to be necessary to pad this.  Don't know why.
    
-   eigenT * evecs = new eigenT;
-   eigenT * evals = new eigenT;
+   //eigenT * evecs = new eigenT;
+   //eigenT * evals = new eigenT;
    
-   evecs->resize(n,IU-IL+1);
-   evals->resize(IU-IL+1, 1);
+   //evecs->resize(n,IU-IL+1);
+   //evals->resize(IU-IL+1, 1);
    
    //Copy X
    eigenT Xc = X;
