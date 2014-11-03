@@ -364,6 +364,12 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
    /*
     *  KL = E^T * R  ==> C = A^T * B
     */
+
+   pout(evecs.rows(), evecs.cols());
+   pout(cv.rows(), cv.cols());
+   pout(Rims.rows(), Rims.cols());
+   pout(klims.rows(), klims.cols());
+
    gemm<typename eigenT::Scalar>(CblasColMajor, CblasTrans, CblasTrans, Nmodes, tNpix,
                               tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
                                  0., klims.data(), klims.rows());

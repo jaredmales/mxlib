@@ -107,12 +107,12 @@ struct HCIobservation
          head.append(keywords[i], "");
       }
       
-      heads.resize(flist.size(), head);
+      //heads.resize(flist.size(), head);
 
       
       imc.resize(im.rows(), im.cols(), flist.size());
       
-      f.read(flist, imc.data(), heads);
+      f.read(flist, imc.data());//, heads);
    
       Nims =  imc.planes();
       Nrows = imc.rows();
