@@ -154,7 +154,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    }
    pout("deroting");
    
-   this->derotate();
+   //this->derotate();
    
    if(this->doFinimCombine)
    {
@@ -290,7 +290,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
          pout("klims:", t13-t7, "secs");
    
-      }
+      } //if(dang != 0)
       
       cfs.resize(1, klims.rows());
    
