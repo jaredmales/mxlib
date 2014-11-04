@@ -103,7 +103,7 @@ struct derotODI
    ///Calculate the derotation angle for a given image number
    floatT derotAngle(size_t imno)
    {
-      return imno;
+      return 0;
    }
 };
 

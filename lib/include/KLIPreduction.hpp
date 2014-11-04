@@ -21,9 +21,12 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    int Nmodes;
    floatT dang;
    
+   int dang_method;
+   
    KLIPreduction()
    {
       Nmodes = 0;
+      dang_method = 0;
    }
    
    KLIPreduction( const std::string & odir, 
@@ -151,7 +154,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    }
    pout("deroting");
    
-   //this->derotate();
+   this->derotate();
    
    if(this->doFinimCombine)
    {
@@ -223,27 +226,53 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          rotoff0 = 0;
          rotoff1 = this->Nims;
    
-         //Find first rotoff within dang
-         int j;
-         for(j=0; j< this->Nims; ++j)
+         if(dang_method == 0)
          {
-            if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) <= DTOR(dang) )
+            //Find first rotoff within dang
+            int j;
+            for(j=0; j< this->Nims; ++j)
             {
-               rotoff0 = j;
-               break;
+               if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) <= DTOR(dang) )
+               {
+                  rotoff0 = j;
+                  break;
+               }
             }
-         }
 
-         //Find last rotoff outside dang
-         for(; j< this->Nims; ++j)
-         {
-            if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) >= DTOR(dang) )
+            //Find last rotoff outside dang
+            for(; j< this->Nims; ++j)
             {
-               rotoff1 = j;
-               break;
+               if( fabs(angleDiff(this->derotF.derotAngle(j), this->derotF.derotAngle(imno))) >= DTOR(dang) )
+               {
+                  rotoff1 = j;
+                  break;
+               }
             }
          }
-   
+         
+         if(dang_method == 1)
+         {
+            //Find first rotoff within dang
+            int j;
+            for(j=0; j< this->Nims; ++j)
+            {
+               if( fabs( j - imno ) <= dang )
+               {
+                  rotoff0 = j;
+                  break;
+               }
+            }
+
+            //Find last rotoff outside dang
+            for(; j< this->Nims; ++j)
+            {
+               if( fabs( j -  imno ) >= dang)
+               {
+                  rotoff1 = j;
+                  break;
+               }
+            }
+         }
    
          pout("rejecting", rotoff1-rotoff0, "images");
 
