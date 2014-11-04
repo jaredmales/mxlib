@@ -151,7 +151,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    }
    pout("deroting");
    
-   this->derotate();
+   //this->derotate();
    
    if(this->doFinimCombine)
    {

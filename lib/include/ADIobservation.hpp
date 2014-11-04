@@ -96,14 +96,14 @@ struct derotODI
    ///Method called by DIobservation to get keyword-values
    void extractKeywords(vector<fitsHeader> & heads)
    {
-      rotoff.resize(heads.size());
-      for(int i=0; i<heads.size(); ++i) rotoff[i] = i;
+//       rotoff.resize(heads.size());
+//       for(int i=0; i<heads.size(); ++i) rotoff[i] = i;
    }
    
    ///Calculate the derotation angle for a given image number
    floatT derotAngle(size_t imno)
    {
-      return 0;
+      return imno;
    }
 };
 
