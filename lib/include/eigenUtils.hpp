@@ -418,7 +418,7 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
 
    //  Allocate minimum allowed sizes for workspace
    WORK = (dataT *) malloc (26*n*sizeof(dataT));
-   IWORK = (int *) malloc (10*n*sizeof(int))
+   IWORK = (int *) malloc (10*n*sizeof(int));
 
    //  Query for optimum sizes for workspace 
    info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
