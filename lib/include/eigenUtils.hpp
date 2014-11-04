@@ -405,18 +405,7 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    
    eigvec.resize(n,IU-IL+1);
    eigval.resize(n, 1); 
-   
-   //eigenT * evecs = new eigenT;
-   //eigenT * evals = new eigenT;
-   
-// <<<<<<< HEAD
-//    //evecs->resize(n,IU-IL+1);
-//    //evals->resize(IU-IL+1, 1);
-// =======
-//    evecs->resize(n,IU-IL+1);
-//    evals->resize(n, 1);
-// >>>>>>> 8c476524b9e390d690838b33a04a7897e8362936
-   
+      
    //Copy X
    eigenT Xc = X;
                 
@@ -427,18 +416,16 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       return 2;
    }
 
-   
    //  Allocate minimum allowed sizes for workspace
    WORK = (dataT *) malloc (26*n*sizeof(dataT));
-   IWORK = (int *) malloc (10*n*sizeof(int));
-                     
+   IWORK = (int *) malloc (10*n*sizeof(int))
+
    //  Query for optimum sizes for workspace 
-   //info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
    info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
-   
+
    sizeWORK = (int)WORK[0]; 
    sizeIWORK = IWORK[0]; 
-        
+
    // Now allocate optimum sizes
    free(WORK);
    free(IWORK);
@@ -451,23 +438,11 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    }
         
    // Now actually do the calculationg
-   //pout("Xc:", Xc.rows(), Xc.cols());
-   //pout("IL,IU", IL, IU);
-   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);
-        
-   //pout("numeig: ", numeig);
-   //pout("eigval: ", eigval.rows(), eigval.cols());
+   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);     
    
     /*  Cleanup and exit  */
    free(WORK); free(IWORK); free(ISUPPZ);
-   
-   
- /*  eigval = *evals;
-   eigvec = *evecs;
- */  
-   
-   
-   
+      
    return info;
 }       
 

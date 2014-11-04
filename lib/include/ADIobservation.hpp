@@ -84,7 +84,7 @@ struct derotODI
    std::vector<std::string> keywords;
    
    ///Vector(s) to hold the keyword values
-   //none
+   std::vector<std::string> rotoff;
    
    
    ///Constructor should populate keywords
@@ -96,7 +96,8 @@ struct derotODI
    ///Method called by DIobservation to get keyword-values
    void extractKeywords(vector<fitsHeader> & heads)
    {
-      //no keywords
+      rotoff.resize(heads.size());
+      for(int i=0; i<heads.size(); ++i) rotoff[i] = i;
    }
    
    ///Calculate the derotation angle for a given image number

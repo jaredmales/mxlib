@@ -263,12 +263,10 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    
       }
       
-      //pout(1, klims.rows());
       cfs.resize(1, klims.rows());
    
       t14 = get_curr_time();
    
-      //pout(2);
       #pragma omp parallel for schedule(static, 1)
       for(int j=0; j<cfs.size(); ++j)
       {
@@ -276,31 +274,18 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       }
       dcfs += get_curr_time()-t14;
   
-      //pout(3);
-      //pout("Nmodes:", Nmodes);
-      //pout("KL rows:", klims.rows());
-      
       psf = cfs(Nmodes-1)*klims.row(Nmodes-1);
 
-      //pout(4);
+      
       //Count down, since eigenvalues are returned in increasing order
       for(int j=Nmodes-2; j>=0; --j)
       {
          psf += cfs(j)*klims.row(j);
       }    
             
-      //pout(5);
-      //***And insert the psf subtracted region into the cube.
-      //pout(imno);
-      //pout(this->psfsub.cube().cols());
-      //pout(rims.cube().cols());
-      //pout(idx.size());
       insertImageRegion(this->psfsub.cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
-      //pout(6);
    }
-   //pout(&evals, evals.rows(), evals.cols());
-   
-   //pout(7);
+
 }
 
 
@@ -343,17 +328,17 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top Nmodes
     */   
    eigenSYEVR(cv, evecs, evals, tNims - Nmodes, tNims);
-   //evals.resize(0,0);
+
    
    dsyevr += get_curr_time() - t8;
 
    //Normalize the eigenvectors
-   //evals = (1./evals.sqrt());
+   evals = (1./evals.sqrt());
 
-   for(int i=0;i< Nmodes; ++i)
-   {
-      evecs.col(i) = evecs.col(i)/sqrt(evals(i,0));
-   }
+//    for(int i=0;i< Nmodes; ++i)
+//    {
+//       evecs.col(i) = evecs.col(i)/sqrt(evals(i,0));
+//    }
 
    
    klims.resize(Nmodes, tNpix);
