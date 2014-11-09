@@ -161,7 +161,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
       this->combineFinim();
    
       fitsFile<floatT> f;
-      f.write("finim.fits", this->finim.data(), this->finim.rows(), this->finim.cols());
+      f.write(this->finimName, this->finim.data(), this->finim.rows(), this->finim.cols());
    }
    
    if(this->doOutputPsfsub)
