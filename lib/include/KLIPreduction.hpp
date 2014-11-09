@@ -362,12 +362,12 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
    dsyevr += get_curr_time() - t8;
 
    //Normalize the eigenvectors
-   evals = (1./evals.sqrt());
+   //evals = (1./evals.sqrt());
 
-//    for(int i=0;i< Nmodes; ++i)
-//    {
-//       evecs.col(i) = evecs.col(i)/sqrt(evals(i,0));
-//    }
+   for(int i=0;i< Nmodes; ++i)
+   {
+      evecs.col(i) = evecs.col(i)/sqrt(evals(i));
+   }
 
    
    klims.resize(Nmodes, tNpix);
