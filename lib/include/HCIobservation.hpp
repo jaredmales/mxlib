@@ -111,11 +111,11 @@ struct HCIobservation
 
       for(int i=0;i<keywords.size();++i)
       {
-         head.append(keywords[i], "");
+         head.append(keywords[i], 0);
       }
       
       heads.resize(flist.size(), head);
-
+      head.clear();
       
       imc.resize(im.rows(), im.cols(), flist.size());
       
