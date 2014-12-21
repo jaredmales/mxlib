@@ -51,7 +51,6 @@ void fitsHeader::clear()
    cardMap.clear();
 }
 
-   
 void fitsHeader::append(fitsHeaderCard card)
 {
    //First check if duplicate key
@@ -69,8 +68,8 @@ void fitsHeader::append(fitsHeaderCard card)
    
    //Then add to the Map.
    headerIterator insertedIt = cards.end();
-   insertedIt--;
-   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   --insertedIt;
+   cardMap.insert( std::pair<std::string, headerIterator>(card.keyword, insertedIt) );
    
 }
 

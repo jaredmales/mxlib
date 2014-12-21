@@ -273,6 +273,8 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
       head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
 
       fitsFile<floatT> f;
+      
+      pout("actually writing\n");
       f.write(this->finimName, this->finim.data(), this->finim.rows(), this->finim.cols(), this->finim.planes(), &head);
    }
    
