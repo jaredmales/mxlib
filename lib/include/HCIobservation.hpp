@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <fstream>
 
 #include "templateBLAS.hpp"
 #include "fileUtils.hpp"
@@ -43,6 +44,10 @@ struct HCIobservation
    bool doFinimCombine;
    std::string finimName;
    
+   bool doWeightedCombo;
+   std::string weightFile;
+   vector<floatT> comboWeights;
+   
    bool doOutputPsfsub;
    std::string psfsubPrefix;
    
@@ -54,9 +59,9 @@ struct HCIobservation
    bool filesRead;
    
    eigenCube<floatT> imc;
-   eigenCube<floatT> psfsub;
+   std::vector<eigenCube<floatT> > psfsub;
    
-   Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> finim;
+   eigenCube<floatT> finim;
    
    int Nims;
    int Nrows;
@@ -69,6 +74,8 @@ struct HCIobservation
       
       doFinimCombine = true;
       finimName = "finim.fits";
+      
+      doWeightedCombo = false;
       
       doOutputPsfsub = false;
    }
@@ -119,25 +126,72 @@ struct HCIobservation
       Ncols = imc.cols();
       Npix =  imc.rows()*imc.cols();
       
+      
+      if(weightFile != "")
+      {
+         readWeights();
+      }
+      
       filesRead = true;
    }
     
-   void combineFinim()
+   void readWeights()
    {
-      imc.median(finim);
+      std::ifstream fin;
+      std::string str;
+      
+      fin.open(weightFile.c_str());
+      
+      comboWeights.resize(Nims);
+      
+      for(int i=0; i<Nims; ++i)
+      {
+         fin >> str;
+         comboWeights[i] = convertFromString<floatT>(str);
+      }
+      
+      fin.close();
+      
+      doWeightedCombo = true;
    }
    
-   void outputPsfsub()
+   void combineFinim()
    {
-      fitsFile<floatT> ff;
-      std::string fname;
+      eigenImagef tfinim;
       
-      for(int i=0;i<psfsub.planes(); ++i)
+      finim.resize(psfsub[0].rows(), psfsub[0].cols(), psfsub.size());
+      
+      for(int n= 0; n < psfsub.size(); ++n)
       {
-         fname = psfsubPrefix + convertToString(i) + ".fits";
-         ff.write(fname, psfsub.image(i).data(), psfsub.rows(), psfsub.cols());
+         if(doWeightedCombo)
+         {
+            for(int i=0;i<psfsub[n].planes();++i)
+            {
+               psfsub[n].image(i) = comboWeights[i]*psfsub[n].image(i);
+            }
+         
+            psfsub[n].mean(tfinim);
+            finim.image(n) = tfinim;
+         }
+         else
+         {
+            psfsub[n].median(tfinim);
+            finim.image(n) = tfinim;
+         }
       }
    }
+   
+//    void outputPsfsub()
+//    {
+//       fitsFile<floatT> ff;
+//       std::string fname;
+//       
+//       for(int i=0;i<psfsub.planes(); ++i)
+//       {
+//          fname = psfsubPrefix + convertToString(i) + ".fits";
+//          ff.write(fname, psfsub.image(i).data(), psfsub.rows(), psfsub.cols());
+//       }
+//    }
    
 };
 

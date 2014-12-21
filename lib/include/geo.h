@@ -27,20 +27,24 @@
   * \tparam arithT is the type in which to do arithmetic
   * 
   */
-template<typename arithT>
+template<int degrad = 0, typename arithT>
 arithT angleDiff(arithT q1, arithT q2)
 { 
    arithT dq = q2-q1;
 
-   if (abs(dq) > 180)
+   double half;
+   if(!degrad) half = 180.0;
+   if(degrad) half = DPI;
+      
+   if (abs(dq) > half)
    {
       if(dq < 0)
       {
-         dq = dq + 360.;
+         dq = dq + 2.*half;
       }
       else
       {
-         dq = dq - 360.;
+         dq = dq - 2.*half;
       }
    }
    

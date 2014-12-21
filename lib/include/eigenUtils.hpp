@@ -198,11 +198,11 @@ std::vector<size_t> imageRegionIndices( eigenT &rIm,
    
    int x0 = xcen+min_x;
    if(x0 < 0) x0 = 0;
-   int x1 = xcen+max_x;
+   int x1 = xcen+max_x+1;
    if(x1 > rIm.rows()) x1 = rIm.rows();
    int y0 = ycen+min_y;
    if(y0 < 0) y0 = 0;
-   int y1 = ycen+max_y;
+   int y1 = ycen+max_y+1;
    if(y1 > rIm.cols()) y1 = rIm.cols();
    
    for(size_t i = x0; i< x1; ++i)
@@ -267,6 +267,12 @@ void removeRowsAndCols(eigenT & out, const eigenTin & in, int st, int w)
    out.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w)) = in.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w));
 }
 
+
+
+
+
+
+
 template<typename eigenT, typename eigenTin>
 void removeRows(eigenT & out,  const eigenTin & in, int st, int w)
 {
@@ -300,6 +306,7 @@ static int eigenMedian_compare (const void * a, const void * b)
   return 0;
    
 }
+
 
 
 template<typename eigenT>
@@ -401,7 +408,7 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       IU = ev1;
    }
    
-   pout(IL, IU, n, ev0, ev1);
+   //pout(IL, IU, n, ev0, ev1);
    
    eigvec.resize(n,IU-IL+1);
    eigval.resize(n, 1); 

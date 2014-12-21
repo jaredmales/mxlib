@@ -177,17 +177,16 @@ struct ADIobservation : public HCIobservation<_floatT>
       eigenImagef rotim;
       floatT derot;
 
-      for(int i=0; i<this->imc.planes();i++)
+      for(int n=0; n<this->psfsub.size(); ++n)
       {
-         derot = derotF.derotAngle(i);
-         if(derot == 0) 
+         for(int i=0; i<this->psfsub[n].planes();++i)
          {
-            this->imc.image(i) = this->psfsub.image(i);
-         }
-         else
-         {
-            imageRotate(rotim, this->psfsub.image(i), derot, cubicConvolTransform<floatT>());
-            this->imc.image(i) = rotim;
+            derot = derotF.derotAngle(i);
+            if(derot != 0) 
+            {
+               imageRotate(rotim, this->psfsub[n].image(i), derot, cubicConvolTransform<floatT>());
+               this->psfsub[n].image(i) = rotim;
+            }
          }
       }
         

@@ -8,7 +8,12 @@
 
 namespace mx
 {
-   
+ 
+template<> int getFitsType<char *>()
+{
+   return TSTRING;
+}
+
 template<> int getFitsType<unsigned char>()
 {
    return TBYTE;

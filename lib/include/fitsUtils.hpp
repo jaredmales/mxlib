@@ -10,6 +10,7 @@
 
 
 #include "fitsio.h"
+#include <iostream>
 
 namespace mx
 {
@@ -28,6 +29,8 @@ template<typename scalarT> int getFitsType()
 {
    return -1;
 }
+
+template<> int getFitsType<char *>();
 
 template<> int getFitsType<unsigned char>();
 
@@ -77,6 +80,31 @@ template<> int getFitsBITPIX<long>();
 template<> int getFitsBITPIX<float>();
 
 template<> int getFitsBITPIX<double>();
+
+
+/** Update a header keyword. 
+  * Templatized wrapper for the cfitsio routine.
+  *
+  * \tparam typeT is the type of the value
+  *
+  * \param fptr is a pointer to an open fits file
+  * \param keyword is a c-string containing the keyword
+  * \param value is a pointer to the memory location of the value
+  * \param comment is a c-string, possibly NULL, containing a comment string
+  *  
+  * \returns the status returned by the cfitsio routine.
+  */
+template<typename typeT> int fits_update_key(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   int fstatus = 0;
+ 
+   //std::cout << "writing " << keyword << " " << comment << "\n";
+   
+   fits_update_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
+   
+   //std::cout << fstatus << "\n";
+   return fstatus;
+}
 
 ///@}
 

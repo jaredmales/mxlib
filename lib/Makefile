@@ -42,7 +42,7 @@ OBJS = readcolumns.o \
 
 
 INC_TO_INSTALL = astroconstants.h \
-                 astrodyn.h \
+                 astrodyn.hpp \
                  astrotypes.h \
                  kepler.hpp \
                  geo.h \
@@ -59,6 +59,7 @@ INC_TO_INSTALL = astroconstants.h \
                  process_interface.h \
                  ds9_interface.h \
                  gnuplot_interface.h \
+                 fileUtils.hpp \
                  fitsUtils.hpp \
                  fitsFile.hpp \
                  fitsHeader.hpp \

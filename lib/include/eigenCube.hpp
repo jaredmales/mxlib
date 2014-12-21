@@ -69,6 +69,30 @@ public:
       }
    }
 
+   void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false)
+   {
+      if(_owner && _data)
+      {
+         delete _data;
+         _owner = false;
+      }
+      
+      _rows = src._rows;
+      _cols = src._cols;
+      _planes = src._planes;
+      _data = src._data;
+      
+      if(takeOwner == true) 
+      {
+         _owner = true;
+         src._owner = false;
+      }
+      else
+      { 
+         _owner = false;
+      }
+   }
+   
    void resize(int r, int c, int p)
    {
       if(_owner && _data)
@@ -82,6 +106,7 @@ public:
       
       _data = new dataT[_rows*_cols*_planes];
       _owner = true;
+     
    }
    
       
@@ -142,7 +167,8 @@ public:
    }
    
    ///Calculate the mean image of the cube
-   void mean(Array<dataT, Dynamic, Dynamic> & mim)
+   template<typename eigenT>
+   void mean(eigenT & mim)
    {
       mim.resize(_rows, _cols);
       
@@ -155,9 +181,10 @@ public:
          }
       }
    }
-   
+      
    ///Calculate the median image of the cube
-   void median(Array<dataT, Dynamic, Dynamic> & mim)
+   template<typename eigenT>
+   void median(eigenT & mim)
    {
       mim.resize(_rows, _cols);
       

@@ -10,6 +10,7 @@
 
 #include "stringUtils.hpp"
 
+#include "fitsUtils.hpp"
 
 namespace mx
 {
@@ -34,6 +35,9 @@ struct fitsHeaderCard
    ///The comment
    std::string comment;
 
+   ///The FITS type
+   int type;
+   
    ///Construct from the three components.
    template<typename typeT> fitsHeaderCard(std::string k, typeT v, std::string c);
    
@@ -91,6 +95,8 @@ struct fitsHeaderCard
     */
    long double longDouble();
    
+   int write(fitsfile * fptr);
+   
 }; //fitsHeaderCard
 
 
@@ -98,6 +104,7 @@ template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, typeT v, 
 {
    keyword = k;
    value = convertToString<typeT>(v);
+   type = getFitsType<typeT>();
    comment = c;
 }
 
@@ -105,6 +112,7 @@ template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, typeT v)
 {
    keyword = k;
    value = convertToString<typeT>(v);
+   type = getFitsType<typeT>();
 }
 
 template<typename typeT> typeT fitsHeaderCard::Value()

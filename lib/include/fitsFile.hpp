@@ -205,88 +205,11 @@ public:
    /** \name Writing Data Arrays
      * @{
      */
+   void write(dataT * im, int d1, int d2, int d3, fitsHeader * head = 0);
+      
+   void write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader * head = 0);
    
-   void write(dataT * im, int d1, int d2, int d3)
-   {
-      if(isOpen) close();
-      if(naxes) delete naxes;
-   
-      fstatus = 0;
-      naxis = 1;
-      if(d2 > 0) 
-      {
-         if(d3 > 0) naxis = 3;
-         else naxis = 2;
-      }
-      
-      naxes = new long[naxis];
-      
-      naxes[0] = d1;
-      if(naxis > 1) naxes[1] = d2;
-      if(naxis > 2) naxes[2] = d3;
-      
-      std::string forceFileName = "!"+fileName;
-      //std::cout << forceFileName << "\n";
-      
-      fits_create_file(&fptr, forceFileName.c_str(), &fstatus);
-      if (fstatus)
-      {
-         char emnem[31];
-         std::string explan;
-         fits_get_errstatus(fstatus, emnem);
-         explan = "Error creating file: ";
-         explan +=  fileName + ". ";
-         mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-         throw e;
-
-      }
-   
-      fits_create_img( fptr, getFitsBITPIX<dataT>(), naxis, naxes, &fstatus);
-      if (fstatus)
-      {
-         char emnem[31];
-         std::string explan;
-         fits_get_errstatus(fstatus, emnem);
-         explan = "Error creating image: ";
-         explan +=  fileName + ". ";
-         mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-         throw e;
-
-      }
-      
-      long fpixel[3];
-      fpixel[0] = 1;
-      fpixel[1] = 1;
-      fpixel[2] = 1;
-      
-      LONGLONG nelements = 1;
-      
-      for(int i=0;i<naxis;++i) nelements *= naxes[i];
-      
-      //std::cout << fpixel[0] << " " << fpixel[1] << " " << fpixel[2] << " " << nelements << "\n";
-      
-      fits_write_pix( fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
-      if (fstatus)
-      {
-         char emnem[31];
-         std::string explan;
-         fits_get_errstatus(fstatus, emnem);
-         explan = "Error writing data: ";
-         explan +=  fileName + ". ";
-         mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-         throw e;
-
-      }
-      
-      
-      close();
-   }
-      
-   void write(std::string fname, dataT * im, int d1, int d2, int d3=0)
-   {
-      setFilename(fname, false);
-      write(im, d1, d2, d3);
-   }
+   void writeHeader(fitsHeader &head);
    
    ///@}
    
@@ -755,6 +678,103 @@ void fitsFile<dataT>::readHeader(const std::string &fname, fitsHeader &head)
    setFilename(fname);
    readHeader(head);
 }
+
+template<typename dataT>
+void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * head)
+{
+   if(isOpen) close();
+   if(naxes) delete naxes;
+
+   fstatus = 0;
+   naxis = 1;
+   if(d2 > 0) 
+   {
+      if(d3 > 0) naxis = 3;
+      else naxis = 2;
+   }
+   
+   naxes = new long[naxis];
+   
+   naxes[0] = d1;
+   if(naxis > 1) naxes[1] = d2;
+   if(naxis > 2) naxes[2] = d3;
+   
+   std::string forceFileName = "!"+fileName;
+   //std::cout << forceFileName << "\n";
+   
+   fits_create_file(&fptr, forceFileName.c_str(), &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error creating file: ";
+      explan +=  fileName + ". ";
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      throw e;
+
+   }
+
+   fits_create_img( fptr, getFitsBITPIX<dataT>(), naxis, naxes, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error creating image: ";
+      explan +=  fileName + ". ";
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      throw e;
+
+   }
+   
+   long fpixel[3];
+   fpixel[0] = 1;
+   fpixel[1] = 1;
+   fpixel[2] = 1;
+   
+   LONGLONG nelements = 1;
+   
+   for(int i=0;i<naxis;++i) nelements *= naxes[i];
+   
+   //std::cout << fpixel[0] << " " << fpixel[1] << " " << fpixel[2] << " " << nelements << "\n";
+   
+   fits_write_pix( fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
+   if (fstatus)
+   {
+      char emnem[31];
+      std::string explan;
+      fits_get_errstatus(fstatus, emnem);
+      explan = "Error writing data: ";
+      explan +=  fileName + ". ";
+      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      throw e;
+
+   }
+   
+   if(head != 0)
+   {
+      fitsHeader::headerIterator it;
+      
+      for(it = head->begin(); it != head->end(); ++it)
+      {
+         it->write(fptr);
+         
+         // fits_update_key(fptr, TSTRING, it->keyword.c_str(), (void *)it->value.c_str(),(char *)it->comment.c_str(),  &fstatus);
+      }
+   }
+   
+   close();
+}
+      
+template<typename dataT>
+void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader * head)
+{
+   setFilename(fname, false);
+   write(im, d1, d2, d3, head);
+}
+
+
 
 /** \addtogroup image_processing
   * @{
