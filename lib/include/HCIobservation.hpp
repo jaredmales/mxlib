@@ -165,13 +165,15 @@ struct HCIobservation
       {
          if(doWeightedCombo)
          {
+            floatT wsum = 0.0;
             for(int i=0;i<psfsub[n].planes();++i)
             {
                psfsub[n].image(i) = comboWeights[i]*psfsub[n].image(i);
+               wsum += comboWeights[i];
             }
          
             psfsub[n].mean(tfinim);
-            finim.image(n) = tfinim;
+            finim.image(n) = tfinim/wsum*psfsub[n].planes();
          }
          else
          {
