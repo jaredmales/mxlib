@@ -1,9 +1,16 @@
+/** \file KLIPreduction.hpp
+  * \author Jared R. Males
+  * \brief Declarations and definitions for an implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm. 
+  * \ingroup hc_imaging
+  *
+  */
 
 
-#include "ADIobservation.hpp"
 
 #ifndef __KLIPreduction_hpp__
 #define __KLIPreduction_hpp__
+
+#include "ADIobservation.hpp"
 
 namespace mx
 {
@@ -11,12 +18,19 @@ namespace mx
 double t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, tf;
 double dcut, dcv, dklims, dgemm, dsyevr, dcfs, drot, dcombo, dread;
 
+/** \addtogroup hc_imaging
+  * @{
+  */
+
+/// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
 template<typename _floatT, class _derotFunctObj>
 struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
 {
    typedef _floatT floatT;
    
    typedef Array<floatT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
+   
+   int padSize;
    
    std::vector<int> Nmodes;
    int maxNmodes;
@@ -25,36 +39,44 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
    //bool excludeNone;
    
-   int excludeMethod; //If 0, then excludes on angle.  If 1 then excludes on image number  
+
    
    enum excludeMethods{excludeNone, excludePixel, excludeAngle, excludeImno};
    //static const int excludeAngle = 0;
    //static const int excludeImno = 1;
+
+   /// Controls how reference images are excluded, if at all, from the covariance matrix for each target image.
+   int excludeMethod;
    
    ///Number of reference images to include in the covariance matrix
    /** If > 0, then at most this many images, determined by highest cross-correlation, are included.
      * This is determined after rotational/image-number exclusion. 
      * If == 0, then all reference images are included. 
      */
-   int includeRefNum; //
+   int includeRefNum; 
    
    
    
    KLIPreduction()
    {
-      excludeMethod = excludeNone;
-      includeRefNum = 0;
+      initialize();
    }
    
    KLIPreduction( const std::string & odir, 
                   const std::string & oprefix, 
                   const std::string & oext) : ADIobservation<_floatT, _derotFunctObj>(odir, oprefix, oext)
    {
-      excludeMethod = excludeNone;
-      includeRefNum = 0;
+      initialize();
    }
    
-   void meanSubtract(eigenCube<floatT> & ims);
+   void initialize()
+   {
+      excludeMethod = excludeNone;
+      includeRefNum = 0;
+      padSize = 4;
+   }
+   
+   void meanSubtract(eigenCube<floatT> & ims, std::vector<floatT> & sds);
    void medianSubtract(eigenCube<floatT> & ims, std::vector<floatT> & sds);
    void getStdDevs(std::vector<floatT> sd, eigenCube<floatT> & ims);
    
@@ -98,18 +120,49 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
 
 template<typename _floatT, class _derotFunctObj>
 inline
-void KLIPreduction<_floatT, _derotFunctObj>::meanSubtract(eigenCube<floatT> & ims)
+void KLIPreduction<_floatT, _derotFunctObj>::meanSubtract(eigenCube<floatT> & ims, std::vector<_floatT> & norms)
 {
-   
-   eigenImageT meanIm;
-   
-   ims.mean(meanIm);
-      
-   #pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<ims.planes(); ++i)
+
+   norms.resize(ims.planes());
+
+   if(this->applyMask)
    {
+      //S#pragma omp parallel for schedule(static, 1)
+      for(int n=0;n<ims.planes(); ++n)
+      {
+         _floatT mn = 0, Navg = 0;
       
-      ims.image(i) -= meanIm;//ims.image(i).mean();
+         for(int j=0;j<ims.rows()*ims.cols();++j)
+         {
+            if( ims.image(n)(j) != this->maskVal)
+            {
+               mn += ims.image(n)(j);
+               ++Navg;
+            }
+         }
+         mn /= Navg;
+
+         for(int j=0;j<ims.rows()*ims.cols();++j)
+         {
+            if( ims.image(n)(j) != this->maskVal)
+            {      
+               ims.image(n)(j) -= mn;//ims.image(i).mean();
+            }
+            else 
+            {
+               ims.image(n)(j) = 0.;
+            }
+         }
+         norms[n] = ims.image(n).matrix().norm();
+      }
+   }
+   else
+   {
+      for(int n=0;n<ims.planes(); ++n)
+      {
+         ims.image(n) -= ims.image(n).mean();
+         norms[n] = ims.image(n).matrix().norm();
+      }
    }
 }
  
@@ -158,36 +211,10 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    
    if(!this->filesRead) 
    {
+      this->imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + padSize);
+            
       this->readFiles();
       
-      eigenCube<floatT> timc;
-      
-      timc.shallowCopy(this->imc, true);
-      
-      int rmax = *std::max_element(maxr.begin(),maxr.end());
-   
-      double xc = 0.5*(timc.cols()-1);
-      double yc = 0.5*(timc.rows()-1);
-   
-      int min_x = floor(xc - (rmax-0.5) + 0.01);
-      int max_x = floor(xc + (rmax-0.5) + 0.51);
-      
-      int min_y = floor(yc - (rmax-0.5) + 0.01);
-      int max_y = floor(yc + (rmax-0.5) + 0.51);
-   
-      std::cout << min_x << " " << max_x << " " << min_y << " " << max_y << "\n";
-      this->imc.resize( max_x-min_x, max_y-min_y, timc.planes());
-      
-      for(int n=0;n<timc.planes();++n)
-      {
-         this->imc.image(n) = timc.image(n).block(min_x, min_y, max_x-min_x, max_y-min_y);
-      }
-      
-      //timc.~eigenCube();
-      
-      this->Nrows = this->imc.rows();
-      this->Ncols = this->imc.cols();
-      this->Npix =  this->imc.rows()*this->imc.cols();
    }
    
    
@@ -319,7 +346,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    pout("Median subtracting\n");
    
    //meanSubtract(rims);
-   medianSubtract(rims, sds);
+   meanSubtract(rims, sds);
 
    //*** Form lower-triangle covariance matrix
    pout("calculating covariance matrix");
@@ -597,7 +624,7 @@ void KLIPreduction<floatT, derotFunctObj>::collapseCovar( eigenT & cutCV,
    extractCols(rimsCut, rims, allidx);
 }
 
-
+///@}
 
 } //namespace mx
 

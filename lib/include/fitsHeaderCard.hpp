@@ -38,6 +38,12 @@ struct fitsHeaderCard
    ///The FITS type
    int type;
    
+   ///Basic c'tor
+   fitsHeaderCard()
+   {
+      type = getFitsType<char *>();
+   }
+   
    ///Construct from the three components.
    template<typename typeT> fitsHeaderCard(std::string k, typeT v, std::string c);
    

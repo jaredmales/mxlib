@@ -32,6 +32,7 @@ Once you have edited the makefile, cd into the directory src/c and type make, an
 
 The SOFA documentation can be found at <a href="http://www.iausofa.org/current_C.html#Documents">http://www.iausofa.org/current_C.html#Documents</a>.
 
+@}
 */
 
  

@@ -81,5 +81,5 @@ void fft( Matrix_in & m_in, Matrix_out & m_out, int dir=-1)
 
 }//namespace mx
 
-#endif // __mx_vmopfft__
+#endif // __fft_hpp__
 

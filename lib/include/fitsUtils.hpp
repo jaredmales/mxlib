@@ -1,4 +1,4 @@
-/** \file fitsUtils
+/** \file fitsUtils.hpp
   * \brief Declares and defines utilities to work with FITS files
   * \ingroup image_processing
   * \author Jared R. Males (jaredmales@gmail.com)
