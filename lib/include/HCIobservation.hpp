@@ -38,7 +38,7 @@ struct HCIobservation
 
    typedef _floatT floatT;
    
-   std::string dir;
+   std::string dir; ///<The directory where to search for files
    std::string prefix;
    std::string ext;
    
