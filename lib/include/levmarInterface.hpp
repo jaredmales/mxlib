@@ -108,7 +108,7 @@ public:
    
 protected:
    floatT *p; ///<  Parameter array.  On input is the initial estimates. On output has the estimated solution. 
-   int m;     ///<  Parameter vector dimension (i.e. #unknowns)
+   int m;     ///<  Parameter vector dimension (i.e. number of unknowns)
    bool own_p; ///< Flag indicating whether the p array is owned by this object (for de-allocation).
 
    int itmax; ///< Maximum number of iterations, default is 100
@@ -170,7 +170,7 @@ public:
    levmarInterface();
    
    /// Setup constructor
-   /** After construction ::fit() will work.
+   /** After construction fit() will work.
      *
      * \param i_p pointer to the initial parameter guess
      * \param i_x pointer to the data (can be NULL)

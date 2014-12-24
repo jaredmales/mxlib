@@ -77,11 +77,8 @@ struct imPlanes<eigenT, false>
  */
 template <typename eigenT>
 void ds9( const eigenT & im, int frame =1)
-{
-   pout(is_eigenCube<eigenT>::value);
-   
+{   
    ::ds9_display(frame, im.data(), im.rows(), im.cols(), imPlanes<eigenT>()(im), getFitsBITPIX<typename eigenT::Scalar>());
-
 }
 
 ///@}

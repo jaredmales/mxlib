@@ -34,6 +34,7 @@ should be commented out if there is any chance you will use levmar in a multithr
 
 Some levmar documentation can be found at <a href="http://users.ics.forth.gr/~lourakis/levmar/">http://users.ics.forth.gr/~lourakis/levmar/</a>.  The source tree also contains documentation.
 
+@}
 */
 
  

@@ -1,5 +1,5 @@
-/** \file fitsHeaderCart.cpp
-  * \brief Definitoins for a class to work with FITS header cards
+/** \file fitsHeaderCard.cpp
+  * \brief Definitions for a class to work with FITS header cards
   * \ingroup image_processing
   * \author Jared R. Males (jaredmales@gmail.com)
   *
@@ -119,7 +119,9 @@ int fitsHeaderCard::write(fitsfile *fptr)
          return fits_update_key<double>(fptr, (char *) keyword.c_str(), &d, (char *) comment.c_str());   
       }
       default:
-         return -1;
+      {
+         return fits_update_key<char *>(fptr, (char *) keyword.c_str(), (void *)value.c_str(), (char *) comment.c_str());
+      }
    }
 }
          

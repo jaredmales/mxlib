@@ -55,10 +55,10 @@ void pout()
   * \tparam flush controls whether std::cout.flush() is called, by default it is true.
   * \tparam eol is the character to print at end of line, by default it is '\\n'.
   * \tparam valT a type which can be output by std::cout
-  * \tparam valTs... a variadic list of additional types which can be output by std::cout
+  * \tparam valTs a variadic list of additional types which can be output by std::cout
   * 
   * \param value a value to print.  
-  * \param values... a variadic list of additional values. Any number of values can be specified.
+  * \param values a variadic list of additional values. Any number of values can be specified.
   * 
   */
 template<char space=' ', bool flush=true, char eol='\n', typename valT, typename... valTs> 

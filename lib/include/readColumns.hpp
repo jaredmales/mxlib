@@ -59,15 +59,15 @@ void readcol(std::ifstream & fin, int i, arrT* & array, arrTs*&... arrays)
   * \code
   * pout<',', '\r'>(readcol("data_file.csv", 5, i1, f1, d1););
   * \endcode
-  * which sets the delimmiter to comma, and the end-of-line to \r.
+  * which sets the delimmiter to comma, and the end-of-line to \\r.
   * 
   * \tparam delim is the character separating columns,  by default this is space.
   * \tparam eol is the end of line character
-  * \tparam arrTs... a variadic list of array types
+  * \tparam arrTs a variadic list of array types
   * 
   * \param fname is the file name to read from
   * \param n_lines is the number of lines in the file.
-  * \param arrays... a variadic list of allocate arrays of the appropriate type. Any number of values with mixed type can be specified.  These must be pre-allocated with at least n_lines length.
+  * \param arrays a variadic list of allocate arrays of the appropriate type. Any number of values with mixed type can be specified.  These must be pre-allocated with at least n_lines length.
   * 
   */
 template<char delim=' ', char eol='\n', typename... arrTs> 

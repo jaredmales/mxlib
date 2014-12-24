@@ -151,10 +151,11 @@ int ds9_display(int frame, const void *im, size_t dim1, size_t dim2, size_t dim3
 int ds9_display_shutdown();
 
 ///@}
+
 ///@}
 
 #ifdef __cplusplus
-} //extern "C"ip
+} //extern "C"
 #endif
    
 #endif //__ds9_interface_h__

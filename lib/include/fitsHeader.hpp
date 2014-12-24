@@ -59,6 +59,11 @@ public:
     */
    fitsHeader(const fitsHeader & head);
    
+   ~fitsHeader()
+   {
+      clear();
+   }
+   
    /// Get iterator to the beginning of the cards list
    headerIterator begin();
    
