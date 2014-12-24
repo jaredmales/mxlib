@@ -242,13 +242,12 @@ inline void HCIobservation<_floatT>::combineFinim()
    {
       if(doWeightedCombo)
       {
-            for(int i=0;i<psfsub[n].planes();++i)
-            {
-               psfsub[n].image(i) = comboWeights[i]*psfsub[n].image(i);
-            }
-         
-            psfsub[n].mean(tfinim);
-            finim.image(n) = tfinim; // /wsum*psfsub[n].planes();
+         for(int i=0;i<psfsub[n].planes();++i)
+         {
+            psfsub[n].image(i) = comboWeights[i]*psfsub[n].image(i);
+         }
+         psfsub[n].mean(tfinim);
+         finim.image(n) = tfinim; // /wsum*psfsub[n].planes();
       }
       else
       {
