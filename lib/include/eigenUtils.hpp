@@ -209,7 +209,7 @@ std::vector<size_t> imageRegionIndices( eigenT &rIm,
    {
       for(size_t j = y0; j< y1; ++j)
       { 
-         if(rIm(i,j) >= min_r && rIm(i,j) <= max_r && qIm(i,j) >= min_q && qIm(i,j) <= max_q) 
+         if(rIm(i,j) >= min_r && rIm(i,j) < max_r && qIm(i,j) >= min_q && qIm(i,j) < max_q) 
          {
             idx.push_back(i*rIm.cols() + j);
          }

@@ -22,6 +22,11 @@ double dcut, dcv, dklims, dgemm, dsyevr, dcfs, drot, dcombo, dread;
   * @{
   */
 
+namespace HCI 
+{
+   enum excludeMethods{excludeNone, excludePixel, excludeAngle, excludeImno};   
+}
+
 /// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
 template<typename _floatT, class _derotFunctObj>
 struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
@@ -41,7 +46,7 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
 
    
-   enum excludeMethods{excludeNone, excludePixel, excludeAngle, excludeImno};
+
    //static const int excludeAngle = 0;
    //static const int excludeImno = 1;
 
@@ -71,7 +76,7 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
    void initialize()
    {
-      excludeMethod = excludeNone;
+      excludeMethod = HCI::excludeNone;
       includeRefNum = 0;
       padSize = 4;
    }
@@ -256,15 +261,15 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
 
       floatT dang = 0;
       
-      if(excludeMethod == excludePixel)
+      if(excludeMethod == HCI::excludePixel)
       {
          dang = fabs(atan(mindpx/minr[regno]));
       }
-      else if(excludeMethod == excludeAngle)
+      else if(excludeMethod == HCI::excludeAngle)
       {
          dang = DTOR(mindpx);
       }
-      else if(excludeMethod == excludeImno)
+      else if(excludeMethod == HCI::excludeImno)
       {
          dang = mindpx;
       }
@@ -279,7 +284,7 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
    this->derotate();
    drot= get_curr_time()-drot;
    
-   if(this->doFinimCombine)
+   if(this->combineMethod > 0)
    {
       pout("combining");
       dcombo = get_curr_time();
@@ -292,17 +297,35 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
       
       std::stringstream str;
       for(int nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
-      str << Nmodes[Nmodes.size()-1];
-      
+      str << Nmodes[Nmodes.size()-1];      
       head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
+      
+      str.str("");
+      for(int nm=0;nm < minr.size()-1; ++nm) str << minr[nm] << ",";
+      str << minr[minr.size()-1];      
+      head.append<char *>("REGMINR", (char *)str.str().c_str(), "region inner edge(s)");
+      
+      str.str("");
+      for(int nm=0;nm < maxr.size()-1; ++nm) str << maxr[nm] << ",";
+      str << maxr[maxr.size()-1];      
+      head.append<char *>("REGMAXR", (char *)str.str().c_str(), "region outer edge(s)");
+      
+      str.str("");
+      for(int nm=0;nm < minq.size()-1; ++nm) str << minq[nm] << ",";
+      str << minq[minq.size()-1];      
+      head.append<char *>("REGMINQ", (char *)str.str().c_str(), "region minimum angle(s)");
+      
+      str.str("");
+      for(int nm=0;nm < maxq.size()-1; ++nm) str << maxq[nm] << ",";
+      str << maxq[maxq.size()-1];      
+      head.append<char *>("REGMAXQ", (char *)str.str().c_str(), "region maximum angle(s)");
+      
+      
       head.append<int>("EXCLMTHD", excludeMethod, "value of excludeMethod");
       head.append<floatT>("MINDPX", mindpx, "minimum pixel delta");
       head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
 
-      fitsFile<floatT> f;
-      
-      pout("actually writing\n");
-      f.write(this->finimName, this->finim.data(), this->finim.rows(), this->finim.cols(), this->finim.planes(), &head);
+      this->writeFinim(&head);
    }
    
 //    if(this->doOutputPsfsub)
@@ -354,7 +377,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    eigenSYRK(cv, rims.cube());
    dcv += get_curr_time() - t5;
 
-   if( excludeMethod == excludeNone )
+   if( excludeMethod == HCI::excludeNone )
    {
       pout("calculating K-L images");
       /**** Now calculate the K-L Images ****/
@@ -368,7 +391,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    {
       pout("image:", imno, "/", this->Nims);
 
-       if( excludeMethod != excludeNone )
+       if( excludeMethod != HCI::excludeNone )
        {
          collapseCovar( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang);
          /**** Now calculate the K-L Images ****/
@@ -547,8 +570,10 @@ void KLIPreduction<floatT, derotFunctObj>::collapseCovar( eigenT & cutCV,
    int rotoff0 = 0;
    int rotoff1 = 0;
    
-   if(excludeMethod == excludePixel || excludeMethod == excludeAngle )
+   if(excludeMethod == HCI::excludePixel || excludeMethod == HCI::excludeAngle )
    {
+      pout("dang", dang);
+      
       rotoff1 = this->Nims;
       //Find first rotoff within dang
       int j;
@@ -571,7 +596,7 @@ void KLIPreduction<floatT, derotFunctObj>::collapseCovar( eigenT & cutCV,
          }
       }
    }
-   else if(excludeMethod == excludeImno)
+   else if(excludeMethod == HCI::excludeImno)
    {
       rotoff1 = this->Nims;
       //Find first imno within dang

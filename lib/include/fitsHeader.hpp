@@ -76,7 +76,7 @@ public:
    /// Get number of cards currently stored in the header.
    size_t size();
    
-   /// Clear al cards from the header
+   /// Clear all cards from the header
    void clear();
    
    /// Append a fitsHeaderCard to the end of the header
@@ -93,7 +93,7 @@ public:
      * \param v is the value of typeT
      * \param c is the comment string
      */ 
-   template<typename typeT> void append(const std::string &k, typeT v, const std::string &c);
+   template<typename typeT> void append(const std::string &k, const typeT &v, const std::string &c);
    
    /// Append a card to the end of the header, from the components of a card with no comment.
    /**
@@ -102,8 +102,14 @@ public:
      * \param k is the keyword string
      * \param v is the value of typeT
      */
-   template<typename typeT> void append(const std::string &k, typeT v);
+   template<typename typeT> void append(const std::string &k, const typeT &v);
       
+   /// Append a fitsHeader to the end of the header
+   /**
+     * \param head is a populated fitsHeader
+     */ 
+   void append(fitsHeader & head);
+   
    /// Insert a card before another card.
    void insert_before(headerIterator it, fitsHeaderCard card);
    template<typename typeT> void insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c);
@@ -129,13 +135,13 @@ public:
 
 
 
-template<typename typeT> void fitsHeader::append(const std::string &k, typeT v, const std::string &c)
+template<typename typeT> void fitsHeader::append(const std::string &k, const typeT &v, const std::string &c)
 {
    append(fitsHeaderCard(k,v,c));
 }
 
 
-template<typename typeT> void fitsHeader::append(const std::string &k, typeT v)
+template<typename typeT> void fitsHeader::append(const std::string &k, const typeT &v)
 {
    append(fitsHeaderCard(k,v));
 }

@@ -45,10 +45,10 @@ struct fitsHeaderCard
    }
    
    ///Construct from the three components.
-   template<typename typeT> fitsHeaderCard(std::string k, typeT v, std::string c);
+   template<typename typeT> fitsHeaderCard(std::string k, const typeT v, std::string c);
    
    ///Construct from just two components.
-   template<typename typeT> fitsHeaderCard(std::string k, typeT v);
+   template<typename typeT> fitsHeaderCard(std::string k, const typeT v);
 
    ///Get value converted to the specified type
    /** Uses convertFromString.  typeT can be any <a href=\isfundamental>fundamental type</a>, 
@@ -106,7 +106,7 @@ struct fitsHeaderCard
 }; //fitsHeaderCard
 
 
-template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, typeT v, std::string c)
+template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v, std::string c)
 {
    keyword = k;
    value = convertToString<typeT>(v);
@@ -114,7 +114,7 @@ template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, typeT v, 
    comment = c;
 }
 
-template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, typeT v)
+template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
 {
    keyword = k;
    value = convertToString<typeT>(v);

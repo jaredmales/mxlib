@@ -29,6 +29,14 @@ namespace mx
   * @{
   */
 
+namespace HCI 
+{
+   ///Possible combination methods
+   enum combineMethods{ noCombine, medianCombine, meanCombine, weightedMeanCombine};
+   
+   
+}
+
 /// The basic high contrast imaging data type
 /** 
   */
@@ -39,8 +47,8 @@ struct HCIobservation
    typedef _floatT floatT;
    
    std::string dir; ///<The directory where to search for files
-   std::string prefix;
-   std::string ext;
+   std::string prefix; ///<The prefix of the files
+   std::string ext; ///<The extension of the files, default is ".fits"
    
    ///Set the image size.  Images are cut down to this size after reading.
    /** Set to <= 0 to use images uncut.
@@ -58,8 +66,19 @@ struct HCIobservation
    ///Value to insert as the mask according to \ref maskIdx.
    floatT maskVal;
    
-   bool doFinimCombine;
+   ///Determine how to combine the images
+   int combineMethod;
+   
+   
+   ///Set whether the final combined image is written to disk
+   int doWriteFinim;
+   
+   ///The base file name of the output final image
+   /** The complete name is formed by combining with a sequential number
+     */
    std::string finimName;
+   
+   
    
    bool doWeightedCombo;
    std::string weightFile;
@@ -83,34 +102,14 @@ struct HCIobservation
    int Ncols;
    int Npix;
    
-   void initialize()
-   {
-      imSize = 0;
-      applyMask = false;
-      
-      filesRead = false;
-      
-      doFinimCombine = true;
-      finimName = "finim.fits";
-      
-      doWeightedCombo = false;
-      
-      doOutputPsfsub = false;
-   }
+   void initialize();
+
+   HCIobservation();
    
-   HCIobservation()
-   {
-      initialize();
-   }
-   
-   HCIobservation(std::string odir, std::string oprefix, std::string oext)
-   {
-      initialize();
-      
-      dir = odir;
-      prefix = oprefix;
-      ext = oext;      
-   }
+   HCIobservation(std::string oprefix);
+   HCIobservation(std::string odir, std::string oprefix);
+   HCIobservation(std::string odir, std::string oprefix, std::string oext);
+
    
    ///Read the list of files, cut to size, and apply the mask.
    void readFiles();
@@ -123,9 +122,66 @@ struct HCIobservation
      */
    void combineFinim();
    
+   ///Write the final combined image to disk
+   /** 
+    */
+   void writeFinim(fitsHeader * addHead = 0);
 };
 
+template<typename _floatT>
+void HCIobservation<_floatT>::initialize()
+{
+   dir = "./";
+   prefix = "";
+   ext = ".fits";
+   
+   imSize = 0;
+   applyMask = false;
+   
+   filesRead = false;
+   
+   combineMethod = HCI::medianCombine;
+   
+   doWriteFinim = 1;
+   finimName = "finim_";
+   
+   doWeightedCombo = false;
+   
+   doOutputPsfsub = false;
+}
 
+template<typename _floatT>
+HCIobservation<_floatT>::HCIobservation()
+{
+   initialize();
+}
+
+template<typename _floatT>
+HCIobservation<_floatT>::HCIobservation(std::string oprefix)
+{
+   initialize();
+   prefix = oprefix;
+}
+
+template<typename _floatT>
+HCIobservation<_floatT>::HCIobservation(std::string odir, std::string oprefix)
+{
+   initialize();
+   
+   dir = odir;
+   prefix = oprefix;
+}
+
+template<typename _floatT>
+HCIobservation<_floatT>::HCIobservation(std::string odir, std::string oprefix, std::string oext)
+{
+   initialize();
+   
+   dir = odir;
+   prefix = oprefix;
+   ext = oext;      
+}
+   
 
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
@@ -234,13 +290,39 @@ inline void HCIobservation<_floatT>::readWeights()
 template<typename _floatT>
 inline void HCIobservation<_floatT>::combineFinim()
 {
+   if(combineMethod == HCI::noCombine) return;
+   
+   
+   //Validate the combineMethod setting
+   int method = HCI::medianCombine;
+   
+   if(combineMethod == HCI::medianCombine)
+   {
+      method = HCI::medianCombine;
+   }
+   else if(combineMethod == HCI::meanCombine)
+   {
+      method = HCI::meanCombine;
+   }
+   else if(combineMethod == HCI::weightedMeanCombine && comboWeights.size() == Nims)
+   {
+      method = HCI::weightedMeanCombine;
+   }
+   else if(combineMethod == HCI::weightedMeanCombine && comboWeights.size() != Nims)
+   {
+      method = HCI::meanCombine;
+   }
+   
+   
+   //Create and size temporary image for averaging
    eigenImagef tfinim;
    
    finim.resize(psfsub[0].rows(), psfsub[0].cols(), psfsub.size());
    
+   //Now cycle through each set of psf subtractions
    for(int n= 0; n < psfsub.size(); ++n)
    {
-      if(doWeightedCombo)
+      if(method == HCI::weightedMeanCombine)
       {
          for(int i=0;i<psfsub[n].planes();++i)
          {
@@ -249,14 +331,46 @@ inline void HCIobservation<_floatT>::combineFinim()
          psfsub[n].mean(tfinim);
          finim.image(n) = tfinim; // /wsum*psfsub[n].planes();
       }
-      else
+      else if(method == HCI::medianCombine)
       {
          psfsub[n].median(tfinim);
+         finim.image(n) = tfinim;
+      }
+      else if(method == HCI::meanCombine)
+      {
+         psfsub[n].mean(tfinim);
          finim.image(n) = tfinim;
       }
    }
 }
    
+template<typename _floatT>
+inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
+{
+   std::string fname;
+   
+   
+   fname = getSequentialFilename(finimName, ".fits");
+   
+   fitsHeader head;
+   
+   std::string comment = "mx::HCIobservation parameters:";
+   head.append<char *>("COMMENT", (char *) comment.c_str());
+   head.append<int>("IMSIZE", imSize, "image size after reading");
+   head.append<int>("COMBMTHD", combineMethod, "combination method");
+                    
+   if(addHead)
+   {
+      head.append(*addHead);
+   }
+   
+   fitsFile<floatT> f;
+      
+   f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
+   
+   pout("Final image written to: ", fname);
+}
+
 ///@} 
 
 } //namespace mx
