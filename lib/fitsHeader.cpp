@@ -73,7 +73,15 @@ void fitsHeader::append(fitsHeaderCard card)
    
 }
 
-
+void fitsHeader::append(fitsHeader & head)
+{
+   headerIterator it;
+   
+   for(it = head.begin(); it != head.end(); ++it)
+   {
+      append(*it);
+   }
+}
 
 void fitsHeader::insert_before(headerIterator it, fitsHeaderCard card)
 {
