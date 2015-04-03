@@ -36,9 +36,13 @@ typedef Eigen::ArrayXXd eigenImaged;
 
 typedef Eigen::Array<long double, Eigen::Dynamic, Eigen::Dynamic> eigenImageld;
 
-typedef Eigen::ArrayXXd eigenImagecf;
+// typedef Eigen::ArrayXXd eigenImagecf;
+// 
+// typedef Eigen::ArrayXXd eigenImagecd;
 
-typedef Eigen::ArrayXXd eigenImagecd;
+typedef Eigen::Array<std::complex<float>, Eigen::Dynamic, Eigen::Dynamic> eigenImagecf;
+
+typedef Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> eigenImagecd;
 
 typedef Eigen::Array<std::complex<long double>, Eigen::Dynamic, Eigen::Dynamic> eigenImagecld;
 
