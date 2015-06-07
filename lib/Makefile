@@ -31,6 +31,7 @@ OBJS = readcolumns.o \
        fileUtils.o \
        stringUtils.o \
        msgq.o \
+       mxlib.o\
        sharedmem_segment.o \
        sharedMemSegment.o \
        process_interface.o \
@@ -54,6 +55,7 @@ INC_TO_INSTALL = astroconstants.h \
                  IPC.h \
                  msgq.h \
                  msgQ \
+                 mxlib.h\
                  sharedmem_segment.h \
                  sharedMemSegment \
                  process_interface.h \
@@ -83,6 +85,7 @@ all: $(TARGETS)
 fileUtils.o: include/fileUtils.hpp
 stringUtils.o: include/stringUtils.hpp
 msgq.o: include/IPC.h include/msgq.h
+mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 sharedMemSegment.o: include/sharedMemSegment
 process_interface.o: include/process_interface.h
@@ -94,11 +97,16 @@ fitsHeader.o: include/fitsHeader.hpp
 astrodyn.o: include/astrodyn.hpp
 kepler.o: include/kepler.hpp
 
-libmxlib: $(OBJS)
+.PHONY: mxlib_version
+mxlib_version:
+	@sh ./gengithead.sh .. ./include/mxlib_comp_version.h MXLIB_COMP
+
+libmxlib: mxlib_version $(OBJS) 
 	$(AR) libmxlib.a $(OBJS)
 	$(RANLIB) libmxlib.a 
 	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) $(LIB_SOFA) -lrt -lc -rdynamic
-
+	@rm ./include/mxlib_comp_version.h
+	
 install: libmxlib
 	install -d $(INCLUDE_PATH)
 	install -d $(LIB_PATH)

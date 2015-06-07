@@ -31,10 +31,10 @@ GIT_HEADER="$HEADPATH"
 
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
-GIT_MODIFIED="no"
+GIT_MODIFIED=0
 echo $(git --git-dir=$GITPATH/.git --work-tree=$GITPATH status) > /tmp/git_status
 if grep --quiet "modified" /tmp/git_status; then
-   GIT_MODIFIED="yes"
+   GIT_MODIFIED=1
 fi
 
 
@@ -43,9 +43,17 @@ echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
 echo "#define $PREFIX""_CURRENT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
-echo "#define $PREFIX""_REPO_MODFIED \"$GIT_MODIFIED"\" >> $GIT_HEADER
+echo "#define $PREFIX""_REPO_MODIFIED  $GIT_MODIFIED"  >> $GIT_HEADER
 echo "" >> $GIT_HEADER
-echo "#endif //$PREFIX""_VERSION_H" >> $GIT_HEADER
-
-
-
+echo "" >> $GIT_HEADER
+echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
+echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
+echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
+echo "  #pragma message(\"* WARNING: repository modified *\")" >> $GIT_HEADER
+echo "  #pragma message(\"*     changes not committed    *\")" >> $GIT_HEADER
+echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
+echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
+echo "#endif" >> $GIT_HEADER
+echo "" >> $GIT_HEADER
+echo "" >> $GIT_HEADER
+echo "#endif" >> $GIT_HEADER

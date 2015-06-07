@@ -60,7 +60,7 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
    int sgn = 1;
 
    st = 0;
-   en = xmsstr.find(':', st);
+   en = hmsstr.find(':', st);
    
    //h = strtold(hmsstr.substr(st, en-st).c_str(), 0);
    h = convertFromString<floatT>(hmsstr.substr(st, en-st).c_str());
@@ -78,7 +78,7 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
    st = en+1;
    
    //s = sgn*strtold(hmsstr.substr(st, xmsstr.length()-st).c_str(), 0);
-   s = sgn*convertFromString<floatT>(hmsstr.substr(st, xmsstr.length()-st).c_str());
+   s = sgn*convertFromString<floatT>(hmsstr.substr(st, hmsstr.length()-st).c_str());
 }
 
 
