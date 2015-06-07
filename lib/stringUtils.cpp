@@ -60,7 +60,7 @@ int convertFromString<int>(const std::string & str)
 template<>   
 unsigned int convertFromString<unsigned int>(const std::string & str)
 {
-   return (unsigned int) atoi(str.c_str());
+   return (unsigned int) strtoul(str.c_str(),0,0);
 }
 
 /// Template specialization of convertFromString for long

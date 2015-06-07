@@ -21,8 +21,19 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
       if(is_directory(directory) )
       {
 
-         auto it = directory_iterator(directory);
-         auto it_end = directory_iterator();
+//         auto it = directory_iterator(directory);
+//         auto it_end = directory_iterator();
+         
+         typedef std::vector<path> vec;             // store paths,
+         vec v;                                // so we can sort them later
+
+         copy(directory_iterator(directory), directory_iterator(), back_inserter(v));
+
+         sort(v.begin(), v.end());             // sort, since directory iteration
+                                              // is not ordered on some file systems
+  
+         auto it = v.begin();
+         auto it_end = v.end();
          
          while(it != it_end)
          {
@@ -30,7 +41,7 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
             
             if(extension != "")
             {
-               if(it->path().extension() != extension)
+               if(it->extension() != extension)
                {
                   inc = false;
                }
@@ -38,7 +49,7 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
             
             if(prefix != "" && inc)
             {
-               std::string p = it->path().filename().generic_string();
+               std::string p = it->filename().generic_string();
                if(p.find(prefix) != 0)
                {
                   inc = false;
@@ -47,7 +58,7 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
                   
             if(inc)
             {
-               vect.push_back(it->path().native());
+               vect.push_back(it->native());
             }
             
             ++it;

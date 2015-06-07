@@ -81,6 +81,33 @@ struct _fft
    }
 };
 
+template<typename arrayOut, typename arrayIn>
+struct _fft<arrayOut, arrayIn, double, 1>
+{
+   void operator()(arrayOut & out, arrayIn & in, int sign = FFTW_FORWARD)
+   {        
+      fftw_plan p = fftw_plan_dft_r2c_1d(in.rows(), in.data(), reinterpret_cast<fftw_complex*>(out.data()), FFTW_ESTIMATE);
+      
+      fftw_execute(p);
+
+      fftw_destroy_plan(p);
+   }
+};
+
+template<typename arrayOut, typename arrayIn>
+struct _fft<arrayOut, arrayIn, std::complex<double>, 1>
+{
+   void operator()(arrayOut & out, arrayIn & in, int sign = FFTW_FORWARD)
+   {        
+      fftw_plan p = fftw_plan_dft_1d(in.rows(), reinterpret_cast<fftw_complex*>(in.data()),
+                                     reinterpret_cast<fftw_complex*>(out.data()), sign, FFTW_ESTIMATE);
+      
+      fftw_execute(p);
+
+      fftw_destroy_plan(p);
+   }
+};
+
 
 template<typename arrayOut, typename arrayIn>
 struct _fft<arrayOut, arrayIn, std::complex<float>, -1>

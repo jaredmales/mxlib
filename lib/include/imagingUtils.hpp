@@ -1,22 +1,26 @@
-#ifndef __imaging_hpp__
-#define __imaging_hpp__
+/** \file imagingUtils.hpp
+  * \brief Utilities for modeling image formation
+  * \ingroup imaging
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
+
+#ifndef __imagingUtils_hpp__
+#define __imagingUtils_hpp__
+
+#include <cmath>
 
 namespace mx
 {
 
-#include <cmath>
-
-
 /// Fill in an Eigen Array with a circular pupil mask.
-/** 
-  * \ingroup imaging
-  *
+/** \ingroup imaging
   * \param m is the allocated Array
   * \param eps [optional] is the central obscuration.  0-1, default is 0.
   * \param rad [optional] is the desired radius. if 0 the maximum radius is used.
   */  
 template<class arrayT> 
-void circular_pupil( arrayT & m, 
+void circularPupil( arrayT & m, 
                      typename arrayT::Scalar eps=0, 
                      typename arrayT::Scalar rad=0 
                    )
@@ -42,38 +46,16 @@ void circular_pupil( arrayT & m,
    }
 }
 
-// template<class carrayT>
-// void fraunpropFocal(carrayT & cmplxAmpFocal, carrayT & cmplxAmpPupil, int Nfft=-1)
-// {
-//    typedef typename carrayT::Scalar complexT;
-//    
-//    if(Nfft == -1) Nfft = cmplxAmpPupil.rows();
-//    
-//    carrayT pad(Nfft, Nfft);
-//    pad.setZero();
-//    
-//    pad.topLeftCorner(cmplxAmpPupil.rows(), cmplxAmpPupil.cols()) = cmplxAmpPupil;
-//    
-//    //Center the result by multiplying the input by (-1)^(ii+jj) and 1/2 pixel phase slope
-//    int one  = 1.0;
-//    float xc = .5*(Nfft-1);
-//    float yc = .5*(Nfft-1);
-//    for(int ii=0; ii< cmplxAmpIn.rows(); ++ii)
-//    {
-//       for(int jj=0; jj<cmplxAmpIn.cols(); ++jj)
-//       {     
-//          pad(ii,jj) = pad(ii,jj)*complexT(one,one)* exp(complexT(0.,-6.28*((ii-xc)+(jj-yc))*.5/Nfft));
-//          one *= -1;
-//       }
-//       one*=-1.;
-//    }
-//    
-//    
-//    cmplxAmpOut.resize(Nfft, Nfft);
-//    
-//    fft(cmplxAmpOut, pad);
-// }
 
+///Create a complex pupil plane wavefront from a real amplitude mask.
+/** The input real amplitude mask is placed in the center of a 0-padded complex array.
+  *
+  * \param complexPupil [output] the complex pupil plane wavefront
+  * \param realPupil [input] a real amplitude mask.
+  * \param wavefrontSizePixels [input] the desired size of the ouput wavefront, should be at least as big as realPupil
+  * 
+  * \ingroup imaging
+  */ 
 template<typename arithT>
 void makeComplexPupil(Eigen::Array<std::complex<arithT>, Eigen::Dynamic, Eigen::Dynamic> & complexPupil, 
                        Eigen::Array<arithT, Eigen::Dynamic, Eigen::Dynamic> & realPupil, int wavefrontSizePixels)
@@ -91,7 +73,39 @@ void makeComplexPupil(Eigen::Array<std::complex<arithT>, Eigen::Dynamic, Eigen::
 
 }
 
+///Apply a tilt to a wavefront 
+/**
+  * \param complexWavefront [in/out] the complex wavefront to tilt, will be modified on output
+  * \param xTilt [input] the amount of tilt in the x direction, in pixels 
+  * \param yTilt [input] the amount of tilt in the y direction, in pixels 
+  * 
+  * \ingroup imaging
+  */
+template<typename arithT>
+void tiltWavefront(Eigen::Array<std::complex<arithT>, Eigen::Dynamic, Eigen::Dynamic> & complexWavefront, 
+                       arithT xTilt, arithT yTilt)
+{
+   typedef std::complex<arithT> complexT;
+   
+   int wfsSizeX = complexWavefront.cols();
+   int wfsSizeY = complexWavefront.rows();
+   
+   arithT xCen = 0.5*wfsSizeX;
+   arithT yCen = 0.5*wfsSizeY;
+
+   arithT argX = D2PI/(wfsSizeX-1);
+   arithT argY = D2PI/(wfsSizeY-1);
+  
+   for(int ii=0; ii < wfsSizeX; ++ii)
+   {
+      for(int jj=0; jj < wfsSizeY; ++jj)
+      {     
+         complexWavefront(ii,jj) = complexWavefront(ii,jj)*exp(complexT(0.,argX*xTilt*(ii-xCen)+argY*yTilt*(jj-yCen)));
+      }
+   }
+}
+
 } //namespace mx
 
-#endif //__imaging_hpp__
+#endif //__imagingUtils_hpp__
 

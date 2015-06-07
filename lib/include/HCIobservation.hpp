@@ -186,12 +186,12 @@ HCIobservation<_floatT>::HCIobservation(std::string odir, std::string oprefix, s
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
 {      
-   eigenImagef im;
+   Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
 
    vector<string> flist = getFileNames(dir, prefix, ext);
    sort(flist.begin(), flist.end());
-
-   fitsFilef f(flist[0]);
+   
+   fitsFile<floatT> f(flist[0]);
 
    f.read(im);
 
