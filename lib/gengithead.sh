@@ -37,7 +37,7 @@ if grep --quiet "modified" /tmp/git_status; then
    GIT_MODIFIED=1
 fi
 
-
+REPO_NAME=$(basename `git -C $GITPATH rev-parse --show-toplevel`)
 
 echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER
@@ -50,7 +50,8 @@ echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
 echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
 echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
 echo "  #pragma message(\"* WARNING: repository modified *\")" >> $GIT_HEADER
-echo "  #pragma message(\"*     changes not committed    *\")" >> $GIT_HEADER
+echo "  #pragma message(\"*  changes not committed for   *\")" >> $GIT_HEADER
+echo "  #pragma message(\"*    $REPO_NAME    *\")" >> $GIT_HEADER
 echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
 echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
 echo "#endif" >> $GIT_HEADER

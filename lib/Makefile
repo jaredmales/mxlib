@@ -99,7 +99,7 @@ kepler.o: include/kepler.hpp
 
 .PHONY: mxlib_version
 mxlib_version:
-	@sh ./gengithead.sh .. ./include/mxlib_comp_version.h MXLIB_COMP
+	@sh ./gengithead.sh ../ ./include/mxlib_comp_version.h MXLIB_COMP
 
 libmxlib: mxlib_version $(OBJS) 
 	$(AR) libmxlib.a $(OBJS)
