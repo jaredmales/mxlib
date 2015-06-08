@@ -23,11 +23,9 @@ else
 fi
 
 
-echo "Generating header for git hash"
+#echo "Generating header for git hash"
+
 GIT_HEADER="$HEADPATH"
-# if [ -z "$1" ]; then
-#         GIT_HEADER="git_version.h"
-# fi
 
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
