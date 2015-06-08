@@ -16,7 +16,9 @@ extern "C"
    
 /// Get the compile-time git repository SHA-1
 /** Returns a pointer to a static string containing the SHA-1 hash of the
-  * mxlib git repository at compile time
+  * mxlib git repository at compile time.  This pointer should not be modified.
+  * 
+  * \retval char* which points to a string containing the SHA-1 hash
   * 
   */
 char * mxlib_compiled_git_sha1();
@@ -25,6 +27,7 @@ char * mxlib_compiled_git_sha1();
 /** Returns a pointer to a static int, if 1 then at compile 
   * time there were modifications not committed.
   * 
+  * \retval int denoting whether the repo contained uncommitted modifications at compile time.
   */
 int mxlib_compiled_git_repo_modified();
 

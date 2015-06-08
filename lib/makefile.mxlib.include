@@ -1,7 +1,7 @@
 MXLIB_PATH=/home/jaredmales/Source/c/mxlib
 INCLUDE_PATH = $(MXLIB_PATH)/lib/include  -I/home/jaredmales/include
 MXLIB_LIB_PATH = $(MXLIB_PATH)/lib
-LIBS =  -lboost_filesystem -lcfitsio $(MXLIB_LIB_PATH)/libmxlib.a
+LIBS = $(MXLIB_LIB_PATH)/libmxlib.a  -lboost_filesystem -lboost_system -lcfitsio 
 
 OPTIMIZE = -O3
 

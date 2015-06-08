@@ -54,9 +54,21 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
 std::vector<std::string> getFileNames(const std::string & directory);
 
 
+///Get the next file in a numbered sequence
+/** Searches for files in the path designated by basename of the form basenameXXXXextension
+  * where the number of digits in XXXX is set by the \a ndigit template parameter.
+  * 
+  * \param[in] basename  path and initial name of the file
+  * \param[in] extension [optional] extension to append after the number. Default is empty.
+  * \param[in] startat [optional] number to start the search from.  Default is 0.
+  *
+  * \retval std::string containing the next filename.
+  * 
+  * \tparam ndigit [optional] number of digits in string representation of the number.  Default is 4.
+  */ 
 template<int ndigit = 4>
 std::string getSequentialFilename( const std::string & basename, 
-                                   const std::string & extension, 
+                                   const std::string & extension ="", 
                                    const int startat = 0)
 {
    int maxdig = 1;
