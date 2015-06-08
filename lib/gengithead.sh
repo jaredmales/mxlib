@@ -46,6 +46,7 @@ echo "#define $PREFIX""_CURRENT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
 echo "#define $PREFIX""_REPO_MODIFIED  $GIT_MODIFIED"  >> $GIT_HEADER
 echo "" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
+if [ $GIT_MODIFIED = 1 ]; then
 echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
 echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
 echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
@@ -55,6 +56,7 @@ echo "  #pragma message(\"*    $REPO_NAME    *\")" >> $GIT_HEADER
 echo "  #pragma message(\"*                              *\")" >> $GIT_HEADER
 echo "  #pragma message(\"********************************\")" >> $GIT_HEADER
 echo "#endif" >> $GIT_HEADER
+fi
 echo "" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
 echo "#endif" >> $GIT_HEADER
