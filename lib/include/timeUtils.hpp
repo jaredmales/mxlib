@@ -29,7 +29,7 @@ namespace mx
   *               must have cast from integer types, and + and / operators defined.
   * \tparam clk_id is the sys/time.h clock identifier [default=CLOCK_REALTIME]
   * 
-  * \returns the current time in seconds
+  * \retval typeT containing the current time in seconds
   */
 template<typename typeT=double, clockid_t clk_id=CLOCK_REALTIME>
 typeT get_curr_time()
@@ -45,10 +45,10 @@ typeT get_curr_time()
 /** Parse a string of format hh:mm:ss.x
   * Breaks a time string into constituent parts.  Handles -h by distributing the sign to m and s.
   *
-  * \param hmsstr [input] is a string of format hh:mm:ss.x where ss.x can be of any precision
-  * \param h [output] is the hour component coverted to floatT
-  * \param m [output] is the minute component converted to floatT
-  * \param s [output] is the second component converted to floatT
+  * \param[in] hmsstr  is a string of format hh:mm:ss.x where ss.x can be of any precision
+  * \param[out] h  is the hour component coverted to floatT
+  * \param[out] m  is the minute component converted to floatT
+  * \param[out] s  is the second component converted to floatT
   * 
   * \tparam floatT is a floating point type
   */ 

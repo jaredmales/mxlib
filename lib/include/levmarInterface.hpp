@@ -14,8 +14,8 @@
 namespace mx
 {
 
-//Test whether a function type has a Jacobian function by testing whether it has a typedef of "hasJacobian"
-/* Used for compile-time determination of type
+///Test whether a function type has a Jacobian function by testing whether it has a typedef of "hasJacobian"
+/** Used for compile-time determination of whether the fitter has a Jacobian.
   */
 //This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
 template <typename T>
@@ -32,8 +32,10 @@ struct hasJacobian
    template <typename>
    static no& test(...);
  
+   /// If hasJacobian<fitterT>::value == true, then fitterT has a Jacobian and the appropriate levmar routines are used.
+   /// If ::value == false, then the numerical derivatives are calculated.
    // If the "sizeof" of the result of calling test<T>(0) would be equal to sizeof(yes),
-   // the first overload worked and T has a nested type named "is_mmatrix".
+   // the first overload worked and T has a nested type named "hasJacobian".
    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
 
@@ -41,9 +43,9 @@ struct hasJacobian
 template<typename floatT>
 struct array2Fit
 {
-   floatT * data;
-   size_t nx;
-   size_t ny;
+   floatT * data; ///Pointer to the array
+   size_t nx; ///X dimension of the array
+   size_t ny; ///Y dimension of the array
 };
 
 /** \addtogroup fitting

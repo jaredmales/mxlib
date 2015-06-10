@@ -56,6 +56,7 @@ INC_TO_INSTALL = astroconstants.h \
                  msgq.h \
                  msgQ \
                  mxlib.h\
+                 mxlib_uncomp_version.h\
                  sharedmem_segment.h \
                  sharedMemSegment \
                  process_interface.h \
@@ -72,12 +73,12 @@ INC_TO_INSTALL = astroconstants.h \
                  imageTransforms.hpp \
                  mxException
                  
-VMOP_TO_INSTALL = MMatrix \
-                  MMatrix1 \
-                  MMatrix2 \
-                  MMatrixSlice \
-                  MMatrixView1 \
-                  MMatrixView2
+# VMOP_TO_INSTALL = MMatrix \
+#                   MMatrix1 \
+#                   MMatrix2 \
+#                   MMatrixSlice \
+#                   MMatrixView1 \
+#                   MMatrixView2
 
 all: $(TARGETS) 
 
@@ -97,15 +98,18 @@ fitsHeader.o: include/fitsHeader.hpp
 astrodyn.o: include/astrodyn.hpp
 kepler.o: include/kepler.hpp
 
-.PHONY: mxlib_version
-mxlib_version:
+.PHONY: mxlib_comp_version
+mxlib_comp_version:
 	@sh ./gengithead.sh ../ ./include/mxlib_comp_version.h MXLIB_COMP
 
-libmxlib: mxlib_version $(OBJS) 
+.PHONY: mxlib_uncomp_version
+mxlib_uncomp_version:
+	@sh ./gengithead.sh ../ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
+	
+libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
 	$(AR) libmxlib.a $(OBJS)
 	$(RANLIB) libmxlib.a 
 	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) $(LIB_SOFA) -lrt -lc -rdynamic
-	@rm ./include/mxlib_comp_version.h
 	
 install: libmxlib
 	install -d $(INCLUDE_PATH)
@@ -115,9 +119,9 @@ install: libmxlib
 	for file in ${INC_TO_INSTALL}; do \
 	 (install include/$$file $(INCLUDE_PATH)) || break; \
 	done
-	for file in ${VMOP_TO_INSTALL}; do \
-	 (install vmop/$$file $(INCLUDE_PATH)) || break; \
-	done
+# 	for file in ${VMOP_TO_INSTALL}; do \
+# 	 (install vmop/$$file $(INCLUDE_PATH)) || break; \
+# 	done
 
 clean:
 	rm -f *.o *~

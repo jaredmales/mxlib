@@ -8,10 +8,13 @@
 #define __mxlib_h__
 
 
+#include "mxlib_uncomp_version.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
 
    
 /// Get the compile-time git repository SHA-1

@@ -27,29 +27,29 @@ namespace mx
 
 ///Get a list of file names from the specified directory, specifying a prefix and an extension
 /** 
-  * \param directory the path to the directory to search
-  * \param extension the file name extension to search for, if "" then not used 
-  * \param prefix the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
+  * \param[in] directory the path to the directory to search
+  * \param[in] extension the file name extension to search for, if "" then not used 
+  * \param[in] prefix the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
   *
-  * \returns a std::vector<std::string> containing the matching file names.
+  * \retval std::vector<std::string> which contains the matching file names.
   */ 
 std::vector<std::string> getFileNames(const std::string & directory, const std::string & prefix, const std::string & extension);
 
 
 ///Get a list of file names from the specified directory, specifying the extension
 /** 
-  * \param directory the path to the directory to search
-  * \param extension the file name extension to search for, if "" then not used 
+  * \param[in] directory the path to the directory to search
+  * \param[in] extension the file name extension to search for, if "" then not used 
   *
-  * \returns a std::vector<std::string> containing the matching file names.
+  * \retval std::vector<std::string> which contains the matching file names.
   */ 
 std::vector<std::string> getFileNames(const std::string & directory, const std::string & extension);
 
 ///Get a list of file names from the specified directory
-/** 
+/** \overload
   * \param directory the path to the directory to search
   *
-  * \returns a std::vector<std::string> containing the matching file names.
+  * \retval std::vector<std::string> which contains the matching file names.
   */ 
 std::vector<std::string> getFileNames(const std::string & directory);
 
@@ -68,7 +68,7 @@ std::vector<std::string> getFileNames(const std::string & directory);
   */ 
 template<int ndigit = 4>
 std::string getSequentialFilename( const std::string & basename, 
-                                   const std::string & extension ="", 
+                                   const std::string & extension = "", 
                                    const int startat = 0)
 {
    int maxdig = 1;
@@ -94,10 +94,31 @@ std::string getSequentialFilename( const std::string & basename,
    
       outn << basename;
       outn << digstr;
+      
       outn << extension;
    }
    
    return outn.str();
+}
+
+///Get the next file in a numbered sequence
+/** \overload 
+  * 
+  * Searches for files in the path designated by basename of the form basenameXXXX
+  * where the number of digits in XXXX is set by the \a ndigit template parameter.
+  * 
+  * \param[in] basename  path and initial name of the file
+  * \param[in] startat number to start the search from.
+  *
+  * \retval std::string containing the next filename.
+  * 
+  * \tparam ndigit [optional] number of digits in string representation of the number.  Default is 4.
+  */ 
+template<int ndigit = 4>
+std::string getSequentialFilename( const std::string & basename,  
+                                   const int startat )
+{
+   return getSequentialFilename<ndigit>(basename, "", startat);
 }
 
 ///@} -fileutils
