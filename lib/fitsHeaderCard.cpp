@@ -1,6 +1,6 @@
 /** \file fitsHeaderCard.cpp
   * \brief Definitions for a class to work with FITS header cards
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */

@@ -1,6 +1,7 @@
 INSTALL_PATH = $(HOME)
 INCLUDE_PATH = $(INSTALL_PATH)/include/mx
 LIB_PATH = $(INSTALL_PATH)/lib
+BIN_PATH = $(HOME)/bin 
 
 LIB_SOFA = $(LIB_PATH)/libsofa_c.a
 
@@ -35,6 +36,7 @@ OBJS = readcolumns.o \
        sharedmem_segment.o \
        sharedMemSegment.o \
        process_interface.o \
+       timeUtils.o \
        ds9_interface.o \
        gnuplot_interface.o \
        fitsUtils.o\
@@ -89,6 +91,7 @@ msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 sharedMemSegment.o: include/sharedMemSegment
+timeUtils.o : include/timeUtils.hpp
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 gnuplot_interface.o: include/gnuplot_interface.h
@@ -116,6 +119,7 @@ install: libmxlib
 	install -d $(LIB_PATH)
 	install libmxlib.a $(LIB_PATH)
 	install libmxlib.so $(LIB_PATH)
+	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
 	 (install include/$$file $(INCLUDE_PATH)) || break; \
 	done

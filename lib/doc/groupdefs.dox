@@ -30,6 +30,26 @@
   * \brief Tools for processing images
   */
   
+/** \defgroup fits_processing FITS Files
+  * \brief Tools for working with FITS files.
+  * \ingroup image_processing
+  */
+
+/** \defgroup fits_processing_typedefs fitsFile typedefs 
+  * \brief Typedefs of \ref fitsFile for standard types
+  * \ingroup fits_processing 
+  */
+  
+/** \defgroup fits_utils FITS Utilities
+  * \brief FITS file utilities and wrappers.
+  * \ingroup fits_processing
+  */
+  
+/** \defgroup fits_processing_files Source files for FITS
+  * \brief Source of tools for working with FITS files.
+  * \ingroup fits_processing
+  */
+  
 /** \defgroup eigen_image_processing Image Processing with Eigen 
   * \brief Using the Eigen matrix library for image processing
   * \ingroup image_processing

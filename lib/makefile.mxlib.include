@@ -1,6 +1,4 @@
-MXLIB_PATH=/home/jaredmales/Source/c/mxlib/lib
-INCLUDE_PATH = -I/home/jaredmales/include
-LIBS = $(MXLIB_PATH)/libmxlib.a  -lboost_filesystem -lboost_system -lcfitsio 
+MXLIB_EXLIBS = -lboost_filesystem -lboost_system -lcfitsio 
 
 OPTIMIZE = -O3
 
@@ -15,8 +13,5 @@ CPPFLAGS += --std=c++0x
 	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -I$(INCLUDE_PATH) -c $<
 
 
-.PHONY: mxlib_version
-mxlib_version:
-	@sh ~/bin/gengithead.sh $(MXLIB_PATH) ./mxlib_version.h MXLIB_UNCOMP
 
 

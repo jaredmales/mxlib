@@ -1,6 +1,6 @@
 /** \file fitsHeader.cpp
   * \brief Definitions for a class to work with a FITS header
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */

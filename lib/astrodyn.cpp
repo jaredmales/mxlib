@@ -9,21 +9,6 @@
 
 static char UTCSTR[4] = "UTC";
 
-double get_JD(double Y, double M, double D)
-{
-   double A, B;
-   
-   if(M<3)
-   {
-      Y-=1;
-      M+=12;
-   }
-   
-   A = floor(Y/100);
-   B = 2.0 - A + floor(A/4);
-   
-   return floor(365.25*(Y+4716.0))+floor(30.6001*(M+1.0)) + D + B - 1524.5;
-}
 
 int get_hrminsec_fm_day(int &Dy, int &hr, int &min, double &sec, double day)
 {

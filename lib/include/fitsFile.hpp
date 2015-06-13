@@ -1,6 +1,6 @@
 /** \file fitsFile.hpp
   * \brief Declares and defines a class to work with a FITS file
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -17,7 +17,7 @@
 namespace mx
 {
 
-/** \addtogroup image_processing
+/** \addtogroup fits_processing
   * @{
   */
 
@@ -25,7 +25,7 @@ namespace mx
 /// Class to manage interactions with a FITS file
 /** This class conveniently wraps the functionality of cfitsio.
   * 
-  * \tparam dataT the datatype to use for in-memory storage of the image.  This does not have to match the data type stored on disk.
+  * \tparam dataT is the datatype to use for in-memory storage of the image.  This does not have to match the data type stored on disk.
   * 
   */
 template<typename dataT> class fitsFile
@@ -776,7 +776,9 @@ void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d
 
 
 
-/** \addtogroup image_processing
+
+
+/** \ingroup fits_processing_typedefs
   * @{
   */
 
@@ -807,7 +809,7 @@ typedef fitsFile<float> fitsFilef;
 /// A \ref fitsFile to work in double precision
 typedef fitsFile<double> fitsFiled;
 
-///@}
+//@}
 
 } //namespace mx
 

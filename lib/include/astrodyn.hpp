@@ -17,14 +17,7 @@
   * @{ 
   */
 
-   
-///Returns the Julian Day for a given Year, Month, and Day.
-/** References: J. Meeus "Astronomical Algorithms", 1991; V. Pisacane "Fundamentals of Space Systems", 2nd ed., 2005.
- * \param Y is the Year, should be an integer.
- * \param M is the month, should be an integer.
- * \param D is the decimal day, use fractional days for time other than 0h.
- * \retval JD is the calculated Julian Day, in decimal days.*/
-double get_JD(double Y, double M, double D);
+  
 
 ///Breaks down a decimal day into hours, minutes and decimal point seconds.
 /** Assumes 86400 seconds per day, ignoring leap seconds.

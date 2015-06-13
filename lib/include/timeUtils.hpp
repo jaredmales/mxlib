@@ -11,16 +11,16 @@
 #define __timeUtils_hpp__
 
 
-#include "time.h"
-#include "sys/time.h"
+#include <time.h>
+#include <sys/time.h>
+#include <cmath>
+#include <sofa.h>
 #include "stringUtils.hpp"
+
 
 namespace mx
 {
    
-/** \addtogroup timeutils
-  * @{
-  */
   
 /** Get the current system time.
   * Uses timespec, so nanosecond resolution is possible.
@@ -30,6 +30,8 @@ namespace mx
   * \tparam clk_id is the sys/time.h clock identifier [default=CLOCK_REALTIME]
   * 
   * \retval typeT containing the current time in seconds
+  *
+  * \ingroup timeutils
   */
 template<typename typeT=double, clockid_t clk_id=CLOCK_REALTIME>
 typeT get_curr_time()
@@ -51,6 +53,8 @@ typeT get_curr_time()
   * \param[out] s  is the second component converted to floatT
   * 
   * \tparam floatT is a floating point type
+  * 
+  * \ingroup timeutils
   */ 
 template<typename floatT>
 void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
@@ -81,8 +85,34 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
    s = sgn*convertFromString<floatT>(hmsstr.substr(st, hmsstr.length()-st).c_str());
 }
 
+///Converts a Gregorian calendar date into modified Julian date (MJD).
+/** Uses the SOFA function iauCal2jd.  Note this is not a template in floating point
+  * because SOFA is always double precision. 
+  *
+  * \param [in] yr Gregorian calendar year
+  * \param [in] mon Gregorian calendar month
+  * \param [in] day Gregorian calendar day
+  * \param [in] hr Gregorian calendar hour
+  * \param [in] min  Gregorian calendar minute
+  * \param [in] sec  Gregorian calendar second
+  *
+  * \retval double containing the MJD
+  * \retval <0 on error (-1 = bad year, -2 = bad month, -3 = bad day)
+  * 
+  * \ingroup timeutils
+  * 
+  */ 
+double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec);
+   
+///Parse a FITS date of the form "YYYY-MM-DDTHH:MM:SS.S" and return the modified Julian date (MJD)
+/** After parsing calls Cal2mjd.
+  * 
+  * \param [in] fdate is a standard FITS date string
+  * 
+  * \ingroup timeutils
+  */
+double FITSdate2mjd(const std::string & fdate);
 
-/// @}
 
 } //namespace mx
 

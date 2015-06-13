@@ -1,6 +1,6 @@
 /** \file fitsHeader.hpp
   * \brief Declares and defines a class to work with a FITS header
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -19,13 +19,13 @@
 namespace mx
 {
    
-/** \addtogroup image_processing
+/** \addtogroup fits_processing
   * @{
   */
 
 /// Class to manage a complete fits header
 /** Manages tasks such as insertion (avoiding duplicates), and keyword lookup.
-  * The \ref fitsHeaderCard "cards" are stored in a std::list to preserver order, but
+  * The \ref fitsHeaderCard "cards" are stored in a std::list to preserve order, but
   * a std::unordered_multimap is used to provide fast keyword lookup.
   * 
   */ 
@@ -51,14 +51,17 @@ protected:
    
 public:
 
+   ///Default c'tor
    fitsHeader()
    {
    }
+   
    ///Copy constructor
    /** Must be defined to handle creation of new iterators in the cardMap
     */
    fitsHeader(const fitsHeader & head);
    
+   ///Destructor
    ~fitsHeader()
    {
       clear();
@@ -93,7 +96,8 @@ public:
      * \param v is the value of typeT
      * \param c is the comment string
      */ 
-   template<typename typeT> void append(const std::string &k, const typeT &v, const std::string &c);
+   template<typename typeT> 
+   void append(const std::string &k, const typeT &v, const std::string &c);
    
    /// Append a card to the end of the header, from the components of a card with no comment.
    /**
@@ -102,7 +106,8 @@ public:
      * \param k is the keyword string
      * \param v is the value of typeT
      */
-   template<typename typeT> void append(const std::string &k, const typeT &v);
+   template<typename typeT> 
+   void append(const std::string &k, const typeT &v);
       
    /// Append a fitsHeader to the end of the header
    /**
@@ -111,31 +116,95 @@ public:
    void append(fitsHeader & head);
    
    /// Insert a card before another card.
+   /** 
+     * \param it points to the element before which to insert
+     * \param card contains the card to insert
+     */ 
    void insert_before(headerIterator it, fitsHeaderCard card);
-   template<typename typeT> void insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c);
    
-   template<typename typeT> void insert_before(headerIterator it, const std::string &k, typeT v);
+   /// Insert a card before another card, specifying the card by its components.
+   /** 
+     * \tparam typeT is the type of the value, which is converted to string for insertion
+     * 
+     * \param it points to the element before which to insert
+     * \param k is the keyword
+     * \param v is the value
+     * \param c is the comment
+     * 
+     */ 
+   template<typename typeT> 
+   void insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c);
+   
+   /// Insert a card before another card, specifying the card by its components.
+   /** 
+     * \tparam typeT is the type of the value, which is converted to string for insertion
+     *
+     * \param it points to the element before which to insert
+     * \param k is the keyword
+     * \param v is the value
+     * 
+     */
+   template<typename typeT> 
+   void insert_before(headerIterator it, const std::string &k, typeT v);
    
    /// Insert a card after another card.
+   /** 
+     * \param it points to the element after which to insert
+     * \param card contains the card to insert
+     */ 
    void insert_after(headerIterator it, fitsHeaderCard card);
    
-   template<typename typeT> void insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c);
+   /// Insert a card after another card, specifying the card by its components.
+   /** 
+     * \tparam typeT is the type of the value, which is converted to string for insertion
+     * 
+     * \param it points to the element after which to insert
+     * \param k is the keyword
+     * \param v is the value
+     * \param c is the comment
+     * 
+
+     */ 
+   template<typename typeT> 
+   void insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c);
    
-   template<typename typeT> void insert_after(headerIterator it, const std::string &k, typeT v);
+   /// Insert a card after another card, specifying the card by its components.
+   /** 
+     * \tparam typeT is the type of the value, which is converted to string for insertion
+     * 
+     * \param it points to the element after which to insert
+     * \param k is the keyword
+     * \param v is the value
+     * 
+     */
+   template<typename typeT> 
+   void insert_after(headerIterator it, const std::string &k, typeT v);
    
    /// Card access by keyword operator
    /** Looks up the card by its keyword, and returns a reference to it.
-    */
+     *
+     * \param keyword is the header keyword to look up
+     *
+     * \retval fitsHeaderCard& reference to the \ref fitsHeaderCard 
+     */
    fitsHeaderCard & operator[](const std::string & keyword);
    
+   /// Card access by keyword operator (const version)
+   /** Looks up the card by its keyword, and returns a reference to it.
+     *
+     * \param keyword is the header keyword to look up
+     *
+     * \retval fitsHeaderCard& const reference to the \ref fitsHeaderCard 
+     */
    const fitsHeaderCard & operator[](const std::string & keyword) const;
    
 };  // fitsHeader
 
+//@}
 
 
-
-template<typename typeT> void fitsHeader::append(const std::string &k, const typeT &v, const std::string &c)
+template<typename typeT> 
+void fitsHeader::append(const std::string &k, const typeT &v, const std::string &c)
 {
    append(fitsHeaderCard(k,v,c));
 }
@@ -173,17 +242,51 @@ template<typename typeT> void fitsHeader::insert_after(headerIterator it, const 
    insert_after(it, fitsHeaderCard(k,v));
 }
 
-///Convert the values in a vector of \ref fitsHeader "fits headers" into a vector of values.
+
+/** \addtogroup fits_utils
+  * @{
+  */
+
+///Convert the values in a std::vector of \ref fitsHeader "fits headers" into a std::vector of values.
+/** Resizes the vector of the appropriate type.
+  *
+  * \tparam dataT is the type of the header value
+  * 
+  * \param[out] v will contain the converted values
+  * \param[in] heads contains the headers 
+  * \param[in] keyw contains the keyword designating which value to convert
+  * 
+  */
 template<typename dataT>
-std::vector<dataT> headersToValues(const std::vector<fitsHeader> & heads, const std::string &keyw)
+void headersToValues(std::vector<dataT> & v, const std::vector<fitsHeader> & heads, const std::string &keyw)
 {
-   std::vector<dataT> v(heads.size());
+   v.resize(heads.size());
    
    for(int i=0;i<heads.size(); ++i)
    {
       v[i] = convertFromString<dataT>(heads[i][keyw].value);
    }
 
+   return v;
+}
+
+///Convert the values in a std::vector of \ref fitsHeader "fits headers" into a std::vector of values.
+/** Creates a vector of the appropriate type and size.
+  *
+  * \tparam dataT is the type of the header value
+  * 
+  * \param[in] heads contains the headers 
+  * \param[in] keyw contains the keyword designating which value to convert
+  * 
+  * \retval std::vector<dataT> containing the converted values
+  */
+template<typename dataT>
+std::vector<dataT> headersToValues(const std::vector<fitsHeader> & heads, const std::string &keyw)
+{
+   std::vector<dataT> v(heads.size());
+   
+   headersToValues(v,heads, keyw);
+   
    return v;
 }
 

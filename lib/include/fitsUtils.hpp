@@ -1,6 +1,6 @@
 /** \file fitsUtils.hpp
   * \brief Declares and defines utilities to work with FITS files
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -15,14 +15,16 @@
 namespace mx
 {
 
-/** \addtogroup image_processing
+/** \addtogroup fits_utils
   * @{
   */
 
-/** Return the cfitsio constant for a given data type.
+/// Return the cfitsio constant for a given data type.
+/** 
   *
   * \tparam scalarT is the type 
-  * \returns a constant define in cfitsio corresponding to the native type
+  * 
+  * \retval int contains a constant defined in cfitsio corresponding to the native type
   * \retval -1 if not a define type in cfitsio
   */
 template<typename scalarT> int getFitsType()
@@ -55,7 +57,7 @@ template<> int getFitsType<double>();
 /** Return the cfitsio BITPIX value for a given data type.
   *
   * \tparam scalarT is the type 
-  * \returns a constant defined in cfitsio corresponding to the native type
+  * \retval int > 0 if a constant is defined in cfitsio corresponding to the native type
   * \retval -1 if not a defined type in cfitsio
   */
 template<typename scalarT> int getFitsBITPIX()
@@ -82,8 +84,8 @@ template<> int getFitsBITPIX<float>();
 template<> int getFitsBITPIX<double>();
 
 
-/** Update a header keyword. 
-  * Templatized wrapper for the cfitsio routine.
+/// Update a header keyword. 
+/** This is a templatized wrapper for the cfitsio routine.
   *
   * \tparam typeT is the type of the value
   *
@@ -92,17 +94,14 @@ template<> int getFitsBITPIX<double>();
   * \param value is a pointer to the memory location of the value
   * \param comment is a c-string, possibly NULL, containing a comment string
   *  
-  * \returns the status returned by the cfitsio routine.
+  * \retval int containing the status returned by the cfitsio routine.
   */
 template<typename typeT> int fits_update_key(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
    int fstatus = 0;
- 
-   //std::cout << "writing " << keyword << " " << comment << "\n";
    
    fits_update_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
    
-   //std::cout << fstatus << "\n";
    return fstatus;
 }
 

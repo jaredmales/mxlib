@@ -1,6 +1,6 @@
 /** \file fitsHeaderCard.hpp
   * \brief Declares and defines a class to work with a FITS header card
-  * \ingroup image_processing
+  * \ingroup fits_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -16,7 +16,7 @@ namespace mx
 {
 
    
-/** \ingroup image_processing
+/** \ingroup fits_processing
   *@{
   */
       
@@ -38,6 +38,11 @@ struct fitsHeaderCard
    ///The FITS type
    int type;
    
+   /// \name Constructors
+   /**
+     */
+   //@{
+   
    ///Basic c'tor
    fitsHeaderCard()
    {
@@ -45,13 +50,29 @@ struct fitsHeaderCard
    }
    
    ///Construct from the three components.
+   /**
+     * \param k is the keyword
+     * \param v is the value
+     * \param c is the comment
+     */ 
    template<typename typeT> fitsHeaderCard(std::string k, const typeT v, std::string c);
    
    ///Construct from just two components.
+   /**
+     * \param k is the keyword
+     * \param v is the value
+     */ 
    template<typename typeT> fitsHeaderCard(std::string k, const typeT v);
 
+   //@}
+   
+   ///\name Conversions
+   /**
+     */
+   //@{
+
    ///Get value converted to the specified type
-   /** Uses convertFromString.  typeT can be any <a href=\isfundamental>fundamental type</a>, 
+   /** Uses \ref convertFromString.  typeT can be any <a href=\isfundamental>fundamental type</a>, 
      * or any type which can be typecast from std::string.
      */
    template<typename typeT> typeT Value();
@@ -101,7 +122,19 @@ struct fitsHeaderCard
     */
    long double longDouble();
    
+   //@}
+   
+   ///\name Output
+   /**
+     */
+   //@{
+   
+   /// Writes this card to a FITS file, using \ref fits_update_key.
+   /** 
+     */
    int write(fitsfile * fptr);
+   
+   //@}
    
 }; //fitsHeaderCard
 
