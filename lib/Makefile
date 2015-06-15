@@ -36,7 +36,6 @@ OBJS = readcolumns.o \
        sharedmem_segment.o \
        sharedMemSegment.o \
        process_interface.o \
-       timeUtils.o \
        ds9_interface.o \
        gnuplot_interface.o \
        fitsHeaderCard.o \
@@ -75,6 +74,7 @@ INC_TO_INSTALL = astroconstants.h \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
+                 timeUtils.hpp \
                  mxException
                  
 # VMOP_TO_INSTALL = MMatrix \
