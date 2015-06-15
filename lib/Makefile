@@ -50,7 +50,6 @@ INC_TO_INSTALL = astroconstants.h \
                  geo.h \
                  readcolumns.h \
                  stringUtils.hpp \
-                 timeUtils.hpp \
                  fileUtils.hpp \
                  pout.hpp \
                  IPC.h \
@@ -94,7 +93,6 @@ msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 sharedMemSegment.o: include/sharedMemSegment
-timeUtils.o : include/timeUtils.hpp
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 gnuplot_interface.o: include/gnuplot_interface.h
