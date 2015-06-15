@@ -20,7 +20,6 @@ namespace mx
   *@{
   */
       
-
 /// Simple structure to hold the three components of a FITS header card 
 /** Is a struct so all members are public for easy access.  Several string-to-number conversions are provided.
   */
@@ -46,8 +45,40 @@ struct fitsHeaderCard
    ///Basic c'tor
    fitsHeaderCard()
    {
-      type = getFitsType<char *>();
+      type = getFitsType<fitsUnknownType>();
    }
+
+   ///Construct from the three components, when value's type is unknown
+   /**
+     * \param k is the keyword
+     * \param v is the value, must be cast-able to char*
+     * \param c is the comment
+     */ 
+   fitsHeaderCard(std::string k, const void * &v, std::string c);
+
+   ///Construct from the three components, when value's type is unknown
+   /**
+     * \param k is the keyword
+     * \param v is the value, must be cast-able to char*
+     * \param c is the comment
+     */ 
+   fitsHeaderCard(std::string k, void * v, std::string c);
+   
+   ///Construct from the three components, when it's a comment
+   /**
+     * \param k is the keyword
+     * \param v is an object of type fitsCommentType
+     * \param c is the comment
+     */ 
+   fitsHeaderCard(std::string k, fitsCommentType v, std::string c);
+   
+   ///Construct from the three components, when it's a history
+   /**
+     * \param k is the keyword
+     * \param v is an object of type fitsHistoryType
+     * \param c is the comment
+     */ 
+   fitsHeaderCard(std::string k, fitsHistoryType v, std::string c);
    
    ///Construct from the three components.
    /**
@@ -55,15 +86,24 @@ struct fitsHeaderCard
      * \param v is the value
      * \param c is the comment
      */ 
-   template<typename typeT> fitsHeaderCard(std::string k, const typeT v, std::string c);
+   template<typename typeT> 
+   fitsHeaderCard(std::string k, const typeT v, std::string c);
+   
+   ///Construct from just two components, when value's type is unknown
+   /**
+     * \param k is the keyword
+     * \param v is the value, must be cast-able to char*
+     */ 
+   fitsHeaderCard(std::string k, const void* &v);
    
    ///Construct from just two components.
    /**
      * \param k is the keyword
      * \param v is the value
      */ 
-   template<typename typeT> fitsHeaderCard(std::string k, const typeT v);
-
+   template<typename typeT> 
+   fitsHeaderCard(std::string k, const typeT v);
+   
    //@}
    
    ///\name Conversions
@@ -75,7 +115,8 @@ struct fitsHeaderCard
    /** Uses \ref convertFromString.  typeT can be any <a href=\isfundamental>fundamental type</a>, 
      * or any type which can be typecast from std::string.
      */
-   template<typename typeT> typeT Value();
+   template<typename typeT> 
+   typeT Value();
    
    ///Convert value to an integer
    /** \returns the result of converting the value string to an integer
@@ -139,7 +180,42 @@ struct fitsHeaderCard
 }; //fitsHeaderCard
 
 
-template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v, std::string c)
+
+//template<> 
+inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * &v, std::string c)
+{
+   keyword = k;
+   value = (char *) v; //convertToString<typeT>(v);
+   type = getFitsType<fitsUnknownType>();
+   comment = c;
+}
+
+inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v, std::string c)
+{
+   keyword = k;
+   value = (char *) v; //convertToString<typeT>(v);
+   type = getFitsType<fitsUnknownType>();
+   comment = c;
+}
+
+inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsCommentType v, std::string c)
+{
+   keyword = k;
+   value = "";
+   type = getFitsType<fitsCommentType>();
+   comment = c;
+}
+
+inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsHistoryType v, std::string c)
+{
+   keyword = k;
+   value = "";
+   type = getFitsType<fitsHistoryType>();
+   comment = c;
+}
+
+template<typename typeT> 
+fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v, std::string c)
 {
    keyword = k;
    value = convertToString<typeT>(v);
@@ -147,14 +223,27 @@ template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, const typ
    comment = c;
 }
 
-template<typename typeT> fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
+
+template<typename typeT> 
+fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
 {
    keyword = k;
    value = convertToString<typeT>(v);
    type = getFitsType<typeT>();
 }
 
-template<typename typeT> typeT fitsHeaderCard::Value()
+//template<> 
+inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * &v)
+{
+   keyword = k;
+   value = (char *) v;
+   type = getFitsType<fitsUnknownType>();
+}
+
+
+
+template<typename typeT> 
+typeT fitsHeaderCard::Value()
 {
    return convertFromString<typeT>(value);
 }

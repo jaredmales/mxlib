@@ -39,7 +39,6 @@ OBJS = readcolumns.o \
        timeUtils.o \
        ds9_interface.o \
        gnuplot_interface.o \
-       fitsUtils.o\
        fitsHeaderCard.o \
        fitsHeader.o
 
@@ -70,9 +69,13 @@ INC_TO_INSTALL = astroconstants.h \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
                  eigenImage.hpp \
+                 eigenCube.hpp \
                  eigenUtils.hpp \
                  imageFilters.hpp \
                  imageTransforms.hpp \
+                 templateBLAS.hpp \
+                 templateLapack.hpp \
+                 templateLevmar.hpp \
                  mxException
                  
 # VMOP_TO_INSTALL = MMatrix \
@@ -95,9 +98,8 @@ timeUtils.o : include/timeUtils.hpp
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 gnuplot_interface.o: include/gnuplot_interface.h
-fitsUtils.o: include/fitsUtils.hpp
-fitsHeaderCard.o: include/fitsHeaderCard.hpp
-fitsHeader.o: include/fitsHeader.hpp
+fitsHeaderCard.o: include/fitsHeaderCard.hpp include/fitsUtils.hpp
+fitsHeader.o: include/fitsHeader.hpp include/fitsUtils.hpp
 astrodyn.o: include/astrodyn.hpp
 kepler.o: include/kepler.hpp
 

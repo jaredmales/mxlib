@@ -1,3 +1,11 @@
+/** \file eigenCube.hpp
+  * \brief An image cube with an Eigen API
+  * 
+  * \author Jared R. Males (jaredmales@gmail.com)
+  * 
+  * \ingroup image_processing
+  *
+  */
 
 #ifndef __eigenCube_hpp__
 #define __eigenCube_hpp__
@@ -10,6 +18,9 @@ using namespace Eigen;
 namespace mx
 {
    
+/// An image cube with an Eigen API
+/** \ingroup image_processing
+  */
 template<typename dataT>
 class eigenCube 
 {
@@ -110,7 +121,11 @@ public:
      
    }
    
-      
+   void resize(int r, int c)
+   {
+      resize(r, c, 1);
+   }
+   
    dataT * data()
    {
       return _data;

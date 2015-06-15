@@ -16,7 +16,7 @@ namespace mx
 
 /// Specialization of convertToString to avoid converting a string to a string
 template<> 
-  std::string convertToString<std::string>(const std::string & value)
+std::string convertToString<std::string>(const std::string & value)
 {
    return value;
 }

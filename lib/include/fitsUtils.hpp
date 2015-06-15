@@ -11,6 +11,8 @@
 
 #include "fitsio.h"
 #include <iostream>
+#include <cstdlib>
+#include <cstring>
 
 namespace mx
 {
@@ -18,6 +20,32 @@ namespace mx
 /** \addtogroup fits_utils
   * @{
   */
+
+///The standard width of the value entry in a header card
+#define stdValWidth (20)
+
+#define fitsTUNKNOWN (-5000)
+struct fitsUnknownType
+{
+};
+
+#define fitsTCOMMENT (-5001)
+struct fitsCommentType
+{
+   fitsCommentType(char *v)
+   {
+   }
+};
+
+#define fitsTHISTORY (-5002)
+struct fitsHistoryType
+{
+   fitsHistoryType(char *v)
+   {
+   }
+};
+
+
 
 /// Return the cfitsio constant for a given data type.
 /** 
@@ -27,32 +55,102 @@ namespace mx
   * \retval int contains a constant defined in cfitsio corresponding to the native type
   * \retval -1 if not a define type in cfitsio
   */
-template<typename scalarT> int getFitsType()
+template<typename scalarT> 
+int getFitsType()
 {
    return -1;
 }
 
-template<> int getFitsType<char *>();
+template<> 
+inline int getFitsType<char *>()
+{
+   return TSTRING;
+}
 
-template<> int getFitsType<unsigned char>();
+template<> 
+inline int getFitsType<unsigned char>()
+{
+   return TBYTE;
+}
 
-template<> int getFitsType<signed char>();
+template<> 
+inline int getFitsType<signed char>()
+{
+   return TSBYTE;
+}
 
-template<> int getFitsType<short>();
+template<> 
+inline int getFitsType<short>()
+{
+   return TSHORT;
+}
 
-template<> int getFitsType<unsigned short>();
+template<> 
+inline int getFitsType<unsigned short>()
+{
+   return TUSHORT;
+}
 
-template<> int getFitsType<int>();
+template<> 
+inline int getFitsType<int>()
+{
+   return TINT;
+}
 
-template<> int getFitsType<long>();
+template<> 
+inline int getFitsType<unsigned int>()
+{
+   return TUINT;
+}
 
-template<> int getFitsType<long long>();
+template<> 
+inline int getFitsType<long>()
+{
+   return TLONG;
+}
 
-template<> int getFitsType<unsigned long>();
+template<> 
+inline int getFitsType<long long>()
+{
+   return TLONGLONG;
+}
 
-template<> int getFitsType<float>();
+template<> 
+inline int getFitsType<unsigned long>()
+{
+   return TULONG;
+}
 
-template<> int getFitsType<double>();
+template<> 
+inline int getFitsType<float>()
+{
+   return TFLOAT;
+}
+
+template<> 
+inline int getFitsType<double>()
+{
+   return TDOUBLE;
+}
+
+template<> 
+inline int getFitsType<fitsUnknownType>()
+{
+   return fitsTUNKNOWN;
+}
+
+template<> 
+inline int getFitsType<fitsCommentType>()
+{
+   return fitsTCOMMENT;
+}
+
+template<> 
+inline int getFitsType<fitsHistoryType>()
+{
+   return fitsTHISTORY;
+}
+
 
 /** Return the cfitsio BITPIX value for a given data type.
   *
@@ -65,24 +163,86 @@ template<typename scalarT> int getFitsBITPIX()
    return -1;
 }
 
-template<> int getFitsBITPIX<char>();
+template<> 
+inline int getFitsBITPIX<char>()
+{
+   return SBYTE_IMG;
+}
 
-template<> int getFitsBITPIX<unsigned char>();
+template<> 
+inline int getFitsBITPIX<unsigned char>()
+{
+   return BYTE_IMG;
+}
 
-template<> int getFitsBITPIX<short>();
+template<> 
+inline int getFitsBITPIX<short>()
+{
+   return SHORT_IMG;
+}
 
-template<> int getFitsBITPIX<unsigned short>();
+template<> 
+inline int getFitsBITPIX<unsigned short>()
+{
+   return USHORT_IMG;
+}
 
-template<> int getFitsBITPIX<int>();
+template<> 
+inline int getFitsBITPIX<int>()
+{
+   return LONG_IMG; //Yes, this is right.  This returns 32
+}
 
-template<> int getFitsBITPIX<unsigned int>();
+template<> 
+inline int getFitsBITPIX<unsigned int>()
+{
+   return ULONG_IMG; //Yes, this is right, this returns 40
+}
 
-template<> int getFitsBITPIX<long>();
+template<> 
+inline int getFitsBITPIX<long>()
+{
+   return LONGLONG_IMG; //Yes, this is right, this returns 64
+}
 
-template<> int getFitsBITPIX<float>();
+template<> 
+inline int getFitsBITPIX<float>()
+{
+   return FLOAT_IMG;
+}
 
-template<> int getFitsBITPIX<double>();
+template<> 
+inline int getFitsBITPIX<double>()
+{
+   return DOUBLE_IMG;
+}
 
+/// Strip the apostrophes from a FITS value string
+/** The argument is modified if the first and/or last non-whitespace character is '
+  *
+  * \param s is the string from which to strip apostrophes
+  * 
+  * \retval int containing the number of stripped apostrophes
+  */ 
+inline int fitsStripApost(std::string & s)
+{  
+   int stripped = 0;
+   int p = s.find_first_not_of(" \t\n\t");
+   if(s[p] == '\'')  
+   {
+      s.erase(0,p+1);
+      ++stripped;
+   }
+   
+   p = s.find_last_not_of(" \t\n\t");
+   if(s[p] == '\'')
+   {
+      s.erase(p);
+      ++stripped;
+   }
+   
+   return stripped;
+}
 
 /// Update a header keyword. 
 /** This is a templatized wrapper for the cfitsio routine.
@@ -96,7 +256,8 @@ template<> int getFitsBITPIX<double>();
   *  
   * \retval int containing the status returned by the cfitsio routine.
   */
-template<typename typeT> int fits_update_key(fitsfile * fptr, char * keyword, void * value, char * comment)
+template<typename typeT> 
+int fits_update_key(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
    int fstatus = 0;
    
@@ -104,6 +265,85 @@ template<typename typeT> int fits_update_key(fitsfile * fptr, char * keyword, vo
    
    return fstatus;
 }
+
+///Populate a fits header card with the value string copied verbatim
+/** 
+  * \param headStr is a c-string which must be 81 characters in length, including the '\n'
+  * \param keyword is the keyword name 
+  * \param value is the value string
+  * \param comment is the comment string
+  */ 
+inline void fitsPopulateCard(char headStr[81], char *keyword, char *value, char *comment)
+{
+   memset(headStr, ' ', 80);
+   headStr[80] = '\0';
+   
+   int rpos = 0;
+   
+   snprintf(headStr, 9, "%-8s", keyword);
+   headStr[8] = '=';
+   rpos = 10;
+   
+   if(strlen(value) < stdValWidth)
+   {
+      char fstr[10];
+      snprintf(fstr, 10, "%%+%ds", stdValWidth);
+      snprintf(headStr + rpos, 81-rpos, fstr, value);
+      
+   }
+   else
+   {
+      snprintf(headStr + rpos, 81-rpos, "%s", value);
+   }
+   
+   rpos = strlen(headStr);
+   
+   headStr[rpos] = ' ';
+   ++rpos;
+   
+   headStr[rpos] = '/';
+   ++rpos;
+   
+   headStr[rpos] = ' ';
+   ++rpos;
+   
+   snprintf(headStr + rpos, 81-rpos, "%s", comment);
+}
+
+template<> 
+inline int fits_update_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   int fstatus = 0;
+
+   char *vstr = (char *) value;
+   
+   //If type is unkown, do it verbatim
+   char headStr[81];
+   
+   fitsPopulateCard(headStr, keyword, vstr, comment);
+      
+   fits_write_record(fptr, headStr, &fstatus);
+   return fstatus;
+}
+
+inline int fits_write_comment(fitsfile *fptr, char * comment)
+{
+   int fstatus = 0;
+   
+   fits_write_comment(fptr, comment, &fstatus);
+   
+   return fstatus;
+}
+
+inline int fits_write_history(fitsfile *fptr, char * history)
+{
+   int fstatus = 0;
+   
+   fits_write_history(fptr, history, &fstatus);
+   
+   return fstatus;
+}
+
 
 ///@}
 

@@ -13,6 +13,7 @@
 
 #include "fitsHeader.hpp"
 #include "mxException"
+#include "eigenCube.hpp"
 
 namespace mx
 {
@@ -163,12 +164,55 @@ public:
    template<typename arrT>
    void read(arrT & data);
    
+   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
+   /** The type arrT can be any type with the following members defined:
+     * - resize(int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef arrT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param data is the array, which will be resized as necessary using its resize(int, int) member
+     * \param head is a fitsHeader object which is passed to \ref readHeader
+     * 
+     * \throws mxException on error
+     * 
+     */ 
    template<typename arrT>
    void read(arrT & data, fitsHeader &head);
    
+   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
+   /** The type arrT can be any type with the following members defined:
+     * - resize(int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef arrT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param data is the array, which will be resized as necessary using its resize(int, int) member
+     * 
+     * \throws mxException on error
+     * 
+     */ 
    template<typename arrT>
    void read(const std::string &fname, arrT & data);
    
+   ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
+   /** The type arrT can be any type with the following members defined:
+     * - resize(int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef arrT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param data is the array, which will be resized as necessary using its resize(int, int) member
+     * \param head is a fitsHeader object which is passed to \ref readHeader
+     * 
+     * \throws mxException on error
+     * 
+     */ 
    template<typename arrT>
    void read(const std::string &fname, arrT & data, fitsHeader &head);
    
@@ -465,7 +509,21 @@ void fitsFile<dataT>::read(arrT & im)
       nelements *= naxes[i];
    }
 
-   im.resize(naxes[0], naxes[1]);
+   if(is_eigenCube<arrT>::value == true)
+   {
+      if(naxis > 1)
+      {
+         im.resize(naxes[0], naxes[1], naxes[2]);
+      }
+      else
+      {
+         im.resize(naxes[0], naxes[1],1);
+      }
+   }
+   else
+   {
+      im.resize(naxes[0], naxes[1]);
+   }
    
    fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
                                      (void *) im.data(), &anynul, &fstatus);
@@ -642,7 +700,19 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
       
       if(!head_keys_only)
       {
-         head.append(keyword, value, comment);
+         if(strcmp(keyword, "COMMENT") == 0)
+         {
+            head.append<fitsCommentType>(keyword,  fitsCommentType(value), comment);
+         }
+         else if(strcmp(keyword, "HISTORY") == 0)
+         {
+            head.append<fitsHistoryType>(keyword,  fitsHistoryType(value), comment);
+         }
+         else
+         {
+            //Otherwise we append it as an unknown type, using void *
+            head.append(keyword, (void *) value, comment);
+         }
       }
       else
       {
@@ -689,7 +759,7 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
    naxis = 1;
    if(d2 > 0) 
    {
-      if(d3 > 0) naxis = 3;
+      if(d3 > 1) naxis = 3;
       else naxis = 2;
    }
    

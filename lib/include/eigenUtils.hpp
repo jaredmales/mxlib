@@ -6,8 +6,8 @@
 #include <sofa.h>
 #include "geo.h"
 
-#include <templateBLAS.hpp>
-#include <templateLapack.hpp>
+#include "templateBLAS.hpp"
+#include "templateLapack.hpp"
 
 
 namespace mx

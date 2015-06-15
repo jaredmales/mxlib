@@ -118,9 +118,17 @@ int fitsHeaderCard::write(fitsfile *fptr)
          double d = Double();
          return fits_update_key<double>(fptr, (char *) keyword.c_str(), &d, (char *) comment.c_str());   
       }
+      case fitsTCOMMENT:
+      {
+         return fits_write_comment(fptr, (char *) comment.c_str());
+      }
+      case fitsTHISTORY:
+      {
+         return fits_write_history(fptr, (char *) comment.c_str());
+      }
       default:
       {
-         return fits_update_key<char *>(fptr, (char *) keyword.c_str(), (void *)value.c_str(), (char *) comment.c_str());
+         return fits_update_key<fitsUnknownType>(fptr, (char *) keyword.c_str(), (void *)value.c_str(), (char *) comment.c_str());
       }
    }
 }

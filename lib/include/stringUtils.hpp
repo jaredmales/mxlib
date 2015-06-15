@@ -49,7 +49,7 @@ std::string convertToString(const typeT & value)
 
 /// Specialization of convertToString to avoid converting a string to a string
 template<> 
-inline std::string convertToString<std::string>(const std::string & value);
+std::string convertToString<std::string>(const std::string & value);
 
 
 /// Convert a string to a numerical value.

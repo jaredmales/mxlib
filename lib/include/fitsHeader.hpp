@@ -73,6 +73,13 @@ public:
    /// Get iterator to the end of the cards list
    headerIterator end();
    
+   /// Get iterator pointing to a specific element
+   headerIterator iterator(const std::string & keyword)
+   {
+      return cardMap.find(keyword)->second;
+      
+   }
+   
    /// Test whether the header is empty.
    bool empty();
    
@@ -82,6 +89,13 @@ public:
    /// Clear all cards from the header
    void clear();
    
+   void erase(const std::string & keyword)
+   {
+      headerIterator it = cardMap.find(keyword)->second;
+      cardMap.erase(keyword);
+      cards.erase(it);
+   }
+      
    /// Append a fitsHeaderCard to the end of the header
    /**
      * \param card is a fitsHeaderCard already populated
@@ -108,7 +122,7 @@ public:
      */
    template<typename typeT> 
    void append(const std::string &k, const typeT &v);
-      
+          
    /// Append a fitsHeader to the end of the header
    /**
      * \param head is a populated fitsHeader
@@ -210,20 +224,23 @@ void fitsHeader::append(const std::string &k, const typeT &v, const std::string 
 }
 
 
-template<typename typeT> void fitsHeader::append(const std::string &k, const typeT &v)
+template<typename typeT> 
+void fitsHeader::append(const std::string &k, const typeT &v)
 {
    append(fitsHeaderCard(k,v));
 }
 
 
 
-template<typename typeT> void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c)
+template<typename typeT> 
+void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c)
 {
    insert_before(it, fitsHeaderCard(k,v,c));
 }
 
 
-template<typename typeT> void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v)
+template<typename typeT> 
+void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v)
 {
    insert_before(it, fitsHeaderCard(k,v));
 }
@@ -231,7 +248,8 @@ template<typename typeT> void fitsHeader::insert_before(headerIterator it, const
 
 
 
-template<typename typeT> void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c)
+template<typename typeT> 
+void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v, const std::string &c)
 {
    insert_after(it, fitsHeaderCard(k,v,c));
 }
