@@ -3,7 +3,7 @@
 
 \section sofa_intro Introduction
 
-The Internation Astronomical Union maintains and distributes the Standards of Fundamental Astronomy (SOFA) c and Fortran libraries.  The astronomical part of mxlib depends on SOFA, and it is generally a good thing to have if you do astronomy coding.
+The Internation Astronomical Union maintains and distributes the Standards of Fundamental Astronomy (SOFA) c and Fortran libraries.  mxlib depends on SOFA for time and astronomical calculations, and it is generally a good thing to have if you do astronomy coding.
 
 \section getting_sofa Getting SOFA
 
@@ -31,6 +31,12 @@ Once you have edited the makefile, cd into the directory src/c and type make, an
 \section sofa_documentation SOFA Documentation 
 
 The SOFA documentation can be found at <a href="http://www.iausofa.org/current_C.html#Documents">http://www.iausofa.org/current_C.html#Documents</a>.
+
+\section sofa_updating Keeping SOFA Up To date
+
+It is important to keep SOFA up to date, particularly for making sure that it has the latest leap second information from the <a href="http://www.iers.org/">International Earth Rotation and Reference Systems Service (IERS)</a>.  You can register with SOFA at http://www.iausofa.org/register.html.
+
+In addition, IERS announces leap seconds, or confirms that there will not be a leap second, twice a year.  You can receive IERS Bulletin C via email by creating an account on the <a href="http://www.iers.org/">IERS website</a> and subscribing.  This will then notify you when it is time to update SOFA.
 
 @}
 */

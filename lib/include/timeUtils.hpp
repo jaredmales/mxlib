@@ -45,10 +45,10 @@ typeT get_curr_time()
 
 
 
-/** Parse a string of format hh:mm:ss.x
+/** Parse a string of format hh:mm:ss.s
   * Breaks a time string into constituent parts.  Handles -h by distributing the sign to m and s.
   *
-  * \param[in] hmsstr  is a string of format hh:mm:ss.x where ss.x can be of any precision
+  * \param[in] hmsstr  is a string of format hh:mm:ss.s where ss.s can be of any precision
   * \param[out] h  is the hour component coverted to floatT
   * \param[out] m  is the minute component converted to floatT
   * \param[out] s  is the second component converted to floatT
@@ -103,7 +103,8 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
   * \ingroup timeutils
   * 
   */ 
-inline double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
+inline 
+double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
 {
    double djm0, djm;
    
@@ -127,7 +128,8 @@ inline double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
   * 
   * \ingroup timeutils
   */
-inline double ISO8601date2mjd(const std::string & fdate)
+inline 
+double ISO8601date2mjd(const std::string & fdate)
 {   
    if(fdate.length() < 19) return -4;
    
@@ -144,8 +146,115 @@ inline double ISO8601date2mjd(const std::string & fdate)
    
 }
 
+/// Get a date-time string in ISO 8601 format
+/** For recognized time types, returns a string in the ISO 8601 format:
+  * YYYY-MM-DDYHH:MM:SS.SS, with optional timezone designation such as Z or +00:00.
+  *
+  * \tparam timeT is the time type
+  *
+  * \param [in] timeIn is the input time
+  * \param [in] timeZone specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+  *
+  * \retval std::string containing the format date/time 
+  * 
+  * \ingroup timeutils
+  */ 
+template<typename timeT>
+std::string ISO8601DateTimeStr(const timeT &timeIn, int timeZone = 0)
+{
+   return "";
+}
+
+
+
+
+/// Get a date-time string in ISO 8601 format for time_t
+/** Returns a string in the ISO 8601 format:
+  * YYYY-MM-DDYHH:MM:SS, with optional timezone designation such as Z or +00:00.
+  *
+  * \overload
+  *
+  * \param [in] timeIn is the input time
+  * \param [in] timeZone specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+  *
+  * \retval std::string containing the format date/time 
+  * 
+  * \ingroup timeutils
+  */ 
+template<> inline
+std::string ISO8601DateTimeStr<time_t>(const time_t &timeIn, int timeZone)
+{
+   tm bdt;
+   gmtime_r(&timeIn, &bdt);
+   
+   char tstr[25];
+   
+   strftime(tstr, 25, "%FT%H:%M:%S", &bdt);
+   
+   std::string result = tstr;
+   
+   if(timeZone == 1) result += "Z";
+   if(timeZone == 2) result += "+00:00";
+   
+   return result;
+}
+
+/// Get a date-time string in ISO 8601 format for timespec
+/** Returns a string in the ISO 8601 format:
+  * YYYY-MM-DDYHH:MM:SS.SSSSSSSSS, with optional timezone designation such as Z or +00:00.
+  *
+  * \overload
+  *
+  * \param [in] timeIn is the input time
+  * \param [in] timeZone specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+  *
+  * \retval std::string containing the format date/time 
+  * 
+  * \ingroup timeutils
+  */ 
+template<> inline
+std::string ISO8601DateTimeStr<timespec>(const timespec &timeIn, int timeZone)
+{
+   std::string result = ISO8601DateTimeStr<time_t>(timeIn.tv_sec, 0);
+   
+   char tstr[20];
+   
+   snprintf(tstr, 20, ".%09ld", timeIn.tv_nsec);
+   
+   result += tstr;
+   
+   if(timeZone == 1) result += "Z";
+   if(timeZone == 2) result += "+00:00";
+   
+   return result;
+}
+
+/// Get a date-time string in ISO 8601 format for the current UTC time
+/** Returns a string in the ISO 8601 format:
+  * YYYY-MM-DDYHH:MM:SS.SS, with optional timezone designation such as Z or +00:00.
+  *
+  * \overload
+  *
+  * \param [in] timeZone [optional] specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+  *
+  * \retval std::string containing the format date/time 
+  * 
+  * \ingroup timeutils
+  */ 
+inline 
+std::string ISO8601DateTimeStr(int timeZone = 0)
+{
+   return ISO8601DateTimeStr<time_t>(time(0), timeZone);
+}
+
+
 /// Convert a UTC timespec to TAI modified Julian date
-/** \param [out] djm the modified Julian day number
+/** Converts a timespec assumed to be in <a href="https://en.wikipedia.org/wiki/Coordinated_Universal_Time">Coordinated
+  *  Universal Time (UTC)</a> to a <a href="https://en.wikipedia.org/wiki/Julian_day">
+  *  Modified Julian Date (MJD)</a> in 
+  * <a href="https://en.wikipedia.org/wiki/International_Atomic_Time">International Atomic Time (TAI)</a>.
+  * 
+  * \param [out] djm the modified Julian day number
   * \param [out] djmf the fraction of the day
   * \param [in] tsp contains the UTC time
   * \param [out] tm0 [optional] will be filled with the broken down UTC time
@@ -158,8 +267,11 @@ inline double ISO8601date2mjd(const std::string & fdate)
   * \retval -4 SOFA bad fractional day [see SOFA documentation for iauDat and iauCal2jd]
   * \retval -5 SOFA internal error [see SOFA documentation for iauDat and iauCal2jd]
   * \retval -10 gmtime_r returned error, check errno
+  * 
+  * \ingroup timeutils
   */
-inline int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * tm0)
+inline 
+int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * tm0)
 {
    double dat, djm0;
    tm *tmrv;

@@ -244,8 +244,8 @@ inline int fitsStripApost(std::string & s)
    return stripped;
 }
 
-/// Update a header keyword. 
-/** This is a templatized wrapper for the cfitsio routine.
+/// Write a header card to a file
+/** This is a templatized wrapper for the cfitsio routine fits_write_key.
   *
   * \tparam typeT is the type of the value
   *
@@ -257,11 +257,11 @@ inline int fitsStripApost(std::string & s)
   * \retval int containing the status returned by the cfitsio routine.
   */
 template<typename typeT> 
-int fits_update_key(fitsfile * fptr, char * keyword, void * value, char * comment)
+int fits_write_key(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
    int fstatus = 0;
    
-   fits_update_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
+   fits_write_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
    
    return fstatus;
 }
@@ -311,7 +311,7 @@ inline void fitsPopulateCard(char headStr[81], char *keyword, char *value, char 
 }
 
 template<> 
-inline int fits_update_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
+inline int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
    int fstatus = 0;
 

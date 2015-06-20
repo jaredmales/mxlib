@@ -54,7 +54,7 @@ struct fitsHeaderCard
      * \param v is the value, must be cast-able to char*
      * \param c is the comment
      */ 
-   fitsHeaderCard(std::string k, const void * &v, std::string c);
+   fitsHeaderCard(std::string k, const void * v, std::string c);
 
    ///Construct from the three components, when value's type is unknown
    /**
@@ -64,23 +64,25 @@ struct fitsHeaderCard
      */ 
    fitsHeaderCard(std::string k, void * v, std::string c);
    
-   ///Construct from the three components, when it's a comment
-   /**
+   ///Construct from the three components, when it's really a comment card
+   /** This overload is provided to facilitate handling of comments when re-writing the file.
+     * 
      * \param k is the keyword
      * \param v is an object of type fitsCommentType
      * \param c is the comment
      */ 
    fitsHeaderCard(std::string k, fitsCommentType v, std::string c);
    
-   ///Construct from the three components, when it's a history
-   /**
+   ///Construct from the three components, when it's really a history card
+   /** This overload is provided to facilitate handling of history when re-writing the file.
+     * 
      * \param k is the keyword
      * \param v is an object of type fitsHistoryType
      * \param c is the comment
      */ 
    fitsHeaderCard(std::string k, fitsHistoryType v, std::string c);
    
-   ///Construct from the three components.
+   ///Construct from the three components for a known type.
    /**
      * \param k is the keyword
      * \param v is the value
@@ -94,9 +96,16 @@ struct fitsHeaderCard
      * \param k is the keyword
      * \param v is the value, must be cast-able to char*
      */ 
-   fitsHeaderCard(std::string k, const void* &v);
+   fitsHeaderCard(std::string k, void* v);
    
-   ///Construct from just two components.
+   ///Construct from just two components, when value's type is unknown
+   /**
+     * \param k is the keyword
+     * \param v is the value, must be cast-able to char*
+     */ 
+   fitsHeaderCard(std::string k, const void* v);
+   
+   ///Construct from just two components when value's type is known.
    /**
      * \param k is the keyword
      * \param v is the value
@@ -170,7 +179,7 @@ struct fitsHeaderCard
      */
    //@{
    
-   /// Writes this card to a FITS file, using \ref fits_update_key.
+   /// Writes this card to a FITS file, using \ref fits_write_key.
    /** 
      */
    int write(fitsfile * fptr);
@@ -179,24 +188,26 @@ struct fitsHeaderCard
    
 }; //fitsHeaderCard
 
+///@}
 
 
-//template<> 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * &v, std::string c)
-{
-   keyword = k;
-   value = (char *) v; //convertToString<typeT>(v);
-   type = getFitsType<fitsUnknownType>();
-   comment = c;
-}
 
 inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v, std::string c)
 {
    keyword = k;
-   value = (char *) v; //convertToString<typeT>(v);
+   value = (char *) v; 
    type = getFitsType<fitsUnknownType>();
    comment = c;
 }
+
+inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * v, std::string c)
+{
+   keyword = k;
+   value = (char *) v; 
+   type = getFitsType<fitsUnknownType>();
+   comment = c;
+}
+
 
 inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsCommentType v, std::string c)
 {
@@ -224,6 +235,22 @@ fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v, std::string c)
 }
 
 
+inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v)
+{
+   keyword = k;
+   value = (char *) v;
+   type = getFitsType<fitsUnknownType>();
+}
+
+
+inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * v)
+{
+   keyword = k;
+   value = (char *) v;
+   type = getFitsType<fitsUnknownType>();
+}
+
+
 template<typename typeT> 
 fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
 {
@@ -232,15 +259,6 @@ fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
    type = getFitsType<typeT>();
 }
 
-//template<> 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * &v)
-{
-   keyword = k;
-   value = (char *) v;
-   type = getFitsType<fitsUnknownType>();
-}
-
-
 
 template<typename typeT> 
 typeT fitsHeaderCard::Value()
@@ -248,9 +266,125 @@ typeT fitsHeaderCard::Value()
    return convertFromString<typeT>(value);
 }
 
+inline int fitsHeaderCard::Int()
+{
+   return convertFromString<int>(value);
+}
+
+inline unsigned int fitsHeaderCard::unsignedInt()
+{
+   return convertFromString<unsigned int>(value);
+}
+
+inline long fitsHeaderCard::Long()
+{
+   return convertFromString<long>(value);
+}
+
+inline unsigned long fitsHeaderCard::unsignedLong()
+{
+   return convertFromString<unsigned long>(value);
+}
+
+inline long long fitsHeaderCard::longLong()
+{
+   return convertFromString<long long>(value);
+}
+   
+inline unsigned long long fitsHeaderCard::unsignedLongLong()
+{
+   return convertFromString<unsigned long long>(value);
+}
+
+inline float fitsHeaderCard::Float()
+{
+   return convertFromString<float>(value);
+}
+
+inline double fitsHeaderCard::Double()
+{
+   return convertFromString<double>(value);
+}   
+
+inline long double fitsHeaderCard::longDouble()
+{
+   return convertFromString<long double>(value);
+}
 
 
-///@}
+inline int fitsHeaderCard::write(fitsfile *fptr)
+{
+   int fstatus;
+   switch(type)
+   {
+      case TSTRING:
+      {
+         return fits_write_key<char *>(fptr, (char *) keyword.c_str(), (void *)value.c_str(), (char *) comment.c_str());
+      }
+      case TBYTE:
+      {
+         unsigned char b = Int();
+         return fits_write_key<unsigned char>(fptr, (char *) keyword.c_str(), &b, (char *) comment.c_str());
+      }  
+      case TSBYTE:
+      {
+         signed char sc = Int();
+         return fits_write_key<signed char>(fptr, (char *) keyword.c_str(), &sc, (char *) comment.c_str());   
+      }
+      case TSHORT:
+      {
+         short s = Int();
+         return fits_write_key<short>(fptr, (char *) keyword.c_str(), &s, (char *) comment.c_str());   
+      }   
+      case TUSHORT:
+      {
+         unsigned short us = Int();
+         return fits_write_key<unsigned short>(fptr, (char *) keyword.c_str(), &us, (char *) comment.c_str());
+      }   
+      case TINT:
+      {
+         int i = Int();
+         return fits_write_key<int>(fptr, (char *) keyword.c_str(), &i, (char *) comment.c_str());
+      }   
+      case TLONG:
+      {
+         long l = Long();
+         return fits_write_key<long>(fptr, (char *) keyword.c_str(), &l, (char *) comment.c_str());
+      }
+      case TLONGLONG:
+      {
+         long long ll = longLong();
+         return fits_write_key<long long>(fptr, (char *) keyword.c_str(), &ll, (char *) comment.c_str());
+      }
+      case TULONG:
+      {
+         unsigned long ul = unsignedLong();
+         return fits_write_key<unsigned long>(fptr, (char *) keyword.c_str(), &ul, (char *) comment.c_str());
+      }   
+      case TFLOAT:
+      {
+         float f = Float();
+         return fits_write_key<float>(fptr, (char *) keyword.c_str(), &f, (char *) comment.c_str());   
+      }   
+      case TDOUBLE:
+      {
+         double d = Double();
+         return fits_write_key<double>(fptr, (char *) keyword.c_str(), &d, (char *) comment.c_str());   
+      }
+      case fitsTCOMMENT:
+      {
+         return fits_write_comment(fptr, (char *) comment.c_str());
+      }
+      case fitsTHISTORY:
+      {
+         return fits_write_history(fptr, (char *) comment.c_str());
+      }
+      default:
+      {
+         return fits_write_key<fitsUnknownType>(fptr, (char *) keyword.c_str(), (void *)value.c_str(), (char *) comment.c_str());
+      }
+   }
+}
 
 } //namespace mx
 

@@ -37,6 +37,9 @@ public:
    /// The iterator type for the cards list
    typedef std::list<fitsHeaderCard>::iterator headerIterator ;
 
+   /// The iterator type for the card map
+   typedef std::unordered_multimap<std::string, headerIterator>::iterator mapIterator;
+   
 protected:
    /// The storage for the FITS header cards
    /** We use a list,  rather than forward_list, so that append (insert at end) is constant time.
@@ -52,20 +55,20 @@ protected:
 public:
 
    ///Default c'tor
-   fitsHeader()
-   {
-   }
+   fitsHeader();
    
    ///Copy constructor
-   /** Must be defined to handle creation of new iterators in the cardMap
+   /** Must be explicitly defined to handle creation of new iterators in the cardMap
     */
    fitsHeader(const fitsHeader & head);
    
    ///Destructor
-   ~fitsHeader()
-   {
-      clear();
-   }
+   ~fitsHeader();
+   
+   /// Assignment
+   /** Must be explicitly defined to handle creation of new iterators in the cardMap
+     */
+   fitsHeader & operator=(const fitsHeader & head);
    
    /// Get iterator to the beginning of the cards list
    headerIterator begin();
@@ -74,11 +77,7 @@ public:
    headerIterator end();
    
    /// Get iterator pointing to a specific element
-   headerIterator iterator(const std::string & keyword)
-   {
-      return cardMap.find(keyword)->second;
-      
-   }
+   headerIterator iterator(const std::string & keyword);
    
    /// Test whether the header is empty.
    bool empty();
@@ -89,13 +88,28 @@ public:
    /// Clear all cards from the header
    void clear();
    
-   void erase(const std::string & keyword)
-   {
-      headerIterator it = cardMap.find(keyword)->second;
-      cardMap.erase(keyword);
-      cards.erase(it);
-   }
-      
+   /// Erase card by keyword
+   /** This can not be used to erase COMMENT or HISTORY cards.
+     *
+     * \param keyword the keyword of the card to delete 
+     * 
+     */
+   void erase(const std::string & keyword);
+   
+   /// Erase card by iterator
+   /** This handles COMMENT and HISTORY cards, deleting only the one pointed to by it
+     *
+     * \param it is a headerIterator pointing to the card to delete.
+     * 
+     */
+   void erase(headerIterator it);
+   
+   /// Erase the standard entries at the top of the header
+   /** Erases each entry down to BSCALE.  This is useful for appending
+     * a header to a newly created file.
+     */  
+   void eraseStandardTop();
+   
    /// Append a fitsHeaderCard to the end of the header
    /**
      * \param card is a fitsHeaderCard already populated
@@ -212,9 +226,162 @@ public:
      */
    const fitsHeaderCard & operator[](const std::string & keyword) const;
    
+   
+   
 };  // fitsHeader
 
 //@}
+
+
+inline 
+fitsHeader::fitsHeader()
+{
+}
+   
+inline 
+fitsHeader::fitsHeader(const fitsHeader & head)
+{
+   operator=(head);
+   
+}
+
+inline 
+fitsHeader::~fitsHeader()
+{
+   clear();
+}
+
+inline
+fitsHeader & fitsHeader::operator=(const fitsHeader & head)
+{
+   cards = head.cards;
+   
+   headerIterator it = cards.begin();
+   
+   cardMap.clear();
+   while(it != cards.end())
+   {
+      cardMap.insert(std::pair<std::string, headerIterator>(it->keyword, it));         
+      ++it;
+   }
+   
+   return *this;
+}
+
+
+inline 
+fitsHeader::headerIterator fitsHeader::begin() 
+{
+   return cards.begin();
+}
+
+inline 
+fitsHeader::headerIterator fitsHeader::end() 
+{
+   return cards.end();
+}
+
+inline 
+fitsHeader::headerIterator fitsHeader::iterator(const std::string & keyword)
+{
+   return cardMap.find(keyword)->second;   
+}
+
+
+inline 
+bool fitsHeader::empty()
+{
+   return cards.empty();
+}
+   
+inline 
+size_t fitsHeader::size()
+{
+   return cards.size();
+}
+   
+inline 
+void fitsHeader::clear()
+{
+   cards.clear();
+   cardMap.clear();
+}
+
+inline
+void fitsHeader::erase(const std::string & keyword)
+{
+   if(keyword == "COMMENT" || keyword == "HISTORY")
+   {
+      return;
+   }
+   headerIterator it = cardMap.find(keyword)->second;
+   cardMap.erase(keyword);
+   cards.erase(it);
+}
+
+inline
+void fitsHeader::erase(headerIterator it)
+{
+   mapIterator mit = cardMap.find(it->keyword);
+              
+   if(it->keyword == "COMMENT" || it->keyword == "HISTORY")
+   {
+      while(mit->second->keyword == it->keyword && it->comment != mit->second->comment) ++mit;
+   }
+   cardMap.erase(mit);
+   cards.erase(it);
+}
+
+inline 
+void fitsHeader::eraseStandardTop()
+{
+   
+   headerIterator it = begin();
+   
+   while(it->keyword != "BSCALE" && it != end())
+   {
+      erase(it);
+      
+      it = begin();
+   }
+   
+   erase("BSCALE");   
+}
+
+            
+inline
+void fitsHeader::append(fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   cards.push_back(card);
+   
+   //Then add to the Map.
+   headerIterator insertedIt = cards.end();
+   --insertedIt;
+   cardMap.insert( std::pair<std::string, headerIterator>(card.keyword, insertedIt) );
+   
+}
+
+inline
+void fitsHeader::append(fitsHeader & head)
+{
+   headerIterator it;
+   
+   for(it = head.begin(); it != head.end(); ++it)
+   {
+      append(*it);
+   }
+}
 
 
 template<typename typeT> 
@@ -230,7 +397,26 @@ void fitsHeader::append(const std::string &k, const typeT &v)
    append(fitsHeaderCard(k,v));
 }
 
-
+inline
+void fitsHeader::insert_before(headerIterator it, fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   headerIterator insertedIt = cards.insert(it, card);
+   
+   //Then add to the Map.
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+      
+}
 
 template<typename typeT> 
 void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v, const std::string &c)
@@ -245,7 +431,27 @@ void fitsHeader::insert_before(headerIterator it, const std::string &k, typeT v)
    insert_before(it, fitsHeaderCard(k,v));
 }
 
-
+inline
+void fitsHeader::insert_after(headerIterator it, fitsHeaderCard card)
+{
+   //First check if duplicate key
+   if(cardMap.count(card.keyword) > 0)
+   {
+      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      {
+         std::cerr << "attempt to duplicate keyword\n";
+         return;
+      }
+   }
+   
+   //Now insert in list
+   headerIterator insertedIt = cards.insert(++it, card);
+   
+   //Then add to the Map.
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   
+   
+}
 
 
 template<typename typeT> 
@@ -258,6 +464,22 @@ void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v, 
 template<typename typeT> void fitsHeader::insert_after(headerIterator it, const std::string &k, typeT v)
 {
    insert_after(it, fitsHeaderCard(k,v));
+}
+
+inline
+fitsHeaderCard & fitsHeader::operator[](const std::string & keyword)
+{
+   headerIterator it = cardMap.find(keyword)->second;
+   
+   return *it;
+}
+
+inline
+const fitsHeaderCard & fitsHeader::operator[](const std::string & keyword) const
+{
+   headerIterator it = cardMap.find(keyword)->second;
+   
+   return *it;
 }
 
 
@@ -308,6 +530,7 @@ std::vector<dataT> headersToValues(const std::vector<fitsHeader> & heads, const 
    return v;
 }
 
+   
 ///@}
 
 } //namespace mx

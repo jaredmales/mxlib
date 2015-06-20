@@ -38,8 +38,6 @@ OBJS = readcolumns.o \
        process_interface.o \
        ds9_interface.o \
        gnuplot_interface.o \
-       fitsHeaderCard.o \
-       fitsHeader.o
 
 
 INC_TO_INSTALL = astroconstants.h \
@@ -96,8 +94,6 @@ sharedMemSegment.o: include/sharedMemSegment
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 gnuplot_interface.o: include/gnuplot_interface.h
-fitsHeaderCard.o: include/fitsHeaderCard.hpp include/fitsUtils.hpp
-fitsHeader.o: include/fitsHeader.hpp include/fitsUtils.hpp
 astrodyn.o: include/astrodyn.hpp
 kepler.o: include/kepler.hpp
 
