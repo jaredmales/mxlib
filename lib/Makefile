@@ -30,7 +30,6 @@ OBJS = readcolumns.o \
        kepler.o \
        astrodyn.o \
        fileUtils.o \
-       stringUtils.o \
        msgq.o \
        mxlib.o\
        sharedmem_segment.o \
@@ -86,7 +85,6 @@ all: $(TARGETS)
 
 #dependencies:
 fileUtils.o: include/fileUtils.hpp
-stringUtils.o: include/stringUtils.hpp
 msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
