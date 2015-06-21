@@ -1,6 +1,8 @@
 work/*
 lib/doc/html/*
 lib/vmop/*
+lib/include/mxlib_uncomp_version.h
+lib/include/mxlib_comp_version.h
 *.a
 *.so
 a.out

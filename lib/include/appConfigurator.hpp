@@ -1,0 +1,173 @@
+/** \file appConfigurator.hpp
+ * \author Jared R. Males
+ * \brief An application configuration manager
+ *
+ */
+
+#ifndef __appConfigurator_hpp__
+#define __appConfigurator_hpp__
+
+#include "stringUtils.hpp"
+
+#include "app/clOptions.hpp"
+#include "app/iniFile.hpp"
+
+
+#include <list>
+
+namespace mx
+{
+   
+///A configuration target 
+struct configTarget
+{
+   std::string name; ///<The name of the target
+   std::string shortOpt; ///< The command-line short option (e.g. -f)
+   std::string longOpt; ///< The command-line long option (e.g. --file)
+   int clType; ///< The command-line option type, argType::false, argType::true, argType::optional, argType::required
+   std::string section; ///< The config file section name, can be empty ""
+   std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
+   bool set; ///< true if the value has been set by the configuration, use to distinguish empty strings
+   std::string value; ///< holds the most recent value set by the configuration
+
+   /// Default c'tor
+   configTarget()
+   {
+      clType = 0;
+      set = false;
+   }
+
+   /// Construct and set values
+   configTarget(const std::string &n, 
+                const std::string &so, 
+                const std::string &lo, 
+                int clt, 
+                const std::string & s, 
+                const std::string & kw)
+   {
+      name = n;
+      shortOpt = so;
+      longOpt = lo;
+      clType = clt;
+      section = s;
+      keyword = kw;
+      
+      set = false;
+   }
+};
+
+/// Class to manage a set of configTarget entries, and read their values from config/ini files and the command line.
+struct appConfigurator
+{
+   typedef std::unordered_map<std::string, configTarget>::iterator targetIterator;
+   typedef std::list<configTarget>::iterator clOnlyTargetIterator;
+   
+   std::unordered_map<std::string, configTarget> targets;
+   std::list<configTarget> clOnlyTargets;
+   
+   /// Add a configTarget
+   /** Note that if name is a duplicate but the section and keyword are empty, it is handled as command-line only.
+     */
+   void add(configTarget tgt)
+   {
+      //First check for duplicate name and command line only
+      if(targets.count(tgt.name) > 0 && tgt.section == "" && tgt.keyword == "")
+      {
+         clOnlyTargets.push_back(tgt);
+      }
+      else
+      {
+         targets.insert({tgt.name, tgt});
+      }
+   }
+   
+   ///Parse the command line, updating the targets
+   void parseCommandLine(int argc, char ** argv)
+   {
+      if(argc == 0) return;
+      
+      clOptions clOpts;
+
+      targetIterator it;
+
+      for(it = targets.begin(); it != targets.end(); ++it)
+      {
+         if(it->second.shortOpt == "" && it->second.longOpt == "") continue;
+         
+         clOpts.add(it->second.name,it->second.shortOpt.c_str(),it->second.longOpt.c_str(), it->second.clType);
+      }
+      
+      clOnlyTargetIterator cloit;
+      for(cloit = clOnlyTargets.begin(); cloit != clOnlyTargets.end(); ++cloit)
+      {
+         if(cloit->shortOpt == "" && cloit->longOpt == "") continue;
+         
+         clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
+      }
+      
+      if(clOpts.nOpts == 0) 
+      {
+         std::cout << "none" << "\n";
+         return;
+      }
+      
+      clOpts.parse(argc, argv);
+
+      for(it = targets.begin(); it != targets.end(); ++it)
+      {
+         if(clOpts.optSet(it->second.name)) 
+         {
+            it->second.value = clOpts[it->second.name];
+            it->second.set = true;
+         }
+      }
+   }
+
+   ///Parst a config/ini file, updating the targets
+   void readConfig(const std::string & fname)
+   {
+      iniFile iF;
+      
+      iF.parse(fname);
+      
+      targetIterator it;
+      
+      for(it = targets.begin(); it != targets.end(); ++it)
+      {
+         if(iF.count(it->second.section, it->second.keyword) > 0) 
+         {
+            it->second.value = iF(it->second.section, it->second.keyword);
+            it->second.set = true;
+         }
+      }
+   }
+   
+   /// Check if a target has been set by the configuration
+   bool isSet(const std::string & name)
+   {
+      if(targets.count(name) == 0) return false;
+      
+      return targets[name].set;
+   }
+
+   /// Get the value of the target, converted tot the specified value
+   template<typename typeT>
+   typeT get(const std::string & name)
+   {
+      if(!isSet(name)) return false;
+      
+      return convertFromString<typeT>(targets[name].value);
+   }
+   
+   template<typename typeT>
+   void set(typeT & var, const std::string & name)
+   {
+      if(!isSet(name)) return;
+      
+      var = convertFromString<typeT>(targets[name].value);
+   }
+};
+
+} //namespace mx
+
+#endif // __appConfigurator_hpp__

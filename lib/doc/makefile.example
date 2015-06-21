@@ -1,0 +1,32 @@
+MXLIB_PATH=/home/jaredmales/Source/c/mxlib/lib/
+INCLUDE_PATH = $(MXLIB_PATH)/include  -I/home/jaredmales/include
+LIB_PATH = $(MXLIB_PATH)
+LIBS = -lmxlib
+
+OPTIMIZE = -O3
+
+CPP = g++
+
+CPPFLAGS += --std=c++0x
+
+.c.o:
+	$(CC) $(OPTIMIZE) $(CFLAGS) -I$(INCLUDE_PATH) -c $<
+
+.cpp.o:
+	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -I$(INCLUDE_PATH) -c $<
+
+# programs to be made
+TARGETS = my_target
+OBJS = my_target.o other_file.o
+
+
+all: $(TARGETS) 
+
+
+my_target: $(OBJS) my_target.hpp other_file.hpp 
+	$(CPP) -o my_target $(OBJS) $(CPPFLAGS) $(OPTIMIZE) -L$(LIB_PATH) $(LIBS)
+
+
+clean:
+	rm -f *.o *~
+	rm -f my_target
