@@ -22,7 +22,7 @@
 namespace mx
 {
    
-  
+
 /** Get the current system time.
   * Uses timespec, so nanosecond resolution is possible.
   * 
@@ -229,6 +229,8 @@ std::string ISO8601DateTimeStr<timespec>(const timespec &timeIn, int timeZone)
    return result;
 }
 
+
+
 /// Get a date-time string in ISO 8601 format for the current UTC time
 /** Returns a string in the ISO 8601 format:
   * YYYY-MM-DDYHH:MM:SS.SS, with optional timezone designation such as Z or +00:00.
@@ -245,6 +247,46 @@ inline
 std::string ISO8601DateTimeStr(int timeZone = 0)
 {
    return ISO8601DateTimeStr<time_t>(time(0), timeZone);
+}
+
+/// Get a date-time string in ISO 8601 format for an MJD
+/** Returns a string in the ISO 8601 format:
+  * YYYY-MM-DDYHH:MM:SS.SSSSSSSSS, with optional timezone designation such as Z or +00:00.
+  *
+  * \param [in] timeIn is the input time
+  * \param [in] timeZone specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+  *
+  * \retval std::string containing the format date/time 
+  * 
+  * \ingroup timeutils
+  */ 
+std::string ISO8601DateTimeStrMJD(const double &timeIn, int timeZone = 0)
+{
+   int iy, im, id;
+   double fd;
+   
+   iauJd2cal( DJM0, timeIn,
+              &iy, &im, &id, &fd);
+   
+   int hr, mn;
+   
+   hr = floor(fd*24.0);
+   fd = (fd - hr/24.0)*24.0;
+   
+   mn = floor(fd*60.);
+   
+   fd = (fd - mn/60.0)*3600.0;
+   
+   char tstr[32];
+   
+   snprintf(tstr, 32, "%04d-%02d-%02dT%02d:%02d:%012.9f", iy,im,id,hr,mn,fd);
+   
+   std::string result = tstr;
+   
+   if(timeZone == 1) result += "Z";
+   if(timeZone == 2) result += "+00:00";
+   
+   return result;
 }
 
 

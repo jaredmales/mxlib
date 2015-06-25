@@ -115,6 +115,22 @@ struct fitsHeaderCard
    
    //@}
    
+   ///\name Setting Components
+   /**
+     */
+   //@{
+
+   ///Set the value string, applying the appropriate conversion and setting the FITS type.
+   /**
+     * \param v the value to convert to string and set 
+     *
+     * \tparam typeT is the type to convert from
+     */ 
+   template<typename typeT>
+   void setValue(const typeT v);
+   
+   //@}
+   
    ///\name Conversions
    /**
      */
@@ -126,6 +142,11 @@ struct fitsHeaderCard
      */
    template<typename typeT> 
    typeT Value();
+   
+   ///Convert value to an string, stripping apostrophes if necessary.
+   /** \returns the result of converting the value string to a string
+    */
+   std::string String();
    
    ///Convert value to an integer
    /** \returns the result of converting the value string to an integer
@@ -173,6 +194,9 @@ struct fitsHeaderCard
    long double longDouble();
    
    //@}
+   
+   
+   
    
    ///\name Output
    /**
@@ -259,12 +283,26 @@ fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
    type = getFitsType<typeT>();
 }
 
-
+template<typename typeT>
+void fitsHeaderCard::setValue(const typeT v)
+{
+   value = convertToString<typeT>(v);
+   type = getFitsType<typeT>();
+}
+   
 template<typename typeT> 
 typeT fitsHeaderCard::Value()
 {
    return convertFromString<typeT>(value);
 }
+
+inline std::string fitsHeaderCard::String()
+{
+   std::string s = value;
+   fitsStripApost(s);
+   return s;
+}
+
 
 inline int fitsHeaderCard::Int()
 {

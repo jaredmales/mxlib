@@ -47,6 +47,7 @@ INC_TO_INSTALL = astroconstants.h \
                  readcolumns.h \
                  stringUtils.hpp \
                  fileUtils.hpp \
+                 gslInterpolation.hpp \
                  pout.hpp \
                  IPC.h \
                  msgq.h \

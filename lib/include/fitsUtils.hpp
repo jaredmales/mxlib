@@ -68,6 +68,13 @@ inline int getFitsType<char *>()
 }
 
 template<> 
+inline int getFitsType<std::string>()
+{
+   return TSTRING;
+}
+
+
+template<> 
 inline int getFitsType<unsigned char>()
 {
    return TBYTE;
@@ -244,28 +251,6 @@ inline int fitsStripApost(std::string & s)
    return stripped;
 }
 
-/// Write a header card to a file
-/** This is a templatized wrapper for the cfitsio routine fits_write_key.
-  *
-  * \tparam typeT is the type of the value
-  *
-  * \param fptr is a pointer to an open fits file
-  * \param keyword is a c-string containing the keyword
-  * \param value is a pointer to the memory location of the value
-  * \param comment is a c-string, possibly NULL, containing a comment string
-  *  
-  * \retval int containing the status returned by the cfitsio routine.
-  */
-template<typename typeT> 
-int fits_write_key(fitsfile * fptr, char * keyword, void * value, char * comment)
-{
-   int fstatus = 0;
-   
-   fits_write_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
-   
-   return fstatus;
-}
-
 ///Populate a fits header card with the value string copied verbatim
 /** 
   * \param headStr is a c-string which must be 81 characters in length, including the '\n'
@@ -310,9 +295,33 @@ inline void fitsPopulateCard(char headStr[81], char *keyword, char *value, char 
    snprintf(headStr + rpos, 81-rpos, "%s", comment);
 }
 
+/// Write a header card to a file
+/** This is a templatized wrapper for the cfitsio routine fits_write_key.
+  *
+  * \tparam typeT is the type of the value
+  *
+  * \param fptr is a pointer to an open fits file
+  * \param keyword is a c-string containing the keyword
+  * \param value is a pointer to the memory location of the value
+  * \param comment is a c-string, possibly NULL, containing a comment string
+  *  
+  * \retval int containing the status returned by the cfitsio routine.
+  */
+template<typename typeT> 
+int fits_write_key(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   int fstatus = 0;
+   
+   fits_write_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
+   
+   return fstatus;
+}
+
 template<> 
 inline int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
+   
+   
    int fstatus = 0;
 
    char *vstr = (char *) value;
@@ -325,6 +334,10 @@ inline int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void
    fits_write_record(fptr, headStr, &fstatus);
    return fstatus;
 }
+
+
+
+
 
 inline int fits_write_comment(fitsfile *fptr, char * comment)
 {

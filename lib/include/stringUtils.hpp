@@ -36,11 +36,14 @@ namespace mx
   * \param value the value of type typeT to be converted
   * 
   * \returns a string representation of value
+  * 
+  * \todo should have a facility to handle desired precision and format
   */
 template<typename typeT> 
 std::string convertToString(const typeT & value)
 {
    std::ostringstream convert;
+   convert.precision(20);
    
    convert << value;
    
