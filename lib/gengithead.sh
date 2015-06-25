@@ -35,7 +35,7 @@ if grep --quiet "modified" /tmp/git_status; then
    GIT_MODIFIED=1
 fi
 
-REPO_NAME=$(basename `git -C $GITPATH rev-parse --show-toplevel`)
+REPO_NAME=$(basename `git --exec-path=$GITPATH rev-parse --show-toplevel`)
 
 echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER
