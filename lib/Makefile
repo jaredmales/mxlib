@@ -73,7 +73,11 @@ INC_TO_INSTALL = astroconstants.h \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  timeUtils.hpp \
-                 mxException
+                 mxException \
+		 HCIobservation.hpp \
+		 ADIobservation.hpp \
+	         KLIPreduction.hpp \
+		 imageMasks.hpp
                  
 # VMOP_TO_INSTALL = MMatrix \
 #                   MMatrix1 \

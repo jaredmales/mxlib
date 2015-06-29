@@ -507,7 +507,6 @@ void headersToValues(std::vector<dataT> & v, const std::vector<fitsHeader> & hea
       v[i] = convertFromString<dataT>(heads[i][keyw].value);
    }
 
-   return v;
 }
 
 ///Convert the values in a std::vector of \ref fitsHeader "fits headers" into a std::vector of values.
