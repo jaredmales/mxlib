@@ -76,7 +76,11 @@ INC_TO_INSTALL = app \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  timeUtils.hpp \
-                 mxException
+                 mxException \
+		 HCIobservation.hpp \
+		 ADIobservation.hpp \
+	         KLIPreduction.hpp \
+		 imageMasks.hpp
                  
 # VMOP_TO_INSTALL = MMatrix \
 #                   MMatrix1 \

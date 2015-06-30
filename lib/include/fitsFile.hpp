@@ -513,11 +513,11 @@ void fitsFile<dataT>::read(arrT & im)
    {
       if(naxis > 1)
       {
-         im.resize(naxes[0], naxes[1], naxes[2]);
+         //im.resize(naxes[0], naxes[1], naxes[2]);
       }
       else
       {
-         im.resize(naxes[0], naxes[1],1);
+         //im.resize(naxes[0], naxes[1],1);
       }
    }
    else
