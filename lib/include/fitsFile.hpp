@@ -496,7 +496,7 @@ struct eigenArrResize
    }
 };
 
-template<typename arrT>s
+template<typename arrT>
 struct eigenArrResize<arrT, false>
 {
    //If it's not a cube, never pass zsz
