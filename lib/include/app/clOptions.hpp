@@ -49,6 +49,8 @@ struct clOptions
    
    unsigned int nOpts;
 
+
+   
    clOptions()
    {
       options = 0;
@@ -94,7 +96,7 @@ struct clOptions
       descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
    }
 
-   void parse(int argc, char **argv)
+   void parse(int argc, char **argv, std::vector<std::string> * nonOptions = 0)
    {
       argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
       
@@ -107,6 +109,15 @@ struct clOptions
       
       option::Parser parse(descriptions.data(), argc, argv, options, buffer);
       
+      if(nonOptions)
+      {
+         nonOptions->resize(parse.nonOptionsCount());
+      
+         for(int i=0;i<parse.nonOptionsCount(); ++i)
+         {
+            (*nonOptions)[i] = parse.nonOption(i);
+         }
+      }
    }
       
    const char * operator[](const std::string & key)

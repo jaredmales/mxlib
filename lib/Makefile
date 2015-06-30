@@ -39,7 +39,10 @@ OBJS = readcolumns.o \
        gnuplot_interface.o \
 
 
-INC_TO_INSTALL = astroconstants.h \
+INC_TO_INSTALL = app \
+                 appConfigurator.hpp \
+                 application.hpp \
+                 astroconstants.h \
                  astrodyn.hpp \
                  astrotypes.h \
                  kepler.hpp \
@@ -116,7 +119,7 @@ install: libmxlib
 	install libmxlib.so $(LIB_PATH)
 	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
-	 (install include/$$file $(INCLUDE_PATH)) || break; \
+	 (cp -r include/$$file $(INCLUDE_PATH)) || break; \
 	done
 # 	for file in ${VMOP_TO_INSTALL}; do \
 # 	 (install vmop/$$file $(INCLUDE_PATH)) || break; \

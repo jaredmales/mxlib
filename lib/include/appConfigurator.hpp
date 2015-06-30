@@ -65,6 +65,9 @@ struct appConfigurator
    std::unordered_map<std::string, configTarget> targets;
    std::list<configTarget> clOnlyTargets;
    
+   
+   std::vector<std::string> nonOptions;
+      
    /// Add a configTarget
    /** Note that if name is a duplicate but the section and keyword are empty, it is handled as command-line only.
      */
@@ -111,7 +114,7 @@ struct appConfigurator
          return;
       }
       
-      clOpts.parse(argc, argv);
+      clOpts.parse(argc, argv, &nonOptions);
 
       for(it = targets.begin(); it != targets.end(); ++it)
       {
@@ -121,6 +124,9 @@ struct appConfigurator
             it->second.set = true;
          }
       }
+      
+      
+      
    }
 
    ///Parst a config/ini file, updating the targets
@@ -159,6 +165,8 @@ struct appConfigurator
       return convertFromString<typeT>(targets[name].value);
    }
    
+  
+   
    template<typename typeT>
    void set(typeT & var, const std::string & name)
    {
@@ -168,6 +176,17 @@ struct appConfigurator
    }
 };
 
+
+template<>
+std::string appConfigurator::get<std::string>(const std::string & name)
+{
+   if(!isSet(name)) return "";
+      
+   return targets[name].value;
+}
+
+   
+   
 } //namespace mx
 
 #endif // __appConfigurator_hpp__
