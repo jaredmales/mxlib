@@ -485,6 +485,27 @@ void fitsFile<dataT>::read(const std::string &fname, dataT * data, fitsHeader &h
 /***                      Eigen Arrays                    ***/
 /************************************************************/
 
+
+template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
+struct eigenArrResize
+{
+   //If it's a cube, always pass zsz
+   void resize(arrT & arr, int xsz, int ysz, int zsz)
+   {
+      arr.resize(xsz, ysz, zsz);
+   }
+};
+
+template<typename arrT>s
+struct eigenArrResize<arrT, false>
+{
+   //If it's not a cube, never pass zsz
+   void resize(arrT & arr, int xsz, int ysz, int zsz)
+   {
+      arr.resize(xsz, ysz);
+   }
+};
+
 template<typename dataT>
 template<typename arrT>
 void fitsFile<dataT>::read(arrT & im)
@@ -509,21 +530,22 @@ void fitsFile<dataT>::read(arrT & im)
       nelements *= naxes[i];
    }
 
-   if(is_eigenCube<arrT>::value == true)
+   eigenArrResize<arrT> arrresz;
+   
+   if(naxis > 1)
    {
-      if(naxis > 1)
-      {
-         //im.resize(naxes[0], naxes[1], naxes[2]);
-      }
-      else
-      {
-         //im.resize(naxes[0], naxes[1],1);
-      }
+      arrresz.resize(im, naxes[0], naxes[1], naxes[2]);
    }
    else
    {
-      im.resize(naxes[0], naxes[1]);
+      arrresz.resize(im, naxes[0], naxes[1],1);
    }
+   
+//    }
+//    else
+//    {
+//       im.resize(naxes[0], naxes[1]);
+//    }
    
    fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
                                      (void *) im.data(), &anynul, &fstatus);
