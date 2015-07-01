@@ -115,30 +115,44 @@ struct derotODI
 /** Angular differential imaging (ADI) uses sky rotation to differentiate real objects from
   * speckles.
   * 
-  * derotFunctObj is a function object with the following minimum interface
+  * \tparam floatT is the floating point type in which to do calculations
+  * 
+  * \tparam _derotFunctObj 
+  * \parblock 
+  * is the derotation functor with the following minimum interface: 
   * \code
-  * template<typename _arithT>
+  * template<typename _floatT>
   * struct derotF
   * {
-  *    typedef  _arithT arithT;
-  *    std::string angKeyWord;  //This is used to extract the rotation angle from the header
+  *    typedef  _floatT floatT;
   * 
-  *    //Constructor must initialize angKeyWord
-  *    derotF()
+  *    //Vector of keywords to extract from the fits headers
+  *    std::vector<std::string> keywords;
+  *    
+  *    //Vector(s) to hold the keyword values
+  *    std::vector<floatT> keyValue1;
+  *    
+  *    
+  *    //Constructor should populate keywords
+  *    derotVisAO()
   *    {
-  *       angKeyWord = "ROTOFF";
+  *       keywords.push_back("KEYWORD1");
   *    }
-  * 
-  *    //operator() calculates the counter-clockwise angle to de-rotate by.
-  *    arithT operator()(arithT rotoff)
+  *    
+  *    //Method called by HCIobservation to get keyword-values
+  *    void extractKeywords(vector<fitsHeader> & heads)
   *    {
-  *       return rotoff+90-0.6;
-  *    } 
+  *       keyValue1 = headersToValues<float>(heads, "KEYWORD1");
+  *    }
+  *    
+  *    //Calculate the derotation angle for a given image number
+  *    floatT derotAngle(size_t imno)
+  *    {
+  *       return DTOR(keyValue1[imno]+90-0.6);
+  *    }
   * };
   * \endcode
-  * 
-  * \tparam floatT is the floating point type in which to do calculations
-  * \tparam _derotFunctObj is the derotation functor with the interface described above
+  * \endparblock
   */
 template<typename _floatT, class _derotFunctObj>
 struct ADIobservation : public HCIobservation<_floatT>

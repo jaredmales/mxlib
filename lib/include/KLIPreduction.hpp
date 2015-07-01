@@ -28,6 +28,9 @@ namespace HCI
 }
 
 /// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
+/**
+  * 
+  */ 
 template<typename _floatT, class _derotFunctObj>
 struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
 {
@@ -37,20 +40,31 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
    int padSize;
    
+   /// Specifies the number of modes to include in the PSF.
+   /** The output image is a cube with a plane for each entry in Nmodes.
+     * Only the number of eigenvalues required for the maximum value of Nmodes
+     * are calculated, so this can have an important impact on speed.
+     * 
+     * Can be initialized as:
+     * \code 
+     * red.Nmodes={5,10,15,20};
+     * \endcode
+     * 
+     */ 
    std::vector<int> Nmodes;
+   
    int maxNmodes;
    
    floatT mindpx;
    
-   //bool excludeNone;
    
-
-   
-
-   //static const int excludeAngle = 0;
-   //static const int excludeImno = 1;
-
    /// Controls how reference images are excluded, if at all, from the covariance matrix for each target image.
+   /** Can have the following values:
+     *  - <b>HCI::excludeNone</b> = no exclusion, all images included
+     *  - <b>HCI::excludePixel</b> = exclude based on pixels of rotation at the inner edge of the region
+     *  - <b>HCI::excludeAngle</b> = exclude based on degrees of rotation at the inner edge of the region
+     *  - <b>HCI::excludeImno</b> = exclude based on number of images
+     */
    int excludeMethod;
    
    ///Number of reference images to include in the covariance matrix
@@ -503,7 +517,7 @@ bool cvEntryComp( const cvEntry & cvE1, const cvEntry & cvE2)
    return ( fabs(cvE1.cvVal) > fabs(cvE2.cvVal) );
 }
 
-//This sorts with greater-than
+//This sorts with less-than
 bool cvEntryCompIndex( const cvEntry & cvE1, const cvEntry & cvE2)
 {
    return ( cvE1.index < cvE2.index );
@@ -572,9 +586,8 @@ void KLIPreduction<floatT, derotFunctObj>::collapseCovar( eigenT & cutCV,
    
    if(excludeMethod == HCI::excludePixel || excludeMethod == HCI::excludeAngle )
    {
-      pout("dang", dang);
-      
       rotoff1 = this->Nims;
+      
       //Find first rotoff within dang
       int j;
       for(j=0; j< this->Nims; ++j)

@@ -448,7 +448,9 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
    info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);     
    
     /*  Cleanup and exit  */
-   free(WORK); free(IWORK); free(ISUPPZ);
+   free(WORK); 
+   free(IWORK); 
+   free(ISUPPZ);
       
    return info;
 }       
