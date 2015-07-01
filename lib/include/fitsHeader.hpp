@@ -540,8 +540,8 @@ inline void fitsHeaderGitStatus(fitsHeader & head,
    
    hist = "   sha1=";
    hist += sha1;
-   if(modified) hist += ", modified.";
-   else hist += ".";
+   if(modified) hist += ", modified";
+   
    head.append("", fitsHistoryType(), hist);
 }
 

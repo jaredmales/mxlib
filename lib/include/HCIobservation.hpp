@@ -357,7 +357,9 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    
    fitsHeader head;
    
+   head.append("", fitsCommentType(), "----------------------------------------");
    head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
+   head.append("", fitsCommentType(), "----------------------------------------");
    head.append<int>("IMSIZE", imSize, "image size after reading");
    head.append<int>("COMBMTHD", combineMethod, "combination method");
                     

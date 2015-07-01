@@ -309,6 +309,10 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
       
       fitsHeader head;
       
+      head.append("", fitsCommentType(), "----------------------------------------");
+      head.append("", fitsCommentType(), "mx::KLIPreduction parameters:");
+      head.append("", fitsCommentType(), "----------------------------------------");
+   
       std::stringstream str;
       for(int nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
       str << Nmodes[Nmodes.size()-1];      
