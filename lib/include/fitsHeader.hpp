@@ -530,6 +530,19 @@ std::vector<dataT> headersToValues(const std::vector<fitsHeader> & heads, const 
 }
 
    
+inline void fitsHeaderGitStatus(fitsHeader & head, 
+                                const std::string & repoName,
+                                const char * sha1,
+                                int modified)
+{
+   std::string hist = "Git status for " + repoName + ": sha1=";
+   hist += sha1;
+   if(modified) hist += ", modified.";
+   else hist += ".";
+   
+   head.append("", fitsHistoryType(""), hist);
+}
+
 ///@}
 
 } //namespace mx

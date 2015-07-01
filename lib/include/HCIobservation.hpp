@@ -364,6 +364,9 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
       head.append(*addHead);
    }
    
+   fitsHeaderGitStatus(head, "mxlib_comp",  mxlib_compiled_git_sha1(), mxlib_compiled_git_repo_modified());
+   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
+   
    fitsFile<floatT> f;
       
    f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);

@@ -8,6 +8,21 @@
   * \ingroup gen_math
   */
   
+/** \defgroup template_blaslap Templatized BLAS and Lapack
+  * \brief Templatized interfaces to the BLAS and the Lapack library
+  * \ingroup gen_math
+  */
+
+/** \defgroup template_blas Templatized BLAS interface
+  * \brief Templatized interface to the BLAS
+  * \ingroup template_blaslap
+  */  
+
+/** \defgroup template_lapack Templatized Lapack interface
+  * \brief Templatized interface to the Lapack library
+  * \ingroup template_blaslap
+  */  
+  
 /** \defgroup signal_processing Signal Processing 
   * \brief Tools for processing signals
   */

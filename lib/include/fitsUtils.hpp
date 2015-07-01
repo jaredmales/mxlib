@@ -32,7 +32,15 @@ struct fitsUnknownType
 #define fitsTCOMMENT (-5001)
 struct fitsCommentType
 {
+   fitsCommentType()
+   {
+   }
+   
    fitsCommentType(char *v)
+   {
+   }
+   
+   fitsCommentType(const char *v)
    {
    }
 };
@@ -41,6 +49,14 @@ struct fitsCommentType
 struct fitsHistoryType
 {
    fitsHistoryType(char *v)
+   {
+   }
+   
+   fitsHistoryType(const char *v)
+   {
+   }
+   
+   fitsHistoryType()
    {
    }
 };
@@ -356,6 +372,8 @@ inline int fits_write_history(fitsfile *fptr, char * history)
    
    return fstatus;
 }
+
+
 
 
 ///@}

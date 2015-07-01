@@ -1,4 +1,9 @@
-
+/** \file templateBLAS.hpp
+  * \brief Declares and defines templatized wrappers for the BLAS
+  * \ingroup template_blas
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
 
 #include <complex>
 

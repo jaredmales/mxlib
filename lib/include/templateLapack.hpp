@@ -1,6 +1,6 @@
 /** \file templateLapack.hpp
   * \brief Declares and defines templatized wrappers for the Lapack library
-  * \ingroup genutils
+  * \ingroup template_lapack
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -29,6 +29,8 @@
   * </pre>
   * 
   * \returns the value of the specified machine parameters for the specified precision
+  * 
+  * \ingroup template_lapack
   */
 
 template<typename dataT>
@@ -82,6 +84,8 @@ double lamch<double>(char CMACH)
   * \param INFO (output)  0:  successful exit < 0:  if INFO = -i, the i-th argument had an illegal value
   * 
   * \returns the value of INFO from the LAPACK routine
+  * 
+  * \ingroup template_lapack
   */
 template<typename dataT>
 int sytrd( char UPLO, int N, dataT * A, int LDA, dataT *D, dataT *E, dataT *TAU, dataT *WORK, int LWORK, int INFO)
@@ -126,6 +130,8 @@ int sytrd<double>( char UPLO, int N, double * A, int LDA, double *D, double *E, 
   * indices for the desired eigenvalues.
   * 
   * See more details: http://www.netlib.org/lapack/lapack-3.1.1/html/ssyevr.f.html.
+  * 
+  * \ingroup template_lapack
   */
 template<typename dataT>
 int syevr (  char JOBZ, char RANGE, char UPLO, int N, dataT *A, int LDA, dataT VL, dataT VU, int IL, 
@@ -335,6 +341,8 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
            did not converge to zero. See the description of WORK
           above for details.
     \endparblock
+  *
+  * \ingroup template_lapack
   */
 template<typename dataT>
 int gesvd( char JOBU, char JOBVT, int M, int N, dataT * A, int LDA, dataT * S, dataT *U, int LDU, 
