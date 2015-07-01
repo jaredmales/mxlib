@@ -355,9 +355,9 @@ void fitsHeader::append(fitsHeaderCard card)
    //First check if duplicate key
    if(cardMap.count(card.keyword) > 0)
    {
-      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
       {
-         std::cerr << "attempt to duplicate keyword\n";
+         std::cerr << "attempt to duplicate keyword: " << card.keyword << "\n";
          return;
       }
    }
@@ -403,9 +403,9 @@ void fitsHeader::insert_before(headerIterator it, fitsHeaderCard card)
    //First check if duplicate key
    if(cardMap.count(card.keyword) > 0)
    {
-      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
       {
-         std::cerr << "attempt to duplicate keyword\n";
+         std::cerr << "attempt to duplicate keyword: " << card.keyword << "\n";
          return;
       }
    }
@@ -437,9 +437,9 @@ void fitsHeader::insert_after(headerIterator it, fitsHeaderCard card)
    //First check if duplicate key
    if(cardMap.count(card.keyword) > 0)
    {
-      if(card.keyword != "HISTORY" && card.keyword != "COMMENT")
+      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
       {
-         std::cerr << "attempt to duplicate keyword\n";
+         std::cerr << "attempt to duplicate keyword:" << card.keyword << "\n";
          return;
       }
    }
@@ -535,12 +535,14 @@ inline void fitsHeaderGitStatus(fitsHeader & head,
                                 const char * sha1,
                                 int modified)
 {
-   std::string hist = "Git status for " + repoName + ": sha1=";
+   std::string hist = "Git status for " + repoName + ":";
+   head.append("", fitsHistoryType(), hist);
+   
+   hist = "   sha1=";
    hist += sha1;
    if(modified) hist += ", modified.";
    else hist += ".";
-   
-   head.append("", fitsHistoryType(""), hist);
+   head.append("", fitsHistoryType(), hist);
 }
 
 ///@}

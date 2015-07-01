@@ -12,6 +12,8 @@
 #include <string>
 #include <fstream>
 
+#include "mxlib.h"
+
 #include "templateBLAS.hpp"
 #include "fileUtils.hpp"
 #include "eigenImage.hpp"
@@ -189,6 +191,7 @@ inline void HCIobservation<_floatT>::readFiles()
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
 
    vector<string> flist = getFileNames(dir, prefix, ext);
+      
    sort(flist.begin(), flist.end());
    
    fitsFile<floatT> f(flist[0]);
@@ -354,8 +357,7 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    
    fitsHeader head;
    
-   std::string comment = "mx::HCIobservation parameters:";
-   head.append<char *>("COMMENT", (char *) comment.c_str());
+   head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
    head.append<int>("IMSIZE", imSize, "image size after reading");
    head.append<int>("COMBMTHD", combineMethod, "combination method");
                     
