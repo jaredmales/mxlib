@@ -171,7 +171,7 @@ struct ADIobservation : public HCIobservation<_floatT>
    {
    }
    
-   void readFiles()
+   void readFiles(const std::vector<std::string> & flist)
    {      
       this->keywords.clear();
       for(int i=0;i<derotF.keywords.size();++i)
@@ -179,7 +179,7 @@ struct ADIobservation : public HCIobservation<_floatT>
          this->keywords.push_back(derotF.keywords[i]);
       }
       
-      HCIobservation<floatT>::readFiles();
+      HCIobservation<floatT>::readFiles(flist);
       
       derotF.extractKeywords(this->heads);
       
