@@ -113,6 +113,8 @@ struct HCIobservation
    HCIobservation(std::string odir, std::string oprefix, std::string oext);
 
    
+   void readFiles(const std::vector<std::string> &flist);
+   
    ///Read the list of files, cut to size, and apply the mask.
    void readFiles();
    
