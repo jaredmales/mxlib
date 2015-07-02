@@ -167,11 +167,15 @@ struct ADIobservation : public HCIobservation<_floatT>
    {
    }
    
-   ADIobservation(std::string odir, std::string oprefix, std::string oext) : HCIobservation<floatT>(odir,oprefix,oext)
+   ADIobservation( const std::string & dir, 
+                   const std::string & prefix, 
+                   const std::string & ext) : HCIobservation<floatT>(dir,prefix,ext)
    {
    }
    
-   void readFiles(const std::vector<std::string> & flist)
+   
+   
+   void readFiles()
    {      
       this->keywords.clear();
       for(int i=0;i<derotF.keywords.size();++i)
@@ -179,7 +183,7 @@ struct ADIobservation : public HCIobservation<_floatT>
          this->keywords.push_back(derotF.keywords[i]);
       }
       
-      HCIobservation<floatT>::readFiles(flist);
+      HCIobservation<floatT>::readFiles();
       
       derotF.extractKeywords(this->heads);
       

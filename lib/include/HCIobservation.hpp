@@ -48,9 +48,11 @@ struct HCIobservation
 
    typedef _floatT floatT;
    
-   std::string dir; ///<The directory where to search for files
-   std::string prefix; ///<The prefix of the files
-   std::string ext; ///<The extension of the files, default is ".fits"
+//    std::string dir; ///<The directory where to search for files
+//    std::string prefix; ///<The prefix of the files
+//    std::string ext; ///<The extension of the files, default is ".fits"
+   
+   std::vector<std::string> fileList;
    
    ///Set the image size.  Images are cut down to this size after reading.
    /** Set to <= 0 to use images uncut.
@@ -108,16 +110,17 @@ struct HCIobservation
 
    HCIobservation();
    
-   HCIobservation(std::string oprefix);
-   HCIobservation(std::string odir, std::string oprefix);
-   HCIobservation(std::string odir, std::string oprefix, std::string oext);
+   HCIobservation(const std::string &prefix);
+   HCIobservation(const std::string &dir, const std::string &prefix);
+   HCIobservation(const std::string &dir, const std::string &prefix, const std::string &ext);
 
+   ///Load the file list
+   void loadFileList(const std::string &dir, const std::string &prefix, const std::string &ext);
    
-   void readFiles(const std::vector<std::string> &flist);
    
-   ///Read the list of files, cut to size, and apply the mask.
+   ///Read the list of files, cut to size, and apply the mask.   
    void readFiles();
-   
+      
    ///Read the image weights from a single column text file.
    void readWeights();
 
@@ -135,9 +138,9 @@ struct HCIobservation
 template<typename _floatT>
 void HCIobservation<_floatT>::initialize()
 {
-   dir = "./";
-   prefix = "";
-   ext = ".fits";
+   //dir = "./";
+   //prefix = "";
+   //ext = ".fits";
    
    imSize = 0;
    applyMask = false;
@@ -161,48 +164,49 @@ HCIobservation<_floatT>::HCIobservation()
 }
 
 template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(std::string oprefix)
+HCIobservation<_floatT>::HCIobservation(const std::string & prefix)
 {
    initialize();
-   prefix = oprefix;
+   //prefix = oprefix;
+   loadFileList("./", prefix, ".fits"); 
 }
 
 template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(std::string odir, std::string oprefix)
+HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::string & prefix)
 {
    initialize();
    
-   dir = odir;
-   prefix = oprefix;
+   //dir = odir;
+   //prefix = oprefix;
+   loadFileList(dir, prefix, ".fits");
 }
 
 template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(std::string odir, std::string oprefix, std::string oext)
+HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
    initialize();
    
-   dir = odir;
-   prefix = oprefix;
-   ext = oext;      
+   //dir = odir;
+   //prefix = oprefix;
+   //ext = oext;      
+   loadFileList(dir, prefix, ext);
 }
    
+
+template<typename _floatT>
+inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
+{
+   fileList = getFileNames(dir, prefix, ext);
+      
+   sort(fileList.begin(), fileList.end());
+}
 
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
-{
-   vector<string> flist = getFileNames(dir, prefix, ext);
-      
-   sort(flist.begin(), flist.end());
-
-   readFiles(flist);
-}
-
-template<typename _floatT>
-inline void HCIobservation<_floatT>::readFiles(const std::vector<std::string> & flist)
 {      
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
-   fitsFile<floatT> f(flist[0]);
+   fitsFile<floatT> f(fileList[0]);
 
    f.read(im);
 
@@ -213,12 +217,12 @@ inline void HCIobservation<_floatT>::readFiles(const std::vector<std::string> & 
       head.append(keywords[i], 0);
    }
    
-   heads.resize(flist.size(), head);
+   heads.resize(fileList.size(), head);
    head.clear();
    
-   imc.resize(im.rows(), im.cols(), flist.size());
+   imc.resize(im.rows(), im.cols(), fileList.size());
    
-   f.read(flist, imc.data(), heads);
+   f.read(fileList, imc.data(), heads);
 
    
    if(imSize > 0)

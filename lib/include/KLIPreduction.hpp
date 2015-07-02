@@ -81,9 +81,9 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
       initialize();
    }
    
-   KLIPreduction( const std::string & odir, 
-                  const std::string & oprefix, 
-                  const std::string & oext) : ADIobservation<_floatT, _derotFunctObj>(odir, oprefix, oext)
+   KLIPreduction( const std::string & dir, 
+                  const std::string & prefix, 
+                  const std::string & ext) : ADIobservation<_floatT, _derotFunctObj>(dir, prefix, ext)
    {
       initialize();
    }
