@@ -530,6 +530,14 @@ std::vector<dataT> headersToValues(const std::vector<fitsHeader> & heads, const 
 }
 
    
+///Write the status of a Git repository to HISTORY in a FITS header.
+/**
+  * \param [in,out] head the HISTORY cards will be appended to this header
+  * \param [in] repoName the name of the repository
+  * \param [in] sha1 is the SHA-1 hash string of the repository 
+  * \param [in] modified whether or not the repository has been modified after the 
+  *                      commit referred to by sha1
+  */
 inline void fitsHeaderGitStatus(fitsHeader & head, 
                                 const std::string & repoName,
                                 const char * sha1,

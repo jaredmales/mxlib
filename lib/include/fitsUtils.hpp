@@ -48,6 +48,10 @@ struct fitsCommentType
 #define fitsTHISTORY (-5002)
 struct fitsHistoryType
 {
+   fitsHistoryType()
+   {
+   }
+
    fitsHistoryType(char *v)
    {
    }
@@ -56,9 +60,6 @@ struct fitsHistoryType
    {
    }
    
-   fitsHistoryType()
-   {
-   }
 };
 
 
