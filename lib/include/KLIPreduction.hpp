@@ -375,7 +375,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    pout("beginning worker");
    
 //   eigenImagef evecs;//, evals;
-   #pragma omp parrallel
+   #pragma omp parrallel no_wait schedule(dynamic, 10)
    {
    eigenImagef klims;
    eigenImagef cv;
