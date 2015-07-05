@@ -146,7 +146,7 @@ void KLIPreduction<_floatT, _derotFunctObj>::meanSubtract(eigenCube<floatT> & im
 
    if(this->applyMask)
    {
-      //S#pragma omp parallel for schedule(static, 1)
+      //#pragma omp parallel for schedule(static, 1)
       for(int n=0;n<ims.planes(); ++n)
       {
          _floatT mn = 0, Navg = 0;
@@ -405,6 +405,9 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       dklims += t9 - t7;
    }
 
+   //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
+   //Local: cfs, psf, rims_cut, cv_cut, sds
+   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds) shared(rims,idx,dang, cv, klims, maxNmodes, sds)
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       pout("image:", imno, "/", this->Nims);
@@ -423,7 +426,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    
       t10 = get_curr_time();
    
-      #pragma omp parallel for schedule(static, 1)
+      //#pragma omp parallel for schedule(static, 1)
       for(int j=0; j<cfs.size(); ++j)
       {
          cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
