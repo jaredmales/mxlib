@@ -407,7 +407,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
    //Local: cfs, psf, rims_cut, cv_cut, sds
-   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds) shared(rims,idx,dang, cv, klims, maxNmodes, sds)
+   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       pout("image:", imno, "/", this->Nims);
