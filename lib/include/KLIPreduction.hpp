@@ -375,13 +375,9 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    pout("beginning worker");
    
 //   eigenImagef evecs;//, evals;
-   eigenImagef cfs; //The coefficients
-   eigenImagef psf;
-   eigenImagef rims_cut;
+  
    eigenImagef klims;
    eigenImagef cv;
-   eigenImagef cv_cut;
-   std::vector<floatT> sds;
       
    //*** First mean subtract ***//
    pout("Median subtracting\n");
@@ -407,9 +403,18 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
    //Local: cfs, psf, rims_cut, cv_cut, sds
-   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds) no_wait 
+   #pragma omp parrallel for  no_wait  
+   //private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
    for(int imno = 0; imno < this->Nims; ++imno)
    {
+      eigenImagef cfs; //The coefficients
+      eigenImagef psf;
+      eigenImagef rims_cut;
+      eigenImagef cv_cut;
+      std::vector<floatT> sds;
+  
+      double timno = get_curr_time();
+      
       pout("image:", imno, "/", this->Nims);
 
        if( excludeMethod != HCI::excludeNone )
@@ -447,6 +452,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
       }
    }
+   std::cout << get_curr_time() - timno;
 
 }
 
