@@ -407,7 +407,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
    //Local: cfs, psf, rims_cut, cv_cut, sds
-   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
+   #pragma omp parrallel for private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds) no_wait 
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       pout("image:", imno, "/", this->Nims);
@@ -443,7 +443,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
             psf += cfs(j)*klims.row(j);
          }  
          
-         #pragma omp critical
+         //#pragma omp critical
          insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
       }
    }
