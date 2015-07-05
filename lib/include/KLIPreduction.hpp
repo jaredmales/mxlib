@@ -378,6 +378,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
   
    eigenImagef klims;
    eigenImagef cv;
+   std::vector<floatT> sds;
       
    //*** First mean subtract ***//
    pout("Median subtracting\n");
@@ -411,7 +412,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       eigenImagef psf;
       eigenImagef rims_cut;
       eigenImagef cv_cut;
-      std::vector<floatT> sds;
+
   
       double timno = get_curr_time();
       
@@ -451,9 +452,10 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          //#pragma omp critical
          insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
       }
-   }
-   std::cout << get_curr_time() - timno;
+      std::cout << get_curr_time() - timno;
 
+   }
+   
 }
 
 
