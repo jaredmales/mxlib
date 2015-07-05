@@ -441,7 +441,9 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          for(int j=maxNmodes-2; j>=maxNmodes-Nmodes[mode_i]; --j)
          {
             psf += cfs(j)*klims.row(j);
-         }    
+         }  
+         
+         #pragma omp critical
          insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
       }
    }
