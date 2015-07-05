@@ -375,7 +375,8 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    pout("beginning worker");
    
 //   eigenImagef evecs;//, evals;
-  
+   #pragma omp parrallel
+   {
    eigenImagef klims;
    eigenImagef cv;
    std::vector<floatT> sds;
@@ -404,8 +405,9 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
    //Local: cfs, psf, rims_cut, cv_cut, sds
-   #pragma omp parrallel for  no_wait  
+   //#pragma omp parrallel for  no_wait  
    //private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
+#pragma openmp for
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       eigenImagef cfs; //The coefficients
@@ -455,7 +457,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
       std::cout << get_curr_time() - timno;
 
    }
-   
+   }//openmp parrallel  
 }
 
 
