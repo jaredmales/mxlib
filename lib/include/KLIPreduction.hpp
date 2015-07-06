@@ -376,20 +376,11 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
 
    std::vector<floatT> sds;
 
-   meanSubtract(rims, sds);   
-//   eigenImagef evecs;//, evals;
-   #pragma omp parallel  
-   {
-   eigenImagef klims;
-   eigenImagef cv;
- //  std::vector<floatT> sds;
-   
-   std::cout << omp_get_num_threads()<<"\n";   
    //*** First mean subtract ***//
-//   pout("Median subtracting\n");
-   
-   //meanSubtract(rims);
- //  meanSubtract(rims, sds);
+   pout("Mean subtracting\n");
+   meanSubtract(rims, sds);   
+
+   eigenImagef cv;
 
    //*** Form lower-triangle covariance matrix
    pout("calculating covariance matrix");
@@ -397,71 +388,74 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    eigenSYRK(cv, rims.cube());
    dcv += get_curr_time() - t5;
 
-   if( excludeMethod == HCI::excludeNone )
-   {
-      pout("calculating K-L images");
-      /**** Now calculate the K-L Images ****/
-      t7 = get_curr_time();
-      calcKLIms(klims, cv, rims.cube(), maxNmodes);
-      t9 = get_curr_time();
-      dklims += t9 - t7;
-   }
-
-   //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
-   //Local: cfs, psf, rims_cut, cv_cut, sds
-   //#pragma omp parrallel for  no_wait  
-   //private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
-   #pragma omp for  nowait
-   for(int imno = 0; imno < this->Nims; ++imno)
+   #pragma omp parallel  
    {
       eigenImagef cfs; //The coefficients
       eigenImagef psf;
       eigenImagef rims_cut;
       eigenImagef cv_cut;
       eigenImagef klims;
- 
-      std::cout << omp_get_num_threads() << "\n";    
-      double timno = get_curr_time();
       
-      pout("image:", imno, "/", this->Nims);
 
-       if( excludeMethod != HCI::excludeNone )
-       {
-         collapseCovar( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang);
+      if( excludeMethod == HCI::excludeNone )
+      {
+         pout("calculating K-L images");
          /**** Now calculate the K-L Images ****/
          t7 = get_curr_time();
-         calcKLIms(klims, cv_cut, rims_cut, maxNmodes);
+         calcKLIms(klims, cv, rims.cube(), maxNmodes);
          t9 = get_curr_time();
          dklims += t9 - t7;
-   
-      } //if(mindpx != 0)
-      cfs.resize(1, klims.rows());
-   
-      t10 = get_curr_time();
-   
-      //#pragma omp parallel for schedule(static, 1)
-      for(int j=0; j<cfs.size(); ++j)
-      {
-         cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
       }
-      dcfs += get_curr_time()-t10;
-  
-      for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
-      {
-         psf = cfs(maxNmodes-1)*klims.row(maxNmodes-1);
 
-         //Count down, since eigenvalues are returned in increasing order
-         for(int j=maxNmodes-2; j>=maxNmodes-Nmodes[mode_i]; --j)
+      //Globals:  rims, idx, dang, cv, klims, maxNmodes, sds
+      //Local: cfs, psf, rims_cut, cv_cut, sds
+      //#pragma omp parrallel for  no_wait  
+      //private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
+      #pragma omp for 
+      for(int imno = 0; imno < this->Nims; ++imno)
+      {
+ 
+         std::cout << omp_get_num_threads() << "\n";    
+         double timno = get_curr_time();
+      
+         pout("image:", imno, "/", this->Nims);
+
+         if( excludeMethod != HCI::excludeNone )
          {
-            psf += cfs(j)*klims.row(j);
-         }  
-         
-         //#pragma omp critical
-         insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
-      }
-      std::cout << get_curr_time() - timno << "\n";
+            collapseCovar( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang);
+            /**** Now calculate the K-L Images ****/
+            t7 = get_curr_time();
+            calcKLIms(klims, cv_cut, rims_cut, maxNmodes);
+            t9 = get_curr_time();
+            dklims += t9 - t7;
+   
+         } //if(mindpx != 0)
+         cfs.resize(1, klims.rows());
+   
+         t10 = get_curr_time();
+   
+         //#pragma omp parallel for schedule(static, 1)
+         for(int j=0; j<cfs.size(); ++j)
+         {
+            cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
+         }
+         dcfs += get_curr_time()-t10;
+  
+         for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
+         {
+            psf = cfs(maxNmodes-1)*klims.row(maxNmodes-1);
 
-   }
+            //Count down, since eigenvalues are returned in increasing order
+            for(int j=maxNmodes-2; j>=maxNmodes-Nmodes[mode_i]; --j)
+            {
+               psf += cfs(j)*klims.row(j);
+            }  
+         
+            //#pragma omp critical
+            insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
+         }
+         std::cout << get_curr_time() - timno << "\n";
+      }
    }//openmp parrallel  
 }
 

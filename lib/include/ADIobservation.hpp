@@ -195,6 +195,9 @@ struct ADIobservation : public HCIobservation<_floatT>
       eigenImagef rotim;
       floatT derot;
 
+      std::cout << psfsub.size() << "\n";
+      std::cout << psfsub[0].planes() << "\n";
+      
       for(int n=0; n<this->psfsub.size(); ++n)
       {
          for(int i=0; i<this->psfsub[n].planes();++i)
