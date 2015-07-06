@@ -373,19 +373,23 @@ inline
 void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vector<size_t> & idx, floatT dang)
 {
    pout("beginning worker");
-   
+
+   std::vector<floatT> sds;
+
+   meanSubtract(rims, sds);   
 //   eigenImagef evecs;//, evals;
-   #pragma omp parrallel no_wait schedule(dynamic, 10)
+   #pragma omp parallel  
    {
    eigenImagef klims;
    eigenImagef cv;
-   std::vector<floatT> sds;
-      
+ //  std::vector<floatT> sds;
+   
+   std::cout << omp_get_num_threads()<<"\n";   
    //*** First mean subtract ***//
-   pout("Median subtracting\n");
+//   pout("Median subtracting\n");
    
    //meanSubtract(rims);
-   meanSubtract(rims, sds);
+ //  meanSubtract(rims, sds);
 
    //*** Form lower-triangle covariance matrix
    pout("calculating covariance matrix");
@@ -407,15 +411,16 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
    //Local: cfs, psf, rims_cut, cv_cut, sds
    //#pragma omp parrallel for  no_wait  
    //private(cfs, psf, rims_cut, cv_cut, sds,rims,idx,dang, cv, klims, maxNmodes, sds)
-#pragma openmp for
+   #pragma omp for  nowait
    for(int imno = 0; imno < this->Nims; ++imno)
    {
       eigenImagef cfs; //The coefficients
       eigenImagef psf;
       eigenImagef rims_cut;
       eigenImagef cv_cut;
-
-  
+      eigenImagef klims;
+ 
+      std::cout << omp_get_num_threads() << "\n";    
       double timno = get_curr_time();
       
       pout("image:", imno, "/", this->Nims);
@@ -454,7 +459,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & rims, vect
          //#pragma omp critical
          insertImageRegion(this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
       }
-      std::cout << get_curr_time() - timno;
+      std::cout << get_curr_time() - timno << "\n";
 
    }
    }//openmp parrallel  
