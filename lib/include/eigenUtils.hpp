@@ -422,7 +422,8 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       printf("malloc failed in eigenSYEVR\n"); 
       return 2;
    }
-
+   for(int i=0;i<2*n;++i) ISUPPZ[i] = 0;
+   
    //  Allocate minimum allowed sizes for workspace
    WORK = (dataT *) malloc (26*n*sizeof(dataT));
    IWORK = (int *) malloc (10*n*sizeof(int));
@@ -444,6 +445,9 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       return 2;
    }
         
+   for(int i=0;i<sizeWORK; ++i) WORK[i] =  0;
+   for(int i=0;i<sizeIWORK; ++i) IWORK[i] =  0;
+        
    // Now actually do the calculationg
    info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);     
    
@@ -454,6 +458,29 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       
    return info;
 }       
+
+template<typename imOutT, typename imInT>
+void padImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
+{
+   imOut = imOutT::Zero(nrows, ncols);
+   
+   int stRow = (nrows - imIn.rows())/2;
+   int stCol = (ncols - imIn.cols())/2;
+   
+   imOut.block(stRow, stCol, imIn.rows(),imIn.cols()) = imIn;
+}
+
+template<typename imOutT, typename imInT>
+void cutImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
+{
+   imOut = imOutT::Zero(nrows, ncols);
+   
+   int stRow = (imIn.rows()-nrows)/2;
+   int stCol = (imIn.cols()-ncols)/2;
+   
+   imOut = imIn.block(stRow, stCol, nrows, ncols);
+}
+
 
 }//namespace mx
 

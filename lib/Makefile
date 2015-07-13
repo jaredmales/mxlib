@@ -76,7 +76,7 @@ INC_TO_INSTALL = app \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  timeUtils.hpp \
-                 mxException \
+                 mxException.hpp \
 		 HCIobservation.hpp \
 		 ADIobservation.hpp \
 	         KLIPreduction.hpp \

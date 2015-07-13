@@ -1,3 +1,9 @@
+/** \file imageTransforms.hpp
+ * \author Jared R. Males
+ * \brief Image interpolation and transformation
+ * \ingroup image_processing
+ *
+ */
 
 #ifndef __imageTransforms_hpp__
 #define __imageTransforms_hpp__
@@ -5,7 +11,12 @@
 namespace mx
 {
 
-template<typename _arithT=double>
+/** \addtogroup image_processing
+  * @{
+  */
+
+///Transformation by bi-linear interpolation
+template<typename _arithT>
 struct bilinearTransform
 {
    typedef _arithT arithT;
@@ -24,19 +35,16 @@ struct bilinearTransform
       kern(1,1) = x*y;
    }
 };
-  
-// template<typename arithT>
-// inline
-// arithT cubicConvolKernel(arithT cubic, arithT d)
-// {   
-//    if(d <= 1) return (cubic+2.)*d*d*d - (cubic+3.)*d*d + 1.;
-//    
-//    if(d < 2) return cubic*d*d*d -5.*cubic*d*d + 8.*cubic*d - 4.*cubic;
-//    
-//    return 0;
-// }
-   
-template<typename _arithT=float>
+
+///Typedef for bilinearTransform with single precision   
+typedef bilinearTransform<float> bilinearTransf;
+
+///Typedef for bilinearTransform with double precision   
+typedef bilinearTransform<double> bilinearTransd; 
+
+
+///Transformation by cubic convolution interpolation
+template<typename _arithT>
 struct cubicConvolTransform
 {
    typedef _arithT arithT;
@@ -58,10 +66,7 @@ struct cubicConvolTransform
    
    cubicConvolTransform(const cubicConvolTransform & t)
    {
-      
       cubic = t.cubic;
-      
-      //pout("copy", cubic);
    }
    
    arithT cubicConvolKernel(arithT d)
@@ -75,23 +80,10 @@ struct cubicConvolTransform
 
    template<typename arrT, typename arithT>
    void operator()(arrT & kern, arithT x, arithT y)
-   {    
-      //pout("|", cubic, "|");
-      //kern.resize(width, width);
-      
+   {          
       arithT km2x,km1x,kp1x,kp2x;
       arithT km2y,km1y,kp1y,kp2y;
-      
-//       km2x = cubicConvolKernel<arithT>(cubic, (1.+x));
-//       km1x = cubicConvolKernel<arithT>(cubic, x);
-//       kp1x = cubicConvolKernel<arithT>(cubic, 1.-x);
-//       kp2x = cubicConvolKernel<arithT>(cubic, 2.-x);
-//       
-//       km2y = cubicConvolKernel<arithT>(cubic, (1.+y));
-//       km1y = cubicConvolKernel<arithT>(cubic, y);
-//       kp1y = cubicConvolKernel<arithT>(cubic, 1.-y);
-//       kp2y = cubicConvolKernel<arithT>(cubic, 2.-y);
-      
+            
       km2x = cubicConvolKernel((1.+x));
       km1x = cubicConvolKernel(x);
       kp1x = cubicConvolKernel(1.-x);
@@ -121,13 +113,32 @@ struct cubicConvolTransform
       kern(3,1) = kp2x*km1y;
       kern(3,2) = kp2x*kp1y;
       kern(3,3) = kp2x*kp2y;
-      
-      
    }
 };
 
-template<typename arrT, typename arrT2, typename floatT, typename transformT>
-void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
+///Typedef for cubicConvolTransform with single precision 
+typedef cubicConvolTransform<float> cubicConvolTransf;
+
+///Typedef for cubicConvolTransform with double precision
+typedef cubicConvolTransform<double> cubicConvolTransd; 
+
+
+
+/// Rotate an image represented as an eigen array
+/** Uses the given transformation type to rotate an image.
+  *
+  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
+  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
+  * \tparam transformT specifies the transformation to use [will be resolved by compiler]
+  *
+  * \param [out] transim contains the shifted image.  Must be pre-allocated.
+  * \param [in] im is the image to be shifted.
+  * \param [in] dq is the amount in radians to rotate in the c.c.w. direction
+  * \param [in] trans is the transformation to use
+  */
+template<typename transformT, typename arrT, typename arrT2, typename floatT>
+void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
 {
    typedef typename transformT::arithT arithT;
    arithT cosq, sinq;
@@ -137,9 +148,6 @@ void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
    int Nrows, Ncols;
    
    int i0, j0;
-
-//    //The kernel
-   //arrT kern; 
     
    const int lbuff = transformT::lbuff;
    const int width = transformT::width;
@@ -168,47 +176,145 @@ void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
    xc_x_cosq += yc_x_sinq;
    xc_x_sinq -= yc_x_cosq;
    
-   arithT i_x_cosq, i_x_sinq;
-   arrT kern; 
          
-   #pragma omp parallel for private(x0,y0,i0,j0,x,y,i_x_cosq, i_x_sinq, kern) schedule(static, 1)
-   for(int i=0;i<Nrows; ++i)
+   #pragma omp parallel private(x0,y0,i0,j0,x,y) 
    {
+      arithT i_x_cosq, i_x_sinq;
+      arrT kern; 
       kern.resize(width,width);
-      i_x_cosq = i*cosq - xc_x_cosq;// + xcen;
-      i_x_sinq = -(i*sinq - xc_x_sinq);// + ycen;
-      
-      for(int j=0;j<Ncols; ++j)
+   
+      #pragma omp for
+      for(int i=0;i<Nrows; ++i)
       {
-         //x0 =  (i-xcen)*cosq + (j-ycen)*sinq;
-         //y0 = -(i-xcen)*sinq + (j-ycen)*cosq;
-         //This is the minimum-op representation of the above rotation matrix:
-         x0 =  i_x_cosq + j*sinq;
-         y0 =  i_x_sinq + j*cosq;
-        
-         //Get lower left index
-         i0 = x0 +xcen;
-         j0 = y0 +ycen;
+         i_x_cosq = i*cosq - xc_x_cosq;// + xcen;
+         i_x_sinq = -(i*sinq - xc_x_sinq);// + ycen;
          
-         if(i0 <= lbuff || i0 >= xulim || j0 <= lbuff || j0 >= yulim) 
+         for(int j=0;j<Ncols; ++j)
          {
-            transim(i,j) = 0;
+            //We are actually doing this rotation matrix:
+            //x0 =  (i-xcen)*cosq + (j-ycen)*sinq;
+            //y0 = -(i-xcen)*sinq + (j-ycen)*cosq;
+            //This is the minimum-op representation of the above rotation matrix:
+            x0 =  i_x_cosq + j*sinq;
+            y0 =  i_x_sinq + j*cosq;
+           
+            //Get lower left index
+            i0 = x0 +xcen;
+            j0 = y0 +ycen;
+            
+            if(i0 <= lbuff || i0 >= xulim || j0 <= lbuff || j0 >= yulim) 
+            {
+               transim(i,j) = 0;
+               continue;
+            }
+            
+            //Get the residual
+            x = x0+xcen-i0;
+            y = y0+ycen-j0;
+        
+            trans(kern, x, y);
+            transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
+         }//for j
+      }//for i
+   }//#pragma omp parallel
+         
+}//void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
+
+/// Shift an image represented as an eigen array
+/** Uses the given transformation type to shift an image.
+  *
+  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
+  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
+  * \tparam transformT specifies the transformation to use [will be resolved by compiler]
+  * 
+  * \param [out] transim contains the shifted image.  Must be pre-allocated.
+  * \param [in] im is the image to be shifted.
+  * \param [in] dx is the amount to shift in the x direction
+  * \param [in] dy is the amount to shift in the y direction
+  * \param [in] trans is the transformation to use
+  * 
+  */
+template<typename arrOutT, typename arrInT, typename floatT, typename transformT>
+void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, transformT trans)
+{
+   typedef typename transformT::arithT arithT;
+   
+   arithT x0, y0, x,y;
+   arithT xcen, ycen;
+   
+   int Nrows, Ncols;
+   
+   int i0, j0;
+    
+   const int lbuff = transformT::lbuff;
+   const int width = transformT::width;
+   
+   Nrows = im.rows();
+   Ncols = im.cols();
+
+   
+   transim.resize(Nrows, Ncols);
+   
+   //The geometric image center
+   xcen = 0.5*(Nrows-1.);       
+   ycen = 0.5*(Ncols-1.);
+   
+   int xulim = Nrows-width+lbuff;// - 1;
+   int yulim = Ncols-width+lbuff;// - 1;
+  
+         
+   #pragma omp parallel private(x0,y0,i0,j0,x,y)
+   {
+      arrOutT kern; 
+      kern.resize(width,width);
+      
+      #pragma omp for   
+      for(int i=0;i<Nrows; ++i)
+      {
+         // (i,j) is position in new image
+         // (x0,y0) is true position in old image
+         // (i0,j0) is integer position in old image
+         // (x, y) is fractional residual of (x0-i0, y0-j0)
+
+         x0 = i-dx;
+         i0 = x0; //just converting to int
+            
+         if(i0 <= lbuff || i0 >= xulim) 
+         {
+            for(int j=0;j<Ncols; ++j)
+            {
+               transim(i,j) = 0;
+            }
             continue;
          }
+            
+         for(int j=0;j<Ncols; ++j)
+         {
+
+            y0 = j-dy;
+            j0 = y0;
+            
+            if(j0 <= lbuff || j0 >= yulim) 
+            {
+               transim(i,j) = 0;
+               continue;
+            }
+            
+            //Get the residual
+            x = x0-i0;
+            y = y0-j0;
+                 
+            trans(kern, x, y);
+            transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
+         }//for j
+      }//for i
+   }//#pragam omp
          
-         //Get the residual
-         x = x0+xcen-i0;
-         y = y0+ycen-j0;
-     
-         trans(kern, x, y);
-         transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
-      }
-   }
-         
-}
+} //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
 
 
-
+///@}
 } //namespace mx
 
 

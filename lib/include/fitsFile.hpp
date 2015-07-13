@@ -12,7 +12,7 @@
 #include "fitsUtils.hpp"
 
 #include "fitsHeader.hpp"
-#include "mxException"
+#include "mxException.hpp"
 #include "eigenCube.hpp"
 
 namespace mx

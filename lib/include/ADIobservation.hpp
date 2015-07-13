@@ -34,11 +34,11 @@ struct derotVisAO
    ///Method called by DIobservation to get keyword-values
    void extractKeywords(vector<fitsHeader> & heads)
    {
-      rotoff = headersToValues<float>(heads, "ROTOFF");
+      rotoff = headersToValues<floatT>(heads, "ROTOFF");
    }
    
    ///Calculate the derotation angle for a given image number
-   floatT derotAngle(size_t imno)
+   floatT derotAngle(size_t imno) const
    {
       return DTOR(rotoff[imno]+90-0.6);
    }
@@ -65,11 +65,11 @@ struct derotClio
    ///Method called by DIobservation to get keyword-values
    void extractKeywords(vector<fitsHeader> & heads)
    {
-      rotoff = headersToValues<float>(heads, "ROTOFF");
+      rotoff = headersToValues<floatT>(heads, "ROTOFF");
    }
    
    ///Calculate the derotation angle for a given image number
-   floatT derotAngle(size_t imno)
+   floatT derotAngle(size_t imno) const
    {
       return DTOR(rotoff[imno]-180-1.8);
    }
@@ -146,7 +146,7 @@ struct derotODI
   *    }
   *    
   *    //Calculate the derotation angle for a given image number
-  *    floatT derotAngle(size_t imno)
+  *    floatT derotAngle(size_t imno) const
   *    {
   *       return DTOR(keyValue1[imno]+90-0.6);
   *    }
@@ -159,18 +159,21 @@ struct ADIobservation : public HCIobservation<_floatT>
 {
    typedef _floatT floatT;
    typedef _derotFunctObj derotFunctObj;
+   typedef Array<floatT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
    
    derotFunctObj derotF;
    //vector<floatT> derot;
       
    ADIobservation()
    {
+      doFake = 0;
    }
    
    ADIobservation( const std::string & dir, 
                    const std::string & prefix, 
                    const std::string & ext) : HCIobservation<floatT>(dir,prefix,ext)
    {
+      doFake = 0;
    }
    
    
@@ -187,16 +190,77 @@ struct ADIobservation : public HCIobservation<_floatT>
       
       derotF.extractKeywords(this->heads);
       
+      if(doFake) injectFake();
+      
    }
+   
+   int doFake;
+   std::string fakeFileName;
+   floatT fakeSep;
+   floatT fakePA;
+   floatT fakeContrast;
+   
+   
+   
+   void injectFake()
+   {
+      typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
+      imT fakePSF;
+      fitsFile<floatT> ff;
+      
+      ff.read(fakeFileName, fakePSF);
+
+      //Check for correct sizing
+      if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
+                           (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
+      {
+         throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
+      }
+      
+      //Check if fake needs to be padded out
+      if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
+      {
+         imT pfake(this->imc.rows(), this->imc.cols());
+         padImage(pfake, fakePSF, this->imc.rows(), this->imc.cols());
+         fakePSF = pfake;
+      }
+      
+      //Check if fake needs to be cut down
+      if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
+      {
+         imT cfake(this->imc.rows(), this->imc.cols());
+         cutImage(cfake, fakePSF, this->imc.rows(), this->imc.cols());
+         fakePSF = cfake;
+      }
+      
+      
+      //allocate shifted fake psf
+      imT shiftFake(fakePSF.rows(), fakePSF.cols());
+      
+      floatT ang, dx, dy;
+      
+      for(int i=0; i<this->imc.planes(); ++i)
+      {
+
+         ang = DTOR(fakePA) - derotF.derotAngle(i);
+         
+         dx = fakeSep * sin(ang);
+         dy = fakeSep * cos(ang);
+                  
+         imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
+      
+         this->imc.image(i) = this->imc.image(i) + shiftFake*fakeContrast;
+      }
+      
+      pout("fake injected");
+   }
+   
    
    
    void derotate()
    {
-      eigenImagef rotim;
+      eigenImageT rotim;
       floatT derot;
-
-      std::cout << this->psfsub.size() << "\n";
-      std::cout << this->psfsub[0].planes() << "\n";
       
       for(int n=0; n<this->psfsub.size(); ++n)
       {

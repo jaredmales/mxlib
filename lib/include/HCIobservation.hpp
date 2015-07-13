@@ -14,6 +14,8 @@
 
 #include "mxlib.h"
 
+#include "mxException.hpp"
+
 #include "templateBLAS.hpp"
 #include "fileUtils.hpp"
 #include "eigenImage.hpp"
@@ -47,6 +49,7 @@ struct HCIobservation
 {
 
    typedef _floatT floatT;
+   typedef Array<floatT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
    
 //    std::string dir; ///<The directory where to search for files
 //    std::string prefix; ///<The prefix of the files
@@ -330,7 +333,7 @@ inline void HCIobservation<_floatT>::combineFinim()
    
    
    //Create and size temporary image for averaging
-   eigenImagef tfinim;
+   eigenImageT tfinim;
    
    finim.resize(psfsub[0].rows(), psfsub[0].cols(), psfsub.size());
    

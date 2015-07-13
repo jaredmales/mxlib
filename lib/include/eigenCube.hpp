@@ -81,6 +81,18 @@ public:
       }
    }
 
+   eigenCube<dataT> & operator=(eigenCube<dataT> & ec)
+   {
+      std::cout << "---*********************************---\n";
+      resize(ec.rows(), ec.cols(), ec.planes());
+      
+      int N = _rows*_cols*_planes;
+      
+      for(int i=0;i<N;++i) _data[i] = ec._data[i];
+      
+      return *this;
+   }
+   
    void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false)
    {
       if(_owner && _data)
