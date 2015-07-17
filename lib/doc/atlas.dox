@@ -1,0 +1,60 @@
+/** \defgroup atlas Getting ATLAS
+  * \brief Instructions for building and installing the Automatically Tune Linear Algebra Software (ATLAS)
+  * \ingroup template_blaslap
+  
+
+Folow these steps to build an ATLAS based BLAS and Lapack library.
+
+-# download, but do not unpack,  the latest LAPACK library from http://www.netlib.org/lapack/
+   - As of July 2015 (lapack version 3.5.0, it appears to be better to checkout the SVN repo, at least rev 1558, for good behavior in XSYEVR.  If you do this, you need to make your own .tgz by zipping up the downloaded trunk directory.
+   
+-# download ATLAS (http://math-atlas.sourceforge.net/), unpack.  It's a good idea to rename it to ATLASX.XX.XX. In the ATLASX.XX.XX directory, make a 'LINUX' directory, or whatever seems like a good name for your system.
+
+-# Turn off frequency scaling:
+
+   - Ubuntu:  
+      -# cpufreq-info --> note that it references the ondemand governor
+      -# sudo vi /etc/default/cpufrequtils --> create if this file doesn't exist
+          - add: GOVERNOR="performance"
+      -# sudo /etc/init.d/cpufrequtils restart
+      -# cpufreq-info --> where before it referenced the ondemand governor, now it says performance
+
+   - CentOS:  
+      -# edit /etc/sysconfig/cpuspeed, setting GOVERNOR=performance
+      -# restart cpuspeed: /etc/init.d/cpuspeed restart
+      -# output should say "enabling performance cpu frequency scaling"
+            
+            
+-# Build Atlas:
+         
+    -  In the 'LINUX' directory, run configure:
+       \code
+       ../configure -b 64 --with-netlib-lapack-tarfile=/home/jaredmales/Source/LAPACK/lapack-3.5.0.tgz -D c -DPentiumCPS=2800 -Fa alg -fPIC --shared
+       \endcode
+       
+       \note modify the path the lapack tarball appropriately
+
+       \note -fPIC may not be necessary along with --shared
+
+       \note the -D c -DPentiumCPS=2800 flag tells ATLAS to use the highest accuracy clock, and the '2800' corresponds to processor speed in MHz.  This can be found in cpufreq-info on ubuntu, or with lscpu.
+
+    - In interfaces/lapack/C2F/src add -frecursive to:
+     \code
+     F77FLAGS = -O2 -mavx -fPIC -m64 -fPIC -frecursive
+     \endcode
+
+     \note this is possibly necessary to make dyevr thread safe, maybe syevr too.
+
+    - Now make
+      -# make build
+      -# make check
+      -# make time
+      -# make shared
+
+      \note there should be no non-ignored errors at each of these steps
+
+    - Now install
+      -# sudo make install
+
+ */
+

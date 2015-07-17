@@ -67,6 +67,7 @@ INC_TO_INSTALL = app \
                  fitsFile.hpp \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
+                 fft.hpp \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \

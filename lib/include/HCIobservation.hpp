@@ -36,7 +36,7 @@ namespace mx
 namespace HCI 
 {
    ///Possible combination methods
-   enum combineMethods{ noCombine, medianCombine, meanCombine, weightedMeanCombine};
+   enum combineMethods{ noCombine, medianCombine, meanCombine, weightedMeanCombine, debug};
    
    
 }
@@ -330,6 +330,10 @@ inline void HCIobservation<_floatT>::combineFinim()
    {
       method = HCI::meanCombine;
    }
+   else if(combineMethod == HCI::debug)
+   {
+      method = HCI::debug;
+   }
    
    
    //Create and size temporary image for averaging
@@ -358,6 +362,10 @@ inline void HCIobservation<_floatT>::combineFinim()
       {
          psfsub[n].mean(tfinim);
          finim.image(n) = tfinim;
+      }
+      else if(method == HCI::debug)
+      {
+         finim.image(n) = psfsub[n].image(0);
       }
    }
 }

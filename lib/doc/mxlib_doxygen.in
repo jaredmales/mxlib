@@ -652,6 +652,7 @@ INPUT                  = ./groupdefs.dox \
                          ./sofa.dox \
                          ./sofa_constants.h \
                          ./levmar.dox \
+                         ./atlas.dox \
                          ../ \
                          ../include \
                          ../include/mxException \

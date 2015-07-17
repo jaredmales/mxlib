@@ -373,29 +373,94 @@ void eigenSYRK(eigenT1 &cv, const eigenT2 &ims)
    
 }   
 
-// template<typename eigenT1, typename eigenT2>
-// void eigenDSYRK(eigenT1 &cv, eigenT2 &ims)
-// {
-//    cv.resize(ims.rows(), ims.rows());
-//    
-//    cblas_dsyrk(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
-//                  /*const enum CBLAS_TRANSPOSE Trans*/ CblasNoTrans, /*const int N*/ims.rows(), /*const int K*/ ims.cols(),
-//                  /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
-//                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
-//    
-// }   
 
-/** \todo eigenSYEVR eigval memory bug
- */
-template<typename eigenT>
-int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1, char UPLO = 'L') 
+
+/// A struct to hold the working memory for eigenSYEVR and maintain it between calls if desired.
+template<typename sizeT, typename intT, typename floatT>
+struct syevrMem
 {
-   typedef typename eigenT::Scalar dataT;
+   sizeT sizeISuppZ;
+   sizeT sizeWork;
+   sizeT sizeIWork;
    
-   dataT *WORK;
-   int *ISUPPZ, *IWORK;
-   int  numeig, info, sizeWORK, sizeIWORK;
+   intT *iSuppZ;
+   
+   floatT *work;
+   
+   intT *iWork;
+   
+   syevrMem()
+   {
+      sizeISuppZ = 0;
+      sizeWork = 0;
+      sizeIWork = 0;
+      
+      iSuppZ = 0;
+      work = 0;
+      iWork = 0;
+   }
+   
+   ~syevrMem()
+   {
+      if(iSuppZ) ::free(iSuppZ);
+      if(work) ::free(work);
+      if(iWork) ::free(iWork);
+
+   }
+        
+   void free()
+   {
+      if(iSuppZ) ::free(iSuppZ);
+      sizeISuppZ = 0;
+      
+      if(work) ::free(work);
+      sizeWork = 0;
+      
+      if(iWork) ::free(iWork);
+      sizeIWork = 0;
+   }
+   
+};
+
+/// Calculate select eigenvalues and eigenvectors of an Eigen Array
+/** Uses the templateLapack wrapper for syevr.
+  * 
+  * \tparam cvT is the scalar type of X (a.k.a. the covariance matrix)
+  * \tparam calcT is the type in which to calculate the eigenvectors/eigenvalues
+  * 
+  * \param [in] X is a square matrix which is either upper or lower (default) triangular
+  * \param [out] eigvec will contain the eigenvectors as columns
+  * \param [out] eigval will contain the eigenvalues
+  * \param [in] ev0 is the first desired eigenvalue default 0
+  * \param [in] ev1 if >= ev0 thenthis is the last desired eigenvalue.  If -1 all eigenvalues are returned.
+  * \param [in] UPLO specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
+  * \param [in] mem holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
+  * 
+  * \retval the return code from syevr.
+  */
+template<typename cvT, typename calcT> //, typename eigenT>
+int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, 
+                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, 
+                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, 
+                int ev0=0, 
+                int ev1=-1, 
+                char UPLO = 'L',
+                syevrMem<int, int, calcT> * mem = 0
+              ) 
+{     
+   //calcT *WORK;
+   //int *ISUPPZ, *IWORK;
+   int  numeig, info;//, sizeWORK, sizeIWORK;
    char RANGE = 'A';
+   
+   int localMem = 0;
+   
+   if(mem == 0)
+   {
+      mem = new syevrMem<int, int, calcT>;
+      localMem = 1;
+   }
+   
    
    int n = X.rows();
    
@@ -408,54 +473,78 @@ int eigenSYEVR(eigenT &X, eigenT &eigvec, eigenT &eigval, int ev0=0, int ev1=-1,
       IU = ev1;
    }
    
-   //pout(IL, IU, n, ev0, ev1);
    
    eigvec.resize(n,IU-IL+1);
    eigval.resize(n, 1); 
       
-   //Copy X
-   eigenT Xc = X;
-                
-   ISUPPZ = (int *) malloc (2*n*sizeof(dataT));
-   if ((ISUPPZ==NULL)) 
+   //Copy X, casting to calcT
+   Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> Xc = X.template cast<calcT>();
+   
+   if( mem->sizeISuppZ < 2*n)
+   {
+      if(mem->iSuppZ) free(mem->iSuppZ);
+         
+      mem->sizeISuppZ = 2*n;
+      mem->iSuppZ = (int *) malloc (mem->sizeISuppZ*sizeof(int));
+   
+      if ( mem->iSuppZ==NULL ) 
+      {
+         printf("malloc failed in eigenSYEVR\n"); 
+         return 2;
+      }
+   }
+   
+   
+   //  Allocate minimum allowed sizes for workspace
+   int sizeWork = 26*n;
+   calcT * work = (calcT *) malloc (sizeWork*sizeof(calcT));
+   
+   
+   int sizeIWork = 10*n;
+   int * iWork = (int *) malloc (sizeIWork*sizeof(int));
+
+   //  Query for optimum sizes for workspace 
+   info=syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
+
+   // Now allocate optimum sizes
+   /* -- tested increasing by x10, didn't improve performance at all 
+    */
+   if( mem->sizeWork <  ((int) work[0])*(1))
+   {
+      if(mem->work) free(mem->work);
+  
+      mem->sizeWork = ((int) work[0])*1;
+      mem->work = (calcT *) malloc ((mem->sizeWork)*sizeof(calcT));
+   }
+   free(work);
+   
+   
+   if(mem->sizeIWork < iWork[0]*1)
+   {
+      if(mem->iWork) free(mem->iWork);
+
+      mem->sizeIWork = iWork[0]*1; 
+      mem->iWork = (int *) malloc ((mem->sizeIWork)*sizeof(int));
+   }   
+   free(iWork);
+   
+
+   if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
       printf("malloc failed in eigenSYEVR\n"); 
       return 2;
    }
-   for(int i=0;i<2*n;++i) ISUPPZ[i] = 0;
-   
-   //  Allocate minimum allowed sizes for workspace
-   WORK = (dataT *) malloc (26*n*sizeof(dataT));
-   IWORK = (int *) malloc (10*n*sizeof(int));
-
-   //  Query for optimum sizes for workspace 
-   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, -1, IWORK, -1);
-
-   sizeWORK = (int)WORK[0]; 
-   sizeIWORK = IWORK[0]; 
-
-   // Now allocate optimum sizes
-   free(WORK);
-   free(IWORK);
-   WORK = (dataT *) malloc (sizeWORK*sizeof(dataT));
-   IWORK = (int *) malloc (sizeIWORK*sizeof(int));
-   if ((WORK==NULL)||(IWORK==NULL)) 
-   {
-      printf("malloc failed in eigenSYVR\n"); 
-      return 2;
-   }
-        
-   for(int i=0;i<sizeWORK; ++i) WORK[i] =  0;
-   for(int i=0;i<sizeIWORK; ++i) IWORK[i] =  0;
-        
+                
    // Now actually do the calculationg
-   info=syevr<dataT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<dataT>('S'), &numeig, eigval.data(), eigvec.data(), n, ISUPPZ, WORK, sizeWORK, IWORK, sizeIWORK);     
+   info=syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
    
     /*  Cleanup and exit  */
-   free(WORK); 
-   free(IWORK); 
-   free(ISUPPZ);
+   //free(WORK); 
+   //free(IWORK); 
+   //free(ISUPPZ);
       
+   if(localMem) delete mem;
+   
    return info;
 }       
 

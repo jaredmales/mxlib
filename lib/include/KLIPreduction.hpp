@@ -33,12 +33,14 @@ namespace HCI
 /**
   * 
   */ 
-template<typename _floatT, class _derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT = double>
 struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
 {
    typedef _floatT floatT;
    
    typedef Array<floatT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
+   
+   typedef _evCalcT evCalcT;
    
    int padSize;
    
@@ -126,7 +128,8 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    void calcKLIms( eigenT & klims, 
                    eigenT & cv, 
                    const eigenT1 & Rims, 
-                   int n_modes = 0 );   
+                   int n_modes = 0,
+                   syevrMem<int, int, evCalcT> * mem = 0);   
    
    /*template<typename eigenT, typename eigenTv>
    void collapseCovar( eigenT & cutCV, 
@@ -140,9 +143,9 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
 };
 
-template<typename _floatT, class _derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<_floatT, _derotFunctObj>::meanSubtract(eigenCube<floatT> & ims, std::vector<_floatT> & norms)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<floatT> & ims, std::vector<_floatT> & norms)
 {
 
    norms.resize(ims.planes());
@@ -188,9 +191,9 @@ void KLIPreduction<_floatT, _derotFunctObj>::meanSubtract(eigenCube<floatT> & im
    }
 }
  
-template<typename _floatT, class _derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<_floatT, _derotFunctObj>::medianSubtract(eigenCube<floatT> & ims, std::vector<_floatT> & sds)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::medianSubtract(eigenCube<floatT> & ims, std::vector<_floatT> & sds)
 {
          
    sds.resize(ims.planes());
@@ -203,12 +206,12 @@ void KLIPreduction<_floatT, _derotFunctObj>::medianSubtract(eigenCube<floatT> & 
    }
 } 
 
-template<typename floatT, class derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr, 
-                                                    vector<floatT> maxr, 
-                                                    vector<floatT> minq, 
-                                                    vector<floatT> maxq)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> minr, 
+                                                                vector<_floatT> maxr, 
+                                                                vector<_floatT> minq, 
+                                                                vector<_floatT> maxq)
 {   
    t0 = get_curr_time();
       
@@ -374,16 +377,18 @@ void KLIPreduction<floatT, derotFunctObj>::regions( vector<floatT> minr,
 
 
 
-template<typename floatT, class derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 template<typename eigenT, typename eigenT1>
 inline
-void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims, 
-                                                      eigenT & cv, 
-                                                      const eigenT1 & Rims, 
-                                                      int n_modes )
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims, 
+                                                                  eigenT & cv, 
+                                                                  const eigenT1 & Rims, 
+                                                                  int n_modes,
+                                                                  syevrMem<int, int, _evCalcT> * mem)
 {
-
    eigenT evecs, evals;
+   
+   Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
    
    if(cv.rows() != cv.cols())
    {
@@ -408,20 +413,25 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
-   eigenSYEVR(cv, evecs, evals, tNims - n_modes, tNims);
-
+   int info = eigenSYEVR<float, evCalcT>(cv, evecsd, evalsd, tNims - n_modes, tNims, 'L', mem);
    
+   if(info !=0 ) 
+   {
+      std::cerr << "info =" << info << "\n";
+      exit(0);
+   }
+   
+   evecs = evecsd.template cast<floatT>();
+   evals = evalsd.template cast<floatT>();
+      
    dsyevr += get_curr_time() - t8;
 
    //Normalize the eigenvectors
-   //evals = (1./evals.sqrt());
+   for(int i=0;i< n_modes; ++i)
+   {
+      evecs.col(i) = evecs.col(i)/sqrt(evals(i));
+   }
 
-    for(int i=0;i< n_modes; ++i)
-    {
-       evecs.col(i) = evecs.col(i)/sqrt(evals(i));
-    }
-
-   
    klims.resize(n_modes, tNpix);
 
    t11 = get_curr_time();
@@ -434,6 +444,8 @@ void KLIPreduction<floatT, derotFunctObj>::calcKLIms( eigenT & klims,
                                  0., klims.data(), klims.rows());
 
    dgemm += get_curr_time() - t11;
+     
+   
 } //calcKLIms
 
 
@@ -498,9 +510,8 @@ void collapseCovar( eigenT & cutCV,
                                                           int excludeMethod,
                                                           int includeRefNum,
                                                           const derotFunctObj & derotF
-                                                          
                                                         )
-{
+{   
    std::vector<cvEntry> allidx(Nims);
    
    
@@ -550,36 +561,30 @@ void collapseCovar( eigenT & cutCV,
    }
    else if(excludeMethod == HCI::excludeImno)
    {
-      rotoff1 = Nims;
-      //Find first imno within dang
-      int j;
-      for(j=0; j< Nims; ++j)
-      {
-         if( fabs( j - imno ) <= dang )
-         {
-            rotoff0 = j;
-            ++j;
-            break;
-         }
-      }
-
-      //Find last imno outside dang
-      for(; j< Nims; ++j)
-      {
-         if( fabs( j -  imno ) > dang)
-         {
-            rotoff1 = j;
-            break;
-         }
-      }
+      rotoff0 = imno-dang;
+      if(rotoff0 < 0) rotoff0= 0;
+      
+      rotoff1 = imno+dang+1;
+      if(rotoff1 > Nims-1) rotoff1 = Nims;      
    }
    
    pout("rejecting", rotoff1-rotoff0, "images");
+   
    if(rotoff1-rotoff0 > 0)
    {
-      allidx.erase(allidx.begin()+rotoff0, allidx.begin()+rotoff1);
+      
+      //Note: erase(first, end()+n) does not erase the last element properly
+      //      have to handle this case as a possible error 
+      
+      std::vector<cvEntry>::iterator last;
+         
+      if(rotoff1 < Nims) last = allidx.begin() + rotoff1;
+      else last = allidx.begin() + (Nims-1); //Make sure we don't try to erase end() or more
+      
+      allidx.erase(allidx.begin()+rotoff0, last);
+      
+      if(rotoff1 > Nims-1) allidx.pop_back(); //Erase the last element if needed   
    }
-   
    
    if( includeRefNum > 0 && includeRefNum < allidx.size())
    {
@@ -599,35 +604,48 @@ void collapseCovar( eigenT & cutCV,
 
    extractRowsAndCols(cutCV, CV, allidx);
    extractCols(rimsCut, rims, allidx);
+   
 }
 
 
 
 
-template<typename floatT, class derotFunctObj>
+template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & trims, vector<size_t> & tidx, floatT dang)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT> & rims, vector<size_t> & idx, floatT dang)
 {
    pout("beginning worker");
 
+   std::vector<floatT> sds;
+
+   //*** First mean subtract ***//   
+   meanSubtract(rims, sds);  
+
+   //*** Form lower-triangle covariance matrix      
+   eigenImageT cv;
+   t5 = get_curr_time();
+ 
+   eigenSYRK(cv, rims.cube());
+   dcv += get_curr_time() - t5;
+      
    #pragma omp parallel 
    {
       //We need local copies for each thread.  Only way this works, for whatever reason.
-      eigenCube<floatT> rims;
-      rims = trims;
-      vector<size_t> idx = tidx;
+      //eigenCube<floatT> rims;
+      //rims = trims;
+      //vector<size_t> idx = tidx;
 
-      std::vector<floatT> sds;
+//       std::vector<floatT> sds;
+// 
+//       //*** First mean subtract ***//   
+//       meanSubtract(rims, sds);  
 
-      //*** First mean subtract ***//   
-      meanSubtract(rims, sds);  
-
-      //*** Form lower-triangle covariance matrix      
-      eigenImageT cv;
-      t5 = get_curr_time();
- 
-      eigenSYRK(cv, rims.cube());
-      dcv += get_curr_time() - t5;
+//       //*** Form lower-triangle covariance matrix      
+//       eigenImageT cv;
+//       t5 = get_curr_time();
+//  
+//       eigenSYRK(cv, rims.cube());
+//       dcv += get_curr_time() - t5;
 
       eigenImageT cfs; //The coefficients
       eigenImageT psf;
@@ -635,6 +653,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & trims, vec
       eigenImageT cv_cut;
       eigenImageT klims;
       
+      syevrMem<int, int, evCalcT> mem;
 
       if( excludeMethod == HCI::excludeNone )
       {
@@ -658,9 +677,10 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & trims, vec
          if( excludeMethod != HCI::excludeNone )
          {
             collapseCovar<floatT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
+            
             /**** Now calculate the K-L Images ****/
             t7 = get_curr_time();
-            calcKLIms(klims, cv_cut, rims_cut, maxNmodes);
+            calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);            
             t9 = get_curr_time();
             dklims += t9 - t7;
    
@@ -674,8 +694,7 @@ void KLIPreduction<floatT, derotFunctObj>::worker(eigenCube<floatT> & trims, vec
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
          }
          dcfs += get_curr_time()-t10;
-  
-         
+           
          for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
          {
             psf = cfs(maxNmodes-1)*klims.row(maxNmodes-1);

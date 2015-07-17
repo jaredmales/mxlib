@@ -242,7 +242,7 @@ struct ADIobservation : public HCIobservation<_floatT>
       for(int i=0; i<this->imc.planes(); ++i)
       {
 
-         ang = DTOR(fakePA) - derotF.derotAngle(i);
+         ang = DTOR(-fakePA) + derotF.derotAngle(i);
          
          dx = fakeSep * sin(ang);
          dy = fakeSep * cos(ang);
