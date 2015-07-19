@@ -261,18 +261,21 @@ struct ADIobservation : public HCIobservation<_floatT>
    {
       
       
-      #pragma omp parallel for num_threads(4) schedule(static, 1)
-      eigenImageT rotim;
-      floatT derot;
-      for(int n=0; n<this->psfsub.size(); ++n)
+      #pragma omp parallel num_threads(4)
       {
-         for(int i=0; i<this->psfsub[n].planes();++i)
+         eigenImageT rotim;
+         floatT derot;
+         #pragma omp for schedule(static, 1)
+         for(int n=0; n<this->psfsub.size(); ++n)
          {
-            derot = derotF.derotAngle(i);
-            if(derot != 0) 
+            for(int i=0; i<this->psfsub[n].planes();++i)
             {
-               imageRotate(rotim, this->psfsub[n].image(i), derot, cubicConvolTransform<floatT>());
-               this->psfsub[n].image(i) = rotim;
+               derot = derotF.derotAngle(i);
+               if(derot != 0) 
+               {
+                  imageRotate(rotim, this->psfsub[n].image(i), derot, cubicConvolTransform<floatT>());
+                  this->psfsub[n].image(i) = rotim;
+               }
             }
          }
       }
