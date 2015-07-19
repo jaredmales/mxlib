@@ -651,7 +651,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
          dklims += t9 - t7;
       }
    
-      #pragma omp for 
+      #pragma omp for num_threads(10)
       for(int imno = 0; imno < this->Nims; ++imno)
       {
          //std::cout << omp_get_num_threads() << "\n";    
