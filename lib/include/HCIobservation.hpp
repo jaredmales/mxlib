@@ -301,7 +301,11 @@ void HCIobservation<_floatT>::initialize()
    
    imSize = 0;
    applyMask = false;
-   
+  
+   coaddCombineMethod = HCI::noCombine;
+   coaddMaxImno = 0;
+   coaddMaxTime = 0;
+ 
    filesRead = false;
    
    combineMethod = HCI::medianCombine;
@@ -481,7 +485,7 @@ void HCIobservation<_floatT>::readWeights()
 template<typename _floatT>
 void HCIobservation<_floatT>::coaddImages()
 {
-   pout("coadding", Nims);
+   pout("coadding");
    
    std::vector<eigenImageT> coadds;
 
@@ -551,7 +555,7 @@ void HCIobservation<_floatT>::coaddImages()
                   
       }//while(increment == true)
       //At this point, imF is the first image NOT to include in the next coadd.          
-            
+     
       //Now actually do the accumulation 
       ///\todo this needs to handle averaging of angles
       for(int imno = im0+1; imno < imF; ++imno)
