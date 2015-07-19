@@ -703,9 +703,23 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    head.append("", fitsCommentType(), "----------------------------------------");
    head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
    head.append("", fitsCommentType(), "----------------------------------------");
+   
+   head.append<int>("FDELFRNT", deleteFront, "image deleted from front of file list");
+   head.append<int>("FDELBACK", deleteBack, "image deleted from back of file list");
+   
    head.append<int>("IMSIZE", imSize, "image size after reading");
+   
+   head.append<int>("COADMTHD", coaddCombineMethod, "coadd combination method");
+   if(coaddCombineMethod != HCI::noCombine)
+   {
+      head.append<int>("COADIMNO", coaddMaxImno, "max number of images in each coadd");
+      head.append<int>("COADTIME", coaddMaxTime, "max time  in each coadd");
+   }
+
+   
    head.append<int>("COMBMTHD", combineMethod, "combination method");
                     
+   
    if(addHead)
    {
       head.append(*addHead);

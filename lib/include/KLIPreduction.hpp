@@ -664,6 +664,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
          {
             collapseCovar<floatT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
             
+
             /**** Now calculate the K-L Images ****/
             t7 = get_curr_time();
             calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);            
@@ -681,12 +682,15 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
          }
          dcfs += get_curr_time()-t10;
            
+         pout(cfs.size(), maxNmodes);
+         
          for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
          {
-            psf = cfs(maxNmodes-1)*klims.row(maxNmodes-1);
+            psf = cfs(cfs.size()-1)*klims.row(cfs.size()-1);
 
             //Count down, since eigenvalues are returned in increasing order
-            for(int j=maxNmodes-2; j>=maxNmodes-Nmodes[mode_i]; --j)
+            //  handle case where cfs.size() < Nmodes[mode_i], i.e. when more modes than images.
+            for(int j=cfs.size()-2; j>=cfs.size()-Nmodes[mode_i] && j >= 0; --j)
             {
                psf += cfs(j)*klims.row(j);
             }  
