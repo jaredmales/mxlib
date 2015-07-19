@@ -481,7 +481,7 @@ void HCIobservation<_floatT>::readWeights()
 template<typename _floatT>
 void HCIobservation<_floatT>::coaddImages()
 {
-   pout("coadding");
+   pout("coadding", Nims);
    
    std::vector<eigenImageT> coadds;
 
