@@ -481,6 +481,8 @@ void HCIobservation<_floatT>::readWeights()
 template<typename _floatT>
 void HCIobservation<_floatT>::coaddImages()
 {
+   pout("coadding");
+   
    std::vector<eigenImageT> coadds;
 
    //We do all math here in double, to avoid losing precision
