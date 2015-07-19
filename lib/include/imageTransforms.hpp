@@ -183,7 +183,7 @@ void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
       arrT kern; 
       kern.resize(width,width);
    
-      #pragma omp for
+      #pragma omp for schedule(static, 1)
       for(int i=0;i<Nrows; ++i)
       {
          i_x_cosq = i*cosq - xc_x_cosq;// + xcen;
@@ -269,7 +269,7 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
       arrOutT kern; 
       kern.resize(width,width);
       
-      #pragma omp for   
+      #pragma omp for 
       for(int i=0;i<Nrows; ++i)
       {
          // (i,j) is position in new image
