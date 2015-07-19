@@ -485,6 +485,11 @@ void HCIobservation<_floatT>::readWeights()
 template<typename _floatT>
 void HCIobservation<_floatT>::coaddImages()
 {
+   //Validate setup
+   if(coaddMaxImno <=0 && coaddMaxTime <= 0) return;
+   //Validate combine method
+   if(coaddCombineMethod == HCI::noCombine) return;
+
    pout("coadding");
    
    std::vector<eigenImageT> coadds;
@@ -493,8 +498,6 @@ void HCIobservation<_floatT>::coaddImages()
    std::vector<double> avgMJD;
    std::vector<std::vector<double> > avgVals;
 
-   //Validate combine method
-   if(coaddCombineMethod == HCI::noCombine) return;
    
    int combineMethod =  HCI::medianCombine;
    if(coaddCombineMethod == HCI::meanCombine) combineMethod = HCI::meanCombine;
