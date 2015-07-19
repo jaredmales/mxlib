@@ -629,7 +629,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
    eigenSYRK(cv, rims.cube());
    dcv += get_curr_time() - t5;
       
-   #pragma omp parallel 
+   #pragma omp parallel num_threads(10) 
    {
       //We need local copies for each thread.  Only way this works, for whatever reason.
 
@@ -651,7 +651,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
          dklims += t9 - t7;
       }
    
-      #pragma omp for num_threads(10)
+      #pragma omp for 
       for(int imno = 0; imno < this->Nims; ++imno)
       {
          //std::cout << omp_get_num_threads() << "\n";    
