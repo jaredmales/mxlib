@@ -605,7 +605,7 @@ void HCIobservation<_floatT>::coaddImages()
       lastVals.push_back(heads[imF-1]["ROTOFF"].Value<double>());
       
       
-      pout(im0, imF-1, firstVals.back(), avgVals.back()[0], lastVals.back());
+      pout(im0, imF-1, firstVals.back());//, avgVals.back()[0], lastVals.back());
       
       im0 = imF;
       imF = im0 + 1;
