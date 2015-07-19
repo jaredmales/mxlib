@@ -438,6 +438,7 @@ inline void HCIobservation<_floatT>::readFiles()
    if(weightFile != "")
    {
       readWeights();
+
    }
    
    if(coaddCombineMethod != HCI::noCombine)
@@ -599,6 +600,10 @@ void HCIobservation<_floatT>::coaddImages()
    
    for(int i=0;i<Nims;++i) imc.image(i) = coadds[i];
    
+   Nims =  imc.planes();
+   Nrows = imc.rows();
+   Ncols = imc.cols();
+   Npix =  imc.rows()*imc.cols();
    
    //Now deal with imageMJD and headers
    imageMJD.erase(imageMJD.begin()+Nims, imageMJD.end());   
