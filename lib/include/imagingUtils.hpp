@@ -50,9 +50,9 @@ void circularPupil( arrayT & m,
 ///Create a complex pupil plane wavefront from a real amplitude mask.
 /** The input real amplitude mask is placed in the center of a 0-padded complex array.
   *
-  * \param complexPupil [output] the complex pupil plane wavefront
-  * \param realPupil [input] a real amplitude mask.
-  * \param wavefrontSizePixels [input] the desired size of the ouput wavefront, should be at least as big as realPupil
+  * \param [out] complexPupil the complex pupil plane wavefront
+  * \param [in] realPupil a real amplitude mask.
+  * \param [in] wavefrontSizePixels the desired size of the ouput wavefront, should be at least as big as realPupil
   * 
   * \ingroup imaging
   */ 

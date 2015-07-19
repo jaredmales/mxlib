@@ -10,6 +10,7 @@
 #define __fraunhoferImager_hpp__
 
 #include "imagingUtils.hpp"
+#include "fft.hpp"
 
 namespace mx
 {
@@ -77,8 +78,8 @@ public:
    /** The pupil plane wavefront (complexPupil) is multiplied by a tilt to place the
      * image in the geometric center of the focal plane. 
      * 
-     * \param complexFocal [output] the focal plane wavefront.  Must be pre-allocated to same size as complexPupil.
-     * \param complexPupil [input] the pupil plane wavefront. Modified due to application of centering tilt.
+     * \param [out] complexFocal the focal plane wavefront.  Must be pre-allocated to same size as complexPupil.
+     * \param [in] complexPupil the pupil plane wavefront. Modified due to application of centering tilt.
      * 
      */ 
    void propagatePupilToFocal(wavefrontT & complexFocal, wavefrontT & complexPupil)

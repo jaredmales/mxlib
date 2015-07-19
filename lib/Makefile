@@ -67,6 +67,8 @@ INC_TO_INSTALL = app \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
                  fft.hpp \
+                 imagingUtils.hpp \
+                 fraunhoferImager.hpp \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \
