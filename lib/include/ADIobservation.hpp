@@ -267,7 +267,6 @@ struct ADIobservation : public HCIobservation<_floatT>
          for(int i=0; i<this->psfsub[n].planes();++i)
          {
             derot = derotF.derotAngle(i);
-            pout(derot);
             if(derot != 0) 
             {
                imageRotate(rotim, this->psfsub[n].image(i), derot, cubicConvolTransform<floatT>());
