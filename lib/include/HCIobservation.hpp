@@ -497,9 +497,6 @@ void HCIobservation<_floatT>::coaddImages()
    //We do all math here in double, to avoid losing precision
    std::vector<double> avgMJD;
    std::vector<std::vector<double> > avgVals;
-
-   std::vector<double> firstVals;
-   std::vector<double> lastVals;
    
    int combineMethod =  HCI::medianCombine;
    if(coaddCombineMethod == HCI::meanCombine) combineMethod = HCI::meanCombine;
@@ -600,10 +597,7 @@ void HCIobservation<_floatT>::coaddImages()
       //Insert the new averages
       avgMJD.push_back(initMJD);
       avgVals.push_back(initVals);
-      
-      firstVals.push_back(heads[im0]["ROTOFF"].Value<double>());
-      lastVals.push_back(heads[imF-1]["ROTOFF"].Value<double>());
-      
+            
       im0 = imF;
       imF = im0 + 1;
    }//while(im0 < Nims)
@@ -631,12 +625,6 @@ void HCIobservation<_floatT>::coaddImages()
       }
    }
    
-   for(int i=0;i<Nims;++i)
-   {
-      pout(firstVals[i], heads[i]["ROTOFF"].Double(), lastVals[i]);
-   }
-   
-   exit(0);
    
 }//void HCIobservation<_floatT>::coaddImages()
 
