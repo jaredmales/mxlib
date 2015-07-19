@@ -259,9 +259,11 @@ struct ADIobservation : public HCIobservation<_floatT>
    
    void derotate()
    {
+      
+      
+      #pragma omp parallel for num_threads(4) schedule(static, 1)
       eigenImageT rotim;
       floatT derot;
-      
       for(int n=0; n<this->psfsub.size(); ++n)
       {
          for(int i=0; i<this->psfsub[n].planes();++i)
