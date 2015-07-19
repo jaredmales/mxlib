@@ -29,7 +29,6 @@ TARGETS = libmxlib
 OBJS = readcolumns.o \
        kepler.o \
        astrodyn.o \
-       fileUtils.o \
        msgq.o \
        mxlib.o\
        sharedmem_segment.o \
@@ -93,7 +92,7 @@ INC_TO_INSTALL = app \
 all: $(TARGETS) 
 
 #dependencies:
-fileUtils.o: include/fileUtils.hpp
+#fileUtils.o: include/fileUtils.hpp
 msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h

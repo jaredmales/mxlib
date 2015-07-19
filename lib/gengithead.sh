@@ -46,13 +46,15 @@ echo "" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
 if [ $GIT_MODIFIED = 1 ]; then
 echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
-echo "  #pragma message (\"********************************\")" >> $GIT_HEADER
-echo "  #pragma message (\"*                              *\")" >> $GIT_HEADER
-echo "  #pragma message (\"* WARNING: repository modified *\")" >> $GIT_HEADER
-echo "  #pragma message (\"*  changes not committed for   *\")" >> $GIT_HEADER
-echo "  #pragma message (\"*    $REPO_NAME    *\")" >> $GIT_HEADER
-echo "  #pragma message (\"*                              *\")" >> $GIT_HEADER
-echo "  #pragma message (\"********************************\")" >> $GIT_HEADER
+echo "  #ifndef GITHEAD_NOWARNING" >> $GIT_HEADER
+echo "    #pragma message (\"********************************\")" >> $GIT_HEADER
+echo "    #pragma message (\"*                              *\")" >> $GIT_HEADER
+echo "    #pragma message (\"* WARNING: repository modified *\")" >> $GIT_HEADER
+echo "    #pragma message (\"*  changes not committed for   *\")" >> $GIT_HEADER
+echo "    #pragma message (\"*    $REPO_NAME    *\")" >> $GIT_HEADER
+echo "    #pragma message (\"*                              *\")" >> $GIT_HEADER
+echo "    #pragma message (\"********************************\")" >> $GIT_HEADER
+echo "  #endif" >> $GIT_HEADER
 echo "#endif" >> $GIT_HEADER
 fi
 echo "" >> $GIT_HEADER

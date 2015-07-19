@@ -137,6 +137,13 @@ public:
    template<typename typeT> 
    void append(const std::string &k, const typeT &v);
           
+   /// Append a card to the end of the header, with just a keyword.
+   /** Appens a headerCard with unknownType
+     * 
+     * \param k is the keyword string
+     */
+   void append(const std::string &k);
+   
    /// Append a fitsHeader to the end of the header
    /**
      * \param head is a populated fitsHeader
@@ -230,7 +237,7 @@ public:
    
 };  // fitsHeader
 
-//@}
+///@}
 
 
 inline 
@@ -395,6 +402,12 @@ template<typename typeT>
 void fitsHeader::append(const std::string &k, const typeT &v)
 {
    append(fitsHeaderCard(k,v));
+}
+
+inline
+void fitsHeader::append(const std::string &k)
+{
+   append(fitsHeaderCard(k));
 }
 
 inline

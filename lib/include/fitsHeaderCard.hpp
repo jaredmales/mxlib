@@ -112,6 +112,13 @@ struct fitsHeaderCard
      */ 
    template<typename typeT> 
    fitsHeaderCard(std::string k, const typeT v);
+
+   ///Construct from just keyword, when value's type is unknown
+   /**
+     * \param k is the keyword
+     */ 
+   fitsHeaderCard(std::string k);
+  
    
    //@}
    
@@ -216,7 +223,8 @@ struct fitsHeaderCard
 
 
 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v, std::string c)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, void * v, std::string c)
 {
    keyword = k;
    value = (char *) v; 
@@ -224,7 +232,8 @@ inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v, std::string c)
    comment = c;
 }
 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * v, std::string c)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, const void * v, std::string c)
 {
    keyword = k;
    value = (char *) v; 
@@ -232,8 +241,8 @@ inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * v, std::string
    comment = c;
 }
 
-
-inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsCommentType v, std::string c)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, fitsCommentType v, std::string c)
 {
    keyword = k;
    value = "";
@@ -241,7 +250,8 @@ inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsCommentType v, std::str
    comment = c;
 }
 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, fitsHistoryType v, std::string c)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, fitsHistoryType v, std::string c)
 {
    keyword = k;
    value = "";
@@ -259,7 +269,8 @@ fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v, std::string c)
 }
 
 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, void * v)
 {
    keyword = k;
    value = (char *) v;
@@ -267,13 +278,21 @@ inline fitsHeaderCard::fitsHeaderCard(std::string k, void * v)
 }
 
 
-inline fitsHeaderCard::fitsHeaderCard(std::string k, const void * v)
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k, const void * v)
 {
    keyword = k;
    value = (char *) v;
    type = getFitsType<fitsUnknownType>();
 }
 
+inline 
+fitsHeaderCard::fitsHeaderCard(std::string k)
+{
+   keyword = k;
+   value = "";
+   type = getFitsType<fitsUnknownType>();
+}
 
 template<typename typeT> 
 fitsHeaderCard::fitsHeaderCard(std::string k, const typeT v)
@@ -296,7 +315,8 @@ typeT fitsHeaderCard::Value()
    return convertFromString<typeT>(value);
 }
 
-inline std::string fitsHeaderCard::String()
+inline 
+std::string fitsHeaderCard::String()
 {
    std::string s = value;
    fitsStripApost(s);
@@ -304,17 +324,20 @@ inline std::string fitsHeaderCard::String()
 }
 
 
-inline int fitsHeaderCard::Int()
+inline 
+int fitsHeaderCard::Int()
 {
    return convertFromString<int>(value);
 }
 
-inline unsigned int fitsHeaderCard::unsignedInt()
+inline 
+unsigned int fitsHeaderCard::unsignedInt()
 {
    return convertFromString<unsigned int>(value);
 }
 
-inline long fitsHeaderCard::Long()
+inline 
+long fitsHeaderCard::Long()
 {
    return convertFromString<long>(value);
 }

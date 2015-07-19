@@ -184,7 +184,6 @@ public:
    ///Return an Eigen::Map of the cube where each image is a vector
    Map<Array<dataT, Dynamic, Dynamic> > asVectors()
    {
-      //return Map<Array<dataT, Dynamic, Dynamic> >(_data,  _planes, _rows*_cols);
       return Map<Array<dataT, Dynamic, Dynamic> >(_data,  _rows*_cols, _planes);
    }
  
@@ -196,40 +195,58 @@ public:
    
    ///Calculate the mean image of the cube
    template<typename eigenT>
-   void mean(eigenT & mim)
-   {
-      mim.resize(_rows, _cols);
-      
-      #pragma omp parallel for schedule(static, 1) num_threads(Eigen::nbThreads())
-      for(Index i=0; i < _rows; ++i)
-      {
-         for(Index j=0;j< _cols; ++j)
-         {
-            mim(i,j) = pixel(i,j).mean(); 
-         }
-      }
-   }
+   void mean(eigenT & mim);
       
    ///Calculate the median image of the cube
    template<typename eigenT>
-   void median(eigenT & mim)
-   {
-      mim.resize(_rows, _cols);
-      
-      #pragma omp parallel for schedule(static, 10) num_threads(Eigen::nbThreads())
-      for(Index i=0; i < _rows; ++i)
-      {
-         //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> work;
-         std::vector<Scalar> work;
-         for(Index j=0;j< _cols; ++j)
-         {
-            mim(i,j) = eigenMedian(pixel(i,j), &work);             
-         }
-      }
-   }
+   void median(eigenT & mim);
    
    
 };
+
+
+template<typename dataT>
+template<typename eigenT>
+void eigenCube<dataT>::mean(eigenT & mim)
+{
+   mim.resize(_rows, _cols);
+   
+   #pragma omp parallel for schedule(static, 1) num_threads(Eigen::nbThreads())
+   for(Index i=0; i < _rows; ++i)
+   {
+      for(Index j=0;j< _cols; ++j)
+      {
+         mim(i,j) = pixel(i,j).mean(); 
+      }
+   }
+}
+
+template<typename dataT>
+template<typename eigenT>
+void eigenCube<dataT>::median(eigenT & mim)
+{
+   mim.resize(_rows, _cols);
+   
+   #pragma omp parallel for schedule(static, 10) num_threads(Eigen::nbThreads())
+   for(Index i=0; i < _rows; ++i)
+   {
+      //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> work;
+      std::vector<Scalar> work;
+      for(Index j=0;j< _cols; ++j)
+      {
+         mim(i,j) = eigenMedian(pixel(i,j), &work);             
+      }
+   }
+}
+
+
+
+
+
+
+
+
+
 
 
 
