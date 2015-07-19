@@ -604,6 +604,9 @@ void HCIobservation<_floatT>::coaddImages()
       firstVals.push_back(heads[im0]["ROTOFF"].Value<double>());
       lastVals.push_back(heads[imF-1]["ROTOFF"].Value<double>());
       
+      
+      pout(im0, imF-1, firstVals.back(), avgVals.back()[0], lastVals.back());
+      
       im0 = imF;
       imF = im0 + 1;
    }//while(im0 < Nims)
@@ -631,10 +634,10 @@ void HCIobservation<_floatT>::coaddImages()
       }
    }
    
-   for(int i=0;i<Nims;++i)
-   {
-      pout(firstVals[i], heads[i]["ROTOFF"].Double(), lastVals[i]);
-   }
+//    for(int i=0;i<Nims;++i)
+//    {
+//       pout(firstVals[i], heads[i]["ROTOFF"].Double(), lastVals[i]);
+//    }
    
    exit(0);
    
