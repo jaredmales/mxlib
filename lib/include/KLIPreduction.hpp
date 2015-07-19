@@ -243,10 +243,11 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
    }
    
    
-   
-   pout("Files read\n");
+  
+   pout("Files read");
    dread = get_curr_time()-t1;
-   
+   pout(this->Nims);
+  
    this->psfsub.resize(Nmodes.size());
    for(int n=0;n<Nmodes.size(); ++n)
    {
@@ -631,21 +632,6 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
    #pragma omp parallel 
    {
       //We need local copies for each thread.  Only way this works, for whatever reason.
-      //eigenCube<floatT> rims;
-      //rims = trims;
-      //vector<size_t> idx = tidx;
-
-//       std::vector<floatT> sds;
-// 
-//       //*** First mean subtract ***//   
-//       meanSubtract(rims, sds);  
-
-//       //*** Form lower-triangle covariance matrix      
-//       eigenImageT cv;
-//       t5 = get_curr_time();
-//  
-//       eigenSYRK(cv, rims.cube());
-//       dcv += get_curr_time() - t5;
 
       eigenImageT cfs; //The coefficients
       eigenImageT psf;
