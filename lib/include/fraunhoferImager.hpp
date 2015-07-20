@@ -42,11 +42,6 @@ protected:
    ///The size of the wavefront in pixels
    int wavefrontSizePixels;
 
-   ///The physical size of the wavefront
-   /** This is used for calculating the plate scale
-     */
-   arithT wavefrontSizePhysical;
-
    arithT xcen; ///<x-coordinate of focal plane center, in pixels
    arithT ycen; ///<x-coordinate of focal plane center, in pixels
      
@@ -56,15 +51,22 @@ protected:
    ///Phase screen for un-tilting the pupil plane after propagating from a centered focal plane.
    wavefrontT centerPupil;
 
+   fftwf_plan fftw_p_fwd; 
+   fftwf_plan fftw_p_back; 
+   
    ///Initialize members
    void initialize()
    {
       wavefrontSizePixels = 0;
-      wavefrontSizePhysical = 0;
+      
+      fftw_p_fwd = 0;
+      fftw_p_back = 0;
       
       xcen = 0;
       ycen = 0;
    }
+   
+   
    
 public:
    
@@ -72,6 +74,13 @@ public:
    fraunhoferImager()
    {
       initialize();
+   }
+   
+   ///Destructor
+   ~fraunhoferImager()
+   {
+      if(fftw_p_fwd) fftwf_destroy_plan(fftw_p_fwd);
+      if(fftw_p_back) fftwf_destroy_plan(fftw_p_back);
    }
    
    ///Propagate the wavefront from the pupil plane to the focal plane
@@ -93,8 +102,8 @@ public:
       //Apply the centering shift -- this adjusts by 0.5 pixels
       complexPupil *= centerFocal;
             
-      fft(complexFocal, complexPupil);
-      
+      fftwf_execute_dft(fftw_p_fwd, reinterpret_cast<fftwf_complex*>(complexPupil.data()), reinterpret_cast<fftwf_complex*>(complexFocal.data()));
+
       //Normalize
       complexFocal = complexFocal / complexT(norm, norm);
       
@@ -114,7 +123,7 @@ public:
       //DFT normalization, sqrt(2) for complex number
       arithT norm = wavefrontSizePixels/sqrt(2.);
       
-      fft(complexPupil, complexFocal, FFTW_BACKWARD);
+      fftwf_execute_dft(fftw_p_back, reinterpret_cast<fftwf_complex*>(complexFocal.data()), reinterpret_cast<fftwf_complex*>(complexPupil.data()));
       
       //Unshift the wavefront
       complexPupil *= centerPupil;
@@ -122,15 +131,6 @@ public:
       complexPupil /= complexT(norm, norm);
    }
    
-   /// Set the physical size of the wavefront
-   /**
-     * \param wfsPhys is the new size of the wavefront
-     */ 
-   void setWavefrontSizePhysical(int wfsPhys)
-   {      
-      wavefrontSizePhysical = wfsPhys;
-   }
-
    ///Set the size of the wavefront, in pixels
    /** Checks if the size changes, does nothing if no change.  Otherwise,  calls
      * \ref makeShiftPhase to pre-calculate the tilt arrays.
@@ -148,6 +148,19 @@ public:
       ycen = 0.5*(wfsPix - 1.0);
       
       makeShiftPhase();
+      
+      //Need temporaries for fftw_plans.
+      wavefrontT forplan1, forplan2;
+      forplan1.resize(wfsPix, wfsPix);
+      forplan2.resize(wfsPix, wfsPix);
+      
+      if(fftw_p_fwd) fftwf_destroy_plan(fftw_p_fwd);
+      
+      fftw_p_fwd = fftwf_plan_dft_2d(wfsPix, wfsPix, reinterpret_cast<fftwf_complex*>(forplan1.data()), reinterpret_cast<fftwf_complex*>(forplan2.data()),  FFTW_FORWARD, FFTW_MEASURE);
+      
+      if(fftw_p_back) fftwf_destroy_plan(fftw_p_back);
+      
+      fftw_p_back = fftwf_plan_dft_2d(wfsPix, wfsPix, reinterpret_cast<fftwf_complex*>(forplan1.data()), reinterpret_cast<fftwf_complex*>(forplan2.data()),  FFTW_BACKWARD, FFTW_MEASURE);
    }   
    
 protected:
@@ -176,6 +189,7 @@ protected:
 
    
 };//class fraunhoferImager
+
 
 } //namespace mx
 
