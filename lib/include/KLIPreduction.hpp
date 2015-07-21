@@ -629,7 +629,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
    eigenSYRK(cv, rims.cube());
    dcv += get_curr_time() - t5;
       
-   #pragma omp parallel num_threads(20) 
+   #pragma omp parallel //num_threads(20) 
    {
       //We need local copies for each thread.  Only way this works, for whatever reason.
 
