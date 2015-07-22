@@ -1,21 +1,10 @@
 #ifndef MXLIB_COMP_VERSION_H
 #define MXLIB_COMP_VERSION_H
 
-#define MXLIB_COMP_CURRENT_SHA1 "cf3a627212f31a72aa54ce1e3e48bbdd5219116b"
-#define MXLIB_COMP_REPO_MODIFIED  1
+#define MXLIB_COMP_CURRENT_SHA1 "9597a2407a375a08b80a568e5ebf8a3c6b1651b3"
+#define MXLIB_COMP_REPO_MODIFIED  0
 
 
-#if MXLIB_COMP_REPO_MODIFIED == 1
-  #ifndef GITHEAD_NOWARNING
-    #pragma message ("********************************")
-    #pragma message ("*                              *")
-    #pragma message ("* WARNING: repository modified *")
-    #pragma message ("*  changes not committed for   *")
-    #pragma message ("*    mxlib    *")
-    #pragma message ("*                              *")
-    #pragma message ("********************************")
-  #endif
-#endif
 
 
 #endif
