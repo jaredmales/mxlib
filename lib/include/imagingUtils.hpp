@@ -63,11 +63,8 @@ void makeComplexPupil(Eigen::Array<std::complex<arithT>, Eigen::Dynamic, Eigen::
    
    complexPupil.resize(wavefrontSizePixels, wavefrontSizePixels);
    complexPupil.setZero();
-   
-   //complexPupil.bottomRightCorner(realPupil.rows(), realPupil.cols()) = realPupil*std::complex<arithT>(1,0);
-   
+      
    int bl = 0.5*(complexPupil.rows()-1) - 0.5*(realPupil.rows()-1.);
-   //int ur = 0.5*(complexPupil.rows()-1) + 0.5*(realPupil.rows()-1.);
    
    complexPupil.block(bl, bl, realPupil.rows(), realPupil.rows()) = realPupil*std::complex<arithT>(1,0);
 
