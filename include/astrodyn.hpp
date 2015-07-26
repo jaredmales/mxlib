@@ -11,7 +11,7 @@
 #include "astroconstants.h"
 #include "geo.h"
 #include "sofa.h"
-#include "../vmop/MMatrix1"
+//#include "../vmop/MMatrix1"
 
 /** \addtogroup astrodynamics
   * @{ 
@@ -139,7 +139,7 @@ void calc_AZ_EL(double *az, double *el, double ha, double dec, double lat);
 
 void azel_to_hadec(double &ha, double &dec, double az, double el, double lat);
 
-void azel_to_hadec(mx::Vectord &ha, mx::Vectord &dec, const mx::Vectord &az, const mx::Vectord &el, double lat);
+//void azel_to_hadec(mx::Vectord &ha, mx::Vectord &dec, const mx::Vectord &az, const mx::Vectord &el, double lat);
 
 ///Calculate the Parallactic angle, with angles in degrees
 /** \param lat is the observer latitude
@@ -178,20 +178,20 @@ int latlon_to_ECI(double &x, double &y, double &z, double lat, double lon, doubl
   * \param alt [input] the altitude of RAD_EARTH (meters)
   * \param lst [input] the local sidereal time (radians) 
   */
-int latlon_to_ECI(mx::Vectord &x, mx::Vectord &y, double &z, double lat, double lon, double alt, const mx::Vectord &lst);
+//int latlon_to_ECI(mx::Vectord &x, mx::Vectord &y, double &z, double lat, double lon, double alt, const mx::Vectord &lst);
 
 
-int ECI_to_TCH( mx::Vectord & az,
-                mx::Vectord & el,
-                mx::Vectord & r,
-                const double lat,
-                const mx::Vectord & lst,
-                const mx::Vectord & obs_x,
-                const mx::Vectord & obs_y,
-                const double obs_z,
-                const mx::Vectord & tgt_x,
-                const mx::Vectord & tgt_y,
-                const mx::Vectord & tgt_z ); 
+// int ECI_to_TCH( mx::Vectord & az,
+//                 mx::Vectord & el,
+//                 mx::Vectord & r,
+//                 const double lat,
+//                 const mx::Vectord & lst,
+//                 const mx::Vectord & obs_x,
+//                 const mx::Vectord & obs_y,
+//                 const double obs_z,
+//                 const mx::Vectord & tgt_x,
+//                 const mx::Vectord & tgt_y,
+//                 const mx::Vectord & tgt_z ); 
 
 
 /// @}

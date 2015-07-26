@@ -107,11 +107,11 @@ kepler.o: include/kepler.hpp
 
 .PHONY: mxlib_comp_version
 mxlib_comp_version:
-	@sh ./gengithead.sh ../ ./include/mxlib_comp_version.h MXLIB_COMP
+	@sh ./gengithead.sh ./ ./include/mxlib_comp_version.h MXLIB_COMP
 
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
-	@sh ./gengithead.sh ../ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
+	@sh ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
 	
 libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
 	$(AR) libmxlib.a $(OBJS)
