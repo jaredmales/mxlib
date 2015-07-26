@@ -92,20 +92,20 @@ struct derotODI
    ///Constructor should populate keywords
    derotODI()
    {
+      period = 365.25;
       keywords.push_back("DATEOBS");
    }
    
    ///Method called by DIobservation to get keyword-values
    void extractKeywords(vector<fitsHeader> & heads)
    {
-//       rotoff.resize(heads.size());
-//       for(int i=0; i<heads.size(); ++i) rotoff[i] = i;
+      dateobs = headersToValues<floatT>(heads, "DATEOBS");
    }
    
    ///Calculate the derotation angle for a given image number
    floatT derotAngle(size_t imno)
    {
-      return 0;
+      return (fmod(dateobs[imno], period)/period)*D2PI;
    }
 };
 
