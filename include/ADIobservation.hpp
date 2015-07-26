@@ -84,13 +84,15 @@ struct derotODI
    std::vector<std::string> keywords;
    
    ///Vector(s) to hold the keyword values
-   std::vector<std::string> rotoff;
+   std::vector<std::string> dateobs;
    
+   ///The period of the orbit
+   _floatT period;
    
    ///Constructor should populate keywords
    derotODI()
    {
-      //no keywords
+      keywords.push_back("DATEOBS");
    }
    
    ///Method called by DIobservation to get keyword-values
