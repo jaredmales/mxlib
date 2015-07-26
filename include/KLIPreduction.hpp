@@ -312,6 +312,10 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
       this->combineFinim();
       dcombo = get_curr_time() - dcombo;
       
+   }
+   
+   if(this->doWriteFinim == true || this->doOutputPSFSub == true)
+   {
       pout("writing");
       
       fitsHeader head;
@@ -350,14 +354,16 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
       head.append<floatT>("MINDPX", mindpx, "minimum pixel delta");
       head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
 
-      this->writeFinim(&head);
+      if(this->doWriteFinim == true)
+      {
+         this->writeFinim(&head);
+      }
+      
+      if(this->doOutputPSFSub)
+      {
+         this->outputPSFSub(&head);
+      }
    }
-   
-//    if(this->doOutputPsfsub)
-//    {
-//       pout("outputting");
-//       this->outputPsfsub();
-//    }
    
    tf = get_curr_time();
    pout("total time: ", tf-t0);

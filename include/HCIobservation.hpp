@@ -25,6 +25,7 @@
 #include "timeUtils.hpp"
 #include "pout.hpp"
 #include "imageMasks.hpp"
+#include "mxException.hpp"
 
 namespace mx
 {
@@ -294,6 +295,13 @@ struct HCIobservation
    /** 
      */
    void writeFinim(fitsHeader * addHead = 0);
+   
+   
+   ///Write the PSF subtracted images to disk
+   /**
+    */
+   void outputPSFSub(fitsHeader * addHead = 0);
+   
 };
 
 template<typename _floatT>
@@ -362,6 +370,13 @@ inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
 {
+   
+   if(fileList.size() == 0)
+   {
+      throw mxException("mx::HCIobservation",1, "no files to read",__FILE__, __LINE__-2, 
+                      "The fileList has 0 length, there are no files to be read.");
+   }
+   
    //First make the list deletions
    if(!filesDeleted)
    {
@@ -413,11 +428,9 @@ inline void HCIobservation<_floatT>::readFiles()
       }
       else
       {
-         std::cout << "Doing this right\n";
          for(int i=0;i<imageMJD.size();++i)
          {
             imageMJD[i] =  heads[i][MJDKeyword].Value<floatT>()*MJDUnits;
-            std::cout << imageMJD[i] << "\n";
          }
       }
    }
@@ -756,6 +769,51 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
    
    pout("Final image written to: ", fname);
+}
+
+
+template<typename _floatT>
+inline void HCIobservation<_floatT>::outputPSFSub(fitsHeader * addHead)
+{
+   std::string fname;
+   
+   fitsHeader head;
+   
+   head.append("", fitsCommentType(), "----------------------------------------");
+   head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
+   head.append("", fitsCommentType(), "----------------------------------------");
+   
+   head.append<int>("FDELFRNT", deleteFront, "image deleted from front of file list");
+   head.append<int>("FDELBACK", deleteBack, "image deleted from back of file list");
+   
+   head.append<int>("IMSIZE", imSize, "image size after reading");
+   
+   head.append<int>("COADMTHD", coaddCombineMethod, "coadd combination method");
+   if(coaddCombineMethod != HCI::noCombine)
+   {
+      head.append<int>("COADIMNO", coaddMaxImno, "max number of images in each coadd");
+      head.append<int>("COADTIME", coaddMaxTime, "max time  in each coadd");
+   }
+   
+   if(addHead)
+   {
+      head.append(*addHead);
+   }
+   
+   fitsHeaderGitStatus(head, "mxlib_comp",  mxlib_compiled_git_sha1(), mxlib_compiled_git_repo_modified());
+   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
+   
+   fitsFile<floatT> f;
+
+   char num[16];
+   for(int n=0; n<psfsub.size(); ++n)
+   {
+      snprintf(num, 10, "%05d.fits", n);
+      fname = PSFSubPrefix + num;
+   
+      f.write(fname, psfsub[n].data(), psfsub[n].rows(), psfsub[n].cols(), psfsub[n].planes(), &head);
+   }
+   
 }
 
 ///@} 
