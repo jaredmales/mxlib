@@ -77,7 +77,7 @@ struct HCIobservation
      * 
      * If empty "", then image date is not read.
      */
-   std::string mjdKeyword;
+   std::string MJDKeyword;
    
    ///Whether or not the date is in ISO 8601 format
    bool MJDisISO8601;
@@ -303,7 +303,7 @@ void HCIobservation<_floatT>::initialize()
    deleteBack = 0;
    filesDeleted = false;
    
-   mjdKeyword = "DATE-OBS";
+   MJDKeyword = "DATE-OBS";
    MJDisISO8601 = true;   
    MJDUnits = 1.0;
    
@@ -386,7 +386,7 @@ inline void HCIobservation<_floatT>::readFiles()
 
    fitsHeader head;
 
-   if(mjdKeyword != "") head.append(mjdKeyword);
+   if(MJDKeyword != "") head.append(MJDKeyword);
    
    for(int i=0;i<keywords.size();++i)
    {
@@ -400,7 +400,7 @@ inline void HCIobservation<_floatT>::readFiles()
    
    f.read(fileList, imc.data(), heads);
 
-   if(mjdKeyword != "")
+   if(MJDKeyword != "")
    {
       imageMJD.resize(heads.size());
 
@@ -408,7 +408,7 @@ inline void HCIobservation<_floatT>::readFiles()
       {
          for(int i=0;i<imageMJD.size();++i)
          {
-            imageMJD[i] =  mx::ISO8601date2mjd(heads[i][mjdKeyword].String());
+            imageMJD[i] =  mx::ISO8601date2mjd(heads[i][MJDKeyword].String());
          }
       }
       else
@@ -416,7 +416,7 @@ inline void HCIobservation<_floatT>::readFiles()
          std::cout << "Doing this right\n";
          for(int i=0;i<imageMJD.size();++i)
          {
-            imageMJD[i] =  heads[i][mjdKeyword].Value<floatT>()*MJDUnits;
+            imageMJD[i] =  heads[i][MJDKeyword].Value<floatT>()*MJDUnits;
             std::cout << imageMJD[i] << "\n";
          }
       }
