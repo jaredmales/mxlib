@@ -70,7 +70,7 @@ struct HCIobservation
    int deleteBack;
    
    ///Name of the keyword to use for the image date. 
-   /** Specifies the keyword corresponding to a date in ISO 8601 format.  This is
+   /** Specifies the keyword corresponding to .  This is
      * the "DATE" keyword for file write time, and usually "DATE-OBS" for actual observation time.
      *  
      * Default is "DATE-OBS".  
@@ -78,6 +78,12 @@ struct HCIobservation
      * If empty "", then image date is not read.
      */
    std::string mjdKeyword;
+   
+   ///Whether or not the date is in ISO 8601 format
+   bool MJDisISO8601;
+   
+   ///If the date is not ISO 8601, this specifies the conversion to Julian Days (i.e. seconds to days)
+   floatT MJDunits;
    
    ///Vector of FITS header keywords to read from the files in fileList.
    std::vector<std::string> keywords;
@@ -298,6 +304,8 @@ void HCIobservation<_floatT>::initialize()
    filesDeleted = false;
    
    mjdKeyword = "DATE-OBS";
+   MJDisISO8601 = true;   
+   MJDunits = 1.0;
    
    imSize = 0;
    applyMask = false;
@@ -395,10 +403,20 @@ inline void HCIobservation<_floatT>::readFiles()
    if(mjdKeyword != "")
    {
       imageMJD.resize(heads.size());
-      
-      for(int i=0;i<imageMJD.size();++i)
+
+      if(MJDisISO8601)
       {
-         imageMJD[i] =  mx::ISO8601date2mjd(heads[i][mjdKeyword].String());
+         for(int i=0;i<imageMJD.size();++i)
+         {
+            imageMJD[i] =  mx::ISO8601date2mjd(heads[i][mjdKeyword].String());
+         }
+      }
+      else
+      {
+         for(int i=0;i<imageMJD.size();++i)
+         {
+            imageMJD[i] =  heads[i][mjdKeyword].Value<floatT>()*MJDUnits;
+         }
       }
    }
    
