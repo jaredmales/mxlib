@@ -413,9 +413,11 @@ inline void HCIobservation<_floatT>::readFiles()
       }
       else
       {
+         std::cout << "Doing this right\n";
          for(int i=0;i<imageMJD.size();++i)
          {
             imageMJD[i] =  heads[i][mjdKeyword].Value<floatT>()*MJDUnits;
+            std::cout << imageMJD[i] << "\n";
          }
       }
    }
