@@ -84,7 +84,7 @@ struct derotODI
    std::vector<std::string> keywords;
    
    ///Vector(s) to hold the keyword values
-   std::vector<std::string> dateobs;
+   std::vector<floatT> dateobs;
    
    ///The period of the orbit
    _floatT period;
@@ -103,7 +103,7 @@ struct derotODI
    }
    
    ///Calculate the derotation angle for a given image number
-   floatT derotAngle(size_t imno)
+   floatT derotAngle(size_t imno) const
    {
       return (fmod(dateobs[imno], period)/period)*D2PI;
    }

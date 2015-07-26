@@ -83,7 +83,7 @@ struct HCIobservation
    bool MJDisISO8601;
    
    ///If the date is not ISO 8601, this specifies the conversion to Julian Days (i.e. seconds to days)
-   floatT MJDunits;
+   floatT MJDUnits;
    
    ///Vector of FITS header keywords to read from the files in fileList.
    std::vector<std::string> keywords;
@@ -305,7 +305,7 @@ void HCIobservation<_floatT>::initialize()
    
    mjdKeyword = "DATE-OBS";
    MJDisISO8601 = true;   
-   MJDunits = 1.0;
+   MJDUnits = 1.0;
    
    imSize = 0;
    applyMask = false;
