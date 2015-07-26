@@ -457,7 +457,6 @@ inline void HCIobservation<_floatT>::readFiles()
       int max_y = floor(yc + (0.5*imSize-0.5) + 0.51);
       if(max_y >= timc.rows()) max_y = timc.cols() - 1;
    
-      std::cout << min_x << " " << max_x << " " << min_y << " " << max_y << "\n";
       imc.resize( max_y-min_y + 1, max_x-min_x+1, timc.planes());
    
       for(int n=0;n<timc.planes();++n)
@@ -808,7 +807,7 @@ inline void HCIobservation<_floatT>::outputPSFSub(fitsHeader * addHead)
    char num[16];
    for(int n=0; n<psfsub.size(); ++n)
    {
-      snprintf(num, 10, "%05d.fits", n);
+      snprintf(num, 16, "%05d.fits", n);
       fname = PSFSubPrefix + num;
    
       f.write(fname, psfsub[n].data(), psfsub[n].rows(), psfsub[n].cols(), psfsub[n].planes(), &head);

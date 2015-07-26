@@ -102,12 +102,13 @@ public:
    {
       s.str("");
       
-      s << "Exception source: " << except_code_source << "\n";
-      s << "            code: " << except_code << "\n";
-      s << "       code mnem: " << except_code_mnem << "\n";
-      s << "  thrown in file: " << except_file << "\n";
-      s << "         at line: " << except_line << "\n";
-      s << "     explanation: " << except_explanation << "\n";
+      s << "An exception has been thrown in an mxlib component.\n";
+      s << "      source: " << except_code_source << "\n";
+      s << "        code: " << except_code << "\n";
+      s << "   code mnem: " << except_code_mnem << "\n";
+      s << "     in file: " << except_file << "\n";
+      s << "     at line: " << except_line << "\n";
+      s << " explanation: " << except_explanation << "\n";
    }
    
    ///Return the details of the exception as a single string.
