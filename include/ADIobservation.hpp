@@ -166,8 +166,11 @@ struct ADIobservation : public HCIobservation<_floatT>
    derotFunctObj derotF;
    //vector<floatT> derot;
       
+   bool doDerotate;
+   
    ADIobservation()
    {
+      doDerotate = true;
       doFake = 0;
    }
    
@@ -175,6 +178,7 @@ struct ADIobservation : public HCIobservation<_floatT>
                    const std::string & prefix, 
                    const std::string & ext) : HCIobservation<floatT>(dir,prefix,ext)
    {
+      doDerotate = true;
       doFake = 0;
    }
    
