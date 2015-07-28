@@ -105,7 +105,7 @@ struct derotODI
    ///Calculate the derotation angle for a given image number
    floatT derotAngle(size_t imno) const
    {
-      return -1*(fmod(dateobs[imno], period)/period)*D2PI;
+      return D2PI-(fmod(dateobs[imno], period)/period)*D2PI;
    }
 };
 
