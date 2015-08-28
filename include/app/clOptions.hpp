@@ -109,6 +109,8 @@ struct clOptions
       
       option::Parser parse(descriptions.data(), argc, argv, options, buffer);
       
+      //std::cout << options[map["tags"]].count() << std::endl;
+      
       if(nonOptions)
       {
          nonOptions->resize(parse.nonOptionsCount());
@@ -130,8 +132,6 @@ struct clOptions
          return 0;
       }
 
-
-
       int typeDesc = typeMap[key]; 
 
       //If this option is not pressent, either return the opposite T/F condition or blank
@@ -147,13 +147,84 @@ struct clOptions
          if(options[it->second].last()->type() == argType::False) return falseStr;
          else return trueStr;
       }
-         
-      
+
       if(options[it->second].arg == 0) return blankStr;
       
-      return options[it->second].arg;
+      return options[it->second].last()->arg;
    }
    
+   int count(const std::string & key)
+   {
+      mapIterator it = map.find(key);
+      return options[it->second].count();
+   }
+   
+   ///Fill a vector of strings with the arguments supplied for key, last first. 
+   void getAll(std::vector<std::string> & args, const std::string & key)
+   {
+      mapIterator it = map.find(key);
+      
+      
+      if(it == map.end())
+      {
+         std::cerr << "oh no\n";
+         return;
+      }
+
+      int typeDesc = typeMap[key]; 
+
+      //If this option is not present, either return the opposite T/F condition or blank
+      if(options[it->second].type() == argType::None) 
+      {
+         
+         if(typeDesc == argType::False) 
+         {
+            args.resize(1);
+            args[0]= trueStr;
+            return;
+         }
+         
+         if(typeDesc == argType::True) 
+         {
+            args.resize(1);
+            args[0]= falseStr;
+            return;
+         }
+         
+         args.clear();
+         
+         return;
+      }
+      
+      if(typeDesc == argType::False || typeDesc == argType::True)
+      {
+         args.resize(1);
+         
+         if(options[it->second].last()->type() == argType::False) args[0] = falseStr;
+         else args[0] = trueStr;         
+         return;
+      }
+      
+      
+      if(options[it->second].arg == 0) 
+      {
+         args.clear();
+         return;
+      }
+      
+      int N = options[it->second].count();
+      
+      args.resize(N);
+      
+      int i=0;
+      
+      for (option::Option* opt = options[it->second]; opt != NULL && i < N; opt = opt->next())
+      {
+         args[i] = opt->arg;
+         ++i;
+      }
+   }
+      
    bool optSet(const std::string & key)
    {
      mapIterator it = map.find(key);

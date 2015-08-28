@@ -28,7 +28,7 @@ struct configTarget
    std::string section; ///< The config file section name, can be empty ""
    std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
    bool set; ///< true if the value has been set by the configuration, use to distinguish empty strings
-   std::string value; ///< holds the most recent value set by the configuration
+   std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
 
    /// Default c'tor
    configTarget()
@@ -56,7 +56,7 @@ struct configTarget
    }
 };
 
-/// Class to manage a set of configTarget entries, and read their values from config/ini files and the command line.
+/// Class to manage a set of configurable values, and read their values from config/ini files and the command line.
 struct appConfigurator
 {
    typedef std::unordered_map<std::string, configTarget>::iterator targetIterator;
@@ -82,6 +82,9 @@ struct appConfigurator
       {
          targets.insert({tgt.name, tgt});
       }
+      
+      //targets.insert({tgt.name, tgt});
+      //clOnlyTargets.push_back(tgt);
    }
    
    ///Parse the command line, updating the targets
@@ -115,18 +118,19 @@ struct appConfigurator
       }
       
       clOpts.parse(argc, argv, &nonOptions);
-
+      
       for(it = targets.begin(); it != targets.end(); ++it)
       {
          if(clOpts.optSet(it->second.name)) 
          {
-            it->second.value = clOpts[it->second.name];
+            std::vector<std::string> args;
+            
+            clOpts.getAll(args, it->second.name);
+            
+            it->second.values.insert( it->second.values.end(), args.begin(), args.end());
             it->second.set = true;
          }
-      }
-      
-      
-      
+      }      
    }
 
    ///Parst a config/ini file, updating the targets
@@ -142,7 +146,7 @@ struct appConfigurator
       {
          if(iF.count(it->second.section, it->second.keyword) > 0) 
          {
-            it->second.value = iF(it->second.section, it->second.keyword);
+            it->second.values.push_back(iF(it->second.section, it->second.keyword));
             it->second.set = true;
          }
       }
@@ -152,28 +156,43 @@ struct appConfigurator
    bool isSet(const std::string & name)
    {
       if(targets.count(name) == 0) return false;
-      
       return targets[name].set;
    }
 
-   /// Get the value of the target, converted tot the specified value
+   /// Get the final value of the target, converted to the specified value
    template<typename typeT>
    typeT get(const std::string & name)
    {
       if(!isSet(name)) return false;
       
-      return convertFromString<typeT>(targets[name].value);
+      return convertFromString<typeT>(targets[name].values.back());
    }
    
-  
+   /// Get the i-th value of the target, converted to the specified config target
+   template<typename typeT>
+   typeT get(const std::string & name, int i)
+   {
+      if(!isSet(name)) return false;
+      
+      return convertFromString<typeT>(targets[name].values[i]);
+   }
    
+   /// Set a variable to the final value of a specified config target
    template<typename typeT>
    void set(typeT & var, const std::string & name)
    {
       if(!isSet(name)) return;
       
-      var = convertFromString<typeT>(targets[name].value);
+      var = convertFromString<typeT>(targets[name].values.back());
    }
+   
+   ///Get the number of different values set for the specified config target 
+   int count(const std::string & name)
+   {
+      return targets[name].values.size();
+   }
+   
+   
 };
 
 
@@ -182,9 +201,16 @@ std::string appConfigurator::get<std::string>(const std::string & name)
 {
    if(!isSet(name)) return "";
       
-   return targets[name].value;
+   return targets[name].values.back();
 }
 
+template<>
+std::string appConfigurator::get<std::string>(const std::string & name, int i)
+{
+   if(!isSet(name)) return "";
+      
+   return targets[name].values[i];
+}
    
    
 } //namespace mx
