@@ -9,7 +9,9 @@
 #ifndef __fraunhoferImager_hpp__
 #define __fraunhoferImager_hpp__
 
+#include "imagingArray.hpp"
 #include "imagingUtils.hpp"
+
 #include "fft.hpp"
 
 namespace mx
@@ -22,45 +24,46 @@ namespace mx
   * focal plane to pupil plane, the pupil plane wavefront is un-tilted to restore the 
   * pupil to its original position.  
   * 
-  * \tparam arithT is the arithmetic type
+  * \tparam realT is the arithmetic type
   * 
   * \ingroup imaging
   */ 
-template<typename arithT>
+template<typename _wavefrontT>
 class fraunhoferImager 
 {
    
 public:
-   ///The complex data type
-   typedef std::complex<arithT> complexT;
    
    ///The wavefront data type
-   typedef Eigen::Array<std::complex<arithT>, Eigen::Dynamic, Eigen::Dynamic> wavefrontT;
+   typedef _wavefrontT wavefrontT;
+   
+   ///The complex data type
+   typedef typename wavefrontT::dataT complexT;
+   
+   ///The real data type
+   typedef typename wavefrontT::dataT::value_type realT;
    
 protected:
 
    ///The size of the wavefront in pixels
    int wavefrontSizePixels;
 
-   arithT xcen; ///<x-coordinate of focal plane center, in pixels
-   arithT ycen; ///<x-coordinate of focal plane center, in pixels
+   realT xcen; ///<x-coordinate of focal plane center, in pixels
+   realT ycen; ///<x-coordinate of focal plane center, in pixels
      
    ///Phase screen for tilting the pupil plane so that the focal plane image is centered.  
    wavefrontT centerFocal;  
    
    ///Phase screen for un-tilting the pupil plane after propagating from a centered focal plane.
    wavefrontT centerPupil;
-
-   fftwf_plan fftw_p_fwd; 
-   fftwf_plan fftw_p_back; 
+   
+   mx::fftT<complexT, complexT,2,0> fft_fwd;
+   mx::fftT<complexT, complexT,2,0> fft_back;
    
    ///Initialize members
    void initialize()
    {
       wavefrontSizePixels = 0;
-      
-      fftw_p_fwd = 0;
-      fftw_p_back = 0;
       
       xcen = 0;
       ycen = 0;
@@ -79,8 +82,6 @@ public:
    ///Destructor
    ~fraunhoferImager()
    {
-      if(fftw_p_fwd) fftwf_destroy_plan(fftw_p_fwd);
-      if(fftw_p_back) fftwf_destroy_plan(fftw_p_back);
    }
    
    ///Propagate the wavefront from the pupil plane to the focal plane
@@ -93,19 +94,20 @@ public:
      */ 
    void propagatePupilToFocal(wavefrontT & complexFocal, wavefrontT & complexPupil)
    {
-      //First setup the tilt screens (does nothing if there's not change in size)
-      setWavefrontSizePixels(complexPupil.rows());
+      //First setup the tilt screens (does nothing if there's no change in size)
+      setWavefrontSizePixels(complexPupil.szY());
       
       //DFT normalization, sqrt(2) for complex number
-      arithT norm = wavefrontSizePixels/sqrt(2.);
+      //realT norm = 1./(wavefrontSizePixels/sqrt(2.));
       
-      //Apply the centering shift -- this adjusts by 0.5 pixels
+      //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
       complexPupil *= centerFocal;
-            
-      fftwf_execute_dft(fftw_p_fwd, reinterpret_cast<fftwf_complex*>(complexPupil.data()), reinterpret_cast<fftwf_complex*>(complexFocal.data()));
+        
+      fft_fwd.fft(complexPupil.data(), complexFocal.data() );
 
       //Normalize
-      complexFocal = complexFocal / complexT(norm, norm);
+      //complexT cnorm = complexT(norm, norm);
+      //complexFocal *= cnorm;
       
    }
    
@@ -121,14 +123,15 @@ public:
    void propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
    {
       //DFT normalization, sqrt(2) for complex number
-      arithT norm = wavefrontSizePixels/sqrt(2.);
+      //realT norm = 1./(wavefrontSizePixels/sqrt(2.));
       
-      fftwf_execute_dft(fftw_p_back, reinterpret_cast<fftwf_complex*>(complexFocal.data()), reinterpret_cast<fftwf_complex*>(complexPupil.data()));
-      
-      //Unshift the wavefront
+      fft_back.fft( complexFocal.data(), complexPupil.data());
+            
+      //Unshift the wavefront and normalize
       complexPupil *= centerPupil;
       
-      complexPupil /= complexT(norm, norm);
+      //complexT cnorm = complexT(norm, norm);
+      //complexPupil *= cnorm;
    }
    
    ///Set the size of the wavefront, in pixels
@@ -140,7 +143,7 @@ public:
    void setWavefrontSizePixels(int wfsPix)
    {
       //If no change in size, do nothing
-      if(wfsPix == centerFocal.rows()) return;
+      if(wfsPix == centerFocal.szY()) return;
             
       wavefrontSizePixels = wfsPix;
       
@@ -149,18 +152,9 @@ public:
       
       makeShiftPhase();
       
-      //Need temporaries for fftw_plans.
-      wavefrontT forplan1, forplan2;
-      forplan1.resize(wfsPix, wfsPix);
-      forplan2.resize(wfsPix, wfsPix);
+      fft_fwd.plan(wfsPix, wfsPix);
       
-      if(fftw_p_fwd) fftwf_destroy_plan(fftw_p_fwd);
-      
-      fftw_p_fwd = fftwf_plan_dft_2d(wfsPix, wfsPix, reinterpret_cast<fftwf_complex*>(forplan1.data()), reinterpret_cast<fftwf_complex*>(forplan2.data()),  FFTW_FORWARD, FFTW_MEASURE);
-      
-      if(fftw_p_back) fftwf_destroy_plan(fftw_p_back);
-      
-      fftw_p_back = fftwf_plan_dft_2d(wfsPix, wfsPix, reinterpret_cast<fftwf_complex*>(forplan1.data()), reinterpret_cast<fftwf_complex*>(forplan2.data()),  FFTW_BACKWARD, FFTW_MEASURE);
+      fft_back.plan(wfsPix, wfsPix, MXFFT_BACKWARD);      
    }   
    
 protected:
@@ -170,19 +164,24 @@ protected:
      */
    void makeShiftPhase()
    {      
+      realT pi = boost::math::constants::pi<realT>();
+      
+      realT norm = 1./(wavefrontSizePixels/sqrt(2.));
+      complexT cnorm = complexT(norm, norm);
+      
       //Resize the center phases
       centerFocal.resize(wavefrontSizePixels, wavefrontSizePixels);
       centerPupil.resize(wavefrontSizePixels, wavefrontSizePixels);
 
       //Shift by 0.5 pixels
-      arithT arg = -1.0*D2PI*0.5*wavefrontSizePixels/(wavefrontSizePixels-1);
+      realT arg = -2.0*pi*0.5*wavefrontSizePixels/(wavefrontSizePixels-1);
   
       for(int ii=0; ii < wavefrontSizePixels; ++ii)
       {
          for(int jj=0; jj < wavefrontSizePixels; ++jj)
          {     
-            centerFocal(ii,jj) = exp(complexT(0.,arg*((ii-xcen)+(jj-ycen))));
-            centerPupil(ii,jj) = exp(complexT(0., 0.5*DPI - arg*((ii-xcen)+(jj-ycen))));
+            centerFocal(ii,jj) = cnorm*exp(complexT(0.,arg*((ii-xcen)+(jj-ycen))));
+            centerPupil(ii,jj) = cnorm*exp(complexT(0., 0.5*pi - arg*((ii-xcen)+(jj-ycen))));
          }
       }
    }

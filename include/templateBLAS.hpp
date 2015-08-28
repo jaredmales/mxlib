@@ -17,6 +17,159 @@ extern "C"
 #define __templateBLAS_hpp__
 
 
+/// Template wrapper for cblas xSCAL
+/**
+  */
+template<typename dataT>
+void scal( const int N,
+           const dataT alpha,
+           dataT * X,
+           const int incX )
+{
+   //static_assert(0, "templateBLAS: no scal wrapper defined for type dataT");
+   return; //No BLAS for this type.
+}
+
+template<>
+inline
+void scal<float>( const int N,
+                  const float alpha,
+                  float * X,
+                  const int incX )
+{
+   cblas_sscal(N, alpha, X, incX);
+}
+
+template<>
+inline
+void scal<double>( const int N,
+                  const double alpha,
+                  double * X,
+                  const int incX )
+{
+   cblas_dscal(N, alpha, X, incX);
+}
+
+template<>
+inline
+void scal<std::complex<float> >( const int N,
+                  const std::complex<float>  alpha,
+                  std::complex<float>  * X,
+                  const int incX )
+{
+   cblas_cscal(N, &alpha, X, incX);
+}
+
+
+template<>
+inline
+void scal<std::complex<double> >( const int N,
+                  const std::complex<double>  alpha,
+                  std::complex<double>  * X,
+                  const int incX )
+{
+   cblas_zscal(N, &alpha, X, incX);
+}
+
+///Implementation of the Hadamard (element-wise) product of two vectors 
+/** Computes the the Hadamard or element-wise product: X <- alpha*X*Y
+  * 
+  * \param N [in] the length of the two vectors
+  * \param alpha [in] scalar to multiply each element by
+  * \param Y [in] vector to perform element-wise multiplication with
+  * \param incY [in] in-memory increment or stride for Y
+  * \param X [in/out] vector which is multiplied by alpha and element-wise multiplied by Y
+  * \param incX [in] in-memeory increment or stride for X
+  * 
+  * \tparam dataT the data type of the alpha, X, and Y
+  */
+template<typename dataT>
+inline
+void hadp_impl( const int N,
+                dataT * __restrict__ Y,
+                dataT * __restrict__ X)
+{
+   dataT *x = (dataT *) __builtin_assume_aligned(X, 16);
+   dataT *y = (dataT *) __builtin_assume_aligned(Y, 16);
+   
+   #pragma omp simd
+   for(int i=0; i<N; i++)
+   {
+      x[i] *= y[i];
+   }
+}
+
+/// Template wrapper for cblas-extension xHADP
+/** Computes the the Hadamard or element-wise product: X <- alpha*X*Y
+  * 
+  * \param N [in] the length of the two vectors
+  * \param alpha [in] scalar to multiply each element by
+  * \param Y [in] vector to perform element-wise multiplication with
+  * \param incY [in] in-memory increment or stride for Y
+  * \param X [in/out] vector which is multiplied by alpha and element-wise multiplied by Y
+  * \param incX [in] in-memeory increment or stride for X
+  * 
+  * \tparam dataT the data type of the alpha, X, and Y
+  */
+template<typename dataT>
+inline
+void hadp( const int N,
+           dataT * Y,
+           dataT * X )
+{
+   hadp_impl(N, Y, X);
+}
+
+///Implementation of the Hadamard (element-wise) division of two vectors 
+/** Computes the the Hadamard or element-wise product: X <- alpha*X/Y
+  * 
+  * \param N [in] the length of the two vectors
+  * \param alpha [in] scalar to multiply each element by
+  * \param Y [in] vector to perform element-wise division with
+  * \param incY [in] in-memory increment or stride for Y
+  * \param X [in/out] vector which is multiplied by alpha and element-wise divided by Y
+  * \param incX [in] in-memeory increment or stride for X
+  * 
+  * \tparam dataT the data type of the alpha, X, and Y
+  */
+template<typename dataT>
+void hadd_impl( const int N,
+                const dataT alpha,
+                const dataT * Y,
+                const int incY,
+                dataT * X,
+                const int incX )
+{
+   #pragma omp parallel for
+   for(int i=0; i<N; ++i)
+   {
+      X[i*incX] = alpha*X[i*incX]/Y[i*incY];
+   }
+}
+
+/// Template wrapper for cblas-extension xHADD
+/** Computes the the Hadamard or element-wise product: X <- alpha*X/Y
+  * 
+  * \param N [in] the length of the two vectors
+  * \param alpha [in] scalar to multiply each element by
+  * \param Y [in] vector to perform element-wise division with
+  * \param incY [in] in-memory increment or stride for Y
+  * \param X [in/out] vector which is multiplied by alpha and element-wise divided by Y
+  * \param incX [in] in-memeory increment or stride for X
+  * 
+  * \tparam dataT the data type of the alpha, X, and Y
+  */
+template<typename dataT>
+void hadd( const int N,
+           const dataT alpha,
+           const dataT * Y,
+           const int incY,
+           dataT * X,
+           const int incX )
+{
+   hadd_impl(N, alpha, Y, incY, X, incX);
+}
+
 /// Template Wrapper for cblas xGEMM
 /** 
   *
@@ -29,8 +182,8 @@ void gemm(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TransA,
           const int lda, const dataT *B, const int ldb,
           const dataT beta, dataT *C, const int ldc)
 {
-   //Throw exception here!
-   return; //No BLAS for this time.
+   //static_assert(0, "templateBLAS: no gemm wrapper defined for type dataT");
+   return; //No BLAS for this type.
 }
 
 
@@ -93,7 +246,7 @@ void syrk(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,
           const dataT alpha, const dataT *A, const int lda,
           const dataT beta, dataT *C, const int ldc)
 {
-   //Throw exception here!
+   //static_assert(0, "templateBLAS: no syrk wrapper defined for type dataT");
    return; //No BLAS for this time.
 }
 
