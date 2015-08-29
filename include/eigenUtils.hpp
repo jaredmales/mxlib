@@ -573,7 +573,7 @@ void padImageRef(imOutT imOut, imInT imIn, int nrows, int ncols)
 
 
 template<typename imOutT, typename imInT>
-void cutImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
+void cutImage(imOutT & imOut, const imInT & imIn, int nrows, int ncols)
 {
    imOut = imOutT::Zero(nrows, ncols);
    
@@ -582,6 +582,8 @@ void cutImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
    
    imOut = imIn.block(stRow, stCol, nrows, ncols);
 }
+
+
 
 
 }//namespace mx

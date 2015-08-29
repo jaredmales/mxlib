@@ -117,6 +117,18 @@ public:
       }
    }
    
+   void clear()
+   {
+      if(_owner && _data)
+      {
+         delete _data;
+      }
+      
+      _rows = 0;
+      _cols = 0;
+      _planes = 0;
+   }
+   
    void resize(int r, int c, int p)
    {
       if(_owner && _data)
@@ -127,7 +139,7 @@ public:
       _rows = r;
       _cols = c;
       _planes = p;
-      
+     
       _data = new dataT[_rows*_cols*_planes];
       _owner = true;
      
