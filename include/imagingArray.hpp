@@ -144,6 +144,7 @@ struct imagingArrayInplaceAdd
    
    void operator()(imageT & im, typeT & alpha)
    {
+      typedef typename imageT::dataT scalarT;
       Eigen::Map<Eigen::Array<scalarT,-1,-1> > eigX(im.data(), im.szX(), im.szY());
       eigX += alpha;
    }
