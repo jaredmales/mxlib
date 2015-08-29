@@ -548,6 +548,7 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
    return info;
 }       
 
+
 template<typename imOutT, typename imInT>
 void padImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
 {
@@ -558,6 +559,18 @@ void padImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
    
    imOut.block(stRow, stCol, imIn.rows(),imIn.cols()) = imIn;
 }
+
+template<typename imOutT, typename imInT>
+void padImageRef(imOutT imOut, imInT imIn, int nrows, int ncols)
+{
+   imOut = imOutT::Zero(nrows, ncols);
+   
+   int stRow = (nrows - imIn.rows())/2;
+   int stCol = (ncols - imIn.cols())/2;
+   
+   imOut.block(stRow, stCol, imIn.rows(),imIn.cols()) = imIn;
+}
+
 
 template<typename imOutT, typename imInT>
 void cutImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
