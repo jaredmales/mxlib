@@ -131,6 +131,48 @@ struct imagingArrayInplaceDivision<imageT, typeT, true>
 };
 
 
+
+template< typename imageT, 
+          typename typeT,  
+          bool isScalar = is_imagingArray<typeT>::value>
+struct imagingArrayInplaceAdd
+{
+   imagingArrayInplaceAdd()
+   {
+      static_assert( is_imagingArray<imageT>::value, "imagingArrayInplaceAdd template parameter 1 must be an imagingArray type");
+   }
+   
+   void operator()(imageT & im, typeT & alpha)
+   {
+      Eigen::Map<Eigen::Array<scalarT,-1,-1> > eigX(im.data(), im.szX(), im.szY());
+      eigX += alpha;
+   }
+};
+
+template< typename imageT, 
+          typename typeT>
+struct imagingArrayInplaceAdd<imageT, typeT, true>
+{
+   imagingArrayInplaceAdd()
+   {
+      static_assert( is_imagingArray<imageT>::value, "imagingArrayInplaceAdd template parameter 1 must be an imagingArray type");
+   }
+   
+   void operator()(imageT & im, typeT & alpha)
+   {
+      typedef typename imageT::dataT scalarT;
+      //hadp<scalarT>(im.szX()*im.szY(), alpha.data(), im.data()); 
+      
+      Eigen::Map<Eigen::Array<scalarT,-1,-1> > eigY(alpha.data(), alpha.szX(), alpha.szY());
+      Eigen::Map<Eigen::Array<scalarT,-1,-1> > eigX(im.data(), im.szX(), im.szY());
+      
+      eigX += eigY;
+      
+   }
+};
+
+
+
 template<typename _dataT, class _allocatorT, int cudaGPU>
 class imagingArray;
 
@@ -261,6 +303,15 @@ public:
    {
       imagingArrayInplaceDivision<imagingArray, typeT> div;
       div(*this, alpha);
+      return *this;
+   }
+   
+   ///In-place add.  Works for both scalars and imagingArray types.
+   template<typename typeT>
+   imagingArray & operator+=(typeT & alpha)
+   {
+      imagingArrayInplaceAdd<imagingArray, typeT> prod;
+      prod(*this, alpha);
       return *this;
    }
    
