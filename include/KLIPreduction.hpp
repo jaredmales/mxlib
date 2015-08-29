@@ -300,10 +300,15 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
       pout("worker done");
       
    }
-   pout("deroting");
-   drot = get_curr_time();
-   this->derotate();
-   drot= get_curr_time()-drot;
+   
+   if(this->doDerotate)
+   {
+      pout("deroting");
+      drot = get_curr_time();
+      this->derotate();
+      drot= get_curr_time()-drot;
+   }
+   
    
    if(this->combineMethod > 0)
    {

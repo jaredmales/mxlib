@@ -148,6 +148,8 @@ protected:
    
    dataT * _data;
 
+   bool _owner;
+   
    int _szX;
    int _szY;
 
@@ -156,10 +158,30 @@ public:
    imagingArray()
    {
       _data = 0;
+      _owner = false;
       _szX = 0;
       _szY = 0;
    }
 
+   imagingArray(int x, int y)
+   {
+      _data = 0;
+      _owner=false;
+      _szX = 0;
+      _szY = 0;
+      
+      resize(x, y);
+   }
+   
+   template<typename eigenT>
+   imagingArray(eigenT & im)
+   {
+      _data = im.data();
+      _owner=false;
+      _szX = im.cols();
+      _szY = im.rows();
+   }
+   
    ~imagingArray()
    {
       free();
@@ -167,7 +189,7 @@ public:
    
    void resize(int szx, int szy)
    {
-      if(szx == _szX && szy == _szY) return;
+      if(szx == _szX && szy == _szY && _owner) return;
       
       free();
 
@@ -175,11 +197,12 @@ public:
       _szY = szy;
 
       _data = allocator.alloc(_szX*_szY);
+      _owner = true;
    }
 
    void free()
    {
-      if(_data)
+      if(_data && _owner)
       {
          allocator.free(_data);
          _data = 0;
