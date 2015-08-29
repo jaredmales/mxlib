@@ -61,7 +61,7 @@ void circularPupil( arrayT & m,
   */ 
 template<typename arrayOutT, typename arrayInT>
 void makeComplexPupil( arrayOutT & complexPupil, 
-                       arrayInT & realPupil, 
+                       const arrayInT & realPupil, 
                        int wavefrontSizePixels)
 {
    
@@ -81,6 +81,40 @@ void makeComplexPupil( arrayOutT & complexPupil,
    //complexPupil.block(bl, bl, realPupil.szY(), realPupil.szY()) = realPupil*std::complex<realT>(1,0);
 
 }
+
+
+///Create a complex wavefront from a real amplitude and a real phase.
+/** The wavefront is placed in the center of a 0-padded complex array.
+  *
+  * \param [out] complexWavefront the complex pupil plane wavefront
+  * \param [in] realAmplitude is the real-valued amplitude.
+  * \param [in] realPhase is the real-valued phase in radians, same size as realAmplitude
+  * \param [in] wavefrontSizePixels the desired size of the ouput wavefront, should be at least as big as the real arrays
+  * 
+  * \ingroup imaging
+  */ 
+template<typename arrayOutT, typename arrayInT>
+void makeComplexPupil( arrayOutT & complexWavefront, 
+                       const arrayInT & realAmplitude, 
+                       const arrayInT & realPhase, 
+                       int wavefrontSizePixels)
+{
+   
+   complexWavefront.resize(wavefrontSizePixels, wavefrontSizePixels);
+   complexWavefront.set(0);
+     
+   //Lower-left corner of insertion region
+   int bl = 0.5*(complexWavefront.szY()-1) - 0.5*(realAmplitude.szY()-1.);
+   
+   for(int i=0; i< realAmplitude.szX(); ++i)
+   {
+      for(int j=0; j < realAmplitude.szY(); ++j)
+      {
+         complexWavefront(bl+i, bl+j) = realAmplitude(i,j)*exp(  (typename arrayOutT::dataT(0,1)) * realPhase(i,j)); 
+      }
+   }
+}
+
 
 ///Apply a tilt to a wavefront 
 /**

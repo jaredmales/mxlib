@@ -211,12 +211,12 @@ public:
       }
    }
 
-   int szX()
+   int szX() const
    {
       return _szX;
    }
       
-   int szY()
+   int szY() const
    {
       return _szY;
    }
@@ -224,6 +224,11 @@ public:
    dataT * data()
    {
       return _data;
+   }
+   
+   dataT operator()(int x, int y) const
+   {
+      return _data[x + y*_szX];
    }
    
    dataT & operator()(int x, int y)
