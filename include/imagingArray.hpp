@@ -329,7 +329,8 @@ public:
 
 
 
-
+typedef imagingArray<float,mx::fftwAllocator<float>,0> imagingArrayf;
+typedef imagingArray<std::complex<float>,mx::fftwAllocator<std::complex<float> >,0> imagingArraycf;
 
 
 } //namespace mx

@@ -90,6 +90,9 @@ public:
    ///Get the number of dimensions (i.e. naxis)
    int getDimensions();
    
+   ///Get the total size
+   long getSize();
+   
    ///Get the size of a specific dimension
    long getSize(size_t axis);
    
@@ -402,6 +405,18 @@ int fitsFile<dataT>::getDimensions()
    if(!isOpen or !naxes) return -1;
    
    return naxis;
+}
+
+template<typename dataT>
+long fitsFile<dataT>::getSize()
+{
+   if(!isOpen or !naxes) return -1;
+
+   long sz = 1;
+   
+   for(int i=0;i<naxis;++i) sz*= naxes[i];
+   
+   return sz;
 }
 
 template<typename dataT>
