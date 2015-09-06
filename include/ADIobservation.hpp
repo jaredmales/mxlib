@@ -172,6 +172,7 @@ struct ADIobservation : public HCIobservation<_floatT>
    {
       doDerotate = true;
       doFake = 0;
+      doFakeScale = 0;
    }
    
    ADIobservation( const std::string & dir, 
@@ -180,6 +181,7 @@ struct ADIobservation : public HCIobservation<_floatT>
    {
       doDerotate = true;
       doFake = 0;
+      doFakeScale = 0;
    }
    
    
@@ -202,6 +204,10 @@ struct ADIobservation : public HCIobservation<_floatT>
    
    int doFake;
    std::string fakeFileName;
+   bool doFakeScale;
+   std::string fakeScaleFile;
+   
+   
    floatT fakeSep;
    floatT fakePA;
    floatT fakeContrast;
@@ -213,7 +219,8 @@ struct ADIobservation : public HCIobservation<_floatT>
       typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
       imT fakePSF;
       fitsFile<floatT> ff;
-      
+      std::ifstream scaleFin; //for reading the scale file.
+         
       ff.read(fakeFileName, fakePSF);
 
       //Check for correct sizing
@@ -244,10 +251,16 @@ struct ADIobservation : public HCIobservation<_floatT>
       imT shiftFake(fakePSF.rows(), fakePSF.cols());
       
       floatT ang, dx, dy;
-      
+
+      if(doFakeScale)
+      {
+         scaleFin.open(fakeScaleFile.c_str());
+      }
+         
       for(int i=0; i<this->imc.planes(); ++i)
       {
-
+         floatT fakeScale = 1;
+         
          ang = DTOR(-fakePA) + derotF.derotAngle(i);
          
          dx = fakeSep * sin(ang);
@@ -255,7 +268,14 @@ struct ADIobservation : public HCIobservation<_floatT>
                   
          imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
       
-         this->imc.image(i) = this->imc.image(i) + shiftFake*fakeContrast;
+         if(doFakeScale) scaleFin >> fakeScale;
+         
+         this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale*fakeContrast;
+      }
+      
+      if(doFakeScale)
+      {
+         scaleFin.close();
       }
       
       pout("fake injected");

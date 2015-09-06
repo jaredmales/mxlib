@@ -210,6 +210,37 @@ void extractIntensityImage(realImageT & im,
       wf_data = &wf.data()[wfX0 + (wfY0+j)*wf_rows];
       for(int i=0; i<imYsz; ++i)
       {
+         im_data[i] = norm(wf_data[i]);
+      }
+   }
+}
+
+template< typename realImageT,
+          typename complexImageT>
+void extractIntensityImageInPlace(realImageT & im,
+                           int imX0,
+                           int imXsz,
+                           int imY0,
+                           int imYsz,
+                           complexImageT & wf,
+                           int wfX0,
+                           int wfY0)
+{
+   int im_idx;
+   int im_rows = im.szX();
+   
+   int wf_idx;
+   int wf_rows = wf.szX();
+   
+   typename realImageT::dataT * im_data;
+   typename complexImageT::dataT * wf_data;
+   
+   for(int j =0; j< imXsz; ++j)
+   {
+      im_data = &im.data()[imX0 + (imY0+j)*im_rows];
+      wf_data = &wf.data()[wfX0 + (wfY0+j)*wf_rows];
+      for(int i=0; i<imYsz; ++i)
+      {
          im_data[i] += norm(wf_data[i]);
       }
    }
