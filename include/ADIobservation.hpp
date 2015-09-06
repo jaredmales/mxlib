@@ -257,6 +257,7 @@ struct ADIobservation : public HCIobservation<_floatT>
          scaleFin.open(fakeScaleFile.c_str());
       }
          
+         
       for(int i=0; i<this->imc.planes(); ++i)
       {
          floatT fakeScale = 1;
