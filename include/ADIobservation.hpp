@@ -270,7 +270,7 @@ struct ADIobservation : public HCIobservation<_floatT>
          imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
       
          if(doFakeScale) scaleFin >> fakeScale;
-         
+         std::cout << fakeScale << "\n";
          this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale*fakeContrast;
       }
       
