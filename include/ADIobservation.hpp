@@ -205,7 +205,7 @@ struct ADIobservation : public HCIobservation<_floatT>
    int doFake;
    std::string fakeFileName;
    bool doFakeScale;
-   std::string fakeScaleFile;
+   std::string fakeScaleFileName;
    
    
    floatT fakeSep;
@@ -254,7 +254,7 @@ struct ADIobservation : public HCIobservation<_floatT>
 
       if(doFakeScale)
       {
-         scaleFin.open(fakeScaleFile.c_str());
+         scaleFin.open(fakeScaleFileName.c_str());
       }
          
          
