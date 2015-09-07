@@ -73,8 +73,10 @@ INC_TO_INSTALL = app \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \
+                 gramSchmidt.hpp \
                  imageFilters.hpp \
                  imageTransforms.hpp \
+                 signalWindows.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
