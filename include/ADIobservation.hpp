@@ -202,15 +202,15 @@ struct ADIobservation : public HCIobservation<_floatT>
       
    }
    
-   int doFake;
-   std::string fakeFileName;
-   bool doFakeScale;
-   std::string fakeScaleFileName;
+   int doFake; ///<Flag controlling whether or not fake planets are injected
+   std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject
+   bool doFakeScale; ///<Flag controlling whether or not a separate scale is used at each point in time
+   std::string fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
    
    
-   floatT fakeSep;
-   floatT fakePA;
-   floatT fakeContrast;
+   std::vector<floatT> fakeSep; ///< Separation(s) of the fake planet(s)
+   std::vector<floatT> fakePA; ///< Position angles(s) of the fake planet(s)
+   std::vector<floatT> fakeContrast; ///< Contrast(s) of the fake planet(s)
    
    
    
@@ -252,32 +252,34 @@ struct ADIobservation : public HCIobservation<_floatT>
       
       floatT ang, dx, dy;
 
+      //Fake Scale -- default to 1, read from file otherwise
+      std::vector<floatT> fakeScale(this->imc.planes(), 1.0);
       if(doFakeScale)
       {
          scaleFin.open(fakeScaleFileName.c_str());
+         for(int i=0; i<this->imc.planes(); ++i)
+         {
+            scaleFin >> fakeScale[i];
+         }
+         scaleFin.close();
       }
          
          
       for(int i=0; i<this->imc.planes(); ++i)
       {
-         floatT fakeScale = 1;
+         for(int j=0;j<fakeSep.size(); ++j)
+         {
+            ang = DTOR(-fakePA[j]) + derotF.derotAngle(i);
          
-         ang = DTOR(-fakePA) + derotF.derotAngle(i);
-         
-         dx = fakeSep * sin(ang);
-         dy = fakeSep * cos(ang);
+            dx = fakeSep[j] * sin(ang);
+            dy = fakeSep[j] * cos(ang);
                   
-         imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
+            imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
       
-         if(doFakeScale) scaleFin >> fakeScale;
-         std::cout << fakeScale << "\n";
-         this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale*fakeContrast;
+            this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale[i]*fakeContrast[j];
+         }
       }
       
-      if(doFakeScale)
-      {
-         scaleFin.close();
-      }
       
       pout("fake injected");
    }
