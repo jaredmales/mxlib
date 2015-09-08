@@ -264,7 +264,7 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
    int yulim = Ncols-width+lbuff;// - 1;
   
          
-   #pragma omp parallel private(x0,y0,i0,j0,x,y)
+   #pragma omp parallel private(x0,y0,i0,j0,x,y) num_threads(4)
    {
       arrOutT kern; 
       kern.resize(width,width);
