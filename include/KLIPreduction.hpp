@@ -248,6 +248,8 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
    dread = get_curr_time()-t1;
    pout(this->Nims);
   
+   std::cout << 10 << std::endl;
+   
    this->psfsub.resize(Nmodes.size());
    for(int n=0;n<Nmodes.size(); ++n)
    {
@@ -255,6 +257,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
       this->psfsub[n].cube().setZero();
    }
    
+   std::cout << 11 << std::endl;
    //Make radius and angle images
    eigenImageT rIm(this->Nrows,this->Ncols);
    eigenImageT qIm(this->Nrows,this->Ncols);

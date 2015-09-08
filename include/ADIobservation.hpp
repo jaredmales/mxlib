@@ -196,8 +196,12 @@ struct ADIobservation : public HCIobservation<_floatT>
       
       HCIobservation<floatT>::readFiles();
       
-      derotF.extractKeywords(this->heads);
+      std::cout << 9.1 << std::endl;
       
+      derotF.extractKeywords(this->heads);
+      std::cout << 9.2 << std::endl;
+      
+      std::cout << 9.3 << std::endl;
       if(doFake) injectFake();
       
    }
