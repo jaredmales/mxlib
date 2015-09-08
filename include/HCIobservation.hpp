@@ -377,6 +377,7 @@ inline void HCIobservation<_floatT>::readFiles()
                       "The fileList has 0 length, there are no files to be read.");
    }
    
+   std::cout << 1 << std::endl;
    //First make the list deletions
    if(!filesDeleted)
    {
@@ -391,7 +392,8 @@ inline void HCIobservation<_floatT>::readFiles()
       }
       filesDeleted = true;
    }   
-   
+
+   std::cout << 2 << std::endl;
    
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
@@ -399,6 +401,7 @@ inline void HCIobservation<_floatT>::readFiles()
 
    f.read(im);
 
+        
    fitsHeader head;
 
    if(MJDKeyword != "") head.append(MJDKeyword);
@@ -413,7 +416,9 @@ inline void HCIobservation<_floatT>::readFiles()
       
    imc.resize(im.rows(), im.cols(), fileList.size());
    
+   std::cout << 3 << std::endl;
    f.read(fileList, imc.data(), heads);
+   std::cout << 4 << std::endl;
 
    if(MJDKeyword != "")
    {
@@ -434,7 +439,7 @@ inline void HCIobservation<_floatT>::readFiles()
          }
       }
    }
-   
+   std::cout << 5 << std::endl;
    //Re-size the image
    if(imSize > 0)
    {
@@ -466,6 +471,8 @@ inline void HCIobservation<_floatT>::readFiles()
 
    }
    
+   std::cout << 6 << std::endl;
+   
    Nims =  imc.planes();
    Nrows = imc.rows();
    Ncols = imc.cols();
@@ -477,11 +484,15 @@ inline void HCIobservation<_floatT>::readFiles()
 
    }
    
+   std::cout << 7 << std::endl;
+   
    if(coaddCombineMethod != HCI::noCombine)
    {
       coaddImages();
    }
-      
+     
+   std::cout << 8 << std::endl;
+   
    if(applyMask)
    {
       for(int n=0;n<Nims;++n)
@@ -490,7 +501,7 @@ inline void HCIobservation<_floatT>::readFiles()
          mx::applyMask(im, maskIdx, maskVal);
       }
    }  
-   
+   std::cout << 9 << std::endl;
    
    filesRead = true;
 }
