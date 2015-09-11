@@ -10,6 +10,9 @@
 #ifndef __gramSchmidt_hpp__
 #define __gramSchmidt_hpp__
 
+namespace mx
+{
+   
 ///Perform Gram-Schmidt ortogonalization of a basis set, and normalize the result.
 /** Performs the stabilized Gram-Schmidt procedure on the input basis set, followed
   * by normalization of the result.
@@ -35,7 +38,7 @@ void gramSchmidt(eigenTin & out, const eigenTout & in)
          std::cout << i+1 << "/" << in.cols() << "\n";
       }
       
-      out.col(i) = in.col(i);
+      //out.col(i) = in.col(i);
       
       out.col(i) = in.col(i) - ((in.col(i).matrix().dot(out.col(0).matrix())) / (out.col(0).matrix().dot(out.col(0).matrix())) )* out.col(0);
 
@@ -51,6 +54,7 @@ void gramSchmidt(eigenTin & out, const eigenTout & in)
    }
 }
 
+} //namespace mx
 
 #endif //__gramSchmidt_hpp__
 

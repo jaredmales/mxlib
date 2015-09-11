@@ -38,7 +38,8 @@ OBJS = readcolumns.o \
        gnuplot_interface.o \
 
 
-INC_TO_INSTALL = app \
+INC_TO_INSTALL = airy.hpp \
+                 app \
                  appConfigurator.hpp \
                  application.hpp \
                  astroconstants.h \

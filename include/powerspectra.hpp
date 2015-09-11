@@ -257,7 +257,7 @@ void psd_filter( eigenArrn & noise,
    ft *= psd.sqrt();
    fft(ft, ft); //in-place
    
-   noise = ft.real()/(noise.rows()*noise.cols());
+   noise = ft.real();///(noise.rows()*noise.cols());
 }
 
 template<typename arithT>

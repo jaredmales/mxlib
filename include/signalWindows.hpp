@@ -12,6 +12,9 @@
 
 #include <boost/math/constants/constants.hpp>
 
+namespace mx
+{
+   
 /** \brief Create a 2-D Tukey window
   * 
   * Function to create a 2-D Tukey window.  
@@ -133,5 +136,6 @@ void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, f
    }
 }
 
+} //namespace mx
 #endif // __signalWindows_hpp__
 

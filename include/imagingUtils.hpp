@@ -217,7 +217,7 @@ void extractIntensityImage(realImageT & im,
 
 template< typename realImageT,
           typename complexImageT>
-void extractIntensityImageInPlace(realImageT & im,
+void extractIntensityImageAccum(realImageT & im,
                            int imX0,
                            int imXsz,
                            int imY0,
