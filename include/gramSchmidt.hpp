@@ -13,6 +13,10 @@
 namespace mx
 {
    
+/** \addtogroup signal_processing
+  * @{
+  */
+     
 ///Perform Gram-Schmidt ortogonalization of a basis set, and normalize the result.
 /** Performs the stabilized Gram-Schmidt procedure on the input basis set, followed
   * by normalization of the result.
@@ -54,6 +58,7 @@ void gramSchmidt(eigenTin & out, const eigenTout & in)
    }
 }
 
+///@}
 } //namespace mx
 
 #endif //__gramSchmidt_hpp__
