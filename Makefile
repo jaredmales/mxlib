@@ -26,8 +26,7 @@ CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC
 # programs to be made
 TARGETS = libmxlib
 
-OBJS = readcolumns.o \
-       kepler.o \
+OBJS = kepler.o \
        astrodyn.o \
        msgq.o \
        mxlib.o\
@@ -47,7 +46,7 @@ INC_TO_INSTALL = airy.hpp \
                  astrotypes.h \
                  kepler.hpp \
                  geo.h \
-                 readcolumns.h \
+                 readColumns.hpp \
                  stringUtils.hpp \
                  fileUtils.hpp \
                  gslInterpolation.hpp \
