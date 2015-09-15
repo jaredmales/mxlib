@@ -39,6 +39,7 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
    sin = sin + i;
    sz = sz -i;
 
+   if(sz < 1) return;
    
    if(nargs >= 0) 
    {
