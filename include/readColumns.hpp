@@ -71,14 +71,14 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
   * std::vector<float> f1;
   * std::vector<double> d1;
   * 
-  * readcol("data_file.txt", i1, f1, d1);
+  * readColumns("data_file.txt", i1, f1, d1);
   * \endcode
   * 
   * Note that the types of the vectors do not need to be specified as template arguments.  
   * 
   * The format of the file can be specified with template arguments like
   * \code
-  * pout<',', ';', '\r'>(readcol("data_file.csv", i1, f1, d1););
+  * readColumns<',', ';', '\r'>("data_file.csv", i1, f1, d1);
   * \endcode
   * which sets the delimmiter to comma, the comment character to ;, and the end-of-line to \\r.
   * 
