@@ -234,6 +234,7 @@ void ADIobservation<_floatT, _derotFunctObj>::readFiles()
    
    HCIobservation<floatT>::readFiles();
    
+   derotF.extractKeywords(this->heads);
 }
 
 template<typename _floatT, class _derotFunctObj>
