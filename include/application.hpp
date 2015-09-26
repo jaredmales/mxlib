@@ -112,7 +112,7 @@ protected:
       }
        
       #ifdef MX_APP_DEFAULT_configPathLocal
-         configPathUser = MX_APP_DEFAULT_configPathLocal;
+         configPathLocal = MX_APP_DEFAULT_configPathLocal;
       #endif
       #ifdef MX_APP_DEFAULT_configPathLocal_env
          tmp = getenv(MX_APP_DEFAULT_configPathLocal_env);

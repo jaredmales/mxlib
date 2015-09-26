@@ -59,6 +59,7 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
    int maxNmodes;
    
+   /// Specify the minimum pixel difference at the inner edge of the search region 
    floatT mindpx;
    
    
