@@ -49,7 +49,51 @@ void circularPupil( arrayT & m,
    }
 }
 
+template<class arrayT> 
+void drawLine( arrayT & im, 
+                     typename arrayT::dataT x0, 
+                     typename arrayT::dataT y0,
+                     typename arrayT::dataT x1, 
+                     typename arrayT::dataT y1,
+                           typename arrayT::dataT halfWidth
+                   )
+{
 
+   typename arrayT::dataT m = (y1-y0)/(x1-x0);
+   int y;
+   
+   if(x1 > x0)
+   {
+      for(int x = x0; x<=x1; ++x)
+      {
+         y = y0 + (x-x0)*m;
+      
+         for(int i=0; i<= halfWidth; ++i)
+         {
+            im(x,y+i) = 0;
+            im(x,y-i) = 0;
+         }
+      }
+   }
+   else
+   {
+      for(int x = x1; x<=x0; ++x)
+      {
+         y = y0 + (x-x0)*m;
+      
+         for(int i=0; i<= halfWidth; ++i)
+         {
+            im(x,y+i) = 0;
+            im(x,y-i) = 0;
+         }
+      }
+      
+   }
+   
+}
+   
+   
+   
 ///Create a complex pupil plane wavefront from a real amplitude mask.
 /** The input real amplitude mask is placed in the center of a 0-padded complex array.
   *
