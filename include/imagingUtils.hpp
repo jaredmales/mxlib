@@ -24,16 +24,16 @@ namespace mx
   */  
 template<class arrayT> 
 void circularPupil( arrayT & m, 
-                     typename arrayT::dataT eps=0, 
-                     typename arrayT::dataT rad=0 
+                     typename arrayT::Scalar eps=0, 
+                     typename arrayT::Scalar rad=0 
                    )
 {
-   size_t l0 = m.szY();
-   size_t l1 = m.szX();
+   size_t l0 = m.rows();
+   size_t l1 = m.cols();
    
-   typename arrayT::dataT r;
-   typename arrayT::dataT xc = 0.5*(l0-1);
-   typename arrayT::dataT yc = 0.5*(l1-1);
+   typename arrayT::Scalar r;
+   typename arrayT::Scalar xc = 0.5*(l0-1);
+   typename arrayT::Scalar yc = 0.5*(l1-1);
    
    if(rad == 0) rad = 0.5*std::min(l0-1, l1-1);
    
@@ -51,15 +51,15 @@ void circularPupil( arrayT & m,
 
 template<class arrayT> 
 void drawLine( arrayT & im, 
-                     typename arrayT::dataT x0, 
-                     typename arrayT::dataT y0,
-                     typename arrayT::dataT x1, 
-                     typename arrayT::dataT y1,
-                           typename arrayT::dataT halfWidth
+                     typename arrayT::Scalar x0, 
+                     typename arrayT::Scalar y0,
+                     typename arrayT::Scalar x1, 
+                     typename arrayT::Scalar y1,
+                           typename arrayT::Scalar halfWidth
                    )
 {
 
-   typename arrayT::dataT m = (y1-y0)/(x1-x0);
+   typename arrayT::Scalar m = (y1-y0)/(x1-x0);
    int y;
    
    if(x1 > x0)
@@ -92,7 +92,30 @@ void drawLine( arrayT & im,
    
 }
    
+template<class arrayT> 
+void maskCircle( arrayT & m, 
+                     typename arrayT::Scalar xcen,
+                     typename arrayT::Scalar ycen,
+                     typename arrayT::Scalar rad,
+                     typename arrayT::Scalar pixbuf = 0.5
+                   )
+{
+   size_t l0 = m.rows();
+   size_t l1 = m.cols();
    
+   typename arrayT::Scalar r;
+   
+   
+   for(size_t i=0; i < l0; i++)
+   {
+      for(size_t j=0; j < l1; j++)
+      {
+         r = std::sqrt( std::pow(i-xcen, 2) + std::pow(j-ycen, 2) );
+         
+         if(r <= rad+pixbuf) m(i,j) = 0;
+      }
+   }
+}   
    
 ///Create a complex pupil plane wavefront from a real amplitude mask.
 /** The input real amplitude mask is placed in the center of a 0-padded complex array.
@@ -113,16 +136,16 @@ void makeComplexPupil( arrayOutT & complexPupil,
    complexPupil.set(0);
      
    //Lower-left corner of insertion region
-   int bl = 0.5*(complexPupil.szY()-1) - 0.5*(realPupil.szY()-1.);
+   int bl = 0.5*(complexPupil.rows()-1) - 0.5*(realPupil.rows()-1.);
    
-   for(int i=0; i< realPupil.szX(); ++i)
+   for(int i=0; i< realPupil.cols(); ++i)
    {
-      for(int j=0; j < realPupil.szY(); ++j)
+      for(int j=0; j < realPupil.rows(); ++j)
       {
-         complexPupil(bl+i, bl+j) = realPupil(i,j)*( typename arrayOutT::dataT(1,0)); 
+         complexPupil(bl+i, bl+j) = realPupil(i,j)*( typename arrayOutT::Scalar(1,0)); 
       }
    }
-   //complexPupil.block(bl, bl, realPupil.szY(), realPupil.szY()) = realPupil*std::complex<realT>(1,0);
+   //complexPupil.block(bl, bl, realPupil.rows(), realPupil.rows()) = realPupil*std::complex<realT>(1,0);
 
 }
 
@@ -148,13 +171,13 @@ void makeComplexPupil( arrayOutT & complexWavefront,
    complexWavefront.set(0);
      
    //Lower-left corner of insertion region
-   int bl = 0.5*(complexWavefront.szY()-1) - 0.5*(realAmplitude.szY()-1.);
+   int bl = 0.5*(complexWavefront.rows()-1) - 0.5*(realAmplitude.rows()-1.);
    
-   for(int i=0; i< realAmplitude.szX(); ++i)
+   for(int i=0; i< realAmplitude.cols(); ++i)
    {
-      for(int j=0; j < realAmplitude.szY(); ++j)
+      for(int j=0; j < realAmplitude.rows(); ++j)
       {
-         complexWavefront(bl+i, bl+j) = realAmplitude(i,j)*exp(  (typename arrayOutT::dataT(0,1)) * realPhase(i,j)); 
+         complexWavefront(bl+i, bl+j) = realAmplitude(i,j)*exp(  (typename arrayOutT::Scalar(0,1)) * realPhase(i,j)); 
       }
    }
 }
@@ -170,16 +193,16 @@ void makeComplexPupil( arrayOutT & complexWavefront,
   */
 template<typename wavefrontT>
 void tiltWavefront( wavefrontT & complexWavefront, 
-                    typename wavefrontT::dataT::value_type xTilt, 
-                    typename wavefrontT::dataT::value_type yTilt)
+                    typename wavefrontT::Scalar::value_type xTilt, 
+                    typename wavefrontT::Scalar::value_type yTilt)
 {
-   typedef typename wavefrontT::dataT complexT;
-   typedef typename wavefrontT::dataT::value_type realT;
+   typedef typename wavefrontT::Scalar complexT;
+   typedef typename wavefrontT::Scalar::value_type realT;
    
    realT pi = boost::math::constants::pi<realT>();
    
-   int wfsSizeX = complexWavefront.szX();
-   int wfsSizeY = complexWavefront.szY();
+   int wfsSizeX = complexWavefront.cols();
+   int wfsSizeY = complexWavefront.rows();
    
    realT xCen = 0.5*wfsSizeX;
    realT yCen = 0.5*wfsSizeY;
@@ -207,12 +230,12 @@ void extractBlock(imageT & im,
                   int wfY0)
 {
    int im_idx;
-   int im_rows = im.szX();
+   int im_rows = im.cols();
    
    int wf_idx;
-   int wf_rows = wf.szX();
+   int wf_rows = wf.cols();
    
-   typedef typename imageT::dataT dataT;
+   typedef typename imageT::Scalar dataT;
    
    dataT * im_data;
    dataT * wf_data;
@@ -240,13 +263,13 @@ void extractIntensityImage(realImageT & im,
                            int wfY0)
 {
    int im_idx;
-   int im_rows = im.szX();
+   int im_rows = im.cols();
    
    int wf_idx;
-   int wf_rows = wf.szX();
+   int wf_rows = wf.cols();
    
-   typename realImageT::dataT * im_data;
-   typename complexImageT::dataT * wf_data;
+   typename realImageT::Scalar * im_data;
+   typename complexImageT::Scalar * wf_data;
    
    for(int j =0; j< imXsz; ++j)
    {
@@ -271,13 +294,13 @@ void extractIntensityImageAccum(realImageT & im,
                            int wfY0)
 {
    int im_idx;
-   int im_rows = im.szX();
+   int im_rows = im.cols();
    
    int wf_idx;
-   int wf_rows = wf.szX();
+   int wf_rows = wf.cols();
    
-   typename realImageT::dataT * im_data;
-   typename complexImageT::dataT * wf_data;
+   typename realImageT::Scalar * im_data;
+   typename complexImageT::Scalar * wf_data;
    
    for(int j =0; j< imXsz; ++j)
    {

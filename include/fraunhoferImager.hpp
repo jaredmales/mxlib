@@ -38,10 +38,10 @@ public:
    typedef _wavefrontT wavefrontT;
    
    ///The complex data type
-   typedef typename wavefrontT::dataT complexT;
+   typedef typename wavefrontT::Scalar complexT;
    
    ///The real data type
-   typedef typename wavefrontT::dataT::value_type realT;
+   typedef typename wavefrontT::Scalar::value_type realT;
    
 protected:
 
@@ -95,7 +95,7 @@ public:
    void propagatePupilToFocal(wavefrontT & complexFocal, wavefrontT & complexPupil)
    {
       //First setup the tilt screens (does nothing if there's no change in size)
-      setWavefrontSizePixels(complexPupil.szY());
+      setWavefrontSizePixels(complexPupil.rows());
       
       //DFT normalization, sqrt(2) for complex number
       //realT norm = 1./(wavefrontSizePixels/sqrt(2.));
@@ -143,7 +143,7 @@ public:
    void setWavefrontSizePixels(int wfsPix)
    {
       //If no change in size, do nothing
-      if(wfsPix == centerFocal.szY()) return;
+      if(wfsPix == centerFocal.rows()) return;
             
       wavefrontSizePixels = wfsPix;
       
