@@ -51,6 +51,7 @@ INC_TO_INSTALL = airy.hpp \
                  fileUtils.hpp \
                  gslInterpolation.hpp \
                  pout.hpp \
+                 psds.hpp \
                  IPC.h \
                  msgq.h \
                  msgQ \

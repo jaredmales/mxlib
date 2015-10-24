@@ -13,6 +13,60 @@
 namespace mx
 {
 
+struct gslInterpolator
+{
+   gsl_interp * interp;
+   gsl_interp_accel * acc;
+   
+   double *_xin;
+   double *_yin;
+   
+   void setup(const gsl_interp_type * interpT, double *xin, double *yin, size_t Nin)
+   {
+      interp =  gsl_interp_alloc(interpT, Nin);
+      acc = gsl_interp_accel_alloc ();
+
+      gsl_interp_init(interp, xin, yin, Nin);
+   
+      gsl_interp_accel_reset(acc);
+      
+      _xin = xin;
+      _yin = yin;
+   }
+   
+   void setup(const gsl_interp_type * interpT, std::vector<double> & xin, std::vector<double> & yin)
+   {
+      setup(interpT, xin.data(), yin.data(), xin.size());
+   }
+   
+   gslInterpolator()
+   {
+   }
+   
+   gslInterpolator(const gsl_interp_type * interpT, double *xin, double *yin, size_t Nin)
+   {
+      setup(interpT, xin,yin,Nin);
+   }
+   
+   gslInterpolator(const gsl_interp_type * interpT, std::vector<double> & xin, std::vector<double> & yin)
+   {
+      setup(interpT, xin.data(), yin.data(), xin.size());
+   }
+   
+   ~gslInterpolator()
+   {
+      gsl_interp_free(interp);
+      gsl_interp_accel_free (acc);
+   }
+   
+   double interpolate(double & x)
+   {
+      double y;
+      gsl_interp_eval_e (interp, _xin, _yin, x, acc, &y);
+      return y;
+   }
+   
+};
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
   * \param interpT of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.

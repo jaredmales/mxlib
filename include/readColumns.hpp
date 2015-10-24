@@ -46,7 +46,8 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
       std::stringstream sinstr(sin);
       
       std::getline(sinstr, str, delim);
-      
+
+      //std::cout << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
       array.push_back(convertFromString<typename arrT::value_type>(str));
    }
       
@@ -104,14 +105,22 @@ void readColumns(const std::string & fname, arrTs &... arrays)
   
    while(fin.good())
    {
-      fin.getline(line, lineSize, eol);
+      //Save one space for adding eol
+      fin.getline(line, lineSize-1, eol);
             
       int i=0;
       int l = strlen(line);
+
+      if(l <= 0) break;
       
       //Find start of comment.
-      while(line[i] != comment && i < l ) ++i;
-      line[i] = '\0';
+      while(line[i] != comment && i < l ) ++i;      
+      if(i < l-1) line[i] = '\0';
+
+      //Make sure line ends with eol
+      line[l] = eol;
+      ++l;
+      line[l] = '\0';
       
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
