@@ -207,8 +207,8 @@ void tiltWavefront( wavefrontT & complexWavefront,
    realT xCen = 0.5*wfsSizeX;
    realT yCen = 0.5*wfsSizeY;
 
-   realT argX = 2*pi/(wfsSizeX-1);
-   realT argY = 2*pi/(wfsSizeY-1);
+   realT argX = 2.0*pi/(wfsSizeX-1.0);
+   realT argY = 2.0*pi/(wfsSizeY-1.0);
   
    for(int ii=0; ii < wfsSizeX; ++ii)
    {
