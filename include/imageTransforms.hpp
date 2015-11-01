@@ -241,7 +241,7 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
    typedef typename transformT::arithT arithT;
    
    arithT x0, y0, x,y;
-   arithT xcen, ycen;
+   //arithT xcen, ycen;
    
    int Nrows, Ncols;
    
@@ -257,8 +257,8 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
    transim.resize(Nrows, Ncols);
    
    //The geometric image center
-   xcen = 0.5*(Nrows-1.);       
-   ycen = 0.5*(Ncols-1.);
+   //xcen = 0.5*(Nrows-1.);       
+   //ycen = 0.5*(Ncols-1.);
    
    int xulim = Nrows-width+lbuff;// - 1;
    int yulim = Ncols-width+lbuff;// - 1;
@@ -293,6 +293,93 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
          {
 
             y0 = j-dy;
+            j0 = y0;
+            
+            if(j0 <= lbuff || j0 >= yulim) 
+            {
+               transim(i,j) = 0;
+               continue;
+            }
+            
+            //Get the residual
+            x = x0-i0;
+            y = y0-j0;
+                 
+            trans(kern, x, y);
+            transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
+         }//for j
+      }//for i
+   }//#pragam omp
+         
+} //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
+
+
+/// Magnify an image represented as an eigen array.
+/** Uses the given transformation type to magnify the input image to the size of the output image.
+  *
+  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
+  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
+  * \tparam transformT specifies the transformation to use [will be resolved by compiler]
+  * 
+  * \param [out] transim contains the magnified image.  Must be pre-allocated.
+  * \param [in] im is the image to be magnified.
+  * \param [in] trans is the transformation to use
+  * 
+  */
+template<typename arrOutT, typename arrInT, typename transformT>
+void imageMagnify(arrOutT & transim, const arrInT  &im, transformT trans)
+{
+   typedef typename transformT::arithT arithT;
+   
+   arithT x0, y0, x,y;
+   //arithT xcen, ycen;
+   
+   int Nrows, Ncols;
+   
+   int i0, j0;
+    
+   const int lbuff = transformT::lbuff;
+   const int width = transformT::width;
+   
+   Nrows = transim.rows();
+   Ncols = transim.cols();
+
+   int xulim = im.rows()-width+lbuff;// - 1;
+   int yulim = im.cols()-width+lbuff;// - 1;
+
+   arithT x_scale = (arithT in.rows())/ transim.rows()
+   arithT y_scale = (arithT in.cols())/ transim.cols()
+   
+   #pragma omp parallel private(x0,y0,i0,j0,x,y) num_threads(4)
+   {
+      arrOutT kern; 
+      kern.resize(width,width);
+      
+      #pragma omp for 
+      for(int i=0;i<Nrows; ++i)
+      {
+         // (i,j) is position in new image
+         // (x0,y0) is true position in old image
+         // (i0,j0) is integer position in old image
+         // (x, y) is fractional residual of (x0-i0, y0-j0)
+
+         x0 = (i+0.5)*x_scale;
+         i0 = x0; //just converting to int
+            
+         if(i0 <= lbuff || i0 >= xulim) 
+         {
+            for(int j=0;j<Ncols; ++j)
+            {
+               transim(i,j) = 0;
+            }
+            continue;
+         }
+            
+         for(int j=0;j<Ncols; ++j)
+         {
+
+            y0 = (j+0.5)*y_scale;
             j0 = y0;
             
             if(j0 <= lbuff || j0 >= yulim) 

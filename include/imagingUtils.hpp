@@ -293,10 +293,8 @@ void extractIntensityImageAccum(realImageT & im,
                            int wfX0,
                            int wfY0)
 {
-   int im_idx;
    int im_rows = im.cols();
    
-   int wf_idx;
    int wf_rows = wf.cols();
    
    typename realImageT::Scalar * im_data;
