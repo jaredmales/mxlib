@@ -32,7 +32,7 @@ Folow these steps to build an ATLAS based BLAS and Lapack library.
        ../configure -b 64 --with-netlib-lapack-tarfile=/home/jaredmales/Source/LAPACK/lapack-3.5.0.tgz -D c -DPentiumCPS=2800 -Fa alg -fPIC --shared
        \endcode
        
-       \note modify the path the lapack tarball appropriately
+       \note modify the path to the lapack tarball appropriately
 
        \note -fPIC may not be necessary along with --shared
 

@@ -1,4 +1,7 @@
-
+/** \defgroup installation Installation
+  * \brief Installation of mxlib
+  */  
+  
 /** \defgroup gen_math General Mathematics
   * \brief General mathematical utilities.
   */
@@ -34,11 +37,6 @@
 /** \defgroup psds Power Spectra 
   * \brief Tools for generating and manipulating power spectra
   * \ingroup signal_processing
-  */
-  
-/** \defgroup vmop_tools Vector Matrix Operator Tools
-  * \brief Tools which use the vmop interface.
-  * \ingroup vmop
   */
   
 /** \defgroup image_processing Image Processing

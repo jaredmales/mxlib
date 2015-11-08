@@ -342,17 +342,23 @@ void fitsHeader::erase(headerIterator it)
 inline 
 void fitsHeader::eraseStandardTop()
 {
-   
-   headerIterator it = begin();
-   
-   while(it->keyword != "BSCALE" && it != end())
+  
+   headerIterator it = begin(), nit;
+  
+   int n =0;
+   while(it->keyword != "BSCALE" && it != end() && n < 25)
    {
+      nit = it;
+      ++nit;
+      if(it->keyword == "SIMPLE" || it->keyword == "SIMPLE" || it->keyword == "BITPIX" || it->keyword == "NAXIS" 
+           || it->keyword == "NAXIS1" || it->keyword == "NAXIS2" || it->keyword == "NAXIS3" || it->keyword == "EXTEND"
+              || it->keyword == "BZERO" || it->keyword == "BSCALE")
       erase(it);
       
-      it = begin();
+      it = nit;
+      ++n;
    }
    
-   erase("BSCALE");   
 }
 
             

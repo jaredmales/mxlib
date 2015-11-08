@@ -33,6 +33,14 @@ static const char * falseStr = "false";
 static const char * trueStr = "true";
 static const char * blankStr = "";
 
+static option::ArgStatus Arg_Required(const option::Option& option, bool msg)
+{
+   if (option.arg != 0)
+   return option::ARG_OK;
+
+   return option::ARG_ILLEGAL;
+}
+   
 
 /// Command line options parser.
 struct clOptions
@@ -85,7 +93,13 @@ struct clOptions
       
       if(it == map.end())
       {
-         descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+         if(argT == argType::Optional)
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+         else if(argT == argType::Required)
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+         else
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+         
          map.insert({optName, nOpts});
          typeMap.insert({optName, argT});
          
@@ -93,7 +107,13 @@ struct clOptions
          return;
       }
       
-      descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+      if(argT == argType::Optional)
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+         else if(argT == argType::Required)
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+         else
+            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+//      descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
    }
 
    void parse(int argc, char **argv, std::vector<std::string> * nonOptions = 0)
@@ -108,9 +128,7 @@ struct clOptions
       buffer  = new option::Option[stats.buffer_max];
       
       option::Parser parse(descriptions.data(), argc, argv, options, buffer);
-      
-      //std::cout << options[map["tags"]].count() << std::endl;
-      
+            
       if(nonOptions)
       {
          nonOptions->resize(parse.nonOptionsCount());
@@ -204,7 +222,6 @@ struct clOptions
          else args[0] = trueStr;         
          return;
       }
-      
       
       if(options[it->second].arg == 0) 
       {

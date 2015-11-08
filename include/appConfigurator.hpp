@@ -113,7 +113,6 @@ struct appConfigurator
       
       if(clOpts.nOpts == 0) 
       {
-         std::cout << "none" << "\n";
          return;
       }
       
@@ -125,8 +124,8 @@ struct appConfigurator
          {
             std::vector<std::string> args;
             
-            clOpts.getAll(args, it->second.name);
             
+            clOpts.getAll(args, it->second.name);
             it->second.values.insert( it->second.values.end(), args.begin(), args.end());
             it->second.set = true;
          }
@@ -163,6 +162,7 @@ struct appConfigurator
    template<typename typeT>
    typeT get(const std::string & name)
    {
+      
       if(!isSet(name)) return false;
       
       return convertFromString<typeT>(targets[name].values.back());
