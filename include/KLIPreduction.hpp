@@ -235,7 +235,10 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
 
    t1 = get_curr_time();
    
-   this->imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + padSize);
+   if(this->imSize == 0)
+   {
+      this->imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + padSize);
+   }
    
    if(!this->filesRead) 
    {         

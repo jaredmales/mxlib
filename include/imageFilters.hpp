@@ -1,8 +1,17 @@
+/** \file imageFilters.hpp
+  * \brief Image filters (smoothing, radial profiles, etc.)
+  * \ingroup image_processing
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
 
 #ifndef __imageFilters_hpp__
 #define __imageFilters_hpp__
 
 #include <cstdlib>
+
+#include "gslInterpolation.hpp"
+
 namespace mx
 {
 
@@ -37,7 +46,8 @@ void gaussKernel(arrT &kernel, fwhmT fwhm)
 
 
 
-template<typename arrT> void smoothImage(arrT &smim, arrT & im, arrT & kernel)
+template<typename arrT1, typename arrT2, typename arrT3> 
+void smoothImage(arrT1 &smim, arrT2 & im, arrT3 & kernel)
 {
    
    smim.resize(im.rows(), im.cols());
@@ -60,7 +70,7 @@ template<typename arrT> void smoothImage(arrT &smim, arrT & im, arrT & kernel)
    int im_i, im_j, im_p,im_q;
    int kern_i, kern_j, kern_p,kern_q;
    
-   typename arrT::Scalar norm;
+   typename arrT1::Scalar norm;
    
    for(size_t i=0; i< im.rows(); i++)
    {
@@ -102,6 +112,153 @@ template<typename arrT> void smoothImage(arrT &smim, arrT & im, arrT & kernel)
    }
    
 }
+  
+  
+  
+  
+//------------ Radial Profile --------------------//
+
+template<typename floatT>
+struct radval
+{
+   floatT r;
+   floatT v;
+};
+
+template<typename floatT>
+struct radvalRadComp
+{
+   bool operator()(radval<floatT> rv1, radval<floatT> rv2)
+   {
+      return (rv1.r < rv2.r);
+   }
+};
+
+template<typename floatT>
+struct radvalValComp
+{
+   bool operator()(radval<floatT> rv1, radval<floatT> rv2)
+   {
+      return (rv1.v < rv2.v);
+   }
+};
+
+
+
+///Form a radial profile image, and optionally subtract it from the input
+/** The radial profile is calculated using linear interpolation on a 1 pixel grid
+  * \ingroup image_processing
+  * 
+  * \param [out] radprof is the radial profile image.  This will be resized.
+  * \param [in] im is the image to form the profile of. 
+  * \param [in] rad is an array of radius values
+  * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
+  * 
+  * \tparam radprofT the eigen array type of the output
+  * \tparam eigenimT the eigen array type of the input
+  */ 
+template<typename radprofT, typename eigenimT>
+void radprofim( radprofT & radprof, 
+                eigenimT & im,
+                radprofT & rad,
+                bool subtract = false)
+{
+   typedef typename eigenimT::Scalar floatT;
+   
+   int dim1 = im.cols();
+   int dim2 = im.rows();
+   
+   floatT mr = rad.maxCoeff();
+   
+   /* A vector of radvals will be sorted, then binned*/
+   std::vector<radval<floatT> > rv(dim1*dim2);
+   
+   for(int i=0;i<rv.size();++i)
+   {
+      rv[i].r = rad(i);
+      rv[i].v = im(i);
+   }
+   
+   sort(rv.begin(), rv.end(), radvalRadComp<floatT>());
+   
+   /*Now bin*/
+   floatT dr = 1;
+   floatT r0 = 0;
+   floatT r1 = dr;
+   int i1=0, i2, n;
+   
+   floatT med;
+  
+   std::vector<double> med_r, med_v;
+   while(r1 < mr)
+   {
+      while(rv[i1].r < r0) ++i1;
+      i2 = i1;
+      while(rv[i2].r <= r1) ++i2;
+      
+      n = 0.5*(i2-i1);
+
+      std::nth_element(rv.begin()+i1, rv.begin()+i1+n, rv.begin()+i2, radvalValComp<floatT>());
+      
+      med = (rv.begin()+i1+n)->v;
+      
+      med_r.push_back(.5*(r0+r1));
+      med_v.push_back(med);
+      i1 = i2;
+      r0 += dr;
+      r1 += dr;
+   }
+   
+   /* And finally, interpolate onto the radius image */
+   radprof.resize(dim1, dim2);
+   gslInterpolator interp(gsl_interp_linear, med_r, med_v);
+   
+   for(int i=0;i<dim1;++i)
+   {
+      for(int j=0;j<dim2;++j)
+      {
+         radprof(i,j) = interp.interpolate( ((double) rad(i,j)) );
+         if(subtract) im(i,j) -= radprof(i,j);
+      }
+   }
+   
+}
+
+
+
+
+///Form a radial profile image, and optionally subtract it from the input
+/** The radial profile is calculated using linear interpolation on a 1 pixel grid.
+  * This version calculates a centered radius image.
+  * 
+  * \ingroup image_processing
+  * 
+  * \param [out] radprof is the radial profile image.  This will be resized.
+  * \param [in] im is the image to form the profile of. 
+  * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
+  * 
+  * \tparam radprofT the eigen array type of the output
+  * \tparam eigenimT the eigen array type of the input
+  */ 
+template<typename radprofT, typename eigenimT>
+void radprofim( radprofT & radprof, 
+                eigenimT & im, 
+                bool subtract = false)
+{
+   typedef typename eigenimT::Scalar floatT;
+   
+   int dim1 = im.cols();
+   int dim2 = im.rows();
+   
+   radprofT rad;
+   rad.resize(dim1, dim2);
+   
+   radiusImage(rad);
+   
+   radprofim(radprof, im, rad, subtract);
+   
+}
+  
   
 } //namespace mx
 

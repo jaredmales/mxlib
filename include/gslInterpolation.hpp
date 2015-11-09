@@ -59,7 +59,7 @@ struct gslInterpolator
       gsl_interp_accel_free (acc);
    }
    
-   double interpolate(double & x)
+   double interpolate(const double & x)
    {
       double y;
       gsl_interp_eval_e (interp, _xin, _yin, x, acc, &y);
