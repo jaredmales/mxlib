@@ -8,11 +8,13 @@ These are instructions for installing the "mxlib" c/c++ library.  This is my per
 \section install_depends Basic Dependencies
 
 - You need a c++11 compatible compiler (or c++14, or --std=c++0x in g++ works)
+- You need the GNU Scientific Library (GSL) (this is probably obtainable from the linux distro package manager)
 - You need the boost c++ library (this is probably obtainable from the linux distro package manager)
 - You need cfitsio (http://heasarc.gsfc.nasa.gov/fitsio/) \note for ACIC: you already got this for fitssub
 - You need a BLAS and LAPACK.  See ATLAS notes here \ref atlas.  \note for ACIC: I'm pretty sure that on UA HPC these are provided, probably the Intel MKL (http://rc.arizona.edu/hpc-htc/using-systems/scientific-libraries).  If not, I recommend ATLAS, and can help with installation.
 - You need fftw. \note for ACIC: the Intel MKL has an fftw compatible API, so this should work without installing the actual fftw (https://software.intel.com/en-us/node/522277), but I've never tested this.  This would require editing makefiles at minimum.
 - You need the IAU sofa libary.  See \ref astro_sofa
+- You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php)
 
 \section install_build Build and Install
 Follow these steps:
