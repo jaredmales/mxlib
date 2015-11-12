@@ -15,103 +15,287 @@
 namespace mx
 {
 
-template<size_t kernW=4, typename arithT=double, typename arrT, typename fwhmT> 
-void gaussKernel(arrT &kernel, fwhmT fwhm)
+///Symetric Gaussian smoothing kernel
+/** \ingroup image_processing
+  */
+template<typename _arrayT, size_t kernW=4>
+struct gaussKernel
 {
-   size_t kernSize = fwhm*kernW; 
+   typedef _arrayT arrayT;
+   typedef typename _arrayT::Scalar arithT;
    
-   if(kernSize % 2 == 0) kernSize++;
+   arrayT kernel;
    
-   arithT kernCen = 0.5*(kernSize-1.);
-
-   kernel.resize(kernSize, kernSize);
-
-   fwhmT r2;
-
-   fwhmT sig2 = fwhm/2.354820045030949327;
-   sig2 *= sig2;
-
-   for(size_t i =0; i < kernSize; i++)
+   arithT _fwhm;
+   
+   gaussKernel(arithT fwhm)
    {
-      for(size_t j=0; j < kernSize; j++)
-      {
-         r2 = (i-kernCen)*(i-kernCen) + (j-kernCen)*(j-kernCen);
-
-         kernel(i,j) = exp(-r2/sig2);
-      }
-   }
-   
-   kernel /= kernel.sum();
-}
-
-
-
-template<typename arrT1, typename arrT2, typename arrT3> 
-void smoothImage(arrT1 &smim, arrT2 & im, arrT3 & kernel)
-{
-   
-   smim.resize(im.rows(), im.cols());
-   smim.setZero();
-   
-   size_t kernW = kernel.rows();
-   size_t fullW = 0.5*kernW;
-   
-   //First do the main part of the image as fast as possible
-   #pragma omp parallel for
-   for(int i=fullW; i< im.rows()-fullW; i++)
-   {
-      for(int j=fullW; j<im.cols()-fullW; j++)
-      {
-         smim(i,j) = (im.block(i-fullW, j-fullW, kernW, kernW)*kernel).sum();
-      }
-   }
-
-   //Now handle the edges
-   int im_i, im_j, im_p,im_q;
-   int kern_i, kern_j, kern_p,kern_q;
-   
-   typename arrT1::Scalar norm;
-   
-   for(size_t i=0; i< im.rows(); i++)
-   {
-      for(size_t j=0; j<im.cols(); j++)
-      {
-         if((i >= fullW && i< im.rows()-fullW) && (j>= fullW && j<im.rows()-fullW)) continue;
-         
-         im_i = i - fullW;
-         if(im_i < 0) im_i = 0;
-         
-         im_j = j - fullW;
-         if(im_j < 0) im_j = 0;
-
-         im_p = im.rows() - im_i;
-         if(im_p > kernW) im_p = kernW;
-          
-         im_q = im.cols() - im_j;
-         if(im_q > kernW) im_q = kernW;
-         
-         kern_i = fullW - i;
-         if(kern_i < 0) kern_i = 0;
-         
-         kern_j = fullW - j;
-         if(kern_j < 0) kern_j = 0;
+      _fwhm = fwhm;
       
-         kern_p = kernW - kern_i;
-         if(kern_p > kernW) kern_p = kernW;
-         
-         kern_q = kernW - kern_j;
-         if(kern_q > kernW) kern_q = kernW;
-       
-         //Pick only the smallest widths
-         if(im_p < kern_p) kern_p = im_p;
-         if(im_q < kern_q) kern_q = im_q;
+      int w = kernW*_fwhm;
+      
+      if(w % 2 == 0) w++;
+      
+      kernel.resize(w, w);
+
+      arithT kcen = 0.5*(w-1.0);
+      
+      arithT sig2 = _fwhm/2.354820045030949327;
+      sig2 *= sig2;
    
-         norm = kernel.block(kern_i, kern_j, kern_p, kern_q ).sum();
-         smim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+      arithT r2;
+      for(int i=0; i < w; ++i)
+      {
+         for(int j=0; j < w; ++j)
+         {
+            r2 = pow(i-kcen,2) + pow(j-kcen,2) ;
+            kernel(i,j) = exp(-r2/sig2);
+         }
       }
+      
+      kernel /= kernel.sum();
+
+      
    }
    
-}
+   void setKernel(arithT x, arithT y)
+   {
+   }
+   
+};
+
+///Azimuthally variable boxcare smoothing kernel.
+/** \ingroup image_processing
+  */
+template<typename _arrayT, size_t kernW=4>
+struct azBoxKernel
+{
+   typedef _arrayT arrayT;
+   typedef typename _arrayT::Scalar arithT;
+
+   arrayT kernel;
+   
+   arithT _radWidth;
+   arithT _azWidth;
+   
+   azBoxKernel(arithT radWidth, arithT azWidth)
+   {
+      _radWidth = radWidth;
+      _azWidth = azWidth;
+   }
+   
+   void setKernel(arithT x, arithT y)
+   {
+      arithT rad = sqrt((arithT) (x*x + y*y));
+      
+      arithT sinq = y/rad;
+      arithT cosq = x/rad;
+      
+      
+      int w = 2*( (int) std::max( fabs(_azWidth*sinq), fabs(_radWidth*cosq) ) + 1 );
+      int h = 2*( (int) std::max( fabs(_azWidth*cosq), fabs(_radWidth*sinq) ) + 1);
+      
+      
+      kernel.resize(w, h);
+      
+      arithT xcen = 0.5*(w-1.0);
+      arithT ycen = 0.5*(h-1.0);
+      
+      arithT sinq2, cosq2, sindq;
+      for(int i=0; i < w; ++i)
+      {
+         for(int j=0; j < h; ++j)
+         {
+            rad = sqrt( pow(i-xcen,2) + pow(j-ycen,2) );
+            sinq2 = (j-ycen)/rad;
+            cosq2 = (i-xcen)/rad;
+            sindq = sinq2*cosq - cosq2*sinq;
+            if( rad <= _radWidth && fabs(rad*sindq) <= _azWidth) kernel(i,j) = 1;
+            else kernel(i,j) = 0;
+         }
+      }
+      if(kernel.sum() == 0)
+      {
+         std::cerr << "Kernel sum 0: " << x << " " << y << "\n";
+         exit(-1);
+      }
+      kernel /= kernel.sum();
+   }
+   
+};
+            
+///Filter an image with a kernel.
+/** Applies the kernel to each pixel in the image, storing the filtered result in the output image.
+  * The kernel-type (kernelT) must have the following interface:
+  * \code
+  * template<typename _arrayT, size_t kernW=4>
+  * struct filterKernel
+  * {
+  *     typedef _arrayT arrayT;
+  *     typedef typename _arrayT::Scalar arithT;
+  *
+  *      arrayT kernel;
+  *   
+  *      filterKernel()
+  *      {
+  *         //constructor
+  *      }
+  *   
+  *      //The setKernel function is called for each pixel.
+  *      void setKernel(arithT x, arithT y)
+  *      {
+  *         //This may or may not do anything (e.g., kernel could be created in constructor)
+  *         //but on output kernel array should be normalized so that sum() = 1.0
+  *      }
+  * };
+  * \endcode
+  *
+  * Note that kernelT stores the kernel array, which has implications for parallelization. This
+  * function is not currently parallelized.
+  * 
+  * \param [out] fim will be allocated with resize, and on output contains the filtered image
+  * \param [in] im is the image to be filtered
+  * \param [in] kernel a fully configured obect of type kernelT
+  * \param [in] maxr is the maximum radius from the image center to apply the kernel.  pixels
+  *                  outside this radius are set to 0.
+  * 
+  * \tparam imageOutT the type of the output image (must have an Eigen like interface)
+  * \tparam imageInT the type of the input image (must have an Eigen like interface)
+  * \tparam kernelT is the kernel type (see above)
+  *
+  * \ingroup image_processing 
+  */ 
+template<typename imageOutT, typename imageInT, typename kernelT>
+void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr)
+{
+   fim.resize(im.rows(), im.cols());
+  
+   float xcen = 0.5*(im.rows()-1);
+   float ycen = 0.5*(im.cols()-1);
+   
+   
+   int mini = 0.5*im.rows() - maxr;
+   int maxi = 0.5*im.rows() + maxr;
+   int minj = 0.5*im.cols() - maxr;
+   int maxj = 0.5*im.cols() + maxr;
+   
+   for(int i=0; i<im.rows(); ++i)
+   {
+      for(int j=0; j<im.cols(); ++j)
+      {
+         if(i < mini || i > maxi || j < minj || j > maxj)
+         {
+            fim(i,j) = 0;
+            continue;
+         }
+         kernel.setKernel(i-xcen, j-ycen);
+         fim(i,j) = (im.block(i-0.5*kernel.kernel.rows(), j-0.5*kernel.kernel.cols(), kernel.kernel.rows(), kernel.kernel.cols())*kernel.kernel).sum();
+      }
+   }
+}   
+   
+   
+   
+   
+   
+   
+// template<size_t kernW=4, typename arithT=double, typename arrT, typename fwhmT> 
+// void gaussKernel(arrT &kernel, fwhmT fwhm)
+// {
+//    size_t kernSize = fwhm*kernW; 
+//    
+//    if(kernSize % 2 == 0) kernSize++;
+//    
+//    arithT kernCen = 0.5*(kernSize-1.);
+// 
+//    kernel.resize(kernSize, kernSize);
+// 
+//    fwhmT r2;
+// 
+//    fwhmT sig2 = fwhm/2.354820045030949327;
+//    sig2 *= sig2;
+// 
+//    for(size_t i =0; i < kernSize; i++)
+//    {
+//       for(size_t j=0; j < kernSize; j++)
+//       {
+//          r2 = (i-kernCen)*(i-kernCen) + (j-kernCen)*(j-kernCen);
+// 
+//          kernel(i,j) = exp(-r2/sig2);
+//       }
+//    }
+//    
+//    kernel /= kernel.sum();
+// }
+// 
+// 
+// 
+// template<typename arrT1, typename arrT2, typename arrT3> 
+// void smoothImage(arrT1 &smim, arrT2 & im, arrT3 & kernel)
+// {
+//    
+//    smim.resize(im.rows(), im.cols());
+//    smim.setZero();
+//    
+//    size_t kernW = kernel.rows();
+//    size_t fullW = 0.5*kernW;
+//    
+//    //First do the main part of the image as fast as possible
+//    #pragma omp parallel for
+//    for(int i=fullW; i< im.rows()-fullW; i++)
+//    {
+//       for(int j=fullW; j<im.cols()-fullW; j++)
+//       {
+//          smim(i,j) = (im.block(i-fullW, j-fullW, kernW, kernW)*kernel).sum();
+//       }
+//    }
+// 
+//    //Now handle the edges
+//    int im_i, im_j, im_p,im_q;
+//    int kern_i, kern_j, kern_p,kern_q;
+//    
+//    typename arrT1::Scalar norm;
+//    
+//    for(size_t i=0; i< im.rows(); i++)
+//    {
+//       for(size_t j=0; j<im.cols(); j++)
+//       {
+//          if((i >= fullW && i< im.rows()-fullW) && (j>= fullW && j<im.rows()-fullW)) continue;
+//          
+//          im_i = i - fullW;
+//          if(im_i < 0) im_i = 0;
+//          
+//          im_j = j - fullW;
+//          if(im_j < 0) im_j = 0;
+// 
+//          im_p = im.rows() - im_i;
+//          if(im_p > kernW) im_p = kernW;
+//           
+//          im_q = im.cols() - im_j;
+//          if(im_q > kernW) im_q = kernW;
+//          
+//          kern_i = fullW - i;
+//          if(kern_i < 0) kern_i = 0;
+//          
+//          kern_j = fullW - j;
+//          if(kern_j < 0) kern_j = 0;
+//       
+//          kern_p = kernW - kern_i;
+//          if(kern_p > kernW) kern_p = kernW;
+//          
+//          kern_q = kernW - kern_j;
+//          if(kern_q > kernW) kern_q = kernW;
+//        
+//          //Pick only the smallest widths
+//          if(im_p < kern_p) kern_p = im_p;
+//          if(im_q < kern_q) kern_q = im_q;
+//    
+//          norm = kernel.block(kern_i, kern_j, kern_p, kern_q ).sum();
+//          smim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+//       }
+//    }
+//    
+// }
   
   
   

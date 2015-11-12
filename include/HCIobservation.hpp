@@ -497,18 +497,18 @@ inline void HCIobservation<_floatT>::readFiles()
       }
    }  
    
-   eigenImageT kernel;
-   gaussKernel(kernel, 15);
-   
-   for(int n=0;n<Nims;++n)
-   {
-      eigenImageT imbg;
-      typename eigenCube<floatT>::imageRef im = imc.image(n);
-      
-      smoothImage(imbg, im, kernel);
-      im = im - imbg;
-      mx::applyMask(im, maskIdx, maskVal);
-   }
+//    eigenImageT kernel;
+//    gaussKernel(kernel, 15);
+//    
+//    for(int n=0;n<Nims;++n)
+//    {
+//       eigenImageT imbg;
+//       typename eigenCube<floatT>::imageRef im = imc.image(n);
+//       
+//       smoothImage(imbg, im, kernel);
+//       im = im - imbg;
+//       mx::applyMask(im, maskIdx, maskVal);
+//    }
    
    
    

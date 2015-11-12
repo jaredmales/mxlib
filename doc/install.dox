@@ -28,9 +28,7 @@ LIB_PATH = $(INSTALL_PATH)/lib
 BIN_PATH = $(HOME)/bin 
 \endcode
 
-3. You need to move "gengithead.sh" to a directory in your shell's path (e.g. \$(HOME)/bin).
-
-4. Once that's done, type make, then make install
+3. Once that's done, type make, then make install
 
 @}
 */

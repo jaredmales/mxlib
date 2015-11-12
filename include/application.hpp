@@ -85,14 +85,15 @@ protected:
 
    virtual void setDefaults()
    {
+      char *tmpstr;
       std::string tmp;
       
       #ifdef MX_APP_DEFAULT_configPathGlobal
          configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
       #endif
       #ifdef MX_APP_DEFAULT_configPathGlobal_env
-         tmp = getenv(MX_APP_DEFAULT_configPathGlobal_env);
-         if(tmp != "") configPathGlobal = tmp;
+         tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
+         if(tmpstr != 0) configPathGlobal = tmpstr;
       #endif
          
          
@@ -100,8 +101,8 @@ protected:
          configPathUser = MX_APP_DEFAULT_configPathUser;
       #endif
       #ifdef MX_APP_DEFAULT_configPathUser_env
-         tmp = getenv(MX_APP_DEFAULT_configPathUser_env);
-         if(tmp != "") configPathUser = tmp;
+         tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
+         if(tmpstr != 0) configPathUser = tmpstr;
       #endif
       
       if(configPathUser != "")
@@ -115,8 +116,8 @@ protected:
          configPathLocal = MX_APP_DEFAULT_configPathLocal;
       #endif
       #ifdef MX_APP_DEFAULT_configPathLocal_env
-         tmp = getenv(MX_APP_DEFAULT_configPathLocal_env);
-         if(tmp != "") configPathLocal = tmp;
+         tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
+         if(tmpstr != 0) configPathLocal = tmpstr;
       #endif
          
       return;
