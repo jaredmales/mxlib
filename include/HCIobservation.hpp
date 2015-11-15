@@ -26,6 +26,7 @@
 #include "pout.hpp"
 #include "imageMasks.hpp"
 #include "mxException.hpp"
+#include "readColumns.hpp"
 
 namespace mx
 {
@@ -69,6 +70,15 @@ struct HCIobservation
    
    ///Specify how many files from fileList to delete from the back of the list
    int deleteBack;
+   
+   
+   ///Control whether to threshold on image quality
+   bool doQualityThreshold;
+   
+   std::string qualityFile;
+   
+   floatT qualityThreshold;
+   
    
    ///Name of the keyword to use for the image date. 
    /** Specifies the keyword corresponding to .  This is
@@ -395,6 +405,37 @@ inline void HCIobservation<_floatT>::readFiles()
       filesDeleted = true;
    }   
 
+   if(qualityFile != "")
+   {      
+      std::cout << "Thresholding  . . .\n";
+      
+      std::vector<std::string> qfileNames;
+      std::vector<floatT> imQ;
+      
+      //Read the quality file and load it into a map
+      readColumns(qualityFile, qfileNames, imQ);
+      
+      std::map<std::string, floatT> quality;     
+      for(int i=0;i<qfileNames.size();++i) quality[qfileNames[i]] = imQ[i];
+      
+      for(int i=0; i<fileList.size(); ++i)
+      {
+         if(quality.count(basename(fileList[i].c_str())) <= 0)
+         {
+            fileList.erase(fileList.begin()+i);
+            --i;
+         }
+         else if (quality[basename(fileList[i].c_str())] < qualityThreshold)
+         {
+            fileList.erase(fileList.begin()+i);
+            --i;
+         }
+      }
+      
+      std::cerr << "Done.\n";
+   }
+   
+   
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
    fitsFile<floatT> f(fileList[0]);
@@ -765,8 +806,12 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
    head.append("", fitsCommentType(), "----------------------------------------");
    
-   head.append<int>("FDELFRNT", deleteFront, "image deleted from front of file list");
-   head.append<int>("FDELBACK", deleteBack, "image deleted from back of file list");
+   head.append<int>("FDELFRNT", deleteFront, "images deleted from front of file list");
+   head.append<int>("FDELBACK", deleteBack, "images deleted from back of file list");
+   
+  
+   head.append("QFILE", basename(qualityFile.c_str()), "quality file for thresholding");
+   head.append<floatT>("QTHRESH", qualityThreshold, "quality threshold");
    
    head.append<int>("IMSIZE", imSize, "image size after reading");
    
