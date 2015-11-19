@@ -47,6 +47,12 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
       
       std::getline(sinstr, str, delim);
 
+      //Last entry in line might contain eol
+      if( str[str.size()-1] == eol) 
+      {
+         str.erase(str.size()-1);
+      }
+      
       //std::cout << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
       array.push_back(convertFromString<typename arrT::value_type>(str));
    }

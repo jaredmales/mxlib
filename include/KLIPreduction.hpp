@@ -125,6 +125,7 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    void worker(eigenCube<floatT> & rims, vector<size_t> & idx, floatT dang);
    //void worker(eigenCube<floatT> rims, vector<size_t> idx, floatT dang);
    
+   ///Calculate the KL images for a given covariance matrix
    template<typename eigenT, typename eigenT1>
    void calcKLIms( eigenT & klims, 
                    eigenT & cv, 
@@ -237,13 +238,16 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
    
    if(this->imSize == 0)
    {
+      std::cout << "Calculating imSize . . . \n";
       this->imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + padSize);
+      std::cout << "done.\n";
    }
    
    if(!this->filesRead) 
    {         
+      std::cout << "Reading Files . . .\n";
       this->readFiles();
-      
+      std::cout << "Done reading files.\n";
    }
    
    

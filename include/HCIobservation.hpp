@@ -299,6 +299,23 @@ struct HCIobservation
    ///Coadd the images
    void coaddImages();
    
+   /****** Pre-Processing **********/
+   
+   bool preProcessBeforeCoadd; ///<controls whether pre-processing takes place before or after coadding
+   
+   bool preProcess_subRadProfIm; ///If true, a radial profile is subtracted from each image.
+   
+   floatT preProcess_azUSM_azW;
+   floatT preProcess_azUSM_radW;
+
+   std::string preProcess_maskFile;
+   
+   floatT preProcess_gaussUSM_fwhm;
+   
+   void preProcess();
+   
+   
+   
    ///Combine the images into a single final image.
    /** Images are combined by the method specified in \ref combineMethod
      */
@@ -335,6 +352,14 @@ void HCIobservation<_floatT>::initialize()
    coaddMaxImno = 0;
    coaddMaxTime = 0;
  
+   preProcessBeforeCoadd = false; 
+   
+   preProcess_subRadProfIm = true;
+   
+   preProcess_azUSM_azW = 0;
+   preProcess_azUSM_radW = 0;
+   preProcess_gaussUSM_fwhm = 0;
+   
    filesRead = false;
    
    combineMethod = HCI::medianCombine;
@@ -376,20 +401,23 @@ HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::stri
 template<typename _floatT>
 inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
+   std::cout << "Getting file list...\n";
    fileList = getFileNames(dir, prefix, ext);
    filesDeleted = false;
+   std::cout << "done.\n";
 }
 
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
 {
-   
+   std::cout << "HCIobservation::readfiles()  1\n";
    if(fileList.size() == 0)
    {
       throw mxException("mx::HCIobservation",1, "no files to read",__FILE__, __LINE__-2, 
                       "The fileList has 0 length, there are no files to be read.");
    }
    
+   std::cout << "HCIobservation::readfiles()  2\n";
    //First make the list deletions
    if(!filesDeleted)
    {
@@ -405,6 +433,7 @@ inline void HCIobservation<_floatT>::readFiles()
       filesDeleted = true;
    }   
 
+   std::cout << "HCIobservation::readfiles()  3\n";
    if(qualityFile != "")
    {      
       std::cout << "Thresholding  . . .\n";
@@ -436,6 +465,7 @@ inline void HCIobservation<_floatT>::readFiles()
    }
    
    
+   std::cout << "HCIobservation::readfiles()  4\n";
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
    fitsFile<floatT> f(fileList[0]);
@@ -447,18 +477,23 @@ inline void HCIobservation<_floatT>::readFiles()
 
    if(MJDKeyword != "") head.append(MJDKeyword);
    
+   std::cout << "HCIobservation::readfiles()  5\n";
    for(int i=0;i<keywords.size();++i)
    {
       head.append(keywords[i]);
    }
       
+   std::cout << "HCIobservation::readfiles()  6\n";
    heads.clear(); //This is necessary to make sure heads.resize copies head on a 2nd call
    heads.resize(fileList.size(), head);
       
+   std::cout << "HCIobservation::readfiles()  7\n";
    imc.resize(im.rows(), im.cols(), fileList.size());
    
+   std::cout << "HCIobservation::readfiles()  8\n";
    f.read(fileList, imc.data(), heads);
 
+   std::cout << "HCIobservation::readfiles()  9\n";
    if(MJDKeyword != "")
    {
       imageMJD.resize(heads.size());
@@ -482,6 +517,7 @@ inline void HCIobservation<_floatT>::readFiles()
    //Re-size the image
    if(imSize > 0)
    {
+      std::cout << "Resizing . . .\n";
       eigenCube<floatT> timc;
    
       timc.shallowCopy(imc, true);
@@ -508,6 +544,7 @@ inline void HCIobservation<_floatT>::readFiles()
          imc.image(n) = timc.image(n).block(min_x, min_y, max_x-min_x + 1, max_y-min_y+1);
       }
 
+      std::cout << "Done\n";
    }
    
    Nims =  imc.planes();
@@ -519,6 +556,14 @@ inline void HCIobservation<_floatT>::readFiles()
    /*** Now do the post-read actions ***/
    postReadFiles();
    
+   
+   /*** Now do any pre-processing ***/
+   if(preProcessBeforeCoadd) preProcess();
+   
+   
+   
+   
+   
    if(weightFile != "")
    {
       readWeights();
@@ -529,14 +574,20 @@ inline void HCIobservation<_floatT>::readFiles()
       coaddImages();
    }
    
-   if(applyMask)
-   {
-      for(int n=0;n<Nims;++n)
-      {
-         typename eigenCube<floatT>::imageRef im = imc.image(n);
-         mx::applyMask(im, maskIdx, maskVal);
-      }
-   }  
+   
+   /*** Now do any pre-processing ***/
+   if(!preProcessBeforeCoadd) preProcess();
+   
+   
+//    if(applyMask)
+//    {
+//       for(int n=0;n<Nims;++n)
+//       {
+//          typename eigenCube<floatT>::imageRef im = imc.image(n);
+//          mx::applyMask(im, maskIdx, maskVal);
+//       }
+//    }  
+   
    
 //    eigenImageT kernel;
 //    gaussKernel(kernel, 15);
@@ -727,6 +778,89 @@ void HCIobservation<_floatT>::coaddImages()
    
 }//void HCIobservation<_floatT>::coaddImages()
 
+
+template<typename _floatT>
+void HCIobservation<_floatT>::preProcess()
+{
+   if( preProcess_subRadProfIm )
+   {
+      std::cout << "subtracting radial profile . . .\n";
+      eigenImageT rp;
+      
+      for(int i=0;i<imc.planes(); ++i)
+      {
+         Eigen::Map<Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> > imRef(imc.image(i));
+         radprofim(rp, imRef, true);
+      }
+      
+      std::cout << "done\n";
+   }
+   
+   if( preProcess_azUSM_azW && preProcess_azUSM_radW )
+   {
+      std::cout << "Applying azimuthal USM . . .\n";
+      
+      #pragma omp parallel for
+      for(int i=0;i<imc.planes(); ++i)
+      {
+         eigenImageT fim, im;
+         im = imc.image(i);
+         filterImage(fim, im, azBoxKernel<eigenImagef>(preProcess_azUSM_radW, preProcess_azUSM_azW), 0.5*(imc.cols()-1) - preProcess_azUSM_radW);
+         im = (im-fim);
+         imc.image(i) = im;
+      }
+      
+      std::cout  << "Done\n";
+   }
+   
+   if( preProcess_maskFile != "")
+   {
+      std::cout << "Masking . . .\n";
+      fitsFile<floatT> ff;
+      eigenImageT mask;
+      
+      ff.read(preProcess_maskFile, mask);
+      
+      #pragma omp parallel for
+      for(int i=0;i<imc.planes(); ++i)
+      {
+         imc.image(i) *= mask;
+      }
+      std::cout << "Done\n";
+   }
+   
+   if( preProcess_gaussUSM_fwhm > 0)
+   {
+      std::cout << "Applying Gauss USM . . .\n";
+      #pragma omp parallel for
+      for(int i=0;i<imc.planes(); ++i)
+      {
+         eigenImageT fim, im;
+         im = imc.image(i);
+         filterImage(fim, im, gaussKernel<eigenImagef>(preProcess_gaussUSM_fwhm), 0.5*(imc.cols()-1) - preProcess_gaussUSM_fwhm*4);
+         im = (im-fim);
+         imc.image(i) = im;
+      }
+      if( preProcess_maskFile != "")
+      {
+         std::cout << "Masking . . .\n";
+         fitsFile<floatT> ff;
+         eigenImageT mask;
+      
+         ff.read(preProcess_maskFile, mask);
+      
+         #pragma omp parallel for
+         for(int i=0;i<imc.planes(); ++i)
+         {
+            imc.image(i) *= mask;
+         }
+         
+      }
+      std::cout << "Done\n";
+   }
+   
+   
+}
 template<typename _floatT>
 void HCIobservation<_floatT>::combineFinim()
 {

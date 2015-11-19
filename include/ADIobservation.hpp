@@ -226,15 +226,19 @@ ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & dir
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::readFiles()
 {      
+   std::cout << "Loading keywords . . .\n";
    this->keywords.clear();
    for(int i=0;i<derotF.keywords.size();++i)
    {
       this->keywords.push_back(derotF.keywords[i]);
    }
    
+   std::cout << "Done.\n";
    HCIobservation<floatT>::readFiles();
    
+   std::cout << "Extracting Keywords.\n";
    derotF.extractKeywords(this->heads);
+   std::cout << "Done\n";
 }
 
 template<typename _floatT, class _derotFunctObj>

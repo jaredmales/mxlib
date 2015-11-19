@@ -18,11 +18,12 @@ namespace mx
 ///Symetric Gaussian smoothing kernel
 /** \ingroup image_processing
   */
-template<typename _arrayT, size_t kernW=4>
+template<typename _arrayT, size_t _kernW=4>
 struct gaussKernel
 {
    typedef _arrayT arrayT;
    typedef typename _arrayT::Scalar arithT;
+   static const int kernW = _kernW;
    
    arrayT kernel;
    
@@ -58,6 +59,11 @@ struct gaussKernel
       
    }
    
+   int maxWidth()
+   {
+      return _kernW*_fwhm;
+   }
+   
    void setKernel(arithT x, arithT y)
    {
    }
@@ -67,21 +73,32 @@ struct gaussKernel
 ///Azimuthally variable boxcare smoothing kernel.
 /** \ingroup image_processing
   */
-template<typename _arrayT, size_t kernW=4>
+template<typename _arrayT, size_t _kernW=4>
 struct azBoxKernel
 {
    typedef _arrayT arrayT;
    typedef typename _arrayT::Scalar arithT;
 
+
+   static const int kernW = _kernW;
+   
    arrayT kernel;
    
    arithT _radWidth;
    arithT _azWidth;
+   int _maxWidth;
    
    azBoxKernel(arithT radWidth, arithT azWidth)
    {
       _radWidth = radWidth;
       _azWidth = azWidth;
+      
+      _maxWidth = std::max(radWidth, azWidth);
+   }
+   
+   int maxWidth()
+   {
+      return _maxWidth;
    }
    
    void setKernel(arithT x, arithT y)
@@ -166,32 +183,81 @@ struct azBoxKernel
   * \ingroup image_processing 
   */ 
 template<typename imageOutT, typename imageInT, typename kernelT>
-void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr)
+void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
 {
    fim.resize(im.rows(), im.cols());
   
    float xcen = 0.5*(im.rows()-1);
    float ycen = 0.5*(im.cols()-1);
    
+   if(maxr == 0) maxr = 0.5*im.rows() - kernel.maxWidth();
    
    int mini = 0.5*im.rows() - maxr;
    int maxi = 0.5*im.rows() + maxr;
    int minj = 0.5*im.cols() - maxr;
    int maxj = 0.5*im.cols() + maxr;
    
-   for(int i=0; i<im.rows(); ++i)
+   
+   for(int i=mini; i<maxi; ++i)
    {
-      for(int j=0; j<im.cols(); ++j)
+      for(int j=minj; j<maxj; ++j)
       {
-         if(i < mini || i > maxi || j < minj || j > maxj)
-         {
-            fim(i,j) = 0;
-            continue;
-         }
          kernel.setKernel(i-xcen, j-ycen);
          fim(i,j) = (im.block(i-0.5*kernel.kernel.rows(), j-0.5*kernel.kernel.cols(), kernel.kernel.rows(), kernel.kernel.cols())*kernel.kernel).sum();
       }
    }
+
+   //Now handle the edges
+   int im_i, im_j, im_p,im_q;
+   int kern_i, kern_j, kern_p,kern_q;  
+   typename imageOutT::Scalar norm;
+   
+   for(size_t i=0; i< im.rows(); i++)
+   {
+      for(size_t j=0; j<im.cols(); j++)
+      {
+         if((i >= maxr && i< im.rows()-maxr) && (j>= maxr && j<im.rows()-maxr)) continue;
+         
+         kernel.setKernel(i-xcen, j-ycen);
+         
+         im_i = i - 0.5*kernel.kernel.rows();
+         if(im_i < 0) im_i = 0;
+         
+         im_j = j - 0.5*kernel.kernel.cols();
+         if(im_j < 0) im_j = 0;
+
+         im_p = im.rows() - im_i;
+         if(im_p > kernel.kernel.rows()) im_p = kernel.kernel.rows();
+          
+         im_q = im.cols() - im_j;
+         if(im_q > kernel.kernel.cols()) im_q = kernel.kernel.cols();
+         
+         kern_i = 0.5*kernel.kernel.rows() - i;
+         if(kern_i < 0) kern_i = 0;
+         
+         kern_j = 0.5*kernel.kernel.cols() - j;
+         if(kern_j < 0) kern_j = 0;
+      
+         kern_p = kernel.kernel.rows() - kern_i;
+         if(kern_p > kernel.kernel.rows()) kern_p = kernel.kernel.rows();
+         
+         kern_q = kernel.kernel.cols() - kern_j;
+         if(kern_q > kernel.kernel.cols()) kern_q = kernel.kernel.cols();
+       
+         //Pick only the smallest widths
+         if(im_p < kern_p) kern_p = im_p;
+         if(im_q < kern_q) kern_q = im_q;
+   
+         
+         norm = kernel.kernel.block(kern_i, kern_j, kern_p, kern_q ).sum();
+        
+         fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+
+         if( !isfinite(fim(i,j))) fim(i,j) = 0.0;
+      }
+   }
+   
+
 }   
    
    
