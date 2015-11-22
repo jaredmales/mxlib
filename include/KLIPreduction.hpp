@@ -10,7 +10,14 @@
 #ifndef __KLIPreduction_hpp__
 #define __KLIPreduction_hpp__
 
+
+
+
+
 #include "ADIobservation.hpp"
+
+#include <vector>
+#include <map>
 
 #include <omp.h>
 
@@ -88,13 +95,19 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    
    KLIPreduction( const std::string & dir, 
                   const std::string & prefix, 
-                  const std::string & ext) : ADIobservation<_floatT, _derotFunctObj>(dir, prefix, ext)
+                  const std::string ext = ".fits") : ADIobservation<_floatT, _derotFunctObj>(dir, prefix, ext)
+   {
+      initialize();
+   }
+   
+   KLIPreduction( const std::string & fileListFile ) : ADIobservation<_floatT, _derotFunctObj>(fileListFile)
    {
       initialize();
    }
    
    void initialize()
    {
+      mindpx = 0;
       excludeMethod = HCI::excludeNone;
       includeRefNum = 0;
       padSize = 4;
@@ -104,10 +117,10 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
    void medianSubtract(eigenCube<floatT> & ims, std::vector<floatT> & sds);
    void getStdDevs(std::vector<floatT> sd, eigenCube<floatT> & ims);
    
-   void regions( vector<floatT> minr, 
-                 vector<floatT> maxr, 
-                 vector<floatT> minq, 
-                 vector<floatT> maxq);
+   void regions( std::vector<floatT> minr, 
+                 std::vector<floatT> maxr, 
+                 std::vector<floatT> minq, 
+                 std::vector<floatT> maxq);
    
    void regions( floatT minr, 
                  floatT maxr, 
@@ -122,7 +135,7 @@ struct KLIPreduction : public ADIobservation<_floatT, _derotFunctObj>
       regions(vminr, vmaxr, vminq, vmaxq);
    }
    
-   void worker(eigenCube<floatT> & rims, vector<size_t> & idx, floatT dang);
+   void worker(eigenCube<floatT> & rims, std::vector<size_t> & idx, floatT dang);
    //void worker(eigenCube<floatT> rims, vector<size_t> idx, floatT dang);
    
    ///Calculate the KL images for a given covariance matrix
@@ -152,45 +165,45 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<fl
 
    norms.resize(ims.planes());
 
-   if(this->applyMask)
-   {
-      //#pragma omp parallel for schedule(static, 1)
-      for(int n=0;n<ims.planes(); ++n)
-      {
-         _floatT mn = 0, Navg = 0;
-      
-         for(int j=0;j<ims.rows()*ims.cols();++j)
-         {
-            if( ims.image(n)(j) != this->maskVal)
-            {
-               mn += ims.image(n)(j);
-               ++Navg;
-            }
-         }
-         mn /= Navg;
-
-         for(int j=0;j<ims.rows()*ims.cols();++j)
-         {
-            if( ims.image(n)(j) != this->maskVal)
-            {      
-               ims.image(n)(j) -= mn;//ims.image(i).mean();
-            }
-            else 
-            {
-               ims.image(n)(j) = 0.;
-            }
-         }
-         norms[n] = ims.image(n).matrix().norm();
-      }
-   }
-   else
-   {
+//    if(this->applyMask)
+//    {
+//       //#pragma omp parallel for schedule(static, 1)
+//       for(int n=0;n<ims.planes(); ++n)
+//       {
+//          _floatT mn = 0, Navg = 0;
+//       
+//          for(int j=0;j<ims.rows()*ims.cols();++j)
+//          {
+//             if( ims.image(n)(j) != this->maskVal)
+//             {
+//                mn += ims.image(n)(j);
+//                ++Navg;
+//             }
+//          }
+//          mn /= Navg;
+// 
+//          for(int j=0;j<ims.rows()*ims.cols();++j)
+//          {
+//             if( ims.image(n)(j) != this->maskVal)
+//             {      
+//                ims.image(n)(j) -= mn;//ims.image(i).mean();
+//             }
+//             else 
+//             {
+//                ims.image(n)(j) = 0.;
+//             }
+//          }
+//          norms[n] = ims.image(n).matrix().norm();
+//       }
+//   }
+//   else
+//   {
       for(int n=0;n<ims.planes(); ++n)
       {
          ims.image(n) -= ims.image(n).mean();
          norms[n] = ims.image(n).matrix().norm();
       }
-   }
+//   }
 }
  
 template<typename _floatT, class _derotFunctObj, typename _evCalcT>
@@ -210,10 +223,10 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::medianSubtract(eigenCube<
 
 template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> minr, 
-                                                                vector<_floatT> maxr, 
-                                                                vector<_floatT> minq, 
-                                                                vector<_floatT> maxq)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_floatT> minr, 
+                                                                std::vector<_floatT> maxr, 
+                                                                std::vector<_floatT> minq, 
+                                                                std::vector<_floatT> maxq)
 {   
    t0 = get_curr_time();
       
@@ -276,7 +289,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( vector<_floatT> 
    //******** For each region do this:
    for(int regno = 0; regno < minr.size(); ++regno)
    {
-      vector<size_t> idx = imageRegionIndices(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1), 
+      std::vector<size_t> idx = imageRegionIndices(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1), 
                                                     minr[regno], maxr[regno], minq[regno], maxq[regno]);
    
       //Create storage for the R-ims and psf-subbed Ims
@@ -635,7 +648,7 @@ void collapseCovar( eigenT & cutCV,
 
 template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
-void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT> & rims, vector<size_t> & idx, floatT dang)
+void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT> & rims, std::vector<size_t> & idx, floatT dang)
 {
    pout("beginning worker");
 

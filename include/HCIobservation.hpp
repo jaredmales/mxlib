@@ -9,6 +9,7 @@
 #define __HCIobservation_hpp__ 
 
 #include <vector>
+#include <map>
 #include <string>
 #include <fstream>
 
@@ -27,6 +28,7 @@
 #include "imageMasks.hpp"
 #include "mxException.hpp"
 #include "readColumns.hpp"
+#include "imageFilters.hpp"
 
 namespace mx
 {
@@ -104,16 +106,21 @@ struct HCIobservation
      */
    int imSize;
    
+   ///Specify a mask file to apply
+   /**No mask is applied if this is empty.
+     */
+   std::string maskFile;
+   
    ///Controls whether the mask is applied.
    /** If true, then the mask described by \ref maskIdx and \ref maskVal is applied after the file read.
      */
-   bool applyMask;
+   //bool applyMask;
    
    ///Indices of the mask to apply to each image if \ref applyMask is true
-   std::vector<size_t> maskIdx;
+   //std::vector<size_t> maskIdx;
    
    ///Value to insert as the mask according to \ref maskIdx.
-   floatT maskVal;
+   //floatT maskVal;
    
    ///@}
    
@@ -168,7 +175,7 @@ struct HCIobservation
    std::string weightFile;
    
    ///Vector to hold the weights read from the weightFile.
-   vector<floatT> comboWeights;
+   std::vector<floatT> comboWeights;
    
    
    ///@}
@@ -207,7 +214,7 @@ struct HCIobservation
    std::vector<double> imageMJD;
    
    ///Vector of FITS headers,one per file, populated with the values for the keywords.
-   vector<fitsHeader> heads;
+   std::vector<fitsHeader> heads;
    
    ///Whether or not the fileList has been read.
    bool filesRead;
@@ -250,31 +257,34 @@ struct HCIobservation
    
    ///Construct and load the file list.
    /** Populates the \ref fileList vector by searching on disk for files which match
-     * "./prefix*".  See \ref loadFileList
-     * 
-     * \param [in] prefix is the initial part of the file name.  Can be empty "".
-     */
-   HCIobservation(const std::string &prefix);
-   
-   ///Construct and load the file list.
-   /** Populates the \ref fileList vector by searching on disk for files which match
-     * "dir/prefix*".  See \ref loadFileList
-     * 
-     * \param [in] dir is the directory to search.
-     * \param [in] prefix is the initial part of the file name.  Can be empty "".
-     */
-   HCIobservation(const std::string &dir, const std::string &prefix);
-   
-   ///Construct and load the file list.
-   /** Populates the \ref fileList vector by searching on disk for files which match
      * "dir/prefix*.ext".  See \ref loadFileList
      * 
      * \param [in] dir is the directory to search.
      * \param [in] prefix is the initial part of the file name.  Can be empty "".
-     * \param [in] ext is the extension to append to the file name. Can be empty "".
+     * \param [in] ext is the extension to append to the file name. If ommitted defaults to ".fits"
      */
-   HCIobservation(const std::string &dir, const std::string &prefix, const std::string &ext);
+   HCIobservation(const std::string &dir, const std::string &prefix, const std::string ext=".fits");
+   
+   
+   ///Construct using a file containing the file lise
+   /** Populates the \ref fileList vector by reading the file, which should be a single
+     * column of new-line delimited file names.
+     * 
+     * \param [in] fileListFile is a file name to read.
+     */
+   HCIobservation(const std::string &fileListFile);
+   
+   
+   
 
+   ///Load the file list from a file
+   /** Populates the \ref fileList vector by reading the file, which should be a single
+     * column of new-line delimited file names.
+     * 
+     * \param [in] fileListFile is a file name to read.
+     */
+   void loadFileList(const std::string &fileListFile);
+   
    ///Load the file list
    /** Populates the \ref fileList vector by searching on disk for files which match the given parameters.
      * Uses \ref mx::getFileNames to search for all files which match "dir/prefix*.ext".
@@ -303,12 +313,12 @@ struct HCIobservation
    
    bool preProcessBeforeCoadd; ///<controls whether pre-processing takes place before or after coadding
    
-   bool preProcess_subRadProfIm; ///If true, a radial profile is subtracted from each image.
+   bool preProcess_subradprof; ///If true, a radial profile is subtracted from each image.
    
    floatT preProcess_azUSM_azW;
    floatT preProcess_azUSM_radW;
 
-   std::string preProcess_maskFile;
+   //std::string preProcess_maskFile;
    
    floatT preProcess_gaussUSM_fwhm;
    
@@ -346,7 +356,7 @@ void HCIobservation<_floatT>::initialize()
    MJDUnits = 1.0;
    
    imSize = 0;
-   applyMask = false;
+//   applyMask = false;
   
    coaddCombineMethod = HCI::noCombine;
    coaddMaxImno = 0;
@@ -354,7 +364,7 @@ void HCIobservation<_floatT>::initialize()
  
    preProcessBeforeCoadd = false; 
    
-   preProcess_subRadProfIm = true;
+   preProcess_subradprof = true;
    
    preProcess_azUSM_azW = 0;
    preProcess_azUSM_radW = 0;
@@ -362,7 +372,7 @@ void HCIobservation<_floatT>::initialize()
    
    filesRead = false;
    
-   combineMethod = HCI::medianCombine;
+   combineMethod = HCI::meanCombine;
    
    doWriteFinim = 1;
    finimName = "finim_";
@@ -377,26 +387,27 @@ HCIobservation<_floatT>::HCIobservation()
 }
 
 template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(const std::string & prefix)
-{
-   initialize();
-   loadFileList("./", prefix, ".fits"); 
-}
-
-template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::string & prefix)
-{
-   initialize();   
-   loadFileList(dir, prefix, ".fits");
-}
-
-template<typename _floatT>
-HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string & ext)
+HCIobservation<_floatT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string ext)
 {
    initialize();
    loadFileList(dir, prefix, ext);
 }
    
+template<typename _floatT>
+HCIobservation<_floatT>::HCIobservation(const std::string & fileListFile)
+{
+   initialize();
+   loadFileList(fileListFile);
+}
+
+template<typename _floatT>
+inline void HCIobservation<_floatT>::loadFileList(const std::string & fileListFile)
+{
+   std::cout << "Getting file list from file...\n";
+   readColumns(fileListFile, fileList);
+   filesDeleted = false;
+   std::cout << "done.\n";
+}
 
 template<typename _floatT>
 inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
@@ -782,7 +793,7 @@ void HCIobservation<_floatT>::coaddImages()
 template<typename _floatT>
 void HCIobservation<_floatT>::preProcess()
 {
-   if( preProcess_subRadProfIm )
+   if( preProcess_subradprof )
    {
       std::cout << "subtracting radial profile . . .\n";
       eigenImageT rp;
@@ -813,13 +824,13 @@ void HCIobservation<_floatT>::preProcess()
       std::cout  << "Done\n";
    }
    
-   if( preProcess_maskFile != "")
+   if( maskFile != "")
    {
       std::cout << "Masking . . .\n";
       fitsFile<floatT> ff;
       eigenImageT mask;
       
-      ff.read(preProcess_maskFile, mask);
+      ff.read(maskFile, mask);
       
       #pragma omp parallel for
       for(int i=0;i<imc.planes(); ++i)
@@ -841,13 +852,13 @@ void HCIobservation<_floatT>::preProcess()
          im = (im-fim);
          imc.image(i) = im;
       }
-      if( preProcess_maskFile != "")
+      if( maskFile != "")
       {
          std::cout << "Masking . . .\n";
          fitsFile<floatT> ff;
          eigenImageT mask;
       
-         ff.read(preProcess_maskFile, mask);
+         ff.read(maskFile, mask);
       
          #pragma omp parallel for
          for(int i=0;i<imc.planes(); ++i)

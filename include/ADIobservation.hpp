@@ -32,7 +32,7 @@ struct derotVisAO
    }
    
    ///Method called by DIobservation to get keyword-values
-   void extractKeywords(vector<fitsHeader> & heads)
+   void extractKeywords(std::vector<fitsHeader> & heads)
    {
       rotoff = headersToValues<floatT>(heads, "ROTOFF");
    }
@@ -63,7 +63,7 @@ struct derotClio
    }
    
    ///Method called by DIobservation to get keyword-values
-   void extractKeywords(vector<fitsHeader> & heads)
+   void extractKeywords(std::vector<fitsHeader> & heads)
    {
       rotoff = headersToValues<floatT>(heads, "ROTOFF");
    }
@@ -97,7 +97,7 @@ struct derotODI
    }
    
    ///Method called by DIobservation to get keyword-values
-   void extractKeywords(vector<fitsHeader> & heads)
+   void extractKeywords(std::vector<fitsHeader> & heads)
    {
       dateobs = headersToValues<floatT>(heads, "DATEOBS");
    }
@@ -170,9 +170,11 @@ struct ADIobservation : public HCIobservation<_floatT>
    
    ADIobservation();
    
+   ADIobservation( const std::string & fileListFile) ;
+                   
    ADIobservation( const std::string & dir, 
                    const std::string & prefix, 
-                   const std::string & ext) ;
+                   const std::string ext = ".fits") ;
 
    ///Read in the files
    /** First sets up the keywords, then calls HCIobservation readFiles
@@ -214,14 +216,23 @@ ADIobservation<_floatT, _derotFunctObj>::ADIobservation()
 }
 
 template<typename _floatT, class _derotFunctObj>
-ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & dir, 
-                                                         const std::string & prefix, 
-                                                         const std::string & ext) : HCIobservation<floatT>(dir,prefix,ext)
+ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & fileListFile) : HCIobservation<floatT>(fileListFile)
 {
    doDerotate = true;
    doFake = 0;
    doFakeScale = 0;
 }
+
+template<typename _floatT, class _derotFunctObj>
+ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & dir, 
+                                                         const std::string & prefix, 
+                                                         const std::string ext) : HCIobservation<floatT>(dir,prefix,ext)
+{
+   doDerotate = true;
+   doFake = 0;
+   doFakeScale = 0;
+}
+
 
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::readFiles()

@@ -253,7 +253,7 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
         
          fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
 
-         if( !isfinite(fim(i,j))) fim(i,j) = 0.0;
+         if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
       }
    }
    

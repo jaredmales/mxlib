@@ -158,7 +158,7 @@ struct appConfigurator
       return targets[name].set;
    }
 
-   /// Get the final value of the target, converted to the specified value
+   /// Get the final value of the target, converted to the specified type
    template<typename typeT>
    typeT get(const std::string & name)
    {
@@ -167,6 +167,31 @@ struct appConfigurator
       
       return convertFromString<typeT>(targets[name].values.back());
    }
+   
+   template<typename typeT>
+   std::vector<typeT> getVector(const std::string & name)
+   {
+      std::vector<typeT> v;
+
+      std::string s = get<std::string>(name);
+      
+      int st;
+      int com;
+
+      st = 0;
+      com = s.find(',', st);
+   
+      while(com != std::string::npos)
+      {
+         v.push_back( convertFromString<typeT>(s.substr(st, com-st)) );
+         st = com + 1;
+         com = s.find(',', st);
+      }
+      v.push_back( convertFromString<typeT>(s.substr(st, s.size()-st)));
+   
+      return v;
+   }
+   
    
    /// Get the i-th value of the target, converted to the specified config target
    template<typename typeT>
@@ -204,6 +229,8 @@ std::string appConfigurator::get<std::string>(const std::string & name)
    return targets[name].values.back();
 }
 
+
+
 template<>
 std::string appConfigurator::get<std::string>(const std::string & name, int i)
 {
@@ -211,7 +238,8 @@ std::string appConfigurator::get<std::string>(const std::string & name, int i)
       
    return targets[name].values[i];
 }
-   
+
+
    
 } //namespace mx
 
