@@ -263,7 +263,11 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       std::cout << "Done reading files.\n";
    }
    
-   
+   if(this->preProcess_only)
+   {
+      std::cout << "Pre-processing complete, stopping.\n";
+      return;
+   }
   
    pout("Files read");
    dread = get_curr_time()-t1;

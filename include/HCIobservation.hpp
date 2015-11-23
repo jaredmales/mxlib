@@ -44,7 +44,10 @@ namespace HCI
 }
 
 /// The basic high contrast imaging data type
-/** 
+/** This class manages file reading, resizing, co-adding, pre-processing (masking and filtering), 
+  * and final image combination.
+  * 
+  * \tparam _floatT is the floating point type in which to do all arithmetic.
   */
 template<typename _floatT>
 struct HCIobservation
@@ -74,16 +77,22 @@ struct HCIobservation
    int deleteBack;
    
    
-   ///Control whether to threshold on image quality
-   bool doQualityThreshold;
-   
+   ///File containing 2 space-delimited columns fo fileVame qualityValue pairs.
+   /** If this is not empty and \ref qualityThreshold is > 0, then only images where
+     * qualityValue >= qualityThreshold.
+     * 
+     * The only restriction on qualityValue is that it is > 0.  It is intendend to be
+     * something like Strehl ratio.
+     */  
    std::string qualityFile;
    
+   ///Threshold to apply to qualityValues read from \ref qualityFile.
+   /** If <= 0, then thresholding is not performed.
+    */
    floatT qualityThreshold;
    
-   
    ///Name of the keyword to use for the image date. 
-   /** Specifies the keyword corresponding to .  This is
+   /** Specifies the keyword corresponding to the date.  This is
      * the "DATE" keyword for file write time, and usually "DATE-OBS" for actual observation time.
      *  
      * Default is "DATE-OBS".  
@@ -103,25 +112,12 @@ struct HCIobservation
 
    ///Set the image size.  Images are cut down to this size after reading.
    /** Set to <= 0 to use images uncut.
+     *
+     * Image sizes are not increased if this is larger than their size on disk. 
      */
    int imSize;
    
-   ///Specify a mask file to apply
-   /**No mask is applied if this is empty.
-     */
-   std::string maskFile;
-   
-   ///Controls whether the mask is applied.
-   /** If true, then the mask described by \ref maskIdx and \ref maskVal is applied after the file read.
-     */
-   //bool applyMask;
-   
-   ///Indices of the mask to apply to each image if \ref applyMask is true
-   //std::vector<size_t> maskIdx;
-   
-   ///Value to insert as the mask according to \ref maskIdx.
-   //floatT maskVal;
-   
+      
    ///@}
    
    /** \name Coadding
@@ -153,6 +149,53 @@ struct HCIobservation
    
    ///@} -- coadding
    
+   
+   /** \name Pre-Processing
+     * These options control the pre-processing masking and filtering.
+     * They are performed in the following order:
+     * -# radial profile subtraction (enabled by preProcess_subradprof)
+     * -# azimuthal unsharp mask (preProcess_azUSM_azW, and preProcess_azUSM_radW)
+     * -# mask applied (maskFile)
+     * -# symmetric Gaussian unsharp mask (preProcess_gaussUSM_fwhm)
+     * -# mask applied again if summetric USM ran.
+     * @{
+     */
+   
+   bool preProcess_beforeCoadd; ///<controls whether pre-processing takes place before or after coadding
+   
+   bool preProcess_subradprof; ///<If true, a radial profile is subtracted from each image.
+   
+   ///Azimuthal boxcar width for azimuthal unsharp mask
+   /** If this is 0 then azimuthal-USM is not performed.
+     */
+   floatT preProcess_azUSM_azW;
+   
+   ///Radial boxcar width for azimuthal unsharp mask
+   /** If this is 0 then azimuthal-USM is not performed.
+     */
+   floatT preProcess_azUSM_radW;
+
+   ///Specify a mask file to apply
+   /**No mask is applied if this is empty.
+     */
+   std::string maskFile;
+
+   ///Kernel FWHM for symmetric unsharp mask (USM)
+   /** USM is not performed if this is 0.
+    */ 
+   floatT preProcess_gaussUSM_fwhm;
+
+   ///Set path and file prefix to output the pre-processed images.
+   /** If empty, then pre-processed images are not output.
+     */
+   std::string preProcess_outputPrefix;
+   
+   /// If true, then we stop after pre-processing.
+   bool preProcess_only;
+   
+   
+   ///@}
+   
    /** \name Image Combination
      * These options control how the final image combination is performed.
      * @{
@@ -176,7 +219,6 @@ struct HCIobservation
    
    ///Vector to hold the weights read from the weightFile.
    std::vector<floatT> comboWeights;
-   
    
    ///@}
    
@@ -309,21 +351,12 @@ struct HCIobservation
    ///Coadd the images
    void coaddImages();
    
-   /****** Pre-Processing **********/
    
-   bool preProcessBeforeCoadd; ///<controls whether pre-processing takes place before or after coadding
-   
-   bool preProcess_subradprof; ///If true, a radial profile is subtracted from each image.
-   
-   floatT preProcess_azUSM_azW;
-   floatT preProcess_azUSM_radW;
-
-   //std::string preProcess_maskFile;
-   
-   floatT preProcess_gaussUSM_fwhm;
-   
+   ///Do the pre-processing
    void preProcess();
    
+   ///Output the pre-processed images
+   void outputPreProcessed();
    
    
    ///Combine the images into a single final image.
@@ -362,13 +395,14 @@ void HCIobservation<_floatT>::initialize()
    coaddMaxImno = 0;
    coaddMaxTime = 0;
  
-   preProcessBeforeCoadd = false; 
    
-   preProcess_subradprof = true;
-   
+   preProcess_beforeCoadd = false; 
+   preProcess_subradprof = false;
    preProcess_azUSM_azW = 0;
    preProcess_azUSM_radW = 0;
    preProcess_gaussUSM_fwhm = 0;
+   
+   preProcess_only = false;
    
    filesRead = false;
    
@@ -421,14 +455,12 @@ inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const
 template<typename _floatT>
 inline void HCIobservation<_floatT>::readFiles()
 {
-   std::cout << "HCIobservation::readfiles()  1\n";
    if(fileList.size() == 0)
    {
       throw mxException("mx::HCIobservation",1, "no files to read",__FILE__, __LINE__-2, 
                       "The fileList has 0 length, there are no files to be read.");
    }
    
-   std::cout << "HCIobservation::readfiles()  2\n";
    //First make the list deletions
    if(!filesDeleted)
    {
@@ -444,10 +476,11 @@ inline void HCIobservation<_floatT>::readFiles()
       filesDeleted = true;
    }   
 
-   std::cout << "HCIobservation::readfiles()  3\n";
    if(qualityFile != "")
    {      
       std::cout << "Thresholding  . . .\n";
+
+      int origsize = fileList.size();
       
       std::vector<std::string> qfileNames;
       std::vector<floatT> imQ;
@@ -470,13 +503,11 @@ inline void HCIobservation<_floatT>::readFiles()
             fileList.erase(fileList.begin()+i);
             --i;
          }
-      }
-      
-      std::cerr << "Done.\n";
+      }      
+      std::cerr << "Done.  Selected " << fileList.size() << " out of " << origsize << "\n";
    }
    
    
-   std::cout << "HCIobservation::readfiles()  4\n";
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
    fitsFile<floatT> f(fileList[0]);
@@ -488,23 +519,20 @@ inline void HCIobservation<_floatT>::readFiles()
 
    if(MJDKeyword != "") head.append(MJDKeyword);
    
-   std::cout << "HCIobservation::readfiles()  5\n";
    for(int i=0;i<keywords.size();++i)
    {
       head.append(keywords[i]);
    }
       
-   std::cout << "HCIobservation::readfiles()  6\n";
-   heads.clear(); //This is necessary to make sure heads.resize copies head on a 2nd call
+   heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
    heads.resize(fileList.size(), head);
       
-   std::cout << "HCIobservation::readfiles()  7\n";
    imc.resize(im.rows(), im.cols(), fileList.size());
    
-   std::cout << "HCIobservation::readfiles()  8\n";
+  /** \bug It is this step that is really slow during file reads *sometimes* 
+   */
    f.read(fileList, imc.data(), heads);
 
-   std::cout << "HCIobservation::readfiles()  9\n";
    if(MJDKeyword != "")
    {
       imageMJD.resize(heads.size());
@@ -569,51 +597,22 @@ inline void HCIobservation<_floatT>::readFiles()
    
    
    /*** Now do any pre-processing ***/
-   if(preProcessBeforeCoadd) preProcess();
-   
-   
-   
-   
+   if(preProcess_beforeCoadd) preProcess();
    
    if(weightFile != "")
    {
       readWeights();
    }
-   
+
    if(coaddCombineMethod != HCI::noCombine)
    {
       coaddImages();
    }
-   
-   
-   /*** Now do any pre-processing ***/
-   if(!preProcessBeforeCoadd) preProcess();
-   
-   
-//    if(applyMask)
-//    {
-//       for(int n=0;n<Nims;++n)
-//       {
-//          typename eigenCube<floatT>::imageRef im = imc.image(n);
-//          mx::applyMask(im, maskIdx, maskVal);
-//       }
-//    }  
-   
-   
-//    eigenImageT kernel;
-//    gaussKernel(kernel, 15);
-//    
-//    for(int n=0;n<Nims;++n)
-//    {
-//       eigenImageT imbg;
-//       typename eigenCube<floatT>::imageRef im = imc.image(n);
-//       
-//       smoothImage(imbg, im, kernel);
-//       im = im - imbg;
-//       mx::applyMask(im, maskIdx, maskVal);
-//    }
-   
-   
+
+   /*** Now do any pre-processing if not done already***/
+   if(!preProcess_beforeCoadd) preProcess();
+      
+   outputPreProcessed();
    
    filesRead = true;
 }
@@ -872,6 +871,27 @@ void HCIobservation<_floatT>::preProcess()
    
    
 }
+
+template<typename _floatT>
+void HCIobservation<_floatT>::outputPreProcessed()
+{
+   if(preProcess_outputPrefix == "") return;
+   
+   std::string bname, fname;
+   
+   fitsFile<_floatT> ff;
+   
+   /** \todo Should add a HISTORY card here */
+   for(int i=0; i< Nims; ++i)
+   {
+      bname = fileList[i];
+      fname = preProcess_outputPrefix + basename(bname.c_str());
+      ff.write(fname, imc.image(i).data(), Ncols, Nrows, 1, &heads[i]);
+   }
+   
+   
+}
+
 template<typename _floatT>
 void HCIobservation<_floatT>::combineFinim()
 {
