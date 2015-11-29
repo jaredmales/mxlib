@@ -387,6 +387,188 @@ int gesvd<double>( char JOBU, char JOBVT, int M, int N, double * A, int LDA, dou
    return INFO;
 }
 
+
+
+
+/// Compute the singular value decomposition (SVD) of a real matrix with GESDD
+/** 
+ This documentation copied shamelessly from the LAPACK source at <a href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#gac2cd4f1079370ac908186d77efcd5ea8">netlib</a>.
+  
+ SGESDD computes the singular value decomposition (SVD) of a real
+ M-by-N matrix A, optionally computing the left and right singular
+ vectors.  If singular vectors are desired, it uses a
+ divide-and-conquer algorithm.
+
+ The SVD is written
+
+      \f$ A = U * \Sigma * V^T \f$
+
+ where \f$ \Sigma \f$ is an M-by-N matrix which is zero except for its
+ min(m,n) diagonal elements, U is an M-by-M orthogonal matrix, and
+ V is an N-by-N orthogonal matrix.  The diagonal elements of \f$ \Sigma \f$
+ are the singular values of A; they are real and non-negative, and
+ are returned in descending order.  The first min(m,n) columns of
+ U and V are the left and right singular vectors of A.
+
+ Note that the routine returns \f$ V^T \f$, not \f$ V \f$.
+
+ The divide and conquer algorithm makes very mild assumptions about
+ floating point arithmetic. It will work on machines with a guard
+ digit in add/subtract, or on those binary machines without guard
+ digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
+ Cray-2. It could conceivably fail on hexadecimal or decimal machines
+ without guard digits, but the authors know of none.
+ \endparblock
+
+ \param[in] JOBZ
+ \parblock
+          JOBZ is CHARACTER*1
+          Specifies options for computing all or part of the matrix U:
+          = 'A':  all M columns of U and all N rows of V**T are
+                  returned in the arrays U and VT;
+          = 'S':  the first min(M,N) columns of U and the first
+                  min(M,N) rows of V**T are returned in the arrays U
+                  and VT;
+          = 'O':  If M >= N, the first N columns of U are overwritten
+                  on the array A and all rows of V**T are returned in
+                  the array VT;
+                  otherwise, all columns of U are returned in the
+                  array U and the first M rows of V**T are overwritten
+                  in the array A;
+          = 'N':  no columns of U or rows of V**T are computed.
+ \param[in] M
+ \parblock
+          M is INTEGER
+          The number of rows of the input matrix A.  M >= 0.
+ \param[in] N
+ \parblock
+          N is INTEGER
+          The number of columns of the input matrix A.  N >= 0.
+ \param[in,out] A
+ \parblock
+          A is REAL array, dimension (LDA,N)
+          On entry, the M-by-N matrix A.
+          On exit,
+          if JOBZ = 'O',  A is overwritten with the first N columns
+                          of U (the left singular vectors, stored
+                          columnwise) if M >= N;
+                          A is overwritten with the first M rows
+                          of V**T (the right singular vectors, stored
+                          rowwise) otherwise.
+          if JOBZ .ne. 'O', the contents of A are destroyed.
+ \param[in] LDA
+ \parblock
+          LDA is INTEGER
+          The leading dimension of the array A.  LDA >= max(1,M).
+ 
+
+ \param[out] S
+ \parblock
+          S is REAL array, dimension (min(M,N))
+          The singular values of A, sorted so that S(i) >= S(i+1).
+
+ \param[out] U
+ \parblock
+          U is REAL array, dimension (LDU,UCOL)
+          UCOL = M if JOBZ = 'A' or JOBZ = 'O' and M < N;
+          UCOL = min(M,N) if JOBZ = 'S'.
+          If JOBZ = 'A' or JOBZ = 'O' and M < N, U contains the M-by-M
+          orthogonal matrix U;
+          if JOBZ = 'S', U contains the first min(M,N) columns of U
+          (the left singular vectors, stored columnwise);
+          if JOBZ = 'O' and M >= N, or JOBZ = 'N', U is not referenced.
+
+ \param[in] LDU
+ \parblock
+          LDU is INTEGER
+          The leading dimension of the array U.  LDU >= 1; if
+          JOBZ = 'S' or 'A' or JOBZ = 'O' and M < N, LDU >= M.
+
+ \param[out] VT
+ \parblock
+          VT is REAL array, dimension (LDVT,N)
+          If JOBZ = 'A' or JOBZ = 'O' and M >= N, VT contains the
+          N-by-N orthogonal matrix V**T;
+          if JOBZ = 'S', VT contains the first min(M,N) rows of
+          V**T (the right singular vectors, stored rowwise);
+          if JOBZ = 'O' and M < N, or JOBZ = 'N', VT is not referenced.
+
+ \param[in] LDVT
+ \parblock
+          LDVT is INTEGER
+          The leading dimension of the array VT.  LDVT >= 1; if
+          JOBZ = 'A' or JOBZ = 'O' and M >= N, LDVT >= N;
+          if JOBZ = 'S', LDVT >= min(M,N).
+
+ \param[out] WORK
+ \parblock
+          WORK is REAL array, dimension (MAX(1,LWORK))
+          On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
+
+ \param[in] LWORK
+ \parblock
+          LWORK is INTEGER
+          The dimension of the array WORK. LWORK >= 1.
+          If JOBZ = 'N',
+            LWORK >= 3*min(M,N) + max(max(M,N),6*min(M,N)).
+          If JOBZ = 'O',
+            LWORK >= 3*min(M,N) + 
+                     max(max(M,N),5*min(M,N)*min(M,N)+4*min(M,N)).
+          If JOBZ = 'S' or 'A'
+            LWORK >= min(M,N)*(7+4*min(M,N))
+          For good performance, LWORK should generally be larger.
+          If LWORK = -1 but other input arguments are legal, WORK(1)
+          returns the optimal LWORK.
+
+ \param[out] IWORK
+ \parblock
+          IWORK is INTEGER array, dimension (8*min(M,N))
+ \endparblock
+
+ \returns
+ \parblock
+          = 0:  successful exit.<br />
+          < 0:  if INFO = -i, the i-th argument had an illegal value.<br />
+          > 0:  SBDSDC did not converge, updating process failed.
+ \endparblock
+ 
+   * \ingroup template_lapack
+*/
+template<typename dataT>
+int gesdd(char JOBZ, int M, int N, dataT *A, int LDA, dataT *S, dataT * U, int LDU, dataT * VT, int LDVT, dataT *WORK, int  LWORK, int * IWORK, int INFO)
+{
+   return -1;
+}
+
+//Declarations of the lapack calls
+extern "C"
+{
+   void sgesdd_(char * JOBZ, int *M, int *N, float *A, int *LDA, float *S, float * U, int *LDU, float * VT, int *LDVT, float *WORK, int * LWORK, int * IWORK, int *INFO);
+   
+   void dgesdd_(char * JOBZ, int *M, int *N, double *A, int *LDA, double *S, double * U, int *LDU, double * VT, int *LDVT, double *WORK, int * LWORK, int * IWORK, int *INFO);
+   
+}
+
+//float specialization of gesdd
+template<>
+int gesdd<float>(char JOBZ, int M, int N, float *A, int LDA, float *S, float * U, int LDU, float * VT, int LDVT, float *WORK, int  LWORK, int * IWORK, int INFO)
+{
+   sgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
+   
+   return INFO;
+}
+
+//double specialization of gesdd
+template<>
+int gesdd<double>(char JOBZ, int M, int N, double *A, int LDA, double *S, double * U, int LDU, double * VT, int LDVT, double *WORK, int  LWORK, int * IWORK, int INFO)
+{
+   dgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
+   
+   return INFO;
+}
+
+
+
 // 
 
 #endif //__templateLapack_hpp__

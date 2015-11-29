@@ -257,7 +257,7 @@ void ADIobservation<_floatT, _derotFunctObj>::postReadFiles()
 {
    derotF.extractKeywords(this->heads);
    
-   if(doFake) injectFake();
+   if(fakeFileName != "") injectFake();
 }
 
 template<typename _floatT, class _derotFunctObj>
@@ -303,14 +303,38 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
 
    //Fake Scale -- default to 1, read from file otherwise
    std::vector<floatT> fakeScale(this->imc.planes(), 1.0);
-   if(doFakeScale)
+   if(fakeScaleFileName != "")
    {
-      scaleFin.open(fakeScaleFileName.c_str());
-      for(int i=0; i<this->imc.planes(); ++i)
+      
+      std::vector<std::string> sfileNames;
+      std::vector<floatT> imS;
+      
+      //Read the quality file and load it into a map
+      readColumns(fakeScaleFileName, sfileNames, imS);
+      
+      std::map<std::string, floatT> scales;     
+      for(int i=0;i<sfileNames.size();++i) scales[sfileNames[i]] = imS[i];
+      
+      for(int i=0; i<this->fileList.size(); ++i)
       {
-         scaleFin >> fakeScale[i];
+         if(scales.count(basename(this->fileList[i].c_str())) > 0)
+         {
+            fakeScale[i] = scales[basename(this->fileList[i].c_str())];
+         }
+         else
+         {
+            std::cerr << "File name not found in fakeScaleFile:\n";
+            std::cerr << basename(this->fileList[i].c_str()) << "\n";
+            exit(-1);
+         }
       }
-      scaleFin.close();
+
+//       scaleFin.open(fakeScaleFileName.c_str());
+//       for(int i=0; i<this->imc.planes(); ++i)
+//       {
+//          scaleFin >> fakeScale[i];
+//       }
+//       scaleFin.close();
    }
       
       

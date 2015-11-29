@@ -549,6 +549,118 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
 }       
 
 
+///Compute the SVD of an Eigen::Array using LAPACK's xgesdd
+/** Computes the SVD of A, \f$ A = U S V^T \f$.
+  * 
+  * \param U [out] the A.rows() x A.rows() left matrix
+  * \param S [out] the A.cols() x 1 matrix of singular values
+  * \param VT [out] the A.cols() x A.cols() right matrix, note this is the transpose.
+  * \param A [in] the input matrix to be decomposed
+  *
+  * \returns 
+  * \parblock
+  *     0 on success
+  *     -i on error in ith parameter (from LAPACK xgesdd)
+  *     >0 did not converge (from LAPACK xgesdd)
+  * \endparblock
+  * 
+  * \tparam dataT is either float or double.
+  */ 
+template<typename dataT>
+int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Eigen::Array<dataT,-1,-1> & VT, Eigen::Array<dataT,-1,-1> & A )
+{
+   char JOBZ = 'A';
+   int M = A.rows();
+   int N = A.cols();
+   int LDA = M;
+   S.resize(N,1);
+   U.resize(M,M);
+   int LDU = M;
+   VT.resize(N,N);
+   int LDVT = N;
+   
+   dataT wkOpt;
+   int LWORK = -1;
+   
+   int * IWORK = new int[8*M];
+   int INFO;
+   
+   gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO);
+   
+   LWORK = wkOpt;
+   //delete WORK;
+   dataT *WORK = new dataT[LWORK];
+   
+   INFO = gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO);
+   
+   delete WORK;
+   delete IWORK;
+   
+   return INFO;
+}
+
+///Calculate the pseudo-inverser of a patrix using the SVD
+/**
+  * \param PInv [out] the pseudo-inverse of A
+  * \param A [in] the matrix to invert
+  * \param condition [in/out] the condition number used to threshold the singular values.  Set to 0 use include all. On output *                           this is the final condition number.
+  *
+  * \tparam dataT is either float or double.
+  */
+template<typename dataT>
+int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv, 
+                       Eigen::Array<dataT, -1, -1> & A, 
+                       dataT & condition)
+{
+   Eigen::Array<double,-1,-1> S, U, VT;
+   
+   int info;
+   info = eigenGESDD(U,S,VT,A);
+   
+   if(info != 0) return info;
+   
+   
+   dataT threshold = 0;
+   dataT Smax=S.maxCoeff();
+   if(condition > 0)
+   {
+      threshold = Smax/condition;
+   }
+   
+   Eigen::Array<double, -1,-1> sigma;
+   sigma.resize(S.rows(), S.rows());
+   sigma.setZero();
+   
+   condition = 1;
+   for(int i=0; i< S.rows(); ++i)
+   {
+      if( S(i) >= threshold )
+      {
+         sigma(i,i) = 1./S(i);
+         if(Smax/S(i) > condition) condition = Smax/S(i);
+      }
+      else
+      {
+         sigma(i,i) = 0;
+      }
+   }
+   
+   
+   Eigen::Array<double, -1,-1> PInvTmp;
+   
+   PInvTmp = sigma.matrix() * VT.matrix();
+   
+   PInv = U.block(0,0, U.rows(), PInvTmp.cols()).matrix()*PInvTmp.matrix();
+
+   return 0;
+}
+
+
+
+
+
+
+
 template<typename imOutT, typename imInT>
 void padImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
 {

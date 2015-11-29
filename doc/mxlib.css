@@ -117,8 +117,8 @@ div.navtab {
 
 a {
 	color: #1B1817;
-	font-weight: normal;
-	text-decoration: none;
+	font-weight: bold;
+	text-decoration: underline;
 }
 
 .contents a:visited {

@@ -16,6 +16,12 @@
 namespace mx
 {
 
+template<typename floatT>
+floatT fftPlateScale(floatT pixels, floatT metersPerPixel, floatT lambda)
+{
+   return (lambda/metersPerPixel) * (1./pixels);
+}
+   
 /// Fill in an imagingArray with a circular pupil mask.
 /** \ingroup imaging
   * \param m is the allocated Array
