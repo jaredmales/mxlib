@@ -176,6 +176,8 @@ struct ADIobservation : public HCIobservation<_floatT>
                    const std::string & prefix, 
                    const std::string ext = ".fits") ;
 
+   void initialize();
+   
    ///Read in the files
    /** First sets up the keywords, then calls HCIobservation readFiles
      */
@@ -204,23 +206,24 @@ struct ADIobservation : public HCIobservation<_floatT>
    ///De-rotate the PSF subtracted images
    void derotate();
 
+   double t_fake_begin;
+   double t_fake_end;
+   
+   double t_derotate_begin;
+   double t_derotate_end;
    
 };
 
 template<typename _floatT, class _derotFunctObj>
 ADIobservation<_floatT, _derotFunctObj>::ADIobservation()
 {
-   doDerotate = true;
-   doFake = 0;
-   doFakeScale = 0;
+   initialize();
 }
 
 template<typename _floatT, class _derotFunctObj>
 ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & fileListFile) : HCIobservation<floatT>(fileListFile)
 {
-   doDerotate = true;
-   doFake = 0;
-   doFakeScale = 0;
+   initialize();
 }
 
 template<typename _floatT, class _derotFunctObj>
@@ -228,28 +231,33 @@ ADIobservation<_floatT, _derotFunctObj>::ADIobservation( const std::string & dir
                                                          const std::string & prefix, 
                                                          const std::string ext) : HCIobservation<floatT>(dir,prefix,ext)
 {
+   initialize();
+}
+template<typename _floatT, class _derotFunctObj>
+void ADIobservation<_floatT, _derotFunctObj>::initialize()
+{
    doDerotate = true;
    doFake = 0;
    doFakeScale = 0;
+   
+   t_fake_begin = 0;
+   t_fake_end = 0;
+   
+   t_derotate_begin = 0;
+   t_derotate_end = 0;
 }
-
-
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::readFiles()
 {      
-   std::cout << "Loading keywords . . .\n";
    this->keywords.clear();
    for(int i=0;i<derotF.keywords.size();++i)
    {
       this->keywords.push_back(derotF.keywords[i]);
    }
    
-   std::cout << "Done.\n";
    HCIobservation<floatT>::readFiles();
    
-   std::cout << "Extracting Keywords.\n";
    derotF.extractKeywords(this->heads);
-   std::cout << "Done\n";
 }
 
 template<typename _floatT, class _derotFunctObj>
@@ -264,6 +272,8 @@ template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::injectFake()
 {
    std::cout << "injecting fake planets\n";
+
+   t_fake_begin = get_curr_time();
    
    typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
    imT fakePSF;
@@ -355,12 +365,16 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
    
    
    pout("fake injected");
+   
+   t_fake_end = get_curr_time();
 }
 
 
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::derotate()
 {
+   t_derotate_begin = get_curr_time();
+   
    //On magaoarx it doesn't seem worth it to use more than 4 threads
    #pragma omp parallel num_threads(4)
    {
@@ -380,7 +394,8 @@ void ADIobservation<_floatT, _derotFunctObj>::derotate()
          }
       }
    }
-     
+   
+   t_derotate_end = get_curr_time();
 }
 ///@}
 

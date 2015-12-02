@@ -64,6 +64,11 @@ protected:
    ///One time initialization common to all constructors
    void construct();
   
+   long _x0;
+   long _y0;
+   long _xpix;
+   long _ypix;
+   
 public:
    
    ///Default constructor
@@ -109,7 +114,7 @@ public:
      * 
      */ 
    void read(dataT * data);
-   
+
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
      *
@@ -260,6 +265,24 @@ public:
    
    ///@}
    
+   void setReadSize()
+   {
+      _x0 = -1;
+      _y0 = -1;
+      _xpix = -1;
+      _ypix = -1;
+   }
+   
+   void setReadSize(long x0, long y0, long xpix, long ypix)
+   {
+      _x0 = x0;
+      _y0 = y0;
+      _xpix = xpix;
+      _ypix = ypix;
+      
+   }
+   
+   
 }; // fitsFile
 
 ///@}
@@ -275,6 +298,9 @@ void fitsFile<dataT>::construct()
    anynul = 0;
    
    noComment = 0;
+   
+   setReadSize();
+
 }
 
 template<typename dataT>
@@ -414,7 +440,14 @@ long fitsFile<dataT>::getSize()
 
    long sz = 1;
    
-   for(int i=0;i<naxis;++i) sz*= naxes[i];
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis ==2)
+   {
+      return _xpix*_ypix;
+   }
+   else
+   {
+      for(int i=0;i<naxis;++i) sz*= naxes[i];
+   }
    
    return sz;
 }
@@ -424,7 +457,15 @@ long fitsFile<dataT>::getSize(size_t axis)
 {
    if(!isOpen or !naxes) return -1;
 
-   return naxes[axis];
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis ==2)
+   {
+      if(axis == 0) return _xpix;
+      return _ypix;
+   }
+   else
+   {
+      return naxes[axis];
+   }
 }
 
 /************************************************************/
@@ -447,14 +488,33 @@ void fitsFile<dataT>::read(dataT * data)
    
    long long nelements = 1;
    long *fpix = new long[naxis];
-
-   for(int i=0;i<naxis; i++)
+   long *lpix = new long[naxis];
+   long *inc = new long[naxis];
+   
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis == 2)
    {
-      fpix[i] = 1;
-      nelements *= naxes[i];
+      fpix[0] = _x0+1;
+      lpix[0] = fpix[0] + _xpix-1;
+      fpix[1] = _y0+1;
+      lpix[1] = fpix[1] + _ypix-1;
+   
+      inc[0] = 1;
+      inc[1] = 1;
    }
-
-   fits_read_pix(fptr, getFitsType<dataT>(), fpix, nelements, (void *) &nulval, 
+   else
+   {
+      for(int i=0;i<naxis; i++)
+      {
+         fpix[i] = 1;
+         lpix[i] = naxes[i];
+         inc[i] = 1;
+         //nelements *= naxes[i];
+      }
+   }
+   
+   //fits_read_pix(fptr, getFitsType<dataT>(), fpix, nelements, (void *) &nulval, 
+                                     //(void *) data, &anynul, &fstatus);
+   fits_read_subset(fptr, getFitsType<dataT>(), fpix, lpix, inc, (void *) &nulval, 
                                      (void *) data, &anynul, &fstatus);
    
    if (fstatus && fstatus != 107)
@@ -467,11 +527,15 @@ void fitsFile<dataT>::read(dataT * data)
       mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
       
       delete fpix;
-      
+      delete lpix;
+      delete inc;
+   
       throw e;
    }
 
    delete fpix;
+   delete lpix;
+   delete inc;
 }
 
 template<typename dataT>
@@ -536,33 +600,51 @@ void fitsFile<dataT>::read(arrT & im)
       }
    }
    
-   long long nelements = 1;
+   //long long nelements = 1;
    long *fpix = new long[naxis];
-
-   for(int i=0;i<naxis; i++)
-   {
-      fpix[i] = 1;
-      nelements *= naxes[i];
-   }
-
+   long *lpix = new long[naxis];
+   long *inc = new long[naxis];
    eigenArrResize<arrT> arrresz;
-   
-   if(naxis > 1)
-   {
-      arrresz.resize(im, naxes[0], naxes[1], naxes[2]);
+
+      
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis == 2)
+   {      
+      fpix[0] = _x0+1;
+      lpix[0] = fpix[0] + _xpix-1;
+      
+      fpix[1] = _y0+1;
+      lpix[1] = fpix[1] + _ypix-1;
+      //nelements = _xpix*_ypix;
+     
+      inc[0] = 1;
+      inc[1] = 1;
+      arrresz.resize(im, _xpix, _ypix,1);
    }
    else
    {
-      arrresz.resize(im, naxes[0], naxes[1],1);
+      for(int i=0;i<naxis; i++)
+      {
+         fpix[i] = 1;
+         lpix[i] = naxes[i];
+         inc[i] = 1;
+         //nelements *= naxes[i];
+      }
+
+   
+      if(naxis > 1)
+      {
+         arrresz.resize(im, naxes[0], naxes[1], naxes[2]);
+      }
+      else
+      {
+         arrresz.resize(im, naxes[0], naxes[1],1);
+      }
    }
    
-//    }
-//    else
-//    {
-//       im.resize(naxes[0], naxes[1]);
-//    }
    
-   fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
+   //fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
+   //                                  (void *) im.data(), &anynul, &fstatus);
+   fits_read_subset(fptr, getFitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &nulval, 
                                      (void *) im.data(), &anynul, &fstatus);
    
    if (fstatus && fstatus != 107)
@@ -578,7 +660,6 @@ void fitsFile<dataT>::read(arrT & im)
       
       throw e;
    }
-
    delete fpix;
       
 }
@@ -807,7 +888,6 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
    if(naxis > 2) naxes[2] = d3;
    
    std::string forceFileName = "!"+fileName;
-   //std::cout << forceFileName << "\n";
    
    fits_create_file(&fptr, forceFileName.c_str(), &fstatus);
    if (fstatus)
@@ -843,9 +923,7 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
    LONGLONG nelements = 1;
    
    for(int i=0;i<naxis;++i) nelements *= naxes[i];
-   
-   //std::cout << fpixel[0] << " " << fpixel[1] << " " << fpixel[2] << " " << nelements << "\n";
-   
+      
    fits_write_pix( fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
    if (fstatus)
    {

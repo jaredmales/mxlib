@@ -32,7 +32,22 @@
 
 namespace mx
 {
-   
+ 
+double t_begin;
+double t_end;
+
+double t_load_begin;
+double t_load_end;
+
+double t_coadd_begin;
+double t_coadd_end;
+
+double t_preproc_begin;
+double t_preproc_end;
+
+double t_combo_begin;
+double t_combo_end;
+
 /** \addtogroup hc_imaging
   * @{
   */
@@ -375,6 +390,29 @@ struct HCIobservation
     */
    void outputPSFSub(fitsHeader * addHead = 0);
    
+   
+   double t_begin;
+   double t_end;
+
+   double t_load_begin;
+   double t_load_end;
+
+   double t_coadd_begin;
+   double t_coadd_end;
+
+   double t_preproc_begin;
+   double t_preproc_end;
+
+   double t_azusm_begin;
+   double t_azusm_end;
+   
+   double t_gaussusm_begin;
+   double t_gaussusm_end;
+
+   
+   double t_combo_begin;
+   double t_combo_end;
+   
 };
 
 template<typename _floatT>
@@ -412,6 +450,28 @@ void HCIobservation<_floatT>::initialize()
    finimName = "finim_";
       
    doOutputPSFSub = false;
+   
+   
+   t_begin = 0;
+   t_end = 0;
+
+   t_load_begin = 0;
+   t_load_end = 0;
+
+   t_coadd_begin = 0;
+   t_coadd_end = 0;
+
+   t_preproc_begin = 0;
+   t_preproc_end = 0;
+   
+   t_azusm_begin =0;
+   t_azusm_end = 0;
+   
+   t_gaussusm_begin = 0;
+   t_gaussusm_end = 0;
+
+   t_combo_begin = 0;
+   t_combo_end = 0;
 }
 
 template<typename _floatT>
@@ -512,6 +572,7 @@ inline void HCIobservation<_floatT>::readFiles()
       
    fitsFile<floatT> f(fileList[0]);
 
+      
    f.read(im);
 
         
@@ -526,13 +587,25 @@ inline void HCIobservation<_floatT>::readFiles()
       
    heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
    heads.resize(fileList.size(), head);
+
+   if(imSize > 0)
+   {
+      f.setReadSize( 0.5*(im.rows()-1) - 0.5*(imSize-1), 0.5*(im.cols()-1.0) - 0.5*(imSize-1.0), imSize, imSize);
+      im.resize(imSize, imSize);
+   }
       
+
    imc.resize(im.rows(), im.cols(), fileList.size());
+
+   std::cout << imc.rows() << " " << imc.cols() << "\n";
+   t_load_begin = get_curr_time();
    
   /** \bug It is this step that is really slow during file reads *sometimes* 
    */
    f.read(fileList, imc.data(), heads);
 
+   f.setReadSize();
+   
    if(MJDKeyword != "")
    {
       imageMJD.resize(heads.size());
@@ -553,6 +626,9 @@ inline void HCIobservation<_floatT>::readFiles()
       }
    }
 
+   t_load_end = get_curr_time();
+   
+#if 0
    //Re-size the image
    if(imSize > 0)
    {
@@ -585,6 +661,8 @@ inline void HCIobservation<_floatT>::readFiles()
 
       std::cout << "Done\n";
    }
+#endif   
+   
    
    Nims =  imc.planes();
    Nrows = imc.rows();
@@ -650,6 +728,8 @@ void HCIobservation<_floatT>::coaddImages()
    //Validate combine method
    if(coaddCombineMethod == HCI::noCombine) return;
 
+   t_coadd_begin = get_curr_time();
+   
    pout("coadding raw images\n");
    
    std::vector<eigenImageT> coadds;
@@ -785,6 +865,7 @@ void HCIobservation<_floatT>::coaddImages()
       }
    }
    
+   t_coadd_end = get_curr_time();
    
 }//void HCIobservation<_floatT>::coaddImages()
 
@@ -792,6 +873,8 @@ void HCIobservation<_floatT>::coaddImages()
 template<typename _floatT>
 void HCIobservation<_floatT>::preProcess()
 {
+   t_preproc_begin = get_curr_time();
+   
    if( preProcess_subradprof )
    {
       std::cout << "subtracting radial profile . . .\n";
@@ -809,7 +892,7 @@ void HCIobservation<_floatT>::preProcess()
    if( preProcess_azUSM_azW && preProcess_azUSM_radW )
    {
       std::cout << "Applying azimuthal USM . . .\n";
-      
+      t_azusm_begin = get_curr_time();
       #pragma omp parallel for
       for(int i=0;i<imc.planes(); ++i)
       {
@@ -820,6 +903,7 @@ void HCIobservation<_floatT>::preProcess()
          imc.image(i) = im;
       }
       
+      t_azusm_end = get_curr_time();
       std::cout  << "Done\n";
    }
    
@@ -842,6 +926,8 @@ void HCIobservation<_floatT>::preProcess()
    if( preProcess_gaussUSM_fwhm > 0)
    {
       std::cout << "Applying Gauss USM . . .\n";
+      t_gaussusm_begin = get_curr_time();
+      
       #pragma omp parallel for
       for(int i=0;i<imc.planes(); ++i)
       {
@@ -866,10 +952,11 @@ void HCIobservation<_floatT>::preProcess()
          }
          
       }
+      t_gaussusm_end = get_curr_time();
       std::cout << "Done\n";
    }
    
-   
+   t_preproc_end = get_curr_time();
 }
 
 template<typename _floatT>
@@ -896,7 +983,8 @@ template<typename _floatT>
 void HCIobservation<_floatT>::combineFinim()
 {
    if(combineMethod == HCI::noCombine) return;
-   
+ 
+   t_combo_begin = get_curr_time();
    
    //Validate the combineMethod setting
    int method = HCI::medianCombine;
@@ -955,6 +1043,8 @@ void HCIobservation<_floatT>::combineFinim()
          finim.image(n) = psfsub[n].image(0);
       }
    }
+   
+   t_combo_end = get_curr_time();
 }
    
 template<typename _floatT>

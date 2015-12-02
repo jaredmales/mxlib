@@ -111,6 +111,8 @@ int ds9_interface_display_raw(ds9_interface *ds9i, int frame, const void *im, si
    
    ds9_interface_spawn(ds9i);
    
+
+   
    switch(bitpix)
    {
       case 8:
@@ -162,7 +164,7 @@ int ds9_interface_display_raw(ds9_interface *ds9i, int frame, const void *im, si
    
    snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s frame %i", ds9i->title, frame);
    system(cmd);
-   
+
    //Handle single image so that the cube dialog doesn't open up
    if(dim3 == 1)
    {
