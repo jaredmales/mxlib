@@ -340,6 +340,8 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       
       fitsHeader head;
       
+      this->ADIobservation<_floatT, _derotFunctObj>::fitsHeader(&head);
+      
       head.append("", fitsCommentType(), "----------------------------------------");
       head.append("", fitsCommentType(), "mx::KLIPreduction parameters:");
       head.append("", fitsCommentType(), "----------------------------------------");

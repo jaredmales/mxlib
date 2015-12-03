@@ -1089,6 +1089,7 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
   
    head.append("QFILE", basename(qualityFile.c_str()), "quality file for thresholding");
    head.append<floatT>("QTHRESH", qualityThreshold, "quality threshold");
+   head.append<int>("NUMIMS", Nims, "number of images processed");
    
    head.append<int>("IMSIZE", imSize, "image size after reading");
    
@@ -1100,8 +1101,19 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    }
 
    
+   
+   head.append<int>("PPBEFORE", preProcess_beforeCoadd, "pre-process before coadd flag");
+   head.append<int>("PPSUBRAD", preProcess_subradprof, "pre-process subtract radial profile flag");
+   head.append<floatT>("PPAUSMAW", preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width");
+   head.append<floatT>("PPAUSMRW", preProcess_azUSM_radW, "pre-process azimuthal USM radial width");
+   head.append("MASKFILE", maskFile, "mask file applied during pre-processing");
+   head.append<floatT>("PPGUSMFW", preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm");
+   
    head.append<int>("COMBMTHD", combineMethod, "combination method");
-                    
+   if(combineMethod == HCI::weightedMeanCombine)
+      head.append("WEIGHTF", weightFile, "filed containing weights for combination");
+   if(combineMethod == HCI::sigmaMeanCombine)
+      head.append<floatT>("SIGMAT", sigmaThreshold, "threshold for sigma clipping");
    
    if(addHead)
    {

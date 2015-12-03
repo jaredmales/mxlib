@@ -6,6 +6,7 @@
   */
 
 #include "HCIobservation.hpp"
+#include "fitsHeader.hpp"
 
 #ifndef __ADIobservation_hpp__
 #define __ADIobservation_hpp__
@@ -165,7 +166,7 @@ struct ADIobservation : public HCIobservation<_floatT>
    
    derotFunctObj derotF;
    //vector<floatT> derot;
-      
+
    bool doDerotate;
    
    ADIobservation();
@@ -189,9 +190,9 @@ struct ADIobservation : public HCIobservation<_floatT>
    /** \name Fake Planets
      * @{ 
      */
-   int doFake; ///<Flag controlling whether or not fake planets are injected
+//   int doFake; ///<Flag controlling whether or not fake planets are injected
    std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject
-   bool doFakeScale; ///<Flag controlling whether or not a separate scale is used at each point in time
+//   bool doFakeScale; ///<Flag controlling whether or not a separate scale is used at each point in time
    std::string fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
    
    std::vector<floatT> fakeSep; ///< Separation(s) of the fake planet(s)
@@ -202,6 +203,8 @@ struct ADIobservation : public HCIobservation<_floatT>
    void injectFake();
    
    /// @}
+   
+   void fitsHeader(fitsHeader * head);
    
    ///De-rotate the PSF subtracted images
    void derotate();
@@ -237,8 +240,8 @@ template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::initialize()
 {
    doDerotate = true;
-   doFake = 0;
-   doFakeScale = 0;
+//   doFake = 0;
+//   doFakeScale = 0;
    
    t_fake_begin = 0;
    t_fake_end = 0;
@@ -380,6 +383,7 @@ void ADIobservation<_floatT, _derotFunctObj>::derotate()
    {
       eigenImageT rotim;
       floatT derot;
+      
       #pragma omp for schedule(static, 1)
       for(int n=0; n<this->psfsub.size(); ++n)
       {
@@ -397,6 +401,36 @@ void ADIobservation<_floatT, _derotFunctObj>::derotate()
    
    t_derotate_end = get_curr_time();
 }
+
+
+template<typename _floatT, class _derotFunctObj>
+void ADIobservation<_floatT, _derotFunctObj>::fitsHeader(mx::fitsHeader * head)
+{
+   if(head == 0) return;
+   
+   head->append("", fitsCommentType(), "----------------------------------------");
+   head->append("", fitsCommentType(), "mx::ADIobservation parameters:");
+   head->append("", fitsCommentType(), "----------------------------------------");
+
+   head->append("FAKEFILE", fakeFileName, "name of fake planet PSF file");
+   head->append("FAKESCFL", fakeScaleFileName, "name of fake planet scale file name");
+   
+   std::stringstream str;
+   for(int nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
+   str << fakeSep[fakeSep.size()-1];      
+   head->append<char *>("FAKESEP", (char *)str.str().c_str(), "separation of fake planets");
+   
+   str.str("");
+   for(int nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
+   str << fakePA[fakePA.size()-1];      
+   head->append<char *>("FAKEPA", (char *)str.str().c_str(), "PA of fake planets");
+   
+   str.str("");
+   for(int nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
+   str << fakeContrast[fakeContrast.size()-1];      
+   head->append<char *>("FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets");
+}
+
 ///@}
 
 } //namespace mx
