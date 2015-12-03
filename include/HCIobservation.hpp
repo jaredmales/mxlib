@@ -55,7 +55,7 @@ double t_combo_end;
 namespace HCI 
 {
    ///Possible combination methods
-   enum combineMethods{ noCombine, medianCombine, meanCombine, weightedMeanCombine, debug};
+   enum combineMethods{ noCombine, medianCombine, meanCombine, weightedMeanCombine, sigmaMeanCombine, debug};
 }
 
 /// The basic high contrast imaging data type
@@ -223,6 +223,7 @@ struct HCIobservation
      * - HCI::medianCombine -- [default] final image is the median
      * - HCI::meanCombine -- final image is the simple mean
      * - HCI::weightedMeanCombine -- final image is the weighted mean.  weightFile must be provided.
+     * - HCI::sigmaMeanCombine -- final image is sigma clipped mean.  If sigmaThreshold <= 0, then it reverts to meanCombine.
      */
    int combineMethod;
    
@@ -231,6 +232,9 @@ struct HCIobservation
      * is executed.  Weights should be white-space separated.
      */
    std::string weightFile;
+   
+   ///The standard deviation threshold used if combineMethod == HCI::sigmaMeanCombine.
+   floatT sigmaThreshold;
    
    ///Vector to hold the weights read from the weightFile.
    std::vector<floatT> comboWeights;
@@ -445,6 +449,7 @@ void HCIobservation<_floatT>::initialize()
    filesRead = false;
    
    combineMethod = HCI::meanCombine;
+   sigmaThreshold = 0;
    
    doWriteFinim = 1;
    finimName = "finim_";
@@ -1005,6 +1010,17 @@ void HCIobservation<_floatT>::combineFinim()
    {
       method = HCI::meanCombine;
    }
+   else if(combineMethod == HCI::sigmaMeanCombine)
+   {
+      if(sigmaThreshold > 0)
+      {
+         method = HCI::sigmaMeanCombine;
+      }
+      else
+      {
+         method = HCI::meanCombine;
+      }
+   }
    else if(combineMethod == HCI::debug)
    {
       method = HCI::debug;
@@ -1036,6 +1052,12 @@ void HCIobservation<_floatT>::combineFinim()
       else if(method == HCI::meanCombine)
       {
          psfsub[n].mean(tfinim);
+         finim.image(n) = tfinim;
+      }
+      else if(method == HCI::sigmaMeanCombine)
+      {
+         std::cout << "Sigma Clipping! " << sigmaThreshold << "\n";
+         psfsub[n].sigmaMean(tfinim, sigmaThreshold);
          finim.image(n) = tfinim;
       }
       else if(method == HCI::debug)

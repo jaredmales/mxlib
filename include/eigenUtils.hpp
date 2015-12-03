@@ -599,7 +599,7 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
    return INFO;
 }
 
-///Calculate the pseudo-inverser of a patrix using the SVD
+///Calculate the pseudo-inverse of a patrix using the SVD
 /**
   * \param PInv [out] the pseudo-inverse of A
   * \param A [in] the matrix to invert

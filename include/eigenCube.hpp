@@ -12,6 +12,7 @@
 
 #include <Eigen/Dense>
 #include "eigenUtils.hpp"
+#include "vectorUtils.hpp"
 
 using namespace Eigen;
 
@@ -213,6 +214,9 @@ public:
    template<typename eigenT>
    void median(eigenT & mim);
    
+   ///Calculate the sigma clipped mean image of the cube
+   template<typename eigenT>
+   void sigmaMean(eigenT & mim, Scalar sigma);
    
 };
 
@@ -251,7 +255,33 @@ void eigenCube<dataT>::median(eigenT & mim)
    }
 }
 
+template<typename dataT>
+template<typename eigenT>
+void eigenCube<dataT>::sigmaMean(eigenT & mim, dataT sigma)
+{
+   mim.resize(_rows, _cols);
 
+   #pragma omp parallel num_threads(Eigen::nbThreads())
+   {
+      std::vector<Scalar> work;
+      Scalar var;
+      
+      #pragma omp for schedule(static, 10) 
+      for(Index i=0; i < _rows; ++i)
+      {
+         for(Index j=0;j< _cols; ++j)
+         {
+            work.resize(_planes);//work could be smaller after sigmaMean
+            int ii=0;
+            for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
+            
+            mim(i,j) = vectorSigmaMean(work, sigma, var);             
+         }
+      }
+      
+      
+   }
+}
 
 
 
