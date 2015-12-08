@@ -139,7 +139,7 @@ void makeComplexPupil( arrayOutT & complexPupil,
 {
    
    complexPupil.resize(wavefrontSizePixels, wavefrontSizePixels);
-   complexPupil.set(0);
+   complexPupil.set(typename arrayOutT::Scalar(0,0));
      
    //Lower-left corner of insertion region
    int bl = 0.5*(complexPupil.rows()-1) - 0.5*(realPupil.rows()-1.);
@@ -148,7 +148,7 @@ void makeComplexPupil( arrayOutT & complexPupil,
    {
       for(int j=0; j < realPupil.rows(); ++j)
       {
-         complexPupil(bl+i, bl+j) = realPupil(i,j)*( typename arrayOutT::Scalar(1,0)); 
+         complexPupil(bl+i, bl+j) = typename arrayOutT::Scalar(realPupil(i,j),0); //*exp( typename arrayOutT::Scalar(0,1)); 
       }
    }
    //complexPupil.block(bl, bl, realPupil.rows(), realPupil.rows()) = realPupil*std::complex<realT>(1,0);
@@ -174,7 +174,7 @@ void makeComplexPupil( arrayOutT & complexWavefront,
 {
    
    complexWavefront.resize(wavefrontSizePixels, wavefrontSizePixels);
-   complexWavefront.set(0);
+   complexWavefront.set(typename arrayOutT::Scalar(0,0));
      
    //Lower-left corner of insertion region
    int bl = 0.5*(complexWavefront.rows()-1) - 0.5*(realAmplitude.rows()-1.);

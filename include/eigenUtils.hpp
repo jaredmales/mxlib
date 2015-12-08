@@ -1,7 +1,10 @@
 #ifndef __eigenUtils_hpp__
 #define __eigenUtils_hpp__
 
+#pragma GCC system_header
 #include <Eigen/Dense>
+
+
 #include <cmath>
 #include <sofa.h>
 #include "geo.h"

@@ -22,7 +22,7 @@ template<class rangenT> rangenT & random_engine()
 ///A random number type, which functions like any other arithmetic type.  
 /** 
   * Combines a random engine, and a random distribution.  Using the type conversion operator
-  * randomT returns the next random deviate whenever t is referenced. 
+  * randomT returns the next random deviate whenever it is referenced. 
   *
   * Example:
   * 

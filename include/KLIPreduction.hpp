@@ -248,7 +248,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       if(Nmodes[i] > maxNmodes) maxNmodes = Nmodes[i];
    }
    
-   pout("Beginning\n");
+   std::cerr << "Beginning\n";
       
 
  //  t1 = get_curr_time();
@@ -265,7 +265,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
    
    if(this->preProcess_only)
    {
-      std::cout << "Pre-processing complete, stopping.\n";
+      std::cerr << "Pre-processing complete, stopping.\n";
       return;
    }
 
@@ -282,7 +282,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
    
    radAngImage(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1));
 
-   pout("starting regions", minr.size());
+   std::cerr << "starting regions " << minr.size() << "\n";
    //******** For each region do this:
    for(int regno = 0; regno < minr.size(); ++regno)
    {
@@ -316,27 +316,27 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       
       //*** Dispatch the work
       worker(rims, idx, dang);
-      pout("worker done");
+      std::cerr << "worker done\n";
       
    }
    
    if(this->doDerotate)
    {
-      pout("derotating");
+      std::cerr << "derotating\n";
       this->derotate();
    }
    
    
    if(this->combineMethod > 0)
    {
-      pout("combining");
+      std::cerr << "combining\n";
       this->combineFinim();
       
    }
    
    if(this->doWriteFinim == true || this->doOutputPSFSub == true)
    {
-      pout("writing");
+      std::cerr << "writing\n";
       
       fitsHeader head;
       
@@ -608,7 +608,7 @@ void collapseCovar( eigenT & cutCV,
    {
       //First partially sort the correlation values
       std::nth_element(allidx.begin(), allidx.begin()+ includeRefNum, allidx.end(), cvEntryComp);
-      std::cout << "    Minimum correlation: " << allidx[includeRefNum].cvVal << "\n";
+      std::cerr << "    Minimum correlation: " << allidx[includeRefNum].cvVal << "\n";
       
       //Now delete the lower correlation values
       allidx.erase(allidx.begin()+includeRefNum, allidx.end());
@@ -617,7 +617,7 @@ void collapseCovar( eigenT & cutCV,
       std::sort(allidx.begin(), allidx.end(), cvEntryCompIndex);
    }
     
-   std::cout << "  Keeping " << allidx.size() << " reference images out of " << Nims << " (" << rotoff1-rotoff0 << " rejected)\n";
+   std::cerr << "  Keeping " << allidx.size() << " reference images out of " << Nims << " (" << rotoff1-rotoff0 << " rejected)\n";
    
 
    extractRowsAndCols(cutCV, CV, allidx);
@@ -632,7 +632,7 @@ template<typename _floatT, class _derotFunctObj, typename _evCalcT>
 inline
 void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT> & rims, std::vector<size_t> & idx, floatT dang)
 {
-   pout("beginning worker");
+   std::cerr << "beginning worker\n";
 
    t_worker_begin = get_curr_time();
    
@@ -671,7 +671,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::worker(eigenCube<_floatT>
       for(int imno = 0; imno < this->Nims; ++imno)
       {
       
-         pout("image:", imno, "/", this->Nims);
+         std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
 
          //#pragma omp critical
          if( excludeMethod != HCI::excludeNone )

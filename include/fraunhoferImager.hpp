@@ -166,7 +166,7 @@ protected:
    {      
       realT pi = boost::math::constants::pi<realT>();
       
-      realT norm = 1./(wavefrontSizePixels/sqrt(2.));
+      realT norm = 1./(wavefrontSizePixels*sqrt(2));
       complexT cnorm = complexT(norm, norm);
       
       //Resize the center phases

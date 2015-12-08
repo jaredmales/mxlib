@@ -3,8 +3,10 @@
 #ifndef __eigenImage__
 #define __eigenImage__
 
-
+#pragma GCC system_header
 #include <Eigen/Dense>
+
+
 #include "fitsUtils.hpp"
 #include "eigenCube.hpp"
 

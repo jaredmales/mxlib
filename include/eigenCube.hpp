@@ -10,7 +10,10 @@
 #ifndef __eigenCube_hpp__
 #define __eigenCube_hpp__
 
+#pragma GCC system_header
 #include <Eigen/Dense>
+
+
 #include "eigenUtils.hpp"
 #include "vectorUtils.hpp"
 
@@ -84,7 +87,6 @@ public:
 
    eigenCube<dataT> & operator=(eigenCube<dataT> & ec)
    {
-      std::cout << "---*********************************---\n";
       resize(ec.rows(), ec.cols(), ec.planes());
       
       int N = _rows*_cols*_planes;

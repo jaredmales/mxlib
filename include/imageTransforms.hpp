@@ -8,6 +8,9 @@
 #ifndef __imageTransforms_hpp__
 #define __imageTransforms_hpp__
 
+#include <cstddef>
+#include <cmath>
+
 namespace mx
 {
 
@@ -314,8 +317,8 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
 } //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
 
 
-/// Magnify an image represented as an eigen array.
-/** Uses the given transformation type to magnify the input image to the size of the output image.
+// Magnify an image represented as an eigen array.
+/* Uses the given transformation type to magnify the input image to the size of the output image.
   *
   * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
   * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
@@ -400,6 +403,81 @@ void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, tran
 //          
 // } //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
 
+
+template<typename imageOutT, typename imageInT>
+void imageDownSample(imageOutT & imout, const imageInT & imin)
+{
+   typedef typename imageOutT::Scalar Scalar;
+   
+   
+   //Record this for normalization later
+   Scalar inputTotal = imin.sum();
+   
+   
+   
+   //As a first step, rebin to nearest whole pixel factor which is larger than the desired output size
+   int closestRebin = imin.rows()/imout.rows();//, imin.cols()/imout.cols() );
+
+   float sample = ( (float) imin.rows())/ closestRebin;
+   
+   while(  sample != floor(sample))
+   {
+      --closestRebin;
+      if(closestRebin == 1) break;
+      sample = ( (float) imin.rows())/ closestRebin;
+   }
+   
+   
+   //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> temp;
+   imageOutT temp;
+   temp.resize( imin.rows()/closestRebin, imin.cols()/closestRebin);
+   
+   for(int i=0;i<temp.rows(); ++i)
+   {
+      for(int j=0; j<temp.cols(); ++j)
+      {
+         temp(i,j) = imin.block( i*closestRebin, j*closestRebin, closestRebin, closestRebin).sum();
+      }
+   }
+
+   //If the output image is now the requested size return.
+   if(temp.rows() == imout.rows() && temp.cols() == imout.cols())
+   {
+      imout = temp;
+      Scalar outputTotal = imout.sum();
+      
+      //Normalize
+      imout *= inputTotal/outputTotal;
+      return;
+   }
+   //Otherwise, re-sample using bilinear interpolation.
+   typedef mx::bilinearTransform<Scalar> transformT;
+   
+   transformT trans;
+   //Eigen::Array<Scalar, -1,-1> kern;
+   imageOutT kern;
+   
+   const int lbuff = transformT::lbuff;
+   const int width = transformT::width;
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0;j<imout.cols(); ++j)
+      {
+         double x = ( (double) i/ imout.rows())*temp.rows();
+         double y = ( (double) j/ imout.cols())*temp.cols();
+         
+         trans(kern, x-floor(x), y-floor(y));
+         
+         imout(i,j) = (temp.block( floor(x)-lbuff, floor(y)-lbuff, width, width)*kern).sum();
+                  
+      }
+   }
+   
+   //Normalize
+   Scalar outputTotal = imout.sum();   
+   imout *= inputTotal/outputTotal;
+}   
 
 ///@}
 } //namespace mx

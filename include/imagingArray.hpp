@@ -12,7 +12,9 @@
 #include "templateBLAS.hpp"
 #include "fft.hpp"
 
+#pragma GCC system_header
 #include <Eigen/Dense>
+
 namespace mx
 {
    

@@ -24,7 +24,6 @@
 #include "imageTransforms.hpp"
 #include "fitsFile.hpp"
 #include "timeUtils.hpp"
-#include "pout.hpp"
 #include "imageMasks.hpp"
 #include "mxException.hpp"
 #include "readColumns.hpp"
@@ -105,6 +104,9 @@ struct HCIobservation
    /** If <= 0, then thresholding is not performed.
     */
    floatT qualityThreshold;
+   
+   ///Just prints the names and qualities of the files which pass threshold, and stop.
+   bool thresholdOnly;
    
    ///Name of the keyword to use for the image date. 
    /** Specifies the keyword corresponding to the date.  This is
@@ -426,6 +428,8 @@ void HCIobservation<_floatT>::initialize()
    deleteBack = 0;
    filesDeleted = false;
    
+   thresholdOnly = false;
+   
    MJDKeyword = "DATE-OBS";
    MJDisISO8601 = true;   
    MJDUnits = 1.0;
@@ -502,19 +506,19 @@ HCIobservation<_floatT>::HCIobservation(const std::string & fileListFile)
 template<typename _floatT>
 inline void HCIobservation<_floatT>::loadFileList(const std::string & fileListFile)
 {
-   std::cout << "Getting file list from file...\n";
+   std::cerr << "Getting file list from file...\n";
    readColumns(fileListFile, fileList);
    filesDeleted = false;
-   std::cout << "done.\n";
+   std::cerr << "done.\n";
 }
 
 template<typename _floatT>
 inline void HCIobservation<_floatT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
-   std::cout << "Getting file list...\n";
+   std::cerr << "Getting file list...\n";
    fileList = getFileNames(dir, prefix, ext);
    filesDeleted = false;
-   std::cout << "done.\n";
+   std::cerr << "done.\n";
 }
 
 template<typename _floatT>
@@ -543,7 +547,7 @@ inline void HCIobservation<_floatT>::readFiles()
 
    if(qualityFile != "")
    {      
-      std::cout << "Thresholding  . . .\n";
+      std::cerr << "Thresholding  . . .\n";
 
       int origsize = fileList.size();
       
@@ -570,6 +574,17 @@ inline void HCIobservation<_floatT>::readFiles()
          }
       }      
       std::cerr << "Done.  Selected " << fileList.size() << " out of " << origsize << "\n";
+      
+      if(thresholdOnly)
+      {
+         std::cout << "#Files which passed thresholding:\n";
+         for(int i=0; i<fileList.size(); ++i)
+         {
+            std::cout << fileList[i] << "\n";
+         }
+         
+         exit(0);
+      }
    }
    
    
@@ -602,7 +617,7 @@ inline void HCIobservation<_floatT>::readFiles()
 
    imc.resize(im.rows(), im.cols(), fileList.size());
 
-   std::cout << imc.rows() << " " << imc.cols() << "\n";
+   std::cerr << imc.rows() << " " << imc.cols() << "\n";
    t_load_begin = get_curr_time();
    
   /** \bug It is this step that is really slow during file reads *sometimes* 
@@ -637,7 +652,7 @@ inline void HCIobservation<_floatT>::readFiles()
    //Re-size the image
    if(imSize > 0)
    {
-      std::cout << "Resizing . . .\n";
+      std::cerr << "Resizing . . .\n";
       eigenCube<floatT> timc;
    
       timc.shallowCopy(imc, true);
@@ -664,7 +679,7 @@ inline void HCIobservation<_floatT>::readFiles()
          imc.image(n) = timc.image(n).block(min_x, min_y, max_x-min_x + 1, max_y-min_y+1);
       }
 
-      std::cout << "Done\n";
+      std::cerr << "Done\n";
    }
 #endif   
    
@@ -735,7 +750,7 @@ void HCIobservation<_floatT>::coaddImages()
 
    t_coadd_begin = get_curr_time();
    
-   pout("coadding raw images\n");
+   std::cerr << "coadding raw images\n";
    
    std::vector<eigenImageT> coadds;
 
@@ -882,7 +897,7 @@ void HCIobservation<_floatT>::preProcess()
    
    if( preProcess_subradprof )
    {
-      std::cout << "subtracting radial profile . . .\n";
+      std::cerr << "subtracting radial profile . . .\n";
       eigenImageT rp;
       
       for(int i=0;i<imc.planes(); ++i)
@@ -891,12 +906,12 @@ void HCIobservation<_floatT>::preProcess()
          radprofim(rp, imRef, true);
       }
       
-      std::cout << "done\n";
+      std::cerr << "done\n";
    }
    
    if( preProcess_azUSM_azW && preProcess_azUSM_radW )
    {
-      std::cout << "Applying azimuthal USM . . .\n";
+      std::cerr << "Applying azimuthal USM . . .\n";
       t_azusm_begin = get_curr_time();
       #pragma omp parallel for
       for(int i=0;i<imc.planes(); ++i)
@@ -909,12 +924,12 @@ void HCIobservation<_floatT>::preProcess()
       }
       
       t_azusm_end = get_curr_time();
-      std::cout  << "Done\n";
+      std::cerr  << "Done\n";
    }
    
    if( maskFile != "")
    {
-      std::cout << "Masking . . .\n";
+      std::cerr << "Masking . . .\n";
       fitsFile<floatT> ff;
       eigenImageT mask;
       
@@ -925,12 +940,12 @@ void HCIobservation<_floatT>::preProcess()
       {
          imc.image(i) *= mask;
       }
-      std::cout << "Done\n";
+      std::cerr << "Done\n";
    }
    
    if( preProcess_gaussUSM_fwhm > 0)
    {
-      std::cout << "Applying Gauss USM . . .\n";
+      std::cerr << "Applying Gauss USM . . .\n";
       t_gaussusm_begin = get_curr_time();
       
       #pragma omp parallel for
@@ -944,7 +959,7 @@ void HCIobservation<_floatT>::preProcess()
       }
       if( maskFile != "")
       {
-         std::cout << "Masking . . .\n";
+         std::cerr << "Masking . . .\n";
          fitsFile<floatT> ff;
          eigenImageT mask;
       
@@ -958,7 +973,7 @@ void HCIobservation<_floatT>::preProcess()
          
       }
       t_gaussusm_end = get_curr_time();
-      std::cout << "Done\n";
+      std::cerr << "Done\n";
    }
    
    t_preproc_end = get_curr_time();
@@ -1056,7 +1071,7 @@ void HCIobservation<_floatT>::combineFinim()
       }
       else if(method == HCI::sigmaMeanCombine)
       {
-         std::cout << "Sigma Clipping! " << sigmaThreshold << "\n";
+         std::cerr << "Sigma Clipping! " << sigmaThreshold << "\n";
          psfsub[n].sigmaMean(tfinim, sigmaThreshold);
          finim.image(n) = tfinim;
       }
@@ -1127,7 +1142,7 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
       
    f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
    
-   pout("Final image written to: ", fname);
+   std::cerr << "Final image written to: " <<  fname << "\n";
 }
 
 

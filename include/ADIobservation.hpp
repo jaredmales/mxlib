@@ -274,7 +274,7 @@ void ADIobservation<_floatT, _derotFunctObj>::postReadFiles()
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::injectFake()
 {
-   std::cout << "injecting fake planets\n";
+   std::cerr << "injecting fake planets\n";
 
    t_fake_begin = get_curr_time();
    
@@ -367,7 +367,7 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
    }
    
    
-   pout("fake injected");
+   std::cerr << "fake injected\n";
    
    t_fake_end = get_curr_time();
 }
