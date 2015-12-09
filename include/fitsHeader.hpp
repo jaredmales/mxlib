@@ -353,8 +353,11 @@ void fitsHeader::eraseStandardTop()
       if(it->keyword == "SIMPLE" || it->keyword == "SIMPLE" || it->keyword == "BITPIX" || it->keyword == "NAXIS" 
            || it->keyword == "NAXIS1" || it->keyword == "NAXIS2" || it->keyword == "NAXIS3" || it->keyword == "EXTEND"
               || it->keyword == "BZERO" || it->keyword == "BSCALE")
-      erase(it);
-      
+      {
+         erase(it);
+      }
+         
+      if(nit == end()) break;
       it = nit;
       ++n;
    }
