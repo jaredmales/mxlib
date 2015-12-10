@@ -57,6 +57,8 @@ struct configTarget
 };
 
 /// Class to manage a set of configurable values, and read their values from config/ini files and the command line.
+/** \bug a config=value pair listed in a conf file twice seems to cause a failure, even if they are the same value.
+ */
 struct appConfigurator
 {
    typedef std::unordered_map<std::string, configTarget>::iterator targetIterator;
