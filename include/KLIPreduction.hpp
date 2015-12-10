@@ -263,7 +263,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       this->readFiles();
    }
    
-   if(this->preProcess_only)
+   if(this->preProcess_only && !this->skipPreProcess)
    {
       std::cerr << "Pre-processing complete, stopping.\n";
       return;

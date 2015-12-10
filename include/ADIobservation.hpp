@@ -268,7 +268,7 @@ void ADIobservation<_floatT, _derotFunctObj>::postReadFiles()
 {
    derotF.extractKeywords(this->heads);
    
-   if(fakeFileName != "") injectFake();
+   if(fakeFileName != ""  && !this->skipPreProcess) injectFake();
 }
 
 template<typename _floatT, class _derotFunctObj>

@@ -178,6 +178,8 @@ struct HCIobservation
      * @{
      */
    
+   bool skipPreProcess; ///<Don't do any of the pre-processing steps (including coadding).
+   
    bool preProcess_beforeCoadd; ///<controls whether pre-processing takes place before or after coadding
    
    bool preProcess_subradprof; ///<If true, a radial profile is subtracted from each image.
@@ -446,6 +448,7 @@ void HCIobservation<_floatT>::initialize()
    coaddMaxImno = 0;
    coaddMaxTime = 0;
  
+   skipPreProcess = false;
    
    preProcess_beforeCoadd = false; 
    preProcess_subradprof = false;
@@ -454,6 +457,8 @@ void HCIobservation<_floatT>::initialize()
    preProcess_gaussUSM_fwhm = 0;
    
    preProcess_only = false;
+   
+
    
    filesRead = false;
    
@@ -659,29 +664,30 @@ inline void HCIobservation<_floatT>::readFiles()
    Ncols = imc.cols();
    Npix =  imc.rows()*imc.cols();
    
-   
    /*** Now do the post-read actions ***/
    postReadFiles();
    
+   if(!skipPreProcess)
+   {   
+      /*** Now do any pre-processing ***/
+      if(preProcess_beforeCoadd) preProcess();
    
-   /*** Now do any pre-processing ***/
-   if(preProcess_beforeCoadd) preProcess();
-   
-   if(weightFile != "")
-   {
-      readWeights();
-   }
+      if(weightFile != "")
+      {
+         readWeights();
+      }
 
-   if(coaddCombineMethod != HCI::noCombine)
-   {
-      coaddImages();
-   }
+      if(coaddCombineMethod != HCI::noCombine)
+      {
+         coaddImages();
+      }
 
-   /*** Now do any pre-processing if not done already***/
-   if(!preProcess_beforeCoadd) preProcess();
+      /*** Now do any pre-processing if not done already***/
+      if(!preProcess_beforeCoadd) preProcess();
       
-   outputPreProcessed();
+      outputPreProcessed();
    
+   }
    filesRead = true;
 }
  
