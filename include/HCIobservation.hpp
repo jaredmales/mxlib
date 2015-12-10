@@ -252,11 +252,16 @@ struct HCIobservation
    int doWriteFinim;
    
    ///The base file name of the output final image
-   /** The complete name is formed by combining with a sequential number and the fits extension.
-     * that is: finimName0000.fits 
+   /** The complete name is formed by combining with a sequential number and the ".fits" extension.
+     * that is: finimName0000.fits.  This behavior can be modified with exactFinimName.
      */
    std::string finimName;
    
+   ///Use finimName exactly as specified, without appending a number or an extension.
+   /** Output is still FITS format, regardless of extension.  This will overwrite
+     * an existing file without asking.  
+     */
+   bool exactFinimName;
    
    ///Controls whether or not the individual PSF subtracted images are written to disk.  
    /** - true -- write to disk
@@ -457,7 +462,8 @@ void HCIobservation<_floatT>::initialize()
    
    doWriteFinim = 1;
    finimName = "finim_";
-      
+   exactFinimName = false;
+   
    doOutputPSFSub = false;
    
    
@@ -647,43 +653,7 @@ inline void HCIobservation<_floatT>::readFiles()
    }
 
    t_load_end = get_curr_time();
-   
-#if 0
-   //Re-size the image
-   if(imSize > 0)
-   {
-      std::cerr << "Resizing . . .\n";
-      eigenCube<floatT> timc;
-   
-      timc.shallowCopy(imc, true);
-     
-      double xc = 0.5*(timc.rows()-1);
-      double yc = 0.5*(timc.cols()-1);
-
-      int min_x = floor(xc - (0.5*imSize-0.5) + 0.01);
-      if(min_x < 0) min_x = 0;
-   
-      int max_x = floor(xc + (0.5*imSize-0.5) + 0.51);
-      if(max_x >= timc.cols()) max_x = timc.rows()-1;
-   
-      int min_y = floor(yc - (0.5*imSize-0.5) + 0.01);
-      if(min_y < 0) min_y = 0;
-   
-      int max_y = floor(yc + (0.5*imSize-0.5) + 0.51);
-      if(max_y >= timc.rows()) max_y = timc.cols() - 1;
-   
-      imc.resize( max_y-min_y + 1, max_x-min_x+1, timc.planes());
-   
-      for(int n=0;n<timc.planes();++n)
-      {
-         imc.image(n) = timc.image(n).block(min_x, min_y, max_x-min_x + 1, max_y-min_y+1);
-      }
-
-      std::cerr << "Done\n";
-   }
-#endif   
-   
-   
+      
    Nims =  imc.planes();
    Nrows = imc.rows();
    Ncols = imc.cols();
@@ -1090,7 +1060,15 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    std::string fname;
    
    
-   fname = getSequentialFilename(finimName, ".fits");
+   if(!exactFinimName)
+   {
+      fname = getSequentialFilename(finimName, ".fits");
+   }
+   else
+   {
+      fname = finimName;
+   }
+   
    
    fitsHeader head;
    
@@ -1126,7 +1104,7 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    
    head.append<int>("COMBMTHD", combineMethod, "combination method");
    if(combineMethod == HCI::weightedMeanCombine)
-      head.append("WEIGHTF", weightFile, "filed containing weights for combination");
+      head.append("WEIGHTF", weightFile, "file containing weights for combination");
    if(combineMethod == HCI::sigmaMeanCombine)
       head.append<floatT>("SIGMAT", sigmaThreshold, "threshold for sigma clipping");
    
