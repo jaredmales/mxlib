@@ -621,7 +621,8 @@ inline void HCIobservation<_floatT>::readFiles()
 
    if(imSize > 0)
    {
-      f.setReadSize( 0.5*(im.rows()-1) - 0.5*(imSize-1), 0.5*(im.cols()-1.0) - 0.5*(imSize-1.0), imSize, imSize);
+      //the +0.1 is just to make sure we don't have a problem with precision (we shouldn't)/
+      f.setReadSize( floor(0.5*(im.rows()-1) - 0.5*(imSize-1) +0.1), floor(0.5*(im.cols()-1.0) - 0.5*(imSize-1.0)+0.1), imSize, imSize);
       im.resize(imSize, imSize);
    }
       
