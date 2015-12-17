@@ -404,6 +404,9 @@ void fitsFile<dataT>::close()
 {
    int stat;
    fstatus = 0;
+      
+   if(!isOpen) return;
+   
    stat = fits_close_file(fptr, &fstatus);
    
    if (fstatus)
@@ -420,8 +423,9 @@ void fitsFile<dataT>::close()
    
    isOpen = 0;
    fstatus = 0;
-
+      
    if(naxes) delete naxes;
+
    naxes = 0;
 }
 
