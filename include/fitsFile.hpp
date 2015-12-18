@@ -905,7 +905,8 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
       throw e;
 
    }
-
+   isOpen = true;
+   
    fits_create_img( fptr, getFitsBITPIX<dataT>(), naxis, naxes, &fstatus);
    if (fstatus)
    {
