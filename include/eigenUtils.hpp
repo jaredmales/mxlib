@@ -613,7 +613,8 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
 template<typename dataT>
 int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv, 
                        Eigen::Array<dataT, -1, -1> & A, 
-                       dataT & condition)
+                       dataT & condition,
+                       int & nrejected)
 {
    Eigen::Array<double,-1,-1> S, U, VT;
    
@@ -635,6 +636,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    sigma.setZero();
    
    condition = 1;
+   nrejected = 0;
    for(int i=0; i< S.rows(); ++i)
    {
       if( S(i) >= threshold )
@@ -645,6 +647,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       else
       {
          sigma(i,i) = 0;
+         ++nrejected;
       }
    }
    

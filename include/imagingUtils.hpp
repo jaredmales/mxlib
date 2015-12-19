@@ -57,12 +57,12 @@ void circularPupil( arrayT & m,
 
 template<class arrayT> 
 void drawLine( arrayT & im, 
-                     typename arrayT::Scalar x0, 
-                     typename arrayT::Scalar y0,
-                     typename arrayT::Scalar x1, 
-                     typename arrayT::Scalar y1,
-                           typename arrayT::Scalar halfWidth
-                   )
+               typename arrayT::Scalar x0, 
+               typename arrayT::Scalar y0,
+               typename arrayT::Scalar x1, 
+               typename arrayT::Scalar y1,
+               typename arrayT::Scalar halfWidth
+             )
 {
 
    typename arrayT::Scalar m = (y1-y0)/(x1-x0);
