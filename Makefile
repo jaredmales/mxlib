@@ -88,7 +88,8 @@ INC_TO_INSTALL = airy.hpp \
 	         KLIPreduction.hpp \
 		 imageMasks.hpp \
 		 vectorUtils.hpp \
-		 randomT.hpp
+		 randomT.hpp \
+		 powerspectra.hpp
                  
 # VMOP_TO_INSTALL = MMatrix \
 #                   MMatrix1 \

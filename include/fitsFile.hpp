@@ -351,13 +351,12 @@ void fitsFile<dataT>::open()
       std::string explan;
       fits_get_errstatus(fstatus, emnem);
       explan = "Error opening file: ";
-      explan +=  fileName + ". ";
-      
+      explan +=  fileName + ". ";      
       mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+
       throw e;
 
    }
-
    fits_get_img_dim(fptr, &naxis, &fstatus);
    if (fstatus)
    {

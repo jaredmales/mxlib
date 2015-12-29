@@ -19,7 +19,7 @@ class mxException : public std::exception
 
 protected:
    ///Contains the what() string
-   std::ostringstream s;
+   char whatstr[4096];
    
 public:
 
@@ -100,6 +100,7 @@ public:
      */
    virtual void build_what()
    {
+      std::ostringstream s;
       s.str("");
       
       s << "An exception has been thrown in an mxlib component.\n";
@@ -109,12 +110,14 @@ public:
       s << "     in file: " << except_file << "\n";
       s << "     at line: " << except_line << "\n";
       s << " explanation: " << except_explanation << "\n";
+      
+      snprintf(whatstr, 4096, "%s", s.str().c_str());
    }
    
    ///Return the details of the exception as a single string.
    virtual const char * what() const noexcept
    {   
-      return s.str().c_str();
+      return whatstr;//s.str().c_str();
    }
    
 };

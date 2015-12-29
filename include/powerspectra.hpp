@@ -11,13 +11,17 @@
 #include <cmath>
 #include "randomT.hpp"
 
+#pragma GCC system_header
+#include <Eigen/Dense>
+
+
 namespace mx
 {
 
 /** \addtogroup psds 
   */
-//@{
-
+/* //@{
+*/
 
 /// Calculates the frequency sampling for a grid given maximum dimension and maximum frequency.
 /** The freq_sampling is
@@ -111,7 +115,8 @@ void frequency_grid( eigenArr & arr,
       }
    }
 }
-   
+ 
+#if 0 
 template<typename eigenArrp, typename eigenArrs>
 void calcPSD( eigenArrp & psd,
               eigenArrs & sample
@@ -357,7 +362,7 @@ void oneoverf_noise( eigenArrn & noise,
    
    eigenArrn freq(noise.rows(), noise.cols());
    eigenArrn psd(noise.rows(), noise.cols());
-   Eigen::Array<complexT, Dynamic, Dynamic> subh(noise.rows(), noise.cols());
+   Eigen::Array<complexT, Eigen::Dynamic, Eigen::Dynamic> subh(noise.rows(), noise.cols());
    
    dim_1 = noise.rows();
    dim_2 = noise.cols();
@@ -418,7 +423,33 @@ void oneoverf_noise( eigenArrn & noise,
 }
 
 
-template<typename eigenArrw>
+
+
+/*group psds*/
+//@} 
+
+
+template<typename realT>
+void test_psd_and_ac(realT N, int simNx, realT alpha, std::string fname)
+{
+   Eigen::ArrayXXd noise, sample, w, psd, ac, psdavg, acavg;
+   int Ntrials = 1000;
+
+   uni_distd rand;
+
+   noise.resize(N*simNx, 1);
+
+   sample.resize(N,1);
+   psd.resize(N,1);
+   ac.resize(N,1);
+
+   psdavg.resize(N,1);
+   psdavg.setZero();
+   acavg.resize(N,1);
+   acavg.setZero();
+
+   w.resize(N,1);
+   tukeyWindow1D(w, Ntemplate<typename eigenArrw>
 void tukeyWindow1D( eigenArrw & w,
                   typename eigenArrw::Index N,
                   typename eigenArrw::Scalar alpha
@@ -449,34 +480,7 @@ void tukeyWindow1D( eigenArrw & w,
    {
       w(t) = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 2./alpha + 1))) ;
    }
-}
-
-/*group psds*/
-//@} 
-
-}//namespace mx
-
-template<typename realT>
-void test_psd_and_ac(realT N, int simNx, realT alpha, std::string fname)
-{
-   Eigen::ArrayXXd noise, sample, w, psd, ac, psdavg, acavg;
-   int Ntrials = 1000;
-
-   uni_distd rand;
-
-   noise.resize(N*simNx, 1);
-
-   sample.resize(N,1);
-   psd.resize(N,1);
-   ac.resize(N,1);
-
-   psdavg.resize(N,1);
-   psdavg.setZero();
-   acavg.resize(N,1);
-   acavg.setZero();
-
-   w.resize(N,1);
-   tukeyWindow1D(w, N, 1.0);
+}, 1.0);
 
    for(int n = 0; n<Ntrials; ++n)
    {
@@ -532,10 +536,99 @@ void test_psd_and_ac(realT N, int simNx, realT alpha, std::string fname)
    fout.close();
 
 }  
+
+#endif
+
+#include <sofa.h>
+
+template<typename vecT>
+void tukeyWindow1D( vecT & w,
+                  typename vecT::value_type alpha
+                )
+{
+   //typedef typename eigenArrw::Index Index;
+   typedef typename vecT::value_type Scalar;
    
+   int N = w.size();
+
+   //Avoid divide by 0, etc.,if we don't need it 
+   if(alpha == 0.)
+   {
+      for(int i=0;i<N; ++i) w[i] = 1.0;
+      return;
+   }
+
+   int t = 0;
+   for(t;t <= 0.5*alpha*(N-1); ++t)
+   {
+      w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 1)));
+   }
+   for(t; t < (N-1)*(1-0.5*alpha); ++t)
+   {
+      w[t] = 1.;
+   }
+   for(t; t<N; ++t)
+   {
+      w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 2./alpha + 1))) ;
+   }
+}
+
+///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
+template<typename floatT>
+void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, floatT dt, floatT avgLen, floatT olap)
+{
+   int Nper = avgLen/dt;
+   int Nover = (avgLen-olap)/dt;
    
+   pgram.resize(Nper/2., 0);
    
+   std::vector<floatT> work;
+   work.resize(Nper);
    
+   std::vector<std::complex<floatT> > fftwork;
+   fftwork.resize(Nper);
+   
+   int Navg = ts.size()/Nover;
+   
+   while(Navg*Nover + Nper > ts.size()) --Navg;
+
+   typename std::vector<floatT>::iterator first, last;
+   
+   fftwf_plan p = fftwf_plan_dft_r2c_1d(work.size(), work.data(), reinterpret_cast<fftwf_complex*>(fftwork.data()), FFTW_ESTIMATE);
+
+   std::vector<floatT> w;
+   w.resize(Nper);
+   tukeyWindow1D(w, .5);
+   
+   for(int i=0;i<Navg;++i)
+   {
+      first = ts.begin() + (i*Nover);
+      last = first + Nper;
+      
+      work.assign(first, last);
+      float mean = 0;
+      for (int j=0;j<work.size();++j) mean += work[j];
+      //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
+      mean/=work.size();
+      for(int j=0;j<work.size();++j) 
+      {
+         work[j] = (work[j] - mean)*w[j];
+      }
+            
+      fftwf_execute(p);
+       
+      for(int j=0;j<pgram.size();++j) pgram[j] += pow(abs(fftwork[j]),2);
+
+      //pgram[0] = 0;
+   }
+
+   
+   fftwf_destroy_plan(p);
+
+}
+   
+}//namespace mx
+
    
 #endif //#ifdef __mx_powerspectra__
 

@@ -491,14 +491,29 @@ template<typename typeT> void fitsHeader::insert_after(headerIterator it, const 
 inline
 fitsHeaderCard & fitsHeader::operator[](const std::string & keyword)
 {
-   headerIterator it = cardMap.find(keyword)->second;
-   
+   headerIterator it;
+
+   //If not found, append it.
+   if(cardMap.find(keyword) == cardMap.end())
+   {
+      append(keyword);
+   }
+
+   it = cardMap.find(keyword)->second;
+
    return *it;
+   
 }
 
 inline
 const fitsHeaderCard & fitsHeader::operator[](const std::string & keyword) const
 {
+   if(cardMap.find(keyword) == cardMap.end())
+   {
+      std::cerr << "Fits header card with keyword: " << keyword << " not found.\n";
+   }
+
+   
    headerIterator it = cardMap.find(keyword)->second;
    
    return *it;
