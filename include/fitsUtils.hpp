@@ -334,6 +334,24 @@ int fits_write_key(fitsfile * fptr, char * keyword, void * value, char * comment
    return fstatus;
 }
 
+template<>
+inline int fits_write_key<char *>(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   int fstatus = 0;
+  
+   fits_write_key_longstr(fptr, keyword, (const char *)  value, comment,  &fstatus);
+   
+   return fstatus;
+   
+}
+
+template<>
+inline int fits_write_key<std::string>(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   return fits_write_key<char *>(fptr, keyword, value, comment);
+}
+
+
 template<> 
 inline int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
