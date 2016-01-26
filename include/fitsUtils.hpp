@@ -339,6 +339,9 @@ inline int fits_write_key<char *>(fitsfile * fptr, char * keyword, void * value,
 {
    int fstatus = 0;
   
+   fits_write_key_longwarn(fptr, &fstatus);
+   
+      
    fits_write_key_longstr(fptr, keyword, (const char *)  value, comment,  &fstatus);
    
    return fstatus;
