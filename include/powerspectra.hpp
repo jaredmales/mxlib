@@ -610,6 +610,7 @@ void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, f
       for (int j=0;j<work.size();++j) mean += work[j];
       //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
       mean/=work.size();
+      
       for(int j=0;j<work.size();++j) 
       {
          work[j] = (work[j] - mean)*w[j];

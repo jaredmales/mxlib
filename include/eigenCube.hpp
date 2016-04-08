@@ -85,6 +85,13 @@ public:
       }
    }
 
+   void setZero()
+   {
+      int N = _rows*_cols*_planes;
+      
+      for(int i=0;i<N;++i) _data[i] = ((dataT) 0);
+   }
+   
    eigenCube<dataT> & operator=(eigenCube<dataT> & ec)
    {
       resize(ec.rows(), ec.cols(), ec.planes());

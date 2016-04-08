@@ -16,6 +16,16 @@
 namespace mx
 {
 
+///Calculate the plate scale of an image after propagation by FFT.
+/** 
+  * \tparam floatT a rel floating point type 
+  * 
+  * \param pixels is the linear dimension of the FFT (including 0 pad, etc.)
+  * \param metersPerPixel is the scale of the input wavefront [m/pix]
+  * \param lambda is the wavelength of the wavefront [m]
+  *
+  * \returns the platescale of the wavefront after propagation by FFT.
+  */   
 template<typename floatT>
 floatT fftPlateScale(floatT pixels, floatT metersPerPixel, floatT lambda)
 {
