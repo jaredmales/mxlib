@@ -264,6 +264,39 @@ bool convertFromString<bool>(const std::string & str)
    return (bool) convertFromString<int>(str);
 }
 
+/// Convert a string to all lower case.
+/** Calls the c tolower function for each character in instr.
+  * 
+  * \param outstr will be resized and populated with the lower case characters
+  * \param instr the string to convert.
+  */
+inline
+void toLower(std::string &outstr, const std::string & instr)
+{
+   outstr.resize(instr.size());
+   
+   for(int i=0; i < instr.size(); ++i) outstr[i] = tolower(instr[i]);
+   
+}
+
+/// Convert a string to all lower case.
+/** Calls the c tolower function for each character in instr.
+  * 
+  * \param instr the string to convert.
+  * 
+  * \return the all lower case string
+  */
+inline
+std::string toLower(const std::string & instr)
+{
+   std::string outstr;
+   
+   toLower(outstr, instr);
+   
+   return outstr;
+}
+
+
 
 /// @}
 

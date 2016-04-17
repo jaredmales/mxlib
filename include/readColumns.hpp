@@ -114,6 +114,8 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       //Save one space for adding eol
       fin.getline(line, lineSize-1, eol);
             
+      //std::cout << line << "\n";
+      
       int i=0;
       int l = strlen(line);
 

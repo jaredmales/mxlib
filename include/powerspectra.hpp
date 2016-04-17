@@ -574,8 +574,21 @@ void tukeyWindow1D( vecT & w,
 }
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
+/**
+  * \param pgram [out] the resultant periodogram
+  * \param ts [in] the time series
+  * \param dt [in] the sampling time of ts
+  * \param avgLen [in] the length of the averaging interval, same units as dt
+  * \param olap [in] the length of the overlap region, same units as avgLen
+  * \param alpha  [in] Tukey window parameter, alpha = 0 is rectangle (no window)
+  */
 template<typename floatT>
-void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, floatT dt, floatT avgLen, floatT olap)
+void averagePeriodogram( std::vector<floatT> & pgram, 
+                         std::vector<floatT> & ts, 
+                         floatT dt, 
+                         floatT avgLen, 
+                         floatT olap,
+                         floatT alpha = 0.5 )
 {
    int Nper = avgLen/dt;
    int Nover = (avgLen-olap)/dt;
@@ -594,11 +607,11 @@ void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, f
 
    typename std::vector<floatT>::iterator first, last;
    
-   fftwf_plan p = fftwf_plan_dft_r2c_1d(work.size(), work.data(), reinterpret_cast<fftwf_complex*>(fftwork.data()), FFTW_ESTIMATE);
+   fftw_plan p = fftw_plan_dft_r2c_1d(work.size(), work.data(), reinterpret_cast<fftw_complex*>(fftwork.data()), FFTW_ESTIMATE);
 
    std::vector<floatT> w;
    w.resize(Nper);
-   tukeyWindow1D(w, .5);
+   tukeyWindow1D(w, alpha);
    
    for(int i=0;i<Navg;++i)
    {
@@ -611,12 +624,13 @@ void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, f
       //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
       mean/=work.size();
       
+      
       for(int j=0;j<work.size();++j) 
       {
          work[j] = (work[j] - mean)*w[j];
       }
             
-      fftwf_execute(p);
+      fftw_execute(p);
        
       for(int j=0;j<pgram.size();++j) pgram[j] += pow(abs(fftwork[j]),2);
 
@@ -624,7 +638,7 @@ void averagePeriodogram(std::vector<floatT> & pgram, std::vector<floatT> & ts, f
    }
 
    
-   fftwf_destroy_plan(p);
+   fftw_destroy_plan(p);
 
 }
    
