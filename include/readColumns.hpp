@@ -53,7 +53,7 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
          str.erase(str.size()-1);
       }
       
-      //std::cout << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
+      //std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
       array.push_back(convertFromString<typename arrT::value_type>(str));
    }
       
@@ -114,17 +114,28 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       //Save one space for adding eol
       fin.getline(line, lineSize-1, eol);
             
-      //std::cout << line << "\n";
+      
       
       int i=0;
       int l = strlen(line);
 
       if(l <= 0) break;
       
-      //Find start of comment.
+      //std::cerr << line << "\n";
+      
+      //Find start of comment and end line at that point.
       while(line[i] != comment && i < l ) ++i;      
-      if(i < l-1) line[i] = '\0';
-
+      if(i <= l-1) 
+      {
+         line[i] = '\0';
+      }
+       
+      //std::cerr << "- " << l << " " << i << "\n"; 
+      l = strlen(line);
+      //std::cerr << "+ " << l << " " << i << "\n"; 
+      
+      if(l == 0) continue;
+      
       //Make sure line ends with eol
       line[l] = eol;
       ++l;
