@@ -43,6 +43,7 @@ INC_TO_INSTALL = airy.hpp \
                  application.hpp \
                  astroconstants.h \
                  astrodyn.hpp \
+                 astroFilter.hpp \
                  astrotypes.h \
                  kepler.hpp \
                  geo.h \
@@ -74,6 +75,7 @@ INC_TO_INSTALL = airy.hpp \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \
+                 environment.hpp \
                  gramSchmidt.hpp \
                  imageFilters.hpp \
                  imageTransforms.hpp \

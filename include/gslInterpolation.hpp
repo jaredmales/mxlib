@@ -2,6 +2,8 @@
   * \brief Wrappers for using the GNU Scientific Library 1-D interpolation functions
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
+  * 
+  * \ingroup interpolation
   *
   */
   
@@ -70,14 +72,16 @@ struct gslInterpolator
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
   * \param interpT of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
-  * \param [in] xin the input x-axis
-  * \param [in] yin the input y-values
-  * \param [in] Nin the size of the input x-y data series
-  * \param [in] xout the desired x-axis
-  * \param [out] yout the output interpolated y-values
-  * \param [in] Nout the size of the output x-y axis
+  * \param [in]  xin the input x-axis
+  * \param [in]  yin the input y-values
+  * \param [in]  Nin the size of the input x-y data series
+  * \param [in]  xout the desired x-axis
+  * \param [out] yout the output interpolated y-values, pre-allocated
+  * \param [in]  Nout the size of the output x-y axis
   * 
   * \retval
+  * 
+  * \ingroup interpolation
   */
 int gsl_interpolate( const gsl_interp_type * interpT, 
                      double *xin, 
@@ -105,6 +109,17 @@ int gsl_interpolate( const gsl_interp_type * interpT,
 }
 
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis (vector version)
+/**
+  * \param interpT of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
+  * \param [in] xin the input x-axis
+  * \param [in] yin the input y-values
+  * \param [in] xout the desired x-axis
+  * \param [out] yout the output interpolated y-values, does not need to be allocated
+  * 
+  * \retval
+  * 
+  * \ingroup interpolation
+  */
 int gsl_interpolate( const gsl_interp_type * interpT,
                      std::vector<double> & xin,
                      std::vector<double> & yin,

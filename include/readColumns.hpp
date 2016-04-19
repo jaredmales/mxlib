@@ -32,6 +32,7 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
    int i=0;
    int l = strlen(sin);
    
+   //std::cerr << 1 << " " << sin << " " << sz << " " << l << "\n";
    if(l < 1) return;
    
    //Eat white space
@@ -39,7 +40,9 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
    sin = sin + i;
    sz = sz -i;
 
-   if(sz < 1) return;
+   //std::cerr << 2 << " " << sin << " " << sz << " " << l << "\n";
+      
+   if(sz <= 1) return;
    
    if(nargs >= 0) 
    {

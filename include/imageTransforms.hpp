@@ -2,6 +2,7 @@
  * \author Jared R. Males
  * \brief Image interpolation and transformation
  * \ingroup image_processing
+ * \ingroup interpolation
  *
  */
 
@@ -15,6 +16,7 @@ namespace mx
 {
 
 /** \addtogroup image_processing
+  * \addtogroup interpolation 
   * @{
   */
 

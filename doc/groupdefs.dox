@@ -16,6 +16,11 @@
   * \ingroup gen_math
   */
 
+/** \defgroup interpolation Interpolation 
+  * \brief Various tools for interpolating data and discrete functions.
+  * \ingroup gen_math
+  */
+  
 /** \defgroup template_blas Templatized BLAS interface
   * \brief Templatized interface to the BLAS
   * \ingroup template_blaslap
@@ -93,7 +98,9 @@
   * Provides various methods for working with the @f$ 1/r^2 @f$ central force prolem, a.k.a. Kepler's problem, of orbital dynamics.
   */ 
 
-
+/** \defgroup astrophot Astronomical Photometry
+  * \ingroup genastro
+  */
   
 /** \defgroup phyconstants Physical Constants
  * \brief Various physical constants
