@@ -19,6 +19,47 @@ namespace mx
   * @{
   */
 
+/// Create a 1-D Tukey window
+/** 
+  * Function to create a 1-D Tukey window.  
+  * 
+  * The width of the window is controlled by alpha.  alpha = 0 is a square wave, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \param filt is a pre-allocated array of size N
+  * \param N is the size of the array
+  * \param alpha controls the window width.
+  * 
+  * \tparam floatT specifies the floating point type
+  * 
+  */
+template<typename floatT>
+void tukey1d(floatT *filt, int N, floatT alpha)
+{
+   floatT pi = boost::math::constants::pi<floatT>();
+   
+   floatT lim1 = alpha*(N-1.0)/2.0;
+   floatT lim2 = (N-1.0)*(1.0-0.5*alpha);
+   
+   for(int ii=0; ii<N; ++ii)
+   {
+    
+      if(ii < lim1 && alpha > 0.)
+      {
+         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(alpha*(N-1)) - 1.0) ));
+      }
+      else if(ii > lim2 && alpha > 0.)
+      {
+         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(alpha*(N-1)) - 2./alpha + 1.0) ));
+      }
+      else
+      {
+         filt[ii] = 1.0;
+      }
+   }
+}
+   
 /** \brief Create a 2-D Tukey window
   * 
   * Function to create a 2-D Tukey window.  

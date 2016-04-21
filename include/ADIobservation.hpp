@@ -191,7 +191,9 @@ struct ADIobservation : public HCIobservation<_floatT>
      * @{ 
      */
 //   int doFake; ///<Flag controlling whether or not fake planets are injected
-   std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject
+   int fakeMethod; // 0 == 1 file total, 1 == 1 file per image 
+   std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject or a list of fake images
+   
 //   bool doFakeScale; ///<Flag controlling whether or not a separate scale is used at each point in time
    std::string fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
    
@@ -199,9 +201,18 @@ struct ADIobservation : public HCIobservation<_floatT>
    std::vector<floatT> fakePA; ///< Position angles(s) of the fake planet(s)
    std::vector<floatT> fakeContrast; ///< Contrast(s) of the fake planet(s)
    
+
+   
    ///Inect the fake plants
    void injectFake();
    
+   void injectFake( eigenImageT & fakePSF,
+                    int image_i,
+                    floatT PA,
+                    floatT sep,
+                    floatT contrast,
+                    floatT scale = 1.0 );
+
    /// @}
    
    void fitsHeader(fitsHeader * head);
@@ -243,6 +254,8 @@ void ADIobservation<_floatT, _derotFunctObj>::initialize()
 //   doFake = 0;
 //   doFakeScale = 0;
    
+   fakeMethod = 0;
+   
    t_fake_begin = 0;
    t_fake_end = 0;
    
@@ -278,47 +291,47 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
 
    t_fake_begin = get_curr_time();
    
-   typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
-   imT fakePSF;
+   //typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
+   eigenImageT fakePSF;
+   std::vector<std::string> fakeFiles; //used if fakeMethod == 1
+   
    fitsFile<floatT> ff;
    std::ifstream scaleFin; //for reading the scale file.
       
-   ff.read(fakeFileName, fakePSF);
-
-   //Check for correct sizing
-   if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
-                        (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
-   {
-      throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
-   }
    
-   //Check if fake needs to be padded out
-   if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
-   {
-      imT pfake(this->imc.rows(), this->imc.cols());
-      padImage(pfake, fakePSF, this->imc.rows(), this->imc.cols());
-      fakePSF = pfake;
-   }
-   
-   //Check if fake needs to be cut down
-   if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
-   {
-      imT cfake(this->imc.rows(), this->imc.cols());
-      cutImage(cfake, fakePSF, this->imc.rows(), this->imc.cols());
-      fakePSF = cfake;
-   }
+//    //Check for correct sizing
+//    if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
+//                         (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
+//    {
+//       throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
+//    }
+//    
+//    //Check if fake needs to be padded out
+//    if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
+//    {
+//       imT pfake(this->imc.rows(), this->imc.cols());
+//       padImage(pfake, fakePSF, this->imc.rows(), this->imc.cols());
+//       fakePSF = pfake;
+//    }
+//    
+//    //Check if fake needs to be cut down
+//    if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
+//    {
+//       imT cfake(this->imc.rows(), this->imc.cols());
+//       cutImage(cfake, fakePSF, this->imc.rows(), this->imc.cols());
+//       fakePSF = cfake;
+//    }
    
    
    //allocate shifted fake psf
-   imT shiftFake(fakePSF.rows(), fakePSF.cols());
-   
-   floatT ang, dx, dy;
+//    imT shiftFake(fakePSF.rows(), fakePSF.cols());
+//    
+//    floatT ang, dx, dy;
 
    //Fake Scale -- default to 1, read from file otherwise
    std::vector<floatT> fakeScale(this->imc.planes(), 1.0);
    if(fakeScaleFileName != "")
-   {
-      
+   {      
       std::vector<std::string> sfileNames;
       std::vector<floatT> imS;
       
@@ -341,28 +354,36 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
             exit(-1);
          }
       }
-
-//       scaleFin.open(fakeScaleFileName.c_str());
-//       for(int i=0; i<this->imc.planes(); ++i)
-//       {
-//          scaleFin >> fakeScale[i];
-//       }
-//       scaleFin.close();
+   } //if(fakeScaleFileName != "")
+      
+   if(fakeMethod == 0)
+   {
+      ff.read(fakeFileName, fakePSF);
    }
-      
-      
+
+   if(fakeMethod == 1)
+   {
+      readColumns(fakeFileName, fakeFiles);
+   }
+   
    for(int i=0; i<this->imc.planes(); ++i)
    {
+      if(fakeMethod == 1)
+      {
+         ff.read(fakeFiles[i], fakePSF);
+      }
+
       for(int j=0;j<fakeSep.size(); ++j)
       {
-         ang = DTOR(-fakePA[j]) + derotF.derotAngle(i);
-      
-         dx = fakeSep[j] * sin(ang);
-         dy = fakeSep[j] * cos(ang);
-               
-         imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
-   
-         this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale[i]*fakeContrast[j];
+         injectFake(fakePSF, i, fakePA[j], fakeSep[j], fakeContrast[j], fakeScale[j]);
+//          ang = DTOR(-fakePA[j]) + derotF.derotAngle(i);
+//       
+//          dx = fakeSep[j] * sin(ang);
+//          dy = fakeSep[j] * cos(ang);
+//                
+//          imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
+//    
+//          this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale[i]*fakeContrast[j];
       }
    }
    
@@ -372,6 +393,57 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
    t_fake_end = get_curr_time();
 }
 
+
+template<typename _floatT, class _derotFunctObj>
+void ADIobservation<_floatT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
+                                                          int image_i,
+                                                          _floatT PA,
+                                                          _floatT sep,
+                                                          _floatT contrast,
+                                                          _floatT scale)
+{
+   //typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imT;
+
+   //Check for correct sizing
+   if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
+                        (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
+   {
+      throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
+   }
+   
+   //Check if fake needs to be padded out
+   if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
+   {
+      eigenImageT pfake(this->imc.rows(), this->imc.cols());
+      padImage(pfake, fakePSF, this->imc.rows(), this->imc.cols());
+      fakePSF = pfake;
+   }
+   
+   //Check if fake needs to be cut down
+   if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
+   {
+      eigenImageT cfake(this->imc.rows(), this->imc.cols());
+      cutImage(cfake, fakePSF, this->imc.rows(), this->imc.cols());
+      fakePSF = cfake;
+   }
+
+   /*** Now shift to the separation and PA, scale, apply contrast, and inject ***/
+   //allocate shifted fake psf
+   eigenImageT shiftFake(fakePSF.rows(), fakePSF.cols());
+   
+   floatT ang, dx, dy;
+
+   ang = DTOR(-1*PA) + derotF.derotAngle(image_i);
+      
+   dx = sep * sin(ang);
+   dy = sep * cos(ang);
+               
+   imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<floatT>());
+   
+   this->imc.image(image_i) = this->imc.image(image_i) + shiftFake*scale*contrast;
+
+   
+}
 
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::derotate()
