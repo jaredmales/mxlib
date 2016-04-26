@@ -168,7 +168,7 @@ void oneoverf_psd( eigenArrp  & psd,
   * \param psd [output] is the array to populate
   * \param freq [input] is a frequency grid, must be the same logical size as psd
   * \param alpha [input] is the power law exponent, by convention @f$ alpha > 0 @f$.
-  * \param L0 [input] is the out scale
+  * \param L0 [input] is the outer scale
   * \param beta [optional input] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
   *                           the PSD is normalized using \ref oneoverf_norm.
   *

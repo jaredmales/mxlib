@@ -193,14 +193,14 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    
    typename kernelT::arrayT kernelArray;
    
-   for(int i=mini; i<maxi; ++i)
-   {
-      for(int j=minj; j<maxj; ++j)
-      {
-         kernel.setKernel(i-xcen, j-ycen, kernelArray);
-         fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
-      }
-   }
+//    for(int i=mini; i<maxi; ++i)
+//    {
+//       for(int j=minj; j<maxj; ++j)
+//       {
+//          kernel.setKernel(i-xcen, j-ycen, kernelArray);
+//          fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
+//       }
+//    }
 
    //Now handle the edges
    #pragma omp parallel private(kernelArray)
@@ -215,44 +215,49 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
          for(size_t j=0; j<im.cols(); j++)
          {
             //if((i >= maxr && i< im.rows()-maxr) && (j>= maxr && j<im.rows()-maxr)) continue;
-            if((i >= mini && i< maxi) && (j>= minj && j<maxj)) continue;
+            if((i >= mini && i< maxi) && (j>= minj && j<maxj))
+            {
+               kernel.setKernel(i-xcen, j-ycen, kernelArray);
+               fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
+            }
+            else
+            {
+               kernel.setKernel(i-xcen, j-ycen, kernelArray);
          
-            kernel.setKernel(i-xcen, j-ycen, kernelArray);
+               im_i = i - 0.5*kernelArray.rows();
+               if(im_i < 0) im_i = 0;
          
-            im_i = i - 0.5*kernelArray.rows();
-            if(im_i < 0) im_i = 0;
-         
-            im_j = j - 0.5*kernelArray.cols();
-            if(im_j < 0) im_j = 0;
+               im_j = j - 0.5*kernelArray.cols();
+               if(im_j < 0) im_j = 0;
 
-            im_p = im.rows() - im_i;
-            if(im_p > kernelArray.rows()) im_p = kernelArray.rows();
+               im_p = im.rows() - im_i;
+               if(im_p > kernelArray.rows()) im_p = kernelArray.rows();
           
-            im_q = im.cols() - im_j;
-            if(im_q > kernelArray.cols()) im_q = kernelArray.cols();
+               im_q = im.cols() - im_j;
+               if(im_q > kernelArray.cols()) im_q = kernelArray.cols();
          
-            kern_i = 0.5*kernelArray.rows() - i;
-            if(kern_i < 0) kern_i = 0;
+               kern_i = 0.5*kernelArray.rows() - i;
+               if(kern_i < 0) kern_i = 0;
          
-            kern_j = 0.5*kernelArray.cols() - j;
-            if(kern_j < 0) kern_j = 0;
+               kern_j = 0.5*kernelArray.cols() - j;
+               if(kern_j < 0) kern_j = 0;
       
-            kern_p = kernelArray.rows() - kern_i;
-            if(kern_p > kernelArray.rows()) kern_p = kernelArray.rows();
+               kern_p = kernelArray.rows() - kern_i;
+               if(kern_p > kernelArray.rows()) kern_p = kernelArray.rows();
          
-            kern_q = kernelArray.cols() - kern_j;
-            if(kern_q > kernelArray.cols()) kern_q = kernelArray.cols();
+               kern_q = kernelArray.cols() - kern_j;
+               if(kern_q > kernelArray.cols()) kern_q = kernelArray.cols();
        
-            //Pick only the smallest widths
-            if(im_p < kern_p) kern_p = im_p;
-            if(im_q < kern_q) kern_q = im_q;
+               //Pick only the smallest widths
+               if(im_p < kern_p) kern_p = im_p;
+               if(im_q < kern_q) kern_q = im_q;
    
-         
-            norm = kernelArray.block(kern_i, kern_j, kern_p, kern_q ).sum();
+               norm = kernelArray.block(kern_i, kern_j, kern_p, kern_q ).sum();
         
-            fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernelArray.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+               fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernelArray.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
 
-            if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
+               if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
+            }
          }
       }
    }// pragma omp parallel
@@ -405,7 +410,7 @@ void radprofim( radprofT & radprof,
 }
   
 ///Form a standard deviation image, and optionally divide the input by it
-/** The standard deviation profile using linear interpolation on a 1 pixel grid
+/** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * \ingroup image_processing
   * 
   * \param [out] stdIm is the standard deviation image.  This will be resized.
@@ -503,7 +508,7 @@ void stddevImage( eigenimT & stdIm,
 }
  
 ///Form a standard deviation image, and optionally divide the input by it
-/** The standard deviation profile using linear interpolation on a 1 pixel grid
+/** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * \ingroup image_processing
   * 
   * \param [out] stdIm is the standard deviation image.  This will be resized.
@@ -538,7 +543,7 @@ void stddevImage( eigenimT & stdIm,
 }
 
 ///Form a standard deviation image for each imamge in a cube, and optionally divide the input by it
-/** The standard deviation profile using linear interpolation on a 1 pixel grid
+/** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * \ingroup image_processing
   * 
   * \param [out] stdImc is the standard deviation image cube.  This will be resized.
