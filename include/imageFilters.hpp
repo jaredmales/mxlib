@@ -202,7 +202,6 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
 //       }
 //    }
 
-   //Now handle the edges
    #pragma omp parallel private(kernelArray)
    {
       int im_i, im_j, im_p,im_q;
