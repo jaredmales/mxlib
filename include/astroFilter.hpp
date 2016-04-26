@@ -180,6 +180,59 @@ void readATRAN( const std::string & site,
    
 }
 
+
+/// Read a BTRAM atmospheric transmission spectrum 
+/**
+  *
+  * \param site currently only "manqui", for Cerro Manqui at LCO, is supported.
+  * \param pwv precipitable water vapor   
+  * \param zd zenith distance
+  * \param lambda the wavelength scale
+  * \param trans the transmission
+  * \param datadir [optional] the directory containing the Gemini ATRAN files
+  *
+  * \tparam dataT the type of data
+  */ 
+template<typename dataT>
+void readBTRAM( const std::string & site,
+                const std::string & run,
+                double pwv, 
+                double zd, 
+                std::vector<dataT> & lambda, 
+                std::vector<dataT> & trans,
+                const std::string & datadir = "" )
+{
+   std::string basepath;
+   if(datadir == "")
+   {
+      basepath = getEnv("BTRAM_DATADIR");
+   }
+   else
+   {
+      basepath = datadir;
+   }
+   
+   std::string fname;
+   
+   fname = basepath + "/" + site + "/" + run + "/" + site + "_";
+   
+   char digits[32];
+   
+   snprintf(digits, 32, "zd%0.1f_", zd);
+   
+   fname += digits;
+
+   snprintf(digits, 32, "pwv%0.1f.txt", pwv);
+   
+   fname += digits;
+      
+
+   
+   readColumns<','>(fname, lambda, trans);
+   
+}
+
+
 template<typename dataT>
 void readEarthShine( std::vector<dataT> & lambda, 
                      std::vector<dataT> & albedo,
@@ -349,6 +402,7 @@ void astrofilt( const std::string & filtName,
       
    std::string fname = basepath + "/" + filtName + ".dat";
    
+      
    mx::readColumns(fname, lambda, trans);
    
    if(rsr)
@@ -558,6 +612,27 @@ void astrofiltMultiply( std::vector<dataT> & lambda_1,
    }
 }
 
+/// Multiply a spectrum or filter curve by a scalar.  
+/** 
+  *
+  * \param spectrum the spectrum
+  * \param scale the scale to multiply by
+  * \param spectrum_out the product of spectrum_1 and the re-sampled spectrum_2
+  *
+  * \tparam dataT the type of the data 
+  */ 
+template<typename dataT>
+void astrofiltMultiply( std::vector<dataT> & spectrum,
+                        dataT scale,
+                        std::vector<dataT> & spectrum_out )
+{
+   spectrum_out.resize(spectrum.size());
+   
+   for(int i=0; i<spectrum_out.size(); ++i) 
+   {
+      spectrum_out[i] * spectrum[i] * scale;
+   }
+}
 
 // astrofiltScaleFlux
 
@@ -576,12 +651,12 @@ void astrofiltMultiply( std::vector<dataT> & lambda_1,
   * \tparam dataT the type of the data
   */ 
 template<typename dataT>
-void astrofiltScaleFlux( std::vector<dataT> & lambda_s,
-                         std::vector<dataT> & spectrum,
-                         std::vector<dataT> & lambda_f,
-                         std::vector<dataT> & trans,
-                         dataT mag,
-                         int scaleBy = 0 )
+void astrofiltScaleMag( std::vector<dataT> & lambda_s,
+                        std::vector<dataT> & spectrum,
+                        std::vector<dataT> & lambda_f,
+                        std::vector<dataT> & trans,
+                        dataT mag,
+                        int scaleBy = 0 )
 {
    dataT flambda0, fnu0, fphot0;
    dataT flambda, fnu, fphot;
@@ -608,6 +683,53 @@ void astrofiltScaleFlux( std::vector<dataT> & lambda_s,
    
    scale *= pow(10., -0.4*mag);
          
+   for(int i=0; i < spectrum.size(); ++i) spectrum[i] *= scale;
+   
+}
+
+/// Scale a spectrum to a specified mean value in a filter.
+/**
+  * Scales the spectrum to have the specified mean value.
+  * The spectrum can be scaled by \f$ f_\lambda \f$, \f$ f_\nu \f$, or \f$ f_\gamma \f$.
+  *
+  * \param lambda_s wavelength scale of the spectrum
+  * \param spectrum the spectrum to scale, will be be altered
+  * \param lambda_f the wavelength scale of the filter
+  * \param trans the transmission profile of the filter
+  * \param mean the desired mean value in the filter
+  * \param scaleBy specifies which flux measurement to scale by. \f$ 0 = f_\lambda \f$, \f$ 1=f_\nu \f$, or \f$ 2=f_\gamma \f$
+  * 
+  * \tparam dataT the type of the data
+  */ 
+template<typename dataT>
+void astrofiltScaleMean( std::vector<dataT> & lambda_s,
+                         std::vector<dataT> & spectrum,
+                         std::vector<dataT> & lambda_f,
+                         std::vector<dataT> & trans,
+                         dataT mean,
+                         int scaleBy = 0 )
+{
+   dataT flambda, fnu, fphot;
+   
+   astrofiltCharFlux(lambda_f, trans, lambda_s, spectrum, flambda, fnu, fphot);
+   
+   dataT scale;
+   
+   switch(scaleBy)
+   {
+      case 0:
+         scale =  (mean/flambda);
+         break;
+      case 1:
+         scale =  (mean/fnu);
+         break;
+      case 2:
+         scale =  (mean/fphot);
+         break;
+      default:
+         scale =  (mean/flambda);
+   }
+            
    for(int i=0; i < spectrum.size(); ++i) spectrum[i] *= scale;
    
 }

@@ -55,8 +55,6 @@ struct gaussKernel
       }
       
       kernel /= kernel.sum();
-
-      
    }
    
    int maxWidth()
@@ -64,8 +62,9 @@ struct gaussKernel
       return _kernW*_fwhm;
    }
    
-   void setKernel(arithT x, arithT y)
+   void setKernel(arithT x, arithT y, arrayT & kernelArray)
    {
+      kernelArray = kernel;
    }
    
 };
@@ -82,7 +81,7 @@ struct azBoxKernel
 
    static const int kernW = _kernW;
    
-   arrayT kernel;
+   //arrayT kernel;
    
    arithT _radWidth;
    arithT _azWidth;
@@ -101,7 +100,7 @@ struct azBoxKernel
       return _maxWidth;
    }
    
-   void setKernel(arithT x, arithT y)
+   void setKernel(arithT x, arithT y, arrayT & kernel)
    {
       arithT rad = sqrt((arithT) (x*x + y*y));
       
@@ -150,25 +149,20 @@ struct azBoxKernel
   * {
   *     typedef _arrayT arrayT;
   *     typedef typename _arrayT::Scalar arithT;
-  *
-  *      arrayT kernel;
   *   
-  *      filterKernel()
-  *      {
-  *         //constructor
-  *      }
+  *     filterKernel()
+  *     {
+  *        //constructor
+  *     }
   *   
-  *      //The setKernel function is called for each pixel.
-  *      void setKernel(arithT x, arithT y)
-  *      {
-  *         //This may or may not do anything (e.g., kernel could be created in constructor)
-  *         //but on output kernel array should be normalized so that sum() = 1.0
-  *      }
+  *     //The setKernel function is called for each pixel.
+  *     void setKernel(arithT x, arithT y, arrayT & kernel)
+  *     {
+  *        //This may or may not do anything (e.g., kernel could be created in constructor)
+  *        //but on output kernel array should be normalized so that sum() = 1.0
+  *     }
   * };
   * \endcode
-  *
-  * Note that kernelT stores the kernel array, which has implications for parallelization. This
-  * function is not currently parallelized.
   * 
   * \param [out] fim will be allocated with resize, and on output contains the filtered image
   * \param [in] im is the image to be filtered
@@ -197,173 +191,74 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    int minj = 0.5*im.cols() - maxr;
    int maxj = 0.5*im.cols() + maxr;
    
+   typename kernelT::arrayT kernelArray;
    
    for(int i=mini; i<maxi; ++i)
    {
       for(int j=minj; j<maxj; ++j)
       {
-         kernel.setKernel(i-xcen, j-ycen);
-         fim(i,j) = (im.block(i-0.5*kernel.kernel.rows(), j-0.5*kernel.kernel.cols(), kernel.kernel.rows(), kernel.kernel.cols())*kernel.kernel).sum();
+         kernel.setKernel(i-xcen, j-ycen, kernelArray);
+         fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
       }
    }
 
    //Now handle the edges
-   int im_i, im_j, im_p,im_q;
-   int kern_i, kern_j, kern_p,kern_q;  
-   typename imageOutT::Scalar norm;
-   
-   for(size_t i=0; i< im.rows(); i++)
+   #pragma omp parallel private(kernelArray)
    {
-      for(size_t j=0; j<im.cols(); j++)
+      int im_i, im_j, im_p,im_q;
+      int kern_i, kern_j, kern_p,kern_q;  
+      typename imageOutT::Scalar norm;
+   
+      #pragma omp for
+      for(size_t i=0; i< im.rows(); i++)
       {
-         if((i >= maxr && i< im.rows()-maxr) && (j>= maxr && j<im.rows()-maxr)) continue;
+         for(size_t j=0; j<im.cols(); j++)
+         {
+            //if((i >= maxr && i< im.rows()-maxr) && (j>= maxr && j<im.rows()-maxr)) continue;
+            if((i >= mini && i< maxi) && (j>= minj && j<maxj)) continue;
          
-         kernel.setKernel(i-xcen, j-ycen);
+            kernel.setKernel(i-xcen, j-ycen, kernelArray);
          
-         im_i = i - 0.5*kernel.kernel.rows();
-         if(im_i < 0) im_i = 0;
+            im_i = i - 0.5*kernelArray.rows();
+            if(im_i < 0) im_i = 0;
          
-         im_j = j - 0.5*kernel.kernel.cols();
-         if(im_j < 0) im_j = 0;
+            im_j = j - 0.5*kernelArray.cols();
+            if(im_j < 0) im_j = 0;
 
-         im_p = im.rows() - im_i;
-         if(im_p > kernel.kernel.rows()) im_p = kernel.kernel.rows();
+            im_p = im.rows() - im_i;
+            if(im_p > kernelArray.rows()) im_p = kernelArray.rows();
           
-         im_q = im.cols() - im_j;
-         if(im_q > kernel.kernel.cols()) im_q = kernel.kernel.cols();
+            im_q = im.cols() - im_j;
+            if(im_q > kernelArray.cols()) im_q = kernelArray.cols();
          
-         kern_i = 0.5*kernel.kernel.rows() - i;
-         if(kern_i < 0) kern_i = 0;
+            kern_i = 0.5*kernelArray.rows() - i;
+            if(kern_i < 0) kern_i = 0;
          
-         kern_j = 0.5*kernel.kernel.cols() - j;
-         if(kern_j < 0) kern_j = 0;
+            kern_j = 0.5*kernelArray.cols() - j;
+            if(kern_j < 0) kern_j = 0;
       
-         kern_p = kernel.kernel.rows() - kern_i;
-         if(kern_p > kernel.kernel.rows()) kern_p = kernel.kernel.rows();
+            kern_p = kernelArray.rows() - kern_i;
+            if(kern_p > kernelArray.rows()) kern_p = kernelArray.rows();
          
-         kern_q = kernel.kernel.cols() - kern_j;
-         if(kern_q > kernel.kernel.cols()) kern_q = kernel.kernel.cols();
+            kern_q = kernelArray.cols() - kern_j;
+            if(kern_q > kernelArray.cols()) kern_q = kernelArray.cols();
        
-         //Pick only the smallest widths
-         if(im_p < kern_p) kern_p = im_p;
-         if(im_q < kern_q) kern_q = im_q;
+            //Pick only the smallest widths
+            if(im_p < kern_p) kern_p = im_p;
+            if(im_q < kern_q) kern_q = im_q;
    
          
-         norm = kernel.kernel.block(kern_i, kern_j, kern_p, kern_q ).sum();
+            norm = kernelArray.block(kern_i, kern_j, kern_p, kern_q ).sum();
         
-         fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+            fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernelArray.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
 
-         if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
+            if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
+         }
       }
-   }
-   
-
+   }// pragma omp parallel
 }   
    
    
-   
-   
-   
-   
-// template<size_t kernW=4, typename arithT=double, typename arrT, typename fwhmT> 
-// void gaussKernel(arrT &kernel, fwhmT fwhm)
-// {
-//    size_t kernSize = fwhm*kernW; 
-//    
-//    if(kernSize % 2 == 0) kernSize++;
-//    
-//    arithT kernCen = 0.5*(kernSize-1.);
-// 
-//    kernel.resize(kernSize, kernSize);
-// 
-//    fwhmT r2;
-// 
-//    fwhmT sig2 = fwhm/2.354820045030949327;
-//    sig2 *= sig2;
-// 
-//    for(size_t i =0; i < kernSize; i++)
-//    {
-//       for(size_t j=0; j < kernSize; j++)
-//       {
-//          r2 = (i-kernCen)*(i-kernCen) + (j-kernCen)*(j-kernCen);
-// 
-//          kernel(i,j) = exp(-r2/sig2);
-//       }
-//    }
-//    
-//    kernel /= kernel.sum();
-// }
-// 
-// 
-// 
-// template<typename arrT1, typename arrT2, typename arrT3> 
-// void smoothImage(arrT1 &smim, arrT2 & im, arrT3 & kernel)
-// {
-//    
-//    smim.resize(im.rows(), im.cols());
-//    smim.setZero();
-//    
-//    size_t kernW = kernel.rows();
-//    size_t fullW = 0.5*kernW;
-//    
-//    //First do the main part of the image as fast as possible
-//    #pragma omp parallel for
-//    for(int i=fullW; i< im.rows()-fullW; i++)
-//    {
-//       for(int j=fullW; j<im.cols()-fullW; j++)
-//       {
-//          smim(i,j) = (im.block(i-fullW, j-fullW, kernW, kernW)*kernel).sum();
-//       }
-//    }
-// 
-//    //Now handle the edges
-//    int im_i, im_j, im_p,im_q;
-//    int kern_i, kern_j, kern_p,kern_q;
-//    
-//    typename arrT1::Scalar norm;
-//    
-//    for(size_t i=0; i< im.rows(); i++)
-//    {
-//       for(size_t j=0; j<im.cols(); j++)
-//       {
-//          if((i >= fullW && i< im.rows()-fullW) && (j>= fullW && j<im.rows()-fullW)) continue;
-//          
-//          im_i = i - fullW;
-//          if(im_i < 0) im_i = 0;
-//          
-//          im_j = j - fullW;
-//          if(im_j < 0) im_j = 0;
-// 
-//          im_p = im.rows() - im_i;
-//          if(im_p > kernW) im_p = kernW;
-//           
-//          im_q = im.cols() - im_j;
-//          if(im_q > kernW) im_q = kernW;
-//          
-//          kern_i = fullW - i;
-//          if(kern_i < 0) kern_i = 0;
-//          
-//          kern_j = fullW - j;
-//          if(kern_j < 0) kern_j = 0;
-//       
-//          kern_p = kernW - kern_i;
-//          if(kern_p > kernW) kern_p = kernW;
-//          
-//          kern_q = kernW - kern_j;
-//          if(kern_q > kernW) kern_q = kernW;
-//        
-//          //Pick only the smallest widths
-//          if(im_p < kern_p) kern_p = im_p;
-//          if(im_q < kern_q) kern_q = im_q;
-//    
-//          norm = kernel.block(kern_i, kern_j, kern_p, kern_q ).sum();
-//          smim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernel.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
-//       }
-//    }
-//    
-// }
-  
-  
   
   
 //------------ Radial Profile --------------------//
@@ -509,7 +404,188 @@ void radprofim( radprofT & radprof,
    
 }
   
+///Form a standard deviation image, and optionally divide the input by it
+/** The standard deviation profile using linear interpolation on a 1 pixel grid
+  * \ingroup image_processing
+  * 
+  * \param [out] stdIm is the standard deviation image.  This will be resized.
+  * \param [in] im is the image to form the standard deviation profile of. 
+  * \param [in] rad is an array of radius values
+  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+  * \param [in] minRad is the minimum radius to analyze
+  * \param [in] maxRad is the maximum radius to analyze
+  * \param [in] divide if true, the input image is divided by the std-def profile
+  * 
+  * \tparam eigenimT the eigen array type of the output and non-reference images
+  */ 
+template<typename eigenimT>
+void stddevImage( eigenimT & stdIm, 
+                  eigenimT & im,
+                  eigenimT & rad,
+                  eigenimT & mask,
+                  typename eigenimT::Scalar minRad,
+                  typename eigenimT::Scalar maxRad, 
+                  bool divide = false )
+{
+   typedef typename eigenimT::Scalar floatT;
+   
+   int dim1 = im.cols();
+   int dim2 = im.rows();
+   
+   floatT mr = rad.maxCoeff();
+   
+   /* A vector of radvals will be sorted, then binned*/
+   std::vector<radval<floatT> > rv(dim1*dim2);
+   
+   for(int i=0;i<rv.size();++i)
+   {
+      if(mask(i) == 0) continue;
+      
+      rv[i].r = rad(i);
+      rv[i].v = im(i);
+   }
+   
+   sort(rv.begin(), rv.end(), radvalRadComp<floatT>());
+   
+   /*Now bin*/
+   floatT dr = 1;
+   floatT r0 = 0;
+   floatT r1 = dr;
+   int i1=0, i2, n;
+   
+   floatT stdVal;
   
+   std::vector<double> std_r, std_v;
+   while(r1 < mr)
+   {
+      while(rv[i1].r < r0) ++i1;
+      i2 = i1;
+      while(rv[i2].r <= r1) ++i2;
+      
+      n = 0.5*(i2-i1);
+
+      std::vector<double> vals;
+      
+      for(int i=i1; i< i2; ++i)
+      {
+         vals.push_back( rv[i].v);
+      } 
+      
+      std_r.push_back(.5*(r0+r1));
+      
+      std_v.push_back( std::sqrt(mx::vectorVariance(vals)) ) ;
+      i1 = i2;
+      r0 += dr;
+      r1 += dr;
+   }
+   
+   /* And finally, interpolate onto the radius image */
+   stdIm.resize(dim1, dim2);
+   mx::gslInterpolator interp(gsl_interp_linear, std_r, std_v);
+   
+   for(int i=0;i<dim1;++i)
+   {
+      for(int j=0;j<dim2;++j)
+      {
+         if(rad(i,j) < minRad || rad(i,j) > maxRad)
+         {
+            stdIm(i,j) = 0;
+            if(divide) im(i,j) = 0;
+         }
+         else
+         {
+            stdIm(i,j) = interp.interpolate( ((double) rad(i,j)) );
+            if(divide) im(i,j) /= stdIm(i,j);
+         }
+      }
+   }
+   
+}
+ 
+///Form a standard deviation image, and optionally divide the input by it
+/** The standard deviation profile using linear interpolation on a 1 pixel grid
+  * \ingroup image_processing
+  * 
+  * \param [out] stdIm is the standard deviation image.  This will be resized.
+  * \param [in] im is the image to form the standard deviation profile of. 
+  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+  * \param [in] minRad is the minimum radius to analyze
+  * \param [in] maxRad is the maximum radius to analyze
+  * \param [in] divide if true, the input image is divided by the std-def profile
+  * 
+  * \tparam eigenimT the eigen array type of the output and non-reference images
+  */ 
+template<typename eigenimT>
+void stddevImage( eigenimT & stdIm, 
+                  eigenimT & im,
+                  eigenimT & mask,
+                  typename eigenimT::Scalar minRad,
+                  typename eigenimT::Scalar maxRad,
+                  bool divide = false )
+{
+   typedef typename eigenimT::Scalar floatT;
+   
+   int dim1 = im.cols();
+   int dim2 = im.rows();
+   
+   eigenimT rad;
+   rad.resize(dim1, dim2);
+   
+   mx::radiusImage(rad);
+   
+   stddevImage(stdIm, im, rad, mask, minRad, maxRad, divide );
+   
+}
+
+///Form a standard deviation image for each imamge in a cube, and optionally divide the input by it
+/** The standard deviation profile using linear interpolation on a 1 pixel grid
+  * \ingroup image_processing
+  * 
+  * \param [out] stdImc is the standard deviation image cube.  This will be resized.
+  * \param [in] imc is the image cube to form the standard deviation profile of. 
+  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+  * \param [in] minRad is the minimum radius to analyze
+  * \param [in] maxRad is the maximum radius to analyze
+  * \param [in] divide if true, the input image is divided by the std-def profile
+  * 
+  * \tparam eigencubeT is the eigen cube type of the input and output cubes
+  * \tparam eigenimT the eigen array type of the output and non-reference images
+  */ 
+template<typename eigencubeT, typename eigenimT>
+void stddevImageCube( eigencubeT & stdImc, 
+                      eigencubeT & imc,
+                      eigenimT & mask,
+                      typename eigenimT::Scalar minRad,
+                      typename eigenimT::Scalar maxRad,
+                      bool divide = false )
+{
+   typedef typename eigenimT::Scalar floatT;
+   
+   int dim1 = imc.cols();
+   int dim2 = imc.rows();
+   
+   eigenimT rad;
+   rad.resize(dim1, dim2);
+   
+   mx::radiusImage(rad);
+
+   eigenimT im, stdIm;
+   
+   stdImc.resize(imc.rows(), imc.cols(), imc.planes());
+   
+   for(int i=0; i< imc.planes(); ++i)
+   {
+      im = imc.image(i);
+      
+      stddevImage(stdIm, im, rad, mask, minRad, maxRad, divide );
+
+      stdImc.image(i) = stdIm;
+      
+      if(divide) imc.image(i) = im;
+      
+   }
+}
+
 } //namespace mx
 
 #endif //__imageFilters_hpp__  

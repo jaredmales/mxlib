@@ -236,7 +236,7 @@ void psd_filter( eigenArrn & noise,
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft2(noise.rows(), noise.cols());
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> cnoise(noise.rows(), noise.cols());
    
-   //Make noise a complex 
+   //Make noise a complex number
    for(int ii=0;ii<noise.rows();++ii)
    {
       for(int jj=0; jj<noise.cols(); ++jj)
@@ -256,8 +256,7 @@ void psd_filter( eigenArrn & noise,
    
    //eigenArrn rft = ft.abs().square();
    //mx::ds9(rft, 3);
-   
-  
+     
    fftR.fft(ft.data(), ft2.data()); //in-place
    
    noise = ft2.real()/(noise.rows());//*noise.cols());

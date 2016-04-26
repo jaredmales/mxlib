@@ -5,7 +5,7 @@
 
 #include <fftw3.h>
 
-
+#include <complex>
 
 namespace mx
 {
@@ -18,6 +18,245 @@ class fftT;
 
 typedef fftT<std::complex<float>, std::complex<float>, 2, 0> fft_cf_cf_2d;
 typedef fftT<std::complex<double>, std::complex<double>, 2, 0> fft_cd_cd_2d;
+
+//1D float,  non-cudaGPU
+template<>
+class fftT<std::complex<float>, std::complex<float>, 1, 0>
+{  
+protected:
+   int _dir;
+   
+   int _szX;
+    
+   fftwf_plan _plan;
+   
+public:
+   
+   typedef std::complex<float> inputT;
+   typedef std::complex<float> outputT;
+   
+   fftT()
+   {
+      _szX = 0;
+      _plan = 0;
+      
+      _dir = MXFFT_FORWARD;
+   }      
+
+   
+//    fftT(int ndir)
+//    {
+//       _plan = 0;
+// 
+//       _szX = 0;
+//       _dir = ndir;
+//       
+//    }
+   
+   fftT(int nx, int ndir = MXFFT_FORWARD)
+   {
+      _plan = 0;
+
+      _szX = 0;
+      _dir = ndir;
+      
+      plan(nx, _dir);
+   }
+   
+   ~fftT()
+   {
+      destroy_plan();
+   }
+   
+   void destroy_plan()
+   {
+      if(_plan) fftwf_destroy_plan(_plan);
+      
+      _plan = 0;
+      
+      _szX = 0;
+   }
+      
+   void plan(int nx, int ndir)
+   {
+      if(_szX == nx  && _dir == ndir && _plan)
+      {
+         return;
+      }   
+    
+      destroy_plan();
+      
+      _dir = ndir;
+      
+      plan(nx);
+   }
+   
+   void plan(int nx)
+   {
+      if(_szX == nx && _plan)
+      {
+         return;
+      }
+
+      destroy_plan();
+            
+      _szX = nx;
+      
+      inputT * forplan1;
+      outputT * forplan2;
+
+      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX);
+      
+      int pdir = FFTW_FORWARD;
+      if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
+      
+      _plan = fftwf_plan_dft_1d(_szX, reinterpret_cast<fftwf_complex *>(forplan1), reinterpret_cast<fftwf_complex*>(forplan2), pdir, FFTW_MEASURE);
+      
+      fftw_free(forplan1);
+      fftw_free(forplan2);
+   }
+   
+   void fft(inputT * in, outputT * out)
+   {
+      fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
+   }
+   
+   void fft(float * in, outputT * out)
+   {
+      inputT * cin = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      for(int i =0; i< _szX; ++i)
+      {
+         cin[i] = inputT(in[i],0);
+      }
+      
+      fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(cin), reinterpret_cast<fftwf_complex*>(out));
+      
+      fftw_free(cin);
+   }
+   
+      
+};
+
+//1D double,  non-cudaGPU
+template<>
+class fftT<std::complex<double>, std::complex<double>, 1, 0>
+{  
+protected:
+   int _dir;
+   
+   int _szX;
+    
+   fftw_plan _plan;
+   
+public:
+   
+   typedef std::complex<double> inputT;
+   typedef std::complex<double> outputT;
+   
+   fftT()
+   {
+      _szX = 0;
+      _plan = 0;
+      
+      _dir = MXFFT_FORWARD;
+   }      
+
+   
+   fftT(int ndir)
+   {
+      _plan = 0;
+
+      _szX = 0;
+      _dir = ndir;
+      
+   }
+   
+   fftT(int nx, int ndir = MXFFT_FORWARD)
+   {
+      _plan = 0;
+
+      _szX = 0;
+      _dir = ndir;
+      
+      plan(nx, _dir);
+   }
+   
+   ~fftT()
+   {
+      destroy_plan();
+   }
+   
+   void destroy_plan()
+   {
+      if(_plan) fftw_destroy_plan(_plan);
+      
+      _plan = 0;
+      
+      _szX = 0;
+   }
+      
+   void plan(int nx, int ndir)
+   {
+      if(_szX == nx  && _dir == ndir && _plan)
+      {
+         return;
+      }   
+    
+      destroy_plan();
+      
+      _dir = ndir;
+      
+      plan(nx);
+   }
+   
+   void plan(int nx)
+   {
+      if(_szX == nx && _plan)
+      {
+         return;
+      }
+
+      destroy_plan();
+            
+      _szX = nx;
+      
+      inputT * forplan1;
+      outputT * forplan2;
+
+      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX);
+      
+      int pdir = FFTW_FORWARD;
+      if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
+      
+      _plan = fftw_plan_dft_1d(_szX, reinterpret_cast<fftw_complex *>(forplan1), reinterpret_cast<fftw_complex*>(forplan2), pdir, FFTW_MEASURE);
+      
+      fftw_free(forplan1);
+      fftw_free(forplan2);
+   }
+   
+   void fft(inputT * in, outputT * out)
+   {
+      fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out));
+   }
+   
+   void fft(double * in, outputT * out)
+   {
+      inputT * cin = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      for(int i =0; i< _szX; ++i)
+      {
+         cin[i] = inputT(in[i],0);
+      }
+      
+      fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(cin), reinterpret_cast<fftw_complex*>(out));
+      
+      fftw_free(cin);
+   }
+   
+      
+};
+
 
 //2D complex-float,  non-cudaGPU
 template<>

@@ -33,10 +33,12 @@ public:
    typedef dataT Scalar;
 
    typedef typename Array<dataT,Dynamic,Dynamic>::Index Index;
+   
    typedef Map<Array<dataT, Dynamic, Dynamic> > imageRef;
    
+   typedef Array<dataT,Dynamic,Dynamic> imageT;
+   
 protected:
-
    
    Index _rows;
    Index _cols;
