@@ -575,12 +575,15 @@ void stddevImageCube( eigencubeT & stdImc,
    
    mx::radiusImage(rad);
 
-   eigenimT im, stdIm;
+   
    
    stdImc.resize(imc.rows(), imc.cols(), imc.planes());
    
+   #pragma omp parallel for
    for(int i=0; i< imc.planes(); ++i)
    {
+      eigenimT im, stdIm;
+      
       im = imc.image(i);
       
       stddevImage(stdIm, im, rad, mask, minRad, maxRad, divide );
