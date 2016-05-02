@@ -18,6 +18,8 @@
 namespace mx
 {
 
+#if 0 
+
 /** \addtogroup psds 
   */
 /* //@{
@@ -116,7 +118,6 @@ void frequency_grid( eigenArr & arr,
    }
 }
  
-#if 0 
 template<typename eigenArrp, typename eigenArrs>
 void calcPSD( eigenArrp & psd,
               eigenArrs & sample
@@ -541,37 +542,37 @@ void tukeyWindow1D( eigenArrw & w,
 
 #include <sofa.h>
 
-template<typename vecT>
-void tukeyWindow1D( vecT & w,
-                  typename vecT::value_type alpha
-                )
-{
-   //typedef typename eigenArrw::Index Index;
-   typedef typename vecT::value_type Scalar;
-   
-   int N = w.size();
-
-   //Avoid divide by 0, etc.,if we don't need it 
-   if(alpha == 0.)
-   {
-      for(int i=0;i<N; ++i) w[i] = 1.0;
-      return;
-   }
-
-   int t = 0;
-   for(t;t <= 0.5*alpha*(N-1); ++t)
-   {
-      w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 1)));
-   }
-   for(t; t < (N-1)*(1-0.5*alpha); ++t)
-   {
-      w[t] = 1.;
-   }
-   for(t; t<N; ++t)
-   {
-      w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 2./alpha + 1))) ;
-   }
-}
+// template<typename vecT>
+// void tukeyWindow1D( vecT & w,
+//                   typename vecT::value_type alpha
+//                 )
+// {
+//    //typedef typename eigenArrw::Index Index;
+//    typedef typename vecT::value_type Scalar;
+//    
+//    int N = w.size();
+// 
+//    //Avoid divide by 0, etc.,if we don't need it 
+//    if(alpha == 0.)
+//    {
+//       for(int i=0;i<N; ++i) w[i] = 1.0;
+//       return;
+//    }
+// 
+//    int t = 0;
+//    for(t;t <= 0.5*alpha*(N-1); ++t)
+//    {
+//       w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 1)));
+//    }
+//    for(t; t < (N-1)*(1-0.5*alpha); ++t)
+//    {
+//       w[t] = 1.;
+//    }
+//    for(t; t<N; ++t)
+//    {
+//       w[t] = 0.5*(1. + cos(DPI*(2*t/(alpha*N-1) - 2./alpha + 1))) ;
+//    }
+// }
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
 /**

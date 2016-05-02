@@ -50,6 +50,7 @@ INC_TO_INSTALL = airy.hpp \
                  readColumns.hpp \
                  stringUtils.hpp \
                  fileUtils.hpp \
+                 gaussian.hpp \
                  gslInterpolation.hpp \
                  pout.hpp \
                  psds.hpp \

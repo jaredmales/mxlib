@@ -45,7 +45,30 @@ namespace mx
   */ 
 #define sigma2fwhm(sig)  ( (sig) * twosqrt2log)
    
-
+///Find value at position (x) of the 1D arbitrarily-centered symmetric Gaussian
+/**
+  * Computes:
+  * \f$ G(x) = G_0 + A\exp[-(0.5/\sigma^2)((x-x_0)^2)]\f$
+  * 
+  * \param x is the x-position at which to evaluate the Gaussian
+  * \param G0 is the constant to add to the Gaussian
+  * \param A is the scaling factor (peak = A)
+  * \param x0 is the x-coordinate of the center
+  * \param sigma is the width of the Gaussian.
+  * 
+  * \returns the value of the 1D arbitrarily-centered symmetric Gaussian at (x)
+  * 
+  * \tparam arithT is type to use for arithmetic
+  */ 
+template<typename arithT>
+arithT gaussian( const arithT & x,
+                   const arithT G0, 
+                   const arithT A, 
+                   const arithT &x0, 
+                   const arithT & sigma )
+{ 
+   return G0 + A*std::exp( -( 0.5/(sigma*sigma) * ( ( (x-x0)*(x-x0))) ));
+}
 
 ///Find value at position (x,y) of the 2D arbitrarily-centered symmetric Gaussian
 /**

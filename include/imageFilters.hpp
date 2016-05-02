@@ -440,7 +440,7 @@ void stddevImage( eigenimT & stdIm,
    
    /* A vector of radvals will be sorted, then binned*/
    std::vector<radval<floatT> > rv(dim1*dim2);
-   
+      
    for(int i=0;i<rv.size();++i)
    {
       if(mask(i) == 0) continue;
@@ -458,13 +458,15 @@ void stddevImage( eigenimT & stdIm,
    int i1=0, i2, n;
    
    floatT stdVal;
-  
+     
    std::vector<double> std_r, std_v;
    while(r1 < mr)
    {
-      while(rv[i1].r < r0) ++i1;
+      while(rv[i1].r < r0 && i1 < rv.size()) ++i1;
+      if(i1 == rv.size()) break;
+      
       i2 = i1;
-      while(rv[i2].r <= r1) ++i2;
+      while(rv[i2].r <= r1 && i2 < rv.size()) ++i2;
       
       n = 0.5*(i2-i1);
 
@@ -476,13 +478,13 @@ void stddevImage( eigenimT & stdIm,
       } 
       
       std_r.push_back(.5*(r0+r1));
-      
+            
       std_v.push_back( std::sqrt(mx::vectorVariance(vals)) ) ;
       i1 = i2;
       r0 += dr;
       r1 += dr;
    }
-   
+      
    /* And finally, interpolate onto the radius image */
    stdIm.resize(dim1, dim2);
    mx::gslInterpolator interp(gsl_interp_linear, std_r, std_v);

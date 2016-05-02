@@ -22,6 +22,32 @@ realT freq_sampling( size_t dim,
    return (f_max/(0.5*dim));
 }
 
+///Create a 1-D frequency grid
+template<typename eigenVec>
+void frequency_grid1D( eigenVec & vec,
+                       typename eigenVec::Scalar dt)
+{
+   typename eigenVec::Index dim, dim_1, dim_2;
+   typename eigenVec::Scalar df;
+   
+   dim_1 = vec.rows();
+   dim_2 = vec.cols();
+   
+   dim = std::max(dim_1, dim_2);
+   
+   df = freq_sampling(dim, 0.5/dt);
+      
+   for(int ii=0; ii < ceil(0.5*(dim-1) + 1); ++ii)
+   {
+      vec(ii) = ii*df;
+   }
+   
+   for(int ii=ceil(0.5*(dim-1)+1); ii < dim_1; ++ii)
+   {
+      vec(ii) = (ii-dim)*df;
+   }
+}
+
 ///Create a frequency grid
 template<typename eigenArr>
 void frequency_grid( eigenArr & arr,
@@ -264,4 +290,76 @@ void psd_filter( eigenArrn & noise,
    noise *= sqrt( psd.sum()/noise.square().sum());
 }
 
+
+///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
+/**
+  * \param pgram [out] the resultant periodogram
+  * \param ts [in] the time series
+  * \param dt [in] the sampling time of ts
+  * \param avgLen [in] the length of the averaging interval, same units as dt
+  * \param olap [in] the length of the overlap region, same units as avgLen
+  * \param w  [in] a vector of length ( (int) avgLen/dt) or empty, which is a window.
+  */
+template<typename floatT>
+void averagePeriodogram( std::vector<floatT> & pgram, 
+                         std::vector<floatT> & ts, 
+                         floatT dt, 
+                         floatT avgLen, 
+                         floatT olap,
+                         std::vector<floatT> & w)
+{
+   int Nper = avgLen/dt;
+   int Nover = (avgLen-olap)/dt;
+   
+   pgram.resize(Nper/2., 0);
+   
+   std::vector<floatT> work;
+   work.resize(Nper);
+   
+   std::vector<std::complex<floatT> > fftwork;
+   fftwork.resize(Nper);
+   
+   int Navg = ts.size()/Nover;
+   
+   while(Navg*Nover + Nper > ts.size()) --Navg;
+
+   typename std::vector<floatT>::iterator first, last;
+   
+   //fftw_plan p = fftw_plan_dft_r2c_1d(work.size(), work.data(), reinterpret_cast<fftw_complex*>(fftwork.data()), FFTW_ESTIMATE);
+
+   mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
+   //std::vector<floatT> w;
+   //w.resize(Nper);
+   //tukeyWindow1D(w, alpha);
+   
+   for(int i=0;i<Navg;++i)
+   {
+      first = ts.begin() + (i*Nover);
+      last = first + Nper;
+      
+      work.assign(first, last);
+      float mean = 0;
+      for (int j=0;j<work.size();++j) mean += work[j];
+      //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
+      mean/=work.size();
+      
+      
+      for(int j=0;j<work.size();++j) 
+      {
+         work[j] = (work[j] - mean);//
+         if(w.size() == Nper) work[j] *= w[j];
+      }
+            
+      //fftw_execute(p);
+      fft.fft(work.data(), fftwork.data()); 
+       
+      for(int j=0;j<pgram.size();++j) pgram[j] += pow(abs(fftwork[j]),2);
+
+      //pgram[0] = 0;
+   }
+
+   
+   //fftw_destroy_plan(p);
+
+}
 #endif //__psds_hpp__

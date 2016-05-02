@@ -84,6 +84,7 @@ typeT convertFromString(const std::string & str)
 }
 
 
+
 /// Template specialization of convertFromString for char
 /**  
   * \param str is the std::string object to convert.
@@ -95,6 +96,7 @@ char convertFromString<char>(const std::string & str)
 {
    return (char) atoi(str.c_str());
 }
+
 
 /// Template specialization of convertFromString for unsigned char
 /**  
@@ -264,6 +266,9 @@ bool convertFromString<bool>(const std::string & str)
    return (bool) convertFromString<int>(str);
 }
 
+
+
+
 /// Convert a string to all lower case.
 /** Calls the c tolower function for each character in instr.
   * 
@@ -278,6 +283,9 @@ void toLower(std::string &outstr, const std::string & instr)
    for(int i=0; i < instr.size(); ++i) outstr[i] = tolower(instr[i]);
    
 }
+
+
+
 
 /// Convert a string to all lower case.
 /** Calls the c tolower function for each character in instr.
