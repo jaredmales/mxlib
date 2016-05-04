@@ -50,7 +50,7 @@ struct gaussKernel
          for(int j=0; j < w; ++j)
          {
             r2 = pow(i-kcen,2) + pow(j-kcen,2) ;
-            kernel(i,j) = exp(-r2/sig2);
+            kernel(i,j) = exp(-r2/(2.0*sig2));
          }
       }
       
@@ -80,8 +80,6 @@ struct azBoxKernel
 
 
    static const int kernW = _kernW;
-   
-   //arrayT kernel;
    
    arithT _radWidth;
    arithT _azWidth;
@@ -158,8 +156,10 @@ struct azBoxKernel
   *     //The setKernel function is called for each pixel.
   *     void setKernel(arithT x, arithT y, arrayT & kernel)
   *     {
-  *        //This may or may not do anything (e.g., kernel could be created in constructor)
-  *        //but on output kernel array should be normalized so that sum() = 1.0
+  *        //This must resize and populate the passed in kernel array each time
+  *        //so that it is re-entrant. 
+  *        //Note: On output kernel array should be normalized so that sum() = 1.0
+  *        //Note: the width and height of the kernel array should always be odd
   *     }
   * };
   * \endcode
@@ -193,15 +193,6 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    
    typename kernelT::arrayT kernelArray;
    
-//    for(int i=mini; i<maxi; ++i)
-//    {
-//       for(int j=minj; j<maxj; ++j)
-//       {
-//          kernel.setKernel(i-xcen, j-ycen, kernelArray);
-//          fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
-//       }
-//    }
-
    #pragma omp parallel private(kernelArray)
    {
       int im_i, im_j, im_p,im_q;
@@ -213,20 +204,19 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
       {
          for(size_t j=0; j<im.cols(); j++)
          {
-            //if((i >= maxr && i< im.rows()-maxr) && (j>= maxr && j<im.rows()-maxr)) continue;
             if((i >= mini && i< maxi) && (j>= minj && j<maxj))
             {
                kernel.setKernel(i-xcen, j-ycen, kernelArray);
-               fim(i,j) = (im.block(i-0.5*kernelArray.rows(), j-0.5*kernelArray.cols(), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
+               fim(i,j) = (im.block(i-0.5*(kernelArray.rows()-1), j-0.5*(kernelArray.cols()-1), kernelArray.rows(), kernelArray.cols())*kernelArray).sum();
             }
             else
             {
                kernel.setKernel(i-xcen, j-ycen, kernelArray);
          
-               im_i = i - 0.5*kernelArray.rows();
+               im_i = i - 0.5*(kernelArray.rows()-1);
                if(im_i < 0) im_i = 0;
          
-               im_j = j - 0.5*kernelArray.cols();
+               im_j = j - 0.5*(kernelArray.cols()-1);
                if(im_j < 0) im_j = 0;
 
                im_p = im.rows() - im_i;
@@ -235,10 +225,10 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
                im_q = im.cols() - im_j;
                if(im_q > kernelArray.cols()) im_q = kernelArray.cols();
          
-               kern_i = 0.5*kernelArray.rows() - i;
+               kern_i = 0.5*(kernelArray.rows()-1) - i;
                if(kern_i < 0) kern_i = 0;
          
-               kern_j = 0.5*kernelArray.cols() - j;
+               kern_j = 0.5*(kernelArray.cols()-1) - j;
                if(kern_j < 0) kern_j = 0;
       
                kern_p = kernelArray.rows() - kern_i;
