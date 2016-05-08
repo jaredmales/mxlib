@@ -970,7 +970,7 @@ void HCIobservation<_floatT>::outputPreProcessed()
    {
       bname = fileList[i];
       fname = preProcess_outputPrefix + basename(bname.c_str());
-      ff.write(fname, imc.image(i).data(), Ncols, Nrows, 1, &heads[i]);
+      ff.write(fname, imc.image(i).data(), Ncols, Nrows, 1, heads[i]);
    }
    
    
@@ -1125,7 +1125,8 @@ inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)
    
    fitsFile<floatT> f;
       
-   f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
+   //f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
+   f.write(fname, finim, head);
    
    std::cerr << "Final image written to: " <<  fname << "\n";
 }
@@ -1170,7 +1171,7 @@ inline void HCIobservation<_floatT>::outputPSFSub(fitsHeader * addHead)
       snprintf(num, 16, "%05d.fits", n);
       fname = PSFSubPrefix + num;
    
-      f.write(fname, psfsub[n].data(), psfsub[n].rows(), psfsub[n].cols(), psfsub[n].planes(), &head);
+      f.write(fname, psfsub[n].data(), psfsub[n].rows(), psfsub[n].cols(), psfsub[n].planes(), head);
    }
    
 }

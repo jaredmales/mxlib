@@ -293,7 +293,26 @@ public:
    
    void setZero()
    {
+      set( (Scalar) 0);
    }
+   
+   
+   imagingArray & operator=(const imagingArray & arr)
+   {
+      resize(arr.rows(), arr.cols());
+      
+      for(int i=0; i<_rows; ++i)
+      {
+         for(int j=0; j<_cols; ++j)
+         {
+            operator()(i,j) = arr(i,j);
+         }
+      }
+      
+      return (*this);
+   }
+         
+   
    ///In-place product.  Works for both scalars and imagingArray types.
    template<typename typeT>
    imagingArray & operator*=(typeT & alpha)
@@ -330,9 +349,15 @@ public:
       
       return _sum;
    }
+   
+   Eigen::Map<Eigen::Array<Scalar,-1,-1> >  eigenMap()
+   {
+      return Eigen::Map<Eigen::Array<Scalar,-1,-1> >(_data, _rows, _cols);
+   }
 };
 
 
+   
 
 typedef imagingArray<float,mx::fftwAllocator<float>,0> imagingArrayf;
 typedef imagingArray<std::complex<float>,mx::fftwAllocator<std::complex<float> >,0> imagingArraycf;

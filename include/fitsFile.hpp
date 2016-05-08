@@ -64,9 +64,16 @@ protected:
    ///One time initialization common to all constructors
    void construct();
   
+   ///The starting x-pixel to read from
    long _x0;
+   
+   ///The starting y-pixel to read from
    long _y0;
+   
+   ///The number of x-pixels to read
    long _xpix;
+   
+   ///The number of y-pixels to read
    long _ypix;
    
 public:
@@ -257,30 +264,151 @@ public:
    /** \name Writing Data Arrays
      * @{
      */
-   void write(dataT * im, int d1, int d2, int d3, fitsHeader * head = 0);
-      
-   void write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader * head = 0);
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * Note: the type of the array must match dataT
+     *  
+     * \param im is the array
+     * \param d1 is the first dimension
+     * \param d2 is the second dimension
+     * \param d3 is the third dimenesion (minimum 1)
+     * \param head is an (optiona) pointer to the header.  Set to 0 if not used.
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   void write(dataT * im, int d1, int d2, int d3, fitsHeader * head);
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * Note: the type of the array must match dataT
+     *  
+     * \param im is the array
+     * \param d1 is the first dimension
+     * \param d2 is the second dimension
+     * \param d3 is the third dimenesion (minimum 1)
+     * 
+     * \throws mxException on error
+     * 
+     */
+   void write(dataT * im, int d1, int d2, int d3);
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * Note: the type of the array must match dataT
+     *  
+     * \param im is the array
+     * \param d1 is the first dimension
+     * \param d2 is the second dimension
+     * \param d3 is the third dimenesion (minimum 1)
+     * \param head is the header. 
+     * 
+     * \throws mxException on error
+     * 
+     */
+   void write(dataT * im, int d1, int d2, int d3, fitsHeader & head);
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * Note: the type of the array must match dataT
+     *  
+     * \param fname is the name of the file
+     * \param im is the array
+     * \param d1 is the first dimension
+     * \param d2 is the second dimension
+     * \param d3 is the third dimenesion (minimum 1)
+     * 
+     * \throws mxException on error
+     * 
+     */
+   void write(std::string fname, dataT * im, int d1, int d2, int d3);
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * Note: the type of the array must match dataT
+     *  
+     * \param fname is the name of the file
+     * \param im is the array
+     * \param d1 is the first dimension
+     * \param d2 is the second dimension
+     * \param d3 is the third dimenesion (minimum 1)
+     * \param head is the header. 
+     * 
+     * \throws mxException on error
+     * 
+     */
+   void write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader & head);
+
+   ///Write the contents of and Eigen-type array to a FITS file.
+   /** The type arrT can be any type with the following members defined:
+     * - data() (returns a pointer to the underlying array)
+     * - rows() (returrns the number of rows)
+     * - cols() (returns the number of columns)
+     * - may have planes() defined
+     * 
+     * Note: as with all write methods, the Scalar type of the array must match dataT
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param im is the array
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   template<typename arrT>
+   void write(std::string fname, arrT & im); 
+  
+   ///Write the contents of an Eigen-type array to a FITS file.
+   /** The type arrT can be any type with the following members defined:
+     * - data() (returns a pointer to the underlying array)
+     * - rows() (returrns the number of rows)
+     * - cols() (returns the number of columns)
+     * - may have planes() defined.
+     * 
+     * Note: as with all write methods, the Scalar type of the array must match dataT
+     * 
+     * \tparam arrT is the type of array, see requirements above.
+     * 
+     * \param fname is the file path, which is passed to \ref setFilename
+     * \param im is the array
+     * \param head is a fitsHeader object which is passed to \ref readHeader
+     * 
+     * \throws mxException on error
+     * 
+     */ 
+   template<typename arrT>
+   void write(std::string fname, arrT & im, fitsHeader & head); 
    
    void writeHeader(fitsHeader &head);
    
    ///@}
    
-   void setReadSize()
-   {
-      _x0 = -1;
-      _y0 = -1;
-      _xpix = -1;
-      _ypix = -1;
-   }
-   
-   void setReadSize(long x0, long y0, long xpix, long ypix)
-   {
-      _x0 = x0;
-      _y0 = y0;
-      _xpix = xpix;
-      _ypix = ypix;
-      
-   }
+   ///Set to read all the pixels in the file
+   void setReadSize();
+//    {
+//       _x0 = -1;
+//       _y0 = -1;
+//       _xpix = -1;
+//       _ypix = -1;
+//    }
+
+   ///Set to read only a subet of the pixels in the file
+   /**
+     * \param x0  is the starting x-pixel to read
+     * \param y0  is the starting y-pixel to read
+     * \param xpix is the number of x-pixels to read
+     * \param ypix is the number of y-pixels to read
+     */ 
+   void setReadSize(long x0, long y0, long xpix, long ypix);
+//    {
+//       _x0 = x0;
+//       _y0 = y0;
+//       _xpix = xpix;
+//       _ypix = ypix;
+//       
+//    }
    
    
 }; // fitsFile
@@ -957,15 +1085,97 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
 }
       
 template<typename dataT>
-void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader * head)
+void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3)
 {
-   setFilename(fname, false);
-   write(im, d1, d2, d3, head);
+   write(im, d1, d2, d3, (fitsHeader *) 0);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader & head)
+{
+   write(im, d1, d2, d3, &head);
 }
 
 
+template<typename dataT>
+void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3)
+{
+   setFilename(fname, false);
+   write(im, d1, d2, d3, (fitsHeader *) 0);
+}
+
+template<typename dataT>
+void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader & head)
+{
+   setFilename(fname, false);
+   write(im, d1, d2, d3, &head);
+}
 
 
+/************************************************************/
+/***                      Eigen Arrays                    ***/
+/************************************************************/
+
+//SFINAE to check for 3D eigenCube
+template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
+struct eigenArrPlanes
+{
+   //If it's an eigenCube, call planes planes()
+   int operator()(arrT & arr)
+   {
+      return arr.planes();
+   }
+};
+
+template<typename arrT>
+struct eigenArrPlanes<arrT, false>
+{
+   //If it's not an eigenCube, never call planes()
+   int operator()(arrT & arr)
+   {
+      return 1;
+   }
+};
+
+
+template<typename dataT>
+template<typename arrT>
+void fitsFile<dataT>::write(std::string fname, arrT & im)
+{
+   eigenArrPlanes<arrT> planes;
+   
+   write(fname, im.data(), im.rows(), im.cols(), planes(im));
+   
+}
+
+template<typename dataT>
+template<typename arrT>
+void fitsFile<dataT>::write(std::string fname, arrT & im, fitsHeader & head)
+{
+   eigenArrPlanes<arrT> planes;
+   
+   write(fname, im.data(), im.rows(), im.cols(), planes(im), head);
+   
+}
+
+template<typename dataT>
+void fitsFile<dataT>::setReadSize()
+{
+   _x0 = -1;
+   _y0 = -1;
+   _xpix = -1;
+   _ypix = -1;
+}
+
+template<typename dataT>
+void fitsFile<dataT>::setReadSize(long x0, long y0, long xpix, long ypix)
+{
+   _x0 = x0;
+   _y0 = y0;
+   _xpix = xpix;
+   _ypix = ypix;
+}
+   
 
 /** \ingroup fits_processing_typedefs
   * @{

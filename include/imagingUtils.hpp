@@ -27,7 +27,7 @@ namespace mx
   * \returns the platescale of the wavefront after propagation by FFT.
   */   
 template<typename floatT>
-floatT fftPlateScale(floatT pixels, floatT metersPerPixel, floatT lambda)
+floatT fftPlateScale(size_t pixels, floatT metersPerPixel, floatT lambda)
 {
    return (lambda/metersPerPixel) * (1./pixels);
 }
@@ -235,13 +235,13 @@ void tiltWavefront( wavefrontT & complexWavefront,
    }
 }
 
-template< typename imageT>
-void extractBlock(imageT & im,
+template< typename imageT1, typename imageT2>
+void extractBlock(imageT1 & im,
                   int imX0,
                   int imXsz,
                   int imY0,
                   int imYsz,
-                  imageT & wf,
+                  imageT2 & wf,
                   int wfX0,
                   int wfY0)
 {
@@ -251,7 +251,7 @@ void extractBlock(imageT & im,
    int wf_idx;
    int wf_rows = wf.cols();
    
-   typedef typename imageT::Scalar dataT;
+   typedef typename imageT1::Scalar dataT;
    
    dataT * im_data;
    dataT * wf_data;
