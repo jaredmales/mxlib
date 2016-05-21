@@ -45,13 +45,31 @@ INC_TO_INSTALL = airy.hpp \
                  astrodyn.hpp \
                  astroFilter.hpp \
                  astrotypes.h \
-                 kepler.hpp \
+                 eigenImage.hpp \
+                 eigenCube.hpp \
+                 eigenUtils.hpp \
+                 environment.hpp \
+                 fileUtils.hpp \
+                 fitsUtils.hpp \
+                 fitsFile.hpp \
+                 fitsHeader.hpp \
+                 fitsHeaderCard.hpp \
+                 fft.hpp \
+                 fraunhoferImager.hpp \
+                 imagingArray.hpp \
+                 imagingUtils.hpp \
+                 imageFilters.hpp \
+                 imageTransforms.hpp \
+                 gaussian.hpp \
                  geo.h \
+		 gnuplot_interface.h \
+                 gramSchmidt.hpp \
+                 gslInterpolation.hpp \
+                 jinc.hpp \
+                 kepler.hpp \
                  readColumns.hpp \
                  stringUtils.hpp \
                  fileUtils.hpp \
-                 gaussian.hpp \
-                 gslInterpolation.hpp \
                  pout.hpp \
                  psds.hpp \
                  IPC.h \
@@ -63,23 +81,6 @@ INC_TO_INSTALL = airy.hpp \
                  sharedMemSegment \
                  process_interface.h \
                  ds9_interface.h \
-                 gnuplot_interface.h \
-                 fileUtils.hpp \
-                 fitsUtils.hpp \
-                 fitsFile.hpp \
-                 fitsHeader.hpp \
-                 fitsHeaderCard.hpp \
-                 fft.hpp \
-                 imagingArray.hpp \
-                 imagingUtils.hpp \
-                 fraunhoferImager.hpp \
-                 eigenImage.hpp \
-                 eigenCube.hpp \
-                 eigenUtils.hpp \
-                 environment.hpp \
-                 gramSchmidt.hpp \
-                 imageFilters.hpp \
-                 imageTransforms.hpp \
                  signalWindows.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
@@ -91,8 +92,8 @@ INC_TO_INSTALL = airy.hpp \
 	         KLIPreduction.hpp \
 		 imageMasks.hpp \
 		 vectorUtils.hpp \
-		 randomT.hpp \
-		 powerspectra.hpp
+		 randomT.hpp 
+#		 powerspectra.hpp
                  
 # VMOP_TO_INSTALL = MMatrix \
 #                   MMatrix1 \

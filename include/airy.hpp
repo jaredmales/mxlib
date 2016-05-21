@@ -26,6 +26,8 @@ namespace mx
 template<typename floatT>
 floatT airy(floatT x)
 {
+   if(x == 0) return 1.0;
+   
    return pow(2.*cyl_bessel_j(1, pi<floatT>()*x)/(pi<floatT>()*x),2);
 }
 

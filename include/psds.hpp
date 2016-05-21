@@ -232,14 +232,18 @@ void vonKarman_psd( eigenArrp  & psd,
    }
    
    //Scalar L02 = pow(D2PI,2)/(L0*L0);
-   Scalar L02 = 1.0/(L0*L0);
+   
+   Scalar L02;
+   if(L0 > 0) L02 = 1.0/(L0*L0);
+   else L02 = 0;
+   
    Scalar sqrt_alpha = 0.5*alpha;//std::sqrt(alpha);
    
    for(int ii =0; ii < dim_1; ++ii)
    {
       for(int jj=0; jj < dim_2; ++jj)
       {
-         if(freq(ii,jj) == 0)
+         if(freq(ii,jj) == 0 && L02 == 0)
          {
             p = 0;
          }
@@ -267,7 +271,7 @@ void psd_filter( eigenArrn & noise,
    {
       for(int jj=0; jj<noise.cols(); ++jj)
       {
-         cnoise(ii,jj) = complexT(noise(ii,jj), 0);
+         cnoise(ii,jj) = complexT(noise(ii,jj),0);// noise(ii,jj));
       }
    }
    
@@ -276,18 +280,13 @@ void psd_filter( eigenArrn & noise,
    
    fft.fft( cnoise.data(),ft.data());
    
-   ft *= psd.sqrt();
-   
-   //ft *= sqrt(psd.sum()/ft.abs().square().sum());
-   
-   //eigenArrn rft = ft.abs().square();
-   //mx::ds9(rft, 3);
-     
+   ft *= psd.sqrt();//*exp(complexT(0, 0.5*3.14159));
+        
    fftR.fft(ft.data(), ft2.data()); //in-place
    
-   noise = ft2.real()/(noise.rows());//*noise.cols());
+   noise = ft2.real()/(noise.rows()*noise.cols());
    
-   noise *= sqrt( psd.sum()/noise.square().sum());
+   //noise *= sqrt( psd.sum()/noise.square().sum());
 }
 
 
