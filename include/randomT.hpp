@@ -1,4 +1,9 @@
-
+/** \file randomT.hpp
+  * \author Jared R. Males
+  * \brief Defines a random number type
+  * \ingroup random
+  *
+  */
 
 #ifndef __randomT__
 #define __randomT__
@@ -11,6 +16,8 @@ namespace mx
 ///Access to a global random number engine  
 /** 
   * @returns Returns a reference to the global engine.
+  * 
+  * \ingroup random
   */
 template<class rangenT> rangenT & random_engine()
 {
@@ -22,17 +29,26 @@ template<class rangenT> rangenT & random_engine()
 ///A random number type, which functions like any other arithmetic type.  
 /** 
   * Combines a random engine, and a random distribution.  Using the type conversion operator
-  * randomT returns the next random deviate whenever it is referenced. 
+  * randomT returns the next random deviate whenever it is referenced. The random engine is 
+  * the global engine of that type accessed by random_engine().
   *
   * Example:
   * 
   * \code
+  * #include <mx/randomSeed.hpp>
+  * 
+  * 
   * randomT<double, std::mt19937_64, std::normal_distribution<double> > norm_distd;
-  * norm_distd.engine().seed(5);
+  * 
+  * unsigned long seedval;
+  * randomSeed(seedval); //Get seed from urandom
+  * norm_distd.engine().seed(seedval);
   * 
   * double d1 = norm_distd; //get a normally distributed value
   * double d2 = norm_distd; //get the next normally distributed value
   * \endcode
+  * 
+  * \ingroup random
   */
 template<class typeT, class _ranengT, class _randistT> class randomT
 {
@@ -81,6 +97,8 @@ public:
    * </table>
    * 
    * This is based on the implementation of the exponential distribution in the GNU ISO C++ Library version 4.6.
+   * 
+   * \ingroup random
    */
 template<typename _RealType = double>
 class laplace_distribution
@@ -248,6 +266,9 @@ template<typename _RealType, typename _CharT, typename _Traits> std::basic_istre
 
 
 
+/** \ingroup random
+ * @{
+ */
 
 ///Typedef for a standard normal distribution of floats
 typedef randomT<float, std::mt19937_64, std::normal_distribution<float> > norm_distf;
@@ -280,6 +301,7 @@ typedef randomT<long double, std::mt19937_64, std::exponential_distribution<long
 ///Typedef for a Laplace or long double exponential distribution of long doubles
 typedef randomT<long double, std::mt19937_64, mx::laplace_distribution<long double> > lap_distld;
 
+/// @}
 
 } //namespace MX
 

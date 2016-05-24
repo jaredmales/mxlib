@@ -10,6 +10,9 @@
 
 #include <boost/math/special_functions/bessel.hpp>
 
+namespace mx
+{
+   
 ///Returns the the Jinc function
 /** The Jinc function is defined here as
   * \f[ 
@@ -53,5 +56,7 @@ floatT jinc2(floatT x)
    if(fabs(x) < 1e-5) return 0.0;
    else return boost::math::cyl_bessel_j(2,x)/(x);
 }
+
+} //namespace mx
 
 #endif //__jinc_hpp__

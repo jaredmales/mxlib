@@ -37,7 +37,8 @@ OBJS = kepler.o \
        gnuplot_interface.o \
 
 
-INC_TO_INSTALL = airy.hpp \
+INC_TO_INSTALL = ADIobservation.hpp \
+                 airy.hpp \
                  app \
                  appConfigurator.hpp \
                  application.hpp \
@@ -45,62 +46,53 @@ INC_TO_INSTALL = airy.hpp \
                  astrodyn.hpp \
                  astroFilter.hpp \
                  astrotypes.h \
+                 ds9_interface.h \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \
                  environment.hpp \
+                 fft.hpp \
                  fileUtils.hpp \
                  fitsUtils.hpp \
                  fitsFile.hpp \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
-                 fft.hpp \
                  fraunhoferImager.hpp \
-                 imagingArray.hpp \
-                 imagingUtils.hpp \
-                 imageFilters.hpp \
-                 imageTransforms.hpp \
                  gaussian.hpp \
                  geo.h \
 		 gnuplot_interface.h \
                  gramSchmidt.hpp \
                  gslInterpolation.hpp \
-                 jinc.hpp \
-                 kepler.hpp \
-                 readColumns.hpp \
-                 stringUtils.hpp \
-                 fileUtils.hpp \
-                 pout.hpp \
-                 psds.hpp \
+       		 HCIobservation.hpp \
                  IPC.h \
+                 imageFilters.hpp \
+       		 imageMasks.hpp \
+                 imageTransforms.hpp \
+                 imagingArray.hpp \
+                 imagingUtils.hpp \
+                 jinc.hpp \
+                 KLIPreduction.hpp \
+                 kepler.hpp \
                  msgq.h \
                  msgQ \
+                 mxException.hpp \
                  mxlib.h\
                  mxlib_uncomp_version.h\
+                 pout.hpp \
+                 process_interface.h \
+                 psds.hpp \
+                 readColumns.hpp \
                  sharedmem_segment.h \
                  sharedMemSegment \
-                 process_interface.h \
-                 ds9_interface.h \
                  signalWindows.hpp \
+                 stringUtils.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  timeUtils.hpp \
-                 mxException.hpp \
-		 HCIobservation.hpp \
-		 ADIobservation.hpp \
-	         KLIPreduction.hpp \
-		 imageMasks.hpp \
-		 vectorUtils.hpp \
-		 randomT.hpp 
-#		 powerspectra.hpp
-                 
-# VMOP_TO_INSTALL = MMatrix \
-#                   MMatrix1 \
-#                   MMatrix2 \
-#                   MMatrixSlice \
-#                   MMatrixView1 \
-#                   MMatrixView2
+		 randomSeed.hpp \
+		 randomT.hpp \
+		 vectorUtils.hpp                  
 
 all: $(TARGETS) 
 

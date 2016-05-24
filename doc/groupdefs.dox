@@ -21,6 +21,11 @@
   * \ingroup gen_math
   */
   
+/** \defgroup random Random Numbers
+  * \brief Random number generation.
+  * \ingroup gen_math
+  */
+  
 /** \defgroup template_blas Templatized BLAS interface
   * \brief Templatized interface to the BLAS
   * \ingroup template_blaslap
