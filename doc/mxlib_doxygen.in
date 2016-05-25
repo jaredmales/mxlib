@@ -660,6 +660,7 @@ INPUT                  = ./groupdefs.dox \
                          ../include/msgQ \
                          ../include/sharedMemSegment \
                          ../vmop/doc/main_page.txt \
+                         ./boost_const.dox
 #                         ../vmop/MMatrixBase \
 #                         ../vmop/MMfunctional \
 #                         ../vmop/MMatrixBound \

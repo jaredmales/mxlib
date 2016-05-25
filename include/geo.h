@@ -3,17 +3,43 @@
 #ifndef __geo_h__
 #define __geo_h__
 
+#include <boost/math/constants/constants.hpp>
+
 #include <sofa.h>
 
 /** \addtogroup geo
   * @{
   */
 
+//#define DTOR(q) ((q)*DPI/180.)
+
 ///Convert from degrees to radians
-#define DTOR(q) ((q)*DPI/180.)
+/**
+  * Uses boost constants:
+  * \code
+  * return q*boost::math::constants::degree<dataT>();
+  * \endcode
+  */
+template<typename dataT>
+dataT DTOR(dataT q)
+{
+   return q * boost::math::constants::degree<dataT>();
+}
+
+//#define RTOD(q) ((q)*180./DPI)
 
 ///Convert from radians to degrees
-#define RTOD(q) ((q)*180./DPI)
+/**
+  * Uses boost constants:
+  * \code
+  * return q*boost::math::constants::radian<dataT>();
+  * \endcode
+  */
+template<typename dataT>
+dataT RTOD(dataT q)
+{
+   return q * boost::math::constants::radian<dataT>();
+}
 
 ///Calculate the difference between two angles, correctly across 0/360.
 /** Calculates \f$ dq = q2- q1 \f$, but accounts for crossing 0/360.  This implies
@@ -34,7 +60,7 @@ arithT angleDiff(arithT q1, arithT q2)
 
    double half;
    if(!degrad) half = 180.0;
-   if(degrad) half = DPI;
+   if(degrad) half = boost::math::constants::pi<arithT>();//DPI;
       
    if (abs(dq) > half)
    {
