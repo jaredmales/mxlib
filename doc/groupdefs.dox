@@ -6,6 +6,11 @@
   * \brief General mathematical utilities.
   */
   
+/** \defgroup gen_math_files Headers
+  * \brief Header files for General Mathematics
+  * \ingroup gen_math
+  */
+  
 /** \defgroup gen_math_gaussians The Gaussian Function
   * \brief Utilities for working with the Gaussian function
   * \ingroup gen_math

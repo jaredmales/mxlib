@@ -1,6 +1,6 @@
 /** \file jinc.hpp
   * \brief Declares and defines the Jinc and Jinc2 functions
-  * \ingroup gen_math
+  * \ingroup gen_math_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */

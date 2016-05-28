@@ -84,6 +84,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  readColumns.hpp \
                  sharedmem_segment.h \
                  sharedMemSegment \
+                 sigmoid.hpp \
                  signalWindows.hpp \
                  stringUtils.hpp \
                  templateBLAS.hpp \

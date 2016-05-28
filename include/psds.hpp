@@ -1,9 +1,20 @@
+/** \file psds.hpp
+  * \brief Tools for working with PSDs
+  * 
+  * \author Jared R. Males (jaredmales@gmail.com)
+  * 
+  * \ingroup psds
+  *
+  */
 
 #ifndef __psds_hpp__
 #define __psds_hpp__
 
 #include <mx/fft.hpp>
 
+namespace mx
+{
+   
 /** \ingroup psds
   * @{
   */
@@ -361,4 +372,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    //fftw_destroy_plan(p);
 
 }
+
+} //namespace mx
+
 #endif //__psds_hpp__
