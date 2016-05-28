@@ -4,6 +4,9 @@
 
 #include <mx/fft.hpp>
 
+/** \ingroup psds
+  * @{
+  */
 
 /// Calculates the frequency sampling for a grid given maximum dimension and maximum frequency.
 /** The freq_sampling is
@@ -98,7 +101,7 @@ void frequency_grid( eigenArr & arr,
    }
 }
 
-///Calculate the normalization for a @f$ 1/|f|^\alpha @f$ PSD.
+///Calculate the normalization for a 1-D @f$ 1/|f|^\alpha @f$ PSD.
 /**
   * \param fmin is the minimum non-zero absolute value of frequency
   * \param fmax is the maximum absolute value of frequencey
@@ -115,13 +118,13 @@ realT oneoverf_norm(realT fmin, realT fmax, realT alpha)
 }
 
 /// Generates a @f$ 1/|f|^\alpha @f$ power spectrum
-/** \ingroup psds
+/** 
   * Populates an Eigen array  with
   * \f[
   *  P(|f| = 0) = 0 
   * \f]
   * \f[
-  *  P(|f| > 0) = c/|f|^{\alpha} 
+  *  P(|f| > 0) = \frac{\beta}{|f|^{\alpha}} 
   * \f]
   * 
   *
@@ -181,20 +184,20 @@ void oneoverf_psd( eigenArrp  & psd,
 }
 
 /// Generates a von Karman power spectrum
-/** \ingroup psds
+/** 
   * Populates an Eigen array  with
+  *
   * \f[
-  *  P(|f| = 0) = 0 
-  * \f]
-  * \f[
-  *  P(|f| > 0) = c/|f|^{\alpha} 
+  *  P(f) = \frac{\beta}{ (f^2 + (1/L_0)^2)^{\alpha/2}} 
   * \f]
   * 
+  * If you set \f$ L_0 \le 0 \f$ this reverts to standard \f$ 1/f^\alpha \f$ law (i.e. 
+  * it treats this as infinite outer scale).  
   *
-  * \param psd [output] is the array to populate
+  * \param psd [output] is the array to populate, allocated.
   * \param freq [input] is a frequency grid, must be the same logical size as psd
   * \param alpha [input] is the power law exponent, by convention @f$ alpha > 0 @f$.
-  * \param L0 [input] is the outer scale
+  * \param L0 [input] is the outer scale.  
   * \param beta [optional input] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
   *                           the PSD is normalized using \ref oneoverf_norm.
   *
@@ -231,7 +234,6 @@ void vonKarman_psd( eigenArrp  & psd,
       beta = oneoverf_norm(fmin, fmax, alpha);
    }
    
-   //Scalar L02 = pow(D2PI,2)/(L0*L0);
    
    Scalar L02;
    if(L0 > 0) L02 = 1.0/(L0*L0);
@@ -256,6 +258,12 @@ void vonKarman_psd( eigenArrp  & psd,
    }   
 }
 
+///Filter a noise vector or array by the given PSD using Fourier convolution.
+/**
+  * \param noise [input/output] is the noise array, an Eigen type. On output it is replaced with the filtered noise.
+  * \param psd [input] is the 2-sided PSD with which to filter the noise.
+  * 
+  */
 template<typename eigenArrn, typename eigenArrp>
 void psd_filter( eigenArrn & noise,
                  eigenArrp & psd )
@@ -286,7 +294,6 @@ void psd_filter( eigenArrn & noise,
    
    noise = ft2.real()/(noise.rows()*noise.cols());
    
-   //noise *= sqrt( psd.sum()/noise.square().sum());
 }
 
 
@@ -324,12 +331,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,
 
    typename std::vector<floatT>::iterator first, last;
    
-   //fftw_plan p = fftw_plan_dft_r2c_1d(work.size(), work.data(), reinterpret_cast<fftw_complex*>(fftwork.data()), FFTW_ESTIMATE);
-
    mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
-   //std::vector<floatT> w;
-   //w.resize(Nper);
-   //tukeyWindow1D(w, alpha);
    
    for(int i=0;i<Navg;++i)
    {
@@ -349,12 +351,10 @@ void averagePeriodogram( std::vector<floatT> & pgram,
          if(w.size() == Nper) work[j] *= w[j];
       }
             
-      //fftw_execute(p);
       fft.fft(work.data(), fftwork.data()); 
        
       for(int j=0;j<pgram.size();++j) pgram[j] += pow(abs(fftwork[j]),2);
 
-      //pgram[0] = 0;
    }
 
    
