@@ -45,6 +45,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  astroconstants.h \
                  astrodyn.hpp \
                  astroFilter.hpp \
+                 astroSpectrum.hpp \
                  astrotypes.h \
                  ds9_interface.h \
                  eigenImage.hpp \

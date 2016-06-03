@@ -109,6 +109,12 @@ void readColumns(const std::string & fname, arrTs &... arrays)
    std::ifstream fin;
    fin.open(fname);
    
+   if(!fin.good())
+   {
+      std::cerr << "readColumns: Error opening file -- " << fname << "\n";
+      return;
+   }
+   
    int lineSize = 1024;
    char * line = new char[lineSize];
   
@@ -133,9 +139,7 @@ void readColumns(const std::string & fname, arrTs &... arrays)
          line[i] = '\0';
       }
        
-      //std::cerr << "- " << l << " " << i << "\n"; 
       l = strlen(line);
-      //std::cerr << "+ " << l << " " << i << "\n"; 
       
       if(l == 0) continue;
       
