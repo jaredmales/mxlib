@@ -101,7 +101,6 @@ int gsl_interpolate( const gsl_interp_type * interpT,
    for(int i=0;i<Nout; ++i)
    {
       int e = gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
-      //std::cout << xout[i] << " " << yin[i] << "\n";
    }
    
    gsl_interp_free(interp);

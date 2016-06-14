@@ -1,0 +1,43 @@
+
+
+/** \addtogroup genphyconstants
+
+Boost Constants
+===============
+
+Many constants of general utility are defined by the boost c++ library.  For example:
+
+\code
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
+double dpi = pi<double>();
+
+double d2pi = two_pi<double>();
+
+double droot2 = root_two<double>();
+
+double dln2 = ln_two<double>();
+
+double oneDroot2 = one_div_root_two<double>();
+
+//And many others defined in constants.hpp
+
+\endcode
+
+Fundamental constants can be accessed with
+
+\code
+
+#include <boost/units/systems/si/codata/universal_constants.hpp>
+
+double c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
+
+\endcode
+
+SOFA Constants
+==============
+
+*/
+
+

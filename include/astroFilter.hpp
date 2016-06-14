@@ -25,10 +25,25 @@
 
 #include "signalWindows.hpp"
 
+#include "astroSpectrum.hpp"
+
 namespace mx
 {
 
    
+//Forward Decls.
+template<typename dataT>
+void readCalspec( std::vector<dataT> & lambda, 
+                  std::vector<dataT> & flambda,
+                  const std::string & spName, 
+                  const std::string & datadir);
+
+template<typename dataT>
+void readCalspec( std::vector<dataT> & lambda, 
+                  std::vector<dataT> & flambda,
+                  const std::string & spName );
+
+
 /** \addtogroup astrophot
   * @{
   */
@@ -50,18 +65,18 @@ void astrofiltNormalize( std::vector<dataT> & trans )
 
 /// Erase points at beginning and end to trim unwanted data from a spectrum.
 /**
-  * \param lambda_0 the minimum wavelength to be included
-  * \param lambda_f the maximum wavelength to be include
-  * \param lambda the wavelength points of the spectrum
-  * \param spectrum the spectrum 
+  * \param lambda [out] the wavelength points of the spectrum
+  * \param spectrum [out] the spectrum 
+  * \param lambda_0 [in] the minimum wavelength to be included
+  * \param lambda_f [in] the maximum wavelength to be include
   *  
   * \tparam dataT the type of the data 
   */
 template<typename dataT>
-void astrofiltTrimWavelength( dataT lambda_0,
-                              dataT lambda_f,
-                              std::vector<dataT> & lambda,
-                              std::vector<dataT> & spectrum )
+void astrofiltTrimWavelength( std::vector<dataT> & lambda,
+                              std::vector<dataT> & spectrum,
+                              dataT lambda_0,
+                              dataT lambda_f )
 {
    typename std::vector<dataT>::iterator it_lam, it_spect;
    
@@ -101,16 +116,17 @@ void astrofiltTrimWavelength( dataT lambda_0,
 
 /// Erase points at beginning and end to trim unwanted data from a spectrum.
 /**
-  * \param lambda_ref the wavelength grid to use as the reference for min and max.
-  * \param lambda the wavelength points of the spectrum
-  * \param spectrum the spectrum 
-  *  
+  * 
+  * \param lambda [out] the wavelength points of the spectrum
+  * \param spectrum [out] the spectrum 
+  * \param lambda_ref [in] the wavelength grid to use as the reference for min and max.
+  * 
   * \tparam dataT the type of the data 
   */
 template<typename dataT>
-void astrofiltTrimWavelength( std::vector<dataT> & lambda_ref,
-                              std::vector<dataT> & lambda,
-                              std::vector<dataT> & spectrum )
+void astrofiltTrimWavelength( std::vector<dataT> & lambda,
+                              std::vector<dataT> & spectrum,
+                              std::vector<dataT> & lambda_ref )
 {
    astrofiltTrimWavelength( lambda_ref[0], lambda_ref[lambda_ref.size()-1], lambda, spectrum);
 }
@@ -123,8 +139,8 @@ void astrofiltTrimWavelength( std::vector<dataT> & lambda_ref,
   * where \f$ T(\lambda) \f$ is the energy transmission profile.
   * This is appropriate for photon detectors (like CCDs).  See Bessell, PASP, 112, 961 (2000).
   * 
-  * \param lambda is the wavelength scale
-  * \param trans is the transmission profile
+  * \param lambda [in] The wavelength scale
+  * \param trans [in] The transmission profile
   *  
   * \tparam dataT the type of the data 
   */
@@ -153,18 +169,18 @@ void astrofiltRSR( std::vector<dataT> & lambda,
   * environment variable.  Astrofilt profiles are in wavelength of microns, and transmission normalized to peak 
   * of 1 and airmass 0.
   * 
-  * \param filtName  the name of the filter, with no path or extension, e.g. 'J_NIRC2' or 'ip_VisAO'
-  * \param lam the profile wavelength scale, in microns.
-  * \param trans the transmission at each lambda, normalized to a peak of 1 at 0 airmass.
-  * \param rsr  if true converts to relative spectral response, appropriate for photon detectors (like CCDs).  See Bessell, PASP, 112, 961 (2000).
-  * \param datadir specifies the data directory.  if not set or empty, the environment is queried for then value of ASTROFILT_DATADIR.
+  * \param lam [out] the profile wavelength scale, in microns.  Is cleared.
+  * \param trans [out] the transmission at each lambda, normalized to a peak of 1 at 0 airmass. Is cleared.
+  * \param filtName  [in] the name of the filter, with no path or extension, e.g. 'J_NIRC2' or 'ip_VisAO'
+  * \param rsr [in] [optional] if true converts to relative spectral response, appropriate for photon detectors (like CCDs).  See Bessell, PASP, 112, 961 (2000).
+  * \param datadir [in] [optional] specifies the data directory.  if not set or empty, the environment is queried for then value of ASTROFILT_DATADIR.
   * 
   * \tparam dataT the type of data to return
   */
 template<typename dataT>
-void astrofilt( const std::string & filtName, 
-                std::vector<dataT> & lambda, 
+void astrofilt( std::vector<dataT> & lambda, 
                 std::vector<dataT> & trans,
+                const std::string & filtName, 
                 bool rsr = false,
                 const std::string & datadir = "" )
 {
@@ -181,6 +197,9 @@ void astrofilt( const std::string & filtName,
    std::string fname = basepath + "/" + filtName + ".dat";
    
       
+   lambda.clear();
+   trans.clear();
+   
    mx::readColumns(fname, lambda, trans);
    
    if(rsr)
@@ -197,20 +216,20 @@ void astrofilt( const std::string & filtName,
   * 
   * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ T(\lambda) \f$.
   * 
-  * \param lambda  the wavelength grid of the profile
-  * \param trans   the transmission of the profile at each wavelength
-  * \param lambda0 the central wavelength of the filter 
-  * \param fwhm the full-width at half-maximum of the filter profile
-  * \param weff the effective width of the filter
+  * \param lambda0 [out] the central wavelength of the filter 
+  * \param fwhm [out] the full-width at half-maximum of the filter profile
+  * \param weff [out] the effective width of the filter
+  * \param lambda [in] the wavelength grid of the profile
+  * \param trans  [in] the transmission of the profile at each wavelength
   *
   * \tparam dataT the data type in which calculations are performed.
   */ 
 template<typename dataT>
-void astrofiltCharTrans( std::vector<dataT> & lambda,
-                         std::vector<dataT> & trans,
-                         dataT & lambda0,
+void astrofiltCharTrans( dataT & lambda0,
                          dataT & fwhm,
-                         dataT & weff )
+                         dataT & weff,
+                         std::vector<dataT> & lambda,
+                         std::vector<dataT> & trans )
 {
    
    weff = 0;
@@ -251,23 +270,24 @@ void astrofiltCharTrans( std::vector<dataT> & lambda,
 
 /// Characterize the fluxes of a filter transmission curve w.r.t. a spectrum
 /** 
-  * 
-  * \param lambda  the wavelength grid of the profile
-  * \param trans   the transmission of the profile at each wavelength
-  * \param flambda0 the flux of the star at \f$ \lambda_0 \f$ in ergs/sec/um/cm^2
-  * \param fnu0 the flux of the star at \f$ \lambda_0 \f$  in Jy
-  * \param fphot0 the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^2
+  * \param flambda0 [out] the flux of the star at \f$ \lambda_0 \f$ in ergs/sec/um/cm^2
+  * \param fnu0 [out] the flux of the star at \f$ \lambda_0 \f$  in Jy
+  * \param fphot0 [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^2
+  * \param lambda_f [in] the wavelength grid of the filter
+  * \param trans  [in] the transmission of the filter at each wavelength
+  * \param lambda_s [in] the wavelength scale of the spectrum
+  * \param flambda [in] the spectrum
   * 
   * \tparam dataT the data type in which calculations are performed.
   */ 
 template<typename dataT>
-void astrofiltCharFlux( std::vector<dataT> & lambda_f,
+void astrofiltCharFlux( dataT & flambda0,
+                        dataT & fnu0,
+                        dataT & fphot0,
+                        std::vector<dataT> & lambda_f,
                         std::vector<dataT> & trans,
                         std::vector<dataT> & lambda_s,
-                        std::vector<dataT> & flambda,
-                        dataT & flambda0,
-                        dataT & fnu0,
-                        dataT & fphot0)
+                        std::vector<dataT> & flambda)
 {
    //std::vector<dataT> lambda_s;
    //std::vector<dataT> flambda;
@@ -336,30 +356,30 @@ void astrofiltCharFlux( std::vector<dataT> & lambda_f,
 /** Uses the HST Calspec spectrum of Vega.
   * 
   * 
-  * \param lambda  the wavelength grid of the profile
-  * \param trans   the transmission of the profile at each wavelength
-  * \param flambda0 the flux of a 0 mag star at \f$ \lambda_0 \f$  in ergs/sec/um/cm^2
-  * \param fnu0 the flux of a 0 mag star at \f$ \lambda_0 \f$ in Jy
-  * \param fphot0 the flux of a 0 mag star at \f$ \lambda_0 \f$ in photons/sec/m^2
+  * \param flambda0 [out] the flux of a 0 mag star at \f$ \lambda_0 \f$  in ergs/sec/um/cm^2
+  * \param fnu0 [out] the flux of a 0 mag star at \f$ \lambda_0 \f$ in Jy
+  * \param fphot0 [out] the flux of a 0 mag star at \f$ \lambda_0 \f$ in photons/sec/m^2
+  * \param lambda [in] the wavelength grid of the profile
+  * \param trans [in] the transmission of the profile at each wavelength
+  * 
   * 
   * \tparam dataT the data type in which calculations are performed.
   */ 
 template<typename dataT>
-void astrofiltCharVega( std::vector<dataT> & lambda,
-                        std::vector<dataT> & trans,
-                        dataT & flambda0,
+void astrofiltCharVega( dataT & flambda0,
                         dataT & fnu0,
-                        dataT & fphot0)
+                        dataT & fphot0,
+                        std::vector<dataT> & lambda,
+                        std::vector<dataT> & trans )
 {
    std::vector<dataT> vega_lambda;
    std::vector<dataT> vega_flambda;
    
    
-   readCalspec("vega", vega_lambda, vega_flambda);
+   readCalspec(vega_lambda, vega_flambda, "vega");
    
-   astrofiltCharFlux(lambda, trans, vega_lambda, vega_flambda, flambda0, fnu0, fphot0);
+   astrofiltCharFlux(flambda0, fnu0, fphot0, lambda, trans, vega_lambda, vega_flambda);
    
-
    
 }
 
