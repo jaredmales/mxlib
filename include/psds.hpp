@@ -37,12 +37,20 @@ realT freq_sampling( size_t dim,
 }
 
 ///Create a 1-D frequency grid
-template<typename eigenVec>
-void frequency_grid1D( eigenVec & vec,
-                       typename eigenVec::Scalar dt)
+/**
+  * \param vec [out] the pre-allocated Eigen-type 1xN or Nx1 array, on return contains the frequency grid
+  * \param dt [in] the temporal sampling of the time series
+  * \param inverse [in] [optional] if true
+  * 
+  * \tparam eigenArr the Eigen array type
+  */ 
+template<typename eigenArr>
+void frequency_grid1D( eigenArr & vec,
+                       typename eigenVec::Scalar dt,
+                       bool inverse = false )
 {
-   typename eigenVec::Index dim, dim_1, dim_2;
-   typename eigenVec::Scalar df;
+   typename eigenArr::Index dim, dim_1, dim_2;
+   typename eigenArr::Scalar df;
    
    dim_1 = vec.rows();
    dim_2 = vec.cols();
@@ -51,14 +59,24 @@ void frequency_grid1D( eigenVec & vec,
    
    df = freq_sampling(dim, 0.5/dt);
       
-   for(int ii=0; ii < ceil(0.5*(dim-1) + 1); ++ii)
+   if( !inverse )
    {
-      vec(ii) = ii*df;
-   }
+      for(int ii=0; ii < ceil(0.5*(dim-1) + 1); ++ii)
+      {
+         vec(ii) = ii*df;
+      }
    
-   for(int ii=ceil(0.5*(dim-1)+1); ii < dim_1; ++ii)
+      for(int ii=ceil(0.5*(dim-1)+1); ii < dim_1; ++ii)
+      {
+         vec(ii) = (ii-dim)*df;
+      }
+   }
+   else
    {
-      vec(ii) = (ii-dim)*df;
+      for(int ii=0; ii < dim; ++ii)
+      {
+         vec(ii) = df * ii / dim;
+      }
    }
 }
 
