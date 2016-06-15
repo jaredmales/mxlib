@@ -1168,10 +1168,14 @@ inline void HCIobservation<_floatT>::outputPSFSub(fitsHeader * addHead)
    char num[16];
    for(int n=0; n<psfsub.size(); ++n)
    {
-      snprintf(num, 16, "%05d.fits", n);
-      fname = PSFSubPrefix + num;
+      for(int p=0; p< psfsub[n].planes(); ++p)
+      {
+         snprintf(num, 16, "_%03d_%05d.fits",n,p);
+         fname = PSFSubPrefix + num;
    
-      f.write(fname, psfsub[n].data(), psfsub[n].rows(), psfsub[n].cols(), psfsub[n].planes(), head);
+         head.append(heads[p]);
+         f.write(fname, psfsub[n].image(p).data(), psfsub[n].rows(), psfsub[n].cols(), 1, head);
+      }
    }
    
 }

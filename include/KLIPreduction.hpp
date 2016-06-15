@@ -376,7 +376,7 @@ void KLIPreduction<_floatT, _derotFunctObj, _evCalcT>::regions( std::vector<_flo
       head.append<floatT>("MINDPX", mindpx, "minimum pixel delta");
       head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
 
-      if(this->doWriteFinim == true)
+      if(this->doWriteFinim == true && this->combineMethod > 0)
       {
          this->writeFinim(&head);
       }
