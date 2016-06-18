@@ -120,7 +120,6 @@ typename vectorT::value_type vectorVariance(const vectorT & vec, typename vector
 {
    typename vectorT::value_type var;
    
-
    var = 0;
    for(size_t i=0; i< vec.size(); ++i) var += (vec[i]-mean)*(vec[i]-mean);
    

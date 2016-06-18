@@ -1176,7 +1176,7 @@ inline void HCIobservation<_floatT>::outputPSFSub(fitsHeader * addHead)
          mx::fitsHeader h = head;
          
          h.append(heads[p]);
-         f.write(fname, psfsub[n].image(p).data(), psfsub[n].rows(), psfsub[n].cols(), 1, head);
+         f.write(fname, psfsub[n].image(p).data(), psfsub[n].rows(), psfsub[n].cols(), 1, h);
       }
    }
    

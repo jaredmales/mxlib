@@ -46,7 +46,7 @@ realT freq_sampling( size_t dim,
   */ 
 template<typename eigenArr>
 void frequency_grid1D( eigenArr & vec,
-                       typename eigenVec::Scalar dt,
+                       typename eigenArr::Scalar dt,
                        bool inverse = false )
 {
    typename eigenArr::Index dim, dim_1, dim_2;
