@@ -10,7 +10,8 @@
 #ifndef __psds_hpp__
 #define __psds_hpp__
 
-#include <mx/fft.hpp>
+#include "fft.hpp"
+#include "eigenImage.hpp"
 
 namespace mx
 {

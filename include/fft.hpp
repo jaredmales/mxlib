@@ -163,14 +163,14 @@ public:
    }      
 
    
-   fftT(int ndir)
-   {
-      _plan = 0;
-
-      _szX = 0;
-      _dir = ndir;
-      
-   }
+//    fftT(int ndir)
+//    {
+//       _plan = 0;
+// 
+//       _szX = 0;
+//       _dir = ndir;
+//       
+//    }
    
    fftT(int nx, int ndir = MXFFT_FORWARD)
    {
@@ -284,16 +284,16 @@ public:
       _dir = MXFFT_FORWARD;
    }
    
-   fftT(int ndir)
-   {
-      _plan = 0;
-
-      _szX = 0;
-      _szY = 0;      
-      _dir = ndir;
-      
-   }
-   
+//    fftT(int ndir)
+//    {
+//       _plan = 0;
+// 
+//       _szX = 0;
+//       _szY = 0;      
+//       _dir = ndir;
+//       
+//    }
+//    
    fftT(int nx, int ny, int ndir = MXFFT_FORWARD)
    {
       _plan = 0;
@@ -395,15 +395,15 @@ public:
       _dir = MXFFT_FORWARD;
    }
 
-   fftT(int ndir)
-   {
-      _plan = 0;
-
-      _szX = 0;
-      _szY = 0;      
-      _dir = ndir;
-      
-   }
+//    fftT(int ndir)
+//    {
+//       _plan = 0;
+// 
+//       _szX = 0;
+//       _szY = 0;      
+//       _dir = ndir;
+//       
+//    }
    
    fftT(int nx, int ny, int ndir = MXFFT_FORWARD)
    {
