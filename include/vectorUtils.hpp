@@ -15,6 +15,32 @@
 namespace mx
 {
 
+///Fill in a vector with a regularly spaced scale
+/** Fills in the vector with a 0....N-1 scale.  The spacing of the points
+  * can be changed with the scale parameter, and the starting point can be 
+  * changed with the offset.
+  *
+  * \param vec [out] the vector to fill in, can be pre-allocated or not
+  * \param N [in] [optional] if specified > 0, then vec is resize()-ed. Default is 0, and vec is not resize()-ed.  
+  * \param scale [in] [optional] if specified !=0, then the points are spaced by this value
+  * \param offset [in] [optional] if specified !=0, then the starting point of the scale is this value
+  * 
+  * \tparam vectorT is a std::vector type.
+  */
+template<typename vectorT>
+void vectorScale( vectorT & vec, 
+                  size_t N = 0, 
+                  typename vectorT::value_type scale = 0, 
+                  typename vectorT::value_type offset = 0 )
+{
+   if(scale == 0) scale = 1.0;
+   
+   if(N > 0) vec.resize(N);
+   
+   for(int i=0;i<vec.size(); ++i) vec[i] = i*scale + offset;
+}
+   
+   
 ///Calculate the mean of a vector.
 /** 
   * \param vec [in] the vector
