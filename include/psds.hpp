@@ -10,7 +10,8 @@
 #ifndef __psds_hpp__
 #define __psds_hpp__
 
-#include <mx/fft.hpp>
+#include "fft.hpp"
+#include "eigenImage.hpp"
 
 namespace mx
 {
@@ -46,7 +47,7 @@ realT freq_sampling( size_t dim,
   */ 
 template<typename eigenArr>
 void frequency_grid1D( eigenArr & vec,
-                       typename eigenVec::Scalar dt,
+                       typename eigenArr::Scalar dt,
                        bool inverse = false )
 {
    typename eigenArr::Index dim, dim_1, dim_2;
@@ -293,13 +294,15 @@ void vonKarman_psd( eigenArrp  & psd,
   * \param psd [input] is the 2-sided PSD with which to filter the noise.
   * 
   */
-template<typename eigenArrn, typename eigenArrp>
+template<typename eigenArrn, typename eigenArrp, typename carrT>
 void psd_filter( eigenArrn & noise,
-                 eigenArrp & psd )
+                 eigenArrp & psd ,
+                 carrT & ft
+               )
 {
    typedef std::complex<typename eigenArrn::Scalar> complexT;
    
-   Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft(noise.rows(), noise.cols());
+   //Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft(noise.rows(), noise.cols());
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft2(noise.rows(), noise.cols());
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> cnoise(noise.rows(), noise.cols());
    
@@ -361,7 +364,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    typename std::vector<floatT>::iterator first, last;
    
    mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
-   
+
    for(int i=0;i<Navg;++i)
    {
       first = ts.begin() + (i*Nover);
@@ -382,10 +385,11 @@ void averagePeriodogram( std::vector<floatT> & pgram,
             
       fft.fft(work.data(), fftwork.data()); 
        
-      for(int j=0;j<pgram.size();++j) pgram[j] += pow(abs(fftwork[j]),2);
+      for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
 
    }
 
+   for(int j=0;j<pgram.size();++j) pgram[j] /= (work.size()*Navg);
    
    //fftw_destroy_plan(p);
 

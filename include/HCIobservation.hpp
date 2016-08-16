@@ -95,7 +95,7 @@ struct HCIobservation
    /** If this is not empty and \ref qualityThreshold is > 0, then only images where
      * qualityValue >= qualityThreshold.
      * 
-     * The only restriction on qualityValue is that it is > 0.  It is intendend to be
+     * The only restriction on qualityTValue is that it is > 0.  It is intendend to be
      * something like Strehl ratio.
      */  
    std::string qualityFile;
@@ -616,6 +616,9 @@ inline void HCIobservation<_floatT>::readFiles()
       head.append(keywords[i]);
    }
       
+   /*----- Append the HCI keywords to propagate them if needed -----*/
+      
+      
    heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
    heads.resize(fileList.size(), head);
 
@@ -1060,6 +1063,8 @@ void HCIobservation<_floatT>::combineFinim()
    
    t_combo_end = get_curr_time();
 }
+   
+   // if skipPreProcess is true, then use propagated values
    
 template<typename _floatT>
 inline void HCIobservation<_floatT>::writeFinim(fitsHeader * addHead)

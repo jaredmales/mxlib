@@ -251,8 +251,6 @@ template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::initialize()
 {
    doDerotate = true;
-//   doFake = 0;
-//   doFakeScale = 0;
    
    fakeMethod = 0;
    
@@ -271,9 +269,15 @@ void ADIobservation<_floatT, _derotFunctObj>::readFiles()
       this->keywords.push_back(derotF.keywords[i]);
    }
    
+   /*----- Append the ADI keywords to propagate them if needed -----*/
+      
    HCIobservation<floatT>::readFiles();
    
    derotF.extractKeywords(this->heads);
+   
+   
+   /*---- Check for ADI keywords -----*/
+   //Maybe fill in a structure of values, in case things are overwritten by new settings
 }
 
 template<typename _floatT, class _derotFunctObj>
@@ -298,35 +302,6 @@ void ADIobservation<_floatT, _derotFunctObj>::injectFake()
    fitsFile<floatT> ff;
    std::ifstream scaleFin; //for reading the scale file.
       
-   
-//    //Check for correct sizing
-//    if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
-//                         (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
-//    {
-//       throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
-//    }
-//    
-//    //Check if fake needs to be padded out
-//    if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
-//    {
-//       imT pfake(this->imc.rows(), this->imc.cols());
-//       padImage(pfake, fakePSF, this->imc.rows(), this->imc.cols());
-//       fakePSF = pfake;
-//    }
-//    
-//    //Check if fake needs to be cut down
-//    if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
-//    {
-//       imT cfake(this->imc.rows(), this->imc.cols());
-//       cutImage(cfake, fakePSF, this->imc.rows(), this->imc.cols());
-//       fakePSF = cfake;
-//    }
-   
-   
-   //allocate shifted fake psf
-//    imT shiftFake(fakePSF.rows(), fakePSF.cols());
-//    
-//    floatT ang, dx, dy;
 
    //Fake Scale -- default to 1, read from file otherwise
    std::vector<floatT> fakeScale(this->imc.planes(), 1.0);
@@ -474,6 +449,8 @@ void ADIobservation<_floatT, _derotFunctObj>::derotate()
    t_derotate_end = get_curr_time();
 }
 
+
+//If fakeFileName == "" or skipPreProcess == true then use the structure of propagated values
 
 template<typename _floatT, class _derotFunctObj>
 void ADIobservation<_floatT, _derotFunctObj>::fitsHeader(mx::fitsHeader * head)
