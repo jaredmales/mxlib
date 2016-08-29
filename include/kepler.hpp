@@ -612,7 +612,7 @@ int cartesian_orbit2D_f( vectorT &nx,
                          arithT w, 
                          arithT W )
 {
-   return cartesian_orbit_work(&nx, &ny, 0, &f, 0, 0, t, N, a, P, e, t0, i, w, W);
+   return cartesian_orbit_work<vectorT, arithT>(&nx, &ny, 0, &f, 0, 0, t, N, a, P, e, t0, i, w, W);
 }
 
 
@@ -723,7 +723,10 @@ int cartesian_orbit2D_phi( vectorT &nx,
   * \retval -1 on error
   * \retval 0 on success
   */ 
-int get_orbit_phase(double &cos_alf, double f, double w, double inc);
+int get_orbit_phase(double &cos_alf, double f, double w, double inc)
+{
+   cos_alf = sin(f+w)*sin(inc);
+}
 
 ///Get the orbital phase at true anomaly f. Calculates the cos(alfa) where alfa is the orbital phase.
 /** Only calculates cos(alfa) to save an operation when possible.

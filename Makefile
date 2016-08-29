@@ -75,6 +75,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  jinc.hpp \
                  KLIPreduction.hpp \
                  kepler.hpp \
+                 levmarInterface.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \

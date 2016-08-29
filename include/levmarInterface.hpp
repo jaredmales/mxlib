@@ -10,7 +10,7 @@
 
 
 #include "templateLevmar.hpp"
-
+#include "timeUtils.hpp"
 namespace mx
 {
 
@@ -220,7 +220,7 @@ public:
    
    
    ///Set the maximum number of iterations
-   /** Sets itmax.  Initizlization default is itmax = 100
+   /** Sets itmax.  Initialization default is itmax = 100
      * 
      * \param i_itmax the new value of itmax to set 
      */
@@ -310,22 +310,22 @@ public:
    ///Dump the parameter vector to stdout.
    void dump_params()
    {
-      std::cout << "Current parameters:\n";
-      for(int i=0;i<m;i++) std::cout << "p[" << i << "] = " << p[i] << "\n";
+      std::cerr << "Current parameters:\n";
+      for(int i=0;i<m;i++) std::cerr << "p[" << i << "] = " << p[i] << "\n";
    }
    
    ///Dump a status report to stdout
-   void dump_report()
+   void dump_report(bool dumpParams = true)
    {
-      std::cout << "-------------------------------------------\n";
-      dump_params();
-      std::cout << "Reason for termination: " << get_reason_string() << "\n";
-      std::cout << "Initial norm: " << get_initial_norm() << "\n";
-      std::cout << "Final norm: " << get_final_norm() << "\n";
-      std::cout << "Number of iterations: " << get_iterations() << "\n";
-      std::cout << "Function evals: " << get_fevals() << "\n";
-      std::cout << "Jacobian evals: " << get_jevals() << "\n";
-      std::cout << "Elapsed time: " << get_deltaT() << " secs\n";
+      std::cerr << "-------------------------------------------\n";
+      if(dumpParams) dump_params();
+      std::cerr << "Reason for termination: " << get_reason_string() << "\n";
+      std::cerr << "Initial norm: " << get_initial_norm() << "\n";
+      std::cerr << "Final norm: " << get_final_norm() << "\n";
+      std::cerr << "Number of iterations: " << get_iterations() << "\n";
+      std::cerr << "Function evals: " << get_fevals() << "\n";
+      std::cerr << "Jacobian evals: " << get_jevals() << "\n";
+      std::cerr << "Elapsed time: " << get_deltaT() << " secs\n";
    }
       
 };
