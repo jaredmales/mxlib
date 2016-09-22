@@ -616,7 +616,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
                        int & nrejected)
 {
-   Eigen::Array<double,-1,-1> S, U, VT;
+   Eigen::Array<dataT,-1,-1> S, U, VT;
    
    int info;
    info = eigenGESDD(U,S,VT,A);
@@ -631,7 +631,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       threshold = Smax/condition;
    }
    
-   Eigen::Array<double, -1,-1> sigma;
+   Eigen::Array<dataT, -1,-1> sigma;
    sigma.resize(S.rows(), S.rows());
    sigma.setZero();
    
@@ -652,7 +652,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    }
    
    
-   Eigen::Array<double, -1,-1> PInvTmp;
+   Eigen::Array<dataT, -1,-1> PInvTmp;
    
    PInvTmp = sigma.matrix() * VT.matrix();
    

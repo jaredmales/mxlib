@@ -135,7 +135,16 @@ public:
       fftw_free(cin);
    }
    
-      
+   void operator()( outputT *out, float * in)
+   {
+      fft(in, out);
+   }   
+   
+   void operator()( outputT *out, inputT * in)
+   {
+      fft(in, out);
+   }
+         
 };
 
 //1D double,  non-cudaGPU
@@ -254,7 +263,16 @@ public:
       fftw_free(cin);
    }
    
-      
+   void operator()( outputT *out, double * in)
+   {
+      fft(in, out);
+   }
+   
+   void operator()( outputT *out, inputT * in)
+   {
+      fft(in, out);
+   }
+   
 };
 
 

@@ -371,7 +371,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,
       last = first + Nper;
       
       work.assign(first, last);
-      float mean = 0;
+      floatT mean = 0;
       for (int j=0;j<work.size();++j) mean += work[j];
       //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
       mean/=work.size();
@@ -394,6 +394,123 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    //fftw_destroy_plan(p);
 
 }
+
+
+
+
+
+///Augment a 1-sided PSD to standard FFT form.
+/** Allocates psdTwoSided to hold a flipped copy of psdOneSided.
+  * Default assumes that psdOneSided[0] corresponds to 0 frequency,
+  * but this can be changed by setting zeroFreq to a non-zero value.
+  * In this case psdTwoSided[0] is set to 0, and the augmented psd
+  * is shifted by 1.
+  * 
+  * Example:
+  * 
+  * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * 
+  * Note: entries in psdOneSided are cast to the value_type of psdTwoSided,
+  * for instance to allow for conversion to complex type.
+  * 
+  * \param psdTwoSided [out] on return contains the FFT storage order copy of psdOneSided.
+  * \param psdOneSided [in] the one-sided PSD to augment
+  * \param zeroFreq [in] [optional] set to a non-zero value if psdOneSided does not contain a zero frequency component.
+  */ 
+template<typename vectorTout, typename vectorTin, typename dataT>
+void augment1SidedPSD( vectorTout & psdTwoSided, 
+                       vectorTin  & psdOneSided,
+                       dataT zeroFreq = 0 )
+{
+   typedef typename vectorTout::value_type outT;
+   
+   int needZero = 1;
+   
+   size_t N; 
+   
+   if( zeroFreq == 0 ) 
+   {
+      needZero = 0;
+      N = 2*psdOneSided.size()-2;
+   }
+   else
+   {
+      N = 2*psdOneSided.size();
+   }
+   
+   psdTwoSided.resize(N);
+   
+   if( needZero)
+   {
+      psdTwoSided[0] = outT(0.0);
+   }
+   else
+   {
+      psdTwoSided[0] = outT(psdOneSided[0]);
+   }
+   
+   int i;
+   for(i=0; i < psdOneSided.size() - 1 - (1-needZero); ++i)
+   {
+      psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
+      psdTwoSided[i + psdOneSided.size()+ needZero] = outT(psdOneSided[ psdOneSided.size() - 2 - i]);
+   }
+   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
+
+}
+   
+///Augment a 1-sided frequency scale to standard FFT form.
+/** Allocates freqTwoSided to hold a flipped copy of freqOneSided.
+  * If freqOneSided[0] is not 0, freqTwoSided[0] is set to 0, and the augmented
+  * frequency scale is shifted by 1.
+  * 
+  * Example:
+  * 
+  * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * 
+  * \param freqTwoSided [out] on return contains the FFT storage order copy of freqOneSided.
+  * \param freqOneSided [in] the one-sided frequency scale to augment
+  */ 
+template<typename T>
+void augment1SidedPSDFreq( std::vector<T> & freqTwoSided,
+                           std::vector<T> & freqOneSided )
+{
+   int needZero = 1;
+   
+   size_t N; 
+   
+   if(freqOneSided[0] != 0) 
+   {
+      N = 2*freqOneSided.size();
+   }
+   else
+   {
+      needZero = 0;
+      N = 2*freqOneSided.size()-2;
+   }
+   
+   freqTwoSided.resize(N);
+   
+   if( needZero)
+   {
+      freqTwoSided[0] = 0.0;
+   }
+   else
+   {
+      freqTwoSided[0] = freqOneSided[0]; //0
+   }
+   
+   int i;
+   for(i=0; i < freqOneSided.size() - 1 - (1-needZero); ++i)
+   {
+      freqTwoSided[i + 1] = freqOneSided[i + (1-needZero) ];
+      freqTwoSided[i + freqOneSided.size()+ needZero] = -freqOneSided[ freqOneSided.size() - 2 - i];
+   }
+   freqTwoSided[i + 1] = freqOneSided[i + (1-needZero) ];
+
+}
+
+///@}
 
 } //namespace mx
 

@@ -459,8 +459,8 @@ void astrofiltScaleMag( std::vector<dataT> & lambda_s,
    dataT flambda0, fnu0, fphot0;
    dataT flambda, fnu, fphot;
    
-   astrofiltCharVega(lambda_f, trans, flambda0, fnu0, fphot0);
-   astrofiltCharFlux(lambda_f, trans, lambda_s, spectrum, flambda, fnu, fphot);
+   astrofiltCharVega(flambda0, fnu0, fphot0, lambda_f, trans);
+   astrofiltCharFlux(flambda, fnu, fphot, lambda_f, trans, lambda_s, spectrum);
    
    dataT scale;
    
