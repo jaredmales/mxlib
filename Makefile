@@ -48,6 +48,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  astroSpectrum.hpp \
                  astrotypes.h \
                  autocorrelation.hpp \
+                 binVector.hpp \
                  ds9_interface.h \
                  eigenImage.hpp \
                  eigenCube.hpp \

@@ -147,6 +147,22 @@ realT oneoverf_norm(realT fmin, realT fmax, realT alpha)
    return 1/integ;
 }
 
+///Calculate the normalization for a 2-D @f$ 1/|k|^\alpha @f$ PSD.
+/**
+  * \param kmin is the minimum non-zero absolute value of frequency
+  * \param kmax is the maximum absolute value of frequencey
+  * \param alpha is the power-law exponent, by convention @f$ \alpha > 0 @f$.
+  * 
+  * \returns the normalization for a 2-D, 2-sided power law PSD.
+  */
+template<typename realT>
+realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
+{
+   realT integ = 2*(pow(kmax, -1*alpha + 2.0) - pow(kmin, -1.0*alpha + 2.0))/(-1*alpha + 2.0);
+   
+   return 1/integ;
+}
+
 /// Generates a @f$ 1/|f|^\alpha @f$ power spectrum
 /** 
   * Populates an Eigen array  with
