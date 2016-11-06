@@ -60,6 +60,17 @@ floatT zernikeQNorm(int n, int m, floatT k, floatT phi)
    return Q2;
 }
 
+template<typename floatT>
+floatT zernikeQNorm(int j, floatT k, floatT phi)
+{
+   int n, m;
+   
+   noll_nm(n,m,j);
+   
+   return zernikeQNorm(n, m, k, phi);
+}
+
+
 
 #endif //__zernike_hpp__
 
