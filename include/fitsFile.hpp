@@ -730,13 +730,13 @@ void fitsFile<dataT>::read(arrT & im)
          return;
       }
    }
-   
+      
    //long long nelements = 1;
    long *fpix = new long[naxis];
    long *lpix = new long[naxis];
    long *inc = new long[naxis];
    eigenArrResize<arrT> arrresz;
-
+ 
       
    if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis == 2)
    {      
@@ -762,7 +762,7 @@ void fitsFile<dataT>::read(arrT & im)
       }
 
    
-      if(naxis > 1)
+      if(naxis > 2)
       {
          arrresz.resize(im, naxes[0], naxes[1], naxes[2]);
       }
@@ -771,13 +771,10 @@ void fitsFile<dataT>::read(arrT & im)
          arrresz.resize(im, naxes[0], naxes[1],1);
       }
    }
-   
-   
-   //fits_read_pix(fptr, getFitsType<typename arrT::Scalar>(), fpix, nelements, (void *) &nulval, 
-   //                                  (void *) im.data(), &anynul, &fstatus);
+
    fits_read_subset(fptr, getFitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &nulval, 
                                      (void *) im.data(), &anynul, &fstatus);
-   
+ 
    if (fstatus && fstatus != 107)
    {
       char emnem[31];
