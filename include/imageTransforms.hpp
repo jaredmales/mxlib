@@ -12,6 +12,9 @@
 #include <cstddef>
 #include <cmath>
 
+#include <iostream>
+
+
 namespace mx
 {
 
@@ -413,7 +416,7 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    
    
    //Record this for normalization later
-   Scalar inputTotal = imin.sum();
+   Scalar inputTotal = fabs(imin.sum());
    
    
    
@@ -428,7 +431,6 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
       if(closestRebin == 1) break;
       sample = ( (float) imin.rows())/ closestRebin;
    }
-   
    
    //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> temp;
    imageOutT temp;
@@ -446,7 +448,7 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    if(temp.rows() == imout.rows() && temp.cols() == imout.cols())
    {
       imout = temp;
-      Scalar outputTotal = imout.sum();
+      Scalar outputTotal = fabs(imout.sum());
       
       //Normalize
       imout *= inputTotal/outputTotal;
@@ -477,7 +479,7 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    }
    
    //Normalize
-   Scalar outputTotal = imout.sum();   
+   Scalar outputTotal = fabs(imout.sum());   
    imout *= inputTotal/outputTotal;
 }   
 

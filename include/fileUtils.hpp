@@ -1,3 +1,4 @@
+
 /** \file fileUtils.hpp
   * \brief Declarations of utilities for working with files
   * 
@@ -14,7 +15,10 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <libgen.h>
+ 
 #include <boost/filesystem.hpp>
+
 
 using namespace boost::filesystem;
 
@@ -25,7 +29,7 @@ namespace mx
   * @{
   */
 
-///Get a list of file names from the specified directory, specifying a prefix and an extension
+///Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /** 
   * \param[in] directory the path to the directory to search
   * \param[in] prefix the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
@@ -34,7 +38,7 @@ namespace mx
   * \retval std::vector<std::string> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames(const std::string & directory, const std::string & prefix, const std::string & extension)
+std::vector<std::string> getFileNames(const std::string & directory, const std::string & prefix, const std::string & substr, const std::string & extension)
 {
    typedef std::vector<path> vec;             // store paths,
 
@@ -73,7 +77,16 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
                   inc = false;
                }
             }
-                  
+         
+            if(substr != "" && inc)
+            {
+               std::string p = it->filename().generic_string();
+               if(p.find(substr) == std::string::npos)
+               {
+                  inc = false;
+               }
+            }
+            
             if(inc)
             {
                vect.push_back(it->native());
@@ -106,7 +119,7 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
 inline
 std::vector<std::string> getFileNames(const std::string & directory, const std::string & extension)
 {
-   return getFileNames(directory, "", extension);
+   return getFileNames(directory, "", "", extension);
 }
 
 ///Get a list of file names from the specified directory
@@ -118,7 +131,58 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
 inline
 std::vector<std::string> getFileNames(const std::string & directory)
 {
-   return getFileNames(directory, "", "");
+   return getFileNames(directory, "", "", "");
+}
+
+
+///Prepend and/or append strings to a file name, leaving the directory and extension unaltered.
+/**
+  * \param fname the original file name, possibly including a directory and extension
+  * \param prepend is the string to insert at the beginning of the file name after the path
+  * \param append is the string to insert at the end of the file name, before the extension
+  * 
+  * \returns the new file name
+  */
+inline
+std::string  fileNamePrependAppend(const std::string & fname, const std::string & prepend, const std::string & append)
+{
+   std::string dir, base, ext;
+   
+   path p = fname;
+   dir = p.parent_path().string();
+   base = p.stem().string();
+   ext = p.extension().string();
+   
+
+   return dir +'/' + prepend + base + append + ext;
+   
+   
+}
+
+///Append a string to a file name, leaving the directory and extension unaltered.
+/**
+  * \param fname the original file name, possibly including a directory and extension
+  * \param append is the string to insert at the end of the file name, before the extension
+  * 
+  * \returns the new file name
+  */
+inline
+std::string  fileNameAppend(const std::string & fname, const std::string & append)
+{
+   return fileNamePrependAppend(fname, "", append);
+}
+
+///Prepend strings to a file name, leaving the directory and extension unaltered.
+/**
+  * \param fname the original file name, possibly including a directory and extension
+  * \param prepend is the string to insert at the beginning of the file name after the path
+  * 
+  * \returns the new file name
+  */
+inline
+std::string  fileNamePrepend(const std::string & fname, const std::string & prepend)
+{
+   return fileNamePrependAppend(fname, prepend, "");   
 }
 
 ///Get the next file in a numbered sequence
