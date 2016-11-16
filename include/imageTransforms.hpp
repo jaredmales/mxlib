@@ -451,7 +451,7 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
       Scalar outputTotal = fabs(imout.sum());
       
       //Normalize
-      imout *= inputTotal/outputTotal;
+      imout *= 1.0;//(1./    inputTotal/outputTotal;
       return;
    }
    //Otherwise, re-sample using bilinear interpolation.
