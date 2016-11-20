@@ -34,7 +34,6 @@ OBJS = kepler.o \
        sharedMemSegment.o \
        process_interface.o \
        ds9_interface.o \
-       gnuplot_interface.o \
 
 
 INC_TO_INSTALL = ADIobservation.hpp \
@@ -64,7 +63,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  fraunhoferImager.hpp \
                  gaussian.hpp \
                  geo.h \
-		 gnuplot_interface.h \
+                 gnuPlot.hpp \
                  gramSchmidt.hpp \
                  gslInterpolation.hpp \
        		 HCIobservation.hpp \
@@ -110,7 +109,6 @@ sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 sharedMemSegment.o: include/sharedMemSegment
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
-gnuplot_interface.o: include/gnuplot_interface.h
 astrodyn.o: include/astrodyn.hpp
 kepler.o: include/kepler.hpp
 

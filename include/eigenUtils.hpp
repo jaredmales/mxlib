@@ -606,7 +606,8 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
 /**
   * \param PInv [out] the pseudo-inverse of A
   * \param A [in] the matrix to invert
-  * \param condition [in/out] the condition number used to threshold the singular values.  Set to 0 use include all. On output *                           this is the final condition number.
+  * \param condition [in/out] the condition number used to threshold the singular values.  Set to 0 use include all. On output 
+  *                            this is the final condition number.
   *
   * \tparam dataT is either float or double.
   */
@@ -650,10 +651,9 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
          ++nrejected;
       }
    }
-   
-   
+
    Eigen::Array<dataT, -1,-1> PInvTmp;
-   
+
    PInvTmp = sigma.matrix() * VT.matrix();
    
    PInv = U.block(0,0, U.rows(), PInvTmp.cols()).matrix()*PInvTmp.matrix();
