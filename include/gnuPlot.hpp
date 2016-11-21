@@ -33,23 +33,16 @@ namespace mx
 #define MX_GP_FNAME_SZ 64
 #define MX_GP_TEMP_SZ 128
 
+//Get the gnuplot binary format string for a type
+//Specializations below.
 template<typename dataT>
 std::string gpBinaryFormat()
 {
+   std::cerr << "No gnuplot format specifier available for this type.\n";
    return "";
 }
 
-template<>
-std::string gpBinaryFormat<float>()
-{
-   return "%float";
-}
 
-template<>
-std::string gpBinaryFormat<double>()
-{
-   return "%double";
-}
 
 /// A c++ interface to gnuplot
 /** Spawns a gnuplot sesssion and communicates with it.
@@ -60,14 +53,31 @@ protected:
    
    int _initialized;
    
+   ///File stream for the gnuplot interface
    FILE * _pipeH;
    
+   ///Where to create gnuplot stderr fifo
+   /** Default is /dev/shm/
+     */
+   std::string _errLocation;
+   
+   ///File name of the gnuplot stderr fifo
    char _errFName[MX_GP_FNAME_SZ];
    
+   ///File descriptor for the gnuplot stderr fifo
    int _errFD;
    
-   std::vector<std::string> _tempFiles;
+   ///Location of temporary files 
+   /** Default is /dev/shm/
+     */
+   std::string _tempLocation;
    
+   ///Vector of all temporary file names opened, used for removal on destruction.
+   std::vector<std::string> _tempFiles;
+
+   ///Flag to control whether temporary files are deleted on destruction.  Default is true (files deleted).
+   bool _deleteTemp;
+
 public:
    
    gnuPlot();
@@ -76,6 +86,15 @@ public:
    
    void init();
    
+   ///Send a command to gnuplot
+   /** The newline is appended to the command, and then it is sent to gnuplot.
+     *
+     * \param com is the command string
+     * \param flush [optional] if true, then the output stream is flushed once the command is written.
+     *
+     * \retval 0 on success
+     * \retval -1 on error
+     */ 
    int command(const std::string & com, bool flush = true);
    
    /// Issue the \b replot command
@@ -245,7 +264,12 @@ public:
    template<typename dataTx, typename dataTy>
    int plot( const std::vector<dataTx> & x, const std::vector<dataTy> & y, const std::string & modifiers = "", const std::string & title = "");
    
+protected:
    
+   ///Open a temporary binary file, and provide the filename. 
+   FILE * openTempFile(char * fname);
+   
+
    
    
 };
@@ -254,12 +278,15 @@ public:
 inline
 gnuPlot::gnuPlot()
 {
+   _initialized = 0;
+
    _pipeH = 0;
-   
+
+   _errLocation = "/dev/shm";
    _errFName[0] = 0;
    _errFD = 0;
 
-   _initialized = 0;
+   _tempLocation = "/dev/shm";
    
    init();
 }
@@ -295,7 +322,7 @@ void gnuPlot::init()
 
    if(_initialized) return;
    
-   snprintf(_errFName, MX_GP_FNAME_SZ, "/tmp/gperr%d", getpid());
+   snprintf(_errFName, MX_GP_FNAME_SZ, "%s/gperr%d", _errLocation.c_str(), getpid());
    
    if (mkfifo(_errFName, 0600)) 
    {
@@ -423,24 +450,14 @@ int gnuPlot::plot( const dataT * y, size_t N,  const std::string & modifiers, co
    FILE * fout;
    char temp[MX_GP_TEMP_SZ];
    
-   snprintf(temp, MX_GP_TEMP_SZ, "/dev/shm/gpplot_%d_XXXXXX", getpid());
-   mkstemp(temp);
+   fout = openTempFile(temp);
    
-   fout = fopen(temp, "wb");
-
-   if(fout == NULL)
-   {
-      std::cerr << "Could not open /dev/shm file for writing\n";
-      perror("gnuPlot: ");
-      return -1;
-   }
-   
-   _tempFiles.push_back(temp);
+   if(fout == 0) return -1;
    
    int rv = fwrite(y, sizeof(dataT), N, fout);
    if(rv != N)
    {
-      std::cerr << "Error writing to /dev/shm\n";
+      std::cerr << "Error writing to temporary file\n";
       perror("gnuPlot: ");
       return -1;
    }
@@ -461,24 +478,19 @@ int gnuPlot::plot( const std::vector<dataT> & y, const std::string & modifiers, 
 }
    
 template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const dataTx * x, const dataTy * y, size_t N, const std::string & modifiers, const std::string & title)
+int gnuPlot::plot( const dataTx * x, 
+                   const dataTy * y, 
+                   size_t N, 
+                   const std::string & modifiers, 
+                   const std::string & title)
 {
    FILE * fout;
    char temp[MX_GP_TEMP_SZ];
-   
-   snprintf(temp, MX_GP_TEMP_SZ, "/dev/shm/gpplot_%d_XXXXXX", getpid());
-   mkstemp(temp);
-   
-   fout = fopen(temp, "wb");
 
-   if(fout == NULL)
-   {
-      std::cerr << "Could not open /dev/shm file for writing\n";
-      perror("gnuPlot: ");
-      return -1;
-   }
+   fout = openTempFile(temp);
    
-   _tempFiles.push_back(temp);
+   if(fout == 0) return -1;
+
    
    for(int i=0; i< N; ++i)
    {
@@ -487,7 +499,7 @@ int gnuPlot::plot( const dataTx * x, const dataTy * y, size_t N, const std::stri
       
       if(rv != 2)
       {
-         std::cerr << "Error writing to /dev/shm\n";
+         std::cerr << "Error writing to temporary file\n";
          perror("gnuPlot: ");
          return -1;
       }
@@ -500,8 +512,6 @@ int gnuPlot::plot( const dataTx * x, const dataTy * y, size_t N, const std::stri
    com +=  gpBinaryFormat<dataTx>() + gpBinaryFormat<dataTy>() + "\" u 1:2 t \"" + title + "\" " + modifiers;
          
    return command(com, true);
-   
-   
 }
  
 template<typename dataTx, typename dataTy>
@@ -509,6 +519,88 @@ int gnuPlot::plot( const std::vector<dataTx> & x, const std::vector<dataTy> & y,
 {
    return plot( x.data(), y.data(), x.size(), modifiers, title);
 }
+
+FILE * gnuPlot::openTempFile(char * temp)
+{
+   FILE * fout;
+   
+   snprintf(temp, MX_GP_TEMP_SZ, "%s/gpplot_%d_XXXXXX", _tempLocation.c_str(), getpid());
+   mkstemp(temp);
+   
+   fout = fopen(temp, "wb");
+
+   if(fout == NULL)
+   {
+      std::cerr << "Could not open tempoary file (" << temp << ") for writing\n";
+      perror("gnuPlot: ");
+      return 0;
+   }
+   
+   _tempFiles.push_back(temp);
+   
+   return fout;
+} //FILE * gnuPlot::openTempFile(char * temp)
+
+template<>
+std::string gpBinaryFormat<char>()
+{
+   return "%char";
+}
+
+template<>
+std::string gpBinaryFormat<unsigned char>()
+{
+   return "%uchar";
+}
+
+template<>
+std::string gpBinaryFormat<short>()
+{
+   return "%short";
+}
+
+template<>
+std::string gpBinaryFormat<unsigned short>()
+{
+   return "%ushort";
+}
+
+template<>
+std::string gpBinaryFormat<int>()
+{
+   return "%int";
+}
+
+template<>
+std::string gpBinaryFormat<unsigned int>()
+{
+   return "%uint";
+}
+
+template<>
+std::string gpBinaryFormat<long>()
+{
+   return "%long";
+}
+
+template<>
+std::string gpBinaryFormat<unsigned long>()
+{
+   return "%ulong";
+}
+
+template<>
+std::string gpBinaryFormat<float>()
+{
+   return "%float";
+}
+
+template<>
+std::string gpBinaryFormat<double>()
+{
+   return "%double";
+}
+
 
 }//namespace mx
 
