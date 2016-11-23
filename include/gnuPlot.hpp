@@ -57,6 +57,7 @@ std::string gpBinaryFormat()
    return "";
 }
 
+//Convert a timespec into a double of secons since epoch
 double gp_get_curr_time()
 {
    struct timespec tsp;
@@ -69,7 +70,7 @@ double gp_get_curr_time()
 /// A c++ interface to gnuplot
 /** Spawns a gnuplot sesssion and communicates with it.
   * \ingroup plotting 
-  * 
+  * An example of using gnuPlot to plot data from a file: 
   * \code
   * gnuPlot gp; //This automatically connects, and is now ready to plot.
   * 
@@ -288,6 +289,17 @@ public:
      * \retval -1 on error
      */
    int ulogxy();
+   
+   /// Issue a plot command with a n separate lines specified by gplot_spec structures.
+   /** Forms the plot command as follows
+     * \verbatim
+        plot <plot_specs[0]>, /
+             <plot_specs[1]>, /
+             ---
+             <plot_specs[n-1]>
+      \endverbatim
+     */
+   //int plot( std::vector<gplot_spec> plot_specs ); 
    
    /// Plot from a file
    /** Forms the gnuplot plot command as follows:

@@ -12,6 +12,8 @@
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 
+#include "gnuPlot.hpp"
+
 
 namespace mx
 {
@@ -602,20 +604,28 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
    return INFO;
 }
 
+#define MX_PINV_NO_INTERACT 0
+#define MX_PINV_PLOT 1
+#define MX_PINV_ASK 2
+
 ///Calculate the pseudo-inverse of a patrix using the SVD
 /**
   * \param PInv [out] the pseudo-inverse of A
+  * \param condition [out] The final condition number.
+  * \param nRejected [out] the number of eigenvectors rejected
   * \param A [in] the matrix to invert
-  * \param condition [in/out] the condition number used to threshold the singular values.  Set to 0 use include all. On output 
-  *                            this is the final condition number.
-  *
+  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
+  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
+  *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
   */
 template<typename dataT>
-int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv, 
-                       Eigen::Array<dataT, -1, -1> & A, 
+int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
-                       int & nrejected)
+                       int & nRejected, 
+                       Eigen::Array<dataT, -1, -1> & A, 
+                       dataT & maxCondition,
+                       int interact = MX_PINV_NO_INTERACT   )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    
@@ -625,11 +635,36 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    if(info != 0) return info;
    
    
-   dataT threshold = 0;
    dataT Smax=S.maxCoeff();
-   if(condition > 0)
+   
+   
+   if(interact & MX_PINV_PLOT)
    {
-      threshold = Smax/condition;
+      gnuPlot gp;
+      gp.command("set title \"SVD Eigenvalues\"");
+      gp.logy();
+      gp.plot( S.data(), S.rows(), " w l", "eigenvalues");
+   }
+   
+   if(interact & MX_PINV_ASK)
+   {
+      dataT mine;
+      std::cout << "Maximum eigenvalue: " << Smax << "\n";
+      std::cout << "Minimum eigenvalue: " << S.minCoeff() << "\n";
+      std::cout << "Enter eigenvalue threshold: ";
+      std::cin >> mine;
+   
+      if(mine > 0)
+      {
+         maxCondition = Smax/mine;
+      }
+      else maxCondition = 0;
+   }
+
+   dataT threshold = 0;
+   if(maxCondition > 0)
+   {
+      threshold = Smax/maxCondition;
    }
    
    Eigen::Array<dataT, -1,-1> sigma;
@@ -637,7 +672,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    sigma.setZero();
    
    condition = 1;
-   nrejected = 0;
+   nRejected = 0;
    for(int i=0; i< S.rows(); ++i)
    {
       if( S(i) >= threshold )
@@ -648,7 +683,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       else
       {
          sigma(i,i) = 0;
-         ++nrejected;
+         ++nRejected;
       }
    }
 
