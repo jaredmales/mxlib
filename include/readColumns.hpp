@@ -115,11 +115,11 @@ void readColumns(const std::string & fname, arrTs &... arrays)
    {
       if(errno != 0)
       {
-         std::cerr << "\n" << mxPError("readColumns", errno, "Occurred while opening " + fname + " for reading.") << "\n";;
+         mxPError("readColumns", errno, "Occurred while opening " + fname + " for reading.");
       }
       else
       {
-         std::cerr  << "\n" << mxError("readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading.") << "\n";
+         mxError("readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading.");
       }
       return;
    }
