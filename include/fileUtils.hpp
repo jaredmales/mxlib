@@ -31,9 +31,10 @@ namespace mx
 
 ///Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /** 
-  * \param[in] directory the path to the directory to search
+  * \param[in] directory the path to the directory to search.
   * \param[in] prefix the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
-  * \param[in] extension the file name extension to search for, if "" then not used 
+  * \param[in] substr a substring of the filename to earch for, if "" then not used.
+  * \param[in] extension the file name extension to search for, if "" then not used.
   *
   * \retval std::vector<std::string> which contains the matching file names.
   */ 

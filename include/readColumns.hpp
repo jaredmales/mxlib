@@ -10,9 +10,10 @@
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <iostream>
 
 #include "stringUtils.hpp"
-
+#include "mxError.hpp"
 
 namespace mx
 {
@@ -106,12 +107,20 @@ template<char delim=' ', char comment='#', char eol='\n', typename... arrTs>
 void readColumns(const std::string & fname, arrTs &... arrays)
 {
    //open file
+   errno = 0;
    std::ifstream fin;
    fin.open(fname);
    
    if(!fin.good())
    {
-      std::cerr << "readColumns: Error opening file -- " << fname << "\n";
+      if(errno != 0)
+      {
+         std::cerr << "\n" << mxPError("readColumns", errno, "Occurred while opening " + fname + " for reading.") << "\n";;
+      }
+      else
+      {
+         std::cerr  << "\n" << mxError("readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading.") << "\n";
+      }
       return;
    }
    
@@ -151,7 +160,33 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
    
+   if(fin.fail())
+   {
+      if(errno != 0)
+      {
+         mxPError("readColumns", errno, "Occurred while writing to " + fname + ".");
+      }
+      else
+      {
+         mxError("readColumns", MXE_FILEWERR, "Occurred while writing to " + fname + ".");
+      }
+      return;
+   }
+   
    fin.close();
+   
+   if(fin.fail())
+   {
+      if(errno != 0)
+      {
+         mxPError("readColumns", errno, "Occurred while closing " + fname + ".");
+      }
+      else
+      {
+         mxError("readColumns", MXE_FILECERR, "Occurred while closing " + fname + ".");
+      }
+      return;
+   }
    
    delete line;
 }

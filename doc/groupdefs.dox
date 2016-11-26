@@ -2,6 +2,10 @@
   * \brief Installation of mxlib
   */  
   
+/** \defgroup error_handling Error Handling 
+  * \brief How mxlib handles errors
+  */
+  
 /** \defgroup gen_math General Mathematics
   * \brief General mathematical utilities.
   */

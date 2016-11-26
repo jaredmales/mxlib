@@ -20,58 +20,102 @@ namespace mx
   */
 
 ///Populate a single cosine mode
+/** Makes a 2D image of the cosine mode:
+    \f[ 
+    M_c(\vec{q}) = \cos\left( 2\pi\frac{m}{D}u + 2\pi\frac{n}{D}v \right) 
+    \f]
+  * where
+    \f[
+    \vec{q} = u \hat{u} + v \hat{v}
+    \f]
+  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  *
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  *
+  * \tparam typeN is an Eigen-like reference type.
+  */  
 template<class typeN>
-void make_fourier_mode_c(typeN im, typename typeN::Scalar k, typename typeN::Scalar l)
+void make_fourier_mode_c(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar xc, yc, x, y;
+   typename typeN::Scalar uc, vc, u, v;
 
-   xc = 0.5*(dim1-1.0);
-   yc = 0.5*(dim2-1.0);
+   uc = 0.5*(dim1-1.0);
+   vc = 0.5*(dim2-1.0);
    
    for(int i=0;i<dim1; ++i)
    {
-      x = i - xc;
+      u = i - uc;
       for(int j=0;j<dim2; ++j)
       {
-         y = j-yc;
+         v = j-vc;
          
-         im(i,j) = cos(2.*3.14159/(dim1)*(k*x + l*y));
+         im(i,j) = cos(2.*3.14159/(dim1)*(m*u + n*v));
       }
    }
    
 }
  
 ///Populate a single sine mode 
+/** Makes a 2D image of the cosine mode:
+    \f[ 
+    M_s(\vec{q}) = \sin\left( 2\pi\frac{m}{D}u + 2\pi\frac{n}{D}v \right) 
+    \f]
+  * where
+    \f[
+    \vec{q} = u \hat{u} + v \hat{v}
+    \f]
+  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  *
+  * \tparam typeN is an Eigen-like reference type.
+  */  
 template<class typeN>
-void make_fourier_mode_s(typeN  im, typename typeN::Scalar k, typename typeN::Scalar l)
+void make_fourier_mode_s(typeN  im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar xc, yc, x, y;
+   typename typeN::Scalar uc, vc, u, v;
 
-   xc = 0.5*(dim1-1.0);
-   yc = 0.5*(dim2-1.0);
+   uc = 0.5*(dim1-1.0);
+   vc = 0.5*(dim2-1.0);
    
    for(int i=0;i<dim1; ++i)
    {
-      x = i - xc;
+      u = i - uc;
       for(int j=0;j<dim2; ++j)
       {
-         y = j-yc;
+         v = j-vc;
          
-         im(i,j) = sin(2.*3.14159/(dim1)*(k*x + l*y));
+         im(i,j) = sin(2.*3.14159/(dim1)*(m*u + n*v));
       }
    }
    
-} 
+}
 
-///Populate a single modified Fourier +1 mode
+///Populate a single modified Fourier mode
+/** Makes a 2D image of the modified fourier mode:
+    \f[ 
+    M_p(\vec{q}) = \cos\left( 2\pi \frac{m}{D}u + 2\pi\frac{n}{D}v \right) + p  \sin\left( 2\pi\frac{m}{D}u + 2\pi\frac{n}{D}v \right)
+    \f]
+  * where \f$ p = \pm 1 \f$, \f$ \vec{q} = u \hat{u} + v \hat{v} \f$,
+  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  * \param [in] p is +/- 1 specifying which modified Fourier mode
+  * 
+  * \tparam typeN is an Eigen-like reference type.
+  */  
 template<class typeN>
-void make_modified_fourier_mode_p(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+void make_modified_fourier_mode(typeN im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
 {
    int dim1 = im.cols();
    int dim2 = im.rows();
@@ -91,39 +135,43 @@ void make_modified_fourier_mode_p(typeN im, typename typeN::Scalar m, typename t
          
          arg = 2.*3.14159/(dim1)*(m*x + n*y);
          
-         im(i,j) = cos(arg) + sin(arg);
+         im(i,j) = cos(arg) + p*sin(arg);
       }
    }
+   
+}
+
+///Populate a single modified Fourier +1 mode
+/** See \ref make_modified_fourier_mode.
+  * 
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  * 
+  * \tparam typeN is an Eigen-like reference type.
+  */
+template<class typeN>
+void make_modified_fourier_mode_p(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+{
+   make_modified_fourier_mode(im, m, n, 1);
    
 }
  
 ///Populate a single modified Fourier -1 mode
+/** See \ref make_modified_fourier_mode.
+  * 
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  * 
+  * \tparam typeN is an Eigen-like reference type.
+  */
 template<class typeN>
 void make_modified_fourier_mode_m(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
-   int dim1 = im.cols();
-   int dim2 = im.rows();
-
-   typename typeN::Scalar xc, yc, x, y, arg;
-
-   xc = 0.5*(dim1-1.0);
-   yc = 0.5*(dim2-1.0);
-   
-   
-   for(int i=0;i<dim1; ++i)
-   {
-      x = i - xc;
-      for(int j=0;j<dim2; ++j)
-      {
-         y = j-yc;
-         
-         arg = 2.*3.14159/(dim1)*(m*x + n*y);
-         
-         im(i,j) = cos(arg) - sin(arg);
-      }
-   }
-   
+   make_modified_fourier_mode(im, m, n, -1);
 }
+
 
 template<typename floatT>
 struct spfreq
@@ -141,7 +189,7 @@ struct spfreq
 };
 
 template<typename floatT>
-bool comp_spfreq (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2) 
+bool comp_spfreq_PandV (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2) 
 { 
    floatT fr1 = spf1.k*spf1.k + spf1.l*spf1.l;
    floatT fr2 = spf2.k*spf2.k + spf2.l*spf2.l;
@@ -155,12 +203,15 @@ bool comp_spfreq (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2)
       }
       return (spf1.l < spf1.l);
    }
+   
+   //Otherwise sort by lowest absolute value
    return (fr1 < fr2); 
 }
 
 
 ///Fill in a vector of x and y spatial frequencies for a Fourier modal basis
 /** Follows the conventions of Poyneer & Veran, JOSAA, 22:8, 1515, (2005)
+  * 
   * \param ks [output] is a vector to fill in with the x spatial frequencies
   * \param ls [output] is a vector to fill in with the y spatial frequencies
   * \param cs [output] is a vector to fill in with 0 if only a cosine mode, 1 if both cosine and sine modes for this pair
@@ -223,7 +274,7 @@ void make_fourier_mode_freqs_PandV(std::vector<floatT> & ks, std::vector<floatT>
       freqs[i].cs = cs[i];
    }
    
-   std::sort(freqs.begin(), freqs.end(), comp_spfreq<floatT>);
+   std::sort(freqs.begin(), freqs.end(), comp_spfreq_PandV<floatT>);
    
    for(int i=0;i<freqs.size(); ++i)
    {
@@ -235,6 +286,25 @@ void make_fourier_mode_freqs_PandV(std::vector<floatT> & ks, std::vector<floatT>
 }
    
 
+template<typename floatT>
+bool comp_spfreq (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2) 
+{ 
+   floatT fr1 = spf1.k*spf1.k + spf1.l*spf1.l;
+   floatT fr2 = spf2.k*spf2.k + spf2.l*spf2.l;
+   
+   if(fr1 == fr2)
+   {
+      if(spf1.k == spf2.k) 
+      {
+         if(spf1.l == spf2.l) return (spf1.cs < spf2.cs);
+         else   return (spf1.l < spf2.l);
+      }
+      return (spf1.l < spf1.l);
+   }
+   
+   //Otherwise sort by lowest absolute value
+   return (fr1 < fr2); 
+}
 
 template<typename floatT>
 void make_fourier_mode_freqs_Circular(std::vector<floatT> & ks, std::vector<floatT> & ls, int N)
@@ -278,6 +348,7 @@ void make_fourier_mode_freqs_Circular(std::vector<floatT> & ks, std::vector<floa
    {
       freqs[i].k = ks[i];
       freqs[i].l = ls[i];
+      freqs[i].cs = 1;
    }
    
    std::sort(freqs.begin(), freqs.end(), comp_spfreq<floatT>);
@@ -332,6 +403,7 @@ void make_fourier_mode_freqs_Rect(std::vector<floatT> & ks, std::vector<floatT> 
    {
       freqs[i].k = ks[i];
       freqs[i].l = ls[i];
+      freqs[i].cs = 1;
    }
    
    std::sort(freqs.begin(), freqs.end(), comp_spfreq<floatT>);
@@ -431,11 +503,9 @@ void make_modified_fourier_basis_Rect(cubeT & cube, int dim, int N)
    typedef typename cubeT::Scalar floatT;
    
    std::vector<floatT> ks, ls; 
-   
-   
+      
    make_fourier_mode_freqs_Rect<floatT>(ks, ls, N);
 
-   
    int Nmodes = 2*ks.size();
    
    cube.resize(dim,dim,Nmodes);

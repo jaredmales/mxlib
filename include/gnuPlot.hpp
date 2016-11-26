@@ -177,8 +177,8 @@ public:
    ///Send a command to gnuplot
    /** The newline is appended to the command, and then it is sent to gnuplot.
      *
-     * \param com is the command string
-     * \param flush [optional] if true, then the output stream is flushed once the command is written.
+     * \param[in] com is the command string
+     * \param[in] flush [optional] if true, then the output stream is flushed once the command is written.
      *
      * \retval 0 on success
      * \retval -1 on error
@@ -196,8 +196,8 @@ public:
      * If the response begins with \c gnuplot>, then the response is an error.  In this case, checkResponse returns -1 and the gpError flag is set.  If gpError is not set 
      * but the return value is -1, then some other error occurred (check \c errno).
      * 
-     * \param response contains the response from gnuplot, but is empty on timeout or error.
-     * \param timeout [optional] is the length of time, in seconds, to wait for a response. Default is 0, but a minimum of 0.5 if a response is expected.
+     * \param[out] response contains the response from gnuplot, but is empty on timeout or error.
+     * \param[in] timeout [optional] is the length of time, in seconds, to wait for a response. Default is 0, but a minimum of 0.5 if a response is expected.
      * 
      * \retval 0 on timeout or successful read
      * \retval -1 on error, or if the gnuplot response indicates an error.
@@ -207,8 +207,8 @@ public:
    ///Get a response from gnuplot for a given command.
    /** This should only be used if a response is expected.
      *
-     * \param com is the command string
-     * \param timeout [optional] is the length of time, in seconds, to wait for a response. Default is 0.5, which is the minimum that should be used.
+     * \param[in] com is the command string
+     * \param[in] timeout [optional] is the length of time, in seconds, to wait for a response. Default is 0.5, which is the minimum that should be used.
      * 
      * \returns "" (empty string) on timeout or error (\c errno and gpError() should be checked), and the response from gnuplot otherwise.
      */ 
@@ -308,8 +308,8 @@ public:
        \endverbatim
      * The modifiers string can contain any modifiers such as \a using, \a title \endverbatim, etc.
      * 
-     * \param fname [in] is the name of the file containing data to plot
-     * \param modifiers [in] [optional] contains any modifiers to the plot command.
+     * \param[in] fname is the name of the file containing data to plot
+     * \param[in] modifiers [optional] contains any modifiers to the plot command.
      * 
      * \retval 0 on success
      * \retval -1 on error
@@ -324,10 +324,10 @@ public:
      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
      * specified so that the name of the temporary file name is not printed on the plot. 
      * 
-     * \param y is a pointer to an array of data
-     * \param N is the length of the array
-     * \param modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-     * \param title [optional] contains the title of the data set, default is an empty string and no key on the plot
+     * \param[in] y is a pointer to an array of data
+     * \param[in] N is the length of the array
+     * \param[in] modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
+     * \param[in] title [optional] contains the title of the data set, default is an empty string and no key on the plot
      *
      * \retval 0 on success
      * \retval -1 on error
@@ -343,9 +343,9 @@ public:
      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
      * specified so that the name of the temporary file name is not printed on the plot. 
      * 
-     * \param y is the vector containing the data
-     * \param modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-     * \param title [optional] contains the title of the data set, default is an empty string and no key on the plot
+     * \param[in] y is the vector containing the data
+     * \param[in] modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
+     * \param[in] title [optional] contains the title of the data set, default is an empty string and no key on the plot
      *
      * \retval 0 on success
      * \retval -1 on error
@@ -362,11 +362,11 @@ public:
      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
      * specified so that the name of the temporary file name is not printed on the plot. 
      * 
-     * \param x is a pointer to an array of data for the independent variable
-     * \param y is a pointer to an array of data for the dependent variable
-     * \param N is the length of the arrays
-     * \param modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-     * \param title [optional] contains the title of the data set, default is an empty string and no key on the plot
+     * \param[in] x is a pointer to an array of data for the independent variable
+     * \param[in] y is a pointer to an array of data for the dependent variable
+     * \param[in] N is the length of the arrays
+     * \param[in] modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
+     * \param[in] title [optional] contains the title of the data set, default is an empty string and no key on the plot
      *
      * \retval 0 on success
      * \retval -1 on error
@@ -382,10 +382,10 @@ public:
      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
      * specified so that the name of the temporary file name is not printed on the plot. 
      * 
-     * \param x is a vector of data for the independent variable
-     * \param y is a vector of data for the dependent variable
-     * \param modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-     * \param title [optional] contains the title of the data set, default is an empty string and no key on the plot
+     * \param[in] x is a vector of data for the independent variable
+     * \param[in] y is a vector of data for the dependent variable
+     * \param[in] modifiers [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
+     * \param[in] title [optional] contains the title of the data set, default is an empty string and no key on the plot
      *
      * \retval 0 on success
      * \retval -1 on error
@@ -478,12 +478,22 @@ int gnuPlot::connect()
    
    errno = 0;
    _errFD = open(_errFName.c_str(), O_RDONLY);
-   if(_errFD <= 0)
+   
+   int n =0;
+   while(_errFD <= 0 && n < 10)
    {
-      perror("gnuPlot failed to open file: ");
+      //First we try again after sleeping again.
+      usleep(MX_GP_FC_TIME);//allow file creation to finish before opening stderr file
+      _errFD = open(_errFName.c_str(), O_RDONLY);
+      ++n;
+   }
+
+   if(_errFD <= 0)
+   {  
+      perror("gnuPlot failed to open stderr file: ");
       return -1;
    }
-   
+      
    _connected = 1;
 }
 

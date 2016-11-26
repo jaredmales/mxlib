@@ -432,29 +432,29 @@ struct syevrMem
   * 
   * \tparam cvT is the scalar type of X (a.k.a. the covariance matrix)
   * \tparam calcT is the type in which to calculate the eigenvectors/eigenvalues
-  * 
-  * \param [in] X is a square matrix which is either upper or lower (default) triangular
+  *
   * \param [out] eigvec will contain the eigenvectors as columns
   * \param [out] eigval will contain the eigenvalues
+  * \param [in] CHANGED is just a placeholder to make sure that old calls don't compile
+  * \param [in] X is a square matrix which is either upper or lower (default) triangular
   * \param [in] ev0 is the first desired eigenvalue default 0
   * \param [in] ev1 if >= ev0 thenthis is the last desired eigenvalue.  If -1 all eigenvalues are returned.
   * \param [in] UPLO specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
   * \param [in] mem holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
   * 
-  * \retval the return code from syevr.
+  * \returns the return code from syevr.
   */
 template<typename cvT, typename calcT> //, typename eigenT>
-int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, 
-                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, 
-                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, 
+int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, 
+                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval,
+                int CHANGED,
+                Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
                 int ev0=0, 
                 int ev1=-1, 
                 char UPLO = 'L',
                 syevrMem<int, int, calcT> * mem = 0
               ) 
 {     
-   //calcT *WORK;
-   //int *ISUPPZ, *IWORK;
    int  numeig, info;//, sizeWORK, sizeIWORK;
    char RANGE = 'A';
    
@@ -465,8 +465,7 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
       mem = new syevrMem<int, int, calcT>;
       localMem = 1;
    }
-   
-   
+      
    int n = X.rows();
    
    int IL = 1;
@@ -544,9 +543,6 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
    info=syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
    
     /*  Cleanup and exit  */
-   //free(WORK); 
-   //free(IWORK); 
-   //free(ISUPPZ);
       
    if(localMem) delete mem;
    
@@ -557,10 +553,10 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
 ///Compute the SVD of an Eigen::Array using LAPACK's xgesdd
 /** Computes the SVD of A, \f$ A = U S V^T \f$.
   * 
-  * \param U [out] the A.rows() x A.rows() left matrix
-  * \param S [out] the A.cols() x 1 matrix of singular values
-  * \param VT [out] the A.cols() x A.cols() right matrix, note this is the transpose.
-  * \param A [in] the input matrix to be decomposed
+  * \param[out] U the A.rows() x A.rows() left matrix
+  * \param[out] S the A.cols() x 1 matrix of singular values
+  * \param[out] VT the A.cols() x A.cols() right matrix, note this is the transpose.
+  * \param[in] A the input matrix to be decomposed
   *
   * \returns 
   * \parblock
@@ -570,6 +566,8 @@ int eigenSYEVR( Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
   * \endparblock
   * 
   * \tparam dataT is either float or double.
+  * 
+  * \ingroup gen_math
   */ 
 template<typename dataT>
 int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Eigen::Array<dataT,-1,-1> & VT, Eigen::Array<dataT,-1,-1> & A )
@@ -608,26 +606,36 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
 #define MX_PINV_PLOT 1
 #define MX_PINV_ASK 2
 
+
 ///Calculate the pseudo-inverse of a patrix using the SVD
-/**
-  * \param PInv [out] the pseudo-inverse of A
-  * \param condition [out] The final condition number.
-  * \param nRejected [out] the number of eigenvectors rejected
-  * \param A [in] the matrix to invert
-  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
-  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
-  *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
+/** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
+  * 
+  * \param[out] PInv the pseudo-inverse of A
+  * \param[out] condition The final condition number.
+  * \param[out] nRejected the number of eigenvectors rejected
+  * \param[out] U
+  * \param[out] S
+  * \param[out] VT
+  * \param[in] A the matrix to invert
+  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
+  * \param[in] interact [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (interact & MX_PINV_ASK) is true
+  *                                 then the minimum singular value threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
+  * 
+  * \ingroup gen_math
   */
 template<typename dataT>
 int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
                        int & nRejected, 
+                       Eigen::Array<dataT, -1, -1> & U,
+                       Eigen::Array<dataT, -1, -1> & S,
+                       Eigen::Array<dataT, -1, -1> & VT,
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
                        int interact = MX_PINV_NO_INTERACT   )
 {
-   Eigen::Array<dataT,-1,-1> S, U, VT;
+   //Eigen::Array<dataT,-1,-1> S, U, VT;
    
    int info;
    info = eigenGESDD(U,S,VT,A);
@@ -641,17 +649,17 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    if(interact & MX_PINV_PLOT)
    {
       gnuPlot gp;
-      gp.command("set title \"SVD Eigenvalues\"");
+      gp.command("set title \"SVD Singular Values\"");
       gp.logy();
-      gp.plot( S.data(), S.rows(), " w l", "eigenvalues");
+      gp.plot( S.data(), S.rows(), " w l", "singular values");
    }
    
    if(interact & MX_PINV_ASK)
    {
       dataT mine;
-      std::cout << "Maximum eigenvalue: " << Smax << "\n";
-      std::cout << "Minimum eigenvalue: " << S.minCoeff() << "\n";
-      std::cout << "Enter eigenvalue threshold: ";
+      std::cout << "Maximum singular value: " << Smax << "\n";
+      std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+      std::cout << "Enter singular value threshold: ";
       std::cin >> mine;
    
       if(mine > 0)
@@ -698,6 +706,33 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 
 
 
+///Calculate the pseudo-inverse of a patrix using the SVD
+/** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
+  * This interface does not provide access to U, S and VT.
+  * 
+  * \param PInv [out] the pseudo-inverse of A
+  * \param condition [out] The final condition number.
+  * \param nRejected [out] the number of eigenvectors rejected
+  * \param A [in] the matrix to invert
+  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
+  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
+  *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
+  * \tparam dataT is either float or double.
+  * 
+  * \ingroup gen_math
+  */
+template<typename dataT>
+int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
+                       dataT & condition,
+                       int & nRejected, 
+                       Eigen::Array<dataT, -1, -1> & A, 
+                       dataT & maxCondition,
+                       int interact = MX_PINV_NO_INTERACT   )
+{
+   Eigen::Array<dataT,-1,-1> S, U, VT;
+   
+   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, interact);
+}
 
 
 

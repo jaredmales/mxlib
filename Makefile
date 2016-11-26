@@ -80,6 +80,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \
+                 mxError.hpp \
                  mxlib.h\
                  mxlib_uncomp_version.h\
                  pout.hpp \

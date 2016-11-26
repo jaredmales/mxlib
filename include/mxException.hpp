@@ -1,6 +1,7 @@
 /** \file mxException.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declares and defines the mxlib exception class.
+  * \ingroup error_handling
   * 
 */
 
@@ -13,7 +14,8 @@
    
 /// The mxlib exception class
 /** Provides a rich error report via the standard what().
- */
+  * \ingroup error_handling
+  */
 class mxException : public std::exception
 {
 
