@@ -25,6 +25,11 @@
 
 #include <cmath>
 
+//For pi<>()
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
+#include <mx/mxError.hpp>
 
 /** \addtogroup plotting
   * @{
@@ -35,17 +40,27 @@ namespace mx
    
 #ifndef MX_GP_FNAME_SZ
 ///The size of the string for managing the stderr fifo
-#define MX_GP_FNAME_SZ 128
+#define MX_GP_FNAME_SZ (128)
 #endif
    
 #ifndef MX_GP_TEMP_SZ
 ///The size of the string for managing temporary file names
-#define MX_GP_TEMP_SZ 128
+#define MX_GP_TEMP_SZ (128)
 #endif
 
 #ifndef MX_GP_FC_TIME
-///Time in microseconds to wait for gnuplot startup and file creation to complete.
-#define MX_GP_FC_TIME 10000
+/** \def MX_GP_FC_TIME
+  * Time, in microseconds, to wait for gnuplot startup and file creation to complete.
+  * Opening is retried after each timeout of this length for MX_GP_FC_RETRIES attempts.
+  */ 
+#define MX_GP_FC_TIME (10000)
+#endif
+   
+#ifndef MX_GP_FC_RETRIES
+/** \def MX_GP_FC_RETRIES 
+  * Number of times to retry opening the gnuplot stderr file.
+  */
+#define MX_GP_FC_RETRIES (10)
 #endif
    
 //Get the gnuplot binary format string for a type
@@ -145,6 +160,8 @@ protected:
    ///Flag to control whether temporary files are deleted on destruction.  Default is true (files deleted).
    bool _deleteTemp;
 
+   bool _plotted;
+   
 public:
    
    gnuPlot();
@@ -393,6 +410,15 @@ public:
    template<typename dataTx, typename dataTy>
    int plot( const std::vector<dataTx> & x, const std::vector<dataTy> & y, const std::string & modifiers = "", const std::string & title = "");
    
+   template<typename dataT>
+   int point( dataT x, dataT y, const std::string & modifiers = "", const std::string & title = "");
+   
+   template<typename dataT>
+   int circle( dataT xcen, dataT ycen, dataT radius, const std::string & modifiers = "", const std::string & title = "", dataT npoints =  10);
+   
+   template<typename dataT>
+   int circle( dataT radius, const std::string & modifiers = "", const std::string & title = "", dataT npoints =  10);
+   
 protected:
    
       
@@ -425,6 +451,8 @@ void gnuPlot::init()
    _errFD = 0;
 
    _tempLocation = "/dev/shm";
+   
+   _plotted = false;
 }
 
 inline
@@ -471,16 +499,32 @@ int gnuPlot::connect()
    std::string comm = "gnuplot -persist 2>";
    comm += _errFName;
    
-   
+   errno = 0;
    _pipeH = popen(comm.c_str(), "w");
 
+   if(_pipeH == NULL)
+   {
+      if(errno)
+      {
+         mxPError("gnuPlot", errno, "Error starting the gnuplot program with popen.");
+      }
+      else
+      {
+         mxError("gnuPlot", MXE_PROCERR, "Error starting the gnuplot program with popen.");
+      }
+      
+      return -1;
+   }
+   
+   
+   
    usleep(MX_GP_FC_TIME);//allow file creation to finish before opening stderr file
    
    errno = 0;
    _errFD = open(_errFName.c_str(), O_RDONLY);
    
    int n =0;
-   while(_errFD <= 0 && n < 10)
+   while(_errFD <= 0 && n < MX_GP_FC_RETRIES)
    {
       //First we try again after sleeping again.
       usleep(MX_GP_FC_TIME);//allow file creation to finish before opening stderr file
@@ -490,7 +534,7 @@ int gnuPlot::connect()
 
    if(_errFD <= 0)
    {  
-      perror("gnuPlot failed to open stderr file: ");
+      mxPError("gnuPlot", errno, "gnuPlot failed to open stderr file: ");
       return -1;
    }
       
@@ -545,14 +589,15 @@ int gnuPlot::checkResponse(std::string & response, double timeout)
       
       if(rv < 0)
       {
-         perror("gnuPlot: ");
+         mxPError("gnuPlot", errno, "Occurred while reading gnuplot stderr");
+         
          response = "";
          return -1;
       }
       
       if(rv == 0)
       {
-         std::cerr << "timed out";
+         mxError("gnuPlot", MXE_TIMEOUT, "Timed out while reading from gnuplot stderr");
          response = "";
          return 0;
       }
@@ -603,6 +648,9 @@ int gnuPlot::checkResponse(std::string & response, double timeout)
          {
             _gpError = true;
             _gpErrorMsg = response;
+            
+            mxError("gnuPlot", MXE_GNUPLOTERR, "gnuplot says:\n" + response);
+            
             response = "";
             return -1;
          }
@@ -614,6 +662,9 @@ int gnuPlot::checkResponse(std::string & response, double timeout)
    
    //If errFD is not open for some reason
    std::cerr << "gnuplot stderr is not open\n";
+   
+   
+   
    return 1;
    
    
@@ -683,11 +734,24 @@ int gnuPlot::ulogxy()
 
 int gnuPlot::plot(const std::string & fname, const std::string & modifiers)
 {
-   std::string com = "plot \"" + fname;
+   std::string com;
+   
+   if(!_plotted)
+   {
+      com = "plot ";
+   }
+   else
+   {
+      com = "replot ";
+   }
+   
+   com += "\"" + fname;
    
    com += "\" ";
    
    com += modifiers;
+ 
+   _plotted = true;
    
    return command(com, true);
 }
@@ -711,11 +775,23 @@ int gnuPlot::plot( const dataT * y, size_t N,  const std::string & modifiers, co
    }
    fflush(fout);
    
-   std::string com = "plot \"";
+   std::string com;
+   
+   if(!_plotted)
+   {
+      com = "plot ";
+   }
+   else
+   {
+      com = "replot ";
+   }
+   com += "\"";
    com += temp;
    com += "\" binary format=\"";
    com +=  gpBinaryFormat<dataT>() + "\" u 1 t \"" + title + "\" " + modifiers;
-         
+   
+   _plotted = true;
+   
    return command(com, true);
 }
   
@@ -754,14 +830,64 @@ int gnuPlot::plot( const dataTx * x,
    }
    fflush(fout);
    
-   std::string com = "plot \"";
+   std::string com;
+   
+   if(!_plotted)
+   {
+      com = "plot ";
+   }
+   else
+   {
+      com = "replot ";
+   }
+   com += "\"";
    com += temp;
    com += "\" binary format=\"";
    com +=  gpBinaryFormat<dataTx>() + gpBinaryFormat<dataTy>() + "\" u 1:2 t \"" + title + "\" " + modifiers;
          
+   _plotted = true;
    return command(com, true);
 }
- 
+
+template<typename realT>
+int gnuPlot::point( realT x, realT y, const std::string & modifiers, const std::string & title)
+{
+   
+   return plot(&x, &y, 1, modifiers, title);
+}
+
+template<typename realT>
+int gnuPlot::circle( realT xcen, realT ycen, realT radius, const std::string & modifiers, const std::string & title, realT npoints)
+{
+   int halfCirc = (0.5 * 2.0 * pi<realT>() * radius * npoints + 0.5);
+   
+   std::vector<realT> xpts(2*halfCirc), ypts(2*halfCirc);
+   
+   realT x, y;
+   
+   for(int i=0; i < halfCirc; ++i)
+   {
+      x = radius * cos(( (realT) i) / ( (realT) halfCirc) * pi<realT>());
+      
+      y = sqrt( radius*radius - x*x);
+      
+      xpts[i] = xcen + x;
+      ypts[i] = ycen + y;
+      
+      xpts[halfCirc + i] = xcen - x;
+      ypts[halfCirc + i] = ycen - y;
+   }
+   
+   return plot(xpts, ypts, modifiers, title);
+}
+   
+template<typename dataT>
+int gnuPlot::circle( dataT radius, const std::string & modifiers, const std::string & title, dataT npoints)
+{
+   return circle<dataT>(0.0, 0.0, modifiers, title, npoints);
+}
+   
+   
 template<typename dataTx, typename dataTy>
 int gnuPlot::plot( const std::vector<dataTx> & x, const std::vector<dataTy> & y, const std::string & modifiers, const std::string & title)
 {

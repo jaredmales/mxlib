@@ -9,6 +9,7 @@
 #define __imagingUtils_hpp__
 
 #include "imagingArray.hpp"
+#include "mxError.hpp"
 
 #include <cmath>
 #include <boost/math/constants/constants.hpp>
@@ -16,15 +17,18 @@
 namespace mx
 {
 
-///Calculate the plate scale of an image after propagation by FFT.
+///Calculate the angular plate scale (radians per pixel) of an image after propagation by FFT.
 /** 
-  * \tparam floatT a rel floating point type 
   * 
-  * \param pixels is the linear dimension of the FFT (including 0 pad, etc.)
-  * \param metersPerPixel is the scale of the input wavefront [m/pix]
-  * \param lambda is the wavelength of the wavefront [m]
+  * \param[in] pixels is the linear dimension of the FFT (including 0 pad, etc.)
+  * \param[in] metersPerPixel is the scale of the input wavefront [m/pix]
+  * \param[in] lambda is the wavelength of the wavefront [m]
   *
-  * \returns the platescale of the wavefront after propagation by FFT.
+  * \returns the platescale of the wavefront after propagation by FFT, in radians per pixel.
+  * 
+  * \tparam floatT a rel floating point type 
+  *
+  * \ingroup imaging
   */   
 template<typename floatT>
 floatT fftPlateScale(size_t pixels, floatT metersPerPixel, floatT lambda)
@@ -33,17 +37,34 @@ floatT fftPlateScale(size_t pixels, floatT metersPerPixel, floatT lambda)
 }
    
 /// Fill in an imagingArray with a circular pupil mask.
-/** \ingroup imaging
-  * \param m is the allocated Array
-  * \param eps [optional] is the central obscuration.  0-1, default is 0.
-  * \param rad [optional] is the desired radius. if 0 the maximum radius is used.
+/** 
+  * \param[out] m is the allocated Array.  Dimensions are used to create the pupil.
+  * \param[in] eps [optional] is the central obscuration.  0-1, default is 0.
+  * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
+  * 
+  * \retval 0 on success
+  * \retval -1 on error 
+  * 
+  * \ingroup imaging
   */  
 template<class arrayT> 
-void circularPupil( arrayT & m, 
+int circularPupil( arrayT & m, 
                      typename arrayT::Scalar eps=0, 
-                     typename arrayT::Scalar rad=0 
-                   )
+                     typename arrayT::Scalar rad=0 )
 {
+   
+   if( eps < 0)
+   {
+      mxError("circularPupil", MXE_INVALIDARG, "Central obscuration can not be < 0." );
+      return -1;
+   }
+   
+   if(eps > 1)
+   {
+      mxError("circularPupil", MXE_INVALIDARG, "Central obscuration can not be > 1." );
+      return -1;
+   }
+   
    size_t l0 = m.rows();
    size_t l1 = m.cols();
    
@@ -51,7 +72,7 @@ void circularPupil( arrayT & m,
    typename arrayT::Scalar xc = 0.5*(l0-1);
    typename arrayT::Scalar yc = 0.5*(l1-1);
    
-   if(rad == 0) rad = 0.5*std::min(l0-1, l1-1);
+   if(rad <= 0) rad = 0.5*std::min(l0-1, l1-1);
    
    for(size_t i=0; i < l0; i++)
    {
@@ -63,6 +84,8 @@ void circularPupil( arrayT & m,
          else m(i,j) = 0;
       }
    }
+   
+   return 0;
 }
 
 template<class arrayT> 

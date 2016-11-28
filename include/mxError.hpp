@@ -83,17 +83,57 @@
 
 namespace mx
 {
+/** \defgroup mxe_errors mxlib Error Codes
+  * \ingroup error_handling
+  */  
 
+/** \def MXE_INVALIDARG
+  * \brief An argument was invalid.
+  * \ingroup mxe_errors
+  */   
+#define MXE_INVALIDARG 25
+#define MXE_INVALIDARG_MSG "An argument was invalid."
 
+/** \def MXE_FILEOERR
+  * \brief An error occurred while opening a file.
+  * \ingroup mxe_errors
+  */   
 #define MXE_FILEOERR 1034
 #define MXE_FILEOERR_MSG "An error occurred while opening a file."
 
+/** \def MXE_FILEWERR
+  * \brief An error occurred while writing to a file.
+  * \ingroup mxe_errors
+  */   
 #define MXE_FILEWERR 1044
 #define MXE_FILEWERR_MSG "An error occurred while writing to a file."
 
+/** \def MXE_FILECERR
+  * \brief An error occurred while closing a file.
+  * \ingroup mxe_errors
+  */   
 #define MXE_FILECERR 1054
 #define MXE_FILECERR_MSG "An error occurred while closing a file."
    
+/** \def MXE_PROCERR
+  * \brief An error occrred while starting a process.
+  * \ingroup mxe_errors
+  */   
+#define MXE_PROCERR 2001
+#define MXE_PROCERR_MSG "An error occured while starting a process."
+
+/** \def MXE_TIMEOUT
+  * \brief A timeout occurred.
+  * \ingroup mxe_errors
+  */   
+#define MXE_TIMEOUT 2322
+#define MXE_TIMEOUT_MSG "A timeout occurred."
+
+
+/** \def MXE_GNUPLOTERR
+  * \brief An error was returned by gnuplot.
+  * \ingroup mxe_errors
+  */   
 #define MXE_GNUPLOTERR 4567
 #define MXE_GNUPLOTERR_MSG "An error was returned by gnuplot."
    
@@ -109,6 +149,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
    
    switch(ec)
    {
+      case MXE_INVALIDARG:
+         message = MXE_INVALIDARG_MSG;
+         return "MXE_INVALIDARG";
       case MXE_FILEOERR:
          message = MXE_FILEOERR_MSG;
          return "MXE_FILEOERR";
@@ -118,6 +161,12 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_FILECERR:
          message = MXE_FILECERR_MSG;
          return "MXE_FILECERR";
+      case MXE_PROCERR:
+         message = MXE_PROCERR_MSG;
+         return "MXE_PROCERR";
+      case MXE_TIMEOUT:
+         message = MXE_TIMEOUT_MSG;
+         return "MXE_TIMEOUT";
       case MXE_GNUPLOTERR:
          message = MXE_GNUPLOTERR_MSG;
          return "MXE_GNUPLOTERR";

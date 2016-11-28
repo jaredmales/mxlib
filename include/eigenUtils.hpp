@@ -651,7 +651,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       gnuPlot gp;
       gp.command("set title \"SVD Singular Values\"");
       gp.logy();
-      gp.plot( S.data(), S.rows(), " w l", "singular values");
+      gp.plot( S.data(), S.rows(), " w lp", "singular values");
    }
    
    if(interact & MX_PINV_ASK)
