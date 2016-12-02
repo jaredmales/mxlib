@@ -36,8 +36,9 @@ floatT fftPlateScale(size_t pixels, floatT metersPerPixel, floatT lambda)
    return (lambda/metersPerPixel) * (1./pixels);
 }
    
-/// Fill in an imagingArray with a circular pupil mask.
-/** 
+/// Fill in an Eigen-like array with a circular pupil mask.
+/** Sets any pixel which is at rad \<= r \< rad+(1.0/overscan) pixels to rho = 1,
+  * 
   * \param[out] m is the allocated Array.  Dimensions are used to create the pupil.
   * \param[in] eps [optional] is the central obscuration.  0-1, default is 0.
   * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
@@ -47,7 +48,7 @@ floatT fftPlateScale(size_t pixels, floatT metersPerPixel, floatT lambda)
   * 
   * \ingroup imaging
   */  
-template<class arrayT> 
+template<class arrayT, int overscan=2> 
 int circularPupil( arrayT & m, 
                      typename arrayT::Scalar eps=0, 
                      typename arrayT::Scalar rad=0 )
@@ -80,7 +81,7 @@ int circularPupil( arrayT & m,
       {
          r = std::sqrt( std::pow(i-xc, 2) + std::pow(j-yc, 2) );
          
-         if(r <= rad+0.5 && r >= eps*rad) m(i,j) = 1;
+         if(r <= rad+(1.0/overscan) && r >= eps*rad) m(i,j) = 1;
          else m(i,j) = 0;
       }
    }

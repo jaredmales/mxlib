@@ -586,7 +586,7 @@ LAYOUT_FILE            = mxlibDoxygenLayout.xml
 # of the bibliography can be controlled using LATEX_BIB_STYLE. To use this
 # feature you need bibtex and perl available in the search path.
 
-CITE_BIB_FILES         =
+CITE_BIB_FILES         = mxlib.bib
 
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
@@ -1186,7 +1186,7 @@ FORMULA_TRANSPARENT    = YES
 # output. When enabled you also need to install MathJax separately and
 # configure the path to it using the MATHJAX_RELPATH option.
 
-USE_MATHJAX            = NO
+USE_MATHJAX            = YES
 
 # When MathJax is enabled you need to specify the location relative to the
 # HTML output directory using the MATHJAX_RELPATH option. The destination
@@ -1197,7 +1197,7 @@ USE_MATHJAX            = NO
 # MathJax, but it is strongly recommended to install a local copy of MathJax
 # before deployment.
 
-MATHJAX_RELPATH        = http://www.mathjax.org/mathjax
+MATHJAX_RELPATH        = http://cdn.mathjax.org/mathjax/latest
 
 # The MATHJAX_EXTENSIONS tag can be used to specify one or MathJax extension
 # names that should be enabled during MathJax rendering.
@@ -1567,7 +1567,7 @@ TAGFILES               ="/home/jaredmales/Documents/References/cppreference/cppr
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create
 # a tag file that is based on the input files it reads.
 
-GENERATE_TAGFILE       = 
+GENERATE_TAGFILE       = mxlib.tag.xml
 
 # If the ALLEXTERNALS tag is set to YES all external classes will be listed
 # in the class index. If set to NO only the inherited external classes

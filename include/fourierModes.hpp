@@ -1,7 +1,7 @@
 /** \file fourierModes.hpp
   * \author Jared R. Males
   * \brief Functions for generating 2D Fourier modes
-  * \ingroup signal_processing
+  * \ingroup imaging_files
   *
   */
 
@@ -14,11 +14,21 @@
 
 namespace mx
 {
- 
+   
 /** \defgroup fourier_basis The Fourier Basis
-  * \ingroup signal_processing
+  * \ingroup imaging
   * @{
   */
+
+/** \def MX_FOURIER_BASIC
+  * \brief Signifies the basic sine/cosine Fourier basis.
+  */ 
+#define MX_FOURIER_BASIC 0
+   
+/** \def MX_FOURIER_MODIFIED
+  * \brief Signifies the modified Fourier basis.
+  */   
+#define MX_FOURIER_MODIFIED 1
 
 ///Populate a single cosine mode
 /** Makes a 2D image of the cosine mode:
@@ -29,24 +39,28 @@ namespace mx
     \f[
     \vec{q} = u \hat{u} + v \hat{v}
     \f]
-  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  * and  \f$ D \f$ is taken to be the maximum of the number of columns and rows in the image.
   *
   * \param [out] im is an Eigen-like image
   * \param [in] m specifies the spatial frequency in the u direction
   * \param [in] n specifies the spatial frequency in the v direction
   *
+  * \retval 0 on success
+  *
   * \tparam typeN is an Eigen-like reference type.
   */  
 template<class typeN>
-void make_fourier_mode_c(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeFourierModeC(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar uc, vc, u, v;
+   typename typeN::Scalar uc, vc, u, v, D;
 
    uc = 0.5*(dim1-1.0);
    vc = 0.5*(dim2-1.0);
+   
+   D = std::max( dim1, dim2);
    
    for(int i=0;i<dim1; ++i)
    {
@@ -55,10 +69,11 @@ void make_fourier_mode_c(typeN im, typename typeN::Scalar m, typename typeN::Sca
       {
          v = j-vc;
          
-         im(i,j) = cos(2.*3.14159/(dim1)*(m*u + n*v));
+         im(i,j) = cos(2.*3.14159/D*(m*u + n*v));
       }
    }
    
+   return 0;
 }
  
 ///Populate a single sine mode 
@@ -70,23 +85,27 @@ void make_fourier_mode_c(typeN im, typename typeN::Scalar m, typename typeN::Sca
     \f[
     \vec{q} = u \hat{u} + v \hat{v}
     \f]
-  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  * and  \f$ D \f$ is taken to be the maximum of the number of columns and rows in the image.
   * \param [out] im is an Eigen-like image
   * \param [in] m specifies the spatial frequency in the u direction
   * \param [in] n specifies the spatial frequency in the v direction
   *
+  * \retval 0 on success
+  *
   * \tparam typeN is an Eigen-like reference type.
   */  
 template<class typeN>
-void make_fourier_mode_s(typeN  im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeFourierModeS(typeN  im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar uc, vc, u, v;
+   typename typeN::Scalar uc, vc, u, v, D;
 
    uc = 0.5*(dim1-1.0);
    vc = 0.5*(dim2-1.0);
+   
+   D = std::max(dim1, dim2);
    
    for(int i=0;i<dim1; ++i)
    {
@@ -95,10 +114,35 @@ void make_fourier_mode_s(typeN  im, typename typeN::Scalar m, typename typeN::Sc
       {
          v = j-vc;
          
-         im(i,j) = sin(2.*3.14159/(dim1)*(m*u + n*v));
+         im(i,j) = sin(2.*3.14159/D*(m*u + n*v));
       }
    }
    
+   return 0;
+}
+
+///Populate a single basic Fourier mode 
+/** Makes a 2D image of the basic sine or cosine mode.  Calls \ref makeFourierModeC and \ref makeFourierModeS.
+  * 
+  * \param [out] im is an Eigen-like image
+  * \param [in] m specifies the spatial frequency in the u direction
+  * \param [in] n specifies the spatial frequency in the v direction
+  * \param [in] p species sine (-1) or cosine (+1)
+  *
+  * \retval 0 on success
+  *
+  * \tparam typeN is an Eigen-like reference type.
+  */  
+template<class typeN>
+int makeFourierMode(typeN  im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
+{
+   if( p == -1) return makeFourierModeS(im, m, n);
+   
+   if( p == 1) return makeFourierModeC(im, m, m);
+   
+   mxError("makeFourierMode", MXE_INVALIDARG, "p must be +1 (cosine) or -1 (sine).");
+   
+   return -1;
 }
 
 ///Populate a single modified Fourier mode
@@ -107,25 +151,35 @@ void make_fourier_mode_s(typeN  im, typename typeN::Scalar m, typename typeN::Sc
     M_p(\vec{q}) = \cos\left( 2\pi \frac{m}{D}u + 2\pi\frac{n}{D}v \right) + p  \sin\left( 2\pi\frac{m}{D}u + 2\pi\frac{n}{D}v \right)
     \f]
   * where \f$ p = \pm 1 \f$, \f$ \vec{q} = u \hat{u} + v \hat{v} \f$,
-  * and  \f$ D \f$ is taken to be the number of columns in the image.
+  * and  \f$ D \f$ is taken to be the maximum of the number of columns in the image.
+  *
   * \param [out] im is an Eigen-like image
   * \param [in] m specifies the spatial frequency in the u direction
   * \param [in] n specifies the spatial frequency in the v direction
   * \param [in] p is +/- 1 specifying which modified Fourier mode
   * 
+  * \retval 0 on success
+  *
   * \tparam typeN is an Eigen-like reference type.
   */  
 template<class typeN>
-void make_modified_fourier_mode(typeN im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
+int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
 {
+   
+   if(p != 1 && p != -1)
+   {
+      mxError("makeModifiedFourierMode", MXE_INVALIDARG, "p must be +1 or -1.");
+   }
+   
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar xc, yc, x, y, arg;
+   typename typeN::Scalar xc, yc, x, y, arg, D;
 
    xc = 0.5*(dim1-1.0);
    yc = 0.5*(dim2-1.0);
    
+   D = std::max(dim1, dim2);
    
    for(int i=0;i<dim1; ++i)
    {
@@ -134,16 +188,18 @@ void make_modified_fourier_mode(typeN im, typename typeN::Scalar m, typename typ
       {
          y = j-yc;
          
-         arg = 2.*3.14159/(dim1)*(m*x + n*y);
+         arg = 2.*3.14159/D*(m*x + n*y);
          
          im(i,j) = cos(arg) + p*sin(arg);
       }
    }
    
+   return 0;
+   
 }
 
 ///Populate a single modified Fourier +1 mode
-/** See \ref make_modified_fourier_mode.
+/** See \ref makeModifiedFourierMode.
   * 
   * \param [out] im is an Eigen-like image
   * \param [in] m specifies the spatial frequency in the u direction
@@ -152,14 +208,13 @@ void make_modified_fourier_mode(typeN im, typename typeN::Scalar m, typename typ
   * \tparam typeN is an Eigen-like reference type.
   */
 template<class typeN>
-void make_modified_fourier_mode_p(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeModifiedFourierModeP(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
-   make_modified_fourier_mode(im, m, n, 1);
-   
+   return makeModifiedFourierMode(im, m, n, 1);
 }
  
 ///Populate a single modified Fourier -1 mode
-/** See \ref make_modified_fourier_mode.
+/** See \ref makeModifiedFourierMode.
   * 
   * \param [out] im is an Eigen-like image
   * \param [in] m specifies the spatial frequency in the u direction
@@ -168,41 +223,50 @@ void make_modified_fourier_mode_p(typeN im, typename typeN::Scalar m, typename t
   * \tparam typeN is an Eigen-like reference type.
   */
 template<class typeN>
-void make_modified_fourier_mode_m(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeModifiedFourierModeM(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
-   make_modified_fourier_mode(im, m, n, -1);
+   return makeModifiedFourierMode(im, m, n, -1);
 }
 
 
-template<typename floatT>
-struct spfreq
+///Structure to contain the parameters of a Fourier mode.
+struct spFreq
 {
-   floatT k;
-   floatT l;
-   int cs;
+   int m; ///< Spatial frequency m index
+   int n; ///< Spatial frequency n index
+   int p; ///< +/- 1 for modified Fourier modes, -1==>sine, +1==>cosine for basic Fourier modes.
    
-   spfreq()
+   ///Constructor
+   spFreq()
    {
-      k = 0;
-      l = 0;
-      cs = 0;
+      m = 0;
+      n = 0;
+      p = 0;
    }
 };
 
-template<typename floatT>
-bool comp_spfreq_PandV (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2) 
+
+/// Sorting functor for modes according to the Poyner and Veran (2005) standard.
+/** Follows the conventions of  Poyneer & Veran (2005) \cite poyneer_and_veran_2005 
+  * 
+  * \param[in] spf1 is an object of type \ref spFreq to compare with spf2
+  * \param[in] spf2 is an object of type \ref spFreq to compare with spf1
+  * 
+  * \returns the result of (spf1 < spf2) according to the above rules.
+  */ 
+bool comp_spFreq_PandV (const spFreq & spf1, const spFreq & spf2) 
 { 
-   floatT fr1 = spf1.k*spf1.k + spf1.l*spf1.l;
-   floatT fr2 = spf2.k*spf2.k + spf2.l*spf2.l;
+   double fr1 = spf1.m*spf1.m + spf1.n*spf1.n;
+   double fr2 = spf2.m*spf2.m + spf2.n*spf2.n;
    
    if(fr1 == fr2)
    {
-      if(spf1.l == spf2.l) 
+      if(spf1.n == spf2.n) 
       {
-         if(spf1.k == spf2.k) return (spf1.cs < spf2.cs);
-         else   return (spf1.k < spf2.k);
+         if(spf1.m == spf2.m) return (spf1.p < spf2.p);
+         else   return (spf1.m < spf2.m);
       }
-      return (spf1.l < spf1.l);
+      return (spf1.n < spf1.n);
    }
    
    //Otherwise sort by lowest absolute value
@@ -210,29 +274,30 @@ bool comp_spfreq_PandV (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2
 }
 
 
-///Fill in a vector of u and v spatial frequencies for a Fourier modal basis
-/** Follows the conventions of Poyneer & Veran, JOSAA, 22:8, 1515, (2005)
-  * 
-  * \param ks [output] is a vector to fill in with the x spatial frequencies
-  * \param ls [output] is a vector to fill in with the y spatial frequencies
-  * \param cs [output] is a vector to fill in with 0 if only a cosine mode, 1 if both cosine and sine modes for this pair
-  * \param N [input] the 1-D sampling, e.g. these modes sample NxN
+///Generate a Poyneer and Veran spatial frequency grid.  
+/**
+  * \param spf
+  * \param N is the linear number of degrees of freedom.  
   */
-template<typename floatT>
-void make_fourier_mode_freqs_PandV(std::vector<floatT> & ks, std::vector<floatT> & ls, std::vector<bool> & cs, int N)
+int makeFourierModeFreqs_PandV(std::vector<spFreq> & spf, int N)
 {
    int Nmodes = N*N;
    
-   ks.resize(Nmodes);
-   ls.resize(Nmodes);
-   cs.resize(Nmodes);
+   spf.resize(Nmodes);
    
-   floatT _k, _l;
+   int _k, _l;
    int modeCount = 0;
    for(int ll=0; ll<=N; ++ll)
    {
       for(int l=ll, k=0; l>=0; --l, ++k)
       {
+         if(modeCount >= Nmodes)
+         {
+            mxError("makeFourierModeFreqs_PandV", MXE_SIZEERR, "mode count exceeded expected number of modes");
+            return -1;
+         }
+         
+         
          if(k==0 && l > .5*N) continue;
          
          if(k > .5*N && (l == 0 || l>= N-k)) continue;
@@ -244,321 +309,279 @@ void make_fourier_mode_freqs_PandV(std::vector<floatT> & ks, std::vector<floatT>
          else _l = l;
          
          //There is always a cosine mode
-         ks[modeCount] = _k;
-         ls[modeCount] = _l;        
-         cs[modeCount] = 0;
+         spf[modeCount].m = _k;
+         spf[modeCount].n = _l;        
+         spf[modeCount].p = 1;
          
          ++modeCount;
         
          //Make sure it isn't one of the corners, then populate the sine mode
          if(! ((k==0 && l==0) || (k ==0.5*N && l==0) || (k==0 && l==0.5*N) || (k==0.5*N && l==0.5*N)))
          {
-            ks[modeCount] = _k;
-            ls[modeCount] = _l;
-            cs[modeCount] = 1;
+            spf[modeCount].m = _k;
+            spf[modeCount].n = _l;
+            spf[modeCount].p = -1;
             ++modeCount;
 
          }
-         
       }
    }
    
-   std::cout << "modeCount = " << modeCount << "\n";
+   std::sort(spf.begin(), spf.end(), comp_spFreq_PandV);
    
-   std::vector<spfreq<floatT>> freqs;
-   freqs.resize(ks.size());
-   
-   for(int i=0;i<ks.size();++i)
-   {
-      freqs[i].k = ks[i];
-      freqs[i].l = ls[i];
-      freqs[i].cs = cs[i];
-   }
-   
-   std::sort(freqs.begin(), freqs.end(), comp_spfreq_PandV<floatT>);
-   
-   for(int i=0;i<freqs.size(); ++i)
-   {
-      ks[i] = freqs[i].k;
-      ls[i] = freqs[i].l;
-      cs[i] = freqs[i].cs;
-   }
-   
+   return 0;
 }
    
-/// Sorting functor for spatial frequencies
+/// Sorting functor for modes according to the mx::AO standard.
 /** Given a spatial frequency vector \f$ \vec{k} = k_u \hat{u} + k_v \hat{v} \f$, sorts first by
-  * \f$ | \vec{k} | \f$, then by \f$ k_u \f$, then by \f$ k_v \f$.  Results in mode numbers increasing radially
+  * \f$ | \vec{k} | \f$, then by the angle from the u axis.  Results in mode numbers increasing radially
   * and counter-clockwise from the \f$ u \f$ axis.
   * 
-  * \param[in] spf1 is an object of type \ref spfreq to compare with spf2
-  * \param[in] spf2 is an object of type \ref spfreq to compare with spf1
+  * \param[in] spf1 is an object of type \ref spFreq to compare with spf2
+  * \param[in] spf2 is an object of type \ref spFreq to compare with spf1
   * 
   * \returns the result of (spf1 < spf2) according to the above rules.
   */ 
-template<typename floatT>
-bool comp_spfreq (const spfreq<floatT> & spf1, const spfreq<floatT> & spf2) 
+bool comp_spFreq (const spFreq & spf1, const spFreq & spf2) 
 { 
-   floatT fr1 = spf1.k*spf1.k + spf1.l*spf1.l;
-   floatT fr2 = spf2.k*spf2.k + spf2.l*spf2.l;
+   double k1 = spf1.m*spf1.m + spf1.n*spf1.n;
+   double k2 = spf2.m*spf2.m + spf2.n*spf2.n;
    
-   if(fr1 == fr2)
+   if(k1 == k2)
    {
-      if(spf1.l == spf2.l) 
-      {
-         if(spf1.k == spf2.k) return (spf1.cs < spf2.cs);
-         else   return (spf1.k < spf2.k);
-      }
-      return (spf1.l < spf1.l);
+      //Now compare by angle
+      double a1 = atan2(spf1.n, spf1.m);
+      if(a1 < 0) a1 += two_pi<double>();
+      
+      double a2 = atan2(spf2.n, spf2.m);
+      if(a2 < 0) a2 += two_pi<double>();
+      
+      if( a1 == a2 ) return (spf1.p < spf2.p);
+         
+      return ( a1 < a2); 
+      
    }
    
    //Otherwise sort by lowest absolute value
-   return (fr1 < fr2); 
+   return (k1 < k2); 
 }
 
-template<typename floatT>
-void make_fourier_mode_freqs_Circular(std::vector<floatT> & ks, std::vector<floatT> & ls, int N)
-{
-   floatT frad;
-   int Nmodes;
-
-   frad = floor( (floatT) 0.5*N);
-   
-   Nmodes = 0.25*3.14159*N*N*1.1;//The 1.1 is a buffer
-
-   ks.resize(Nmodes);
-   ls.resize(Nmodes);
-   
-   floatT _k, _l;
-   floatT kmax;
-   
-   int modeCount = 0;
-   
-   for(int l=0; l<=frad; ++l)
-   {
-      kmax = sqrt(frad*frad-l*l);
-      
-      for(int k=( (int) -kmax); k <= kmax; ++k)
-      {
-         if(l==0 && k <=0) continue;
-                  
-         ks[modeCount] = k;
-         ls[modeCount] = l;        
-         ++modeCount;
-      }
-   }
-   
-   ks.erase(ks.begin()+modeCount, ks.end());
-   ls.erase(ls.begin()+modeCount, ls.end());
-   
-   std::vector<spfreq<floatT>> freqs;
-   freqs.resize(ks.size());
-   
-   for(int i=0;i<ks.size();++i)
-   {
-      freqs[i].k = ks[i];
-      freqs[i].l = ls[i];
-      freqs[i].cs = 1;
-   }
-   
-   std::sort(freqs.begin(), freqs.end(), comp_spfreq<floatT>);
-   
-   for(int i=0;i<freqs.size(); ++i)
-   {
-      ks[i] = freqs[i].k;
-      ls[i] = freqs[i].l;
-   }
-}
- 
-///Generate a rectangular spatial frequency grid.  
+///Generate a circular spatial frequency grid.  
 /**
-  * \param ks
-  * \param ls
+  * \param spf
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
-template<typename floatT>
-void make_fourier_mode_freqs_Rect(std::vector<floatT> & ks, std::vector<floatT> & ls, int N)
+int makeFourierModeFreqs_Circ( std::vector<spFreq> & spf, 
+                               int N )
 {
+   int krad;
    int Nmodes;
 
+   krad = floor(0.5*N);
    
-   Nmodes = 0.5*(N+1)*(N+1);
+   Nmodes = 0.25*pi<double>()*N*N*1.1;//The 1.1 is a buffer
 
-   ks.resize(Nmodes);
-   ls.resize(Nmodes);
-   
-   floatT _k, _l;
-   floatT kmax;
-   
-   int Ndx = floor(0.5*(N));
-   
+   spf.resize(Nmodes);
+      
    int modeCount = 0;
    
-   for(int l=-Ndx; l <= Ndx; ++l)
+   for(int m=-krad; m <= krad; ++m)
    {      
-      for(int k= 0; k <= Ndx; ++k)
+      int nmax = sqrt(krad*krad-m*m);
+      
+      for(int n=0; n <= nmax; ++n)
       {
-         if( k==0 && l <=0 ) continue;
-       
-         //if(abs(l) == Ndx && abs(k) >= 0.5*Ndx) continue;
-         //if(abs(k) == Ndx && abs(l) >= 0.5*Ndx) continue;
+         if( n==0 && m <=0 ) continue;
+                  
+         for(int p=-1; p<=1; p+=2)
+         {
+            if(modeCount >= Nmodes)
+            {
+               mxError("makeFourierModeFreqs_Circ", MXE_SIZEERR, "mode count exceeded expected number of modes");
+               return -1;
+            }
             
-         ks[modeCount] = k;
-         ls[modeCount] = l;        
-         ++modeCount;
+            spf[modeCount].m = m;
+            spf[modeCount].n = n;
+            spf[modeCount].p = p;
+            ++modeCount;
+         }
+      }
+   }
+
+   //Erase any extra modes (there will bedue to the buffer).
+   spf.erase(spf.begin()+modeCount, spf.end());
+   
+   //And now sort it
+   std::sort(spf.begin(), spf.end(), comp_spFreq);
+   
+   return 0;
+} 
+
+///Generate a rectangular spatial frequency grid.  
+/**
+  * \param spf
+  * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
+  */
+int makeFourierModeFreqs_Rect( std::vector<spFreq> & spf, 
+                                int N )
+{
+   int Ndx = floor(0.5*(N));
+   
+   int Nmodes = 2*((2*Ndx + 1)*(Ndx + 1) - (Ndx+1));
+
+   spf.resize(Nmodes);
+      
+   int modeCount = 0;
+   
+   for(int m=-Ndx; m <= Ndx; ++m)
+   {      
+      for(int n=0; n <= Ndx; ++n)
+      {
+         if( n==0 && m <=0 ) continue;
+                  
+         for(int p=-1; p<=1; p+=2)
+         {
+            if(modeCount >= Nmodes)
+            {
+               mxError("makeFourierModeFreqs_Rect", MXE_SIZEERR, "mode count exceeded expected number of modes");
+               return -1;
+            }
+            
+            spf[modeCount].m = m;
+            spf[modeCount].n = n;
+            spf[modeCount].p = p;
+            ++modeCount;
+            
+
+         }
+      }
+   }
+
+   //Erase any extra modes (there shouldn't be any).
+   spf.erase(spf.begin()+modeCount, spf.end());
+   
+   //And now sort it
+   std::sort(spf.begin(), spf.end(), comp_spFreq);
+   
+   return 0;
+} 
+ 
+
+/// Fill in a cube with a Fourier basis.
+/** Fills the cube with either the basic or modified Fourier basis for the modes specified.
+  * 
+  * \param[out] cube will be allocated to hold and will be filled with the modes
+  * \param[in] dim is the linear size of the maps, each is 
+  * \param[in] spf is a vector of mode definitions to use for each mode
+  * \param[in] basisType is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC
+  *
+  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
+  */ 
+template<typename cubeT>
+int fillFourierBasis( cubeT & cube, 
+                      int dim, 
+                      std::vector<spFreq> spf,
+                      int basisType )
+{
+   typedef typename cubeT::Scalar floatT;
+   
+   int Nmodes = spf.size(); 
+   
+   cube.resize(dim,dim,Nmodes);
+   
+   for(int j=0; j < Nmodes; ++j)
+   {
+      if(basisType == MX_FOURIER_MODIFIED)
+      {
+         if( makeModifiedFourierMode( cube.image(j), spf[j].m, spf[j].n, spf[j].p) < 0) return -1;
+      }
+      else 
+      {
+         if( makeFourierMode(cube.image(j), spf[j].m, spf[j].n, spf[j].p) < 0) return -1;
       }
    }
    
-   ks.erase(ks.begin()+modeCount, ks.end());
-   ls.erase(ls.begin()+modeCount, ls.end());
-   
-   std::vector<spfreq<floatT>> freqs;
-   freqs.resize(ks.size());
-   
-   for(int i=0;i<ks.size();++i)
-   {
-      freqs[i].k = ks[i];
-      freqs[i].l = ls[i];
-      freqs[i].cs = 1;
-   }
-   
-   std::sort(freqs.begin(), freqs.end(), comp_spfreq<floatT>);
-   
-   for(int i=0;i<freqs.size(); ++i)
-   {
-      ks[i] = freqs[i].k;
-      ls[i] = freqs[i].l;
-   }
-} 
- 
-template<typename eigenT, typename floatT>
-void make_freq_map(eigenT & map, std::vector<floatT> & ks, std::vector<floatT> & ls, int N)
-{
-   map.setZero(N+1, N+1);
-   floatT mid = 0.5*(N);
-   
-   for(int i=0; i<ks.size(); ++i)
-   {
-      map( mid+ks[i], mid+ls[i]) = sqrt(pow(ks[i],2) + pow(ls[i],2));
-   }
+   return 0;
 }
 
-   
-template<typename cubeT>
-void make_fourier_basis_PandV(cubeT & cube, int dim, int N)
-{
-   std::vector<float> ks, ls;
-   std::vector<bool> cs;
-   
-   int Nmodes = N*N;
-   
-   make_fourier_mode_freqs_PandV(ks, ls, cs, N);
-   
-   cube.resize(dim,dim,Nmodes-1);
-   
-   
-   for(int n=1; n<Nmodes; ++n)
-   {
-      if(!cs[n])
-         make_fourier_mode_c(cube.image(n-1), ks[n], ls[n]);
-      else
-         make_fourier_mode_s(cube.image(n-1), ks[n], ls[n]);
-   }
-}
-
-/// Generate a circular Fourier basis.
-/** Fills the cube with modes generated by \ref make_fourier_mode_c and \ref make_fourier_mode_s, using the spatial frequency grid generated by \ref make_fourier_mode_freqs_Circular.
-  * 
-  * \param[out] cube will be allocated to hold and will be filled with the modes
-  * \param[in] dim is the linear size of the maps, each is 
-  * \param[in] N is the linear number of degrees of freedom.
-  *
-  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
-  */ 
-template<typename cubeT>
-void make_fourier_basis_Circular(cubeT & cube, int dim, int N)
-{
-   typedef typename cubeT::Scalar floatT;
-   
-   std::vector<floatT> ks, ls; 
-   
-   make_fourier_mode_freqs_Circular<floatT>(ks, ls, N);
-
-   int Nmodes = 2*ks.size();
-   
-   cube.resize(dim,dim,Nmodes);
-   
-   
-   for(int n=0; n < ks.size(); ++n)
-   {
-      make_fourier_mode_c(cube.image(2*n), ks[n], ls[n]);
-      
-      make_fourier_mode_s(cube.image(2*n+1), ks[n], ls[n]);
-   }
-}
-
-/// Generate a rectangular Fourier basis.
-/** Fills the cube with modes generated by \ref make_fourier_mode_c and \ref make_fourier_mode_s, using the spatial frequency grid generated by \ref make_fourier_mode_freqs_Rect.
-  * 
-  * \param[out] cube will be allocated to hold and will be filled with the modes
-  * \param[in] dim is the linear size of the maps, each is 
-  * \param[in] N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1)
-  *
-  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
-  */ 
-template<typename cubeT>
-void make_fourier_basis_Rect(cubeT & cube, int dim, int N)
-{
-   typedef typename cubeT::Scalar floatT;
-   
-   std::vector<floatT> ks, ls; 
-   
-   
-   make_fourier_mode_freqs_Rect<floatT>(ks, ls, N);
-
-   
-   int Nmodes = 2*ks.size();
-   
-   cube.resize(dim,dim,Nmodes);
-   
-   
-   for(int n=0; n < ks.size(); ++n)
-   {
-      make_fourier_mode_c(cube.image(2*n), ks[n], ls[n]);
-      
-      make_fourier_mode_s(cube.image(2*n+1), ks[n], ls[n]);
-   }
-}
-
-/// Generate a rectangular modified Fourier basis.
-/** Fills the cube with modes generated by \ref make_modified_fourier_mode_p and \ref make_modified_fourier_mode_m, using the spatial frequency grid generated by \ref make_fourier_mode_freqs_Rect.
+/// Generate a rectangular modified Fourier basis with the Poyneer and Veran ordering.
+/** Fills the cube with modes generated by \ref makeFourierMode or \ref makeModifiedFourierMode using the mode grid generated by \ref makeFourierModeFreqs_PandV.
   * 
   * \param[out] cube will be allocated to hold and will be filled with the modes
   * \param[in] dim is the linear size of the maps, each is 
   * \param[in] N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
-  *
+  * \param[in] basisType is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC
+  * 
+  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
+  */    
+template<typename cubeT>
+int makeFourierBasis_PandV( cubeT & cube, 
+                            int dim, 
+                            int N,
+                            int basisType )
+{
+   std::vector<spFreq> spf;
+   
+   if( makeFourierModeFreqs_PandV(spf, N) < 0)
+   {
+      return -1;
+   }
+   
+   return fillFourierBasis(cube, dim, spf, basisType);   
+}
+
+/// Generate a circular Fourier basis.
+/** Fills the cube with modes generated by \ref makeFourierMode or \ref makeModifiedFourierMode using the mode grid generated by \ref makeFourierModeFreqs_Circ.
+  * 
+  * \param[out] cube will be allocated to hold and will be filled with the modes
+  * \param[in] dim is the linear size of the maps, each is 
+  * \param[in] N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
+  * \param[in] basisType is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC
+  * 
   * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
   */ 
 template<typename cubeT>
-void make_modified_fourier_basis_Rect(cubeT & cube, int dim, int N)
+int makeFourierBasis_Circ(cubeT & cube, 
+                          int dim, 
+                          int N,
+                          int basisType )
 {
-   typedef typename cubeT::Scalar floatT;
+   std::vector<spFreq> spf;
    
-   std::vector<floatT> ks, ls; 
-      
-   make_fourier_mode_freqs_Rect<floatT>(ks, ls, N);
-
-   int Nmodes = 2*ks.size();
-   
-   cube.resize(dim,dim,Nmodes);
-   
-   
-   for(int n=0; n < ks.size(); ++n)
+   if( makeFourierModeFreqs_Circ(spf, N) < 0 )
    {
-      make_modified_fourier_mode_p(cube.image(2*n), ks[n], ls[n]);
-      
-      make_modified_fourier_mode_m(cube.image(2*n+1), ks[n], ls[n]);
+      return -1;
    }
+   
+   return fillFourierBasis(cube, dim, spf, basisType);   
+}
+
+
+/// Generate a rectangular Fourier basis.
+/** Fills the cube with modes generated by \ref makeFourierMode or \ref makeModifiedFourierMode using the mode grid generated by \ref makeFourierModeFreqs_Rect.
+  * 
+  * \param[out] cube will be allocated to hold and will be filled with the modes
+  * \param[in] dim is the linear size of the maps, each is 
+  * \param[in] N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
+  * \param[in] basisType is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC
+  * 
+  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube. 
+  */ 
+template<typename cubeT>
+int makeFourierBasis_Rect( cubeT & cube, 
+                           int dim, 
+                           int N,
+                           int basisType )
+{   
+   std::vector<spFreq> spf;
+   
+   if( makeFourierModeFreqs_Rect(spf, N) < 0 )
+   {
+      return -1;
+   }
+   
+   return fillFourierBasis(cube, dim, spf, basisType);   
 }
 
 ///@}

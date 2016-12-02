@@ -98,7 +98,8 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
 		 randomT.hpp \
-		 vectorUtils.hpp                  
+		 vectorUtils.hpp  \
+		 zernike.hpp
 
 all: $(TARGETS) 
 

@@ -94,6 +94,14 @@ namespace mx
 #define MXE_INVALIDARG 25
 #define MXE_INVALIDARG_MSG "An argument was invalid."
 
+/** \def MXE_SIZEERR
+  * \brief A size was calculated incorrectly
+  * \ingroup mxe_errors
+  */   
+#define MXE_SIZEERR 35
+#define MXE_SIZEERR_MSG "A size was calculated incorrectly."
+
+
 /** \def MXE_FILEOERR
   * \brief An error occurred while opening a file.
   * \ingroup mxe_errors
@@ -152,6 +160,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_INVALIDARG:
          message = MXE_INVALIDARG_MSG;
          return "MXE_INVALIDARG";
+      case MXE_SIZEERR:
+         message = MXE_SIZEERR_MSG;
+         return "MXE_SIZEERR";
       case MXE_FILEOERR:
          message = MXE_FILEOERR_MSG;
          return "MXE_FILEOERR";
