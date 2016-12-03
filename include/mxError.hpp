@@ -94,11 +94,18 @@ namespace mx
 #define MXE_INVALIDARG 25
 #define MXE_INVALIDARG_MSG "An argument was invalid."
 
+/** \def MXE_PARAMNOTSET
+  * \brief A parameter was not set
+  * \ingroup mxe_errors
+  */   
+#define MXE_PARAMNOTSET 35
+#define MXE_PARAMNOTSET_MSG "A parameter was not set."
+
 /** \def MXE_SIZEERR
   * \brief A size was calculated incorrectly
   * \ingroup mxe_errors
   */   
-#define MXE_SIZEERR 35
+#define MXE_SIZEERR 55
 #define MXE_SIZEERR_MSG "A size was calculated incorrectly."
 
 
@@ -160,6 +167,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_INVALIDARG:
          message = MXE_INVALIDARG_MSG;
          return "MXE_INVALIDARG";
+      case MXE_PARAMNOTSET:
+         message = MXE_PARAMNOTSET_MSG;
+         return "MXE_PARAMNOTSET";
       case MXE_SIZEERR:
          message = MXE_SIZEERR_MSG;
          return "MXE_SIZEERR";
