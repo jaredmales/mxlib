@@ -230,14 +230,14 @@ int makeModifiedFourierModeM(typeN im, typename typeN::Scalar m, typename typeN:
 
 
 ///Structure to contain the parameters of a Fourier mode.
-struct spFreq
+struct fourierModeDef
 {
    int m; ///< Spatial frequency m index
    int n; ///< Spatial frequency n index
    int p; ///< +/- 1 for modified Fourier modes, -1==>sine, +1==>cosine for basic Fourier modes.
    
    ///Constructor
-   spFreq()
+   fourierModeDef()
    {
       m = 0;
       n = 0;
@@ -249,12 +249,12 @@ struct spFreq
 /// Sorting functor for modes according to the Poyner and Veran (2005) standard.
 /** Follows the conventions of  Poyneer & Veran (2005) \cite poyneer_and_veran_2005 
   * 
-  * \param[in] spf1 is an object of type \ref spFreq to compare with spf2
-  * \param[in] spf2 is an object of type \ref spFreq to compare with spf1
+  * \param[in] spf1 is an object of type \ref fourierModeDef to compare with spf2
+  * \param[in] spf2 is an object of type \ref fourierModeDef to compare with spf1
   * 
   * \returns the result of (spf1 < spf2) according to the above rules.
   */ 
-bool comp_spFreq_PandV (const spFreq & spf1, const spFreq & spf2) 
+bool comp_fourierModeDef_PandV (const fourierModeDef & spf1, const fourierModeDef & spf2) 
 { 
    double fr1 = spf1.m*spf1.m + spf1.n*spf1.n;
    double fr2 = spf2.m*spf2.m + spf2.n*spf2.n;
@@ -279,7 +279,7 @@ bool comp_spFreq_PandV (const spFreq & spf1, const spFreq & spf2)
   * \param spf
   * \param N is the linear number of degrees of freedom.  
   */
-int makeFourierModeFreqs_PandV(std::vector<spFreq> & spf, int N)
+int makeFourierModeFreqs_PandV(std::vector<fourierModeDef> & spf, int N)
 {
    int Nmodes = N*N;
    
@@ -327,7 +327,7 @@ int makeFourierModeFreqs_PandV(std::vector<spFreq> & spf, int N)
       }
    }
    
-   std::sort(spf.begin(), spf.end(), comp_spFreq_PandV);
+   std::sort(spf.begin(), spf.end(), comp_fourierModeDef_PandV);
    
    return 0;
 }
@@ -337,12 +337,12 @@ int makeFourierModeFreqs_PandV(std::vector<spFreq> & spf, int N)
   * \f$ | \vec{k} | \f$, then by the angle from the u axis.  Results in mode numbers increasing radially
   * and counter-clockwise from the \f$ u \f$ axis.
   * 
-  * \param[in] spf1 is an object of type \ref spFreq to compare with spf2
-  * \param[in] spf2 is an object of type \ref spFreq to compare with spf1
+  * \param[in] spf1 is an object of type \ref fourierModeDef to compare with spf2
+  * \param[in] spf2 is an object of type \ref fourierModeDef to compare with spf1
   * 
   * \returns the result of (spf1 < spf2) according to the above rules.
   */ 
-bool comp_spFreq (const spFreq & spf1, const spFreq & spf2) 
+bool comp_fourierModeDef (const fourierModeDef & spf1, const fourierModeDef & spf2) 
 { 
    double k1 = spf1.m*spf1.m + spf1.n*spf1.n;
    double k2 = spf2.m*spf2.m + spf2.n*spf2.n;
@@ -371,7 +371,7 @@ bool comp_spFreq (const spFreq & spf1, const spFreq & spf2)
   * \param spf
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
-int makeFourierModeFreqs_Circ( std::vector<spFreq> & spf, 
+int makeFourierModeFreqs_Circ( std::vector<fourierModeDef> & spf, 
                                int N )
 {
    int krad;
@@ -413,7 +413,7 @@ int makeFourierModeFreqs_Circ( std::vector<spFreq> & spf,
    spf.erase(spf.begin()+modeCount, spf.end());
    
    //And now sort it
-   std::sort(spf.begin(), spf.end(), comp_spFreq);
+   std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
    
    return 0;
 } 
@@ -423,7 +423,7 @@ int makeFourierModeFreqs_Circ( std::vector<spFreq> & spf,
   * \param spf
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
-int makeFourierModeFreqs_Rect( std::vector<spFreq> & spf, 
+int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf, 
                                 int N )
 {
    int Ndx = floor(0.5*(N));
@@ -462,7 +462,7 @@ int makeFourierModeFreqs_Rect( std::vector<spFreq> & spf,
    spf.erase(spf.begin()+modeCount, spf.end());
    
    //And now sort it
-   std::sort(spf.begin(), spf.end(), comp_spFreq);
+   std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
    
    return 0;
 } 
@@ -481,7 +481,7 @@ int makeFourierModeFreqs_Rect( std::vector<spFreq> & spf,
 template<typename cubeT>
 int fillFourierBasis( cubeT & cube, 
                       int dim, 
-                      std::vector<spFreq> spf,
+                      std::vector<fourierModeDef> spf,
                       int basisType )
 {
    typedef typename cubeT::Scalar floatT;
@@ -521,7 +521,7 @@ int makeFourierBasis_PandV( cubeT & cube,
                             int N,
                             int basisType )
 {
-   std::vector<spFreq> spf;
+   std::vector<fourierModeDef> spf;
    
    if( makeFourierModeFreqs_PandV(spf, N) < 0)
    {
@@ -547,7 +547,7 @@ int makeFourierBasis_Circ(cubeT & cube,
                           int N,
                           int basisType )
 {
-   std::vector<spFreq> spf;
+   std::vector<fourierModeDef> spf;
    
    if( makeFourierModeFreqs_Circ(spf, N) < 0 )
    {
@@ -574,7 +574,7 @@ int makeFourierBasis_Rect( cubeT & cube,
                            int N,
                            int basisType )
 {   
-   std::vector<spFreq> spf;
+   std::vector<fourierModeDef> spf;
    
    if( makeFourierModeFreqs_Rect(spf, N) < 0 )
    {
