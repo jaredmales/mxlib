@@ -1,8 +1,7 @@
 /** \file imageTransforms.hpp
  * \author Jared R. Males
  * \brief Image interpolation and transformation
- * \ingroup image_processing
- * \ingroup interpolation
+ * \ingroup image_processing_files
  *
  */
 
@@ -18,8 +17,8 @@
 namespace mx
 {
 
-/** \addtogroup image_processing
-  * \addtogroup interpolation 
+/** \ingroup image_processing
+  * \ingroup interpolation 
   * @{
   */
 
@@ -52,6 +51,8 @@ typedef bilinearTransform<double> bilinearTransd;
 
 
 ///Transformation by cubic convolution interpolation
+/** \ingroup image_processing
+  */
 template<typename _arithT>
 struct cubicConvolTransform
 {
@@ -123,6 +124,9 @@ struct cubicConvolTransform
       kern(3,3) = kp2x*kp2y;
    }
 };
+
+
+              
 
 ///Typedef for cubicConvolTransform with single precision 
 typedef cubicConvolTransform<float> cubicConvolTransf;
@@ -244,7 +248,11 @@ void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
   * 
   */
 template<typename arrOutT, typename arrInT, typename floatT, typename transformT>
-void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy, transformT trans)
+void imageShift( arrOutT & transim, 
+                 const arrInT  &im, 
+                 floatT dx, 
+                 floatT dy, 
+                 transformT trans )
 {
    typedef typename transformT::arithT arithT;
    
@@ -484,6 +492,7 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
 }   
 
 ///@}
+
 } //namespace mx
 
 

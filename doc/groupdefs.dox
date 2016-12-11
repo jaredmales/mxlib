@@ -66,6 +66,11 @@
 /** \defgroup image_processing Image Processing
   * \brief Tools for processing images
   */
+
+/** \defgroup image_processing_files Image Processing Files
+  * \brief Files declaring and defining the image processing tools.
+  * \ingroup image_processing
+  */
   
 /** \defgroup fits_processing FITS Files
   * \brief Tools for working with FITS files.

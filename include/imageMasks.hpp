@@ -1,6 +1,6 @@
 /** \file imageMasks.hpp
   * \brief Declares and defines functions to work with image masks
-  * \ingroup image_processing
+  * \ingroup image_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
@@ -10,6 +10,10 @@
 
 namespace mx
 {
+
+/** \ingroup image_processing 
+  * @{
+  */
 
 template<class eigenT> 
 void applyMask(eigenT & mask, std::vector<size_t> & idx, typename eigenT::Scalar maskval = 1)
@@ -46,6 +50,7 @@ void genRectMask(std::vector<size_t> & idx, eigenT & mask, size_t xmin, size_t x
    genRectMask(idx, (size_t) mask.rows(), (size_t) mask.cols(), xmin, xmax, ymin, ymax);  
 }
 
+///@}
 
 } //namespace mx
 

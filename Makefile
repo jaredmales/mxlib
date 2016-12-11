@@ -70,6 +70,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  IPC.h \
                  imageFilters.hpp \
        		 imageMasks.hpp \
+       		 imagePads.hpp \
                  imageTransforms.hpp \
                  imagingArray.hpp \
                  imagingUtils.hpp \

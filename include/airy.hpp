@@ -1,7 +1,7 @@
 /** \file airy.hpp
   * \author Jared R. Males
   * \brief Utilities for working with the Airy pattern
-  * \ingroup imaging
+  * \ingroup imaging_files
   *
   */
 
@@ -19,6 +19,8 @@ namespace mx
 ///The classical Airy pattern
 /** Returns the intensity distribution of the Airy pattern at a given \f$ \lambda/D \f$
   *
+  * \todo this should use mx::jinc
+  * 
   * \param x [in] is the separation in units of  \f$ \lambda/D \f$.
   * 
   * \tparam floatT is the floating point type used for arithmetic.
@@ -34,6 +36,8 @@ floatT airy(floatT x)
 ///The centrally obscured Airy pattern
 /** Returns the intensity distribution of the centrally obscured Airy pattern at a given \f$ \lambda/D \f$
   *
+  * \todo this should use mx::jinc
+  * 
   * \param x [in] is the separation in units of  \f$ \lambda/D \f$.
   * \param eps [in] is the ratio of the circular central obscuration diameter to the diameter.
   * 
@@ -46,6 +50,9 @@ floatT airy(floatT x, floatT eps)
 
 }
 
+///Seeing Halo
+/** o document seeingHalo
+  */
 template<typename floatT>
 floatT seeingHalo(floatT x, floatT fwhm)
 {

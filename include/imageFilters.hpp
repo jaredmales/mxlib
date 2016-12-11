@@ -1,6 +1,6 @@
 /** \file imageFilters.hpp
   * \brief Image filters (smoothing, radial profiles, etc.)
-  * \ingroup image_processing
+  * \ingroup image_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */

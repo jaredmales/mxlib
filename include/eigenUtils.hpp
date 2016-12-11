@@ -737,39 +737,6 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 
 
 
-template<typename imOutT, typename imInT>
-void padImage(imOutT & imOut, imInT & imIn, int nrows, int ncols)
-{
-   imOut = imOutT::Zero(nrows, ncols);
-   
-   int stRow = (nrows - imIn.rows())/2;
-   int stCol = (ncols - imIn.cols())/2;
-   
-   imOut.block(stRow, stCol, imIn.rows(),imIn.cols()) = imIn;
-}
-
-template<typename imOutT, typename imInT>
-void padImageRef(imOutT imOut, imInT imIn, int nrows, int ncols)
-{
-   imOut = imOutT::Zero(nrows, ncols);
-   
-   int stRow = (nrows - imIn.rows())/2;
-   int stCol = (ncols - imIn.cols())/2;
-   
-   imOut.block(stRow, stCol, imIn.rows(),imIn.cols()) = imIn;
-}
-
-
-template<typename imOutT, typename imInT>
-void cutImage(imOutT & imOut, const imInT & imIn, int nrows, int ncols)
-{
-   imOut = imOutT::Zero(nrows, ncols);
-   
-   int stRow = (imIn.rows()-nrows)/2;
-   int stCol = (imIn.cols()-ncols)/2;
-   
-   imOut = imIn.block(stRow, stCol, nrows, ncols);
-}
 
 
 
