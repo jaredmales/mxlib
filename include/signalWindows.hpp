@@ -143,7 +143,7 @@ void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, f
 
    floatT rad = 0.5*(N-1.0);
    
-   Z = floor((1.0-eps)*(rad)) + 1.0;
+   Z = (1-eps)*rad+1.0; //floor((1.0-eps)*(rad)) + 1.0;
    
    floatT pi = boost::math::constants::pi<floatT>();
       
@@ -167,10 +167,10 @@ void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, f
          {
             filt[ii*dim + jj] = 0.5*(1.0 + cos(pi*(2.*z/(alpha*(Z-1)) -1.0) ));
          }
-         else if(z >= (Z-1)*(1.-0.5*alpha) && alpha > 0)
+         else if(z > (Z-1)*(1.-0.5*alpha) && alpha > 0)
          {
             z = z*((Z-0.5)/Z); //Stretch a little to help with the half pixel
-            if(z > Z-1) z = Z-1;
+            if(z > Z) z = Z-1;
             filt[ii*dim + jj] = 0.5*(1.0 + cos(pi* ( 2.*(z)/(alpha*(Z-1)) - 2./alpha + 1.0) ));
          }
          else

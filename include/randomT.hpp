@@ -19,12 +19,12 @@ namespace mx
   * 
   * \ingroup random
   */
-template<class rangenT> rangenT & random_engine()
-{
-   static rangenT engine;
-   
-   return engine;
-}
+// template<class rangenT> rangenT & random_engine()
+// {
+//    static rangenT engine;
+//    
+//    return engine;
+// }
 
 ///A random number type, which functions like any other arithmetic type.  
 /** 
@@ -64,19 +64,23 @@ public:
    ///Typedef for the engine type
    typedef _ranengT ranengT;
 
-   ///Access to the global engine
-   _ranengT & engine()
-   {
-      return random_engine<_ranengT>();
-   }
+//    ///Access to the global engine
+//    _ranengT & engine()
+//    {
+//       return random_engine<_ranengT>();
+//    }
    
    ///The random distribution
    _randistT distribution;
-    
+
+   ///The random engine
+   ranengT engine;
+   
    ///The conversion operator, returns the next value in the sequence, according to the distribution.
    operator typeT()  
    {
-      return distribution(random_engine<_ranengT>());
+      //return distribution(random_engine<_ranengT>());
+      return distribution(engine);
    }
 }; 
 

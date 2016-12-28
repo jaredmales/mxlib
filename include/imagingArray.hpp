@@ -360,6 +360,7 @@ public:
    
 
 typedef imagingArray<float,mx::fftwAllocator<float>,0> imagingArrayf;
+typedef imagingArray<double,mx::fftwAllocator<double>,0> imagingArrayd;
 typedef imagingArray<std::complex<float>,mx::fftwAllocator<std::complex<float> >,0> imagingArraycf;
 
 

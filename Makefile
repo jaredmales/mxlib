@@ -78,16 +78,19 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  KLIPreduction.hpp \
                  kepler.hpp \
                  levmarInterface.hpp \
+                 lyotCoronagraph.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \
                  mxError.hpp \
                  mxlib.h\
                  mxlib_uncomp_version.h\
+                 ompLoopWatcher.hpp \
                  pout.hpp \
                  process_interface.h \
                  psds.hpp \
                  readColumns.hpp \
+                 roots.hpp \
                  sharedmem_segment.h \
                  sharedMemSegment \
                  sigmoid.hpp \
@@ -96,6 +99,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
+                 templateFFTW.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
 		 randomT.hpp \

@@ -17,12 +17,10 @@
 namespace mx
 {
 
-/** \ingroup image_processing
-  * \ingroup interpolation 
-  * @{
-  */
 
 ///Transformation by bi-linear interpolation
+/** \ingroup image_transforms 
+  */
 template<typename _arithT>
 struct bilinearTransform
 {
@@ -44,14 +42,18 @@ struct bilinearTransform
 };
 
 ///Typedef for bilinearTransform with single precision   
+/** \ingroup image_transforms 
+  */
 typedef bilinearTransform<float> bilinearTransf;
 
-///Typedef for bilinearTransform with double precision   
+///Typedef for bilinearTransform with double precision  
+/** \ingroup image_transforms 
+  */
 typedef bilinearTransform<double> bilinearTransd; 
 
 
 ///Transformation by cubic convolution interpolation
-/** \ingroup image_processing
+/** \ingroup image_transforms 
   */
 template<typename _arithT>
 struct cubicConvolTransform
@@ -129,11 +131,18 @@ struct cubicConvolTransform
               
 
 ///Typedef for cubicConvolTransform with single precision 
+/** \ingroup image_transforms 
+  */
 typedef cubicConvolTransform<float> cubicConvolTransf;
 
 ///Typedef for cubicConvolTransform with double precision
+/** \ingroup image_transforms 
+  */
 typedef cubicConvolTransform<double> cubicConvolTransd; 
 
+/** \ingroup image_transforms 
+  * @{
+  */
 
 
 /// Rotate an image represented as an eigen array
@@ -232,7 +241,7 @@ void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
          
 }//void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
 
-/// Shift an image represented as an eigen array
+/// Shift an image.
 /** Uses the given transformation type to shift an image.
   *
   * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
@@ -330,93 +339,113 @@ void imageShift( arrOutT & transim,
 } //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
 
 
-// Magnify an image represented as an eigen array.
-/* Uses the given transformation type to magnify the input image to the size of the output image.
+/// Magnify an image.
+/** Uses the given transformation type to magnify the input image to the size of the output image.
   *
-  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
-  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
-  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
-  * \tparam transformT specifies the transformation to use [will be resolved by compiler]
+  * Here we assume that the image center is the mxlib standard: 
+  * \code
+    x_center = 0.5*(im.rows()-1);
+    y_center = 0.5*(im.cols()-1);
+  * \endcode
+  * Some care is necessary to prevent magnification from shifting with respect to this center.  The main result is that the 
+  * magnification factors (which can be different in x and y) are defined thus:
+  * \code
+    x_mag = (transim.rows()-1.0) / (im.rows()-1.0);
+    y_mag = (transim.cols()-1.0) / (im.cols()-1.0);
+  * \endcode
   * 
   * \param [out] transim contains the magnified image.  Must be pre-allocated.
   * \param [in] im is the image to be magnified.
   * \param [in] trans is the transformation to use
   * 
+  * \tparam arrOutT is the eigen array type of the output. 
+  * \tparam arrInT is the eigen array type of the input.
+  * \tparam transformT specifies the transformation to use.
   */
-// template<typename arrOutT, typename arrInT, typename transformT>
-// void imageMagnify(arrOutT & transim, const arrInT  &im, transformT trans)
-// {
-//    typedef typename transformT::arithT arithT;
-//    
-//    arithT x0, y0, x,y;
-//    //arithT xcen, ycen;
-//    
-//    int Nrows, Ncols;
-//    
-//    int i0, j0;
-//     
-//    const int lbuff = transformT::lbuff;
-//    const int width = transformT::width;
-//    
-//    Nrows = transim.rows();
-//    Ncols = transim.cols();
-// 
-//    int xulim = im.rows()-width+lbuff;// - 1;
-//    int yulim = im.cols()-width+lbuff;// - 1;
-// 
-//    arithT x_scale = (arithT in.rows())/ transim.rows()
-//    arithT y_scale = (arithT in.cols())/ transim.cols()
-//    
-//    #pragma omp parallel private(x0,y0,i0,j0,x,y) num_threads(4)
-//    {
-//       arrOutT kern; 
-//       kern.resize(width,width);
-//       
-//       #pragma omp for 
-//       for(int i=0;i<Nrows; ++i)
-//       {
-//          // (i,j) is position in new image
-//          // (x0,y0) is true position in old image
-//          // (i0,j0) is integer position in old image
-//          // (x, y) is fractional residual of (x0-i0, y0-j0)
-// 
-//          x0 = (i+0.5)*x_scale;
-//          i0 = x0; //just converting to int
-//             
-//          if(i0 <= lbuff || i0 >= xulim) 
-//          {
-//             for(int j=0;j<Ncols; ++j)
-//             {
-//                transim(i,j) = 0;
-//             }
-//             continue;
-//          }
-//             
-//          for(int j=0;j<Ncols; ++j)
-//          {
-// 
-//             y0 = (j+0.5)*y_scale;
-//             j0 = y0;
-//             
-//             if(j0 <= lbuff || j0 >= yulim) 
-//             {
-//                transim(i,j) = 0;
-//                continue;
-//             }
-//             
-//             //Get the residual
-//             x = x0-i0;
-//             y = y0-j0;
-//                  
-//             trans(kern, x, y);
-//             transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
-//          }//for j
-//       }//for i
-//    }//#pragam omp
-//          
-// } //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
+template<typename arrOutT, typename arrInT, typename transformT>
+void imageMagnify(arrOutT & transim, const arrInT  &im, transformT trans)
+{
+   typedef typename transformT::arithT arithT;
+   
+   arithT x0, y0, x,y;
+   
+   int Nrows, Ncols;
+   
+   int i0, j0;
+    
+   const int lbuff = transformT::lbuff;
+   const int width = transformT::width;
+   
+   Nrows = transim.rows();
+   Ncols = transim.cols();
 
+   int xulim = im.rows()-lbuff - 1;
+   int yulim = im.cols()-lbuff - 1;
 
+   arithT x_scale = ( (arithT) im.rows()-1.0)/ (transim.rows()-1.0); //this is 1/x_mag
+   arithT y_scale = ( (arithT) im.cols()-1.0)/ (transim.cols()-1.0); //this is 1/y_mag
+   
+   arithT xcen = 0.5*( (arithT) transim.rows() - 1.0);
+   arithT ycen = 0.5*( (arithT) transim.cols() - 1.0);
+   
+   arithT xcen0 = 0.5*( (arithT) im.rows() - 1.0);
+   arithT ycen0 = 0.5*( (arithT) im.cols() - 1.0);
+   
+//   #pragma omp parallel private(x0,y0,i0,j0,x,y) num_threads(4)
+   {
+      arrOutT kern; 
+      kern.resize(width,width);
+      
+//      #pragma omp for 
+      for(int i=0;i<Nrows; ++i)
+      {
+         // (i,j) is position in new image
+         // (x0,y0) is true position in old image
+         // (i0,j0) is integer position in old image
+         // (x, y) is fractional residual of (x0-i0, y0-j0)
+
+         x0 = xcen0 + (i-xcen)*x_scale;
+         i0 = x0; //just converting to int
+            
+         if(i0 < lbuff || i0 >= xulim) 
+         {
+            for(int j=0;j<Ncols; ++j)
+            {
+               transim(i,j) = 0;
+            }
+            continue;
+         }
+            
+         for(int j=0;j<Ncols; ++j)
+         {
+
+            y0 = ycen0 + (j-ycen)*y_scale; 
+            j0 = y0;
+            
+            if(j0 < lbuff || j0 >= yulim) 
+            {
+               transim(i,j) = 0;
+               continue;
+            }
+            
+            //Get the residual
+            x = x0-i0;
+            y = y0-j0;
+                 
+            trans(kern, x, y);
+            transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
+         }//for j
+      }//for i
+   }//#pragam omp
+         
+} 
+
+/// Down-sample an image, reducing its size while conserving the total flux.
+/** If the old size is an integer multiple of the new size, this is just a re-bin.  If not an integer multiple,
+  * the image is interpolated after performing the closest re-bin, and then re-normalized to conserve flux.
+  * 
+  * \todo Allow selection of interpolator, providing a default version.
+  */ 
 template<typename imageOutT, typename imageInT>
 void imageDownSample(imageOutT & imout, const imageInT & imin)
 {

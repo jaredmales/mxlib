@@ -8,10 +8,11 @@
 #ifndef __airy_hpp__
 #define __airy_hpp__
 
-#include <boost/math/special_functions/bessel.hpp> 
-
-using namespace boost::math;
+#include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
+
+
+#include "jinc.hpp"
 
 namespace mx
 {
@@ -19,39 +20,32 @@ namespace mx
 ///The classical Airy pattern
 /** Returns the intensity distribution of the Airy pattern at a given \f$ \lambda/D \f$
   *
-  * \todo this should use mx::jinc
-  * 
-  * \param x [in] is the separation in units of  \f$ \lambda/D \f$.
+  * \param [in] x is the separation in units of \f$ \lambda/D \f$.
   * 
   * \tparam floatT is the floating point type used for arithmetic.
   */
 template<typename floatT>
 floatT airy(floatT x)
 {
-   if(x == 0) return 1.0;
-   
-   return pow(2.*cyl_bessel_j(1, pi<floatT>()*x)/(pi<floatT>()*x),2);
+   return pow(2*jinc(pi<floatT>()*x),2); 
 }
 
 ///The centrally obscured Airy pattern
 /** Returns the intensity distribution of the centrally obscured Airy pattern at a given \f$ \lambda/D \f$
   *
-  * \todo this should use mx::jinc
-  * 
-  * \param x [in] is the separation in units of  \f$ \lambda/D \f$.
-  * \param eps [in] is the ratio of the circular central obscuration diameter to the diameter.
+  * \param [in] x is the separation in units of  \f$ \lambda/D \f$.
+  * \param [in] eps is the ratio of the circular central obscuration diameter to the diameter.
   * 
   * \tparam floatT is the floating point type used for arithmetic.
   */
 template<typename floatT>
 floatT airy(floatT x, floatT eps)
 {
-   return (1./pow(1.-eps*eps,2))*pow(2.*cyl_bessel_j(1, pi<floatT>()*x)/(pi<floatT>()*x)-eps*2.*cyl_besel_j(1, eps*pi<floatT>()*x)/(pi<floatT>()*x),2);
-
+   return (1./pow(1.-eps*eps,2))*pow(2.*jinc(2*pi<floatT>()*x)-eps*2.*jinc(eps*pi<floatT>()*x),2);
 }
 
 ///Seeing Halo
-/** o document seeingHalo
+/** \todo document seeingHalo
   */
 template<typename floatT>
 floatT seeingHalo(floatT x, floatT fwhm)

@@ -25,25 +25,28 @@ namespace mx
   * @f$ \Delta f = f_{max}/ (0.5*dim) @f$
   * where @f$ f_{max} = 1/(2\Delta t) @f$ is the maximum frequency and @f$ dim @f$ is the size of the grid.
   *
-  * \param dim is the size of the grid
-  * \param f_max is the maximum frequency of the grid
+  * \param [in] dim is the size of the grid
+  * \param [in] f_max is the maximum frequency of the grid
+  * 
   * \returns the sampling interval @f$ \delta f @f$
+  * 
+  * \tparam realT is the real floating point type used for calculations.
+  * 
   */
 template<class realT> 
 realT freq_sampling( size_t dim, 
-                     realT f_max
-                   )
+                     realT f_max )
 {
    return (f_max/(0.5*dim));
 }
 
 ///Create a 1-D frequency grid
 /**
-  * \param vec [out] the pre-allocated Eigen-type 1xN or Nx1 array, on return contains the frequency grid
-  * \param dt [in] the temporal sampling of the time series
-  * \param inverse [in] [optional] if true
+  * \param [out] vec the pre-allocated Eigen-type 1xN or Nx1 array, on return contains the frequency grid
+  * \param [in] dt the temporal sampling of the time series
+  * \param [in] inverse [optional] if true
   * 
-  * \tparam eigenArr the Eigen array type
+  * \tparam eigenArr the Eigen-like array type
   */ 
 template<typename eigenArr>
 void frequency_grid1D( eigenArr & vec,
@@ -133,11 +136,13 @@ void frequency_grid( eigenArr & arr,
 
 ///Calculate the normalization for a 1-D @f$ 1/|f|^\alpha @f$ PSD.
 /**
-  * \param fmin is the minimum non-zero absolute value of frequency
-  * \param fmax is the maximum absolute value of frequencey
-  * \param alpha is the power-law exponent, by convention @f$ \alpha > 0 @f$.
+  * \param [in] fmin is the minimum non-zero absolute value of frequency
+  * \param [in] fmax is the maximum absolute value of frequencey
+  * \param [in] alpha is the power-law exponent, by convention @f$ \alpha > 0 @f$.
   * 
   * \returns the normalization for a 2-sided power law PSD.
+  * 
+  * \tparam realT is the real floating point type used for calculations.
   */
 template<typename realT>
 realT oneoverf_norm(realT fmin, realT fmax, realT alpha)
@@ -149,11 +154,13 @@ realT oneoverf_norm(realT fmin, realT fmax, realT alpha)
 
 ///Calculate the normalization for a 2-D @f$ 1/|k|^\alpha @f$ PSD.
 /**
-  * \param kmin is the minimum non-zero absolute value of frequency
-  * \param kmax is the maximum absolute value of frequencey
-  * \param alpha is the power-law exponent, by convention @f$ \alpha > 0 @f$.
+  * \param [in] kmin is the minimum non-zero absolute value of frequency
+  * \param [in] kmax is the maximum absolute value of frequencey
+  * \param [in] alpha is the power-law exponent, by convention @f$ \alpha > 0 @f$.
   * 
   * \returns the normalization for a 2-D, 2-sided power law PSD.
+  * 
+  * \tparam realT is the real floating point type used for calculations.
   */
 template<typename realT>
 realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
@@ -174,14 +181,14 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
   * \f]
   * 
   *
-  * \param psd [output] is the array to populate
-  * \param freq [input] is a frequency grid, must be the same logical size as psd
-  * \param alpha [input] is the power law exponent, by convention @f$ alpha > 0 @f$.
-  * \param beta [optional input] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
+  * \param [out] psd is the array to populate
+  * \param [in] freq is a frequency grid, must be the same logical size as psd
+  * \param [in] alpha is the power law exponent, by convention @f$ alpha > 0 @f$.
+  * \param [in] beta [optional is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
   *                           the PSD is normalized using \ref oneoverf_norm.
   *
-  * \tparam eigenArrp is the Eigen array type of the psd 
-  * \tparam eigenArrf is the Eigen array type of the frequency grid 
+  * \tparam eigenArrp is the Eigen-like array type of the psd 
+  * \tparam eigenArrf is the Eigen-like array type of the frequency grid 
   */
 template<typename eigenArrp, typename eigenArrf> 
 void oneoverf_psd( eigenArrp  & psd,
@@ -304,21 +311,23 @@ void vonKarman_psd( eigenArrp  & psd,
    }   
 }
 
-///Filter a noise vector or array by the given PSD using Fourier convolution.
+///Filter a noise array by the given PSD using Fourier convolution.
 /**
-  * \param noise [input/output] is the noise array, an Eigen type. On output it is replaced with the filtered noise.
-  * \param psd [input] is the 2-sided PSD with which to filter the noise.
+  * \param [in,out] noise  is the noise array. On output it is replaced with the filtered noise.
+  * \param [in] psd is the 2-sided PSD with which to filter the noise.
+  * \param [out] ft [optional] is used to contain PSD of the noise before the inverse PSD, provided to give access to the intermediate step.
   * 
+  * \tparam eigenArrNT is the Eigen-like array type of the noise
+  * \tparam eigenArrPT is the Eigen-like array type of the PSD
+  * \tparam fftArrT is the Eigen-like array type of the intermediate FFT data
   */
-template<typename eigenArrn, typename eigenArrp, typename carrT>
-void psd_filter( eigenArrn & noise,
-                 eigenArrp & psd ,
-                 carrT & ft
-               )
+template<typename eigenArrNT, typename eigenArrPT, typename fftArrT>
+void psd_filter( eigenArrNT & noise,
+                 eigenArrPT & psd ,
+                 fftArrT & ft )
 {
-   typedef std::complex<typename eigenArrn::Scalar> complexT;
+   typedef std::complex<typename eigenArrNT::Scalar> complexT;
    
-   //Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft(noise.rows(), noise.cols());
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft2(noise.rows(), noise.cols());
    Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> cnoise(noise.rows(), noise.cols());
    
@@ -336,7 +345,7 @@ void psd_filter( eigenArrn & noise,
    
    fft.fft( cnoise.data(),ft.data());
    
-   ft *= psd.sqrt();//*exp(complexT(0, 0.5*3.14159));
+   ft *= psd.sqrt();
         
    fftR.fft(ft.data(), ft2.data()); //in-place
    
@@ -344,15 +353,33 @@ void psd_filter( eigenArrn & noise,
    
 }
 
+///Filter a noise array by the given PSD using Fourier convolution.
+/**
+  * \param [in,out] noise  is the noise array. On output it is replaced with the filtered noise.
+  * \param [in] psd is the 2-sided PSD with which to filter the noise.
+  * 
+  * \tparam eigenArrNT is the Eigen-like array type of the noise
+  * \tparam eigenArrPT is the Eigen-like array type of the PSD
+  */
+template<typename eigenArrNT, typename eigenArrPT>
+void psd_filter( eigenArrNT & noise,
+                 eigenArrPT & psd )
+{
+   typedef std::complex<typename eigenArrNT::Scalar> complexT;
+   
+   Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft(noise.rows(), noise.cols());
+
+   psd_filter(noise, psd, ft);
+}
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
 /**
-  * \param pgram [out] the resultant periodogram
-  * \param ts [in] the time series
-  * \param dt [in] the sampling time of ts
-  * \param avgLen [in] the length of the averaging interval, same units as dt
-  * \param olap [in] the length of the overlap region, same units as avgLen
-  * \param w  [in] a vector of length ( (int) avgLen/dt) or empty, which is a window.
+  * \param [out] pgram the resultant periodogram.
+  * \param [in] ts is input the time-series.
+  * \param [in] dt is the sampling time of time-series.
+  * \param [in] avgLen is the length of the averaging interval, same units as dt.
+  * \param [in] olap is the length of the overlap region, same units as avgLen.
+  * \param [in] w  a vector of length ( (int) avgLen/dt) or empty, which is a window.
   */
 template<typename floatT>
 void averagePeriodogram( std::vector<floatT> & pgram, 
@@ -411,10 +438,6 @@ void averagePeriodogram( std::vector<floatT> & pgram,
 
 }
 
-
-
-
-
 ///Augment a 1-sided PSD to standard FFT form.
 /** Allocates psdTwoSided to hold a flipped copy of psdOneSided.
   * Default assumes that psdOneSided[0] corresponds to 0 frequency,
@@ -429,9 +452,9 @@ void averagePeriodogram( std::vector<floatT> & pgram,
   * Note: entries in psdOneSided are cast to the value_type of psdTwoSided,
   * for instance to allow for conversion to complex type.
   * 
-  * \param psdTwoSided [out] on return contains the FFT storage order copy of psdOneSided.
-  * \param psdOneSided [in] the one-sided PSD to augment
-  * \param zeroFreq [in] [optional] set to a non-zero value if psdOneSided does not contain a zero frequency component.
+  * \param [out] psdTwoSided on return contains the FFT storage order copy of psdOneSided.
+  * \param [in] psdOneSided the one-sided PSD to augment
+  * \param [in] zeroFreq [optional] set to a non-zero value if psdOneSided does not contain a zero frequency component.
   */ 
 template<typename vectorTout, typename vectorTin, typename dataT>
 void augment1SidedPSD( vectorTout & psdTwoSided, 

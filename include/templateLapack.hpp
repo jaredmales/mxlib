@@ -32,7 +32,6 @@
   * 
   * \ingroup template_lapack
   */
-
 template<typename dataT>
 dataT lamch (char CMACH)
 {

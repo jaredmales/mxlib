@@ -7,6 +7,8 @@
 
 #include <complex>
 
+#include "templateFFTW.hpp"
+
 namespace mx
 {
 
@@ -240,7 +242,7 @@ public:
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
       _plan = fftw_plan_dft_1d(_szX, reinterpret_cast<fftw_complex *>(forplan1), reinterpret_cast<fftw_complex*>(forplan2), pdir, FFTW_MEASURE);
-      
+         
       fftw_free(forplan1);
       fftw_free(forplan2);
    }

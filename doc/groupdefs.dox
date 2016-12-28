@@ -6,6 +6,8 @@
   * \brief How mxlib handles errors
   */
   
+//------------------ gen_math -----------------------
+
 /** \defgroup gen_math General Mathematics
   * \brief General mathematical utilities.
   */
@@ -45,24 +47,37 @@
   * \ingroup template_blaslap
   */  
   
+/** \defgroup vectorutils Vector Utilities
+  * \ingroup gen_math
+  * \brief Utilities for working with std::vector.
+  */
+  
+//----------------------- signal_processing --------------------  
 /** \defgroup signal_processing Signal Processing 
   * \brief Tools for processing signals
   */
 
-/** \defgroup imaging Imaging
-  * \brief Tools for modeling imaging
-  */
-
-/** \defgroup imaging_files Imaging Files
-  * \brief The imaging files
-  * \ingroup imaging
-  */
-  
 /** \defgroup psds Power Spectra 
   * \brief Tools for generating and manipulating power spectra
   * \ingroup signal_processing
   */
   
+//----------------------- imaging --------------------  
+/** \defgroup imaging Imaging
+  * \brief Tools for modeling imaging
+  */
+
+/** \defgroup coronagraphs Coronagraphs
+  * \brief Modeling and optimizing coronagraphs
+  * \ingroup imaging
+  /
+  
+/** \defgroup imaging_files Imaging Files
+  * \brief The imaging files
+  * \ingroup imaging
+  */
+  
+//----------------------- image_processing --------------------    
 /** \defgroup image_processing Image Processing
   * \brief Tools for processing images
   */
@@ -70,6 +85,28 @@
 /** \defgroup image_processing_files Image Processing Files
   * \brief Files declaring and defining the image processing tools.
   * \ingroup image_processing
+  */
+
+/** \defgroup image_padding Image Padding
+  * \brief Functions for padding images.
+  * \ingroup image_processing 
+  */
+  
+/** \defgroup image_transforms Image Transforms 
+  * \brief Functions for transforming images by rotating, translating, and magnifying.
+  * \ingroup image_processing
+  * \ingroup interpolation
+  */
+  
+/** \defgroup image_filters Image Filters 
+  * \brief Functions for filtering images 
+  * \ingroup image_processing
+  * \ingroup signal_processing
+  */
+  
+/** \defgroup image_filters_kernels Image Filter Kernels 
+  * \brief Kernels to use in image filtering functions.
+  * \ingroup image_filters 
   */
   
 /** \defgroup fits_processing FITS Files
@@ -92,17 +129,20 @@
   * \ingroup fits_processing
   */
   
-/** \defgroup eigen_image_processing Image Processing with Eigen 
-  * \brief Using the Eigen matrix library for image processing
-  * \ingroup image_processing
-  */
   
 /** \defgroup hc_imaging High Contrast Imaging
   * \brief Tools for astronomical high contrast image processing.
   * \ingroup image_processing
   * \ingroup genastro
   */
+
+/** \defgroup eigen_image_processing Image Processing with Eigen 
+  * \brief Using the Eigen matrix library for image processing
+  * \ingroup image_processing
+  */
+
   
+//------------------  
 /** \defgroup plotting Plotting Data
   * \brief Tools for plotting and displaying data
   */
@@ -149,7 +189,11 @@
 /** \defgroup utils General Utilities
   * \brief Various miscellaneous utilities
   */  
-  
+
+/** \defgroup utils_files Utility Headers
+  * \brief Header files for General Utilities.
+  * \ingroup utils
+  */
 /** \defgroup stringutils Working with strings
   * \ingroup utils
   * \brief Various tools for working with strings
@@ -169,6 +213,11 @@
   * \ingroup utils
   * \brief Various file system utilities
   */
+  
+/** \defgroup mtutils Multi-threading Utilities
+  * \ingroup utils
+  * \brief Tools for multi-threaded programming
+  /
   
 /** \defgroup system System Programming
   * \ingroup utils

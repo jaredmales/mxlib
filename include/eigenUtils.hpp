@@ -12,6 +12,8 @@
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 
+#include "vectorUtils.hpp"
+
 #include "gnuPlot.hpp"
 
 
@@ -355,6 +357,61 @@ typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eig
    return med;
 } 
 
+template<typename imageT, typename maskT=imageT>
+typename imageT::Scalar imageMedian(const imageT & mat, const maskT * mask = 0, std::vector<typename imageT::Scalar> * work =0)
+{
+   typename imageT::Scalar med;
+   
+   bool localWork = false;
+   if(work == 0) 
+   {
+      work = new std::vector<typename imageT::Scalar>;
+      localWork = true;
+   }
+   
+   int sz = mat.size();
+   
+   if(mask)
+   {
+      sz = mask->sum();
+   }
+   
+   work->resize(sz);
+   
+   int ii = 0;
+   for(int i=0;i<mat.rows();++i)
+   {
+      for(int j=0; j<mat.cols();++j)
+      {
+         if(mask)
+         {
+            if( (*mask)(i,j) == 0) continue;
+         }
+         
+         (*work)[ii] = mat(i,j);
+         ++ii;
+      }
+   }
+
+   
+//    int n = 0.5*mat.size();
+//    
+//    nth_element(work->begin(), work->begin()+n, work->end());
+//    
+//    med = (*work)[n];
+//    
+//    if(mat.size()%2 == 0)
+//    {
+//       //nth_element(work->begin(), work->begin()+n-1, work->end());
+//       med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
+//    }
+       
+   med = vectorMedianInPlace(*work);
+   
+   if(localWork) delete work;
+   
+   return med;
+} 
 
 /// Calculates the lower triangular part of the covariance matrix of ims.
 /** Uses cblas_ssyrk.  cv is resized to ims.cols() X ims.cols().

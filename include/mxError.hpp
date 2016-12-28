@@ -9,6 +9,7 @@
 #define __mxError__
 
 #include <cerrno>
+#include <cstring>
 #include <sstream>
 
 /** \defgroup error_macros Error Handling Macros
@@ -154,8 +155,10 @@ namespace mx
    
 ///Return the macro name and a message for an mxlib error code
 /**
-  * \param[in] ec is the error code
-  * \param[in] message is the human friendly message
+  * \param [in] ec is the error code
+  * \param [out] message is the human friendly message
+  * 
+  * \returns the name of the macro corresponding to the error code.
   * 
   * \ingroup error_handling
   */
@@ -200,7 +203,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
 ///Return the macro name and a message for a standard errno code
 /**
   * \param[in] ec is the error code
-  * \param[in] message is the human friendly message
+  * \param[out] message is the human friendly message retrieved using std::strerror
+  * 
+  * \returns the name of the macro corresponding to the code.
   * 
   * \ingroup error_handling
   */

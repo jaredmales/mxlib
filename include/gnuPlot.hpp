@@ -85,6 +85,9 @@ double gp_get_curr_time()
 /// A c++ interface to gnuplot
 /** Spawns a gnuplot sesssion and communicates with it.
   * \ingroup plotting 
+  * 
+  * \todo Use mxError for error reporting.
+  * 
   * An example of using gnuPlot to plot data from a file: 
   * \code
   * gnuPlot gp; //This automatically connects, and is now ready to plot.

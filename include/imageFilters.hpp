@@ -15,9 +15,11 @@
 namespace mx
 {
 
-///Symetric Gaussian smoothing kernel
-/** \ingroup image_processing
+/** \ingroup image_filters_kernels
+  * @{
   */
+
+///Symetric Gaussian smoothing kernel
 template<typename _arrayT, size_t _kernW=4>
 struct gaussKernel
 {
@@ -69,8 +71,10 @@ struct gaussKernel
    
 };
 
-///Azimuthally variable boxcare smoothing kernel.
-/** \ingroup image_processing
+/// Azimuthally variable boxcare smoothing kernel.
+/**
+  * 
+  * \ingroup image_filters_kernels
   */
 template<typename _arrayT, size_t _kernW=4>
 struct azBoxKernel
@@ -137,7 +141,13 @@ struct azBoxKernel
    }
    
 };
-            
+
+///@}
+
+/** \ingroup image_filters 
+  * @{
+  */ 
+
 ///Filter an image with a kernel.
 /** Applies the kernel to each pixel in the image, storing the filtered result in the output image.
   * The kernel-type (kernelT) must have the following interface:
@@ -174,7 +184,6 @@ struct azBoxKernel
   * \tparam imageInT the type of the input image (must have an Eigen like interface)
   * \tparam kernelT is the kernel type (see above)
   *
-  * \ingroup image_processing 
   */ 
 template<typename imageOutT, typename imageInT, typename kernelT>
 void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
@@ -286,7 +295,6 @@ struct radvalValComp
 
 ///Form a radial profile image, and optionally subtract it from the input
 /** The radial profile is calculated using linear interpolation on a 1 pixel grid
-  * \ingroup image_processing
   * 
   * \param [out] radprof is the radial profile image.  This will be resized.
   * \param [in] im is the image to form the profile of. 
@@ -370,7 +378,6 @@ void radprofim( radprofT & radprof,
 /** The radial profile is calculated using linear interpolation on a 1 pixel grid.
   * This version calculates a centered radius image.
   * 
-  * \ingroup image_processing
   * 
   * \param [out] radprof is the radial profile image.  This will be resized.
   * \param [in] im is the image to form the profile of. 
@@ -400,7 +407,6 @@ void radprofim( radprofT & radprof,
   
 ///Form a standard deviation image, and optionally divide the input by it
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
-  * \ingroup image_processing
   * 
   * \param [out] stdIm is the standard deviation image.  This will be resized.
   * \param [in] im is the image to form the standard deviation profile of. 
@@ -500,7 +506,6 @@ void stddevImage( eigenimT & stdIm,
  
 ///Form a standard deviation image, and optionally divide the input by it
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
-  * \ingroup image_processing
   * 
   * \param [out] stdIm is the standard deviation image.  This will be resized.
   * \param [in] im is the image to form the standard deviation profile of. 
@@ -535,7 +540,6 @@ void stddevImage( eigenimT & stdIm,
 
 ///Form a standard deviation image for each imamge in a cube, and optionally divide the input by it
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
-  * \ingroup image_processing
   * 
   * \param [out] stdImc is the standard deviation image cube.  This will be resized.
   * \param [in] imc is the image cube to form the standard deviation profile of. 
@@ -584,6 +588,8 @@ void stddevImageCube( eigencubeT & stdImc,
       
    }
 }
+
+///@}
 
 } //namespace mx
 

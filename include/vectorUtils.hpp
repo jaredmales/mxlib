@@ -1,7 +1,7 @@
 /** \file vectorUtils.hpp
   * \author Jared R. Males
-  * \brief Some utilities for std::vector
-  * \ingroup utils
+  * \brief  Header for the std::vector utilities
+  * \ingroup gen_math_files
   *
   */
 
@@ -14,6 +14,10 @@
 
 namespace mx
 {
+
+/** \ingroup vectorutils
+  *@{
+  */
 
 ///Fill in a vector with a regularly spaced scale
 /** Fills in the vector with a 0....N-1 scale.  The spacing of the points
@@ -47,9 +51,8 @@ void vectorScale( vectorT & vec,
   *
   * \returns the mean of vec 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorMean(const vectorT & vec)
@@ -70,9 +73,8 @@ typename vectorT::value_type vectorMean(const vectorT & vec)
   *
   * \returns the median of vec 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorMedianInPlace(vectorT & vec)
@@ -100,9 +102,8 @@ typename vectorT::value_type vectorMedianInPlace(vectorT & vec)
   * 
   * \returns the median of vec 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorMedian(const vectorT & vec, vectorT * work =0)
@@ -137,9 +138,8 @@ typename vectorT::value_type vectorMedian(const vectorT & vec, vectorT * work =0
   * 
   * \returns the variance of vec w.r.t. mean 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorVariance(const vectorT & vec, typename vectorT::value_type & mean)
@@ -160,9 +160,8 @@ typename vectorT::value_type vectorVariance(const vectorT & vec, typename vector
   *
   * \returns the variance of vec 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorVariance(const vectorT & vec)
@@ -185,9 +184,8 @@ typename vectorT::value_type vectorVariance(const vectorT & vec)
   * 
   * \returns the mean of vec 
   *
-  * \tparam vectorT the std::vector<> type of vec 
+  * \tparam vectorT the std::vector type of vec 
   * 
-  * \ingroup utils
   */
 template<typename vectorT>
 typename vectorT::value_type vectorSigmaMean(const vectorT & vec, 
@@ -229,6 +227,7 @@ typename vectorT::value_type vectorSigmaMean(const vectorT & vec,
    return vectorMean(work);
 }
 
+///@}
 
 } //namespace mx
 

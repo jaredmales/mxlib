@@ -8,10 +8,19 @@
 #ifndef __imagePads_hpp__
 #define __imagePads_hpp__
 
+#include <vector>
+
+#include "mxError.hpp"
+
 namespace mx
 {
 
-/** \ingroup image_processing 
+/** \addtogroup image_padding
+  * These functions pad an image by adding rows and columns, and filling in the new pixels with appropriate values.  This can be a constant, or nearest neighbor.  A version
+  * is also provided which expands an aribtrary 1/0 mask, which is useful when working with, say, circular regions of an image.
+  */
+
+/** \ingroup image_padding
   * @{ 
   */
 
@@ -154,15 +163,16 @@ int padImage( imOutT & imOut,
   * 
   * \tparam imOutT is an Eigen-like array
   * \tparam imInT is an Eigen-like array 
-  * \tparam imMaskT is an Eigen-like array
   */
-template<typename imOutT, typename imInT, typename imMaskT>
+template<typename imOutT, typename imInT>
 int padImage( imOutT & imOut,
               imInT & imIn,
-              imMaskT & imMask,
+              imInT & imMask,
               unsigned int padSz )
 {
 
+   typedef imInT imMaskT;
+   
    int dim1 = imMask.rows();
    int dim2 = imMask.cols();
    
@@ -217,21 +227,23 @@ int padImage( imOutT & imOut,
                   
                   if( tMask( ii+i, jj+j) == 1)
                   {
-                     if(nv == 0) nv = 1;
+                     //if(nv == 0) nv = 1;
                      
                      r = i*i + j*j;
   
-                     if(r == minr) //Equidistant pixels
-                     {
-                        mv += imOut( ii+i, jj+j); //So we average
-                        ++nv;
-                     }
-                     else if(r < minr ) //New closest pixel
-                     {
-                        mv = imOut( ii+i, jj+j);
-                        nv = 1;
-                        minr = r;
-                     }
+//                      if(r == minr) //Equidistant pixels
+//                      {
+//                         mv += imOut( ii+i, jj+j); //So we average
+//                         ++nv;
+//                      }
+//                      else if(r < minr ) //New closest pixel
+//                      {
+//                         mv = imOut( ii+i, jj+j);
+//                         nv = 1;
+//                         minr = r;
+//                      }
+                     mv += imOut( ii+i, jj+j);
+                     ++nv;
   
                   }
                }

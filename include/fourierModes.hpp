@@ -138,7 +138,7 @@ int makeFourierMode(typeN  im, typename typeN::Scalar m, typename typeN::Scalar 
 {
    if( p == -1) return makeFourierModeS(im, m, n);
    
-   if( p == 1) return makeFourierModeC(im, m, m);
+   if( p == 1) return makeFourierModeC(im, m, n);
    
    mxError("makeFourierMode", MXE_INVALIDARG, "p must be +1 (cosine) or -1 (sine).");
    
