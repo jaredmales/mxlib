@@ -532,10 +532,13 @@ void fitsFile<dataT>::close()
    int stat;
    fstatus = 0;
       
-   if(!isOpen) return;
-   
+   if(!isOpen) 
+   {
+      std::cerr << "Tried to close but not open\n";
+      return;
+   }
    stat = fits_close_file(fptr, &fstatus);
-   
+      
    if (fstatus)
    {
       char emnem[31];

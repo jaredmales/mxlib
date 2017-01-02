@@ -124,6 +124,13 @@ namespace mx
 #define MXE_FILEWERR 1044
 #define MXE_FILEWERR_MSG "An error occurred while writing to a file."
 
+/** \def MXE_FILERERR
+  * \brief An error occurred while reading from a file.
+  * \ingroup mxe_errors
+  */   
+#define MXE_FILERERR 1049
+#define MXE_FILERERR_MSG "An error occurred while reading from a file."
+
 /** \def MXE_FILECERR
   * \brief An error occurred while closing a file.
   * \ingroup mxe_errors
@@ -182,6 +189,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_FILEWERR:
          message = MXE_FILEWERR_MSG;
          return "MXE_FILEWERR";
+      case MXE_FILERERR:
+         message = MXE_FILERERR_MSG;
+         return "MXE_FILERERR";
       case MXE_FILECERR:
          message = MXE_FILECERR_MSG;
          return "MXE_FILECERR";
