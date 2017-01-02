@@ -23,7 +23,7 @@ struct fftwAllocator
 {
    Scalar * alloc(size_t sz)
    {
-      return (Scalar *) fftw_malloc(sz * sizeof(Scalar));
+      return (Scalar *) ::fftw_malloc(sz * sizeof(Scalar));
    }
 
    void free(Scalar * ptr)

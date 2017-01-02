@@ -57,6 +57,11 @@
   * \brief Tools for processing signals
   */
 
+/** \defgroup signal_processing_files Headers 
+  * \brief Headers for processing signals
+  * \ingroup signal_processing
+  */
+  
 /** \defgroup psds Power Spectra 
   * \brief Tools for generating and manipulating power spectra
   * \ingroup signal_processing

@@ -3,7 +3,7 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup psds
+  * \ingroup signal_processing_files
   *
   */
 

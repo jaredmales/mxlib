@@ -107,16 +107,16 @@ public:
       inputT * forplan1;
       outputT * forplan2;
 
-      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
-      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX);
+      forplan1 = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
+      forplan2 = (outputT *) ::fftw_malloc(sizeof(outputT)*_szX);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
       _plan = fftwf_plan_dft_1d(_szX, reinterpret_cast<fftwf_complex *>(forplan1), reinterpret_cast<fftwf_complex*>(forplan2), pdir, FFTW_MEASURE);
       
-      fftw_free(forplan1);
-      fftw_free(forplan2);
+      ::fftw_free(forplan1);
+      ::fftw_free(forplan2);
    }
    
    void fft(inputT * in, outputT * out)
@@ -126,7 +126,7 @@ public:
    
    void fft(float * in, outputT * out)
    {
-      inputT * cin = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      inputT * cin = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
       for(int i =0; i< _szX; ++i)
       {
          cin[i] = inputT(in[i],0);
@@ -134,7 +134,7 @@ public:
       
       fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(cin), reinterpret_cast<fftwf_complex*>(out));
       
-      fftw_free(cin);
+      ::fftw_free(cin);
    }
    
    void operator()( outputT *out, float * in)
@@ -235,16 +235,16 @@ public:
       inputT * forplan1;
       outputT * forplan2;
 
-      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
-      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX);
+      forplan1 = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
+      forplan2 = (outputT *) ::fftw_malloc(sizeof(outputT)*_szX);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
       _plan = fftw_plan_dft_1d(_szX, reinterpret_cast<fftw_complex *>(forplan1), reinterpret_cast<fftw_complex*>(forplan2), pdir, FFTW_MEASURE);
          
-      fftw_free(forplan1);
-      fftw_free(forplan2);
+      ::fftw_free(forplan1);
+      ::fftw_free(forplan2);
    }
    
    void fft(inputT * in, outputT * out)
@@ -254,7 +254,7 @@ public:
    
    void fft(double * in, outputT * out)
    {
-      inputT * cin = (inputT *) fftw_malloc(sizeof(inputT)*_szX);
+      inputT * cin = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
       for(int i =0; i< _szX; ++i)
       {
          cin[i] = inputT(in[i],0);
@@ -262,7 +262,7 @@ public:
       
       fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(cin), reinterpret_cast<fftw_complex*>(out));
       
-      fftw_free(cin);
+      ::fftw_free(cin);
    }
    
    void operator()( outputT *out, double * in)
@@ -369,16 +369,16 @@ public:
       inputT * forplan1;
       outputT * forplan2;
 
-      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX*_szY);
-      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX*_szY);
+      forplan1 = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX*_szY);
+      forplan2 = (outputT *) ::fftw_malloc(sizeof(outputT)*_szX*_szY);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
       _plan = fftwf_plan_dft_2d(_szX, _szY, reinterpret_cast<fftwf_complex*>(forplan1), reinterpret_cast<fftwf_complex*>(forplan2),  pdir, FFTW_MEASURE);
       
-      fftw_free(forplan1);
-      fftw_free(forplan2);
+      ::fftw_free(forplan1);
+      ::fftw_free(forplan2);
    }
    
    void fft(inputT * in, outputT * out)
@@ -415,15 +415,6 @@ public:
       _dir = MXFFT_FORWARD;
    }
 
-//    fftT(int ndir)
-//    {
-//       _plan = 0;
-// 
-//       _szX = 0;
-//       _szY = 0;      
-//       _dir = ndir;
-//       
-//    }
    
    fftT(int nx, int ny, int ndir = MXFFT_FORWARD)
    {
@@ -488,16 +479,19 @@ public:
       inputT * forplan1;
       outputT * forplan2;
 
-      forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX*_szY);
-      forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX*_szY);
+      //forplan1 = (inputT *) fftw_malloc(sizeof(inputT)*_szX*_szY);
+      //forplan2 = (outputT *) fftw_malloc(sizeof(outputT)*_szX*_szY);
+      
+      forplan1 = fftw_malloc<inputT>(_szX*_szY);
+      forplan2 = fftw_malloc<outputT>(_szX*_szY);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
 
       _plan = fftw_plan_dft_2d(_szX, _szY, reinterpret_cast<fftw_complex*>(forplan1), reinterpret_cast<fftw_complex*>(forplan2),  pdir, FFTW_MEASURE);
       
-      fftw_free(forplan1);
-      fftw_free(forplan2);
+      fftw_free<inputT>(forplan1);
+      fftw_free<outputT>(forplan2);
    }
    
    void fft(inputT * in, outputT * out)

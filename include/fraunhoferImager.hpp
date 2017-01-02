@@ -116,8 +116,8 @@ public:
      * After the fourier transform, the output pupil plane wavefront is de-tilted, restoring it
      * to the state prior to calling \ref propagatePupilToFocal
      * 
-     * \param complexPupil [output] the pupil plane wavefront. Must be pre-allocated to same size as complexFocal.
-     * \param complexFocal [input] the focal plane wavefront.
+     * \param [out] complexPupil the pupil plane wavefront. Must be pre-allocated to same size as complexFocal.
+     * \param [in] complexFocal the focal plane wavefront.
      * 
      */ 
    void propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)

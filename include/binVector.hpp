@@ -13,20 +13,137 @@ namespace mx
 {
    
 
-/** \defgroup binvector BinVector Files
+/** \defgroup binvector binVector Files
   * \ingroup ioutils
   * \brief A simple binary file format for storing vectors of data on disk.
   * 
-  * The BinVector file format is very simple: the first 8 bytes contain a unit64_t integer which specifies
-  * the length L of the data vector.  The second 8 bytes contain a uint64_t integer which records sizeof(dataT), 
-  * where dataT is the type. The remaining L*sizeof(dataT) bytes contain the data.
-  * No provision is made for recording the data type.  The programmer must know this ahead of time, though 
-  * the consistency between the recorded data size and sizeof(dataT) is checked.
+  * The binVector file format is very simple: the first 8 bytes contain a unit64_t integer which specifies
+  * the type of the data. The second 8 bytes contain a uint64_t integer which specifies the length L of the data vector.  
+  * The remaining L*sizeof(dataT) bytes contain the data.
   * 
   * The suggested extension for BinVector files is ".binv".
   * 
   * @{
   */
+
+///Get the integer type code corresponding to the type.
+/**
+  * \returns an integer which uniquely identifies the type.
+  * 
+  * \tparam dataT is the type 
+  */ 
+template<typename dataT>
+uint64_t binVectorTypeCode();
+
+template<>
+uint64_t binVectorTypeCode<bool>()
+{
+   return 0;
+}
+
+template<>
+uint64_t binVectorTypeCode<signed char>()
+{
+   return 1;
+}
+
+template<>
+uint64_t binVectorTypeCode<unsigned char>()
+{
+   return 2;
+}
+
+template<>
+uint64_t binVectorTypeCode<char>()
+{
+   return 3;
+}
+
+template<>
+uint64_t binVectorTypeCode<wchar_t>()
+{
+   return 4;
+}
+
+template<>
+uint64_t binVectorTypeCode<char16_t>()
+{
+   return 5;
+}
+
+template<>
+uint64_t binVectorTypeCode<char32_t>()
+{
+   return 6;
+}
+
+template<>
+uint64_t binVectorTypeCode<int>()
+{
+   return 7;
+}
+
+template<>
+uint64_t binVectorTypeCode<unsigned int>()
+{
+   return 8;
+}
+
+template<>
+uint64_t binVectorTypeCode<short int>()
+{
+   return 9;
+}
+
+template<>
+uint64_t binVectorTypeCode<short unsigned int>()
+{
+   return 10;
+}
+
+template<>
+uint64_t binVectorTypeCode<long int>()
+{
+   return 11;
+}
+
+template<>
+uint64_t binVectorTypeCode<long unsigned int>()
+{
+   return 12;
+}
+
+template<>
+uint64_t binVectorTypeCode<long long int>()
+{
+   return 13;
+}
+
+template<>
+uint64_t binVectorTypeCode<long long unsigned int>()
+{
+   return 14;
+}
+
+
+template<>
+uint64_t binVectorTypeCode<float>()
+{
+   return 15;
+}
+
+template<>
+uint64_t binVectorTypeCode<double>()
+{
+   return 16;
+}
+
+template<>
+uint64_t binVectorTypeCode<long double>()
+{
+   return 17;
+}
+
 
 /// Read a BinVector file from disk.
 /** 
@@ -43,7 +160,7 @@ int readBinVector( std::vector<dataT> & vec,
                    const std::string & fname )
 {
    FILE *fin;
-   uint64_t sz, ssz;
+   uint64_t typecode, sz;
    int nrd;
 
    fin = fopen(fname.c_str(), "r");
@@ -52,6 +169,31 @@ int readBinVector( std::vector<dataT> & vec,
       mxPError("readBinVector", errno, "Error from fopen.");
       return -1;
    }
+
+   errno = 0;
+   nrd = fread(&typecode, sizeof(uint64_t), 1, fin);
+   
+   if(nrd != 1)
+   {
+      //Have to handle case where EOF reached but no error.
+      if(errno != 0)
+      {
+         mxPError("readBinVector", errno, "Error reading data size.");
+      }
+      else
+      {
+         mxError("readBinVector", MXE_FILERERR, "Error reading data size, did not read enough bytes.");
+      }
+      fclose(fin);
+      return -1;
+   }
+   
+   if( typecode != binVectorTypeCode<dataT> )
+   {
+      mxError("readBinVector", MXE_SIZEERR, "Mismatch between type dataT and type in file.");
+      return -1;
+   }
+
    
    errno = 0;
    nrd = fread(&sz, sizeof(uint64_t), 1, fin);
@@ -71,31 +213,6 @@ int readBinVector( std::vector<dataT> & vec,
       return -1;
    }
 
-   errno = 0;
-   nrd = fread(&ssz, sizeof(uint64_t), 1, fin);
-   
-   if(nrd != 1)
-   {
-      //Have to handle case where EOF reached but no error.
-      if(errno != 0)
-      {
-         mxPError("readBinVector", errno, "Error reading data size.");
-      }
-      else
-      {
-         mxError("readBinVector", MXE_FILERERR, "Error reading data size, did not read enough bytes.");
-      }
-      fclose(fin);
-      return -1;
-   }
-   
-   if( ssz != sizeof(dataT) )
-   {
-      mxError("readBinVector", MXE_SIZEERR, "Mismatch between sizeof(dataT) and data size in file.");
-      return -1;
-   }
-   
-   
    vec.resize(sz);
    
    errno = 0;
@@ -136,13 +253,21 @@ int writeBinVector( const std::string & fname,
      
    FILE *fout;
    int nwr;
+   uint64_t typecode = binVectorTypeCode<dataT>(); 
    uint64_t sz = vec.size();
-   uint64_t ssz = sizeof(dataT);
-
+   
    fout = fopen(fname.c_str(), "wb");
    if(fout == 0)
    {
       mxPError("writeBinVector", errno, "Error from fopen.");
+      return -1;
+   }
+
+   nwr = fwrite( &typecode, sizeof(uint64_t), 1, fout);
+   if(nwr != 1)
+   {
+      mxPError("writeBinVector", errno, "Error writing typecode");
+      fclose(fout);
       return -1;
    }
 
@@ -153,16 +278,8 @@ int writeBinVector( const std::string & fname,
       fclose(fout);
       return -1;
    }
-   
-   nwr = fwrite( &ssz, sizeof(uint64_t), 1, fout);
-   if(nwr != 1)
-   {
-      mxPError("writeBinVector", errno, "Error writing data size.");
-      fclose(fout);
-      return -1;
-   }
-   
-   nwr = fwrite( vec.data(), sizeof(dataT), sz, fout);
+      
+   nwr = fwrite( vec.data(), sizeof(dataT), vec.size(), fout);
    if(nwr != sz)
    {
       mxPError("writeBinVector", errno, "Error writing data.");
