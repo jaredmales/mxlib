@@ -88,8 +88,8 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  ompLoopWatcher.hpp \
                  pout.hpp \
                  process_interface.h \
-                 psds.hpp \
                  psdFilter.hpp \
+                 psdUtils.hpp \
                  readColumns.hpp \
                  roots.hpp \
                  sharedmem_segment.h \

@@ -1,4 +1,4 @@
-/** \file psds.hpp
+/** \file psdUtils.hpp
   * \brief Tools for working with PSDs
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
@@ -7,8 +7,8 @@
   *
   */
 
-#ifndef __psds_hpp__
-#define __psds_hpp__
+#ifndef __psdUtils_hpp__
+#define __psdUtils_hpp__
 
 #include "fft.hpp"
 #include "eigenImage.hpp"
@@ -311,6 +311,7 @@ void vonKarman_psd( eigenArrp  & psd,
    }   
 }
 
+#if 0
 ///Filter a noise array by the given PSD using Fourier convolution.
 /**
   * \param [in,out] noise  is the noise array. On output it is replaced with the filtered noise.
@@ -371,6 +372,8 @@ void psd_filter( eigenArrNT & noise,
 
    psd_filter(noise, psd, ft);
 }
+
+#endif
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
 /**
@@ -553,4 +556,4 @@ void augment1SidedPSDFreq( std::vector<T> & freqTwoSided,
 
 } //namespace mx
 
-#endif //__psds_hpp__
+#endif //__psdUtils_hpp__

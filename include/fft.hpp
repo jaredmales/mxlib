@@ -356,7 +356,7 @@ public:
    
    void destroy_plan()
    {
-      if(_plan) fftwf_destroy_plan(_plan);
+      if(_plan) fftw_destroy_plan<std::complex<float>>(_plan);
       
       _plan = 0;
       
@@ -399,7 +399,6 @@ public:
    
    void doPlan(int nx, int ny, const trueFalseT<true> & inPlace)
    {
-      std::cout << "In Place\n";
       inputT * forplan;
 
       forplan = (inputT *) fftw_malloc<inputT>(sizeof(inputT)*_szX*_szY);
@@ -437,14 +436,9 @@ public:
       
    }
    
-//    void fft(inputT * in, outputT * out)
-//    {
-//       fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
-//    }
-   
    void operator()( outputT * out,  inputT * in )
    {
-      fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
+      fftw_execute_dft<inputT,outputT>(_plan, in, out);
    }
    
       

@@ -255,6 +255,108 @@ inline void fftw_free<std::complex<__float128>>( std::complex<__float128> * p)
    ::fftwq_free( p );
 }
 
+//******* Type Specification *********//
+template<typename inputDataT, typename ouputDataT>
+struct fftwTypeSpec;
+
+template<>
+struct fftwTypeSpec<std::complex<float>, std::complex<float>>
+{
+   typedef float realT;
+   typedef std::complex<float> inputDataT;
+   typedef std::complex<float> outputDataT;
+   
+   typedef fftwf_plan planT;
+   
+};
+
+template<>
+struct fftwTypeSpec<std::complex<double>,std::complex<double>>
+{
+   typedef double realT;
+   typedef std::complex<double> inputDataT;
+   typedef std::complex<double> outputDataT;
+   
+   typedef fftw_plan planT;
+   
+};
+
+template<>
+struct fftwTypeSpec<std::complex<long double>,std::complex<long double>>
+{
+   typedef long double realT;
+   typedef std::complex<long double> inputDataT;
+   typedef std::complex<long double> outputDataT;
+   
+   typedef fftwl_plan planT;
+   
+};
+
+template<>
+struct fftwTypeSpec<std::complex<__float128>,std::complex<__float128>>
+{
+   typedef __float128 realT;
+   typedef std::complex<__float128> inputDataT;
+   typedef std::complex<__float128> outputDataT;
+   
+   typedef fftwq_plan planT;
+   
+};
+
+
+//****** Plan Destruction *********//
+
+template<typename dataT>
+void fftw_destroy_plan( typename fftwTypeSpec<dataT, dataT>::planT plan );
+
+template<>
+inline void fftw_destroy_plan<std::complex<float>>( fftwTypeSpec<std::complex<float>,std::complex<float>>::planT plan )
+{
+   fftwf_destroy_plan(plan);
+}
+
+template<>
+inline void fftw_destroy_plan<std::complex<double>>( fftwTypeSpec<std::complex<double>, std::complex<double>>::planT plan )
+{
+   fftw_destroy_plan(plan);
+}
+
+template<>
+inline void fftw_destroy_plan<std::complex<long double>>( fftwTypeSpec<std::complex<long double>, std::complex<long double>>::planT plan )
+{
+   fftwl_destroy_plan(plan);
+}
+
+template<>
+inline void fftw_destroy_plan<std::complex<__float128>>( fftwTypeSpec<std::complex<__float128>, std::complex<__float128>>::planT plan )
+{
+   fftwq_destroy_plan(plan);
+}
+
+
+//*********  Plan Execution *************//
+template<typename inputDataT, typename outputDataT>
+void fftw_execute_dft( typename fftwTypeSpec<inputDataT, outputDataT>::planT plan, 
+                       inputDataT * in, 
+                       outputDataT * out);
+
+template<>
+inline void fftw_execute_dft<std::complex<float>,std::complex<float>>( fftwTypeSpec<std::complex<float>, std::complex<float>>::planT plan, 
+                                                                      std::complex<float> * in, 
+                                                                      std::complex<float> * out )
+{
+   fftwf_execute_dft( plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
+}
+
+
+template<>
+inline void fftw_execute_dft<std::complex<double>,std::complex<double>>( fftwTypeSpec<std::complex<double>, std::complex<double>>::planT plan, 
+                                                                         std::complex<double> * in, 
+                                                                         std::complex<double> * out )
+{
+   fftw_execute_dft( plan, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out));
+}
+
 }//namespace mx
 
 #endif // __templateFFTW_hpp__
