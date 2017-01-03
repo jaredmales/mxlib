@@ -16,6 +16,8 @@ namespace mx
 
 #define MXFFT_FORWARD  (FFTW_FORWARD)
 #define MXFFT_BACKWARD (FFTW_BACKWARD)
+
+
    
 template<typename inT, typename outT, size_t dim, int cudaGPU=0> 
 class fftT;
@@ -23,6 +25,7 @@ class fftT;
 typedef fftT<std::complex<float>, std::complex<float>, 2, 0> fft_cf_cf_2d;
 typedef fftT<std::complex<double>, std::complex<double>, 2, 0> fft_cd_cd_2d;
 
+#if 0
 //1D float,  non-cudaGPU
 template<>
 class fftT<std::complex<float>, std::complex<float>, 1, 0>
@@ -125,7 +128,8 @@ public:
    {
       fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
    }
-   
+ 
+protected:
    void fft(float * in, outputT * out)
    {
       inputT * cin = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
@@ -138,7 +142,8 @@ public:
       
       ::fftw_free(cin);
    }
-   
+
+public:   
    void operator()( outputT *out, float * in)
    {
       fft(in, out);
@@ -215,7 +220,7 @@ public:
       plan<inPlace>(nx);
    }
    
-   void plan(int nx, int pdir, trueFalseT<false> inPlace)
+   void plan(int nx, trueFalseT<false> inPlace)
    {
       inputT * forplan1;
       outputT * forplan2;
@@ -233,7 +238,7 @@ public:
 
    }
    
-   void plan(int nx, int pdir, trueFalseT<true> inPlace)
+   void plan(int nx, trueFalseT<true> inPlace)
    {
       inputT * forplan;
 
@@ -262,12 +267,13 @@ public:
       plan(nx, trueFalseT<inPlace>());
       
    }
-   
+
+protected:   
    void fft(inputT * in, outputT * out)
    {
       fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out));
    }
-   
+
    void fft(double * in, outputT * out)
    {
       inputT * cin = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX);
@@ -281,6 +287,7 @@ public:
       ::fftw_free(cin);
    }
    
+public:
    void operator()( outputT *out, double * in)
    {
       fft(in, out);
@@ -293,6 +300,7 @@ public:
    
 };
 
+#endif
 
 //2D complex-float,  non-cudaGPU
 template<>
@@ -338,7 +346,7 @@ public:
       _szY = 0;      
       _dir = ndir;
       
-      plan(nx, ny, _dir);
+      plan(nx, ny, _dir, false);
    }
    
    ~fftT()
@@ -356,48 +364,85 @@ public:
       _szY = 0;
    }
       
-   void plan(int nx, int ny, int ndir)
-   {
-      if(_szX == nx && _szY == ny && _dir == ndir && _plan)
-      {
-         return;
-      }   
-    
-      destroy_plan();
-      
-      _dir = ndir;
-      
-      plan(nx, ny);
-   }
+//    template<bool inPlace=false>
+//    void plan(int nx, int ny, int ndir)
+//    {
+//       if(_szX == nx && _szY == ny && _dir == ndir && _plan)
+//       {
+//          return;
+//       }   
+//     
+//       destroy_plan();
+//       
+//       _dir = ndir;
+//       
+//       plan<inPlace>(nx, ny);
+//    }
    
-   void plan(int nx, int ny)
+   void doPlan(int nx, int ny, const trueFalseT<false> & inPlace)
    {
-      if(_szX == nx && _szY == ny && _plan)
-      {
-         return;
-      }
-
-      destroy_plan();
-            
-      _szX = nx;
-      _szY = ny;
-      
       inputT * forplan1;
       outputT * forplan2;
 
-      forplan1 = (inputT *) ::fftw_malloc(sizeof(inputT)*_szX*_szY);
-      forplan2 = (outputT *) ::fftw_malloc(sizeof(outputT)*_szX*_szY);
+      forplan1 = (inputT *) fftw_malloc<inputT>(sizeof(inputT)*_szX*_szY);
+      forplan2 = (outputT *) fftw_malloc<outputT>(sizeof(outputT)*_szX*_szY);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
       _plan = fftwf_plan_dft_2d(_szX, _szY, reinterpret_cast<fftwf_complex*>(forplan1), reinterpret_cast<fftwf_complex*>(forplan2),  pdir, FFTW_MEASURE);
       
-      ::fftw_free(forplan1);
-      ::fftw_free(forplan2);
+      fftw_free<inputT>(forplan1);
+      fftw_free<outputT>(forplan2);
+
    }
    
-   void fft(inputT * in, outputT * out)
+   void doPlan(int nx, int ny, const trueFalseT<true> & inPlace)
+   {
+      std::cout << "In Place\n";
+      inputT * forplan;
+
+      forplan = (inputT *) fftw_malloc<inputT>(sizeof(inputT)*_szX*_szY);
+      
+      int pdir = FFTW_FORWARD;
+      if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
+      
+      _plan = fftwf_plan_dft_2d(_szX, _szY, reinterpret_cast<fftwf_complex*>(forplan), reinterpret_cast<fftwf_complex*>(forplan),  pdir, FFTW_MEASURE);
+      
+      fftw_free<inputT>(forplan);
+   }
+   
+   void plan(int nx, int ny, int ndir=MXFFT_FORWARD, bool inPlace=false)
+   {
+      if(_szX == nx && _szY == ny && _dir == ndir && _plan)
+      {
+         return;
+      }
+
+      destroy_plan();
+
+      _dir = ndir;
+      
+      _szX = nx;
+      _szY = ny;
+      
+      if(inPlace == false)
+      {
+         doPlan(nx, ny, trueFalseT<false>());
+      }
+      else
+      {
+         doPlan(nx, ny, trueFalseT<true>());
+      }
+      
+   }
+   
+//    void fft(inputT * in, outputT * out)
+//    {
+//       fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
+//    }
+   
+   void operator()( outputT * out,  inputT * in )
    {
       fftwf_execute_dft(_plan, reinterpret_cast<fftwf_complex*>(in), reinterpret_cast<fftwf_complex*>(out));
    }
@@ -440,7 +485,7 @@ public:
       _szY = 0;
       _dir = ndir;
       
-      plan(nx, ny, ndir);
+      plan<trueFalseT<false>>(nx, ny, ndir);
    }
    
    ~fftT()
@@ -464,23 +509,23 @@ public:
       return _dir;
    }
    
-   template<bool inPlace=false>
-   void plan(int nx, int ny, int ndir)
-   {
-      if(_szX == nx && _szY == ny && _dir == ndir && _plan)
-      {
-         return;
-      }
-      
-      destroy_plan();
-      
-      _dir = ndir;
-      
-      plan<inPlace>(nx, ny);
-   }
+//    template<bool inPlace=false>
+//    void plan(int nx, int ny, int ndir)
+//    {
+//       if(_szX == nx && _szY == ny && _dir == ndir && _plan)
+//       {
+//          return;
+//       }
+//       
+//       destroy_plan();
+//       
+//       _dir = ndir;
+//       
+//       plan<inPlace>(nx, ny);
+//    }
 
       
-   void plan(int nx, int ny, trueFalseT<false> inPlace)
+   void doPlan(int nx, int ny, const trueFalseT<false> & inPlace)
    {
       inputT * forplan1;
       outputT * forplan2;
@@ -498,7 +543,7 @@ public:
       
    }
    
-   void plan(int nx, int ny, trueFalseT<true> inPlace)
+   void doPlan(int nx, int ny, const trueFalseT<true> & inPlace)
    {
       inputT * forplan;
       
@@ -512,23 +557,30 @@ public:
       fftw_free<inputT>(forplan);
    }
    
-   template<bool inPlace=false>
-   void plan(int nx, int ny)
+   template<typename tfT>
+   void plan(int nx, int ny, int ndir)
    {
-      if(_szX == nx && _szY == ny && _plan)
+      if(_szX == nx && _szY == ny  && _dir == ndir && _plan)
       {
          return;
       }
       
       destroy_plan();
       
+      _dir = ndir;
+      
       _szX = nx;
       _szY = ny;
       
-      plan(nx, ny, trueFalseT<inPlace>());
+      doPlan(nx, ny, tfT());
    }
    
-   void fft(inputT * in, outputT * out)
+//    void fft(inputT * in, outputT * out)
+//    {
+//       fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out));
+//    }
+
+   void operator()( outputT *out, inputT * in)
    {
       fftw_execute_dft(_plan, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out));
    }

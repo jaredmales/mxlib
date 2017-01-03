@@ -343,11 +343,11 @@ void psd_filter( eigenArrNT & noise,
    mx::fftT<complexT, complexT, 2, 0> fft(noise.rows(), noise.cols());
    mx::fftT<complexT, complexT, 2, 0> fftR(noise.rows(), noise.cols(), FFTW_BACKWARD);
    
-   fft.fft( cnoise.data(),ft.data());
+   fft( ft.data(), cnoise.data() );
    
    ft *= psd.sqrt();
         
-   fftR.fft(ft.data(), ft2.data()); //in-place
+   fftR( ft2.data(), ft.data() ); 
    
    noise = ft2.real()/(noise.rows()*noise.cols());
    

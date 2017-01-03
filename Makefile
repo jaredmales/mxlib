@@ -89,6 +89,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  pout.hpp \
                  process_interface.h \
                  psds.hpp \
+                 psdFilter.hpp \
                  readColumns.hpp \
                  roots.hpp \
                  sharedmem_segment.h \

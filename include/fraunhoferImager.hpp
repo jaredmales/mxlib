@@ -24,7 +24,7 @@ namespace mx
   * focal plane to pupil plane, the pupil plane wavefront is un-tilted to restore the 
   * pupil to its original position.  
   * 
-  * \tparam realT is the arithmetic type
+  * \tparam _wavefrontT is an Eigen::Array-like type, with std::complex values.
   * 
   * \ingroup imaging
   */ 
@@ -97,18 +97,11 @@ public:
       //First setup the tilt screens (does nothing if there's no change in size)
       setWavefrontSizePixels(complexPupil.rows());
       
-      //DFT normalization, sqrt(2) for complex number
-      //realT norm = 1./(wavefrontSizePixels/sqrt(2.));
-      
       //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
       complexPupil *= centerFocal;
         
-      fft_fwd.fft(complexPupil.data(), complexFocal.data() );
-
-      //Normalize
-      //complexT cnorm = complexT(norm, norm);
-      //complexFocal *= cnorm;
-      
+      //fft_fwd.fft(complexPupil.data(), complexFocal.data() );
+      fft_fwd( complexFocal.data(), complexPupil.data() );      
    }
    
    ///Propagate the wavefront from Focal plane to Pupil plane
@@ -121,24 +114,19 @@ public:
      * 
      */ 
    void propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
-   {
-      //DFT normalization, sqrt(2) for complex number
-      //realT norm = 1./(wavefrontSizePixels/sqrt(2.));
+   {     
+      //fft_back.fft( complexFocal.data(), complexPupil.data());
+      fft_back( complexPupil.data(), complexFocal.data() );      
       
-      fft_back.fft( complexFocal.data(), complexPupil.data());
-            
       //Unshift the wavefront and normalize
       complexPupil *= centerPupil;
-      
-      //complexT cnorm = complexT(norm, norm);
-      //complexPupil *= cnorm;
    }
    
    ///Set the size of the wavefront, in pixels
    /** Checks if the size changes, does nothing if no change.  Otherwise,  calls
      * \ref makeShiftPhase to pre-calculate the tilt arrays.
      *
-     * \param wfsPix [input] the desired new size of the wavefront
+     * \param [in] wfsPix the desired new size of the wavefront
      */ 
    void setWavefrontSizePixels(int wfsPix)
    {
@@ -159,13 +147,14 @@ public:
    
 protected:
    
-   ///Calculate the complex tilt arrays for centering the wavefronts
-   /**
+   ///Calculate the complex tilt arrays for centering and normalizing the wavefronts
+   /** 
      */
    void makeShiftPhase()
    {      
       realT pi = boost::math::constants::pi<realT>();
       
+      //The normalization is included in the tilt.
       realT norm = 1./(wavefrontSizePixels*sqrt(2));
       complexT cnorm = complexT(norm, norm);
       
