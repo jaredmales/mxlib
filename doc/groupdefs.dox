@@ -195,7 +195,7 @@
   * \brief Various miscellaneous utilities
   */  
 
-/** \defgroup utils_files Utility Headers
+/** \defgroup utils_files Headers
   * \brief Header files for General Utilities.
   * \ingroup utils
   */

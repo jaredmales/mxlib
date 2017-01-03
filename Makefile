@@ -100,6 +100,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  templateFFTW.hpp \
+                 trueFalseT.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
 		 randomT.hpp \
