@@ -21,6 +21,7 @@ namespace mx
 /** \ingroup psds
   *
   * \todo investigate whether it is really necessary to use the backward transform. 
+  * \todo once fftT has a plan interface with pointers for working memory, use it.
   */
 template<typename _realT>
 class psdFilter

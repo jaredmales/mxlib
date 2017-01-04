@@ -28,6 +28,9 @@ std::vector<int> fftwDimVec( int szX, int szY, int szZ);
 /// Fast Fourier Transforms using the FFTW library
 /**
   * \todo document fftT 
+  * \todo add execute interface with fftw like signature
+  * \todo add plan interface where user passes in pointers (to avoid allocations)
+  * 
   */ 
 template<typename _inputT, typename _outputT, size_t _dim>
 class fftT< _inputT, _outputT, _dim, 0>

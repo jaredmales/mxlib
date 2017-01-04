@@ -259,8 +259,8 @@ void imageShiftWP( outputArrT & out,
                    int dx,
                    int dy )
 {
-   dx %= out.rows();
-   dy %= out.cols();
+   dx %= in.rows();
+   dy %= in.cols();
 
    #pragma omp parallel num_threads(4)
    {
@@ -269,18 +269,18 @@ void imageShiftWP( outputArrT & out,
       #pragma omp for   
       for(int i=0;i<out.rows(); ++i)
       {
-         x = i + dx;
+         x = i - dx;
          
-         if(x < 0) x += out.rows();
-         else if (x >= out.rows()) x -= out.rows();
+         if(x < 0) x += in.rows();
+         else if (x >= in.rows()) x -= in.rows();
 
          for(int j=0; j<out.cols(); ++j)
          {
-            y = j + dy;
-            if (y < 0) y += out.cols();
-            else if (y >= out.cols()) y -= out.cols();
+            y = j - dy;
+            if (y < 0) y += in.cols();
+            else if (y >= in.cols()) y -= in.cols();
          
-            out(x, y) = in(i,j);
+            out(i, j) = in(x,y);
          }
       }
    }
