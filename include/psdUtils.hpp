@@ -419,7 +419,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,
       work.assign(first, last);
       floatT mean = 0;
       for (int j=0;j<work.size();++j) mean += work[j];
-      //mean = std::accumulate(work.begin(), work.end(), 0);// / work.size();
+
       mean/=work.size();
       
       
@@ -437,7 +437,6 @@ void averagePeriodogram( std::vector<floatT> & pgram,
 
    for(int j=0;j<pgram.size();++j) pgram[j] /= (work.size()*Navg);
    
-   //fftw_destroy_plan(p);
 
 }
 

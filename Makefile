@@ -54,6 +54,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  eigenUtils.hpp \
                  environment.hpp \
                  fft.hpp \
+                 fftwTemplates.hpp \
                  fileUtils.hpp \
                  fitsUtils.hpp \
                  fitsFile.hpp \
@@ -100,7 +101,6 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
-                 templateFFTW.hpp \
                  trueFalseT.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \

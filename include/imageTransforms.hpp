@@ -241,6 +241,51 @@ void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
          
 }//void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
 
+/// Shift an image by whole pixels, wrapping around..
+/**
+  *  
+  * \param [out] out contains the shifted image.  Must be pre-allocated.
+  * \param [in] in is the image to be shifted.
+  * \param [in] dx is the amount to shift in the x direction
+  * \param [in] dy is the amount to shift in the y direction
+  *
+  * \tparam outputArrT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam inputArrT is the eigen array type of the input [will be resolved by compiler]
+  *
+  */
+template<typename outputArrT, typename inputArrT> 
+void imageShiftWP( outputArrT & out,
+                   inputArrT & in,
+                   int dx,
+                   int dy )
+{
+   dx %= out.rows();
+   dy %= out.cols();
+
+   #pragma omp parallel num_threads(4)
+   {
+      int x, y;
+   
+      #pragma omp for   
+      for(int i=0;i<out.rows(); ++i)
+      {
+         x = i + dx;
+         
+         if(x < 0) x += out.rows();
+         else if (x >= out.rows()) x -= out.rows();
+
+         for(int j=0; j<out.cols(); ++j)
+         {
+            y = j + dy;
+            if (y < 0) y += out.cols();
+            else if (y >= out.cols()) y -= out.cols();
+         
+            out(x, y) = in(i,j);
+         }
+      }
+   }
+}
+
 /// Shift an image.
 /** Uses the given transformation type to shift an image.
   *
