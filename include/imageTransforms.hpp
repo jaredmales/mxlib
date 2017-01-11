@@ -242,9 +242,11 @@ void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
 }//void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
 
 /// Shift an image by whole pixels, wrapping around..
-/**
+/** The output image can be smaller than the input image, in which case the wrapping still occurs for the input image, but only
+  * output images worth of pixels are actually shifted.  This is useful, for instance, when propagating large turbulence phase screens
+  * where one only needs a small section at a time. 
   *  
-  * \param [out] out contains the shifted image.  Must be pre-allocated.
+  * \param [out] out contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
   * \param [in] in is the image to be shifted.
   * \param [in] dx is the amount to shift in the x direction
   * \param [in] dy is the amount to shift in the y direction

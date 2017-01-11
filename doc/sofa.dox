@@ -15,16 +15,18 @@ As of May 2014 the direct link to the downloads page is: <a href="http://www.iau
 
 Unpack the archive in any location, note that it contains a sofa/ top directory, and a subdirectory for each version.
 
-In the sofa_20XXMMDD_m directory review the 00READ.ME file.  Note the need to edit the makefile.  In particular, pay attention to:
+In the sofa_20XXMMDD_m directory review the 00READ.ME file.  Note the need to edit the makefile.  In particular:
+
+\par IMPORTANT: 
+You MUST edit the CFLAGF and  CFLAGX lines by adding "-fPIC".  This is necessary for inclusion in the shared version of mxlib.
+
+Note also that you can edit these variables:
 
  - INSTALL_DIR
  - SOFA_LIB_DIR
  - SOFA_INC_DIR
 
-\par IMPORTANT: 
-in addition to these changes, you MUST edit the CFLAGF and  CFLAGX lines by adding "-fPIC".  This is necessary for inclusion in the shared version of mxlib.
- 
-For mxlib to use SOFA, it doesn't matter where you install these as long as you tell the compiler to look in these directories (i.e. with -I/path/to/sofa and -L/path/to/sofa -lsofa_c).
+These are set to $(HOME), $(HOME)/lib and $(HOME)/include by default.  For mxlib to use SOFA, it doesn't matter where you install these as long as you tell the compiler to look in these directories (i.e. with -I/path/to/sofa and -L/path/to/sofa -lsofa_c).
 
 Once you have edited the makefile, cd into the directory src/c and type make, and make install.
 

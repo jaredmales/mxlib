@@ -10,43 +10,27 @@
 
 #include <random>
 
+#include "randomSeed.hpp"
+
 namespace mx
 {
 
-///Access to a global random number engine  
-/** 
-  * @returns Returns a reference to the global engine.
-  * 
-  * \ingroup random
-  */
-// template<class rangenT> rangenT & random_engine()
-// {
-//    static rangenT engine;
-//    
-//    return engine;
-// }
 
 ///A random number type, which functions like any other arithmetic type.  
 /** 
   * Combines a random engine, and a random distribution.  Using the type conversion operator
-  * randomT returns the next random deviate whenever it is referenced. The random engine is 
-  * the global engine of that type accessed by random_engine().
+  * randomT returns the next random deviate whenever it is referenced. 
   *
   * Example:
   * 
-  * \code
-  * #include <mx/randomSeed.hpp>
-  * 
-  * 
-  * randomT<double, std::mt19937_64, std::normal_distribution<double> > norm_distd;
-  * 
-  * unsigned long seedval;
-  * randomSeed(seedval); //Get seed from urandom
-  * norm_distd.engine().seed(seedval);
-  * 
-  * double d1 = norm_distd; //get a normally distributed value
-  * double d2 = norm_distd; //get the next normally distributed value
-  * \endcode
+    \code
+    //This can also be done using the alias definition mx::normDistT.  
+    randomT<double, std::mt19937_64, std::normal_distribution<double> > norm_distd;
+    norm_distd.seed(); // 
+  
+    double d1 = norm_distd; //get a normally distributed value
+    double d2 = norm_distd; //get the next normally distributed value
+   \endcode
   * 
   * \ingroup random
   */
@@ -64,12 +48,6 @@ public:
    ///Typedef for the engine type
    typedef _ranengT ranengT;
 
-//    ///Access to the global engine
-//    _ranengT & engine()
-//    {
-//       return random_engine<_ranengT>();
-//    }
-   
    ///The random distribution
    _randistT distribution;
 
@@ -82,6 +60,28 @@ public:
       //return distribution(random_engine<_ranengT>());
       return distribution(engine);
    }
+   
+   ///Set the seed of the random engine.
+   /** Calls the engines seed member function.
+     *
+     * \param seedval is the argument to pass to ranengT::seed() 
+     * 
+     */
+   void seed( typename ranengT::result_type seedval)
+   {
+      engine.seed(seedval);
+   }
+   
+   ///Seed the random engine with a good value
+   /** Calls \ref mx::randomSeed to get the value.  On linux this uses /dev/urandom.  On other sytems, this uses time(0).
+    */
+   void seed()
+   {
+      typename ranengT::result_type seedval;
+      randomSeed(seedval);
+      seed(seedval);
+   }
+   
 }; 
 
 
@@ -274,36 +274,23 @@ template<typename _RealType, typename _CharT, typename _Traits> std::basic_istre
  * @{
  */
 
-///Typedef for a standard normal distribution of floats
-typedef randomT<float, std::mt19937_64, std::normal_distribution<float> > norm_distf;
+///Alias for a uniform random variate
+template<typename realT>
+using uniDistT = randomT<realT, std::mt19937_64, std::uniform_real_distribution<realT>>;
 
-///Typedef for an exponential distribution of floats
-typedef randomT<float, std::mt19937_64, std::exponential_distribution<float> > exp_distf;
+///Alias for a standard normal random variate
+template<typename realT>
+using normDistT = randomT<realT, std::mt19937_64, std::normal_distribution<realT>>;
 
-///Typedef for a Laplace or double exponential distribution of floats
-typedef randomT<float, std::mt19937_64, mx::laplace_distribution<float> > lap_distf;
+///Alias for an exponential random variate
+template<typename realT>
+using expDistT = randomT<realT, std::mt19937_64, std::exponential_distribution<realT>>;
 
-///Typedef for a standard uniform distribution of doubles
-typedef randomT<double, std::mt19937_64, std::uniform_real_distribution<double> > uni_distd;
-
-///Typedef for a standard normal distribution of doubles
-typedef randomT<double, std::mt19937_64, std::normal_distribution<double> > norm_distd;
-
-///Typedef for an exponential distribution of doubles
-typedef randomT<double, std::mt19937_64, std::exponential_distribution<double> > exp_distd;
-
-///Typedef for a Laplace or double exponential distribution of doubles
-typedef randomT<double, std::mt19937_64, mx::laplace_distribution<double> > lap_distd;
+///Alias for a laplace random variate
+template<typename realT>
+using lapDistT = randomT<realT, std::mt19937_64, laplace_distribution<realT>>;
 
 
-///Typedef for a standard normal distribution of long doubles
-typedef randomT<long double, std::mt19937_64, std::normal_distribution<long double> > norm_distld;
-
-///Typedef for an exponential distribution of long doubles
-typedef randomT<long double, std::mt19937_64, std::exponential_distribution<long double> > exp_distld;
-
-///Typedef for a Laplace or long double exponential distribution of long doubles
-typedef randomT<long double, std::mt19937_64, mx::laplace_distribution<long double> > lap_distld;
 
 /// @}
 

@@ -52,10 +52,12 @@ namespace mx
 template<class typeN>
 int makeFourierModeC(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
+   typedef typename typeN::Scalar realT;
+      
    int dim1 = im.cols();
    int dim2 = im.rows();
-
-   typename typeN::Scalar uc, vc, u, v, D;
+   
+   realT uc, vc, u, v, D;
 
    uc = 0.5*(dim1-1.0);
    vc = 0.5*(dim2-1.0);
@@ -69,7 +71,7 @@ int makeFourierModeC(typeN im, typename typeN::Scalar m, typename typeN::Scalar 
       {
          v = j-vc;
          
-         im(i,j) = cos(2.*3.14159/D*(m*u + n*v));
+         im(i,j) = cos(two_pi<realT>()/D*(m*u + n*v));
       }
    }
    
@@ -97,10 +99,12 @@ int makeFourierModeC(typeN im, typename typeN::Scalar m, typename typeN::Scalar 
 template<class typeN>
 int makeFourierModeS(typeN  im, typename typeN::Scalar m, typename typeN::Scalar n)
 {
+   typedef typename typeN::Scalar realT;
+      
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar uc, vc, u, v, D;
+   realT uc, vc, u, v, D;
 
    uc = 0.5*(dim1-1.0);
    vc = 0.5*(dim2-1.0);
@@ -114,7 +118,7 @@ int makeFourierModeS(typeN  im, typename typeN::Scalar m, typename typeN::Scalar
       {
          v = j-vc;
          
-         im(i,j) = sin(2.*3.14159/D*(m*u + n*v));
+         im(i,j) = sin(two_pi<realT>()/D*(m*u + n*v));
       }
    }
    
@@ -165,7 +169,8 @@ int makeFourierMode(typeN  im, typename typeN::Scalar m, typename typeN::Scalar 
 template<class typeN>
 int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
 {
-   
+   typedef typename typeN::Scalar realT;
+      
    if(p != 1 && p != -1)
    {
       mxError("makeModifiedFourierMode", MXE_INVALIDARG, "p must be +1 or -1.");
@@ -174,7 +179,7 @@ int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::
    int dim1 = im.cols();
    int dim2 = im.rows();
 
-   typename typeN::Scalar xc, yc, x, y, arg, D;
+   realT xc, yc, x, y, arg, D;
 
    xc = 0.5*(dim1-1.0);
    yc = 0.5*(dim2-1.0);
@@ -188,7 +193,7 @@ int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::
       {
          y = j-yc;
          
-         arg = 2.*3.14159/D*(m*x + n*y);
+         arg = two_pi<realT>()/D*(m*x + n*y);
          
          im(i,j) = cos(arg) + p*sin(arg);
       }

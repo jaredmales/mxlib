@@ -67,8 +67,12 @@ public:
       _dir = MXFFT_FORWARD;
    }
 
-   
-   fftT(int nx, int ny, int ndir = MXFFT_FORWARD)
+   ///Constructor for rank 1 FFT.
+   template<int cdim = _dim>
+   fftT( int nx, 
+         int ndir = MXFFT_FORWARD,
+         bool inPlace = false,
+         typename std::enable_if<cdim==1>::type* = 0 )
    {
       _plan = 0;
       
@@ -78,7 +82,26 @@ public:
       
       _dir = ndir;
       
-      plan(nx, ny, ndir, false);
+      plan(nx, 0, ndir, inPlace);
+   }
+
+   ///Constructor for rank 2 FFT.
+   template<int cdim = _dim>
+   fftT( int nx, 
+         int ny, 
+         int ndir = MXFFT_FORWARD,
+         bool inPlace = false,
+         typename std::enable_if<cdim==2>::type* = 0 )
+   {
+      _plan = 0;
+      
+      _szX = 0;
+      _szY = 0;
+      _szZ = 0;
+      
+      _dir = ndir;
+      
+      plan(nx, ny, ndir, inPlace);
    }
    
    ~fftT()
@@ -102,13 +125,18 @@ public:
       return _dir;
    }
          
-   void doPlan(int nx, int ny, const trueFalseT<false> & inPlace)
+   void doPlan(const trueFalseT<false> & inPlace)
    {
       inputT * forplan1;
       outputT * forplan2;
       
-      forplan1 = fftw_malloc<inputT>(_szX*_szY);
-      forplan2 = fftw_malloc<outputT>(_szX*_szY);
+      int sz;
+      
+      if(_dim == 1) sz = _szX;
+      if(_dim == 2) sz = _szX*_szY;
+      
+      forplan1 = fftw_malloc<inputT>(sz);
+      forplan2 = fftw_malloc<outputT>(sz);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
@@ -122,11 +150,16 @@ public:
       
    }
    
-   void doPlan(int nx, int ny, const trueFalseT<true> & inPlace)
+   void doPlan(const trueFalseT<true> & inPlace)
    {
       inputT * forplan;
+
+      int sz;
       
-      forplan = fftw_malloc<inputT>(_szX*_szY);
+      if(_dim == 1) sz = _szX;
+      if(_dim == 2) sz = _szX*_szY;
+      
+      forplan = fftw_malloc<inputT>(sz);
       
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
@@ -154,11 +187,11 @@ public:
       
       if(inPlace == false)
       {
-         doPlan(nx, ny, trueFalseT<false>());
+         doPlan(trueFalseT<false>());
       }
       else
       {
-         doPlan(nx, ny, trueFalseT<true>());
+         doPlan(trueFalseT<true>());
       }
    }
 

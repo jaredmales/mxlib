@@ -62,32 +62,32 @@
   * \ingroup signal_processing
   */
   
+/** \defgroup fft Fast Fourier Transforms
+  * \brief Tools for using the FFT
+  * \ingroup signal_processing
+  */
+  
+/** \defgroup fft_files Headers
+  * \ingroup fft 
+  */
+  
+/** \defgroup fftw_templates Template wrappers for FFTW
+  * \ingroup fft 
+  */
+  
 /** \defgroup psds Power Spectra 
   * \brief Tools for generating and manipulating power spectra
   * \ingroup signal_processing
   */
   
-//----------------------- imaging --------------------  
-/** \defgroup imaging Imaging
-  * \brief Tools for modeling imaging
-  */
 
-/** \defgroup coronagraphs Coronagraphs
-  * \brief Modeling and optimizing coronagraphs
-  * \ingroup imaging
-  /
-  
-/** \defgroup imaging_files Imaging Files
-  * \brief The imaging files
-  * \ingroup imaging
-  */
   
 //----------------------- image_processing --------------------    
 /** \defgroup image_processing Image Processing
   * \brief Tools for processing images
   */
 
-/** \defgroup image_processing_files Image Processing Files
+/** \defgroup image_processing_files Headers
   * \brief Files declaring and defining the image processing tools.
   * \ingroup image_processing
   */
@@ -134,7 +134,6 @@
   * \ingroup fits_processing
   */
   
-  
 /** \defgroup hc_imaging High Contrast Imaging
   * \brief Tools for astronomical high contrast image processing.
   * \ingroup image_processing
@@ -146,6 +145,21 @@
   * \ingroup image_processing
   */
 
+//----------------------- imaging --------------------  
+/** \defgroup imaging Imaging
+  * \brief Tools for modeling imaging
+  */
+
+/** \defgroup coronagraphs Coronagraphs
+  * \brief Modeling and optimizing coronagraphs
+  * \ingroup imaging
+  /
+  
+/** \defgroup imaging_files Imaging Files
+  * \brief The imaging files
+  * \ingroup imaging
+  */
+  
   
 //------------------  
 /** \defgroup plotting Plotting Data

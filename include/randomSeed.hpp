@@ -10,6 +10,7 @@
 
 #include <fcntl.h>
 
+#include "mxError.hpp"
 
 namespace mx
 {
@@ -18,7 +19,10 @@ namespace mx
 /** On Linux systems, uses /dev/urandom to populate the value with sizeof(intT) bytes.  
   * Otherwise, uses time(0) to get time since the epoch.
   *
-  * \param seedval will be populated with the seed.
+  * \param [out] seedval will be populated with the seed.
+  * 
+  * \returns 0 on success.
+  * \returns -1 on error.
   * 
   * \tparam intT is the integer type of seeval. 
   * 
@@ -29,27 +33,46 @@ template<typename intT>
 int randomSeed(intT & seedval)
 {   
    
-#ifdef __linux__
+   #ifdef __linux__
+   
    int fd;
-      
+   
+   errno = 0;
    fd = open("/dev/urandom", O_RDONLY);
 
+   if(fd < 0)
+   {
+      mxPError("randomSeed", errno, "error opening /dev/urandom");
+         
+      return -1;
+   }
+   
    seedval = 0;
 
+   errno = 0;
    int rv =read(fd, &seedval, sizeof(intT));
       
-   close(fd);
       
-    
    if(rv < 0)
    {
-      std::cerr << "mx::randomSeed: read from /dev/urandom returned error\n";
-         
-      return rv;
+      mxPError("randomSeed", errno, "Error on read from /dev/urandom.");
+      close(fd);
+      return -1;
    }
-     
+   
+   close(fd);
+
+   if(rv < sizeof(intT))
+   {
+      mxError("randomSeed", MXE_FILERERR, "Read from /dev/urandom did not return enough bytes");
+         
+      return -1;
+   }
+   
    return 0;
-#endif //__linux__
+
+   
+   #endif //__linux__
    
    
    seedval = time(0);

@@ -16,10 +16,200 @@
 namespace mx
 {
 
+/** \defgroup fftw_template_types Types 
+  * \brief Type specifications for FFTW Templates.
+  *
+  * \ingroup fftw_templates
+  * 
+  * @{
+  */ 
+
+
+///The complex float data type.
 typedef std::complex<float>       complexFT;   
+
+///The complex double data type.
 typedef std::complex<double>      complexDT;
+
+///The complex long double data type.
 typedef std::complex<long double> complexLT;
+
+///The complex __float128 data type.
 typedef std::complex<__float128>  complexQT;
+
+//****** Plans ******//
+
+///Specify the type of the plan based on the real type of the data
+/**
+  * Specializations contain a typedef <b> planT </b> which maps to one of the FFTW plan types: fftwf_plan, fftw_plan, fftwl_plan, or fftwq_plan.
+  * 
+  * \tparam realT is the real floating point type.
+  */ 
+template<typename realT>
+struct fftwPlanSpec;
+
+///Specialization for float
+template<>
+struct fftwPlanSpec<float>
+{
+   /// Specifies fftwf_plan as planT
+   typedef fftwf_plan planT;
+};
+
+///Specialization for double
+template<>
+struct fftwPlanSpec<double>
+{
+   /// Specifies fftw_plan as planT
+   typedef fftw_plan planT;/// Specifies fftwf_plan as planT
+};
+
+///Specialization for long double
+template<>
+struct fftwPlanSpec<long double>
+{
+   /// Specifies fftwl_plan as planT
+   typedef fftwl_plan planT;
+};
+
+///Specialization for __float128
+template<>
+struct fftwPlanSpec<__float128>
+{
+   /// Specifies fftwq_plan as planT
+   typedef fftwq_plan planT;
+};
+
+
+//******* Type Specification *********//
+
+///A structure specifying various types based on the FFT input and output data types.
+/** 
+  */
+template<typename inputDataT, typename ouputDataT>
+struct fftwTypeSpec;
+
+///Specialization for complex float input and complex float output.
+template<>
+struct fftwTypeSpec<complexFT, complexFT>
+{
+   typedef float realT;
+   typedef complexFT inputDataT;
+   typedef complexFT outputDataT;
+   typedef fftwPlanSpec<float>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<float, complexFT>
+{
+   typedef float realT;
+   typedef float inputDataT;
+   typedef complexFT outputDataT;
+   typedef fftwPlanSpec<float>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexFT, float>
+{
+   typedef float realT;
+   typedef complexFT inputDataT;
+   typedef float outputDataT;
+   typedef fftwPlanSpec<float>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexDT,complexDT>
+{
+   typedef double realT;
+   typedef complexDT inputDataT;
+   typedef complexDT outputDataT;
+   typedef fftwPlanSpec<double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<double,complexDT>
+{
+   typedef double realT;
+   typedef double inputDataT;
+   typedef complexDT outputDataT;
+   typedef fftwPlanSpec<double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexDT,double>
+{
+   typedef double realT;
+   typedef complexDT inputDataT;
+   typedef double outputDataT;
+   typedef fftwPlanSpec<double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexLT,complexLT>
+{
+   typedef long double realT;
+   typedef complexLT inputDataT;
+   typedef complexLT outputDataT;
+   typedef fftwPlanSpec<long double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<long double,complexLT>
+{
+   typedef long double realT;
+   typedef long double inputDataT;
+   typedef complexLT outputDataT;
+   typedef fftwPlanSpec<long double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexLT,long double>
+{
+   typedef long double realT;
+   typedef complexLT inputDataT;
+   typedef long double outputDataT;
+   typedef fftwPlanSpec<long double>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexQT,complexQT>
+{
+   typedef __float128 realT;
+   typedef complexQT inputDataT;
+   typedef complexQT outputDataT;
+   typedef fftwPlanSpec<__float128>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<__float128,complexQT>
+{
+   typedef __float128 realT;
+   typedef __float128 inputDataT;
+   typedef complexQT outputDataT;
+   typedef fftwPlanSpec<__float128>::planT planT;
+};
+
+///Specialization for X input and Y output
+template<>
+struct fftwTypeSpec<complexQT,__float128>
+{
+   typedef __float128 realT;
+   typedef complexQT inputDataT;
+   typedef __float128 outputDataT;
+   typedef fftwPlanSpec<__float128>::planT planT;
+};
+
+///@}
 
 template<typename realT>
 int fftw_import_system_wisdom();
@@ -261,170 +451,10 @@ inline void fftw_free<complexQT>( complexQT * p)
    ::fftwq_free( p );
 }
 
-//****** Plans ******//
-template<typename realT>
-struct fftwPlanSpec;
-
-template<>
-struct fftwPlanSpec<float>
-{
-   typedef fftwf_plan planT;
-};
-
-template<>
-struct fftwPlanSpec<double>
-{
-   typedef fftw_plan planT;
-};
-
-template<>
-struct fftwPlanSpec<long double>
-{
-   typedef fftwl_plan planT;
-};
-
-template<>
-struct fftwPlanSpec<__float128>
-{
-   typedef fftwq_plan planT;
-};
 
 
-//******* Type Specification *********//
-template<typename inputDataT, typename ouputDataT>
-struct fftwTypeSpec;
 
-template<>
-struct fftwTypeSpec<complexFT, complexFT>
-{
-   typedef float realT;
-   typedef complexFT inputDataT;
-   typedef complexFT outputDataT;
-   
-   typedef fftwPlanSpec<float>::planT planT;
-   
-};
 
-template<>
-struct fftwTypeSpec<float, complexFT>
-{
-   typedef float realT;
-   typedef float inputDataT;
-   typedef complexFT outputDataT;
-   
-   typedef fftwPlanSpec<float>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexFT, float>
-{
-   typedef float realT;
-   typedef complexFT inputDataT;
-   typedef float outputDataT;
-   
-   typedef fftwPlanSpec<float>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexDT,complexDT>
-{
-   typedef double realT;
-   typedef complexDT inputDataT;
-   typedef complexDT outputDataT;
-   
-   typedef fftwPlanSpec<double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<double,complexDT>
-{
-   typedef double realT;
-   typedef double inputDataT;
-   typedef complexDT outputDataT;
-   
-   typedef fftwPlanSpec<double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexDT,double>
-{
-   typedef double realT;
-   typedef complexDT inputDataT;
-   typedef double outputDataT;
-   
-   typedef fftwPlanSpec<double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexLT,complexLT>
-{
-   typedef long double realT;
-   typedef complexLT inputDataT;
-   typedef complexLT outputDataT;
-   
-   typedef fftwPlanSpec<long double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<long double,complexLT>
-{
-   typedef long double realT;
-   typedef long double inputDataT;
-   typedef complexLT outputDataT;
-   
-   typedef fftwPlanSpec<long double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexLT,long double>
-{
-   typedef long double realT;
-   typedef complexLT inputDataT;
-   typedef long double outputDataT;
-   
-   typedef fftwPlanSpec<long double>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexQT,complexQT>
-{
-   typedef __float128 realT;
-   typedef complexQT inputDataT;
-   typedef complexQT outputDataT;
-   
-   typedef fftwPlanSpec<__float128>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<__float128,complexQT>
-{
-   typedef __float128 realT;
-   typedef __float128 inputDataT;
-   typedef complexQT outputDataT;
-   
-   typedef fftwPlanSpec<__float128>::planT planT;
-   
-};
-
-template<>
-struct fftwTypeSpec<complexQT,__float128>
-{
-   typedef __float128 realT;
-   typedef complexQT inputDataT;
-   typedef __float128 outputDataT;
-   
-   typedef fftwPlanSpec<__float128>::planT planT;
-   
-};
 
 //********* Plan Creation **************//
 template<typename inputDataT, typename outputDataT>

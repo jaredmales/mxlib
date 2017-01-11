@@ -241,17 +241,18 @@ void oneoverf_psd( eigenArrp  & psd,
   * Populates an Eigen array  with
   *
   * \f[
-  *  P(f) = \frac{\beta}{ (f^2 + (1/L_0)^2)^{\alpha/2}} 
+  *  P(k) = \frac{\beta}{ (k^2 + (1/L_0)^2)^{\alpha/2}} e^{ - k^2 l_0^2}
   * \f]
   * 
-  * If you set \f$ L_0 \le 0 \f$ this reverts to standard \f$ 1/f^\alpha \f$ law (i.e. 
-  * it treats this as infinite outer scale).  
+  * If you set \f$ L_0 \le 0 \f$ and \f$ l_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e. 
+  * it treats this as infinite outer scale and inner scale).  
   *
-  * \param psd [output] is the array to populate, allocated.
-  * \param freq [input] is a frequency grid, must be the same logical size as psd
-  * \param alpha [input] is the power law exponent, by convention @f$ alpha > 0 @f$.
-  * \param L0 [input] is the outer scale.  
-  * \param beta [optional input] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
+  * \param [out] psd is the array to populate, allocated.
+  * \param [in] freq is a frequency grid, must be the same logical size as psd
+  * \param [in] alpha is the power law exponent, by convention @f$ alpha > 0 @f$.
+  * \param [in] L0 [optional] is the outer scale. 
+  * \param [in] l0 [optional] is the inner scale. 
+  * \param [in] beta [optional] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then 
   *                           the PSD is normalized using \ref oneoverf_norm.
   *
   * \tparam eigenArrp is the Eigen array type of the psd 
@@ -261,7 +262,8 @@ template<typename eigenArrp, typename eigenArrf>
 void vonKarman_psd( eigenArrp  & psd,
                    eigenArrf & freq,
                    typename eigenArrp::Scalar alpha,
-                   typename eigenArrp::Scalar L0,
+                   typename eigenArrp::Scalar L0 = 0,
+                   typename eigenArrp::Scalar l0 = 0,
                    typename eigenArrp::Scalar beta = -1 )
 {   
    typedef typename eigenArrp::Scalar Scalar;
@@ -304,7 +306,8 @@ void vonKarman_psd( eigenArrp  & psd,
          }
          else
          {
-            p = beta / std::pow(   std::pow(freq(ii,jj),2) + L02, sqrt_alpha);
+            p = beta / pow( pow(freq(ii,jj),2) + L02, sqrt_alpha);
+            if(l0 > 0 ) p *= exp(-1*pow( freq(ii,jj)*l0, 2)); 
          }
          psd(ii,jj) = p;
       }
@@ -376,13 +379,14 @@ void psd_filter( eigenArrNT & noise,
 #endif
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
-/**
+/** The time series should be mean subtracted before passing to this function.
+  * 
   * \param [out] pgram the resultant periodogram.
   * \param [in] ts is input the time-series.
   * \param [in] dt is the sampling time of time-series.
   * \param [in] avgLen is the length of the averaging interval, same units as dt.
   * \param [in] olap is the length of the overlap region, same units as avgLen.
-  * \param [in] w  a vector of length ( (int) avgLen/dt) or empty, which is a window.
+  * \param [in] w  a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
   */
 template<typename floatT>
 void averagePeriodogram( std::vector<floatT> & pgram, 
@@ -397,45 +401,50 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    
    pgram.resize(Nper/2., 0);
    
-   std::vector<floatT> work;
-   work.resize(Nper);
+   //std::vector<floatT> work;
+   //work.resize(Nper);
    
-   std::vector<std::complex<floatT> > fftwork;
+   std::vector<std::complex<floatT> > fftwork, cwork;
+   
    fftwork.resize(Nper);
+   cwork.resize(Nper);
    
    int Navg = ts.size()/Nover;
    
    while(Navg*Nover + Nper > ts.size()) --Navg;
 
-   typename std::vector<floatT>::iterator first, last;
+   //typename std::vector<floatT>::iterator first, last;
    
    mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
 
    for(int i=0;i<Navg;++i)
    {
-      first = ts.begin() + (i*Nover);
-      last = first + Nper;
+      //first = ts.begin() + (i*Nover);
+      //last = first + Nper;
       
-      work.assign(first, last);
-      floatT mean = 0;
-      for (int j=0;j<work.size();++j) mean += work[j];
-
-      mean/=work.size();
+      //work.assign(first, last);
       
-      
-      for(int j=0;j<work.size();++j) 
+      floatT v;
+      //for(int j=0;j<work.size();++j) 
+      for(int j=0;j<Nper;++j) 
       {
-         work[j] = (work[j] - mean);//
-         if(w.size() == Nper) work[j] *= w[j];
+         v = ts[i*Nover + j];
+         //if(w.size() == Nper) work[j] *= w[j];
+         if(w.size() == Nper) v *= w[j];
+         
+         //cwork[j] = std::complex<floatT>(work[j], 0);
+         cwork[j] = std::complex<floatT>(v, 0);
       }
             
-      fft.fft(work.data(), fftwork.data()); 
+            
+            
+      fft( fftwork.data(), cwork.data()); 
        
       for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
 
    }
 
-   for(int j=0;j<pgram.size();++j) pgram[j] /= (work.size()*Navg);
+   for(int j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
    
 
 }

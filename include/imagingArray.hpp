@@ -358,10 +358,12 @@ public:
 
 
    
+template<typename scalarT>
+using imagingArrayT = imagingArray<scalarT,mx::fftwAllocator<scalarT>,0>;
 
-typedef imagingArray<float,mx::fftwAllocator<float>,0> imagingArrayf;
-typedef imagingArray<double,mx::fftwAllocator<double>,0> imagingArrayd;
-typedef imagingArray<std::complex<float>,mx::fftwAllocator<std::complex<float> >,0> imagingArraycf;
+// typedef imagingArray<float,mx::fftwAllocator<float>,0> imagingArrayf;
+// typedef imagingArray<double,mx::fftwAllocator<double>,0> imagingArrayd;
+// typedef imagingArray<std::complex<float>,mx::fftwAllocator<std::complex<float> >,0> imagingArraycf;
 
 
 } //namespace mx
