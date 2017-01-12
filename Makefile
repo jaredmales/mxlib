@@ -63,7 +63,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  fourierModes.hpp \
                  fraunhoferImager.hpp \
                  gaussian.hpp \
-                 geo.h \
+                 geo.hpp \
                  gnuPlot.hpp \
                  gramSchmidt.hpp \
                  gslInterpolation.hpp \

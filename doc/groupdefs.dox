@@ -17,6 +17,11 @@
   * \ingroup gen_math
   */
   
+/** \defgroup geo Geometry and Geodesy
+  * \brief Functions for basic geometry and working with earth coordinate systems
+  * \ingroup gen_math
+  */
+
 /** \defgroup gen_math_gaussians The Gaussian Function
   * \brief Utilities for working with the Gaussian function
   * \ingroup gen_math
@@ -200,9 +205,6 @@
   * \brief Constants for astronomy
   */
 
-/** \defgroup geo Geometry and Geodesy
-  * \brief Functions for basic geometry and working with earth coordinate systems
-  */
   
   
 /** \defgroup utils General Utilities

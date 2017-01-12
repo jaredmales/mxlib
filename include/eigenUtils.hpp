@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <sofa.h>
-#include "geo.h"
 
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
