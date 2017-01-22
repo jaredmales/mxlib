@@ -280,7 +280,7 @@ bool comp_fourierModeDef_PandV (const fourierModeDef & spf1, const fourierModeDe
 
 
 ///Generate a Poyneer and Veran spatial frequency grid.  
-/**
+/**  \todo use push_back instead of resize
   * \param spf
   * \param N is the linear number of degrees of freedom.  
   */
@@ -372,7 +372,8 @@ bool comp_fourierModeDef (const fourierModeDef & spf1, const fourierModeDef & sp
 }
 
 ///Generate a circular spatial frequency grid.  
-/**
+/** \todo use push_back instead of resize
+  * 
   * \param spf
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
@@ -424,7 +425,7 @@ int makeFourierModeFreqs_Circ( std::vector<fourierModeDef> & spf,
 } 
 
 ///Generate a rectangular spatial frequency grid.  
-/**
+/** 
   * \param spf
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
@@ -435,8 +436,10 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
    
    int Nmodes = 2*((2*Ndx + 1)*(Ndx + 1) - (Ndx+1));
 
-   spf.resize(Nmodes);
-      
+   //spf.resize(Nmodes);
+   spf.clear();
+   spf.reserve(Nmodes);
+   
    int modeCount = 0;
    
    for(int m=-Ndx; m <= Ndx; ++m)
@@ -453,6 +456,8 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
                return -1;
             }
             
+            spf.push_back( fourierModeDef() );
+            
             spf[modeCount].m = m;
             spf[modeCount].n = n;
             spf[modeCount].p = p;
@@ -462,9 +467,12 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
          }
       }
    }
-
+   
+   
+   //std::cerr << "mfm: " << Nmodes << " " << modeCount << "\n";
+   
    //Erase any extra modes (there shouldn't be any).
-   spf.erase(spf.begin()+modeCount, spf.end());
+   //spf.erase(spf.begin()+modeCount, spf.end());
    
    //And now sort it
    std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
