@@ -314,69 +314,6 @@ void vonKarman_psd( eigenArrp  & psd,
    }   
 }
 
-#if 0
-///Filter a noise array by the given PSD using Fourier convolution.
-/**
-  * \param [in,out] noise  is the noise array. On output it is replaced with the filtered noise.
-  * \param [in] psd is the 2-sided PSD with which to filter the noise.
-  * \param [out] ft [optional] is used to contain PSD of the noise before the inverse PSD, provided to give access to the intermediate step.
-  * 
-  * \tparam eigenArrNT is the Eigen-like array type of the noise
-  * \tparam eigenArrPT is the Eigen-like array type of the PSD
-  * \tparam fftArrT is the Eigen-like array type of the intermediate FFT data
-  */
-template<typename eigenArrNT, typename eigenArrPT, typename fftArrT>
-void psd_filter( eigenArrNT & noise,
-                 eigenArrPT & psd ,
-                 fftArrT & ft )
-{
-   typedef std::complex<typename eigenArrNT::Scalar> complexT;
-   
-   Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft2(noise.rows(), noise.cols());
-   Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> cnoise(noise.rows(), noise.cols());
-   
-   //Make noise a complex number
-   for(int ii=0;ii<noise.rows();++ii)
-   {
-      for(int jj=0; jj<noise.cols(); ++jj)
-      {
-         cnoise(ii,jj) = complexT(noise(ii,jj),0);// noise(ii,jj));
-      }
-   }
-   
-   mx::fftT<complexT, complexT, 2, 0> fft(noise.rows(), noise.cols());
-   mx::fftT<complexT, complexT, 2, 0> fftR(noise.rows(), noise.cols(), FFTW_BACKWARD);
-   
-   fft( ft.data(), cnoise.data() );
-   
-   ft *= psd.sqrt();
-        
-   fftR( ft2.data(), ft.data() ); 
-   
-   noise = ft2.real()/(noise.rows()*noise.cols());
-   
-}
-
-///Filter a noise array by the given PSD using Fourier convolution.
-/**
-  * \param [in,out] noise  is the noise array. On output it is replaced with the filtered noise.
-  * \param [in] psd is the 2-sided PSD with which to filter the noise.
-  * 
-  * \tparam eigenArrNT is the Eigen-like array type of the noise
-  * \tparam eigenArrPT is the Eigen-like array type of the PSD
-  */
-template<typename eigenArrNT, typename eigenArrPT>
-void psd_filter( eigenArrNT & noise,
-                 eigenArrPT & psd )
-{
-   typedef std::complex<typename eigenArrNT::Scalar> complexT;
-   
-   Eigen::Array< complexT, Eigen::Dynamic, Eigen::Dynamic> ft(noise.rows(), noise.cols());
-
-   psd_filter(noise, psd, ft);
-}
-
-#endif
 
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
 /** The time series should be mean subtracted before passing to this function.
@@ -401,9 +338,6 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    
    pgram.resize(Nper/2., 0);
    
-   //std::vector<floatT> work;
-   //work.resize(Nper);
-   
    std::vector<std::complex<floatT> > fftwork, cwork;
    
    fftwork.resize(Nper);
@@ -413,40 +347,42 @@ void averagePeriodogram( std::vector<floatT> & pgram,
    
    while(Navg*Nover + Nper > ts.size()) --Navg;
 
-   //typename std::vector<floatT>::iterator first, last;
    
    mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
 
    for(int i=0;i<Navg;++i)
    {
-      //first = ts.begin() + (i*Nover);
-      //last = first + Nper;
-      
-      //work.assign(first, last);
       
       floatT v;
-      //for(int j=0;j<work.size();++j) 
+      
+//       v = 0;
+//       for(int j=0;j<Nper;++j) 
+//       {
+//          v += ts[i*Nover + j];
+//       }
+//       v /= Nper;
+//       
+//       for(int j=0;j<Nper;++j) 
+//       {
+//          ts[i*Nover + j] -= v;
+//       }
+      
       for(int j=0;j<Nper;++j) 
       {
          v = ts[i*Nover + j];
-         //if(w.size() == Nper) work[j] *= w[j];
+ 
          if(w.size() == Nper) v *= w[j];
          
-         //cwork[j] = std::complex<floatT>(work[j], 0);
          cwork[j] = std::complex<floatT>(v, 0);
       }
-            
-            
-            
+         
       fft( fftwork.data(), cwork.data()); 
        
       for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
-
    }
 
    for(int j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
    
-
 }
 
 ///Augment a 1-sided PSD to standard FFT form.

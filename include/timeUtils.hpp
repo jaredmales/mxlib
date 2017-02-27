@@ -89,7 +89,7 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
 }
 
 ///Converts a Gregorian calendar date into modified Julian date (MJD).
-/** Uses the SOFA function iauCal2jd.  Note this is not a template in floating point
+/** Uses the SOFA function iauCal2jd.  This is not a template in floating point
   * because SOFA is always double precision. 
   *
   * \param [in] yr Gregorian calendar year
@@ -108,17 +108,17 @@ void parse_hms(const std::string & hmsstr, floatT & h, floatT & m, floatT &s)
 inline 
 double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
 {
-   double djm0, djm;
+   double djm0;
+   double djm;
    
    int rv = iauCal2jd(yr, mon, day, &djm0, &djm);
    
    if (rv < 0) return (double) rv;
    
-   djm += ( (double) hr)/ (24.0);
-   djm += ( (double) min)/ (60.0*24.0);
-   djm +=  sec / (3600.0*24.0);
    
-   return djm;
+   djm0 = djm + (( (double) hr)/ (24.0) + ( (double) min)/ (60.0*24.0) + sec / (3600.0*24.0));
+   
+   return djm0;
 }
    
 ///Parse an ISO8601 date of the form "YYYY-MM-DDTHH:MM:SS.S" and return the modified Julian date (MJD)

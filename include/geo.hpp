@@ -93,6 +93,44 @@ realT angleDiff(realT q1, realT q2)
 }
 
 
+///Calculate the mean of a set of angles, correctly across 0/360.
+/** Calculates the mean by decomposing into vectors and averaging the components. This accounts for crossing 0/360.  
+  * 
+  * \param q vector of angles to average.
+  *
+  * \returns the mean angle
+  *
+  * \tparam degrad controls whether angles are degrees (false) or radians (true)
+  * \tparam realT is the type in which to do arithmetic
+  * 
+  */
+template<int degrad = 0, typename realT>
+realT angleMean(std::vector<realT> q)
+{ 
+   static_assert(std::is_floating_point<realT>::value);
+   
+   realT s = 0;
+   realT c = 0;
+
+   realT d2r;
+   
+   if( degrad ) d2r = 1;
+   else d2r  = boost::math::constants::pi<realT>()/static_cast<realT>(180);
+
+   for(int i=0; i< q.size(); ++i)
+   {
+      s += sin( q[i]*d2r );
+      c += cos( q[i]*d2r );
+   }
+   
+   s /= q.size();
+   c /= q.size();
+   
+   return atan(s/c)/d2r ;
+
+}
+
+
 /// @}
 
 } //namespace mx

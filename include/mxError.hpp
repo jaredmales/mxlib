@@ -137,7 +137,14 @@ namespace mx
   */   
 #define MXE_FILECERR 1054
 #define MXE_FILECERR_MSG "An error occurred while closing a file."
-   
+
+/** \def MXE_FILENOTFOUND
+  * \brief An error occurred while closing a file.
+  * \ingroup mxe_errors
+  */   
+#define MXE_FILENOTFOUND 1059
+#define MXE_FILENOTFOUND_MSG "The file was not found."
+
 /** \def MXE_PROCERR
   * \brief An error occrred while starting a process.
   * \ingroup mxe_errors
@@ -195,6 +202,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_FILECERR:
          message = MXE_FILECERR_MSG;
          return "MXE_FILECERR";
+      case MXE_FILENOTFOUND:
+         message = MXE_FILENOTFOUND_MSG;
+         return "MXE_FILENOTFOUND";
       case MXE_PROCERR:
          message = MXE_PROCERR_MSG;
          return "MXE_PROCERR";

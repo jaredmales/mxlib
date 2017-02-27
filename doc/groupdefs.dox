@@ -76,7 +76,7 @@
   * \ingroup fft 
   */
   
-/** \defgroup fftw_templates Template wrappers for FFTW
+/** \defgroup fftw_templates Template FFTW
   * \ingroup fft 
   */
   

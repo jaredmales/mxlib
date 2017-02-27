@@ -132,13 +132,11 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       //Save one space for adding eol
       fin.getline(line, lineSize-1, eol);
             
-      
-      
       int i=0;
       int l = strlen(line);
 
       if(l <= 0) break;
-      
+   
       //std::cerr << line << "\n";
       
       //Find start of comment and end line at that point.
@@ -160,19 +158,21 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
    
-   if(fin.fail())
+   //getline will have set fail if there was no new line on the last line.
+   if(fin.bad() && !fin.fail())
    {
       if(errno != 0)
       {
-         mxPError("readColumns", errno, "Occurred while writing to " + fname + ".");
+         mxPError("readColumns", errno, "Occurred while reading from " + fname + ".");
       }
       else
       {
-         mxError("readColumns", MXE_FILEWERR, "Occurred while writing to " + fname + ".");
+         mxError("readColumns", MXE_FILERERR, "Occurred while reading from " + fname + ".");
       }
       return;
    }
    
+   fin.clear(); //Clear the fail bit which may have been set by getline
    fin.close();
    
    if(fin.fail())

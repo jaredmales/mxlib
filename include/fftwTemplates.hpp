@@ -15,9 +15,14 @@
 
 namespace mx
 {
+/** \addtogroup fftw_templates
+  *
+  * A templatized interface to the fftw library.
+  * 
+  */
 
 /** \defgroup fftw_template_types Types 
-  * \brief Type specifications for FFTW Templates.
+  * \brief Types and type specifications for FFTW Templates.
   *
   * \ingroup fftw_templates
   * 
@@ -39,16 +44,33 @@ typedef std::complex<__float128>  complexQT;
 
 //****** Plans ******//
 
+/** \defgroup fftw_template_plan_specs Plan Specification 
+  * \brief Plan specifications for FFTW Templates.
+  *
+  * \ingroup fftw_template_types
+  * 
+  * @{
+  */
+
 ///Specify the type of the plan based on the real type of the data
 /**
-  * Specializations contain a typedef <b> planT </b> which maps to one of the FFTW plan types: fftwf_plan, fftw_plan, fftwl_plan, or fftwq_plan.
   * 
   * \tparam realT is the real floating point type.
   */ 
 template<typename realT>
 struct fftwPlanSpec;
 
-///Specialization for float
+//For doxygen only:
+#ifdef __DOXY_ONLY__
+template<typename realT>
+struct fftwPlanSpec
+{
+   /// Specializations typedef planT as fftwf_plan, fftw_plan, fftwl_plan, or fftwq_plan.
+   typedef fftwX_plan planT;
+};
+#endif
+
+///Specialization of fftwPlanSpec for float
 template<>
 struct fftwPlanSpec<float>
 {
@@ -56,7 +78,7 @@ struct fftwPlanSpec<float>
    typedef fftwf_plan planT;
 };
 
-///Specialization for double
+///Specialization of fftwPlanSpec for double
 template<>
 struct fftwPlanSpec<double>
 {
@@ -64,7 +86,7 @@ struct fftwPlanSpec<double>
    typedef fftw_plan planT;/// Specifies fftwf_plan as planT
 };
 
-///Specialization for long double
+///Specialization of fftwPlanSpec for long double
 template<>
 struct fftwPlanSpec<long double>
 {
@@ -72,7 +94,7 @@ struct fftwPlanSpec<long double>
    typedef fftwl_plan planT;
 };
 
-///Specialization for __float128
+///Specialization of fftwPlanSpec for __float128
 template<>
 struct fftwPlanSpec<__float128>
 {
@@ -80,153 +102,226 @@ struct fftwPlanSpec<__float128>
    typedef fftwq_plan planT;
 };
 
+///@}
 
 //******* Type Specification *********//
 
+/** \defgroup fftw_template_type_specs Type Specification 
+  * \brief Type specifications for FFTW Templates.
+  *
+  * \ingroup fftw_template_types
+  * 
+  * @{
+  */ 
+
 ///A structure specifying various types based on the FFT input and output data types.
-/** 
+/** Provides various typedefs to specify which fftw functions to compile.
+  * 
+  * See the specializations: 
+  * \li   fftwTypeSpec<complexFT,complexFT>
+  * \li   fftwTypeSpec<float, complexFT>
+  * \li   fftwTypeSpec<complexFT, float>
+  * \li   fftwTypeSpec<complexDT,complexDT>
+  * \li   fftwTypeSpec<double, complexDT>
+  * \li   fftwTypeSpec<complexDT, double>
+  * \li   fftwTypeSpec<complexLT,complexLT>
+  * \li   fftwTypeSpec<long double, complexLT>
+  * \li   fftwTypeSpec<complexLT, long double>
+  * \li   fftwTypeSpec<complexQT,complexQT>
+  * \li   fftwTypeSpec<__float128, complexQT>
+  * \li   fftwTypeSpec<complexQT, __float128>
+  * 
+  * \tparam _inputDataT is the data type of the input array
+  * \tparam _outputDataT is the data type of the output array
+  * 
   */
-template<typename inputDataT, typename ouputDataT>
+template<typename _inputDataT, typename _outputDataT>
 struct fftwTypeSpec;
 
-///Specialization for complex float input and complex float output.
+//For doxygen only:
+#ifdef __DOXY_ONLY__
+template<typename _inputDataT, typename _outputDataT>
+struct fftwTypeSpec
+{
+   typedef _realT realT; ///< The real data type (_realT is actually defined in specializations).
+   typedef std::complex<realT> complexT; ///< The complex data type
+   typedef _inputDataT inputDataT; ///< The input array data type
+   typedef _outputDataT outputDataT; ///< The output array data type
+   typedef fftwPlanSpec<realT>::planT planT; ///< The plan type
+};
+#endif
+
+///Specialization of fftwTypeSpec for complex-float input and complex-float output.
+/** 
+  */
 template<>
 struct fftwTypeSpec<complexFT, complexFT>
 {
-   typedef float realT;
-   typedef complexFT inputDataT;
-   typedef complexFT outputDataT;
-   typedef fftwPlanSpec<float>::planT planT;
+   typedef float realT; ///< The real data type
+   typedef complexFT complexT; ///< The complex data type
+   typedef complexFT inputDataT; ///< The input array data type
+   typedef complexFT outputDataT; ///< The output array data type
+   typedef fftwPlanSpec<float>::planT planT; ///< The plan type
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for real-float input and complex-float output
 template<>
 struct fftwTypeSpec<float, complexFT>
 {
-   typedef float realT;
-   typedef float inputDataT;
-   typedef complexFT outputDataT;
-   typedef fftwPlanSpec<float>::planT planT;
+   typedef float realT; ///< The real data type
+   typedef complexFT complexT; ///< The complex data type
+   typedef float inputDataT; ///< The input array data type
+   typedef complexFT outputDataT; ///< The output array data type
+   typedef fftwPlanSpec<float>::planT planT; ///< The plan type
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-float input and real-float output
 template<>
 struct fftwTypeSpec<complexFT, float>
 {
-   typedef float realT;
+   typedef float realT; ///< The real data type
+   typedef complexFT complexT;
    typedef complexFT inputDataT;
    typedef float outputDataT;
    typedef fftwPlanSpec<float>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-double input and complex-double output
 template<>
 struct fftwTypeSpec<complexDT,complexDT>
 {
-   typedef double realT;
+   typedef double realT; ///< The real data type
+   typedef complexDT complexT;
    typedef complexDT inputDataT;
    typedef complexDT outputDataT;
    typedef fftwPlanSpec<double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for real-double input and complex-double output
 template<>
 struct fftwTypeSpec<double,complexDT>
 {
-   typedef double realT;
+   typedef double realT; ///< The real data type
+   typedef complexDT complexT;
    typedef double inputDataT;
    typedef complexDT outputDataT;
    typedef fftwPlanSpec<double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-double input and double output
 template<>
 struct fftwTypeSpec<complexDT,double>
 {
-   typedef double realT;
+   typedef double realT; ///< The real data type
+   typedef complexDT complexT;
    typedef complexDT inputDataT;
    typedef double outputDataT;
    typedef fftwPlanSpec<double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-long-double input and complex-long-double output
 template<>
 struct fftwTypeSpec<complexLT,complexLT>
 {
-   typedef long double realT;
+   typedef long double realT; ///< The real data type
+   typedef complexLT complexT;
    typedef complexLT inputDataT;
    typedef complexLT outputDataT;
    typedef fftwPlanSpec<long double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for real-long-double input and complex-long-double output
 template<>
 struct fftwTypeSpec<long double,complexLT>
 {
-   typedef long double realT;
+   typedef long double realT; ///< The real data type
+   typedef complexLT complexT;
    typedef long double inputDataT;
    typedef complexLT outputDataT;
    typedef fftwPlanSpec<long double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-long-double input and real-long-double output
 template<>
 struct fftwTypeSpec<complexLT,long double>
 {
-   typedef long double realT;
+   typedef long double realT; ///< The real data type
+   typedef complexLT complexT;
    typedef complexLT inputDataT;
    typedef long double outputDataT;
    typedef fftwPlanSpec<long double>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-quad input and complex-quad output
 template<>
 struct fftwTypeSpec<complexQT,complexQT>
 {
-   typedef __float128 realT;
+   typedef __float128 realT; ///< The real data type
+   typedef complexQT complexT;
    typedef complexQT inputDataT;
    typedef complexQT outputDataT;
    typedef fftwPlanSpec<__float128>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for real-quad input and complex-quad output
 template<>
 struct fftwTypeSpec<__float128,complexQT>
 {
-   typedef __float128 realT;
+   typedef __float128 realT; ///< The real data type
+   typedef complexQT complexT;
    typedef __float128 inputDataT;
    typedef complexQT outputDataT;
    typedef fftwPlanSpec<__float128>::planT planT;
 };
 
-///Specialization for X input and Y output
+///Specialization of fftwTypeSpec for complex-quad input and real-quad output
 template<>
 struct fftwTypeSpec<complexQT,__float128>
 {
-   typedef __float128 realT;
+   typedef __float128 realT; ///< The real data type
+   typedef complexQT complexT;
    typedef complexQT inputDataT;
    typedef __float128 outputDataT;
    typedef fftwPlanSpec<__float128>::planT planT;
 };
-
+///@}
 ///@}
 
+/** \defgroup fftw_template_wisdom Wisdom 
+  * \brief Wrappers for working with fftw wisdom.
+  *
+  * \ingroup fftw_templates.
+  * 
+  * @{
+  */ 
+
+///Template wrapper for fftwX_import_system_wisdom();
+/**
+  * \retval 0 on failure
+  * \retval 1 on success
+  * 
+  * \tparam realT the real floating point type.
+  */ 
 template<typename realT>
 int fftw_import_system_wisdom();
 
+//specializations don't need to be doxygen-ed:
+
+//Template wrapper for fftwf_import_system_wisdom();
 template<>
 inline int fftw_import_system_wisdom<float>()
 {
    return ::fftwf_import_system_wisdom();
 }
 
+//Template wrapper for fftw_import_system_wisdom();
 template<>
 inline int fftw_import_system_wisdom<double>()
 {
    return ::fftw_import_system_wisdom();
 }
 
-
+//Template wrapper for fftwl_import_system_wisdom();
 template<>
 inline int fftw_import_system_wisdom<long double>()
 {
@@ -234,13 +329,22 @@ inline int fftw_import_system_wisdom<long double>()
 }
 
 
+//Template wrapper for fftwq_import_system_wisdom();
 template<>
 inline int fftw_import_system_wisdom<__float128>()
 {
    return ::fftwq_import_system_wisdom();
 }
 
-
+///Template wrapper for fftwX_import_wisdom_from_filename(const char *);
+/**
+  * \param filename is the name of the wisdom file
+  * 
+  * \retval 0 on failure
+  * \retval 1 on success
+  * 
+  * \tparam realT the real floating point type.
+  */
 template<typename realT>
 inline int fftw_import_wisdom_from_filename( const char * filename );
 
@@ -272,7 +376,15 @@ inline int fftw_import_wisdom_from_filename<__float128>( const char * filename )
    return ::fftwq_import_wisdom_from_filename( filename );
 }
 
-
+///Template wrapper for fftwX_export_wisdom_to_filename(const char *);
+/**
+  * \param filename is the name of the wisdom file
+  * 
+  * \retval 0 on failure
+  * \retval 1 on success
+  * 
+  * \tparam realT the real floating point type.
+  */
 template<typename realT>
 int fftw_export_wisdom_to_filename(const char * filename);
 
@@ -304,43 +416,25 @@ inline int fftw_export_wisdom_to_filename<__float128>(const char *filename)
    return ::fftwq_export_wisdom_to_filename( filename );
 }
 
-
-template<typename realT>
-void fftw_make_planner_thread_safe();
+///@} fftw_template_wisdom
 
 
-template<>
-inline void fftw_make_planner_thread_safe<float>()
-{
-   ::fftwf_make_planner_thread_safe();
-}
-
-
-template<>
-inline void fftw_make_planner_thread_safe<double>()
-{
-   ::fftw_make_planner_thread_safe();
-}
-
-
-template<>
-inline void fftw_make_planner_thread_safe<long double>()
-{
-   ::fftwl_make_planner_thread_safe();
-}
-
-
-template<>
-inline void fftw_make_planner_thread_safe<__float128>()
-{
-   ::fftwl_make_planner_thread_safe();
-}
-
+/** \defgroup fftw_template_alloc Allocation
+  * \brief Wrappers for fftw memory allocation and de-allocation functions.
+  *
+  * \note Here the call to sizeof() is implicit, so you only specify the number of elements, not the number of bytes.
+  * 
+  * \ingroup fftw_templates.
+  * 
+  * @{
+  */ 
 
 //************ Allocation ************************//
 
-///Call to fftw_malloc, but with type cast.
+///Call to fftw_malloc, with type cast.
 /**
+  * \note Here the call to sizeof() is implicit, so you only specify the number of elements, not the number of bytes.
+  * 
   * \param n is the number of type realT elements, not the number of bytes.
   */ 
 template<typename realT>
@@ -452,11 +546,67 @@ inline void fftw_free<complexQT>( complexQT * p)
 }
 
 
+///@} fftw_template_alloc
+
+/** \defgroup fftw_template_plans Planning 
+  * \brief Wrappers for working with fftw plans.
+  *
+  * \ingroup fftw_templates.
+  * 
+  * @{
+  */ 
+
+///Wrapper for fftwX_make_planner_thread_safe()
+/**
+  * \tparam realT the real floating point type
+  */ 
+template<typename realT>
+void fftw_make_planner_thread_safe();
 
 
+template<>
+inline void fftw_make_planner_thread_safe<float>()
+{
+   ::fftwf_make_planner_thread_safe();
+}
+
+
+template<>
+inline void fftw_make_planner_thread_safe<double>()
+{
+   ::fftw_make_planner_thread_safe();
+}
+
+
+template<>
+inline void fftw_make_planner_thread_safe<long double>()
+{
+   ::fftwl_make_planner_thread_safe();
+}
+
+
+template<>
+inline void fftw_make_planner_thread_safe<__float128>()
+{
+   ::fftwl_make_planner_thread_safe();
+}
 
 
 //********* Plan Creation **************//
+
+///Wrapper for the fftwX_plan_dft functions
+/**
+  * \param n is a vector of ints containing the size of each dimension.
+  * \param in is the input data array
+  * \param out is the output data array
+  * \param sign specifies forward or backwards, i.e. FFTW_FORWARD or FFTW_BACKWARD.
+  * \param flags other fftw flags
+  *
+  * \returns an fftw plan for the types specified.
+  * 
+  * \tparam inputDataT the data type of the input array
+  * \tparam outputDataT the data type of the output array
+  */ 
 template<typename inputDataT, typename outputDataT>
 typename fftwTypeSpec<inputDataT,outputDataT>::planT fftw_plan_dft( std::vector<int> n, 
                                                                     inputDataT * in, 
@@ -589,7 +739,28 @@ inline fftwTypeSpec<complexQT, __float128>::planT fftw_plan_dft<complexQT, __flo
    return ::fftwq_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwq_complex*>(in), out, flags);
 }
 
+///@} fftw_template_plans
+
+
+/** \defgroup fftw_template_exec Execution 
+  * \brief Wrappers for executing with fftw plans.
+  *
+  * \ingroup fftw_templates.
+  * 
+  * @{
+  */ 
+
 //*********  Plan Execution *************//
+
+/// Execute the given plan on the given arrays
+/**
+  * \param plan the pre-planned plan
+  * \param in the input data array
+  * \param out the output data array
+  * 
+  * \tparam inputDataT the data type of the input array
+  * \tparam outputDataT the data type of the output array
+  */
 template<typename inputDataT, typename outputDataT>
 void fftw_execute_dft( typename fftwTypeSpec<inputDataT, outputDataT>::planT plan, 
                        inputDataT * in, 
@@ -615,6 +786,12 @@ inline void fftw_execute_dft<complexDT,complexDT>( fftwTypeSpec<complexDT, compl
 
 //****** Plan Destruction *********//
 
+/// Destroy the given plan
+/**
+  * \param plan is the plan to destroy
+  *
+  * \tparam realT is the real floating point type of the plan
+  */ 
 template<typename realT>
 void fftw_destroy_plan( typename fftwPlanSpec<realT>::planT plan );
 
@@ -642,7 +819,7 @@ inline void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan 
    ::fftwq_destroy_plan(plan);
 }
 
-
+///@} fftw_template_exec
 
 }//namespace mx
 

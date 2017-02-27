@@ -75,7 +75,7 @@ void gramSchmidt(eigenTout & out, const eigenTin & in)
 template<int progress=0, typename eigenTout, typename eigenTin, typename eigenTWin>
 void gramSchmidt(eigenTout & out, const eigenTin & in, const eigenTWin & window)
 {
-   out.resize(in.rows(), in.cols());
+   //out.resize(in.rows(), in.cols());
 
    out.col(0) = in.col(0);
    
