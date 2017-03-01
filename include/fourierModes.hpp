@@ -563,48 +563,7 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
    
    return 0;
    
-   //spf.resize(Nmodes);
-//   spf.clear();
-//   spf.reserve(Nmodes);
-   
-//    int modeCount = 0;
-//    
-//    for(int m=-Ndx; m <= Ndx; ++m)
-//    {      
-//       for(int n=0; n <= Ndx; ++n)
-//       {
-//          if( n==0 && m <=0 ) continue;
-//                   
-//          for(int p=-1; p<=1; p+=2)
-//          {
-//             if(modeCount >= Nmodes)
-//             {
-//                mxError("makeFourierModeFreqs_Rect", MXE_SIZEERR, "mode count exceeded expected number of modes");
-//                return -1;
-//             }
-//             
-//             spf.push_back( fourierModeDef() );
-//             
-//             spf[modeCount].m = m;
-//             spf[modeCount].n = n;
-//             spf[modeCount].p = p;
-//             ++modeCount;
-//             
-// 
-//          }
-//       }
-//    }
-   
-   
-   //std::cerr << "mfm: " << Nmodes << " " << modeCount << "\n";
-   
-   //Erase any extra modes (there shouldn't be any).
-   //spf.erase(spf.begin()+modeCount, spf.end());
-   
-   //And now sort it
-   //std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
-   
-   return 0;
+
 } 
  
 
