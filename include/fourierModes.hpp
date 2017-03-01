@@ -371,6 +371,7 @@ bool comp_fourierModeDef (const fourierModeDef & spf1, const fourierModeDef & sp
    return (k1 < k2); 
 }
 
+
 ///Generate a circular spatial frequency grid.  
 /** \todo use push_back instead of resize
   * 
@@ -424,9 +425,120 @@ int makeFourierModeFreqs_Circ( std::vector<fourierModeDef> & spf,
    return 0;
 } 
 
+///Calculate the index of a Fourier mode given its (m,n,p) coordinates.
+/** The index increases counter-clockwise from the m axis in squares, with p==-1 being even and p==1 being odd.
+  * 
+  * \param [in] m is the m spatial frequency coordinate
+  * \param [in] n is the n spatial frequency coordinage
+  * \param [in] p is the parity, +/-1, for sine or cosine or specifiying the modified Fourier mode.
+  *
+  * \returns the index of the Fourier mode on success
+  * \returns -1 on an error.
+  */ 
+int fourierModeNumber(int m, int n, int p)
+{
+
+   if( p != -1 && p != 1)
+   {
+      mxError("fourierModeCoordinates", MXE_INVALIDARG, "p must +/-1");      
+      return -1;
+   }
+
+   if(m ==0 && n == 0)
+   {
+      mxError("fourierModeCoordinates", MXE_INVALIDARG, "piston is ignored");
+      return -1;
+   }
+
+
+   int m0 = std::max(abs(m),abs(n));
+   
+   int i0 = 2*(m0*m0 - m0);
+
+   int di0= 4*m0;
+
+   int di;
+   
+   if( m == m0 )
+   {
+      di = n;
+   }
+   else if( m == - m0 )
+   {
+      di = 4*m0 - n;
+   }
+   else
+   {
+      di = 2*m0 - m;
+      
+   }
+
+   return 2*(i0 + di) + (1 + p)/2;
+}
+
+///Calculate the (m,n,p) coordinates of a Fourier mode given its index.
+/** The index increases counter-clockwise from the m axis in squares, with p==-1 being even and p==1 being odd.
+  * 
+  * \param [out] m is the m spatial frequency coordinate
+  * \param [out] n is the n spatial frequency coordinage
+  * \param [out] p is the parity, +/-1, for sine or cosine or specifiying the modified Fourier mode.
+  * \param [in] i is the mode index.
+  * 
+  * \retval 0 on success
+  * \retval -1 on an error.
+  */ 
+int fourierModeCoordinates( int & m, int & n, int & p, int i)
+{
+   if(i < 0)
+   {
+      mxError("fourierModeCoordinates", MXE_INVALIDARG, "i must be >= 0");
+      m = 0;
+      n = 0;
+      p = 0;
+      return -1;
+   }
+   
+   
+   int ii = (i)/2;
+   
+   int m0 = 1;
+   
+   while( 2*(m0*m0-m0) <= ii) ++m0;
+   --m0;
+
+   int di = ii - 2*(m0*m0-m0);
+   
+   if( di <= m0 )
+   {
+      m = m0;
+      n = di;
+   }
+   else if( di <= 3*m0 )
+   {
+      m = 2*m0 - di;
+      n = m0;
+   }
+   else
+   {
+      m = -m0;
+      n = 4*m0 - di;
+   }
+   
+   p = -1 + 2*(i%2);
+   
+   return 0;
+}
+
+
+
+
+
+
+
+
 ///Generate a rectangular spatial frequency grid.  
 /** 
-  * \param spf
+  * \param spf is a vector of fourierModeDef structures, which will be resized and populated.
   * \param N is the linear number of degrees of freedom.  The number of modes is ((N+1)(N+1) - 1).
   */
 int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf, 
@@ -436,37 +548,52 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
    
    int Nmodes = 2*((2*Ndx + 1)*(Ndx + 1) - (Ndx+1));
 
-   //spf.resize(Nmodes);
-   spf.clear();
-   spf.reserve(Nmodes);
+   spf.resize(Nmodes);
    
-   int modeCount = 0;
+   int m, n, p;
    
-   for(int m=-Ndx; m <= Ndx; ++m)
-   {      
-      for(int n=0; n <= Ndx; ++n)
-      {
-         if( n==0 && m <=0 ) continue;
-                  
-         for(int p=-1; p<=1; p+=2)
-         {
-            if(modeCount >= Nmodes)
-            {
-               mxError("makeFourierModeFreqs_Rect", MXE_SIZEERR, "mode count exceeded expected number of modes");
-               return -1;
-            }
-            
-            spf.push_back( fourierModeDef() );
-            
-            spf[modeCount].m = m;
-            spf[modeCount].n = n;
-            spf[modeCount].p = p;
-            ++modeCount;
-            
-
-         }
-      }
+   for(int i=0; i< Nmodes; ++i)
+   {
+      fourierModeCoordinates(m, n, p, i);
+      
+      spf[i].m = m;
+      spf[i].n = n;
+      spf[i].p = p;
    }
+   
+   return 0;
+   
+   //spf.resize(Nmodes);
+//   spf.clear();
+//   spf.reserve(Nmodes);
+   
+//    int modeCount = 0;
+//    
+//    for(int m=-Ndx; m <= Ndx; ++m)
+//    {      
+//       for(int n=0; n <= Ndx; ++n)
+//       {
+//          if( n==0 && m <=0 ) continue;
+//                   
+//          for(int p=-1; p<=1; p+=2)
+//          {
+//             if(modeCount >= Nmodes)
+//             {
+//                mxError("makeFourierModeFreqs_Rect", MXE_SIZEERR, "mode count exceeded expected number of modes");
+//                return -1;
+//             }
+//             
+//             spf.push_back( fourierModeDef() );
+//             
+//             spf[modeCount].m = m;
+//             spf[modeCount].n = n;
+//             spf[modeCount].p = p;
+//             ++modeCount;
+//             
+// 
+//          }
+//       }
+//    }
    
    
    //std::cerr << "mfm: " << Nmodes << " " << modeCount << "\n";
@@ -475,7 +602,7 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> & spf,
    //spf.erase(spf.begin()+modeCount, spf.end());
    
    //And now sort it
-   std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
+   //std::sort(spf.begin(), spf.end(), comp_fourierModeDef);
    
    return 0;
 } 
