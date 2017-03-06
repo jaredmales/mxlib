@@ -71,7 +71,7 @@ struct gslInterpolator
 };
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
-  * \param interpT of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
+  * \param interpT one of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
   * \param [in]  xin the input x-axis
   * \param [in]  yin the input y-values
   * \param [in]  Nin the size of the input x-y data series

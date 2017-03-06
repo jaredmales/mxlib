@@ -95,6 +95,13 @@ namespace mx
 #define MXE_INVALIDARG 25
 #define MXE_INVALIDARG_MSG "An argument was invalid."
 
+/** \def MXE_NOTIMPL
+  * \brief A component or technique is not implemented.
+  * \ingroup mxe_errors
+  */   
+#define MXE_NOTIMPL 30
+#define MXE_NOTIMPL_MSG "A component of technique is not implemented."
+
 /** \def MXE_PARAMNOTSET
   * \brief A parameter was not set
   * \ingroup mxe_errors
@@ -184,6 +191,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_INVALIDARG:
          message = MXE_INVALIDARG_MSG;
          return "MXE_INVALIDARG";
+      case MXE_NOTIMPL:
+         message = MXE_NOTIMPL;
+         return "MXE_NOTIMPL";
       case MXE_PARAMNOTSET:
          message = MXE_PARAMNOTSET_MSG;
          return "MXE_PARAMNOTSET";

@@ -136,14 +136,14 @@ void baseSpectrum(eigenT & bspect, eigenT & gsspect)
   * \tparam eigenTout is the Eigen array type of the desired output
   * \tparam eigenTin is the Eigen array type of the input
   */ 
-template<int progress=0, typename eigenTout, typename eigenTin>
-void gramSchmidtSpectrum(eigenTout & out, eigenTout & spect, const eigenTin & in)
+template<int progress=0, typename eigenTout, typename eigenTout2, typename eigenTin>
+void gramSchmidtSpectrum(eigenTout & out, eigenTout2 & spect, const eigenTin & in)
 {
    typedef typename eigenTout::Scalar Scalar;
    
    out.resize(in.rows(), in.cols());
    
-   eigenTout gsspect;
+   eigenTout2 gsspect;
    
    gsspect.resize(in.cols(), in.cols());
    gsspect.setZero();
