@@ -68,7 +68,7 @@ realT rtod(realT q)
 template<int degrad = 0, typename realT>
 realT angleDiff(realT q1, realT q2)
 { 
-   static_assert(std::is_floating_point<realT>::value);
+   static_assert(std::is_floating_point<realT>::value, "realT must be floating point");
    
    realT dq = q2-q1;
 
@@ -107,7 +107,7 @@ realT angleDiff(realT q1, realT q2)
 template<int degrad = 0, typename realT>
 realT angleMean(std::vector<realT> q)
 { 
-   static_assert(std::is_floating_point<realT>::value);
+   static_assert(std::is_floating_point<realT>::value, "realT must be floaing point");
    
    realT s = 0;
    realT c = 0;
