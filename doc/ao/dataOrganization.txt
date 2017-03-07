@@ -1,0 +1,34 @@
+
+
+$MXAO_DATA_DIR/
+               dm/
+                  [dm-name]/
+                            inf.fits
+                            actPos.fits
+                            pinv.fits
+                            mirrorModes.fits
+                            singularValues.dat
+                            basis/
+                                  [basis-name]/
+                                               m2c.fits
+                                               projectedModes.fits
+               pupil/
+                     [pupil-name]/
+                                 pupil.fits
+               basis/
+                     [basis-name]/
+                                  modes.fits
+               system/
+                      [system-name]/
+                                    cal/
+                                        [pupil-name]/
+                                                     [WFS-name]/
+                                                                [basis-name]/
+                                                                             rImages_[name]_[time_stamp].fits 
+                                                                             rMat_[name]_[time_stamp].fits
+                                                                             Rec_[name]_[time_stamp].fits
+                                                                             
+                                                   
+              
+                            
+                            

@@ -1,0 +1,86 @@
+/** \defgroup ao_getting_started Getting Started
+
+Here is how to get started working with the mx::AO library.
+
+Define the MX_AO_DATADIR environment variable in .bashrc or .bash_alias like so:
+\verbatim
+export MX_AO_DATADIR=/path/to/mxao/data/
+\endverbatim
+
+The following program will create a pupil and a modified Fourier basis set, including the orthogonalization of the basis on the pupil.
+\code
+#include "pupil.hpp"
+
+#include "fourierBasis.hpp"
+
+#include "basis.hpp"
+
+int main()
+{
+   typedef double realT; //It is generally best to do all preparatory work in double precision.
+   
+   //Assign descriptive names to each component
+   std::string basis = "modf_150_48";
+   std::string pupil = "circular_29percent_150";
+   
+
+   //Generate a centrally obscured pupil.
+   mx::AO::circularPupil<realT>(pupil, 150, 6.5, 0.29);
+   
+   //Note: these functions generally require an explicit template parameter.
+   
+   //Make a modified Fourier basis
+   mx::AO::makeModfBasis<realT>( basis, 150,  48 );
+           
+   //Apply the pupil to the basis
+   mx::AO::applyPupil2Basis<realT>( basis, pupil); 
+
+   //Now orthogonalize the basis on the pupil
+   mx::AO::orthogonalizeBasis<realT>(basis, pupil, MXAO_ORTHO_METHOD_SGS);
+   
+   return 0;
+   
+}
+\endcode
+
+
+Next, the following code creates a DM and characterize it so that it can be used with the basis just created.
+
+\code
+#include "influenceFunctions.hpp"
+
+int main()
+{
+   typedef double realT;
+   
+   std::string basis = "modf_150_48";
+   std::string pupil = "circular_29percent_150";
+   std::string dm = "circular2k_magaox";
+   
+   //Create a 2048 actuator circular DM with 50 actuators across, with a 150 pixel pupil only 48 actuators across.
+   //The actuator's influence function is 15% high at the nearest actuator.
+   //Based on the BMC 2k.
+   mx::AO::influenceFunctionsGaussian<realT>(dm, 150.0*50.0/48.0, 50.0, 51.3, 0.15, 150.0);
+   
+   //Now calculate the pseudo-inverse, with interaction with the user.
+   mx::AO::ifPInv<realT>(dm, -1);
+                          
+   //And then calculate the modes-to-command matrix for the unaltered basis. 
+   mx::AO::m2cMatrix<realT>(dm, basis, pupil);
+      
+   //And do the same for the pupil-orthogonalized basis. 
+   mx::AO::m2cMatrix<realT>(dm, basis, pupil, true);
+  
+   
+   //Now test the M2C by recreating the basis using the influence influence functions.
+   //First, for the unaltered basis
+   mx::AO::modesOnDM<realT>(dm, basis, pupil, false);
+   //And then for the orthogonalized version.
+   mx::AO::modesOnDM<realT>(dm, basis, pupil, true);
+   
+   return 0;
+}
+\endcode
+
+*/
+

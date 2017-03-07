@@ -654,13 +654,16 @@ INPUT                  = ./groupdefs.dox \
                          ./sofa_constants.h \
                          ./levmar.dox \
                          ./atlas.dox \
+                         ./fftw.dox \
                          ../ \
                          ../include \
                          ../include/mxException \
                          ../include/msgQ \
                          ../include/sharedMemSegment \
-                         ../vmop/doc/main_page.txt \
-                         ./boost_const.dox
+                         ./boost_const.dox \
+                         ../include/ao \
+                         ./ao/aogroupdefs.dox \
+                         ./ao/gettingStarted.dox
 #                         ../vmop/MMatrixBase \
 #                         ../vmop/MMfunctional \
 #                         ../vmop/MMatrixBound \

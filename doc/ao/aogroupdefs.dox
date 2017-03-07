@@ -1,0 +1,16 @@
+/** \defgroup mxAO Adaptive Optics
+  * \brief All sorts of things related to astronomical adaptive optics
+  * \ingroup genastro
+  */  
+  
+/** \defgroup mxAO_paths Adaptive Optics Path Management
+  * \brief Definitions and managemetn of AO related file paths.
+  * \ingroup mxAO
+  */  
+  
+/** \defgroup mxAO_files Adaptive Optics Files
+  * \brief Files related to astronomical adaptive optics
+  * \ingroup mxAO
+  */  
+  
+  
