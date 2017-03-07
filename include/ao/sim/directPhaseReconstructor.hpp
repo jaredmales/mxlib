@@ -241,10 +241,10 @@ int directPhaseReconstructor<realT>::detCols()
 template<typename realT> 
 void directPhaseReconstructor<realT>::loadRecon(std::string fname)
 {
-   mx::fitsFile<floatT> ff;
-   mx::fitsHeader head;
-   
-   ff.read(fname, _recon, head);
+//    mx::fitsFile<realT> ff;
+//    mx::fitsHeader head;
+//    
+//    ff.read(fname, _recon, head);
 
    
 }
@@ -259,7 +259,7 @@ template<typename realT>
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::calcMeasurement(measurementT & slopes, wfsImageT & wfsImage)
 {
-   slopes = wfsImge;
+   slopes = wfsImage;
 }
      
 template<typename realT> 
@@ -354,30 +354,30 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
 template<typename realT> 
 void directPhaseReconstructor<realT>::initializeRMat(int nModes, realT calamp, int detRows, int detCols)
 {
-   _nModes = nModes;
-   
-   _detRows = detRows;
-   _detCols = detCols;
-   
-   _rMat.resize(measurementSize(), nModes);
-   _rMat.setZero();
-   
-   _rImages.resize(_detRows, _detCols, _nModes);
+//    _nModes = nModes;
+//    
+//    _detRows = detRows;
+//    _detCols = detCols;
+//    
+//    _rMat.resize(measurementSize(), nModes);
+//    _rMat.setZero();
+//    
+//    _rImages.resize(_detRows, _detCols, _nModes);
 }
 
 template<typename realT> 
 template<typename measurementT>
 void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec)
 {
-   _rMat.col(i) = measureVec.row(0);
+//   _rMat.col(i) = measureVec.row(0);
 }
   
 template<typename realT> 
 void directPhaseReconstructor<realT>::saveRMat(std::string fname)
 {
-   accumulateRMat(i, measureVec);
-   
-   _rImages.image(i) = wfsImage;
+//    accumulateRMat(i, measureVec);
+//    
+//    _rImages.image(i) = wfsImage;
 }
 
 } //namespace sim
