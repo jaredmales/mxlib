@@ -7,7 +7,7 @@
 #ifndef __binVector_hpp__
 #define __binVector_hpp__
 
-
+#include "mxError.hpp"
 
 namespace mx
 {
