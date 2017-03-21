@@ -120,10 +120,7 @@ public:
    int wfSz();
    
    ///Set the wavefront size in pixels.
-   /**
-     * \param sz is the new size
-     */ 
-   void wfSz(int sz);
+   void wfSz( int sz /**< [in] The new size */);
    
    ///Get the detector rows  in pixels
    /**
@@ -374,7 +371,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
    _wavefronts[_lastWavefront].phase = pPlane.phase;
    _wavefronts[_lastWavefront].iterNo = pPlane.iterNo;
    
-   std::cerr << _lastWavefront << " " << pPlane.iterNo << "\n";
+   //std::cerr << _lastWavefront << " " << pPlane.iterNo << "\n";
    //Always skip the first one for averaging to center of iTime.
    if(firstRun)
    {

@@ -71,6 +71,8 @@ public:
    
    imageT * _gains; 
    
+   int _npix;
+   
 public:   
    ///Default c'tor
    directPhaseReconstructor();
@@ -184,6 +186,8 @@ directPhaseReconstructor<realT>::directPhaseReconstructor()
    norm = 0;
    
    _gains =0;
+   
+   _npix = 0;
 }
 
 template<typename realT> 
@@ -269,18 +273,85 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    BREAD_CRUMB;
    
-   int npix = _pupil->sum();
+   if(_npix == 0)
+   {
+      _npix = _pupil->sum();
+   }
    
    BREAD_CRUMB;   
 
-   wfsImage.image *= *_pupil;
+   //wfsImage.image *= *_pupil;
    
    BREAD_CRUMB;
    
-   realT mean = wfsImage.image.sum()/npix;
    
-   wfsImage.image -= mean;
-   wfsImage.image *= *_pupil;
+
+   
+   commandVect.measurement.setZero();
+   
+   #pragma omp parallel for
+   for(int j=0; j< _nModes; ++j)
+   {
+      realT amp;
+      
+      if(_gains)
+      {
+         if( (*_gains)(0,j) == 0)
+         {
+            commandVect.measurement(0,j) = 0;
+            continue;            
+         }
+      }
+      
+      amp = (wfsImage.image*_modes->image(j)).sum()/ _npix;
+      
+      commandVect.measurement(0,j) = amp;
+   }
+
+   commandVect.iterNo = wfsImage.iterNo;
+}
+
+template<typename realT> 
+void directPhaseReconstructor<realT>::initializeRMat(int nModes, realT calamp, int detRows, int detCols)
+{
+//    _nModes = nModes;
+//    
+//    _detRows = detRows;
+//    _detCols = detCols;
+//    
+//    _rMat.resize(measurementSize(), nModes);
+//    _rMat.setZero();
+//    
+//    _rImages.resize(_detRows, _detCols, _nModes);
+}
+
+template<typename realT> 
+template<typename measurementT>
+void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec)
+{
+//   _rMat.col(i) = measureVec.row(0);
+}
+  
+template<typename realT> 
+void directPhaseReconstructor<realT>::saveRMat(std::string fname)
+{
+//    accumulateRMat(i, measureVec);
+//    
+//    _rImages.image(i) = wfsImage;
+}
+
+} //namespace sim
+} //namespace AO
+} //namespace mx
+
+#endif //__directPhaseReconstructor_hpp__
+
+
+//--- Code for mean and tip/tilt subtraction in reconstruct:
+//    realT mean = (wfsImage.image * *_pupil).sum()/npix;
+//    
+//    wfsImage.image -= mean;
+//    wfsImage.image *= *_pupil;
 
 #if 0 
    
@@ -324,65 +395,4 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       }
    }
 #endif
-   
-
-   
-   commandVect.measurement.setZero();
-   
-   #pragma omp parallel for
-   for(int j=0; j< _nModes; ++j)
-   {
-      realT amp;
-      
-      if(_gains)
-      {
-         if( (*_gains)(0,j) == 0)
-         {
-            commandVect.measurement(0,j) = 0;
-            continue;            
-         }
-      }
-      
-      amp = (wfsImage.image*_modes->image(j)).sum()/ npix;
-      
-      commandVect.measurement(0,j) = amp;
-   }
-
-   commandVect.iterNo = wfsImage.iterNo;
-}
-
-template<typename realT> 
-void directPhaseReconstructor<realT>::initializeRMat(int nModes, realT calamp, int detRows, int detCols)
-{
-//    _nModes = nModes;
-//    
-//    _detRows = detRows;
-//    _detCols = detCols;
-//    
-//    _rMat.resize(measurementSize(), nModes);
-//    _rMat.setZero();
-//    
-//    _rImages.resize(_detRows, _detCols, _nModes);
-}
-
-template<typename realT> 
-template<typename measurementT>
-void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec)
-{
-//   _rMat.col(i) = measureVec.row(0);
-}
-  
-template<typename realT> 
-void directPhaseReconstructor<realT>::saveRMat(std::string fname)
-{
-//    accumulateRMat(i, measureVec);
-//    
-//    _rImages.image(i) = wfsImage;
-}
-
-} //namespace sim
-} //namespace AO
-} //namespace mx
-
-#endif //__directPhaseReconstructor_hpp__
 

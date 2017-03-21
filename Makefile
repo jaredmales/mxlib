@@ -60,6 +60,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  fitsFile.hpp \
                  fitsHeader.hpp \
                  fitsHeaderCard.hpp \
+                 fitGaussian.hpp \
                  fourierModes.hpp \
                  fraunhoferImager.hpp \
                  gaussian.hpp \

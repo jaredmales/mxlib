@@ -56,23 +56,6 @@ void idealCoronagraph(complexWavefrontT & wf, realPupilT & pupil)
    
 }
 
-template<typename realImageT, typename complexPupilT, typename fraunhoferImagerT>
-void spmCoronagraph( realImageT & realFocal, realImageT & phase, realImageT & amp, realImageT & pup, complexPupilT & complexPupil, complexPupilT & complexFocal, fraunhoferImagerT & fi)
-{
-   int wfSz = phase.rows();
-   
-   
-   //Phase only
-   for(int j=0;j<wfSz;++j) for(int k=0; k<wfSz;++k) complexPupil(j,k) = pup(j,k)*phase(j,k);
-   fi.propagatePupilToFocal(complexFocal, complexPupil);
-   mx::extractIntensityImage(realFocal,0,complexFocal.rows(),0,complexFocal.cols(),complexFocal,0,0); 
-   
-      
-//    //Perrin Coronagraph, w/ amp
-//    for(int j=0;j<wfSz;++j) for(int k=0; k<wfSz;++k) complexPupil(j,k) = noise_amp(j,k)-pup(j,k);
-//    fi.propagatePupilToFocal(complexFocal, complexPupil);
-//    mx::extractIntensityImage(realFocal,0,complexFocal.rows(),0,complexFocal.cols(),complexFocal,0,0); 
-}
    
 
       
@@ -114,6 +97,7 @@ public:
    std::string _sysName;
    std::string _wfsName;
    std::string _pupilName;
+   std::string _pupilMaskName;
    
    
    wfsT wfs;
@@ -202,16 +186,19 @@ public:
    
    ///Initialize the system
    /**
-     * \param basisName [in] base file name of the basis set (without the directory or extension)
-     * \param imatName [in] base file name of the interaction matrix (without the directory or extension)
-     * \param wfSz [in] the wavefront linear size, in pixels
-     * \param simStep [in] the simulation time step, in seconds
+     * Initializes the basic parts of the system.
+     * 
+     * \returns 0 on success
+     * \returns -1 on an error (simulation should not continue if this happens).
+     * 
      */ 
-   void initSystem( const std::string & sysName,
-                    typename dmT::specT & dmSpec,
-                    const std::string & wfsName,
-                    const std::string & pupilName,
-                    const int & wfSz );
+   int initSystem( const std::string & sysName,       ///< [in] System name.
+                   typename dmT::specT & dmSpec,      ///< [in] DM Specification.
+                   const std::string & wfsName,       ///< [in] WFS Name.
+                   const std::string & pupilName,     ///< [in] Name of the system pupil.
+                   const std::string & pupilMaskName, ///< [in] Name of the pupil mask, possibly apodized.  If empty string "", then pupilName is used.
+                   const int & wfSz                   ///< [in] Size of the wavefront used for propagation.
+                 );
    
    void initSim( typename reconT::specT & reconSpec,
                  realT simStep,
@@ -231,8 +218,11 @@ public:
 //                        const int & wfSz );
 // 
 //    
-   imageT _pupil;
-
+   imageT _pupil; ///< The system pupil.  This is generally a binary mask and will be applied at various points in the propagation.
+   imageT _pupilMask; ///< A pupil mask which is applied once at the beginning of propagation.  Could be apodized and/or different from _pupil.
+   
+   int _npix;
+   
    ///Measure the system response matrix
    /** System should be initialized with initSystemCal.
      *
@@ -269,6 +259,8 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::simulatedA
    _currImage = 0;
    _currFile = 0;
    
+   _npix = 0;
+   
 }
    
 template<typename _realT, typename _wfsT, typename _reconT, typename _filterT, typename _dmT, typename _turbSeqT>
@@ -303,19 +295,32 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::~simulated
 }
 
 template<typename _realT, typename _wfsT, typename _reconT, typename _filterT, typename _dmT, typename _turbSeqT>
-void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initSystem( const std::string & sysName,
+int simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initSystem( const std::string & sysName,
                                                                                         typename _dmT::specT & dmSpec,
                                                                                         const std::string & wfsName,
                                                                                         const std::string & pupilName,
+                                                                                        const std::string & pupilMaskName,
                                                                                         const int & wfSz )
 {
    _sysName = sysName;
    _wfsName = wfsName;
    _pupilName = pupilName;
    
+   
+   if(pupilMaskName == "")
+   {
+      _pupilMaskName = _pupilName;
+   }
+   else
+   {
+      _pupilMaskName = pupilMaskName;
+   }
+   
+   
    mx::fitsFile<realT> ff;
    mx::fitsHeader head;
 
+   //Initialize the pupil.
          
    std::string pupilFile = mx::AO::path::pupil::pupilFile(_pupilName);
          
@@ -324,11 +329,31 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initS
    _D = head["PUPILD"].Value<realT>(); //pupilD;
    _wfPS = head["SCALE"].Value<realT>();
    
+   //Pupil Mask Initialization
+   pupilFile = mx::AO::path::pupil::pupilFile(_pupilMaskName);
+   
+   std::cerr << pupilMaskName << " " << _pupilMaskName << " " << pupilFile << "\n";
+   
+   ff.read(pupilFile, _pupilMask);
+
+   if( _pupilMask.rows() != _pupil.rows() || _pupilMask.cols() != _pupil.cols())
+   {
+      mxError("simulatedAOSystem::initSystem", MXE_SIZEERR, "pupil and pupilMask must be the same size.");
+      return -1;
+   }
+   
+   
+   //Set the wavefront size.
    _wfSz = wfSz;
    wfs.wfSz(_wfSz);
    
-   _wfPS = _D/std::max(_pupil.rows(), _pupil.cols());
-      
+   
+
+   
+   
+   
+   
+   
    //Turbulence sequence
    turbSeq._pupil = &_pupil;
    turbSeq.wfPS(_wfPS);
@@ -340,6 +365,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initS
    
    _loopClosed = false;
    
+   
+   return 0;
    
 }
 
@@ -539,7 +566,19 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    BREAD_CRUMB;
    
-   realT pupSum = _pupil.sum();
+   
+//    if(_pupilMask.rows() != _pupil.rows() || _pupilMask.cols() != _pupil.cols())
+//    {
+//       _pupilMask = _pupil;
+//    }
+   
+   if(_npix == 0)
+   {
+      _npix = _pupil.sum();
+   }
+   
+   
+   
    
    BREAD_CRUMB;
    
@@ -550,8 +589,12 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       
    BREAD_CRUMB;
    
-   realT mn = (wf.phase * _pupil).sum()/pupSum;
-   wf.phase = (wf.phase-mn)*_pupil;
+   //Mean subtraction on the system pupil.  
+   realT mn = (wf.phase * _pupil).sum()/_npix;
+   
+   
+   //Apply the pupil mask just once.
+   wf.phase = (wf.phase-mn)*_pupilMask;
 
 
    BREAD_CRUMB;
@@ -564,8 +607,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    BREAD_CRUMB;
    
-   mn = 0;//(wf.phase * _pupil).sum()/pupSum;
-   realT rms_ol = sqrt(  ( (wf.phase-mn) * _pupil).square().sum()/ pupSum );
+   realT rms_ol = sqrt(  wf.phase.square().sum()/ _npix );
    
    BREAD_CRUMB;
    
@@ -591,6 +633,10 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    BREAD_CRUMB;
    if(_loopClosed) dm.applyShape(wf, _wfsLambda);
 
+   
+   
+   
+   
    BREAD_CRUMB;
    if(_loopClosed)
    {
@@ -678,8 +724,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    realT rms_cl;
    
    imageT uwphase = wf.phase;
-   mn = (uwphase* _pupil).sum()/pupSum;
-   rms_cl = sqrt(  ( (uwphase-mn) * _pupil).square().sum()/ pupSum );
+   mn = uwphase.sum()/_npix;
+   rms_cl = sqrt( uwphase.square().sum()/ _npix );
    
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
 
@@ -719,24 +765,23 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             _realPhase.resize(_wfSz, _wfSz);
             _realAmp.resize(_wfSz, _wfSz);
             
-            padImage(_realPupil, _pupil, 0.5*(_wfSz-_pupil.rows()),0);
-            //_realPupil.resize(_wfSz, _wfSz);
             
-            //_coronMask.resize(_pupil.rows(), _pupil.cols());
-            _coronMask.resize(_wfSz, _wfSz);
-            mx::tukey2d(_coronMask.data(), _coronMask.rows(), (realT) _pupil.rows(), (realT) 0.3, (realT) 0.5*(_coronMask.rows()-1), (realT) 0.5*(_coronMask.cols()-1));
+            //Create Coronagraph pupil, must be with _pupilMask in case it is apodized.
+            padImage(_realPupil, _pupil, 0.5*(_wfSz-_pupil.rows()),0);
+            
+            //Create an apodized mask for the image plane.            
+//             _coronMask.resize(_wfSz, _wfSz);
+//             mx::tukey2d(_coronMask.data(), _coronMask.rows(), (realT) _pupil.rows(), (realT) 0.0, (realT) 0.5*(_coronMask.rows()-1), (realT) 0.5*(_coronMask.cols()-1));
          }            
       }
-
-      //wf.phase *= 900./761.;//900./656.;
 
       
       if(_doCoron)
       {
          
          wavefrontT cwf;
-         cwf.phase = wf.phase;// * _coronMask;
-         cwf.amplitude = wf.amplitude;// * _coronMask;
+         cwf.phase = wf.phase;
+         cwf.amplitude = wf.amplitude;
          cwf.getWavefront(_complexPupil, _wfSz);
          
 
@@ -750,13 +795,13 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          
          idealCoronagraph(_complexPupilCoron, _realPupil);
          
-         for(int ni=0; ni< _complexPupilCoron.rows(); ++ni)
-         {
-            for(int nj=0; nj< _complexPupilCoron.cols(); ++nj)
-            {
-               _complexPupilCoron(ni,nj) = _complexPupilCoron(ni,nj)*_coronMask(ni,nj);
-            }
-         }
+//          for(int ni=0; ni< _complexPupilCoron.rows(); ++ni)
+//          {
+//             for(int nj=0; nj< _complexPupilCoron.cols(); ++nj)
+//             {
+//                _complexPupilCoron(ni,nj) = _complexPupilCoron(ni,nj)*_coronMask(ni,nj);
+//             }
+//          }
          
          _fi.propagatePupilToFocal(_complexFocalCoron, _complexPupilCoron);
       
@@ -768,13 +813,13 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
 
       wf.getWavefront(_complexPupil, _wfSz);
 
-      for(int ni=0; ni< _complexPupilCoron.rows(); ++ni)
-      {
-         for(int nj=0; nj< _complexPupilCoron.cols(); ++nj)
-         {
-            _complexPupilCoron(ni,nj) = _complexPupilCoron(ni,nj)*_coronMask(ni,nj);
-         }
-      }
+//       for(int ni=0; ni< _complexPupilCoron.rows(); ++ni)
+//       {
+//          for(int nj=0; nj< _complexPupilCoron.cols(); ++nj)
+//          {
+//             _complexPupilCoron(ni,nj) = _complexPupilCoron(ni,nj)*_coronMask(ni,nj);
+//          }
+//       }
             
       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
       extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);

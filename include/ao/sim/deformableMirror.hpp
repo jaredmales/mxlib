@@ -78,8 +78,9 @@ protected:
    ///The amplitude used when measuring the response matrix of the current basis set.
    float _calAmp;
    
-   ///The system pupil
+   ///The system pupil, possibly apodized, etc.
    imageT _pupil;
+   
       
 public:   
    ds9_interface ds9i;
@@ -185,11 +186,7 @@ deformableMirror<_realT>::deformableMirror()
    _commandFileOpen = false;
 }
 
-// template<typename _realT>
-// int deformableMirror<_realT>::initialize( const std::string & name,
-//                                            const std::string & basis,
-//                                            bool ortho,
-//                                            const std::string & pupil )
+
 template<typename _realT>
 int deformableMirror<_realT>::initialize( specT & spec, 
                                            const std::string & pupil )
@@ -217,7 +214,6 @@ int deformableMirror<_realT>::initialize( specT & spec,
  
    ff.read(m2cName, _m2c);
    
-   //std::cerr << "_infF: " << _infF.rows() << " " <<  _infF.cols() << "\n";
    _shape.resize(_infF.rows(), _infF.cols());
    
    _shape.setZero();   
@@ -390,7 +386,8 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       #pragma omp critical
       _nextShape += tmp;
    }
-      
+    
+   
    _oldShape = _shape;
 #if 0
    _settling = 1;
@@ -434,7 +431,7 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    
    BREAD_CRUMB;
    
-   std::cerr << "DM Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   //std::cerr << "DM Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
 }
 
 } //sim

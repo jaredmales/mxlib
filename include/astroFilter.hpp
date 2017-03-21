@@ -386,20 +386,20 @@ void astrofiltCharVega( dataT & flambda0,
 /// Multiply two spectra or filter curves.  
 /** Interpolates the 2nd onto the 1st, so that the wavelength scale of the output is lambda_1.
   *
-  * \param lambda_1 the first (higher sampling) wavelength scale
-  * \param spectrum_1 the first (higher sampling) spectrum
-  * \param lambda_2 the second wavelength scale
-  * \param spectrum_2 the second spectrum, will be re-sampled onto lambda_1
-  * \param spectrum_out the product of spectrum_1 and the re-sampled spectrum_2
+  * \param [out] spectrum_out the product of spectrum_1 and the re-sampled spectrum_2
+  * \param [in] lambda_1 the first (higher sampling) wavelength scale
+  * \param [in] spectrum_1 the first (higher sampling) spectrum
+  * \param [in] lambda_2 the second wavelength scale
+  * \param [in] spectrum_2 the second spectrum, will be re-sampled onto lambda_1
   *
   * \tparam dataT the type of the data 
   */ 
 template<typename dataT>
-void astrofiltMultiply( std::vector<dataT> & lambda_1,
+void astrofiltMultiply( std::vector<dataT> & spectrum_out ,
+                        std::vector<dataT> & lambda_1,
                         std::vector<dataT> & spectrum_1,
                         std::vector<dataT> & lambda_2,
-                        std::vector<dataT> & spectrum_2,
-                        std::vector<dataT> & spectrum_out )
+                        std::vector<dataT> & spectrum_2 )
 {
    gsl_interpolate( gsl_interp_linear, lambda_2, spectrum_2, lambda_1, spectrum_out);
    

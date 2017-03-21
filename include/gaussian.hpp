@@ -43,7 +43,7 @@ namespace mx
   * \f$ FWHM = 2\sqrt{2\log2}\sigma \f$
   *
   */ 
-#define sigma2fwhm(sig)  ( (sig) * twosqrt2log)
+#define sigma2fwhm(sig)  ( (sig) * twosqrt2log2)
    
 ///Find value at position (x) of the 1D arbitrarily-centered symmetric Gaussian
 /**
