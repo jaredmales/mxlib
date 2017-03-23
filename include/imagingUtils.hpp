@@ -89,16 +89,29 @@ int circularPupil( arrayT & m,
    return 0;
 }
 
+///Draw a line in an image
+/**
+  * \tparam arrayT is an Eigen-like array with public typedef Scalar
+  */ 
 template<class arrayT> 
-void drawLine( arrayT & im, 
-               typename arrayT::Scalar x0, 
-               typename arrayT::Scalar y0,
-               typename arrayT::Scalar x1, 
-               typename arrayT::Scalar y1,
-               typename arrayT::Scalar halfWidth
+void drawLine( arrayT & im,  ///< [in/out] The input image, modified.
+               typename arrayT::Scalar x0, ///< [in] the x value, relative to image center, of the starting point
+               typename arrayT::Scalar y0, ///< [in] the y value, relative to image center, of the starting point
+               typename arrayT::Scalar x1,  ///< [in] the x value, relative to image center, of the end point
+               typename arrayT::Scalar y1, ///< [in] the y value, relative to image center, of the end point
+               typename arrayT::Scalar halfWidth  ///< [in] the half-width of the line.
              )
 {
 
+   int d1 = im.rows();
+   int d2 = im.cols();
+   
+   typename arrayT::Scalar xc, yc;
+   
+   xc = 0.5*(im.rows()-1);
+   yc = 0.5*(im.cols()-1);
+   
+   
    typename arrayT::Scalar m = (y1-y0)/(x1-x0);
    int y;
    
@@ -110,8 +123,8 @@ void drawLine( arrayT & im,
       
          for(int i=0; i<= halfWidth; ++i)
          {
-            im(x,y+i) = 0;
-            im(x,y-i) = 0;
+            if( x+xc >= 0 && x+xc < d1 && y+yc+i >= 0 && y+yc+i < d2) im(x+xc,y+yc+i) = 0;
+            if( x+xc >= 0 && x+xc < d1 && y+yc-i >= 0 && y+yc-i < d2) im(x+xc,y+yc-i) = 0;
          }
       }
    }
@@ -123,8 +136,8 @@ void drawLine( arrayT & im,
       
          for(int i=0; i<= halfWidth; ++i)
          {
-            im(x,y+i) = 0;
-            im(x,y-i) = 0;
+            if( x+xc >= 0 && x+xc < d1 && y+yc+i >= 0 && y+yc+i < d2) im(x+xc,y+yc+i) = 0;
+            if( x+xc >= 0 && x+xc < d1 && y+yc-i >= 0 && y+yc-i < d2) im(x+xc,y+yc-i) = 0;
          }
       }
       
