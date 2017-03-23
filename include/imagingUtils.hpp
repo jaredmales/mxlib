@@ -90,7 +90,8 @@ int circularPupil( arrayT & m,
 }
 
 ///Draw a line in an image
-/**
+/** \todo should handle width much more intelligently, this only works for ~45 degree lines.
+  * 
   * \tparam arrayT is an Eigen-like array with public typedef Scalar
   */ 
 template<class arrayT> 
