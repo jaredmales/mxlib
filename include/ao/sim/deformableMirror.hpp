@@ -83,7 +83,7 @@ protected:
    
       
 public:   
-   ds9_interface ds9i;
+   ds9_interface ds9i_shape, ds9i_phase;
    
    //The modes-2-command matrix for the basis
    Eigen::Array<realT, -1, -1> _m2c;
@@ -176,9 +176,10 @@ deformableMirror<_realT>::deformableMirror()
    _settleTime_counter = 0;
    _calAmp = 1e-6;
    
-   ds9_interface_init(&ds9i);
-   ds9_interface_set_title(&ds9i, "DM");
-   
+   ds9_interface_init(&ds9i_shape);
+   ds9_interface_set_title(&ds9i_shape, "DM_Shape");
+   ds9_interface_init(&ds9i_phase);
+   ds9_interface_set_title(&ds9i_phase, "DM_Phase");
    t_mm = 0;
    t_sum = 0;
    
@@ -202,17 +203,32 @@ int deformableMirror<_realT>::initialize( specT & spec,
    ff.read(pName, _pupil);
    
    
-   std::string ifName;
-   ifName = mx::AO::path::dm::influenceFunctions(_name);
-   ff.read(ifName, _infF);
-
-
+   if(_name == "modalDM")
+   {
+      std::cerr << "modalDM\n";
+      
+      std::string ifName;
+      ifName = mx::AO::path::basis::modes(_basisName);
+      ff.read(ifName, _infF);
+      
+      _m2c.resize( _infF.planes(), _infF.planes());
+      _m2c.setZero();
+      
+      for(int i=0;i<_m2c.rows();++i) _m2c(i,i) = 1.0;
+      
+   }
+   else
+   {
+      std::string ifName;
+      ifName = mx::AO::path::dm::influenceFunctions(_name);
+      ff.read(ifName, _infF);
    
-   std::string m2cName;
+      std::string m2cName;
 
-   m2cName = mx::AO::path::dm::M2c( _name, _basisName );
+      m2cName = mx::AO::path::dm::M2c( _name, _basisName );
  
-   ff.read(m2cName, _m2c);
+      ff.read(m2cName, _m2c);
+   }
    
    _shape.resize(_infF.rows(), _infF.cols());
    
@@ -387,6 +403,13 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       _nextShape += tmp;
    }
     
+    _nextShape *= _pupil;
+   
+//   realT mn = (_nextShape*_pupil).sum()/_pupil.sum();
+   
+//    _nextShape -= mn;
+//    _nextShape *= _pupil;
+   
    
    _oldShape = _shape;
 #if 0
@@ -423,11 +446,14 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    //imageT dshape = _shape*(2.*3.14159/900e-6)*2.;
    
    //ds9_display(4, dshape.data(), _shape.rows(), _shape.cols(), 1, mx::getFitsBITPIX<realT>());
-   
+
+   ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
    
    BREAD_CRUMB;
    
    wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
+   
+   ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
    
    BREAD_CRUMB;
    

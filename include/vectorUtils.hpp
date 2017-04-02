@@ -24,18 +24,14 @@ namespace mx
   * can be changed with the scale parameter, and the starting point can be 
   * changed with the offset.
   *
-  * \param vec [out] the vector to fill in, can be pre-allocated or not
-  * \param N [in] [optional] if specified > 0, then vec is resize()-ed. Default is 0, and vec is not resize()-ed.  
-  * \param scale [in] [optional] if specified !=0, then the points are spaced by this value
-  * \param offset [in] [optional] if specified !=0, then the starting point of the scale is this value
-  * 
   * \tparam vectorT is a std::vector type.
   */
 template<typename vectorT>
-void vectorScale( vectorT & vec, 
-                  size_t N = 0, 
-                  typename vectorT::value_type scale = 0, 
-                  typename vectorT::value_type offset = 0 )
+void vectorScale( vectorT & vec,  ///< [out] the vector to fill in, can be pre-allocated or not
+                  size_t N = 0,  ///< [in] [optional] if specified > 0, then vec is resize()-ed. Default is 0, and vec is not resize()-ed. 
+                  typename vectorT::value_type scale = 0, ///< [in] [optional] if specified !=0, then the points are spaced by this value.  Default spacing is 1.
+                  typename vectorT::value_type offset = 0 ///< [in] [optional] if specified !=0, then the starting point of the scale is this value.
+                )
 {
    if(scale == 0) scale = 1.0;
    

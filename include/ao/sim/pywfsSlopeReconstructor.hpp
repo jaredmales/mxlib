@@ -31,7 +31,7 @@ public:
    typedef _floatT floatT;
    
    ///The type of the measurement (i.e. the slope vector)
-   typedef Eigen::Array<floatT,-1,-1> measurementT;
+   //typedef Eigen::Array<floatT,-1,-1> measurementT;
    
    ///The type of the WFS image
    typedef Eigen::Array<floatT, -1, -1> imageT;
@@ -159,10 +159,12 @@ public:
      * \param slopes [out] a (_measurementSize X 2)  array of slopes
      * \param wfsImage [in] the WFS image from which to measure the slopes
      */   
-   void calcMeasurement(measurementT & slopes, imageT & wfsImage);
+   template<typename measurementT, typename wfsImageT>
+   void calcMeasurement(measurementT & slopes, wfsImageT & wfsImage);
          
    ///Reconstruct the wavefront from the input image, producing the modal amplitude vector
-   void reconstruct(measurementT & commandVect, imageT & wfsImage);
+   template<typename measurementT, typename wfsImageT>
+   void reconstruct(measurementT & commandVect, wfsImageT & wfsImage);
 
    ///Initialize the response matrix for acquisition
    /** 
@@ -178,8 +180,11 @@ public:
      * \param i the measurement index
      * \param measureVec is the i-th measurement vector
      */ 
+   template<typename measurementT>
    void accumulateRMat(int i, measurementT &measureVec);
-   void accumulateRMat(int i, measurementT &measureVec, imageT & wfsImage);
+   
+   template<typename measurementT, typename wfsImageT>
+   void accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage);
    
    ///Write the accumulated response matrix to disk
    /**
@@ -351,7 +356,8 @@ int pywfsSlopeReconstructor<floatT>::measurementSize()
 }
 
 template<typename floatT> 
-void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, imageT & wfsImage)
+template<typename measurementT, typename wfsImageT>
+void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, wfsImageT & wfsImage)
 {
    if(!_maskMade) calcMask();
    
@@ -360,12 +366,12 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, ima
    if(_binFact > 1)
    {
       std::cout << "rebinning" << "\n";
-      _wfsImage.resize( wfsImage.rows()/_binFact, wfsImage.cols()/_binFact);
-      imageDownSample( _wfsImage, wfsImage);
+      _wfsImage.resize( wfsImage.image.rows()/_binFact, wfsImage.image.cols()/_binFact);
+      imageDownSample( _wfsImage, wfsImage.image);
    }
    else
    {
-      _wfsImage = wfsImage;
+      _wfsImage = wfsImage.image;
    }
 
    int nsz = _wfsImage.rows();
@@ -388,7 +394,7 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, ima
       }
    }
 
-   slopes.resize(1, 2.*nPix);
+   slopes.measurement.resize(1, 2.*nPix);
    
    floatT I0, I1, I2, I3;
    
@@ -401,20 +407,21 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, ima
       I2 = _wfsImage(x[i], y[i]+0.5*nsz);
       I3 = _wfsImage(x[i]+0.5*nsz, y[i]+0.5*nsz);
       
-      slopes(0,i)          = (I0 + I1 - I2 - I3)/norm;//(I0+I1+I2+I3);
-      slopes(0,i+nPix) = (I0 + I2 - I1 - I3)/norm; //(I0+I1+I2+I3);
+      slopes.measurement(0,i)          = (I0 + I1 - I2 - I3)/norm;//(I0+I1+I2+I3);
+      slopes.measurement(0,i+nPix) = (I0 + I2 - I1 - I3)/norm; //(I0+I1+I2+I3);
    }
    
 }
      
-template<typename floatT> 
-void pywfsSlopeReconstructor<floatT>::reconstruct(measurementT & commandVect, imageT & wfsImage)
+template<typename floatT>
+template<typename measurementT, typename wfsImageT>
+void pywfsSlopeReconstructor<floatT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
    measurementT slopes;
    
    calcMeasurement(slopes, wfsImage);
    
-   commandVect = slopes.matrix()*_recon.matrix();
+   commandVect.measurement = slopes.measurement.matrix()*_recon.matrix();
 }
 
 template<typename floatT> 
@@ -435,18 +442,20 @@ void pywfsSlopeReconstructor<floatT>::initializeRMat(int nModes, floatT calamp, 
    
 }
 
-template<typename floatT> 
+template<typename floatT>   
+template<typename measurementT>
 void pywfsSlopeReconstructor<floatT>::accumulateRMat(int i, measurementT &measureVec)
 {
-   _rMat.col(i) = measureVec.row(0);
+   _rMat.col(i) = measureVec.measurement.row(0);
 }
 
-template<typename floatT> 
-void pywfsSlopeReconstructor<floatT>::accumulateRMat(int i, measurementT &measureVec, imageT & wfsImage)
+template<typename floatT>   
+template<typename measurementT, typename wfsImageT>
+void pywfsSlopeReconstructor<floatT>::accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage)
 {
    accumulateRMat(i, measureVec);
    
-   _rImages.image(i) = wfsImage;
+   _rImages.image(i) = wfsImage.image;
 }
 
 template<typename floatT> 

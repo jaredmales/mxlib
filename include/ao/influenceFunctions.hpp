@@ -133,6 +133,8 @@ struct influenceFunctionGaussianSpec
       {
          Eigen::Array<realT,-1,-1> im;
          
+         std::cerr << "ok trying bad acts\n";
+         std::cerr << badActi.size() << "\n";
          for(int k=0; k< badActi.size(); ++k)
          {
             if(badActType[k] == 0) continue;
@@ -150,23 +152,29 @@ struct influenceFunctionGaussianSpec
          
             _rad = sqrt( pow(xc + xoff,2) + pow(yc,2));
    
+            std::cerr << xc << " " << yc << "\n";
+            
             if(_rad/act_space <= 0.5*diameter +.01  || diameter == 0)
             {
                xc = (xcen + (xc+xoff) + 0.0*(dmSz-pupilSz));
                yc = (ycen + yc + 0.0*(dmSz-pupilSz));
             
+               std::cerr << xc << " " << yc << "\n";
             
-               mx::gaussian2D( im.data() ,pupilSz, pupilSz, 0.0, -1.0, xc, yc, fwhm2sigma(fwhm));
+               mx::gaussian2D( im.data() ,pupilSz, pupilSz, 0.0, -150.0, xc, yc, fwhm2sigma(fwhm));
             
                for(int i=0; i< xcoords.size(); ++i)
                {
                   act_inf.image(i) += im;
                }
             }
+            
          }
       }
-      
-      
+      else
+      {
+         std::cerr << "Didn't do bad atuators!\n";
+      }
       
       
       

@@ -14,6 +14,7 @@
 #include <mx/eigenUtils.hpp>
 #include <mx/imageFilters.hpp>
 #include <mx/imagePads.hpp>
+#include <mx/signalWindows.hpp>
 
 #include "aoPaths.hpp"
 
@@ -209,6 +210,106 @@ void orthogonalizeBasis( const std::string & orthoName,
    }
    
 }
+
+template<typename realT>
+int slaveBasis( const std::string outputBasisN,
+                const std::string inputBasisN,
+                const std::string pupilN,
+                realT fwhm,
+                realT fsmooth )
+{
+   mx::fitsFile<realT> ff;
+   mx::fitsHeader head;
+   
+   std::string basisFName = mx::AO::path::basis::modes(inputBasisN);//, pupilName); 
+   mx::eigenCube<realT> modes;
+   ff.read(basisFName, modes);
+
+   std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilN);
+   Eigen::Array<realT, -1, -1> pupil;
+   ff.read(pupilFName, pupil);
+   
+   Eigen::Array<realT, -1, -1> im, ppim, pim, fim, ppupil;
+   
+   
+   padImage(ppupil, pupil, 2*fwhm);
+   
+   for(int  i=0; i< modes.planes(); ++i)
+   {
+      if(fwhm > 0 || fsmooth > 0)
+      {
+         im = modes.image(i)*pupil;
+         padImage(ppim, im, 2*fwhm);
+         padImage(pim, im, ppupil, 1);//ppupil,4);
+         
+         if( fwhm > 0 )
+         {
+            filterImage(fim, pim, gaussKernel<Eigen::Array<realT, -1, -1>>(fwhm));
+            fim = ppim + fim*(ppupil - 1).abs();
+         }
+         else
+         {
+            fim = ppim;
+         }
+         
+         if(fsmooth > 0)
+         {
+            pim = fim;
+            filterImage(fim, pim, gaussKernel<Eigen::Array<realT, -1, -1>>(fsmooth));
+         }
+         
+         cutPaddedImage(im, fim, 2*fwhm);
+         modes.image(i) = im; 
+      }
+   }
+   
+   std::string oFName =  mx::AO::path::basis::modes(outputBasisN, true);
+   ff.write(oFName, modes);
+   
+}
+
+
+template<typename realT>
+int apodizeBasis( const std::string outputBasisN,
+                  const std::string inputBasisN,
+                  realT tukeyAlpha,
+                  realT centralObs,
+                  realT overScan,
+                  int firstMode )
+{
+   mx::fitsFile<realT> ff;
+   mx::fitsHeader head;
+   
+   std::string basisFName = mx::AO::path::basis::modes(inputBasisN);//, pupilName); 
+   mx::eigenCube<realT> modes;
+   ff.read(basisFName, modes);
+
+   realT cen = 0.5*(modes.rows() - 1.0);
+   
+   Eigen::Array<realT, -1, -1> pupil;
+   pupil.resize( modes.rows(), modes.cols());
+   
+   if(centralObs == 0)
+   {
+      tukey2d<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, tukeyAlpha, cen,cen);
+   }
+   else
+   {
+      tukey2dAnnulus<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, centralObs, tukeyAlpha, cen,cen);
+   }
+   
+   
+   
+   for(int  i=firstMode; i< modes.planes(); ++i)
+   {
+      modes.image(i) = modes.image(i)*pupil;
+   }
+   
+   std::string oFName =  mx::AO::path::basis::modes(outputBasisN, true);
+   ff.write(oFName, modes);
+   
+}
+
 
 template<typename realT>
 int subtractBasis( const std::string basisName,

@@ -101,7 +101,8 @@ struct turbAtmosphere
                   const std::vector<realT> & Cn2,
                   const std::vector<realT> & z,
                   const std::vector<realT> & windV,
-                  const std::vector<realT> & windD );
+                  const std::vector<realT> & windD,
+                  int nCombo  );
   
    int setLayers( const size_t scrnSz,
                   const realT r0,
@@ -110,7 +111,8 @@ struct turbAtmosphere
                   const std::vector<realT> & Cn2,
                   const std::vector<realT> & z,
                   const std::vector<realT> & windV,
-                  const std::vector<realT> & windD );
+                  const std::vector<realT> & windD,
+                  int nCombo );
    
    int genLayers();
    
@@ -175,7 +177,8 @@ int turbAtmosphere<realT>::setLayers( const std::vector<size_t> & scrnSz,
                const std::vector<realT> & Cn2,
                const std::vector<realT> & z,
                const std::vector<realT> & windV,
-               const std::vector<realT> & windD )
+               const std::vector<realT> & windD,
+               int nCombo)
 {
    
    size_t nLayers = scrnSz.size();
@@ -228,6 +231,7 @@ int turbAtmosphere<realT>::setLayers( const std::vector<size_t> & scrnSz,
 
    for(int i=0; i< nLayers; ++i)
    {
+      _layers[i]._nCombo = nCombo;
       _layers[i].setLayer( _wfSz, _buffSz, scrnSz[i], r0[i], L0[i], l0[i], _pupD, Cn2[i], z[i], windV[i], windD[i]);
    }
    
@@ -242,11 +246,12 @@ int turbAtmosphere<realT>::setLayers( const size_t scrnSz,
                const std::vector<realT> & Cn2,
                const std::vector<realT> & z,
                const std::vector<realT> & windV,
-               const std::vector<realT> & windD )
+               const std::vector<realT> & windD,
+               int nCombo )
 {
    size_t n = Cn2.size();
    
-   return setLayers( std::vector<size_t>(n, scrnSz), std::vector<realT>(n, r0), std::vector<realT>(n,L0), std::vector<realT>(n,l0),Cn2,z,windV,windD);
+   return setLayers( std::vector<size_t>(n, scrnSz), std::vector<realT>(n, r0), std::vector<realT>(n,L0), std::vector<realT>(n,l0),Cn2,z,windV,windD, nCombo);
 }
 
 template<typename realT>
@@ -270,7 +275,7 @@ int turbAtmosphere<realT>::genLayers()
       return 0;
    }
    
-   #pragma omp parallel num_threads(2)
+   //#pragma omp parallel num_threads(2)
    {
       arrayT psd;
       arrayT freq;
@@ -284,7 +289,7 @@ int turbAtmosphere<realT>::genLayers()
       realT sqrt_alpha = 0.5*11./3.;
    
       realT p;
-      #pragma omp for 
+     // #pragma omp for 
       for(int i=0; i< _layers.size(); ++i)
       {
          std::cerr << "Generating layer " << i << " ";

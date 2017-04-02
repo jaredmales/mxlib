@@ -30,7 +30,7 @@ public:
    typedef typename wooferReconT::floatT floatT;
    
    ///The type of the measurement (i.e. the slope vector)
-   typedef wooferTweeterCommand<floatT> measurementT;
+   //typedef wooferTweeterCommand<floatT> measurementT;
    
    ///The type of the WFS image
    typedef Eigen::Array<floatT, -1, -1> imageT;
@@ -66,8 +66,10 @@ public:
    void calcMeasurement(measurementT & slopes, imageT & wfsImage);
 #endif
 
-   ///Reconstruct the wavefront from the input image, producing the modal amplitude vector
-   void reconstruct(measurementT & commandVect, imageT & wfsImage);
+   ///Reconstruct the wavefront from the input image, producing the modal amplitude vector 
+   template<typename measurementT, typename wfsImageT>
+   void reconstruct( measurementT & commandVect, 
+                     wfsImageT & wfsImage);
 
 #if 0  
    ///Initialize the response matrix for acquisition
@@ -127,10 +129,28 @@ void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::calcMeasurement(me
 #endif
 
 template< typename wooferReconT, typename tweeterReconT >
-void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::reconstruct(measurementT & commandVect, imageT & wfsImage)
+template< typename measurementT, typename wfsImageT >
+void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
-   _woofer.reconstruct( commandVect.wooferVect, wfsImage);
-   _tweeter.reconstruct( commandVect.tweeterVect, wfsImage);
+   measurementT woofV;
+   _woofer.reconstruct( woofV, wfsImage);
+   
+   measurementT tweetV;
+   _tweeter.reconstruct( tweetV, wfsImage);
+   
+   commandVect.measurement.resize(1, woofV.measurement.cols() + tweetV.measurement.cols());
+   
+   
+   for(int i=0; i< woofV.measurement.cols(); ++i)
+   {
+      commandVect.measurement(0,i) = woofV.measurement(0,i);
+   }
+   
+   for(int i= 0; i< tweetV.measurement.cols(); ++i)
+   {
+      commandVect.measurement(0, woofV.measurement.cols()+i) = tweetV.measurement(0,i);
+   }
+   
    
 }
 

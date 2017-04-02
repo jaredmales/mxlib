@@ -1,6 +1,6 @@
-/** \file 
+/** \file generalIntegrator.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief 
+  * \brief Declares and defines a general integrator controller class for AO control.
   * \ingroup mxAO_sim_files
   * 
   */
@@ -15,81 +15,211 @@ namespace AO
 namespace sim 
 {
    
+template<typename _realT>
+struct wfMeasurement
+{
+   typedef _realT realT;
+   
+   realT iterNo;
+   
+   typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> commandT;
+   
+   commandT measurement;
+};
 
+///Implements a general integrator controller.
+/**
+  * \tparam _realT is the floating point type for all calculations.
+  */ 
 template<typename _realT>
 class generalIntegrator
 {
 
 public:
    
+   ///The real data type
    typedef _realT realT;
      
+   ///The real data type
    typedef std::complex<realT> complexT;
    
    ///The wavefront data type
-   typedef wavefront<realT> wavefrontT;
+//   typedef wavefront<realT> wavefrontT;
    
-   ///The pupil image type
-   typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> commandT;
+   ///The command type
+   typedef wfMeasurement<realT> commandT;
+   
+   ///The image type, used here as a general storage array
    typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
    
+   ///Default c'tor.
    generalIntegrator();
 
+   imageT _closingGains;   ///< Column-vector of gains used for loop closing as pure integrator
+   int _closingRamp;
+   
 protected:
 
+   int _nModes; ///< The number of modes being filtered.
+
+   bool _openLoop; ///< If true, then commands are not integrated.
+   
+   int _closingDelay; ///< If > 0, then the gains are ramped linearly up to this value. Default = 0.
+   
+   int _lowOrders; ///< If > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.  Default = 0.
+   
+   
+      
    imageT _a;
    int _currA;
    
    imageT _b;
    int _currB;
    
-   imageT _gains;   
+   imageT _gains;   ///< Column-vector of gains
    
    imageT _commandsIn;
    imageT _commandsOut;
    
 public:
 
-   template<typename dmT>
-   void initialize(dmT & dm);
+   ///Allocate and initialize all state.
+   /** 
+     * \returns 0 on success, a negative integer otherwise.
+     */ 
+   int initialize(int nModes /**< [in] the number of modes to be filtered */);
    
-   void setASize(int n);
+   ///Get the number of modes
+   /** nModes is only set by calling initialize.
+     *
+     * \returns the current value of _nModes
+     */ 
+   int nModes();
    
-   void setA(int i, const imageT & a);
+   ///Set the _openLoop flag.
+   /** If _openLoop is true, then commands are not filtered.
+     *
+     * \returns 0 on success, a negative integer on error. 
+     */
+   int openLoop(bool ol /**< [in] the new value of _openLoop */ );
    
-   void setBSize(int n);
+   ///Get the value of the _openLoop flag.
+   /** 
+     * \returns the current value of _openLoop.
+     */
+   bool openLoop();
    
-   void setB(int i, const imageT & b);
-   
-   realT gain(int i);
-   
-   void setGain(int i, realT g);
-   
-   void setGains(realT g);
+   ///Set _closingDelay.
+   /** If _closingDelay  > 0, then the gains are ramped linearly up to this value.
+     *
+     * \returns 0 on success, a negative integer on error. 
+     */
+   int closingDelay( int cd /**< [in] The new value of _closingDelay */);
 
-   void setGains(const std::string & ogainf);
-   
-   
-   
-   void filterCommands( int iterNo,
-                        commandT & filtAmps, 
-                        commandT & rawAmps);
+   ///Get the value of the _closingDelay.
+   /** 
+     * \returns the current value of _closingDelay.
+     */   
+   int closingDelay();
 
-   int _closingDelay;
-   int _lowOrders;
-   realT _closingGainFact;
+   ///Set _lowOrders.
+   /** If _lowOrders > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0. 
+     *
+     * \returns 0 on success, a negative integer on error. 
+     */   
+   int lowOrders( int lo /**< [in] The new value of _lowOrders */);
+
+   ///Get the value of the _lowOrders.
+   /** 
+     * \returns the current value of _lowOrders.
+     */   
+   int lowOrders();
    
-   int _nModes;
+   ///Set the size of the IIR vector (the a coefficients)
+   /** This allocates _a to be _nModes X n in size.
+     * 
+     * \returns 0 on success, negative number on error.
+     */ 
+   int setASize(int n /**< [in] the number of IIR coefficients */ );
    
-   void initMeasurements(commandT & filtAmps, commandT & rawAmps)
-   {
-      filtAmps.resize(1, _nModes);
-      filtAmps.setZero();
-      
-      rawAmps.resize(1, _nModes);
-      rawAmps.setZero();
-      
-   }
+   ///Set the IIR coefficients for one mode.
+   /** 
+     * \returns 0 on success, negative number on error.
+     */
+   int setA( int i,  ///< [in] the mode number
+             const imageT & a ///< [in] the IIR coefficients for this mode
+           );
+   
+   ///Set the size of the FIR vector (the b coefficients)
+   /** This allocates _b to be _nModes X n in size.
+     *
+     * \returns 0 on success, negative number on error.
+     */ 
+   int setBSize(int n /**<  [in] the number of FIR coefficients */ );
+   
+   ///Set the FIR coefficients for one mode.
+   /** 
+     * \returns 0 on success, negative number on error.
+     */
+   int setB( int i,  ///< [in] the mode number
+             const imageT & b ///< [in] the IIR coefficients for this mode
+           );
+   
+   ///Get the gain for a single mode.
+   /** 
+     * \returns the gain value if mode exists.  
+     */
+   realT gain( int i /**< The mode number*/);
+   
+   ///Set the gain for a single mode.
+   /** 
+     * \returns 0 on success, negative number on error.
+     */
+   int gain( int i,  ///< The mode number 
+              realT g ///< The new gain value
+            );
+   
+   ///Set the gain for all modes to a single value
+   /** 
+     * \returns 0 on success, negative number on error.
+     */
+   int gains(realT g /**< The new gain value*/ );
+   
+   ///Set the gains for all modes, using a vector to specify each gain
+   /** The vector must be exactly as long as _nModes. 
+     * 
+     * \returns 0 on success, negative number on error.
+     */
+   int gains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
+   
+   int closingGains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
+   
+   ///Set the gains for all modes, using a file to specify each gain
+   /** The file format is a simple ASCII single column, with 1 gain per line.
+     * Must be exactly as long as _nModes. 
+     * 
+     * \returns 0 on success, negative number on error.
+     */
+   int gains( const std::string & ogainf /**<  [in] the name of the file, full path */ );
+   
+   
+   ///Allocate the provided command structures
+   /** Used by the calling system to allocate the commands being passed between components.
+     *
+     * \returns 0 on success, negative number on error.
+     */ 
+   int initMeasurements( commandT & filtAmps, ///< The structure to contain the filtered commands
+                         commandT & rawAmps ///< The structure to contain the raw commands
+                       );
+   
+   int filterCommands( commandT & filtAmps, 
+                       commandT & rawAmps,
+                       int iterNo
+                     );
+
+   
+   
+
 };
 
 
@@ -98,18 +228,20 @@ generalIntegrator<realT>::generalIntegrator()
 {
    _nModes = 0;
    
+   _openLoop = false;
+   
    _closingDelay = 0;
+   
    _lowOrders = 0;
-   _closingGainFact = 1.0;
+   
 }
 
 
 
 template<typename realT>
-template<typename dmT>
-void generalIntegrator<realT>::initialize(dmT & dm)
+int generalIntegrator<realT>::initialize(int nModes)
 {
-   _nModes = dm.nModes();
+   _nModes = nModes;
    
    //If _a has been sized, resize it
    if(_a.cols() > 0)
@@ -135,14 +267,67 @@ void generalIntegrator<realT>::initialize(dmT & dm)
       _commandsIn.setZero();
    }
 
+   _closingGains.resize(1,_nModes);
+   
+   _closingGains.setZero();
+   
    _gains.resize(1,_nModes);
    
    _gains.setZero();
 
+   
+   return 0;
 }
 
 template<typename realT>
-void generalIntegrator<realT>::setASize(int n)
+int generalIntegrator<realT>::nModes()
+{
+   return _nModes;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::openLoop( bool ol )
+{
+   _openLoop = ol;
+   return 0;
+}
+
+template<typename realT>
+bool generalIntegrator<realT>::openLoop()
+{
+   return _openLoop;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingDelay( int cd )
+{
+   _closingDelay = cd;
+   
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingDelay()
+{
+   return _closingDelay;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::lowOrders( int lo )
+{
+   _lowOrders = lo;
+   
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::lowOrders()
+{
+   return _lowOrders;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::setASize(int n)
 {
    //Resize with _nModes if set
    if( _nModes > 0)
@@ -159,17 +344,20 @@ void generalIntegrator<realT>::setASize(int n)
    _a.setZero();
    _currA = 0;
    _commandsOut.setZero();
-      
+   
+   return 0;
 }
    
 template<typename realT>
-void generalIntegrator<realT>::setA(int i, const imageT & a)
+int generalIntegrator<realT>::setA(int i, const imageT & a)
 {
    _a.row(i) = a;
+   
+   return 0;
 }
    
 template<typename realT>
-void generalIntegrator<realT>::setBSize(int n)
+int generalIntegrator<realT>::setBSize(int n)
 {
    //Resize with _nModes if set
    if( _nModes > 0)
@@ -186,82 +374,156 @@ void generalIntegrator<realT>::setBSize(int n)
    _b.setZero();
    _currB = 0;
    _commandsIn.setZero();
+   
+   return 0;
 }
 
-  
 template<typename realT>
-void generalIntegrator<realT>::setB(int i, const imageT & b)
+int generalIntegrator<realT>::setB(int i, const imageT & b)
 {
    _b.row(i) = b;
+   
+   return 0;
 }
-
 
 
 template<class realT>
 realT generalIntegrator<realT>::gain(int i)
 {
+   if(i < 0 || i >= _nModes)
+   {
+      mxError("generalIntegrator::gain", MXE_INVALIDARG, "mode index out of range");
+      return 0; ///\retval 0 if the mode doesn't exist.
+   }
+   
    return _gains(i);
 }
-
    
 template<typename realT>
-void generalIntegrator<realT>::setGain(int i, realT g)
+int generalIntegrator<realT>::gain(int i, realT g)
 {
+   if(i < 0 || i >= _nModes)
+   {
+      mxError("generalIntegrator::gain", MXE_INVALIDARG, "mode index out of range");
+      return 0; ///\retval 0 if the mode doesn't exist.
+   }
+   
    _gains(0,i) = g;
+   
+   return 0;
 }
 
+
 template<typename realT>
-void generalIntegrator<realT>::setGains(realT g)
+int generalIntegrator<realT>::gains(realT g)
 {
-   for(int i=0;i<_gains.cols(); ++i) _gains(0,i) = g;
+   for(int i=0;i<_gains.cols(); ++i) 
+   {
+      _gains(0,i) = g;
+   }
+   
+   return 0;
 }
 
 template<typename realT>
-void generalIntegrator<realT>::setGains(const std::string & ogainf)
+int generalIntegrator<realT>::gains( const std::vector<realT> & gains )
+{
+   
+   if( gains.size() != _gains.cols())
+   {
+      mxError("generalIntegrator::gains", MXE_SIZEERR, "input gain vector not same size as number of modes");
+      return -1; ///\retval -1 on vector size mismatch
+   }
+   
+   for(int i=0;i<_gains.cols(); ++i) 
+   {
+      _gains(0,i) = gains[i];
+   }
+   
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
+{
+   
+   if( gains.size() != _closingGains.cols())
+   {
+      mxError("generalIntegrator::closingGains", MXE_SIZEERR, "input gain vector not same size as number of modes");
+      return -1; ///\retval -1 on vector size mismatch
+   }
+   
+   for(int i=0;i<_closingGains.cols(); ++i) 
+   {
+      _closingGains(0,i) = gains[i];
+   }
+   
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::gains(const std::string & ogainf)
 {
    std::ifstream fin;
    fin.open(ogainf);
    
    if(!fin.good())
    {
-      std::cerr << "generalIntegrator: gain file " << ogainf << " not found.\n";
-      exit(-1);
+      mxError("generalIntegrator::gains", MXE_FILEOERR, "could not open gan file");
+      return -1; /// \retval -1 if file open fails
    }
    
    std::string tmpstr;
+   realT g;
    for(int i=0;i<_gains.cols();++i)
    {
       fin >> tmpstr;
-      fin >> tmpstr;
-      fin >> tmpstr;
-      fin >> tmpstr;
-      
-      setGain(i, mx::convertFromString<float>(tmpstr));
+      g = mx::convertFromString<realT>(tmpstr);
+      gain(i, g);
 
-   }  
+   }
    
+   return 0;
 }
 
+template<class realT>
+int generalIntegrator<realT>::initMeasurements(commandT & filtAmps, commandT & rawAmps)
+{
+   filtAmps.measurement.resize(1, _nModes);
+   filtAmps.measurement.setZero();
+      
+   rawAmps.measurement.resize(1, _nModes);
+   rawAmps.measurement.setZero();
+    
+   return 0;
+}
 
 template<typename realT>
-void generalIntegrator<realT>::filterCommands( int iterNo,
-                                                 commandT & filtAmps, 
-                                                 commandT & rawAmps )
+int generalIntegrator<realT>::filterCommands( commandT & filtAmps, 
+                                              commandT & rawAmps,
+                                              int iterNo )
 {
-
+   filtAmps.iterNo = rawAmps.iterNo;
+   
+   if(_openLoop) 
+   {
+      filtAmps.measurement.setZero();
+      return 0;
+   }
+   
+   
    realT aTot, bTot;
-   
-   
-   if( iterNo < _closingDelay )
+
+   if( iterNo < _closingDelay)
    {
       BREAD_CRUMB;
       
       for(int i=0; i< _nModes; ++i)
       {
-         if( std::isnan( rawAmps(0,i) ) || !std::isfinite(rawAmps(0,i))) rawAmps(0,i) = 0.0; 
+         if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0; 
          
       
-         _commandsIn(i, _currB) = rawAmps(0,i);
+         _commandsIn(i, _currB) = rawAmps.measurement(0,i);
       
          aTot = _commandsOut(i, _currA);
          //std::cerr << _currA << " " << aTot << "\n";
@@ -270,19 +532,23 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
          int cA = _currA + 1;
          if(cA >= _a.cols()) cA = 0;
          
-         realT gf = ((realT) iterNo)/_closingDelay * (_closingGainFact);
          
-         _commandsOut(i, cA) = aTot + gf*_gains(i) * rawAmps(0,i);
+         realT gf = 1.0;
+         
+         if( iterNo < _closingRamp) gf = ((realT) iterNo)/_closingRamp;
+         
+         
+         _commandsOut(i, cA) = aTot + gf*_closingGains(i) * rawAmps.measurement(0,i);
          
          //std::cerr << cA << " " << _commandsOut(i, cA) << "\n";
       
          if( i <= _lowOrders || _lowOrders <= 0)
          {
-            filtAmps(0,i) = _commandsOut(i, cA);
+            filtAmps.measurement(0,i) = _commandsOut(i, cA);
          }
          else
          {
-            filtAmps(0,i) = 0;
+            filtAmps.measurement(0,i) = 0;
          }
       }  
       
@@ -293,7 +559,7 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
       ++_currA;
       if(_currA >= _a.cols()) _currA = 0;
          
-      return;
+      return 0;
    }
    
 
@@ -303,12 +569,12 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
    {
       if(_gains(i) == 0)
       {
-         filtAmps(0,i) = 0;
+         filtAmps.measurement(0,i) = 0;
          continue;
       }
       
       
-      if( std::isnan( rawAmps(0,i) ) || !std::isfinite(rawAmps(0,i))) rawAmps(0,i) = 0.0; 
+      if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0; 
       
       aTot = 0;
       for(int j = 0; j < _a.cols(); ++j)
@@ -318,7 +584,7 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
          aTot += _a(i,j) * _commandsOut(i,k);
       }
       
-      _commandsIn(i, _currB) = rawAmps(0,i);
+      _commandsIn(i, _currB) = rawAmps.measurement(0,i);
       
       bTot = 0;
       for(int j = 0; j < _b.cols(); ++j)
@@ -335,7 +601,7 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
       
       _commandsOut(i, cA) = aTot + _gains(i) * bTot;
       
-      filtAmps(0,i) = _commandsOut(i, cA);
+      filtAmps.measurement(0,i) = _commandsOut(i, cA);
    }
 
    ++_currB;
@@ -344,6 +610,7 @@ void generalIntegrator<realT>::filterCommands( int iterNo,
    ++_currA;
    if(_currA >= _a.cols()) _currA = 0;
       
+   return 0;
 }
 
 

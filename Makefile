@@ -38,6 +38,7 @@ OBJS = kepler.o \
 
 INC_TO_INSTALL = ADIobservation.hpp \
                  airy.hpp \
+                 ao \
                  app \
                  appConfigurator.hpp \
                  application.hpp \

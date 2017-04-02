@@ -65,7 +65,7 @@ public:
    typedef wooferTweeterDMSpec specT;
    
    //typedef wooferTweeterCommand<floatT> commandT;
-   typedef Eigen::Array< floatT, -1, -1> commandT;
+   //typedef Eigen::Array< floatT, -1, -1> commandT;
    
    deformableMirror<floatT> woofer;
    deformableMirror<floatT> tweeter;
@@ -86,7 +86,7 @@ public:
    
    
    ///Get the calibration amplitude.
-   void calAmp(floatT ca);
+   void calAmp(const std::vector<floatT> & ca);
     
    
    void applyMode( wavefrontT & wf, 
@@ -94,6 +94,7 @@ public:
                    floatT amp, 
                    floatT lambda );
    
+   template<typename commandT>
    void setShape( commandT & commandV );
       
    void applyShape(wavefrontT & wf,  floatT lambda);
@@ -114,8 +115,10 @@ public:
 template<typename _floatT>
 wooferTweeterDM<_floatT>::wooferTweeterDM()
 {
-   ds9_interface_set_title(&woofer.ds9i, "Woofer");
-   ds9_interface_set_title(&tweeter.ds9i, "Tweeter");
+   ds9_interface_set_title(&woofer.ds9i_shape, "Woofer_Shape");
+   ds9_interface_set_title(&woofer.ds9i_phase, "Woofer_Phase");
+   ds9_interface_set_title(&tweeter.ds9i_shape, "Tweeter_Shape");
+   ds9_interface_set_title(&tweeter.ds9i_phase, "Tweeter_Phase");
    
    t_mm = 0;
    t_sum = 0;
@@ -141,10 +144,10 @@ int wooferTweeterDM<_floatT>::initialize( specT & spec,
 
 
 template<typename _floatT>
-void wooferTweeterDM<_floatT>::calAmp(_floatT ca)
+void wooferTweeterDM<_floatT>::calAmp(const std::vector<_floatT> & ca)
 {
-   woofer.calAmp(ca);
-   tweeter.calAmp(ca);
+   woofer.calAmp(ca[0]);
+   tweeter.calAmp(ca[1]);
 }
 
 template<typename _floatT>
@@ -166,6 +169,7 @@ void wooferTweeterDM<_floatT>::applyMode( wavefrontT & wf,
    
 
 template<typename _floatT>
+template<typename commandT>
 void wooferTweeterDM<_floatT>::setShape( commandT & commandV )
 {
    static int called = 0;
@@ -174,29 +178,31 @@ void wooferTweeterDM<_floatT>::setShape( commandT & commandV )
    commandT woofV, tweetV;
    
    BREAD_CRUMB;
-   woofV = commandV.block(0, 0, 1, _wooferModes);
+   woofV.measurement = commandV.measurement.block(0, 0, 1, _wooferModes);
    
    BREAD_CRUMB;
 //    std::cerr << _wooferModes << "\n";
 //    std::cerr << commandV.cols() << "\n";
    
-   tweetV = commandV.block(0, _wooferModes, 1,commandV.cols()-_wooferModes);
+   tweetV.measurement = commandV.measurement.block(0, _wooferModes, 1,commandV.measurement.cols()-_wooferModes);
    
    BREAD_CRUMB;
    
-   if(called == 0)
-   {
-      avgWoofV = woofV;
-      ++called;
-   }
-   else if(called == 1)
-   {
-      avgWoofV += woofV;
-      avgWoofV /= (called + 1);
-      
-      woofer.setShape(avgWoofV);
-      called = 0;
-   }
+   woofer.setShape(woofV);
+         
+//    if(called == 0)
+//    {
+//       avgWoofV.measurement = woofV.measurement;
+//       ++called;
+//    }
+//    else if(called == 1)
+//    {
+//       avgWoofV.measurement += woofV.measurement;
+//       avgWoofV.measurement /= (called + 1);
+//       
+//       woofer.setShape(avgWoofV.measurement);
+//       called = 0;
+//    }
    
    
    BREAD_CRUMB;

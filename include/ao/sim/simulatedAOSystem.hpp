@@ -94,10 +94,10 @@ public:
    typedef _dmT dmT;
    typedef _turbSeqT turbSeqT;
    
-   std::string _sysName;
-   std::string _wfsName;
-   std::string _pupilName;
-   std::string _pupilMaskName;
+   std::string _sysName; ///< The system name for use in mx::AO::path 
+   std::string _wfsName; ///< The WFS name for use in the mx::AO::path
+   std::string _pupilName; ///< The pupil name for use in the mx::AO::path
+   std::string _pupilMaskName; ///< The pupil mask name for use in the mx::AO::path
    
    
    wfsT wfs;
@@ -385,7 +385,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initS
    wfs.simStep(_simStep);
 
    
-   filter.initialize(dm);
+   filter.initialize(dm.nModes());
    
    recon.initialize(*this, reconSpec);
    dm.calAmp(recon.calAmp());
@@ -471,6 +471,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
 
    double tO,tF, t0, t1, t_applyMode = 0, t_senseWF = 0, t_calcMeas = 0, t_accum = 0;
 
+   std::cerr << dm.nModes() << "\n";
+   
    tO = get_curr_time();
    
    for(int i=0;i< dm.nModes(); ++i)
@@ -481,23 +483,34 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
       
       currWF.setPhase(_pupil*0);
       
-      t0 = get_curr_time();
-      dm.applyMode(currWF, i, amp, 0.78e-6);
-      t1 = get_curr_time();
-      t_applyMode += t1-t0;
+      realT s_amp = amp;
+      if(nmodes>0 && i>= nmodes) 
+      {
+         s_amp =0;
+         wfs.detectorImage.image.setZero();
+      }
+      else
+      {
+         t0 = get_curr_time();
+         dm.applyMode(currWF, i, s_amp, 0.8e-6);
+         t1 = get_curr_time();
+         t_applyMode += t1-t0;
+      
+         BREAD_CRUMB;
+      
+         t0 = get_curr_time();
+         wfs.senseWavefrontCal(currWF);
+         t1 = get_curr_time();
+         //std::cout << t1-t0 << "\n";
+         t_senseWF += t1-t0;
+      }
       
       BREAD_CRUMB;
       
       t0 = get_curr_time();
-      wfs.senseWavefrontCal(currWF);
-      t1 = get_curr_time();
-      //std::cout << t1-t0 << "\n";
-      t_senseWF += t1-t0;
       
-      BREAD_CRUMB;
-      
-      t0 = get_curr_time();
       recon.calcMeasurement(measureVec, wfs.detectorImage);
+      
       t1 = get_curr_time();
       //std::cout << t1-t0 << "\n";
       t_calcMeas += t1-t0;
@@ -701,7 +714,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       {
          BREAD_CRUMB;
          
-         filter.filterCommands(_frameCounter, commandAmps, _delayedCommands[_currCommand]);
+         filter.filterCommands(commandAmps, _delayedCommands[_currCommand], _frameCounter);
             
          BREAD_CRUMB;
          

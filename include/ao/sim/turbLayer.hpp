@@ -10,6 +10,8 @@
 #ifndef __turbLayer_hpp__
 #define __turbLayer_hpp__
 
+#include <vector>
+
 #include <Eigen/Dense>
 
 #include <mx/randomT.hpp>
@@ -51,12 +53,18 @@ struct turbLayer
    realT _dx;
    realT _dy;
 
-   int _last_wdx;
-   int _last_wdy;
+   int _nCombo;
+   
+   std::vector<_realT> _x0;
+   std::vector<_realT> _y0;
+   
+   std::vector<int> _last_wdx;
+   std::vector<int> _last_wdy;
 
    arrayT phase;
-   arrayT shiftPhaseWP;
+   std::vector<arrayT> shiftPhaseWP;
    arrayT shiftPhase;
+   arrayT shiftPhaseWork;
 
    mx::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
    
@@ -135,8 +143,7 @@ void turbLayer<realT>::setLayer( int wfSz,
    _dx = _windV*cos(_windD)/(_pupD/_wfSz);
    _dy = _windV*sin(_windD)/(_pupD/_wfSz);
    
-   _last_wdx = _scrnSz + 1;
-   _last_wdy = _scrnSz + 1;
+   
 
    alloc();
 }
@@ -145,8 +152,34 @@ template<typename realT>
 void turbLayer<realT>::alloc()
 {      
    phase.resize(_scrnSz, _scrnSz);
-   shiftPhaseWP.resize( _wfSz+2*_buffSz, _wfSz+2*_buffSz);
+   
+   shiftPhaseWP.resize(_nCombo);
+   for(int i=0;i<_nCombo; ++i)
+   {
+      shiftPhaseWP[i].resize( _wfSz+2*_buffSz, _wfSz+2*_buffSz);
+   }
+   
    shiftPhase.resize( _wfSz+2*_buffSz, _wfSz+2*_buffSz);
+   
+   shiftPhaseWork.resize( _wfSz+2*_buffSz, _wfSz+2*_buffSz);
+   
+   _x0.resize(_nCombo);
+   _y0.resize(_nCombo);
+   
+   _last_wdx.resize(_nCombo);
+   _last_wdy.resize(_nCombo);
+   
+   initRandom();
+   
+   for(int i=0;i<_nCombo; ++i)
+   {
+      _x0[i] = 0; //floor(uniVar * (_scrnSz));
+      _y0[i] = 0; //floor(uniVar * (_scrnSz));
+      
+      _last_wdx[i] = _scrnSz + 1;
+      _last_wdy[i] = _scrnSz + 1;
+   
+   }
    
    //fft.plan( _wfSz+2*_buffSz, _wfSz+2*_buffSz, MXFFT_FORWARD, true);
    //fftR.plan( _wfSz+2*_buffSz, _wfSz+2*_buffSz, MXFFT_BACKWARD, true);
@@ -158,30 +191,36 @@ void turbLayer<realT>::shift( realT dt )
    int wdx, wdy;
    realT ddx, ddy;
 
-   ddx = _dx*dt;
-   ddy = _dy*dt;
+   shiftPhase.setZero();
    
-   wdx = (int) trunc(ddx);
-   ddx -= wdx;
-   wdy = (int) trunc(ddy);
-   ddy -= wdy;
-   
-   wdx %= _scrnSz;
-   wdy %= _scrnSz;
-
-   //Check for a new whole-pixel shift
-   if(wdx != _last_wdx || wdy != _last_wdy)
+   for(int i=0; i < _nCombo; ++i)
    {
-      //Need a whole pixel shift
-      mx::imageShiftWP(shiftPhaseWP, phase, wdx, wdy);
+      ddx = _x0[i] + _dx*dt;
+      ddy = _y0[i] + _dy*dt;
+   
+      wdx = (int) trunc(ddx);
+      ddx -= wdx;
+      wdy = (int) trunc(ddy);
+      ddy -= wdy;
+   
+      wdx %= _scrnSz;
+      wdy %= _scrnSz;
+
+      //Check for a new whole-pixel shift
+      if(wdx != _last_wdx[i] || wdy != _last_wdy[i])
+      {
+         //Need a whole pixel shift
+         mx::imageShiftWP(shiftPhaseWP[i], phase, wdx, wdy);
+      }
+   
+      //Do the sub-pixel shift      
+      mx::imageShift( shiftPhaseWork, shiftPhaseWP[i], ddx, ddy, mx::cubicConvolTransform<realT>(-0.5));
+      shiftPhase += shiftPhaseWork;
+      
+      _last_wdx[i] = wdx;
+      _last_wdy[i] = wdy;
    }
-   
-   //Do the sub-pixel shift      
-   mx::imageShift( shiftPhase, shiftPhaseWP, ddx, ddy, mx::cubicConvolTransform<realT>(-0.5));
-   
-   _last_wdx = wdx;
-   _last_wdy = wdy;
-   
+   shiftPhase /= sqrt(_nCombo);
 }
 
 template<typename realT>

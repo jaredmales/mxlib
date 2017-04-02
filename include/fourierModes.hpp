@@ -41,16 +41,15 @@ namespace mx
     \f]
   * and  \f$ D \f$ is taken to be the maximum of the number of columns and rows in the image.
   *
-  * \param [out] im is an Eigen-like image
-  * \param [in] m specifies the spatial frequency in the u direction
-  * \param [in] n specifies the spatial frequency in the v direction
-  *
   * \retval 0 on success
   *
   * \tparam typeN is an Eigen-like reference type.
   */  
 template<class typeN>
-int makeFourierModeC(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeFourierModeC( typeN im,                   ///<  [out] is an Eigen-like image
+                      typename typeN::Scalar m,   ///<  [in] specifies the spatial frequency in the u direction
+                      typename typeN::Scalar n    ///<  [in] n specifies the spatial frequency in the v direction
+                    )
 {
    typedef typename typeN::Scalar realT;
       
@@ -476,18 +475,16 @@ int fourierModeNumber(int m, int n, int p)
    return 2*(i0 + di) + (1 + p)/2;
 }
 
+
 ///Calculate the (m,n,p) coordinates of a Fourier mode given its index.
 /** The index increases counter-clockwise from the m axis in squares, with p==-1 being even and p==1 being odd.
   * 
-  * \param [out] m is the m spatial frequency coordinate
-  * \param [out] n is the n spatial frequency coordinage
-  * \param [out] p is the parity, +/-1, for sine or cosine or specifiying the modified Fourier mode.
-  * \param [in] i is the mode index.
-  * 
-  * \retval 0 on success
-  * \retval -1 on an error.
+  * \returns 0 on success, a negative number otherwise
   */ 
-int fourierModeCoordinates( int & m, int & n, int & p, int i)
+int fourierModeCoordinates( int & m, ///< [out] is the m spatial frequency coordinate 
+                            int & n, ///< [out] is the n spatial frequency coordinage
+                            int & p, ///< [out] is the parity, +/-1, for sine or cosine or specifiying the modified Fourier mode.
+                            int i )  ///< [in] is the mode index.
 {
    if(i < 0)
    {
@@ -495,7 +492,7 @@ int fourierModeCoordinates( int & m, int & n, int & p, int i)
       m = 0;
       n = 0;
       p = 0;
-      return -1;
+      return -1; /// \retval -1 if i < 0
    }
    
    
