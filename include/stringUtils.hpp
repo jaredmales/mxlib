@@ -22,37 +22,85 @@ namespace mx
   */
 
 ///Convert a numerical value to a string
-/** \details The default version uses the stream library to convert. 
+/** The default version uses the stream library to convert.  A specialization is provided to prevent conversion of std::string.
   *
-  * Example:
+  * The precision parameter is only used for floating point types.  If the default precision==0 is passed, then the maximum useful precision is 
+  * used, from the value of std::numeric_limits\<typeT\>::max_digits10.
+  * 
+  * The width and pad template parameters can be used to set a fixed maximum width and a pad character.
+  * 
+  * Examples:
+  * 
+  * To convert a double precision number to string:
   * \code
-  * double d = 2.898434;
-  * std::string str;
-  * str = convertToString(d);  //note that you will not normally need to specify <typeT>
+    double d = 2.898434;
+    std::string str;
+    str = convertToString(d);  //note that you will not normally need to specify <typeT>
+  * \endcode
+  *
+  * To produce a fixed with 0 padded string from an integer:
+  * \code
+    int i = 23;
+    std::string str;
+    str = convertToString<int, 5, '0'>(i);  //result is "00023".
   * \endcode
   *
   * \tparam typeT is the type of value to convert
-  * 
-  * \param value the value of type typeT to be converted
-  * 
+  * \tparam width specifies the maximum width, not including the '\0'
+  * \tparam pad specifies the pad character
+  *
   * \returns a string representation of value
-  * 
-  * \todo should have a facility to handle desired precision and format
+  *
   */
-template<typename typeT> 
-std::string convertToString(const typeT & value)
+template< typename typeT, unsigned width=0, char pad=' '> 
+std::string convertToString( const typeT & value, ///< [in] the value of type typeT to be converted
+                             int precision = 0   ///< [in] [optional] the precision (see http://www.cplusplus.com/reference/ios/ios_base/precision/) to use for floating point types.
+                           )
 {
+   
    std::ostringstream convert;
-   convert.precision(20);
+   
+   if( std::is_floating_point<typeT>::value )
+   {
+      if(precision == 0 )
+      {
+         convert.precision(  std::numeric_limits<typeT>::max_digits10);
+      }
+      else
+      {
+         convert.precision(precision);
+      }
+   }
    
    convert << value;
-   
-   return convert.str();
+      
+   if(width == 0)
+   {
+      return convert.str();
+   }
+   else
+   {
+      std::string c = convert.str();
+      
+      if( c.length() > width )
+      {
+         c.erase( width, c.length()-width);
+         return c;
+      }
+      
+      return std::string( width-c.length(), pad) + c;
+   }
+      
+      
+      
+      
 }
 
 /// Specialization of convertToString to avoid converting a string to a string
 template<> inline
-std::string convertToString<std::string>(const std::string & value)
+std::string convertToString<std::string>( const std::string & value,
+                                          int precision
+                                        )
 {
    return value;
 }

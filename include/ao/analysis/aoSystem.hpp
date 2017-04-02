@@ -109,9 +109,8 @@ public:
    /// Set the value of the 0 magnitude photon rate
    /** This is the photon rate at the WFS, photons/sec.
      * 
-     * \param nF0 is the new value of _F0.
      */
-   void F0(floatT nF0);
+   void F0(floatT nF0 /**< [in] is the new value of _F0.*/);
    
    /// Get the value of the 0 magnitude photon rate
    /**
@@ -121,9 +120,8 @@ public:
    
    /// Set the value of the Star's magnitude
    /**
-     * \param nmag is the new value of _starMag.
      */
-   void starMag(floatT nmag);
+   void starMag(floatT nmag /**< [in] is the new value of _starMag.*/);
    
    /// Get the value of the Star's magnitude
    /**
@@ -133,11 +131,9 @@ public:
    
    ///The photon flux at a given star magnitude.
    /**
-     * \param [in] mag is the magnitude of the star.
-     *
      * \returns the photon flux of the star in the bandpass assumed by F0.
      */ 
-   floatT Fg(floatT mag);
+   floatT Fg( floatT mag /**< [in] is the magnitude of the star. */);
    
    /// Get the photon rate at the current Star magnitude.
    /** Calculates \f$ F_\gamma = F_0 10^{-0.4 m} \f$ where \f$ F_0 \f$ is _F0 and \f$ m \f$ is _starMag.
@@ -148,9 +144,8 @@ public:
    
    /// Set the value of the primary mirror diameter.
    /** 
-     * \param nD is the new value of _D.
      */
-   void D( floatT nD );
+   void D( floatT nD /**< [in] is the new value of _D. */);
    
    /// Get the value of the primary mirror diamter
    /**
@@ -160,9 +155,8 @@ public:
    
    /// Set the value of the minimum subaperture sampling.
    /**
-     * \param nd is the new value of _d_min.
      */
-   void d_min( floatT nd );
+   void d_min( floatT nd /**< [in] is the new value of _d_min */);
    
    /// Get the value of the minimum subaperture sampling.
    /**
@@ -172,9 +166,8 @@ public:
    
    /// Set whether or not the value of d is optimized or just set to _d_min.
    /**
-     * \param od is the new value of _optd.
      */
-   void optd( bool od );
+   void optd( bool od /**< [in] is the new value of _optd */);
    
    /// Get the value of _optd.
    /**
@@ -184,9 +177,8 @@ public:
    
    /// Set the value of the WFS wavelength.
    /**
-     * \param nlam is the new value of _lam_wfs.
      */
-   void lam_wfs( floatT nlam );
+   void lam_wfs( floatT nlam /**< [in] is the new value of _lam_wfs */);
    
    /// Get the value of the WFS wavelength.
    /**
@@ -196,9 +188,8 @@ public:
    
    /// Set the number of pixels in the WFS
    /**
-     * \param npix is the new value of _npix_wfs
      */
-   void npix_wfs( floatT npix );
+   void npix_wfs( floatT npix /**< [in] is the new value of _npix_wfs */);
    
    /// Get the number of pixels in the WFS
    /**
@@ -208,9 +199,8 @@ public:
    
    /// Set the value of the WFS readout noise
    /**
-     * \param nron is the new value of _ron_wfs
      */
-   void ron_wfs( floatT nron );
+   void ron_wfs( floatT nron /**< [in] is the new value of _ron_wfs */);
    
    /// Get the value of the WFS readout noise
    /**
@@ -220,9 +210,8 @@ public:
    
    /// Set the value of the background blux.
    /**
-     * \param fbg is the new value of _Fbg.
      */
-   void Fbg(floatT fbg);
+   void Fbg(floatT fbg /**< [in] is the new value of _Fbg */);
    
    /// Get the value of the background flux.
    /**
@@ -232,9 +221,8 @@ public:
    
    /// Set the value of the minimum WFS exposure time.
    /**
-     * \param ntau is the new value of _minTauWFS.
      */
-   void minTauWFS(floatT ntau);
+   void minTauWFS(floatT ntau /**< [in] is the new value of _minTauWFS */);
    
    /// Get the value of the minimum WFS exposure time.
    /**
@@ -244,9 +232,8 @@ public:
    
    /// Set the value of _deltaTau.
    /**
-     * \param ndel is the new value of _deltaTau.
      */
-   void deltaTau(floatT ndel);
+   void deltaTau(floatT ndel /**< [in] is the new value of _deltaTau*/);
    
    /// Get the value of _deltaTau.
    /**
@@ -256,9 +243,8 @@ public:
 
    /// Set the value of _optTau.
    /**
-     * \param ot is the new value of _optTau.
      */   
-   void optTau( bool ot );
+   void optTau( bool ot /**< [in] is the new value of _optTau */);
    
    /// Get the value of _optTau.
    /**
@@ -268,9 +254,8 @@ public:
    
    /// Set the science wavelength.
    /**
-     * \param nlam is the new value of _lam_sci.
      */
-   void lam_sci(floatT nlam);
+   void lam_sci(floatT nlam /**< [in] is the new value of _lam_sci */);
    
    /// Get the science wavelength.
    /**
@@ -280,9 +265,8 @@ public:
    
    /// Set the value of the non-common path WFE.
    /**
-     * \param nwfe is the new value of _ncp_wfe.
      */
-   void ncp_wfe(floatT nwfe);
+   void ncp_wfe(floatT nwfe /**< [in] is the new value of _ncp_wfe*/);
    
    /// Get the value of the non-common path WFE.
    /**
@@ -303,26 +287,22 @@ public:
       (S/N)^2 = \frac{ F_\gamma^2 \tau_{wfs}^2 }{ F_\gamma \tau_{wfs} + n_{pix} F_{bg} \tau_{wfs} + n_{pix} \sigma_{ron}^2 }
       \f]
     
-     * \param [in,out] tau_wfs specifies the WFS exposure time.  If 0, then optimumTauWFS is used.
      * 
      * \returns the S/N squared
      */
-   floatT signal2Noise2( floatT & tau_wfs );
+   floatT signal2Noise2( floatT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
    
    ///Calculate the measurement noise at a spatial frequency
    /** Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
-     * 
-     * \param [in] m specifies the u component of the spatial frequency
-     * \param [in] n specifies the v component of the spatial frequency
      *
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
-   floatT measurementError( floatT m, 
-                            floatT n );
+   floatT measurementError( floatT m, ///< [in] specifies the u component of the spatial frequency  
+                            floatT n  ///< [in] specifies the v component of the spatial frequency
+                          );
 
    ///Calculate the total measurement error over all corrected spatial frequencies
    /**
-     * 
      * \returns the total WFE due to measurement error.
      */ 
    floatT measurementError();
@@ -337,13 +317,11 @@ public:
    ///Calculate the time delay at a spatial frequency at the optimum exposure time.
    /** Calculates the wavefront phase variance due to time delay at \f$ f = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
-     * \param [in] m specifies the u component of the spatial frequency
-     * \param [in] n specifies the v component of the spatial frequency
-     *
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
-   floatT timeDelayError( floatT m, 
-                          floatT n );
+   floatT timeDelayError( floatT m, ///< [in] specifies the u component of the spatial frequency
+                          floatT n  ///< [in] specifies the v component of the spatial frequency
+                        );
 
    /// Calculate the time delay error over all corrected spatial frequencies
    /**
@@ -360,15 +338,13 @@ public:
      */
    
    /// Calculate the fitting error at a specific spatial frequency.   
-   /** \param [in] m specifies the u component of the spatial frequency
-     * \param [in] n specifies the v component of the spatial frequency
-     * \param [in] d [optional] specifies the actuator spacing. If 0 then d_opt() is used.
-     *
+   /**
      * \returns the fitting error in rad^2 rms at the science wavelength at (m,n).
      */ 
 
-   floatT fittingError( floatT m, 
-                        floatT n );
+   floatT fittingError( floatT m,  ///< [in] specifies the u component of the spatial frequency
+                        floatT n   ///< [in] specifies the v component of the spatial frequency
+                      );
 
    /// Calculate the total fitting error over all uncorrected spatial frequencies.
    /**
@@ -388,13 +364,11 @@ public:
    ///Calculate the optimum exposure time for a given spatial frequency.
    /** Finds the optimum exposure time at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
-     * \param m is the spatial frequency index in u.
-     * \param n is the spatial frequency index in v.
-     * 
      * \returns the optimum expsoure time.
      */
-   floatT optimumTauWFS( floatT m,
-                         floatT n );
+   floatT optimumTauWFS( floatT m, ///< [in] is the spatial frequency index in u
+                         floatT n  ///< [in] is the spatial frequency index in v
+                       );
 
    ///Calculate the optimum actuator spacing.
    /** Finds the value of _d_opt where the fitting error is less than than the combined time delay and measurement error.
@@ -411,13 +385,11 @@ public:
    /// Calculate the NCP variance at a spatial frequency.
    /** Finds the NCP variance at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
-     * \param m is the spatial frequency index in u.
-     * \param n is the spatial frequency index in v.
-     * 
      * \returns the NCP variance at k.
      */
-   floatT ncpError( int m, 
-                    int n );
+   floatT ncpError( int m, ///< [in] is the spatial frequency index in u
+                    int n  ///< [in] is the spatial frequency index in v
+                  );
    
    /// Calculate the total NCP variance in rad^2.
    /**
@@ -467,15 +439,19 @@ public:
      * @{
      */
    
-   floatT C0( floatT m, floatT n);
+   floatT C0( floatT m,  ///< [in] is the spatial frequency index in u
+              floatT n   ///< [in] is the spatial frequency index in v
+            );
    
    template<typename imageT>
-   void C0Map( imageT & im);
+   void C0Map( imageT & im /**< */);
    
-   floatT C1( floatT m, floatT n);
+   floatT C1( floatT m,  ///< [in] is the spatial frequency index in u
+              floatT n   ///< [in] is the spatial frequency index in v
+            );
    
    template<typename imageT>
-   void C1Map( imageT & im);
+   void C1Map( imageT & im /**< */);
    
    ///Calculate the contrast due to measurement and time delay errors at a spatial frequency.
    /** Contrast C2 is just the total variance due to time delay and measurement errors, 
@@ -486,10 +462,12 @@ public:
      * 
      * \returns C2.
      */
-   floatT C2( floatT m, floatT n );
+   floatT C2( floatT m,  ///< [in] is the spatial frequency index in u
+              floatT n   ///< [in]  is the spatial frequency index in v
+            );
    
    template<typename imageT>
-   void C2Map( imageT & im );
+   void C2Map( imageT & im /**< */ );
       
    
    
@@ -497,7 +475,7 @@ public:
    
    
    template<typename iosT>
-   iosT & dumpAOSystem( iosT & ios);
+   iosT & dumpAOSystem( iosT & ios /**< */);
    
 };
 
