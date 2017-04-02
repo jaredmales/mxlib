@@ -9,7 +9,7 @@
 
 #include <cmath>
 #include "astroconstants.h"
-#include "geo.h"
+#include "geo.hpp"
 #include "sofa.h"
 //#include "../vmop/MMatrix1"
 
