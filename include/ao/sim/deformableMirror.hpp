@@ -447,13 +447,13 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    
    //ds9_display(4, dshape.data(), _shape.rows(), _shape.cols(), 1, mx::getFitsBITPIX<realT>());
 
-   ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
+   //ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
    
    BREAD_CRUMB;
    
    wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
    
-   ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
+   //ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
    
    BREAD_CRUMB;
    
