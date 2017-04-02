@@ -13,6 +13,7 @@
 #ifndef __stringUtils_hpp__
 #define __stringUtils_hpp__
 
+#include <limits>
 /// The mxlib c++ namespace
 namespace mx
 {
