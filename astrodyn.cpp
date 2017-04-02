@@ -199,7 +199,7 @@ void azel_to_hadec(double &ha, double &dec, double az, double el, double lat)
 
 double get_ParAng_deg(double lat, double dec, double ha)
 {
-   return RTOD(atan2(cos(DTOR(lat))*sin(DTOR(ha)), sin(DTOR(lat))*cos(DTOR(dec)) - cos(DTOR(lat))*sin(DTOR(dec))*cos(DTOR(ha))));
+   return mx::rtod(atan2(cos(mx::dtor(lat))*sin(mx::dtor(ha)), sin(mx::dtor(lat))*cos(mx::dtor(dec)) - cos(mx::dtor(lat))*sin(mx::dtor(dec))*cos(mx::dtor(ha))));
    
    
    //RTOD( atan(-sin(d2r*had), cos(d2r*dec)*tan(d2r*latitude)-sin(d2r*dec)*cos(d2r*had))
