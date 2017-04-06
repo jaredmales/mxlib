@@ -661,7 +661,7 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
 #define MX_PINV_NO_INTERACT 0
 #define MX_PINV_PLOT 1
 #define MX_PINV_ASK 2
-
+#define MX_PINV_ASK_NMODES 4
 
 ///Calculate the pseudo-inverse of a patrix using the SVD
 /** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
@@ -710,7 +710,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       gp.plot( S.data(), S.rows(), " w lp", "singular values");
    }
    
-   if(interact & MX_PINV_ASK)
+   if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
    {
       dataT mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -725,6 +725,22 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       else maxCondition = 0;
    }
 
+   if( interact & MX_PINV_ASK_NMODES)
+   {
+      unsigned mine;
+      std::cout << "Maximum singular value: " << Smax << "\n";
+      std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+      std::cout << "Enter number of modes to keep: ";
+      std::cin >> mine;
+   
+      if(mine > 0)
+      {
+         maxCondition = Smax/S(mine-1,0);
+      }
+      else maxCondition = 0;
+   }
+   
+   
    dataT threshold = 0;
    if(maxCondition > 0)
    {
@@ -751,6 +767,13 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       }
    }
 
+   if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
+   {
+      dataT mine;
+      std::cout << "Modes Rejected: " << nRejected << "\n";
+      std::cout << "Condition Number: " << condition << "\n";
+   }
+   
    Eigen::Array<dataT, -1,-1> PInvTmp;
 
    PInvTmp = sigma.matrix() * VT.matrix();

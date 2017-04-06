@@ -165,6 +165,12 @@ public:
    std::string _commandFile;
    std::ofstream _commandFout;
    
+   int display_phase;
+   int display_phase_counter;
+   int display_shape;
+   int display_shape_counter;
+   
+   
 };
 
 
@@ -185,6 +191,11 @@ deformableMirror<_realT>::deformableMirror()
    
    _writeCommands = false;
    _commandFileOpen = false;
+   
+   display_phase = 0;
+   display_phase_counter = 0;
+   display_shape = 0;
+   display_shape_counter = 0;
 }
 
 
@@ -339,7 +350,10 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    Eigen::Array<_realT, -1, -1> c;
     
    //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
-   c = -1*_m2c.matrix() * commandV.measurement.matrix().transpose();
+   c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
+
+//   c*=_calAmp;
+
    
    if( _writeCommands )
    {
@@ -349,12 +363,12 @@ void deformableMirror<_realT>::setShape(commandT commandV)
          _commandFout << std::scientific;
          _commandFileOpen = true;
       }
-      _commandFout << commandV.iterNo << "> ";
-      for(int i=0; i<c.rows(); ++i)
-      {
-         _commandFout << commandV.measurement(0,i) << " ";
-      }
-      _commandFout << std::endl;
+//       _commandFout << commandV.iterNo << "> ";
+//       for(int i=0; i<c.rows(); ++i)
+//       {
+//          _commandFout << commandV.measurement(0,i) << " ";
+//       }
+//       _commandFout << std::endl;
       
       _commandFout << commandV.iterNo << "> ";
       for(int i=0; i<c.rows(); ++i)
@@ -365,7 +379,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       
 //      _commandFout << c.transpose() << "\n\n";
    }
-   c*=_calAmp;
    
    
    bool skipFrame = 0;
@@ -412,7 +425,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    
    
    _oldShape = _shape;
-#if 0
+#if 1
    _settling = 1;
    _settleTime_counter = 0;
    _settlingIter = commandV.iterNo;
@@ -426,7 +439,7 @@ template<typename _realT>
 void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
 {
    
-#if 0
+#if 1
    BREAD_CRUMB;
    
    if(_settling)
@@ -443,17 +456,34 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
        }
    }
 #endif
-   //imageT dshape = _shape*(2.*3.14159/900e-6)*2.;
-   
-   //ds9_display(4, dshape.data(), _shape.rows(), _shape.cols(), 1, mx::getFitsBITPIX<realT>());
 
-   //ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
+   if( display_shape > 0)
+   {
+      ++display_shape_counter;
+      
+      if(display_shape_counter >= display_shape)
+      {
+         ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
+         display_shape_counter = 0;
+      }
+   }
    
    BREAD_CRUMB;
    
    wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
    
-   //ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
+   if( display_phase > 0)
+   {
+      ++display_phase_counter;
+      
+      if(display_phase_counter >= display_phase)
+      {
+         ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
+
+         display_phase_counter = 0;
+      }
+   }
+   
    
    BREAD_CRUMB;
    

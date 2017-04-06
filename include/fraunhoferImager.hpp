@@ -61,123 +61,154 @@ protected:
    mx::fftT<complexT, complexT,2,0> fft_back;
    
    ///Initialize members
-   void initialize()
-   {
-      wavefrontSizePixels = 0;
+   void initialize();
       
-      xcen = 0;
-      ycen = 0;
-   }
-   
-   
    
 public:
    
    ///Constructor
-   fraunhoferImager()
-   {
-      initialize();
-   }
+   fraunhoferImager();
    
    ///Destructor
-   ~fraunhoferImager()
-   {
-   }
+   ~fraunhoferImager();
+   
+   ///Apply the shift to a pupil wavefront which will center the resultant focal plane image.
+   /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or setWavefrontSizePixels.
+     */
+   void shiftPupil( wavefrontT & complexPupil /**< [in/out] the complex pupil plane wavefront to shift*/);
    
    ///Propagate the wavefront from the pupil plane to the focal plane
    /** The pupil plane wavefront (complexPupil) is multiplied by a tilt to place the
      * image in the geometric center of the focal plane. 
      * 
-     * \param [out] complexFocal the focal plane wavefront.  Must be pre-allocated to same size as complexPupil.
-     * \param [in] complexPupil the pupil plane wavefront. Modified due to application of centering tilt.
-     * 
      */ 
-   void propagatePupilToFocal(wavefrontT & complexFocal, wavefrontT & complexPupil)
-   {
-      //First setup the tilt screens (does nothing if there's no change in size)
-      setWavefrontSizePixels(complexPupil.rows());
-      
-      //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
-      complexPupil *= centerFocal;
-        
-      //fft_fwd.fft(complexPupil.data(), complexFocal.data() );
-      fft_fwd( complexFocal.data(), complexPupil.data() );      
-   }
+   void propagatePupilToFocal( wavefrontT & complexFocal, ///< [out] the focal plane wavefront.  Must be pre-allocated to same size as complexPupil. 
+                               wavefrontT & complexPupil  ///< [in] the pupil plane wavefront. Modified due to application of centering tilt.
+                             );
    
    ///Propagate the wavefront from Focal plane to Pupil plane
    /** 
      * After the fourier transform, the output pupil plane wavefront is de-tilted, restoring it
      * to the state prior to calling \ref propagatePupilToFocal
      * 
-     * \param [out] complexPupil the pupil plane wavefront. Must be pre-allocated to same size as complexFocal.
-     * \param [in] complexFocal the focal plane wavefront.
-     * 
      */ 
-   void propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
-   {     
-      //fft_back.fft( complexFocal.data(), complexPupil.data());
-      fft_back( complexPupil.data(), complexFocal.data() );      
-      
-      //Unshift the wavefront and normalize
-      complexPupil *= centerPupil;
-   }
+   void propagateFocalToPupil( wavefrontT & complexPupil, ///< [out] the pupil plane wavefront. Must be pre-allocated to same size as complexFocal.
+                               wavefrontT & complexFocal  ///< [in] the focal plane wavefront.
+                             );
    
    ///Set the size of the wavefront, in pixels
    /** Checks if the size changes, does nothing if no change.  Otherwise,  calls
-     * \ref makeShiftPhase to pre-calculate the tilt arrays.
+     * \ref makeShiftPhase to pre-calculate the tilt arrays and plans the FFTs.
      *
-     * \param [in] wfsPix the desired new size of the wavefront
      */ 
-   void setWavefrontSizePixels(int wfsPix)
-   {
-      //If no change in size, do nothing
-      if(wfsPix == centerFocal.rows()) return;
-            
-      wavefrontSizePixels = wfsPix;
-      
-      xcen = 0.5*(wfsPix - 1.0);
-      ycen = 0.5*(wfsPix - 1.0);
-      
-      makeShiftPhase();
-      
-      fft_fwd.plan(wfsPix, wfsPix);
-      
-      fft_back.plan(wfsPix, wfsPix, MXFFT_BACKWARD);      
-   }   
+   void setWavefrontSizePixels( int wfsPix /**< [in] the desired new size of the wavefront */ );
    
 protected:
    
    ///Calculate the complex tilt arrays for centering and normalizing the wavefronts
    /** 
      */
-   void makeShiftPhase()
-   {      
-      realT pi = boost::math::constants::pi<realT>();
-      
-      //The normalization is included in the tilt.
-      realT norm = 1./(wavefrontSizePixels*sqrt(2));
-      complexT cnorm = complexT(norm, norm);
-      
-      //Resize the center phases
-      centerFocal.resize(wavefrontSizePixels, wavefrontSizePixels);
-      centerPupil.resize(wavefrontSizePixels, wavefrontSizePixels);
-
-      //Shift by 0.5 pixels
-      realT arg = -2.0*pi*0.5*wavefrontSizePixels/(wavefrontSizePixels-1);
-  
-      for(int ii=0; ii < wavefrontSizePixels; ++ii)
-      {
-         for(int jj=0; jj < wavefrontSizePixels; ++jj)
-         {     
-            centerFocal(ii,jj) = cnorm*exp(complexT(0.,arg*((ii-xcen)+(jj-ycen))));
-            centerPupil(ii,jj) = cnorm*exp(complexT(0., 0.5*pi - arg*((ii-xcen)+(jj-ycen))));
-         }
-      }
-   }
-
+   void makeShiftPhase();
    
 };//class fraunhoferImager
 
+template<typename wavefrontT>
+void fraunhoferImager<wavefrontT>::initialize()
+{
+   wavefrontSizePixels = 0;
+      
+   xcen = 0;
+   ycen = 0;
+}
+   
+template<typename wavefrontT>
+fraunhoferImager<wavefrontT>::fraunhoferImager()
+{
+   initialize();
+}
+   
+template<typename wavefrontT>
+fraunhoferImager<wavefrontT>::~fraunhoferImager()
+{
+}
+
+template<typename wavefrontT>
+void fraunhoferImager<wavefrontT>::shiftPupil( wavefrontT & complexPupil )
+{
+   complexPupil *= centerFocal;
+}
+
+template<typename wavefrontT>
+void fraunhoferImager<wavefrontT>::propagatePupilToFocal( wavefrontT & complexFocal, 
+                            wavefrontT & complexPupil  
+                          )
+{
+   //First setup the tilt screens (does nothing if there's no change in size)
+   setWavefrontSizePixels(complexPupil.rows());
+      
+   //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
+   complexPupil *= centerFocal;
+        
+   //fft_fwd.fft(complexPupil.data(), complexFocal.data() );
+   fft_fwd( complexFocal.data(), complexPupil.data() );      
+}
+ 
+template<typename wavefrontT> 
+void fraunhoferImager<wavefrontT>::propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
+{     
+   //First setup the tilt screens (does nothing if there's no change in size)
+   setWavefrontSizePixels(complexPupil.rows());
+   
+   //fft_back.fft( complexFocal.data(), complexPupil.data());
+   fft_back( complexPupil.data(), complexFocal.data() );      
+   
+   //Unshift the wavefront and normalize
+   complexPupil *= centerPupil;
+}
+
+template<typename wavefrontT>
+void fraunhoferImager<wavefrontT>::setWavefrontSizePixels(int wfsPix)
+{
+   //If no change in size, do nothing
+   if(wfsPix == centerFocal.rows()) return;
+         
+   wavefrontSizePixels = wfsPix;
+   
+   xcen = 0.5*(wfsPix - 1.0);
+   ycen = 0.5*(wfsPix - 1.0);
+   
+   makeShiftPhase();
+   
+   fft_fwd.plan(wfsPix, wfsPix);
+   
+   fft_back.plan(wfsPix, wfsPix, MXFFT_BACKWARD);      
+}   
+
+template<typename wavefrontT>
+void fraunhoferImager<wavefrontT>::makeShiftPhase()
+{      
+   realT pi = boost::math::constants::pi<realT>();
+   
+   //The normalization is included in the tilt.
+   realT norm = 1./(wavefrontSizePixels*sqrt(2));
+   complexT cnorm = complexT(norm, norm);
+   
+   //Resize the center phases
+   centerFocal.resize(wavefrontSizePixels, wavefrontSizePixels);
+   centerPupil.resize(wavefrontSizePixels, wavefrontSizePixels);
+
+   //Shift by 0.5 pixels
+   realT arg = -2.0*pi*0.5*wavefrontSizePixels/(wavefrontSizePixels-1);
+
+   for(int ii=0; ii < wavefrontSizePixels; ++ii)
+   {
+      for(int jj=0; jj < wavefrontSizePixels; ++jj)
+      {     
+         centerFocal(ii,jj) = cnorm*exp(complexT(0.,arg*((ii-xcen)+(jj-ycen))));
+         centerPupil(ii,jj) = cnorm*exp(complexT(0., 0.5*pi - arg*((ii-xcen)+(jj-ycen))));
+      }
+   }
+}
 
 } //namespace mx
 

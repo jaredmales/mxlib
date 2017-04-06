@@ -779,7 +779,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             _realAmp.resize(_wfSz, _wfSz);
             
             
-            //Create Coronagraph pupil, must be with _pupilMask in case it is apodized.
+            //Create Coronagraph pupil.
             padImage(_realPupil, _pupil, 0.5*(_wfSz-_pupil.rows()),0);
             
             //Create an apodized mask for the image plane.            

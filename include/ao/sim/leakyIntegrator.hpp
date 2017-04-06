@@ -410,17 +410,27 @@ int leakyIntegrator<realT>::filterCommands( commandT & filtAmps,
    
    
    realT gainF = 1.0; 
+   realT HOgainF = 0.0;
+   
+   
    if( iterNo < _closingDelay) gainF = ((realT) iterNo)/_closingDelay;
       
    if(_lowOrders > 0)
    {
-      if( iterNo >= _lowOrderDelay)
+      if( iterNo >= _closingDelay+_lowOrderDelay)
       {
          _lowOrders = 0;
       }
       else
       {
          topN = _lowOrders;   
+         
+         if( iterNo >= _closingDelay )
+         {
+            HOgainF = ( (realT) (iterNo - _closingDelay) )/( _lowOrderDelay );
+            
+         }
+         
       }
    }
    
@@ -435,8 +445,14 @@ int leakyIntegrator<realT>::filterCommands( commandT & filtAmps,
    }
    
    for(int i=topN; i< rawAmps.measurement.cols(); ++i)
-   {
-      filtAmps.measurement(0,i) = 0;
+   {      
+      if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0; 
+
+      _commands(0,i) = (1.0-_leaks(0,i))*_commands(0,i) + HOgainF*_gains(0,i)*rawAmps.measurement(0,i);
+      
+      filtAmps.measurement(0,i) = _commands(0,i);
+      
+      //filtAmps.measurement(0,i) = 0;
    }
    
    

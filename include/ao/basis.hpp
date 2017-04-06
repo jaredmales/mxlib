@@ -231,16 +231,19 @@ int slaveBasis( const std::string outputBasisN,
    
    Eigen::Array<realT, -1, -1> im, ppim, pim, fim, ppupil;
    
+   int padw = 2*fwhm;
    
-   padImage(ppupil, pupil, 2*fwhm);
+   if(fwhm ==0 ) padw = 8*fsmooth;
+   
+   padImage(ppupil, pupil, padw);
    
    for(int  i=0; i< modes.planes(); ++i)
    {
       if(fwhm > 0 || fsmooth > 0)
       {
          im = modes.image(i)*pupil;
-         padImage(ppim, im, 2*fwhm);
-         padImage(pim, im, ppupil, 1);//ppupil,4);
+         padImage(ppim, im, padw);
+         padImage(pim, im, ppupil, 4);//ppupil,4);
          
          if( fwhm > 0 )
          {
@@ -258,7 +261,7 @@ int slaveBasis( const std::string outputBasisN,
             filterImage(fim, pim, gaussKernel<Eigen::Array<realT, -1, -1>>(fsmooth));
          }
          
-         cutPaddedImage(im, fim, 2*fwhm);
+         cutPaddedImage(im, fim, padw);
          modes.image(i) = im; 
       }
    }

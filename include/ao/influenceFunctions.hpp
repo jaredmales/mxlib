@@ -16,6 +16,7 @@
 #include <mx/eigenUtils.hpp>
 #include <mx/gnuPlot.hpp>
 #include <mx/pout.hpp>
+#include <mx/randomT.hpp>
 
 #include <vector>
 
@@ -224,8 +225,8 @@ struct influenceFunctionGaussianSpec
   * \param [in] dmSz the linear size of the DM in pixels.
   * \param [in] linNAct the linear number of actuators across the DM.
   * \param [in] diameter is the diameter of the DM, in actuators.  If 0 then the DM is a square.
-  * \param [in] coupling is the height of the IF at 1 actuator separation.  For FWHM = 1 actuator, set this to 0.0625. 
-  * \param [in] pupilSz is the size of the pupil, and therefore the size of the maps (pupilSz x pupilSz),  Is set to dmSz if 0, can be pupilSz \< dmName for an oversized DM.  The pupil is assumed to be centered.
+  * \param [in] coupling is the height of the IF at 1 actuator separation.  E.G., for a FWHM = 1 actuator, set this to 0.0625. 
+  * \param [in] pupilSz is the size of the pupil, and therefore the size of the maps (pupilSz x pupilSz),  Is set to dmSz if 0, can be pupilSz \< dmSx for an oversized DM.  The pupil is assumed to be centered.
   * 
   * \tparam realT is the real floating point type in which to do calculations.
   */
@@ -235,6 +236,7 @@ void influenceFunctionsGaussian( const std::string & dmName,
                                  int linNAct,
                                  realT diameter,
                                  realT coupling,
+                                 realT couplingRange, ///< Uniformly distributed uncertainy in coupling, in fraction of the coupling.
                                  realT pupilSz = 0,
                                  bool offsetOdd = false )
 {
@@ -255,6 +257,13 @@ void influenceFunctionsGaussian( const std::string & dmName,
    ycen = 0.5*(pupilSz - 1); //0.5*(linNAct*pupilScale - 1);   
    
    realT xoff = 0.0;
+   
+   mx::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
+   
+   if(couplingRange > 0)
+   {
+      uniVar.seed();
+   }
    
    for(int i=0; i< linNAct; ++i)
    {
@@ -292,12 +301,23 @@ void influenceFunctionsGaussian( const std::string & dmName,
 
    mx::eigenCube<realT>  act_inf(pupilSz, pupilSz, xcoords.size());
 
+   realT fw;
+   
    for(int i=0; i < xcoords.size(); ++i)
    {
       xc = xcoords[i];
       yc = ycoords[i];
 
-      mx::gaussian2D( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, fwhm2sigma(fwhm)); 
+      if(couplingRange > 0)
+      {
+         fw = fwhm + fwhm*(1.0 - 2.0*uniVar)*couplingRange;
+      }
+      else
+      {
+         fw = fwhm;
+      }
+      
+      mx::gaussian2D( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, fwhm2sigma(fw)); 
 
    }
 

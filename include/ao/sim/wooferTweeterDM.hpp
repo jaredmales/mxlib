@@ -86,8 +86,8 @@ public:
    
    
    ///Get the calibration amplitude.
-   void calAmp(const std::vector<floatT> & ca);
-    
+//   void calAmp(const std::vector<floatT> & ca);
+   void calAmp(floatT ca); 
    
    void applyMode( wavefrontT & wf, 
                    int modeNo, 
@@ -143,12 +143,20 @@ int wooferTweeterDM<_floatT>::initialize( specT & spec,
    
 
 
+// template<typename _floatT>
+// void wooferTweeterDM<_floatT>::calAmp(const std::vector<_floatT> & ca)
+// {
+//    woofer.calAmp(ca[0]);
+//    tweeter.calAmp(ca[1]);
+// }
+
 template<typename _floatT>
-void wooferTweeterDM<_floatT>::calAmp(const std::vector<_floatT> & ca)
+void wooferTweeterDM<_floatT>::calAmp(_floatT ca)
 {
-   woofer.calAmp(ca[0]);
-   tweeter.calAmp(ca[1]);
+   woofer.calAmp(ca);
+   tweeter.calAmp(ca);
 }
+
 
 template<typename _floatT>
 void wooferTweeterDM<_floatT>::applyMode( wavefrontT & wf, 
