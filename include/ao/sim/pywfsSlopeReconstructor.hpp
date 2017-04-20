@@ -341,10 +341,12 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
       mx::circularPupil( _quadMask, _maskObscuration,_maskRadius/_binFact);
    }
       
-   _measurementSize = 2* _quadMask.sum();
+   _measurementSize = 2* _quadMask.sum();// + 64*64;
    
    _maskMade = true;
    
+    mx::fitsFile<floatT> ff;
+    ff.write("quadMask.fits", _quadMask);
 }
 
 template<typename floatT> 
@@ -394,7 +396,7 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, wfs
       }
    }
 
-   slopes.measurement.resize(1, 2.*nPix);
+   slopes.measurement.resize(1, 2.*nPix);// + 64*64); //wfsImage.tipImage.rows()*wfsImage.tipImage.cols());
    
    floatT I0, I1, I2, I3;
    
@@ -406,10 +408,27 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, wfs
       I1 = _wfsImage(x[i] + 0.5*nsz, y[i]);
       I2 = _wfsImage(x[i], y[i]+0.5*nsz);
       I3 = _wfsImage(x[i]+0.5*nsz, y[i]+0.5*nsz);
-      
-      slopes.measurement(0,i)          = (I0 + I1 - I2 - I3)/norm;//(I0+I1+I2+I3);
-      slopes.measurement(0,i+nPix) = (I0 + I2 - I1 - I3)/norm; //(I0+I1+I2+I3);
+ 
+      if(norm == 0)
+      {
+         slopes.measurement(0,i) =0;;
+         slopes.measurement(0,i+nPix) = 0;//
+      }
+      else
+      {
+         slopes.measurement(0,i)          = (I0 + I1 - I2 - I3)/norm;//(I0+I1+I2+I3);
+         slopes.measurement(0,i+nPix) = (I0 + I2 - I1 - I3)/norm; //(I0+I1+I2+I3);
+      }
    }
+   
+   /*
+   for(int i=0; i< wfsImage.tipImage.rows(); ++i)
+   {
+      for(int j=0;j<wfsImage.tipImage.cols(); ++j)
+      {
+         slopes.measurement(0, 2*nPix + i*wfsImage.tipImage.cols() + j) = wfsImage.tipImage(i,j);
+      }
+   }/**/
    
 }
      

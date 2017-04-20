@@ -44,6 +44,8 @@ struct wfsImageT
    typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
    
    imageT image;
+   
+   imageT tipImage;
 };
 
 template<typename _realT, typename _detectorT>
@@ -76,6 +78,12 @@ protected:
 
    realT _lambda; ///< Central wavelength, in meters
 
+public:
+   std::vector<realT> _wavelengths; ///< Vector of wavelengths in the WFS bandpass
+   std::vector<realT> _wavelengthWeights; ///< The relative weights of the wavelengths
+   
+protected:
+   
    int _iTime; ///<Integration time in loop steps
          
    int _roTime; ///<Readout time in loop steps
@@ -137,7 +145,7 @@ public:
    /**
      * \param sz is the new size
      */ 
-   void wfSz(int sz);
+   void wfSz( int sz /**< */ );
    
    ///Get the detector rows  in pixels
    /**
@@ -155,7 +163,9 @@ public:
    /**
      * \param sz is the new size
      */ 
-   void detSize(int nrows, int ncols);
+   void detSize( int nrows, ///< 
+                 int ncols ///<
+               );
    
    ///Get the PyWFS central wavelength
    /**
@@ -167,40 +177,40 @@ public:
    /**
      * \param d is the new central wavelength in meters
      */
-   void lambda(realT l);
+   void lambda(realT l /**< */ );
    
    ///Get the PyWFS integration time, in time steps
    int iTime(); 
    
    ///Set the PyWFS integration time, in time steps
-   void iTime(int it);
+   void iTime(int it /**< */ );
    
    ///Get the PyWFS detector readout time, in time steps
    int roTime(); 
    
    ///Set the PyWFS detector readout time, in time steps
-   void roTime(int rt);
+   void roTime(int rt /**< */ );
    
    ///Get the simulation step-size, in seconds.
    realT simStep(); 
    
    ///Set the simulation step-size, in seconds.
-   void simStep(realT st);
+   void simStep(realT st /**< */ );
    
    template<typename AOSysT>
-   void linkSystem(AOSysT & AOSys);
+   void linkSystem(AOSysT & AOSys /**< */ );
    
    
    ///Sense the wavefront aberrations
    /** Returns true if a new wavefront measurement is ready.
      * Retruns false if still integrating.
      */
-   bool senseWavefront(wavefrontT & pupilPlane);
+   bool senseWavefront(wavefrontT & pupilPlane /**< */ );
    
    ///Sense the wavefront aberrations in a calibration mode
    /** Allows for faster calibrations.
      */
-   bool senseWavefrontCal(wavefrontT & pupilPlane);
+   bool senseWavefrontCal(wavefrontT & pupilPlane /**< */ );
    
    
    
@@ -218,7 +228,7 @@ public:
    /**
      * \param ps is the pixel scale
      */ 
-   void wfPS(realT ps);
+   void wfPS(realT ps /**< */ );
    
    ///Get the telescope diameter
    /**
@@ -230,7 +240,7 @@ public:
    /**
      * \param d is the new size in meters
      */
-   void D(realT d);
+   void D(realT d /**< */ );
    
    
    ///Get the number of modulation steps
@@ -243,7 +253,7 @@ public:
    /**
      * \param mSt is the new number of modulation steps
      */ 
-   void modSteps(int mSt);
+   void modSteps(int mSt /**< */ );
 
    ///Get the radius of modulation
    /**
@@ -255,7 +265,7 @@ public:
    /**
      * \param mR is the new modulation radius in lambda/D
      */    
-   void modRadius(realT mR);
+   void modRadius(realT mR /**< */ );
    
    ///Get the quadrant size in pixels
    /** This is the size of the quadrant in un-binned wavefront space
@@ -272,20 +282,29 @@ public:
      * 
      * \param sz is the new size
      */ 
-   void quadSz(int sz);
+   void quadSz(int sz /**< */ );
 
 
+   template<typename pupilT>
+   void makeRefTipImage( pupilT & pupil);
+   
+   int ref;
+   
 protected:
    
    ///The image formed by the WFS
    wfsImageT<realT> wfsImage;
+   
+   wfsImageT<realT> wfsTipImage;
+   
+   wfsImageT<realT> refTipImage;
    
    void makeOpdMask();
    
    void makeTilts();
    
    void doSenseWavefront();
-   void doSenseWavefrontNoMod(wavefrontT &);
+   void doSenseWavefrontNoMod(wavefrontT &  /**< */ );
 
    bool firstRun;
    
@@ -320,6 +339,8 @@ pyramidSensor<_realT, _detectorT>::pyramidSensor()
    
    ds9_interface_init(&ds9i);
    ds9_interface_set_title(&ds9i, "PyWFS");
+   
+   ref = 1;
 }
 
 template<typename _realT,  typename _detectorT>
@@ -463,6 +484,24 @@ void pyramidSensor<_realT, _detectorT>::quadSz(int sz)
 }
 
 template<typename _realT,  typename _detectorT>
+template<typename pupilT>
+void pyramidSensor<_realT, _detectorT>::makeRefTipImage(pupilT & pupil)
+{
+   wavefrontT currWF;
+   currWF.setAmplitude( pupil );
+   currWF.setPhase( pupil*0 );
+
+   refTipImage.image.resize(0,0);
+   
+   senseWavefrontCal(currWF);
+   
+   refTipImage = wfsTipImage;
+   
+   //ds9_interface_display_raw( &ds9i, 1, refTipImage.image.data(), refTipImage.image.rows(), refTipImage.image.cols(),1, mx::getFitsBITPIX<realT>());
+   
+}
+
+template<typename _realT,  typename _detectorT>
 void pyramidSensor<_realT, _detectorT>::makeOpdMask()
 {
    complexFieldT opdMaskQ;
@@ -496,7 +535,7 @@ void pyramidSensor<_realT, _detectorT>::makeTilts()
 {
    _realT pi = boost::math::constants::pi<_realT>();
    
-   _realT dang = 2*pi/_modSteps;
+   _realT dang = 2*pi/(_modSteps);
    _realT dx, dy;
 
    tilts.resize(_modSteps);
@@ -615,7 +654,10 @@ bool pyramidSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPlane)
          detector.exposeImage(detectorImage.image, wfsImage.image);
          detectorImage.iterNo = wfsImage.iterNo;
          
+         detectorImage.tipImage = wfsTipImage.image;
+         
          //ds9_interface_display_raw( &ds9i, 1, detectorImage.image.data(), detectorImage.image.rows(), detectorImage.image.cols(),1, mx::getFitsBITPIX<realT>());
+         
          
          _roTime_counter = 0;
          _reading=0;
@@ -654,6 +696,8 @@ bool pyramidSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupilPlan
       
    detector.exposeImage(detectorImage.image, wfsImage.image);
 
+   detectorImage.tipImage = wfsTipImage.image;
+   
     //ds9_interface_display_raw( &ds9i, 1, wfsImage.data(), wfsImage.rows(), wfsImage.cols(),1, mx::getFitsBITPIX<realT>());
    //ds9_interface_display_raw( &ds9i, 1, detectorImage.data(), detectorImage.rows(), detectorImage.cols(),1, mx::getFitsBITPIX<realT>());
    
@@ -704,26 +748,77 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    
    wfsImage.image.setZero();
          
-   complexFieldT pupilPlaneCF;
-   pupilPlane.getWavefront(pupilPlaneCF, _wfSz);
+   wfsTipImage.image.resize(64, 64);
+   wfsTipImage.image.setZero();
+   
+   //---------------------------------------
+   //  Check if wavelength vector is filled
+   //---------------------------------------
+   if( _wavelengths.size() == 0 )
+   {
+      _wavelengths.resize(1, _lambda);
+      _wavelengthWeights.resize(1, 1.0);
+   }
+   
    
    if(!_opdMaskMade) makeOpdMask();
+   
+   
+   
+   for(int l = 0; l<_wavelengths.size(); ++l)
+   {
       
-   complexFieldT focalPlaneCF;
-   focalPlaneCF.resize(_wfSz, _wfSz);
+   complexFieldT pupilPlaneCF;
+   
+   pupilPlane.lambda = _lambda;
+   pupilPlane.getWavefront(pupilPlaneCF, _wavelengths[l], _wfSz); //_wavelengths[i]
+   
+   
+     
+   //These can probably be deleted:
+   //complexFieldT focalPlaneCF;
+   //focalPlaneCF.resize(_wfSz, _wfSz);
+   
+   complexFieldT defocus;
+   
+   defocus.resize(_wfSz, _wfSz);
+   realT rho, xc, yc;
+   xc = 0.5*(_wfSz-1);
+   yc = xc;
+   for(int i=0;i<_wfSz; ++i)
+   {
+      for(int j=0;j<_wfSz;++j)
+      {
+         rho = (pow( i-xc,2) + pow(j-yc,2))/xc;
+         
+         defocus(i,j) = exp(complexT(0, 1.0*(2.*rho-1)*two_pi<realT>()));
+      }
+   }
    
    #pragma omp parallel 
    {
       complexFieldT tiltedPlane;
+      complexFieldT tiltedPlaneDF;
+      
       complexFieldT focalPlane;
+      complexFieldT focalPlaneDefocus;
+      
       complexFieldT sensorPlane;
+      typename wfsImageT<realT>::imageT pyramidImage;
       
       typename wfsImageT<realT>::imageT sensorImage;
          
       tiltedPlane.resize(_wfSz, _wfSz);
+      tiltedPlaneDF.resize(_wfSz, _wfSz);
+      
       focalPlane.resize(_wfSz, _wfSz);
+      focalPlaneDefocus.resize(_wfSz, _wfSz);
+      
       sensorPlane.resize(_wfSz, _wfSz);
-
+      
+      pyramidImage.resize( 64, 64);
+      pyramidImage.setZero();
+      
       sensorImage.resize(_quadSz*2, _quadSz*2);
       sensorImage.setZero();
 
@@ -732,7 +827,9 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
       { 
          int nelem = _wfSz*_wfSz;
 
-         complexT * tp_data = tiltedPlane.data();         
+         complexT * tp_data = tiltedPlane.data();  
+         complexT * tpDF_data = tiltedPlaneDF.data();
+         
          complexT * pp_data = pupilPlaneCF.data();
          complexT * ti_data = tilts[i].data();
          complexT * fp_data = focalPlane.data();
@@ -744,12 +841,29 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
          for(int ii=0; ii< nelem; ++ii)
          {
             tp_data[ii] = pp_data[ii]*ti_data[ii];
+            tpDF_data[ii] = tp_data[ii];
          }
          
          //---------------------------------------------
          //Propagate to Pyramid tip 
          //---------------------------------------------
          fi.propagatePupilToFocal(focalPlane, tiltedPlane);            
+         
+   /*      
+         for(int ii =0; ii < _wfSz; ++ii)
+         {
+            for(int jj=0; jj < _wfSz; ++jj)
+            {
+               tiltedPlaneDF(ii,jj) = tiltedPlaneDF(ii,jj)*defocus(ii,jj);
+            }
+         }
+         
+         fi.propagatePupilToFocal(focalPlaneDefocus, tiltedPlaneDF);            
+         
+         extractIntensityImageAccum(pyramidImage, 0, 64, 0, 64, focalPlaneDefocus, 0.5*(_wfSz-1) - 0.5*(64-1), 0.5*(_wfSz-1) - 0.5*(64-1));
+     */    
+         
+         
          
          
          //---------------------------------------------
@@ -777,15 +891,44 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
                   
       #pragma omp critical
       {
-         wfsImage.image += sensorImage;
+         wfsImage.image += sensorImage * _wavelengthWeights[l];
+        // wfsTipImage.image += pyramidImage * _wavelengthWeights[l];
+         
       }
       
       
    }//#pragma omp parallel
    
+   } //l for wavelength
+
+         
+   
+   
    BREAD_CRUMB;
    
    wfsImage.image /= _modSteps;
+  /* wfsTipImage.image /= _modSteps;
+   
+   wfsTipImage.image /= wfsTipImage.image.sum();
+   
+   
+   if (refTipImage.image.rows() == wfsTipImage.image.rows() && refTipImage.image.cols() == wfsTipImage.image.cols())
+   {
+      wfsTipImage.image -= refTipImage.image;
+      
+      if(!ref)
+      {
+         wfsTipImage.image *= 0;
+      }
+      else
+      {
+         wfsImage.image *= 0;
+      }
+      //wfsTipImage.image/=refTipImage.image;
+   }
+*/
+   //ds9_interface_display_raw( &ds9i, 1, wfsTipImage.image.data(), wfsTipImage.image.rows(), wfsTipImage.image.cols(),1, mx::getFitsBITPIX<realT>());
+   
 }
 
 

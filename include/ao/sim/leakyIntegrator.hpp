@@ -412,9 +412,12 @@ int leakyIntegrator<realT>::filterCommands( commandT & filtAmps,
    realT gainF = 1.0; 
    realT HOgainF = 0.0;
    
+   //leaks(0.01);
    
    if( iterNo < _closingDelay) gainF = ((realT) iterNo)/_closingDelay;
       
+   //if( iterNo < 0.55*_closingDelay) leaks(0.1);
+   
    if(_lowOrders > 0)
    {
       if( iterNo >= _closingDelay+_lowOrderDelay)

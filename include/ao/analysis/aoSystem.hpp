@@ -457,13 +457,11 @@ public:
    /** Contrast C2 is just the total variance due to time delay and measurement errors, 
      * divided by the Strehl ratio.
      * 
-     * \param m is the spatial frequency index in u.
-     * \param n is the spatial frequency index in v.
-     * 
      * \returns C2.
      */
    floatT C2( floatT m,  ///< [in] is the spatial frequency index in u
-              floatT n   ///< [in]  is the spatial frequency index in v
+              floatT n,   ///< [in]  is the spatial frequency index in v
+              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
             );
    
    template<typename imageT>
@@ -1121,20 +1119,26 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::C1Map( imageT & im )
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
 floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C2(  floatT m, 
-                                                     floatT n )
+                                                     floatT n,
+                                                     bool normStrehl
+                                                  )
 {
    if(m ==0 && n == 0) return 0;
 
    int mn_max = _D/(2.*d_opt());
    
+   floatT S = 1;
+   
+   if(normStrehl) S = strehl();
+   
    if(abs(m) > mn_max || abs(n) > mn_max)
    {
-      return fittingError( m, n )/strehl();
+      return fittingError( m, n )/ S;
    }
          
    floatT sig = measurementError(m, n) + timeDelayError(m,n);
    
-   return sig/strehl();
+   return sig/S;
 }
 
 template<typename floatT, class inputSpectT, class wfsBetaT>

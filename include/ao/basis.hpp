@@ -215,35 +215,81 @@ template<typename realT>
 int slaveBasis( const std::string outputBasisN,
                 const std::string inputBasisN,
                 const std::string pupilN,
+                const std::string dmN,
                 realT fwhm,
-                realT fsmooth )
+                realT fsmooth,
+                int firstMode = 0
+              )
 {
    mx::fitsFile<realT> ff;
    mx::fitsHeader head;
+
+   //get DM size and clear memory first
+   std::string dmFName = mx::AO::path::dm::influenceFunctions(dmN);
+   mx::eigenCube<realT> inf;
+   ff.read(dmFName, inf);
+
+   int dmSz = inf.rows();
    
+   inf.resize(0,0);
+
+   //Now load basis
    std::string basisFName = mx::AO::path::basis::modes(inputBasisN);//, pupilName); 
    mx::eigenCube<realT> modes;
    ff.read(basisFName, modes);
 
+   //Now load pupil
    std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilN);
    Eigen::Array<realT, -1, -1> pupil;
    ff.read(pupilFName, pupil);
-   
+
    Eigen::Array<realT, -1, -1> im, ppim, pim, fim, ppupil;
    
    int padw = 2*fwhm;
    
-   if(fwhm ==0 ) padw = 8*fsmooth;
+   if(fwhm ==0 ) padw = 2*fsmooth;
+
+   int cutw = 0.5*(dmSz - modes.rows());
+   
+   if( padw < cutw )
+   {
+      padw = cutw;
+   }
+
+   mx::eigenCube<realT> oModes;
+   
+   oModes.resize( modes.rows()+2*cutw, modes.cols()+2*cutw, modes.planes());
+   
+   
+   if(modes.rows() > pupil.rows())
+   {
+      padImage(ppupil, pupil, 0.5*(modes.rows()-pupil.rows()));
+      pupil = ppupil;
+   }
+   
    
    padImage(ppupil, pupil, padw);
+
    
-   for(int  i=0; i< modes.planes(); ++i)
+   for(int i=0;i<firstMode; ++i)
    {
+      im = modes.image(i);
+      padImage(ppim, im, padw);
+      cutPaddedImage(im, ppim, 0.5*ppim.rows() - (0.5*modes.rows()+cutw));
+                  
+      oModes.image(i) = im;
+   }
+   
+   for(int  i=firstMode; i< modes.planes(); ++i)
+   {
+
       if(fwhm > 0 || fsmooth > 0)
       {
+         
          im = modes.image(i)*pupil;
          padImage(ppim, im, padw);
-         padImage(pim, im, ppupil, 4);//ppupil,4);
+         padImage(pim, im, ppupil, padw);//ppupil,4);
+         
          
          if( fwhm > 0 )
          {
@@ -258,16 +304,19 @@ int slaveBasis( const std::string outputBasisN,
          if(fsmooth > 0)
          {
             pim = fim;
+            
             filterImage(fim, pim, gaussKernel<Eigen::Array<realT, -1, -1>>(fsmooth));
          }
          
-         cutPaddedImage(im, fim, padw);
-         modes.image(i) = im; 
+         
+         cutPaddedImage(im, fim, 0.5*fim.rows() - (0.5*modes.rows()+cutw));
+                  
+         oModes.image(i) = im; 
       }
    }
    
    std::string oFName =  mx::AO::path::basis::modes(outputBasisN, true);
-   ff.write(oFName, modes);
+   ff.write(oFName, oModes);
    
 }
 

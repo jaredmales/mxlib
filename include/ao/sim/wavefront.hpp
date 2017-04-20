@@ -39,6 +39,9 @@ struct wavefront
    ///The wavefront phase
    realImageT phase;
 
+   ///The wavelength at which the wavefront is specified
+   realT lambda;
+   
    ///The iteration number of this wavefront
    realT iterNo;
    
@@ -64,6 +67,16 @@ struct wavefront
    {
       mx::makeComplexPupil( wf, amplitude, phase, wfSz); 
    }
+   
+   void getWavefront( complexAmplitudeT & wf, 
+                      realT dlambda, 
+                      int wfSz
+                    )
+   {
+      realImageT dphase = phase*(lambda/dlambda);
+      mx::makeComplexPupil( wf, amplitude, dphase, wfSz); 
+   }
+   
    
 };
 

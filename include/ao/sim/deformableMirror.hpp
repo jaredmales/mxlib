@@ -170,6 +170,7 @@ public:
    int display_shape;
    int display_shape_counter;
    
+   realT _commandLimit;
    
 };
 
@@ -196,6 +197,8 @@ deformableMirror<_realT>::deformableMirror()
    display_phase_counter = 0;
    display_shape = 0;
    display_shape_counter = 0;
+   
+   _commandLimit = 0;
 }
 
 
@@ -232,8 +235,21 @@ int deformableMirror<_realT>::initialize( specT & spec,
    {
       std::string ifName;
       ifName = mx::AO::path::dm::influenceFunctions(_name);
-      ff.read(ifName, _infF);
+      
+      
+      mx::eigenCube<realT> infFLoad;
+      ff.read(ifName, infFLoad);
    
+      realT c = 0.5*(infFLoad.rows()-1);
+      realT w = 0.5*(_pupil.rows()-1);
+      
+      _infF.resize( _pupil.rows(), _pupil.cols(), infFLoad.planes());
+      
+      for(int i=0;i<infFLoad.planes(); ++i)
+      {
+         _infF.image(i) = infFLoad.image(i).block( c-w, c-w, _pupil.rows(), _pupil.rows());
+      }
+      
       std::string m2cName;
 
       m2cName = mx::AO::path::dm::M2c( _name, _basisName );
@@ -352,6 +368,17 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
    c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
 
+   
+   if(_commandLimit > 0 )
+   {
+      for(int i=0; i < c.rows(); ++i)
+      {
+         if(c(i,0) > _commandLimit ) c(i,0) = _commandLimit;
+         if(c(i,0) < -1*_commandLimit ) c(i,0) = -1*_commandLimit;
+      }
+   }
+   
+   //c = c - c.sum()/c.rows();
 //   c*=_calAmp;
 
    
@@ -416,23 +443,22 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       _nextShape += tmp;
    }
     
+    
     _nextShape *= _pupil;
    
-//   realT mn = (_nextShape*_pupil).sum()/_pupil.sum();
-   
-//    _nextShape -= mn;
-//    _nextShape *= _pupil;
-   
+    _nextShape = (_nextShape - _nextShape.sum()/_pupil.sum())*_pupil;
+
    
    _oldShape = _shape;
 #if 1
    _settling = 1;
    _settleTime_counter = 0;
    _settlingIter = commandV.iterNo;
-#endif
+#else
 //Ignoring settling time.   
    _shape = _nextShape;
-   
+#endif
+      
 }
    
 template<typename _realT>
