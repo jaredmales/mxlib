@@ -83,7 +83,7 @@ protected:
    
       
 public:   
-   ds9_interface ds9i_shape, ds9i_phase;
+   ds9_interface ds9i_shape, ds9i_phase, ds9i_acts;
    
    //The modes-2-command matrix for the basis
    Eigen::Array<realT, -1, -1> _m2c;
@@ -170,7 +170,12 @@ public:
    int display_shape;
    int display_shape_counter;
    
+   int display_acts;
+   int display_acts_counter;
+   
    realT _commandLimit;
+   
+   Eigen::Array<double,-1,-1> _pos, _map;
    
 };
 
@@ -187,6 +192,10 @@ deformableMirror<_realT>::deformableMirror()
    ds9_interface_set_title(&ds9i_shape, "DM_Shape");
    ds9_interface_init(&ds9i_phase);
    ds9_interface_set_title(&ds9i_phase, "DM_Phase");
+   
+   ds9_interface_init(&ds9i_acts);
+   ds9_interface_set_title(&ds9i_acts, "DM_Actuators");
+   
    t_mm = 0;
    t_sum = 0;
    
@@ -197,6 +206,9 @@ deformableMirror<_realT>::deformableMirror()
    display_phase_counter = 0;
    display_shape = 0;
    display_shape_counter = 0;
+   
+   display_acts = 0;
+   display_acts_counter = 0;
    
    _commandLimit = 0;
 }
@@ -255,6 +267,12 @@ int deformableMirror<_realT>::initialize( specT & spec,
       m2cName = mx::AO::path::dm::M2c( _name, _basisName );
  
       ff.read(m2cName, _m2c);
+      
+      
+      std::string posName =  mx::AO::path::dm::actuatorPositions(_name, true);
+   
+      ff.read(posName, _pos);
+
    }
    
    _shape.resize(_infF.rows(), _infF.cols());
@@ -351,6 +369,56 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
 
 }
 
+template<typename realT>
+void makeMap( Eigen::Array<realT, -1, -1> & map,  Eigen::Array<realT, -1, -1> & pos, Eigen::Array<realT, -1, -1> & act)
+{
+   
+   realT minx = pos.row(0).minCoeff();
+   realT maxx = pos.row(0).maxCoeff();
+   
+   int i=0;
+   realT dx = 0;
+   while(dx == 0)
+   {
+      dx = fabs(pos(0,i)- pos(0,0));
+      ++i;
+   }
+   
+   realT miny = pos.row(1).minCoeff();
+   realT maxy = pos.row(1).maxCoeff();
+   
+   i = 0;
+   realT dy = 0;
+   
+   while(dy == 0)
+   {
+      dy = fabs(pos(1,i)- pos(1,0));
+      ++i;
+   }
+   
+   int nx = (maxx-minx)/dx + 1;
+   int ny = (maxy-miny)/dy + 1;
+   
+   
+   map.resize(nx, ny);
+   map.setZero();
+   
+   realT x, y;
+   
+   for(int j=0;j < pos.cols(); ++j)
+   {
+      x = (pos(0,j) - minx)/dx;
+      
+      y = ( pos(1,j) - miny ) / dy;
+      
+      map(x,y) = act(j,0);
+   }
+   
+   
+   
+}
+
+
 template<typename _realT>
 template<typename commandT>
 void deformableMirror<_realT>::setShape(commandT commandV)
@@ -368,7 +436,57 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
    c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
 
+   makeMap( _map, _pos, c);
+
+      
    
+   if(_commandLimit > 0)
+   {
+      realT r1 = sqrt( pow(_pos(0,1) - _pos(0,0),2) + pow(_pos(1,1) - _pos(1,0),2));
+   
+
+      realT r;
+   
+      int nLimited = 0;
+      for(int i=0; i< _pos.cols(); ++i)
+      {
+         for(int j=i+1; j< _pos.cols(); ++j)
+         {
+            r = sqrt( pow(_pos(0,j) - _pos(0,i),2) + pow(_pos(1,j) - _pos(1,i),2));
+         
+            if( fabs(r1 - r) < .01 )
+            {
+               realT iact = fabs( c(i,0) - c(j,0) ); 
+               if( iact > _commandLimit )
+               {
+                  std::cerr << "Limited Actuators " << i << " " << j << "\n";
+                  ++nLimited;
+                  c(i,0) *= _commandLimit/iact;
+                  c(j,0) *= _commandLimit/iact;
+               }
+            }
+         }
+      }
+      std::cerr << nLimited << " strokes limited\n";
+      
+   }
+   
+   
+   
+   
+   if( display_acts > 0)
+   {
+      ++display_acts_counter;
+      
+      if(display_acts_counter >= display_acts)
+      {
+         ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
+         display_acts_counter = 0;
+      }
+   }
+
+   
+#if 0   
    if(_commandLimit > 0 )
    {
       for(int i=0; i < c.rows(); ++i)
@@ -377,7 +495,8 @@ void deformableMirror<_realT>::setShape(commandT commandV)
          if(c(i,0) < -1*_commandLimit ) c(i,0) = -1*_commandLimit;
       }
    }
-   
+#endif
+
    //c = c - c.sum()/c.rows();
 //   c*=_calAmp;
 

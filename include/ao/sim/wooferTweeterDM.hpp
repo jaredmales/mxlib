@@ -117,8 +117,10 @@ wooferTweeterDM<_floatT>::wooferTweeterDM()
 {
    ds9_interface_set_title(&woofer.ds9i_shape, "Woofer_Shape");
    ds9_interface_set_title(&woofer.ds9i_phase, "Woofer_Phase");
+   ds9_interface_set_title(&woofer.ds9i_acts, "Woofer_Acts");
    ds9_interface_set_title(&tweeter.ds9i_shape, "Tweeter_Shape");
    ds9_interface_set_title(&tweeter.ds9i_phase, "Tweeter_Phase");
+   ds9_interface_set_title(&tweeter.ds9i_acts, "Tweeter_Acts");
    
    t_mm = 0;
    t_sum = 0;
