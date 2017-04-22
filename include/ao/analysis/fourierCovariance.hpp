@@ -689,7 +689,7 @@ void calcKLCoeffs( const std::string & outFile,
    //Normalize the eigenvectors
    for(int i=0;i< evecs.cols(); ++i)
    {
-      evecs.col(i) = evecs.col(i)/sqrt(abs(evals(i)));
+      evecs.col(i) = evecs.col(i)/sqrt(fabs(evals(i)));
    }
    
    ff.write(outFile, evecs);
