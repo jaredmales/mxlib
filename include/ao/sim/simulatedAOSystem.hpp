@@ -577,23 +577,13 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::calcO
 template<typename _realT, typename _wfsT, typename _reconT, typename _filterT, typename _dmT, typename _turbSeqT>
 void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextWF(wavefrontT & wf)
 {
-   //static int iterNo = 0;
    
    BREAD_CRUMB;
-   
-   
-//    if(_pupilMask.rows() != _pupil.rows() || _pupilMask.cols() != _pupil.cols())
-//    {
-//       _pupilMask = _pupil;
-//    }
-   
+      
    if(_npix == 0)
    {
       _npix = _pupil.sum();
    }
-   
-   
-   
    
    BREAD_CRUMB;
    

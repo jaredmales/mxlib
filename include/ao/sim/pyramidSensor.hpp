@@ -652,12 +652,11 @@ bool pyramidSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPlane)
       if(_roTime_counter >= _roTime)
       {
          detector.exposeImage(detectorImage.image, wfsImage.image);
-         detectorImage.iterNo = wfsImage.iterNo;
          
          detectorImage.tipImage = wfsTipImage.image;
+         detectorImage.iterNo = wfsImage.iterNo;
          
          //ds9_interface_display_raw( &ds9i, 1, detectorImage.image.data(), detectorImage.image.rows(), detectorImage.image.cols(),1, mx::getFitsBITPIX<realT>());
-         
          
          _roTime_counter = 0;
          _reading=0;
@@ -723,6 +722,8 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
    pupilPlane.phase = _wavefronts[_firstWavefront].phase;
    
+   realT avgIt = _wavefronts[_firstWavefront].iterNo;
+   
    //std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
    BREAD_CRUMB;
    
@@ -732,11 +733,15 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
       if(_firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
       
       pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
-      pupilPlane.phase += _wavefronts[_firstWavefront].phase;      
+      pupilPlane.phase += _wavefronts[_firstWavefront].phase;
+      avgIt += _wavefronts[_firstWavefront].iterNo;
    }
+   
    
    pupilPlane.amplitude /= (_iTime+1);
    pupilPlane.phase /= (_iTime+1);
+   
+   avgIt /= (_iTime + 1.0);
    
    /*=====================================*/
    
@@ -778,7 +783,7 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    //These can probably be deleted:
    //complexFieldT focalPlaneCF;
    //focalPlaneCF.resize(_wfSz, _wfSz);
-   
+#if 0  
    complexFieldT defocus;
    
    defocus.resize(_wfSz, _wfSz);
@@ -794,7 +799,8 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
          defocus(i,j) = exp(complexT(0, 1.0*(2.*rho-1)*two_pi<realT>()));
       }
    }
-   
+#endif
+
    #pragma omp parallel 
    {
       complexFieldT tiltedPlane;
@@ -907,6 +913,9 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    BREAD_CRUMB;
    
    wfsImage.image /= _modSteps;
+   wfsImage.iterNo = avgIt;
+   
+   
   /* wfsTipImage.image /= _modSteps;
    
    wfsTipImage.image /= wfsTipImage.image.sum();

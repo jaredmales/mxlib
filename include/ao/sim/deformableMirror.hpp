@@ -435,10 +435,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
     
    //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
    c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
-
-   makeMap( _map, _pos, c);
-
-      
    
    if(_commandLimit > 0)
    {
@@ -467,7 +463,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
             }
          }
       }
-      std::cerr << nLimited << " strokes limited\n";
+      if(nLimited > 0) std::cerr << nLimited << " strokes limited\n";
       
    }
    
@@ -480,6 +476,8 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       
       if(display_acts_counter >= display_acts)
       {
+         makeMap( _map, _pos, c);
+
          ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
          display_acts_counter = 0;
       }
@@ -497,8 +495,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    }
 #endif
 
-   //c = c - c.sum()/c.rows();
-//   c*=_calAmp;
 
    
    if( _writeCommands )
@@ -509,12 +505,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
          _commandFout << std::scientific;
          _commandFileOpen = true;
       }
-//       _commandFout << commandV.iterNo << "> ";
-//       for(int i=0; i<c.rows(); ++i)
-//       {
-//          _commandFout << commandV.measurement(0,i) << " ";
-//       }
-//       _commandFout << std::endl;
       
       _commandFout << commandV.iterNo << "> ";
       for(int i=0; i<c.rows(); ++i)
@@ -522,8 +512,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
          _commandFout << c(i,0) << " ";
       }
       _commandFout << std::endl;
-      
-//      _commandFout << c.transpose() << "\n\n";
    }
    
    
@@ -632,7 +620,7 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    
    BREAD_CRUMB;
    
-   //std::cerr << "DM Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   //std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
 }
 
 } //sim

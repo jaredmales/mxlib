@@ -189,12 +189,14 @@ void wooferTweeterDM<_floatT>::setShape( commandT & commandV )
    
    BREAD_CRUMB;
    woofV.measurement = commandV.measurement.block(0, 0, 1, _wooferModes);
+   woofV.iterNo = commandV.iterNo;
    
    BREAD_CRUMB;
 //    std::cerr << _wooferModes << "\n";
 //    std::cerr << commandV.cols() << "\n";
    
    tweetV.measurement = commandV.measurement.block(0, _wooferModes, 1,commandV.measurement.cols()-_wooferModes);
+   tweetV.iterNo = commandV.iterNo;
    
    BREAD_CRUMB;
    

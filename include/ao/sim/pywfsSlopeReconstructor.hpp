@@ -421,6 +421,7 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, wfs
       }
    }
    
+   
    /*
    for(int i=0; i< wfsImage.tipImage.rows(); ++i)
    {
@@ -441,6 +442,8 @@ void pywfsSlopeReconstructor<floatT>::reconstruct(measurementT & commandVect, wf
    calcMeasurement(slopes, wfsImage);
    
    commandVect.measurement = slopes.measurement.matrix()*_recon.matrix();
+   
+   commandVect.iterNo = wfsImage.iterNo;
 }
 
 template<typename floatT> 
