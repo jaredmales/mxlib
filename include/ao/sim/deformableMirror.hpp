@@ -444,6 +444,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       realT r;
    
       int nLimited = 0;
+      
       for(int i=0; i< _pos.cols(); ++i)
       {
          for(int j=i+1; j< _pos.cols(); ++j)

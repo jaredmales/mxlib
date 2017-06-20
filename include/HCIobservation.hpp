@@ -602,11 +602,9 @@ inline void HCIobservation<_floatT>::readFiles()
    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> im;
       
    fitsFile<floatT> f(fileList[0]);
-
       
    f.read(im);
 
-        
    fitsHeader head;
 
    if(MJDKeyword != "") head.append(MJDKeyword);

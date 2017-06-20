@@ -70,7 +70,7 @@ protected:
 
    floatT _lam_sci; ///< Science wavelength [m]
 
-   floatT _fit_mn_max; ///< Maximum spatial frequency index to use for fitting error calculation.
+   int _fit_mn_max; ///< Maximum spatial frequency index to use for fitting error calculation.
    
    floatT _ncp_wfe; ///<Static WFE [m rms]
    floatT _ncp_alpha; ///< Power-law exponent for the NCP aberations.  Default is 2.
@@ -101,10 +101,14 @@ public:
    /**  
      *
      */ 
-   void load_guyon_2005(); 
+   void loadGuyon2005(); 
    
-   void load_GMT_model();
-   void load_MagAO_model();
+   ///Load parameters corresponding to the MagAO-X system.
+   void loadMagAOX();
+   
+   ///Load parameters corresponding to the G-MagAO-X system.
+   void loadGMagAOX();
+   
 
    /// Set the value of the 0 magnitude photon rate
    /** This is the photon rate at the WFS, photons/sec.
@@ -263,6 +267,18 @@ public:
      */ 
    floatT lam_sci();
    
+   
+   /// Set the value of _fit_mn_max
+   /**
+     */
+   void fit_mn_max( int mnm /**< [in] is the new value of _fit_mn_max */ );
+   
+   /// Get the value of _fit_mn_max
+   /**
+     */
+   int fit_mn_max();
+   
+   
    /// Set the value of the non-common path WFE.
    /**
      */
@@ -275,6 +291,18 @@ public:
    floatT ncp_wfe();
    
 
+   
+   /// Set the value of the non-common path WFE PSD index.
+   /**
+     */
+   void ncp_alpha(floatT alpha /**< [in] is the new value of _ncp_alpha*/);
+   
+   /// Get the value of the non-common path WFE PSD index.
+   /**
+     * \returns the current value of _ncp_alpha.
+     */ 
+   floatT ncp_alpha();
+   
    
    /** \name Measurement Error
      * Calculating the WFE due to WFS measurement noise.
@@ -526,44 +554,54 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::initialize()
 }
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::load_guyon_2005()
+void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGuyon2005()
 {
-   atm.load_Guyon_2005();
+   atm.loadGuyon2005();
    
-   _F0 = 1.75e9;
-   _lam_wfs = 0.55e-6;
-   _lam_sci = 1.6e-6;
+   F0(1.75e9*0.25*pi<floatT>()*64.); //Converting to photons/sec
+   lam_wfs(0.55e-6);
+   lam_sci(1.6e-6);
    D(8.);
+   starMag(5);
    
    _specsChanged = true;
    _dminChanged = true;
 }
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::load_GMT_model()
-{
-   atm.load_GMT_model();
-   
-   
-   _F0 = _F0 = (6.7e10)*0.25* 0.75 * 0.8* (0.25*pi<floatT>()*24.5*24.5*(1.-0.29*0.29));
-   _lam_wfs = 0.675e-6;
-   _lam_sci = 0.9e-6;
-   D(25.4);
-   
-   _specsChanged = true;
-   _dminChanged = true;
-}
-
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::load_MagAO_model()
+void aoSystem<floatT, inputSpectT, wfsBetaT>::loadMagAOX()
 {   
-   atm.load_MagAO_model();   
+   atm.loadLCO();   
+   
+   F0(7.6e10);
+   lam_wfs(0.851e-6);
+   lam_sci(0.656e-6);
+   
+   d_min( 6.5/48.0 );
+   minTauWFS( 1./3630. );
    
    D(6.5);
    
    _specsChanged = true;
    _dminChanged = true;
 }
+
+
+template<typename floatT, class inputSpectT, class wfsBetaT>
+void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGMagAOX()
+{
+
+   loadMagAOX();
+   
+   
+   F0(7.6e10 * 368.0 / (0.25*pi<floatT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
+   
+   D(25.4);
+   
+   _specsChanged = true;
+   _dminChanged = true;
+}
+
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
 void aoSystem<floatT, inputSpectT, wfsBetaT>::F0(floatT nF0)
@@ -764,6 +802,19 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::lam_sci()
 }
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
+void aoSystem<floatT, inputSpectT, wfsBetaT>::fit_mn_max( int mnm )
+{
+   if(mnm < 0) mnm = 0;
+   _fit_mn_max = mnm;
+}
+
+template<typename floatT, class inputSpectT, class wfsBetaT>
+int aoSystem<floatT, inputSpectT, wfsBetaT>::fit_mn_max()
+{
+   return _fit_mn_max;
+}
+   
+template<typename floatT, class inputSpectT, class wfsBetaT>
 void aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_wfe(floatT nwfe)
 {
    _ncp_wfe = nwfe;
@@ -777,6 +828,19 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_wfe()
    return _ncp_wfe;
 }
 
+template<typename floatT, class inputSpectT, class wfsBetaT>
+void aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_alpha(floatT alpha)
+{
+   _ncp_alpha = alpha;
+   _specsChanged = true;
+   _dminChanged = true;
+}
+
+template<typename floatT, class inputSpectT, class wfsBetaT>
+floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_alpha()
+{
+   return _ncp_alpha;
+}
 
 template<typename floatT, class inputSpectT, class wfsBetaT>
 floatT aoSystem<floatT, inputSpectT, wfsBetaT>::signal2Noise2( floatT & tau_wfs )
@@ -801,6 +865,7 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::measurementError( floatT m,
             
    floatT snr2 = signal2Noise2( tau_wfs );
          
+  
    return pow(beta_p,2)/snr2*pow(_lam_wfs/_lam_sci, 2);
 }
 
@@ -957,6 +1022,13 @@ template<typename floatT, class inputSpectT, class wfsBetaT>
 floatT aoSystem<floatT, inputSpectT, wfsBetaT>::d_opt()
 {
    if(!_dminChanged) return _d_opt;
+   
+   if( _d_min == 0 )
+   {
+      _d_opt = 1e-50;
+      _dminChanged = false;
+      return _d_opt;
+   }
    
    if(!_optd) 
    {
@@ -1130,12 +1202,15 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C2(  floatT m,
    floatT S = 1;
    
    if(normStrehl) S = strehl();
+
+
    
-   if(abs(m) > mn_max || abs(n) > mn_max)
+   if(mn_max > 0 && (abs(m) > mn_max || abs(n) > mn_max))
    {
       return fittingError( m, n )/ S;
    }
-         
+   
+
    floatT sig = measurementError(m, n) + timeDelayError(m,n);
    
    return sig/S;
@@ -1194,6 +1269,7 @@ iosT & aoSystem<floatT, inputSpectT, wfsBetaT>::dumpAOSystem( iosT & ios)
    ios << "# AO Params:\n";
    ios << "#    D = " << D() << '\n';
    ios << "#    d_min = " << d_min() << '\n';
+   ios << "#    d_opt = " << d_opt() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    F0 = " << F0() << '\n';
    ios << "#    starMag = " << starMag() << '\n';

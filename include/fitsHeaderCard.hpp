@@ -145,10 +145,11 @@ struct fitsHeaderCard
 
    ///Get value converted to the specified type
    /** Uses \ref convertFromString.  typeT can be any <a href=\isfundamental>fundamental type</a>, 
-     * or any type which can be typecast from std::string.
+     * or any type which can be typecast from std::string.  This is specialized for typeT=std::string so
+     * that leading and trailing apostrophes are removed.
      */
    template<typename typeT> 
-   typeT Value();
+   typeT Value() const;
    
    ///Convert value to an string, stripping apostrophes if necessary.
    /** \returns the result of converting the value string to a string
@@ -310,9 +311,18 @@ void fitsHeaderCard::setValue(const typeT v)
 }
    
 template<typename typeT> 
-typeT fitsHeaderCard::Value()
+typeT fitsHeaderCard::Value() const
 {
    return convertFromString<typeT>(value);
+}
+
+//Specialization for strings, removing the apostrophe.
+template<> 
+std::string fitsHeaderCard::Value<std::string>() const
+{
+   std::string s = value;
+   fitsStripApost(s);
+   return s;
 }
 
 inline 

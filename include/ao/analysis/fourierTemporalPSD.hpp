@@ -569,7 +569,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
       //result += result2;
       //result = result2;
 #endif      
-      std::cerr << layer_i << " " << i << " " << freq[i]/fmax << "\n";
+      //std::cerr << layer_i << " " << i << " " << freq[i]/fmax << "\n";
       if(ec == GSL_EDIVERGE)
       {
          std::cerr << "GSL_EDIVERGE:" << p << " " << freq[i] << " " << v_wind << " " << m << " " << n << " " << _m << " " << _n << "\n";

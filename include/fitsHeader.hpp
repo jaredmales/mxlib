@@ -60,7 +60,7 @@ public:
    ///Copy constructor
    /** Must be explicitly defined to handle creation of new iterators in the cardMap
     */
-   fitsHeader(const fitsHeader & head);
+   fitsHeader(const fitsHeader & head /**< The fitsHeader to copy */);
    
    ///Destructor
    ~fitsHeader();
@@ -68,7 +68,7 @@ public:
    /// Assignment
    /** Must be explicitly defined to handle creation of new iterators in the cardMap
      */
-   fitsHeader & operator=(const fitsHeader & head);
+   fitsHeader & operator=(const fitsHeader & head /**< The fitsHeader to copy */);
    
    /// Get iterator to the beginning of the cards list
    headerIterator begin();
@@ -77,7 +77,7 @@ public:
    headerIterator end();
    
    /// Get iterator pointing to a specific element
-   headerIterator iterator(const std::string & keyword);
+   headerIterator iterator(const std::string & keyword /**< The keyword to look up*/);
    
    /// Test whether the header is empty.
    bool empty();
@@ -541,7 +541,7 @@ void headersToValues(std::vector<dataT> & v, const std::vector<fitsHeader> & hea
    
    for(int i=0;i<heads.size(); ++i)
    {
-      v[i] = convertFromString<dataT>(heads[i][keyw].value);
+      v[i] = heads[i][keyw].Value<dataT>();//convertFromString<dataT>(heads[i][keyw].value);
    }
 
 }

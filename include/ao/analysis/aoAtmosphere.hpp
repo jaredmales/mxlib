@@ -89,14 +89,16 @@ public:
      * 
      * \returns the current value of _r_0 * pow(lam, 6/5).
      */
-   realT r_0(const realT & lam);
+   realT r_0( const realT & lam /**< [in] the wavelength at which to calculate r_0*/ );
    
    ///Set the value of Fried's parameter and the reference wavelength.
    /**
-     * \param [in] r0 is the new value of _r_0
-     * \param [in] l0 is the new value of _lam_0.
+     * 
+     * 
      */ 
-   void r_0(const realT & r0, const realT & l0); 
+   void r_0( const realT & r0, ///< [in] is the new value of _r_0  
+             const realT & l0 ///< [in] is the new value of _lam_0, if 0 then 0.5 microns is the default.
+           ); 
    
    ///Get the current value of the reference wavelength.
    /** This is the wavelength at which r_0 is specified.
@@ -113,9 +115,8 @@ public:
    
    ///Set the value of the outer scale.
    /**
-     * \param [in] l0 is the new value of _L_0.
      */ 
-   void L_0(const realT & l0);
+   void L_0( const realT & L0 /**< [in] is the new value of _L_0 */);
 
    ///Get the height of a single layer.
    /**
@@ -123,7 +124,7 @@ public:
      *
      * \returns the value of _layer_z[n].
      */
-   realT layer_z(const int n);
+   realT layer_z( const int n /**< */);
    
    ///Get the vector layer heights.
    /** 
@@ -135,7 +136,7 @@ public:
    /**
      * \param [in] layz is the new vector, which is copied to _layer_z.
      */
-   void layer_z(const std::vector<realT> & layz);
+   void layer_z(const std::vector<realT> & layz /**< */ );
    
    ///Get the strength of a single layer.
    /**
@@ -143,7 +144,7 @@ public:
      *
      * \returns the value of _layer_Cn2[n].
      */
-   realT layer_Cn2(const int n);
+   realT layer_Cn2(const int n /**< */);
    
    ///Get the vector of layer strengths.
    /** 
@@ -159,11 +160,11 @@ public:
      * Regardless of what units the strengths are specified in, they are normalized so that
      * \f$ \sum_n C_n^2 = 1 \f$.
      * 
-     * \param [in] cn2 is a vector containing the layer strengths
-     * \param [in] l0 [optional] if l0 > 0, then r_0 is set according from the layer strengths.
      * 
      */  
-   void layer_Cn2(const std::vector<realT> & cn2, const realT l0 = 0);
+   void layer_Cn2( const std::vector<realT> & cn2, ///<  [in] is a vector containing the layer strengths 
+                   const realT l0 = 0  ///< [in] [optional] if l0 > 0, then r_0 is set according from the layer strengths.
+                 );
    
    ///Get the wind speed of a single layer.
    /**
@@ -183,7 +184,7 @@ public:
    /**
      * \param [in] spd is the new vector, which is copied to _layer_v_wind.
      */
-   void layer_v_wind(const std::vector<realT> & spd);
+   void layer_v_wind(const std::vector<realT> & spd /**< */);
    
    ///Get the wind direction of a single layer.
    /**
@@ -191,7 +192,7 @@ public:
      *
      * \returns the value of _layer_dir[n].
      */
-   realT layer_dir(const int n);
+   realT layer_dir(const int n /**< */);
    
    ///Get the vector of layer wind directions
    /** 
@@ -203,7 +204,7 @@ public:
    /**
      * \param [in] d is the new vector, which is copied to _layer_dir.
      */
-   void layer_dir(const std::vector<realT> & d);
+   void layer_dir(const std::vector<realT> & d /**< */);
    
    ///Get the number of layers
    /**
@@ -256,7 +257,7 @@ public:
      * 
      * \param vw is the new value of _v_wind.
      */
-   void v_wind(const realT & vw);
+   void v_wind(const realT & vw /**< */);
    
    ///Get the weighted mean layer height
    /** Returns the weighted layer height according to the 5/3's turbulence moment.  This is defined as
@@ -285,7 +286,7 @@ public:
      * 
      * \param zm is the new value of _v_wind.
      */
-   void z_mean(const realT & zm);
+   void z_mean(const realT & zm /**< */);
    
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (14) of Guyon (2005) \cite{guyon_2005}. 
@@ -295,7 +296,9 @@ public:
      *
      * \returns the value of the X function. 
      */
-   realT X(realT k, realT lam_sci);
+   realT X( realT k,  ///<
+            realT lam_sci ///<
+          );
    
    ///The differential fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (25) of Guyon (2005) \cite{guyon_2005}. 
@@ -305,7 +308,10 @@ public:
      *
      * \returns the value of the dX function. 
      */
-   realT dX(realT k, realT lam_sci, realT lam);
+   realT dX( realT k,  ///<
+             realT lam_sci, ///< 
+             realT lam ///<
+           );
 
    ///The fraction of the turbulence PSD in amplitude after Fresnel propagation.
    /** See Equation (15) of Guyon (2005) \cite{guyon_2005}. 
@@ -315,7 +321,9 @@ public:
      *
      * \returns the value of the Y function. 
      */
-   realT Y(realT k, realT lam_sci);
+   realT Y( realT k, ///< 
+            realT lam_sci ///<
+         );
    
    ///The differential fraction of the turbulence PSD in amplitude after Fresnel propagation.
    /** See Equation (27) of Guyon (2005) \cite{guyon_2005}. 
@@ -325,7 +333,10 @@ public:
      *
      * \returns the value of the dY function. 
      */
-   realT dY(realT k, realT lam_sci, realT lam);
+   realT dY( realT k,       ///<
+             realT lam_sci, ///<
+             realT lam      ///<
+           );
     
    ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere.
    /** Calculate the FWHM of a seeing limited image with the current parameters according to \cite{floyd_2010}:
@@ -341,30 +352,27 @@ public:
      *
      * \returns the value of the FWHM (\f$ \epsilon_{0/vK} \f$) for the current atmosphere parameters.
      */ 
-   realT fwhm(realT lam_sci);
+   realT fwhm(realT lam_sci /**< */ );
    
    ///Load the default atmosphere model from Guyon (2005).
    /** Sets the parameters from Table 4 of Guyon (2005) \cite{guyon_2005}.
      */
-   void load_Guyon_2005();
+   void loadGuyon2005();
    
-   ///Load parameters corresponding to the median atmosphere of the GMT site survey.
+   ///Load parameters corresponding to the median atmosphere of the GMT site survey at LCO.
    /**
     */
-   void load_GMT_model();
+   void loadLCO();
    
-   ///Load the parameters for the MagAO median atmosphere model.
-   /** These parameters are identical to the GMT site survey model in \ref load_GMT_model.
-    */
-   void load_MagAO_model();
 
    ///Set a single layer model.
    /** 
     * 
     */
-   void setSingleLayer( realT lz,
-                        realT vw,
-                        realT dir )
+   void setSingleLayer( realT lz,   ///<
+                        realT vw,   ///<
+                        realT dir   ///<
+                      )
    {      
       layer_Cn2(std::vector<realT>({1}));
       layer_z(std::vector<realT>({lz}));
@@ -375,12 +383,10 @@ public:
    ///Output current parameters to a stream
    /** Prints a formatted list of all current parameters.
      *
-     * \param ios a std::ostream-like stream.
-     *
      * \tparam iosT is a std::ostream-like type.
      */ 
    template<typename iosT>
-   iosT & dumpAtmosphere( iosT & ios);
+   iosT & dumpAtmosphere( iosT & ios /**< [in] a std::ostream-like stream. */);
 };
 
 template<typename realT>
@@ -411,7 +417,14 @@ void aoAtmosphere<realT>::r_0(const realT & r0, const realT  & l0)
 {
    _r_0 = r0;
    
-   _lam_0 = l0;
+   if( l0 > 0)
+   {
+      _lam_0 = l0;
+   }
+   else
+   {
+      _lam_0 = 0.5e-6;
+   }
 }
 
 
@@ -716,17 +729,18 @@ realT aoAtmosphere<realT>::fwhm(realT lam_sci)
 
    
 template<typename realT>
-void aoAtmosphere<realT>::load_Guyon_2005()
+void aoAtmosphere<realT>::loadGuyon2005()
 {
    layer_Cn2({0.2283, 0.0883, 0.0666, 0.1458, 0.3350, 0.1350});
    layer_z({500, 1000, 2000, 4000, 8000, 16000});
    layer_v_wind({10., 10.,  10.,  10.,  10.,  10.});
+   layer_dir({0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
    
    r_0(0.2, 0.5e-6);
 }
 
 template<typename realT>
-void aoAtmosphere<realT>::load_GMT_model()
+void aoAtmosphere<realT>::loadLCO()
 {
    layer_Cn2(      {0.42,      0.029,      0.062,    0.16,     0.11,     0.10,     0.12});
    layer_z(        {250.,       500.,       1000.,   2000.,    4000.,    8000.,    16000. });
@@ -738,11 +752,6 @@ void aoAtmosphere<realT>::load_GMT_model()
    L_0(25.0);
 }
 
-template<typename realT>
-void aoAtmosphere<realT>::load_MagAO_model()
-{
-   load_GMT_model();
-}
 
 template<typename realT>
 template<typename iosT>

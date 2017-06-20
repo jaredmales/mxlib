@@ -1,15 +1,11 @@
-/** \file astroSpectrum.hpp
-  * \author Jared R. Males
-  * \brief Utilities for working with astronomical filters spectra
-  * \ingroup astrophot
-  *
-  */
+
 
 #ifndef __astroSpectra_hpp__
 #define __astroSpectra_hpp__
 
 #include "astroFilter.hpp"
 #include "astroconstants.h"
+
 
 namespace mx
 {
@@ -475,6 +471,163 @@ void readEarthShine( std::vector<dataT> & lambda,
    std::string datadir;
    readEarthShine(lambda, albedo, datadir);
 }
+
+
+template<typename dataT>
+int readCahoy( std::vector<dataT> & lambda,
+               std::vector<dataT> & albedo,
+               double sepAU,
+               int metal,
+               double phase,
+               std::string & datadir)
+{
+   if(datadir == "")
+   {
+      datadir = getEnv("CAHOYALBEDO_DATADIR");
+      
+      if(datadir == "")
+      {
+         std::cerr << "readCahoy: data directory not found.  Trying pwd.\n";
+      }
+   }
+   
+   std::string fname; 
+   
+   fname = datadir + "/";
+   
+   if(sepAU == 0.8)
+   {
+      fname += "0.8";
+   }
+   else if(sepAU == 2.0)
+   {
+      fname += "2.0";
+   }
+   else if(sepAU == 5.0)
+   {
+      fname += "5";
+   }
+   else if(sepAU = 10.0)
+   {
+      fname += "10";
+   }
+   else
+   {
+      mxError("readCahoy", MXE_INVALIDARG, "invalid separation (sepAU)");
+      return -1;
+   }
+
+   fname += "au_";
+   fname += convertToString<int>(metal);
+   fname += "x_albedos/00_Spectral_Albedos   ";  
+   
+   char pstr[9];
+   int l = snprintf(pstr, 9, "%0.5f", phase);
+   
+   fname+=pstr;
+   
+   fname += ".txt";
+   
+   std::vector<int> tmp1, tmp2;
+   
+   readColumns(fname, tmp1, lambda, tmp2, albedo);
+
+   if(lambda.size() == 0)
+   {
+      std::cerr << "None: " << fname << "\n";
+   }
+}
+
+struct cahoyGrid
+{
+   std::vector<double> _sep;
+   std::vector<double> _phase;
+   
+   std::vector<double> _lambda;
+   std::vector<std::vector<std::vector<double>>> _ag;
+   
+   
+   void openGrid(int metal)
+   {
+      _sep = {0.8, 2.0, 5.0, 10.0};
+      _phase = {0.0, 0.1745, 0.3491, 0.5236, 0.6981, 0.8727, 1.0472, 1.2217, 1.3963,1.5708,1.7453,1.9199, 2.0944, 2.2689, 2.4435, 2.6180, 2.7925,2.9671, 3.139};
+      
+      _ag.resize( _sep.size());
+      for(int i=0; i< _ag.size(); ++i) _ag[i].resize(_phase.size());
+      
+      std::vector<double> tmpl, tmpag;
+      for(int i=0; i< _sep.size(); ++i)
+      {
+         for(int j=0; j < _phase.size(); ++j)
+         {
+            tmpl.clear();
+            tmpag.clear();
+           
+            std::string ddir = "/home/jrmales/Data/Spectra/Models/cahoy_EGP_albedos";
+            readCahoy(tmpl, tmpag, _sep[i], metal, _phase[j], ddir);
+            _ag[i][j] = tmpag;
+         }
+      }
+
+      _lambda = tmpl;
+      
+   }
+   
+   ///Get an interpolated spectrum at arbitrary non-grid point using bilinear interpolation.
+   /** If outside the endpoints of the grid, the grid is simply extended (i.e. constant albedo).
+     */
+   int getAgSpectrum( std::vector<double> & lambda, std::vector<double> & spect, double sep, double phase)
+   {
+      int i_l, i_u, j_l, j_u;
+      
+      phase = fmod(phase, pi<double>());
+      
+      if(phase < 0) phase += pi<double>();
+      
+      i_l = _sep.size()-1;
+      while( _sep[i_l] > sep && i_l > 0) --i_l;
+      
+      i_u = 0;
+      while( _sep[i_u] < sep && i_u < _sep.size()-1) ++i_u;
+      
+      j_l = _phase.size()-1;
+      while( _phase[j_l] > phase && j_l > 0) --j_l;
+      
+      j_u = 0;
+      while( _phase[j_u] < phase && j_u < _phase.size()-1) ++j_u;
+      
+      lambda.resize( _lambda.size() );
+      spect.resize( _lambda.size() );
+      
+      double x = sep - _sep[i_l];
+      if(x < 0) x = 0;
+      
+      double y = (phase - _phase[j_l]);
+      if(y < 0) y = 0;
+      
+      double x0, x1;
+            
+      for(int i=0; i< spect.size(); ++i)
+      {
+         lambda[i] = _lambda[i];
+       
+         x0 = _ag[i_l][j_l][i];
+         x1 = _ag[i_u][j_l][i];
+         
+         if(y != 0 && j_u != j_l)
+         {
+            x0 += (_ag[i_l][j_u][i] - _ag[i_l][j_l][i])*y/(_phase[j_u] - _phase[j_l]);
+            x1 += (_ag[i_u][j_u][i] - _ag[i_u][j_l][i])*y/(_phase[j_u] - _phase[j_l]);
+         }
+         if( x == 0 || i_u==i_l ) spect[i] = x0;
+         else spect[i] = x0 + (x1-x0)*x/( _sep[i_u] - _sep[i_l]);
+      }
+      
+      return 0;
+   }
+
+      
+};
 
 /// @}
 

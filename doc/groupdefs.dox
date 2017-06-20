@@ -170,7 +170,9 @@
 /** \defgroup plotting Plotting Data
   * \brief Tools for plotting and displaying data
   */
+
   
+//--------------------- astronomy ------------------  
 /** \defgroup genastro Astronomy
   * \brief Tools for working with the heavens.
   */
@@ -179,11 +181,15 @@
   * \brief Algorithms for astrodynamic calculations.
   * \ingroup genastro
   */  
+
+/** \defgroup orbits Orbital Mechanics
+  * \brief Calculations of orbits and related quantities.
+  * \ingroup astrodynamics
+  */
   
 /** \defgroup kepler The Kepler Problem
-  * \ingroup astrodynamics
-  * \brief Utilities for working with the Kepler problem.
-  * Provides various methods for working with the @f$ 1/r^2 @f$ central force prolem, a.k.a. Kepler's problem, of orbital dynamics.
+  * \ingroup orbits
+  * \brief Utilities for solving the Kepler problem.
   */ 
 
 /** \defgroup astrophot Astronomical Photometry
@@ -191,20 +197,25 @@
   */
   
 /** \defgroup phyconstants Physical Constants
- * \brief Various physical constants
- */
+  * \brief Various physical constants
+  * \ingroup genastro
+  */
 
-/** \defgroup genphyconstants General Constants
+/* \defgroup genphyconstants General Constants
   * \ingroup phyconstants 
   * \brief Constants of general applicability
   */
   
 /** \defgroup astroconstants Astronomical Constants
-  * \ingroup genastro  
   * \ingroup phyconstants
   * \brief Constants for astronomy
   */
 
+/** \defgroup astrofiles Astronomy Headers
+  * \ingroup genastro
+  */
+  
+//---------------------
   
   
 /** \defgroup utils General Utilities

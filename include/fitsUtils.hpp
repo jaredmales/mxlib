@@ -265,6 +265,15 @@ inline int fitsStripApost(std::string & s)
       ++stripped;
    }
    
+   --p;
+
+   while(s[p] == ' ' && p >=0)
+   {
+      s.erase(p);
+      --p;
+      ++stripped;
+   }
+   
    return stripped;
 }
 

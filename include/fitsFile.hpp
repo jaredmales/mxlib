@@ -13,7 +13,7 @@
 
 #include "fitsHeader.hpp"
 #include "mxException.hpp"
-#include "eigenCube.hpp"
+#include "eigenUtils.hpp"
 
 namespace mx
 {
@@ -24,7 +24,7 @@ namespace mx
 
 
 /// Class to manage interactions with a FITS file
-/** This class conveniently wraps the functionality of cfitsio.
+/** This class wraps the functionality of cfitsio.
   * 
   * \tparam dataT is the datatype to use for in-memory storage of the image.  This does not have to match the data type stored on disk.
   * 
@@ -35,34 +35,29 @@ template<typename dataT> class fitsFile
 protected:
    
    ///The path to the file
-   std::string fileName;
+   std::string _fileName;
    
    ///The cfitsio data structure
-   fitsfile * fptr;
-   
-   ///The status code returned by the cfitsio library
-   int fstatus;
-   
+   fitsfile * _fptr;
+      
    ///The dimensions of the image (1D, 2D, 3D etc)
-   int naxis;
+   int _naxis;
    
    ///The size of each dimension
-   long * naxes;
+   long * _naxes;
 
    ///Flag indicating whether the file is open or not
-   bool isOpen;
+   bool _isOpen;
 
    ///The value to replace null values with
-   dataT nulval;
+   dataT _nulval;
    
    ///Records whether any null values were replaced
-   int anynul;
+   int _anynul;
    
    ///Flag to control whether the comment string is read.
-   int noComment; 
+   int _noComment; 
    
-   ///One time initialization common to all constructors
-   void construct();
   
    ///The starting x-pixel to read from
    long _x0;
@@ -75,31 +70,75 @@ protected:
    
    ///The number of y-pixels to read
    long _ypix;
+
+   ///One time initialization common to all constructors
+   void construct();
    
 public:
    
    ///Default constructor
    fitsFile();
    
-   ///Constructor with fileName, and option to open.
-   fitsFile(const std::string & fname, bool doopen = 1);
+   ///Constructor with _fileName, and option to open.
+   fitsFile( const std::string & fname, ///<File name to set on construction
+             bool doopen = true ///< If true, then the file is opened (the default).
+           );
    
    ///Destructor
    ~fitsFile();
    
+   ///Get the current value of _fileName
+   /**
+     * \returns the current value of _fileName.
+     */ 
+   std::string fileName();
+   
    ///Set the file path, and optionally open the file.
-   void setFilename(const std::string & fname, bool doopen = 1);
+   /**
+     * \returns 0 on success
+     * \returns -1 on success
+     */
+   int fileName( const std::string & fname,  ///< The new file name.
+                 bool doopen = true ///< If true, then the file is opened (the default).
+               );
+   
+   ///Get the current value of _naxis
+   /**
+     * \returns the current value of _naxis
+     */
+   int naxis();
+   
+   ///Get the current value of _naxes for the specified dimension
+   /**
+     * \returns the current value of _naxes for the specified dimension
+     */
+   long naxes( int dim /**< [in] the dimension */);
+   
+   
    
    ///Open the file
-   void open();
+   /** File name needs to already have been set.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */  
+   int open();
    
    ///Open the file, first setting the file path.
-   void open(const std::string & fname);
+   /** 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int open( const std::string & fname /**< The name of the file to open. */);
    
    ///Close the file.
-   void close();
+   /** 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int close();
 
-   ///Get the number of dimensions (i.e. naxis)
+   ///Get the number of dimensions (i.e. _naxis)
    int getDimensions();
    
    ///Get the total size
@@ -109,57 +148,65 @@ public:
    long getSize(size_t axis);
    
    /** \name Reading Basic Arrays
+     * These methods read FITS data into basic or raw arrays specified by a pointer. 
      * @{
      */
    
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
-     *
-     * \param data an allocated arrray large enough to hold the entire image 
      * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   void read(dataT * data);
+   int read( dataT * data /**< [out] an allocated arrray large enough to hold the entire image */ );
 
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
      *
-     * \param data is an allocated arrray large enough to hold the entire image 
-     * \param head is a fitsHeader object which is passed to \ref readHeader
-     * 
-     * \throws mxException is thrown on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   void read(dataT * data, fitsHeader &head);
+   int read( dataT * data, ///< [out] an allocated arrray large enough to hold the entire image  
+             fitsHeader &head ///< [out] a fitsHeader object which is passed to \ref readHeader
+           );
    
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
      *
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param data is an allocated arrray large enough to hold the entire image 
-     * 
-     * \throws mxException is thrown on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   void read(const std::string &fname, dataT * data);
+   int read( dataT * data, ///< [out] is an allocated arrray large enough to hold the entire image 
+             const std::string &fname ///< [in] is the file path, which is passed to \ref fileName
+           );
    
-   ///Read the contents of the FITS file into an array.
+   ///Read the contents of the FITS file into an array and read the header.
    /** The array pointed to by data must have been allocated.
      *
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param data is an allocated arrray large enough to hold the entire image 
-     * \param head is a fitsHeader object which is passed to \ref readHeader
-     * 
-     * \throws mxException is thrown on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   void read(const std::string &fname, dataT * data, fitsHeader &head);
+   int read( dataT * data,             ///< [out] an allocated arrray large enough to hold the entire image 
+             fitsHeader &head,         ///< [out] a fitsHeader object which is passed to \ref readHeader
+             const std::string &fname ///< [in] the file path, which is passed to \ref fileName 
+           );
+
+   ///Read data from a vector list of files into an image cube
+   int read( dataT * im, ///< [out] An allocated array large enough to hold all the images
+             const std::vector<std::string> & flist ///< [in] The list of files to read. 
+           );
+   
+   ///Read data from a vector of files into an image cube with individual headers
+   int read( dataT * im, ///< [out] An allocated array large enough to hold all the images 
+             std::vector<fitsHeader> &heads, ///< [in/out] The vector of fits headers, allocated to contain one per image.
+             const std::vector<std::string> & flist  ///< [in] The list of files to read.
+           );
 
    
    ///@}
    
    /** \name Reading Eigen Arrays
+     * These methods read FITS data into array types with an Eigen-like interface. 
      * @{
      */
    
@@ -169,15 +216,13 @@ public:
      * - data() (returns a pointer to the underlying array)
      * - typedef arrT::Scalar (is the data type, does not have to be dataT)
      * 
-     * \tparam arrT is the type of array, see requirements above.
+     * \tparam arrT is the type of array, see requirements above. 
      * 
-     * \param data is the array, which will be resized as necessary using its resize(int, int) member
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void read(arrT & data);
+   int read( arrT & data /**< [out] is the array, which will be resized as necessary using its resize(int, int) member */);
    
    ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
    /** The type arrT can be any type with the following members defined:
@@ -187,14 +232,13 @@ public:
      * 
      * \tparam arrT is the type of array, see requirements above.
      * 
-     * \param data is the array, which will be resized as necessary using its resize(int, int) member
-     * \param head is a fitsHeader object which is passed to \ref readHeader
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void read(arrT & data, fitsHeader &head);
+   int read( arrT & data,      ///< [out] is the array, which will be resized as necessary using its resize(int, int) member
+             fitsHeader &head  ///< [out] is a fitsHeader object which is passed to \ref readHeader
+           );
    
    ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
    /** The type arrT can be any type with the following members defined:
@@ -204,14 +248,13 @@ public:
      * 
      * \tparam arrT is the type of array, see requirements above.
      * 
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param data is the array, which will be resized as necessary using its resize(int, int) member
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void read(const std::string &fname, arrT & data);
+   int read( arrT & data,              ///< [out] is the array, which will be resized as necessary using its resize(int, int) member
+             const std::string &fname  ///< [in] is the file path, which is passed to \ref fileName
+           );
    
    ///Read the contents of the FITS file into an Eigen array type (not a simple pointer).
    /** The type arrT can be any type with the following members defined:
@@ -221,126 +264,167 @@ public:
      * 
      * \tparam arrT is the type of array, see requirements above.
      * 
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param data is the array, which will be resized as necessary using its resize(int, int) member
-     * \param head is a fitsHeader object which is passed to \ref readHeader
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void read(const std::string &fname, arrT & data, fitsHeader &head);
+   int read( arrT & data,  ///< [out] the array, which will be resized as necessary using its resize(int, int) member
+             fitsHeader &head, ///< [out] a fitsHeader object which is passed to \ref readHeader
+             const std::string &fname ///< [in] the file path, which is passed to \ref fileName
+           );
+   
+   ///Read data from a vector list of files into an image cube
+   /** The type cubeT can be any type with the following members defined:
+     * - resize(int, int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef cubeT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \note The images must all be the same size, or all be as large or larger than the subset specified.
+     * 
+     * \tparam cubeT is the type of array, see requirements above.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   template<typename cubeT>
+   int read( cubeT & cube,    ///< [out] A cube which will be resized using its resize(int, int, int) member.
+             const std::vector<std::string> & flist, ///< [in] The list of files to read.
+             std::vector<fitsHeader> * heads = 0 ///< [out] [optional] A vector of fits headers, allocated to contain one per image.
+           );
+   
+   ///Read data from a vector of files into an image cube with individual headers
+   /** The type cubeT can be any type with the following members defined:
+     * - resize(int, int, int) (allocates memory)
+     * - data() (returns a pointer to the underlying array)
+     * - typedef cubeT::Scalar (is the data type, does not have to be dataT)
+     * 
+     * \tparam cubeT is the type of array, see requirements above.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   template<typename cubeT>
+   int read( cubeT & cube, ///< [out] A cube which will be resized using its resize(int, int, int) member.
+             std::vector<fitsHeader> &heads, ///< [out] The vector of fits headers, allocated to contain one per image. 
+             const std::vector<std::string> & flist  ///< [in] The list of files to read.
+           );
+
    
    ///@}
    
    
-   void read(const std::vector<std::string> & flist, dataT * im);
-   
-   void read(const std::vector<std::string> & flist, dataT * im, std::vector<fitsHeader> &heads);
-   
+   /** \name Reading Headers
+     * @{
+     */
    
    ///Read the header from the fits file.
    /** If head is not empty, then only the keywords already in head are updated.  Otherwise
      * the complete header is read.
      * 
-     * \param head is a fitsHeader object
-     * 
-     * \throws mxException is thrown on error
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   void readHeader(fitsHeader &head);
+   int readHeader(fitsHeader &head /**< [out] a fitsHeader object */);
    
    ///Read the header from the fits file.
    /** If head is not empty, then only the keywords already in head are updated.  Otherwise
      * the complete header is read.
      * 
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param head is a fitsHeader object
-     * 
-     * \throws mxException is thrown on error
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   void readHeader(const std::string &fname, fitsHeader &head);
+   int readHeader( fitsHeader &head,  ///< [out] a fitsHeader object 
+                   const std::string &fname ///< [in] the file path, which is passed to \ref fileName 
+                 );
+
+   /// Read the headers from a list of FITS files.
+   /** In each case, if the header is not empty then only the keywords already in head are updated.  Otherwise
+     * the complete header is read.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int readHeader( std::vector<fitsHeader> & heads, /// A vector of fitsHeader objects to read into.
+                   const std::vector<std::string> & flist ///< [in] A list of files, each of which is passed to \ref fileName 
+                 );
    
+   ///@}
    
-   /** \name Writing Data Arrays
+   /** \name Writing Basic Arrays
+     * These methods write basic arrays specified by a pointer to FITS. 
      * @{
      */
    
    ///Write the contents of a raw array to the FITS file.
    /** 
-     * Note: the type of the array must match dataT
-     *  
-     * \param im is the array
-     * \param d1 is the first dimension
-     * \param d2 is the second dimension
-     * \param d3 is the third dimenesion (minimum 1)
-     * \param head is an (optiona) pointer to the header.  Set to 0 if not used.
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error 
      */ 
-   void write(dataT * im, int d1, int d2, int d3, fitsHeader * head);
+   int write( dataT * im, ///< [in] is the array
+              int d1,  ///< [in] is the first dimension
+              int d2,  ///< [in] is the second dimension
+              int d3,  ///< [in] is the third dimenesion (minimum value is 1)
+              fitsHeader * head ///< [in] a pointer to the header.  Set to 0 if not used.
+            );
+   
+   ///Write the contents of a raw array to the FITS file.
+   /** 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int write( dataT * im, ///< [in] is the array
+              int d1,  ///< [in] is the first dimension
+              int d2,  ///< [in] is the second dimension
+              int d3  ///< [in] is the third dimenesion (minimum value is 1)
+            );
    
    ///Write the contents of a raw array to the FITS file.
    /** 
      * Note: the type of the array must match dataT
-     *  
-     * \param im is the array
-     * \param d1 is the first dimension
-     * \param d2 is the second dimension
-     * \param d3 is the third dimenesion (minimum 1)
      * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   void write(dataT * im, int d1, int d2, int d3);
+   int write( dataT * im, ///< [in] is the array
+              int d1,  ///< [in] is the first dimension
+              int d2,  ///< [in] is the second dimension
+              int d3,  ///< [in] is the third dimenesion (minimum value is 1)
+              fitsHeader & head ///< [in] is the header
+            );
    
    ///Write the contents of a raw array to the FITS file.
    /** 
-     * Note: the type of the array must match dataT
-     *  
-     * \param im is the array
-     * \param d1 is the first dimension
-     * \param d2 is the second dimension
-     * \param d3 is the third dimenesion (minimum 1)
-     * \param head is the header. 
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   void write(dataT * im, int d1, int d2, int d3, fitsHeader & head);
+   int write( std::string fname, ///< [in] is the name of the file.
+              dataT * im, ///< [in] is the array
+              int d1,  ///< [in] is the first dimension
+              int d2,  ///< [in] is the second dimension
+              int d3   ///< [in] is the third dimenesion (minimum value is 1)
+            );
    
    ///Write the contents of a raw array to the FITS file.
    /** 
-     * Note: the type of the array must match dataT
-     *  
-     * \param fname is the name of the file
-     * \param im is the array
-     * \param d1 is the first dimension
-     * \param d2 is the second dimension
-     * \param d3 is the third dimenesion (minimum 1)
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   void write(std::string fname, dataT * im, int d1, int d2, int d3);
-   
-   ///Write the contents of a raw array to the FITS file.
-   /** 
-     * Note: the type of the array must match dataT
-     *  
-     * \param fname is the name of the file
-     * \param im is the array
-     * \param d1 is the first dimension
-     * \param d2 is the second dimension
-     * \param d3 is the third dimenesion (minimum 1)
-     * \param head is the header. 
-     * 
-     * \throws mxException on error
-     * 
-     */
-   void write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader & head);
+   int write( std::string fname, ///< [in] is the name of the file.
+              dataT * im, ///< [in] is the array
+              int d1,  ///< [in] is the first dimension
+              int d2,  ///< [in] is the second dimension
+              int d3,  ///< [in] is the third dimenesion (minimum value is 1)
+              fitsHeader & head ///< [in] is the header
+            );
 
-   ///Write the contents of and Eigen-type array to a FITS file.
+   ///@}
+   
+   /** \name Writing Eigen Arrays
+     * These methods write array types with an Eigen-like interface. 
+     * @{
+     */
+   
+   ///Write the contents of an Eigen-type array to a FITS file.
    /** The type arrT can be any type with the following members defined:
      * - data() (returns a pointer to the underlying array)
      * - rows() (returrns the number of rows)
@@ -351,14 +435,13 @@ public:
      * 
      * \tparam arrT is the type of array, see requirements above.
      * 
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param im is the array
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void write(std::string fname, arrT & im); 
+   int write( std::string fname, ///< [in] is the name of the file.
+              arrT & im ///< [in] is the array
+            ); 
   
    ///Write the contents of an Eigen-type array to a FITS file.
    /** The type arrT can be any type with the following members defined:
@@ -371,61 +454,70 @@ public:
      * 
      * \tparam arrT is the type of array, see requirements above.
      * 
-     * \param fname is the file path, which is passed to \ref setFilename
-     * \param im is the array
-     * \param head is a fitsHeader object which is passed to \ref readHeader
-     * 
-     * \throws mxException on error
-     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
    template<typename arrT>
-   void write(std::string fname, arrT & im, fitsHeader & head); 
+   int write( std::string fname,  ///< [in] is the file path, which is passed to \ref fileName
+              arrT & im, ///< [in] is the array
+              fitsHeader & head ///< [in] is a fitsHeader object which is passed to \ref readHeader
+            ); 
    
-   void writeHeader(fitsHeader &head);
+   //int writeHeader( fitsHeader &head );
    
    ///@}
+
+   /** \name Reading Subsets
+     * It is often desirable to read only a subset of an image or images into memory.  These methods
+     * allow you to specify this. 
+     * @{
+     */
    
    ///Set to read all the pixels in the file
    void setReadSize();
-//    {
-//       _x0 = -1;
-//       _y0 = -1;
-//       _xpix = -1;
-//       _ypix = -1;
-//    }
 
-   ///Set to read only a subet of the pixels in the file
+   ///Set to read only a subset of the pixels in the file
    /**
-     * \param x0  is the starting x-pixel to read
-     * \param y0  is the starting y-pixel to read
-     * \param xpix is the number of x-pixels to read
-     * \param ypix is the number of y-pixels to read
      */ 
-   void setReadSize(long x0, long y0, long xpix, long ypix);
-//    {
-//       _x0 = x0;
-//       _y0 = y0;
-//       _xpix = xpix;
-//       _ypix = ypix;
-//       
-//    }
-   
+   void setReadSize( long x0,   ///< is the starting x-pixel to read
+                     long y0,   ///< is the starting y-pixel to read
+                     long xpix, ///< is the number of x-pixels to read
+                     long ypix  ///< is the number of y-pixels to read
+                   );
+
+   ///@}
    
 }; // fitsFile
 
 ///@}
 
+void fitsErrText( std::string & explan, const std::string & filename, int fstatus )
+{
+   char emnem[31];
+      
+   fits_get_errstatus(fstatus, emnem);
+   
+   explan += ": ";
+   explan += filename;
+   explan += ". CFITSIO: ";      
+   
+   explan += emnem;
+   explan += " (";
+   explan += convertToString(fstatus);
+   explan += ")";
+
+}
+      
 template<typename dataT>
 void fitsFile<dataT>::construct()
 {
-   naxes = 0;
-   isOpen = 0;
-   fstatus = 0;
+   _naxes = 0;
+   _isOpen = 0;
    
-   nulval = 0;
-   anynul = 0;
+   _nulval = 0;
+   _anynul = 0;
    
-   noComment = 0;
+   _noComment = 0;
    
    setReadSize();
 
@@ -441,146 +533,160 @@ template<typename dataT>
 fitsFile<dataT>::fitsFile(const std::string &fname, bool doopen)
 {
    construct();
-   setFilename(fname, doopen);
+   fileName(fname, doopen);
 }
 
 template<typename dataT>
 fitsFile<dataT>::~fitsFile()
 {
-   if(isOpen) close();
+   if(_isOpen) close();
    
-   if(naxes) delete naxes;
+   if(_naxes) delete _naxes;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::setFilename(const std::string &fname, bool doopen)
+std::string fitsFile<dataT>::fileName()
 {
-   if(isOpen) 
+   return _fileName;
+}
+
+template<typename dataT>
+int fitsFile<dataT>::fileName(const std::string &fname, bool doopen)
+{
+   if(_isOpen) 
    {
       close();
    }
    
-   fileName = fname;
+   _fileName = fname;
    
    if(doopen)
    {
-      open();
+      return open();
    }
+   
+   return 0;
 
 } 
 
 template<typename dataT>
-void fitsFile<dataT>::open()
+int fitsFile<dataT>::naxis()
 {
-   fits_open_file(&fptr, fileName.c_str(), READONLY, &fstatus);
-   if (fstatus)
-   {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error opening file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-
-      throw e;
-
-   }
-   fits_get_img_dim(fptr, &naxis, &fstatus);
-   if (fstatus)
-   {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error getting number of axes in file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      
-      throw e;
-      
-
-   }
-
-   if(naxes) delete naxes;
-   naxes = new long[naxis];
-
-   fits_get_img_size(fptr, naxis, naxes, &fstatus);
-   if (fstatus)
-   {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error getting dimensions in file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      
-      throw e;
-   }
-
-   isOpen = true; //Only set this after opening is complete.
+   return _naxis;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::open(const std::string & fname)
+long fitsFile<dataT>::naxes( int dim)
 {
-   setFilename(fname);
-   open();
+   return _naxes[dim];
 }
-
+   
 template<typename dataT>
-void fitsFile<dataT>::close()
+int fitsFile<dataT>::open()
 {
-   int stat;
-   fstatus = 0;
-      
-   if(!isOpen) 
-   {
-      std::cerr << "Tried to close but not open\n";
-      return;
-   }
-   stat = fits_close_file(fptr, &fstatus);
-      
+   int fstatus = 0;
+   
+   fits_open_file(&_fptr, _fileName.c_str(), READONLY, &fstatus);
+   
    if (fstatus)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error closing file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      std::string explan = "Error opening file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILEOERR, explan);
       
-      return;
+      return -1;
+
    }
    
-   isOpen = 0;
+   fits_get_img_dim(_fptr, &_naxis, &fstatus);
+   if (fstatus)
+   {
+      std::string explan = "Error getting number of axes in file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILERERR, explan);
+      
+      return -1;
+   
+   }
+
+   if(_naxes) delete _naxes;
+   _naxes = new long[_naxis];
+
+   fits_get_img_size(_fptr, _naxis, _naxes, &fstatus);
+   if (fstatus)
+   {
+      std::string explan = "Error getting dimensions in file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILERERR, explan);
+      
+      return -1;
+   }
+
+   _isOpen = true; //Only set this after opening is complete.
+   
+   return 0;
+}
+
+template<typename dataT>
+int fitsFile<dataT>::open(const std::string & fname)
+{
+   return fileName(fname, true);
+}
+
+template<typename dataT>
+int fitsFile<dataT>::close()
+{
+   int stat;
+   int fstatus = 0;
+      
+   if(!_isOpen) 
+   {
+      return 0; //No error.
+   }
+   
+   stat = fits_close_file(_fptr, &fstatus);
+      
+   if (fstatus)
+   {
+      std::string explan = "Error closing file";
+      fitsErrText( explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILECERR, explan);
+      
+      return -1;
+   }
+   
+   _isOpen = 0;
    fstatus = 0;
       
-   if(naxes) delete naxes;
+   if(_naxes) delete _naxes;
 
-   naxes = 0;
+   _naxes = 0;
+   
+   return 0;
 }
 
 template<typename dataT>
 int fitsFile<dataT>::getDimensions()
 {
-   if(!isOpen or !naxes) return -1;
+   if(!_isOpen or !_naxes) return -1;
    
-   return naxis;
+   return _naxis;
 }
 
 template<typename dataT>
 long fitsFile<dataT>::getSize()
 {
-   if(!isOpen or !naxes) return -1;
+   if(!_isOpen or !_naxes) return -1;
 
    long sz = 1;
    
-   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis ==2)
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis ==2)
    {
       return _xpix*_ypix;
    }
    else
    {
-      for(int i=0;i<naxis;++i) sz*= naxes[i];
+      for(int i=0;i<_naxis;++i) sz*= _naxes[i];
    }
    
    return sz;
@@ -589,16 +695,16 @@ long fitsFile<dataT>::getSize()
 template<typename dataT>
 long fitsFile<dataT>::getSize(size_t axis)
 {
-   if(!isOpen or !naxes) return -1;
+   if(!_isOpen or !_naxes) return -1;
 
-   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis ==2)
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis ==2)
    {
       if(axis == 0) return _xpix;
       return _ypix;
    }
    else
    {
-      return naxes[axis];
+      return _naxes[axis];
    }
 }
 
@@ -607,25 +713,21 @@ long fitsFile<dataT>::getSize(size_t axis)
 /************************************************************/
 
 template<typename dataT>
-void fitsFile<dataT>::read(dataT * data)
+int fitsFile<dataT>::read(dataT * data)
 {
-   if(!isOpen)
+   int fstatus = 0;
+      
+   if(!_isOpen)
    {
-      open();
-   
-      if(!isOpen)
-      {
-         std::cerr << "File not open.\n";
-         return;
-      }
+      if( open() < 0) return -1;   
    }
    
    long long nelements = 1;
-   long *fpix = new long[naxis];
-   long *lpix = new long[naxis];
-   long *inc = new long[naxis];
+   long *fpix = new long[_naxis];
+   long *lpix = new long[_naxis];
+   long *inc = new long[_naxis];
    
-   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis == 2)
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis == 2)
    {
       fpix[0] = _x0+1;
       lpix[0] = fpix[0] + _xpix-1;
@@ -637,67 +739,131 @@ void fitsFile<dataT>::read(dataT * data)
    }
    else
    {
-      for(int i=0;i<naxis; i++)
+      for(int i=0;i<_naxis; i++)
       {
          fpix[i] = 1;
-         lpix[i] = naxes[i];
+         lpix[i] = _naxes[i];
          inc[i] = 1;
-         //nelements *= naxes[i];
+         //nelements *= _naxes[i];
       }
    }
    
-   //fits_read_pix(fptr, getFitsType<dataT>(), fpix, nelements, (void *) &nulval, 
-                                     //(void *) data, &anynul, &fstatus);
-   fits_read_subset(fptr, getFitsType<dataT>(), fpix, lpix, inc, (void *) &nulval, 
-                                     (void *) data, &anynul, &fstatus);
+   //fits_read_pix(_fptr, getFitsType<dataT>(), fpix, nelements, (void *) &_nulval, 
+                                     //(void *) data, &_anynul, &fstatus);
+   fits_read_subset(_fptr, getFitsType<dataT>(), fpix, lpix, inc, (void *) &_nulval, 
+                                     (void *) data, &_anynul, &fstatus);
    
    if (fstatus && fstatus != 107)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error reading data from file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      std::string explan = "Error reading data from file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILERERR, explan);
       
       delete fpix;
       delete lpix;
       delete inc;
    
-      throw e;
+      return -1;
    }
 
    delete fpix;
    delete lpix;
    delete inc;
+   
+   return 0;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::read(dataT * data, fitsHeader &head)
+int fitsFile<dataT>::read( dataT * data, 
+                           fitsHeader &head
+                         )
 {
-   read(data);
-   readHeader(head);
+   if( read(data) < 0 ) return -1;
+   if( readHeader(head) < 0) return -1;
+   
+   return 0;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::read(const std::string &fname, dataT * data)
+int fitsFile<dataT>::read( dataT * data, 
+                           const std::string &fname
+                         )
 {
-   setFilename(fname);
-   read(data);
+   if( fileName(fname) < 0 ) return -1;
+   if( read(data) < 0 ) return -1;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::read(const std::string &fname, dataT * data, fitsHeader &head)
+int fitsFile<dataT>::read( dataT * data, 
+                           fitsHeader &head, 
+                           const std::string &fname 
+                         )
 {
-   setFilename(fname);
-   read(data);
-   readHeader(head);
+   if( fileName(fname) < 0 ) return -1;
+   if( read(data) < 0 ) return -1;
+   if( readHeader(head) < 0 ) return -1;
 }
+
+template<typename dataT>
+int fitsFile<dataT>::read( dataT * im, 
+                           const std::vector<std::string> & flist 
+                         )
+{
+   if(flist.size() == 0)
+   {
+      mxError("fitsFile", MXE_PARAMNOTSET, "Empty file list"); 
+      return - 1;
+   }
+   
+   long sz0 =0, sz1=0;
+   
+   for(int i=0;i<flist.size(); ++i)
+   {
+      if( fileName(flist[i], 1) < 0 ) return -1;
+      
+      if( read(im + i*sz0*sz1) < 0 ) return -1;
+      
+      sz0 = getSize(0);
+      sz1 = getSize(1);      
+   }
+   
+   return 0;
+}
+   
+template<typename dataT>
+int fitsFile<dataT>::read( dataT * im, 
+                           std::vector<fitsHeader> &heads, 
+                           const std::vector<std::string> & flist 
+                         )
+{
+   if(flist.size() == 0)
+   {
+      mxError("fitsFile", MXE_PARAMNOTSET, "Empty file list"); 
+      return -1;
+   }
+   
+   long sz0 =0, sz1=0;
+   
+   for(int i=0;i<flist.size(); ++i)
+   {
+      if( fileName(flist[i], 1) < 0 ) return -1;
+      
+      if( read(im + i*sz0*sz1) < 0 ) return -1;
+    
+      if( readHeader(heads[i]) < 0 ) return  -1;
+      
+      sz0 = getSize(0);
+      sz1 = getSize(1);
+      
+   }
+   
+   return 0;
+}
+
 
 /************************************************************/
 /***                      Eigen Arrays                    ***/
 /************************************************************/
-
 
 template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
 struct eigenArrResize
@@ -721,27 +887,23 @@ struct eigenArrResize<arrT, false>
 
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::read(arrT & im)
+int fitsFile<dataT>::read(arrT & im)
 {
-   if(!isOpen)
-   {
-      open();
+   int fstatus = 0;
    
-      if(!isOpen)
-      {
-         std::cerr << "File not open.\n";
-         return;
-      }
+   if(!_isOpen)
+   {
+      if( open() < 0 ) return -1;   
    }
       
    //long long nelements = 1;
-   long *fpix = new long[naxis];
-   long *lpix = new long[naxis];
-   long *inc = new long[naxis];
+   long *fpix = new long[_naxis];
+   long *lpix = new long[_naxis];
+   long *inc = new long[_naxis];
    eigenArrResize<arrT> arrresz;
  
       
-   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && naxis == 2)
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis == 2)
    {      
       fpix[0] = _x0+1;
       lpix[0] = fpix[0] + _xpix-1;
@@ -756,122 +918,211 @@ void fitsFile<dataT>::read(arrT & im)
    }
    else
    {
-      for(int i=0;i<naxis; i++)
+      for(int i=0;i<_naxis; i++)
       {
          fpix[i] = 1;
-         lpix[i] = naxes[i];
+         lpix[i] = _naxes[i];
          inc[i] = 1;
-         //nelements *= naxes[i];
+         //nelements *= _naxes[i];
       }
 
    
-      if(naxis > 2)
+      if(_naxis > 2)
       {
-         arrresz.resize(im, naxes[0], naxes[1], naxes[2]);
+         arrresz.resize(im, _naxes[0], _naxes[1], _naxes[2]);
       }
       else
       {
-         arrresz.resize(im, naxes[0], naxes[1],1);
+         arrresz.resize(im, _naxes[0], _naxes[1],1);
       }
    }
 
-   fits_read_subset(fptr, getFitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &nulval, 
-                                     (void *) im.data(), &anynul, &fstatus);
+   if( fits_read_subset(_fptr, getFitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &_nulval, 
+                                     (void *) im.data(), &_anynul, &fstatus) < 0 ) return -1;
  
    if (fstatus && fstatus != 107)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error reading data from file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      
+      std::string explan = "Error reading data from file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILERERR, explan);
+         
       delete fpix;
+      delete lpix;
+      delete inc;
       
-      throw e;
+      return -1;
    }
    delete fpix;
+   delete lpix;
+   delete inc;
+   
+   return 0;
       
 }
 
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::read(arrT & data, fitsHeader &head)
+int fitsFile<dataT>::read(arrT & data, fitsHeader &head)
 {
-   read(data);
-   readHeader(head);
+   if( read(data) < 0 ) return -1;
+   if( readHeader(head) < 0 ) return -1;
+   return 0;
 }
    
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::read(const std::string &fname, arrT & data)
+int fitsFile<dataT>::read( arrT & data,
+                           const std::string &fname
+                         )
 {
-   setFilename(fname);
-   read(data);
+   if( fileName(fname) < 0 ) return -1;
+   if( read(data) < 0 ) return -1;
+   return 0;
 }
    
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::read(const std::string &fname, arrT & data, fitsHeader &head)
+int fitsFile<dataT>::read( arrT & data, 
+                           fitsHeader &head, 
+                           const std::string &fname
+                         )
 {
-   setFilename(fname);
-   read(data);
-   readHeader(head);
+   if( fileName(fname) < 0 ) return -1;
+   if( read(data) < 0 ) return -1;
+   if( readHeader(head) < 0 ) return  -1;
+   
+   return 0;
 }
    
+
 template<typename dataT>
-void fitsFile<dataT>::read(const std::vector<std::string> & flist, dataT * im)
+template<typename cubeT>
+int fitsFile<dataT>::read( cubeT & cube,  
+                           const std::vector<std::string> & flist,
+                           std::vector<fitsHeader> * heads
+                         )
 {
-   if(flist.size() == 0)
+   int fstatus = 0;
+      
+   if( flist.size() == 0 )
    {
-      std::cerr << "Empty file list\n";
-      return;
+      mxError("fitsFile", MXE_PARAMNOTSET, "Empty file list"); 
+      return -1;
    }
    
-   long sz0 =0, sz1=0;
    
-   for(int i=0;i<flist.size(); ++i)
-   {
-      setFilename(flist[i], 1);
-      
-      read(im + i*sz0*sz1);
-      
-      sz0 = getSize(0);
-      sz1 = getSize(1);      
-   }
-}
+   //Open the first file to get the dimensions.
+   if( fileName(flist[0], 1) < 0) return -1;
    
-template<typename dataT>
-void fitsFile<dataT>::read(const std::vector<std::string> & flist, dataT * im, std::vector<fitsHeader> &heads)
-{
-   if(flist.size() == 0)
-   {
-      std::cerr << "Empty file list\n";
-      return;
-   }
-   
-   long sz0 =0, sz1=0;
-   
-   for(int i=0;i<flist.size(); ++i)
-   {
-      setFilename(flist[i], 1);
-      
-      read(im + i*sz0*sz1);
+   long *fpix = new long[_naxis];
+   long *lpix = new long[_naxis];
+   long *inc = new long[_naxis];
     
-      readHeader(heads[i]);
-      //pout(heads[i]["ROTOFF"].value);
+   //Check if we're reading subsets   
+   if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis == 2)
+   {      
+      fpix[0] = _x0+1;
+      lpix[0] = fpix[0] + _xpix-1;
       
-      sz0 = getSize(0);
-      sz1 = getSize(1);
-      
+      fpix[1] = _y0+1;
+      lpix[1] = fpix[1] + _ypix-1;
+      //nelements = _xpix*_ypix;
+     
+      inc[0] = 1;
+      inc[1] = 1;
+      cube.resize(_xpix, _ypix, flist.size());
    }
-}
+   else
+   {
+      for(int i=0;i<_naxis; i++)
+      {
+         fpix[i] = 1;
+         lpix[i] = _naxes[i];
+         inc[i] = 1;
+      }
 
+      cube.resize( _naxes[0], _naxes[1], flist.size());
+   }
+      
+      
+   //Now read first image.   
+   fits_read_subset(_fptr, getFitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &_nulval, 
+                                     (void *) cube.image(0).data(), &_anynul, &fstatus);
+
+   
+   if (fstatus && fstatus != 107)
+   {
+      
+      std::string explan = "Error reading data from file";
+      fitsErrText(explan, _fileName, fstatus);
+      
+      mxError("cfitsio", MXE_FILERERR, explan); 
+      
+      delete fpix;
+      delete lpix;
+      delete inc;
+      
+      return -1;
+   }
+
+   if(heads)
+   {
+      if( readHeader( (*heads)[0]) < 0) return -1;
+   }
+
+   
+   //Now read in the rest.
+   for(int i=1; i< flist.size(); ++i)
+   {
+      fileName(flist[i], 1);
+      
+      //Now read image.   
+      fits_read_subset(_fptr, getFitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &_nulval, 
+                                     (void *) cube.image(i).data(), &_anynul, &fstatus);
+ 
+      if (fstatus && fstatus != 107)
+      {
+         std::string explan = "Error reading data from file";
+         fitsErrText(explan, _fileName, fstatus);
+         mxError("cfitsio", MXE_FILERERR, explan); 
+      
+         delete fpix;
+         delete lpix;
+         delete inc;
+      
+         return -1;
+      }
+      
+      if(heads)
+      {
+         if( readHeader( (*heads)[i]) < 0) return -1;
+      }
+   }
+   
+   
+   delete fpix;      
+   delete lpix;
+   delete inc;
+      
+   return 0;
+}
+   
 
 template<typename dataT>
-void fitsFile<dataT>::readHeader(fitsHeader & head)
+template<typename cubeT>
+int fitsFile<dataT>::read( cubeT & cube,
+                           std::vector<fitsHeader> & heads,
+                           const std::vector<std::string> & flist
+                         )
 {
+   return read(cube, flist, &heads);
+}
+   
+template<typename dataT>
+int fitsFile<dataT>::readHeader(fitsHeader & head)
+{
+   int fstatus = 0;
+   
    char keyword[FLEN_KEYWORD];
    char value[FLEN_VALUE];
    char * comment;
@@ -894,8 +1145,8 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
       num_head_keys = head.size();
    }
    
-   //If noComment is set, then we don't read in the comment
-   if(noComment)
+   //If _noComment is set, then we don't read in the comment
+   if(_noComment)
    {
       comment = 0;
    }
@@ -907,44 +1158,38 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
    int keysexist;
    int morekeys;
    
-   if(!isOpen)
+   if(!_isOpen)
    {
       open();
    }
    
    //This gets the number of header keys to read
-   fits_get_hdrspace(fptr, &keysexist, &morekeys, &fstatus);
+   fits_get_hdrspace(_fptr, &keysexist, &morekeys, &fstatus);
    
    if (fstatus)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error reading header from file: ";
-      explan +=  fileName + ". ";      
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+      std::string explan = "Error reading header from file";
+      fitsErrText( explan, _fileName, fstatus);
+      mxError( "fitsFile", MXE_FILERERR, explan);
       
       delete comment;
       
-      throw e;
+      return -1;
    }
    
    for(int i=0; i<keysexist; i++)
    {
-      fits_read_keyn(fptr, i+1, keyword, value, comment, &fstatus);
+      fits_read_keyn(_fptr, i+1, keyword, value, comment, &fstatus);
       
       if (fstatus)
       {
-         char emnem[31];
-         std::string explan;
-         fits_get_errstatus(fstatus, emnem);
-         explan = "Error reading header from file: ";
-         explan +=  fileName + ". ";      
-         mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
+         std::string explan = "Error reading header from file";
+         fitsErrText( explan, _fileName, fstatus);
+         mxError( "fitsFile", MXE_FILERERR, explan);
       
          delete comment;
          
-         throw e;
+         return -1;
       }
       
       if(!head_keys_only)
@@ -985,66 +1230,84 @@ void fitsFile<dataT>::readHeader(fitsHeader & head)
       }
    }
    
-   
-   
-   
    delete comment;
+   
+   return 0;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::readHeader(const std::string &fname, fitsHeader &head)
+int fitsFile<dataT>::readHeader( fitsHeader &head,
+                                 const std::string &fname 
+                               )
 {
-   setFilename(fname);
-   readHeader(head);
+   if( fileName(fname) < 0 ) return -1;
+   if( readHeader(head) < 0 ) return -1;
 }
 
 template<typename dataT>
-void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * head)
+int fitsFile<dataT>::readHeader( std::vector<fitsHeader> & heads,
+                                 const std::vector<std::string> & flist
+                               )
 {
-   if(isOpen) close();
-   if(naxes) delete naxes;
-
-   fstatus = 0;
-   naxis = 1;
-   if(d2 > 0) 
+   for(int i=0; i< flist.size(); ++i)
    {
-      if(d3 > 1) naxis = 3;
-      else naxis = 2;
+      fileName(flist[i], 1);
+       
+      if( readHeader( heads[i]) < 0) return -1;      
    }
    
-   naxes = new long[naxis];
+   return 0;
+}
+
+
+template<typename dataT>
+int fitsFile<dataT>::write( dataT * im, 
+                            int d1, 
+                            int d2, 
+                            int d3, 
+                            fitsHeader * head
+                          )
+{
+   int fstatus = 0;
    
-   naxes[0] = d1;
-   if(naxis > 1) naxes[1] = d2;
-   if(naxis > 2) naxes[2] = d3;
+   if(_isOpen) close();
+   if(_naxes) delete _naxes;
+
+   fstatus = 0;
+   _naxis = 1;
+   if(d2 > 0) 
+   {
+      if(d3 > 1) _naxis = 3;
+      else _naxis = 2;
+   }
+   
+   _naxes = new long[_naxis];
+   
+   _naxes[0] = d1;
+   if(_naxis > 1) _naxes[1] = d2;
+   if(_naxis > 2) _naxes[2] = d3;
    
    std::string forceFileName = "!"+fileName;
    
-   fits_create_file(&fptr, forceFileName.c_str(), &fstatus);
+   fits_create_file(&_fptr, forceFileName.c_str(), &fstatus);
    if (fstatus)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error creating file: ";
-      explan +=  fileName + ". ";
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      throw e;
-
-   }
-   isOpen = true;
+      std::string explan = "Error creating file";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILEOERR, explan);
    
-   fits_create_img( fptr, getFitsBITPIX<dataT>(), naxis, naxes, &fstatus);
+      return -1;
+   }
+   _isOpen = true;
+   
+   fits_create_img( _fptr, getFitsBITPIX<dataT>(), _naxis, _naxes, &fstatus);
    if (fstatus)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error creating image: ";
-      explan +=  fileName + ". ";
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      throw e;
-
+      std::string explan = "Error creating image";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILEWERR, explan);
+      
+      return -1;
    }
    
    long fpixel[3];
@@ -1054,18 +1317,16 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
    
    LONGLONG nelements = 1;
    
-   for(int i=0;i<naxis;++i) nelements *= naxes[i];
+   for(int i=0;i<_naxis;++i) nelements *= _naxes[i];
       
-   fits_write_pix( fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
+   fits_write_pix( _fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
    if (fstatus)
    {
-      char emnem[31];
-      std::string explan;
-      fits_get_errstatus(fstatus, emnem);
-      explan = "Error writing data: ";
-      explan +=  fileName + ". ";
-      mxException e("cfitsio", fstatus, emnem, __FILE__, __LINE__, explan);
-      throw e;
+      std::string explan = "Error writing data";
+      fitsErrText(explan, _fileName, fstatus);
+      mxError("fitsFile", MXE_FILEWERR, explan);
+      
+      return -1;
 
    }
    
@@ -1075,86 +1336,83 @@ void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader * hea
       
       for(it = head->begin(); it != head->end(); ++it)
       {
-         it->write(fptr);
-         
-         // fits_update_key(fptr, TSTRING, it->keyword.c_str(), (void *)it->value.c_str(),(char *)it->comment.c_str(),  &fstatus);
+         it->write(_fptr);
       }
    }
    
-   close();
+   if( close() < 0) return -1;
+   
+   return 0;
 }
       
 template<typename dataT>
-void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3)
+int fitsFile<dataT>::write( dataT * im, 
+                            int d1, 
+                            int d2, 
+                            int d3
+                          )
 {
-   write(im, d1, d2, d3, (fitsHeader *) 0);
+   return write(im, d1, d2, d3, (fitsHeader *) 0);
 }
 
 template<typename dataT>
-void fitsFile<dataT>::write(dataT * im, int d1, int d2, int d3, fitsHeader & head)
+int fitsFile<dataT>::write( dataT * im, 
+                            int d1, 
+                            int d2, 
+                            int d3, 
+                            fitsHeader & head)
 {
-   write(im, d1, d2, d3, &head);
+   return write(im, d1, d2, d3, &head);
 }
 
 
 template<typename dataT>
-void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3)
+int fitsFile<dataT>::write( std::string fname, 
+                            dataT * im, 
+                            int d1, 
+                            int d2, 
+                            int d3
+                          )
 {
-   setFilename(fname, false);
-   write(im, d1, d2, d3, (fitsHeader *) 0);
+   if( fileName(fname, false) < 0) return -1;
+   return write(im, d1, d2, d3, (fitsHeader *) 0);
 }
 
 template<typename dataT>
-void fitsFile<dataT>::write(std::string fname, dataT * im, int d1, int d2, int d3, fitsHeader & head)
+int fitsFile<dataT>::write( std::string fname, 
+                            dataT * im, 
+                            int d1, 
+                            int d2, 
+                            int d3, 
+                            fitsHeader & head)
 {
-   setFilename(fname, false);
-   write(im, d1, d2, d3, &head);
+   if( fileName(fname, false) < 0) return -1;
+   return write(im, d1, d2, d3, &head);
 }
 
-
-/************************************************************/
-/***                      Eigen Arrays                    ***/
-/************************************************************/
-
-//SFINAE to check for 3D eigenCube
-template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
-struct eigenArrPlanes
-{
-   //If it's an eigenCube, call planes planes()
-   int operator()(arrT & arr)
-   {
-      return arr.planes();
-   }
-};
-
-template<typename arrT>
-struct eigenArrPlanes<arrT, false>
-{
-   //If it's not an eigenCube, never call planes()
-   int operator()(arrT & arr)
-   {
-      return 1;
-   }
-};
 
 
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::write(std::string fname, arrT & im)
+int fitsFile<dataT>::write( std::string fname, 
+                            arrT & im
+                          )
 {
    eigenArrPlanes<arrT> planes;
    
-   write(fname, im.data(), im.rows(), im.cols(), planes(im));
+   return write(fname, im.data(), im.rows(), im.cols(), planes(im));
    
 }
 
 template<typename dataT>
 template<typename arrT>
-void fitsFile<dataT>::write(std::string fname, arrT & im, fitsHeader & head)
+int fitsFile<dataT>::write( std::string fname, 
+                            arrT & im, 
+                            fitsHeader & head)
 {
    eigenArrPlanes<arrT> planes;
    
-   write(fname, im.data(), im.rows(), im.cols(), planes(im), head);
+   return write(fname, im.data(), im.rows(), im.cols(), planes(im), head);
    
 }
 

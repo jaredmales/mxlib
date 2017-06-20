@@ -43,8 +43,12 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
 
    //std::cerr << 2 << " " << sin << " " << sz << " " << l << "\n";
       
-   if(sz <= 1) return;
-   
+   //If there's nothing here, we still need to populate the vector
+   if(sz <= 1) 
+   {
+      array.push_back(convertFromString<typename arrT::value_type>(""));
+      return;
+   }
    if(nargs >= 0) 
    {
       std::stringstream sinstr(sin);
@@ -57,7 +61,7 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
          str.erase(str.size()-1);
       }
       
-      //std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
+  //    std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
       array.push_back(convertFromString<typename arrT::value_type>(str));
    }
       

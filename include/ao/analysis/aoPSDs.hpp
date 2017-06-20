@@ -32,7 +32,7 @@ struct vonKarmanSpectrum
 {
    
 protected:
-   bool _subPiston;///< flag controlling whether piston is subtracted from the PSD.  Default is false.
+   bool _subPiston;///< flag controlling whether piston is subtracted from the PSD.  Default is true.
    bool _subTipTilt; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
    
    bool _scintillation; ///< flag controlling whether or not scintillation is included
@@ -47,7 +47,7 @@ public:
    ///Default Constructor
    vonKarmanSpectrum()
    {
-      _subPiston = false;
+      _subPiston = true;
       _subTipTilt = false;
 
       _scintillation = false;
@@ -58,11 +58,11 @@ public:
    
    ///Constructor specifying the parameters
    /**
-     * \param subP is the value of _subPiston.
-     * \param subT is the value of _subTipTilt.
-     * \param D is the value of _D.
      */ 
-   vonKarmanSpectrum(bool subP, bool subT, floatT D)
+   vonKarmanSpectrum( bool subP, ///< [in] is the value of _subPiston.
+                      bool subT, ///< [in] is the value of _subTipTilt.
+                      floatT D ///< [in] is the value of _D.
+                    )
    {
       _subPiston = subP;
       _subTipTilt = subT;
@@ -80,9 +80,8 @@ public:
    
    ///Set the value of _subPiston
    /**
-     * \param sp is the new value of _subPiston
      */ 
-   void subPiston(bool sp)
+   void subPiston( bool sp /**< [in] is the new value of _subPiston */)
    {
       _subPiston = sp;
    }

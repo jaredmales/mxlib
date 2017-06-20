@@ -100,7 +100,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_NOTIMPL 30
-#define MXE_NOTIMPL_MSG "A component of technique is not implemented."
+#define MXE_NOTIMPL_MSG "A component or technique is not implemented."
 
 /** \def MXE_PARAMNOTSET
   * \brief A parameter was not set

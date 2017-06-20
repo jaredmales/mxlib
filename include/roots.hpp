@@ -51,16 +51,16 @@ void quarticRoots( std::vector<std::complex<realT> > & x,
    Delta0 = c*c - 3.0*b*d + 12.0*a*e;
    Delta1 = 2.0*c*c*c - 9.0*b*c*d + 27.0*b*b*e + 27.0*a*d*d - 72.0*a*c*e;
    
-   Q = pow( 0.5* (Delta1 + sqrt( Delta1*Delta1 - 4.0*Delta0*Delta0*Delta0)), 1./3.);
+   Q = pow( static_cast<realT>(0.5)* (Delta1 + sqrt( Delta1*Delta1 - static_cast<realT>(4)*Delta0*Delta0*Delta0)), 1./3.);
    
-   S = 0.5*sqrt( -(2.0/3.0)*p + (1.0/(3.0*a))*(Q + Delta0/Q));
+   S = static_cast<realT>(0.5)*sqrt( - static_cast<realT>(2.0/3.0)*p + static_cast<realT>(1.0/(3.0*a))*(Q + Delta0/Q));
    
    x.resize(4);
    
-   x[0] = -b/(4.0*a) - S + 0.5*sqrt( -4.0*S*S-2.0*p + q/S);
-   x[1] = -b/(4.0*a) - S - 0.5*sqrt( -4.0*S*S-2.0*p + q/S);
-   x[2] = -b/(4.0*a) + S + 0.5*sqrt( -4.0*S*S-2.0*p - q/S);
-   x[3] = -b/(4.0*a) + S - 0.5*sqrt( -4.0*S*S-2.0*p - q/S);
+   x[0] = -b/(4*a) - S + static_cast<realT>(0.5)*sqrt( static_cast<realT>(-4)*S*S - static_cast<realT>(2)*p + q/S);
+   x[1] = -b/(4*a) - S - static_cast<realT>(0.5)*sqrt( static_cast<realT>(-4)*S*S - static_cast<realT>(2)*p + q/S);
+   x[2] = -b/(4*a) + S + static_cast<realT>(0.5)*sqrt( static_cast<realT>(-4)*S*S - static_cast<realT>(2)*p - q/S);
+   x[3] = -b/(4*a) + S - static_cast<realT>(0.5)*sqrt( static_cast<realT>(-4)*S*S - static_cast<realT>(2)*p - q/S);
    
 } //quarticRoots
 

@@ -20,6 +20,60 @@ namespace mx
 {
 
 
+///Test whether a type is an eigenCube by testing whether it has a typedef of "is_eigenCube"
+/** Used for compile-time determination of type
+  * Example usage:
+  * \code
+  * bool is_eC = is_eigenCube<eigenCube<float> >; //Evaluates to true
+  * bool is_not_eC = is_eigenCube<eigenImagef>; //Evaluates to false
+  * \endcode
+  * 
+  * This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
+  */
+
+template <typename T>
+struct is_eigenCube 
+{
+   // Types "yes" and "no" are guaranteed to have different sizes,
+   // specifically sizeof(yes) == 1 and sizeof(no) == 2.
+   typedef char yes[1];
+   typedef char no[2];
+ 
+   template <typename imageT>
+   static yes& test(typename imageT::is_eigenCube*);
+ 
+   template <typename>
+   static no& test(...);
+ 
+   // If the "sizeof" of the result of calling test<T>(0) would be equal to sizeof(yes),
+   // the first overload worked and T has a nested type named "is_mmatrix".
+   static const bool value = sizeof(test<T>(0)) == sizeof(yes);
+};
+
+///Function object to retun the number of planes for any Eigen like object, whether 2D or a 3D cube.
+/** Uses SFINAE to check for 3D eigenCube.
+  */
+template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
+struct eigenArrPlanes
+{
+   //If it's an eigenCube, call planes planes()
+   int operator()(const arrT & arr)
+   {
+      return arr.planes(); 
+   }
+};
+
+template<typename arrT>
+struct eigenArrPlanes<arrT, false>
+{
+   //If it's not an eigenCube, never call planes()
+   int operator()(const arrT & arr)
+   {
+      return 1;
+   }
+};
+
+
 /// Fills in the cells of an Eigen 2D Array with their radius from the center
 /** \ingroup image_processing
   *

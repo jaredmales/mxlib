@@ -1,4 +1,6 @@
-/** \addtogroup genphyconstants General Constants
+/** \defgroup sofa_constants SOFA Constants
+  * \brief Constants and macros available from \ref astro_sofa. 
+  * \ingroup phyconstants
   * @{
   * 
   */ 

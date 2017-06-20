@@ -1,10 +1,8 @@
+/** \defgroup boost_constants Boost Constants
+  * \brief Constants provided by the boost library
+  * \ingroup phyconstants
 
-
-/** \addtogroup genphyconstants
-
-Boost Constants
-===============
-
+  
 Many constants of general utility are defined by the boost c++ library.  For example:
 
 \code
@@ -21,22 +19,11 @@ double dln2 = ln_two<double>();
 
 double oneDroot2 = one_div_root_two<double>();
 
-//And many others defined in constants.hpp
 
 \endcode
 
-Fundamental constants can be accessed with
+And many others defined in <a href="http://www.boost.org/doc/libs/1_64_0/libs/math/doc/html/math_toolkit/constants.html">boost/math/constants/constants.hpp</a>.
 
-\code
-
-#include <boost/units/systems/si/codata/universal_constants.hpp>
-
-double c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
-
-\endcode
-
-SOFA Constants
-==============
 
 */
 

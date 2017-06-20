@@ -8,6 +8,8 @@
 #ifndef __geo_hpp__
 #define __geo_hpp__
 
+#include <vector>
+
 #include <boost/math/constants/constants.hpp>
 
 #include <sofa.h>
@@ -18,6 +20,19 @@ namespace mx
 /** \ingroup geo
   * @{
   */
+
+///Calculate the semi-latus rectum of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>
+#define semilatrect(a,e) (e == 0.0 ? a : (e == 1.0 ? 2.*a : (e < 1. ? a*(1-e*e) : a*(e*e-1))))
+
+///Calculate the focal parameter of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>
+#define focus(a,e) (e == 0.0 ? 1e34 : (e == 1.0 ? 2.*a : (e < 1. ? a*(1-e*e)/e : a*(e*e-1)/e)))
+
+///Calculate the semi-major axis of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>, given the focal parameter and the eccentricity
+#define semimaj(p,e) (e == 1.0 ? 1e34 : (e < 1 ? p*e/(1-e*e) : p*e/(e*e-1) ))
+
+///Calculate the eccentricity of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a> given the semi-major axis and the focal parameter
+#define eccent(a, p) (a == 0.0 ? 1e34 : (p >= 1e9 ? 0.0 : (p>0 ? (-p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) : (p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) ) ))
+
 
 ///Convert from degrees to radians
 /**
@@ -104,8 +119,8 @@ realT angleDiff(realT q1, realT q2)
   * \tparam realT is the type in which to do arithmetic
   * 
   */
-template<int degrad = 0, typename realT>
-realT angleMean(std::vector<realT> q)
+template<typename realT, int degrad = 0>
+realT angleMean(std::vector<realT> & q)
 { 
    static_assert(std::is_floating_point<realT>::value, "realT must be floating point");
    

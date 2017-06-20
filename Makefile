@@ -40,9 +40,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  airy.hpp \
                  ao \
                  app \
-                 appConfigurator.hpp \
-                 application.hpp \
-                 astroconstants.h \
+                 astro \
                  astrodyn.hpp \
                  astroFilter.hpp \
                  astroSpectrum.hpp \
@@ -50,6 +48,7 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  autocorrelation.hpp \
                  binVector.hpp \
                  ds9_interface.h \
+                 ds9Interface.hpp \
                  eigenImage.hpp \
                  eigenCube.hpp \
                  eigenUtils.hpp \
@@ -79,7 +78,6 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  imagingUtils.hpp \
                  jinc.hpp \
                  KLIPreduction.hpp \
-                 kepler.hpp \
                  levmarInterface.hpp \
                  lyotCoronagraph.hpp \
                  msgq.h \
@@ -96,13 +94,13 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  readColumns.hpp \
                  roots.hpp \
                  sharedmem_segment.h \
-                 sharedMemSegment \
                  sigmoid.hpp \
                  signalWindows.hpp \
                  stringUtils.hpp \
                  templateBLAS.hpp \
                  templateLapack.hpp \
                  templateLevmar.hpp \
+                 textTable.hpp \
                  trueFalseT.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
@@ -116,11 +114,9 @@ all: $(TARGETS)
 msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
-sharedMemSegment.o: include/sharedMemSegment
 process_interface.o: include/process_interface.h
 ds9_interface.o: include/ds9_interface.h
 astrodyn.o: include/astrodyn.hpp
-kepler.o: include/kepler.hpp
 
 .PHONY: mxlib_comp_version
 mxlib_comp_version:

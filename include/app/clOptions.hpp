@@ -245,9 +245,9 @@ struct clOptions
    bool optSet(const std::string & key)
    {
      mapIterator it = map.find(key);
+     if(it == map.end()) return false; //Not found --> e.g. if neither command line short nor long option set.
      
      if( options[it->second].type() != argType::None) return true;
-     
      return false;
    };
    
