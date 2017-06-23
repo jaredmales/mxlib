@@ -74,12 +74,12 @@ INC_TO_INSTALL = ADIobservation.hpp \
        		 imageMasks.hpp \
        		 imagePads.hpp \
                  imageTransforms.hpp \
+                 imaging \
                  imagingArray.hpp \
                  imagingUtils.hpp \
                  jinc.hpp \
                  KLIPreduction.hpp \
                  levmarInterface.hpp \
-                 lyotCoronagraph.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \

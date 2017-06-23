@@ -151,6 +151,7 @@ void maskCircle( arrayT & m,
                      typename arrayT::Scalar xcen,
                      typename arrayT::Scalar ycen,
                      typename arrayT::Scalar rad,
+                     typename arrayT::Scalar val = 0,
                      typename arrayT::Scalar pixbuf = 0.5
                    )
 {
@@ -166,7 +167,7 @@ void maskCircle( arrayT & m,
       {
          r = std::sqrt( std::pow(i-xcen, 2) + std::pow(j-ycen, 2) );
          
-         if(r <= rad+pixbuf) m(i,j) = 0;
+         if(r <= rad+pixbuf) m(i,j) = val;
       }
    }
 }   

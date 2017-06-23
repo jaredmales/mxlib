@@ -73,7 +73,7 @@ struct imPlanes<eigenT, false>
    }
 };
 
-
+#if 0
 /** \ingroup plotting
   * @{
   */
@@ -86,6 +86,8 @@ void ds9( const eigenT & im, int frame =1)
 {   
    ::ds9_display(frame, im.data(), im.rows(), im.cols(), imPlanes<eigenT>()(im), getFitsBITPIX<typename eigenT::Scalar>());
 }
+
+#endif
 
 ///@}
 

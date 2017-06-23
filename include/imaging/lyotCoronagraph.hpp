@@ -14,34 +14,37 @@
 #include "imagingUtils.hpp"
 #include "fraunhoferImager.hpp"
 
-#include "fitsFile.hpp"
-#include "fitsUtils.hpp"
+#include "../fitsFile.hpp"
+#include "../fitsUtils.hpp"
 
-#include "eigenImage.hpp"
+#include "../eigenImage.hpp"
 
 namespace mx
+{
+   
+namespace imaging 
 {
    
 /// The Lyot Coronagraph
 /**
   * \ingroup coronagraphs
   */   
-template<typename _floatT, typename _fpmaskFloatT>
+template<typename _realT, typename _fpmaskFloatT>
 struct lyotCoronagraph
 {
-   typedef _floatT floatT;
+   typedef _realT realT;
    typedef _fpmaskFloatT fpmaskFloatT;
    
-   typedef std::complex<floatT> complexT;
+   typedef std::complex<realT> complexT;
    
    ///The wavefront complex field type
-   typedef mx::imagingArray<std::complex<floatT>, fftwAllocator<std::complex<floatT> >, 0> complexFieldT;
+   typedef mx::imagingArray<std::complex<realT>, fftwAllocator<std::complex<realT> >, 0> complexFieldT;
    
    ///The focal plane mask type
    typedef Eigen::Array< fpmaskFloatT, Eigen::Dynamic, Eigen::Dynamic> fpMaskT;
    
    ///The image type
-   typedef Eigen::Array< floatT, Eigen::Dynamic, Eigen::Dynamic> imageT;
+   typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
 
    std::string _fileDir;
    
@@ -52,8 +55,8 @@ struct lyotCoronagraph
    
    int maskSource; ///< 0= read from file, 1 = constructed by makeFocalMask, 2 = trans optimized
    std::string maskFile; ///< Name of file from which mask was loaded
-   floatT maskRad; ///<Radius of mask if it was constructed
-   floatT maskTrans; ///<Transmission of mask if it was constructed
+   realT maskRad; ///<Radius of mask if it was constructed
+   realT maskTrans; ///<Transmission of mask if it was constructed
    
    fpMaskT focalMask;
    
@@ -90,7 +93,7 @@ struct lyotCoronagraph
 
       
    ///Make the focal plane mask
-   void makeFocalMask( floatT rad, 
+   void makeFocalMask( realT rad, 
                        fpmaskFloatT trans = 0.0,
                        int sz = 0.0 );
    
@@ -135,25 +138,27 @@ struct lyotCoronagraph
    void applyFocalMask( complexFieldT & focalPlane );
    void applyLyotStop( complexFieldT &lyotPlane );
    
-   ///Propagate the given pupil-plane wavefront through the coronagraph
-   void propagate( complexFieldT & pupilPlane);
+   ///Propagate the given pupil-plane wavefront through the coronagraph.
+   void propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
-   ///Apply the pupil apodization and Lyot stop, but not the FPM, to the given pupil-plane wavefront such 
-   ///that the result will produce the non-coronagraphic (off-axis) PSF.
-   void propagateNC( complexFieldT & pupilPlane);
+   /// Propagate the given pupil-plane wavefront without the coronagraph. 
+   /** For a Lyot coronagraph, this applies the pupil apodization and Lyot stop, but not the FPM, to the given pupil-plane wavefront such 
+     * that the result will produce the non-coronagraphic (off-axis) PSF.
+     */
+   void propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
    
    
    void optimizeApodizer( imageT & geomPupil, 
-                          floatT fpmRadPix, 
-                          floatT relTol, 
-                          floatT absTol, 
+                          realT fpmRadPix, 
+                          realT relTol, 
+                          realT absTol, 
                           int maxIter,
                           const std::string & cname );  
    
 };
 
-template<typename _floatT, typename _fpmaskFloatT>
-lyotCoronagraph<_floatT, _fpmaskFloatT>::lyotCoronagraph()
+template<typename _realT, typename _fpmaskFloatT>
+lyotCoronagraph<_realT, _fpmaskFloatT>::lyotCoronagraph()
 {
    _fileDir = "coron/";
    
@@ -161,14 +166,14 @@ lyotCoronagraph<_floatT, _fpmaskFloatT>::lyotCoronagraph()
    savePreMaskFocalPlane = false;
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-int lyotCoronagraph<_floatT, _fpmaskFloatT>::wfSz()
+template<typename _realT, typename _fpmaskFloatT>
+int lyotCoronagraph<_realT, _fpmaskFloatT>::wfSz()
 {
    return _wfSz;
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::wfSz(int sz)
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::wfSz(int sz)
 {
    _wfSz = sz;
    
@@ -177,8 +182,8 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::wfSz(int sz)
    
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::makeFocalMask(_floatT rad, 
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::makeFocalMask(_realT rad, 
                                                             _fpmaskFloatT trans, 
                                                             int sz )
 {
@@ -207,18 +212,18 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::makeFocalMask(_floatT rad,
 
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
 {
-   fitsFile<_floatT> ff;
+   fitsFile<_realT> ff;
    
    ff.read(apodName, pupilApodizer);
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
 {
-   fitsFile<_floatT> ff;
+   fitsFile<_realT> ff;
    
    ff.read(fpmName, focalMask);
    
@@ -228,17 +233,17 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadFocalMask( const std::string &
    maskTrans = 0.0;   
 }
    
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
 {
-   fitsFile<_floatT> ff;
+   fitsFile<_realT> ff;
    
    ff.read(lyotName, lyotStop);
 }
 
  
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadCoronagraph( const std::string & cName)
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & cName)
 {
    std::string apodName= _fileDir + cName + "_apod.fits";
    std::string fpmName = _fileDir + cName + "_fpm.fits";
@@ -249,8 +254,8 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadCoronagraph( const std::string
    loadLyotStop(lyotName);
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadCoronagraph( const std::string & apodName, 
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & apodName, 
                                                                const std::string & fpmName,
                                                                const std::string & lyotName)
 {
@@ -260,15 +265,15 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::loadCoronagraph( const std::string
 }
 
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyApodizer( complexFieldT &pupilPlane )
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::applyApodizer( complexFieldT &pupilPlane )
 {
    int sz = pupilApodizer.rows();
    
-   floatT w = 0.5*(sz - 1.0);
+   realT w = 0.5*(sz - 1.0);
    
-   floatT xc = 0.5*(pupilPlane.rows() - 1);
-   floatT yc = 0.5*(pupilPlane.cols() - 1);
+   realT xc = 0.5*(pupilPlane.rows() - 1);
+   realT yc = 0.5*(pupilPlane.cols() - 1);
    
    for(int i=0; i<pupilPlane.rows(); ++i)
    {
@@ -281,15 +286,15 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyApodizer( complexFieldT &pupi
    
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyFocalMask( complexFieldT &focalPlane )
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::applyFocalMask( complexFieldT &focalPlane )
 {
    int sz = focalMask.rows();
    
-   floatT w = 0.5*(sz - 1.0);
+   realT w = 0.5*(sz - 1.0);
    
-   floatT xc = 0.5*(focalPlane.rows() - 1);
-   floatT yc = 0.5*(focalPlane.cols() - 1);
+   realT xc = 0.5*(focalPlane.rows() - 1);
+   realT yc = 0.5*(focalPlane.cols() - 1);
    
    for(int i=0; i<sz; ++i)
    {
@@ -301,15 +306,15 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyFocalMask( complexFieldT &foc
    
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyLyotStop( complexFieldT & lyotPlane )
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::applyLyotStop( complexFieldT & lyotPlane )
 {
    int sz = lyotStop.rows();
    
-   floatT w = 0.5*(sz - 1.0);
+   realT w = 0.5*(sz - 1.0);
    
-   floatT xc = 0.5*(lyotPlane.rows() - 1);
-   floatT yc = 0.5*(lyotPlane.cols() - 1);
+   realT xc = 0.5*(lyotPlane.rows() - 1);
+   realT yc = 0.5*(lyotPlane.cols() - 1);
    
    for(int i=0; i< lyotPlane.rows(); ++i)
    {
@@ -322,8 +327,8 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::applyLyotStop( complexFieldT & lyo
    
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::propagate( complexFieldT & pupilPlane )
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::propagate( complexFieldT & pupilPlane )
 {
    applyApodizer( pupilPlane);
    
@@ -347,8 +352,8 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::propagate( complexFieldT & pupilPl
    
 }
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::propagateNC( complexFieldT & pupilPlane )
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::propagateNC( complexFieldT & pupilPlane )
 {
    applyApodizer( pupilPlane);
    
@@ -361,11 +366,11 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::propagateNC( complexFieldT & pupil
 }
 
 
-template<typename _floatT, typename _fpmaskFloatT>
-void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPupil, 
-                                                                floatT fpmRadPix, 
-                                                                floatT relTol, 
-                                                                floatT absTol, 
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPupil, 
+                                                                realT fpmRadPix, 
+                                                                realT relTol, 
+                                                                realT absTol, 
                                                                 int maxIter,
                                                                 const std::string & cname )
 {
@@ -374,11 +379,11 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPup
    pupilPlane.resize(_wfSz, _wfSz);
    focalPlane.resize(_wfSz, _wfSz);
    
-   mx::imagingArray<floatT,mx::fftwAllocator<floatT>, 0> mask(_wfSz, _wfSz);
+   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> mask(_wfSz, _wfSz);
    mx::circularPupil( mask, 0., fpmRadPix);   
   
    //Initialize pupilImage
-   mx::imagingArray<floatT,mx::fftwAllocator<floatT>, 0> pupilImage(_wfSz, _wfSz);
+   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> pupilImage(_wfSz, _wfSz);
    pupilImage.setZero();
    
    int gpLLi = 0.5*(_wfSz-1) - 0.5*(geomPupil.rows()-1);
@@ -395,7 +400,7 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPup
       }
    }
    
-   floatT lastLambdaA, LambdaA;
+   realT lastLambdaA, LambdaA;
    
    lastLambdaA = 1;
    int n;
@@ -464,7 +469,7 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPup
       
    std::cout << "LambdaA: = " << LambdaA << "\n";
    
-   floatT trans = 1.0 - 1.0/LambdaA;
+   realT trans = 1.0 - 1.0/LambdaA;
 
    int pupSize = geomPupil.rows();
    
@@ -484,13 +489,13 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPup
    head.append("", fitsCommentType(), "lyotCoronagraph optimization Parameters:");
    head.append("", fitsCommentType(), "----------------------------------------");
    head.append<int>("WFSZ", _wfSz, "Size of wavefront used for FFTs (pixels)");
-   head.append<floatT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
-   head.append<floatT>("ABSTOL", absTol , "input absolute tolerance");
-   head.append<floatT>("RELTOL", relTol , "input relative tolerance");
+   head.append<realT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
+   head.append<realT>("ABSTOL", absTol , "input absolute tolerance");
+   head.append<realT>("RELTOL", relTol , "input relative tolerance");
    head.append<int>("MAXITER", maxIter , "input maximum iterations");
    head.append<int>("NITER", n , "actual number of iterations");
    head.append<std::string>("XREASON", reason , "reason for convergence");
-   head.append<floatT>("FPMTRANS", trans, "transmission of FPM");
+   head.append<realT>("FPMTRANS", trans, "transmission of FPM");
    
    
    mx::fitsFile<double> ff;
@@ -510,7 +515,7 @@ void lyotCoronagraph<_floatT, _fpmaskFloatT>::optimizeApodizer( imageT & geomPup
    
 }
 
-   
+} //namespace imaging    
 } //namespace mx
 
 #endif //__lyotCoronagraph_hpp__

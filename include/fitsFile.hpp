@@ -1287,7 +1287,7 @@ int fitsFile<dataT>::write( dataT * im,
    if(_naxis > 1) _naxes[1] = d2;
    if(_naxis > 2) _naxes[2] = d3;
    
-   std::string forceFileName = "!"+fileName;
+   std::string forceFileName = "!"+_fileName;
    
    fits_create_file(&_fptr, forceFileName.c_str(), &fstatus);
    if (fstatus)
