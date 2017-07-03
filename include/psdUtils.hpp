@@ -11,7 +11,7 @@
 #define __psdUtils_hpp__
 
 #include "fft.hpp"
-#include "eigenImage.hpp"
+//#include "eigenImage.hpp"
 
 namespace mx
 {

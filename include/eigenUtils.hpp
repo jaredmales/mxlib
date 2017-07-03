@@ -6,7 +6,6 @@
 
 
 #include <cmath>
-#include <sofa.h>
 
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
@@ -306,7 +305,7 @@ void insertImageRegion(imageTout imout, const imageTin & imin,  coeffT & coeffs)
    #pragma omp parallel for schedule(static, 1)
    for(int i=0;i<coeffs.size();++i)
    {
-      imout(coeffs[i]) = imin(i);
+      imout(coeffs[i],0) = imin(i,0);
    }
    
 } 

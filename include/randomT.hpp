@@ -63,11 +63,9 @@ public:
    
    ///Set the seed of the random engine.
    /** Calls the engines seed member function.
-     *
-     * \param seedval is the argument to pass to ranengT::seed() 
      * 
      */
-   void seed( typename ranengT::result_type seedval)
+   void seed( typename ranengT::result_type seedval /**< [in] the argument to pass to ranengT::seed() */)
    {
       engine.seed(seedval);
    }

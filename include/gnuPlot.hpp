@@ -31,20 +31,24 @@ using namespace boost::math::constants;
 
 #include <mx/mxError.hpp>
 
-/** \addtogroup plotting
-  * @{
-  */
    
 namespace mx
 {
-   
+
+
+
+
 #ifndef MX_GP_FNAME_SZ
 ///The size of the string for managing the stderr fifo
+/** \ingroup plotting
+  */
 #define MX_GP_FNAME_SZ (128)
 #endif
    
 #ifndef MX_GP_TEMP_SZ
 ///The size of the string for managing temporary file names
+/** \ingroup plotting
+  */
 #define MX_GP_TEMP_SZ (128)
 #endif
 
@@ -52,6 +56,7 @@ namespace mx
 /** \def MX_GP_FC_TIME
   * Time, in microseconds, to wait for gnuplot startup and file creation to complete.
   * Opening is retried after each timeout of this length for MX_GP_FC_RETRIES attempts.
+  * \ingroup plotting
   */ 
 #define MX_GP_FC_TIME (10000)
 #endif
@@ -59,6 +64,7 @@ namespace mx
 #ifndef MX_GP_FC_RETRIES
 /** \def MX_GP_FC_RETRIES 
   * Number of times to retry opening the gnuplot stderr file.
+  * \ingroup plotting
   */
 #define MX_GP_FC_RETRIES (10)
 #endif
@@ -981,8 +987,6 @@ std::string gpBinaryFormat<double>()
 
 }//namespace mx
 
-/** @}
-  */ //addtogroup plotting
    
 #endif //__gnuPlot_hpp__
 

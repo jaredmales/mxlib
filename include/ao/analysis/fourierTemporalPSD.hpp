@@ -860,7 +860,7 @@ realT F_mod (realT kv, void * params)
    
    realT QQ = 2*(Jp*Jp + Jm*Jm);
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_wfs() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->zeta() );
    
    return P*QQ ;
 }
@@ -955,7 +955,7 @@ realT F_projMod (realT kv, void * params)
    //realT QQ = 2*(Jp*Jp + Jm*Jm);
    
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_wfs() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->zeta() );
    
    return P*QQ ;
 }

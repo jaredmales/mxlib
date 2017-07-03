@@ -7,10 +7,13 @@
 #ifndef __astrodyn_hpp__
 #define __astrodyn_hpp__
 
+//#include <sofa.h>
+
+
 #include <cmath>
-#include "astroconstants.h"
+//#include "astroconstants.h"
 #include "geo.hpp"
-#include "sofa.h"
+
 //#include "../vmop/MMatrix1"
 
 /** \addtogroup astrodynamics

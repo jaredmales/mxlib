@@ -6,6 +6,9 @@
 
 #include "astrodyn.hpp"
 
+#include <sofa.h>
+
+#define RAD_EARTH (6378137.0)
 
 static char UTCSTR[4] = "UTC";
 

@@ -92,11 +92,6 @@
   * \brief Tools for processing images
   */
 
-/** \defgroup image_processing_files Headers
-  * \brief Files declaring and defining the image processing tools.
-  * \ingroup image_processing
-  */
-
 /** \defgroup image_padding Image Padding
   * \brief Functions for padding images.
   * \ingroup image_processing 
@@ -142,7 +137,6 @@
 /** \defgroup hc_imaging High Contrast Imaging
   * \brief Tools for astronomical high contrast image processing.
   * \ingroup image_processing
-  * \ingroup genastro
   */
 
 /** \defgroup eigen_image_processing Image Processing with Eigen 
@@ -150,9 +144,14 @@
   * \ingroup image_processing
   */
 
+/** \defgroup image_processing_files Headers
+  * \brief Files declaring and defining the image processing tools.
+  * \ingroup image_processing
+  */
+  
 //----------------------- imaging --------------------  
-/** \defgroup imaging Imaging
-  * \brief Tools for modeling imaging
+/** \defgroup imaging Wavefront Propagation
+  * \brief Tools for modeling wavefront propagation
   */
 
 /** \defgroup coronagraphs Coronagraphs
@@ -160,8 +159,8 @@
   * \ingroup imaging
   /
   
-/** \defgroup imaging_files Imaging Files
-  * \brief The imaging files
+/** \defgroup imaging_files Wavefront Propagation Files
+  * \brief Header files
   * \ingroup imaging
   */
   

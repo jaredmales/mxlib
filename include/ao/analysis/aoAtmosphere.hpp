@@ -58,6 +58,10 @@ protected:
 
    std::vector<realT> _layer_z; ///< Vector of layer heights, in m, above the observatory.
    
+   realT _h_obs; ///< Height of the observatory above sea level, in m.  
+   
+   realT _H; ///< The atmospheric scale height, in m.
+   
    std::vector<realT> _layer_Cn2; ///< Vector of layer strengths. 
    
    std::vector<realT> _layer_v_wind; ///< Vector of layer wind speeds, in m/s.
@@ -137,6 +141,14 @@ public:
      * \param [in] layz is the new vector, which is copied to _layer_z.
      */
    void layer_z(const std::vector<realT> & layz /**< */ );
+   
+   realT h_obs();
+   
+   void h_obs( realT nh );
+   
+   realT H();
+   
+   void H( realT nH );
    
    ///Get the strength of a single layer.
    /**
@@ -338,6 +350,15 @@ public:
              realT lam      ///<
            );
     
+   
+   realT n_air( realT lam /**< [in]The wavelength*/);
+   
+   realT Z( realT k, ///< [in] the spatial frequency, in inverse metes 
+            realT lambda_i, 
+            realT lambda_wfs, 
+            realT zeta
+          );
+   
    ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere.
    /** Calculate the FWHM of a seeing limited image with the current parameters according to \cite{floyd_2010}:
      \f[
@@ -395,6 +416,9 @@ aoAtmosphere<realT>::aoAtmosphere()
    _lam_0 = 0.5e-6;
    
    _L_0 = 0;
+   
+   _h_obs = 0;
+   _H = 8000;
    
    _v_wind_updated = false;
    _z_mean_updated = false;
@@ -458,6 +482,30 @@ std::vector<realT> aoAtmosphere<realT>::layer_z()
    return _layer_z;
 }
 
+template<typename realT>
+realT aoAtmosphere<realT>::h_obs()
+{
+   return _h_obs;
+}
+   
+template<typename realT>
+void aoAtmosphere<realT>::h_obs( realT nh )
+{
+   _h_obs = nh;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::H()
+{
+   return _H;
+}
+   
+template<typename realT>
+void aoAtmosphere<realT>::H( realT nH )
+{
+   _H = nH;
+}
+   
 template<typename realT>
 void aoAtmosphere<realT>::layer_z(const std::vector<realT> & z)
 {
@@ -713,6 +761,31 @@ realT aoAtmosphere<realT>::dY(realT f, realT lambda_i, realT lambda)
    }
    
    return c;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::n_air( realT lambda)
+{
+   realT ll2 = static_cast<realT>(1)/pow(lambda/1e-6, 2);
+   
+   return 1.0 + 8.34213e-5 + 0.0240603/(130.0 - ll2) + 0.00015997/(38.9 - ll2);
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::Z(realT k, realT lambda_i, realT lambda_wfs, realT zeta)
+{
+   realT c = 0;
+   realT secZ = 1.0/cos(zeta);
+   realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * _H*tan(zeta)*secZ; 
+   realT x;
+   
+   for(int i = 0; i < _layer_Cn2.size(); ++i)
+   {
+      x = x0*(1-exp((_layer_z[i]+_h_obs)/_H));
+      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i * _layer_z[i]*secZ), 2) * pow( sin(pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
+   }
+   
+   return 4*c;
 }
 
 template<typename realT>

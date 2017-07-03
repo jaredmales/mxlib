@@ -7,7 +7,7 @@
 template<typename aosysT, typename floatT>
 void setupMagAOX(aosysT & aosys, floatT F0, floatT F1, floatT lam_wfs, floatT lam_sci)
 {
-   aosys.load_MagAO_model();
+   aosys.loadMagAOX();
    aosys.atm.L_0(25.);
    
    aosys.d_min(aosys.D()/48.);

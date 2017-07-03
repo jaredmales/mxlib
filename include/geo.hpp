@@ -10,9 +10,10 @@
 
 #include <vector>
 
+
 #include <boost/math/constants/constants.hpp>
 
-#include <sofa.h>
+
 
 namespace mx
 {

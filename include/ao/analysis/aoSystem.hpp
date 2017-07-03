@@ -34,59 +34,62 @@ namespace AO
   * Templatized by the turbulence power spectral density (PSD) and the wavefront sensor (WFS)
   * sensitivity function. 
   *
-  * \tparam floatT the floating point type used for all calculations
+  * \tparam realT the floating point type used for all calculations
   * \tparam inputSpecT specifies the turbulence spatial PSD type
   * \tparam wfsBetaT specifies the WFS sensitivity type.  
   */
-template<typename floatT, class inputSpectT, class wfsBetaT>
+template<typename realT, class inputSpectT, class wfsBetaT>
 class aoSystem
 {
 
 public:
       
-   aoAtmosphere<floatT> atm;
+   aoAtmosphere<realT> atm;
    inputSpectT psd;
    wfsBetaT wfsBeta;
 
    
 protected:
    
-   floatT _F0; ///< 0 mag flux from star at WFS [photons/sec]
-   floatT _D; ///< Telescope diameter [m]
+   realT _F0; ///< 0 mag flux from star at WFS [photons/sec]
+   realT _D; ///< Telescope diameter [m]
 
-   floatT _d_min; ///< Minimum AO system actuator pitch [m]
-   floatT _d_opt; ///< Current optimum AO system actuator pitch [m]
+   realT _d_min; ///< Minimum AO system actuator pitch [m]
+   realT _d_opt; ///< Current optimum AO system actuator pitch [m]
    bool _optd; ///< Flag controlling whether actuator pitch is optimized (true) or just uses _d_min (false).  Default: true.
    
-   floatT _lam_wfs; ///< WFS wavelength [m]
-   floatT _npix_wfs; ///< Number of WFS pixels
-   floatT _ron_wfs; ///< WFS readout noise [electrons/pix]
-   floatT _Fbg; ///< Background flux, [photons/sec/pixel]
+   realT _lam_wfs; ///< WFS wavelength [m]
+   realT _npix_wfs; ///< Number of WFS pixels
+   realT _ron_wfs; ///< WFS readout noise [electrons/pix]
+   realT _Fbg; ///< Background flux, [photons/sec/pixel]
    
    
-   floatT _minTauWFS; ///< Minimum WFS exposure time [sec]
-   floatT _deltaTau; ///< Loop latency [sec]
+   realT _minTauWFS; ///< Minimum WFS exposure time [sec]
+   realT _deltaTau; ///< Loop latency [sec]
    bool _optTau; ///< Flag controlling whether optimum integration time is calculated (true) or if _minTauWFS is used (false). Default: true.
 
-   floatT _lam_sci; ///< Science wavelength [m]
+   realT _lam_sci; ///< Science wavelength [m]
 
+   realT _zeta; ///<  Zenith angle [radians]
+   realT _secZeta; ///< Secant of the Zenith angle (calculated)
+   
    int _fit_mn_max; ///< Maximum spatial frequency index to use for fitting error calculation.
    
-   floatT _ncp_wfe; ///<Static WFE [m rms]
-   floatT _ncp_alpha; ///< Power-law exponent for the NCP aberations.  Default is 2.
+   realT _ncp_wfe; ///<Static WFE [m rms]
+   realT _ncp_alpha; ///< Power-law exponent for the NCP aberations.  Default is 2.
    
-   floatT _starMag; ///< The magnitude of the star.
+   realT _starMag; ///< The magnitude of the star.
    
    bool _specsChanged;///< Flag to indicate that a specification has changed.
    bool _dminChanged;///< Flag to indicate that d_min has changed.
    
-   floatT _wfeMeasurement; ///< Total WFE due to measurement a error [rad^2 at _lam_sci]
-   floatT _wfeTimeDelay; ///< Total WFE due to time delay [rad^2 at _lam_sci]
-   floatT _wfeFitting; ///< Total WFE due to fitting error [rad^2 at _lam_sci]
-   floatT _wfeNCP; ///< Total WFE due to NCP errors [rad^2 at _lam_sci]
+   realT _wfeMeasurement; ///< Total WFE due to measurement a error [rad^2 at _lam_sci]
+   realT _wfeTimeDelay; ///< Total WFE due to time delay [rad^2 at _lam_sci]
+   realT _wfeFitting; ///< Total WFE due to fitting error [rad^2 at _lam_sci]
+   realT _wfeNCP; ///< Total WFE due to NCP errors [rad^2 at _lam_sci]
    
-   floatT _wfeVar; ///< The WFE variance, in meters^2.  Never use this directly, instead use wfeVar().
-   floatT _strehl; ///<Strehl ratio, a calculated quantity.  Never use this directdy, instead use strehl().
+   realT _wfeVar; ///< The WFE variance, in meters^2.  Never use this directly, instead use wfeVar().
+   realT _strehl; ///<Strehl ratio, a calculated quantity.  Never use this directdy, instead use strehl().
    
    
 public:
@@ -114,59 +117,59 @@ public:
    /** This is the photon rate at the WFS, photons/sec.
      * 
      */
-   void F0(floatT nF0 /**< [in] is the new value of _F0.*/);
+   void F0(realT nF0 /**< [in] is the new value of _F0.*/);
    
    /// Get the value of the 0 magnitude photon rate
    /**
      * \returns the current value of _F0.
      */ 
-   floatT F0();
+   realT F0();
    
    /// Set the value of the Star's magnitude
    /**
      */
-   void starMag(floatT nmag /**< [in] is the new value of _starMag.*/);
+   void starMag(realT nmag /**< [in] is the new value of _starMag.*/);
    
    /// Get the value of the Star's magnitude
    /**
      * \returns the current value of _starMag
      */ 
-   floatT starMag();
+   realT starMag();
    
    ///The photon flux at a given star magnitude.
    /**
      * \returns the photon flux of the star in the bandpass assumed by F0.
      */ 
-   floatT Fg( floatT mag /**< [in] is the magnitude of the star. */);
+   realT Fg( realT mag /**< [in] is the magnitude of the star. */);
    
    /// Get the photon rate at the current Star magnitude.
    /** Calculates \f$ F_\gamma = F_0 10^{-0.4 m} \f$ where \f$ F_0 \f$ is _F0 and \f$ m \f$ is _starMag.
      * 
      * \returns the current value of the current photon rate.
      */ 
-   floatT Fg();
+   realT Fg();
    
    /// Set the value of the primary mirror diameter.
    /** 
      */
-   void D( floatT nD /**< [in] is the new value of _D. */);
+   void D( realT nD /**< [in] is the new value of _D. */);
    
    /// Get the value of the primary mirror diamter
    /**
      * \returns the current value of _D.
      */ 
-   floatT D();
+   realT D();
    
    /// Set the value of the minimum subaperture sampling.
    /**
      */
-   void d_min( floatT nd /**< [in] is the new value of _d_min */);
+   void d_min( realT nd /**< [in] is the new value of _d_min */);
    
    /// Get the value of the minimum subaperture sampling.
    /**
      * \returns the new value of _d_min.
      */ 
-   floatT d_min();
+   realT d_min();
    
    /// Set whether or not the value of d is optimized or just set to _d_min.
    /**
@@ -182,68 +185,68 @@ public:
    /// Set the value of the WFS wavelength.
    /**
      */
-   void lam_wfs( floatT nlam /**< [in] is the new value of _lam_wfs */);
+   void lam_wfs( realT nlam /**< [in] is the new value of _lam_wfs */);
    
    /// Get the value of the WFS wavelength.
    /**
      * \returns the current value of _lam_wfs.
      */ 
-   floatT lam_wfs();
+   realT lam_wfs();
    
    /// Set the number of pixels in the WFS
    /**
      */
-   void npix_wfs( floatT npix /**< [in] is the new value of _npix_wfs */);
+   void npix_wfs( realT npix /**< [in] is the new value of _npix_wfs */);
    
    /// Get the number of pixels in the WFS
    /**
      * \returns the current value of _npix_wfs
      */ 
-   floatT npix_wfs();
+   realT npix_wfs();
    
    /// Set the value of the WFS readout noise
    /**
      */
-   void ron_wfs( floatT nron /**< [in] is the new value of _ron_wfs */);
+   void ron_wfs( realT nron /**< [in] is the new value of _ron_wfs */);
    
    /// Get the value of the WFS readout noise
    /**
      * \returns the current value of _ron_wfs
      */ 
-   floatT ron_wfs();
+   realT ron_wfs();
    
    /// Set the value of the background blux.
    /**
      */
-   void Fbg(floatT fbg /**< [in] is the new value of _Fbg */);
+   void Fbg(realT fbg /**< [in] is the new value of _Fbg */);
    
    /// Get the value of the background flux.
    /**
      * \returns
      */ 
-   floatT Fbg();
+   realT Fbg();
    
    /// Set the value of the minimum WFS exposure time.
    /**
      */
-   void minTauWFS(floatT ntau /**< [in] is the new value of _minTauWFS */);
+   void minTauWFS(realT ntau /**< [in] is the new value of _minTauWFS */);
    
    /// Get the value of the minimum WFS exposure time.
    /**
      * \returns the current value of _minTauWFS.
      */ 
-   floatT minTauWFS();
+   realT minTauWFS();
    
    /// Set the value of _deltaTau.
    /**
      */
-   void deltaTau(floatT ndel /**< [in] is the new value of _deltaTau*/);
+   void deltaTau(realT ndel /**< [in] is the new value of _deltaTau*/);
    
    /// Get the value of _deltaTau.
    /**
      * \returns the current value of _deltaTau.
      */ 
-   floatT deltaTau();
+   realT deltaTau();
 
    /// Set the value of _optTau.
    /**
@@ -259,14 +262,31 @@ public:
    /// Set the science wavelength.
    /**
      */
-   void lam_sci(floatT nlam /**< [in] is the new value of _lam_sci */);
+   void lam_sci(realT nlam /**< [in] is the new value of _lam_sci */);
    
    /// Get the science wavelength.
    /**
      * \returns the current value of _lam_sci.
      */ 
-   floatT lam_sci();
+   realT lam_sci();
    
+   
+   /// Set the zenith angle, and its secant.
+   /** 
+     */ 
+   void zeta( realT nz /**< [in] The new value of _zeta */ );
+   
+   /// Get the zenith angle
+   /**
+     * \return the current value of _zeta
+     */ 
+   realT zeta();
+   
+   /// Get the zecant of the zenith angle
+   /**
+     * \return the current value of _secZeta
+     */ 
+   realT secZeta();
    
    /// Set the value of _fit_mn_max
    /**
@@ -282,26 +302,26 @@ public:
    /// Set the value of the non-common path WFE.
    /**
      */
-   void ncp_wfe(floatT nwfe /**< [in] is the new value of _ncp_wfe*/);
+   void ncp_wfe(realT nwfe /**< [in] is the new value of _ncp_wfe*/);
    
    /// Get the value of the non-common path WFE.
    /**
      * \returns the current value of _ncp_wfe.
      */ 
-   floatT ncp_wfe();
+   realT ncp_wfe();
    
 
    
    /// Set the value of the non-common path WFE PSD index.
    /**
      */
-   void ncp_alpha(floatT alpha /**< [in] is the new value of _ncp_alpha*/);
+   void ncp_alpha(realT alpha /**< [in] is the new value of _ncp_alpha*/);
    
    /// Get the value of the non-common path WFE PSD index.
    /**
      * \returns the current value of _ncp_alpha.
      */ 
-   floatT ncp_alpha();
+   realT ncp_alpha();
    
    
    /** \name Measurement Error
@@ -318,22 +338,22 @@ public:
      * 
      * \returns the S/N squared
      */
-   floatT signal2Noise2( floatT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
+   realT signal2Noise2( realT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
    
    ///Calculate the measurement noise at a spatial frequency
    /** Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      *
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
-   floatT measurementError( floatT m, ///< [in] specifies the u component of the spatial frequency  
-                            floatT n  ///< [in] specifies the v component of the spatial frequency
+   realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
+                            realT n  ///< [in] specifies the v component of the spatial frequency
                           );
 
    ///Calculate the total measurement error over all corrected spatial frequencies
    /**
      * \returns the total WFE due to measurement error.
      */ 
-   floatT measurementError();
+   realT measurementError();
    
    ///@}
    
@@ -347,8 +367,8 @@ public:
      * 
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
-   floatT timeDelayError( floatT m, ///< [in] specifies the u component of the spatial frequency
-                          floatT n  ///< [in] specifies the v component of the spatial frequency
+   realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
+                          realT n  ///< [in] specifies the v component of the spatial frequency
                         );
 
    /// Calculate the time delay error over all corrected spatial frequencies
@@ -356,7 +376,7 @@ public:
      * 
      * \returns the total WFE due to time delay.
      */ 
-   floatT timeDelayError();
+   realT timeDelayError();
 
    ///@}
 
@@ -370,8 +390,8 @@ public:
      * \returns the fitting error in rad^2 rms at the science wavelength at (m,n).
      */ 
 
-   floatT fittingError( floatT m,  ///< [in] specifies the u component of the spatial frequency
-                        floatT n   ///< [in] specifies the v component of the spatial frequency
+   realT fittingError( realT m,  ///< [in] specifies the u component of the spatial frequency
+                        realT n   ///< [in] specifies the v component of the spatial frequency
                       );
 
    /// Calculate the total fitting error over all uncorrected spatial frequencies.
@@ -379,7 +399,7 @@ public:
      *
      * \returns the total fitting error.
      */ 
-   floatT fittingError();
+   realT fittingError();
 
    ///@}
    
@@ -392,10 +412,12 @@ public:
    ///Calculate the optimum exposure time for a given spatial frequency.
    /** Finds the optimum exposure time at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
+     * \todo Check inclusion of X in parameters
+     * 
      * \returns the optimum expsoure time.
      */
-   floatT optimumTauWFS( floatT m, ///< [in] is the spatial frequency index in u
-                         floatT n  ///< [in] is the spatial frequency index in v
+   realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
+                         realT n  ///< [in] is the spatial frequency index in v
                        );
 
    ///Calculate the optimum actuator spacing.
@@ -403,7 +425,7 @@ public:
      *
      * \returns the current value of _d_opt. 
      */
-   floatT d_opt();
+   realT d_opt();
    
    /// @}
 
@@ -415,7 +437,7 @@ public:
      * 
      * \returns the NCP variance at k.
      */
-   floatT ncpError( int m, ///< [in] is the spatial frequency index in u
+   realT ncpError( int m, ///< [in] is the spatial frequency index in u
                     int n  ///< [in] is the spatial frequency index in v
                   );
    
@@ -423,7 +445,7 @@ public:
    /**
      * \returns the total NCP variance.
      */ 
-   floatT ncpError();
+   realT ncpError();
    
    /** \name Overall WFE and Strehl Ratio 
      * Functions to calculate the total WFE and Strehl ratio.
@@ -443,7 +465,7 @@ public:
      *
      * \returns the current value of _wfeVar;
      */
-   floatT wfeVar();
+   realT wfeVar();
    
    ///Get the current Strehl ratio.
    /** If no changes, merely returns _strehl.  Calls calcStrehl if there are changes.
@@ -456,7 +478,7 @@ public:
      *
      * \returns the current value of _strehl. 
      */
-   floatT strehl();
+   realT strehl();
 
    /// @}
    
@@ -467,35 +489,66 @@ public:
      * @{
      */
    
-   floatT C0( floatT m,  ///< [in] is the spatial frequency index in u
-              floatT n   ///< [in] is the spatial frequency index in v
-            );
+   realT C0( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in] is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio
+           );
    
    template<typename imageT>
    void C0Map( imageT & im /**< */);
    
-   floatT C1( floatT m,  ///< [in] is the spatial frequency index in u
-              floatT n   ///< [in] is the spatial frequency index in v
-            );
+   realT C1( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in] is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio
+           );
    
    template<typename imageT>
    void C1Map( imageT & im /**< */);
    
-   ///Calculate the contrast due to measurement and time delay errors at a spatial frequency.
+   ///Calculate the contrast due to measurement and time delay errors in phase/OPD at a spatial frequency.
    /** Contrast C2 is just the total variance due to time delay and measurement errors, 
      * divided by the Strehl ratio.
      * 
      * \returns C2.
      */
-   floatT C2( floatT m,  ///< [in] is the spatial frequency index in u
-              floatT n,   ///< [in]  is the spatial frequency index in v
-              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
-            );
-   
+   realT C2( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in]  is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
+           );
+
    template<typename imageT>
    void C2Map( imageT & im /**< */ );
-      
    
+   ///Calculate the contrast due to measurement and time delay errors in amplitude at a spatial frequency.
+   /** Contrast C3 is just the total variance due to time delay and measurement errors, 
+     * divided by the Strehl ratio.
+     * 
+     * \returns C3.
+     */
+   realT C3( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in]  is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
+           );
+   
+   realT C4( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in]  is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
+           );
+   
+   realT C5( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in]  is the spatial frequency index in v
+             bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
+           );
+   
+   realT C6( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in] is the spatial frequency index in v
+             bool normStrehl = true ///< flag controls whether the contrast is normalized by Strehl ratio.
+            );
+      
+   realT C7( realT m,  ///< [in] is the spatial frequency index in u
+             realT n,   ///< [in] is the spatial frequency index in v
+             bool normStrehl = true ///< flag controls whether the contrast is normalized by Strehl ratio.
+            );
    
    ///@}
    
@@ -507,14 +560,14 @@ public:
 
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-aoSystem<floatT, inputSpectT, wfsBetaT>::aoSystem()
+template<typename realT, class inputSpectT, class wfsBetaT>
+aoSystem<realT, inputSpectT, wfsBetaT>::aoSystem()
 {
    initialize();
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::initialize()
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::initialize()
 {
    _F0 = 0;
    _D = 0;
@@ -553,12 +606,12 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::initialize()
    _strehl = 0;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGuyon2005()
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::loadGuyon2005()
 {
    atm.loadGuyon2005();
    
-   F0(1.75e9*0.25*pi<floatT>()*64.); //Converting to photons/sec
+   F0(1.75e9*0.25*pi<realT>()*64.); //Converting to photons/sec
    lam_wfs(0.55e-6);
    lam_sci(1.6e-6);
    D(8.);
@@ -568,8 +621,8 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGuyon2005()
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::loadMagAOX()
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::loadMagAOX()
 {   
    atm.loadLCO();   
    
@@ -587,14 +640,14 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::loadMagAOX()
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGMagAOX()
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::loadGMagAOX()
 {
 
    loadMagAOX();
    
    
-   F0(7.6e10 * 368.0 / (0.25*pi<floatT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
+   F0(7.6e10 * 368.0 / (0.25*pi<realT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
    
    D(25.4);
    
@@ -603,49 +656,49 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::loadGMagAOX()
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::F0(floatT nF0)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::F0(realT nF0)
 {
    _F0 = nF0;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::F0()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::F0()
 {
    return _F0;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::starMag(floatT nmag)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::starMag(realT nmag)
 {
    _starMag = nmag;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::starMag()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::starMag()
 {
    return _starMag;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::Fg(floatT mag)
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::Fg(realT mag)
 {
    return _F0*pow(10.0, -0.4*mag);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::Fg()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::Fg()
 {
    return Fg(_starMag);
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::D(floatT nD)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::D(realT nD)
 {
    _D = nD;
    psd.D(_D);
@@ -654,226 +707,248 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::D(floatT nD)
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::D()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::D()
 {
    return _D;
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::d_min(floatT nd)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::d_min(realT nd)
 {
    _d_min = nd;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::d_min()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::d_min()
 {
    return _d_min;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::optd(bool od)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::optd(bool od)
 {
    _optd = od;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-bool aoSystem<floatT, inputSpectT, wfsBetaT>::optd()
+template<typename realT, class inputSpectT, class wfsBetaT>
+bool aoSystem<realT, inputSpectT, wfsBetaT>::optd()
 {
    return _optd;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::lam_wfs(floatT nlam)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::lam_wfs(realT nlam)
 {
    _lam_wfs = nlam;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::lam_wfs()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::lam_wfs()
 {
    return _lam_wfs;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::npix_wfs(floatT npix)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::npix_wfs(realT npix)
 {
    _npix_wfs = npix;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::npix_wfs()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::npix_wfs()
 {
    return _npix_wfs;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::ron_wfs(floatT nron)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::ron_wfs(realT nron)
 {
    _ron_wfs = nron;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ron_wfs()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::ron_wfs()
 {
    return _ron_wfs;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::Fbg(floatT fbg)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::Fbg(realT fbg)
 {
    _Fbg = fbg;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::Fbg()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::Fbg()
 {
    return _Fbg;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::minTauWFS(floatT ntau)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::minTauWFS(realT ntau)
 {
    _minTauWFS = ntau;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::minTauWFS()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::minTauWFS()
 {
    return _minTauWFS;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::deltaTau(floatT ndel)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::deltaTau(realT ndel)
 {
    _deltaTau = ndel;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::deltaTau()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::deltaTau()
 {
    return _deltaTau;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::optTau(bool ot)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::optTau(bool ot)
 {
    _optTau = ot;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-bool aoSystem<floatT, inputSpectT, wfsBetaT>::optTau()
+template<typename realT, class inputSpectT, class wfsBetaT>
+bool aoSystem<realT, inputSpectT, wfsBetaT>::optTau()
 {
    return _optTau;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::lam_sci(floatT nlam)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::lam_sci(realT nlam)
 {
    _lam_sci = nlam;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::lam_sci()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::lam_sci()
 {
    return _lam_sci;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::fit_mn_max( int mnm )
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::zeta(realT nz)
+{
+   _zeta = nz;
+   _secZeta = 1/cos(_zeta);
+   
+   _specsChanged = true;
+   _dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::zeta()
+{
+   return _zeta;
+}
+
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::secZeta()
+{
+   return _secZeta;
+}
+
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::fit_mn_max( int mnm )
 {
    if(mnm < 0) mnm = 0;
    _fit_mn_max = mnm;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-int aoSystem<floatT, inputSpectT, wfsBetaT>::fit_mn_max()
+template<typename realT, class inputSpectT, class wfsBetaT>
+int aoSystem<realT, inputSpectT, wfsBetaT>::fit_mn_max()
 {
    return _fit_mn_max;
 }
    
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_wfe(floatT nwfe)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::ncp_wfe(realT nwfe)
 {
    _ncp_wfe = nwfe;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_wfe()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::ncp_wfe()
 {
    return _ncp_wfe;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_alpha(floatT alpha)
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::ncp_alpha(realT alpha)
 {
    _ncp_alpha = alpha;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncp_alpha()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::ncp_alpha()
 {
    return _ncp_alpha;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::signal2Noise2( floatT & tau_wfs )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::signal2Noise2( realT & tau_wfs )
 {      
-   floatT F = Fg();
+   realT F = Fg();
                
    return pow(F*tau_wfs,2)/((F+_npix_wfs*_Fbg)*tau_wfs + _npix_wfs*_ron_wfs*_ron_wfs);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::measurementError( floatT m, 
-                                                                  floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::measurementError( realT m, 
+                                                                  realT n )
 {
    if(m ==0 and n == 0) return 0;
    
-   floatT tau_wfs;
+   realT tau_wfs;
    
    if(_optTau) tau_wfs = optimumTauWFS(m, n);
    else tau_wfs = _minTauWFS;
    
-   floatT beta_p = wfsBeta.beta_p(m,n,_D);
+   realT beta_p = wfsBeta.beta_p(m,n,_D);
             
-   floatT snr2 = signal2Noise2( tau_wfs );
+   realT snr2 = signal2Noise2( tau_wfs );
          
   
    return pow(beta_p,2)/snr2*pow(_lam_wfs/_lam_sci, 2);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::measurementError()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::measurementError()
 {   
    int mn_max = floor(0.5*_D/d_opt());
-   floatT sum = 0;
+   realT sum = 0;
 
    for(int m=-mn_max; m <= mn_max; ++m)
    {
@@ -888,32 +963,32 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::measurementError()
    return sum;
 }
          
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::timeDelayError( floatT m, 
-                                                                floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::timeDelayError( realT m, 
+                                                                realT n )
 {
    if(m ==0 and n == 0) return 0;
    
-   floatT k = sqrt(m*m + n*n)/_D;
+   realT k = sqrt(m*m + n*n)/_D;
    
-   floatT tau_wfs;
+   realT tau_wfs;
    
    if(_optTau) tau_wfs = optimumTauWFS(m, n);
    else tau_wfs = _minTauWFS;
    
-   floatT tau = tau_wfs + _deltaTau;
+   realT tau = tau_wfs + _deltaTau;
    
    //std::cout << m << " " << n << " " << tau << "\n";
          
-   return psd(atm, k, _lam_sci)/pow(_D,2) * pow(two_pi<floatT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   return psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::timeDelayError()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::timeDelayError()
 {   
    int mn_max = floor(0.5*_D/d_opt());
    
-   floatT sum = 0;
+   realT sum = 0;
 
    for(int m = -mn_max; m <= mn_max; ++m)
    {
@@ -930,21 +1005,21 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::timeDelayError()
 
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::fittingError( floatT m, 
-                                                              floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::fittingError( realT m, 
+                                                            realT n )
 {
-   floatT k = sqrt(m*m+n*n)/_D;
+   realT k = sqrt(m*m+n*n)/_D;
       
-   return psd(atm,k, _lam_sci)/(_D*_D);
+   return psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::fittingError()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::fittingError()
 {   
    int mn_max = _D/(2.0*d_opt());
 
-   floatT sum = 0;
+   realT sum = 0;
    
    for(int m = -_fit_mn_max; m <= _fit_mn_max; ++m)
    {
@@ -960,9 +1035,9 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::fittingError()
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::optimumTauWFS( floatT m, 
-                                                               floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::optimumTauWFS( realT m, 
+                                                               realT n )
 {
    if(_D == 0)
    {
@@ -979,17 +1054,17 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::optimumTauWFS( floatT m,
    
    //if(m == 0) return 0; //Just a big number
    
-   floatT k = sqrt(m*m + n*n)/_D;
+   realT k = sqrt(m*m + n*n)/_D;
    
-   floatT F = Fg();
+   realT F = Fg();
 
-   floatT beta_p = wfsBeta.beta_p(m,n,_D);
+   realT beta_p = wfsBeta.beta_p(m,n,_D);
 
    //Set up for root finding:
-   floatT a, b, c, d, e;
+   realT a, b, c, d, e;
    
-   floatT Atmp = 2*pow(atm.lam_0(),2)*psd(atm,k)/pow(_D,2)*pow(2*pi<floatT>()*atm.v_wind()*k,2);
-   floatT Dtmp = pow(_lam_wfs*beta_p/F,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm,k)/pow(_D,2)*atm.X(k, _lam_sci)*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Dtmp = pow(_lam_wfs*beta_p/F,2);
    
    a = Atmp;
    b = Atmp *_deltaTau;
@@ -997,13 +1072,13 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::optimumTauWFS( floatT m,
    d = -Dtmp * (F+_npix_wfs*_Fbg);
    e = -Dtmp * 2*(_npix_wfs*pow(_ron_wfs,2));
    
-   std::vector<std::complex<floatT> > x;
+   std::vector<std::complex<realT> > x;
    
    //Get the roots
    mx::quarticRoots(x, a, b , c, d, e);
    
    //Now pick the largest positive real root
-   floatT tauopt = 0.0;
+   realT tauopt = 0.0;
    
    for(int i=0; i<4; i++)
    {
@@ -1018,8 +1093,8 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::optimumTauWFS( floatT m,
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::d_opt()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::d_opt()
 {
    if(!_dminChanged) return _d_opt;
    
@@ -1038,7 +1113,7 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::d_opt()
       return _d_opt;
    }
    
-   floatT d = _d_min;
+   realT d = _d_min;
       
    int m = _D/(2*d);
    int n = 0;
@@ -1057,25 +1132,25 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::d_opt()
 }
 
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncpError( int m, 
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::ncpError( int m, 
                                                           int n )
 {
    if(m ==0 and n == 0) return 0;
    
-   floatT k = sqrt(m*m + n*n)/_D;
+   realT k = sqrt(m*m + n*n)/_D;
    
-   return (_ncp_alpha - 2)/(two_pi<floatT>()) * pow(_D, -_ncp_alpha) * ncpError() * pow(k, -_ncp_alpha);
+   return (_ncp_alpha - 2)/(two_pi<realT>()) * pow(_D, -_ncp_alpha) * ncpError() * pow(k, -_ncp_alpha);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::ncpError()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::ncpError()
 {
-   return pow(_ncp_wfe,2)*pow(2.0*pi<floatT>()/_lam_sci,2);
+   return pow(_ncp_wfe,2)*pow(2.0*pi<realT>()/_lam_sci,2);
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::calcStrehl()
+template<typename realT, class inputSpectT, class wfsBetaT>
+void aoSystem<realT, inputSpectT, wfsBetaT>::calcStrehl()
 {  
    _wfeMeasurement = measurementError();
    _wfeTimeDelay = timeDelayError();
@@ -1091,38 +1166,44 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::calcStrehl()
    _specsChanged = false;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::wfeVar()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::wfeVar()
 {
    if(_specsChanged || _dminChanged ) calcStrehl();
    
    return _wfeVar;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::strehl()
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::strehl()
 {
    if( _specsChanged || _dminChanged ) calcStrehl();
    
    return _strehl;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C0(  floatT m, 
-                                                     floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C0( realT m, 
+                                                  realT n,
+                                                  bool normStrehl
+                                                )
 {
    if(m ==0 && n == 0) return 0;
 
-   floatT k = sqrt(m*m + n*n)/_D;
-            
-   floatT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci);
+   realT S = 1;
    
-   return sig/strehl();
+   if(normStrehl) S = strehl();
+   
+   realT k = sqrt(m*m + n*n)/_D;
+            
+   realT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci);
+   
+   return sig/S;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
+template<typename realT, class inputSpectT, class wfsBetaT>
 template<typename imageT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::C0Map( imageT & im )
+void aoSystem<realT, inputSpectT, wfsBetaT>::C0Map( imageT & im )
 {
    int dim1=im.rows();
    int dim2=im.cols();
@@ -1148,22 +1229,28 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::C0Map( imageT & im )
    }
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C1(  floatT m, 
-                                                     floatT n )
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C1( realT m, 
+                                                  realT n,
+                                                  bool normStrehl
+                                                )
 {
    if(m ==0 && n == 0) return 0;
 
-   floatT k = sqrt(m*m + n*n)/_D;
-            
-   floatT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Y(k, _lam_sci);
+   realT S = 1;
    
-   return sig/strehl();
+   if(normStrehl) S = strehl();
+   
+   realT k = sqrt(m*m + n*n)/_D;
+            
+   realT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Y(k, _lam_sci);
+   
+   return sig/S;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
+template<typename realT, class inputSpectT, class wfsBetaT>
 template<typename imageT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::C1Map( imageT & im )
+void aoSystem<realT, inputSpectT, wfsBetaT>::C1Map( imageT & im )
 {
    int dim1=im.rows();
    int dim2=im.cols();
@@ -1189,9 +1276,9 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::C1Map( imageT & im )
    }
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
-floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C2(  floatT m, 
-                                                     floatT n,
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C2(  realT m, 
+                                                     realT n,
                                                      bool normStrehl
                                                   )
 {
@@ -1199,7 +1286,7 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C2(  floatT m,
 
    int mn_max = _D/(2.*d_opt());
    
-   floatT S = 1;
+   realT S = 1;
    
    if(normStrehl) S = strehl();
 
@@ -1211,14 +1298,14 @@ floatT aoSystem<floatT, inputSpectT, wfsBetaT>::C2(  floatT m,
    }
    
 
-   floatT sig = measurementError(m, n) + timeDelayError(m,n);
+   realT sig = measurementError(m, n) + timeDelayError(m,n);
    
    return sig/S;
 }
 
-template<typename floatT, class inputSpectT, class wfsBetaT>
+template<typename realT, class inputSpectT, class wfsBetaT>
 template<typename imageT>
-void aoSystem<floatT, inputSpectT, wfsBetaT>::C2Map( imageT & im )
+void aoSystem<realT, inputSpectT, wfsBetaT>::C2Map( imageT & im )
 {
    int dim1=im.rows();
    int dim2=im.cols();
@@ -1252,8 +1339,91 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::C2Map( imageT & im )
    }
 }
 
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C4( realT m, 
+                                                  realT n,
+                                                  bool normStrehl
+                                                )
+{
+   if(m ==0 && n == 0) return 0;
+
+   int mn_max = _D/(2.*d_opt());
+   
+   realT S = 1;
+   
+   if(normStrehl) S = strehl();
 
 
+   
+   if(mn_max > 0 && (abs(m) > mn_max || abs(n) > mn_max))
+   {
+      return 0;
+   }
+   
+   realT k = sqrt(m*m + n*n)/_D;
+   
+   realT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.dX(k, _lam_sci, _lam_wfs);;
+   
+   return sig/S;
+}
+
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C6( realT m, 
+                                                  realT n,
+                                                  bool normStrehl
+                                                )
+{
+   if(m ==0 && n == 0) return 0;
+
+   int mn_max = _D/(2.*d_opt());
+   
+   realT S = 1;
+   
+   if(normStrehl) S = strehl();
+
+
+   
+   if(mn_max > 0 && (abs(m) > mn_max || abs(n) > mn_max))
+   {
+      return 0;
+   }
+   
+   realT ni = atm.n_air(_lam_sci);
+   realT nw = atm.n_air(_lam_wfs);
+   
+   realT sig = C0(m, n, false) * pow( (ni-nw)/ni, 2);
+   
+   return sig/S;
+}
+
+template<typename realT, class inputSpectT, class wfsBetaT>
+realT aoSystem<realT, inputSpectT, wfsBetaT>::C7( realT m, 
+                                                  realT n,
+                                                  bool normStrehl
+                                                )
+{
+   if(m ==0 && n == 0) return 0;
+
+   int mn_max = _D/(2.*d_opt());
+   
+   realT S = 1;
+   
+   if(normStrehl) S = strehl();
+
+
+   
+   if(mn_max > 0 && (abs(m) > mn_max || abs(n) > mn_max))
+   {
+      return 0;
+   }
+   
+
+   realT k = sqrt(m*m + n*n)/_D;
+            
+   realT sig = psd(atm,k)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Z(k, _lam_wfs, _lam_sci, _zeta);
+   
+   return sig/S;
+}
 
 
 
@@ -1262,9 +1432,9 @@ void aoSystem<floatT, inputSpectT, wfsBetaT>::C2Map( imageT & im )
    
    
    
-template<typename floatT, class inputSpectT, class wfsBetaT>
+template<typename realT, class inputSpectT, class wfsBetaT>
 template<typename iosT>
-iosT & aoSystem<floatT, inputSpectT, wfsBetaT>::dumpAOSystem( iosT & ios)
+iosT & aoSystem<realT, inputSpectT, wfsBetaT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
    ios << "#    D = " << D() << '\n';

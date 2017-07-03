@@ -14,12 +14,11 @@
 #include <time.h>
 #include <sys/time.h>
 #include <cmath>
-#include <sofa.h>
 
 
 
 #include "stringUtils.hpp"
-
+#include "astro/sofa.hpp"
 
 namespace mx
 {
@@ -111,7 +110,7 @@ double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
    double djm0;
    double djm;
    
-   int rv = iauCal2jd(yr, mon, day, &djm0, &djm);
+   int rv = sofa::iauCal2jd(yr, mon, day, &djm0, &djm);
    
    if (rv < 0) return (double) rv;
    
@@ -267,8 +266,7 @@ std::string ISO8601DateTimeStrMJD(const double &timeIn, int timeZone = 0)
    int iy, im, id;
    double fd;
    
-   iauJd2cal( DJM0, timeIn,
-              &iy, &im, &id, &fd);
+   sofa::iauJd2cal( DJM0, timeIn, &iy, &im, &id, &fd);
    
    int hr, mn;
    
@@ -326,11 +324,11 @@ int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * 
    if(tmrv == 0) return -10;
    
    // Then determine deltaAT = TAI-UTC
-   rv1 = iauDat(1900+tm0->tm_year, 1+tm0->tm_mon, tm0->tm_mday, 0.0, &dat);
+   rv1 = sofa::iauDat(1900+tm0->tm_year, 1+tm0->tm_mon, tm0->tm_mday, 0.0, &dat);
    if(rv1 < 0) return rv1;
    
    // And get the MJD
-   rv2 = iauCal2jd(1900+tm0->tm_year, 1+tm0->tm_mon, tm0->tm_mday, &djm0, &djm);
+   rv2 = sofa::iauCal2jd(1900+tm0->tm_year, 1+tm0->tm_mon, tm0->tm_mday, &djm0, &djm);
    if(rv2 < 0) return rv2;
    
    // Finally calculate the day fraction

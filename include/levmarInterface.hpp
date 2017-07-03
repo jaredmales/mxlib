@@ -48,7 +48,7 @@ struct array2Fit
    size_t ny; ///Y dimension of the array
 };
 
-/** \addtogroup fitting
+/** \ingroup fitting
   * @{
   */
 

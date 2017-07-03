@@ -35,7 +35,7 @@ struct pywfsUnmod
    floatT beta_p(int m, int n, floatT D)
    {
       using namespace boost::math::constants;
-      return root_two<floatT>();
+      return 1;//root_two<floatT>();
    }
    
    ///Dump the details of the WFS to a io stream.

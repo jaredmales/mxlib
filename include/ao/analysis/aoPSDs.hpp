@@ -36,7 +36,7 @@ protected:
    bool _subTipTilt; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
    
    bool _scintillation; ///< flag controlling whether or not scintillation is included
-   bool _component; ///< If _scintillation is true, this controls whether phase (false) or amplitude (true) is returned.
+   int _component; ///< If _scintillation is true, this controls whether phase (0), amplitude (1), or dispersive contrast (2) is returned.
    
    floatT _D; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
 
@@ -51,7 +51,7 @@ public:
       _subTipTilt = false;
 
       _scintillation = false;
-      _component = false;
+      _component = 0;
             
       _D = 0;
    }
@@ -135,7 +135,7 @@ public:
    /**
      * \param cc is the new value of _component
      */ 
-   void component(bool cc)
+   void component(int cc)
    {
       _component = cc;
    }
@@ -222,7 +222,12 @@ public:
      * \returns the von Karman PSD at the specified spatial frequency for the specified wavelength.
      * \returns -1 if an error occurs.
      */    
-   floatT operator()(aoAtmosphere<floatT> & atm, floatT k, floatT lambda)
+   floatT operator()( aoAtmosphere<floatT> & atm, ///< [in] 
+                      floatT k,                   ///< [in]
+                      floatT lambda,              ///< [in]
+                      floatT lambda_wfs = 0,      ///< [in]
+                      floatT zeta = 0             ///< [in]
+                    )
    {
       floatT psd = operator()(atm, k)* pow( atm.lam_0()/lambda, 2);
       
@@ -230,13 +235,17 @@ public:
       
       if(_scintillation)
       {
-         if(_component == false)
+         if(_component == 0)
          {
             psd *= atm.X(k, lambda);
          }
-         else
+         else if (_component == 1)
          {
             psd *= atm.Y(k, lambda);
+         }
+         else
+         {
+            psd *= atm.Z(k, lambda, lambda_wfs, zeta);
          }
       }
       

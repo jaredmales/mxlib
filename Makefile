@@ -31,13 +31,10 @@ OBJS = kepler.o \
        msgq.o \
        mxlib.o\
        sharedmem_segment.o \
-       sharedMemSegment.o \
-       process_interface.o \
-       ds9_interface.o \
+       process_interface.o 
 
 
-INC_TO_INSTALL = ADIobservation.hpp \
-                 airy.hpp \
+INC_TO_INSTALL = airy.hpp \
                  ao \
                  app \
                  astro \
@@ -47,38 +44,23 @@ INC_TO_INSTALL = ADIobservation.hpp \
                  astrotypes.h \
                  autocorrelation.hpp \
                  binVector.hpp \
-                 ds9_interface.h \
-                 ds9Interface.hpp \
-                 eigenImage.hpp \
-                 eigenCube.hpp \
                  eigenUtils.hpp \
                  environment.hpp \
                  fft.hpp \
                  fftwTemplates.hpp \
                  fileUtils.hpp \
-                 fitsUtils.hpp \
-                 fitsFile.hpp \
-                 fitsHeader.hpp \
-                 fitsHeaderCard.hpp \
                  fitGaussian.hpp \
                  fourierModes.hpp \
-                 fraunhoferImager.hpp \
                  gaussian.hpp \
                  geo.hpp \
                  gnuPlot.hpp \
                  gramSchmidt.hpp \
                  gslInterpolation.hpp \
-       		 HCIobservation.hpp \
                  IPC.h \
-                 imageFilters.hpp \
-       		 imageMasks.hpp \
-       		 imagePads.hpp \
-                 imageTransforms.hpp \
-                 imaging \
+                 improc \
+                 wfp \
                  imagingArray.hpp \
-                 imagingUtils.hpp \
                  jinc.hpp \
-                 KLIPreduction.hpp \
                  levmarInterface.hpp \
                  msgq.h \
                  msgQ \
