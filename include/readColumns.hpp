@@ -102,13 +102,12 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
   * \tparam eol is the end of line character.  by default this is \n
   * \tparam arrTs a variadic list of array types. this is not specified by the user.
   * 
-  * \param fname is the file name to read from
-  * \param arrays a variadic list of std::vectors. Any number with mixed value_type can be specified. Neither allocated nor
-  *               cleared, so repeated calls will append data.
   * 
   */
 template<char delim=' ', char comment='#', char eol='\n', typename... arrTs> 
-void readColumns(const std::string & fname, arrTs &... arrays)
+int readColumns( const std::string & fname, ///< [in] is the file name to read from
+                 arrTs &... arrays ///< [out] a variadic list of std::vectors. Any number with mixed value_type can be specified. Neither allocated nor cleared, so repeated calls will append data.
+               )
 {
    //open file
    errno = 0;
@@ -125,7 +124,7 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       {
          mxError("readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading.");
       }
-      return;
+      return -1;
    }
    
    int lineSize = 1024;
@@ -162,6 +161,8 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
    
+   delete line;
+   
    //getline will have set fail if there was no new line on the last line.
    if(fin.bad() && !fin.fail())
    {
@@ -173,7 +174,7 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       {
          mxError("readColumns", MXE_FILERERR, "Occurred while reading from " + fname + ".");
       }
-      return;
+      return -1;
    }
    
    fin.clear(); //Clear the fail bit which may have been set by getline
@@ -189,10 +190,12 @@ void readColumns(const std::string & fname, arrTs &... arrays)
       {
          mxError("readColumns", MXE_FILECERR, "Occurred while closing " + fname + ".");
       }
-      return;
+      return -1;
    }
    
-   delete line;
+   
+   
+   return 0;
 }
 
 /// @}

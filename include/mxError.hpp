@@ -109,6 +109,14 @@ namespace mx
 #define MXE_PARAMNOTSET 35
 #define MXE_PARAMNOTSET_MSG "A parameter was not set."
 
+/** \def MXE_NOTFOUND
+  * \brief An item was not found
+  * \ingroup mxe_errors
+  */   
+#define MXE_NOTFOUND 40
+#define MXE_NOTFOUND_MSG "An item was not found."
+
+
 /** \def MXE_SIZEERR
   * \brief A size was calculated incorrectly
   * \ingroup mxe_errors
@@ -146,7 +154,7 @@ namespace mx
 #define MXE_FILECERR_MSG "An error occurred while closing a file."
 
 /** \def MXE_FILENOTFOUND
-  * \brief An error occurred while closing a file.
+  * \brief The file was not found.
   * \ingroup mxe_errors
   */   
 #define MXE_FILENOTFOUND 1059
@@ -197,6 +205,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_PARAMNOTSET:
          message = MXE_PARAMNOTSET_MSG;
          return "MXE_PARAMNOTSET";
+      case MXE_NOTFOUND:
+         message = MXE_NOTFOUND_MSG;
+         return "MXE_NOTFOUND";
       case MXE_SIZEERR:
          message = MXE_SIZEERR_MSG;
          return "MXE_SIZEERR";
