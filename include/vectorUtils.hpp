@@ -81,7 +81,7 @@ typename vectorT::value_type vectorMean( const vectorT & vec, ///< [in] the vect
       wsum += w[i];
    }
    
-   mean /= (vec.size()*wsum);
+   mean /= wsum;
    
    return mean;
 }
@@ -195,50 +195,128 @@ typename vectorT::value_type vectorVariance( const vectorT & vec /**< [in] the v
 /** Performas sigma-clipping relative to the median, removing any values with deviation from the median > sigma.
   * Continues until either no values are removed, or maxPasses iterations.  If maxPasses == 0, then it is ignored.
   * 
-  * \returns the mean of vec 
+  * \returns the sigma clipped mean of vec 
   *
   * \tparam vectorT the std::vector type of vec 
   * 
   */
 template<typename vectorT>
-typename vectorT::value_type vectorSigmaMean( typename vectorT::value_type & var, ///<  [out] the resulting variance of the vector.
-                                              const vectorT & vec,  ///<  [in] the vector (unaltered)
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
+                                              const vectorT * weights,  ///<  [in] [optional] the weights (unaltered)
                                               typename vectorT::value_type sigma, ///< [in] the standard deviation threshold to apply.
-                                              int maxPasses = 0  ///< [in] [optional] the maximum number of sigma-clipping passes.  
+                                              int & maxPasses  ///< [in/out] [optional] the maximum number of sigma-clipping passes.  Set to actual number of passes on return.
                                             )
 {
-   vectorT work;
-   typename vectorT::value_type med, Vsig, dev;
+   vectorT work, wwork;
+   
+   typename vectorT::value_type med, var, Vsig, dev;
 
+   
+   bool doWeight = false;
+   if( weights )
+   {
+      if( weights->size() == vec.size()) doWeight = true;
+   }
+   
    Vsig = sigma*sigma;
    
    med = vectorMedian(vec, &work);
+   var = vectorVariance( work, med );
   
-   var = vectorVariance(vec, med);
-   
    int nclip;
    int passes = 0;
+  
+   
+   //If weighting, have to synchronize work with weights since work will be
+   //partially sorted by median.
+   if(doWeight)
+   {
+      wwork.resize(vec.size());
+      for(int i=0; i< vec.size(); ++i)
+      {
+         work[i] = vec[i];
+         wwork[i] = (*weights)[i];
+      }
+   }
+      
    
    while(passes < maxPasses || maxPasses == 0)
    {
       ++passes;
       
       nclip = 0;
+      
       for(size_t i=0; i<work.size(); ++i)
       {
-         dev = pow(work[i] - med,2);
+         dev = pow(work[i] - med,2)/var;
          if( dev > Vsig )
          {
             work.erase(work.begin()+i);
+            
+            if(doWeight) wwork.erase(wwork.begin() + i);
+            
             --i;
             ++nclip;
          }
       }
+      
       if(nclip == 0) break;
-      var = vectorVariance(vec, med);
+      med = vectorMedian(work);
+      var = vectorVariance( work, med );
    }
       
-   return vectorMean(work);
+   maxPasses = passes;
+   
+   if(doWeight)
+   {
+      return vectorMean(work, wwork);
+   }
+   else
+   {
+      return vectorMean(work);
+   }
+}
+
+
+/** 
+  * \overload
+  */
+template<typename vectorT>
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
+                                              typename vectorT::value_type sigma ///< [in] the standard deviation threshold to apply.
+                                            )
+{
+   int maxPasses = 0;
+   
+   return vectorSigmaMean(vec, (vectorT *) 0, sigma, maxPasses);
+}
+
+/** 
+  * \overload
+  */
+template<typename vectorT>
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
+                                              const vectorT & weights, ///<  [in] [optional] the weights (unaltered)
+                                              typename vectorT::value_type sigma, ///< [in] the standard deviation threshold to apply.
+                                              int & maxPasses  ///< [in/out] [optional] the maximum number of sigma-clipping passes.  Set to actual number of passes on return.
+                                            )
+{
+   
+   return vectorSigmaMean(vec, &weights, sigma, maxPasses);
+}
+
+/** 
+  * \overload
+  */
+template<typename vectorT>
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
+                                              const vectorT & weights, ///<  [in] [optional] the weights (unaltered)
+                                              typename vectorT::value_type sigma ///< [in] the standard deviation threshold to apply.
+                                            )
+{
+   int maxPasses = 0;
+   
+   return vectorSigmaMean(vec, &weights, sigma, maxPasses);
 }
 
 ///@}

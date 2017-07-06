@@ -8,9 +8,14 @@
 #ifndef __randomSeed_hpp__
 #define __randomSeed_hpp__
 
+
+#include <unistd.h>
 #include <fcntl.h>
 
+
 #include "mxError.hpp"
+
+
 
 namespace mx
 {
@@ -50,7 +55,7 @@ int randomSeed(intT & seedval)
    seedval = 0;
 
    errno = 0;
-   int rv =read(fd, &seedval, sizeof(intT));
+   int rv = ::read(fd, &seedval, sizeof(intT));
       
       
    if(rv < 0)

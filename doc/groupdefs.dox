@@ -96,6 +96,11 @@
   * \brief Functions for padding images.
   * \ingroup image_processing 
   */
+
+/** \defgroup image_masks Image Masks
+  * \brief Functions for masking images.
+  * \ingroup image_processing 
+  */
   
 /** \defgroup image_transforms Image Transforms 
   * \brief Functions for transforming images by rotating, translating, and magnifying.
