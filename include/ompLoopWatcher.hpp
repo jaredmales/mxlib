@@ -23,7 +23,7 @@ namespace mx
     #pragma omp parallel for 
     int( i=0; i<1000; ++i)
     {
-       wathcer.incrementAndOutputStatus();
+       watcher.incrementAndOutputStatus();
        //Do loop work
        ...
     }

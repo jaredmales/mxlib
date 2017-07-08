@@ -5,18 +5,23 @@
 /** \defgroup error_handling Error Handling 
   * \brief How mxlib handles errors
   */
+
+/** \defgroup error_macros Error Handling Macros
+  * \brief Macros controlling how mxlib reports errors
+  * \ingroup error_handling 
+  */
+  
+/** \defgroup error_handling_files Files 
+  * \brief Source files for error handling.
+  * \ingroup error_handling
+  */
   
 //------------------ gen_math -----------------------
 
 /** \defgroup gen_math General Mathematics
   * \brief General mathematical utilities.
   */
-  
-/** \defgroup gen_math_files Headers
-  * \brief Header files for General Mathematics
-  * \ingroup gen_math
-  */
-  
+    
 /** \defgroup geo Geometry and Geodesy
   * \brief Functions for basic geometry and working with earth coordinate systems
   * \ingroup gen_math
@@ -56,15 +61,31 @@
   * \ingroup gen_math
   * \brief Utilities for working with std::vector.
   */
+
+/** \defgroup gen_math_files Files
+  * \brief Source files for General Mathematics
+  * \ingroup gen_math
+  */
+  
+//----------------------- data fitting  --------------------  
+
+/** \defgroup fitting Data Fitting
+  * \brief Tools for fitting functions to data
+  */  
+  
+/** \defgroup peak_fit Peak Fitting
+  * \brief Tools for fitting peaks to data
+  * \ingroup fitting
+  */
+  
+/** \defgroup peak_fit Files
+  * \brief Source files for data fitting.
+  * \ingroup fitting
+  */
   
 //----------------------- signal_processing --------------------  
 /** \defgroup signal_processing Signal Processing 
   * \brief Tools for processing signals
-  */
-
-/** \defgroup signal_processing_files Headers 
-  * \brief Headers for processing signals
-  * \ingroup signal_processing
   */
   
 /** \defgroup fft Fast Fourier Transforms
@@ -72,11 +93,11 @@
   * \ingroup signal_processing
   */
   
-/** \defgroup fft_files Headers
+/** \defgroup fftw_templates Template FFTW
   * \ingroup fft 
   */
-  
-/** \defgroup fftw_templates Template FFTW
+
+/** \defgroup fft_files Files
   * \ingroup fft 
   */
   
@@ -85,6 +106,10 @@
   * \ingroup signal_processing
   */
   
+/** \defgroup signal_processing_files Files
+  * \brief Source files for processing signals
+  * \ingroup signal_processing
+  */
 
   
 //----------------------- image_processing --------------------    
@@ -125,7 +150,7 @@
   */
 
 /** \defgroup fits_processing_typedefs fitsFile typedefs 
-  * \brief Typedefs of \ref fitsFile for standard types
+  * \brief Typedefs of \ref mx::improc::fitsFile for standard types
   * \ingroup fits_processing 
   */
   
@@ -134,9 +159,14 @@
   * \ingroup fits_processing
   */
   
-/** \defgroup fits_processing_files Source files for FITS
+/** \defgroup fits_processing_files Files
   * \brief Source of tools for working with FITS files.
   * \ingroup fits_processing
+  */
+
+/** \defgroup eigen_image_processing Image Processing with Eigen 
+  * \brief Using the Eigen matrix library for image processing
+  * \ingroup image_processing
   */
   
 /** \defgroup hc_imaging High Contrast Imaging
@@ -144,12 +174,13 @@
   * \ingroup image_processing
   */
 
-/** \defgroup eigen_image_processing Image Processing with Eigen 
-  * \brief Using the Eigen matrix library for image processing
-  * \ingroup image_processing
+/** \defgroup hc_imaging_files Files
+  * \brief Source files for Hich Contrast Imaging.
+  * \ingroup hc_imaging
   */
+  
 
-/** \defgroup image_processing_files Headers
+/** \defgroup image_processing_files Files
   * \brief Files declaring and defining the image processing tools.
   * \ingroup image_processing
   */
@@ -159,13 +190,21 @@
   * \brief Tools for modeling wavefront propagation
   */
 
+/** \defgroup fourier_basis The Fourier Basis
+  * \ingroup imaging
+  */
+
+/** \defgroup zernike_basis The Zernike Basis
+  * \ingroup imaging
+  */
+  
 /** \defgroup coronagraphs Coronagraphs
   * \brief Modeling and optimizing coronagraphs
   * \ingroup imaging
   /
   
-/** \defgroup imaging_files Wavefront Propagation Files
-  * \brief Header files
+/** \defgroup imaging_files Files
+  * \brief Source files for wavefront propagation
   * \ingroup imaging
   */
   
@@ -205,7 +244,7 @@
   * \ingroup genastro
   */
 
-/* \defgroup genphyconstants General Constants
+/** \defgroup genphyconstants General Constants
   * \ingroup phyconstants 
   * \brief Constants of general applicability
   */
@@ -226,10 +265,6 @@
   * \brief Various miscellaneous utilities
   */  
 
-/** \defgroup utils_files Headers
-  * \brief Header files for General Utilities.
-  * \ingroup utils
-  */
 /** \defgroup stringutils Working with strings
   * \ingroup utils
   * \brief Various tools for working with strings
@@ -275,15 +310,12 @@
   * \brief Tools for managing shared memory
   */  
   
-  
-/** \defgroup fitting Data Fitting
-  * \brief Tools for fitting functions to data
-  */  
-  
-/** \defgroup peak_fit Peak Fitting
-  * \brief Tools for fitting peaks to data
-  * \ingroup fitting
+/** \defgroup utils_files Files
+  * \brief Header files for General Utilities.
+  * \ingroup utils
   */
+  
+
   
   
   

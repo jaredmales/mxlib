@@ -1,7 +1,7 @@
 /** \file mxException.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declares and defines the mxlib exception class.
-  * \ingroup error_handling
+  * \ingroup error_handling_files
   * 
 */
 

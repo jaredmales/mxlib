@@ -79,32 +79,8 @@ struct eigenArrPlanes<arrT, false>
 
 
 
-template<typename imageTout, typename imageTin, typename coeffT>
-void cutImageRegion(imageTout & imout, const imageTin & imin,  coeffT & coeffs, bool resize = true)
-{
-   if(resize)
-   {
-      imout.resize(coeffs.size(),1);
-   }
-   
-   #pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<coeffs.size();++i)
-   {
-      imout(i) = imin(coeffs[i]);
-   }
-   
-}
  
-template<typename imageTout, typename imageTin, typename coeffT>
-void insertImageRegion(imageTout imout, const imageTin & imin,  coeffT & coeffs)
-{
-   #pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<coeffs.size();++i)
-   {
-      imout(coeffs[i],0) = imin(i,0);
-   }
-   
-} 
+
 
 
 template<typename eigenT, typename eigenTin>
@@ -152,6 +128,7 @@ void removeCols(eigenT & out,  const eigenTin & in, int st, int w)
    
 }   
    
+#if 0
 template<typename dataT>
 static int eigenMedian_compare (const void * a, const void * b)
 {
@@ -161,7 +138,7 @@ static int eigenMedian_compare (const void * a, const void * b)
   return 0;
    
 }
-
+#endif
 
 
 template<typename eigenT>
@@ -188,17 +165,19 @@ typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eig
       }
    }
 
-   int n = 0.5*mat.size();
+   med = vectorMedianInPlace(*work);
    
-   nth_element(work->begin(), work->begin()+n, work->end());
-   
-   med = (*work)[n];
-   
-   if(mat.size()%2 == 0)
-   {
-      //nth_element(work->begin(), work->begin()+n-1, work->end());
-      med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
-   }
+//    int n = 0.5*mat.size();
+//    
+//    nth_element(work->begin(), work->begin()+n, work->end());
+//    
+//    med = (*work)[n];
+//    
+//    if(mat.size()%2 == 0)
+//    {
+//       //nth_element(work->begin(), work->begin()+n-1, work->end());
+//       med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
+//    }
          
    if(localWork) delete work;
    
@@ -260,6 +239,7 @@ typename imageT::Scalar imageMedian(const imageT & mat, const maskT * mask = 0, 
    
    return med;
 } 
+
 
 /// Calculates the lower triangular part of the covariance matrix of ims.
 /** Uses cblas_ssyrk.  cv is resized to ims.cols() X ims.cols().

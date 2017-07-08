@@ -24,8 +24,8 @@ using namespace boost::math::constants;
 namespace mx
 {
    
-/** \defgroup zernike_basis The Zernike Basis
-  * \ingroup imaging
+/** 
+  * \ingroup zernike_basis
   * @{
   */
 

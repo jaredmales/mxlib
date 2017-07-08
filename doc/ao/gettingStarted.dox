@@ -1,4 +1,4 @@
-/** \defgroup ao_getting_started Getting Started
+/** \addtogroup ao_getting_started
 
 Here is how to get started working with the mx::AO library.
 

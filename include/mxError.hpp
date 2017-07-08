@@ -1,7 +1,7 @@
 /** \file mxError.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declares and defines the mxlib error reporting system.
-  * \ingroup error_handling
+  * \ingroup error_handling_files
   * 
 */
 
@@ -12,8 +12,7 @@
 #include <cstring>
 #include <sstream>
 
-/** \defgroup error_macros Error Handling Macros
-  * \brief Macros controlling how mxlib reports errors
+/** \addtogroup error_macros 
   * 
   * mxlib components use these macros to report errors to the user, which by default are wrappers for mx::error_report and mx::errno_report.
   * This behavior can be changed with preprocessor defines.
@@ -22,14 +21,15 @@
   * \code
   * #define MX_NO_ERROR_REPORTS
   * \endcode
-  * 
-  * \ingroup error_handling
+  */
+
+  /** \ingroup error_handling
   * @{
   */
 
 /** \def MX_NO_ERROR_REPORTS
   * \brief If this is defined, then no errors are reported.
-  * \addtogroup error_macros
+  * \ingroup error_macros
   */
 #ifdef MX_NO_ERROR_REPORTS
 
@@ -53,7 +53,7 @@
   * \param[in] ecode is an errno erro code
   * \param[in] expl [optional] if more information can be provided, use this to inform the user.
   * 
-  * \addtogroup error_macros
+  * \ingroup error_macros
  */
 #define mxError(esrc,ecode,expl) std::cerr << "\n" << mx::error_report(esrc, ecode, __FILE__, __LINE__, expl) << "\n";
 

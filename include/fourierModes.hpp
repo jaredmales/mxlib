@@ -15,8 +15,8 @@
 namespace mx
 {
    
-/** \defgroup fourier_basis The Fourier Basis
-  * \ingroup imaging
+/** 
+  * \ingroup fourier_basis
   * @{
   */
 

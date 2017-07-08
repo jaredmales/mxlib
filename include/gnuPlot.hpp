@@ -332,7 +332,7 @@ public:
      * \verbatim
        plot "<fname>" <modifiers>
        \endverbatim
-     * The modifiers string can contain any modifiers such as \a using, \a title \endverbatim, etc.
+     * The modifiers string can contain any modifiers such as \a using, \a title, etc.
      * 
      * \param[in] fname is the name of the file containing data to plot
      * \param[in] modifiers [optional] contains any modifiers to the plot command.
