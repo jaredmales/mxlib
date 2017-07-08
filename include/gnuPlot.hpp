@@ -1,7 +1,7 @@
 /** \file gnuPlot.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declaration and definition of an interface to the gnuplot program
-  * \ingroup plotting
+  * \ingroup plotting_files
   * 
 */
 

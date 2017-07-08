@@ -11,11 +11,8 @@
   * \ingroup error_handling 
   */
   
-/** \defgroup error_handling_files Files 
-  * \brief Source files for error handling.
-  * \ingroup error_handling
-  */
-  
+//See error_handling_files
+
 //------------------ gen_math -----------------------
 
 /** \defgroup gen_math General Mathematics
@@ -57,6 +54,8 @@
   * \ingroup gen_math
   */
 
+//------------------  
+
 /** \defgroup fitting Data Fitting
   * \brief Tools for fitting functions to data
   * \ingroup gen_math
@@ -72,6 +71,15 @@
   * \ingroup fitting
   */
 
+//------------------  
+/** \defgroup plotting Plotting Data
+  * \brief Tools for plotting and displaying data
+  */
+
+/** \defgroup plotting_files Files
+  * \brief Source files for plotting data.
+  * \ingroup fitting
+  */  
   
 /** \defgroup random Random Numbers
   * \brief Random number generation.
@@ -84,10 +92,7 @@
   * \brief Utilities for working with std::vector.
   */
 
-/** \defgroup gen_math_files Files
-  * \brief Source files for General Mathematics
-  * \ingroup gen_math
-  */
+//see gen_math_files
   
 
   
@@ -114,10 +119,8 @@
   * \ingroup signal_processing
   */
   
-/** \defgroup signal_processing_files Files
-  * \brief Source files for processing signals
-  * \ingroup signal_processing
-  */
+//see signal_processing_files below
+
 
   
 //----------------------- image_processing --------------------    
@@ -167,10 +170,8 @@
   * \ingroup fits_processing
   */
   
-/** \defgroup fits_processing_files Files
-  * \brief Source of tools for working with FITS files.
-  * \ingroup fits_processing
-  */
+// see fits_processing_files  
+
 
 /** \defgroup eigen_image_processing Image Processing with Eigen 
   * \brief Using the Eigen matrix library for image processing
@@ -179,19 +180,19 @@
   
 /** \defgroup hc_imaging High Contrast Imaging
   * \brief Tools for astronomical high contrast image processing.
+  * \ingroup genastro
   * \ingroup image_processing
   */
 
-/** \defgroup hc_imaging_files Files
-  * \brief Source files for Hich Contrast Imaging.
+/** \defgroup hc_imaging_enums HCI Enums 
+  * \brief Enums for high contrast imaging.
   * \ingroup hc_imaging
   */
   
-
-/** \defgroup image_processing_files Files
-  * \brief Files declaring and defining the image processing tools.
-  * \ingroup image_processing
-  */
+// see hc_imaging_files
+  
+// see image_processing_files
+  
   
 //----------------------- wavefront propagation --------------------  
 /** \defgroup imaging Wavefront Propagation
@@ -221,18 +222,12 @@
   * \brief All sorts of things related to astronomical adaptive optics
   * \ingroup imaging
   */  
-  
-/** \defgroup imaging_files Files
-  * \brief Source files for wavefront propagation
-  * \ingroup imaging
-  */
-  
-  
-//------------------  
-/** \defgroup plotting Plotting Data
-  * \brief Tools for plotting and displaying data
-  */
 
+//see imaging_files  
+  
+  
+
+  
   
 //--------------------- astronomy ------------------  
 /** \defgroup genastro Astronomy
@@ -282,9 +277,8 @@
   * \ingroup genastro
   */
   
-/** \defgroup astrofiles Astronomy Headers
-  * \ingroup genastro
-  */
+// see astrofiles
+
   
 //---------------------
   
@@ -338,21 +332,58 @@
   * \brief Tools for managing shared memory
   */  
   
-/** \defgroup utils_files Files
-  * \brief Header files for General Utilities.
-  * \ingroup utils
-  */
+// see utils_files  
   
 
   
   
+//Files sections are last (except for aux info below)/  
   
+/** \defgroup error_handling_files Error Handling Files 
+  * \brief Source files for error handling.
+  * \ingroup error_handling
+  */
+ 
+/** \defgroup gen_math_files Gen. Math Files
+  * \brief Source files for General Mathematics
+  * \ingroup gen_math
+  */
+
+/** \defgroup signal_processing_files Signal Processing Files
+  * \brief Source files for processing signals
+  * \ingroup signal_processing
+  */
   
+/** \defgroup image_processing_files Image Processing Files
+  * \brief Files declaring and defining the image processing tools.
+  * \ingroup image_processing
+  */
+
+/** \defgroup fits_processing_files FITS Files Files
+  * \brief Source of tools for working with FITS files.
+  * \ingroup fits_processing
+  * \ingroup image_processing_files
+  */
+
+/** \defgroup hc_imaging_files High Contrast Imaging Files
+  * \brief Source files for High Contrast Imaging.
+  * \ingroup hc_imaging
+  */
   
+/** \defgroup imaging_files Wavefront Propagation Files
+  * \brief Source files for wavefront propagation
+  * \ingroup imaging
+  */
   
-  
-  
-  
+/** \defgroup astrofiles Astronomy Files
+  * \brief Source files for Astronomy
+  * \ingroup genastro
+  */
+
+/** \defgroup utils_files Utility Files
+  * \brief Header files for General Utilities.
+  * \ingroup utils
+  */
   
 //This stuff is at the very end to make sure it is last in whatever group listings it is in.  
   

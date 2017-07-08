@@ -3,24 +3,28 @@
 
 \section install_intro Introduction
 
-These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it well organized and documented.  I have installed it on several different computers, so I think this will work!
+These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems.  
+
+2017-07: I'm engaged in a fairly major reorganization and refactor.  So right now not everything will work out of the box.
+
 
 \section install_depends Basic Dependencies
 
-- You need a c++11 compatible compiler (or c++14, or --std=c++0x in g++ works)
-- You need the GNU Scientific Library (GSL) (this is probably obtainable from the linux distro package manager)
-- You need the boost c++ library (this is probably obtainable from the linux distro package manager)
-- You need cfitsio (http://heasarc.gsfc.nasa.gov/fitsio/) \note for ACIC: you already got this for fitssub
-- You need a BLAS and LAPACK.  See ATLAS notes here \ref atlas.  \note for ACIC: I'm pretty sure that on UA HPC these are provided, probably the Intel MKL (http://rc.arizona.edu/hpc-htc/using-systems/scientific-libraries).  If not, I recommend ATLAS, and can help with installation.
-- You need fftw. \note for ACIC: the Intel MKL has an fftw compatible API, so this should work without installing the actual fftw (https://software.intel.com/en-us/node/522277), but I've never tested this.  This would require editing makefiles at minimum.
-- You need the IAU sofa libary.  See \ref astro_sofa
-- You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php)
+-# You need a c++11 compatible compiler (or c++14, or --std=c++0x in g++ works)
+-# You need the GNU Scientific Library (GSL) (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
+-# You need the boost c++ library (this is probably obtainable from the linux distro package manager)
+-# You need cfitsio (http://heasarc.gsfc.nasa.gov/fitsio/) 
+-# You need a BLAS and LAPACK.  An excellent option is ATLAS, see my notes on installing ATLAS here \ref atlas.  
+-# You need fftw. 
+-# You need the IAU sofa libary.  See \ref astro_sofa
+-# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
+
+The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.
 
 \section install_build Build and Install
 Follow these steps:
-1. Checkout mxlib from bitbucket
-
-2. In the mxlib folder, possibly edit the Makefile.  It probably isn't necessary.  If it is, it is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
+-# Checkout mxlib from bitbucket
+-#  In the mxlib folder, possibly edit the Makefile.  It probably isn't necessary.  If it is, it is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
 \code
 INSTALL_PATH = $(HOME)
 INCLUDE_PATH = $(INSTALL_PATH)/include/mx

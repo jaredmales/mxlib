@@ -1,7 +1,10 @@
 work/*
 doc/html/*
+doc/mxlib.tag.xml
 include/mxlib_uncomp_version.h
 include/mxlib_comp_version.h
+old/*
+testing/*
 *.a
 *.so
 a.out
