@@ -5,3 +5,9 @@ It contains code I have developed for data analysis and other tasks, primarily r
 The documentation is located here: http://makana.as.arizona.edu/mxlib/index.html.  
 
 See the User's Guide for installation instructions.
+
+NOTE:
+On 2017-07-08 I moved from bitbucket to github.  To follow along, issue these commands:
+  git remote set-url origin https://github.com/jaredmales/mxlib.git
+  git remote set-url --push origin https://github.com/jaredmales/mxlib.git
+

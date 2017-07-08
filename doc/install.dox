@@ -34,5 +34,13 @@ BIN_PATH = $(HOME)/bin
 
 3. Once that's done, type make, then make install
 
+\section github I've Moved!
+
+On 2017-07-08 I moved from bitbucket to github.  To follow along, issue these commands:
+\verbatim
+  git remote set-url origin https://github.com/jaredmales/mxlib.git
+  git remote set-url --push origin https://github.com/jaredmales/mxlib.git
+\endverbatim
+  
 @}
 */
