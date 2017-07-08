@@ -17,8 +17,9 @@ namespace mx
 namespace astro
 {
 
-/** \defgroup stars Stars 
-  * \ingroup genastro
+
+
+/** \ingroup stars
   * @{
   */
 ///Parse a main sequence spectral type string into a numeric code.

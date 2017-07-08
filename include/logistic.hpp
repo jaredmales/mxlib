@@ -1,5 +1,5 @@
-/** \file sigmoid.hpp
-  * \brief Tools for working with sigmoid curves
+/** \file logistic.hpp
+  * \brief The logistic function
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
@@ -7,8 +7,8 @@
   *
   */
 
-#ifndef __sigmoid_hpp__
-#define __sigmoid_hpp__
+#ifndef __logistic_hpp__
+#define __logistic_hpp__
 
 namespace mx
 {
@@ -31,6 +31,8 @@ namespace mx
   * \returns the value of a
   * 
   * \tparam floatT is the floating point type of the arguments and the returned value.
+  * 
+  * \ingroup functions
   */
 template<typename floatT>
 floatT logistic_param(floatT x, floatT thalf)
@@ -51,6 +53,8 @@ floatT logistic_param(floatT x, floatT thalf)
   * \returns the value of the logistic function at t
   * 
   * \tparam floatT is the floating point type of the arguments and the returned value.
+  * 
+  * \ingroup functions
   */
 template<typename floatT>
 floatT logistic(floatT t, floatT t0 = 0, floatT a = 1)
@@ -63,5 +67,5 @@ floatT logistic(floatT t, floatT t0 = 0, floatT a = 1)
 
 } //namespace mx
 
-#endif //__sigmoid_hpp__
+#endif //__logistic_hpp__
 

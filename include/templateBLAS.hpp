@@ -19,6 +19,9 @@ extern "C"
 
 /// Template wrapper for cblas xSCAL
 /**
+  * \tparam dataT the data type of the alpha, X, and Y
+  * 
+  * \ingroup template_blas 
   */
 template<typename dataT>
 void scal( const int N,
@@ -82,6 +85,8 @@ void scal<std::complex<double> >( const int N,
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
+  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 inline
@@ -110,6 +115,8 @@ void hadp_impl( const int N,
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
+  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 inline
@@ -131,6 +138,8 @@ void hadp( const int N,
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
+  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 void hadd_impl( const int N,
@@ -158,6 +167,8 @@ void hadd_impl( const int N,
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
+  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 void hadd( const int N,
@@ -173,7 +184,7 @@ void hadd( const int N,
 /// Template Wrapper for cblas xGEMM
 /** 
   *
-  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 void gemm(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TransA,
@@ -238,7 +249,7 @@ void gemm<std::complex<double> >(const enum CBLAS_ORDER Order, const enum CBLAS_
 /// Template Wrapper for cblas xSYRK
 /** 
   *
-  * 
+  * \ingroup template_blas
   */
 template<typename dataT>
 void syrk(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,

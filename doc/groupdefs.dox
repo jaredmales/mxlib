@@ -27,9 +27,14 @@
   * \ingroup gen_math
   */
 
+/** \defgroup functions Special Functions
+  * \brief Various special functions.
+  * \ingroup gen_math
+  */
+  
 /** \defgroup gen_math_gaussians The Gaussian Function
   * \brief Utilities for working with the Gaussian function
-  * \ingroup gen_math
+  * \ingroup functions
   */
   
 /** \defgroup template_blaslap Templatized BLAS and Lapack
@@ -37,16 +42,6 @@
   * \ingroup gen_math
   */
 
-/** \defgroup interpolation Interpolation 
-  * \brief Various tools for interpolating data and discrete functions.
-  * \ingroup gen_math
-  */
-  
-/** \defgroup random Random Numbers
-  * \brief Random number generation.
-  * \ingroup gen_math
-  */
-  
 /** \defgroup template_blas Templatized BLAS interface
   * \brief Templatized interface to the BLAS
   * \ingroup template_blaslap
@@ -56,6 +51,33 @@
   * \brief Templatized interface to the Lapack library
   * \ingroup template_blaslap
   */  
+
+/** \defgroup interpolation Interpolation 
+  * \brief Various tools for interpolating data and discrete functions.
+  * \ingroup gen_math
+  */
+
+/** \defgroup fitting Data Fitting
+  * \brief Tools for fitting functions to data
+  * \ingroup gen_math
+  */  
+  
+/** \defgroup peak_fit Peak Fitting
+  * \brief Tools for fitting peaks to data
+  * \ingroup fitting
+  */
+  
+/** \defgroup fitting_files Files
+  * \brief Source files for data fitting.
+  * \ingroup fitting
+  */
+
+  
+/** \defgroup random Random Numbers
+  * \brief Random number generation.
+  * \ingroup gen_math
+  */
+  
   
 /** \defgroup vectorutils Vector Utilities
   * \ingroup gen_math
@@ -67,21 +89,7 @@
   * \ingroup gen_math
   */
   
-//----------------------- data fitting  --------------------  
 
-/** \defgroup fitting Data Fitting
-  * \brief Tools for fitting functions to data
-  */  
-  
-/** \defgroup peak_fit Peak Fitting
-  * \brief Tools for fitting peaks to data
-  * \ingroup fitting
-  */
-  
-/** \defgroup peak_fit Files
-  * \brief Source files for data fitting.
-  * \ingroup fitting
-  */
   
 //----------------------- signal_processing --------------------  
 /** \defgroup signal_processing Signal Processing 
@@ -185,11 +193,17 @@
   * \ingroup image_processing
   */
   
-//----------------------- imaging --------------------  
+//----------------------- wavefront propagation --------------------  
 /** \defgroup imaging Wavefront Propagation
   * \brief Tools for modeling wavefront propagation
   */
 
+/** \defgroup psfs Point Spread Functions
+  * \brief Functions describing PSFs.
+  * \ingroup imaging
+  * \ingroup functions
+  */
+  
 /** \defgroup fourier_basis The Fourier Basis
   * \ingroup imaging
   */
@@ -202,6 +216,11 @@
   * \brief Modeling and optimizing coronagraphs
   * \ingroup imaging
   /
+
+/** \defgroup mxAO Adaptive Optics
+  * \brief All sorts of things related to astronomical adaptive optics
+  * \ingroup imaging
+  */  
   
 /** \defgroup imaging_files Files
   * \brief Source files for wavefront propagation
@@ -219,6 +238,22 @@
 /** \defgroup genastro Astronomy
   * \brief Tools for working with the heavens.
   */
+
+/** \defgroup phyconstants Physical Constants
+  * \brief Various physical constants
+  * \ingroup genastro
+  */
+
+/** \defgroup genphyconstants General Constants
+  * \ingroup phyconstants 
+  * \brief Constants of general applicability
+  */
+  
+/** \defgroup astroconstants Astronomical Constants
+  * \ingroup phyconstants
+  * \brief Constants for astronomy
+  */
+
   
 /** \defgroup astrodynamics Astrodynamics
   * \brief Algorithms for astrodynamic calculations.
@@ -239,21 +274,14 @@
   * \ingroup genastro
   */
   
-/** \defgroup phyconstants Physical Constants
-  * \brief Various physical constants
+/** \defgroup stars Stars 
   * \ingroup genastro
   */
-
-/** \defgroup genphyconstants General Constants
-  * \ingroup phyconstants 
-  * \brief Constants of general applicability
+  
+/** \defgroup planets Planets 
+  * \ingroup genastro
   */
   
-/** \defgroup astroconstants Astronomical Constants
-  * \ingroup phyconstants
-  * \brief Constants for astronomy
-  */
-
 /** \defgroup astrofiles Astronomy Headers
   * \ingroup genastro
   */

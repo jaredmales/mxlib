@@ -18,8 +18,8 @@ namespace mx
 namespace astro
 {
 
-/** \defgroup planets Planets 
-  * \ingroup genastro
+
+/** \ingroup planets
   * @{
   */
 

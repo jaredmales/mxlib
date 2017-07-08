@@ -62,6 +62,7 @@ INC_TO_INSTALL = airy.hpp \
                  imagingArray.hpp \
                  jinc.hpp \
                  levmarInterface.hpp \
+                 logistic.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \
@@ -76,7 +77,6 @@ INC_TO_INSTALL = airy.hpp \
                  readColumns.hpp \
                  roots.hpp \
                  sharedmem_segment.h \
-                 sigmoid.hpp \
                  signalWindows.hpp \
                  stringUtils.hpp \
                  templateBLAS.hpp \

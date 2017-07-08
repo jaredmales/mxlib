@@ -1,7 +1,7 @@
 /** \file environment.hpp
   * \author Jared R. Males
   * \brief Utilities for working with the environment
-  *
+  * \ingroup utils_files
   */
 
 #ifndef __environment_hpp__
@@ -18,12 +18,12 @@ namespace mx
 /// Return the value of an environment variable
 /** Call the standard getenv function, but handles the null pointer as an empty string.
   *
-  * \param estr is the name of the environment variable to query
-  *
   * \returns the value of the environment varialbe, or empty string if it doesn't exist
+  * 
+  * \ingroup system
   */   
 inline
-std::string getEnv(const std::string & estr)
+std::string getEnv(const std::string & estr /**< [in] is the name of the environment variable to query */)
 {
    char * e = getenv(estr.c_str());
    

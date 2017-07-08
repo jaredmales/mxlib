@@ -33,7 +33,7 @@ namespace mx
   * 
   * \tparam T is an floating point type 
   * 
-  * \ingroup gen_math
+  * \ingroup functions
   */
 template<typename T> 
 T jinc( const T & x)
@@ -75,7 +75,7 @@ T jinc( const T & x)
   * 
   * \returns the value of Ji2(x)
   * 
-  * \ingroup gen_math
+  * \ingroup functions
   */
 template<typename T> 
 T jinc2(const T & x)
