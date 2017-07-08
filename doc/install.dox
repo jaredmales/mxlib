@@ -23,7 +23,7 @@ The relevant header files for each library need to be accessible to the compiler
 
 \section install_build Build and Install
 Follow these steps:
--# Checkout mxlib from bitbucket
+-# Checkout mxlib from https://github.com/jaredmales/mxlib
 -#  In the mxlib folder, possibly edit the Makefile.  It probably isn't necessary.  If it is, it is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
 \code
 INSTALL_PATH = $(HOME)
