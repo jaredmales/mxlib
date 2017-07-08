@@ -34,6 +34,7 @@
 #ifdef MX_NO_ERROR_REPORTS
 
 //Just defining these as empty macros, though this is currently untested.
+/** \todo test MX_NO_ERROR_REPORTS */
 
 #define mxError(esrc,ecode,expl) 
 #define mxPError(esrc,ecode,expl)
