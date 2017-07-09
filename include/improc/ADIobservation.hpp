@@ -147,7 +147,7 @@ struct ADIobservation : public HCIobservation<_realT>
    int readFiles();
    
    ///Post read actions, including fake injection
-   virtual void postReadFiles();
+   virtual int postReadFiles();
    
    
    /** \name Fake Planets
@@ -167,9 +167,9 @@ struct ADIobservation : public HCIobservation<_realT>
 
    
    ///Inect the fake plants
-   void injectFake();
+   int injectFake();
    
-   void injectFake( eigenImageT & fakePSF,
+   int injectFake( eigenImageT & fakePSF,
                     int image_i,
                     realT PA,
                     realT sep,
@@ -261,16 +261,20 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
 }
 
 template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::postReadFiles()
+int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 {
    derotF.extractKeywords(this->heads);
    
-   if(fakeFileName != ""  && !this->skipPreProcess) injectFake();
+   if(fakeFileName != ""  && !this->skipPreProcess) 
+   {
+      if( injectFake() < 0) return -1;
+   }
    
+   return 0;
 }
 
 template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::injectFake()
+int ADIobservation<_realT, _derotFunctObj>::injectFake()
 {
    std::cerr << "injecting fake planets\n";
 
@@ -292,10 +296,10 @@ void ADIobservation<_realT, _derotFunctObj>::injectFake()
       std::vector<realT> imS;
       
       //Read the quality file and load it into a map
-      readColumns(fakeScaleFileName, sfileNames, imS);
+      if( readColumns(fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
-      for(int i=0;i<sfileNames.size();++i) scales[sfileNames[i]] = imS[i];
+      for(int i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i])] = imS[i];
       
       for(int i=0; i<this->fileList.size(); ++i)
       {
@@ -314,12 +318,12 @@ void ADIobservation<_realT, _derotFunctObj>::injectFake()
       
    if(fakeMethod == 0)
    {
-      ff.read( fakePSF, fakeFileName );
+      if( ff.read( fakePSF, fakeFileName ) < 0) return -1;
    }
 
    if(fakeMethod == 1)
    {
-      readColumns(fakeFileName, fakeFiles);
+      if( readColumns(fakeFileName, fakeFiles) < 0) return -1;
    }
    
    for(int i=0; i<this->imc.planes(); ++i)
@@ -331,15 +335,7 @@ void ADIobservation<_realT, _derotFunctObj>::injectFake()
 
       for(int j=0;j<fakeSep.size(); ++j)
       {
-         injectFake(fakePSF, i, fakePA[j], fakeSep[j], fakeContrast[j], fakeScale[j]);
-//          ang = DTOR(-fakePA[j]) + derotF.derotAngle(i);
-//       
-//          dx = fakeSep[j] * sin(ang);
-//          dy = fakeSep[j] * cos(ang);
-//                
-//          imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<realT>());
-//    
-//          this->imc.image(i) = this->imc.image(i) + shiftFake*fakeScale[i]*fakeContrast[j];
+         if( injectFake(fakePSF, i, fakePA[j], fakeSep[j], fakeContrast[j], fakeScale[j]) < 0) return -1;
       }
    }
    
@@ -347,11 +343,13 @@ void ADIobservation<_realT, _derotFunctObj>::injectFake()
    std::cerr << "fake injected\n";
    
    t_fake_end = get_curr_time();
+   
+   return 0;
 }
 
 
 template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
+int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
                                                           int image_i,
                                                           _realT PA,
                                                           _realT sep,
@@ -398,6 +396,7 @@ void ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
    
    this->imc.image(image_i) = this->imc.image(image_i) + shiftFake*scale*contrast;
 
+   return 0;
    
 }
 

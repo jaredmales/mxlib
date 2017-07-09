@@ -12,9 +12,9 @@
 #include <sys/wait.h>
 
 #include "fitsUtils.hpp"
-#include "eigenUtils.hpp"
+#include "../eigenUtils.hpp"
 
-#include "IPC.h"
+#include "../IPC.h"
 
 
 namespace mx
@@ -61,6 +61,16 @@ public:
    
    ///Default c'tor
    ds9Interface();
+   
+   /// Constructor which, after initialization, proceeds to display an Eigen-like array in ds9.
+   /** 
+     * see \ref display<typename arrayT>(arrayT & array, int frame=1) for more.
+     */
+   template<typename arrayT>
+   ds9Interface( const arrayT & array, ///< [in] An array containing an image or cube of images
+                 int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
+               );
+   
    
    ///Destructor
    ~ds9Interface();
@@ -155,7 +165,7 @@ public:
                 int frame = 1    ///< [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
               );
 
-   /// Display and Eigen-like array in ds9.
+   /// Display an Eigen-like array in ds9.
    /** Uses the rows(), cols(), and possibly planes(), methods of arrayT.
      * 
      * see \ref display<typename dataT>(const dataT *im, size_t dim1, size_t dim2, size_t dim3, int frame=1) for more.
@@ -166,9 +176,21 @@ public:
      * \retval -1 on an error
      */
    template<typename arrayT>
-   int display( const arrayT & array, ///< [in] An array containing a image or cube of images
+   int display( const arrayT & array, ///< [in] An array containing an image or cube of images
                 int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
               );
+   
+   /// Display an Eigen-like array in ds9.
+   /** 
+     * see \ref display<typename arrayT>(arrayT & array, int frame=1) for more.
+     * 
+     * \retval 0 on sucess
+     * \retval -1 on an error
+     */
+   template<typename arrayT>
+   int operator()( const arrayT & array, ///< [in] An array containing an image or cube of images
+                   int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
+                 );
    
    ///Shutdown the ds9 interface
    /** Mainly detaches from the shared memory segments
@@ -184,6 +206,15 @@ inline
 ds9Interface::ds9Interface()
 {
    init();
+}
+
+template<typename arrayT>
+ds9Interface::ds9Interface( const arrayT & array,
+                            int frame
+                          )
+{
+   init();
+   display(array, frame);
 }
 
 inline
@@ -418,7 +449,13 @@ int ds9Interface::display( const arrayT & array,
    return display(array.data(), array.rows(), array.cols(), planes(array), frame);
 }
 
-
+template<typename arrayT>
+int ds9Interface::operator()( const arrayT & array,
+                              int frame
+                            )
+{
+   return display(array, frame);
+}
    
 inline
 int ds9Interface::shutdown()

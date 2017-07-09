@@ -26,8 +26,7 @@ CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC
 # programs to be made
 TARGETS = libmxlib
 
-OBJS = kepler.o \
-       astrodyn.o \
+OBJS = astrodyn.o \
        msgq.o \
        mxlib.o\
        sharedmem_segment.o \
@@ -97,7 +96,6 @@ msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
 process_interface.o: include/process_interface.h
-ds9_interface.o: include/ds9_interface.h
 astrodyn.o: include/astrodyn.hpp
 
 .PHONY: mxlib_comp_version

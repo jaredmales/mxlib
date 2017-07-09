@@ -66,7 +66,7 @@
   * \ingroup fitting
   */
   
-/** \defgroup fitting_files Files
+/** \defgroup fitting_files Fitting Files
   * \brief Source files for data fitting.
   * \ingroup fitting
   */
@@ -74,11 +74,12 @@
 //------------------  
 /** \defgroup plotting Plotting Data
   * \brief Tools for plotting and displaying data
+  * \ingroup gen_math
   */
 
 /** \defgroup plotting_files Files
   * \brief Source files for plotting data.
-  * \ingroup fitting
+  * \ingroup plotting
   */  
   
 /** \defgroup random Random Numbers
@@ -110,7 +111,12 @@
   * \ingroup fft 
   */
 
-/** \defgroup fft_files Files
+/** \defgroup fftw Getting FFTW
+  * \brief Instructions for building and installing the FFTW library
+  * \ingroup fft 
+  */
+  
+/** \defgroup fft_files FFT Files
   * \ingroup fft 
   */
   
@@ -249,6 +255,11 @@
   * \brief Constants for astronomy
   */
 
+/** \defgroup sofa_constants SOFA Constants
+  * \brief Constants and macros available from \ref astro_sofa. 
+  * \ingroup astroconstants
+  */
+  
   
 /** \defgroup astrodynamics Astrodynamics
   * \brief Algorithms for astrodynamic calculations.

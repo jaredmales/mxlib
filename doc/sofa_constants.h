@@ -1,10 +1,13 @@
-/** \defgroup sofa_constants SOFA Constants
-  * \brief Constants and macros available from \ref astro_sofa. 
-  * \ingroup phyconstants
+/** \addtogroup sofa_constants  
+  * In general, these constants are provided through boost or mxlib with templatized functions/types.
+  * 
+  * \note You should include SOFA via \ref sofa.hpp, rather than the SOFA headers.  In particular, this will remove the constant DC which collides with the Eigen library.
+  *
+  *
+  * 
   * @{
   * 
-  */ 
-
+  */
 /// Pi (defined in the \ref astro_sofa "SOFA" library sofam.h)
 #define DPI (3.141592653589793238462643)
 
@@ -71,7 +74,9 @@
 /// Light time for 1 au (s) (defined in the \ref astro_sofa "SOFA" library sofam.h) 
 #define AULT 499.004782
 
-/// Speed of light (AU per day) (defined in the \ref astro_sofa "SOFA" library sofam.h) 
+/// Speed of light (AU per day) SEE BELOW
+/** Though defined in the \ref astro_sofa "SOFA" library sofam.h, this is undefined by \ref sofa.hpp to avoid a collision with Eigen.  You can use \ref mx::astro::c() instead.
+ */
 #define DC (DAYSEC / AULT)
 
 /// L_G = 1 - d(TT)/d(TCG) (defined in the \ref astro_sofa "SOFA" library sofam.h) 

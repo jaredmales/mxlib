@@ -14,9 +14,10 @@ These are instructions for installing the "mxlib" c/c++ library.  This is my per
 -# You need the GNU Scientific Library (GSL) (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
 -# You need the boost c++ library (this is probably obtainable from the linux distro package manager)
 -# You need cfitsio (http://heasarc.gsfc.nasa.gov/fitsio/) 
--# You need a BLAS and LAPACK.  An excellent option is ATLAS, see my notes on installing ATLAS here \ref atlas.  
--# You need fftw. 
--# You need the IAU sofa libary.  See \ref astro_sofa
+-# You need a BLAS and LAPACK.  An excellent option is ATLAS, see my notes on \ref atlas "installing ATLAS".  
+-# You will need the \ref levmar "levmar least squares library" to use the data fitting tools.
+-# You need \ref fftw "the FFTW library, with at least version 3.3.5". 
+-# You need the \ref astro_sofa "IAU sofa libary".  
 -# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
 
 The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.

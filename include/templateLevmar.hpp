@@ -1,3 +1,9 @@
+/** \file templateLevmar.hpp
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Templatized wrappers to the levmar minimization routines..
+ * \ingroup fitting_files
+ *
+ */
 
 #ifndef __templateLevmar_hpp__
 #define __templateLevmar_hpp__

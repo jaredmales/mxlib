@@ -1,6 +1,6 @@
 /** \defgroup boost_constants Boost Constants
   * \brief Constants provided by the boost library
-  * \ingroup phyconstants
+  * \ingroup genphyconstants
 
   
 Many constants of general utility are defined by the boost c++ library.  For example:

@@ -1,7 +1,7 @@
 /** \file levmarInterface.hpp
  * \author Jared R. Males
- * \brief A templatized interface to the levmar minimization routines..
- * \ingroup fitting
+ * \brief A c++ interface to the templatized levmar minimization routines..
+ * \ingroup fitting_files
  *
  */
 

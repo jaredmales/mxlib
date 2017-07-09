@@ -44,7 +44,7 @@ constexpr realT tan_arcsec()
   */
 
 
-///Newtons Gravitational Constant
+///Newton's Gravitational Constant
 /** Source: 2014 CODATA recommended values \cite codata_2014, http://physics.nist.gov/cuu/Constants/index.html
   */
 template<typename units>
@@ -184,7 +184,7 @@ constexpr typename units::realT GMSun()
 }
 
 /// Solar Mass 
-/** The mass of Sun is the mass parameter \ref GMSun divided by the graviational constant \ref G
+/** The mass of Sun is the \ref GMSun() "Solar mass parameter" divided by the \ref G() "graviational constant".
   * 
   * \f$ M_{Sun} =  GM_{Sun}/G \f$
   * 
@@ -218,7 +218,7 @@ constexpr typename units::realT GMEarth()
 }
 
 /// Earth Mass
-/** The mass of Earth is the mass parameter \ref GMEarth divided by the graviational constant \ref G
+/** The mass of Earth is the \ref GMEarth() "mass parameter"  divided by the \ref G() "gravitational constant".
   * 
   * \f$ M_{e} =  GM_{e}/G \f$
   *
@@ -252,7 +252,7 @@ constexpr typename units::realT GMJupiter()
 }
 
 /// Jupiter Mass
-/** The mass of Jupiter is the mass parameter \ref GMJupiter divided by the graviational constant \ref G
+/** The mass of Jupiter is the \ref GMJupiter() "Jupiter mass parameter"  divided by the \ref G()  "gravitational constant".
   * 
   * \f$ M_{J} =  GM_{J}/G \f$
   *
@@ -281,7 +281,7 @@ constexpr typename units::realT mrMercury()
 
 /// Mass of Mercury.
 /** 
-  * The mass of Mercury is the mass of the Sun \ref massSun divided by the mass ratio of Mercury to the Sun \ref mrMercury.
+  * The mass of Mercury is the \ref massSun() "mass of the Sun" divided by the \ref mrMercury() "mass ratio of Mercury to the Sun".
   * 
   */
 template<typename units>
@@ -319,7 +319,7 @@ constexpr typename units::realT mrVenus()
 
 /// Mass of Venus.
 /** 
-  * The mass of Venus is the mass of the Sun divided by the mass ratio of Venus to the Sun.
+  * The mass of Venus is the \ref massSun() "mass of the Sun" divided by the \ref mrVenus() "mass ratio of Venus to the Sun".
   * 
   */
 template<typename units>

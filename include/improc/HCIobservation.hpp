@@ -423,7 +423,7 @@ public:
    int threshold();
    
    ///Perform post-read actions, for use by derived classes
-   virtual void postReadFiles();
+   virtual int postReadFiles();
 
    ///Populate the mask cube.  Derived classes can do this as appropriate, e.g. by rotating the mask.
    virtual void makeMaskCube();
@@ -710,7 +710,7 @@ int HCIobservation<_realT>::readFiles()
    Npix =  imc.rows()*imc.cols();
    
    /*** Now do the post-read actions ***/
-   postReadFiles();
+   if( postReadFiles() < 0) return -1;
    
    /*** Load the mask ***/
    if( maskFile != "")
@@ -838,9 +838,9 @@ int HCIobservation<_realT>::readWeights()
 }
 
 template<typename _realT>
-void HCIobservation<_realT>::postReadFiles()
+int HCIobservation<_realT>::postReadFiles()
 {
-   return;
+   return 0;
 }
 
 template<typename _realT>

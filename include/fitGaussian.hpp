@@ -1,7 +1,7 @@
 /** \file fitGaussian.hpp
  * \author Jared R. Males
  * \brief Tools for fitting Gaussians to data.
- * \ingroup peak_fit
+ * \ingroup fitting_files
  *
  */
 
@@ -14,11 +14,11 @@
 namespace mx
 {
 
-/** \addtogroup peak_fit
-  * @{
-  */
 
 ///\ref levmarInterface fitter structure for the symmetric Gaussian.
+/** \ingroup peak_fit
+  *
+  */
 template<typename _floatT>
 struct gaussian2D_sym_fitter
 {
@@ -49,6 +49,9 @@ struct gaussian2D_sym_fitter
 };
 
 ///\ref levmarInterface fitter structure for the general elliptical Gaussian.
+/** \ingroup peak_fit
+  *
+  */
 template<typename _floatT>
 struct gaussian2D_gen_fitter
 {
@@ -179,6 +182,9 @@ struct gaussian2D_gen_fitter
   * where the number 7 is replaced by the number of parameters that fitterT expects to fit. 
   *
   * \tparam fitterT a type meeting the above requirements.
+  *
+  * \ingroup peak_fit
+  *
   */
 template<typename fitterT>
 class fitGaussian2D : public levmarInterface<fitterT>
@@ -240,11 +246,44 @@ public:
       fitter.paramNormalizer(this->p, -1);
    }
       
+   floatT G0()
+   {
+      return this->p[0];
+   }
+   
+   floatT A()
+   {
+      return this->p[1];
+   }
+   
+   floatT x0()
+   {
+      return this->p[2];
+   }
+   
+   floatT y0()
+   {
+      return this->p[3];
+   }
+   
+   floatT sigma_x()
+   {
+      return this->p[4];
+   }
+   
+   floatT sigma_y()
+   {
+      return this->p[5];
+   }
+   
+   floatT theta()
+   {
+      return this->p[6];
+   }
    
 };
 
 
-///@}
 
 } //namespace mx
 

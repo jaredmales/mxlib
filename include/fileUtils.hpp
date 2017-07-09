@@ -16,7 +16,8 @@
 #include <vector>
 #include <sstream>
 #include <libgen.h>
- 
+#include <cmath>
+
 #include <boost/filesystem.hpp>
 
 
@@ -31,15 +32,14 @@ namespace mx
 
 ///Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /** 
-  * \param[in] directory the path to the directory to search.
-  * \param[in] prefix the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
-  * \param[in] substr a substring of the filename to earch for, if "" then not used.
-  * \param[in] extension the file name extension to search for, if "" then not used.
-  *
-  * \retval std::vector<std::string> which contains the matching file names.
+  * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames(const std::string & directory, const std::string & prefix, const std::string & substr, const std::string & extension)
+std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search.
+                                       const std::string & prefix,  ///< [in] the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
+                                       const std::string & substr,   ///< [in] a substring of the filename to earch for, if "" then not used.
+                                       const std::string & extension  ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in in ".ext".
+                                     )
 {
    typedef std::vector<path> vec;             // store paths,
 
@@ -111,26 +111,25 @@ std::vector<std::string> getFileNames(const std::string & directory, const std::
 }
 
 ///Get a list of file names from the specified directory, specifying the extension
-/** 
-  * \param[in] directory the path to the directory to search
-  * \param[in] extension the file name extension to search for, if "" then not used 
+/** \overload
   *
-  * \retval std::vector<std::string> which contains the matching file names.
+  * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames(const std::string & directory, const std::string & extension)
+std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search.
+                                       const std::string & extension ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in in ".ext".
+                                     )
 {
    return getFileNames(directory, "", "", extension);
 }
 
 ///Get a list of file names from the specified directory
 /** \overload
-  * \param directory the path to the directory to search
   *
-  * \retval std::vector<std::string> which contains the matching file names.
+  * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames(const std::string & directory)
+std::vector<std::string> getFileNames( const std::string & directory /**< [in] the path to the directory to search.*/)
 {
    return getFileNames(directory, "", "", "");
 }
@@ -138,14 +137,13 @@ std::vector<std::string> getFileNames(const std::string & directory)
 
 ///Prepend and/or append strings to a file name, leaving the directory and extension unaltered.
 /**
-  * \param fname the original file name, possibly including a directory and extension
-  * \param prepend is the string to insert at the beginning of the file name after the path
-  * \param append is the string to insert at the end of the file name, before the extension
-  * 
   * \returns the new file name
   */
 inline
-std::string  fileNamePrependAppend(const std::string & fname, const std::string & prepend, const std::string & append)
+std::string  fileNamePrependAppend( const std::string & fname,  ///< [in] the original file name, possibly including a directory and extension
+                                    const std::string & prepend, ///< [in] is the string to insert at the beginning of the file name after the path
+                                    const std::string & append ///< [in] is the string to insert at the end of the file name, before the extension
+                                  )
 {
    std::string dir, base, ext;
    
@@ -203,8 +201,9 @@ std::string getSequentialFilename( const std::string & basename,
                                    const std::string & extension = "", 
                                    const int startat = 0)
 {
-   int maxdig = 1;
-   for(int j=0;j<ndigit;++j) maxdig *= 10;
+   //int maxdig = 1;
+   //for(int j=0;j<ndigit;++j) maxdig *= 10;
+   int maxdig = pow(10, ndigit);
    
    char digstr[ndigit+1];
    int i = startat;
