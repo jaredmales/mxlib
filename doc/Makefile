@@ -4,5 +4,4 @@ all:
 	
 clean:
 	rm -f *~
-	rm -rf html
 	
