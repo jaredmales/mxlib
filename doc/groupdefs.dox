@@ -160,6 +160,11 @@
   * \brief Kernels to use in image filtering functions.
   * \ingroup image_filters 
   */
+
+/** \defgroup image_reg Image Registration
+  * \brief Tools for registering images.
+  * \ingroup image_processing
+  */
   
 /** \defgroup fits_processing FITS Files
   * \brief Tools for working with FITS files.

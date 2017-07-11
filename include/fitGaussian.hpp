@@ -69,7 +69,7 @@ struct gaussian2D_gen_fitter
       size_t idx_mat, idx_dat;
 
       //Check for positive-definiteness of {{a b}{b c}}
-      if( p[4]*p[6] - p[5]*p[5] <= 0)
+      if( p[4]*p[6] - p[5]*p[5] <= 0 || p[4] <= 0 || p[6] <= 0 || p[4]+p[6] <= 2*fabs(p[6]))
       {
          idx_dat = 0;
          //If it's not positive-definite, then we just fill in with the value of the image itself.

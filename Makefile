@@ -33,8 +33,7 @@ OBJS = astrodyn.o \
        process_interface.o 
 
 
-INC_TO_INSTALL = airy.hpp \
-                 ao \
+INC_TO_INSTALL = ao \
                  app \
                  astro \
                  astrodyn.hpp \

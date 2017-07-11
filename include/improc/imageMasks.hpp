@@ -8,6 +8,9 @@
 #ifndef __imageMasks_hpp__
 #define __imageMasks_hpp__
 
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
 #include "imageTransforms.hpp"
 
 namespace mx
@@ -324,6 +327,49 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
    }
 }   
 
+///Populate a mask based on a typical CCD bleeding pattern.
+/** Masks a circle for saturated pixels, as well as a horizontal bar for bleeding (in both directions if needed).
+  *
+  * \returns 0 on success, -1 otherwise.
+  * 
+  * \tparam imT is an Eigen-like 2D array type.
+  */ 
+template< typename imT >
+int ccdBleedMask( imT & im,  ///< [out] the mask, on output will be 1/0.  Must be allocated prior to call.
+                  typename imT::Scalar x0, ///< [in] the x-coordinate of the center of the mask
+                  typename imT::Scalar y0, ///< [in] the y-coordinate of the center of the mask
+                  typename imT::Scalar rad, ///< [in] the radius of the central circle.
+                  typename imT::Scalar height, ///< [in] the half-height of the saturation bar.
+                  typename imT::Scalar lwidth, ///< [in] the length of the saturation bar to the left.
+                  typename imT::Scalar rwidth ///< [in] the length of the saturation bar to the right.
+                )
+{
+   typename imT::Scalar x, y;
+   
+   for(int i=0; i<im.rows(); ++i)
+   {
+      x = i;
+      for(int j=0; j<im.cols(); ++j)
+      {
+         y = j;
+         
+         if( sqrt( pow(x-x0,2) + pow(y-y0,2)) <= rad)
+         {
+            im(i,j) = 0;
+         }
+         else if( fabs(y - y0) <= height && x >= x0-lwidth && x <= x0 + rwidth )
+         {
+            im(i,j) = 0;
+         }
+         else
+         {
+            im(i,j) = 1;
+         }
+      }
+   }
+   
+   return 0;
+}
 
 /// Cut out a region of an image specified by an index-mask.
 /** The output sill be a row-image containing the pixel values.

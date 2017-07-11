@@ -151,8 +151,7 @@ void gaussian2D( arithT * arr,
   * 
   * In this version the parameters are specified directly as (a,b,c), in particular avoiding the trig function calls.
   * This should be much more efficient, and so this version should be used inside fitting routines, etc.  However
-  * note that the the following condition must be true   
-  * \f$ ac - b^2 > 0 \f$
+  * note that the matrix {a b}{b c} must be <a href="http://mathworld.wolfram.com/PositiveDefiniteMatrix.html">positive-definite</a> 
   * otherwise infinities can result from the argument of the exponent being positive.
   * 
   * The functions \ref gaussian2D_gen2rot and \ref gaussian2D_rot2gen provide conversions from
@@ -272,7 +271,7 @@ void gaussian2D_gen2rot( arithT & sigma_x,
    theta1 = asin(sqrt(s)); //This always gives the correct magnitude, and seems to be more accurate
       
    //Compare signs.  If they match, then we use theta1
-   if( signbit(theta0) == signbit(theta1))
+   if( std::signbit(theta0) == std::signbit(theta1))
    {
       theta = theta1;
    }
