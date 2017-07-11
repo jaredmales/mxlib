@@ -12,23 +12,34 @@ levmar can be found at <a href = "http://users.ics.forth.gr/~lourakis/levmar/"> 
 
 \section installing_levmar Installing levmar
 
-For a static (.a) library, either use cmake to build levmar, or the provided Makefile.  With that route you will have to edit the Makefile to provde the correct path to lapack and blas, etc., in the LAPACKLIBS variable.  
+Download the lates levmar from the above link.  I am currently on 2.6.
 
-If you want a shared (.so) library, you may need to use the Makefile.  You will need to add the option -fPIC to the CFLAGS.  You may also want to change the AR to ar -r and RANLIB to ar -s.  Also edit out any options in the $(AR) command in the liblevmar.a rule.
-
-Finnaly, once the build is complete, turn liblevmar.a into a shared libary like so:
-\code
-gcc -shared -Wl,-soname,liblevmar.so -o liblevmar.so *.o -rdynamic
-\endcode
-
-The location of liblevmar.so and levmar.h should be accessible to your compiler (i.e. in your lib and include directories).
+I typically need to edit the following lines in the Makefile, like so:
+\verbatim
+CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -funroll-loops -Wall -fPIC
+LAPACKLIBS_PATH=/usr/local/atlas/lib
+AR=ar -r
+RANLIB=ar -s
+LAPACKLIBS=-llapack -lcblas -lf77blas  -latlas -lgfortran
+\endverbatim
+This assumes you are using gcc and ATLAS.  If you installed ATLAS somewhere else, modify accordingly.  We want a shared (.so) library, this is why we added the option -fPIC to the CFLAGS, and changed the AR to ar -r and RANLIB to ar -s.  Also edit out any options in the \$(AR) command in the liblevmar.a rule.
 
 \par NOTE:
 In levmar.h the line 
 \code
 #define LINSOLVERS_RETAIN_MEMORY
 \endcode
-should be commented out if there is any chance you will use levmar in a multithreaded program.  In particular, if you use openmp the compiler will issue a warning at this point in the header.
+should be commented out if there is any chance you will use levmar in a multithreaded program.  In particular, if you use openmp the compiler will issue a warning at this point in the header.  I always build levmar with this commented out.
+
+Type make to build.  Do not worry if it exits with an error -- as long liblevmar.a was made then everything is fine for our purposes.
+
+Finnaly, once the build is complete, turn liblevmar.a into a shared libary like so:
+\code
+gcc -shared -Wl,-soname,liblevmar.so -o liblevmar.so *.o -rdynamic
+\endcode
+
+The location of liblevmar.so and levmar.h should be accessible to your compiler.  I put these in \$(HOME)/lib and in \$(HOME)/include respectively.
+
 
 \section levmar_documentation levmar Documentation 
 
