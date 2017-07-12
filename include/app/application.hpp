@@ -16,16 +16,18 @@ namespace mx
 
 /// A class for managing application configuration and execution
 /** Derived classes should implement at a minimum 
-  * \begin{code}
+  * 
+  * \code
     virtual void setupConfig();
     virtual void loadConfig();
     virtual int execute();
-  * \end{code}
+   \endcode
   *
   * These are executed in the order shown by the call to \ref main().
   * 
   * \note After loadConfig() but before execute(), the containers in \ref config are de-allocated , so they can not be used inside execute.
   * 
+  * \ingroup mxApp
   */
 class application
 {
@@ -60,8 +62,8 @@ public:
    }
    
    ///The application main function.
-   /** Call this from the true main function, passing the command line arguments to processed.
-     * This calls \ref setup, then deletes the config structure, and then calls \ref execute. 
+   /** Call this from the true main function, passing the command line arguments to be processed.
+     * This calls \ref setup(), then deletes the config structure, and then calls \ref execute(). 
      */
    int main( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
              char **argv ///< [in] standard command line result containing the arguments.
@@ -221,6 +223,7 @@ protected:
    
    }
    
+   ///Print a formatted help message, based on the config target inputs.
    virtual void help()
    {
       appConfigurator::targetIterator targIt;
@@ -283,6 +286,7 @@ protected:
       
    }
    
+   ///This function is where the derived class should do its work.
    virtual int execute()
    {
       return 0;

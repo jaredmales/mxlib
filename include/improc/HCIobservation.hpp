@@ -1280,13 +1280,14 @@ inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
       head.append<int>("COADTIME", coaddMaxTime, "max time  in each coadd");
    }
 
-   
+   head.append("MASKFILE", maskFile, "mask file");
    
    head.append<int>("PPBEFORE", preProcess_beforeCoadd, "pre-process before coadd flag");
+   head.append<int>("PPMASK", preProcess_mask, "pre-process mask flag");
    head.append<int>("PPSUBRAD", preProcess_subradprof, "pre-process subtract radial profile flag");
    head.append<realT>("PPAUSMAW", preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width");
    head.append<realT>("PPAUSMRW", preProcess_azUSM_radW, "pre-process azimuthal USM radial width");
-   head.append("MASKFILE", maskFile, "mask file applied during pre-processing");
+   
    head.append<realT>("PPGUSMFW", preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm");
    
    head.append<int>("COMBMTHD", combineMethod, "combination method");

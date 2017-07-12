@@ -2,6 +2,7 @@
  * \author Jared R. Males
  * \brief A command line parser
  *
+ * \ingroup mxApp_files
  */
 
 #ifndef __clOptions_hpp__
