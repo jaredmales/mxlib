@@ -1,7 +1,7 @@
 /** \file fourierCovariance.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Calculation of the modal covariance in the Fourier basis.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -57,6 +57,8 @@ struct fourierCovariance;
   *
   * \tparam floatT a floating point type used for all calculations
   * \tparam aosysT the type of the AO system structure 
+  * 
+  * \ingroup mxAOAnalytic
   */
 template<typename floatT, typename aosysT>
 floatT phiInt_basic (floatT phi, void * params) 

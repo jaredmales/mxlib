@@ -234,6 +234,36 @@
   * \ingroup imaging
   */  
 
+/** \defgroup mxAOAnalytic Analysis of Adaptive Optics
+  * \brief Tools for analytic evaluaiton of AO systems
+  * \ingroup mxAO
+  */
+
+/** \defgroup aoConstants AO Constants
+  * \brief A collection of constants useful for AO analysis.
+  * \ingroup mxAOAnalytic
+  */
+
+/** \defgroup mxAOSim Simulation of Adaptive Optics
+  * \brief Tools for simulation of AO systems.
+  * \ingroup mxAO
+  */
+
+/** \defgroup ao_getting_started Getting Started  
+  * \ingroup mxAOSim
+  */
+  
+/** \defgroup mxAO_paths Adaptive Optics Path Management
+  * \brief Definitions and managemetn of AO related file paths.
+  * \ingroup mxAOSim
+  */  
+
+  
+/** \defgroup mxAO_files Adaptive Optics Files
+  * \brief Files related to astronomical adaptive optics
+  * \ingroup mxAO
+  */  
+  
 //see imaging_files  
   
   
@@ -348,6 +378,12 @@
   * \brief Tools for managing shared memory
   */  
   
+/** \defgroup mxApp An Application Framework
+  * \ingroup utils
+  * \brief A command-line application framework.
+  */
+  
+  
 // see utils_files  
   
 
@@ -399,6 +435,12 @@
 /** \defgroup utils_files Utility Files
   * \brief Header files for General Utilities.
   * \ingroup utils
+  */
+  
+/** \defgroup mxApp_files Application Files 
+  * \brief Files for application programming.
+  * \ingroup mxApp 
+  * \ingroup utils_files
   */
   
 //This stuff is at the very end to make sure it is last in whatever group listings it is in.  

@@ -1,7 +1,7 @@
 /** \file aoAtmosphere.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Provides a class to specify atmosphere parameters.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -228,9 +228,9 @@ public:
    /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
      * 
      \f[
-      \bar{v} = \left[\sum_i C_N^2(z_i) v_i^{5/3} \right]^3/5
+      \bar{v} = \left[\sum_i C_N^2(z_i) v_i^{5/3} \right]^{3/5}
      \f]
-     * See Hardy (1998) Section 3.3.6. \cite{hardy_1998}.
+     * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
      * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
      * returns the value of _v_wind.
@@ -243,9 +243,9 @@ public:
    /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
      * 
      \f[
-      \bar{v} = \left[\sum_i C_N^2(z_i) \theta_i^{5/3} \right]^3/5
+      \bar{v} = \left[\sum_i C_N^2(z_i) \theta_i^{5/3} \right]^{3/5}
      \f]
-     * See Hardy (1998) Section 3.3.6. \cite{hardy_1998}.
+     * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
      * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
      * returns the value of _v_wind.
@@ -274,9 +274,9 @@ public:
    ///Get the weighted mean layer height
    /** Returns the weighted layer height according to the 5/3's turbulence moment.  This is defined as
      \f[
-      \bar{z} = \left[\sum_i C_N^2(z_i) z_i^{5/3} \right]^3/5
+      \bar{z} = \left[\sum_i C_N^2(z_i) z_i^{5/3} \right]^{3/5}
      \f]
-     * See Hardy (1998) Section 3.3.6 and 3.7.2. \cite{hardy_1998}.
+     * See Hardy (1998) Section 3.3.6 and 3.7.2. \cite hardy_1998.
      * 
      * This is only re-calculated if either _layer_Cn2 or _layer_z is changed, otherwise this just
      * returns the value of _z_mean.
@@ -301,7 +301,7 @@ public:
    void z_mean(const realT & zm /**< */);
    
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
-   /** See Equation (14) of Guyon (2005) \cite{guyon_2005}. 
+   /** See Equation (14) of Guyon (2005) \cite guyon_2005. 
      *
      * \param k the spatial frequency, in inverse meters.
      * \param lam_sci the wavelength
@@ -313,7 +313,7 @@ public:
           );
    
    ///The differential fraction of the turbulence PSD in phase after Fresnel propagation.
-   /** See Equation (25) of Guyon (2005) \cite{guyon_2005}. 
+   /** See Equation (25) of Guyon (2005) \cite guyon_2005. 
      *
      * \param k the spatial frequency, in inverse meters.
      * \param lam_sci the wavelength
@@ -326,7 +326,7 @@ public:
            );
 
    ///The fraction of the turbulence PSD in amplitude after Fresnel propagation.
-   /** See Equation (15) of Guyon (2005) \cite{guyon_2005}. 
+   /** See Equation (15) of Guyon (2005) \cite guyon_2005. 
      *
      * \param k the spatial frequency, in inverse meters.
      * \param lam_sci the wavelength
@@ -338,7 +338,7 @@ public:
          );
    
    ///The differential fraction of the turbulence PSD in amplitude after Fresnel propagation.
-   /** See Equation (27) of Guyon (2005) \cite{guyon_2005}. 
+   /** See Equation (27) of Guyon (2005) \cite guyon_2005. 
      *
      * \param k the spatial frequency, in inverse meters.
      * \param lam_sci the wavelength
@@ -360,11 +360,11 @@ public:
           );
    
    ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere.
-   /** Calculate the FWHM of a seeing limited image with the current parameters according to \cite{floyd_2010}:
+   /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite floyd_2010
      \f[
       \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}.
       \f]
-     * If there is an outer scale (_L_0 > 0), then a correction is applied according to \cite{tokovinin_2002}:
+     * If there is an outer scale (_L_0 > 0), then a correction is applied according to Tokovinin (2002) \cite tokovinin_2002
      \f[
       \left( \frac{\epsilon_{vK}}{\epsilon_0}\right)^2 = 1 - 2.183\left( \frac{r_0(\lambda_{sci}}{L_0}\right)^{0.356}
      \f]
@@ -376,7 +376,7 @@ public:
    realT fwhm(realT lam_sci /**< */ );
    
    ///Load the default atmosphere model from Guyon (2005).
-   /** Sets the parameters from Table 4 of Guyon (2005) \cite{guyon_2005}.
+   /** Sets the parameters from Table 4 of Guyon (2005) \cite guyon_2005.
      */
    void loadGuyon2005();
    

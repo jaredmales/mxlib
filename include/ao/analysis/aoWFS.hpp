@@ -1,7 +1,7 @@
 /** \file aoWFS.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Definitions of various wavefront sensors
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -18,6 +18,8 @@ namespace AO
 /** Calculates the \f$\beta_p\f$ parameter of Guyon, 2005 \cite guyon_2005
   *
   * \tparam floatT is the floating point type used for calculations
+  * 
+  * \ingroup mxAOAnalytic
   */ 
 template<typename floatT>
 struct pywfsUnmod

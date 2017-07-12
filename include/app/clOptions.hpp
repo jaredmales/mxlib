@@ -13,7 +13,7 @@
 #include <string>
 #include <iostream>
 
-#include "optionparser.h"
+#include "optionparser/optionparser.h"
 
 namespace mx
 {
@@ -43,6 +43,10 @@ static option::ArgStatus Arg_Required(const option::Option& option, bool msg)
    
 
 /// Command line options parser.
+/** This is a wrapper for the <a href="https://sourceforge.net/projects/optionparser/">"The Lean Mean C++ Option Parser"</a> command line parser.  
+  * 
+  * \ingroup mxApp
+  */ 
 struct clOptions
 {
    std::unordered_map<std::string, unsigned int> map;

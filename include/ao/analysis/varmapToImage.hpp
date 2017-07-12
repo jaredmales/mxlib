@@ -1,7 +1,7 @@
 /** \file varmapToImage.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief A utility to convert a wavefront variance map to an intensity image
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -24,6 +24,8 @@ namespace AO
   * \param [in] psf is the point spread function
   * 
   * \tparam imageT is an Eigen-array-like type.
+  * 
+  * \ingroup mxAOAnalytic
   */
 template< typename imageT >
 void varmapToImage( imageT & im,

@@ -1,7 +1,7 @@
 /** \file aoConstants.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Calculate and provide constants related to adaptive optics.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -24,10 +24,6 @@ namespace AO
 namespace constants
 {
    
-/** \defgroup aoConstants AO Constants
-  * \ingroup mxAOAnalytic 
-  * @{
-  */
 
 ///Calculate the AO constants
 template<typename floatT>
@@ -58,6 +54,7 @@ void calcConstants(floatT & a_sf, floatT & a_psd)
   * \returns 6.883877.... cast to type floatT
   * 
   * \tparam floatT is the type to cast the value to.
+  * \ingroup aoConstants
   */
 template<typename floatT>
 floatT a_SF()
@@ -76,6 +73,8 @@ floatT a_SF()
   * \returns 0.02181... cast to type floatT
   * 
   * \tparam floatT is the type to cast the value to
+  * 
+  * \ingroup aoConstants
   */
 template<typename floatT>
 floatT a_PSD()
@@ -84,6 +83,8 @@ floatT a_PSD()
 }
 
 ///Return 5/3 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT five_thirds()
 {
@@ -92,6 +93,8 @@ floatT five_thirds()
 
 
 ///Return 5/6 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT five_sixths()
 {
@@ -99,6 +102,8 @@ floatT five_sixths()
 }
 
 ///Return 11/3 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT eleven_thirds()
 {
@@ -106,6 +111,8 @@ floatT eleven_thirds()
 }
 
 ///Return 11/6 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT eleven_sixths()
 {
@@ -113,6 +120,8 @@ floatT eleven_sixths()
 }
 
 ///Return 6/5 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT six_fifths()
 {
@@ -120,6 +129,8 @@ floatT six_fifths()
 }
 
 ///Return 3/5 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT three_fifths()
 {
@@ -127,13 +138,14 @@ floatT three_fifths()
 }
 
 ///Return 17/3 in the specified precision
+/** \ingroup aoConstants
+  */
 template<typename floatT>
 floatT seventeen_thirds()
 {
    return static_cast<floatT>(17)/static_cast<floatT>(3);
 }
 
-///@}
 
 } //namespace constants
 } //namespace AO

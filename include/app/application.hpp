@@ -22,9 +22,9 @@ namespace mx
     virtual int execute();
   * \end{code}
   *
-  * These are executed in the order shown by the call to \ref main.
+  * These are executed in the order shown by the call to \ref main().
   * 
-  * \note After loadConfig() but before execute(), \ref config is de-allocated, so it can not be used inside execute.
+  * \note After loadConfig() but before execute(), the containers in \ref config are de-allocated , so they can not be used inside execute.
   * 
   */
 class application
@@ -39,7 +39,7 @@ protected:
    std::string configPathLocal;
    std::string configPathCL;
    
-   appConfigurator * config;
+   appConfigurator config;
    
    bool doHelp;
 
@@ -48,8 +48,6 @@ protected:
 public:
    application()
    {
-      config = new appConfigurator;
-      
       doHelp = false;
       helpWidth = 120;
       
@@ -58,8 +56,6 @@ public:
    
    ~application()
    {
-      if(config) delete config;
-      
       return;
    }
    
@@ -67,7 +63,9 @@ public:
    /** Call this from the true main function, passing the command line arguments to processed.
      * This calls \ref setup, then deletes the config structure, and then calls \ref execute. 
      */
-   int main(int argc, char **argv)
+   int main( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
+             char **argv ///< [in] standard command line result containing the arguments.
+           )
    {
       setup(argc, argv);
       
@@ -77,8 +75,7 @@ public:
          return 0;
       }
       
-      delete config;
-      config = 0;
+      config.clear();
       
       return execute();
    }
@@ -112,15 +109,15 @@ protected:
       
       setupConfig();
       
-      config->readConfig(configPathGlobal);
-      config->readConfig(configPathUser);
-      config->readConfig(configPathLocal);
+      config.readConfig(configPathGlobal);
+      config.readConfig(configPathUser);
+      config.readConfig(configPathLocal);
       
-      config->parseCommandLine(argc, argv);
+      config.parseCommandLine(argc, argv);
 
       setConfigPathCL();
       
-      config->readConfig(configPathCL);
+      config.readConfig(configPathCL);
       
       loadConfig();
    }
@@ -240,7 +237,7 @@ protected:
       std::cerr << "  Required options:\n";
       
       int row = 0;
-      for( clOnlyTargIt = config->clOnlyTargets.begin(); clOnlyTargIt !=  config->clOnlyTargets.end(); ++clOnlyTargIt)
+      for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
       {
          if( clOnlyTargIt->isRequired == true)
          {
@@ -249,7 +246,7 @@ protected:
          }
       }
             
-      for( targIt = config->targets.begin(); targIt !=  config->targets.end(); ++targIt)
+      for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
       {
          if( targIt->second.isRequired == true)
          {
@@ -264,7 +261,7 @@ protected:
       row = 0;
       std::cerr << "\n  Optional options:\n";
       
-      for( clOnlyTargIt = config->clOnlyTargets.begin(); clOnlyTargIt !=  config->clOnlyTargets.end(); ++clOnlyTargIt)
+      for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
       {
          if( clOnlyTargIt->isRequired == false)
          {
@@ -273,7 +270,7 @@ protected:
          }
       }
             
-      for( targIt = config->targets.begin(); targIt !=  config->targets.end(); ++targIt)
+      for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
       {
          if( targIt->second.isRequired == false)
          {

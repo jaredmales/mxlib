@@ -1,7 +1,7 @@
 /** \file aoPSDs.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Spatial power spectra used in adaptive optics.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -27,6 +27,8 @@ namespace AO
 {
    
 ///Manage calculations using the von Karman spatial power spectrum.
+/** \ingroup mxAOAnalytic
+  */ 
 template<typename floatT>
 struct vonKarmanSpectrum
 {

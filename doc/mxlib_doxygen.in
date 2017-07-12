@@ -790,9 +790,12 @@ INPUT                  = ./groupdefs.dox \
                          ./fftw.dox \
                          ../ \
                          ../include \
+                         ../include/app \
                          ../include/astro \
                          ./boost_const.dox \
                          ../include/ao \
+                         ../include/ao/analysis \
+                         ../include/ao/sim \
                          ./ao/aogroupdefs.dox \
                          ./ao/gettingStarted.dox \
                          ../include/improc \

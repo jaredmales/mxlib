@@ -1,7 +1,7 @@
 /** \file clGainOpt.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Provides a class to manage closed loop gain optimization.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -39,6 +39,8 @@ struct clGainOptOptGain_CL;
 /// A class to manage optimizing closed-loop gains
 /**
   * \tparam _realT the real floating point type in which to do all arithmetic.  Is used to define the complex type as well. 
+  * 
+  * \ingroup mxAOAnalytic
   */
 template<typename _realT>
 struct clGainOpt

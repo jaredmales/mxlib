@@ -1,7 +1,7 @@
 /** \file fourierTemporalPSD.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Calculation of the temporal PSD of Fourier modes.
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -74,6 +74,7 @@ realT F_projMod (realT kv, void * params);
   * \todo Split off the integration parameters in a separate structure.
   * \todo once integration parameters are in a separate structure, make this a class with protected members.
   * 
+  * \ingroup mxAOAnalytic
   */
 template<typename realT, typename aosysT>
 struct fourierTemporalPSD
@@ -802,6 +803,8 @@ void fourierTemporalPSD<realT, aosysT>::getGridPSD( std::vector<realT> & freq,
 }
 
 ///Worker function for GSL Integration for the basic sin/cos Fourier modes.
+/** \ingroup mxAOAnalytic
+  */
 template<typename realT, typename aosysT>
 realT F_basic (realT kv, void * params) 
 {
@@ -834,6 +837,8 @@ realT F_basic (realT kv, void * params)
 }
 
 ///Worker function for GSL Integration for the modified Fourier modes.
+/** \ingroup mxAOAnalytic
+  */
 template<typename realT, typename aosysT>
 realT F_mod (realT kv, void * params) 
 {
@@ -868,6 +873,8 @@ realT F_mod (realT kv, void * params)
 
 
 ///Worker function for GSL Integration for a basis projected onto the modified Fourier modes.
+/** \ingroup mxAOAnalytic
+  */
 template<typename realT, typename aosysT>
 realT F_projMod (realT kv, void * params) 
 {

@@ -1,7 +1,7 @@
 /** \file aoSystem.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declares and defines an analytical AO system
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -37,6 +37,8 @@ namespace AO
   * \tparam realT the floating point type used for all calculations
   * \tparam inputSpecT specifies the turbulence spatial PSD type
   * \tparam wfsBetaT specifies the WFS sensitivity type.  
+  * 
+  * \ingroup mxAOAnalytic
   */
 template<typename realT, class inputSpectT, class wfsBetaT>
 class aoSystem
@@ -100,7 +102,7 @@ public:
    ///Initialize all members.
    void initialize();
 
-   ///Load the default parameters from Guyon, 2005.
+   ///Load the default parameters from Guyon, 2005\cite guyon_2005.
    /**  
      *
      */ 

@@ -1,7 +1,7 @@
 /** \file wfsNoisePSD.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declares and defines a function to calculate the measurement noise PSD
-  * \ingroup mxAOAnalytic_files
+  * \ingroup mxAO_files
   * 
   */
 
@@ -16,6 +16,8 @@ namespace AO
 ///Populate a vector with the PSD of measurement noise given WFS parameters.
 /** 
   * \tparam realT is the real floating point type for calculations
+  * 
+  * \ingroup mxAOAnalytic
   */ 
 template<typename realT>
 void wfsNoisePSD( std::vector<realT> &PSD,  ///< [out] A pre-allocated vector which will be filled with the PSD value.

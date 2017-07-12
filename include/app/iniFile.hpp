@@ -28,13 +28,15 @@ struct iniFile
    {    
       std::string nkey = makeKey(section, name);
 
-      if (names[nkey].size() > 0)
-      {
-        names[nkey] += "\n";
-      }
+      names[nkey];
+//       if (names[nkey].size() > 0) //This is where the insertion actually occurs.
+//       {
+//         names[nkey] += ""; //We actually do nothing.
+//       }
 
-      names[nkey] += value;
-      return 1;
+      names[nkey] += value; //This is just an update to the existing value.
+      
+      return 0;
    }
 
    static int handler(void* user, const char* section, const char* name,

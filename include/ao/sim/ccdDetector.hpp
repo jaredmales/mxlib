@@ -1,4 +1,9 @@
-
+/** \file ccdDetector.hpp
+  * \author Jared R. Males (jaredmales@gmail.com)
+  * \brief Provides a class to simulate a CCD.
+  * \ingroup mxAO_files
+  * 
+  */
 
 #ifndef __ccdDetector_hpp__
 #define __ccdDetector_hpp__
@@ -23,7 +28,11 @@ namespace sim
 
    
    
-   
+///A simulated CCD detector
+/** A simulated CCD detector, including an optional EMCCD noise model.
+  *
+  * \ingroup mxAOSim
+  */   
 template<typename _floatT>
 class ccdDetector 
 {
@@ -115,13 +124,15 @@ public:
      * The output image is resized only if necessary.
      * The input image is multiplied by expTime, so its flux should be in photons/sec.
      * Noise is modeled as follows:
-     * -# The number of input photons for pixel (i,j) is $f/ n_{ie} = (in(i,j) + darkCurrent)*expTime + cic $f/
-     * -# The Poisson distribution with mean and variance $f/ n_{ie} $/f is sampled. 
+     * -# The number of input photons for pixel (i,j) is \f$ n_{ie} = (in(i,j) + darkCurrent)*expTime + cic \f$
+     * -# The Poisson distribution with mean and variance \f$ n_{ie} \f$ is sampled. 
      * -# If gain > 1, the gamma distribution is sampled
      * -# Read noise is applied
      * -# Result is rounded to nearest whole integer.
      */
-   void exposeImage(imageT & out, imageT & in);
+   void exposeImage( imageT & out, ///< [out] The output image, after all above steps applied. 
+                     imageT & in ///< [in] the input image, in photons/sec flux units.
+                   );
    
       
    
