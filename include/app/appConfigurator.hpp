@@ -133,6 +133,8 @@ struct appConfigurator
    
 
    ///Parse a config/ini file, updating the targets
+   /** \todo handle += here, by appending to the last value as if a vector.
+     */
    void readConfig(const std::string & fname /**< [in] the config file name */);
       
    /// Check if a target has been set by the configuration
@@ -352,6 +354,7 @@ void appConfigurator::readConfig(const std::string & fname)
          it->second.set = true;
       }
    }
+   
 }
    
 inline

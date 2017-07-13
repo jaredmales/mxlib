@@ -25,7 +25,7 @@ namespace mx
   *
   * These are executed in the order shown by the call to \ref main().
   * 
-  * This uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
+  * We use a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
   * - A user configuration file
   * - A local configuration file
@@ -41,7 +41,7 @@ namespace mx
   
   [section1]
   key3=value3
-  key4=value4
+  key4=value4,value4.1, value4.2, value4.3
   
   [section2]
   key3=value5
@@ -51,9 +51,11 @@ namespace mx
        
   \endverbatim
   * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).  Additional entries within one file with the same
-  * section and key are appended with a newline to the previous entry.  So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such that in the above example
-  * the result is key4=value6_over_multiple_lines
+  * section and key are appended with a newline to the previous entry.  So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such 
+  * that in the above example the result is key4=value6_over_multiple_lines.  Vectors are input as in section1.key4.
   *
+  * \todo add handling of += 
+  * 
   * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
   *
   * \note After loadConfig() but before execute(), the containers in \ref config are de-allocated , so they can not be used inside execute.
