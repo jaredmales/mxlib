@@ -119,7 +119,38 @@ double Cal2mjd(int yr, int mon, int day, int hr, int min, double sec)
    
    return djm0;
 }
+
+///Parse an ISO8601 date of the form "YYYY-MM-DDTHH:MM:SS.S" into the individual components.
+/** Parsing is currently only for the exact form above, which is the form in a FITS file.
+  * See https://en.wikipedia.org/?title=ISO_8601. 
+  * 
+  * \ingroup timeutils
+  */
+inline 
+int ISO8601dateBreakdown( int & yr, ///< [out] Gregorian calendar year
+                           int & mon, ///< [out] Gregorian calendar month
+                           int & day, ///< [out] Gregorian calendar day
+                           int & hr, ///< [out] Gregorian calendar hour
+                           int & min, ///< [out] Gregorian calendar minute
+                           double & sec, ///< [out] Gregorian calendar second
+                           const std::string & fdate ///< [in] is a standard ISO8601 date string
+                         )
+{   
+   if(fdate.length() < 19) return -4;
    
+   
+   yr = atoi(fdate.substr(0,4).c_str());
+   mon = atoi(fdate.substr(5,2).c_str());
+   day = atoi(fdate.substr(8,2).c_str());
+   
+   double _hr, _min;
+   parse_hms(fdate.substr(11), _hr, _min, sec);
+
+   hr = floor(_hr);
+   min = floor(_min);
+   
+}
+
 ///Parse an ISO8601 date of the form "YYYY-MM-DDTHH:MM:SS.S" and return the modified Julian date (MJD)
 /** Parsing is currently only for the exact form above, which is the form in a FITS file.
   * See https://en.wikipedia.org/?title=ISO_8601. 
@@ -134,16 +165,20 @@ double ISO8601date2mjd(const std::string & fdate)
 {   
    if(fdate.length() < 19) return -4;
    
-   int yr, mon, day;
-   double hr, min, sec;
+   int yr, mon, day, hr, min;
+   //double hr, min, sec;
+   double sec;
    
-   yr = atoi(fdate.substr(0,4).c_str());
+/*   yr = atoi(fdate.substr(0,4).c_str());
    mon = atoi(fdate.substr(5,2).c_str());
    day = atoi(fdate.substr(8,2).c_str());
    
    parse_hms(fdate.substr(11), hr, min, sec);
+  */
+
+   ISO8601dateBreakdown( yr, mon, day, hr, min, sec, fdate);
    
-   return Cal2mjd(yr,mon,day, floor(hr), floor(min),sec);
+   return Cal2mjd(yr,mon,day, hr, min, sec);
    
 }
 

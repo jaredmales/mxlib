@@ -319,6 +319,9 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
    return vectorSigmaMean(vec, &weights, sigma, maxPasses);
 }
 
+
+
+
 ///@}
 
 } //namespace mx

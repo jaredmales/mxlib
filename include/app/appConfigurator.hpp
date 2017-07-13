@@ -10,6 +10,8 @@
 #define __appConfigurator_hpp__
 
 #include "../stringUtils.hpp"
+#include "../meta/trueFalseT.hpp"
+#include "../meta/typeTraits.hpp"
 
 #include "clOptions.hpp"
 #include "iniFile.hpp"
@@ -124,8 +126,9 @@ struct appConfigurator
            );
       
    ///Parse the command line, updating the targets
-   void parseCommandLine( int argc, 
-                          char ** argv
+   void parseCommandLine( int argc,  ///< [in] standard command line result specifying number of argumetns in argv
+                          char ** argv, ///< [in] standard command line result containing the arguments.
+                          const std::string & oneTarget = "" ///< [in] [optional] if not empty, then only this target is extracted by the parser.
                         );
    
 
@@ -207,6 +210,38 @@ struct appConfigurator
                    const std::string & name
                  );
 
+private:
+   //Tag-dispatching: These overloads provide different behavior depending on whether typeT is a vector, effectively 
+   // overloading get(name) based on return type.   
+   template<typename typeT>
+   typeT internalGet( const std::string & name, //[in] the target name
+                      meta::trueFalseT<false> isNotVector //[in] the false type makes this the overload for non-std::vector typeT
+                    );
+   
+   template<typename typeT>
+   typeT internalGet( const std::string & name, //[in] the target name
+                      meta::trueFalseT<true> isVector //[in] the true type makes this the overload for typeT == std::vector
+                    );
+
+public:   
+   /// Get the final value of the target, returned as the specified type
+   /** The default-constructed/initialized value is returned if \ref isSet() == false, so this should carefully be used
+     * in conjunction with \ref isSet() to avoid overwriting default values.
+     * 
+     * This works for vectors as well (through tag dispatching).  In any case, you must explicitly specify typeT, as in 
+     * \code
+       float f = get<float>(name);
+       std::vector<float> v = get<std::vector<float>>(name); 
+       \endcode
+     * 
+     * 
+     * \retval 0 on success.
+     * \retval -1 on error.
+     */
+   template<typename typeT>
+   typeT get( const std::string & name /**< [in] the config target name */ );
+   
+   
 };
 
 inline
@@ -247,7 +282,8 @@ void appConfigurator::add( const std::string &n,
    
 inline
 void appConfigurator::parseCommandLine( int argc, 
-                                        char ** argv
+                                        char ** argv,
+                                        const std::string & oneTarget
                                       ) 
 {
    if(argc == 0) return;
@@ -260,6 +296,8 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(it->second.shortOpt == "" && it->second.longOpt == "") continue; //No command line opts specified.
       
+      if(oneTarget != "" && it->second.name != oneTarget) continue;
+      
       clOpts.add(it->second.name,it->second.shortOpt.c_str(),it->second.longOpt.c_str(), it->second.clType);
    }
    
@@ -268,6 +306,8 @@ void appConfigurator::parseCommandLine( int argc,
    for(cloit = clOnlyTargets.begin(); cloit != clOnlyTargets.end(); ++cloit)
    {
       if(cloit->shortOpt == "" && cloit->longOpt == "") continue; //Nothing to add?
+      
+      if(oneTarget != "" && cloit->name != oneTarget) continue;
       
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
    }
@@ -411,7 +451,7 @@ int appConfigurator::get( std::vector<typeT> & v,
    return get(v, name, i);
 }
    
-   
+
 template<typename typeT>
 int appConfigurator::operator()( typeT & v,
                                  const std::string & name
@@ -422,7 +462,43 @@ int appConfigurator::operator()( typeT & v,
 
 
 
+
+template<typename typeT>
+typeT appConfigurator::internalGet( const std::string & name,
+                                    meta::trueFalseT<false> isNotVector
+                                  )
+{
+   static_cast<void>(isNotVector);
    
+   if(!isSet(name)) return typeT(); //this zero-initializes any fundamental types, calls default constructor for class-types.
+   
+   typeT v;
+   get(v, name);
+   
+   return v;
+}
+   
+template<typename typeT>
+typeT appConfigurator::internalGet( const std::string & name,
+                                    meta::trueFalseT<true> isVector
+                                  )
+{
+   static_cast<void>(isVector);
+   
+   typeT v;
+   
+   get(v, name); //Will only be modified if isSet == true.
+   
+   return v;
+}
+   
+template<typename typeT>
+typeT appConfigurator::get( const std::string & name )
+{
+   return internalGet<typeT>(name, meta::trueFalseT< meta::is_std_vector<typeT>::value >());
+}
+
+
 } //namespace mx
 
 #endif // __appConfigurator_hpp__

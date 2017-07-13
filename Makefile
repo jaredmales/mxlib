@@ -61,6 +61,7 @@ INC_TO_INSTALL = ao \
                  jinc.hpp \
                  levmarInterface.hpp \
                  logistic.hpp \
+                 meta \
                  msgq.h \
                  msgQ \
                  mxException.hpp \
@@ -81,7 +82,6 @@ INC_TO_INSTALL = ao \
                  templateLapack.hpp \
                  templateLevmar.hpp \
                  textTable.hpp \
-                 trueFalseT.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
 		 randomT.hpp \

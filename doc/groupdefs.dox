@@ -353,6 +353,11 @@
   * \brief Various file system utilities
   */
   
+/** \defgroup meta Meta-programming Utilities.
+  * \ingroup utils
+  * \brief Various template-meta-programming utilities.
+  */
+  
 /** \defgroup mtutils Multi-threading Utilities
   * \ingroup utils
   * \brief Tools for multi-threaded programming
