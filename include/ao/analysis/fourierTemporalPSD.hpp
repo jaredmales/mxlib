@@ -12,6 +12,7 @@
 #include <iostream>
 #include <fstream>
 
+#include <sys/stat.h>
 
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
@@ -19,16 +20,18 @@ using namespace boost::math::constants;
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
-#include <mx/jinc.hpp>
-#include <mx/vectorUtils.hpp>
-#include <mx/stringUtils.hpp>
-#include <mx/fourierModes.hpp>
-#include <mx/readColumns.hpp>
-#include <mx/binVector.hpp>
-#include <mx/fitsFile.hpp>
-#include <mx/ompLoopWatcher.hpp>
-#include <mx/mxError.hpp>
-#include <mx/gslInterpolation.hpp>
+#include <Eigen/Dense>
+
+#include "../../math/func/jinc.hpp"
+#include "../../vectorUtils.hpp"
+#include "../../stringUtils.hpp"
+#include "../../fourierModes.hpp"
+#include "../../readColumns.hpp"
+#include "../../binVector.hpp"
+
+#include "../../ompLoopWatcher.hpp"
+#include "../../mxError.hpp"
+#include "../../gslInterpolation.hpp"
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -101,43 +104,6 @@ struct fourierTemporalPSD
   Eigen::Array<realT, -1, -1> _modeCoeffs; ///< Coeeficients of the projection onto the Fourier modes 
 
   
-//   gslInterpolator * _gslInt;
-//   
-//   std::vector<realT> * _kvals;
-//   std::vector<realT> * _Jvals;
-//   realT _kmin, _kmax, _dk;
-//   
-//   realT minK, maxK;
-//   
-//   void setupJInterp( realT kmin, realT kmax, realT dk )
-//   {
-//      _gslInt = new gslInterpolator;
-//      _kvals = new std::vector<realT>;
-//      _Jvals = new std::vector<realT>;
-//   
-//      _kmin = kmin;
-//      _kmax = kmax;
-//      _dk - dk;
-//      
-//      int n = (kmax - kmin)/ dk + 1;
-//      
-//      _kvals->resize(n);
-//      _Jvals->resize(n);
-//      
-//      realT k;
-//      
-//      for(int i=0; i< n; ++i)
-//      {
-//         k = kmin + dk*i;
-//         
-//         (*_kvals)[i] = k;
-//         
-//         (*_Jvals)[i] = mx::jinc(k);
-//      }
-//      
-//      _gslInt->setup( gsl_interp_linear, *_kvals, *_Jvals);
-//      
-//   }
   
   std::vector<realT> Jps;
   std::vector<realT> Jms;
@@ -825,13 +791,13 @@ realT F_basic (realT kv, void * params)
    realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
    realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
    
-   realT Q1 = mx::jinc(pi<realT>()*D*kp);
+   realT Q1 = math::func::jinc(pi<realT>()*D*kp);
    
-   realT Q2 = mx::jinc(pi<realT>()*D*kpp);
+   realT Q2 = math::func::jinc(pi<realT>()*D*kpp);
    
    realT Q = (Q1 + p*Q2);
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_wfs());
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), 0, Fp->_aosys->lam_wfs());
    
    return P*Q*Q ;
 }
@@ -859,13 +825,13 @@ realT F_mod (realT kv, void * params)
    realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
    realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
    
-   realT Jp = mx::jinc(pi<realT>()*D*kp);
+   realT Jp = math::func::jinc(pi<realT>()*D*kp);
    
-   realT Jm = mx::jinc(pi<realT>()*D*kpp);
+   realT Jm = math::func::jinc(pi<realT>()*D*kpp);
    
    realT QQ = 2*(Jp*Jp + Jm*Jm);
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->zeta() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), 0, Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
    
    return P*QQ ;
 }
@@ -916,8 +882,8 @@ realT F_projMod (realT kv, void * params)
       kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
       km = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
    
-      Fp->Jps[i] = mx::jinc(pi<realT>()*D*kp);
-      Fp->Jms[i] = mx::jinc(pi<realT>()*D*km);
+      Fp->Jps[i] = math::func::jinc(pi<realT>()*D*kp);
+      Fp->Jms[i] = math::func::jinc(pi<realT>()*D*km);
       
    }
    
@@ -962,7 +928,7 @@ realT F_projMod (realT kv, void * params)
    //realT QQ = 2*(Jp*Jp + Jm*Jm);
    
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->zeta() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), 0, Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
    
    return P*QQ ;
 }

@@ -13,7 +13,7 @@
 using namespace boost::math::constants;
 
 #include <mx/mxError.hpp>
-#include <mx/jinc.hpp>
+#include <mx/math/func/jinc.hpp>
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -29,7 +29,7 @@ namespace AO
 ///Manage calculations using the von Karman spatial power spectrum.
 /** \ingroup mxAOAnalytic
   */ 
-template<typename floatT>
+template<typename realT>
 struct vonKarmanSpectrum
 {
    
@@ -40,7 +40,7 @@ protected:
    bool _scintillation; ///< flag controlling whether or not scintillation is included
    int _component; ///< If _scintillation is true, this controls whether phase (0), amplitude (1), or dispersive contrast (2) is returned.
    
-   floatT _D; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
+   realT _D; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
 
    const char * _id = "von Karman";
    
@@ -63,7 +63,7 @@ public:
      */ 
    vonKarmanSpectrum( bool subP, ///< [in] is the value of _subPiston.
                       bool subT, ///< [in] is the value of _subTipTilt.
-                      floatT D ///< [in] is the value of _D.
+                      realT D ///< [in] is the value of _D.
                     )
    {
       _subPiston = subP;
@@ -146,7 +146,7 @@ public:
    /**
      * \returns _D, the diameter in m.
      */ 
-   floatT D()
+   realT D()
    {
       return _D;
    }
@@ -155,23 +155,25 @@ public:
    /**
      * \pararm nd is the new diameter in m. 
      */
-   void D(floatT nd)
+   void D(realT nd)
    {
       _D = nd;
    }
    
-   ///Get the value of the PSD at spatial frequency k.
+   ///Get the value of the PSD at spatial frequency k and a zenith distance.
    /**
-     * \param atm gives the atmosphere parameters r_0 and L_0.
-     * \param k is the spatial frequency is m^-1.
      *   
      * \returns the von Karman PSD at the specified spatial frequency.
      * \returns -1 if an error occurs.
      * 
      */ 
-   floatT operator()(aoAtmosphere<floatT> & atm, floatT k)
+   realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
+                     realT k, ///< [in] is the spatial frequency in m^-1.
+                     int n,
+                     realT sec_zeta ///< [in] is the secant of the zenith distance.
+                   )
    {
-      floatT k02;
+      realT k02;
       
       if(atm.L_0() > 0)
       {
@@ -184,7 +186,7 @@ public:
          return 0;
       }
       
-      floatT Ppiston, Ptiptilt;
+      realT Ppiston, Ptiptilt;
    
       if( (_subPiston || _subTipTilt) )
       {
@@ -196,13 +198,13 @@ public:
          
          if(_subPiston)
          {
-            Ppiston = pow(2*mx::jinc(pi<floatT>()*k*_D), 2);
+            Ppiston = pow(2*math::func::jinc(pi<realT>()*k*_D), 2);
          }
          else Ppiston = 0;
  
          if(_subTipTilt)
          {
-            Ptiptilt = pow(4*mx::jinc2(pi<floatT>()*k*_D), 2);
+            Ptiptilt = pow(4*math::func::jinc2(pi<realT>()*k*_D), 2);
          }
          else Ptiptilt = 0;
       }
@@ -212,26 +214,24 @@ public:
          Ptiptilt = 0;
       }
       
-      return constants::a_PSD<floatT>()*pow(atm.r_0(), -five_thirds<floatT>())*pow(k*k+k02, -eleven_sixths<floatT>()) * (1.0-Ppiston - Ptiptilt);//*exp(-k*k*l0*l0);
+      return constants::a_PSD<realT>()*pow(atm.r_0(), -five_thirds<realT>())*pow(k*k+k02, -eleven_sixths<realT>()) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
    }
    
-   /// Get the value of the PSD at spatial frequency k and wavelength lambda
+   /// Get the value of the PSD at spatial frequency k and wavelength lambda, and a zenith distance, with a WFS at a different wavelength
    /**
-     * \param atm gives the atmosphere parameters r_0 and L_0.
-     * \param k is the spatial frequency in m^-1.
-     * \param lambda is the wavelength in m
      * 
      * \returns the von Karman PSD at the specified spatial frequency for the specified wavelength.
      * \returns -1 if an error occurs.
      */    
-   floatT operator()( aoAtmosphere<floatT> & atm, ///< [in] 
-                      floatT k,                   ///< [in]
-                      floatT lambda,              ///< [in]
-                      floatT lambda_wfs = 0,      ///< [in]
-                      floatT zeta = 0             ///< [in]
+   realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
+                      realT k,                   ///< [in] is the spatial frequency in m^-1.
+                      realT lambda,              ///< [in] is the observation wavelength in m
+                     int n,
+                      realT lambda_wfs,      ///< [in] is the wavefront measurement wavelength in m
+                      realT secZeta             ///< [in] is the secant of the zenith distance
                     )
    {
-      floatT psd = operator()(atm, k)* pow( atm.lam_0()/lambda, 2);
+      realT psd = operator()(atm, k, 0, secZeta)* pow( atm.lam_0()/lambda, 2);
       
       if(psd < 0) return -1;
       
@@ -239,15 +239,15 @@ public:
       {
          if(_component == 0)
          {
-            psd *= atm.X(k, lambda);
+            psd *= atm.X(k, lambda, secZeta);
          }
          else if (_component == 1)
          {
-            psd *= atm.Y(k, lambda);
+            psd *= atm.Y(k, lambda, secZeta);
          }
          else
          {
-            psd *= atm.Z(k, lambda, lambda_wfs, zeta);
+            psd *= atm.X_Z(k, lambda, lambda_wfs, secZeta);
          }
       }
       
@@ -260,18 +260,18 @@ public:
      * \param atm gives the atmosphere parameters r_0 and L_0
      * \param d is the actuator spacing in m
      */    
-   floatT fittingError(aoAtmosphere<floatT> &atm, floatT d)
+   realT fittingError(aoAtmosphere<realT> &atm, realT d)
    {
-      floatT k0;
+      realT k0;
       if(atm.L_0() > 0)
       {
          k0 = 1/ (atm.L_0()*atm.L_0());
       }
       else k0 = 0;
 
-      floatT lamc = 1.0;//pow( atm.lam_0()/(2*pi<floatT>()),2);
+      realT lamc = 1.0;//pow( atm.lam_0()/(2*pi<realT>()),2);
       
-      return (pi<floatT>() * six_fifths<floatT>())* a_PSD<floatT>()/ pow(atm.r_0(), five_thirds<floatT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<floatT>()))*lamc;
+      return (pi<realT>() * six_fifths<realT>())* a_PSD<realT>()/ pow(atm.r_0(), five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<realT>()))*lamc;
    }
 
    template<typename iosT>
@@ -280,9 +280,9 @@ public:
       ios << "# PSD Parameters:" << '\n';
       ios << "#    ID = " << _id << '\n';
       ios << "#    D = " << _D  << '\n';
-      ios << "#    subPiston = " << _subPiston << '\n';
-      ios << "#    subTipTilt = " << _subTipTilt  << '\n';
-      ios << "#    Scintillation = " << _scintillation << '\n';
+      ios << "#    subPiston = " << std::boolalpha << _subPiston << '\n';
+      ios << "#    subTipTilt = " << std::boolalpha << _subTipTilt  << '\n';
+      ios << "#    Scintillation = " << std::boolalpha << _scintillation << '\n';
       ios << "#    Component = " << _component << '\n';
       return ios;
    }

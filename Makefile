@@ -36,32 +36,27 @@ OBJS = astrodyn.o \
 INC_TO_INSTALL = ao \
                  app \
                  astro \
+                 fft \
+                 improc \
+                 math \
+                 meta \
+                 sigproc \
+                 wfp \
                  astrodyn.hpp \
                  astroFilter.hpp \
                  astroSpectrum.hpp \
                  astrotypes.h \
-                 autocorrelation.hpp \
                  binVector.hpp \
                  eigenUtils.hpp \
                  environment.hpp \
-                 fft.hpp \
-                 fftwTemplates.hpp \
                  fileUtils.hpp \
                  fitGaussian.hpp \
                  fourierModes.hpp \
-                 gaussian.hpp \
-                 geo.hpp \
                  gnuPlot.hpp \
-                 gramSchmidt.hpp \
                  gslInterpolation.hpp \
                  IPC.h \
-                 improc \
-                 wfp \
                  imagingArray.hpp \
-                 jinc.hpp \
                  levmarInterface.hpp \
-                 logistic.hpp \
-                 meta \
                  msgq.h \
                  msgQ \
                  mxException.hpp \
@@ -71,16 +66,9 @@ INC_TO_INSTALL = ao \
                  ompLoopWatcher.hpp \
                  pout.hpp \
                  process_interface.h \
-                 psdFilter.hpp \
-                 psdUtils.hpp \
                  readColumns.hpp \
-                 roots.hpp \
                  sharedmem_segment.h \
-                 signalWindows.hpp \
                  stringUtils.hpp \
-                 templateBLAS.hpp \
-                 templateLapack.hpp \
-                 templateLevmar.hpp \
                  textTable.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \

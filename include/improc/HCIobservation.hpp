@@ -18,7 +18,7 @@
 
 #include "../mxException.hpp"
 
-#include "../templateBLAS.hpp"
+#include "../math/templateBLAS.hpp"
 #include "../fileUtils.hpp"
 #include "../timeUtils.hpp"
 #include "../readColumns.hpp"

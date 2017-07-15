@@ -10,7 +10,7 @@
 #ifndef __ADIDerotator_hpp__
 #define __ADIDerotator_hpp__
 
-#include "../geo.hpp"
+#include "../math/geo.hpp"
 
 namespace mx
 {

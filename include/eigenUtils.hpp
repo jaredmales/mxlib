@@ -7,8 +7,8 @@
 
 #include <cmath>
 
-#include "templateBLAS.hpp"
-#include "templateLapack.hpp"
+#include "math/templateBLAS.hpp"
+#include "math/templateLapack.hpp"
 
 #include "vectorUtils.hpp"
 
@@ -256,7 +256,7 @@ void eigenSYRK(eigenT1 &cv, const eigenT2 &ims)
 {
    cv.resize(ims.cols(), ims.cols());
    
-   syrk<typename eigenT1::Scalar>(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
+   math::syrk<typename eigenT1::Scalar>(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
                  /*const enum CBLAS_TRANSPOSE Trans*/ CblasTrans, /*const int N*/ims.cols(), /*const int K*/ ims.rows(),
                  /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
                  /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
@@ -393,7 +393,7 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec,
    int * iWork = (int *) malloc (sizeIWork*sizeof(int));
 
    //  Query for optimum sizes for workspace 
-   info=syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
+   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
 
    // Now allocate optimum sizes
    /* -- tested increasing by x10, didn't improve performance at all 
@@ -425,7 +425,7 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec,
    }
                 
    // Now actually do the calculationg
-   info=syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
+   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
    
     /*  Cleanup and exit  */
       
@@ -473,13 +473,13 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
    int * IWORK = new int[8*M];
    int INFO;
    
-   gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO);
+   math::gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO);
    
    LWORK = wkOpt;
    //delete WORK;
    dataT *WORK = new dataT[LWORK];
    
-   INFO = gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO);
+   INFO = math::gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO);
    
    delete WORK;
    delete IWORK;

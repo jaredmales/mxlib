@@ -402,16 +402,15 @@ void imageShift( arrOutT & transim,
     y_mag = (transim.cols()-1.0) / (im.cols()-1.0);
   * \endcode
   * 
-  * \param [out] transim contains the magnified image.  Must be pre-allocated.
-  * \param [in] im is the image to be magnified.
-  * \param [in] trans is the transformation to use
-  * 
   * \tparam arrOutT is the eigen array type of the output. 
   * \tparam arrInT is the eigen array type of the input.
   * \tparam transformT specifies the transformation to use.
   */
 template<typename arrOutT, typename arrInT, typename transformT>
-void imageMagnify(arrOutT & transim, const arrInT  &im, transformT trans)
+void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  Must be pre-allocated.
+                   const arrInT  &im, ///< [in] is the image to be magnified.
+                   transformT trans ///< [in] is the transformation to use
+                 )
 {
    typedef typename transformT::arithT arithT;
    

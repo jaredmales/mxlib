@@ -12,7 +12,7 @@
 using namespace boost::math::constants;
 
 
-#include "../jinc.hpp"
+#include "../math/func/jinc.hpp"
 
 namespace mx
 {
@@ -30,7 +30,7 @@ namespace wfp
 template<typename floatT>
 floatT airy( floatT x /**< [in] is the separation in units of \f$ \lambda/D \f$. */)
 {
-   return pow(2*jinc(pi<floatT>()*x),2); 
+   return pow(2*math::func::jinc(pi<floatT>()*x),2); 
 }
 
 ///The centrally obscured Airy pattern
@@ -45,7 +45,7 @@ floatT airy( floatT x,  ///< [in] is the separation in units of  \f$ \lambda/D \
              floatT eps ///< [in] is the ratio of the circular central obscuration diameter to the diameter.
            )
 {
-   return (1./pow(1.-eps*eps,2))*pow(2.*jinc(2*pi<floatT>()*x)-eps*2.*jinc(eps*pi<floatT>()*x),2);
+   return (1./pow(1.-eps*eps,2))*pow(2.*math::func::jinc(2*pi<floatT>()*x)-eps*2.*jinc(eps*pi<floatT>()*x),2);
 }
 
 ///Seeing Halo Profile

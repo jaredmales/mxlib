@@ -294,70 +294,59 @@ protected:
 public:   
    ///Set the weighted mean _z_mean and renormalize the layer heights
    /** Calling this function changes the values of _layer_z so that the 
-     * Layer averaged 5/3 \f$C_n^2\f$ moment of the height is the new value specified by zm.
+     * Layer averaged 5/3 \f$C_n^2\f$ moment of the height is the new value specified.
      * 
-     * \param zm is the new value of _v_wind.
      */
-   void z_mean(const realT & zm /**< */);
+   void z_mean(const realT & zm /**< [in] is the new value of _v_wind. */);
    
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (14) of Guyon (2005) \cite guyon_2005. 
      *
-     * \param k the spatial frequency, in inverse meters.
-     * \param lam_sci the wavelength
-     *
      * \returns the value of the X function. 
      */
-   realT X( realT k,  ///<
-            realT lam_sci ///<
+   realT X( realT k,  ///< [in] the spatial frequency, in inverse meters.
+            realT lam_sci, ///< [in] is the science observation wavelength.
+            realT secZ ///< [in] is the secant of the zenith distance.
           );
    
    ///The differential fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (25) of Guyon (2005) \cite guyon_2005. 
      *
-     * \param k the spatial frequency, in inverse meters.
-     * \param lam_sci the wavelength
-     *
      * \returns the value of the dX function. 
      */
-   realT dX( realT k,  ///<
-             realT lam_sci, ///< 
-             realT lam ///<
+   realT dX( realT k,  ///< [in] the spatial frequency, in inverse meters.
+             realT lam_sci, ///<  [in] is the science observation wavelength.
+             realT lam_wfs ///< [in] is the wavefront sensor wavelength.
            );
 
    ///The fraction of the turbulence PSD in amplitude after Fresnel propagation.
    /** See Equation (15) of Guyon (2005) \cite guyon_2005. 
      *
-     * \param k the spatial frequency, in inverse meters.
-     * \param lam_sci the wavelength
-     *
      * \returns the value of the Y function. 
      */
-   realT Y( realT k, ///< 
-            realT lam_sci ///<
+   realT Y( realT k, ///< [in] the spatial frequency, in inverse meters.
+            realT lam_sci, ///< [in] is the science observation wavelength.
+            realT secZ ///< [in] is the secant of the zenith distance.
          );
    
    ///The differential fraction of the turbulence PSD in amplitude after Fresnel propagation.
    /** See Equation (27) of Guyon (2005) \cite guyon_2005. 
      *
-     * \param k the spatial frequency, in inverse meters.
-     * \param lam_sci the wavelength
-     *
      * \returns the value of the dY function. 
      */
-   realT dY( realT k,       ///<
-             realT lam_sci, ///<
-             realT lam      ///<
+   realT dY( realT k,       ///< [in] the spatial frequency, in inverse meters.
+             realT lam_sci, ///< [in] is the science observation wavelength.
+             realT lam_wfs  ///< [in] is the wavefront sensor wavelength.
            );
     
    
    realT n_air( realT lam /**< [in]The wavelength*/);
    
-   realT Z( realT k, ///< [in] the spatial frequency, in inverse metes 
-            realT lambda_i, 
-            realT lambda_wfs, 
-            realT zeta
-          );
+   realT X_Z( realT k, ///< [in] the spatial frequency, in inverse metes 
+              realT lambda_sci, ///< [in] is the science observation wavelength.
+              realT lambda_wfs, ///< [in] is the wavefront sensor wavelength.
+              realT secZ ///< [in] is the secant of the zenith distance.
+            );
    
    ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere.
    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite floyd_2010
@@ -713,51 +702,56 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::X(realT k, realT lambda_i)
+realT aoAtmosphere<realT>::X( realT k, 
+                              realT lam_sci, 
+                              realT secZ)
 {
    realT c = 0;
     
    for(int i=0;i<_layer_Cn2.size(); ++i)
    {
-      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i * _layer_z[i]), 2);
+      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
    }
    
    return c;
 }
  
 template<typename realT>
-realT aoAtmosphere<realT>::dX(realT f, realT lambda_i, realT lambda)
+realT aoAtmosphere<realT>::dX(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
  
    for(int i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lambda_i * _layer_z[i]) - cos( pi<realT>()*f*f*lambda * _layer_z[i])), 2);
+      c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lam_sci * _layer_z[i]) - cos( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
    }
    
    return c;
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::Y(realT k, realT lambda_i)
+realT aoAtmosphere<realT>::Y( realT k, 
+                              realT lam_sci,
+                              realT secZ
+                            )
 {
    realT c = 0;
  
    for(int i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lambda_i * _layer_z[i]), 2);
+      c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
    }
    return c;
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::dY(realT f, realT lambda_i, realT lambda)
+realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
 
    for(int i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lambda_i * layer_z[i]) - sin( pi<realT>()*f*f*lambda * layer_z[i])), 2);
+      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * layer_z[i])), 2);
    }
    
    return c;
@@ -772,11 +766,12 @@ realT aoAtmosphere<realT>::n_air( realT lambda)
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::Z(realT k, realT lambda_i, realT lambda_wfs, realT zeta)
+realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT secZ)
 {
    realT c = 0;
-   realT secZ = 1.0/cos(zeta);
-   realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * _H*tan(zeta)*secZ; 
+   realT sinZ = sqrt(1.0 - pow(1.0/secZ,2));
+   realT tanZ = sinZ*secZ;
+   realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * _H*tanZ*secZ; 
    realT x;
    
    for(int i = 0; i < _layer_Cn2.size(); ++i)

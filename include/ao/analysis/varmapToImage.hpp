@@ -17,20 +17,17 @@ namespace AO
 /**  
   * The PSF should have odd dimensions, and the peak pixel should be in the center pixel
   * defined by [0.5*psf.rows(), 0.5*psf.cols()].  The platescale (lambda/D per pixel) of the PSF should match that of
-  * the variance map. The PSF should be normalized such that the center/peak pixel has value 1.
-  * 
-  * \param [out] im is the intensity image, resized to match varmap
-  * \param [in] varmap is the wavefront variance map
-  * \param [in] psf is the point spread function
+  * the variance map. The PSF should be normalized such that the center/peak pixel has value 1 (not so that the sum of pixels is 1).
   * 
   * \tparam imageT is an Eigen-array-like type.
   * 
   * \ingroup mxAOAnalytic
   */
 template< typename imageT >
-void varmapToImage( imageT & im,
-                    imageT & varmap,
-                    imageT & psf )
+void varmapToImage( imageT & im, ///< [out] is the intensity image, resized to match varmap
+                    imageT & varmap, ///< [in]  is the wavefront variance map
+                    imageT & psf ///< [in]  is the point spread function
+                  )
 {
    typedef typename imageT::Scalar floatT;
 
@@ -42,6 +39,8 @@ void varmapToImage( imageT & im,
    
    int psf_i, psf_j;
    floatT psfVal;
+   
+   #pragma omp parallel for
    for(int i=0; i< im.rows(); ++i)
    {
       for(int j=0; j< im.cols(); ++j)

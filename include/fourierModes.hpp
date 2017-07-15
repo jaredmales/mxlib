@@ -10,7 +10,9 @@
 
 #include <vector>
 
-#include <mx/eigenImage.hpp>
+#include "mxError.hpp"
+
+//#include <mx/eigenImage.hpp>
 
 namespace mx
 {

@@ -17,8 +17,8 @@
 
 #include <omp.h>
 
-#include "../geo.hpp"
 #include "../ompLoopWatcher.hpp"
+#include "../math/geo.hpp"
 
 #include "ADIobservation.hpp"
 
@@ -466,7 +466,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
    /*
     *  KL = E^T * R  ==> C = A^T * B
     */
-   gemm<typename eigenT::Scalar>(CblasColMajor, CblasTrans, CblasTrans, n_modes, tNpix,
+   math::gemm<typename eigenT::Scalar>(CblasColMajor, CblasTrans, CblasTrans, n_modes, tNpix,
                               tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
                                  0., klims.data(), klims.rows());
 

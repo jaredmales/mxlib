@@ -17,13 +17,14 @@ using namespace boost::math::constants;
 #include <gsl/gsl_errno.h>
 
 
-#include <mx/jinc.hpp>
-#include <mx/fourierModes.hpp>
-#include <mx/fitsFile.hpp>
-#include <mx/mxlib_uncomp_version.h>
-#include <mx/mxlib.h>
-#include <mx/ompLoopWatcher.hpp>
-#include <mx/timeUtils.hpp>
+#include "../../math/func/jinc.hpp"
+#include "../../fourierModes.hpp"
+#include "../../improc/fitsFile.hpp"
+#include "../../improc/eigenCube.hpp"
+#include "../../mxlib_uncomp_version.h"
+#include "../../mxlib.h"
+#include "../../ompLoopWatcher.hpp"
+#include "../../timeUtils.hpp"
 
 #include "aoAtmosphere.hpp"
 #include "aoPSDs.hpp"
@@ -90,11 +91,11 @@ floatT phiInt_basic (floatT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = mx::jinc(pi<floatT>()*D*kmn_p);
-   Ji_mn_m = mx::jinc(pi<floatT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(pi<floatT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(pi<floatT>()*D*kmn_m);
 
    
-   floatT N = 1./sqrt(0.5 + p*mx::jinc(2*pi<floatT>()*sqrt(m*m+n*n)));
+   floatT N = 1./sqrt(0.5 + p*math::func::jinc(2*pi<floatT>()*sqrt(m*m+n*n)));
    
    Q_mn = N*(Ji_mn_p + p*Ji_mn_m);
 
@@ -107,10 +108,10 @@ floatT phiInt_basic (floatT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
    
-   Ji_mpnp_p = mx::jinc(pi<floatT>()*D*kmpnp_p);
-   Ji_mpnp_m = mx::jinc(pi<floatT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(pi<floatT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(pi<floatT>()*D*kmpnp_m);
 
-   floatT Np = 1./sqrt(0.5 + pp*mx::jinc(2*pi<floatT>()*sqrt(mp*mp+np*np)));
+   floatT Np = 1./sqrt(0.5 + pp*math::func::jinc(2*pi<floatT>()*sqrt(mp*mp+np*np)));
    
    Q_mpnp = Np*(Ji_mpnp_p + pp*Ji_mpnp_m);
   
@@ -157,8 +158,8 @@ floatT phiInt_mod (floatT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = mx::jinc(pi<floatT>()*D*kmn_p);
-   Ji_mn_m = mx::jinc(pi<floatT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(pi<floatT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(pi<floatT>()*D*kmn_m);
 
 
    /*** primed ***/
@@ -170,8 +171,8 @@ floatT phiInt_mod (floatT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
    
-   Ji_mpnp_p = mx::jinc(pi<floatT>()*D*kmpnp_p);
-   Ji_mpnp_m = mx::jinc(pi<floatT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(pi<floatT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(pi<floatT>()*D*kmpnp_m);
    
    floatT QQ;
    
@@ -382,20 +383,6 @@ int fourierVarVec( const std::string & fname,
    }
    
    fout.close();
-//    mx::fitsHeader head;
-//    head.append("DIAMETER", aosys.D(), "Diameter in meters");
-//    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
-//    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
-//    head.append("SUBTILT", aosys.psd.subTipTilt(), "Tip/Tilt subtractioon true/false flag");
-//    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
-//    head.append("RELTOL", relTol, "Relative tolerance in qagiu");
-//    
-//    fitsHeaderGitStatus(head, "mxlib_comp",  mxlib_compiled_git_sha1(), mxlib_compiled_git_repo_modified());
-//    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
-//    fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
-//    
-//    mx::fitsFile<floatT> ff;
-//    ff.write(fname + ".fits", var, head);
    
 }
 
@@ -466,7 +453,7 @@ int fourierVarMap( const std::string & fname,
       }
    } 
    
-   mx::fitsHeader head;
+   improc::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
@@ -478,7 +465,7 @@ int fourierVarMap( const std::string & fname,
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
    
-   mx::fitsFile<floatT> ff;
+   improc::fitsFile<floatT> ff;
    ff.write(fname + ".fits", var, head);
    
 }
@@ -549,7 +536,7 @@ int fourierCovarMap( const std::string & fname,
       }
    } 
    
-   mx::fitsHeader head;
+   improc::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
@@ -561,7 +548,7 @@ int fourierCovarMap( const std::string & fname,
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
    
-   mx::fitsFile<floatT> ff;
+   improc::fitsFile<floatT> ff;
    ff.write(fname + ".fits", covar, head);
    
 }
@@ -640,7 +627,7 @@ int fourierCovarMapSeparated( const std::string & fname,
       }
    } 
    
-   mx::fitsHeader head;
+   improc::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
@@ -652,7 +639,7 @@ int fourierCovarMapSeparated( const std::string & fname,
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
    
-   mx::fitsFile<floatT> ff;
+   improc::fitsFile<floatT> ff;
    ff.write(fname + "_pp.fits", covar_pp, head);
    ff.write(fname + "_ppp.fits", covar_ppp, head);
    
@@ -662,11 +649,11 @@ template<typename realT>
 void calcKLCoeffs( const std::string & outFile,
                    const std::string & cvFile )
 {
-   mx::fitsFile<realT> ff;
+   improc::fitsFile<realT> ff;
    
    Eigen::Array<realT,-1,-1> cvT, cv, evecs, evals;
    
-   ff.read(cvFile, cv);
+   ff.read(cv, cvFile);
 
    //cvT = cv.block(0,0, 1000,1000);//.transpose();
    
@@ -712,7 +699,7 @@ void makeKL( eigenArrT1 & kl,
    /*
     *  KL = E^T * R  ==> C = A^T * B
     */
-   gemm<typename eigenArrT1::Scalar>(CblasColMajor, CblasTrans, CblasTrans, n_modes, tNpix,
+   math::gemm<typename eigenArrT1::Scalar>(CblasColMajor, CblasTrans, CblasTrans, n_modes, tNpix,
                               tNims, 1., evecs.data(), evecs.rows(), rvecs.data(), rvecs.rows(),
                                  0., kl.data(), kl.rows());
    
@@ -724,13 +711,13 @@ void makeFKL( const std::string & outFile,
               int N,
               int pupSize )
 {
-   mx::fitsFile<realT> ff;
+   improc::fitsFile<realT> ff;
    Eigen::Array<realT, -1, -1> evecs;
    
-   ff.read(coeffs, evecs);
+   ff.read(evecs, coeffs);
    
-   mx::eigenCube<realT> Rims;
-   mx::makeFourierBasis_Rect(Rims, pupSize, N, MX_FOURIER_MODIFIED);
+   improc::eigenCube<realT> Rims;
+   makeFourierBasis_Rect(Rims, pupSize, N, MX_FOURIER_MODIFIED);
    
    
    std::cout << Rims.planes() << " " << evecs.cols() << "\n";
@@ -750,9 +737,9 @@ void makeFKL( const std::string & outFile,
    //Rims.resize(0,0);
    //evecs.resize(0,0);
       
-   mx::eigenCube<realT> klims(klT.data(), Rims.rows(), Rims.cols(), Rims.planes());
+   improc::eigenCube<realT> klims(klT.data(), Rims.rows(), Rims.cols(), Rims.planes());
    
-   mx::eigenCube<realT> klimsR;
+   improc::eigenCube<realT> klimsR;
    klimsR.resize( klims.rows(), klims.cols(), klims.planes());
    
    for(int i=0; i< klims.planes(); ++i)
