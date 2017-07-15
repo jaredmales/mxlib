@@ -47,6 +47,8 @@ struct configTarget
    
    std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
    
+   int orderAdded; ///< The order in which this was added.  Useful for displaying help messages.
+   
    /// Default c'tor
    configTarget()
    {
@@ -61,7 +63,8 @@ struct configTarget
                  const std::string & kw, ///< [in] The config file keyword, read in a "keyword=value" pair
                  bool isReq = false, ///< [in] Whether or not this is option is required to be set
                  const std::string & ht = "",  ///< [in] The type to display in the help message
-                 const std::string & he = ""  ///< [in] The explanation to display in the help message
+                 const std::string & he = "",  ///< [in] The explanation to display in the help message
+                 int oa = 0 ///< [in] [optional] ///< the order in which this was added. 
                )
    {
       name = n;
@@ -102,6 +105,13 @@ struct appConfigurator
    
    std::vector<std::string> nonOptions;
       
+   int nAdded;
+   
+   appConfigurator()
+   {
+      nAdded = 0;
+   }
+   
    /// Clear the containers and free up the associated memory.
    void clear();
    
@@ -256,15 +266,21 @@ void appConfigurator::clear()
 inline
 void appConfigurator::add( const configTarget & tgt )
 {
+   
    //First check for duplicate name and command line only
    if(targets.count(tgt.name) > 0 && tgt.section == "" && tgt.keyword == "")
    {
       clOnlyTargets.push_back(tgt);
+      clOnlyTargets.back().orderAdded = nAdded;
    }
    else
    {
-      targets.insert({tgt.name, tgt});
+      std::pair<targetIterator, bool> res = targets.insert({tgt.name, tgt});
+      res.first->second.orderAdded = nAdded;
    }      
+   
+   ++nAdded;
+
 }
 
 inline
@@ -276,8 +292,7 @@ void appConfigurator::add( const std::string &n,
                            const std::string & kw, 
                            bool isReq, 
                            const std::string & ht,  
-                           const std::string & he  
-                         )
+                           const std::string & he )
 {
    add( configTarget(n,so,lo,clt, s, kw, isReq, ht, he) );
 }

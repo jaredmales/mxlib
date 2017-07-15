@@ -12,8 +12,6 @@
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
 
-// #include <mx/eigenImage.hpp>
-// #include <mx/airy.hpp>
 #include <mx/math/roots.hpp>
 #include <mx/mxError.hpp>
 
@@ -40,10 +38,11 @@ namespace AO
   *
   * \tparam realT the floating point type used for all calculations
   * \tparam inputSpecT specifies the turbulence spatial PSD type
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
   * 
   * \ingroup mxAOAnalytic
   */
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT = std::ostream>
 class aoSystem
 {
 
@@ -52,7 +51,7 @@ public:
    aoAtmosphere<realT> atm;
    inputSpectT psd;
    
-   wfs<realT> * wfsBeta;
+   
 
    
 protected:
@@ -63,6 +62,8 @@ protected:
    realT _d_min; ///< Minimum AO system actuator pitch [m]
    realT _d_opt; ///< Current optimum AO system actuator pitch [m]
    bool _optd; ///< Flag controlling whether actuator pitch is optimized (true) or just uses _d_min (false).  Default: true.
+   
+   beta_p::wfs<realT, iosT> * _wfsBeta; ///< The WFS beta_p class.
    
    realT _lam_wfs; ///< WFS wavelength [m]
    realT _npix_wfs; ///< Number of WFS pixels
@@ -105,20 +106,19 @@ protected:
 public:
    
    ///Default c'tor
+   /** Calls initialize().
+     */
    aoSystem();
 
+   ///Destructor
+   ~aoSystem();
+   
+protected:
    ///Initialize all members.
    void initialize();
 
-   ///Check for unassigned wfs pointer
-   /** Prints error and exit()s.
-     */
-   int wfsBetaUnalloc()
-   {
-      mxError("aoSystem", MXE_PARAMNOTSET, "The WFS is not assigned.");
-      exit(-1);
-   }
-   
+public:
+      
    ///Load the default parameters from Guyon, 2005 \cite guyon_2005.
    /**  
      *
@@ -201,6 +201,21 @@ public:
      */ 
    bool optd();
    
+   template<typename wfsT>
+   void wfsBeta( const wfsT & w)
+   {
+      _wfsBeta = (beta_p::wfs<realT,iosT> *) &w;
+   }
+   
+   ///Check for unassigned wfs pointer
+   /** Prints error and exit()s.
+     */
+   int wfsBetaUnalloc()
+   {
+      mxError("aoSystem", MXE_PARAMNOTSET, "The WFS is not assigned.");
+      exit(-1);
+   }
+
    /// Set the value of the WFS wavelength.
    /**
      */
@@ -807,27 +822,30 @@ public:
    ///@}
    
    ///Output current parameters to a stream
-   /** Prints a formatted list of all current parameters.
+   /** Outputs a formatted list of all current parameters.
      *
-     * \tparam iosT is a std::ostream-like type.
      */ 
-   template<typename iosT>
    iosT & dumpAOSystem( iosT & ios /**< [in] a std::ostream-like stream. */);
    
 };
 
 
 
-template<typename realT, class inputSpectT>
-aoSystem<realT, inputSpectT>::aoSystem()
+template<typename realT, class inputSpectT, typename iosT>
+aoSystem<realT, inputSpectT, iosT>::aoSystem()
 {
    initialize();
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::initialize()
+template<typename realT, class inputSpectT, typename iosT>
+aoSystem<realT, inputSpectT, iosT>::~aoSystem()
 {
-   wfsBeta = 0;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::initialize()
+{
+   _wfsBeta = 0;
    
    _F0 = 0;
    _D = 0;
@@ -873,8 +891,8 @@ void aoSystem<realT, inputSpectT>::initialize()
    _strehl = 0;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::loadGuyon2005()
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
 {
    atm.loadGuyon2005();
    
@@ -888,8 +906,8 @@ void aoSystem<realT, inputSpectT>::loadGuyon2005()
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::loadMagAOX()
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
 {   
    atm.loadLCO();   
    
@@ -907,8 +925,8 @@ void aoSystem<realT, inputSpectT>::loadMagAOX()
 }
 
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::loadGMagAOX()
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::loadGMagAOX()
 {
 
    loadMagAOX();
@@ -923,49 +941,49 @@ void aoSystem<realT, inputSpectT>::loadGMagAOX()
 }
 
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::F0(realT nF0)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::F0(realT nF0)
 {
    _F0 = nF0;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::F0()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::F0()
 {
    return _F0;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::starMag(realT nmag)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::starMag(realT nmag)
 {
    _starMag = nmag;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::starMag()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::starMag()
 {
    return _starMag;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::Fg(realT mag)
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fg(realT mag)
 {
    return _F0*pow(10.0, -0.4*mag);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::Fg()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fg()
 {
    return Fg(_starMag);
 }
 
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::D(realT nD)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::D(realT nD)
 {
    _D = nD;
    psd.D(_D);
@@ -974,155 +992,155 @@ void aoSystem<realT, inputSpectT>::D(realT nD)
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::D()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::D()
 {
    return _D;
 }
 
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::d_min(realT nd)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::d_min(realT nd)
 {
    _d_min = nd;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::d_min()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::d_min()
 {
    return _d_min;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::optd(bool od)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::optd(bool od)
 {
    _optd = od;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-bool aoSystem<realT, inputSpectT>::optd()
+template<typename realT, class inputSpectT, typename iosT>
+bool aoSystem<realT, inputSpectT, iosT>::optd()
 {
    return _optd;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::lam_wfs(realT nlam)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::lam_wfs(realT nlam)
 {
    _lam_wfs = nlam;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::lam_wfs()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::lam_wfs()
 {
    return _lam_wfs;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::npix_wfs(realT npix)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::npix_wfs(realT npix)
 {
    _npix_wfs = npix;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::npix_wfs()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::npix_wfs()
 {
    return _npix_wfs;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::ron_wfs(realT nron)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::ron_wfs(realT nron)
 {
    _ron_wfs = nron;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::ron_wfs()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ron_wfs()
 {
    return _ron_wfs;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::Fbg(realT fbg)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::Fbg(realT fbg)
 {
    _Fbg = fbg;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::Fbg()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fbg()
 {
    return _Fbg;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::minTauWFS(realT ntau)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::minTauWFS(realT ntau)
 {
    _minTauWFS = ntau;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::minTauWFS()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::minTauWFS()
 {
    return _minTauWFS;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::deltaTau(realT ndel)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::deltaTau(realT ndel)
 {
    _deltaTau = ndel;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::deltaTau()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::deltaTau()
 {
    return _deltaTau;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::optTau(bool ot)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::optTau(bool ot)
 {
    _optTau = ot;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-bool aoSystem<realT, inputSpectT>::optTau()
+template<typename realT, class inputSpectT, typename iosT>
+bool aoSystem<realT, inputSpectT, iosT>::optTau()
 {
    return _optTau;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::lam_sci(realT nlam)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::lam_sci(realT nlam)
 {
    _lam_sci = nlam;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::lam_sci()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::lam_sci()
 {
    return _lam_sci;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::zeta(realT nz)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::zeta(realT nz)
 {
    _zeta = nz;
    _secZeta = 1/cos(_zeta);
@@ -1131,69 +1149,69 @@ void aoSystem<realT, inputSpectT>::zeta(realT nz)
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::zeta()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::zeta()
 {
    return _zeta;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::secZeta()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::secZeta()
 {
    return _secZeta;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::fit_mn_max( int mnm )
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::fit_mn_max( int mnm )
 {
    if(mnm < 0) mnm = 0;
    _fit_mn_max = mnm;
 }
 
-template<typename realT, class inputSpectT>
-int aoSystem<realT, inputSpectT>::fit_mn_max()
+template<typename realT, class inputSpectT, typename iosT>
+int aoSystem<realT, inputSpectT, iosT>::fit_mn_max()
 {
    return _fit_mn_max;
 }
    
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::ncp_wfe(realT nwfe)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::ncp_wfe(realT nwfe)
 {
    _ncp_wfe = nwfe;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::ncp_wfe()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ncp_wfe()
 {
    return _ncp_wfe;
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::ncp_alpha(realT alpha)
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::ncp_alpha(realT alpha)
 {
    _ncp_alpha = alpha;
    _specsChanged = true;
    _dminChanged = true;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::ncp_alpha()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 {
    return _ncp_alpha;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::signal2Noise2( realT & tau_wfs )
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs )
 {      
    realT F = Fg();
                
    return pow(F*tau_wfs,2)/((F+_npix_wfs*_Fbg)*tau_wfs + _npix_wfs*_ron_wfs*_ron_wfs);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::measurementError( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                                   realT n )
 {
    if(m ==0 and n == 0) return 0;
@@ -1203,9 +1221,9 @@ realT aoSystem<realT, inputSpectT>::measurementError( realT m,
    if(_optTau) tau_wfs = optimumTauWFS(m, n);
    else tau_wfs = _minTauWFS;
    
-   if (wfsBeta == 0) wfsBetaUnalloc();
+   if (_wfsBeta == 0) wfsBetaUnalloc();
    
-   realT beta_p = wfsBeta->beta_p(m,n,_D);
+   realT beta_p = _wfsBeta->beta_p(m,n,_D);
             
    realT snr2 = signal2Noise2( tau_wfs );
          
@@ -1213,8 +1231,8 @@ realT aoSystem<realT, inputSpectT>::measurementError( realT m,
    return pow(beta_p,2)/snr2*pow(_lam_wfs/_lam_sci, 2);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::measurementError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::measurementError()
 {   
    int mn_max = floor(0.5*_D/d_opt());
    realT sum = 0;
@@ -1232,8 +1250,8 @@ realT aoSystem<realT, inputSpectT>::measurementError()
    return sum;
 }
          
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::timeDelayError( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                     realT n )
 {
    if(m ==0 and n == 0) return 0;
@@ -1252,8 +1270,8 @@ realT aoSystem<realT, inputSpectT>::timeDelayError( realT m,
    return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::timeDelayError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::timeDelayError()
 {   
    int mn_max = floor(0.5*_D/d_opt());
    
@@ -1274,8 +1292,8 @@ realT aoSystem<realT, inputSpectT>::timeDelayError()
 
 
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::fittingError( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m, 
                                                   realT n )
 {
    realT k = sqrt(m*m+n*n)/_D;
@@ -1283,8 +1301,8 @@ realT aoSystem<realT, inputSpectT>::fittingError( realT m,
    return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::fittingError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::fittingError()
 {   
    int mn_max = _D/(2.0*d_opt());
 
@@ -1303,8 +1321,8 @@ realT aoSystem<realT, inputSpectT>::fittingError()
    return sum;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::chromScintOPDError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDError()
 {
    int mn_max = floor(0.5*_D/d_opt());
    
@@ -1324,8 +1342,8 @@ realT aoSystem<realT, inputSpectT>::chromScintOPDError()
    
 }
 
-template<typename realT, class inputSpectT>   
-realT aoSystem<realT, inputSpectT>::chromScintAmpError()
+template<typename realT, class inputSpectT, typename iosT>   
+realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError()
 {
    return 0;
 #if 0
@@ -1347,8 +1365,8 @@ realT aoSystem<realT, inputSpectT>::chromScintAmpError()
 #endif   
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::chromIndexError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::chromIndexError()
 {
    int mn_max = floor(0.5*_D/d_opt());
    
@@ -1368,8 +1386,8 @@ realT aoSystem<realT, inputSpectT>::chromIndexError()
    
 }  
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::dispAnisoOPDError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDError()
 {
    int mn_max = floor(0.5*_D/d_opt());
    
@@ -1389,8 +1407,8 @@ realT aoSystem<realT, inputSpectT>::dispAnisoOPDError()
    
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::dispAnisoAmpError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
 {
    return 0;
    
@@ -1413,8 +1431,8 @@ realT aoSystem<realT, inputSpectT>::dispAnisoAmpError()
 #endif   
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::optimumTauWFS( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
                                                                realT n )
 {
    if(_D == 0)
@@ -1436,9 +1454,9 @@ realT aoSystem<realT, inputSpectT>::optimumTauWFS( realT m,
    
    realT F = Fg();
 
-   if (wfsBeta == 0) wfsBetaUnalloc();
+   if (_wfsBeta == 0) wfsBetaUnalloc();
       
-   realT beta_p = wfsBeta->beta_p(m,n,_D);
+   realT beta_p = _wfsBeta->beta_p(m,n,_D);
 
    //Set up for root finding:
    realT a, b, c, d, e;
@@ -1473,8 +1491,8 @@ realT aoSystem<realT, inputSpectT>::optimumTauWFS( realT m,
 }
 
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::d_opt()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::d_opt()
 {
    if(!_dminChanged) return _d_opt;
    
@@ -1512,8 +1530,8 @@ realT aoSystem<realT, inputSpectT>::d_opt()
 }
 
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::ncpError( int m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ncpError( int m, 
                                                           int n )
 {
    if(m ==0 and n == 0) return 0;
@@ -1523,14 +1541,14 @@ realT aoSystem<realT, inputSpectT>::ncpError( int m,
    return (_ncp_alpha - 2)/(two_pi<realT>()) * pow(_D, -_ncp_alpha) * ncpError() * pow(k, -_ncp_alpha);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::ncpError()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ncpError()
 {
    return pow(_ncp_wfe,2)*pow(2.0*pi<realT>()/_lam_sci,2);
 }
 
-template<typename realT, class inputSpectT>
-void aoSystem<realT, inputSpectT>::calcStrehl()
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
 {  
    _wfeMeasurement = measurementError();
    _wfeTimeDelay = timeDelayError();
@@ -1549,25 +1567,25 @@ void aoSystem<realT, inputSpectT>::calcStrehl()
    _specsChanged = false;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::wfeVar()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::wfeVar()
 {
    if(_specsChanged || _dminChanged ) calcStrehl();
    
    return _wfeVar;
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::strehl()
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::strehl()
 {
    if( _specsChanged || _dminChanged ) calcStrehl();
    
    return _strehl;
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename varFuncT>
-realT aoSystem<realT, inputSpectT>::C_(  realT m, 
+realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m, 
                                          realT n,
                                          bool normStrehl,
                                          varFuncT varFunc,
@@ -1610,9 +1628,9 @@ realT aoSystem<realT, inputSpectT>::C_(  realT m,
    return var/S;
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT, typename CfuncT>
-void aoSystem<realT, inputSpectT>::C_Map( imageT & im,
+void aoSystem<realT, inputSpectT, iosT>::C_Map( imageT & im,
                                           CfuncT Cfunc
                                         )
 {
@@ -1641,8 +1659,8 @@ void aoSystem<realT, inputSpectT>::C_Map( imageT & im,
    }
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C0var( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C0var( realT m, 
                                            realT n
                                          )
 {
@@ -1650,25 +1668,25 @@ realT aoSystem<realT, inputSpectT>::C0var( realT m,
    return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C0( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C0( realT m, 
                                         realT n,
                                         bool normStrehl
                                       )
 {
    
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C0var, FITTING_ERROR_NO);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C0var, FITTING_ERROR_NO);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C0Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C0Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C0);
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C0);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C1var( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m, 
                                                      realT n
                                                    )
 {
@@ -1677,48 +1695,48 @@ realT aoSystem<realT, inputSpectT>::C1var( realT m,
    return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Y(k, _lam_sci, _secZeta);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C1( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C1( realT m, 
                                                   realT n,
                                                   bool normStrehl
                                                 )
 {
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C1var, FITTING_ERROR_NO);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C1var, FITTING_ERROR_NO);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C1Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C1Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C1);
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C1);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C2var(  realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C2var(  realT m, 
                                                       realT n
                                                    )
 {
    return measurementError(m, n) + timeDelayError(m,n);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C2(  realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C2(  realT m, 
                                                    realT n,
                                                    bool normStrehl
                                                 )
 {
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C2var, FITTING_ERROR_X);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C2var, FITTING_ERROR_X);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C2Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C2Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C2);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C2);   
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C4var( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m, 
                                            realT n
                                          )
 {
@@ -1728,24 +1746,24 @@ realT aoSystem<realT, inputSpectT>::C4var( realT m,
 }
 
                                                   
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C4( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C4( realT m, 
                                                   realT n,
                                                   bool normStrehl
                                                 )
 {
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C4var, FITTING_ERROR_ZERO);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C4var, FITTING_ERROR_ZERO);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C4Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C4Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C4);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C4);   
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C6var( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m, 
                                            realT n
                                          )
 {
@@ -1756,24 +1774,24 @@ realT aoSystem<realT, inputSpectT>::C6var( realT m,
 }
 
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C6( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C6( realT m, 
                                         realT n,
                                         bool normStrehl
                                       )
 {
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C6var, FITTING_ERROR_ZERO);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C6var, FITTING_ERROR_ZERO);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C6Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C6Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C6);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C6);   
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C7var( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C7var( realT m, 
                                                      realT n
                                                    )
 {
@@ -1782,25 +1800,25 @@ realT aoSystem<realT, inputSpectT>::C7var( realT m,
    return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X_Z(k, _lam_wfs, _lam_sci, _secZeta);
 }
 
-template<typename realT, class inputSpectT>
-realT aoSystem<realT, inputSpectT>::C7( realT m, 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C7( realT m, 
                                                   realT n,
                                                   bool normStrehl
                                                 )
 {
-   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT>::C7var, FITTING_ERROR_ZERO);
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C7var, FITTING_ERROR_ZERO);
 }
 
-template<typename realT, class inputSpectT>
+template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT>::C7Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C7Map( imageT & im )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT>::C7);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C7);   
 }
 
-template<typename realT, class inputSpectT>
-template<typename iosT>
-iosT & aoSystem<realT, inputSpectT>::dumpAOSystem( iosT & ios)
+template<typename realT, class inputSpectT, typename iosT>
+//template<typename iosT>
+iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
    ios << "#    D = " << D() << '\n';
@@ -1825,8 +1843,8 @@ iosT & aoSystem<realT, inputSpectT>::dumpAOSystem( iosT & ios)
    ios << "#    ncp_alpha = " << _ncp_alpha << '\n';
    
    
-   if (wfsBeta == 0) wfsBetaUnalloc();
-   wfsBeta->dumpWFS(ios);
+   if (_wfsBeta == 0) wfsBetaUnalloc();
+   _wfsBeta->dumpWFS(ios);
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
    
@@ -1835,8 +1853,6 @@ iosT & aoSystem<realT, inputSpectT>::dumpAOSystem( iosT & ios)
    ios << "#    mxlib_comp modified = " << mxlib_compiled_git_repo_modified() << '\n';
    ios << "#    mxlib_uncomp sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
    ios << "#    mxlib_uncomp modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
-//   ios << "#    mx::AOAnalytic sha1 = " << MXAOANALYTIC_CURRENT_SHA1 << '\n';
-//   ios << "#    mx::AOanalytic modified = " << MXAOANALYTIC_REPO_MODIFIED << '\n';
       
    return ios;
 }

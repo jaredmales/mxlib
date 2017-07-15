@@ -14,6 +14,10 @@ namespace mx
 namespace AO
 {
 
+///Namespace for analytic wavefront sensors.
+namespace beta_p
+{
+   
 ///The ideal wavefront sensor sensitivity function.
 /** Provides the \f$ \beta_p \f$ parameter of Guyon, 2005 \cite guyon_2005
   * for the ideal WFS.
@@ -21,34 +25,48 @@ namespace AO
   * This is the base class for all WFS.
   * 
   * \tparam realT is the floating point type used for calculations
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
   * 
   * \ingroup mxAOAnalytic
   */ 
-template<typename realT>
+template<typename realT, typename iosT = std::ostream>
 struct wfs 
 {
    std::string _id;
    
+   ///Constructor
+   /** Only sets the value of _id.
+     */
    wfs()
    {
       _id = "Ideal WFS";
    }
    
-   /** The sensitivity of the ideal WFS is 1  at all k.
+   ///Destructor
+   /** Declared virtual so more complicated derived types can be created.
+     */
+   virtual ~wfs()
+   {
+      return;
+   }
+   
+   ///Get the sensitivity at a spatial frequency.
+   /** The sensitivity of the ideal WFS is 1 at all k \cite guyon_2005.
      * 
      * \returns the sensitivity to photon noise parameter
      */ 
    virtual realT beta_p( int m, ///< [in] the spatial frequency index for u
                          int n,  ///< [in] the spatial frequency index for v
-                         realT D ///< [in] the diameter
+                         realT D ///< [in] the telescope diameter
                        )
    {
       return static_cast<realT>(1);
    }
    
    ///Dump the details of the WFS to an io stream.
-   template<typename iosT>
-   iosT & dumpWFS(iosT & ios)
+   /** Is virtual so that derived types can add parameters.
+     */
+   virtual iosT & dumpWFS(iosT & ios)
    {
       ios << "# WFS Parameters:\n";
       ios << "#    ID = " << _id << '\n';
@@ -62,11 +80,12 @@ struct wfs
   * for the unmodulated PyWFS.
   * 
   * \tparam realT is the floating point type used for calculations
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
   * 
   * \ingroup mxAOAnalytic
   */ 
-template<typename realT>
-struct pywfsUnmod : public wfs<realT>
+template<typename realT, typename iosT = std::ostream>
+struct pywfsUnmod : public wfs<realT, iosT>
 {
    pywfsUnmod()
    {
@@ -80,7 +99,7 @@ struct pywfsUnmod : public wfs<realT>
      */ 
    realT beta_p( int m, ///< [in] the spatial frequency index for u
                  int n,  ///< [in] the spatial frequency index for v
-                 realT D ///< [in] the diameter
+                 realT D ///< [in] the telescope diameter
                )
    {
       using namespace boost::math::constants;
@@ -95,11 +114,12 @@ struct pywfsUnmod : public wfs<realT>
   * for the modulated PyWFS in the asymptotic limit.
   * 
   * \tparam realT is the floating point type used for calculations
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
   * 
   * \ingroup mxAOAnalytic
   */ 
-template<typename realT>
-struct pywfsModAsymptotic : public wfs<realT>
+template<typename realT, typename iosT = std::ostream>
+struct pywfsModAsymptotic : public wfs<realT, iosT>
 {
    pywfsModAsymptotic()
    {
@@ -113,7 +133,7 @@ struct pywfsModAsymptotic : public wfs<realT>
      */ 
    realT beta_p( int m, ///< [in] the spatial frequency index for u
                  int n,  ///< [in] the spatial frequency index for v
-                 realT D ///< [in] the diameter
+                 realT D ///< [in] the telescope diameter
                )
    {
       using namespace boost::math::constants;
@@ -122,7 +142,7 @@ struct pywfsModAsymptotic : public wfs<realT>
    
 };
 
-
+} //namespace beta_p
 } //namespace AO
 } //namespace mx
 

@@ -82,9 +82,11 @@ void textTable::addCell( int row,
                          const std::string & cell 
                        )
 {
+   //Increase size if needed.
    if( row >= rows.size() )
    {
-      for(int i=0; i< row - rows.size() +1; ++i)
+      int N = rows.size();
+      for(int i=0; i < row - N +1; ++i)
       {
          rows.push_back( std::vector<std::vector<std::string>>( colWidths.size()));
       }

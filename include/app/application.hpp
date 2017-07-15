@@ -25,14 +25,14 @@ namespace mx
   *
   * These are executed in the order shown by the call to \ref main().
   * 
-  * We use a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
+  * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
   * - A user configuration file
   * - A local configuration file
   * - A configuration file specified on the command line
   * - The command line
   *
-  * At each step in the above order, values read from the configuration source override any previous settings.
+  * At each step in the above order, values read from that configuration source override any previous settings. So the command line has the highest precedence.
   *
   * The configuration files are ini-style, with sections.  That is
   \verbatim
@@ -81,18 +81,9 @@ protected:
    int helpWidth; ///< The total text width available for the help message.
    
 public:
-   application()
-   {
-      doHelp = false;
-      helpWidth = 120;
-      
-      return;
-   }
+   application();
    
-   ~application()
-   {
-      return;
-   }
+   virtual ~application();
    
    ///The application main function.
    /** Call this from the true main function, passing the command line arguments to be processed.
@@ -105,35 +96,16 @@ public:
      */
    int main( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
              char **argv ///< [in] standard command line result containing the arguments.
-           )
-   {
-      setup(argc, argv);
-      
-      if(doHelp)
-      {
-         help();
-         return 1;
-      }
-      
-      config.clear();
-      
-      return execute();
-   }
+           );
+
+   ///Set the global configuration path
+   void setConfigPathGlobal(const std::string & s /**< [in] the new path */);
+
+   ///Set the user configuration path
+   void setConfigPathUser(const std::string & s /**< [in] the new path */);
    
-   void setConfigPathGlobal(const std::string & s)
-   {
-      configPathGlobal = s;
-   }
-   
-   void setConfigPathUser(const std::string & s)
-   {
-      configPathUser = s;
-   }
-   
-   void setConfigPathLocal( const std::string & s )
-   {
-      configPathLocal = s;
-   }
+   ///Set the local configuration path
+   void setConfigPathLocal( const std::string & s /**< [in] the new path */);
    
 protected:   
 
@@ -141,23 +113,15 @@ protected:
      * These methods should be implemented in derived classes to use an mx::application in its default behavior.
      * @{
      */ 
+   
     ///In derived classes this is where the config targets are added to \ref config.
-   virtual void setupConfig()
-   {
-      return;
-   }
+   virtual void setupConfig();
    
     ///Override this function to extract the configured values and set up the application.
-   virtual void loadConfig()
-   {
-      return;
-   }
+   virtual void loadConfig();
    
     ///This function is where the derived class should do its work.
-   virtual int execute()
-   {
-      return 0;
-   }
+   virtual int execute();
    
    ///@}
 
@@ -170,223 +134,317 @@ protected:
    /** This will not normally need to be implemented by derived clasess.
      * Only do so if you intende to change the configuration process. 
      */
-   virtual void setup(int argc, char ** argv)
-   {
-      invokedName = argv[0];
-      
-      setDefaults();
-      
-      setupStandardConfig();
-      
-      setupConfig();
-      
-      config.readConfig(configPathGlobal);
-      config.readConfig(configPathUser);
-      config.readConfig(configPathLocal);
-      
-      //Parse CL just to get the CL config.
-      config.parseCommandLine(argc, argv, "config");
-
-      //And now get the value of it and parse it.
-      loadStandardConfig();
-      config.readConfig(configPathCL);
-
-      //Now parse the command line for real.
-      config.parseCommandLine(argc, argv);
-      
-      loadStandardHelp();
-      
-      loadConfig();
-   }
+   virtual void setup( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
+                       char ** argv ///< [in] standard command line result containing the arguments.
+                     );
 
 
    ///Set the default search paths for config files
    /** In general you should not need to redefine this.
      */
-   virtual void setDefaults()
-   {
-      char *tmpstr;
-      std::string tmp;
-      
-      #ifdef MX_APP_DEFAULT_configPathGlobal
-         configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathGlobal_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
-         if(tmpstr != 0) configPathGlobal = tmpstr;
-      #endif
-         
-         
-      #ifdef MX_APP_DEFAULT_configPathUser
-         configPathUser = MX_APP_DEFAULT_configPathUser;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathUser_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
-         if(tmpstr != 0) configPathUser = tmpstr;
-      #endif
-      
-      if(configPathUser != "")
-      {
-         tmp = getenv("HOME");
-         tmp += "/" + configPathUser;
-         configPathUser = tmp;
-      }
-       
-      #ifdef MX_APP_DEFAULT_configPathLocal
-         configPathLocal = MX_APP_DEFAULT_configPathLocal;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathLocal_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
-         if(tmpstr != 0) configPathLocal = tmpstr;
-      #endif
-         
-      return;
-      
-   }
-   
-   
+   virtual void setDefaults();
+
    
    ///Set up the help and command-line config options in a standard way.
    /** This adds "-h and --help", and "-c --config" as command line options.
      * You can override this function to change this behavior, or simply clear config
      * at the beginning of \ref setupConfig().  If you do this, you should also override \ref loadStandardConfig() and \ref loadStandardHelp().
      */
-   virtual void setupStandardConfig()
-   {
-      config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
-      config.add("config","c", "config",mx::argType::Required, "", "config", false, "string", "A local config file");
-
-   }
+   virtual void setupStandardConfig();
   
    
    ///Loads the values of "help" and "config".
    /** Override this function if you do not want to use these, or have different behavior.
      * See also \ref setupStandardConfig(). 
      */
-   virtual void loadStandardConfig()
-   {
-      config(configPathCL, "config");
-   }
+   virtual void loadStandardConfig();
    
    ///Loads the value of "help" into doHelp.
    /** Override this function if you do not want to use this, or have different behavior.
      * See also \ref setupStandardConfig(). 
      */
-   virtual void loadStandardHelp()
-   {
-      config(doHelp, "help");
-   }
+   virtual void loadStandardHelp();
 
    /// Format a configTarget for the help message.
    virtual void optionHelp( configTarget & tgt, ///< [in] The Target
-                            textTable & tt, ///< [out] the textTable being populated
-                            int row ///< [in] the row of the textTable
-                          )
-   {
-      std::string tmp;
-      if(tgt.shortOpt != "")
-      {
-         tmp = "-" + tgt.shortOpt;
-         tt.addCell(row, 0, tmp);
-      }
-      
-      if(tgt.longOpt != "")
-      {
-         tmp =  "--" + tgt.longOpt;
-         tt.addCell(row, 1, tmp);
-      }
-
-      tmp = "";
-      if(tgt.section != "")
-      {
-         tmp = tgt.section + ".";
-      }
-      
-      if(tgt.keyword !="")
-      {
-         tmp += tgt.keyword;
-         tt.addCell(row, 2, tmp);
-      }
-      
-      if(tgt.helpType != "")
-      {
-         tmp = "<" + tgt.helpType + "> ";
-         tt.addCell(row, 3, tmp);
-      }
-      
-      tt.addCell(row, 4, tgt.helpExplanation);
-      
-   
-   }
+                            textTable & tt ///< [out] the textTable being populated
+                          );
    
    ///Print a formatted help message, based on the config target inputs.
-   virtual void help()
-   {
-      appConfigurator::targetIterator targIt;
-      appConfigurator::clOnlyTargetIterator clOnlyTargIt;
-      
-      textTable tt;
-      
-      tt.colWidths = {2,15,25, 15, helpWidth-57-4-4};
-      tt.lineStart = "    ";
-      tt.colSep = " ";
-      tt.rowSep = "";
-      
-      std::cerr << "usage: " << invokedName << " [options] \n";
-      std::cerr << "\n";
-      std::cerr << "  Required arguments:\n";
-      
-      int row = 0;
-      for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
-      {
-         if( clOnlyTargIt->isRequired == true)
-         {
-            optionHelp(*clOnlyTargIt, tt, row);
-            ++row;
-         }
-      }
-            
-      for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
-      {
-         if( targIt->second.isRequired == true)
-         {
-            optionHelp(targIt->second, tt, row);
-            ++row;
-         }
-      }
-
-      tt.outPut(std::cerr);
-      tt.rows.clear();
-      
-      row = 0;
-      std::cerr << "\n  Optional arguments:\n";
-      
-      for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
-      {
-         if( clOnlyTargIt->isRequired == false)
-         {
-            optionHelp(*clOnlyTargIt, tt, row);
-            ++row;
-         }
-      }
-            
-      for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
-      {
-         if( targIt->second.isRequired == false)
-         {
-            optionHelp(targIt->second, tt, row);
-            ++row;
-         }
-      }
-      
-      tt.outPut(std::cerr);
-      
-   }
+   virtual void help();
    
    ///@}
    
 };
+
+inline
+application::application()
+{
+   doHelp = false;
+   helpWidth = 120;
+   
+   return;
+}
+
+inline
+application::~application()
+{
+   return;
+}
+
+inline
+int application::main( int argc, 
+                       char **argv
+                     )
+{
+   setup(argc, argv);
+   
+   if(doHelp)
+   {
+      help();
+      return 1;
+   }
+   
+   config.clear();
+   
+   return execute();
+}
+
+inline
+void application::setConfigPathGlobal(const std::string & s)
+{
+   configPathGlobal = s;
+}
+
+inline
+void application::setConfigPathUser(const std::string & s)
+{
+   configPathUser = s;
+}
+
+inline
+void application::setConfigPathLocal( const std::string & s )
+{
+   configPathLocal = s;
+}
+
+inline
+void application::setupConfig() //virtual
+{
+   return;
+}
+
+inline
+void application::loadConfig() //virtual
+{
+   return;
+}
+
+inline
+int application::execute() //virtual
+{
+   return 0;
+}
+
+inline
+void application::setup(int argc, char ** argv)
+{
+   invokedName = argv[0];
+   
+   setDefaults();
+   
+   setupStandardConfig();
+   
+   setupConfig();
+   
+   config.readConfig(configPathGlobal);
+   config.readConfig(configPathUser);
+   config.readConfig(configPathLocal);
+   
+   //Parse CL just to get the CL config.
+   config.parseCommandLine(argc, argv, "config");
+
+   //And now get the value of it and parse it.
+   loadStandardConfig();
+   config.readConfig(configPathCL);
+
+   //Now parse the command line for real.
+   config.parseCommandLine(argc, argv);
+   
+   loadStandardHelp();
+   
+   loadConfig();
+}
+
+inline
+void application::setDefaults() //virtual
+{
+   char *tmpstr;
+   std::string tmp;
+   
+   #ifdef MX_APP_DEFAULT_configPathGlobal
+      configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
+   #endif
+   #ifdef MX_APP_DEFAULT_configPathGlobal_env
+      tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
+      if(tmpstr != 0) configPathGlobal = tmpstr;
+   #endif
       
+      
+   #ifdef MX_APP_DEFAULT_configPathUser
+      configPathUser = MX_APP_DEFAULT_configPathUser;
+   #endif
+   #ifdef MX_APP_DEFAULT_configPathUser_env
+      tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
+      if(tmpstr != 0) configPathUser = tmpstr;
+   #endif
+   
+   if(configPathUser != "")
+   {
+      tmp = getenv("HOME");
+      tmp += "/" + configPathUser;
+      configPathUser = tmp;
+   }
+    
+   #ifdef MX_APP_DEFAULT_configPathLocal
+      configPathLocal = MX_APP_DEFAULT_configPathLocal;
+   #endif
+   #ifdef MX_APP_DEFAULT_configPathLocal_env
+      tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
+      if(tmpstr != 0) configPathLocal = tmpstr;
+   #endif
+      
+   return;
+   
+}
+
+inline
+void application::setupStandardConfig() //virtual
+{
+   config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
+   config.add("config","c", "config",mx::argType::Required, "", "config", false, "string", "A local config file");
+
+}
+
+inline
+void application::loadStandardConfig() //virtual
+{
+   config(configPathCL, "config");
+}
+
+inline
+void application::loadStandardHelp() //virtual
+{
+   config(doHelp, "help");
+}
+
+inline
+void application::optionHelp( configTarget & tgt,
+                              textTable & tt 
+                            ) //virtual
+{
+   std::string tmp;
+   int row = tgt.orderAdded;
+   
+   if(tgt.shortOpt != "")
+   {
+      tmp = "-" + tgt.shortOpt;
+      tt.addCell(row, 0, tmp);
+   }
+   
+   if(tgt.longOpt != "")
+   {
+      tmp =  "--" + tgt.longOpt;
+      tt.addCell(row, 1, tmp);
+   }
+
+   tmp = "";
+   if(tgt.section != "")
+   {
+      tmp = tgt.section + ".";
+   }
+   
+   if(tgt.keyword !="")
+   {
+      tmp += tgt.keyword;
+      tt.addCell(row, 2, tmp);
+   }
+   
+   if(tgt.helpType != "")
+   {
+      tmp = "<" + tgt.helpType + "> ";
+      tt.addCell(row, 3, tmp);
+   }
+   
+   tt.addCell(row, 4, tgt.helpExplanation);
+   
+
+}
+
+inline
+void application::help() //virtual
+{
+   appConfigurator::targetIterator targIt;
+   appConfigurator::clOnlyTargetIterator clOnlyTargIt;
+   
+   textTable tt;
+   
+   tt.colWidths = {2,15,25, 15, helpWidth-57-4-4};
+   tt.lineStart = "    ";
+   tt.colSep = " ";
+   tt.rowSep = "";
+   
+   std::cerr << "usage: " << invokedName << " [options] \n";
+   std::cerr << "\n";
+   std::cerr << "  Required arguments:\n";
+   
+   int row = 0;
+   for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
+   {
+      if( clOnlyTargIt->isRequired == true)
+      {
+         optionHelp(*clOnlyTargIt, tt);
+         ++row;
+      }
+   }
+         
+   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   {
+      if( targIt->second.isRequired == true)
+      {
+         optionHelp(targIt->second, tt);
+         ++row;
+      }
+   }
+
+   tt.outPut(std::cerr);
+   tt.rows.clear();
+   
+   row = 0;
+   std::cerr << "\n  Optional arguments:\n";
+   
+   for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
+   {
+      if( clOnlyTargIt->isRequired == false)
+      {
+         optionHelp(*clOnlyTargIt, tt);
+         ++row;
+      }
+   }
+         
+   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   {
+      if( targIt->second.isRequired == false)
+      {
+         optionHelp(targIt->second, tt);
+         ++row;
+      }
+   }
+   
+   tt.outPut(std::cerr);
+   
+}
+
 } //namespace mx
 
 #endif // __application_hpp__

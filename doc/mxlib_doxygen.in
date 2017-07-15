@@ -790,17 +790,21 @@ INPUT                  = ./groupdefs.dox \
                          ./fftw.dox \
                          ../ \
                          ../include \
-                         ../include/app \
-                         ../include/astro \
-                         ./boost_const.dox \
                          ../include/ao \
                          ../include/ao/analysis \
                          ../include/ao/sim \
                          ./ao/aogroupdefs.dox \
                          ./ao/gettingStarted.dox \
+                         ../include/app \
+                         ../include/astro \
+                         ./boost_const.dox \
+                         ../include/fft \
                          ../include/improc \
-                         ../include/wfp \
-                         ../include/meta
+                         ../include/math \
+                         ../include/math/func \
+                         ../include/meta \
+                         ../include/sigproc \
+                         ../include/wfp 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

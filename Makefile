@@ -26,12 +26,12 @@ CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC
 # programs to be made
 TARGETS = libmxlib
 
-OBJS = astrodyn.o \
-       msgq.o \
+OBJS = msgq.o \
        mxlib.o\
        sharedmem_segment.o \
        process_interface.o 
 
+#astrodyn.o \
 
 INC_TO_INSTALL = ao \
                  app \

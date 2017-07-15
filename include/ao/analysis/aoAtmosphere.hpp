@@ -33,7 +33,6 @@ namespace AO
 /** 
   * \todo Add layer outer scales.
   * \todo Add calculation of f_G and tau_0.
-  * \todo Add provision for airmass (secant z).
   * 
   * \tparam realT is the real floating type in which all calculations are performed.
   * 
@@ -96,8 +95,7 @@ public:
    realT r_0( const realT & lam /**< [in] the wavelength at which to calculate r_0*/ );
    
    ///Set the value of Fried's parameter and the reference wavelength.
-   /**
-     * 
+   /** If the provided reference wavelength is \<=0, then 0.5 microns is used.
      * 
      */ 
    void r_0( const realT & r0, ///< [in] is the new value of _r_0  
@@ -124,11 +122,9 @@ public:
 
    ///Get the height of a single layer.
    /**
-     * \param [in] n specifies the layer.
-     *
      * \returns the value of _layer_z[n].
      */
-   realT layer_z( const int n /**< */);
+   realT layer_z( const int n /**< [in] specifies the layer. */);
    
    ///Get the vector layer heights.
    /** 
@@ -138,25 +134,36 @@ public:
    
    ///Set the vector of layer heights.
    /**
-     * \param [in] layz is the new vector, which is copied to _layer_z.
      */
-   void layer_z(const std::vector<realT> & layz /**< */ );
+   void layer_z(const std::vector<realT> & layz /**< [in] new vector of layer heights, which is copied to _layer_z. */ );
    
+   /// Get the height of the observatory.
+   /** 
+     * \return the current value of _h_obs.
+     */ 
    realT h_obs();
    
-   void h_obs( realT nh );
+   /// Set the height of the observatory.
+   /**
+     */
+   void h_obs( realT nh /**< [in] the new height of the observatory [m] */);
    
+   /// Get the atmospheric scale height.
+   /** 
+     * \returns the current value of _H.
+     */ 
    realT H();
    
-   void H( realT nH );
+   /// Set the atmospheric scale height.
+   /**
+     */
+   void H( realT nH /**< [in] the new value of _H [m] */);
    
    ///Get the strength of a single layer.
    /**
-     * \param [in] n specifies the layer.
-     *
      * \returns the value of _layer_Cn2[n].
      */
-   realT layer_Cn2(const int n /**< */);
+   realT layer_Cn2(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer strengths.
    /** 
@@ -169,22 +176,19 @@ public:
      * If a reference wavelength is specified (l0 > 0), then r_0 is set from the layer strengths
      * according to
      * 
-     * Regardless of what units the strengths are specified in, they are normalized so that
+     * Regardless of what units the strengths are specified in, they are stored normalized so that
      * \f$ \sum_n C_n^2 = 1 \f$.
-     * 
      * 
      */  
    void layer_Cn2( const std::vector<realT> & cn2, ///<  [in] is a vector containing the layer strengths 
-                   const realT l0 = 0  ///< [in] [optional] if l0 > 0, then r_0 is set according from the layer strengths.
+                   const realT l0 = 0  ///< [in] [optional] if l0 > 0, then r_0 is set from the layer strengths.
                  );
    
    ///Get the wind speed of a single layer.
    /**
-     * \param [in] n specifies the layer.
-     *
      * \returns the value of _layer_v_wind[n].
      */
-   realT layer_v_wind(const int n);
+   realT layer_v_wind(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer windspeeds
    /** 
@@ -194,17 +198,15 @@ public:
    
    ///Set the vector of layer windspeeds.
    /**
-     * \param [in] spd is the new vector, which is copied to _layer_v_wind.
+     * \param 
      */
-   void layer_v_wind(const std::vector<realT> & spd /**< */);
+   void layer_v_wind(const std::vector<realT> & spd /**< [in] the new vector, which is copied to _layer_v_wind. */);
    
    ///Get the wind direction of a single layer.
    /**
-     * \param [in] n specifies the layer.
-     *
      * \returns the value of _layer_dir[n].
      */
-   realT layer_dir(const int n /**< */);
+   realT layer_dir(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer wind directions
    /** 
@@ -214,9 +216,9 @@ public:
    
    ///Set the vector of layer wind directions.
    /**
-     * \param [in] d is the new vector, which is copied to _layer_dir.
+     * \param 
      */
-   void layer_dir(const std::vector<realT> & d /**< */);
+   void layer_dir(const std::vector<realT> & d /**< [in] the new vector, which is copied to _layer_dir. */);
    
    ///Get the number of layers
    /**
@@ -240,15 +242,15 @@ public:
    realT v_wind();
    
    ///Get the weighted mean wind direction
-   /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
+   /** Returns the weighted mean wind direction according to the 5/3's turbulence moment.  This is defined as
      * 
      \f[
-      \bar{v} = \left[\sum_i C_N^2(z_i) \theta_i^{5/3} \right]^{3/5}
+      \bar{\theta} = \left[\sum_i C_N^2(z_i) \theta_i^{5/3} \right]^{3/5}
      \f]
      * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
      * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
-     * returns the value of _v_wind.
+     * returns the value of _dir_wind.
      * 
      * \returns the current value of _dir_wind.
      */ 
@@ -267,9 +269,8 @@ public:
    /** Calling this function changes the values of _layer_v_wind so that the 
      * Layer averaged 5/3 \f$C_n^2\f$ moment of wind speed is the new value specified by vw.
      * 
-     * \param vw is the new value of _v_wind.
      */
-   void v_wind(const realT & vw /**< */);
+   void v_wind(const realT & vw /**< [in] the new value of _v_wind. */);
    
    ///Get the weighted mean layer height
    /** Returns the weighted layer height according to the 5/3's turbulence moment.  This is defined as
@@ -358,11 +359,10 @@ public:
       \left( \frac{\epsilon_{vK}}{\epsilon_0}\right)^2 = 1 - 2.183\left( \frac{r_0(\lambda_{sci}}{L_0}\right)^{0.356}
      \f]
      *
-     * \param lam_sci is the wavelength of the science observation.
      *
      * \returns the value of the FWHM (\f$ \epsilon_{0/vK} \f$) for the current atmosphere parameters.
      */ 
-   realT fwhm(realT lam_sci /**< */ );
+   realT fwhm(realT lam_sci /**< [in] the wavelength of the science observation. */ );
    
    ///Load the default atmosphere model from Guyon (2005).
    /** Sets the parameters from Table 4 of Guyon (2005) \cite guyon_2005.
@@ -377,11 +377,11 @@ public:
 
    ///Set a single layer model.
    /** 
-    * 
-    */
-   void setSingleLayer( realT lz,   ///<
-                        realT vw,   ///<
-                        realT dir   ///<
+     * 
+     */
+   void setSingleLayer( realT lz,   ///< [in] the layer height
+                        realT vw,   ///< [in] the layer wind-seed
+                        realT dir   ///< [in] the layer wind direction.
                       )
    {      
       layer_Cn2(std::vector<realT>({1}));
@@ -422,7 +422,7 @@ realT aoAtmosphere<realT>::r_0()
 template<typename realT>
 realT aoAtmosphere<realT>::r_0(const realT & lam)
 {
-   return _r_0*pow(lam, six_fifths<realT>());
+   return _r_0*pow(lam/_lam_0, six_fifths<realT>());
 }
 
 template<typename realT>
@@ -788,7 +788,9 @@ realT aoAtmosphere<realT>::fwhm(realT lam_sci)
 {
    realT r0lam = r_0(lam_sci);
    
+   std::cerr << r0lam << "\n";
    realT fwhm = 0.98*(lam_sci/r0lam);
+   std::cerr << fwhm << "\n";
    
    if( L_0() > 0) fwhm *= sqrt( 1 - 2.183*pow(r0lam/L_0(), 0.356));
    
@@ -829,10 +831,13 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "#    r_0 = " << r_0() << '\n';
    ios << "#    lam_0 = " << lam_0() << '\n';
    ios << "#    L_0 = " << L_0() << '\n';
+   ios << "#    FWHM = " << fwhm(lam_0()) << '\n';
    ios << "#    n_layers = " << n_layers() << '\n';
    ios << "#    layer_z = ";
    for(int i=0;i < n_layers()-1;++i) ios << layer_z()[i] << ", ";
    ios <<  layer_z()[ n_layers()-1] << '\n';
+   ios << "#    h_obs = " << h_obs() << '\n';
+   ios << "#    H = " << H() << '\n';
    ios << "#    layer_Cn2 = ";
    for(int i=0;i< n_layers()-1;++i) ios << layer_Cn2()[i] << ", ";
    ios << layer_Cn2()[n_layers()-1] << '\n';
@@ -842,11 +847,10 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "#    layer_dir = ";
    for(int i=0;i< n_layers()-1;++i) ios << layer_dir()[i] << ", ";
    ios << layer_dir()[ n_layers()-1] << '\n';
-   ios << "#  mean v_wind = " << v_wind() << '\n';
-   ios << "#  mean z = " << z_mean() << '\n';
+   ios << "#    mean v_wind = " << v_wind() << '\n';
+   ios << "#    mean dir_wind = " << dir_wind() << '\n';
+   ios << "#    mean z = " << z_mean() << '\n';
    
-   //ios << "#    Scintillation = " << scintillation << '\n';
-   //ios << "#    Component = " << component << '\n';
    
    return ios;
 }
