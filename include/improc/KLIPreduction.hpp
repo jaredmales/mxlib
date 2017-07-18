@@ -456,7 +456,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
     */   
    int info = math::eigenSYEVR<float, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
    
-   t_eigenv += (get_curr_time() - t0) / omp_get_num_threads();
+   t_eigenv += (get_curr_time() - t0) ;/// omp_get_num_threads();
    
    if(info !=0 ) 
    {
