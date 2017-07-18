@@ -19,68 +19,6 @@ namespace mx
 {
 
 
-///Test whether a type is an eigenCube by testing whether it has a typedef of "is_eigenCube"
-/** Used for compile-time determination of type
-  * Example usage:
-  * \code
-  * bool is_eC = is_eigenCube<eigenCube<float> >; //Evaluates to true
-  * bool is_not_eC = is_eigenCube<eigenImagef>; //Evaluates to false
-  * \endcode
-  * 
-  * This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
-  */
-
-template <typename T>
-struct is_eigenCube 
-{
-   // Types "yes" and "no" are guaranteed to have different sizes,
-   // specifically sizeof(yes) == 1 and sizeof(no) == 2.
-   typedef char yes[1];
-   typedef char no[2];
- 
-   template <typename imageT>
-   static yes& test(typename imageT::is_eigenCube*);
- 
-   template <typename>
-   static no& test(...);
- 
-   // If the "sizeof" of the result of calling test<T>(0) would be equal to sizeof(yes),
-   // the first overload worked and T has a nested type named "is_mmatrix".
-   static const bool value = sizeof(test<T>(0)) == sizeof(yes);
-};
-
-
-///Function object to retun the number of planes for any Eigen like object, whether 2D or a 3D cube.
-/** Uses SFINAE to check for 3D eigenCube.
-  */
-template<typename arrT, bool isCube=is_eigenCube<arrT>::value>
-struct eigenArrPlanes
-{
-   //If it's an eigenCube, call planes planes()
-   int operator()(const arrT & arr)
-   {
-      return arr.planes(); 
-   }
-};
-
-template<typename arrT>
-struct eigenArrPlanes<arrT, false>
-{
-   //If it's not an eigenCube, never call planes()
-   int operator()(const arrT & arr)
-   {
-      return 1;
-   }
-};
-
-
-
-
-
-
-
- 
-
 
 
 template<typename eigenT, typename eigenTin>
@@ -97,11 +35,6 @@ void removeRowsAndCols(eigenT & out, const eigenTin & in, int st, int w)
    
    out.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w)) = in.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w));
 }
-
-
-
-
-
 
 
 template<typename eigenT, typename eigenTin>
@@ -129,18 +62,6 @@ void removeCols(eigenT & out,  const eigenTin & in, int st, int w)
 }   
    
 #if 0
-template<typename dataT>
-static int eigenMedian_compare (const void * a, const void * b)
-{
-  if( *(dataT*)a < *(dataT*)b) return -1;
-  if( *(dataT*)a > *(dataT*)b) return 1;
-  
-  return 0;
-   
-}
-#endif
-
-
 template<typename eigenT>
 typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eigenT::Scalar> * work =0)
 {
@@ -167,92 +88,29 @@ typename eigenT::Scalar eigenMedian(const eigenT & mat, std::vector<typename eig
 
    med = vectorMedianInPlace(*work);
    
-//    int n = 0.5*mat.size();
-//    
-//    nth_element(work->begin(), work->begin()+n, work->end());
-//    
-//    med = (*work)[n];
-//    
-//    if(mat.size()%2 == 0)
-//    {
-//       //nth_element(work->begin(), work->begin()+n-1, work->end());
-//       med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
-//    }
          
    if(localWork) delete work;
    
    return med;
 } 
+#endif
 
-template<typename imageT, typename maskT=imageT>
-typename imageT::Scalar imageMedian(const imageT & mat, const maskT * mask = 0, std::vector<typename imageT::Scalar> * work =0)
-{
-   typename imageT::Scalar med;
-   
-   bool localWork = false;
-   if(work == 0) 
-   {
-      work = new std::vector<typename imageT::Scalar>;
-      localWork = true;
-   }
-   
-   int sz = mat.size();
-   
-   if(mask)
-   {
-      sz = mask->sum();
-   }
-   
-   work->resize(sz);
-   
-   int ii = 0;
-   for(int i=0;i<mat.rows();++i)
-   {
-      for(int j=0; j<mat.cols();++j)
-      {
-         if(mask)
-         {
-            if( (*mask)(i,j) == 0) continue;
-         }
-         
-         (*work)[ii] = mat(i,j);
-         ++ii;
-      }
-   }
-
-   
-//    int n = 0.5*mat.size();
-//    
-//    nth_element(work->begin(), work->begin()+n, work->end());
-//    
-//    med = (*work)[n];
-//    
-//    if(mat.size()%2 == 0)
-//    {
-//       //nth_element(work->begin(), work->begin()+n-1, work->end());
-//       med = 0.5*(med + *std::max_element(work->begin(), work->begin()+n)); //(*work)[n-1]);
-//    }
-       
-   med = vectorMedianInPlace(*work);
-   
-   if(localWork) delete work;
-   
-   return med;
-} 
-
+#if 0
 
 /// Calculates the lower triangular part of the covariance matrix of ims.
 /** Uses cblas_ssyrk.  cv is resized to ims.cols() X ims.cols().
-  * Calculates \f$ cv = A^T*A\f$.
+  * Calculates \f$ cv = A^T*A \f$.
   * 
-  * \param ims is the eigen matrix/array (images as columns) to calculate the covariance of
-  * \param cv is the eigen matrix/array where to store the result
   *
   * \tparam eigenT1 is the eigen matrix/array type of cv.
-  * \tparam eigenT2 is the eigen matrix/array type of ims
+  * \tparam eigenT2 is the eigen matrix/array type of ims 
+  * 
+  * \ingroup gen_math
   */ 
 template<typename eigenT1, typename eigenT2>
-void eigenSYRK(eigenT1 &cv, const eigenT2 &ims)
+void eigenSYRK( eigenT1 &cv,  ///< [out] is the eigen matrix/array where to store the result
+                const eigenT2 &ims ///< [in] is the eigen matrix/array (images as columns) to calculate the covariance of
+              )
 {
    cv.resize(ims.cols(), ims.cols());
    
@@ -318,26 +176,19 @@ struct syevrMem
   * \tparam cvT is the scalar type of X (a.k.a. the covariance matrix)
   * \tparam calcT is the type in which to calculate the eigenvectors/eigenvalues
   *
-  * \param [out] eigvec will contain the eigenvectors as columns
-  * \param [out] eigval will contain the eigenvalues
-  * \param [in] CHANGED is just a placeholder to make sure that old calls don't compile
-  * \param [in] X is a square matrix which is either upper or lower (default) triangular
-  * \param [in] ev0 is the first desired eigenvalue default 0
-  * \param [in] ev1 if >= ev0 thenthis is the last desired eigenvalue.  If -1 all eigenvalues are returned.
-  * \param [in] UPLO specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
-  * \param [in] mem holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
-  * 
   * \returns the return code from syevr.
+  * 
+  * \ingroup gen_math
   */
-template<typename cvT, typename calcT> //, typename eigenT>
-int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, 
-                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval,
-                int CHANGED,
-                Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,
-                int ev0=0, 
-                int ev1=-1, 
-                char UPLO = 'L',
-                syevrMem<int, int, calcT> * mem = 0
+template<typename cvT, typename calcT>
+int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
+                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
+                int CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
+                Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, ///< [in] is a square matrix which is either upper or lower (default) triangular
+                int ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
+                int ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
+                char UPLO = 'L', ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
+                syevrMem<int, int, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
               ) 
 {     
    int  numeig, info;//, sizeWORK, sizeIWORK;
@@ -434,6 +285,81 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec,
    return info;
 }       
 
+///Calculate the K-L modes, or principle components, given a covariance matrix.
+/** Eigen-decomposition of the covariance matrix is performed using \ref eigenSYEVR().
+  * 
+  * \tparam evCalcT is the type in which to perform eigen-decomposition.
+  * \tparam eigenT is a 2D Eigen-like type
+  * \tparam eigenT1 is a 2D Eigen-like type.  
+  * 
+  * \ingroup gen_math
+  */
+template<typename _evCalcT = double, typename eigenT, typename eigenT1>
+int calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
+                 eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
+                 const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
+                 int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
+                 mx::syevrMem<int, int, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+               )
+{
+   typedef _evCalcT evCalcT;
+   typedef typename eigenT::Scalar realT;
+   
+   eigenT evecs, evals;
+   
+   Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
+   
+   if(cv.rows() != cv.cols())
+   {
+      std::cerr << "Non-square covariance matrix input to calcKLModes\n";
+      return -1;
+   }
+
+   if(cv.rows() != Rims.cols())
+   {
+      std::cerr << "Covariance matrix - reference image size mismatch in klip_klModes\n";
+      return -1;
+   }
+
+
+   int tNims = cv.rows();
+   int tNpix = Rims.rows();
+
+   if(n_modes <= 0 || n_modes > tNims) n_modes = tNims;
+
+   //Calculate eigenvectors and eigenvalues
+   /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
+    */   
+   int info = mx::eigenSYEVR<realT, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
+      
+   if(info !=0 ) 
+   {
+      std::cerr << "info =" << info << "\n";
+      exit(0);
+   }
+   
+   evecs = evecsd.template cast<realT>();
+   evals = evalsd.template cast<realT>();
+      
+   //Normalize the eigenvectors
+   for(int i=0;i< n_modes; ++i)
+   {
+      evecs.col(i) = evecs.col(i)/sqrt(evals(i));
+   }
+
+   klModes.resize(n_modes, tNpix);
+
+   
+   //Now calculate KL images
+   /*
+    *  KL = E^T * R  ==> C = A^T * B
+    */
+   mx::math::gemm<realT>(CblasColMajor, CblasTrans, CblasTrans, n_modes, tNpix,
+                              tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
+                                 0., klModes.data(), klModes.rows());
+
+   
+} //calcKLModes        
 
 ///Compute the SVD of an Eigen::Array using LAPACK's xgesdd
 /** Computes the SVD of A, \f$ A = U S V^T \f$.
@@ -647,7 +573,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 
 
 
-
+#endif
 
 }//namespace mx
 

@@ -347,21 +347,36 @@ void fitsHeader::eraseStandardTop()
    headerIterator it = begin(), nit;
   
    int n =0;
-   while(it->keyword != "BSCALE" && it != end() && n < 25)
+   while(it != end() && n < 25)
    {
       nit = it;
       ++nit;
-      if(it->keyword == "SIMPLE" || it->keyword == "SIMPLE" || it->keyword == "BITPIX" || it->keyword == "NAXIS" 
+      if(it->keyword == "SIMPLE" || it->keyword == "BITPIX" || it->keyword == "NAXIS" 
            || it->keyword == "NAXIS1" || it->keyword == "NAXIS2" || it->keyword == "NAXIS3" || it->keyword == "EXTEND"
               || it->keyword == "BZERO" || it->keyword == "BSCALE")
       {
          erase(it);
       }
          
+      if(it->keyword == "COMMENT")
+      {
+         if(it->comment.find("FITS (Flexible Image") != std::string::npos) erase(it);
+         else if(it->comment.find("and Astrophysics'") != std::string::npos) erase(it);
+      }
+      
       if(nit == end()) break;
       it = nit;
       ++n;
    }
+   
+//    //One last check for BSCALE:
+//    if(nit != end())
+//    {
+//       if(it->keyword == "BSCALE")
+//       {
+//          erase(it);
+//       }
+//    }
    
 }
 

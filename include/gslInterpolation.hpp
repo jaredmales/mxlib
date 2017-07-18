@@ -7,8 +7,8 @@
   *
   */
   
-#ifndef __gslInterpolation_hpp__
-#define __gslInterpolation_hpp__
+#ifndef gslInterpolation_hpp
+#define gslInterpolation_hpp
 
 #include <gsl/gsl_interp.h>
 
@@ -132,4 +132,4 @@ int gsl_interpolate( const gsl_interp_type * interpT,
 
 } //namespace mx
 
-#endif //__gslInterpolation_hpp__
+#endif //gslInterpolation_hpp

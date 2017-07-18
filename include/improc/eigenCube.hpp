@@ -16,6 +16,9 @@
 
 #include "../eigenUtils.hpp"
 #include "../vectorUtils.hpp"
+#include "eigenImage.hpp"
+
+
 
 using namespace Eigen;
 
@@ -509,7 +512,7 @@ void eigenCube<dataT>::median(eigenT & mim)
       std::vector<Scalar> work;
       for(Index j=0;j< _cols; ++j)
       {
-         mim(i,j) = eigenMedian(pixel(i,j), &work);             
+         mim(i,j) = imageMedian(pixel(i,j), &work);             
       }
    }
 }

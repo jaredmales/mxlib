@@ -50,13 +50,11 @@ INC_TO_INSTALL = ao \
                  eigenUtils.hpp \
                  environment.hpp \
                  fileUtils.hpp \
-                 fitGaussian.hpp \
                  fourierModes.hpp \
                  gnuPlot.hpp \
                  gslInterpolation.hpp \
                  IPC.h \
                  imagingArray.hpp \
-                 levmarInterface.hpp \
                  msgq.h \
                  msgQ \
                  mxException.hpp \

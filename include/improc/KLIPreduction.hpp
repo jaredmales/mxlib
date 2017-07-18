@@ -19,6 +19,7 @@
 
 #include "../ompLoopWatcher.hpp"
 #include "../math/geo.hpp"
+#include "../math/eigenLapack.hpp"
 
 #include "ADIobservation.hpp"
 
@@ -169,7 +170,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
                    eigenT & cv, 
                    const eigenT1 & Rims, 
                    int n_modes = 0,
-                   syevrMem<int, int, evCalcT> * mem = 0);   
+                   math::syevrMem<int, int, evCalcT> * mem = 0);   
    
    /*template<typename eigenT, typename eigenTv>
    void collapseCovar( eigenT & cutCV, 
@@ -402,12 +403,11 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
 template<typename eigenT, typename eigenT1>
-inline
 void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims, 
                                                                   eigenT & cv, 
                                                                   const eigenT1 & Rims, 
                                                                   int n_modes,
-                                                                  syevrMem<int, int, _evCalcT> * mem)
+                                                                  math::syevrMem<int, int, _evCalcT> * mem)
 {
    double t0;
    eigenT evecs, evals;
@@ -439,7 +439,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
-   int info = eigenSYEVR<float, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
+   int info = math::eigenSYEVR<float, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
    
    t_eigenv += (get_curr_time() - t0) / omp_get_num_threads();
    
@@ -635,7 +635,6 @@ void collapseCovar( eigenT & cutCV,
 
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
 void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> & rims, std::vector<size_t> & idx, realT dang)
 {
    std::cerr << "beginning worker\n";
@@ -650,7 +649,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
    //*** Form lower-triangle covariance matrix      
    eigenImageT cv;
  
-   eigenSYRK(cv, rims.cube());
+   math::eigenSYRK(cv, rims.cube());
       
    ompLoopWatcher<> status( this->Nims, std::cerr);
    #pragma omp parallel //num_threads(20) 
@@ -663,7 +662,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       eigenImageT cv_cut;
       eigenImageT klims;
       
-      syevrMem<int, int, evCalcT> mem;
+      math::syevrMem<int, int, evCalcT> mem;
 
       if( excludeMethod == HCI::excludeNone )
       {

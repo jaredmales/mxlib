@@ -9,7 +9,7 @@
 #define __imCenterCircleSym_hpp__
 
 #include "../vectorUtils.hpp"
-#include "../fitGaussian.hpp"
+#include "../math/fit/fitGaussian.hpp"
 #include "imageFilters.hpp"
 #include "eigenImage.hpp"
 
@@ -49,8 +49,9 @@ struct imCenterCircleSym
    realT guessWidth; ///< Guess in original pixels for the FWHM of the cost grid.  Default is 0.5, which seems to work well in most cases.
    
    ///The fitter for finding the centroid of the grid.  You can use this to inspect the details of the fit if desired.
-   mx::fitGaussian2D<mx::gaussian2D_gen_fitter<realT>> fit; 
-       
+   //mx::math::fit::fitGaussian2D<mx::gaussian2D_gen_fitter<realT>> fit; 
+   mx::math::fit::fitGaussian2Dgen<realT> fit;
+   
    realT _x0; ///< Internal storage of the guess center position
    realT _y0; ///< Internal storage of the guess center position.
    
@@ -105,7 +106,7 @@ struct imCenterCircleSym
       #pragma omp parallel
       {
 #endif
-         int nRad = (maxRad - minRad)/dRad;
+         int nRad = (maxRad - minRad)/dRad+1;
          std::vector< std::vector<realT> > rads;
          rads.resize( nRad );
       
@@ -162,7 +163,6 @@ struct imCenterCircleSym
 #ifdef ICCS_OMP
       } //omp parallel
 #endif
-      
       //-------- Now Smooth the grid, and multiply by -1 for fitting -------------
       
       if(smWidth > 0)
@@ -185,6 +185,8 @@ struct imCenterCircleSym
       
 
       //------------- Now fit the smoothed cost grid to a 2D elliptical Gaussian ------------
+      /** \todo This needs to be able to handle highly non-symmetric peaks much better.
+        */
       fit.setArray(smGrid.data(), smGrid.rows(), smGrid.cols());
       fit.setGuess(mn, mx-mn, gx, gy, guessWidth/dPix, guessWidth/dPix, 0);
          
@@ -217,7 +219,7 @@ struct imCenterCircleSym
       std::cout << "maxRad: " << maxRad << "\n";
       std::cout << "dRad: " << dRad << "\n"; 
       std::cout << "smWidth: " << smWidth << "\n";
-      std::cout << "guessWidth: " << smWidth << "\n";
+      std::cout << "guessWidth: " << guessWidth << "\n";
       std::cout << "--------------------------------------\n";
       std::cout << "Fit results:\n"   ;
       fit.dump_report();

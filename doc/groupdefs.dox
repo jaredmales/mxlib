@@ -33,6 +33,11 @@
   * \brief Utilities for working with the Gaussian function
   * \ingroup functions
   */
+
+/** \defgroup gen_math_airy_pattern The Airy Pattern
+  * \brief Utilities for working with the Airy Pattern.
+  * \ingroup functions
+  */
   
 /** \defgroup template_blaslap Templatized BLAS and Lapack
   * \brief Templatized interfaces to the BLAS and the Lapack library
@@ -49,6 +54,11 @@
   * \ingroup template_blaslap
   */  
 
+/** \defgroup eigen_lapack Eigen Lapack interfaces
+  * \brief Interfaces to Lapack and BLAS for Eigen-like arrays.
+  * \ingroup gen_math 
+  */  
+  
 /** \defgroup interpolation Interpolation 
   * \brief Various tools for interpolating data and discrete functions.
   * \ingroup gen_math
@@ -213,7 +223,6 @@
 /** \defgroup psfs Point Spread Functions
   * \brief Functions describing PSFs.
   * \ingroup imaging
-  * \ingroup functions
   */
   
 /** \defgroup fourier_basis The Fourier Basis

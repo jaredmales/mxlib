@@ -9,8 +9,10 @@
 #define __fitsFile_hpp__
 
 
-#include "../mxException.hpp"
-#include "../eigenUtils.hpp"
+//#include "../mxException.hpp"
+#include "../mxError.hpp"
+
+#include "eigenImage.hpp"
 
 #include "fitsUtils.hpp"
 
@@ -363,7 +365,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error 
      */ 
-   int write( dataT * im, ///< [in] is the array
+   int write( const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
               int d3,  ///< [in] is the third dimenesion (minimum value is 1)
@@ -375,7 +377,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int write( dataT * im, ///< [in] is the array
+   int write( const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
               int d3  ///< [in] is the third dimenesion (minimum value is 1)
@@ -388,7 +390,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int write( dataT * im, ///< [in] is the array
+   int write( const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
               int d3,  ///< [in] is the third dimenesion (minimum value is 1)
@@ -401,7 +403,7 @@ public:
      * \returns -1 on error
      */
    int write( std::string fname, ///< [in] is the name of the file.
-              dataT * im, ///< [in] is the array
+              const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
               int d3   ///< [in] is the third dimenesion (minimum value is 1)
@@ -413,7 +415,7 @@ public:
      * \returns -1 on error
      */
    int write( std::string fname, ///< [in] is the name of the file.
-              dataT * im, ///< [in] is the array
+              const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
               int d3,  ///< [in] is the third dimenesion (minimum value is 1)
@@ -443,7 +445,7 @@ public:
      */ 
    template<typename arrT>
    int write( std::string fname, ///< [in] is the name of the file.
-              arrT & im ///< [in] is the array
+              const arrT & im ///< [in] is the array
             ); 
   
    ///Write the contents of an Eigen-type array to a FITS file.
@@ -462,7 +464,7 @@ public:
      */ 
    template<typename arrT>
    int write( std::string fname,  ///< [in] is the file path, which is passed to \ref fileName
-              arrT & im, ///< [in] is the array
+              const arrT & im, ///< [in] is the array
               fitsHeader & head ///< [in] is a fitsHeader object which is passed to \ref readHeader
             ); 
    
@@ -1264,7 +1266,7 @@ int fitsFile<dataT>::readHeader( std::vector<fitsHeader> & heads,
 
 
 template<typename dataT>
-int fitsFile<dataT>::write( dataT * im, 
+int fitsFile<dataT>::write( const dataT * im, 
                             int d1, 
                             int d2, 
                             int d3, 
@@ -1322,7 +1324,7 @@ int fitsFile<dataT>::write( dataT * im,
    
    for(int i=0;i<_naxis;++i) nelements *= _naxes[i];
       
-   fits_write_pix( _fptr,  getFitsType<dataT>(), fpixel, nelements, im, &fstatus);
+   fits_write_pix( _fptr,  getFitsType<dataT>(), fpixel, nelements, (void *) im, &fstatus);
    if (fstatus)
    {
       std::string explan = "Error writing data";
@@ -1349,7 +1351,7 @@ int fitsFile<dataT>::write( dataT * im,
 }
       
 template<typename dataT>
-int fitsFile<dataT>::write( dataT * im, 
+int fitsFile<dataT>::write( const dataT * im, 
                             int d1, 
                             int d2, 
                             int d3
@@ -1359,7 +1361,7 @@ int fitsFile<dataT>::write( dataT * im,
 }
 
 template<typename dataT>
-int fitsFile<dataT>::write( dataT * im, 
+int fitsFile<dataT>::write( const dataT * im, 
                             int d1, 
                             int d2, 
                             int d3, 
@@ -1371,7 +1373,7 @@ int fitsFile<dataT>::write( dataT * im,
 
 template<typename dataT>
 int fitsFile<dataT>::write( std::string fname, 
-                            dataT * im, 
+                            const dataT * im, 
                             int d1, 
                             int d2, 
                             int d3
@@ -1383,7 +1385,7 @@ int fitsFile<dataT>::write( std::string fname,
 
 template<typename dataT>
 int fitsFile<dataT>::write( std::string fname, 
-                            dataT * im, 
+                            const dataT * im, 
                             int d1, 
                             int d2, 
                             int d3, 
@@ -1398,7 +1400,7 @@ int fitsFile<dataT>::write( std::string fname,
 template<typename dataT>
 template<typename arrT>
 int fitsFile<dataT>::write( std::string fname, 
-                            arrT & im
+                            const arrT & im
                           )
 {
    eigenArrPlanes<arrT> planes;
@@ -1410,7 +1412,7 @@ int fitsFile<dataT>::write( std::string fname,
 template<typename dataT>
 template<typename arrT>
 int fitsFile<dataT>::write( std::string fname, 
-                            arrT & im, 
+                            const arrT & im, 
                             fitsHeader & head)
 {
    eigenArrPlanes<arrT> planes;
