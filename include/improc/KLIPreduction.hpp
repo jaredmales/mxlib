@@ -485,7 +485,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
                               tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
                                  0., klims.data(), klims.rows());
 
-   t_klim += (get_curr_time() -t0) / omp_get_num_threads() ;  
+   t_klim += (get_curr_time() -t0);// / omp_get_num_threads() ;  
    
 } //calcKLIms
 
@@ -728,7 +728,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
          }
          
-         t_psf = (get_curr_time() - t0) / omp_get_num_threads();
+         t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
          
       } //for imno
    }//openmp parrallel  
