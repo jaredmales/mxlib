@@ -1309,7 +1309,6 @@ inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
    
    fitsFile<realT> f;
       
-   //f.write(fname, finim.data(), finim.rows(), finim.cols(), finim.planes(), &head);
    f.write(fname, finim, head);
    
    std::cerr << "Final image written to: " <<  fname << "\n";

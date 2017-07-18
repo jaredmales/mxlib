@@ -458,23 +458,36 @@ void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader 
    head->append("", fitsCommentType(), "mx::ADIobservation parameters:");
    head->append("", fitsCommentType(), "----------------------------------------");
 
+   if(fakeFileName != "")
    head->append("FAKEFILE", fakeFileName, "name of fake planet PSF file");
+   
+   if(fakeScaleFileName != "")
    head->append("FAKESCFL", fakeScaleFileName, "name of fake planet scale file name");
-   
+
    std::stringstream str;
-   for(int nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
-   str << fakeSep[fakeSep.size()-1];      
-   head->append<char *>("FAKESEP", (char *)str.str().c_str(), "separation of fake planets");
    
-   str.str("");
-   for(int nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
-   str << fakePA[fakePA.size()-1];      
-   head->append<char *>("FAKEPA", (char *)str.str().c_str(), "PA of fake planets");
+   if(fakeSep.size() > 0)
+   {
+      for(int nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
+      str << fakeSep[fakeSep.size()-1];      
+      head->append<char *>("FAKESEP", (char *)str.str().c_str(), "separation of fake planets");
+   }
    
-   str.str("");
-   for(int nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
-   str << fakeContrast[fakeContrast.size()-1];      
-   head->append<char *>("FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets");
+   if(fakePA.size() > 0 )
+   {
+      str.str("");
+      for(int nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
+      str << fakePA[fakePA.size()-1];      
+      head->append<char *>("FAKEPA", (char *)str.str().c_str(), "PA of fake planets");
+   }
+   
+   if( fakeContrast.size() > 0)
+   {
+      str.str("");
+      for(int nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
+      str << fakeContrast[fakeContrast.size()-1];      
+      head->append<char *>("FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets");
+   }
 }
 
 
