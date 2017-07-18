@@ -70,7 +70,10 @@ struct ADIDerotator
    ///Calculate the derotation angle for a given image number
    realT derotAngle(size_t imno) const
    {
-      return dtor( angleScale*angles[imno]+ angleConstant);
+      realT derot = angleScale*angles[imno]+ angleConstant;
+      while(derot < 0) derot += 360.0;
+      derot = fmod(derot, 360.0);
+      return dtor(derot );
    }
 };
 
