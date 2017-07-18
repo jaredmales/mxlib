@@ -692,8 +692,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       for(int imno = 0; imno < this->Nims; ++imno)
       {
       
-         //std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
-         status.incrementAndOutputStatus();
+         std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
+         //status.incrementAndOutputStatus();
          
          //#pragma omp critical
          if( excludeMethod != HCI::excludeNone )
