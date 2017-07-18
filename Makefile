@@ -1,21 +1,22 @@
-INSTALL_PATH = $(HOME)
-INCLUDE_PATH = $(INSTALL_PATH)/include/mx
-LIB_PATH = $(INSTALL_PATH)/lib
-BIN_PATH = $(HOME)/bin 
+##########################################
+##                                      ##
+##        Makefile for mxlib            ##
+##                                      ##
+##########################################
 
-LIB_SOFA = $(LIB_PATH)/libsofa_c.a
+# Instruction:
 
-OPTIMIZE = -O3
+# Step 1: run make -f Makefile.setup 
+#   -- this creates the ./local directory, and copies mxlib.makefile.inc there.
+#  
+# Step 2: edit local/mxlib.makefile.inc 
+# NOTE: in general, you should only edit ./local/mxlib.makefile.inc, not
+# any files in mxlib/.  This is to preserve the git repository state.
 
-CPP = g++
-AR = ar -r
-RANLIB = ar -s
 
-#must include path to the include directory, and to sofa
-INCLUDE = -Iinclude -I$(HOME)/include
+include local/mxlib.makefile.inc 
 
-CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC
-CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC
+
 
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<

@@ -5,6 +5,7 @@ include/mxlib_uncomp_version.h
 include/mxlib_comp_version.h
 old/*
 testing/*
+local/*
 *.a
 *.so
 a.out
