@@ -25,15 +25,19 @@ The relevant header files for each library need to be accessible to the compiler
 \section install_build Build and Install
 Follow these steps:
 -# Checkout mxlib from https://github.com/jaredmales/mxlib
--#  In the mxlib folder, possibly edit the Makefile.  It probably isn't necessary.  If it is, it is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
-\code
-INSTALL_PATH = $(HOME)
-INCLUDE_PATH = $(INSTALL_PATH)/include/mx
-LIB_PATH = $(INSTALL_PATH)/lib
-BIN_PATH = $(HOME)/bin 
-\endcode
-
-3. Once that's done, type make, then make install
+-# In the mxlib folder just created by the clone, run "make -f Makefile.setup" 
+  - This will create a folder named "local" with three makefiles in it.
+-# Examine the file \ref mxlib.makefile.inc "local/mxlib.makefile.inc", and edit as desired. It is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
+   \code
+   INSTALL_PATH = $(HOME)
+   INCLUDE_PATH = $(INSTALL_PATH)/include/mx
+   LIB_PATH = $(INSTALL_PATH)/lib
+   BIN_PATH = $(HOME)/bin 
+   \endcode
+   
+   \note You should only edit the mxlib.makefile.inc in the local directory -- this will preserve the git repo status.
+   
+-# In the mxlib directory, type make, and then make install.
 
 \section github I've Moved!
 

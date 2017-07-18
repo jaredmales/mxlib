@@ -387,7 +387,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
    
    realT ang, dx, dy;
 
-   ang = dtor(-1*PA) + derotF.derotAngle(image_i);
+   ang = math::dtor(-1*PA) + derotF.derotAngle(image_i);
       
    dx = sep * sin(ang);
    dy = sep * cos(ang);

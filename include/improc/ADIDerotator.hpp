@@ -71,9 +71,10 @@ struct ADIDerotator
    realT derotAngle(size_t imno) const
    {
       realT derot = angleScale*angles[imno]+ angleConstant;
-      while(derot < 0) derot += 360.0;
-      derot = fmod(derot, 360.0);
-      return dtor(derot );
+      //while(derot < 0) derot += 360.0;
+      //derot = fmod(derot, 360.0);
+      derot = math::angleMod(derot);
+      return math::dtor(derot );
    }
 };
 

@@ -313,7 +313,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       }
       else if(excludeMethod == HCI::excludeAngle)
       {
-         dang = dtor(mindpx);
+         dang = math::dtor(mindpx);
       }
       else if(excludeMethod == HCI::excludeImno)
       {
@@ -583,7 +583,7 @@ void collapseCovar( eigenT & cutCV,
       int j;
       for(j=0; j< Nims; ++j)
       {
-         if( fabs(angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang )
+         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang )
          {
             rotoff0 = j;
             ++j;
@@ -593,7 +593,7 @@ void collapseCovar( eigenT & cutCV,
       //Find first rotoff outside dang --> this is the first image that will be included again
       for(; j< Nims; ++j)
       {
-         if( fabs(angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dang )
+         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dang )
          {
             rotoff1 = j;
             break;

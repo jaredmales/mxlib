@@ -18,7 +18,7 @@ CPP = g++
 CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC
 CPPFLAGS += --std=c++14 -D_XOPEN_SOURCE=600 -fPIC
 
-INCLUDE = -I../include -I$(INCLUDE_PATH) -I/usr/local/atlas/include
+INCLUDE = -I$(INCLUDE_PATH) -I/usr/local/atlas/include
 
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
