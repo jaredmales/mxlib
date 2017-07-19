@@ -717,6 +717,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          }
 
          #pragma omp critical 
+         {
          std::cerr << "image:" <<  imno << " #3" << "\n";
 
 //         pout(cfs.size(), maxNmodes);
@@ -732,6 +733,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
                psf += cfs(j)*klims.row(j);
             }  
             insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
+         }
          }
          
          #pragma omp critical 
