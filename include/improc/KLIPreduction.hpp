@@ -741,7 +741,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
 
          t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
          
-         }
+         
       } //for imno
    }//openmp parrallel  
    
