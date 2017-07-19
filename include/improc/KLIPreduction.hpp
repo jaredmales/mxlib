@@ -693,6 +693,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       {
 
          #pragma omp critical 
+         {
+            
          std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
          //status.incrementAndOutputStatus();
          
@@ -706,7 +708,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          }
          cfs.resize(1, klims.rows());
    
-         #pragma omp critical 
          std::cerr << "image:" <<  imno << " #2" << "\n";
   
          double t0 = get_curr_time();
@@ -716,8 +717,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
          }
 
-         #pragma omp critical 
-         {
          std::cerr << "image:" <<  imno << " #3" << "\n";
 
 //         pout(cfs.size(), maxNmodes);
@@ -734,13 +733,12 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             }  
             insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
          }
-         }
          
-         #pragma omp critical 
          std::cerr << "image:" <<  imno << " #4" << "\n";
 
          t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
          
+         }
       } //for imno
    }//openmp parrallel  
    
