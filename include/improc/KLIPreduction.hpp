@@ -701,16 +701,16 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          {
             
             std::cerr << "image:" <<  imno << " #2" << "\n";
-
-            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
-            
-            std::cerr << "image:" <<  imno << " #3" << "\n";
             #pragma omp critical 
             {
+
+            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
+            }            
+            std::cerr << "image:" <<  imno << " #3" << "\n";
             /**** Now calculate the K-L Images ****/
             calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);               
             std::cerr << "image:" <<  imno << " #4" << "\n";
-            }
+            
          }
          cfs.resize(1, klims.rows());
    
