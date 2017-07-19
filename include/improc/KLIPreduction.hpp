@@ -692,8 +692,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       for(int imno = 0; imno < this->Nims; ++imno)
       {
 
-         #pragma omp critical 
-         {
             
          std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
          //status.incrementAndOutputStatus();
@@ -701,14 +699,21 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          //#pragma omp critical
          if( excludeMethod != HCI::excludeNone )
          {
+            #pragma omp critical 
+            {
+            std::cerr << "image:" <<  imno << " #2" << "\n";
+
             collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
             
+            std::cerr << "image:" <<  imno << " #3" << "\n";
+
             /**** Now calculate the K-L Images ****/
             calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);               
+            std::cerr << "image:" <<  imno << " #4" << "\n";
+            }
          }
          cfs.resize(1, klims.rows());
    
-         std::cerr << "image:" <<  imno << " #2" << "\n";
   
          double t0 = get_curr_time();
          
@@ -717,7 +722,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
          }
 
-         std::cerr << "image:" <<  imno << " #3" << "\n";
 
 //         pout(cfs.size(), maxNmodes);
          
@@ -734,7 +738,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
          }
          
-         std::cerr << "image:" <<  imno << " #4" << "\n";
 
          t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
          
