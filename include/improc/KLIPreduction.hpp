@@ -683,34 +683,24 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       {
          /**** Now calculate the K-L Images ****/
       
-         //#pragma omp critical
          calcKLIms(klims, cv, rims.cube(), maxNmodes);
-      
       }
    
       #pragma omp for 
       for(int imno = 0; imno < this->Nims; ++imno)
       {
-
-            
-         std::cerr << "image:" <<  imno << "/" << this->Nims << "\n";
-         //status.incrementAndOutputStatus();
+         status.incrementAndOutputStatus();
          
-         //#pragma omp critical
          if( excludeMethod != HCI::excludeNone )
-         {
-            
-            std::cerr << "image:" <<  imno << " #2" << "\n";
-           // #pragma omp critical 
+         {         
+            /// \todo: 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed
+            #pragma omp critical
             {
-
-            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
-            }            
-            std::cerr << "image:" <<  imno << " #3" << "\n";
-            /**** Now calculate the K-L Images ****/
-            calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);               
-            std::cerr << "image:" <<  imno << " #4" << "\n";
+               collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
+            } 
             
+            /**** Now calculate the K-L Images ****/
+            calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);                           
          }
          cfs.resize(1, klims.rows());
    
@@ -722,9 +712,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
          }
 
-
-//         pout(cfs.size(), maxNmodes);
-         
          for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
          {
             psf = cfs(cfs.size()-1)*klims.row(cfs.size()-1);
