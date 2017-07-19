@@ -699,14 +699,14 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          //#pragma omp critical
          if( excludeMethod != HCI::excludeNone )
          {
-            #pragma omp critical 
-            {
+            
             std::cerr << "image:" <<  imno << " #2" << "\n";
 
             collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
             
             std::cerr << "image:" <<  imno << " #3" << "\n";
-
+            #pragma omp critical 
+            {
             /**** Now calculate the K-L Images ****/
             calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);               
             std::cerr << "image:" <<  imno << " #4" << "\n";
