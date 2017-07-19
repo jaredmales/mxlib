@@ -693,7 +693,9 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          
          if( excludeMethod != HCI::excludeNone )
          {         
-            /// \todo: 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed
+            /// \todo: 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed. 
+            //Symptom is segfaults after running for a while.  
+            //Note that this may have been fixed by switching to satlas from tatlas.
             #pragma omp critical
             {
                collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
