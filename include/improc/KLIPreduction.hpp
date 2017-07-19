@@ -701,7 +701,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          {
             
             std::cerr << "image:" <<  imno << " #2" << "\n";
-            #pragma omp critical 
+           // #pragma omp critical 
             {
 
             collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
