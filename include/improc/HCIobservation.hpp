@@ -281,6 +281,9 @@ public:
    ///Set whether the final combined image is written to disk
    int doWriteFinim;
    
+   ///The directory where to write output files.
+   std::string outputDir;
+   
    ///The base file name of the output final image
    /** The complete name is formed by combining with a sequential number and the ".fits" extension.
      * that is: finimName0000.fits.  This behavior can be modified with exactFinimName.
@@ -1254,6 +1257,11 @@ inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
    else
    {
       fname = finimName;
+   }
+   
+   if(outputDir != "")
+   {
+      fname = outputDir + "/" + fname;
    }
    
    

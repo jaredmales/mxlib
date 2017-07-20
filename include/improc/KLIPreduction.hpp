@@ -411,6 +411,8 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    this->t_end = get_curr_time();
  
    dump_times();
+   
+   return 0;
 }
 
 
@@ -693,9 +695,10 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          
          if( excludeMethod != HCI::excludeNone )
          {         
-            /// \todo: 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed. 
+            /// \bug 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed. 
             //Symptom is segfaults after running for a while.  
-            //Note that this may have been fixed by switching to satlas from tatlas.
+            //Note that this may have been fixed by switching to satlas from tatlas, but probably not 
+            //Possible problem: this uses rims which is not thread private.
             #pragma omp critical
             {
                collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);

@@ -908,7 +908,10 @@ FILE * gnuPlot::openTempFile(char * temp)
    FILE * fout;
    
    snprintf(temp, MX_GP_TEMP_SZ, "%s/gpplot_%d_XXXXXX", _tempLocation.c_str(), getpid());
-   mkstemp(temp);
+   int rv = mkstemp(temp);
+   if(rv < 0) return 0;
+      
+   close(rv);
    
    fout = fopen(temp, "wb");
 
