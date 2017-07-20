@@ -1247,22 +1247,22 @@ void HCIobservation<_realT>::combineFinim()
 template<typename _realT>
 inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 {
-   std::string fname;
-   
-   
-   if(!exactFinimName)
-   {
-      fname = getSequentialFilename(finimName, ".fits");
-   }
-   else
-   {
-      fname = finimName;
-   }
+   std::string fname = finimName;
    
    if(outputDir != "")
    {
       fname = outputDir + "/" + fname;
    }
+
+   if(!exactFinimName)
+   {
+      fname = getSequentialFilename(fname, ".fits");
+   }
+//    else
+//    {
+//       fname = finimName;
+//    }
+   
    
    
    fitsHeader head;
