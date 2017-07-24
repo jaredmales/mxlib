@@ -19,8 +19,10 @@ namespace improc
 {
 
 ///A generic ADI derotator class.  
-/** \ingroup hc_imaging
-  * @{
+/** This class is used to calculate the derotation angle for angular differential imaging.
+  * 
+  * \ingroup hc_imaging
+  * 
   */
 template<typename _realT>
 struct ADIDerotator
