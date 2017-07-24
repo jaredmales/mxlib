@@ -11,11 +11,11 @@
 #include <iostream>
 
 #include "../imagingArray.hpp"
-#include "../imagingUtils.hpp"
+#include "imagingUtils.hpp"
 
-#include "../fitsFile.hpp"
-#include "../fitsUtils.hpp"
-
+#include "../improc/fitsFile.hpp"
+#include "../improc/fitsUtils.hpp"
+#include "../improc/imagePads.hpp"
 
 namespace mx
 {
@@ -45,6 +45,9 @@ struct idealCoronagraph
    ///The image type
    typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
 
+   ///The directory where coronagraph files are stored
+   std::string _fileDir;
+   
    ///The linear size of the wavefront in pixels
    int _wfSz;
    
@@ -65,21 +68,36 @@ struct idealCoronagraph
 
    /// Set the real pupil mask.
    /** The input mask does not have to be the same size as wfSz, as the stored mask will be padded.
-     * \todo This should be called "loadCoronagraph" and take a fits file name to match lyotCoronagraph
      * 
      * \returns 0 on success.
      * \returns -1 on error. 
      */
    int setPupil( imageT & pupil /**< [in] the pupil mask. */);
    
+   /// Load the real pupil mask from a FITS file.
+   /** The input mask does not have to be the same size as wfSz, as the stored mask will be padded.
+     * 
+     * \returns 0 on success.
+     * \returns -1 on error. 
+     */
+   int loadPupil( const std::string & pupilFile /**< [in] the FITS file containing the pupil mask. */);
+   
+   ///Load the components of the coronagraph (just a pupil) based in its base name
+   /** Looks in _filDir for the files.
+     * 
+     * \returns 0 on success.
+     * \returns -1 on error. 
+     */ 
+   int loadCoronagraph( const std::string & cName /**< The name of the coronagraph, without directory or file extensions */);
+   
    /// Propagate the given pupil-plane wavefront through the coronagraph
-   void propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   int propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
    /// Propagate the given pupil-plane wavefront without the coronagraph. 
    /** For the ideal coronagraph nothing is done.  This method is included for compliance with
      * with the coronagraph interface.
      */ 
-   void propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */);
+   int propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */);
    
    
 };
@@ -87,6 +105,7 @@ struct idealCoronagraph
 template<typename _realT>
 idealCoronagraph<_realT>::idealCoronagraph()
 {
+   _wfSz = 0;
 }
 
 template<typename _realT>
@@ -104,28 +123,70 @@ void idealCoronagraph<_realT>::wfSz(int sz)
 template<typename _realT>
 int idealCoronagraph<_realT>::setPupil( imageT & pupil)
 {
+   if(_wfSz <= 0)
+   {
+      mxError("idealCoronagraph", MXE_PARAMNOTSET, "Must set wavefront size (wfSz) before setting up coronagraph.");
+      return -1;
+   }
+   
    //Create Coronagraph pupil.
-   padImage(_realPupil, pupil, 0.5*(_wfSz-pupil.rows()),0);
+   improc::padImage(_realPupil, pupil, 0.5*(_wfSz-pupil.rows()),0);
    
    return 0;
 }
 
+template<typename _realT>
+int idealCoronagraph<_realT>::loadPupil( const std::string & pupilFile)
+{
+
+   imageT pupil;
+   
+   improc::fitsFile<realT> ff;
+   
+   ff.read(pupil, pupilFile);
+   
+   return setPupil(pupil);
+   
+   return 0;
+}
 
 template<typename _realT>
-void idealCoronagraph<_realT>::propagate( complexFieldT & pupilPlane )
+int idealCoronagraph<_realT>::loadCoronagraph( const std::string & cName)
 {
+
+   if( _fileDir == "")
+   {
+      mxError("idealCoronagraph", MXE_PARAMNOTSET, "file directory (fileDir) not set.");
+      return -1;
+   }
+   
+   std::string pupilFile = _fileDir + "/" + cName + ".fits";
+   
+   return loadPupil(pupilFile);
+   
+}
+
+template<typename _realT>
+int idealCoronagraph<_realT>::propagate( complexFieldT & pupilPlane )
+{
+   if( pupilPlane.rows() != _realPupil.rows() || pupilPlane.cols() != _realPupil.cols())
+   {
+      mxError("idealCoronagraph", MXE_SIZEERR, "pupilPlane wavefront size does not match realPupil");
+      return -1;
+   }
+   
    Eigen::Map<Eigen::Array<complexT,-1,-1> > eigWf(pupilPlane.data(), pupilPlane.cols(), pupilPlane.rows());
    Eigen::Map<Eigen::Array<realT,-1,-1> > eigPup(_realPupil.data(), _realPupil.cols(), _realPupil.rows());
       
    eigWf = eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum())*eigPup;
    
-   return;
+   return 0;
 }
 
 template<typename _realT>
-void idealCoronagraph<_realT>::propagateNC( complexFieldT & pupilPlane )
+int idealCoronagraph<_realT>::propagateNC( complexFieldT & pupilPlane )
 {
-   return;
+   return 0;
 }
 
 

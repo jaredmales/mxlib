@@ -292,7 +292,7 @@ using lapDistT = randomT<realT, std::mt19937_64, laplace_distribution<realT>>;
 
 /// @}
 
-} //namespace MX
+} //namespace mx
 
 #endif //__randomT__
 

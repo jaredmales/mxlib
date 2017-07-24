@@ -109,40 +109,42 @@ struct lyotCoronagraph
    
    ///Load the apodizer from a FITS file 
    /**
-     * \param apodName is the name of the FITS file
+     * \returns 0 on success.
+     * \returns -1 on error. 
      */ 
-   void loadApodizer( const std::string & apodName /**< */);
+   int loadApodizer( const std::string & apodName /**< [in] is the name of the FITS file containing the apodizer. */);
    
    ///Load the focal plane mask from a FITS file 
    /**
-     * \param fpmName is the name of the FITS file
+     * \returns 0 on success.
+     * \returns -1 on error. 
      */ 
-   void loadFocalMask( const std::string & fpmName /**< */);
+   int loadFocalMask( const std::string & fpmName /**< [in] is the name of the FITS file containing the focal plane mask. */);
    
    ///Load the Lyot stop from a FITS file
    /**
-     * \param lyotName is the name of the FITS file
+     * \returns 0 on success.
+     * \returns -1 on error. 
      */ 
-   void loadLyotStop( const std::string & lyotName /**< */);
-   
-   ///Load the components of the coronagraph based in its base name
-   /** Looks in "./coron/"
-     * 
-     * \param cName is the base name of the coronagraph
-     */ 
-   void loadCoronagraph( const std::string & cName /**< */); 
-   
+   int loadLyotStop( const std::string & lyotName /**< [in] is the name of the FITS file containing the lyot stop. */);
+
    ///Load the components of the coronagraph from FITS files 
    /**
-     * \param apodName is the name of the FITS file
-     * \param fpmName is the name of the FITS file
-     * \param lyotName is the name of the FITS file
+     * \returns 0 on success.
+     * \returns -1 on error.
      */ 
-   void loadCoronagraph( const std::string & apodName, 
-                         const std::string & fpmName,
-                         const std::string & lyotName);
+   int loadCoronagraph( const std::string & apodName, ///< [in] is the name of the FITS file containing the apodizer.
+                        const std::string & fpmName, ///< [in] is the name of the FITS file containing the focal plane mask.
+                        const std::string & lyotName ///< [in] is the name of the FITS file containing the lyot stop.
+                      );
    
-   
+   ///Load the components of the coronagraph based in its base name
+   /** Looks in _filDir for the files.
+     * 
+     * \returns 0 on success.
+     * \returns -1 on error. 
+     */ 
+   int loadCoronagraph( const std::string & cName /**< [in] is the base name of the coronagraph without directory of file extension. */); 
    
    void applyApodizer( complexFieldT &pupilPlane );
    void applyFocalMask( complexFieldT & focalPlane );
@@ -227,19 +229,19 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::makeFocalMask(_realT rad,
 }
 
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
+int lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
 {
    fitsFile<_realT> ff;
    
-   ff.read(pupilApodizer, apodName);
+   return ff.read(pupilApodizer, apodName);
 }
 
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
+int lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
 {
    fitsFile<_realT> ff;
    
-   ff.read(focalMask, fpmName);
+   if(ff.read(focalMask, fpmName) < 0) return -1;
    
    maskSource = 0;
    maskFile = fpmName;
@@ -248,36 +250,41 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & 
 }
    
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
+int lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
 {
    fitsFile<_realT> ff;
    
-   ff.read(lyotStop, lyotName);
+   return ff.read(lyotStop, lyotName);
+   
 }
 
+template<typename _realT, typename _fpmaskFloatT>
+int lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & apodName, 
+                                                             const std::string & fpmName,
+                                                             const std::string & lyotName)
+{
+   if(loadApodizer(apodName) < 0) return -1;
+   if(loadFocalMask(fpmName) < 0) return -1;
+   if(loadLyotStop(lyotName) < 0) return -1;
+   
+   return 0;
+}
  
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & cName)
+int lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & cName)
 {
+   if( _fileDir == "")
+   {
+      mxError("lyotCoronagraph", MXE_PARAMNOTSET, "file directory (fileDir) not set.");
+      return -1;
+   }
+   
    std::string apodName= _fileDir + cName + "_apod.fits";
    std::string fpmName = _fileDir + cName + "_fpm.fits";
    std::string lyotName = _fileDir + cName + "_lyot.fits";
-   
-   loadApodizer(apodName);
-   loadFocalMask(fpmName);
-   loadLyotStop(lyotName);
+      
+   return loadCoronagraph(apodName, fpmName, lyotName);
 }
-
-template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string & apodName, 
-                                                               const std::string & fpmName,
-                                                               const std::string & lyotName)
-{
-   loadApodizer(apodName);
-   loadFocalMask(fpmName);
-   loadLyotStop(lyotName);
-}
-
 
 template<typename _realT, typename _fpmaskFloatT>
 void lyotCoronagraph<_realT, _fpmaskFloatT>::applyApodizer( complexFieldT &pupilPlane )

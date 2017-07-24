@@ -12,7 +12,7 @@
 #include "../imagingArray.hpp"
 #include "imagingUtils.hpp"
 
-#include "../fft.hpp"
+#include "../fft/fft.hpp"
 
 namespace mx
 {

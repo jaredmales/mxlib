@@ -6,11 +6,11 @@
   */
 
 
-#ifndef __imagingArray_hpp__
-#define __imagingArray_hpp__
+#ifndef imagingArray_hpp
+#define imagingArray_hpp
 
-#include "templateBLAS.hpp"
-#include "fft.hpp"
+#include "math/templateBLAS.hpp"
+#include "fft/fft.hpp"
 
 #pragma GCC system_header
 #include <Eigen/Dense>
@@ -73,7 +73,7 @@ struct imagingArrayInplaceProduct
    
    void operator()(imageT & im, typeT & alpha)
    {
-      scal<typename imageT::Scalar>(im.cols()*im.rows(), (typeT) alpha, im.data(), 1);        
+      math::scal<typename imageT::Scalar>(im.cols()*im.rows(), (typeT) alpha, im.data(), 1);        
    }
 };
 
@@ -112,7 +112,7 @@ struct imagingArrayInplaceDivision
    
    void operator()(imageT im, typeT alpha)
    {
-      scal<typename imageT::Scalar>(im.cols()*im.rows(), ((typeT) (1))/alpha, im.data(), 1);   
+      math::scal<typename imageT::Scalar>(im.cols()*im.rows(), ((typeT) (1))/alpha, im.data(), 1);   
    }
 };
 
@@ -128,7 +128,7 @@ struct imagingArrayInplaceDivision<imageT, typeT, true>
    void operator()(imageT im, typeT alpha)
    {
       typedef typename imageT::Scalar scalarT;
-      hadd<scalarT>(im.cols()*im.rows(), (scalarT) 1.0, alpha.data(),1, im.data(), 1); 
+      math::hadd<scalarT>(im.cols()*im.rows(), (scalarT) 1.0, alpha.data(),1, im.data(), 1); 
    }
 };
 
@@ -369,4 +369,4 @@ using imagingArrayT = imagingArray<scalarT,mx::fftwAllocator<scalarT>,0>;
 } //namespace mx
 
 
-#endif //__imagingArray_hpp__
+#endif //imagingArray_hpp

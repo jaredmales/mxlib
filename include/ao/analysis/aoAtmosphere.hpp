@@ -807,6 +807,8 @@ void aoAtmosphere<realT>::loadGuyon2005()
    layer_dir({0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
    
    r_0(0.2, 0.5e-6);
+   
+   h_obs(4200);
 }
 
 template<typename realT>
@@ -820,6 +822,8 @@ void aoAtmosphere<realT>::loadLCO()
    r_0(0.17, 0.5e-6);
    
    L_0(25.0);
+   
+   h_obs(2400);
 }
 
 
