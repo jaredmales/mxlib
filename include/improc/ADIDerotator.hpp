@@ -41,7 +41,7 @@ struct ADIDerotator
    ///Set the angle keyword
    /** Populates the kewords vector appropriately.
      */
-   void angleKeyword( const std::string & akw /**< The angle keyword */)
+   void angleKeyword( const std::string & akw /**< [in] The angle keyword */)
    {
       _angleKeyword = akw;
       keywords = {akw};
@@ -64,17 +64,15 @@ struct ADIDerotator
    }
          
    ///Method called by ADIobservation to get keyword-values
-   void extractKeywords(std::vector<fitsHeader> & heads)
+   void extractKeywords(std::vector<fitsHeader> & heads /**< [in] The headers from the images being reduced.*/)
    {
       angles = headersToValues<realT>(heads, _angleKeyword);
    }
    
    ///Calculate the derotation angle for a given image number
-   realT derotAngle(size_t imno) const
+   realT derotAngle(size_t imno /**< [in] the image number */) const
    {
       realT derot = angleScale*angles[imno]+ angleConstant;
-      //while(derot < 0) derot += 360.0;
-      //derot = fmod(derot, 360.0);
       derot = math::angleMod(derot);
       return math::dtor(derot );
    }
