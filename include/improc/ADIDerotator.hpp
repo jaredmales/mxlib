@@ -7,8 +7,8 @@
 
 #include "fitsHeader.hpp"
 
-#ifndef __ADIDerotator_hpp__
-#define __ADIDerotator_hpp__
+#ifndef ADIDerotator_hpp
+#define ADIDerotator_hpp
 
 #include "../math/geo.hpp"
 
@@ -84,5 +84,5 @@ struct ADIDerotator
 } //namespace improc
 } //namespace mx
 
-#endif // __ADIDerotator_hpp__
+#endif // ADIDerotator_hpp
 
