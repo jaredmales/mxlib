@@ -3,21 +3,20 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_processing_files
   *
   */
 
-#ifndef __signalWindows_hpp__
-#define __signalWindows_hpp__
+#ifndef signalWindows_hpp
+#define signalWindows_hpp
 
 #include <boost/math/constants/constants.hpp>
 
 namespace mx
 {
-  
-/** \addtogroup signal_processing
-  * @{
-  */
+namespace sigproc 
+{
+   
 
 /// Create a 1-D Tukey window
 /** 
@@ -33,6 +32,7 @@ namespace mx
   * 
   * \tparam floatT specifies the floating point type
   * 
+  * \ingroup signal_processing
   */
 template<typename floatT>
 void tukey1d(floatT *filt, int N, floatT alpha)
@@ -74,6 +74,8 @@ void tukey1d(floatT *filt, int N, floatT alpha)
   * \param alpha controls the window width.
   * \param xc is the desired x center of the window
   * \param yc is the desired y center of the window
+  * 
+  *  \ingroup signal_processing
   */
 template<typename floatT>
 void tukey2d(floatT *filt, int dim, floatT N, floatT alpha, floatT xc, floatT yc)
@@ -133,6 +135,8 @@ void tukey2d(floatT *filt, int dim, floatT N, floatT alpha, floatT xc, floatT yc
   * \param yc is the desired y center of the window.
   *
   * \tparam floatT is a floating point type 
+  * 
+  *  \ingroup signal_processing
   */
 template<typename floatT>
 void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, floatT xc, floatT yc)
@@ -181,8 +185,9 @@ void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, f
    }
 }
 
-///@}
 
+} //namespace sigproc 
 } //namespace mx
-#endif // __signalWindows_hpp__
+
+#endif // signalWindows_hpp
 

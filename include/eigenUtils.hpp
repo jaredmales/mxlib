@@ -1,5 +1,5 @@
-#ifndef __eigenUtils_hpp__
-#define __eigenUtils_hpp__
+#ifndef eigenUtils_hpp
+#define eigenUtils_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
@@ -577,4 +577,4 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 
 }//namespace mx
 
-#endif //__eigenUtils_hpp__
+#endif //eigenUtils_hpp

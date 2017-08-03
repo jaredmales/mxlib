@@ -187,6 +187,14 @@ public:
      */
    void f (std::vector<realT> & newF); 
    
+   /// Get the i-th value of frequency.
+   /** No range checks are conducted.
+     * 
+     * \returns the value of _f[i] 
+     * 
+     */ 
+   realT f( size_t i /**< [in] the index of the frequency to return*/ );
+   
    /// Calculate the open-loop transfer function
    /**
      * \param [in] fi is the index of the frequency
@@ -208,6 +216,16 @@ public:
                     complexT & H_dm, 
                     complexT & H_del, 
                     complexT & H_con );
+   
+   /// Return the closed loop error transfer function (ETF) at frequency f for gain g.
+   /**
+     * \param [in] fi the index of the frequency at which to calculate the ETF
+     * \param [in] g the loop gain.
+     * 
+     * \returns the closed loop ETF at f and g.
+     */
+   complexT clETF( int fi, 
+                   realT g );
    
    /// Return the norm of the closed loop error transfer function (ETF) at frequency f for gain g.
    /**
@@ -341,6 +359,10 @@ public:
                        realT g                   ///< [in] the loop gain when PSD was measured.
                      );
    
+   int nyquist( std::vector<realT> & re,
+                std::vector<realT> & im,
+                realT g
+              );
 };
 
 template<typename realT>
@@ -514,7 +536,14 @@ void clGainOpt<realT>::f(std::vector<realT> & newF)
       
    _changed = true;
 }
-    
+
+template<typename realT>
+realT clGainOpt<realT>::f(size_t i)
+{
+   
+   return _f[i];
+}
+
 template<typename realT>
 std::complex<realT> clGainOpt<realT>::olXfer(int fi)
 {
@@ -638,7 +667,15 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
    return ( _H_dm[fi]*_H_wfs[fi]*_H_del[fi]*_H_con[fi]);
    
 }
-   
+ 
+template<typename realT>
+std::complex<realT> clGainOpt<realT>::clETF(int fi, realT g)
+{
+   if(_f[fi] <= 0) return 0;
+      
+   return (realT(1)/( realT(1) + g*olXfer(fi)));
+}
+
 template<typename realT>
 realT clGainOpt<realT>::clETF2(int fi, realT g)
 {
@@ -968,6 +1005,26 @@ int clGainOpt<realT>::pseudoOpenLoop( std::vector<realT> & PSD, realT g)
    }
    
    return 0;
+}
+
+template<typename realT>
+int clGainOpt<realT>::nyquist( std::vector<realT> & re,
+                               std::vector<realT> & im,
+                               realT g
+                             )
+{
+   re.resize(_f.size());
+   im.resize(_f.size());
+   
+   complexT etf;
+   
+   for(int f=0; f< _f.size(); ++f)
+   {
+      etf = g*olXfer(f);// clETF(f, g);
+      
+      re[f] = real(etf);
+      im[f] = imag(etf);
+   }
 }
 
 //------------ Workers ---------------------

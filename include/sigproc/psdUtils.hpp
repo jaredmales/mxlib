@@ -7,8 +7,8 @@
   *
   */
 
-#ifndef __psdUtils_hpp__
-#define __psdUtils_hpp__
+#ifndef psdUtils_hpp
+#define psdUtils_hpp
 
 #include "../fft/fft.hpp"
 
@@ -482,4 +482,4 @@ void augment1SidedPSDFreq( std::vector<T> & freqTwoSided, ///< [out] on return c
 } //namespace sigproc 
 } //namespace mx
 
-#endif //__psdUtils_hpp__
+#endif //psdUtils_hpp

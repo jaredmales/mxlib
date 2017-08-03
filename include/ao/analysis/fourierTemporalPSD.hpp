@@ -51,10 +51,16 @@ namespace AO
 
 #endif
 
-#define MXAO_FTPSD_BASIS_BASIC 0
-#define MXAO_FTPSD_BASIS_MODIFIED 1
-#define MXAO_FTPSD_BASIS_PROJECTED_BASIC 2
-#define MXAO_FTPSD_BASIS_PROJECTED_MODIFIED 3
+enum basis : unsigned int { basic, ///< The basic sine and cosine Fourier modes
+                            modified, ///< The modified Fourier basis from \cite males_guyon_2017
+                            projected_basic, 
+                            projected_modified
+                          };
+                          
+//#define MXAO_FTPSD_BASIS_BASIC 0
+//#define MXAO_FTPSD_BASIS_MODIFIED 1
+//#define MXAO_FTPSD_BASIS_PROJECTED_BASIC 2
+//#define MXAO_FTPSD_BASIS_PROJECTED_MODIFIED 3
 
 //Forward declaration
 template<typename realT, typename aosysT>
@@ -366,7 +372,7 @@ fourierTemporalPSD<realT, aosysT>::~fourierTemporalPSD()
 template<typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::initialize()
 {
-   _useBasis = MXAO_FTPSD_BASIS_MODIFIED;
+   _useBasis = basis::modified;//  MXAO_FTPSD_BASIS_MODIFIED;
    _w = 0;
       
    _absTol = 1e-10; 
@@ -478,16 +484,16 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    gsl_function func;
    switch(_useBasis)
    {
-      case MXAO_FTPSD_BASIS_BASIC:
+      case basis::basic: //MXAO_FTPSD_BASIS_BASIC:
          func.function = &F_basic<realT, aosysT>;
          break;
-      case MXAO_FTPSD_BASIS_MODIFIED:
+      case basis::modified: //MXAO_FTPSD_BASIS_MODIFIED:
          func.function = &F_mod<realT, aosysT>;
          break;
-      case MXAO_FTPSD_BASIS_PROJECTED_BASIC:
-         mxError("fourierTemporalPSD::singleLayerPSD", MXE_NOTIMPL, "Projected basis modes are not implemented.");
+      case basis::projected_basic: //MXAO_FTPSD_BASIS_PROJECTED_BASIC:
+         mxError("fourierTemporalPSD::singleLayerPSD", MXE_NOTIMPL, "Projected basic-basis modes are not implemented.");
          break;
-      case MXAO_FTPSD_BASIS_PROJECTED_MODIFIED:
+      case basis::projected_modified:// MXAO_FTPSD_BASIS_PROJECTED_MODIFIED:
          params.Jps = Jps;
          params.Jms = Jms;
          params.ms = ms;

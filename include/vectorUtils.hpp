@@ -320,7 +320,37 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 }
 
 
-
+///Smooth a vector using the mean in a window specified by its full-width
+template<typename realT>
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                       std::vector<realT> & vec, ///< [in] the input vector, unaltered.
+                       int win ///< [in] the full-width of the smoothing window
+                     )
+{
+   smVec = vec;
+   
+   realT sum;
+   int n;
+   for(int i=0; i < vec.size(); ++i)
+   {
+      int j = i - 0.5*win;
+      if(j < 0) j = 0;
+      
+      sum = 0;
+      n = 0;
+      while( j <= i+0.5*win && j < vec.size())
+      {
+         sum += vec[j];
+         ++n;
+         ++j;
+      }
+      
+      smVec[i] = sum/n;
+      
+   }
+   
+   return 0;
+}
 
 ///@}
 

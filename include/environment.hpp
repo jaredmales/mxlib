@@ -4,8 +4,8 @@
   * \ingroup utils_files
   */
 
-#ifndef __environment_hpp__
-#define __environment_hpp__
+#ifndef environment_hpp
+#define environment_hpp
 
 
 #include <locale>
@@ -34,4 +34,4 @@ std::string getEnv(const std::string & estr /**< [in] is the name of the environ
 
 }
 
-#endif //__environment_hpp__
+#endif //environment_hpp

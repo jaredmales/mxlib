@@ -7,8 +7,8 @@
   *
   */
 
-#ifndef __ompLoopWatcher_hpp__
-#define __ompLoopWatcher_hpp__
+#ifndef ompLoopWatcher_hpp
+#define ompLoopWatcher_hpp
 
 #include <iostream>
 
@@ -149,5 +149,5 @@ public:
 
 } //namespace mx
 
-#endif //__ompLoopWatcher_hpp__
+#endif //ompLoopWatcher_hpp
 

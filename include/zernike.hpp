@@ -1,6 +1,9 @@
 /** \file zernike.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Working with the Zernike polynomials.
+  * 
+  * \todo the basic zernike polys should be in math::func.
+  * 
   * \ingroup imaging_files
   * 
   */

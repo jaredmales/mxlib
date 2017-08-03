@@ -10,11 +10,11 @@
 // NOTE: original ini.h and ini.c are in the ini directory
 
 
-#ifndef __ini_hpp__
-#define __ini_hpp__
+#ifndef ini_hpp
+#define ini_hpp
 
 #ifndef INI_COMMENT_CHAR
-   #define INI_COMMENT_CHAR (';')
+   #define INI_COMMENT_CHAR ('#')
 #endif
 
 /* Nonzero to allow multi-line value parsing, in the style of Python's
@@ -245,4 +245,4 @@ int ini_parse(const char* filename,
     return error;
 }
 
-#endif //__ini_hpp__
+#endif //ini_hpp

@@ -13,9 +13,13 @@
 namespace mx
 {
 
-/** \ingroup gen_math
-  * @{
-  */
+namespace math 
+{
+   
+namespace func 
+{
+   
+
 
 ///Return the logistic function parameter for a specified rise time
 /** The logistic function is
@@ -63,8 +67,9 @@ floatT logistic(floatT t, floatT t0 = 0, floatT a = 1)
 }
 
 
-/// @}
 
+} //namespace func 
+} //namespace math 
 } //namespace mx
 
 #endif //__logistic_hpp__

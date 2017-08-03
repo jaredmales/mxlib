@@ -1,11 +1,11 @@
 /** \file pout.hpp
  * \author Jared R. Males
  * \brief Declaration and definition of a simple formatted output function.
- * \ingroup ioutils
+ * \ingroup utils_files
  */
 
-#ifndef __pout_hpp__
-#define __pout_hpp__
+#ifndef pout_hpp
+#define pout_hpp
 
 #include <iostream>
 
@@ -21,9 +21,7 @@ void pout()
    return;
 }
 
-/** \addtogroup ioutils
-  * @{
-  */
+
 
 ///A simple formatted output function.
 /** This function writes its arguments, of any type and of any number, to stdout.  By default, the
@@ -57,12 +55,12 @@ void pout()
   * \tparam valT a type which can be output by std::cout
   * \tparam valTs a variadic list of additional types which can be output by std::cout
   * 
-  * \param value a value to print.  
-  * \param values a variadic list of additional values. Any number of values can be specified.
-  * 
+  * \ingroup ioutils
   */
 template<char space=' ', bool flush=true, char eol='\n', typename valT, typename... valTs> 
-void pout(valT value, const valTs&... values)
+void pout( valT value,  ///<  [in] a value to print.
+           const valTs&... values ///< [in] a variadic list of additional values. Any number of values can be specified, with any type hangled by std::cout.
+         )
 {
    static const unsigned short int nargs = sizeof...(valTs);
   
@@ -74,11 +72,10 @@ void pout(valT value, const valTs&... values)
 
 }
 
-/// @}
 
 } //namespace mx
 
-#endif //__pout_hpp__
+#endif //pout_hpp
 
 
 

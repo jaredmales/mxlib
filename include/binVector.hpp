@@ -1,11 +1,11 @@
 /** \file binVector.hpp
   * \author Jared R. Males
   * \brief A utility to read/write vectors of data from/to a binary file.
-  * \ingroup ioutils
+  * \ingroup utils_files
   */
 
-#ifndef __binVector_hpp__
-#define __binVector_hpp__
+#ifndef binVector_hpp
+#define binVector_hpp
 
 #include "mxError.hpp"
 
@@ -13,7 +13,7 @@ namespace mx
 {
    
 
-/** \defgroup binvector binVector Files
+/** \defgroup binvector binVector Binary File Format
   * \ingroup ioutils
   * \brief A simple binary file format for storing vectors of data on disk.
   * 
@@ -23,144 +23,188 @@ namespace mx
   * 
   * The suggested extension for BinVector files is ".binv".
   * 
-  * @{
+  *
   */
+
+/// The type used for binVector sizes.
+/** \ingroup binVector 
+  */
+typedef uint64_t binVSizeT;
+
+/// The type of binVector type codes.
+/** \ingroup binvector 
+  */
+typedef uint64_t binVTypeT;
+
+///Namespace fo the bin-vector type-codes.
+/** \ingroup binvector
+  */
+namespace binVTypes
+{
+   
+/// The pre-defined type codes for binVector.
+/** \ingroup binvector
+  */ 
+enum : binVTypeT { Bool = 0,
+                   SChar = 1,
+                   UChar = 2,
+                   Char = 3,
+                   WChar = 4,
+                   Char16 = 5,
+                   Char32 = 6,
+                   Int = 7,
+                   UInt = 8,
+                   SInt = 9,
+                   SUInt = 10,
+                   LInt = 11,
+                   LUInt = 12,
+                   LLInt = 13,
+                   LLUInt = 14,
+                   Float = 15,
+                   Double = 16,
+                   LDouble = 17
+                 };
+                          
+} //namespace binVTyes
 
 ///Get the integer type code corresponding to the type.
 /**
   * \returns an integer which uniquely identifies the type.
   * 
   * \tparam dataT is the type 
+  * 
+  * \ingroup binvector 
   */ 
 template<typename dataT>
-uint64_t binVectorTypeCode();
+binVTypeT binVectorTypeCode();
 
 template<>
-uint64_t binVectorTypeCode<bool>()
+binVTypeT binVectorTypeCode<bool>()
 {
-   return 0;
+   return binVTypes::Bool;
 }
 
 template<>
-uint64_t binVectorTypeCode<signed char>()
+binVTypeT binVectorTypeCode<signed char>()
 {
-   return 1;
+   return binVTypes::SChar;
 }
 
 template<>
-uint64_t binVectorTypeCode<unsigned char>()
+binVTypeT binVectorTypeCode<unsigned char>()
 {
-   return 2;
+   return binVTypes::UChar;
 }
 
 template<>
-uint64_t binVectorTypeCode<char>()
+binVTypeT binVectorTypeCode<char>()
 {
-   return 3;
+   return binVTypes::Char;
 }
 
 template<>
-uint64_t binVectorTypeCode<wchar_t>()
+binVTypeT binVectorTypeCode<wchar_t>()
 {
-   return 4;
+   return binVTypes::WChar;
 }
 
 template<>
-uint64_t binVectorTypeCode<char16_t>()
+binVTypeT binVectorTypeCode<char16_t>()
 {
-   return 5;
+   return binVTypes::Char16;
 }
 
 template<>
-uint64_t binVectorTypeCode<char32_t>()
+binVTypeT binVectorTypeCode<char32_t>()
 {
-   return 6;
+   return binVTypes::Char32;
 }
 
 template<>
-uint64_t binVectorTypeCode<int>()
+binVTypeT binVectorTypeCode<int>()
 {
-   return 7;
+   return binVTypes::Int;
 }
 
 template<>
-uint64_t binVectorTypeCode<unsigned int>()
+binVTypeT binVectorTypeCode<unsigned int>()
 {
-   return 8;
+   return binVTypes::UInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<short int>()
+binVTypeT binVectorTypeCode<short int>()
 {
-   return 9;
+   return binVTypes::SInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<short unsigned int>()
+binVTypeT binVectorTypeCode<short unsigned int>()
 {
-   return 10;
+   return binVTypes::SUInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<long int>()
+binVTypeT binVectorTypeCode<long int>()
 {
-   return 11;
+   return binVTypes::LInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<long unsigned int>()
+binVTypeT binVectorTypeCode<long unsigned int>()
 {
-   return 12;
+   return binVTypes::LUInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<long long int>()
+binVTypeT binVectorTypeCode<long long int>()
 {
-   return 13;
+   return binVTypes::LLInt;
 }
 
 template<>
-uint64_t binVectorTypeCode<long long unsigned int>()
+binVTypeT binVectorTypeCode<long long unsigned int>()
 {
-   return 14;
+   return binVTypes::LLUInt;
 }
 
 
 template<>
-uint64_t binVectorTypeCode<float>()
+binVTypeT binVectorTypeCode<float>()
 {
-   return 15;
+   return binVTypes::Float;
 }
 
 template<>
-uint64_t binVectorTypeCode<double>()
+binVTypeT binVectorTypeCode<double>()
 {
-   return 16;
+   return binVTypes::Double;
 }
 
 template<>
-uint64_t binVectorTypeCode<long double>()
+binVTypeT binVectorTypeCode<long double>()
 {
-   return 17;
+   return binVTypes::LDouble;
 }
 
 
 /// Read a BinVector file from disk.
 /** 
-  * \param [out] vec is a vector which will be resized and populated.
-  * \param [in] fname is the name (full-path) of the file.
-  * 
   * \note dataT must match what was stored in the file.
   * 
   * \returns 0 on success.
   * \returns -1 if an error occurs.
+  * 
+  * \ingroup binvector
   */
 template<typename dataT>
-int readBinVector( std::vector<dataT> & vec, 
-                   const std::string & fname )
+int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which will be resized and populated.
+                   const std::string & fname ///<  [in] fname is the name (full-path) of the file.
+                 )
 {
    FILE *fin;
-   uint64_t typecode, sz;
+   binVTypeT typecode;
+   binVSizeT sz;
    int nrd;
 
    fin = fopen(fname.c_str(), "r");
@@ -171,7 +215,7 @@ int readBinVector( std::vector<dataT> & vec,
    }
 
    errno = 0;
-   nrd = fread(&typecode, sizeof(uint64_t), 1, fin);
+   nrd = fread(&typecode, sizeof(binVTypeT), 1, fin);
    
    if(nrd != 1)
    {
@@ -196,7 +240,7 @@ int readBinVector( std::vector<dataT> & vec,
 
    
    errno = 0;
-   nrd = fread(&sz, sizeof(uint64_t), 1, fin);
+   nrd = fread(&sz, sizeof(binVSizeT), 1, fin);
    
    if(nrd != 1)
    {
@@ -240,21 +284,22 @@ int readBinVector( std::vector<dataT> & vec,
 
 /// Write a BinVector file to disk.
 /** 
-  * \param [in] fname is the name (full-path) of the file.
-  * \param [in] vec is the vector which will be written to disk.
   * 
   * \returns 0 on success.
   * \returns -1 if an error occurs.
+  * 
+  * \ingroup binvector
   */
 template<typename dataT>
-int writeBinVector( const std::string & fname,  
-                    std::vector<dataT> & vec )
+int writeBinVector( const std::string & fname, ///< [in] fname is the name (full-path) of the file.
+                    std::vector<dataT> & vec ///< [in] vec is the vector which will be written to disk. 
+                  )
 {
      
    FILE *fout;
    int nwr;
-   uint64_t typecode = binVectorTypeCode<dataT>(); 
-   uint64_t sz = vec.size();
+   binVTypeT typecode = binVectorTypeCode<dataT>(); 
+   binVSizeT sz = vec.size();
    
    fout = fopen(fname.c_str(), "wb");
    if(fout == 0)
@@ -263,15 +308,15 @@ int writeBinVector( const std::string & fname,
       return -1;
    }
 
-   nwr = fwrite( &typecode, sizeof(uint64_t), 1, fout);
+   nwr = fwrite( &typecode, sizeof(binVTypeT), 1, fout);
    if(nwr != 1)
-   {
+   { 
       mxPError("writeBinVector", errno, "Error writing typecode");
       fclose(fout);
       return -1;
    }
 
-   nwr = fwrite( &sz, sizeof(uint64_t), 1, fout);
+   nwr = fwrite( &sz, sizeof(binVSizeT), 1, fout);
    if(nwr != 1)
    {
       mxPError("writeBinVector", errno, "Error writing vector size.");
@@ -293,8 +338,7 @@ int writeBinVector( const std::string & fname,
 }
 
       
-/// @}
 
 } //namespace mx
 
-#endif //__binVector_hpp__
+#endif //binVector_hpp

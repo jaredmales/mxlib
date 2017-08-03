@@ -3,20 +3,19 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_processing_files
   *
   */
 
-#ifndef __gramSchmidt_hpp__
-#define __gramSchmidt_hpp__
+#ifndef gramSchmidt_hpp
+#define gramSchmidt_hpp
 
 namespace mx
 {
    
-/** \addtogroup signal_processing
-  * @{
-  */
-     
+namespace sigproc 
+{
+   
 ///Perform Gram-Schmidt ortogonalization of a basis set, and normalize the result.
 /** Performs the stabilized Gram-Schmidt procedure on the input basis set, followed
   * by normalization of the result.
@@ -27,6 +26,8 @@ namespace mx
   * \tparam progress if true, then the loop index is printed for progress reporting
   * \tparam eigenTout is the Eigen array type of the desired output
   * \tparam eigenTin is the Eigen array type of the input
+  * 
+  * \ingroup signal_processing 
   */ 
 template<int progress=0, typename eigenTout, typename eigenTin>
 void gramSchmidt(eigenTout & out, const eigenTin & in)
@@ -71,6 +72,8 @@ void gramSchmidt(eigenTout & out, const eigenTin & in)
   * \tparam eigenTout is the Eigen array type of the desired output
   * \tparam eigenTin is the Eigen array type of the input
   * \tparam eigenTWin is the Eigen array type of the window
+  * 
+  * \ingroup signal_processing 
   */ 
 template<int progress=0, typename eigenTout, typename eigenTin, typename eigenTWin>
 void gramSchmidt(eigenTout & out, const eigenTin & in, const eigenTWin & window)
@@ -135,6 +138,8 @@ void baseSpectrum(eigenT & bspect, eigenT & gsspect)
   * \tparam progress if true, then the loop index is printed for progress reporting
   * \tparam eigenTout is the Eigen array type of the desired output
   * \tparam eigenTin is the Eigen array type of the input
+  * 
+  * \ingroup signal_processing 
   */ 
 template<int progress=0, typename eigenTout, typename eigenTout2, typename eigenTin>
 void gramSchmidtSpectrum(eigenTout & out, eigenTout2 & spect, const eigenTin & in)
@@ -186,10 +191,9 @@ void gramSchmidtSpectrum(eigenTout & out, eigenTout2 & spect, const eigenTin & i
 
 
 
-
-///@}
+} //namespace sigproc 
 } //namespace mx
 
-#endif //__gramSchmidt_hpp__
+#endif //gramSchmidt_hpp
 
 

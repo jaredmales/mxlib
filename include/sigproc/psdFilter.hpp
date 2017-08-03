@@ -6,8 +6,8 @@
   */
 
 
-#ifndef __psdFilter_hpp__
-#define __psdFilter_hpp__
+#ifndef psdFilter_hpp
+#define psdFilter_hpp
 
 #include <Eigen/Dense>
 
@@ -281,4 +281,4 @@ int psdFilter<realT>::operator()( realArrayT & noise )
 } //namespace sigproc 
 } //namespace mx
 
-#endif //__psdFilter_hpp__
+#endif //psdFilter_hpp

@@ -1127,7 +1127,7 @@ void HCIobservation<_realT>::outputPreProcessed()
    for(int i=0; i< Nims; ++i)
    {
       bname = fileList[i];
-      fname = preProcess_outputPrefix + basename(bname.c_str());
+      fname = preProcess_outputPrefix + basename(bname.c_str()) + ".fits";
       ff.write(fname, imc.image(i).data(), Ncols, Nrows, 1, heads[i]);
    }
    

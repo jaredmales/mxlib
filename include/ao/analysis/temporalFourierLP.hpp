@@ -1,19 +1,25 @@
 
-#ifndef __temporalFourierLP_hpp__
-#define __temporalFourierLP_hpp__
+#ifndef temporalFourierLP_hpp
+#define temporalFourierLP_hpp
 
 
 #include <vector>
 
-#include <mx/autocorrelation.hpp>
+#include <mx/sigproc/autocorrelation.hpp>
 
-#include <mx/psdUtils.hpp>
+#include <mx/sigproc/psdUtils.hpp>
 
-#include <mx/geo.hpp>
+#include <mx/math/geo.hpp>
 
-#include "linearPredictor.hpp"
+#include <mx/sigproc/linearPredictor.hpp>
 
-
+namespace mx
+{
+namespace AO
+{
+namespace analysis 
+{
+   
 template<typename realT>
 struct temporalFourierLP
 {
@@ -23,9 +29,9 @@ struct temporalFourierLP
    
    std::vector<realT> ac;
    
-   mx::autocorrelationFromPSD<realT> acpsd;
+   sigproc::autocorrelationFromPSD<realT> acpsd;
 
-   linearPredictor<realT> lp;
+   sigproc::linearPredictor<realT> lp;
    
    bool _windFact;
    
@@ -56,7 +62,7 @@ struct temporalFourierLP
       
       if(_windFact)
       {
-         realT dang = abs(mx::angleDiff<1>( _k_dir, _dir_wind));
+         realT dang = abs(math::angleDiff<1>( _k_dir, _dir_wind));
          //if(dang > 0.5*pi<realT>()) dang -= 0.5*pi<realT>();
          nFact = abs(1.0 - dang/ pi<realT>() * 1.8);
          if(nFact < 0.1) nFact = 0.1;
@@ -68,7 +74,7 @@ struct temporalFourierLP
          PSDtn[i] = PSDt[i] +  nFact*PSDn[i];// + 0;// 1e-9;
       }   
 
-      mx::augment1SidedPSD( psd2s, PSDtn,1);
+      sigproc::augment1SidedPSD( psd2s, PSDtn,1);
 
       ac.resize(psd2s.size());
    
@@ -81,5 +87,8 @@ struct temporalFourierLP
    }
 };
 
+}//namespace analysis
+}//namespace ao
+}//namespace mx
 
-#endif // __temporalFourierLP_hpp__
+#endif // temporalFourierLP_hpp
