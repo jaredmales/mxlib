@@ -307,6 +307,8 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 
       realT dang = 0;
       
+      if(mindpx < 0) excludeMethod = HCI::excludeNone;
+      
       if(excludeMethod == HCI::excludePixel)
       {
          dang = fabs(atan(mindpx/minr[regno]));
