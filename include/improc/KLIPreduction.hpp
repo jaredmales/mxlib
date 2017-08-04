@@ -691,6 +691,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       #pragma omp for 
       for(int imno = 0; imno < this->Nims; ++imno)
       {
+         //if(imno != 847) continue;
+         
          status.incrementAndOutputStatus();
          
          if( excludeMethod != HCI::excludeNone )
@@ -714,7 +716,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          
          for(int j=0; j<cfs.size(); ++j)
          {
-            cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());
+            cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());    
          }
 
          for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
@@ -727,6 +729,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             {
                psf += cfs(j)*klims.row(j);
             }  
+            
+            //#pragma omp critical
             insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
          }
          
