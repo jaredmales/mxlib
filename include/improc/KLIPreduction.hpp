@@ -701,10 +701,10 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             //Symptom is segfaults after running for a while.  
             //Note that this may have been fixed by switching to satlas from tatlas, but probably not 
             //Possible problem: this uses rims which is not thread private.
-            #pragma omp critical
-            {
+            //#pragma omp critical
+            //{
                collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
-            } 
+            //} 
             
             /**** Now calculate the K-L Images ****/
             calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);                           
