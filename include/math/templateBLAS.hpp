@@ -9,7 +9,7 @@
 
 extern "C"
 {
-#ifdef MXLIB_MKL_ONLY
+#ifdef MXLIB_MKL
 
    #include <mkl.h>
 
