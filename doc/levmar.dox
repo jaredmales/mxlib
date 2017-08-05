@@ -17,23 +17,38 @@ Download the latest levmar from the above link.  I am currently on 2.6.
 I typically need to edit the following lines in the Makefile, like so:
 \verbatim
 CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -funroll-loops -Wall -fPIC
-LAPACKLIBS_PATH=/usr/local/atlas/lib
 AR=ar -r
 RANLIB=ar -s
-LAPACKLIBS=-llapack -lcblas -lf77blas  -latlas -lgfortran
 \endverbatim
-This assumes you are using gcc and ATLAS.  If you installed ATLAS somewhere else, modify accordingly.  We want a shared (.so) library, this is why we added the option -fPIC to the CFLAGS, and changed the AR to ar -r and RANLIB to ar -s.  
-
-Finally, in the liblevmar.a rule:
+This assumes you are using gcc.  We want a shared (.so) library, this is why we added the option -fPIC to the CFLAGS, and changed the AR to ar -r and RANLIB to ar -s.  Finally, in the liblevmar.a rule:
 - delete the "crv" options to the \$(AR) command
 
-\par NOTE:
+\subsection levmarLAPACK Lapack 
+To have levmar use Lapack, we need to specify where the libraries are in the makefile.  
+
+For ATLAS:
+\verbatim
+LAPACKLIBS_PATH=/usr/local/atlas/lib
+LAPACKLIBS=-llapack -lcblas -lf77blas  -latlas -lgfortran
+\endverbatim
+If you installed ATLAS somewhere else, modify accordingly. 
+
+For MKL:
+\verbatim
+LAPACKLIBS_PATH=${MKLROOT}/lib/intel64
+LAPACKLIBS=-Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+\endverbatim
+Depending on your architecture, you may need to edit the path and these flags. The <a href="https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor" > MKL line advisor</a> is of great help in determining this.
+
+
+\subsection levmarmt Multithreading
 In levmar.h the line 
 \code
 #define LINSOLVERS_RETAIN_MEMORY
 \endcode
 should be commented out if there is any chance you will use levmar in a multithreaded program.  In particular, if you use openmp the compiler will issue a warning at this point in the header.  I always build levmar with this commented out.
 
+\subsection levmarbuild Bulding
 Type make to build.  Do not worry if it exits with an error -- as long liblevmar.a was made then everything is fine for our purposes.
 
 Finnaly, once the build is complete, turn liblevmar.a into a shared libary like so:
