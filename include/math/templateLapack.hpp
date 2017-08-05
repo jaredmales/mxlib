@@ -12,6 +12,13 @@ namespace mx
 {
 namespace math
 {
+
+//MKL uses different MXLAPACK_INTs
+#ifdef MXLIB_MKL
+   typedef MKL_INT MXLAPACK_INT;
+#else
+   typedef int MXLAPACK_INT;
+#endif
    
 /// Determine machine parameters. 
 /** Wrapper for Lapack xLAMCH
@@ -92,7 +99,7 @@ double lamch<double>(char CMACH)
   * \ingroup template_lapack
   */
 template<typename dataT>
-int sytrd( char UPLO, int N, dataT * A, int LDA, dataT *D, dataT *E, dataT *TAU, dataT *WORK, int LWORK, int INFO)
+MXLAPACK_INT sytrd( char UPLO, MXLAPACK_INT N, dataT * A, MXLAPACK_INT LDA, dataT *D, dataT *E, dataT *TAU, dataT *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
 {
    return -1;
 }
@@ -100,13 +107,13 @@ int sytrd( char UPLO, int N, dataT * A, int LDA, dataT *D, dataT *E, dataT *TAU,
 //Declarations of the actual LAPACK functions
 extern "C"
 {
-   void ssytrd_( char * UPLO, int * N, float * A, int * LDA, float *D, float *E, float* TAU, float *WORK, int *LWORK, int *INFO );
-   void dsytrd_( char * UPLO, int * N, double * A, int * LDA, double *D, double *E, double* TAU, double *WORK, int *LWORK, int *INFO );
+   void ssytrd_( char * UPLO, MXLAPACK_INT * N, float * A, MXLAPACK_INT * LDA, float *D, float *E, float* TAU, float *WORK, MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
+   void dsytrd_( char * UPLO, MXLAPACK_INT * N, double * A, MXLAPACK_INT * LDA, double *D, double *E, double* TAU, double *WORK, MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
 }
 
 template<>
 inline
-int sytrd<float>( char UPLO, int N, float * A, int LDA, float *D, float *E, float *TAU, float *WORK, int LWORK, int INFO)
+MXLAPACK_INT sytrd<float>( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float *D, float *E, float *TAU, float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
 {
   
    ssytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
@@ -116,7 +123,7 @@ int sytrd<float>( char UPLO, int N, float * A, int LDA, float *D, float *E, floa
 
 template<>
 inline
-int sytrd<double>( char UPLO, int N, double * A, int LDA, double *D, double *E, double *TAU, double *WORK, int LWORK, int INFO)
+MXLAPACK_INT sytrd<double>( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, double *D, double *E, double *TAU, double *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
 {
   
    dsytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
@@ -138,9 +145,9 @@ int sytrd<double>( char UPLO, int N, double * A, int LDA, double *D, double *E, 
   * \ingroup template_lapack
   */
 template<typename dataT>
-int syevr (  char JOBZ, char RANGE, char UPLO, int N, dataT *A, int LDA, dataT VL, dataT VU, int IL, 
-             int IU, dataT ABSTOL, int *M, dataT *W, dataT *Z, int LDZ, int *ISUPPZ, dataT *WORK, int
-             LWORK, int *IWORK, int LIWORK ) 
+MXLAPACK_INT syevr (  char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, dataT *A, MXLAPACK_INT LDA, dataT VL, dataT VU, MXLAPACK_INT IL, 
+             MXLAPACK_INT IU, dataT ABSTOL, MXLAPACK_INT *M, dataT *W, dataT *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ, dataT *WORK, MXLAPACK_INT
+             LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK ) 
 {
    return -1;
 }
@@ -148,31 +155,31 @@ int syevr (  char JOBZ, char RANGE, char UPLO, int N, dataT *A, int LDA, dataT V
 
 extern "C"
 {
-   void  ssyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, int *Np,
-                             float *A, int *LDAp, float *VLp, float *VUp,
-                              int *ILp, int *IUp, float *ABSTOLp, int *Mp,
-                               float *W, float *Z, int *LDZp, int *ISUPPZ,
-                                float *WORK, int *LWORKp, int *IWORK, int *LIWORKp,
-                                 int *INFOp);
+   void  ssyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, MXLAPACK_INT *Np,
+                             float *A, MXLAPACK_INT *LDAp, float *VLp, float *VUp,
+                              MXLAPACK_INT *ILp, MXLAPACK_INT *IUp, float *ABSTOLp, MXLAPACK_INT *Mp,
+                               float *W, float *Z, MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
+                                float *WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MXLAPACK_INT *LIWORKp,
+                                 MXLAPACK_INT *INFOp);
    
-   void  dsyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, int *Np,
-                             double *A, int *LDAp, double *VLp, double *VUp,
-                              int *ILp, int *IUp, double *ABSTOLp, int *Mp,
-                               double *W, double *Z, int *LDZp, int *ISUPPZ,
-                                double *WORK, int *LWORKp, int *IWORK, int *LIWORKp,
-                                 int *INFOp);
+   void  dsyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, MXLAPACK_INT *Np,
+                             double *A, MXLAPACK_INT *LDAp, double *VLp, double *VUp,
+                              MXLAPACK_INT *ILp, MXLAPACK_INT *IUp, double *ABSTOLp, MXLAPACK_INT *Mp,
+                               double *W, double *Z, MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
+                                double *WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MXLAPACK_INT *LIWORKp,
+                                 MXLAPACK_INT *INFOp);
 }
 
       
 // Float specialization of syevr, a wrapper for Lapack SSYEVR
 template<>
 inline
-int syevr<float> ( char JOBZ, char RANGE, char UPLO, int N, float *A, int LDA, float VL, float VU,
-                    int IL, int IU,  float ABSTOL, int *M, float *W, float *Z, int LDZ, int *ISUPPZ,
-                     float *WORK, int LWORK, int *IWORK, int LIWORK ) 
+MXLAPACK_INT syevr<float> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, float VL, float VU,
+                    MXLAPACK_INT IL, MXLAPACK_INT IU,  float ABSTOL, MXLAPACK_INT *M, float *W, float *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ,
+                     float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK ) 
 {
 
-   int  INFO;
+   MXLAPACK_INT  INFO;
    
    ssyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
            &IL, &IU, &ABSTOL, M, W, Z, &LDZ, ISUPPZ,
@@ -184,12 +191,12 @@ int syevr<float> ( char JOBZ, char RANGE, char UPLO, int N, float *A, int LDA, f
 // Double specialization of syevr, a wrapper for Lapack DSYEVR
 template<>
 inline
-int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA, double VL, double VU,
-                    int IL, int IU,  double ABSTOL, int *M, double *W, double *Z, int LDZ, int *ISUPPZ,
-                     double *WORK, int LWORK, int *IWORK, int LIWORK ) 
+MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, double VL, double VU,
+                    MXLAPACK_INT IL, MXLAPACK_INT IU,  double ABSTOL, MXLAPACK_INT *M, double *W, double *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ,
+                     double *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK ) 
 {
 
-   int  INFO;
+   MXLAPACK_INT  INFO;
    
    dsyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
            &IL, &IU, &ABSTOL, M, W, Z, &LDZ, ISUPPZ,
@@ -246,12 +253,12 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   *
   * \param[in] M
   * \parblock
-    (int)
+    (MXLAPACK_INT)
     The number of rows of the input matrix A.  M >= 0.
   *
   * \param[in] N
   * \parblock
-    (int)
+    (MXLAPACK_INT)
     The number of columns of the input matrix A.  N >= 0.
   *
   * \param[in,out] A
@@ -270,7 +277,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   *
   * \param[in] LDA
   * \parblock
-    (int)
+    (MXLAPACK_INT)
     The leading dimension of the array A.  LDA >= max(1,M).
   *
   * \param[out] S
@@ -289,7 +296,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   *
   * \param[in] LDU
   * \parblock
-     (int)
+     (MXLAPACK_INT)
      The leading dimension of the array U.  <br />
      LDU >= 1<br />
      if JOBU == 'S' or 'A', LDU >= M.
@@ -305,7 +312,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   *
   * \param[in] LDVT
   * \parblock
-     (int)
+     (MXLAPACK_INT)
      The leading dimension of the array VT. <br /> 
      LDVT >= 1<br /> 
      if JOBVT = 'A', LDVT >= N<br /> 
@@ -323,7 +330,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   *
   * \param[in] LWORK
   \parblock
-     (int)
+     (MXLAPACK_INT)
      The dimension of the array WORK.<br />
      LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
         - PATH 1  (M much larger than N, JOBU='N') 
@@ -341,7 +348,7 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
      =0:  successful exit. <br />
      <0:  if INFO = -i, the i-th argument had an illegal value. <br />
      >0:  if SBDSQR did not converge, INFO specifies how many
-           superdiagonals of an intermediate bidiagonal form B
+           superdiagonals of an MXLAPACK_INTermediate bidiagonal form B
            did not converge to zero. See the description of WORK
           above for details.
     \endparblock
@@ -349,8 +356,8 @@ int syevr<double> ( char JOBZ, char RANGE, char UPLO, int N, double *A, int LDA,
   * \ingroup template_lapack
   */
 template<typename dataT>
-int gesvd( char JOBU, char JOBVT, int M, int N, dataT * A, int LDA, dataT * S, dataT *U, int LDU, 
-                dataT * VT, int LDVT, dataT * WORK, int LWORK)       
+MXLAPACK_INT gesvd( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, dataT * A, MXLAPACK_INT LDA, dataT * S, dataT *U, MXLAPACK_INT LDU, 
+                dataT * VT, MXLAPACK_INT LDVT, dataT * WORK, MXLAPACK_INT LWORK)       
 {
    return -1;
 }
@@ -358,20 +365,20 @@ int gesvd( char JOBU, char JOBVT, int M, int N, dataT * A, int LDA, dataT * S, d
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesvd_( char *JOBUp, char *JOBVTp, int *Mp, int *Np, float * A, int *LDAp, float * S, float *U, int *LDUp, 
-                float * VT, int *LDVTp, float * WORK, int *LWORKp, int *INFOp);
+   void sgesvd_( char *JOBUp, char *JOBVTp, MXLAPACK_INT *Mp, MXLAPACK_INT *Np, float * A, MXLAPACK_INT *LDAp, float * S, float *U, MXLAPACK_INT *LDUp, 
+                float * VT, MXLAPACK_INT *LDVTp, float * WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
 
-   void dgesvd_( char *JOBUp, char *JOBVTp, int *Mp, int *Np, double * A, int *LDAp, double * S, double *U, int *LDUp, 
-                double * VT, int *LDVTp, double * WORK, int *LWORKp, int *INFOp);
+   void dgesvd_( char *JOBUp, char *JOBVTp, MXLAPACK_INT *Mp, MXLAPACK_INT *Np, double * A, MXLAPACK_INT *LDAp, double * S, double *U, MXLAPACK_INT *LDUp, 
+                double * VT, MXLAPACK_INT *LDVTp, double * WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
 }
 
 //float specialization of gesvd
 template<>
 inline
-int gesvd<float>( char JOBU, char JOBVT, int M, int N, float * A, int LDA, float * S, float *U, int LDU, 
-                float * VT, int LDVT, float * WORK, int LWORK)       
+MXLAPACK_INT gesvd<float>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float * S, float *U, MXLAPACK_INT LDU, 
+                float * VT, MXLAPACK_INT LDVT, float * WORK, MXLAPACK_INT LWORK)       
 {
-   int INFO;
+   MXLAPACK_INT INFO;
    
    sgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO);
    
@@ -381,10 +388,10 @@ int gesvd<float>( char JOBU, char JOBVT, int M, int N, float * A, int LDA, float
 //double specialization of gesvd
 template<>
 inline
-int gesvd<double>( char JOBU, char JOBVT, int M, int N, double * A, int LDA, double * S, double *U, int LDU, 
-                double * VT, int LDVT, double * WORK, int LWORK)       
+MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, double * S, double *U, MXLAPACK_INT LDU, 
+                double * VT, MXLAPACK_INT LDVT, double * WORK, MXLAPACK_INT LWORK)       
 {
-   int INFO;
+   MXLAPACK_INT INFO;
    
    dgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO);
    
@@ -417,7 +424,7 @@ int gesvd<double>( char JOBU, char JOBVT, int M, int N, double * A, int LDA, dou
  Note that the routine returns \f$ V^T \f$, not \f$ V \f$.
 
  The divide and conquer algorithm makes very mild assumptions about
- floating point arithmetic. It will work on machines with a guard
+ floating poMXLAPACK_INT arithmetic. It will work on machines with a guard
  digit in add/subtract, or on those binary machines without guard
  digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
  Cray-2. It could conceivably fail on hexadecimal or decimal machines
@@ -539,7 +546,7 @@ int gesvd<double>( char JOBU, char JOBVT, int M, int N, double * A, int LDA, dou
    * \ingroup template_lapack
 */
 template<typename dataT>
-int gesdd(char JOBZ, int M, int N, dataT *A, int LDA, dataT *S, dataT * U, int LDU, dataT * VT, int LDVT, dataT *WORK, int  LWORK, int * IWORK, int INFO)
+MXLAPACK_INT gesdd(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, dataT *A, MXLAPACK_INT LDA, dataT *S, dataT * U, MXLAPACK_INT LDU, dataT * VT, MXLAPACK_INT LDVT, dataT *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
 {
    return -1;
 }
@@ -547,15 +554,15 @@ int gesdd(char JOBZ, int M, int N, dataT *A, int LDA, dataT *S, dataT * U, int L
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesdd_(char * JOBZ, int *M, int *N, float *A, int *LDA, float *S, float * U, int *LDU, float * VT, int *LDVT, float *WORK, int * LWORK, int * IWORK, int *INFO);
+   void sgesdd_(char * JOBZ, MXLAPACK_INT *M, MXLAPACK_INT *N, float *A, MXLAPACK_INT *LDA, float *S, float * U, MXLAPACK_INT *LDU, float * VT, MXLAPACK_INT *LDVT, float *WORK, MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
    
-   void dgesdd_(char * JOBZ, int *M, int *N, double *A, int *LDA, double *S, double * U, int *LDU, double * VT, int *LDVT, double *WORK, int * LWORK, int * IWORK, int *INFO);
+   void dgesdd_(char * JOBZ, MXLAPACK_INT *M, MXLAPACK_INT *N, double *A, MXLAPACK_INT *LDA, double *S, double * U, MXLAPACK_INT *LDU, double * VT, MXLAPACK_INT *LDVT, double *WORK, MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
    
 }
 
 //float specialization of gesdd
 template<>
-int gesdd<float>(char JOBZ, int M, int N, float *A, int LDA, float *S, float * U, int LDU, float * VT, int LDVT, float *WORK, int  LWORK, int * IWORK, int INFO)
+MXLAPACK_INT gesdd<float>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, float *S, float * U, MXLAPACK_INT LDU, float * VT, MXLAPACK_INT LDVT, float *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
 {
    sgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
    
@@ -564,7 +571,7 @@ int gesdd<float>(char JOBZ, int M, int N, float *A, int LDA, float *S, float * U
 
 //double specialization of gesdd
 template<>
-int gesdd<double>(char JOBZ, int M, int N, double *A, int LDA, double *S, double * U, int LDU, double * VT, int LDVT, double *WORK, int  LWORK, int * IWORK, int INFO)
+MXLAPACK_INT gesdd<double>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, double *S, double * U, MXLAPACK_INT LDU, double * VT, MXLAPACK_INT LDVT, double *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
 {
    dgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
    
