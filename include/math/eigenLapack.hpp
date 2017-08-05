@@ -47,27 +47,27 @@ void eigenSYRK( eigenT1 &cv,  ///< [out] is the eigen matrix/array where to stor
    cv.resize(ims.cols(), ims.cols());
    
    math::syrk<typename eigenT1::Scalar>(/*const enum CBLAS_ORDER Order*/ CblasColMajor, /*const enum CBLAS_UPLO Uplo*/ CblasLower,
-                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasTrans, /*const int N*/ims.cols(), /*const int K*/ ims.rows(),
-                 /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const int lda*/ ims.rows(),
-                 /*const float beta*/ 0., /*float *C*/ cv.data(), /*const int ldc*/ cv.rows());
+                 /*const enum CBLAS_TRANSPOSE Trans*/ CblasTrans, /*const MXLAPACK_INT N*/ims.cols(), /*const MXLAPACK_INT K*/ ims.rows(),
+                 /*const float alpha*/ 1.0, /*const float *A*/ims.data(), /*const MXLAPACK_INT lda*/ ims.rows(),
+                 /*const float beta*/ 0., /*float *C*/ cv.data(), /*const MXLAPACK_INT ldc*/ cv.rows());
    
 }   
 
 
 
-/// A struct to hold the working memory for eigenSYEVR and maintain it between calls if desired.
-template<typename sizeT, typename intT, typename floatT>
+/// A struct to hold the working memory for eigenSYEVR and maMXLAPACK_INTain it between calls if desired.
+template<typename sizeT, typename MXLAPACK_INTT, typename floatT>
 struct syevrMem
 {
    sizeT sizeISuppZ;
    sizeT sizeWork;
    sizeT sizeIWork;
    
-   intT *iSuppZ;
+   MXLAPACK_INTT *iSuppZ;
    
    floatT *work;
    
-   intT *iWork;
+   MXLAPACK_INTT *iWork;
    
    syevrMem()
    {
@@ -113,31 +113,31 @@ struct syevrMem
   * \ingroup eigen_lapack
   */
 template<typename cvT, typename calcT>
-int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
+MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
                 Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
-                int CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
+                MXLAPACK_INT CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
                 Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, ///< [in] is a square matrix which is either upper or lower (default) triangular
-                int ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
-                int ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
+                MXLAPACK_INT ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
+                MXLAPACK_INT ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
                 char UPLO = 'L', ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
-                syevrMem<int, int, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
+                syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
               ) 
 {     
-   int  numeig, info;//, sizeWORK, sizeIWORK;
+   MXLAPACK_INT  numeig, info;//, sizeWORK, sizeIWORK;
    char RANGE = 'A';
    
-   int localMem = 0;
+   MXLAPACK_INT localMem = 0;
    
    if(mem == 0)
    {
-      mem = new syevrMem<int, int, calcT>;
+      mem = new syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT>;
       localMem = 1;
    }
       
-   int n = X.rows();
+   MXLAPACK_INT n = X.rows();
    
-   int IL = 1;
-   int IU = n;
+   MXLAPACK_INT IL = 1;
+   MXLAPACK_INT IU = n;
    if(ev0 >= 0 && ev1 >= ev0)
    {
       RANGE = 'I';
@@ -157,23 +157,23 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
       if(mem->iSuppZ) free(mem->iSuppZ);
          
       mem->sizeISuppZ = 2*n;
-      mem->iSuppZ = (int *) malloc (mem->sizeISuppZ*sizeof(int));
+      mem->iSuppZ = (MXLAPACK_INT *) malloc (mem->sizeISuppZ*sizeof(MXLAPACK_INT));
    
       if ( mem->iSuppZ==NULL ) 
       {
-         printf("malloc failed in eigenSYEVR\n"); 
+         prMXLAPACK_INTf("malloc failed in eigenSYEVR\n"); 
          return 2;
       }
    }
    
    
    //  Allocate minimum allowed sizes for workspace
-   int sizeWork = 26*n;
+   MXLAPACK_INT sizeWork = 26*n;
    calcT * work = (calcT *) malloc (sizeWork*sizeof(calcT));
    
    
-   int sizeIWork = 10*n;
-   int * iWork = (int *) malloc (sizeIWork*sizeof(int));
+   MXLAPACK_INT sizeIWork = 10*n;
+   MXLAPACK_INT * iWork = (MXLAPACK_INT *) malloc (sizeIWork*sizeof(MXLAPACK_INT));
 
    //  Query for optimum sizes for workspace 
    info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
@@ -191,11 +191,11 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
    // Now allocate optimum sizes
    /* -- tested increasing by x10, didn't improve performance at all 
     */
-   if( mem->sizeWork <  ((int) work[0])*(1))
+   if( mem->sizeWork <  ((MXLAPACK_INT) work[0])*(1))
    {
       if(mem->work) free(mem->work);
   
-      mem->sizeWork = ((int) work[0])*1;
+      mem->sizeWork = ((MXLAPACK_INT) work[0])*1;
       mem->work = (calcT *) malloc ((mem->sizeWork)*sizeof(calcT));
    }
    free(work);
@@ -206,15 +206,19 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
       if(mem->iWork) free(mem->iWork);
 
       mem->sizeIWork = iWork[0]*1; 
-      mem->iWork = (int *) malloc ((mem->sizeIWork)*sizeof(int));
+      mem->iWork = (MXLAPACK_INT *) malloc ((mem->sizeIWork)*sizeof(MXLAPACK_INT));
    }   
    free(iWork);
    
 
    if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
+<<<<<<< HEAD
       printf("malloc failed in eigenSYEVR\n"); 
       if(localMem) delete mem;
+=======
+      prMXLAPACK_INTf("malloc failed in eigenSYEVR\n"); 
+>>>>>>> f4c95081509b3de383c86828092667136ec4fbce
       return 2;
    }
                 
@@ -238,11 +242,11 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
   * \ingroup eigen_lapack
   */
 template<typename _evCalcT = double, typename eigenT, typename eigenT1>
-int calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
+MXLAPACK_INT calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
                  eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
                  const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
-                 int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
-                 syevrMem<int, int, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+                 MXLAPACK_INT n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
+                 syevrMem<MXLAPACK_INT, MXLAPACK_INT, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
                )
 {
    typedef _evCalcT evCalcT;
@@ -265,15 +269,15 @@ int calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or
    }
 
 
-   int tNims = cv.rows();
-   int tNpix = Rims.rows();
+   MXLAPACK_INT tNims = cv.rows();
+   MXLAPACK_INT tNpix = Rims.rows();
 
    if(n_modes <= 0 || n_modes > tNims) n_modes = tNims;
 
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
-   int info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
+   MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
       
    if(info !=0 ) 
    {
@@ -285,7 +289,7 @@ int calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or
    evals = evalsd.template cast<realT>();
       
    //Normalize the eigenvectors
-   for(int i=0;i< n_modes; ++i)
+   for(MXLAPACK_INT i=0;i< n_modes; ++i)
    {
       evecs.col(i) = evecs.col(i)/sqrt(evals(i));
    }
@@ -324,23 +328,23 @@ int calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or
   * \ingroup eigen_lapack
   */ 
 template<typename dataT>
-int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Eigen::Array<dataT,-1,-1> & VT, Eigen::Array<dataT,-1,-1> & A )
+MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Eigen::Array<dataT,-1,-1> & VT, Eigen::Array<dataT,-1,-1> & A )
 {
    char JOBZ = 'A';
-   int M = A.rows();
-   int N = A.cols();
-   int LDA = M;
+   MXLAPACK_INT M = A.rows();
+   MXLAPACK_INT N = A.cols();
+   MXLAPACK_INT LDA = M;
    S.resize(N,1);
    U.resize(M,M);
-   int LDU = M;
+   MXLAPACK_INT LDU = M;
    VT.resize(N,N);
-   int LDVT = N;
+   MXLAPACK_INT LDVT = N;
    
    dataT wkOpt;
-   int LWORK = -1;
+   MXLAPACK_INT LWORK = -1;
    
-   int * IWORK = new int[8*M];
-   int INFO;
+   MXLAPACK_INT * IWORK = new MXLAPACK_INT[8*M];
+   MXLAPACK_INT INFO;
    
    math::gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO);
    
@@ -371,27 +375,27 @@ int eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Ei
   * \param[out] S
   * \param[out] VT
   * \param[in] A the matrix to invert
-  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
-  * \param[in] interact [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (interact & MX_PINV_ASK) is true
+  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if MXLAPACK_INTeractive.
+  * \param[in] MXLAPACK_INTeract [optional] a bitmask controlling MXLAPACK_INTeraction.  If (MXLAPACK_INTeract & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (MXLAPACK_INTeract & MX_PINV_ASK) is true
   *                                 then the minimum singular value threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
   * 
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
+MXLAPACK_INT eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
-                       int & nRejected, 
+                       MXLAPACK_INT & nRejected, 
                        Eigen::Array<dataT, -1, -1> & U,
                        Eigen::Array<dataT, -1, -1> & S,
                        Eigen::Array<dataT, -1, -1> & VT,
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       int interact = MX_PINV_NO_INTERACT   )
+                       MXLAPACK_INT MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
 {
    //Eigen::Array<dataT,-1,-1> S, U, VT;
    
-   int info;
+   MXLAPACK_INT info;
    info = eigenGESDD(U,S,VT,A);
    
    if(info != 0) return info;
@@ -400,7 +404,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    dataT Smax=S.maxCoeff();
    
    
-   if(interact & MX_PINV_PLOT)
+   if(MXLAPACK_INTeract & MX_PINV_PLOT)
    {
       gnuPlot gp;
       gp.command("set title \"SVD Singular Values\"");
@@ -408,7 +412,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       gp.plot( S.data(), S.rows(), " w lp", "singular values");
    }
    
-   if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
+   if(MXLAPACK_INTeract & MX_PINV_ASK && ! (MXLAPACK_INTeract & MX_PINV_ASK_NMODES))
    {
       dataT mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -423,7 +427,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       else maxCondition = 0;
    }
 
-   if( interact & MX_PINV_ASK_NMODES)
+   if( MXLAPACK_INTeract & MX_PINV_ASK_NMODES)
    {
       unsigned mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -451,7 +455,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    
    condition = 1;
    nRejected = 0;
-   for(int i=0; i< S.rows(); ++i)
+   for(MXLAPACK_INT i=0; i< S.rows(); ++i)
    {
       if( S(i) >= threshold )
       {
@@ -465,7 +469,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       }
    }
 
-   if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
+   if(MXLAPACK_INTeract & MX_PINV_ASK  || MXLAPACK_INTeract & MX_PINV_ASK_NMODES)
    {
       dataT mine;
       std::cout << "Modes Rejected: " << nRejected << "\n";
@@ -485,30 +489,30 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 
 ///Calculate the pseudo-inverse of a patrix using the SVD
 /** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
-  * This interface does not provide access to U, S and VT.
+  * This MXLAPACK_INTerface does not provide access to U, S and VT.
   * 
   * \param PInv [out] the pseudo-inverse of A
   * \param condition [out] The final condition number.
   * \param nRejected [out] the number of eigenvectors rejected
   * \param A [in] the matrix to invert
-  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
-  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
+  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if MXLAPACK_INTeractive.
+  * \param MXLAPACK_INTeract [in] [optional] a bitmask controlling MXLAPACK_INTeraction.  If (MXLAPACK_INTeract & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (MXLAPACK_INTeract & MX_PINV_ASK) is true
   *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
   * 
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
+MXLAPACK_INT eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
-                       int & nRejected, 
+                       MXLAPACK_INT & nRejected, 
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       int interact = MX_PINV_NO_INTERACT   )
+                       MXLAPACK_INT MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    
-   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, interact);
+   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, MXLAPACK_INTeract);
 }
 
 
