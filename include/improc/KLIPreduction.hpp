@@ -170,7 +170,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
                    eigenT & cv, 
                    const eigenT1 & Rims, 
                    int n_modes = 0,
-                   math::syevrMem<MXLAPACK_INT, MXLAPACK_INT, evCalcT> * mem = 0);   
+                   math::syevrMem<evCalcT> * mem = 0);   
    
    /*template<typename eigenT, typename eigenTv>
    void collapseCovar( eigenT & cutCV, 
@@ -426,7 +426,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
                                                                   eigenT & cv, 
                                                                   const eigenT1 & Rims, 
                                                                   int n_modes,
-                                                                  math::syevrMem<MXLAPACK_INT, MXLAPACK_INT, _evCalcT> * mem)
+                                                                  math::syevrMem<_evCalcT> * mem)
 {
    double t0;
    eigenT evecs, evals;
@@ -458,7 +458,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */
-   int info = math::eigenSYEVR<float, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
+   int info = math::eigenSYEVR<float, evCalcT>(evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem);
    
    t_eigenv += (get_curr_time() - t0) ;/// omp_get_num_threads();
    
@@ -681,7 +681,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       eigenImageT cv_cut;
       eigenImageT klims;
       
-      math::syevrMem<MXLAPACK_INT, MXLAPACK_INT, evCalcT> mem;
+      math::syevrMem<evCalcT> mem;
 
       if( excludeMethod == HCI::excludeNone )
       {

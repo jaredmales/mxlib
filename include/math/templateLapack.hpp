@@ -8,7 +8,7 @@
 #ifndef __templateLapack_hpp__
 #define __templateLapack_hpp__
 
-//MKL uses different MXLAPACK_INTs
+//MKL uses different integer types, standard BLAS and LAPACK use int
 #ifdef MXLIB_MKL
    typedef MKL_INT MXLAPACK_INT;
 #else

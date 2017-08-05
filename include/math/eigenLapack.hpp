@@ -55,19 +55,21 @@ void eigenSYRK( eigenT1 &cv,  ///< [out] is the eigen matrix/array where to stor
 
 
 
-/// A struct to hold the working memory for eigenSYEVR and maMXLAPACK_INTain it between calls if desired.
-template<typename sizeT, typename intT, typename floatT>
+/// A struct to hold the working memory for eigenSYEVR and maintain it between calls if desired.
+/** \todo this should have the working memory for the first exploratory call to ?syevr as well.
+  */
+template<typename floatT>
 struct syevrMem
 {
-   sizeT sizeISuppZ;
-   sizeT sizeWork;
-   sizeT sizeIWork;
+   MXLAPACK_INT sizeISuppZ;
+   MXLAPACK_INT sizeWork;
+   MXLAPACK_INT sizeIWork;
    
-   intT *iSuppZ;
+   MXLAPACK_INT *iSuppZ;
    
    floatT *work;
    
-   intT *iWork;
+   MXLAPACK_INT *iWork;
    
    syevrMem()
    {
@@ -108,29 +110,29 @@ struct syevrMem
   * \tparam cvT is the scalar type of X (a.k.a. the covariance matrix)
   * \tparam calcT is the type in which to calculate the eigenvectors/eigenvalues
   *
-  * \returns the return code from syevr.
+  * \returns -1000 on an malloc allocation error.
+  * \returns the return code from syevr (info) otherwise.
   * 
   * \ingroup eigen_lapack
   */
 template<typename cvT, typename calcT>
 MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
                          Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
-                         int CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
-                         Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, ///< [in] is a square matrix which is either upper or lower (default) triangular
-                         int ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
-                         int ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
-                         char UPLO = 'L', ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
-                         syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
+                         Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X,        ///< [in] is a square matrix which is either upper or lower (default) triangular
+                         int ev0=0,                                                   ///< [in] [optional] is the first desired eigenvalue (default = 0)
+                         int ev1=-1,                                                  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
+                         char UPLO = 'L',                                             ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
+                         syevrMem<calcT> * mem = 0                                    ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
                        ) 
 {     
-   MXLAPACK_INT  numeig, info;//, sizeWORK, sizeIWORK;
+   MXLAPACK_INT  numeig, info;
    char RANGE = 'A';
    
    MXLAPACK_INT localMem = 0;
    
    if(mem == 0)
    {
-      mem = new syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT>;
+      mem = new syevrMem<calcT>;
       localMem = 1;
    }
       
@@ -161,8 +163,9 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    
       if ( mem->iSuppZ==NULL ) 
       {
-         printf("malloc failed in eigenSYEVR\n"); 
-         return 2;
+         mxError("eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR."); 
+         if(localMem) delete mem;
+         return -1000;
       }
    }
    
@@ -180,10 +183,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
 
    if(info != 0)
    {
-      std::cerr << info << "\n";
-      std::cerr << n << "\n";
-      std::cerr << sizeof(int) << " " << sizeof(MKL_INT) << "\n";      
-      mxError("eigenSYEVR", MXE_INVALIDARG, "error from SYEVR");
+      mxError("eigenSYEVR", MXE_LAPACKERR, "error from SYEVR");
       if(localMem) delete mem;
       return info;
    }
@@ -213,9 +213,9 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
 
    if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
-      printf("malloc failed in eigenSYEVR\n"); 
+      mxError("eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR.");
       if(localMem) delete mem;
-      return 2;
+      return -1000;
    }
                 
    // Now actually do the calculationg
@@ -242,7 +242,7 @@ MXLAPACK_INT calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L 
                           eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
                           const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
                           int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
-                          syevrMem<MXLAPACK_INT, MXLAPACK_INT, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+                          syevrMem<_evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
                         )
 {
    typedef _evCalcT evCalcT;
@@ -273,7 +273,7 @@ MXLAPACK_INT calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L 
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
-   MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
+   MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem);
       
    if(info !=0 ) 
    {

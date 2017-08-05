@@ -126,6 +126,20 @@ namespace mx
 #define MXE_SIZEERR 55
 #define MXE_SIZEERR_MSG "A size was calculated incorrectly."
 
+/** \def MXE_ALLOCERR
+  * \brief An error occurred during memory allocation.
+  * \ingroup mxe_errors
+  */   
+#define MXE_ALLOCERR 60
+#define MXE_ALLOCERR_MSG "An error occurred during memory allocation."
+
+/** \def MXE_FREEERR
+  * \brief An error occurred during memory de-allocation.
+  * \ingroup mxe_errors
+  */   
+#define MXE_FREEERR 65
+#define MXE_FREEERR_MSG "An error occurred during memory de-allocation."
+
 
 /** \def MXE_FILEOERR
   * \brief An error occurred while opening a file.
@@ -183,7 +197,15 @@ namespace mx
   */   
 #define MXE_GNUPLOTERR 4567
 #define MXE_GNUPLOTERR_MSG "An error was returned by gnuplot."
-   
+
+/** \def MXE_LAPACKERR
+  * \brief An error was returned by Lapack.
+  * \ingroup mxe_errors
+  */   
+#define MXE_LAPACKERR 6890
+#define MXE_LAPACKERR_MSG "An error was returned by Lapack."
+
+
 ///Return the macro name and a message for an mxlib error code
 /**
   * \param [in] ec is the error code
@@ -213,6 +235,12 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_SIZEERR:
          message = MXE_SIZEERR_MSG;
          return "MXE_SIZEERR";
+      case MXE_ALLOCERR:
+         message = MXE_ALLOCERR_MSG;
+         return "MXE_ALLOCERR";
+      case MXE_FREEERR:
+         message = MXE_FREEERR_MSG;
+         return "MXE_FREEERR";
       case MXE_FILEOERR:
          message = MXE_FILEOERR_MSG;
          return "MXE_FILEOERR";
@@ -237,6 +265,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_GNUPLOTERR:
          message = MXE_GNUPLOTERR_MSG;
          return "MXE_GNUPLOTERR";
+      case MXE_LAPACKERR:
+         message = MXE_LAPACKERR_MSG;
+         return "MXE_LAPACKERR";   
       default:
          message = "Unknown mxlib error code.";
          return "?";

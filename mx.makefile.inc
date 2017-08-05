@@ -9,11 +9,15 @@ INCLUDE_PATH = $(INSTALL_DIR)/include
 LIB_PATH = $(INSTALL_DIR)/lib
 BIN_PATH = $(INSTALL_DIR)/bin 
 
+###### Use these for MKL (BLAS, Lapack, and FFT):
 FFT_LIB = 
-BLASPACK_INC = -DMXLIB_MKL_ONLY -DMKL_ILP64 -m64 -I${MKLROOT}/include
+BLASPACK_INC = -DMXLIB_MKL -DMKL_ILP64 -m64 -I${MKLROOT}/include
 BLASPACK_LIB = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 
+##### Use this for FFTW
 #FFT_LIB = -lfftw3 -lfftw3f
+
+##### Use these for ATLAS
 #BLASPACK_INC = -I/usr/local/atlas/include
 #BLASPACK_LIB = -L/usr/local/atlas/lib/ -llapack -lf77blas -lcblas -latlas -lgfortran
 
