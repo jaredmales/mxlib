@@ -8,17 +8,19 @@
 #ifndef __templateLapack_hpp__
 #define __templateLapack_hpp__
 
-namespace mx
-{
-namespace math
-{
-
 //MKL uses different MXLAPACK_INTs
 #ifdef MXLIB_MKL
    typedef MKL_INT MXLAPACK_INT;
 #else
    typedef int MXLAPACK_INT;
 #endif
+   
+namespace mx
+{
+namespace math
+{
+
+
    
 /// Determine machine parameters. 
 /** Wrapper for Lapack xLAMCH
