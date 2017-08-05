@@ -180,9 +180,11 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
 
    if(info != 0)
    {
+      std::cerr << info << "\n";
       std::cerr << n << "\n";
-      
-      mxError("eigenSYEVR", MXE_INVALIDARG, "error from SYEVR")l
+      std::cerr << sizeof(int) << " " << sizeof(MKL_INT) << "\n";      
+      mxError("eigenSYEVR", MXE_INVALIDARG, "error from SYEVR");
+      if(localMem) delete mem;
       return info;
    }
    
@@ -212,6 +214,7 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
    if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
       printf("malloc failed in eigenSYEVR\n"); 
+      if(localMem) delete mem;
       return 2;
    }
                 
