@@ -165,13 +165,14 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    //void worker(eigenCube<realT> rims, vector<size_t> idx, realT dang);
    
    ///Calculate the KL images for a given covariance matrix
-   template<typename eigenT, typename eigenT1>
+/*   template<typename eigenT, typename eigenT1>
    void calcKLIms( eigenT & klims, 
                    eigenT & cv, 
                    const eigenT1 & Rims, 
                    int n_modes = 0,
                    math::syevrMem<evCalcT> * mem = 0);   
-   
+*/
+
    /*template<typename eigenT, typename eigenTv>
    void collapseCovar( eigenT & cutCV, 
                        const eigenT & CV,
@@ -419,7 +420,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 
 
 
-
+#if 0
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
 template<typename eigenT, typename eigenT1>
 void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims, 
@@ -492,7 +493,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
    t_klim += (get_curr_time() -t0);// / omp_get_num_threads() ;  
    
 } //calcKLIms
-
+#endif
 
 struct cvEntry
 {
@@ -687,7 +688,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       {
          /**** Now calculate the K-L Images ****/
       
-         calcKLIms(klims, cv, rims.cube(), maxNmodes);
+         //calcKLIms(klims, cv, rims.cube(), maxNmodes);
+         math::calcKLModes(klims, cv, rims.cube(), maxNmodes);
       }
    
       #pragma omp for 
@@ -709,7 +711,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             //} 
             
             /**** Now calculate the K-L Images ****/
-            calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);                           
+            //calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);
+            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem);
          }
          cfs.resize(1, klims.rows());
    

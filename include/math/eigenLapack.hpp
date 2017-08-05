@@ -238,7 +238,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
   * \ingroup eigen_lapack
   */
 template<typename _evCalcT = double, typename eigenT, typename eigenT1>
-MXLAPACK_INT calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
+MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
                           eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
                           const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
                           int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
