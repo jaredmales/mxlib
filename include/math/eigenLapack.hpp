@@ -213,12 +213,8 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
 
    if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
-<<<<<<< HEAD
       printf("malloc failed in eigenSYEVR\n"); 
       if(localMem) delete mem;
-=======
-      prMXLAPACK_INTf("malloc failed in eigenSYEVR\n"); 
->>>>>>> f4c95081509b3de383c86828092667136ec4fbce
       return 2;
    }
                 
