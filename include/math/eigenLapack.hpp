@@ -161,7 +161,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    
       if ( mem->iSuppZ==NULL ) 
       {
-         prMXLAPACK_INTf("malloc failed in eigenSYEVR\n"); 
+         printf("malloc failed in eigenSYEVR\n"); 
          return 2;
       }
    }
