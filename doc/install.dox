@@ -19,6 +19,7 @@ These are instructions for installing the "mxlib" c/c++ library.  This is my per
 -# You need \ref fftw "the FFTW library, with at least version 3.3.5". 
 -# You need the \ref astro_sofa "IAU sofa libary".  
 -# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
+  - I normally unpack the Eigen directory in $HOME/include, and create a symbolic link $Home/include/Eigen --> eigen-eigen-xxyyzz/Eigen
 
 The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.
 
