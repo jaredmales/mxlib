@@ -9,12 +9,15 @@ These are instructions for installing the "mxlib" c/c++ library.  This is my per
 
 
 \section install_depends Basic Dependencies
+This is the list of the other libraries and code-bases mxlib depends on.  
 
 -# You need a c++11 compatible compiler (or c++14, or --std=c++0x in g++ works)
 -# You need the  <a href="https://www.gnu.org/software/gsl/">GNU Scientific Library (GSL)</a> (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
 -# You need the boost c++ library (this is probably obtainable from the linux distro package manager, fine to install with apt or yum)
 -# You need the <a href="http://heasarc.gsfc.nasa.gov/fitsio/"> cfitsio </a> FITS library. 
--# You need a BLAS and LAPACK.  An excellent option is ATLAS, see my notes on \ref atlas "installing ATLAS".  
+-# You need a BLAS and LAPACK.  
+  - ATLAS: An excellent option is ATLAS, see my notes on \ref atlas "installing ATLAS".  
+  - MKL: the intel Math Kernel Library (MKL) is probably the highest performance option.  It is free (as-in-beer) and straightforward to install.
 -# You will need the \ref levmar "levmar least squares library" to use the data fitting tools.
 -# You need \ref fftw "the FFTW library, with at least version 3.3.5". 
 -# You need the \ref astro_sofa "IAU sofa libary".  
@@ -38,7 +41,9 @@ Follow these steps:
    
    \note You should only edit the mxlib.makefile.inc in the local directory -- this will preserve the git repo status.
    
--# In the mxlib directory, type make, and then make install.
+-# In the mxlib directory, type make, and then make install.  The library is now installed.
+
+
 
 \section github I've Moved!
 

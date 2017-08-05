@@ -12,7 +12,7 @@ levmar can be found at <a href = "http://users.ics.forth.gr/~lourakis/levmar/"> 
 
 \section installing_levmar Installing levmar
 
-Download the lates levmar from the above link.  I am currently on 2.6.
+Download the latest levmar from the above link.  I am currently on 2.6.
 
 I typically need to edit the following lines in the Makefile, like so:
 \verbatim
@@ -22,7 +22,10 @@ AR=ar -r
 RANLIB=ar -s
 LAPACKLIBS=-llapack -lcblas -lf77blas  -latlas -lgfortran
 \endverbatim
-This assumes you are using gcc and ATLAS.  If you installed ATLAS somewhere else, modify accordingly.  We want a shared (.so) library, this is why we added the option -fPIC to the CFLAGS, and changed the AR to ar -r and RANLIB to ar -s.  Also edit out any options in the \$(AR) command in the liblevmar.a rule.
+This assumes you are using gcc and ATLAS.  If you installed ATLAS somewhere else, modify accordingly.  We want a shared (.so) library, this is why we added the option -fPIC to the CFLAGS, and changed the AR to ar -r and RANLIB to ar -s.  
+
+Finally, in the liblevmar.a rule:
+- delete the "crv" options to the \$(AR) command
 
 \par NOTE:
 In levmar.h the line 

@@ -178,6 +178,14 @@ int eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///
    //  Query for optimum sizes for workspace 
    info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
 
+   if(info != 0)
+   {
+      std::cerr << n << "\n";
+      
+      mxError("eigenSYEVR", MXE_INVALIDARG, "error from SYEVR")l
+      return info;
+   }
+   
    // Now allocate optimum sizes
    /* -- tested increasing by x10, didn't improve performance at all 
     */

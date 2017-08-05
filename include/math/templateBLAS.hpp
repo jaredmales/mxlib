@@ -10,9 +10,13 @@
 extern "C"
 {
 #ifdef MXLIB_MKL_ONLY
-#include <mkl.h>
+
+   #include <mkl.h>
+
 #else
-#include <cblas.h>
+
+   #include <cblas.h>
+
 #endif
 }
 
