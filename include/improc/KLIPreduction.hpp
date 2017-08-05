@@ -457,7 +457,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::calcKLIms( eigenT & klims,
    
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
-    */   
+    */
    int info = math::eigenSYEVR<float, evCalcT>(evecsd, evalsd, 1, cv, tNims - n_modes, tNims, 'L', mem);
    
    t_eigenv += (get_curr_time() - t0) ;/// omp_get_num_threads();

@@ -56,18 +56,18 @@ void eigenSYRK( eigenT1 &cv,  ///< [out] is the eigen matrix/array where to stor
 
 
 /// A struct to hold the working memory for eigenSYEVR and maMXLAPACK_INTain it between calls if desired.
-template<typename sizeT, typename MXLAPACK_INTT, typename floatT>
+template<typename sizeT, typename intT, typename floatT>
 struct syevrMem
 {
    sizeT sizeISuppZ;
    sizeT sizeWork;
    sizeT sizeIWork;
    
-   MXLAPACK_INTT *iSuppZ;
+   intT *iSuppZ;
    
    floatT *work;
    
-   MXLAPACK_INTT *iWork;
+   intT *iWork;
    
    syevrMem()
    {
@@ -114,14 +114,14 @@ struct syevrMem
   */
 template<typename cvT, typename calcT>
 MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
-                Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
-                MXLAPACK_INT CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
-                Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, ///< [in] is a square matrix which is either upper or lower (default) triangular
-                MXLAPACK_INT ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
-                MXLAPACK_INT ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
-                char UPLO = 'L', ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
-                syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
-              ) 
+                         Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
+                         int CHANGED, ///< [in] is just a placeholder to make sure that old calls don't compile
+                         Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic> &X, ///< [in] is a square matrix which is either upper or lower (default) triangular
+                         int ev0=0,  ///< [in] [optional] is the first desired eigenvalue (default = 0)
+                         int ev1=-1,  ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.  If -1 all eigenvalues are returned.
+                         char UPLO = 'L', ///< [in] [optional] specifies whether X is upper ('U') or lower ('L') triangular.  Default is ('L').
+                         syevrMem<MXLAPACK_INT, MXLAPACK_INT, calcT> * mem = 0 ///< [in] [optional] holds the working memory arrays, can be re-passed to avoid unnecessary re-allocations
+                       ) 
 {     
    MXLAPACK_INT  numeig, info;//, sizeWORK, sizeIWORK;
    char RANGE = 'A';
@@ -239,11 +239,11 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
   */
 template<typename _evCalcT = double, typename eigenT, typename eigenT1>
 MXLAPACK_INT calcKLmodes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
-                 eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
-                 const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
-                 MXLAPACK_INT n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
-                 syevrMem<MXLAPACK_INT, MXLAPACK_INT, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
-               )
+                          eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
+                          const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
+                          int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
+                          syevrMem<MXLAPACK_INT, MXLAPACK_INT, _evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+                        )
 {
    typedef _evCalcT evCalcT;
    typedef typename eigenT::Scalar realT;
@@ -379,15 +379,15 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-MXLAPACK_INT eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
+int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
-                       MXLAPACK_INT & nRejected, 
+                       int & nRejected, 
                        Eigen::Array<dataT, -1, -1> & U,
                        Eigen::Array<dataT, -1, -1> & S,
                        Eigen::Array<dataT, -1, -1> & VT,
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       MXLAPACK_INT MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
+                       int MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
 {
    //Eigen::Array<dataT,-1,-1> S, U, VT;
    
@@ -499,12 +499,12 @@ MXLAPACK_INT eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-MXLAPACK_INT eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
+int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        dataT & condition,
-                       MXLAPACK_INT & nRejected, 
+                       int & nRejected, 
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       MXLAPACK_INT MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
+                       int MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    
