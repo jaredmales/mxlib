@@ -788,9 +788,9 @@ realT aoAtmosphere<realT>::fwhm(realT lam_sci)
 {
    realT r0lam = r_0(lam_sci);
    
-   std::cerr << r0lam << "\n";
+   //std::cerr << r0lam << "\n";
    realT fwhm = 0.98*(lam_sci/r0lam);
-   std::cerr << fwhm << "\n";
+   //std::cerr << fwhm << "\n";
    
    if( L_0() > 0) fwhm *= sqrt( 1 - 2.183*pow(r0lam/L_0(), 0.356));
    
