@@ -105,7 +105,7 @@ std::string fftw_wisdom_filename()
   * 
   * \ingroup fft
   */  
-template< typename realT, bool threads>
+template< typename realT, bool threads=true>
 struct fftwEnvironment
 {
    fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)

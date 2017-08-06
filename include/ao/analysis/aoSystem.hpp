@@ -207,6 +207,13 @@ public:
       _wfsBeta = (beta_p::wfs<realT,iosT> *) &w;
    }
    
+   realT beta_p( realT m, realT n)
+   {
+      if(!_wfsBeta) wfsBetaUnalloc();
+      
+      return _wfsBeta->beta_p(m,n, _D);
+   }
+   
    ///Check for unassigned wfs pointer
    /** Prints error and exit()s.
      */

@@ -26,6 +26,9 @@ namespace mx
 namespace AO
 {
 
+namespace analysis
+{
+   
 //forward declarations
 template<typename realT>
 struct clMaxStableGainOpt;
@@ -186,6 +189,11 @@ public:
      * \param [in] newF is a vector containing the new frequencies
      */
    void f (std::vector<realT> & newF); 
+   
+   size_t f_size()
+   {
+      return _f.size();
+   }
    
    /// Get the i-th value of frequency.
    /** No range checks are conducted.
@@ -1085,6 +1093,7 @@ struct clGainOptOptGain_OL
    }
 };
 
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
