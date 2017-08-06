@@ -82,8 +82,6 @@ struct temporalFourierLP
       acpsd(ac, psd2s);
 
       lp.calcCoefficients(ac, Nc);
-   
-      
    }
 };
 

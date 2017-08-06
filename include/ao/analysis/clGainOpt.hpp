@@ -817,6 +817,34 @@ realT clGainOpt<realT>::findPeakBelow(realT st)
 template<typename realT>
 realT clGainOpt<realT>::maxStableGain(realT & ll, realT & ul)
 {
+   std::vector<realT> re, im;
+   
+   nyquist( re, im, 1.0);
+   
+   int gi_c = re.size()-1;
+   
+   for(int gi=re.size()-2; gi >= 0; --gi)
+   {
+      if( -1.0/re[gi] < ll) continue;
+      
+      if( ( re[gi] < 0) && ( im[gi+1] >= 0 && im[gi] < 0) )
+      {
+         //Check for loop back in Nyquist diagram
+         if( re[gi] <= re[gi_c] ) gi_c = gi;
+      }
+      
+      if( ( re[gi] < 0) && (im[gi+1] < 0 && im[gi] >= 0) ) break;
+      
+      if( -1.0/re[gi] > ul && ul != 0 ) 
+      {
+         return ul;
+      }
+   }
+   
+   return -1.0/ re[gi_c];
+   
+
+#if 0   
    realT msg;
    
    realT minG = ll;
@@ -893,6 +921,7 @@ realT clGainOpt<realT>::maxStableGain(realT & ll, realT & ul)
       }
    }
    return msg;
+#endif
 }
    
    

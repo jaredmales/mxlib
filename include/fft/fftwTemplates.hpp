@@ -5,8 +5,8 @@
   *
   */
 
-#ifndef __fftwTemplates_hpp__
-#define __fftwTemplates_hpp__
+#ifndef fftwTemplates_hpp
+#define fftwTemplates_hpp
 
 #include <complex>
 #include <vector>
@@ -592,6 +592,38 @@ inline void fftw_make_planner_thread_safe<__float128>()
 }
 
 
+//********** Threads ****************//
+/// Tell the FFTW planner how many threads to use.
+/**
+  * \tparam realT the real floating point type.
+  */ 
+template<typename realT>
+void fftw_plan_with_nthreads(int nthreads /**< [in] the number of threads. Set to 1 to disable threads. */);
+
+template<>
+inline void fftw_plan_with_nthreads<float>(int nthreads)
+{
+   ::fftwf_plan_with_nthreads(nthreads);
+}
+
+template<>
+inline void fftw_plan_with_nthreads<double>(int nthreads)
+{
+   ::fftw_plan_with_nthreads(nthreads);
+}
+
+template<>
+inline void fftw_plan_with_nthreads<long double>(int nthreads)
+{
+   ::fftwl_plan_with_nthreads(nthreads);
+}
+
+template<>
+inline void fftw_plan_with_nthreads<__float128>(int nthreads)
+{
+   ::fftwq_plan_with_nthreads(nthreads);
+}
+
 //********* Plan Creation **************//
 
 ///Wrapper for the fftwX_plan_dft functions
@@ -739,6 +771,66 @@ inline fftwTypeSpec<complexQT, __float128>::planT fftw_plan_dft<complexQT, __flo
    return ::fftwq_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwq_complex*>(in), out, flags);
 }
 
+/********* Cleanup *************/
+
+///Cleanup persistent planner data.
+template<typename realT>
+void fftw_cleanup();
+
+template<>
+inline void fftw_cleanup<float>()
+{
+   ::fftwf_cleanup();
+}
+
+template<>
+inline void fftw_cleanup<double>()
+{
+   ::fftw_cleanup();
+}
+
+template<>
+inline void fftw_cleanup<long double>()
+{
+   ::fftwl_cleanup();
+}
+
+template<>
+inline void fftw_cleanup<__float128>()
+{
+   ::fftwq_cleanup();
+}
+
+/********* Thread Cleanup *************/
+
+///Cleanup persistent planner data and threads data.
+template<typename realT>
+void fftw_cleanup_threads();
+
+template<>
+inline void fftw_cleanup_threads<float>()
+{
+   ::fftwf_cleanup_threads();
+}
+
+template<>
+inline void fftw_cleanup_threads<double>()
+{
+   ::fftw_cleanup_threads();
+}
+
+template<>
+inline void fftw_cleanup_threads<long double>()
+{
+   ::fftwl_cleanup_threads();
+}
+
+template<>
+inline void fftw_cleanup_threads<__float128>()
+{
+   ::fftwq_cleanup_threads();
+}
+
 ///@} fftw_template_plans
 
 
@@ -823,5 +915,5 @@ inline void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan 
 
 }//namespace mx
 
-#endif // __fftwTemplates_hpp__
+#endif // fftwTemplates_hpp
 
