@@ -83,17 +83,32 @@ std::string fftw_wisdom_filename()
   * \note the fftw docs recommend against using fftw_make_planner_thread_safe, and says it won't work with omp, but
   * I have not seen any issues using it.
   *
-  * On destruction, wisdom is exported and the fftw_cleanup(_threads) function is called.
+  * On destruction, wisdom is exported and the fftw_cleanup[_threads] function is called.
   *
-  * Typically, and object of this type should be created in the main function.  Nothing else needs to be done with it,
-  * as it will be destructed on program termination.
+  * Typically, an object of this type should be created in the main function.  Nothing else needs to be done with it,
+  * as it will be destructed on program termination. Example:
+   \code
+   
+   #include <mx/fft/fftwEnvironment.hpp>
+   
+   int main()
+   {
+      typedef double realT;
+      mx::fftwEnvironment<realT> fftwEnv;
+   
+      //do stuff . . .
+   
+      return 0;
+   }
+   \endcode
+  * Note that there is no need to explicitly destroy the object fftwEnv.
   * 
   * \ingroup fft
   */  
 template< typename realT, bool threads>
 struct fftwEnvironment
 {
-   fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program */)
+   fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
    {
       fftw_make_planner_thread_safe<realT>();
       
