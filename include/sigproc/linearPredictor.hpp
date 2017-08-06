@@ -17,7 +17,7 @@
 
 #include "../timeUtils.hpp"
 
-#include "nrToeplitz.hpp"
+#include "levinsonRecursion.hpp"
 
 namespace mx 
 {
@@ -101,7 +101,7 @@ struct linearPredictor
       
       for(int i=0;i<Nc; ++i) y[i] = ac[i+1];
       
-      nrToeplitz(r.data(), x.data(), y.data(), Nc);
+      levinsonRecursion(r.data(), x.data(), y.data(), Nc);
       
       _c.resize(1, Nc);
       for(int i=0; i< Nc; ++i) _c(0,i) = x[i];
