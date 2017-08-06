@@ -209,9 +209,9 @@ public:
    
    realT beta_p( realT m, realT n)
    {
-      if(!_wfsBeta) wfsBetaUnalloc();
+      if( _wfsBeta == 0) wfsBetaUnalloc();
       
-      return _wfsBeta->beta_p(m,n, _D);
+      return _wfsBeta->beta_p(m, n, _D);
    }
    
    ///Check for unassigned wfs pointer
