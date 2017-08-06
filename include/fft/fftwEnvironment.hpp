@@ -22,6 +22,8 @@ namespace mx
 /** This is used for wisdom filenames.
   *
   * \tparam realT the real floating point type.
+  * 
+  * \ingroup fft
   */ 
 template<typename realT>
 std::string fftw_typename();
@@ -54,6 +56,8 @@ inline std::string fftw_typename<__float128>()
 /** Looks for the environment variable MXFFTW_WISDOM.  If not found, then pwd "./" is used.
   *
   * \tparam realT is the real floating point type.
+  * 
+  * \ingroup fft
   */
 template<typename realT>
 std::string fftw_wisdom_filename()
@@ -83,6 +87,8 @@ std::string fftw_wisdom_filename()
   *
   * Typically, and object of this type should be created in the main function.  Nothing else needs to be done with it,
   * as it will be destructed on program termination.
+  * 
+  * \ingroup fft
   */  
 template< typename realT, bool threads>
 struct fftwEnvironment
