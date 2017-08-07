@@ -91,7 +91,7 @@ struct temporalFourierLP
          gopt_lp = go_lp.optGainOpenLoop(PSDt, PSDn, gmax_lp);
          var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
-         //std::cout << -sc << " " << gmax_lp << " " << gopt_lp << " " << var << "\n";
+         std::cout << -sc/10 << " " << gmax_lp << " " << gopt_lp << " " << var_lp << "\n";
       
          if( var_lp < min_var )
          {
@@ -121,7 +121,7 @@ struct temporalFourierLP
       
             var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
-            //std::cout << -sc << " " << gmax_lp << " " << gopt_lp << " " << var << "\n";
+            std::cout << -sc/20 << " " << gmax_lp << " " << gopt_lp << " " << var_lp << "\n";
       
             if( var_lp < min_var )
             {
