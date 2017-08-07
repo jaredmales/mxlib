@@ -841,12 +841,12 @@ realT clGainOpt<realT>::maxStableGain(realT & ll, realT & ul)
          if( re[gi] <= re[gi_c] ) gi_c = gi;
       }
       
-      if( ( re[gi] < 0) && (im[gi+1] < 0 && im[gi] >= 0) ) break;
+      //if( ( re[gi] < 0) && (im[gi+1] < 0 && im[gi] >= 0) ) break;
       
-      if( -1.0/re[gi] > ul && ul != 0 ) 
-      {
-         return ul;
-      }
+//       if( -1.0/re[gi] > ul && ul != 0 ) 
+//       {
+//          return ul;
+//       }
    }
    
    return -1.0/ re[gi_c];
