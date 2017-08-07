@@ -104,11 +104,11 @@ struct temporalFourierLP
 
       if( min_sc != max_sc && min_sc != 10.0)
       {
-         realT sc0 = min_sc;
-         for(double sc = sc0-10; sc < sc0+11; ++sc)
+         realT sc0 = min_sc*2;
+         for(double sc = sc0-20; sc < sc0+21; ++sc)
          {
             rpsd.clear();
-            rpsd.resize(go_lp.f_size(), PSDt[0]*pow(10, -sc/10));
+            rpsd.resize(go_lp.f_size(), PSDt[0]*pow(10, -sc/20));
    
             if( calcCoefficients(PSDt, rpsd, Nc) < 0) return -1;
    
