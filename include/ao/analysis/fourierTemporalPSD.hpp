@@ -293,12 +293,13 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( std::string psdDir,  ///< [in] the directory containing the grid of PSDs.  Results will be written to this directory.
+   int analyzePSDGrid( std::string subDir, ///< [in] the sub-directory of psdDir where to write the results.
+                       std::string psdDir,  ///< [in] the directory containing the grid of PSDs. 
                        int mnMax, ///< [in] the maximum value of m and n in the grid.
                        int mnCon, ///< [in] the maximum value of m and n which can be controlled.
                        int lpNc, ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
                        std::vector<realT> & mags, ///< [in] the guide star magnitudes to analyze for.
-                       std::vector<int> & inttimes ///< [in] the integration times, in units of aosysT::minTauWFS.
+                       std::vector<int> & intTimes ///< [in] the integration times, in units of aosysT::minTauWFS.
                      );
    
    /** \name Disk Storage
@@ -471,16 +472,6 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    params._mode_i = _mode_i;
    params._modeCoeffs = _modeCoeffs;
 
-//    params.minK = 1e9;
-//    params.maxK = 0;
-//   
-//    
-//    params._kvals = _kvals;
-//    params._Jvals = _Jvals;
-//    params._gslInt = _gslInt;
-//    params._kmin = _kmin;
-//    params._kmax = _kmax;
-//    params._dk = _dk;
    
    realT result, error, result2;
 
@@ -704,7 +695,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
       
       int m, n;
       
-      #pragma omp for
+      #pragma omp for 
       for(int i=0; i<nLoops; ++i)
       {
          m = spf[i*2].m;
@@ -722,15 +713,41 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
 }
   
 template<typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
+int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
+                                                       std::string psdDir,
                                                        int mnMax,
                                                        int mnCon,
                                                        int lpNc,
                                                        std::vector<realT> & mags,
-                                                       std::vector<int> & inttimes
+                                                       std::vector<int> & intTimes
                                                      )
 {
 
+   std::string dir = psdDir + "/" + subDir;
+   
+   /*** Dump Params to file ***/
+   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+   
+   std::ofstream fout;
+   std::string fn = dir + '/' + "params.txt";
+   fout.open(fn);
+   
+   fout << "#---------------------------\n";
+   _aosys->dumpAOSystem(fout);
+   fout << "#---------------------------\n";
+   fout << "# Analysis Parameters\n";
+   fout << "#    mnMax    = " << mnMax << '\n';
+   fout << "#    mnCon    = " << mnCon << '\n';
+   fout << "#    lpNc     = " << lpNc << '\n';
+   fout << "#    mags     = "; 
+   for(int i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
+   fout << mags[mags.size()-1] << '\n';
+   fout << "#    intTimes = "; 
+   for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
+   fout << intTimes[intTimes.size()-1] << '\n';
+   
+   fout.close();
+   
    //**** Calculating A Variance Map ****//
    
    realT fs = 1.0/_aosys->minTauWFS();
@@ -755,7 +772,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
    vars_lp(mnMax, mnMax) = 0;
       
    bool doLP = false;
-   if(lpNc > 0) doLP = true;
+   if(lpNc > 1) doLP = true;
    Eigen::Array<realT, -1, -1> lpC;  
    
    if(doLP) 
@@ -764,15 +781,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
       lpC.setZero();
    }
    
-   mx::ompLoopWatcher<> watcher(nModes*mags.size()*inttimes.size(), std::cout);
+   mx::ompLoopWatcher<> watcher(nModes*mags.size()*intTimes.size(), std::cout);
    
    for(int s = 0; s < mags.size(); ++s)
    {
       _aosys->starMag(mags[s]);
    
-      for(int j=0; j<inttimes.size(); ++j)
+      for(int j=0; j<intTimes.size(); ++j)
       {      
-         if(inttimes[j] == 0) continue;
+         if(intTimes[j] == 0) continue;
          
          #pragma omp parallel 
          {
@@ -788,15 +805,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
             getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
       
             int imax = 0;
-            while( tfreq[imax] <= 0.5*fs/inttimes[j] && imax < tfreq.size()) ++imax;
+            while( tfreq[imax] <= 0.5*fs/intTimes[j] && imax < tfreq.size()) ++imax;
             tfreq.erase(tfreq.begin() + imax, tfreq.end());
    
             tPSDn.resize(tfreq.size());
    
             mx::AO::analysis::temporalFourierLP<realT> tflp;
             
-            mx::AO::analysis::clGainOpt<realT> go_pi(inttimes[j]/fs, 1.5/fs);
-            mx::AO::analysis::clGainOpt<realT> go_lp(inttimes[j]/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_pi(intTimes[j]/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_lp(intTimes[j]/fs, 1.5/fs);
             
             go_pi.f(tfreq);
             go_lp.f(tfreq);
@@ -807,14 +824,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
          
             int m, n;
             
-            #pragma omp for schedule(dynamic, 10) //want to schedule dynamic so maximal processor usage
+            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
                //if( fms[i].p == -1 ) continue;
                m = fms[2*i].m;
                n = fms[2*i].n;
               
-               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(), (realT) (inttimes[j]/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
+               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(), (realT) (intTimes[j]/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
             
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
@@ -872,14 +889,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
       
                vars_lp( mnMax + m, mnMax + n) = var_lp;
                vars_lp( mnMax - m, mnMax - n ) = var_lp;
-         
-               
-               
+
                watcher.incrementAndOutputStatus();
             } //omp for i..nModes
          }//omp Parallel
    
          Eigen::Array<realT, -1,-1> cim, psf;
+         
+         //Create Airy PSF for convolution with variance map.
          psf.resize(157,157);
          for(int i=0;i<psf.rows();++i)
          {
@@ -890,38 +907,38 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
          }
    
          mx::improc::fitsFile<realT> ff;
-         std::string fn = psdDir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+         std::string fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
          ff.write( fn, gains);
    
-         fn = psdDir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+         fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits";
          ff.write( fn, vars);
    
          mx::AO::analysis::varmapToImage(cim, vars, psf);
          realT S = exp( -1*vars.sum());
          cim /= S;
          
-         fn = psdDir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+         fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits";
          ff.write( fn, cim);
          
          if(doLP)
          {
-            fn = psdDir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+            fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
             ff.write( fn, gains_lp);
    
-            fn = psdDir + "/lpcmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+            fn = dir + "/lpcmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
             ff.write( fn, lpC);
             
-            fn = psdDir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+            fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
             ff.write( fn, vars_lp);
          
             mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
             S = exp( -1*vars_lp.sum());
             cim /= S;
-            fn = psdDir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+            fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
             ff.write( fn, cim);
          }
          
-      }//j (inttimes)
+      }//j (intTimes)
    }//s (mag)
    
    return 0;
