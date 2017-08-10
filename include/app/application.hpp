@@ -181,7 +181,7 @@ inline
 application::application()
 {
    doHelp = false;
-   helpWidth = 120;
+   helpWidth = 100;
    
    return;
 }

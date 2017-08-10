@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __aoConstants_hpp__
-#define __aoConstants_hpp__
+#ifndef aoConstants_hpp
+#define aoConstants_hpp
 
 #include <cmath>
 
@@ -151,4 +151,4 @@ floatT seventeen_thirds()
 } //namespace AO
 } //namespace mx
 
-#endif //__aoConstants_hpp__
+#endif //aoConstants_hpp

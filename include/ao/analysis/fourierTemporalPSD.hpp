@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __fourierTemporalPSD_hpp__
-#define __fourierTemporalPSD_hpp__
+#ifndef fourierTemporalPSD_hpp
+#define fourierTemporalPSD_hpp
 
 
 #include <iostream>
@@ -33,6 +33,11 @@ using namespace boost::math::constants;
 #include "../../mxError.hpp"
 #include "../../gslInterpolation.hpp"
 
+#include "wfsNoisePSD.hpp"
+#include "temporalFourierLP.hpp"
+#include "clGainOpt.hpp"
+#include "varmapToImage.hpp"
+
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
 
@@ -40,7 +45,8 @@ namespace mx
 {
 namespace AO
 {
-  
+namespace analysis
+{
 
 #ifndef WSZ
 
@@ -57,10 +63,6 @@ enum basis : unsigned int { basic, ///< The basic sine and cosine Fourier modes
                             projected_modified
                           };
                           
-//#define MXAO_FTPSD_BASIS_BASIC 0
-//#define MXAO_FTPSD_BASIS_MODIFIED 1
-//#define MXAO_FTPSD_BASIS_PROJECTED_BASIC 2
-//#define MXAO_FTPSD_BASIS_PROJECTED_MODIFIED 3
 
 //Forward declaration
 template<typename realT, typename aosysT>
@@ -74,7 +76,7 @@ realT F_mod (realT kv, void * params);
 template<typename realT, typename aosysT>
 realT F_projMod (realT kv, void * params); 
 
-///Class to manage the calculation of temporatl PSDs of the Fourier modes.
+///Class to manage the calculation of temporal PSDs of the Fourier modes in atmospheric turbulence.
 /** Works with both basic (sines/cosines) and modified Fourier modes.
   *
   * \tparam realT is a real floating point type for calculations.  Currently must be double due to gsl_integration.
@@ -88,7 +90,7 @@ realT F_projMod (realT kv, void * params);
 template<typename realT, typename aosysT>
 struct fourierTemporalPSD
 {
-   ///Pointer to an AO system structure (usually of type ao_system).
+   ///Pointer to an AO system structure.
    aosysT * _aosys;
   
    realT _f; ///< the current temporal frequency 
@@ -256,13 +258,6 @@ protected:
 public:   
    ///Calculate the temporal PSD for a Fourier mode in a multi-layer model.
    /** 
-     * \param[out] PSD is the calculated PSD
-     * \param[in] freq is the populated temporal frequency grid defining at which frequencies the PSD is calculated
-     * \param[in] m is the first index of the spatial frequency
-     * \param[in] n is the second index of the spatial frequency
-     * \param[in] p sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-     * \param[in] fmax [optional] set the maximum temporal frequency for the calculation. The PSD is filled in 
-     *                             with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
      * 
      * \tparam parallel controls whether layers are calculated in parallel.  Default is true.  Set to false if this is called inside a parallelized loop, as in \ref makePSDGrid.
      * 
@@ -271,31 +266,40 @@ public:
      * 
      */ 
    template<bool parallel=true>
-   int multiLayerPSD( std::vector<realT> & PSD,
-                      std::vector<realT> & freq, 
-                      realT m,
-                      realT n,
-                      int p,
-                      realT fmax = 0);
+   int multiLayerPSD( std::vector<realT> & PSD, ///< [out] the calculated PSD
+                      std::vector<realT> & freq, ///< [in] the populated temporal frequency grid defining at which frequencies the PSD is calculated
+                      realT m, ///< [in] the first index of the spatial frequency
+                      realT n, ///< [in] the second index of the spatial frequency
+                      int p, ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
+                      realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in 
+                                     /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+                    );
 
    ///Calculate PSDs over a grid of spatial frequencies.
    /** The grid of spatial frequencies is square, set by the maximum value of m and n.
      * 
      * The PSDs are written as mx::binVector binary files to a directory.  We do not use FITS since
-     * this adds overhead and cfitisio handles parallelization poorly due to the limitation on number created file pointers.
+     * this adds overhead and cfitisio handles parallelization poorly due to the limitation on number of created file pointers.
      * 
-     * \param[in] dir is the directory for output
-     * \param[in] mnMax is the maximum value of m and n.
-     * \param[in] dFreq is the temporal frequency spacing.
-     * \param[in] maxFreq is the maximum temporal frequency to calculate
-     * \param[in] fmax [optional] set the maximum temporal frequency for the calculation. The PSD is filled in 
-     *                             with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
      */ 
-   void makePSDGrid( std::string dir,
-                     int mnMax,
-                     realT dFreq,
-                     realT maxFreq,
-                     realT fmax = 0 );
+   void makePSDGrid( std::string dir, ///< [in] the directory for output of the PSDs
+                     int mnMax, ///< [in] the maximum value of m and n in the grid. 
+                     realT dFreq, ///< [in] the temporal frequency spacing.
+                     realT maxFreq, ///< [in] the maximum temporal frequency to calculate
+                     realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in with a -17/3 power law past 
+                                    /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+                   ); 
+   
+   ///Analyze a PSD grid under closed-loop control.
+   /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
+     */
+   int analyzePSDGrid( std::string psdDir,  ///< [in] the directory containing the grid of PSDs.  Results will be written to this directory.
+                       int mnMax, ///< [in] the maximum value of m and n in the grid.
+                       int mnCon, ///< [in] the maximum value of m and n which can be controlled.
+                       int lpNc, ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       std::vector<realT> & mags, ///< [in] the guide star magnitudes to analyze for.
+                       std::vector<int> & inttimes ///< [in] the integration times, in units of aosysT::minTauWFS.
+                     );
    
    /** \name Disk Storage
      * These methods handle writing to and reading from disk.  The calculated PSDs are store in the mx::BinVector binary format.
@@ -518,34 +522,12 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    {
       params._f = freq[i];
    
-#if 1
       int ec = gsl_integration_qagi (&func, _absTol, _relTol, WSZ, params._w, &result, &error);
-      //int ec = gsl_integration_qagiu(&func,1e-9, _absTol, _relTol, WSZ, params._w, &result, &error);
-   
-      //size_t neval;
-      //int ec = gsl_integration_qng (&func, 1e-3, 5000, _absTol, _relTol, &result, &error, &neval);
-#else   
-      double pts[3];
       
-      //pts[0] = -2;
-      //pts[1] = 0;
-      //pts[2] = 2;
-      
-      //int ec = gsl_integration_qagp (&func, pts, 3, _absTol, _relTol, WSZ, params._w, &result, &error);
-      
-      size_t neval;
-      int ec = gsl_integration_qng (&func, 0, 2, _absTol, _relTol, &result, &error, &neval);
-
-      //result2 = (F_projMod<realT, aosysT> (0.001*freq[i]/v_wind, &params) + F_projMod<realT, aosysT> (0, &params))*(0.001*freq[i]/v_wind)/2.0; 
-      
-      
-      //result += result2;
-      //result = result2;
-#endif      
-      //std::cerr << layer_i << " " << i << " " << freq[i]/fmax << "\n";
       if(ec == GSL_EDIVERGE)
       {
          std::cerr << "GSL_EDIVERGE:" << p << " " << freq[i] << " " << v_wind << " " << m << " " << n << " " << _m << " " << _n << "\n";
+         std::cerr << "ignoring . . .\n";
       }
    
       PSD[i] = scale*result;
@@ -562,7 +544,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    {
       PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], seventeen_thirds<realT>());
    }
-   PSD[j] /= 50;
+   PSD[j] /= 50.0;
    ++j;
    ++i;
    while(j < freq.size()) 
@@ -571,9 +553,6 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
       ++j;
    }
    
-   
-   //std::cerr << "minK: " << params.minK << "\n";
-   //std::cerr << "maxK: " << params.maxK << "\n";
    
    
    return 0;
@@ -741,8 +720,215 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
       }
    }
 }
+  
+template<typename realT, typename aosysT>
+int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string psdDir,
+                                                       int mnMax,
+                                                       int mnCon,
+                                                       int lpNc,
+                                                       std::vector<realT> & mags,
+                                                       std::vector<int> & inttimes
+                                                     )
+{
+
+   //**** Calculating A Variance Map ****//
    
+   realT fs = 1.0/_aosys->minTauWFS();
    
+   std::vector<mx::fourierModeDef> fms;
+   
+   mx::makeFourierModeFreqs_Rect(fms, 2*mnMax);
+   int nModes = 0.5*fms.size();
+
+   Eigen::Array<realT, -1, -1> gains, vars, gains_lp, vars_lp;
+   
+   gains.resize(2*mnMax+1, 2*mnMax+1);
+   vars.resize(2*mnMax+1, 2*mnMax+1);
+   
+   gains(mnMax, mnMax) = 0;
+   vars(mnMax, mnMax) = 0;
+
+   gains_lp.resize(2*mnMax+1, 2*mnMax+1);
+   vars_lp.resize(2*mnMax+1, 2*mnMax+1);
+   
+   gains_lp(mnMax, mnMax) = 0;
+   vars_lp(mnMax, mnMax) = 0;
+      
+   bool doLP = false;
+   if(lpNc > 0) doLP = true;
+   Eigen::Array<realT, -1, -1> lpC;  
+   
+   if(doLP) 
+   {
+      lpC.resize(nModes, lpNc);
+      lpC.setZero();
+   }
+   
+   mx::ompLoopWatcher<> watcher(nModes*mags.size()*inttimes.size(), std::cout);
+   
+   for(int s = 0; s < mags.size(); ++s)
+   {
+      _aosys->starMag(mags[s]);
+   
+      for(int j=0; j<inttimes.size(); ++j)
+      {      
+         if(inttimes[j] == 0) continue;
+         
+         #pragma omp parallel 
+         {
+            realT var0;
+            
+            realT gopt, var;
+      
+            realT gopt_lp, var_lp;
+
+            std::vector<realT> tfreq, tPSDp;
+            std::vector<realT> tPSDn;      
+      
+            getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
+      
+            int imax = 0;
+            while( tfreq[imax] <= 0.5*fs/inttimes[j] && imax < tfreq.size()) ++imax;
+            tfreq.erase(tfreq.begin() + imax, tfreq.end());
+   
+            tPSDn.resize(tfreq.size());
+   
+            mx::AO::analysis::temporalFourierLP<realT> tflp;
+            
+            mx::AO::analysis::clGainOpt<realT> go_pi(inttimes[j]/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_lp(inttimes[j]/fs, 1.5/fs);
+            
+            go_pi.f(tfreq);
+            go_lp.f(tfreq);
+            
+            realT gmax = 0;
+            realT gmax_lp = 0;
+            double t0, t1, t00, t11;
+         
+            int m, n;
+            
+            #pragma omp for schedule(dynamic, 10) //want to schedule dynamic so maximal processor usage
+            for(int i=0; i<nModes; ++i)
+            {
+               //if( fms[i].p == -1 ) continue;
+               m = fms[2*i].m;
+               n = fms[2*i].n;
+              
+               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(), (realT) (inttimes[j]/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
+            
+               realT k = sqrt(m*m + n*n)/_aosys->D();
+               
+               getGridPSD( tPSDp, psdDir, m, n );
+         
+               tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
+               
+               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+      
+               if(fabs(m) <= mnCon && fabs(n) <= mnCon)
+               {
+                  gopt = go_pi.optGainOpenLoop(tPSDp, tPSDn, gmax);
+                  var = go_pi.clVariance(tPSDp, tPSDn, gopt);
+            
+                  if(doLP)
+                  {
+                     tflp.regularizeCoefficients( go_lp, gmax_lp, gopt_lp, var_lp, tPSDp, tPSDn, lpNc);
+                  }
+                  else
+                  {
+                     gopt_lp = 0;
+                  }
+                  
+               }
+               else
+               {
+                  gopt = 0;
+                  var = var0;
+                  var_lp = var0;
+                  gopt_lp = 0;
+                  go_lp.a(std::vector<realT>({1}));
+                  go_lp.b(std::vector<realT>({1}));
+               }
+                  
+               if(gopt > 0 && var > var0)
+               {
+                  gopt = 0;
+                  var = var0;
+               }
+
+               if(gopt_lp > 0 && var_lp > var0)
+               {
+                  gopt_lp = 0;
+                  var_lp = var0;
+               }
+         
+               gains( mnMax + m, mnMax + n ) = gopt;
+               gains( mnMax - m, mnMax - n ) = gopt;
+      
+               gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
+               gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
+         
+               vars( mnMax + m, mnMax + n) = var;
+               vars( mnMax - m, mnMax - n ) = var;
+      
+               vars_lp( mnMax + m, mnMax + n) = var_lp;
+               vars_lp( mnMax - m, mnMax - n ) = var_lp;
+         
+               
+               
+               watcher.incrementAndOutputStatus();
+            } //omp for i..nModes
+         }//omp Parallel
+   
+         Eigen::Array<realT, -1,-1> cim, psf;
+         psf.resize(157,157);
+         for(int i=0;i<psf.rows();++i)
+         {
+            for(int j=0;j<psf.cols();++j)
+            {
+               psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
+            }
+         }
+   
+         mx::improc::fitsFile<realT> ff;
+         std::string fn = psdDir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+         ff.write( fn, gains);
+   
+         fn = psdDir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+         ff.write( fn, vars);
+   
+         mx::AO::analysis::varmapToImage(cim, vars, psf);
+         realT S = exp( -1*vars.sum());
+         cim /= S;
+         
+         fn = psdDir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+         ff.write( fn, cim);
+         
+         if(doLP)
+         {
+            fn = psdDir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+            ff.write( fn, gains_lp);
+   
+            fn = psdDir + "/lpcmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits"; 
+            ff.write( fn, lpC);
+            
+            fn = psdDir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+            ff.write( fn, vars_lp);
+         
+            mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
+            S = exp( -1*vars_lp.sum());
+            cim /= S;
+            fn = psdDir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(inttimes[j]) + ".fits";
+            ff.write( fn, cim);
+         }
+         
+      }//j (inttimes)
+   }//s (mag)
+   
+   return 0;
+}
+
+
+
 template<typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::getGridFreq( std::vector<realT> & freq,
                                                       const std::string & dir )
@@ -939,7 +1125,8 @@ realT F_projMod (realT kv, void * params)
    return P*QQ ;
 }
 
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif //__fourierTemporalPSD_hpp__
+#endif //fourierTemporalPSD_hpp

@@ -134,7 +134,7 @@ struct linearPredictor
       std::complex<realT> He = 0;
       for(int j=0; j < n; ++j)
       {
-         realT s = (j+1.0)* 2*3.14159;
+         realT s = (j+1.0)* two_pi<realT>();
          He += _c(0,j) * exp(s*std::complex<realT>(0,-1.0)*f/fs);
       }
 

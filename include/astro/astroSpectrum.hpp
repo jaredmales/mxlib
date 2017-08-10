@@ -17,7 +17,10 @@ namespace mx
 namespace astro 
 {
 
-
+///Class to manage an astronomical spectrum.
+/** Details of the spectra, including units, file-location, and how they are read from disk, are specified by template parameter _spectrumT.
+  * Spectra are loaded and immediately interpolated onto a wavelength grid.  This is to facilitate manipulation of spectra, i.e. for multiplying by filters, etc.
+  */
 template<typename _spectrumT, bool freq=false>
 struct astroSpectrum
 {
@@ -51,7 +54,11 @@ struct astroSpectrum
    void setParameters( const std::string & name /**< [in] The name of the spectrum */)
    {
       _name = name;
-      _dataDir = getEnv(spectrumT::dataDirEnvVar);
+      
+      if(spectrumT::dataDirEnvVar)
+      {
+         _dataDir = getEnv(spectrumT::dataDirEnvVar);
+      }
    }
    
    void setParameters( const std::string & name,  ///< [in] The name of the spectrum
@@ -62,34 +69,54 @@ struct astroSpectrum
       _dataDir = dataDir;
    }
    
+   ///Load the spectrum and interpolate it on a wavelength scale.  
    template<typename gridT>
-   int setSpectrum( gridT & grid )
+   int setSpectrum( gridT & lambda )
    {
-      std::vector<realT> rawGrid;
+      std::vector<realT> rawLambda;
       std::vector<realT> rawSpectrum;
+      
+      if(_dataDir == "") _dataDir = ".";
       
       std::string path = _dataDir + "/" + spectrumT::fileName(_name);
    
-      spectrumT::readSpectrum(rawGrid, rawSpectrum, path);
+      spectrumT::readSpectrum(rawLambda, rawSpectrum, path);
    
-      for(int i=0; i < rawGrid.size(); ++i)
+      for(int i=0; i < rawLambda.size(); ++i)
       {
-         rawGrid[i] /= spectrumT::wavelengthUnits/(units::length);
+         rawLambda[i] /= spectrumT::wavelengthUnits/(units::length);
          rawSpectrum[i] /= spectrumT::fluxUnits/(units::energy/(units::time * units::length * units::length * units::length));
       }
       
       _spectrum.clear();
       
-      mx::gsl_interpolate(gsl_interp_linear, rawGrid, rawSpectrum, grid, _spectrum);
+      mx::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, _spectrum);
       
       return 0;
    }
     
-   realT operator[](int i)
+   realT & operator[](int i)
+   {
+      return _spectrum[i];
+   }
+   
+   const realT operator[](int i) const
    {
       return _spectrum[i];
    } 
     
+   template<typename compSpectrumT>
+   std::vector<realT> operator*( const compSpectrumT & spec )
+   {
+      std::vector<realT> outVec( _spectrum.size() );
+      
+      for(int i=0; i< _spectrum.size(); ++i)
+      {
+         outVec[i] = _spectrum[i] * spec[i];
+      }
+      
+      return outVec;
+   }
 };
 
 

@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __aoSystem_hpp__
-#define __aoSystem_hpp__
+#ifndef aoSystem_hpp
+#define aoSystem_hpp
 
 
 #include <boost/math/constants/constants.hpp>
@@ -30,11 +30,12 @@ namespace mx
 {
 namespace AO
 {
-
+namespace analysis 
+{
+   
 /// Describes an analytic adaptive optics (AO) system.
 /** 
-  * Templatized by the turbulence power spectral density (PSD) and the wavefront sensor (WFS)
-  * sensitivity function. 
+  * Templatized by the turbulence power spectral density (PSD).
   *
   * \tparam realT the floating point type used for all calculations
   * \tparam inputSpecT specifies the turbulence spatial PSD type
@@ -50,10 +51,7 @@ public:
       
    aoAtmosphere<realT> atm;
    inputSpectT psd;
-   
-   
 
-   
 protected:
    
    realT _F0; ///< 0 mag flux from star at WFS [photons/sec]
@@ -63,7 +61,7 @@ protected:
    realT _d_opt; ///< Current optimum AO system actuator pitch [m]
    bool _optd; ///< Flag controlling whether actuator pitch is optimized (true) or just uses _d_min (false).  Default: true.
    
-   beta_p::wfs<realT, iosT> * _wfsBeta; ///< The WFS beta_p class.
+   wfs<realT, iosT> * _wfsBeta; ///< The WFS beta_p class.
    
    realT _lam_wfs; ///< WFS wavelength [m]
    realT _npix_wfs; ///< Number of WFS pixels
@@ -204,7 +202,13 @@ public:
    template<typename wfsT>
    void wfsBeta( const wfsT & w)
    {
-      _wfsBeta = (beta_p::wfs<realT,iosT> *) &w;
+      _wfsBeta = (wfs<realT,iosT> *) &w;
+   }
+   
+   template<typename wfsT>
+   void wfsBeta( const wfsT * w)
+   {
+      _wfsBeta = (wfs<realT,iosT> *) w;
    }
    
    realT beta_p( realT m, realT n)
@@ -1865,8 +1869,8 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 }
 
 
-
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif //__aoSystem_hpp__
+#endif //aoSystem_hpp

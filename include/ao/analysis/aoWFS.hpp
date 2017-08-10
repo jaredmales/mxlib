@@ -1,12 +1,12 @@
 /** \file aoWFS.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Definitions of various wavefront sensors
+  * \brief Definitions of various analytic wavefront sensors
   * \ingroup mxAO_files
   * 
   */
 
-#ifndef __aoWFS_hpp__
-#define __aoWFS_hpp__
+#ifndef aoWFS_hpp
+#define aoWFS_hpp
 
 namespace mx
 {
@@ -14,8 +14,7 @@ namespace mx
 namespace AO
 {
 
-///Namespace for analytic wavefront sensors.
-namespace beta_p
+namespace analysis
 {
    
 ///The ideal wavefront sensor sensitivity function.
@@ -142,9 +141,9 @@ struct pywfsModAsymptotic : public wfs<realT, iosT>
    
 };
 
-} //namespace beta_p
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif // __aoWFS_hpp__
+#endif // aoWFS_hpp
 

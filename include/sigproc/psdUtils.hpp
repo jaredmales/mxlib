@@ -369,7 +369,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
    
 }
 
-///Augment a 1-sided PSD to standard FFT form.
+///Augment a 1-sided PSD to standard 2-sided FFT form.
 /** Allocates psdTwoSided to hold a flipped copy of psdOneSided.
   * Default assumes that psdOneSided[0] corresponds to 0 frequency,
   * but this can be changed by setting zeroFreq to a non-zero value.
@@ -380,14 +380,15 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
   * 
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
   * 
-  * Note: entries in psdOneSided are cast to the value_type of psdTwoSided,
+  * Entries in psdOneSided are cast to the value_type of psdTwoSided,
   * for instance to allow for conversion to complex type.
-  * 
+  *
   */ 
-template<typename vectorTout, typename vectorTin, typename dataT>
+template<typename vectorTout, typename vectorTin>
 void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
                        vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
-                       dataT zeroFreq = 0  ///< [in] [optional] set to a non-zero value if psdOneSided does not contain a zero frequency component.
+                       bool zeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
+                       typename vectorTin::value_type scale = 1  ///< [in] [optional] value to scale the input by when copying to the output.  Use 0.5 if power needs to be re-normalized for 2-sided PSD.
                      )
 {
    typedef typename vectorTout::value_type outT;
@@ -408,22 +409,24 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
    
    psdTwoSided.resize(N);
    
+   //First set the 0-freq point
    if( needZero)
    {
       psdTwoSided[0] = outT(0.0);
    }
    else
    {
-      psdTwoSided[0] = outT(psdOneSided[0]);
+      psdTwoSided[0] = outT(psdOneSided[0] * scale);
    }
    
+   //Now set all the rest.
    int i;
    for(i=0; i < psdOneSided.size() - 1 - (1-needZero); ++i)
    {
-      psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
-      psdTwoSided[i + psdOneSided.size()+ needZero] = outT(psdOneSided[ psdOneSided.size() - 2 - i]);
+      psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero)] * scale);
+      psdTwoSided[i + psdOneSided.size()+ needZero] = outT(psdOneSided[ psdOneSided.size() - 2 - i] * scale);
    }
-   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
+   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ] * scale);
 
 }
    

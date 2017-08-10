@@ -121,7 +121,7 @@ void textTable::outPut( iosT & ios )
    
    int width = 0;
    for(int i=0;i<colWidths.size();++i) width += colWidths[i];
-   width += colWidths.size()*(colSep.length()-1)+100;
+   width += colWidths.size()*(colSep.length()-1); //+100;
    
    line.resize(width, ' ');
    
@@ -154,7 +154,7 @@ void textTable::outPut( iosT & ios )
          ios << lineStart << line << lineEnd << "\n";
       }
       
-      if(rowSep.length() > 0) ios << rowSep << "\n";
+     if(rowSep.length() > 0) ios << rowSep << "\n";
 
    }
 }

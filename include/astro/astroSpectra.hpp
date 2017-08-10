@@ -16,6 +16,39 @@ namespace mx
 namespace astro 
 {
 
+/// A basic spectrum
+/** 
+  */
+template<typename _units>
+struct basicSpectrum
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+   
+   static const bool freq = false;
+   
+   ///No conversions are performed in the basic spectrum
+   static constexpr realT wavelengthUnits = static_cast<realT>(1);
+   
+   ///No conversions are performed in the basic spectrum
+   static constexpr realT fluxUnits = static_cast<realT>(1);
+   
+   static constexpr const char * dataDirEnvVar = 0;
+   
+   static std::string fileName( const std::string name )
+   {
+      return name;
+   }
+   
+   static std::string readSpectrum( std::vector<realT> & rawLambda,
+                                    std::vector<realT> & rawSpectrum,
+                                    const std::string & path )
+   {
+      mx::readColumns(path, rawLambda, rawSpectrum);
+   }
+   
+};
+
 /// A spectrum from the HST calspec library
 /** See http://www.stsci.edu/hst/observatory/crds/calspec.html
   */
@@ -46,7 +79,7 @@ struct calspecSpectrum
                                     std::vector<realT> & rawSpectrum,
                                     const std::string & path )
    {
-      mx::readColumns(path, rawGrid, rawSpectrum);
+      mx::readColumns(path, rawLambda, rawSpectrum);
    }
    
 };

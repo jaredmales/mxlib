@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __aoPSDs_hpp__
-#define __aoPSDs_hpp__
+#ifndef aoPSDs_hpp
+#define aoPSDs_hpp
 
 
 #include <boost/math/constants/constants.hpp>
@@ -22,10 +22,31 @@ using namespace mx::AO::constants;
 
 namespace mx
 {
-   
 namespace AO
 {
+namespace analysis
+{
    
+namespace PSDComponent
+{
+   ///Enum to specify which component of the PSD to calcualte
+   enum { phase,    ///< The phase or OPD
+          amplitude,  ///< The amplitude
+          dispPhase,  ///< The phase component of dispersive anisoplanatism
+          dispAmplitude  ///< The amplitude component of dispersive anisoplanatism
+        };
+        
+   std::string compName( int cc )
+   {
+      if( cc == phase ) return "phase";
+      if( cc == amplitude ) return "amplitude";
+      if( cc == dispPhase ) return "dispPhase";
+      if( cc == dispAmplitude ) return "dispAmplitude";
+      
+      return "unknown";
+   }
+}
+
 ///Manage calculations using the von Karman spatial power spectrum.
 /** \ingroup mxAOAnalytic
   */ 
@@ -128,18 +149,24 @@ public:
    /**
      * \returns _component
      */ 
-   bool component()
+   int component()
    {
       return _component;
    }
    
    ///Set the value of _component
    /**
-     * \param cc is the new value of _component
      */ 
-   void component(int cc)
+   int component( int cc /**< [in] the new value of _component */)
    {
+      if( cc != PSDComponent::phase && cc != PSDComponent::amplitude && cc != PSDComponent::dispPhase && cc != PSDComponent::dispAmplitude )
+      {
+         mxError("vonKarmanSpectrum::component", MXE_INVALIDARG, "Unknown component");
+         return -1;
+      }
+      
       _component = cc;
+      return 0;         
    }
 
    ///Get the value of the diameter _D.
@@ -169,7 +196,7 @@ public:
      */ 
    realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
                      realT k, ///< [in] is the spatial frequency in m^-1.
-                     int n,
+                     int n, //place holder 
                      realT sec_zeta ///< [in] is the secant of the zenith distance.
                    )
    {
@@ -226,7 +253,7 @@ public:
    realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
                       realT k,                   ///< [in] is the spatial frequency in m^-1.
                       realT lambda,              ///< [in] is the observation wavelength in m
-                     int n,
+                     int n, //place holder
                       realT lambda_wfs,      ///< [in] is the wavefront measurement wavelength in m
                       realT secZeta             ///< [in] is the secant of the zenith distance
                     )
@@ -237,17 +264,27 @@ public:
       
       if(_scintillation)
       {
-         if(_component == 0)
+         if(_component == PSDComponent::phase)
          {
             psd *= atm.X(k, lambda, secZeta);
          }
-         else if (_component == 1)
+         else if (_component == PSDComponent::amplitude)
          {
             psd *= atm.Y(k, lambda, secZeta);
          }
-         else
+         else if (_component == PSDComponent::dispPhase)
          {
             psd *= atm.X_Z(k, lambda, lambda_wfs, secZeta);
+         }
+         else if (_component == PSDComponent::dispAmplitude)
+         {
+            mxError("vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented");
+            return 0;
+         }
+         else
+         {
+            mxError("vonKarmanSpectrum::operator()", MXE_INVALIDARG, "Invalid component specified");
+            return 0;
          }
       }
       
@@ -283,13 +320,14 @@ public:
       ios << "#    subPiston = " << std::boolalpha << _subPiston << '\n';
       ios << "#    subTipTilt = " << std::boolalpha << _subTipTilt  << '\n';
       ios << "#    Scintillation = " << std::boolalpha << _scintillation << '\n';
-      ios << "#    Component = " << _component << '\n';
+      ios << "#    Component = " << PSDComponent::compName(_component) << '\n';
       return ios;
    }
 
 };
 
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif //__aoPSDs_hpp__
+#endif //aoPSDs_hpp

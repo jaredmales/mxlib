@@ -5,12 +5,14 @@
   * 
   */
 
-#ifndef __varmapToImage_hpp__
-#define __varmapToImage_hpp__
+#ifndef varmapToImage_hpp
+#define varmapToImage_hpp
 
 namespace mx
 {
 namespace AO
+{
+namespace analysis
 {
    
 ///Convert a wavefront variance map to an intensity image by convolving with the PSF.
@@ -66,8 +68,9 @@ void varmapToImage( imageT & im, ///< [out] is the intensity image, resized to m
    }
 }
 
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif //__varmapToImage_hpp__
+#endif //varmapToImage_hpp
 

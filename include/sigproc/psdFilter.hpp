@@ -19,10 +19,25 @@ namespace mx
 namespace sigproc 
 {
    
-/// A class for filtering with PSDs
-/** \ingroup psds
+/// A class for filtering noise with PSDs
+/** The square-root of the PSD is maintained by this class, either as a pointer to an external array or using internally allocated memory (which will be
+  * de-allocated on destruction. 
+  * 
+  * PSD Normalization: the PSD used for this needs to be normalized properly to produce filtered noise with the correct statistics.  Given an
+  * array of size N which contains the PSD as "power per unit frequency" vs frequency (i.e. the PSD) on some frequency scale with uniform spacing \f$ \Delta f \f$,
+  * the normalization is
+  \f[
+  PSD_{norm} = PSD * N * \Delta f 
+  \f]
+  * for a 1-dimensional PSD and  
+  \f[
+  PSD_{norm} = PSD * N_0 * \Delta f_0 * N_1 * \Delta f_1 
+  \f]
+  * for a 2-dimensional PSD. Remember that these are applied before taking the square root.
   *
-  * \todo investigate whether it is really necessary to use the backward transform. 
+  * 
+  * \ingroup psds
+  *
   * \todo once fftT has a plan interface with pointers for working memory, use it.
   */
 template<typename _realT>
@@ -82,26 +97,36 @@ public:
      */
    int cols();
    
-   ///Set the sqaure-root of the PSD to be a pointer to an array containing the square root of the PSD.
+   ///Set the sqaure-root of the PSD to be a pointer to an array containing the square root of the properly normalized PSD.
    /** This does not allocate _npsdSqrt, it merely points to the specified array, which remains your responsibility for deallocation, etc.
      *
-     * \param [in] npsdSqrt a pointer to an array containing the square root of the PSD.
+     * See the discussion of PSD normalization above.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     * 
      */  
-   int psdSqrt( realArrayT * npsdSqrt );
+   int psdSqrt( realArrayT * npsdSqrt /**< [in] a pointer to an array containing the square root of the PSD. */ );
    
    ///Set the sqaure-root of the PSD.
    /** This allocates _npsdSqrt and fills it with th evalues in the array.
      *
-     * \param [in] npsdSqrt an array containing the square root of the PSD.
+     * See the discussion of PSD normalization above.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */  
-   int psdSqrt( const realArrayT & npsdSqrt );
+   int psdSqrt( const realArrayT & npsdSqrt /**< [in] an array containing the square root of the PSD.*/ );
    
    ///Set the sqaure-root of the PSD from the PSD.
    /** This allocates _npsdSqrt and fills it with the square root of the values in the array.
      *
-     * \param [in] npsdSqrt an array containing the PSD.
+     * See the discussion of PSD normalization above.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */  
-   int psd( const realArrayT & npsd );
+   int psd( const realArrayT & npsd /**< [in] an array containing the PSD */ );
 
    ///De-allocate all working memory and reset to initial state.
    void clear();
@@ -109,15 +134,18 @@ public:
    
    ///Apply the filter.
    /**
-     * \param [in,out] noise is the noise field of the same size as _sqrtPsd, which is filtered.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   int filter( realArrayT & noise );
+   int filter( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */);
    
    ///Apply the filter.
    /**
-     * \param [in,out] noise is the noise field of the same size as _sqrtPsd, which is filtered.
+     * \returns 0 on success
+     * \returns -1 on error
      */ 
-   int operator()( realArrayT & noise );
+   int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ );
    
 };
 

@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __fourierCovariance_hpp__
-#define __fourierCovariance_hpp__
+#ifndef fourierCovariance_hpp
+#define fourierCovariance_hpp
 
 
 #include <boost/math/constants/constants.hpp>
@@ -35,6 +35,8 @@ using namespace boost::math::constants;
 namespace mx
 {
 namespace AO
+{
+namespace analysis
 {
    
 #ifndef WSZ
@@ -751,8 +753,9 @@ void makeFKL( const std::string & outFile,
    std::cerr  << 3 << "\n";
 }
 
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 
-#endif //__fourierCovariance_hpp__
+#endif //fourierCovariance_hpp
 

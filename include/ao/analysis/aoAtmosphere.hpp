@@ -5,8 +5,8 @@
   * 
   */
 
-#ifndef __aoAtmosphere_h__
-#define __aoAtmosphere_h__
+#ifndef aoAtmosphere_hpp
+#define aoAtmosphere_hpp
 
 
 
@@ -27,6 +27,8 @@ using namespace mx::AO::constants;
 namespace mx
 {
 namespace AO
+{
+namespace analysis 
 {
    
 ///A class to specify atmosphere parameters and perform related calculations.
@@ -858,8 +860,9 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    
    return ios;
 }
-   
+ 
+}//namespace analysis 
 }//namespace AO
 }//namespace mx
 
-#endif
+#endif //aoAtmosphere_hpp
