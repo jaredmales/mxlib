@@ -794,10 +794,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       
       for(int s = 0; s < mags.size(); ++s)
       {
-         _aosys->starMag(mags[s]);
+         //_aosys->starMag(mags[s]);
    
          #pragma omp parallel 
          {
+            realT localMag = mags[s];
+            realT localIntTime = intTimes[j];
+            
             realT var0;
             
             realT gopt, var;
@@ -810,15 +813,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
       
             int imax = 0;
-            while( tfreq[imax] <= 0.5*fs/intTimes[j] && imax < tfreq.size()) ++imax;
+            while( tfreq[imax] <= 0.5*fs/localIntTime && imax < tfreq.size()) ++imax;
             tfreq.erase(tfreq.begin() + imax, tfreq.end());
    
             tPSDn.resize(tfreq.size());
    
             mx::AO::analysis::temporalFourierLP<realT> tflp;
             
-            mx::AO::analysis::clGainOpt<realT> go_si(intTimes[j]/fs, 1.5/fs);
-            mx::AO::analysis::clGainOpt<realT> go_lp(intTimes[j]/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_si(localIntTime/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_lp(localIntTime/fs, 1.5/fs);
             
             go_si.f(tfreq);
             go_lp.f(tfreq);
@@ -836,7 +839,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                m = fms[2*i].m;
                n = fms[2*i].n;
               
-               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(), (realT) (intTimes[j]/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
+               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
             
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
@@ -848,6 +851,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
+                  gmax = 0;
                   gopt = go_si.optGainOpenLoop(tPSDp, tPSDn, gmax);
                   var = go_si.clVariance(tPSDp, tPSDn, gopt);
             
@@ -883,18 +887,21 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   var_lp = var0;
                }
          
-               gains( mnMax + m, mnMax + n ) = gopt;
-               gains( mnMax - m, mnMax - n ) = gopt;
+               #pragma omp critical
+               {
+                  gains( mnMax + m, mnMax + n ) = gopt;
+                  gains( mnMax - m, mnMax - n ) = gopt;
       
-               gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
-               gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
+                  gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
+                  gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
          
-               vars( mnMax + m, mnMax + n) = var;
-               vars( mnMax - m, mnMax - n ) = var;
+                  vars( mnMax + m, mnMax + n) = var;
+                  vars( mnMax - m, mnMax - n ) = var;
       
-               vars_lp( mnMax + m, mnMax + n) = var_lp;
-               vars_lp( mnMax - m, mnMax - n ) = var_lp;
-
+                  vars_lp( mnMax + m, mnMax + n) = var_lp;
+                  vars_lp( mnMax - m, mnMax - n ) = var_lp;
+               }
+               
                watcher.incrementAndOutputStatus();
             } //omp for i..nModes
          }//omp Parallel
