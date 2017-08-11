@@ -781,16 +781,21 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       lpC.setZero();
    }
    
+   std::vector<realT> S_si, S_lp;
+   
    mx::ompLoopWatcher<> watcher(nModes*mags.size()*intTimes.size(), std::cout);
+
+   for(int j=0; j<intTimes.size(); ++j)
+   {      
+      if(intTimes[j] == 0) continue;
+      
+      S_si.clear();
+      S_lp.clear();
+      
+      for(int s = 0; s < mags.size(); ++s)
+      {
+         _aosys->starMag(mags[s]);
    
-   for(int s = 0; s < mags.size(); ++s)
-   {
-      _aosys->starMag(mags[s]);
-   
-      for(int j=0; j<intTimes.size(); ++j)
-      {      
-         if(intTimes[j] == 0) continue;
-         
          #pragma omp parallel 
          {
             realT var0;
@@ -812,10 +817,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
    
             mx::AO::analysis::temporalFourierLP<realT> tflp;
             
-            mx::AO::analysis::clGainOpt<realT> go_pi(intTimes[j]/fs, 1.5/fs);
+            mx::AO::analysis::clGainOpt<realT> go_si(intTimes[j]/fs, 1.5/fs);
             mx::AO::analysis::clGainOpt<realT> go_lp(intTimes[j]/fs, 1.5/fs);
             
-            go_pi.f(tfreq);
+            go_si.f(tfreq);
             go_lp.f(tfreq);
             
             realT gmax = 0;
@@ -843,8 +848,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
-                  gopt = go_pi.optGainOpenLoop(tPSDp, tPSDn, gmax);
-                  var = go_pi.clVariance(tPSDp, tPSDn, gopt);
+                  gopt = go_si.optGainOpenLoop(tPSDp, tPSDn, gmax);
+                  var = go_si.clVariance(tPSDp, tPSDn, gopt);
             
                   if(doLP)
                   {
@@ -907,17 +912,18 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          }
    
          mx::improc::fitsFile<realT> ff;
-         std::string fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
+         std::string fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
          ff.write( fn, gains);
    
-         fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits";
+         fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits";
          ff.write( fn, vars);
    
          mx::AO::analysis::varmapToImage(cim, vars, psf);
          realT S = exp( -1*vars.sum());
+         S_si.push_back(S);
          cim /= S;
          
-         fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_pi_" + mx::convertToString<int>(intTimes[j]) + ".fits";
+         fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits";
          ff.write( fn, cim);
          
          if(doLP)
@@ -933,13 +939,38 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          
             mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
             S = exp( -1*vars_lp.sum());
+            S_lp.push_back(S);
+            
             cim /= S;
             fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
             ff.write( fn, cim);
          }
          
-      }//j (intTimes)
-   }//s (mag)
+      }//s (mag)
+      
+      std::string fn = dir + "/strehl_si_" + mx::convertToString<int>(intTimes[j]) + ".txt";
+      fout.open(fn);
+      for(int i=0;i<mags.size(); ++i)
+      {
+         fout << mags[i] << " " << S_si[i] << "\n";
+      }
+      
+      fout.close();
+      
+      if(doLP)
+      {
+         fn = dir + "/strehl_lp_" + mx::convertToString<int>(intTimes[j]) + ".txt";
+         fout.open(fn);
+         for(int i=0;i<mags.size(); ++i)
+         {
+            fout << mags[i] << " " << S_lp[i] << "\n";
+         }
+      
+         fout.close();
+      }
+      
+      
+   }//j (intTimes)
    
    return 0;
 }
