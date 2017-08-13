@@ -144,7 +144,7 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
-      #pragma omp critical
+      //#pragma omp critical
       {
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ), forplan1, forplan2,  pdir, FFTW_MEASURE);
       }
@@ -168,7 +168,7 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
 
-      #pragma omp critical
+      //#pragma omp critical
       {      
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ),  reinterpret_cast<inputT*>(forplan), reinterpret_cast<outputT*>(forplan),  pdir, FFTW_MEASURE);
       }
