@@ -34,7 +34,7 @@ using namespace boost::math::constants;
 #include "../../gslInterpolation.hpp"
 
 #include "wfsNoisePSD.hpp"
-#include "temporalFourierLP.hpp"
+#include "clAOLinearPredictor.hpp"
 #include "clGainOpt.hpp"
 #include "varmapToImage.hpp"
 
@@ -818,7 +818,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
    
             tPSDn.resize(tfreq.size());
    
-            mx::AO::analysis::temporalFourierLP<realT> tflp;
+            mx::AO::analysis::clAOLinearPredictor<realT> tflp;
             
             mx::AO::analysis::clGainOpt<realT> go_si(localIntTime/fs, 1.5/fs);
             mx::AO::analysis::clGainOpt<realT> go_lp(localIntTime/fs, 1.5/fs);
@@ -857,7 +857,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             
                   if(doLP)
                   {
-                     tflp.regularizeCoefficients( go_lp, gmax_lp, gopt_lp, var_lp, tPSDp, tPSDn, lpNc);
+                     tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
                   }
                   else
                   {
