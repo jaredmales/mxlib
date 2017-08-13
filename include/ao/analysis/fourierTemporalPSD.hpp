@@ -857,7 +857,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             
                   if(doLP)
                   {
-                     tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
+                     #pragma omp critical
+                     {
+                        tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
+                     }
                   }
                   else
                   {
