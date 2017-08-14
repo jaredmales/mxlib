@@ -842,7 +842,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                m = fms[2*i].m;
                n = fms[2*i].n;
               
-               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
+               #pragma omp critical
+               {
+                  wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
+               }
                
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
@@ -853,7 +856,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
-               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               #pragma omp critical
+               {
+                  var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               }
                
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
