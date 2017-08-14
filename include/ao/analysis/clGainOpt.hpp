@@ -572,14 +572,18 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
 
    if(_changed)
    {
+        std::cerr << "x.0.0" << std::endl;
 
       _H_dm.resize(_f.size());
       _H_wfs.resize(_f.size());
       _H_ma.resize(_f.size());
       _H_del.resize(_f.size());
       _H_con.resize(_f.size());
-               
+                       std::cerr << "x.0.1" << std::endl;
+
       int jmax = std::min(_a.size(), _b.size());
+
+              std::cerr << "x.0.2" << std::endl;
 
       //#pragma omp parallel for
       for(int i=0; i<_f.size(); ++i)
@@ -592,15 +596,18 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
    
          _H_dm[i] = (realT(1) - expsT)/(s*_Ti);
    
-         _H_wfs[i] = _H_dm[i];//(realT(1) - expsT)/(s*_Ti);
+         _H_wfs[i] = _H_dm[i];   //(realT(1) - expsT)/(s*_Ti);
    
-         _H_ma[i] = 1;//realT(1./_N)*(realT(1) - pow(expsT,_N))/(realT(1) - expsT);
+         _H_ma[i] = 1;  //realT(1./_N)*(realT(1) - pow(expsT,_N))/(realT(1) - expsT);
          
          _H_del[i] = exp(-s*_tau); //complexT(_tau,0));
-         
+                 std::cerr << "x.0.3" << std::endl;
+
          complexT FIR = complexT(_b[0],0);
+         
+                 std::cerr << "x.0.4" << std::endl;
+
          complexT IIR = complexT(0.0, 0.0); 
-        std::cerr << "x.0" << std::endl;
          for(int j = 1; j < jmax; ++j)
          {
             //realT cs = _cs(i,j);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(j));
