@@ -600,7 +600,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
          
          complexT FIR = complexT(_b[0],0);
          complexT IIR = complexT(0.0, 0.0); 
-        
+        std::cerr << "x.0" << std::endl;
          for(int j = 1; j < jmax; ++j)
          {
             //realT cs = _cs(i,j);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(j));
@@ -611,6 +611,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             FIR += _b[j]*expZ; //complexT(cs, -ss);
             IIR += _a[j-1]*expZ;//complexT(cs, -ss);
          }
+        std::cerr << "x.1" << std::endl;
            
          for(int jj=jmax; jj< _a.size()+1; ++jj)
          {
@@ -622,6 +623,8 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             IIR += _a[jj-1]*expZ; //complexT(cs, -ss);
          }
         
+        std::cerr << "x.2" << std::endl;
+
          for(int jj=jmax; jj<_b.size(); ++jj)
          {
             //realT cs = _cs(i,jj);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
@@ -631,10 +634,15 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             
             FIR += _b[jj]*expZ; //complexT(cs, -ss);
          }
-         
+         std::cerr << "x.3" << std::endl;
+
          _H_con[i] = FIR/( realT(1.0) - IIR);
 
+                 std::cerr << "x.4" << std::endl;
+
       }      
+              std::cerr << "x.f" << std::endl;
+
       _changed = false;
    }
    
