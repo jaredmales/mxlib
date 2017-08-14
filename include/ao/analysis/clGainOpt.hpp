@@ -831,10 +831,12 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
 
    if(gmax <= 0) gmax = maxStableGain();
    
+#pragma omp critical
+   {
    try
    {
       std::pair<realT,realT> brack;
-   
+      
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
 
       return  brack.first;
@@ -843,6 +845,7 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
    {
       std::cerr << "optGainOpenLoop: No root found\n";
       return _minFindMaxFact*gmax;
+   }
    }
 }
    
