@@ -890,7 +890,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   var_lp = var0;
                }
          
-               //This should not be necessary, but it is.  Maybe an bug in Eigen?
+               //This should not be necessary, but it is.  Maybe a bug in Eigen?
                #pragma omp critical
                {
                   gains( mnMax + m, mnMax + n ) = gopt;
