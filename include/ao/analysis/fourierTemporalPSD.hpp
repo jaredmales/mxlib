@@ -810,8 +810,11 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             std::vector<realT> tfreq, tPSDp;
             std::vector<realT> tPSDn;      
       
-            getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
-      
+            #pragma omp critical
+            {
+               getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
+            }
+            
             int imax = 0;
             while( tfreq[imax] <= 0.5*fs/localIntTime && imax < tfreq.size()) ++imax;
             tfreq.erase(tfreq.begin() + imax, tfreq.end());
@@ -840,15 +843,18 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                n = fms[2*i].n;
               
                wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
-            
+               
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
-               getGridPSD( tPSDp, psdDir, m, n );
-         
+               #pragma omp critical
+               {
+                  getGridPSD( tPSDp, psdDir, m, n );
+               }
+               
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
                var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
-      
+               
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
                   gmax = 0;
@@ -857,10 +863,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             
                   if(doLP)
                   {
-                     #pragma omp critical
-                     {
-                        tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
-                     }
+                     tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
                   }
                   else
                   {
