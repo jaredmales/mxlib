@@ -890,9 +890,13 @@ int clGainOpt<realT>::nyquist( std::vector<realT> & re,
    
    complexT etf;
    
+   std::cerr << "3.0.0.1.1" << " " << _f.size()  << std::endl;
+   
    for(int f=0; f< _f.size(); ++f)
    {
       etf = g*olXfer(f);// clETF(f, g);
+      
+      std::cerr << "3.0.0.1.2" << " " << f  << std::endl;
       
       re[f] = real(etf);
       im[f] = imag(etf);
