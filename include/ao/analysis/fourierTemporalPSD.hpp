@@ -866,6 +866,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                {
                   gmax = 0;
                   gopt = go_si.optGainOpenLoop(tPSDp, tPSDn, gmax);
+                  std::cerr << "3.1" << std::endl;
                   var = go_si.clVariance(tPSDp, tPSDn, gopt);
             
                   std::cerr << "4" << std::endl;
