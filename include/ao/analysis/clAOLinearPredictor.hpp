@@ -109,7 +109,7 @@ struct clAOLinearPredictor
       }
       else
       {
-         sc0 = min_sc - precision;
+         sc0 = min_sc + precision;
          last_var = min_var;
       }
 

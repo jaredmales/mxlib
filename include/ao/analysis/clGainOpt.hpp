@@ -543,7 +543,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       return 0;
    }
    
-#if 0
+#if 1
    if(_fChanged)
    {
       int jmax = std::max(_a.size()+1, _b.size());
