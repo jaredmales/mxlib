@@ -367,7 +367,8 @@ template<typename realT>
 void clGainOpt<realT>::init()
 {
    _N = 1;
-//    setLeakyIntegrator(1.0);
+
+   setLeakyIntegrator(1.0);
 
    _Ti = 1./1000.;
    _tau = 2.5*_Ti;
