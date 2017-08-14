@@ -888,6 +888,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   var_lp = var0;
                }
          
+#pragma omp critical
+{
                   gains( mnMax + m, mnMax + n ) = gopt;
                   gains( mnMax - m, mnMax - n ) = gopt;
       
@@ -899,7 +901,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       
                   vars_lp( mnMax + m, mnMax + n) = var_lp;
                   vars_lp( mnMax - m, mnMax - n ) = var_lp;
-               
+}              
                watcher.incrementAndOutputStatus();
             } //omp for i..nModes
          }//omp Parallel
