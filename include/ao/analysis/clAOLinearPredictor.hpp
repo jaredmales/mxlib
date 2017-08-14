@@ -109,7 +109,7 @@ struct clAOLinearPredictor
       }
       else
       {
-         sc0 = min_sc + precision;
+         sc0 = min_sc - precision;
          last_var = min_var;
       }
 
@@ -171,7 +171,7 @@ struct clAOLinearPredictor
       int _maxIts = 20;
       
       int its = 0;
-      while(precision > 0.003 && its < _maxIts)
+      while(precision > 0.01 && its < _maxIts)
       {
          _regularizeCoefficients<printout>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc);
          

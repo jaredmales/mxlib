@@ -796,8 +796,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       {
          //_aosys->starMag(mags[s]);
    
-         #pragma omp parallel 
-         {
+ //        #pragma omp parallel 
+ //        {
+        #pragma omp parallel for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
+            for(int i=0; i<nModes; ++i)
+            {
+ 
             realT localMag = mags[s];
             realT localIntTime = intTimes[j];
             
@@ -832,12 +836,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          
             int m, n;
             
-            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
+ /*           #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
-                //This should not be necessary, but it is.  Maybe a bug in Eigen?
-               #pragma omp critical
-               {
+ */               //This should not be necessary, but it is.  Maybe a bug in Eigen?
+//               #pragma omp critical
+//               {
               
                //if( fms[i].p == -1 ) continue;
                m = fms[2*i].m;
@@ -902,11 +906,11 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       
                   vars_lp( mnMax + m, mnMax + n) = var_lp;
                   vars_lp( mnMax - m, mnMax - n ) = var_lp;
-               }
+ //              }
                
                watcher.incrementAndOutputStatus();
             } //omp for i..nModes
-         }//omp Parallel
+ //        }//omp Parallel
    
          Eigen::Array<realT, -1,-1> cim, psf;
          

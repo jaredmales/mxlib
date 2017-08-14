@@ -72,10 +72,6 @@ public:
      */
    
    realT _maxFindMin; ///< The Minimum value for the maximum stable gain finding algorithm.
-   //int _maxFindBits; ///< The bits of precision to use for finding maximum stable gain. Defaults to 8.
-   //boost::uintmax_t _maxFindMaxIter; ///< The maximum iterations allowed for finding maximum stable gain.
-   //realT _dg; ///< Gain stepsize for finite difference derivative calculation. Default = 0.01;
-   //int _stabULMaxIt; ///< Maximum number of iterations for establishing upper limit.  Default = 10;
    
    ///@}
    
@@ -377,14 +373,9 @@ void clGainOpt<realT>::init()
    _tau = 2.5*_Ti;
    
    _maxFindMin = 0.0;
-   //_maxFindBits = 8;//std::numeric_limits<realT>::digits;
-   //_maxFindMaxIter = 1000;
-   //_dg = 0.01;
-   //_stabULMaxIt = 10;
-   
-   
+      
    _minFindMin = 1e-9;
-   _minFindMaxFact = 0.98;
+   _minFindMaxFact = 0.999;
    _minFindBits = std::numeric_limits<realT>::digits;
    _minFindMaxIter = 1000;
    
@@ -435,7 +426,7 @@ void clGainOpt<realT>::tau(realT newTau)
 template<typename realT>
 void clGainOpt<realT>::b( const std::vector<realT> & newB)
 {
-   if( newB.size() > _cs.cols() && newB.size() > _cs.cols())
+   if( newB.size() > _cs.cols() )
    {
       _fChanged = true;
    }
@@ -447,7 +438,7 @@ void clGainOpt<realT>::b( const std::vector<realT> & newB)
 template<typename realT>
 void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1>  & newB)
 {
-   if( newB.cols() > _cs.cols() && newB.cols() > _cs.cols())
+   if( newB.cols() > _cs.cols() )
    {
       _fChanged = true;
    }
@@ -845,6 +836,22 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
       std::cerr << "optGainOpenLoop: No root found\n";
       gopt = _minFindMaxFact*gmax;
    }
+   
+//    try
+//    {
+//       std::pair<realT,realT> brack;
+//       
+//       realT gm = 1.1*gopt;
+//       if(gm > gmax) gm = gmax;
+//       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, .9*gopt, gm, _minFindBits, _minFindMaxIter);
+// 
+//       gopt = brack.first;
+//    }
+//    catch(...)
+//    {
+//       std::cerr << "optGainOpenLoop: No root found\n";
+//       gopt = _minFindMaxFact*gmax;
+//    }
    
    return gopt;
 }
