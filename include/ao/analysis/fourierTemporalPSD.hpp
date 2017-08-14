@@ -846,13 +846,21 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                
                wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
                
+               std::cerr << "0" << std::endl;
+               
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
                getGridPSD( tPSDp, psdDir, m, n );
                
+               std::cerr << "1" << std::endl;
+               
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
+               std::cerr << "2" << std::endl;
+               
                var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               
+               std::cerr << "3" << std::endl;
                
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
@@ -860,9 +868,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   gopt = go_si.optGainOpenLoop(tPSDp, tPSDn, gmax);
                   var = go_si.clVariance(tPSDp, tPSDn, gopt);
             
+                  std::cerr << "4" << std::endl;
+                  
                   if(doLP)
                   {
+                     std::cerr << "5" << std::endl;
                      tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
+                     std::cerr << "6" << std::endl;
                   }
                   else
                   {
