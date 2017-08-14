@@ -842,6 +842,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                m = fms[2*i].m;
                n = fms[2*i].n;
               
+               std::cerr << m << " " << n << "\n";
+               
                wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
                
                realT k = sqrt(m*m + n*n)/_aosys->D();
