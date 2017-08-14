@@ -831,7 +831,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             double t0, t1, t00, t11;
          
             
-            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
+            #pragma omp for schedule(dynamic, 25) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
                int m, n;
