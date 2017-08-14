@@ -573,18 +573,13 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
 
    if(_changed)
    {
-        std::cerr << "x.0.0" << std::endl;
-
       _H_dm.resize(_f.size());
       _H_wfs.resize(_f.size());
       _H_ma.resize(_f.size());
       _H_del.resize(_f.size());
       _H_con.resize(_f.size());
-                       std::cerr << "x.0.1" << std::endl;
 
       int jmax = std::min(_a.size(), _b.size());
-
-              std::cerr << "x.0.2" << std::endl;
 
       //#pragma omp parallel for
       for(int i=0; i<_f.size(); ++i)
@@ -602,12 +597,9 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
          _H_ma[i] = 1;  //realT(1./_N)*(realT(1) - pow(expsT,_N))/(realT(1) - expsT);
          
          _H_del[i] = exp(-s*_tau); //complexT(_tau,0));
-                 std::cerr << "x.0.3" << std::endl;
 
          complexT FIR = complexT(_b[0],0);
          
-                 std::cerr << "x.0.4" << std::endl;
-
          complexT IIR = complexT(0.0, 0.0); 
          for(int j = 1; j < jmax; ++j)
          {
@@ -619,7 +611,6 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             FIR += _b[j]*expZ; //complexT(cs, -ss);
             IIR += _a[j-1]*expZ;//complexT(cs, -ss);
          }
-        std::cerr << "x.1" << std::endl;
            
          for(int jj=jmax; jj< _a.size()+1; ++jj)
          {
@@ -631,8 +622,6 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             IIR += _a[jj-1]*expZ; //complexT(cs, -ss);
          }
         
-        std::cerr << "x.2" << std::endl;
-
          for(int jj=jmax; jj<_b.size(); ++jj)
          {
             //realT cs = _cs(i,jj);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
@@ -642,14 +631,9 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             
             FIR += _b[jj]*expZ; //complexT(cs, -ss);
          }
-         std::cerr << "x.3" << std::endl;
-
          _H_con[i] = FIR/( realT(1.0) - IIR);
 
-                 std::cerr << "x.4" << std::endl;
-
       }      
-              std::cerr << "x.f" << std::endl;
 
       _changed = false;
    }
@@ -773,11 +757,8 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
    
    if(ll == 0) ll == _maxFindMin;
    
-   std::cerr << "3.0.0.1" << std::endl;
    nyquist( re, im, 1.0);
 
-   std::cerr << "3.0.0.2" << std::endl;
-   
    int gi_c = re.size()-1;
    
    for(int gi=re.size()-2; gi >= 0; --gi)
@@ -798,7 +779,6 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
 //       }
    }
    
-      std::cerr << "3.0.0.3" << std::endl;
 
    return -1.0/ re[gi_c];
    
@@ -842,18 +822,13 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
    olgo.PSDerr = &PSDerr;
    olgo.PSDnoise = &PSDnoise;
    
-   std::cerr << "3.0.0" << std::endl;
    if(gmax <= 0) gmax = maxStableGain();
-      std::cerr << "3.0.1" << std::endl;
    realT gopt;
    
    try
    {
       std::pair<realT,realT> brack;
-         std::cerr << "3.0.2" << std::endl;
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
-
-         std::cerr << "3.0.3" << std::endl;
       gopt = brack.first;
    }
    catch(...)
@@ -906,14 +881,9 @@ int clGainOpt<realT>::nyquist( std::vector<realT> & re,
    
    complexT etf;
    
-   std::cerr << "3.0.0.1.1" << " " << _f.size()  << std::endl;
-   
    for(int f=0; f< _f.size(); ++f)
    {
       etf = g*olXfer(f);// clETF(f, g);
-      
-      std::cerr << "3.0.0.1.2" << " " << f  << std::endl;
-      
       re[f] = real(etf);
       im[f] = imag(etf);
    }
