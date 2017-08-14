@@ -828,12 +828,12 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
    olgo.PSDerr = &PSDerr;
    olgo.PSDnoise = &PSDnoise;
    
-
-   if(gmax <= 0) gmax = maxStableGain();
+   #pragma omp critical
+   {
+      if(gmax <= 0) gmax = maxStableGain();
+   }
    
    realT gopt;
-#pragma omp critical
-   {
    try
    {
       std::pair<realT,realT> brack;
@@ -846,7 +846,6 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
    {
       std::cerr << "optGainOpenLoop: No root found\n";
       gopt = _minFindMaxFact*gmax;
-   }
    }
    
    return gopt;
