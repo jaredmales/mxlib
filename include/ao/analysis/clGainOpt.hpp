@@ -11,7 +11,7 @@
 
 
 
-#include <boost/math/tools/roots.hpp>
+//#include <boost/math/tools/roots.hpp>
 #include <boost/math/tools/minima.hpp>
 #include <boost/math/constants/constants.hpp>
 
@@ -465,7 +465,7 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1>  & newB)
 template<typename realT>
 void clGainOpt<realT>::a ( const std::vector<realT> & newA)
 {
-   if( newA.size()+1 > _cs.cols() && newA.size()+1 > _cs.cols())
+   if( newA.size()+1 > _cs.cols())
    {
       _fChanged = true;
    }
@@ -477,7 +477,7 @@ void clGainOpt<realT>::a ( const std::vector<realT> & newA)
 template<typename realT>
 void clGainOpt<realT>::a( const Eigen::Array<realT, -1, -1>  & newA)
 {
-   if( newA.cols() +1 > _cs.cols() && newA.cols() + 1 > _cs.cols())
+   if( newA.cols() +1 > _cs.cols())
    {
       _fChanged = true;
    }
@@ -831,6 +831,7 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
 
    if(gmax <= 0) gmax = maxStableGain();
    
+   realT gopt;
 #pragma omp critical
    {
    try
@@ -839,14 +840,16 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
       
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
 
-      return  brack.first;
+      gopt = brack.first;
    }
    catch(...)
    {
       std::cerr << "optGainOpenLoop: No root found\n";
-      return _minFindMaxFact*gmax;
+      gopt = _minFindMaxFact*gmax;
    }
    }
+   
+   return gopt;
 }
    
 template<typename realT>
