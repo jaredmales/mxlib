@@ -367,7 +367,7 @@ template<typename realT>
 void clGainOpt<realT>::init()
 {
    _N = 1;
-   setLeakyIntegrator(1.0);
+//    setLeakyIntegrator(1.0);
 
    _Ti = 1./1000.;
    _tau = 2.5*_Ti;
@@ -543,6 +543,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       return 0;
    }
    
+#if 0
    if(_fChanged)
    {
       int jmax = std::max(_a.size()+1, _b.size());
@@ -567,7 +568,8 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       
       _fChanged = false;
    }
-   
+#endif
+
    if(_changed)
    {
 
