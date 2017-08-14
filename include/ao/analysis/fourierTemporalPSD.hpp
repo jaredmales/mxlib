@@ -796,7 +796,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       {
          //_aosys->starMag(mags[s]);
    
-         #pragma omp parallel 
+         //#pragma omp parallel 
          {
             realT localMag = mags[s];
             realT localIntTime = intTimes[j];
@@ -810,10 +810,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             std::vector<realT> tfreq, tPSDp;
             std::vector<realT> tPSDn;      
       
-            #pragma omp critical
-            {
-               getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
-            }
+            getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
             
             int imax = 0;
             while( tfreq[imax] <= 0.5*fs/localIntTime && imax < tfreq.size()) ++imax;
@@ -835,31 +832,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          
             int m, n;
             
-            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
+            //#pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
                //if( fms[i].p == -1 ) continue;
                m = fms[2*i].m;
                n = fms[2*i].n;
               
-               #pragma omp critical
-               {
-                  wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
-               }
+               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
                
                realT k = sqrt(m*m + n*n)/_aosys->D();
                
-               #pragma omp critical
-               {
-                  getGridPSD( tPSDp, psdDir, m, n );
-               }
+               getGridPSD( tPSDp, psdDir, m, n );
                
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
-               #pragma omp critical
-               {
-                  var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
-               }
+               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
                
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
