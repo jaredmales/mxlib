@@ -797,11 +797,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          //_aosys->starMag(mags[s]);
    
         #pragma omp parallel 
-        {
-//        #pragma omp parallel for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
-  //          for(int i=0; i<nModes; ++i)
-            {
- 
+        { 
             realT localMag = mags[s];
             realT localIntTime = intTimes[j];
             
@@ -838,9 +834,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
-                //This should not be necessary, but it is.  Maybe a bug in Eigen?
-//               #pragma omp critical
-//               {
                int m, n;
               
                //if( fms[i].p == -1 ) continue;
