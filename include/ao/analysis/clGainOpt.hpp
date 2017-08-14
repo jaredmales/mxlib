@@ -821,16 +821,18 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
    olgo.PSDerr = &PSDerr;
    olgo.PSDnoise = &PSDnoise;
    
+   std::cerr << "3.0.0" << std::endl;
    if(gmax <= 0) gmax = maxStableGain();
-   
+      std::cerr << "3.0.1" << std::endl;
    realT gopt;
    
    try
    {
       std::pair<realT,realT> brack;
-      
+         std::cerr << "3.0.2" << std::endl;
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
 
+         std::cerr << "3.0.3" << std::endl;
       gopt = brack.first;
    }
    catch(...)
