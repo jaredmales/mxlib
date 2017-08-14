@@ -796,7 +796,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
       {
          //_aosys->starMag(mags[s]);
    
-         //#pragma omp parallel 
+         #pragma omp parallel 
          {
             realT localMag = mags[s];
             realT localIntTime = intTimes[j];
@@ -832,7 +832,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          
             int m, n;
             
-            //#pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
+            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
             for(int i=0; i<nModes; ++i)
             {
                //if( fms[i].p == -1 ) continue;
