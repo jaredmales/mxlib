@@ -757,7 +757,10 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
    
    if(ll == 0) ll == _maxFindMin;
    
+   std::cerr << "3.0.0.1" << std::endl;
    nyquist( re, im, 1.0);
+
+   std::cerr << "3.0.0.2" << std::endl;
    
    int gi_c = re.size()-1;
    
@@ -779,6 +782,8 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
 //       }
    }
    
+      std::cerr << "3.0.0.3" << std::endl;
+
    return -1.0/ re[gi_c];
    
 }
