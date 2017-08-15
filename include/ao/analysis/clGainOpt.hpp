@@ -321,7 +321,8 @@ public:
    /** Uses _gmax for the upper limit.
      * \returns the optimum gain
      */ 
-   realT optGainOpenLoop( std::vector<realT> & PSDerr,    ///< [in] open loop error PSD
+   realT optGainOpenLoop( realT & var,
+                          std::vector<realT> & PSDerr,    ///< [in] open loop error PSD
                           std::vector<realT> & PSDnoise   ///< [in] open loop measurement noise PSD
                         );
       
@@ -329,7 +330,8 @@ public:
    /**
      * \returns the optimum gain.
      */ 
-   realT optGainOpenLoop( std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
+   realT optGainOpenLoop( realT & var,
+                          std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
                           std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
                           realT & gmax                   ///< [in] maximum gain to consider.  If 0, then _gmax is used.
                         );
@@ -805,16 +807,18 @@ realT clGainOpt<realT>::maxStableGain()
 }
 
 template<typename realT>
-realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr, 
+realT clGainOpt<realT>::optGainOpenLoop( realT & var,
+                                         std::vector<realT> & PSDerr, 
                                          std::vector<realT> & PSDnoise)
 {
    realT gmax = 0;
-   return optGainOpenLoop(PSDerr, PSDnoise, gmax);
+   return optGainOpenLoop(var, PSDerr, PSDnoise, gmax);
 }
 
 
 template<typename realT>
-realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr, 
+realT clGainOpt<realT>::optGainOpenLoop( realT & var,
+                                         std::vector<realT> & PSDerr, 
                                          std::vector<realT> & PSDnoise, 
                                          realT & gmax )
 {
@@ -831,11 +835,13 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
       std::pair<realT,realT> brack;
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
       gopt = brack.first;
+      var = brack.second;
    }
    catch(...)
    {
       std::cerr << "optGainOpenLoop: No root found\n";
       gopt = _minFindMaxFact*gmax;
+      var = 0;
    }
       
    return gopt;

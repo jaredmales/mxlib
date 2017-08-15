@@ -122,8 +122,8 @@ struct clAOLinearPredictor
 
          realT ll = 0, ul = 0;
          gmax_lp = go_lp.maxStableGain(ll,ul);
-         gopt_lp = go_lp.optGainOpenLoop(PSDt, PSDn, gmax_lp);
-         var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
+         gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
+         //var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
          if(printout)
          {
@@ -204,9 +204,9 @@ struct clAOLinearPredictor
       
       realT ll = 0, ul = 0;
       gmax_lp = go_lp.maxStableGain(ll,ul);
-      gopt_lp = go_lp.optGainOpenLoop(PSDt, PSDn, gmax_lp);
+      gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
       
-      var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
+//      var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
       return 0;
    }
