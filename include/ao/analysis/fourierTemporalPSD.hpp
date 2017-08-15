@@ -851,9 +851,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {
                   gmax = 0;
-                  gopt = go_si.optGainOpenLoop(tPSDp, tPSDn, gmax);
-
-                  var = go_si.clVariance(tPSDp, tPSDn, gopt);
+                  gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
             
                   if(doLP)
                   {
@@ -887,17 +885,17 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   var_lp = var0;
                }
          
-                  gains( mnMax + m, mnMax + n ) = gopt;
-                  gains( mnMax - m, mnMax - n ) = gopt;
+               gains( mnMax + m, mnMax + n ) = gopt;
+               gains( mnMax - m, mnMax - n ) = gopt;
       
-                  gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
-                  gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
+               gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
+               gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
          
-                  vars( mnMax + m, mnMax + n) = var;
-                  vars( mnMax - m, mnMax - n ) = var;
+               vars( mnMax + m, mnMax + n) = var;
+               vars( mnMax - m, mnMax - n ) = var;
       
-                  vars_lp( mnMax + m, mnMax + n) = var_lp;
-                  vars_lp( mnMax - m, mnMax - n ) = var_lp;
+               vars_lp( mnMax + m, mnMax + n) = var_lp;
+               vars_lp( mnMax - m, mnMax - n ) = var_lp;
                
                watcher.incrementAndOutputStatus();
             } //omp for i..nModes
@@ -906,7 +904,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          Eigen::Array<realT, -1,-1> cim, psf;
          
          //Create Airy PSF for convolution with variance map.
-         psf.resize(157,157);
+         psf.resize(77,77);
          for(int i=0;i<psf.rows();++i)
          {
             for(int j=0;j<psf.cols();++j)
