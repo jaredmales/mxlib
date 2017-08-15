@@ -10,19 +10,15 @@
 #ifndef __timeUtils_hpp__
 #define __timeUtils_hpp__
 
-
 #include <time.h>
 #include <sys/time.h>
 #include <cmath>
-
-
 
 #include "stringUtils.hpp"
 #include "astro/sofa.hpp"
 
 namespace mx
 {
-   
 
 /** Get the current system time.
   * Uses timespec, so nanosecond resolution is possible.

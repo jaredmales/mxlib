@@ -8,7 +8,6 @@
 #ifndef fourierTemporalPSD_hpp
 #define fourierTemporalPSD_hpp
 
-
 #include <iostream>
 #include <fstream>
 

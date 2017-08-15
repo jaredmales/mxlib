@@ -8,7 +8,6 @@
 #ifndef clAOLinearPredictor_hpp
 #define clAOLinearPredictor_hpp
 
-
 #include <vector>
 
 #include "../../math/geo.hpp"
@@ -25,7 +24,7 @@ namespace AO
 namespace analysis 
 {
    
-///Class the manage the calculation of linear predictor coefficients for a closed-loop AO system.
+///Class to manage the calculation of linear predictor coefficients for a closed-loop AO system.
 /**
   * \tparam _realT the real floating point type in which to do all arithmetic.
   * 
@@ -52,11 +51,14 @@ struct clAOLinearPredictor
    
    ///Calculate the LP coefficients for a turbulence PSD and a noise PSD.
    /** This combines the two PSDs, augments to two-sided, and calls the linearPredictor.calcCoefficients method.
-    */
+     * 
+     * A regularization constant can be added to the PSD as well.
+     * 
+     */
    int calcCoefficients( std::vector<realT> & PSDt, ///< [in] the turbulence PSD
                          std::vector<realT> & PSDn, ///< [in] the WFS noise PSD
-                         realT PSDreg, ///< [in] the regularizing constant.
-                         int Nc 
+                         realT PSDreg,              ///< [in] the regularizing constant.  Set to 0 to not use.
+                         int Nc                     ///< [in] the number of LP coefficients.
                        )
    {
       PSDtn.resize(PSDt.size());
@@ -82,14 +84,14 @@ struct clAOLinearPredictor
      * \tparam printout if true then the results are printed to stdout as they are calculated.
      */ 
    template< bool printout=false>
-   int _regularizeCoefficients( realT & min_var, ///< [in/out] the minimum variance found.  Set to 0 on initial call
-                                realT & min_sc, ///< [in/out] the scale factor at the minimum variance.
-                                realT precision, ///< [in] the step-size for the scale factor
-                                realT max_sc, ///< [in] the maximum scale factor to test
-                                clGainOpt<realT> & go_lp, ///< [in] the gain optimization object
+   int _regularizeCoefficients( realT & min_var,           ///< [in/out] the minimum variance found.  Set to 0 on initial call
+                                realT & min_sc,            ///< [in/out] the scale factor at the minimum variance.
+                                realT precision,           ///< [in] the step-size for the scale factor
+                                realT max_sc,              ///< [in] the maximum scale factor to test
+                                clGainOpt<realT> & go_lp,  ///< [in] the gain optimization object
                                 std::vector<realT> & PSDt, ///< [in] the turbulence PSD
                                 std::vector<realT> & PSDn, ///< [in] the WFS noise PSD
-                                int Nc ///< [in] the number of coefficients
+                                int Nc                     ///< [in] the number of coefficients
                               )
    {
       realT gmax_lp;
@@ -152,13 +154,13 @@ struct clAOLinearPredictor
      * \tparam printout if true then the results are printed to stdout as they are calculated.
      */
    template< bool printout=false>
-   int regularizeCoefficients( realT & gmax_lp, ///< [out] the maximum gain calculated for the regularized PSD
-                               realT & gopt_lp, ///< [out] the optimum gain calculated for the regularized PSD
-                               realT & var_lp, ///< [out] the variance at the optimum gain.
+   int regularizeCoefficients( realT & gmax_lp,           ///< [out] the maximum gain calculated for the regularized PSD
+                               realT & gopt_lp,           ///< [out] the optimum gain calculated for the regularized PSD
+                               realT & var_lp,            ///< [out] the variance at the optimum gain.
                                clGainOpt<realT> & go_lp,  ///< [in] the gain optimization object
                                std::vector<realT> & PSDt, ///< [in] the turbulence PSD
                                std::vector<realT> & PSDn, ///< [in] the WFS noise PSD
-                               int Nc ///< [in] the number of coefficients
+                               int Nc                     ///< [in] the number of coefficients
                              )
    {
 
@@ -205,8 +207,6 @@ struct clAOLinearPredictor
       realT ll = 0, ul = 0;
       gmax_lp = go_lp.maxStableGain(ll,ul);
       gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
-      
-//      var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
       return 0;
    }

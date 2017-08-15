@@ -8,10 +8,6 @@
 #ifndef clGainOpt_hpp
 #define clGainOpt_hpp
 
-
-
-
-//#include <boost/math/tools/roots.hpp>
 #include <boost/math/tools/minima.hpp>
 #include <boost/math/constants/constants.hpp>
 
@@ -316,12 +312,11 @@ public:
      */
    realT maxStableGain();
 
-      
    ///Return the optimum closed loop gain given an open loop PSD
    /** Uses _gmax for the upper limit.
      * \returns the optimum gain
      */ 
-   realT optGainOpenLoop( realT & var,
+   realT optGainOpenLoop( realT & var,                    ///< [out] the variance at the optimum gain
                           std::vector<realT> & PSDerr,    ///< [in] open loop error PSD
                           std::vector<realT> & PSDnoise   ///< [in] open loop measurement noise PSD
                         );
@@ -330,7 +325,7 @@ public:
    /**
      * \returns the optimum gain.
      */ 
-   realT optGainOpenLoop( realT & var,
+   realT optGainOpenLoop( realT & var,                   ///< [out] the variance at the optimum gain
                           std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
                           std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
                           realT & gmax                   ///< [in] maximum gain to consider.  If 0, then _gmax is used.
@@ -704,8 +699,6 @@ void clGainOpt<realT>::clTF2(realT & ETF, realT & NTF, int fi, realT g)
    ETF = norm(realT(1)/( realT(1) + g*olX));
    NTF = norm(-(H_dm*H_del*g*H_con))*ETF;
    
-   //if(std::isnan(NTF)) NTF = 1;
-   
 }
 
 template<typename realT>
@@ -780,9 +773,7 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
          //Check for loop back in Nyquist diagram
          if( re[gi] <= re[gi_c] ) gi_c = gi;
       }
-      
    }
-   
 
    return -1.0/ re[gi_c];
    
