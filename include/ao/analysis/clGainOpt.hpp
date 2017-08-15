@@ -533,7 +533,9 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi)
    return olXfer(fi, H_dm, H_del, H_con);
 }
 
-//#define DOCS
+//If PRECALC_TRIG is defined, then the cosine and sine tables are pre-calculated and used instead of repeated exp(-i) calls.
+//This is much much faster, though uses more memory.  In general, only undefine this for testing or debugging.
+#define PRECALC_TRIG
 
 template<typename realT>
 std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT & H_del, complexT & H_con)
@@ -546,7 +548,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       return 0;
    }
    
-#ifdef DOCS
+   #ifdef PRECALC_TRIG
    if(_fChanged)
    {
       int jmax = std::max(_a.size()+1, _b.size());
@@ -568,7 +570,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       
       _fChanged = false;
    }
-#endif
+   #endif
 
    if(_changed)
    {
@@ -602,47 +604,42 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
          complexT IIR = complexT(0.0, 0.0); 
          for(int j = 1; j < jmax; ++j)
          {
-#ifdef DOCS
+            #ifdef PRECALC_TRIG
             realT cs = _cs(i,j);
             realT ss = _ss(i,j);
-            
             FIR += _b[j]*complexT(cs, -ss);
             IIR += _a[j-1]*complexT(cs, -ss);
-
-#else         
+            #else         
             complexT expZ = exp( -s*_Ti*realT(j));
-            
             FIR += _b[j]*expZ; 
             IIR += _a[j-1]*expZ;
-#endif
+            #endif
          }
            
          for(int jj=jmax; jj< _a.size()+1; ++jj)
          {
-#ifdef DOCS
+            #ifdef PRECALC_TRIG
             realT cs = _cs(i,jj);
             realT ss = _ss(i,jj);
             IIR += _a[jj-1]*complexT(cs, -ss);
-#else
-            complexT expZ = exp( -s*_Ti*realT(jj));
-            
+            #else
+            complexT expZ = exp( -s*_Ti*realT(jj));            
             IIR += _a[jj-1]*expZ;
-#endif
+            #endif
          }
         
          for(int jj=jmax; jj<_b.size(); ++jj)
          {
-#ifdef DOCS
+            #ifdef PRECALC_TRIG
             realT cs = _cs(i,jj);
             realT ss = _ss(i,jj);
             FIR += _b[jj]*complexT(cs, -ss);
-
-#else
+            #else
             complexT expZ = exp( -s*_Ti*realT(jj));
-            
             FIR += _b[jj]*expZ; 
-#endif
+            #endif
          }
+         
          _H_con[i] = FIR/( realT(1.0) - IIR);
 
       }      
