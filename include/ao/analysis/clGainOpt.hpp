@@ -533,6 +533,8 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi)
    return olXfer(fi, H_dm, H_del, H_con);
 }
 
+//#define DOCS
+
 template<typename realT>
 std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT & H_del, complexT & H_con)
 {
@@ -544,17 +546,14 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       return 0;
    }
    
-#if 0
+#ifdef DOCS
    if(_fChanged)
    {
       int jmax = std::max(_a.size()+1, _b.size());
       
-      //std::cerr << "_fChanged  " << jmax << std::endl;
-      
       _cs.resize(_f.size(), jmax);
       _ss.resize(_f.size(), jmax);
       
-      //#pragma omp parallel for
       for(int i=0; i< _f.size(); ++i)
       {
          _cs(i,0) = 1.0;
@@ -592,44 +591,57 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
    
          _H_dm[i] = (realT(1) - expsT)/(s*_Ti);
    
-         _H_wfs[i] = _H_dm[i];   //(realT(1) - expsT)/(s*_Ti);
+         _H_wfs[i] = _H_dm[i]; 
    
          _H_ma[i] = 1;  //realT(1./_N)*(realT(1) - pow(expsT,_N))/(realT(1) - expsT);
          
-         _H_del[i] = exp(-s*_tau); //complexT(_tau,0));
+         _H_del[i] = exp(-s*_tau); 
 
          complexT FIR = complexT(_b[0],0);
          
          complexT IIR = complexT(0.0, 0.0); 
          for(int j = 1; j < jmax; ++j)
          {
-            //realT cs = _cs(i,j);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(j));
-            //realT ss = _ss(i,j);//sin(2.*pi<realT>()*_f[i]*_Ti*realT(j));
-         
+#ifdef DOCS
+            realT cs = _cs(i,j);
+            realT ss = _ss(i,j);
+            
+            FIR += _b[j]*complexT(cs, -ss);
+            IIR += _a[j-1]*complexT(cs, -ss);
+
+#else         
             complexT expZ = exp( -s*_Ti*realT(j));
             
-            FIR += _b[j]*expZ; //complexT(cs, -ss);
-            IIR += _a[j-1]*expZ;//complexT(cs, -ss);
+            FIR += _b[j]*expZ; 
+            IIR += _a[j-1]*expZ;
+#endif
          }
            
          for(int jj=jmax; jj< _a.size()+1; ++jj)
          {
-            //realT cs = _cs(i,jj);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
-            //realT ss = _ss(i,jj);//sin(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
-
+#ifdef DOCS
+            realT cs = _cs(i,jj);
+            realT ss = _ss(i,jj);
+            IIR += _a[jj-1]*complexT(cs, -ss);
+#else
             complexT expZ = exp( -s*_Ti*realT(jj));
             
-            IIR += _a[jj-1]*expZ; //complexT(cs, -ss);
+            IIR += _a[jj-1]*expZ;
+#endif
          }
         
          for(int jj=jmax; jj<_b.size(); ++jj)
          {
-            //realT cs = _cs(i,jj);//cos(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
-            //realT ss = _ss(i,jj);//sin(2.*pi<realT>()*_f[i]*_Ti*realT(jj));
+#ifdef DOCS
+            realT cs = _cs(i,jj);
+            realT ss = _ss(i,jj);
+            FIR += _b[jj]*complexT(cs, -ss);
 
+#else
             complexT expZ = exp( -s*_Ti*realT(jj));
             
-            FIR += _b[jj]*expZ; //complexT(cs, -ss);
+            FIR += _b[jj]*expZ; 
+#endif
          }
          _H_con[i] = FIR/( realT(1.0) - IIR);
 
@@ -753,8 +765,7 @@ template<typename realT>
 realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
 {
    std::vector<realT> re, im;
-   
-   
+      
    if(ll == 0) ll == _maxFindMin;
    
    nyquist( re, im, 1.0);
@@ -771,12 +782,6 @@ realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
          if( re[gi] <= re[gi_c] ) gi_c = gi;
       }
       
-      //if( ( re[gi] < 0) && (im[gi+1] < 0 && im[gi] >= 0) ) break;
-      
-//       if( -1.0/re[gi] > ul && ul != 0 ) 
-//       {
-//          return ul;
-//       }
    }
    
 
@@ -818,7 +823,6 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
 {
    clGainOptOptGain_OL<realT> olgo;
    olgo.go = this;
-   //olgo.freq = &_f;
    olgo.PSDerr = &PSDerr;
    olgo.PSDnoise = &PSDnoise;
    
@@ -836,23 +840,7 @@ realT clGainOpt<realT>::optGainOpenLoop( std::vector<realT> & PSDerr,
       std::cerr << "optGainOpenLoop: No root found\n";
       gopt = _minFindMaxFact*gmax;
    }
-   
-//    try
-//    {
-//       std::pair<realT,realT> brack;
-//       
-//       realT gm = 1.1*gopt;
-//       if(gm > gmax) gm = gmax;
-//       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, .9*gopt, gm, _minFindBits, _minFindMaxIter);
-// 
-//       gopt = brack.first;
-//    }
-//    catch(...)
-//    {
-//       std::cerr << "optGainOpenLoop: No root found\n";
-//       gopt = _minFindMaxFact*gmax;
-//    }
-   
+      
    return gopt;
 }
    
