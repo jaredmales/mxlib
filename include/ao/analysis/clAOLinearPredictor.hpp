@@ -185,8 +185,9 @@ struct clAOLinearPredictor
             }
             else
             {
-               std::cerr << "Error in regularizeCoefficients.\n";
-               return -1;
+               //std::cerr << "Error in regularizeCoefficients.\n";
+               //return -1;
+               break;
             }
          }
          else
