@@ -8,6 +8,8 @@
 #ifndef __mx_astro_astroSpectrum_hpp__
 #define __mx_astro_astroSpectrum_hpp__
 
+#include <cmath>
+
 #include "../environment.hpp"
 #include "../readColumns.hpp"
 #include "../gslInterpolation.hpp"
@@ -91,6 +93,11 @@ struct astroSpectrum
       _spectrum.clear();
       
       mx::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, _spectrum);
+      
+      for(int i=0; i < lambda.size(); ++i)
+      {
+         if( !std::isnormal(_spectrum[i])) _spectrum[i] = 0;
+      }
       
       return 0;
    }

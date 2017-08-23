@@ -49,6 +49,56 @@ struct basicSpectrum
    
 };
 
+
+/// A spectrum from the astrofilt filter library
+/** 
+  */
+template<typename _units, bool _rsr=true>
+struct astroFilter
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+   
+   static const bool freq = false;
+   
+   ///Convert from um to SI m
+   static constexpr realT wavelengthUnits = static_cast<realT>(1e6);
+   
+   ///Convert from erg s-1 cm-2 A-1 to SI W m-3
+   static constexpr realT fluxUnits = static_cast<realT>(1); 
+   
+   static constexpr const char * dataDirEnvVar = "ASTROFILT_DATADIR";
+   
+   static std::string fileName( const std::string name )
+   {
+      return name + ".dat";
+   }
+   
+   static std::string readSpectrum( std::vector<realT> & rawLambda,
+                                    std::vector<realT> & rawSpectrum,
+                                    const std::string & path )
+   {
+      mx::readColumns(path, rawLambda, rawSpectrum);
+      
+      
+      realT max = 0;
+      
+      for(int i=0;i<rawLambda.size(); ++i)
+      {
+         if(_rsr) rawSpectrum[i] = rawSpectrum[i]*rawLambda[i];
+         if(rawSpectrum[i] > max) max = rawSpectrum[i];
+      }
+      
+      for(int i=0;i<rawLambda.size(); ++i)
+      {
+         rawSpectrum[i] /= max;
+      }
+   
+   }
+   
+};
+
+
 /// A spectrum from the HST calspec library
 /** See http://www.stsci.edu/hst/observatory/crds/calspec.html
   */
@@ -84,7 +134,38 @@ struct calspecSpectrum
    
 };
 
-
+/// A spectrum from the Pickles library
+/** 
+  */
+template<typename _units>
+struct picklesSpectrum
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+   
+   static const bool freq = false;
+   
+   ///Convert from A to SI m
+   static constexpr realT wavelengthUnits = static_cast<realT>(1e10);
+   
+   ///Convert from erg s-1 cm-2 A-1 to SI W m-3
+   static constexpr realT fluxUnits = static_cast<realT>(1); 
+   
+   static constexpr const char * dataDirEnvVar = "PICKLES_DATADIR";
+   
+   static std::string fileName( const std::string name )
+   {
+      return "uk"+ mx::toLower(name) + ".dat";
+   }
+   
+   static std::string readSpectrum( std::vector<realT> & rawLambda,
+                                    std::vector<realT> & rawSpectrum,
+                                    const std::string & path )
+   {
+      mx::readColumns(path, rawLambda, rawSpectrum);
+   }
+   
+};
 
 
 

@@ -14,10 +14,10 @@
 #include "imagingUtils.hpp"
 #include "fraunhoferPropagator.hpp"
 
-#include "../fitsFile.hpp"
-#include "../fitsUtils.hpp"
+#include "../improc/fitsFile.hpp"
+#include "../improc/fitsUtils.hpp"
 
-#include "../eigenImage.hpp"
+#include "../improc/eigenImage.hpp"
 
 namespace mx
 {
@@ -231,29 +231,32 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::makeFocalMask(_realT rad,
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
 {
-   fitsFile<_realT> ff;
+   improc::fitsFile<_realT> ff;
    
    return ff.read(pupilApodizer, apodName);
+   
 }
 
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
 {
-   fitsFile<_realT> ff;
+   improc::fitsFile<_realT> ff;
    
    if(ff.read(focalMask, fpmName) < 0) return -1;
    
    maskSource = 0;
    maskFile = fpmName;
    maskRad = 0.0;
-   maskTrans = 0.0;   
+   maskTrans = 0.0;  
+   
+   return 0;
 }
    
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
 {
-   fitsFile<_realT> ff;
-   
+   improc::fitsFile<_realT> ff;
+    
    return ff.read(lyotStop, lyotName);
    
 }
@@ -278,7 +281,7 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadCoronagraph( const std::string &
       mxError("lyotCoronagraph", MXE_PARAMNOTSET, "file directory (fileDir) not set.");
       return -1;
    }
-   
+
    std::string apodName= _fileDir + cName + "_apod.fits";
    std::string fpmName = _fileDir + cName + "_fpm.fits";
    std::string lyotName = _fileDir + cName + "_lyot.fits";
@@ -504,11 +507,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    lyotStop = geomPupil;
    
    
-   fitsHeader head;
+   improc::fitsHeader head;
    
-   head.append("", fitsCommentType(), "----------------------------------------");
-   head.append("", fitsCommentType(), "lyotCoronagraph optimization Parameters:");
-   head.append("", fitsCommentType(), "----------------------------------------");
+   head.append("", improc::fitsCommentType(), "----------------------------------------");
+   head.append("", improc::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
+   head.append("", improc::fitsCommentType(), "----------------------------------------");
    head.append<int>("WFSZ", _wfSz, "Size of wavefront used for FFTs (pixels)");
    head.append<realT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
    head.append<realT>("ABSTOL", absTol , "input absolute tolerance");
@@ -519,7 +522,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    head.append<realT>("FPMTRANS", trans, "transmission of FPM");
    
    
-   mx::fitsFile<double> ff;
+   mx::improc::fitsFile<double> ff;
 
    std::string fname = "coron/" + cname + "_apod.fits";
    

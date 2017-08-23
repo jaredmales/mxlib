@@ -271,6 +271,11 @@ public:
       return _data;
    }
    
+   Scalar * data() const
+   {
+      return _data;
+   }
+   
    Scalar operator()(int x, int y) const
    {
       return _data[x + y*_cols];

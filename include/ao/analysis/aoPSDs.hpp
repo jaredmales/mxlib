@@ -74,7 +74,7 @@ public:
       _subTipTilt = false;
 
       _scintillation = false;
-      _component = 0;
+      _component = PSDComponent::phase;
             
       _D = 0;
    }
