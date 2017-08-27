@@ -7,15 +7,15 @@
   *
   */
 
-#ifndef __turbAtmosphere_hpp__
-#define __turbAtmosphere_hpp__
+#ifndef turbAtmosphere_hpp
+#define turbAtmosphere_hpp
 
 #include <vector>
 #include <iostream>
 
-#include <mx/psdFilter.hpp>
-#include <mx/psdUtils.hpp>
-#include <mx/jinc.hpp>
+#include "../../sigproc/psdFilter.hpp"
+#include "../../sigproc/psdUtils.hpp"
+#include "../../math/func/jinc.hpp"
 
 #include "turbLayer.hpp"
 #include "wavefront.hpp"
@@ -264,12 +264,12 @@ int turbAtmosphere<realT>::genLayers()
       fbase += "/";
       fbase += "layer_";
  
-      mx::fitsFile<realT> ff;
+      improc::fitsFile<realT> ff;
       std::string fname;
       for(int i=0; i< _layers.size(); ++i)
       {
          fname = fbase + mx::convertToString<int>(i) + ".fits";
-         ff.read(fname, _layers[i].phase);
+         ff.read(_layers[i].phase, fname);
       }
       
       return 0;
@@ -279,7 +279,7 @@ int turbAtmosphere<realT>::genLayers()
    {
       arrayT psd;
       arrayT freq;
-      mx::psdFilter<realT> filt;
+      sigproc::psdFilter<realT> filt;
    
       mx::normDistT<realT> normVar;
       normVar.seed();
@@ -303,7 +303,7 @@ int turbAtmosphere<realT>::genLayers()
          psd.resize(scrnSz, scrnSz);
 
          freq.resize(scrnSz, scrnSz);
-         mx::frequency_grid(freq, _pupD/_wfSz);
+         sigproc::frequency_grid(freq, _pupD/_wfSz);
 
    
          beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
@@ -329,12 +329,12 @@ int turbAtmosphere<realT>::genLayers()
                   realT Ptiptilt = 0;
                   if(_subPiston)
                   {
-                     Ppiston = pow(2*mx::jinc(pi<realT>() * freq(ii,jj) * _pupD), 2);
+                     Ppiston = pow(2*math::func::jinc(pi<realT>() * freq(ii,jj) * _pupD), 2);
                   }
             
                   if(_subTipTilt)
                   {               
-                     Ptiptilt = pow(4*mx::jinc2(pi<realT>() * freq(ii,jj) * _pupD), 2);
+                     Ptiptilt = pow(4*math::func::jinc2(pi<realT>() * freq(ii,jj) * _pupD), 2);
                   }
             
                   p *= (1 - Ppiston - Ptiptilt);
@@ -360,7 +360,7 @@ int turbAtmosphere<realT>::genLayers()
       fbase += "/";
       fbase += "layer_";
  
-      mx::fitsFile<realT> ff;
+      improc::fitsFile<realT> ff;
       std::string fname;
       for(int i=0; i< _layers.size(); ++i)
       {
@@ -441,4 +441,4 @@ void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
 } //namespace sim
 } //namespace AO
 } //namespace mx
-#endif //__turbAtmosphere_hpp__
+#endif //turbAtmosphere_hpp

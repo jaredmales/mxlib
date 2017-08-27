@@ -12,7 +12,9 @@
 #include <sys/wait.h>
 
 #include "fitsUtils.hpp"
-#include "../eigenUtils.hpp"
+#include "eigenImage.hpp"
+
+//#include "../eigenUtils.hpp"
 
 #include "../IPC.h"
 

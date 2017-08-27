@@ -24,7 +24,7 @@ using namespace boost::math::constants;
 #include "../../math/func/jinc.hpp"
 #include "../../vectorUtils.hpp"
 #include "../../stringUtils.hpp"
-#include "../../fourierModes.hpp"
+#include "../../sigproc/fourierModes.hpp"
 #include "../../readColumns.hpp"
 #include "../../binVector.hpp"
 
@@ -129,7 +129,7 @@ struct fourierTemporalPSD
       for(int i=0; i< _modeCoeffs.cols(); ++i)
       {
          int m, n, p;
-         fourierModeCoordinates( m, n, p, i);
+         sigproc::fourierModeCoordinates( m, n, p, i);
          ps[i] = p;
          ms[i] = m;
          ns[i] = n;
@@ -640,11 +640,11 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
 {
    std::vector<realT> freq;
    
-   std::vector<mx::fourierModeDef> spf; 
+   std::vector<sigproc::fourierModeDef> spf; 
 
    std::string fn;
          
-   mx::makeFourierModeFreqs_Rect(spf, 2*mnMax);
+   sigproc::makeFourierModeFreqs_Rect(spf, 2*mnMax);
 
    //Calculate number of samples, and make sure we get to at least maxFreq
    int N = (int) maxFreq/dFreq;
@@ -751,9 +751,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
    
    realT fs = 1.0/_aosys->minTauWFS();
    
-   std::vector<mx::fourierModeDef> fms;
+   std::vector<sigproc::fourierModeDef> fms;
    
-   mx::makeFourierModeFreqs_Rect(fms, 2*mnMax);
+   sigproc::makeFourierModeFreqs_Rect(fms, 2*mnMax);
    int nModes = 0.5*fms.size();
 
    Eigen::Array<realT, -1, -1> gains, vars, gains_lp, vars_lp;
@@ -855,6 +855,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   if(doLP)
                   {
                      tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
+                     for(int n=0; n< lpNc; ++n) lpC(i,n) = go_lp.a(n);
                   }
                   else
                   {

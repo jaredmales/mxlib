@@ -5,16 +5,16 @@
   * 
   */
 
-#ifndef __deformableMirror_hpp__
-#define __deformableMirror_hpp__
+#ifndef deformableMirror_hpp
+#define deformableMirror_hpp
 
 #include <cmath>
 
-#include <mx/imagingUtils.hpp>
-#include <mx/fraunhoferImager.hpp>
-#include <mx/timeUtils.hpp>
-#include <mx/fitsFile.hpp>
-#include <mx/ds9_interface.h>
+#include "../../wfp/imagingUtils.hpp"
+//#include <mx/fraunhoferImager.hpp>
+#include "../timeUtils.hpp"
+#include "../../improc/fitsFile.hpp"
+#include "../../improc/ds9Interface.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
@@ -83,13 +83,13 @@ protected:
    
       
 public:   
-   ds9_interface ds9i_shape, ds9i_phase, ds9i_acts;
+   improc::ds9Interface ds9i_shape, ds9i_phase, ds9i_acts;
    
    //The modes-2-command matrix for the basis
    Eigen::Array<realT, -1, -1> _m2c;
    
    //The mirror influence functions
-   mx::eigenCube<realT> _infF;
+   improc::eigenCube<realT> _infF;
    
    
 protected:
@@ -188,13 +188,9 @@ deformableMirror<_realT>::deformableMirror()
    _settleTime_counter = 0;
    _calAmp = 1e-6;
    
-   ds9_interface_init(&ds9i_shape);
-   ds9_interface_set_title(&ds9i_shape, "DM_Shape");
-   ds9_interface_init(&ds9i_phase);
-   ds9_interface_set_title(&ds9i_phase, "DM_Phase");
-   
-   ds9_interface_init(&ds9i_acts);
-   ds9_interface_set_title(&ds9i_acts, "DM_Actuators");
+   ds9i_shape.title("DM_Shape");
+   ds9i_phase.title("DM_Phase");   
+   ds9i_acts.title("DM_Actuators");
    
    t_mm = 0;
    t_sum = 0;
@@ -222,11 +218,11 @@ int deformableMirror<_realT>::initialize( specT & spec,
    _basisName = spec.basisName;
    _pupilName = pupil;
    
-   mx::fitsFile<_realT> ff;
+   improc::fitsFile<_realT> ff;
 
    std::string pName;
    pName = mx::AO::path::pupil::pupilFile(_pupilName);
-   ff.read(pName, _pupil);
+   ff.read(_pupil, pName);
    
    
    if(_name == "modalDM")
@@ -235,7 +231,7 @@ int deformableMirror<_realT>::initialize( specT & spec,
       
       std::string ifName;
       ifName = mx::AO::path::basis::modes(_basisName);
-      ff.read(ifName, _infF);
+      ff.read(_infF, ifName);
       
       _m2c.resize( _infF.planes(), _infF.planes());
       _m2c.setZero();
@@ -249,8 +245,8 @@ int deformableMirror<_realT>::initialize( specT & spec,
       ifName = mx::AO::path::dm::influenceFunctions(_name);
       
       
-      mx::eigenCube<realT> infFLoad;
-      ff.read(ifName, infFLoad);
+      improc::eigenCube<realT> infFLoad;
+      ff.read(infFLoad, ifName);
    
       realT c = 0.5*(infFLoad.rows()-1);
       realT w = 0.5*(_pupil.rows()-1);
@@ -266,12 +262,12 @@ int deformableMirror<_realT>::initialize( specT & spec,
 
       m2cName = mx::AO::path::dm::M2c( _name, _basisName );
  
-      ff.read(m2cName, _m2c);
+      ff.read(_m2c, m2cName);
       
       
       std::string posName =  mx::AO::path::dm::actuatorPositions(_name, true);
    
-      ff.read(posName, _pos);
+      ff.read(_pos, posName);
 
    }
    
@@ -479,7 +475,8 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       {
          makeMap( _map, _pos, c);
 
-         ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
+         ds9i_acts(_map);
+//          ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
          display_acts_counter = 0;
       }
    }
@@ -597,7 +594,8 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
       
       if(display_shape_counter >= display_shape)
       {
-         ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
+         ds9i_shape(_shape);
+//          ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
          display_shape_counter = 0;
       }
    }
@@ -612,7 +610,8 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
       
       if(display_phase_counter >= display_phase)
       {
-         ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
+         ds9i_phase(wf.phase);
+//          ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
 
          display_phase_counter = 0;
       }
@@ -621,12 +620,12 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    
    BREAD_CRUMB;
    
-   //std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
 }
 
 } //sim
 } //AO
 } //namespace mx
 
-#endif //__deformableMirror_hpp__
+#endif //deformableMirror_hpp
 

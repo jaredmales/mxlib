@@ -5,14 +5,14 @@
   * 
   */
 
-#ifndef __ccdDetector_hpp__
-#define __ccdDetector_hpp__
+#ifndef ccdDetector_hpp
+#define ccdDetector_hpp
 
 
 //#include <Eigen/Dense>
 
-#include "mx/imageTransforms.hpp"
-#include "mx/randomT.hpp"
+#include "../../improc/imageTransforms.hpp"
+#include "../../randomT.hpp"
 
 #include "wavefront.hpp"
 
@@ -369,4 +369,4 @@ void ccdDetector<floatT>::exposeImage(imageT & out, imageT & in)
 } //namespace AO
 } //namespace mx
 
-#endif //__ccdDetector_hpp__
+#endif //ccdDetector_hpp

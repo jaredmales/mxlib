@@ -51,7 +51,6 @@ INC_TO_INSTALL = ao \
                  eigenUtils.hpp \
                  environment.hpp \
                  fileUtils.hpp \
-                 fourierModes.hpp \
                  gnuPlot.hpp \
                  gslInterpolation.hpp \
                  IPC.h \
@@ -72,8 +71,7 @@ INC_TO_INSTALL = ao \
                  timeUtils.hpp \
 		 randomSeed.hpp \
 		 randomT.hpp \
-		 vectorUtils.hpp  \
-		 zernike.hpp
+		 vectorUtils.hpp
 
 all: $(TARGETS) 
 

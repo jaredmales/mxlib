@@ -5,16 +5,16 @@
   * 
   */
 
-#ifndef __turbSequence_hpp__
-#define __turbSequence_hpp__
+#ifndef turbSequence_hpp
+#define turbSequence_hpp
 
 #include <vector>
 #include <string>
 
 #include <Eigen/Dense>
 
-#include <mx/fileUtils.hpp>
-#include <mx/fitsFile.hpp>
+#include "../../fileUtils.hpp"
+#include "../../improc/fitsFile.hpp"
 
 #include "wavefront.hpp"
 
@@ -56,8 +56,8 @@ struct turbSequence
    
    bool _loopClosed;
    
-   mx::eigenCube<realT> _currPhase;
-   mx::eigenCube<realT> _currAmp;
+   improc::eigenCube<realT> _currPhase;
+   improc::eigenCube<realT> _currAmp;
    
    bool _phaseOnly;
    
@@ -220,7 +220,7 @@ int turbSequence<realT>::turbFnames(std::string dir, int max)
 template<typename realT>
 void turbSequence<realT>::openPhaseFrame(int fn)
 {
-   mx::fitsFile<float> ff;
+   improc::fitsFile<float> ff;
    
    std::cout << _phaseFnames[fn] << "\n";
    
@@ -299,6 +299,6 @@ void turbSequence<realT>::nextWF(wavefront<realT> & wf)
 } //namespace AO 
 } //namespace mx
 
-#endif //__turbSequence_hpp__
+#endif //turbSequence_hpp
 
 

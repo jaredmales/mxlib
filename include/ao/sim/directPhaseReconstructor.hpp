@@ -1,10 +1,12 @@
-#ifndef __directPhaseReconstructor_hpp__
-#define __directPhaseReconstructor_hpp__
+#ifndef directPhaseReconstructor_hpp
+#define directPhaseReconstructor_hpp
 
-#pragma GCC system_header
-#include <Eigen/Dense>
 
-#include <mx/signalWindows.hpp>
+#include "../../improc/eigenImage.hpp"
+#include "../../improc/eigenCube.hpp"
+#include "../../improc/fitsFile.hpp"
+
+#include "../../sigproc/signalWindows.hpp"
 
 #ifdef DEBUG
 #define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n"; 
@@ -56,7 +58,7 @@ protected:
    imageT _rMat; ///<The response matrix
       
    //The mirror modes
-   mx::eigenCube<realT> *_modes;
+   improc::eigenCube<realT> *_modes;
    
    imageT * _pupil;
 
@@ -64,10 +66,8 @@ protected:
    
    realT norm;
    
-   ds9_interface ds9i;
-      
 public:
-   mx::eigenImaged _spectrum;
+   improc::eigenImage<double> _spectrum;
    
    imageT * _gains; 
    
@@ -97,7 +97,7 @@ public:
       //mx::tukey2d(_mask.data(), _mask.rows(), (realT) _mask.rows(), (realT) 0.0, (realT) 0.5*(_mask.rows()-1), (realT) 0.5*(_mask.cols()-1));
       _mask = *_pupil;
       
-      mx::fitsFile<realT> ff;
+      improc::fitsFile<realT> ff;
       ff.write("dprMask.fits", _mask);
    
    }
@@ -205,9 +205,9 @@ void directPhaseReconstructor<realT>::linkSystem(AOSysT & AOSys)
    _pupil = &AOSys._pupil;
    
    _mask.resize(_pupil->rows(), _pupil->cols());
-   mx::tukey2d(_mask.data(), _mask.rows(), (realT) _mask.rows(), 0.0, 0.5*(_mask.rows()-1), 0.5*(_mask.cols()-1));
+   sigproc::tukey2d(_mask.data(), _mask.rows(), (realT) _mask.rows(), 0.0, 0.5*(_mask.rows()-1), 0.5*(_mask.cols()-1));
    
-   mx::fitsFile<realT> ff;
+   improc::fitsFile<realT> ff;
    ff.write("dprMask.fits", _mask);
    
 }
@@ -344,7 +344,7 @@ void directPhaseReconstructor<realT>::saveRMat(std::string fname)
 } //namespace AO
 } //namespace mx
 
-#endif //__directPhaseReconstructor_hpp__
+#endif //directPhaseReconstructor_hpp
 
 
 //--- Code for mean and tip/tilt subtraction in reconstruct:

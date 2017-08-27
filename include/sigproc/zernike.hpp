@@ -8,8 +8,8 @@
   * 
   */
 
-#ifndef __zernike_hpp__
-#define __zernike_hpp__
+#ifndef zernike_hpp
+#define zernike_hpp
 
 #include <cmath>
 
@@ -25,6 +25,8 @@ using namespace boost::math::constants;
 #include "mxError.hpp"
 
 namespace mx
+{
+namespace sigproc 
 {
    
 /** 
@@ -450,7 +452,8 @@ realT zernikeQNorm(int j, realT k, realT phi)
 
 ///@} signa_processing
 
+} //namespace sigproc 
 } //namespace mx
 
-#endif //__zernike_hpp__
+#endif //zernike_hpp
 

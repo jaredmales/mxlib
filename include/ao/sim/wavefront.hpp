@@ -1,14 +1,14 @@
 
 
 
-#ifndef __wavefront_hpp__
-#define __wavefront_hpp__
+#ifndef wavefront_hpp
+#define wavefront_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
 
 #include "mx/imagingArray.hpp"
-#include "mx/imagingUtils.hpp"
+#include "mx/wfp/imagingUtils.hpp"
 
 
 namespace mx
@@ -65,7 +65,7 @@ struct wavefront
    
    void getWavefront(complexAmplitudeT & wf, int wfSz)
    {
-      mx::makeComplexPupil( wf, amplitude, phase, wfSz); 
+      wfp::makeComplexPupil( wf, amplitude, phase, wfSz); 
    }
    
    void getWavefront( complexAmplitudeT & wf, 
@@ -74,7 +74,7 @@ struct wavefront
                     )
    {
       realImageT dphase = phase*(lambda/dlambda);
-      mx::makeComplexPupil( wf, amplitude, dphase, wfSz); 
+      wfp::makeComplexPupil( wf, amplitude, dphase, wfSz); 
    }
    
    

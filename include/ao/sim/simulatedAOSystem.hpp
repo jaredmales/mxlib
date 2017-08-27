@@ -5,24 +5,24 @@
   * 
   */
 
-#ifndef __simulatedAOSystem_hpp__
-#define __simulatedAOSystem_hpp__
+#ifndef simulatedAOSystem_hpp
+#define simulatedAOSystem_hpp
 
 #include <iostream>
 #include <fstream>
 
-#include <mx/imagePads.hpp>
-#include <mx/imagingUtils.hpp>
-#include <mx/fraunhoferImager.hpp>
-#include <mx/ds9_interface.h>
+#include "../../improc/imagePads.hpp"
+#include "../../wfp/imagingUtils.hpp"
+#include "../../wfp/fraunhoferPropagator.hpp"
+#include "../../improc/ds9Interface.hpp"
 
-#include <mx/fitsFile.hpp>
-#include <mx/fitsUtils.hpp>
+#include "../../improc/fitsFile.hpp"
+#include "../../improc/fitsUtils.hpp"
 
-#include <mx/eigenImage.hpp>
+#include "../../improc/eigenImage.hpp"
 
-#include <mx/timeUtils.hpp>
-#include <mx/signalWindows.hpp>
+#include "../../timeUtils.hpp"
+#include "../../sigproc/signalWindows.hpp"
 
 #include "wavefront.hpp"
 #include "../aoPaths.hpp"
@@ -166,7 +166,7 @@ public:
    imageT _realAmp;
    imageT _realFocalCoron;
    
-   fraunhoferImager<complexImageT> _fi;
+   wfp::fraunhoferPropagator<complexImageT> _fi;
          
    
    std::vector<typename filterT::commandT> _delayedCommands;
@@ -306,14 +306,14 @@ int simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initSy
    }
    
    
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   improc::fitsFile<realT> ff;
+   improc::fitsHeader head;
 
    //Initialize the pupil.
          
    std::string pupilFile = mx::AO::path::pupil::pupilFile(_pupilName);
          
-   ff.read(pupilFile, _pupil, head);
+   ff.read(_pupil, head, pupilFile);
    
    _D = head["PUPILD"].Value<realT>(); //pupilD;
    _wfPS = head["SCALE"].Value<realT>();
@@ -323,7 +323,7 @@ int simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initSy
    
    std::cerr << pupilMaskName << " " << _pupilMaskName << " " << pupilFile << "\n";
    
-   ff.read(pupilFile, _pupilMask);
+   ff.read(_pupilMask, pupilFile);
 
    if( _pupilMask.rows() != _pupil.rows() || _pupilMask.cols() != _pupil.cols())
    {
@@ -365,8 +365,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::initS
                                                                                      int commandDelay )
 {
    
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   improc::fitsFile<realT> ff;
+   improc::fitsHeader head;
 
    
    
@@ -780,7 +780,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             
             
             //Create Coronagraph pupil.
-            padImage(_realPupil, _postMask, 0.5*(_wfSz-_pupil.rows()),0);
+            improc::padImage(_realPupil, _postMask, 0.5*(_wfSz-_pupil.rows()),0);
             
          }            
       }
@@ -811,7 +811,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          
          _fi.propagatePupilToFocal(_complexFocalCoron, _complexPupilCoron);
       
-         extractIntensityImage(_realFocalCoron,0,_complexFocalCoron.rows(),0,_complexFocalCoron.cols(),_complexFocalCoron,0,0);
+         wfp::extractIntensityImage(_realFocalCoron,0,_complexFocalCoron.rows(),0,_complexFocalCoron.cols(),_complexFocalCoron,0,0);
          
          //_corons.image(_currImage) = _realFocalCoron;
          
@@ -829,7 +829,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
 //       }
             
       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
-      extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
+      wfp::extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
       //_psfs.image(_currImage) = _realFocal;
       _psfOut += _realFocal;
       
@@ -901,7 +901,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::runTu
    
    if(_psfFileBase != "")
    {
-      mx::fitsFile<realT> ff;
+      improc::fitsFile<realT> ff;
       std::string fn = _psfFileBase + "_psf.fits";
       ff.write(fn, _psfOut);
       
@@ -919,4 +919,4 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::runTu
 } //namespace AO
 } //namespace mx
 
-#endif //__simulatedAOSystem_hpp__
+#endif //simulatedAOSystem_hpp

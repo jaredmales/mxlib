@@ -1,5 +1,5 @@
-#ifndef __directPhaseReconstructor_hpp__
-#define __directPhaseReconstructor_hpp__
+#ifndef directPhaseReconstructor_hpp
+#define directPhaseReconstructor_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
@@ -380,5 +380,5 @@ void directPhaseReconstructor<realT>::saveRImages(std::string fname)
 } //namespace AO
 } //namespace mx
 
-#endif //__directPhaseReconstructor_hpp__
+#endif //directPhaseReconstructor_hpp
 

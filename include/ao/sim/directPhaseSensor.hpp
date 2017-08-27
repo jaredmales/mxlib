@@ -5,13 +5,15 @@
   * 
   */
 
-#ifndef __directPhaseSensor_hpp__
-#define __directPhaseSensor_hpp__
+#ifndef directPhaseSensor_hpp
+#define directPhaseSensor_hpp
 
-#include <mx/fitsFile.hpp>
-#include <mx/eigenCube.hpp>
-#include <mx/fraunhoferImager.hpp>
-#include <mx/psdFilter.hpp>
+#include "../../improc/fitsFile.hpp"
+#include "../../improc/eigenCube.hpp"
+#include "../../improc/ds9Interface.hpp"
+
+//#include <mx/fraunhoferImager.hpp>
+#include "../../sigproc/psdFilter.hpp"
 
 #include "wavefront.hpp"
 
@@ -99,7 +101,7 @@ protected:
    ///The image formed by the WFS
    wfsImageT<realT> wfsImage;
 
-   ds9_interface ds9i;
+   improc::ds9Interface ds9;
    
 public:   
    ///Default c'tor
@@ -201,7 +203,7 @@ public:
    
    
    
-   psdFilter<realT> _filter;
+   sigproc::psdFilter<realT> _filter;
    
    bool applyFilter;
    
@@ -229,8 +231,7 @@ directPhaseSensor<_realT, _detectorT>::directPhaseSensor()
    
    firstRun = true;
    
-   ds9_interface_init(&ds9i);
-   ds9_interface_set_title(&ds9i, "DPWFS");
+   ds9.title("DPWFS");
    
    applyFilter = false;
 
@@ -502,7 +503,7 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    wfsImage.iterNo  = pupilPlane.iterNo;
 #else
 
-   double _firstWavefront = _lastWavefront - 0.5*_iTime;
+   double _firstWavefront = _lastWavefront;// - 0.5*_iTime;
    if(_firstWavefront < 0) 
    {
       _firstWavefront += _wavefronts.size();
@@ -537,40 +538,40 @@ void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
    
    realT v;
    
-   for(int i=0; i< 0.5*nr; ++i)
-   {
-      for(int j=0; j< 0.5*nc; ++j)
-      {
-         if( i <= width && j <=width)
-         {
-            v = 1;
-         }
-         else
-         {
-            v = 0;
-            if( i <= width )
-            {
-               v = (10 - (j-width))/10.;
-            }
-            else if(j <= width)
-            {
-               v = (10 - (i-width))/10.;
-            }
-            else
-            {
-               v = (10 - sqrt( pow(i-width,2) + pow(j-width,2)))/10.0;
-            }
-            
-            if(v < 0) v = 0;
-         }
-         
-         filterMask(i,j) = v;
-         filterMask(i, nc-1-j) = v;
-         filterMask(nr-1-i, j) = v;
-         filterMask(nr-1-i, nc-1-j) = v;
-            
-      }
-   }
+//    for(int i=0; i< 0.5*nr; ++i)
+//    {
+//       for(int j=0; j< 0.5*nc; ++j)
+//       {
+//          if( i <= width && j <=width)
+//          {
+//             v = 1;
+//          }
+//          else
+//          {
+//             v = 0;
+//             if( i <= width )
+//             {
+//                v = (10 - (j-width))/10.;
+//             }
+//             else if(j <= width)
+//             {
+//                v = (10 - (i-width))/10.;
+//             }
+//             else
+//             {
+//                v = (10 - sqrt( pow(i-width,2) + pow(j-width,2)))/10.0;
+//             }
+//             
+//             if(v < 0) v = 0;
+//          }
+//          
+//          filterMask(i,j) = v;
+//          filterMask(i, nc-1-j) = v;
+//          filterMask(nr-1-i, j) = v;
+//          filterMask(nr-1-i, nc-1-j) = v;
+//             
+//       }
+//    }
    
    
    //ds9_interface_display_raw( &ds9i, 1, filterMask.data(), nr, nc,1, mx::getFitsBITPIX<realT>());
@@ -589,5 +590,5 @@ void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
    
 } //namespace mx
 
-#endif //__directPhaseSensor_hpp__
+#endif //directPhaseSensor_hpp
 

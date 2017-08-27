@@ -5,16 +5,24 @@
   *
   */
 
-#ifndef __fourierModes_hpp__
-#define __fourierModes_hpp__
+#ifndef fourierModes_hpp
+#define fourierModes_hpp
 
 #include <vector>
 
-#include "mxError.hpp"
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
+
+#include "../mxError.hpp"
+
 
 //#include <mx/eigenImage.hpp>
 
 namespace mx
+{
+  
+namespace sigproc
 {
    
 /** 
@@ -686,6 +694,7 @@ int makeFourierBasis_Rect( cubeT & cube,
 
 ///@}
 
+} //namespace sigproc
 } //namespace mx
 
-#endif //__fourierModes_hpp__
+#endif //fourierModes_hpp

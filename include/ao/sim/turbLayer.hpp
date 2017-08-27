@@ -7,17 +7,16 @@
   *
   */
 
-#ifndef __turbLayer_hpp__
-#define __turbLayer_hpp__
+#ifndef turbLayer_hpp
+#define turbLayer_hpp
 
 #include <vector>
 
 #include <Eigen/Dense>
 
-#include <mx/randomT.hpp>
-#include <mx/randomSeed.hpp>
+#include "../../randomT.hpp"
 
-#include <mx/imageTransforms.hpp>
+#include "../../improc/imageTransforms.hpp"
 
 
 namespace mx
@@ -210,11 +209,11 @@ void turbLayer<realT>::shift( realT dt )
       if(wdx != _last_wdx[i] || wdy != _last_wdy[i])
       {
          //Need a whole pixel shift
-         mx::imageShiftWP(shiftPhaseWP[i], phase, wdx, wdy);
+         improc::imageShiftWP(shiftPhaseWP[i], phase, wdx, wdy);
       }
    
       //Do the sub-pixel shift      
-      mx::imageShift( shiftPhaseWork, shiftPhaseWP[i], ddx, ddy, mx::cubicConvolTransform<realT>(-0.5));
+      improc::imageShift( shiftPhaseWork, shiftPhaseWP[i], ddx, ddy, improc::cubicConvolTransform<realT>(-0.5));
       shiftPhase += shiftPhaseWork;
       
       _last_wdx[i] = wdx;
@@ -250,11 +249,11 @@ void turbLayer<realT>::shiftRandom( bool nofract )
       ddy=0;
    }
    
-   mx::imageShiftWP(shiftPhaseWP, phase, wdx, wdy);
+   improc::imageShiftWP(shiftPhaseWP, phase, wdx, wdy);
    
    if(ddx !=0 || ddy != 0)
    {
-      mx::imageShift( shiftPhase, shiftPhaseWP, ddx, ddy, mx::cubicConvolTransform<realT>(-0.5));
+      improc::imageShift( shiftPhase, shiftPhaseWP, ddx, ddy, improc::cubicConvolTransform<realT>(-0.5));
    }
    else
    {
@@ -265,4 +264,4 @@ void turbLayer<realT>::shiftRandom( bool nofract )
 } //namespace sim
 } //namespace AO
 } //namespace mx
-#endif //__turbLayer_hpp__
+#endif //turbLayer_hpp
