@@ -1,0 +1,25 @@
+var group__astrophot =
+[
+    [ "astroFilter.hpp", "astroFilter_8hpp.html", null ],
+    [ "astroSpectra.hpp", "astroSpectra_8hpp.html", null ],
+    [ "astrofilt", "group__astrophot.html#gab0535207491cb7b9e67b06ddf9e84159", null ],
+    [ "astrofiltCharFlux", "group__astrophot.html#gaee33722e4bd36e354c3a0e15e29ea1df", null ],
+    [ "astrofiltCharTrans", "group__astrophot.html#ga500c33dbd33c837fb75306a9b9099320", null ],
+    [ "astrofiltCharVega", "group__astrophot.html#gaaf709215fa9fe6c79782e81d87628db3", null ],
+    [ "astrofiltMultiply", "group__astrophot.html#ga68136ee8e4e4672dcb2e4fb79a6c50b8", null ],
+    [ "astrofiltMultiply", "group__astrophot.html#gaffcc98ffb376235040a00e8c8f5d765a", null ],
+    [ "astrofiltNormalize", "group__astrophot.html#gaa6e9b547605f84007a5ef39bad36d46c", null ],
+    [ "astrofiltRSR", "group__astrophot.html#ga064d7669cb184aae83180f0b63bbd87a", null ],
+    [ "astrofiltScaleMag", "group__astrophot.html#gaae02082c324c59e671f43ae62942ac16", null ],
+    [ "astrofiltScaleMean", "group__astrophot.html#ga3203a893c88c2df6e9a297db7d5da1db", null ],
+    [ "astrofiltTrimWavelength", "group__astrophot.html#gab5f5b337ae91b81f78b9bb00005aa427", null ],
+    [ "astrofiltTrimWavelength", "group__astrophot.html#ga51be4b8c6e41a6c4da2abb19049ab94f", null ],
+    [ "readATRAN", "group__astrophot.html#ga1ce74caabed774c52743d41162ab47bd", null ],
+    [ "readBTRAM", "group__astrophot.html#ga07d441d960a7de459cf5703cb8295801", null ],
+    [ "readCalspec", "group__astrophot.html#ga143925d7c8f870845714c095496a5d62", null ],
+    [ "readEarthShine", "group__astrophot.html#ga7b5510b1c262c719d3ce00093763cc8f", null ],
+    [ "readEarthShine", "group__astrophot.html#ga28a13f34e17a06a8524417b917866653", null ],
+    [ "readPhoenix", "group__astrophot.html#ga1020c936030c6629282cc814eca8d08f", null ],
+    [ "readPickles", "group__astrophot.html#ga31335d0526d4a67c3c78b6eb9072ad4a", null ],
+    [ "rewritePhoenixSpectrum", "group__astrophot.html#gaed06fffc3d23784577ebd2823c91f361", null ]
+];
