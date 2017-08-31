@@ -551,12 +551,12 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
 template<typename realT, typename aosysT>
 int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
-                                                        std::vector<realT> & freq, 
-                                                        realT m,
-                                                        realT n,
-                                                        int p,
-                                                        realT fmax,
-                                                        isParallel<true> parallel )
+                                                       std::vector<realT> & freq, 
+                                                       realT m,
+                                                       realT n,
+                                                       int p,
+                                                       realT fmax,
+                                                       isParallel<true> parallel )
 {
    #pragma omp parallel
    {
@@ -628,9 +628,7 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
    
 
 }
-   
-
-   
+      
 template<typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
                                                       int mnMax,
