@@ -787,6 +787,7 @@ INPUT                  = ./groupdefs.dox \
                          ./sofa_constants.h \
                          ./levmar.dox \
                          ./atlas.dox \
+                         ./mkl.dox \
                          ./fftw.dox \
                          ../ \
                          ../include \

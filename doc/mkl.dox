@@ -1,0 +1,17 @@
+/** \defgroup mkl Getting MKL
+  * \brief Instructions for installing the Intel Math Kernel Library (MKL)
+  * \ingroup template_blaslap
+
+To install the MKL:  
+  
+-# Download the library from Intel.  This requires registration and following some links in emails, etc.  Unpack it.
+
+-# Install the MKL library by running the install.sh script.  The default paths, etc, should be fine.
+
+-# Then add the following line to your profile:
+   \verbatim source /opt/intel/mkl/bin/mklvars.sh intel64\endverbatim
+
+   This can be done in your ~/.bashrc or ~/.bash_profile or ~/.bash_aliases file (whichever you use for this). Or to set it for all users add it to /etc/profile.d/mkl.sh (create the file).
+
+*/
+ 

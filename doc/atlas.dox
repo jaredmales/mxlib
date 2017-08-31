@@ -2,6 +2,7 @@
   * \brief Instructions for building and installing the Automatically Tune Linear Algebra Software (ATLAS)
   * \ingroup template_blaslap
   
+As of 2017-Sep-1 I am finding ATLAS to be difficult to install on the last Intel CPUs, because it is difficult to turn off frequency scaling.  I have switched to using the \ref mkl "Intel MKL".
 
 Folow these steps to build an ATLAS based BLAS and Lapack library.
 
