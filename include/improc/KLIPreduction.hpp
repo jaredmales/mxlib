@@ -672,8 +672,15 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
    math::eigenSYRK(cv, rims.cube());
       
    ompLoopWatcher<> status( this->Nims, std::cerr);
+   
+   int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
+      #ifdef _OPENMP
+         #pragma omp critical
+         std::cerr << "This is thread " << nTh++ << "\n";
+      #endif
+      
       //We need local copies for each thread.  Only way this works, for whatever reason.
 
       eigenImageT cfs; //The coefficients
