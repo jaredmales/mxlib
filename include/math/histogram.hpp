@@ -42,7 +42,7 @@ public:
       for(int i=0; i< vals.size(); ++i) accum(vals[i]);
    }
    
-   realT freq(int i)
+   realT freq(int i /**< [in] the bin number */)
    {
       return _freqs[i];
    }
@@ -52,14 +52,20 @@ public:
       return _freqs.size();
    }
    
-   realT binLeft(int i)
+   realT binLeft(int i /**< [in] the bin number */)
    {
       return _min + i*_width;
    }
    
-   realT binMid(int i)
+   realT binMid(int i /**< [in] the bin number */)
    {
       return _min + i*_width + 0.5*_width;
+   }
+   
+   ///Get the right edge of the i-th bin.
+   realT binRight(int i /**< [in] the bin number */)
+   {
+      return _min + i*_width + 1.0*_width;
    }
    
    void normalize( int excludeTop = 0 )
