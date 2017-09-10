@@ -70,8 +70,7 @@ INC_TO_INSTALL = ao \
                  textTable.hpp \
                  timeUtils.hpp \
 		 randomSeed.hpp \
-		 randomT.hpp \
-		 vectorUtils.hpp
+		 randomT.hpp 
 
 all: $(TARGETS) 
 
