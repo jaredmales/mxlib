@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>mxlib: vectorUtils.hpp File Reference</title>
+<title>mxlib: math/vectorUtils.hpp File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -140,63 +140,63 @@ Namespaces</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
-<tr class="memitem:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb">mx::vectorScale</a> (vectorT &amp;vec, size_t N=0, typename vectorT::value_type scale=0, typename vectorT::value_type offset=0)</td></tr>
-<tr class="memdesc:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill in a vector with a regularly spaced scale.  <a href="group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb">More...</a><br /></td></tr>
-<tr class="separator:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memTemplParams" colspan="2">template&lt;typename memberT &gt; </td></tr>
-<tr class="memitem:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; size_t &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gae7664954b7a1661a6fc8c7b281ebb895">mx::vectorSortOrder</a> (std::vector&lt; memberT &gt; const &amp;values)</td></tr>
-<tr class="memdesc:gae7664954b7a1661a6fc8c7b281ebb895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the indices of the vector in sorted order, without altering the vector itself.  <a href="group__vectorutils.html#gae7664954b7a1661a6fc8c7b281ebb895">More...</a><br /></td></tr>
-<tr class="separator:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1986919834cd5916ded818f2ef0f26a1"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga1986919834cd5916ded818f2ef0f26a1"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga1986919834cd5916ded818f2ef0f26a1">mx::vectorMean</a> (const vectorT &amp;vec)</td></tr>
-<tr class="memdesc:ga1986919834cd5916ded818f2ef0f26a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the mean of a vector.  <a href="group__vectorutils.html#ga1986919834cd5916ded818f2ef0f26a1">More...</a><br /></td></tr>
-<tr class="separator:ga1986919834cd5916ded818f2ef0f26a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga811bd7f8029cd6844572c47ce18fd54d"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga811bd7f8029cd6844572c47ce18fd54d"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga811bd7f8029cd6844572c47ce18fd54d">mx::vectorMean</a> (const vectorT &amp;vec, const vectorT &amp;w)</td></tr>
-<tr class="memdesc:ga811bd7f8029cd6844572c47ce18fd54d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the weighted mean of a vector.  <a href="group__vectorutils.html#ga811bd7f8029cd6844572c47ce18fd54d">More...</a><br /></td></tr>
-<tr class="separator:ga811bd7f8029cd6844572c47ce18fd54d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga03c28e55fc49417208a3ec959f550e99"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga03c28e55fc49417208a3ec959f550e99"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga03c28e55fc49417208a3ec959f550e99">mx::vectorMedianInPlace</a> (vectorT &amp;vec)</td></tr>
-<tr class="memdesc:ga03c28e55fc49417208a3ec959f550e99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate median of a vector in-place, altering the vector.  <a href="group__vectorutils.html#ga03c28e55fc49417208a3ec959f550e99">More...</a><br /></td></tr>
-<tr class="separator:ga03c28e55fc49417208a3ec959f550e99"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga603d303d6d01a38ad1dabc5ce6d5f9b4"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga603d303d6d01a38ad1dabc5ce6d5f9b4"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga603d303d6d01a38ad1dabc5ce6d5f9b4">mx::vectorMedian</a> (const vectorT &amp;vec, vectorT *work=0)</td></tr>
-<tr class="memdesc:ga603d303d6d01a38ad1dabc5ce6d5f9b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate median of a vector, leaving the vector unaltered.  <a href="group__vectorutils.html#ga603d303d6d01a38ad1dabc5ce6d5f9b4">More...</a><br /></td></tr>
-<tr class="separator:ga603d303d6d01a38ad1dabc5ce6d5f9b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga8931139d61b25cfd3c73cf715ce23aa8"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga8931139d61b25cfd3c73cf715ce23aa8"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga8931139d61b25cfd3c73cf715ce23aa8">mx::vectorVariance</a> (const vectorT &amp;vec, typename vectorT::value_type &amp;mean)</td></tr>
-<tr class="memdesc:ga8931139d61b25cfd3c73cf715ce23aa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the variance of a vector relative to a supplied mean value.  <a href="group__vectorutils.html#ga8931139d61b25cfd3c73cf715ce23aa8">More...</a><br /></td></tr>
-<tr class="separator:ga8931139d61b25cfd3c73cf715ce23aa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadf78c7a8d2fcacc9af4cc9ec394791bd"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:gadf78c7a8d2fcacc9af4cc9ec394791bd"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gadf78c7a8d2fcacc9af4cc9ec394791bd">mx::vectorVariance</a> (const vectorT &amp;vec)</td></tr>
-<tr class="memdesc:gadf78c7a8d2fcacc9af4cc9ec394791bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the variance of a vector.  <a href="group__vectorutils.html#gadf78c7a8d2fcacc9af4cc9ec394791bd">More...</a><br /></td></tr>
-<tr class="separator:gadf78c7a8d2fcacc9af4cc9ec394791bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga25df7b6606e1dd562ac04f361fc128c2"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga25df7b6606e1dd562ac04f361fc128c2"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga25df7b6606e1dd562ac04f361fc128c2">mx::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT *weights, typename vectorT::value_type sigma, int &amp;maxPasses)</td></tr>
-<tr class="memdesc:ga25df7b6606e1dd562ac04f361fc128c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the sigma-clipped mean of a vector.  <a href="group__vectorutils.html#ga25df7b6606e1dd562ac04f361fc128c2">More...</a><br /></td></tr>
-<tr class="separator:ga25df7b6606e1dd562ac04f361fc128c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga79fd9389b7de22436cdbc84cc89cede7"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga79fd9389b7de22436cdbc84cc89cede7"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga79fd9389b7de22436cdbc84cc89cede7">mx::vectorSigmaMean</a> (const vectorT &amp;vec, typename vectorT::value_type sigma)</td></tr>
-<tr class="separator:ga79fd9389b7de22436cdbc84cc89cede7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadf275515b6719c7d2713870ebf9d5d6a"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:gadf275515b6719c7d2713870ebf9d5d6a"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gadf275515b6719c7d2713870ebf9d5d6a">mx::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT &amp;weights, typename vectorT::value_type sigma, int &amp;maxPasses)</td></tr>
-<tr class="separator:gadf275515b6719c7d2713870ebf9d5d6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga580ed1fb2ff186db8ea6df3982ed5bd1"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
-<tr class="memitem:ga580ed1fb2ff186db8ea6df3982ed5bd1"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga580ed1fb2ff186db8ea6df3982ed5bd1">mx::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT &amp;weights, typename vectorT::value_type sigma)</td></tr>
-<tr class="separator:ga580ed1fb2ff186db8ea6df3982ed5bd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga163731ac2a12f7e3e2e28fd8745e3ce9"><td class="memTemplParams" colspan="2">template&lt;typename realT &gt; </td></tr>
-<tr class="memitem:ga163731ac2a12f7e3e2e28fd8745e3ce9"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga163731ac2a12f7e3e2e28fd8745e3ce9">mx::vectorSmoothMean</a> (std::vector&lt; realT &gt; &amp;smVec, std::vector&lt; realT &gt; &amp;vec, int win)</td></tr>
-<tr class="memdesc:ga163731ac2a12f7e3e2e28fd8745e3ce9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Smooth a vector using the mean in a window specified by its full-width.  <a href="group__vectorutils.html#ga163731ac2a12f7e3e2e28fd8745e3ce9">More...</a><br /></td></tr>
-<tr class="separator:ga163731ac2a12f7e3e2e28fd8745e3ce9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga276acaf96c84d6998de5071feaed77f6"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga276acaf96c84d6998de5071feaed77f6"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga276acaf96c84d6998de5071feaed77f6">mx::math::vectorScale</a> (vectorT &amp;vec, size_t N=0, typename vectorT::value_type scale=0, typename vectorT::value_type offset=0)</td></tr>
+<tr class="memdesc:ga276acaf96c84d6998de5071feaed77f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill in a vector with a regularly spaced scale.  <a href="group__vectorutils.html#ga276acaf96c84d6998de5071feaed77f6">More...</a><br /></td></tr>
+<tr class="separator:ga276acaf96c84d6998de5071feaed77f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadeb6a7d051c0a4b4da392d88b8c50c7d"><td class="memTemplParams" colspan="2">template&lt;typename memberT &gt; </td></tr>
+<tr class="memitem:gadeb6a7d051c0a4b4da392d88b8c50c7d"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; size_t &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gadeb6a7d051c0a4b4da392d88b8c50c7d">mx::math::vectorSortOrder</a> (std::vector&lt; memberT &gt; const &amp;values)</td></tr>
+<tr class="memdesc:gadeb6a7d051c0a4b4da392d88b8c50c7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the indices of the vector in sorted order, without altering the vector itself.  <a href="group__vectorutils.html#gadeb6a7d051c0a4b4da392d88b8c50c7d">More...</a><br /></td></tr>
+<tr class="separator:gadeb6a7d051c0a4b4da392d88b8c50c7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gadc523068946e8457665502c26cb6ef7f"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:gadc523068946e8457665502c26cb6ef7f"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gadc523068946e8457665502c26cb6ef7f">mx::math::vectorMean</a> (const vectorT &amp;vec)</td></tr>
+<tr class="memdesc:gadc523068946e8457665502c26cb6ef7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the mean of a vector.  <a href="group__vectorutils.html#gadc523068946e8457665502c26cb6ef7f">More...</a><br /></td></tr>
+<tr class="separator:gadc523068946e8457665502c26cb6ef7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga74952a93765d3e16f6d83720b24dcc97"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga74952a93765d3e16f6d83720b24dcc97"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga74952a93765d3e16f6d83720b24dcc97">mx::math::vectorMean</a> (const vectorT &amp;vec, const vectorT &amp;w)</td></tr>
+<tr class="memdesc:ga74952a93765d3e16f6d83720b24dcc97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the weighted mean of a vector.  <a href="group__vectorutils.html#ga74952a93765d3e16f6d83720b24dcc97">More...</a><br /></td></tr>
+<tr class="separator:ga74952a93765d3e16f6d83720b24dcc97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3344de7d024e6d60f8d33275e2824b1a"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga3344de7d024e6d60f8d33275e2824b1a"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga3344de7d024e6d60f8d33275e2824b1a">mx::math::vectorMedianInPlace</a> (vectorT &amp;vec)</td></tr>
+<tr class="memdesc:ga3344de7d024e6d60f8d33275e2824b1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate median of a vector in-place, altering the vector.  <a href="group__vectorutils.html#ga3344de7d024e6d60f8d33275e2824b1a">More...</a><br /></td></tr>
+<tr class="separator:ga3344de7d024e6d60f8d33275e2824b1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9efbdfd637f2a5bb6054c6ee5a163fcc"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga9efbdfd637f2a5bb6054c6ee5a163fcc"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga9efbdfd637f2a5bb6054c6ee5a163fcc">mx::math::vectorMedian</a> (const vectorT &amp;vec, vectorT *work=0)</td></tr>
+<tr class="memdesc:ga9efbdfd637f2a5bb6054c6ee5a163fcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate median of a vector, leaving the vector unaltered.  <a href="group__vectorutils.html#ga9efbdfd637f2a5bb6054c6ee5a163fcc">More...</a><br /></td></tr>
+<tr class="separator:ga9efbdfd637f2a5bb6054c6ee5a163fcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae5592658931f0298019a328110e15439"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:gae5592658931f0298019a328110e15439"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gae5592658931f0298019a328110e15439">mx::math::vectorVariance</a> (const vectorT &amp;vec, typename vectorT::value_type &amp;mean)</td></tr>
+<tr class="memdesc:gae5592658931f0298019a328110e15439"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the variance of a vector relative to a supplied mean value.  <a href="group__vectorutils.html#gae5592658931f0298019a328110e15439">More...</a><br /></td></tr>
+<tr class="separator:gae5592658931f0298019a328110e15439"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab1631714d6318c54d032661a5fc5ab41"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:gab1631714d6318c54d032661a5fc5ab41"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gab1631714d6318c54d032661a5fc5ab41">mx::math::vectorVariance</a> (const vectorT &amp;vec)</td></tr>
+<tr class="memdesc:gab1631714d6318c54d032661a5fc5ab41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the variance of a vector.  <a href="group__vectorutils.html#gab1631714d6318c54d032661a5fc5ab41">More...</a><br /></td></tr>
+<tr class="separator:gab1631714d6318c54d032661a5fc5ab41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga755810b51b30a798289dbc680699dbee"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga755810b51b30a798289dbc680699dbee"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga755810b51b30a798289dbc680699dbee">mx::math::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT *weights, typename vectorT::value_type sigma, int &amp;maxPasses)</td></tr>
+<tr class="memdesc:ga755810b51b30a798289dbc680699dbee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the sigma-clipped mean of a vector.  <a href="group__vectorutils.html#ga755810b51b30a798289dbc680699dbee">More...</a><br /></td></tr>
+<tr class="separator:ga755810b51b30a798289dbc680699dbee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga6746761c7ff2f82c3aee8a894d6f0d53"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:ga6746761c7ff2f82c3aee8a894d6f0d53"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga6746761c7ff2f82c3aee8a894d6f0d53">mx::math::vectorSigmaMean</a> (const vectorT &amp;vec, typename vectorT::value_type sigma)</td></tr>
+<tr class="separator:ga6746761c7ff2f82c3aee8a894d6f0d53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac39772037ddf6738fd28e29a4787b2c9"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:gac39772037ddf6738fd28e29a4787b2c9"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gac39772037ddf6738fd28e29a4787b2c9">mx::math::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT &amp;weights, typename vectorT::value_type sigma, int &amp;maxPasses)</td></tr>
+<tr class="separator:gac39772037ddf6738fd28e29a4787b2c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf9eedf955fa8e99195cfaf4ffe66502c"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
+<tr class="memitem:gaf9eedf955fa8e99195cfaf4ffe66502c"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gaf9eedf955fa8e99195cfaf4ffe66502c">mx::math::vectorSigmaMean</a> (const vectorT &amp;vec, const vectorT &amp;weights, typename vectorT::value_type sigma)</td></tr>
+<tr class="separator:gaf9eedf955fa8e99195cfaf4ffe66502c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacba7bbd6e3e6f11d5856c16197c8d13d"><td class="memTemplParams" colspan="2">template&lt;typename realT &gt; </td></tr>
+<tr class="memitem:gacba7bbd6e3e6f11d5856c16197c8d13d"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gacba7bbd6e3e6f11d5856c16197c8d13d">mx::math::vectorSmoothMean</a> (std::vector&lt; realT &gt; &amp;smVec, std::vector&lt; realT &gt; &amp;vec, int win)</td></tr>
+<tr class="memdesc:gacba7bbd6e3e6f11d5856c16197c8d13d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Smooth a vector using the mean in a window specified by its full-width.  <a href="group__vectorutils.html#gacba7bbd6e3e6f11d5856c16197c8d13d">More...</a><br /></td></tr>
+<tr class="separator:gacba7bbd6e3e6f11d5856c16197c8d13d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="vectorUtils_8hpp.html">vectorUtils.hpp</a></li>
-    <li class="footer">Generated on Sat Sep 9 2017 20:56:36 for mxlib by
+    <li class="navelem"><a class="el" href="dir_fba38f648377aa56ae5d69782adf9e53.html">math</a></li><li class="navelem"><a class="el" href="vectorUtils_8hpp.html">vectorUtils.hpp</a></li>
+    <li class="footer">Generated on Sun Sep 10 2017 05:00:02 for mxlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

@@ -7,5 +7,6 @@ var dir_fba38f648377aa56ae5d69782adf9e53 =
     [ "histogramUniform.hpp", "histogramUniform_8hpp.html", null ],
     [ "roots.hpp", "roots_8hpp.html", "roots_8hpp" ],
     [ "templateBLAS.hpp", "templateBLAS_8hpp.html", "templateBLAS_8hpp" ],
-    [ "templateLapack.hpp", "templateLapack_8hpp.html", "templateLapack_8hpp" ]
+    [ "templateLapack.hpp", "templateLapack_8hpp.html", "templateLapack_8hpp" ],
+    [ "vectorUtils.hpp", "vectorUtils_8hpp.html", "vectorUtils_8hpp" ]
 ];

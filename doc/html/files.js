@@ -42,7 +42,6 @@ var files =
     [ "stringUtils.hpp", "stringUtils_8hpp.html", "stringUtils_8hpp" ],
     [ "textTable.hpp", "textTable_8hpp.html", null ],
     [ "timeUtils.hpp", "timeUtils_8hpp.html", "timeUtils_8hpp" ],
-    [ "vectorUtils.hpp", "vectorUtils_8hpp.html", "vectorUtils_8hpp" ],
     [ "msgq.c", "msgq_8c.html", "msgq_8c" ],
     [ "mx.makefile.inc", "mx_8makefile_8inc_source.html", null ],
     [ "mxlib.c", "mxlib_8c.html", "mxlib_8c" ],

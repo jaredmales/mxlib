@@ -1,16 +1,16 @@
 var group__vectorutils =
 [
-    [ "vectorMean", "group__vectorutils.html#ga1986919834cd5916ded818f2ef0f26a1", null ],
-    [ "vectorMean", "group__vectorutils.html#ga811bd7f8029cd6844572c47ce18fd54d", null ],
-    [ "vectorMedian", "group__vectorutils.html#ga603d303d6d01a38ad1dabc5ce6d5f9b4", null ],
-    [ "vectorMedianInPlace", "group__vectorutils.html#ga03c28e55fc49417208a3ec959f550e99", null ],
-    [ "vectorScale", "group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb", null ],
-    [ "vectorSigmaMean", "group__vectorutils.html#ga25df7b6606e1dd562ac04f361fc128c2", null ],
-    [ "vectorSigmaMean", "group__vectorutils.html#ga79fd9389b7de22436cdbc84cc89cede7", null ],
-    [ "vectorSigmaMean", "group__vectorutils.html#gadf275515b6719c7d2713870ebf9d5d6a", null ],
-    [ "vectorSigmaMean", "group__vectorutils.html#ga580ed1fb2ff186db8ea6df3982ed5bd1", null ],
-    [ "vectorSmoothMean", "group__vectorutils.html#ga163731ac2a12f7e3e2e28fd8745e3ce9", null ],
-    [ "vectorSortOrder", "group__vectorutils.html#gae7664954b7a1661a6fc8c7b281ebb895", null ],
-    [ "vectorVariance", "group__vectorutils.html#ga8931139d61b25cfd3c73cf715ce23aa8", null ],
-    [ "vectorVariance", "group__vectorutils.html#gadf78c7a8d2fcacc9af4cc9ec394791bd", null ]
+    [ "vectorMean", "group__vectorutils.html#gadc523068946e8457665502c26cb6ef7f", null ],
+    [ "vectorMean", "group__vectorutils.html#ga74952a93765d3e16f6d83720b24dcc97", null ],
+    [ "vectorMedian", "group__vectorutils.html#ga9efbdfd637f2a5bb6054c6ee5a163fcc", null ],
+    [ "vectorMedianInPlace", "group__vectorutils.html#ga3344de7d024e6d60f8d33275e2824b1a", null ],
+    [ "vectorScale", "group__vectorutils.html#ga276acaf96c84d6998de5071feaed77f6", null ],
+    [ "vectorSigmaMean", "group__vectorutils.html#ga755810b51b30a798289dbc680699dbee", null ],
+    [ "vectorSigmaMean", "group__vectorutils.html#ga6746761c7ff2f82c3aee8a894d6f0d53", null ],
+    [ "vectorSigmaMean", "group__vectorutils.html#gac39772037ddf6738fd28e29a4787b2c9", null ],
+    [ "vectorSigmaMean", "group__vectorutils.html#gaf9eedf955fa8e99195cfaf4ffe66502c", null ],
+    [ "vectorSmoothMean", "group__vectorutils.html#gacba7bbd6e3e6f11d5856c16197c8d13d", null ],
+    [ "vectorSortOrder", "group__vectorutils.html#gadeb6a7d051c0a4b4da392d88b8c50c7d", null ],
+    [ "vectorVariance", "group__vectorutils.html#gae5592658931f0298019a328110e15439", null ],
+    [ "vectorVariance", "group__vectorutils.html#gab1631714d6318c54d032661a5fc5ab41", null ]
 ];
