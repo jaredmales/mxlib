@@ -22,7 +22,7 @@ using namespace boost::math::constants;
 #include <Eigen/Dense>
 
 #include "../../math/func/jinc.hpp"
-#include "../../vectorUtils.hpp"
+#include "../../math/vectorUtils.hpp"
 #include "../../stringUtils.hpp"
 #include "../../sigproc/fourierModes.hpp"
 #include "../../readColumns.hpp"
@@ -674,7 +674,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
    fout.close();
    
    //Create frequency scale.
-   mx::vectorScale(freq, N, dFreq, dFreq); //offset from 0 by dFreq, so f=0 not included
+   math::vectorScale(freq, N, dFreq, dFreq); //offset from 0 by dFreq, so f=0 not included
    
    fn = dir + '/' + "freq.binv";
 
