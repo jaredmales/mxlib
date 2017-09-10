@@ -10,6 +10,7 @@ var vectorUtils_8hpp =
     [ "vectorSigmaMean", "vectorUtils_8hpp.html#gadf275515b6719c7d2713870ebf9d5d6a", null ],
     [ "vectorSigmaMean", "vectorUtils_8hpp.html#ga580ed1fb2ff186db8ea6df3982ed5bd1", null ],
     [ "vectorSmoothMean", "vectorUtils_8hpp.html#ga163731ac2a12f7e3e2e28fd8745e3ce9", null ],
+    [ "vectorSortOrder", "vectorUtils_8hpp.html#gae7664954b7a1661a6fc8c7b281ebb895", null ],
     [ "vectorVariance", "vectorUtils_8hpp.html#ga8931139d61b25cfd3c73cf715ce23aa8", null ],
     [ "vectorVariance", "vectorUtils_8hpp.html#gadf78c7a8d2fcacc9af4cc9ec394791bd", null ]
 ];

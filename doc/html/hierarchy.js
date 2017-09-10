@@ -74,6 +74,7 @@ var hierarchy =
         [ "mx::improc::KLIPreduction< _realT, _derotFunctObj, _evCalcT >", "structmx_1_1improc_1_1KLIPreduction.html", null ]
       ] ]
     ] ],
+    [ "mx::math::histogramUniform< realT >", "classmx_1_1math_1_1histogramUniform.html", null ],
     [ "mx::wfp::idealCoronagraph< _realT >", "structmx_1_1wfp_1_1idealCoronagraph.html", null ],
     [ "mx::improc::imCenterCircleSym< realT >", "structmx_1_1improc_1_1imCenterCircleSym.html", null ],
     [ "mx::improc::is_eigenCube< T >", "structmx_1_1improc_1_1is__eigenCube.html", null ],

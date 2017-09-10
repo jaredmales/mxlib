@@ -74,6 +74,7 @@ var namespacemx =
         [ "hasJacobian", "structmx_1_1math_1_1fit_1_1hasJacobian.html", "structmx_1_1math_1_1fit_1_1hasJacobian" ],
         [ "levmarInterface", "classmx_1_1math_1_1fit_1_1levmarInterface.html", "classmx_1_1math_1_1fit_1_1levmarInterface" ]
       ] ],
+      [ "histogramUniform", "classmx_1_1math_1_1histogramUniform.html", "classmx_1_1math_1_1histogramUniform" ],
       [ "syevrMem", "structmx_1_1math_1_1syevrMem.html", null ]
     ] ],
     [ "meta", null, [

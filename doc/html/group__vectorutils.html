@@ -120,6 +120,10 @@ $(document).ready(function(){initNavTree('group__vectorutils.html','');});
 <tr class="memitem:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb">mx::vectorScale</a> (vectorT &amp;vec, size_t N=0, typename vectorT::value_type scale=0, typename vectorT::value_type offset=0)</td></tr>
 <tr class="memdesc:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill in a vector with a regularly spaced scale.  <a href="group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb">More...</a><br /></td></tr>
 <tr class="separator:ga541b4d6fdc9ee8d53f75e93dc6f3b3bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memTemplParams" colspan="2">template&lt;typename memberT &gt; </td></tr>
+<tr class="memitem:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; size_t &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#gae7664954b7a1661a6fc8c7b281ebb895">mx::vectorSortOrder</a> (std::vector&lt; memberT &gt; const &amp;values)</td></tr>
+<tr class="memdesc:gae7664954b7a1661a6fc8c7b281ebb895"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the indices of the vector in sorted order, without altering the vector itself.  <a href="group__vectorutils.html#gae7664954b7a1661a6fc8c7b281ebb895">More...</a><br /></td></tr>
+<tr class="separator:gae7664954b7a1661a6fc8c7b281ebb895"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1986919834cd5916ded818f2ef0f26a1"><td class="memTemplParams" colspan="2">template&lt;typename vectorT &gt; </td></tr>
 <tr class="memitem:ga1986919834cd5916ded818f2ef0f26a1"><td class="memTemplItemLeft" align="right" valign="top">vectorT::value_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__vectorutils.html#ga1986919834cd5916ded818f2ef0f26a1">mx::vectorMean</a> (const vectorT &amp;vec)</td></tr>
 <tr class="memdesc:ga1986919834cd5916ded818f2ef0f26a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the mean of a vector.  <a href="group__vectorutils.html#ga1986919834cd5916ded818f2ef0f26a1">More...</a><br /></td></tr>
@@ -194,9 +198,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00053">53</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00087">87</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>Referenced by <a class="el" href="imCenterCircleSym_8hpp_source.html#l00087">mx::improc::imCenterCircleSym&lt; realT &gt;::center()</a>, <a class="el" href="eigenCube_8hpp_source.html#l00397">mx::improc::eigenCube&lt; dataT &gt;::mean()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00185">mx::vectorVariance()</a>.</p>
+<p>Referenced by <a class="el" href="imCenterCircleSym_8hpp_source.html#l00087">mx::improc::imCenterCircleSym&lt; realT &gt;::center()</a>, <a class="el" href="eigenCube_8hpp_source.html#l00397">mx::improc::eigenCube&lt; dataT &gt;::mean()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00219">mx::vectorVariance()</a>.</p>
 
 </div>
 </div>
@@ -242,7 +246,7 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00072">72</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00106">106</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -289,11 +293,11 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00128">128</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00162">162</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00099">mx::vectorMedianInPlace()</a>.</p>
+<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00133">mx::vectorMedianInPlace()</a>.</p>
 
-<p>Referenced by <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>.</p>
+<p>Referenced by <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>.</p>
 
 </div>
 </div>
@@ -329,9 +333,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00099">99</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00133">133</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>Referenced by <a class="el" href="eigenImage_8hpp_source.html#l00123">mx::improc::imageMedian()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00128">mx::vectorMedian()</a>.</p>
+<p>Referenced by <a class="el" href="eigenImage_8hpp_source.html#l00123">mx::improc::imageMedian()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00162">mx::vectorMedian()</a>.</p>
 
 </div>
 </div>
@@ -375,7 +379,7 @@ template&lt;typename vectorT &gt; </div>
 
 <p>Fill in a vector with a regularly spaced scale. </p>
 <p>Fills in the vector with a 0....N-1 scale. The spacing of the points can be changed with the scale parameter, and the starting point can be changed with the offset.</p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
+<p>Example: </p><div class="fragment"><div class="line">std::vector vec;</div><div class="line"></div><div class="line"><a class="code" href="group__vectorutils.html#ga541b4d6fdc9ee8d53f75e93dc6f3b3bb">mx::vectorScale</a>(vec, 1000, 0.001, 0.001); <span class="comment">// Produces a vector with values 0.001,0.002,.... 1.000</span></div></div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">vectorT</td><td>is a std::vector type. </td></tr>
   </table>
@@ -391,7 +395,7 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00030">30</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00037">37</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
 <p>Referenced by <a class="el" href="fourierTemporalPSD_8hpp_source.html#l00633">mx::AO::analysis::fourierTemporalPSD&lt; realT, aosysT &gt;::makePSDGrid()</a>.</p>
 
@@ -454,11 +458,11 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00204">204</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00238">238</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="constants_8hpp_source.html#l00082">mx::astro::constants::sigma()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00053">mx::vectorMean()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00128">mx::vectorMedian()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00163">mx::vectorVariance()</a>.</p>
+<p>References <a class="el" href="constants_8hpp_source.html#l00082">mx::astro::constants::sigma()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00087">mx::vectorMean()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00162">mx::vectorMedian()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00197">mx::vectorVariance()</a>.</p>
 
-<p>Referenced by <a class="el" href="eigenCube_8hpp_source.html#l00522">mx::improc::eigenCube&lt; dataT &gt;::sigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00285">mx::vectorSigmaMean()</a>.</p>
+<p>Referenced by <a class="el" href="eigenCube_8hpp_source.html#l00522">mx::improc::eigenCube&lt; dataT &gt;::sigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00319">mx::vectorSigmaMean()</a>.</p>
 
 </div>
 </div>
@@ -496,9 +500,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00285">285</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00319">319</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>.</p>
+<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>.</p>
 
 </div>
 </div>
@@ -550,9 +554,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00298">298</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00332">332</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>.</p>
+<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>.</p>
 
 </div>
 </div>
@@ -597,9 +601,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00312">312</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00346">346</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>.</p>
+<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>.</p>
 
 </div>
 </div>
@@ -645,7 +649,42 @@ template&lt;typename realT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00325">325</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00359">359</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gae7664954b7a1661a6fc8c7b281ebb895"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename memberT &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;size_t&gt; mx::vectorSortOrder </td>
+          <td>(</td>
+          <td class="paramtype">std::vector&lt; memberT &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>values</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Return the indices of the vector in sorted order, without altering the vector itself. </p>
+<p>Example: </p><div class="fragment"><div class="line">std::vector&lt;double&gt; x;</div><div class="line"><span class="comment">// -&gt; fill in x with values</span></div><div class="line"></div><div class="line">std::vector&lt;size_t&gt; idx;</div><div class="line">idx = mx::sortOrder(x);</div><div class="line"></div><div class="line"><span class="comment">//Print x to stdout in sorted order</span></div><div class="line"><span class="keywordflow">for</span>(<span class="keywordtype">int</span> i=0; i&lt; x.size(); ++i) std::cout &lt;&lt; x[idx[i]] &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div></div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">memberT</td><td>is the member type of the vector. Must have &lt; comparison defined. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the indices of the vector in sorted order. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">values</td><td>the vector to sort </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00067">67</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
 </div>
 </div>
@@ -691,9 +730,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00163">163</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00197">197</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>Referenced by <a class="el" href="imCenterCircleSym_8hpp_source.html#l00087">mx::improc::imCenterCircleSym&lt; realT &gt;::center()</a>, <a class="el" href="imageFilters_8hpp_source.html#l00426">mx::improc::stddevImage()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00204">mx::vectorSigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00185">mx::vectorVariance()</a>.</p>
+<p>Referenced by <a class="el" href="imCenterCircleSym_8hpp_source.html#l00087">mx::improc::imCenterCircleSym&lt; realT &gt;::center()</a>, <a class="el" href="imageFilters_8hpp_source.html#l00426">mx::improc::stddevImage()</a>, <a class="el" href="vectorUtils_8hpp_source.html#l00238">mx::vectorSigmaMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00219">mx::vectorVariance()</a>.</p>
 
 </div>
 </div>
@@ -728,9 +767,9 @@ template&lt;typename vectorT &gt; </div>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00185">185</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
+<p>Definition at line <a class="el" href="vectorUtils_8hpp_source.html#l00219">219</a> of file <a class="el" href="vectorUtils_8hpp_source.html">vectorUtils.hpp</a>.</p>
 
-<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00053">mx::vectorMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00163">mx::vectorVariance()</a>.</p>
+<p>References <a class="el" href="vectorUtils_8hpp_source.html#l00087">mx::vectorMean()</a>, and <a class="el" href="vectorUtils_8hpp_source.html#l00197">mx::vectorVariance()</a>.</p>
 
 </div>
 </div>
@@ -739,7 +778,7 @@ template&lt;typename vectorT &gt; </div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Aug 30 2017 23:46:00 for mxlib by
+    <li class="footer">Generated on Sat Sep 9 2017 20:52:09 for mxlib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.11 </li>
   </ul>

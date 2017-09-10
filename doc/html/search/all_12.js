@@ -44,7 +44,7 @@ var searchData=
   ['reltol',['relTol',['../structmx_1_1AO_1_1analysis_1_1fourierCovariance.html#ae4f1b5346df3b18ffb176caf5395b230',1,'mx::AO::analysis::fourierCovariance::relTol()'],['../structmx_1_1AO_1_1analysis_1_1fourierTemporalPSD.html#af6dc595a9ba7d9e11f816dbe81c19f9f',1,'mx::AO::analysis::fourierTemporalPSD::relTol(realT rt)'],['../structmx_1_1AO_1_1analysis_1_1fourierTemporalPSD.html#a56998d92261f8c74bbdb7a9a26c86479',1,'mx::AO::analysis::fourierTemporalPSD::relTol()']]],
   ['removewhitespace',['removeWhiteSpace',['../group__stringutils.html#ga822ccc1ae53dc6401eec5335186903bc',1,'mx::removeWhiteSpace(std::string &amp;outstr, const std::string &amp;instr)'],['../group__stringutils.html#gaf9578a02f8e527b795ee1b2a27ec8605',1,'mx::removeWhiteSpace(const std::string &amp;instr)']]],
   ['replot',['replot',['../classmx_1_1gnuPlot.html#a05d9ce2626fc7cbc4ea3d319d9b9ed6e',1,'mx::gnuPlot']]],
-  ['reset',['reset',['../classmx_1_1laplace__distribution.html#ad944dd1be29ea3b542264d4f6f439153',1,'mx::laplace_distribution']]],
+  ['reset',['reset',['../classmx_1_1laplace__distribution.html#ad944dd1be29ea3b542264d4f6f439153',1,'mx::laplace_distribution::reset()'],['../classmx_1_1math_1_1histogramUniform.html#aedec78a99c860df85efd944cf2bbcf82',1,'mx::math::histogramUniform::reset()']]],
   ['result_5ftype',['result_type',['../classmx_1_1laplace__distribution.html#ac89d67f9142888d35fb75ab0d68df738',1,'mx::laplace_distribution']]],
   ['results',['results',['../structmx_1_1improc_1_1imCenterCircleSym.html#ab6111f8f50ab8d245f3f9841b77dcd36',1,'mx::improc::imCenterCircleSym']]],
   ['rewritephoenixspectrum',['rewritePhoenixSpectrum',['../group__astrophot.html#gaed06fffc3d23784577ebd2823c91f361',1,'mx']]],

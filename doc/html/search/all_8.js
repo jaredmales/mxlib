@@ -23,5 +23,7 @@ var searchData=
   ['helpexplanation',['helpExplanation',['../structmx_1_1configTarget.html#a574fb49045c2ecdd049a871108c958b2',1,'mx::configTarget']]],
   ['helptype',['helpType',['../structmx_1_1configTarget.html#a86786c392cbe82ddb1a451c9d71f7f13',1,'mx::configTarget']]],
   ['helpwidth',['helpWidth',['../classmx_1_1application.html#a66dd015ffba8503c4f70a7b86874f7c5',1,'mx::application']]],
+  ['histogramuniform',['histogramUniform',['../classmx_1_1math_1_1histogramUniform.html',1,'mx::math']]],
+  ['histogramuniform_2ehpp',['histogramUniform.hpp',['../histogramUniform_8hpp.html',1,'']]],
   ['hyperbolic_5fkepler',['hyperbolic_kepler',['../group__kepler.html#ga2486776bb73ecc3ebf0c998b50b702a0',1,'mx::astro']]]
 ];

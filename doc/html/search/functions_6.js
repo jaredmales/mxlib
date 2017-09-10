@@ -54,6 +54,7 @@ var searchData=
   ['fouriertemporalpsd',['fourierTemporalPSD',['../structmx_1_1AO_1_1analysis_1_1fourierTemporalPSD.html#af1a8f37c50455be851ff279b6c7091bf',1,'mx::AO::analysis::fourierTemporalPSD::fourierTemporalPSD()'],['../structmx_1_1AO_1_1analysis_1_1fourierTemporalPSD.html#ae0fc9dd6789e66b18903a400e8e105a3',1,'mx::AO::analysis::fourierTemporalPSD::fourierTemporalPSD(bool allocate)']]],
   ['fouriervarvec',['fourierVarVec',['../fourierCovariance_8hpp.html#aa02bbd3ddde647ad76086516251cb3eb',1,'mx::AO::analysis']]],
   ['fraunhoferpropagator',['fraunhoferPropagator',['../classmx_1_1wfp_1_1fraunhoferPropagator.html#a195779684f44b1cb0f45b55049e030c5',1,'mx::wfp::fraunhoferPropagator']]],
+  ['freq',['freq',['../classmx_1_1math_1_1histogramUniform.html#a3b71793f509b03bb8e7245120dbf7281',1,'mx::math::histogramUniform']]],
   ['freq_5fsampling',['freq_sampling',['../group__psds.html#gad62e6e7fd9fde862c407f3d6613e6374',1,'mx::sigproc']]],
   ['frequency_5fgrid',['frequency_grid',['../group__psds.html#gaba00bc8c56a1b8c42777feb8ad123782',1,'mx::sigproc']]],
   ['frequency_5fgrid1d',['frequency_grid1D',['../group__psds.html#gac4e3f7c1c2541d12a71f2f35a3730ce3',1,'mx::sigproc']]],

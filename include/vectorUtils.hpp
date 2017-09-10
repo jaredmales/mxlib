@@ -5,8 +5,8 @@
   *
   */
 
-#ifndef __vectorUtils_hpp__
-#define __vectorUtils_hpp__ 
+#ifndef vectorUtils_hpp
+#define vectorUtils_hpp 
 
 
 #include <vector>
@@ -24,6 +24,13 @@ namespace mx
   * can be changed with the scale parameter, and the starting point can be 
   * changed with the offset.
   *
+  * Example:
+   \code
+   std::vector vec;
+   
+   mx::vectorScale(vec, 1000, 0.001, 0.001); // Produces a vector with values 0.001,0.002,.... 1.000
+   \endcode
+  * 
   * \tparam vectorT is a std::vector type.
   */
 template<typename vectorT>
@@ -40,7 +47,34 @@ void vectorScale( vectorT & vec,  ///< [out] the vector to fill in, can be pre-a
    for(int i=0;i<vec.size(); ++i) vec[i] = i*scale + offset;
 }
    
-   
+  
+///Return the indices of the vector in sorted order, without altering the vector itself
+/** Example:
+  \code
+  std::vector<double> x;
+  // -> fill in x with values
+  
+  std::vector<size_t> idx;
+  idx = mx::sortOrder(x);
+  
+  //Print x to stdout in sorted order
+  for(int i=0; i< x.size(); ++i) std::cout << x[idx[i]] << "\n";
+  \endcode
+  
+  * \tparam memberT is the member type of the vector.  Must have < comparison defined.
+  */ 
+template <typename memberT>
+std::vector<size_t> vectorSortOrder( std::vector<memberT> const& values /**< [in] the vector to sort */) 
+{
+    std::vector<size_t> indices(values.size());
+
+    std::iota(begin(indices), end(indices), static_cast<size_t>(0));
+
+    std::sort( begin(indices), end(indices), [&](size_t a, size_t b) { return values[a] < values[b]; } );
+    
+    return indices; /// \returns the indices of the vector in sorted order.
+}
+
 ///Calculate the mean of a vector.
 /** 
   *
@@ -358,5 +392,5 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
 
 
 
-#endif // __vectorUtils_hpp__
+#endif // vectorUtils_hpp
 

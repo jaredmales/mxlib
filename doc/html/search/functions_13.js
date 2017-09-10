@@ -29,7 +29,7 @@ var searchData=
   ['setsinglelayer',['setSingleLayer',['../classmx_1_1AO_1_1analysis_1_1aoAtmosphere.html#a8385e803ffbbac56f198dbf2de3625ea',1,'mx::AO::analysis::aoAtmosphere']]],
   ['setsize',['setSize',['../classmx_1_1sigproc_1_1psdFilter.html#af12d0b8601f4cad315c7b449ef2c35a5',1,'mx::sigproc::psdFilter']]],
   ['setspectrum',['setSpectrum',['../structmx_1_1astro_1_1astroSpectrum.html#a32ba8f3aa6c95326b56299b5e606668d',1,'mx::astro::astroSpectrum']]],
-  ['setup',['setup',['../structmx_1_1AO_1_1sim_1_1turbAtmosphere.html#a0875ff60b0cd531545a614e9df52e3d9',1,'mx::AO::sim::turbAtmosphere::setup()'],['../classmx_1_1application.html#a2af9b7de4741b204eddd50d800bed1db',1,'mx::application::setup()']]],
+  ['setup',['setup',['../structmx_1_1AO_1_1sim_1_1turbAtmosphere.html#a0875ff60b0cd531545a614e9df52e3d9',1,'mx::AO::sim::turbAtmosphere::setup()'],['../classmx_1_1application.html#a2af9b7de4741b204eddd50d800bed1db',1,'mx::application::setup()'],['../classmx_1_1math_1_1histogramUniform.html#a45cd5535aae5b533ad5b4a76bcc4ab21',1,'mx::math::histogramUniform::setup()']]],
   ['setupconfig',['setupConfig',['../classmx_1_1application.html#af8e78f79b81b50f8305db0a5b4c7b3df',1,'mx::application']]],
   ['setupstandardconfig',['setupStandardConfig',['../classmx_1_1application.html#aff88d099a29777543628105566430293',1,'mx::application']]],
   ['setvalue',['setValue',['../structmx_1_1improc_1_1fitsHeaderCard.html#a303a6e04daadff1129b90a6a8f4ce46d',1,'mx::improc::fitsHeaderCard']]],

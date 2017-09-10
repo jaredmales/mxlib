@@ -43,14 +43,14 @@ var NAVTREEINDEX =
 "classmx_1_1AO_1_1analysis_1_1aoSystem.html#a4ae8b704a417af81dfb94237cb1c9f60",
 "classmx_1_1AO_1_1sim_1_1simulatedAOSystem.html#ab3454a4c2f249500dd3185c6be4cc5e4",
 "classmx_1_1math_1_1fit_1_1levmarInterface.html#a985f0428decf79604493aecb81af622c",
-"fourierModes_8hpp.html#gab6ce642d471acce4871e2e07d1514846",
-"group__astrophot.html#ga143925d7c8f870845714c095496a5d62",
-"group__image__filters.html#ga1b7977d08d772a0eb4e99cc1506fae8d",
-"group__system.html",
-"readColumns_8hpp_source.html",
-"structmx_1_1astro_1_1calspecSpectrum.html",
-"structmx_1_1improc_1_1HCIobservation.html#a6dca452b1fa27742c182778c7b5d0b12",
-"structsharedmem__segment.html#ae97b6ec7787b16220ba18492ed37c271"
+"fourierCovariance_8hpp.html#ad333ac214a09779be1797ae0a0340fbd",
+"group__astrodynamics.html#ga9c74b649f2b3108bf51253ee4d7393e0",
+"group__hc__imaging__enums.html#gga1af050405983cd62f812ec2c6809603eaf2b98cc56b125154fa3d0e16ebba0433",
+"group__stringutils.html#ga9b29c5892983c8a67f9fd0cb58385a3c",
+"pyramidSensorSepQuad_8hpp_source.html",
+"structmx_1_1appConfigurator.html#ad986120b39a26aa8136e861d00bdc4a6",
+"structmx_1_1improc_1_1HCIobservation.html#a51a4377eafa2a3109722d00d50c583d7",
+"structmx_1_1wfp_1_1lyotCoronagraph.html#a9a3ab92867a56530c85687f255e5f266"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

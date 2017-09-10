@@ -28,6 +28,8 @@ var files =
     [ "mxError.hpp", "mxError_8hpp.html", "mxError_8hpp" ],
     [ "mxException.hpp", "mxException_8hpp.html", null ],
     [ "mxlib.h", "mxlib_8h.html", "mxlib_8h" ],
+    [ "mxlib_comp_version.h", "mxlib__comp__version_8h_source.html", null ],
+    [ "mxlib_uncomp_version.h", "mxlib__uncomp__version_8h_source.html", null ],
     [ "ompLoopWatcher.hpp", "ompLoopWatcher_8hpp.html", null ],
     [ "pout.hpp", "pout_8hpp.html", "pout_8hpp" ],
     [ "process_interface.h", "process__interface_8h.html", "process__interface_8h" ],
