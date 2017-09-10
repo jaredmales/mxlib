@@ -98,7 +98,10 @@ public:
    }
    
    ///Normalize the current frequencies so that the integral over all bins is 1.
-   void normalize( int excludeTop = 0 )
+   /** This normalizes the histogram so that it is a probability distribution, such that the sum
+    * \f$ \sum_i P_i \Delta x = 1 \f$ where \f$ \Delta x \f$ is the bin width.
+    */
+   void normalize( int excludeTop = 0 /**< [in] [optional] specifies a number of bins at the top of the range to exclude from the sum */)
    {
       realT sum = 0;
       

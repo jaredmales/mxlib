@@ -14,7 +14,9 @@
 
 namespace mx
 {
-
+namespace math 
+{
+   
 /** \ingroup vectorutils
   *@{
   */
@@ -388,6 +390,7 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
 
 ///@}
 
+} //namespace math
 } //namespace mx
 
 
