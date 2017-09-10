@@ -7,15 +7,15 @@
   *
   */
 
-#ifndef __eigenCube_hpp__
-#define __eigenCube_hpp__
+#ifndef eigenCube_hpp
+#define eigenCube_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
 
 
 #include "../eigenUtils.hpp"
-#include "../vectorUtils.hpp"
+#include "../math/vectorUtils.hpp"
 #include "eigenImage.hpp"
 
 
@@ -422,7 +422,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
             }
             if(work.size() > 0.75*_planes)
             {
-               mim(i,j) = vectorMean(work); 
+               mim(i,j) = math::vectorMean(work); 
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();   
             
@@ -452,7 +452,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
             int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
             
-            mim(i,j) = vectorMean(work, weights);             
+            mim(i,j) = math::vectorMean(work, weights);             
          }
       }
    }
@@ -491,7 +491,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
             }
             if(work.size() > 0.75*_planes)
             {
-               mim(i,j) = vectorMean(work, wwork); 
+               mim(i,j) = math::vectorMean(work, wwork); 
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
          }
@@ -536,7 +536,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, dataT sigma)
             int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
             
-            mim(i,j) = vectorSigmaMean(work, sigma);             
+            mim(i,j) = math::vectorSigmaMean(work, sigma);             
          }
       }
       
@@ -571,7 +571,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, eigenCubeT & mask, dataT sigma)
             }
             if(work.size() > 0.75*_planes)
             {
-               mim(i,j) = vectorSigmaMean(work, sigma); 
+               mim(i,j) = math::vectorSigmaMean(work, sigma); 
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
             
@@ -601,7 +601,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, dat
             int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
             
-            mim(i,j) = vectorSigmaMean(work, weights, sigma);             
+            mim(i,j) = math::vectorSigmaMean(work, weights, sigma);             
          }
       }
       
@@ -639,7 +639,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eig
             }
             if(work.size() > 0.75*_planes)
             {
-               mim(i,j) = vectorSigmaMean(work, wwork, sigma); 
+               mim(i,j) = math::vectorSigmaMean(work, wwork, sigma); 
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
          }
@@ -657,4 +657,4 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eig
 
 } //namespace mx
 
-#endif //__eigenCube_hpp__
+#endif //eigenCube_hpp

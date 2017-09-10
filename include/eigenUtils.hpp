@@ -10,7 +10,7 @@
 #include "math/templateBLAS.hpp"
 #include "math/templateLapack.hpp"
 
-#include "vectorUtils.hpp"
+#include "math/vectorUtils.hpp"
 
 #include "gnuPlot.hpp"
 

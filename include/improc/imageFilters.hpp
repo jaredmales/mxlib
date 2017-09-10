@@ -11,6 +11,7 @@
 #include <cstdlib>
 
 #include "../gslInterpolation.hpp"
+#include "../math/vectorUtils.hpp"
 
 #include "imageMasks.hpp"
 
@@ -479,7 +480,7 @@ void stddevImage( eigenimT & stdIm,
       
       std_r.push_back(.5*(r0+r1));
             
-      std_v.push_back( std::sqrt(mx::vectorVariance(vals)) ) ;
+      std_v.push_back( std::sqrt(math::vectorVariance(vals)) ) ;
       i1 = i2;
       r0 += dr;
       r1 += dr;

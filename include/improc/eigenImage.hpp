@@ -6,7 +6,7 @@
 #pragma GCC system_header
 #include <Eigen/Dense>
 
-#include "../vectorUtils.hpp"
+#include "../math/vectorUtils.hpp"
 //#include "eigenCube.hpp"
 
 namespace mx
@@ -159,7 +159,7 @@ typename imageT::Scalar imageMedian( const imageT & mat,  ///< [in] the image to
    }
 
    
-   med = vectorMedianInPlace(*work);
+   med = math::vectorMedianInPlace(*work);
    
    if(localWork) delete work;
    
