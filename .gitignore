@@ -1,6 +1,8 @@
 work/*
 doc/html/*
 doc/mxlib.tag.xml
+doc/citelist*
+doc/*.aux
 include/mxlib_uncomp_version.h
 include/mxlib_comp_version.h
 old/*
