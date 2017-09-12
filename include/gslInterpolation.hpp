@@ -68,6 +68,11 @@ struct gslInterpolator
       return y;
    }
    
+   double operator()(const double & x)
+   {
+      return interpolate(x);
+   }
+   
 };
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
@@ -126,7 +131,6 @@ int gsl_interpolate( const gsl_interp_type * interpT,
                      std::vector<double> & yout )
 {
    yout.resize(xout.size());
-   
    return gsl_interpolate(interpT, xin.data(), yin.data(), xin.size(), xout.data(), yout.data(), xout.size());
 }
 

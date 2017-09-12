@@ -125,11 +125,12 @@ struct calspecSpectrum
       else if(name == "sun" || name == "sun_reference") return "sun_reference_stis.002.asc";
    }
    
-   static std::string readSpectrum( std::vector<realT> & rawLambda,
-                                    std::vector<realT> & rawSpectrum,
-                                    const std::string & path )
+   static int readSpectrum( std::vector<realT> & rawLambda,
+                            std::vector<realT> & rawSpectrum,
+                            const std::string & path 
+                          )
    {
-      mx::readColumns(path, rawLambda, rawSpectrum);
+      return mx::readColumns(path, rawLambda, rawSpectrum);
    }
    
 };
@@ -158,11 +159,12 @@ struct picklesSpectrum
       return "uk"+ mx::toLower(name) + ".dat";
    }
    
-   static std::string readSpectrum( std::vector<realT> & rawLambda,
-                                    std::vector<realT> & rawSpectrum,
-                                    const std::string & path )
+   static int readSpectrum( std::vector<realT> & rawLambda,
+                            std::vector<realT> & rawSpectrum,
+                            const std::string & path
+                          )
    {
-      mx::readColumns(path, rawLambda, rawSpectrum);
+      return mx::readColumns(path, rawLambda, rawSpectrum);
    }
    
 };

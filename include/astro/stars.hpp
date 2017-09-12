@@ -17,11 +17,6 @@ namespace mx
 namespace astro
 {
 
-
-
-/** \ingroup stars
-  * @{
-  */
 ///Parse a main sequence spectral type string into a numeric code.
 /** Expects standard spectral type strings such as "O5V" or "F2.5" or "G8.5V".  
   * The numeric code starts at 0 for "O0V", 10 for "A0V", through 90 for "Y0".  The subtypes are added to this value.  For instance,
@@ -29,6 +24,7 @@ namespace astro
   * 
   * Only works for main sequence types.  Any other spectral type, such as MK class I-IV, will return -1.
   * 
+  * \ingroup stars
   */ 
 template<typename realT=float>
 realT numSpType( std::string spType /**< [in] The spectral type string to parse.*/)
@@ -100,6 +96,8 @@ realT numSpType( std::string spType /**< [in] The spectral type string to parse.
   * Loads values of the sequence at construction (hard coded), and then provides interpolation in between the points.
   * 
   * Version of the sequence used: 2017.03.14
+  * 
+  * \ingroup stars
   */
 template<typename realT>
 struct mainSequence
@@ -405,8 +403,6 @@ struct mainSequence
    }
 };
 
-
-///@}
 } //namespace astro
 } //namespace mx
 #endif

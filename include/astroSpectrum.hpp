@@ -3,13 +3,14 @@
 #ifndef __astroSpectra_hpp__
 #define __astroSpectra_hpp__
 
-#include "astroFilter.hpp"
-#include "astroconstants.h"
+//#include "astroFilter.hpp"
+//#include "astroconstants.h"
 
+#include "math/vectorUtils.hpp"
 
 namespace mx
 {
-
+#if 0
 /** \addtogroup astrophot
   * @{
   */
@@ -222,6 +223,8 @@ void readBTRAM( std::vector<dataT> & lambda,
    
 }
 
+#endif
+
 //Used by rewritePhoenixSpectrum
 template<typename floatT>
 struct spectralPoint
@@ -250,12 +253,14 @@ bool comp_spectralPoint (const spectralPoint<floatT> & sp1, const spectralPoint<
 }
 
 
-///Read in, crop, and re-write a Phoenix spectrum data file.
+///Read in, crop, scale, and re-write a Phoenix spectrum data file.
 /** For working with spectra obtained from: http://perso.ens-lyon.fr/france.allard/ 
   * 
   * The Phoenix spectra contain many columns of line data which are not often used, are
   * not necessarily sorted by wavelength, and are sometimes formated so that points with leading 
   * minus signs are not in a separate column.  We also have to change the fortan D to e.
+  * 
+  * We also want to apply the dilution factor and take the power of 10.
   * 
   * This function deals with these issues, producing a two-column space-delimited
   * file in a specified wavelength range.
@@ -275,7 +280,10 @@ bool comp_spectralPoint (const spectralPoint<floatT> & sp1, const spectralPoint<
 template<typename floatT>
 void rewritePhoenixSpectrum( const std::string & filename,
                              floatT lmin,
-                             floatT lmax)
+                             floatT lmax,
+                             int sepWavelength = 0,
+                             floatT DF = -8.0
+                           )
 {
    float lambda, flambda;
         
@@ -289,8 +297,9 @@ void rewritePhoenixSpectrum( const std::string & filename,
       return;
    }
    
-   std::vector<spectralPoint<floatT>> points;
-   
+   //std::vector<spectralPoint<floatT>> points;
+   std::vector<floatT> lambdas;
+   std::vector<floatT> flambdas;
    
    int lineSize = 1024;
    char * line = new char[lineSize];
@@ -303,6 +312,7 @@ void rewritePhoenixSpectrum( const std::string & filename,
    {
       std::cerr << "Error reading file: " << filename << "\n";
    }
+   
    lambda = mx::convertFromString<floatT>(sline.substr(1,12));
    
    //First have to diagnose if this has the column problem
@@ -314,11 +324,13 @@ void rewritePhoenixSpectrum( const std::string & filename,
    sline[nst + 8] = 'e';
    
    flambda = mx::convertFromString<floatT>(sline.substr(nst,12));
-   //if(flambda > 2) flambda = -flambda;
    
    if(lambda >= lmin*1e4 && lambda <= lmax*1e4)
    {
-      points.push_back( spectralPoint<floatT>(lambda, flambda) );
+      //points.push_back( spectralPoint<floatT>(lambda, flambda) );
+      lambdas.push_back(lambda);
+      flambdas.push_back(flambda);
+      
    }
 
    fin.getline(line, lineSize);
@@ -335,7 +347,9 @@ void rewritePhoenixSpectrum( const std::string & filename,
    
       if(lambda >= lmin*1e4 && lambda <= lmax*1e4)
       {
-         points.push_back( spectralPoint<floatT>(lambda, flambda) );
+         //points.push_back( spectralPoint<floatT>(lambda, flambda) );
+         lambdas.push_back(lambda);
+         flambdas.push_back(flambda);
       }
       
       fin.getline(line, lineSize);
@@ -345,26 +359,41 @@ void rewritePhoenixSpectrum( const std::string & filename,
    fin.close();
    delete line;
    
-   std::sort(points.begin(), points.end(), comp_spectralPoint<floatT>);
-
+   //std::sort(points.begin(), points.end(), comp_spectralPoint<floatT>);
+   std::vector<size_t> idx = math::vectorSortOrder(lambdas);
+   
    std::ofstream fout;
   
-   
    std::string fname = filename;// + ".t";
    fout.open(filename);
+   fout.precision(10);
    
-   
-   for(int i=0;i<points.size(); ++i)
+   for(int i=0;i<lambdas.size(); ++i)
    {
-      fout.precision(10);
-      fout << points[i].lambda << "    ";
-      fout.precision(5);
-      fout << points[i].flambda << "\n";
+      if(sepWavelength == 0)
+      {
+         fout << lambdas[idx[i]] << "    ";
+      }
+      
+      fout << pow(10, flambdas[idx[i]] + DF) << "\n";
    }
-
    fout.close();
 
+   if(sepWavelength == 1)
+   {
+      fname = "wavelength.dat";
+      fout.open(fname);
+      fout.precision(10);
+      for(int i=0;i<lambdas.size(); ++i)
+      {
+         fout << lambdas[idx[i]] << "\n";
+      }
+      fout.close();
+   }
+   
 }
+
+#if 0
 
 /// Read a Phoenix model spectrum
 /** Reads in a Phoenix model spectrum specified by a filename.  Does not prepend PHOENIX_DATADIR.
@@ -630,6 +659,7 @@ struct cahoyGrid
 };
 
 /// @}
+#endif
 
 }
 

@@ -90,8 +90,6 @@ struct astroSpectrum
          rawSpectrum[i] /= spectrumT::fluxUnits/(units::energy/(units::time * units::length * units::length * units::length));
       }
       
-      _spectrum.clear();
-      
       mx::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, _spectrum);
       
       for(int i=0; i < lambda.size(); ++i)
