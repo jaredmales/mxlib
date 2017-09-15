@@ -424,7 +424,7 @@ int fourierCovarMap( const std::string & fname,
                      bool subTilt,
                      realT absTol,
                      realT relTol,
-                     bool modifed=true)
+                     bool modified=true)
 {
    std::vector<mx::sigproc::fourierModeDef> ml;
    mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
@@ -458,6 +458,8 @@ int fourierCovarMap( const std::string & fname,
       Pp.relTol = relTol;
       Pp.aosys = &aosys;
 
+      if(!modified) Pp.useBasic = true;
+      
       realT result, error;
    
       #pragma omp for schedule(static,5)
@@ -507,7 +509,7 @@ int fourierCovarMapSeparated( const std::string & fname,
                               aosysT & aosys,
                               realT absTol,
                               realT relTol,
-                              bool modifed=true)
+                              bool modified=true)
 {
    std::vector<mx::sigproc::fourierModeDef> ml;
    mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
@@ -534,6 +536,8 @@ int fourierCovarMapSeparated( const std::string & fname,
       Pp.relTol = relTol;
       Pp.aosys = &aosys;
 
+      if(!modified) Pp.useBasic = true;
+      
       Pp.mnCon = mnCon;
       
       realT result, error;
