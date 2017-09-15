@@ -10,6 +10,7 @@
 #ifndef gslInterpolation_hpp
 #define gslInterpolation_hpp
 
+#include <vector>
 #include <gsl/gsl_interp.h>
 
 namespace mx

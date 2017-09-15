@@ -18,7 +18,7 @@ using namespace boost::math::constants;
 
 
 #include "../../math/func/jinc.hpp"
-#include "../../fourierModes.hpp"
+#include "../../sigproc/fourierModes.hpp"
 #include "../../improc/fitsFile.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib_uncomp_version.h"
@@ -426,13 +426,13 @@ int fourierCovarMap( const std::string & fname,
                      realT relTol,
                      bool modifed=true)
 {
-   std::vector<mx::fourierModeDef> ml;
-   mx::makeFourierModeFreqs_Rect(ml, N);
+   std::vector<mx::sigproc::fourierModeDef> ml;
+   mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
    
       
    aoSystem<realT, vonKarmanSpectrum<realT>, pywfsUnmod<realT> > aosys;
    
-   aosys.load_MagAO_model();
+   aosys.loadMagAOX();
 
    //This is just a normalization parameter in this context.
    aosys.atm.r_0(1.0, 0.5e-6);
@@ -509,8 +509,8 @@ int fourierCovarMapSeparated( const std::string & fname,
                               realT relTol,
                               bool modifed=true)
 {
-   std::vector<mx::fourierModeDef> ml;
-   mx::makeFourierModeFreqs_Rect(ml, N);
+   std::vector<mx::sigproc::fourierModeDef> ml;
+   mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
 
    int psz = 0.5*ml.size();
    

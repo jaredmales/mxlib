@@ -9,8 +9,10 @@
 
 #include "units.hpp"
 
-#ifndef __mx_astro_stars_hpp__
-#define __mx_astro_stars_hpp__
+#ifndef mx_astro_stars_hpp
+#define mx_astro_stars_hpp
+
+#include "../stringUtils.hpp"
 
 namespace mx
 {
