@@ -732,7 +732,7 @@ int HCIobservation<_realT>::readFiles()
                }
             }
          }
-         std::cerr << "Fixed " << k << " " << nfix << "\n";
+         std::cerr << "Fixed " << fileList[k] << " " << k << " " << nfix << "\n";
       }
    }
    
