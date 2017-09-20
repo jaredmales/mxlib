@@ -726,13 +726,13 @@ int HCIobservation<_realT>::readFiles()
             {
                if( !std::isnormal( imc.image(k)(i,j)) ) 
                {
-                  //std::cerr << "Fixing: " << k << " " << i << " " << j << " " << imc.image(k)(i,j) << "\n";
+                  std::cerr << "Fixing: " << k << " " << i << " " << j << " " << imc.image(k)(i,j) << "\n";
                   imc.image(k)(i,j) = 0;
                   ++nfix;
                }
             }
          }
-         std::cerr << "Fixed " << fileList[k] << " " << k << " " << nfix << "\n";
+         std::cerr << "Fixed " << fileList[k] << " " << k << " " << nfix << " " << Nrows << " " << Ncols << "\n";
       }
    }
    
