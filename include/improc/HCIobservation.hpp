@@ -646,8 +646,6 @@ int HCIobservation<_realT>::readFiles()
       if(readWeights() < 0) return -1;
    }
 
-      
-      
    Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
       
    fitsFile<realT> f(fileList[0]);
@@ -670,6 +668,7 @@ int HCIobservation<_realT>::readFiles()
 
    if(imSize > 0)
    {
+      //Make sure we don't read too much.
       if(imSize > im.rows()) imSize = im.rows();
       if(imSize > im.cols()) imSize = im.cols();
       
@@ -715,27 +714,24 @@ int HCIobservation<_realT>::readFiles()
    Ncols = imc.cols();
    Npix =  imc.rows()*imc.cols();
    
-   
+
+   ///\todo zeroNaNs should be a member and be configurable.  Probably should be true by default.   
    bool zeroNaNs = true;
    
    if( zeroNaNs )
    {
       for(int k=0; k<Nims; ++k)
       {
-         int nfix = 0;
          for(int i=0; i< Nrows; ++i)
          {
             for(int j=0; j<Ncols; ++j)
             {
                if( !std::isnormal( imc.image(k)(i,j)) ) 
                {
-                  std::cerr << "Fixing: " << k << " " << i << " " << j << " " << imc.image(k)(i,j) << "\n";
                   imc.image(k)(i,j) = 0;
-                  ++nfix;
                }
             }
          }
-         std::cerr << "Fixed " << fileList[k] << " " << k << " " << nfix << " " << Nrows << " " << Ncols << "\n";
       }
    }
    
