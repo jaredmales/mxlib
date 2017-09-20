@@ -668,7 +668,7 @@ int HCIobservation<_realT>::readFiles()
 
    if(imSize > 0)
    {
-      //Make sure we don't read too much.
+      //Now make sure we don't read too much.
       if(imSize > im.rows()) imSize = im.rows();
       if(imSize > im.cols()) imSize = im.cols();
       
