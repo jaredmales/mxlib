@@ -717,15 +717,15 @@ int HCIobservation<_realT>::readFiles()
    
    if( zeroNaNs )
    {
-      for(int i=0; i< Nrows; ++i)
+      for(int k=0; k<Nims; ++k)
       {
-         for(int j=0; j<Ncols; ++j)
+         for(int i=0; i< Nrows; ++i)
          {
-            for(int k=0; k<Nims; ++k)
+            for(int j=0; j<Ncols; ++j)
             {
                if( !std::isnormal( imc.image(k)(i,j))) 
                {
-                  std::cerr << "Fixing: " << i << " " << j << " " << k << "\n";
+                  std::cerr << "Fixing: " << k << " " << i << " " << i << "\n";
                   imc.image(k)(i,j) = 0;
                }
             }
