@@ -299,7 +299,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       //Create storage for the R-ims and psf-subbed Ims
       eigenCube<realT> rims(idx.size(), 1, this->Nims);
    
-      #pragma omp parallel for schedule(static, 1)
+      //#pragma omp parallel for schedule(static, 1)
       for(int i=0;i< this->Nims; ++i)
       {
          auto rim = rims.image(i);

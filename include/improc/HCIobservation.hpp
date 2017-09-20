@@ -712,6 +712,27 @@ int HCIobservation<_realT>::readFiles()
    Ncols = imc.cols();
    Npix =  imc.rows()*imc.cols();
    
+   
+   bool zeroNaNs = true;
+   
+   if( zeroNaNs )
+   {
+      for(int i=0; i< Nrows; ++i)
+      {
+         for(int j=0; j<Ncols; ++j)
+         {
+            for(int k=0; k<Nims; ++k)
+            {
+               if( !std::isnormal( imc.image(k)(i,j))) 
+               {
+                  std::cerr << "Fixing: " << i << " " << j << " " << k << "\n";
+                  imc.image(k)(i,j) = 0;
+               }
+            }
+         }
+      }
+   }
+   
    /*** Now do the post-read actions ***/
    if( postReadFiles() < 0) return -1;
    

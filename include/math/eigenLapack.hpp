@@ -179,7 +179,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    MXLAPACK_INT * iWork = (MXLAPACK_INT *) malloc (sizeIWork*sizeof(MXLAPACK_INT));
 
    //  Query for optimum sizes for workspace 
-   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
+   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<calcT>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, work, -1, iWork, -1);
 
    if(info != 0)
    {
@@ -219,7 +219,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    }
                 
    // Now actually do the calculationg
-   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<float>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
+   info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<calcT>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
    
     /*  Cleanup and exit  */
       
@@ -371,8 +371,8 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1
   * \param[out] S
   * \param[out] VT
   * \param[in] A the matrix to invert
-  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if MXLAPACK_INTeractive.
-  * \param[in] MXLAPACK_INTeract [optional] a bitmask controlling MXLAPACK_INTeraction.  If (MXLAPACK_INTeract & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (MXLAPACK_INTeract & MX_PINV_ASK) is true
+  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
+  * \param[in] interact [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (interact & MX_PINV_ASK) is true
   *                                 then the minimum singular value threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
   * 
@@ -387,7 +387,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        Eigen::Array<dataT, -1, -1> & VT,
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       int MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
+                       int interact = MX_PINV_NO_INTERACT   )
 {
    //Eigen::Array<dataT,-1,-1> S, U, VT;
    
@@ -400,7 +400,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    dataT Smax=S.maxCoeff();
    
    
-   if(MXLAPACK_INTeract & MX_PINV_PLOT)
+   if(interact & MX_PINV_PLOT)
    {
       gnuPlot gp;
       gp.command("set title \"SVD Singular Values\"");
@@ -408,7 +408,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       gp.plot( S.data(), S.rows(), " w lp", "singular values");
    }
    
-   if(MXLAPACK_INTeract & MX_PINV_ASK && ! (MXLAPACK_INTeract & MX_PINV_ASK_NMODES))
+   if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
    {
       dataT mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -423,7 +423,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       else maxCondition = 0;
    }
 
-   if( MXLAPACK_INTeract & MX_PINV_ASK_NMODES)
+   if( interact & MX_PINV_ASK_NMODES)
    {
       unsigned mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -465,7 +465,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       }
    }
 
-   if(MXLAPACK_INTeract & MX_PINV_ASK  || MXLAPACK_INTeract & MX_PINV_ASK_NMODES)
+   if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
    {
       dataT mine;
       std::cout << "Modes Rejected: " << nRejected << "\n";
@@ -491,8 +491,8 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
   * \param condition [out] The final condition number.
   * \param nRejected [out] the number of eigenvectors rejected
   * \param A [in] the matrix to invert
-  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if MXLAPACK_INTeractive.
-  * \param MXLAPACK_INTeract [in] [optional] a bitmask controlling MXLAPACK_INTeraction.  If (MXLAPACK_INTeract & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (MXLAPACK_INTeract & MX_PINV_ASK) is true
+  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
+  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
   *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
   * \tparam dataT is either float or double.
   * 
@@ -504,11 +504,11 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
                        int & nRejected, 
                        Eigen::Array<dataT, -1, -1> & A, 
                        dataT & maxCondition,
-                       int MXLAPACK_INTeract = MX_PINV_NO_INTERACT   )
+                       int interact = MX_PINV_NO_INTERACT   )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    
-   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, MXLAPACK_INTeract);
+   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, interact);
 }
 
 
