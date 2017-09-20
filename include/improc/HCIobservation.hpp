@@ -719,6 +719,7 @@ int HCIobservation<_realT>::readFiles()
    {
       for(int k=0; k<Nims; ++k)
       {
+         int nfix = 0;
          for(int i=0; i< Nrows; ++i)
          {
             for(int j=0; j<Ncols; ++j)
@@ -727,9 +728,11 @@ int HCIobservation<_realT>::readFiles()
                {
                   //std::cerr << "Fixing: " << k << " " << i << " " << j << " " << imc.image(k)(i,j) << "\n";
                   imc.image(k)(i,j) = 0;
+                  ++nfix;
                }
             }
          }
+         std::cerr << "Fixed " << k << " " << nfix << "\n";
       }
    }
    
