@@ -331,7 +331,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
 {
    int Nper = avgLen/dt;
    int Nover = (avgLen-olap)/dt;
-   
+
    pgram.resize(Nper/2., 0);
    
    std::vector<std::complex<floatT> > fftwork, cwork;
@@ -343,6 +343,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
    
    while(Navg*Nover + Nper > ts.size()) --Navg;
 
+   if(Navg < 1) Navg = 1; //Always do at least 1!
    
    mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
 

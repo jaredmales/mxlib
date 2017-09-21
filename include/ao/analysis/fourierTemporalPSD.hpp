@@ -22,7 +22,10 @@ using namespace boost::math::constants;
 #include <Eigen/Dense>
 
 #include "../../math/func/jinc.hpp"
+#include "../../math/func/airyPattern.hpp"
 #include "../../math/vectorUtils.hpp"
+#include "../../improc/fitsFile.hpp"
+
 #include "../../stringUtils.hpp"
 #include "../../sigproc/fourierModes.hpp"
 #include "../../readColumns.hpp"
