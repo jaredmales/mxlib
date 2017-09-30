@@ -26,17 +26,24 @@ typename units::realT equilibriumTemp( typename units::realT L, ///< [in] Stella
    return pow( (L * (1-Ab)/f) /( static_cast<realT>(16.0)*constants::sigma<units>()*pi<realT>()*r*r), static_cast<realT>(0.25));
 }
 
+///The blackbody spectral energy distribution in the mx::astro::astroSpectrum form.
+/** You specify the temperature, and optionally the radius and distance of the blackbody. 
+  * 
+  * \tparam units specifies the units of the spectrum 
+  * \tparam freq if true, then the blackbody is calcuated as a frequency distribution.  If false (default), it is a wavelength distribution.
+  */
 template< typename units, bool freq=false>
 struct blackbody
 {
-   typedef typename units::realT realT;
+   typedef typename units::realT realT; ///<The real floating point type used for calculations
 
-   realT _temperature;
-   realT _radius;
-   realT _distance;
+   realT _temperature; ///< The temperature of the blackbody.  Default value is the effective temperature of the Sun.
+   realT _radius; ///< The optional radius of the blackbody.
+   realT _distance; ///< The optional distance to the blackbody.
 
-   std::vector<realT> _spectrum;
+   std::vector<realT> _spectrum; ///< The calculated spectral energy distribution.
 
+   ///Default c'tor.
    blackbody()
    {
       _temperature = constants::TeffSun<units>();
@@ -44,17 +51,19 @@ struct blackbody
       _distance = 0;
    }
 
-   blackbody( realT T,
-              realT R = 0,
-              realT d = 0
+   ///Constructor used to initialize parameters.
+   blackbody( realT T,  ///< [in] The effective temperature of the blackbody. Units as specified by the units template-parameter.
+              realT R = 0, ///< [in] [optional] The radius of the blackbody. Units as specified by the units template-parameter.
+              realT d = 0 ///< [in]  [optional] The distance to the blackbody. Units as specified by the units template-parameter.
             )
    {
       setParameters(T, R, d);
    }
    
-   void setParameters( realT T,
-                       realT R,
-                       realT d
+   ///Set the parameters of the blackbody.
+   void setParameters( realT T,  ///< [in] The effective temperature of the blackbody. Units as specified by the units template-parameter.
+                       realT R,  ///< [in] The radius of the blackbody. Units as specified by the units template-parameter.
+                       realT d   ///< [in] The distance to the blackbody. Units as specified by the units template-parameter.
                      )
    {
       _temperature = T;
@@ -83,7 +92,7 @@ struct blackbody
       {
          if(!freq)
          {
-            _spectrum[i] = 2*h*pow(c,2)*solidang        / pow(grid[i],5)  / (exp(h*c/(grid[i]*k*_temperature))-1.0);
+            _spectrum[i] = 2*h*pow(c,2)*solidang / pow(grid[i],5)  / (exp(h*c/(grid[i]*k*_temperature))-1.0);
          }
          else
          {

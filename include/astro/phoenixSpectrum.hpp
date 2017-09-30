@@ -18,7 +18,7 @@ namespace astro
 {
 
 /// A spectrum from the Phoenix model, for use with mx::astro::astroSpectrum.
-/** 
+/** \ingroup astrophot_spectra
   */
 template<typename _units>
 struct phoenixSpectrum
@@ -88,6 +88,8 @@ struct phoenixSpectrum
   * 
   * 
   * \tparam floatT the floating point type in which to work
+  * 
+  * \ingroup astropho_spectra
   */
 template<typename floatT>
 void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complete name of the file to rewrite
@@ -206,6 +208,8 @@ void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complet
 } //rewritePhoenixSpectrum
 
 ///Call rewritePhoenixSpectrum for all files in a directory.
+/** \ingroup astropho_spectra
+  */
 template<typename floatT>
 void rewritePhoenixSpectrumBatch( const std::string & dir,
                                   floatT lmin,

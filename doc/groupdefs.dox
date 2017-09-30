@@ -323,6 +323,10 @@
 /** \defgroup astrophot Astronomical Photometry
   * \ingroup genastro
   */
+
+/** \defgroup astrophot_spectra Astronomical Spectra
+  * \ingroup astrophot
+  */
   
 /** \defgroup stars Stars 
   * \ingroup genastro

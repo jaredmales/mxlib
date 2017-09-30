@@ -12,7 +12,9 @@ namespace mx
 {
 namespace AO
 {
-
+namespace analysis
+{
+   
 ///Populate a vector with the PSD of measurement noise given WFS parameters.
 /** 
   * \tparam realT is the real floating point type for calculations
@@ -40,6 +42,7 @@ void wfsNoisePSD( std::vector<realT> &PSD,  ///< [out] A pre-allocated vector wh
    }
 }
  
+} //namespace analysis
 } //namespace AO
 } //namespace mx
 

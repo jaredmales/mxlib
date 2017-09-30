@@ -11,6 +11,7 @@
 #define psdUtils_hpp
 
 #include "../fft/fft.hpp"
+#include "../math/vectorUtils.hpp"
 
 namespace mx
 {
@@ -316,17 +317,23 @@ void vonKarman_psd( eigenArrp  & psd,
 }
 
 
+   
 ///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
 /** The time series should be mean subtracted before passing to this function.
   * 
-   */
-template<typename floatT>
-void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant periodogram.
-                         std::vector<floatT> & ts,  ///< [in] is input the time-series.
-                         floatT dt,   ///< [in] is the sampling time of time-series.
-                         floatT avgLen,    ///< [in] is the length of the averaging interval, same units as dt.
-                         floatT olap,    ///< [in] is the length of the overlap region, same units as avgLen.
-                         std::vector<floatT> & w   ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
+  * The frequency scale of the output periodogram is 1/(2*pgram.size()*dt), where the factor of 2 is due to the one-sided-ness of the result.
+  * 
+  * If a window is supplied, the PSD is normalized so that the one-sided integral is equal to the variance of the input time-series.
+  *
+  * 
+  */
+template<typename realT>
+void averagePeriodogram( std::vector<realT> & pgram,  ///< [out] the resultant periodogram.
+                         std::vector<realT> & ts,  ///< [in] is input the time-series.
+                         realT dt,   ///< [in] is the sampling time of time-series.
+                         realT avgLen,    ///< [in] is the length of the averaging interval, same units as dt.
+                         realT olap,    ///< [in] is the length of the overlap region, same units as avgLen.
+                         std::vector<realT> & w   ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
                        ) 
 {
    int Nper = avgLen/dt;
@@ -334,7 +341,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
 
    pgram.resize(Nper/2., 0);
    
-   std::vector<std::complex<floatT> > fftwork, cwork;
+   std::vector<std::complex<realT> > fftwork, cwork;
    
    fftwork.resize(Nper);
    cwork.resize(Nper);
@@ -345,12 +352,12 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
 
    if(Navg < 1) Navg = 1; //Always do at least 1!
    
-   mx::fftT<std::complex<floatT>, std::complex<floatT>, 1, 0> fft(Nper);
+   mx::fftT<std::complex<realT>, std::complex<realT>, 1, 0> fft(Nper);
 
    for(int i=0;i<Navg;++i)
    {
       
-      floatT v;
+      realT v;
       
       for(int j=0;j<Nper;++j) 
       {
@@ -358,7 +365,7 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
  
          if(w.size() == Nper) v *= w[j];
          
-         cwork[j] = std::complex<floatT>(v, 0);
+         cwork[j] = std::complex<realT>(v, 0);
       }
          
       fft( fftwork.data(), cwork.data()); 
@@ -366,7 +373,16 @@ void averagePeriodogram( std::vector<floatT> & pgram,  ///< [out] the resultant 
       for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
    }
 
-   for(int j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
+   realT varNorm = 1;
+   if(w.size() == Nper)
+   {
+      realT sum = 0;
+      realT df = 1.0/(2.0*pgram.size()*dt); //factor of 2 since it's a one-sided PSD 
+      for(int j =0; j< pgram.size(); ++j) sum += pgram[j]*df;
+      varNorm = mx::math::vectorVariance(ts) / sum;
+   }
+   
+   for(int j=0;j<pgram.size();++j) pgram[j] *= varNorm / (Nper*Navg);
    
 }
 
