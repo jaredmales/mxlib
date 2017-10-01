@@ -23,9 +23,7 @@ namespace mx
 namespace astro
 {
 
-/** \addtogroup kepler 
-  * @{
-  */
+
    
 #ifndef KEPLER_TOL
 ///The default tolerance for solutions to the Kepler problem
@@ -47,6 +45,8 @@ namespace astro
   * \returns -1 on exceeding itmax, otherwise reurns the number of iterations.
   * 
   * \tparam realT is the type used for arithmetic
+  * 
+  * \ingroup kepler
   */
 template<typename realT>
 long hyperbolic_kepler( realT & E,   ///< [out] is the eccentric anomaly
@@ -85,6 +85,8 @@ long hyperbolic_kepler( realT & E,   ///< [out] is the eccentric anomaly
 }
 
 ///Calculate the next iteration of Danby's quartic Newton-Raphson method.
+/** \ingroup kepler
+  */
 template<typename realT>
 realT kepler_danby_1( realT e, 
                       realT M, 
@@ -112,6 +114,8 @@ realT kepler_danby_1( realT e,
 /** 
   * \returns -1 on exceeding itmax.
   * \returns the number of iterations on success.
+  * 
+  * \ingroup kepler
   */
 template<typename realT>
 long solve_kepler_danby( realT & E, ///< [out] is the eccentric anomaly
@@ -152,6 +156,8 @@ long solve_kepler_danby( realT & E, ///< [out] is the eccentric anomaly
 /** 
   * \returns the number of iterations on success.
   * \returns -1 if itmax is exceeded.
+  * 
+  * \ingroup kepler
   */
 template<typename realT>
 long solve_kepler( realT & E, ///< [out] is the eccentric anomaly
@@ -310,338 +316,10 @@ long solve_keplerdiff_danby(arithT *dE, arithT *D, arithT e, arithT EC, arithT E
    return -1;  //This means itmax exceeded.
 }
 
-//cartesian_orbit_work
-///Calculate various quantities of an orbit given the keplerian elements and a vector of times.
-/** Only those quantities with non-null pointers are actually calculated.
-  * 
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-  *  
-  * \param x       [output] the projected x positions of the orbit.  Must be at least as long as t.
-  * \param y       [output] the projected y positions of the orbit.  Must be at least as long as t.
-  * \param z       [output] the projected z positions of the orbit.  Must be at least as long as t.
-  * \param f       [output] the true anomaly of the orbit.  Must be at least as long as t.
-  * \param cos_alf [output] the phase angle of the orbit.  Must be at least as long as t.
-  * \param phi  [output] the Lambertian phase function.  Must be at least as long as t.
-  * \param t       [input] the times at which to calculate the projected positions
-  * \param N       [input] the number of points contained in t, and allocated in nx, ny, nz
-  * \param a       [input] the semi-major axis of the orbit
-  * \param P       [input] the orbital period
-  * \param e       [input] the eccentricity of the orbit
-  * \param t0      [input] the time of pericenter passage of the orbit
-  * \param i       [input] the inclination of the orbit
-  * \param w       [input] the argument of pericenter of the orbit
-  * \param W       [input] the longitude of the ascending node of the orbit.
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit_work( vectorT  * x, 
-                          vectorT  * y, 
-                          vectorT  * z,
-                          vectorT  * f,
-                          vectorT  * cos_alf,
-                          vectorT  * phi,
-                          const vectorT & t, 
-                          const size_t N,  
-                          arithT a, 
-                          arithT P, 
-                          arithT e, 
-                          arithT t0, 
-                          arithT i, 
-                          arithT w, 
-                          arithT W)
-{
-   long rv;
-   arithT M;
-   arithT r, _f, E, D;
-   
-   //Just do these calcs once
-   arithT cos_i = cos(i);
-   arithT sin_i = sin(i);
-   arithT cos_W = cos(W);
-   arithT sin_W = sin(W);
-   
-   arithT cos_wf, sin_wf;
-   
-   for(size_t j=0; j < N; j++)
-   {
-      M = MEANANOL(t[j], t0, P);
-      
-      rv = rf_elements(&r, &_f, &E, &D, e, M, a);
-      
-      if(rv < 0) return -1;
-      
-      //one calc
-      cos_wf = cos(w+_f);
-      sin_wf = sin(w+_f);
-      
-      //Assumption is that these will be optimized away if NULL
-      if(x) (*x)[j] = r*(cos_W*cos_wf-sin_W*sin_wf*cos_i);
-      if(y) (*y)[j] = r*(sin_W*cos_wf+cos_W*sin_wf*cos_i);
-      if(z) (*z)[j] = r*sin_wf*sin_i;
-      
-      if(f) (*f)[j] = _f;
-      
-      if(cos_alf) (*cos_alf)[j] = sin_wf*sin_i;
-     
-      if(phi) (*phi)[j] = get_lambert_phi<arithT>(sin_wf*sin_i);
-      
-   }
-   return 0;
-}
-
-
-///Calculate the cartesian x-y position of an orbit given keplerian elements and a vector of times.
-/**
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-  * 
-  * \param [out] nx the projected x positions of the orbit.  Must be at least as long as t.
-  * \param [out] ny the projected y positions of the orbit.  Must be at least as long as t.
-  * \param [in] t   the times at which to calculate the projected positions
-  * \param [in] N   the number of points contained in N, and allocated in nx, ny, nz
-  * \param [in] a   the semi-major axis of the orbit
-  * \param [in] P   the orbital period
-  * \param [in] e   the eccentricity of the orbit
-  * \param [in] t0  the time of pericenter passage of the orbit
-  * \param [in] i   the inclination of the orbit
-  * \param [in] w   the argument of pericenter of the orbit
-  * \param [in] W   the longitude of the ascending node of the orbit.
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit_2D( vectorT &nx, 
-                        vectorT &ny, 
-                        const vectorT & t, 
-                        const size_t N,  
-                        arithT a, 
-                        arithT P, 
-                        arithT e, 
-                        arithT t0, 
-                        arithT i, 
-                        arithT w, 
-                        arithT W)
-{
-   return cartesian_orbit_work(&nx, &ny, 0, 0, 0, 0, t, N, a, P, e, t0, i, w, W);
-}
-
-
-///Calculate the cartesian x-y-z position of an orbit given keplerian elements and a vector of times.
-/**
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-  * 
-  * \param nx [output] the projected x positions of the orbit.  Must be at least as long as t.
-  * \param ny [output] the projected y positions of the orbit.  Must be at least as long as t.
-  * \param nz [output] the projected z positions of the orbit.  Must be at least as long as t.
-  * \param t  [input] the times at which to calculate the projected positions
-  * \param N  [input] the number of points contained in N, and allocated in nx, ny, nz
-  * \param a  [input] the semi-major axis of the orbit
-  * \param P  [input] the orbital period
-  * \param e  [input] the eccentricity of the orbit
-  * \param t0 [input] the time of pericenter passage of the orbit
-  * \param i  [input] the inclination of the orbit
-  * \param w  [input] the argument of pericenter of the orbit
-  * \param W  [input] the longitude of the ascending node of the orbit.
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit3D( vectorT &nx, 
-                       vectorT &ny, 
-                       vectorT &nz, 
-                       const vectorT & t, 
-                       const size_t N,  
-                       arithT a, 
-                       arithT P, 
-                       arithT e, 
-                       arithT t0, 
-                       arithT i, 
-                       arithT w, 
-                       arithT W)
-{
-   return cartesian_orbit_work(&nx, &ny, &nz, 0, 0, 0, t, N, a, P, e, t0, i, w, W);
-}
-
-///Calculate the cartesian x-y position and true anomaly of an orbit given keplerian elements and a vector of times.
-/**
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-  * 
-  * \param nx [output] the projected x positions of the orbit.  Must be at least as long as t.
-  * \param ny [output] the projected y positions of the orbit.  Must be at least as long as t.
-  * \param f  [output] the true anomaly of the orbit.  Must be at least as long as t.
-  * \param t  [input] the times at which to calculate the projected positions
-  * \param N  [input] the number of points contained in N, and allocated in nx, ny, nz
-  * \param a  [input] the semi-major axis of the orbit
-  * \param P  [input] the orbital period
-  * \param e  [input] the eccentricity of the orbit
-  * \param t0 [input] the time of pericenter passage of the orbit
-  * \param i  [input] the inclination of the orbit
-  * \param w  [input] the argument of pericenter of the orbit
-  * \param W  [input] the longitude of the ascending node of the orbit.
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit2D_f( vectorT &nx, 
-                         vectorT &ny, 
-                         vectorT &f, 
-                         const vectorT & t, 
-                         const size_t N,  
-                         arithT a, 
-                         arithT P, 
-                         arithT e, 
-                         arithT t0, 
-                         arithT i, 
-                         arithT w, 
-                         arithT W )
-{
-   return cartesian_orbit_work<vectorT, arithT>(&nx, &ny, 0, &f, 0, 0, t, N, a, P, e, t0, i, w, W);
-}
-
-
-///Calculate the cartesian x-y-z position of an orbit and the true anomaly given keplerian elements and a vector of times.
-/**
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-* 
-  * \param nx [output] the projected x positions of the orbit.  Must be at least as long as t.
-  * \param ny [output] the projected y positions of the orbit.  Must be at least as long as t.
-  * \param nz [output] the projected z positions of the orbit.  Must be at least as long as t.
-  * \param f  [output] the true anomaly of the orbit.  Must be at least as long as t.
-  * \param t  [input] the times at which to calculate the projected positions
-  * \param N  [input] the number of points contained in N, and allocated in nx, ny, nz
-  * \param a  [input] the semi-major axis of the orbit
-  * \param P  [input] the orbital period
-  * \param e  [input] the eccentricity of the orbit
-  * \param t0 [input] the time of pericenter passage of the orbit
-  * \param i  [input] the inclination of the orbit
-  * \param w  [input] the argument of pericenter of the orbit
-  * \param W  [input] the longitude of the ascending node of the orbit.
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit3D_f( vectorT &nx, 
-                         vectorT &ny, 
-                         vectorT &nz, 
-                         vectorT &f, 
-                         const vectorT & t, 
-                         const size_t N,  
-                         arithT a, 
-                         arithT P, 
-                         arithT e, 
-                         arithT t0, 
-                         arithT i, 
-                         arithT w, 
-                         arithT W )
-{
-   return cartesian_orbit_work(&nx, &ny, &nz, &f, 0, 0, t, N, a, P, e, t0, i, w, W);
-}
-
-// \param [out] nx  the projected x positions of the orbit.  Must be at least as long as t.
-
-///Calculate the cartesian x-y position and the Lambert phase function of an orbit given keplerian elements and a vector of times.
-/**
-  * \tparam vectorT a type whose elements are accessed with the [] operator.
-  * \tparam arithT the type in which to perform arithmetic
-  * 
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-template<typename vectorT, typename arithT>
-int cartesian_orbit2D_phi( vectorT &nx, ///< [out] the projected x positions of the orbit.  Must be at least as long as t.
-                           vectorT &ny, ///< [out] the projected y positions of the orbit.  Must be at least as long as t.
-                           vectorT &phi, ///< [out] the Labert phase function.  Must be at least as long as t.
-                           const vectorT & t, ///< [in] the times at which to calculate the projected positions
-                           const size_t N,   ///< [in] the number of points contained in N, and allocated in nx, ny, nz
-                           arithT a,  ///< [in] the semi-major axis of the orbit
-                           arithT P,  ///< [in] the orbital period
-                           arithT e,  ///< [in] the eccentricity of the orbit
-                           arithT t0,  ///< [in] the time of pericenter passage of the orbit
-                           arithT i,  ///< [in] the inclination of the orbit
-                           arithT w,  ///< [in] the argument of pericenter of the orbit
-                           arithT W  ///< [in] the longitude of the ascending node of the orbit.
-                         )
-{
-   return cartesian_orbit_work(&nx, &ny, (vectorT *)0, (vectorT *)0, (vectorT *)0, &phi, t, N, a, P, e, t0, i, w, W);
-}
-
-
-
-///Calculate the projection of an orbit onto the reference plane for a set of times.
-/** NOTE: this is depreciated.  Use cartesian_orbit instead.
-  * 
-  * \param nx [output] the projected x positions of the orbit
-  * \param ny [output] the projected y positions of the orbit
-  * \param t [input] the times at which to calculate the projected positions
-  * \param a [input] the semi-major axis of the orbit
-  * \param P [input] the orbital period
-  * \param e [input] the eccentricity of the orbit
-  * \param t0 [input] the time of pericenter passage of the orbit
-  * \param i [input] the inclination of the orbit
-  * \param w [input] the argument of pericenter of the orbit
-  * \param W [input] the longitude of the ascending node of the orbit.
-  * \retval -1 on error calculating the orbit (from rf_elements)
-  * \retval 0 on success.
-  */
-//int project_orbit( mx::Vectord &nx, mx::Vectord &ny, mx::Vectord &f, const mx::Vectord & t, double a, double P, double e, double t0, double i, double w, double W);
-
-///Get the orbital phase at true anomaly f. Calculates the cos(alfa) where alfa is the orbital phase.
-/** Only calculates cos(alfa) to save an operation when possible.
-  * \param cos_alf [output] is the result
-  * \param f [input] is the true anomoaly at which to calculate alfa
-  * \param w [input] the argument of pericenter of the orbit
-  * \param inc [input] is the inclinatin of the orbit
-  * \retval -1 on error
-  * \retval 0 on success
-  */ 
-int get_orbit_phase(double &cos_alf, double f, double w, double inc)
-{
-   cos_alf = sin(f+w)*sin(inc);
-}
-
-///Get the orbital phase at true anomaly f. Calculates the cos(alfa) where alfa is the orbital phase.
-/** Only calculates cos(alfa) to save an operation when possible.
-  * \param cos_alf [output] is the result
-  * \param f [input] is the true anomoaly at which to calculate alfa
-  * \param w [input] the argument of pericenter of the orbit
-  * \param inc [input] is the inclinatin of the orbit
-  * \retval -1 on error
-  * \retval 0 on success
-  */ 
-template<typename vectorT>
-int get_orbit_phase(vectorT &cos_alf, const vectorT &f, const double w, const double inc)
-{
-   cos_alf.allocate(f.size());
-   
-   for(size_t i=0; i<f.size(); i++)
-   {
-      cos_alf[i] = sin(f[i]+w)*sin(inc);
-   }
-   return 0;
-}
 
 
 
 
-
-///Get the lambertian phase function at orbital phase specified as cos(alfa), where alfa is the phase angle.
-/** Uses cos(alfa) to save an operation after calculating orbit phase.
-  * \param phi [output] is the result
-  * \param cos_alf [input] specifies the phase angle, as its cosine
-  * \retval -1 on error
-  * \retval 0 on success
-  */
-//int get_lambert_phi(mx::Vectord &phi, const mx::Vectord &cos_alf);
 
 ///Calculate the inclination and the longitude of the ascending node given a point on the orbit projected onto the plane of the sky, the argument of pericenter, the current true radius, and the current true anomaly.
 /** Solutions are not always possible.  You must check the return value to know if the results are valid.
@@ -694,7 +372,6 @@ int get_W_1pt_z0(arithT &W, arithT x, arithT y, arithT r, arithT f, arithT w)
 }
 
 #endif
-/// @}
 
 } //namespace astro
 } //namespace mx

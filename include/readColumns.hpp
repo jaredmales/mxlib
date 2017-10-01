@@ -72,9 +72,7 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
  
 }
 
-/** \addtogroup ioutils
-  * @{
-  */
+
 
 ///Read in columns from a text file
 /** This function opens a file containing data formatted in columns and reads in the data row by row.  
@@ -97,12 +95,14 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
   * \endcode
   * which sets the delimmiter to comma, the comment character to ;, and the end-of-line to \\r.
   * 
+  * Columns can be skipped using mx::skipCol.
+  * 
   * \tparam delim is the character separating columns,  by default this is space.
   * \tparam comment is the character starting a comment.  by default this is #
   * \tparam eol is the end of line character.  by default this is \n
   * \tparam arrTs a variadic list of array types. this is not specified by the user.
   * 
-  * 
+  * \ingroup ioutils
   */
 template<char delim=' ', char comment='#', char eol='\n', typename... arrTs> 
 int readColumns( const std::string & fname, ///< [in] is the file name to read from
@@ -198,7 +198,29 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
    return 0;
 }
 
-/// @}
+///A dummy class to allow mx::readColumns to skip a column(s) in a file without requiring memory allocation.
+/** The alternative is to use dummy vectors, which result in excess memory allocations and deallocations.
+  * Usage:
+  \code
+  std::vector<T> col1, col5;
+  skipCol sk;
+  readColumns("filename.txt", col1, sk, sk, sk, col5); //This results in only columns 1 and 5 being stored.
+  \endcode
+  *
+  * \ingroup ioutils
+  */
+struct skipCol
+{
+   typedef std::string value_type; ///< value_type is defined as std::string so that no conversions take place.
+   
+   template<typename T>
+   void push_back( const T & arg )
+   {
+      return;
+   }
+};
+
+
 
 } //namespace mx
 

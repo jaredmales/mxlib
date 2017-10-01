@@ -50,7 +50,8 @@ struct basicSpectrum
      */
    static std::string readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
                                     std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-                                    const std::string & path ///< [in] the full path to the file. 
+                                    const std::string & path, ///< [in] the full path to the file. 
+                                    const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                                   )
    {
       mx::readColumns(path, rawLambda, rawSpectrum);
@@ -89,7 +90,8 @@ struct astroFilter
    
    static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
                             std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-                            const std::string & path ///< [in] the full path to the file.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
       mx::readColumns(path, rawLambda, rawSpectrum);
@@ -112,6 +114,66 @@ struct astroFilter
    
 };
 
+
+/// A square-wave filter spectrum
+/** Parameters specify the central wavelength, width, and sampling (all in microns) of a square-wave type filter.
+  * \ingroup astrophot_spectra
+  */
+template<typename _units, bool _rsr=true>
+struct sqWaveFilter
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+   
+   static const bool freq = false;
+   
+   ///The square wave is parameterized by the central wavelength, width, and sampling (all in microns).
+   typedef struct
+   {
+      realT lam0; ///< The central Wavelength in microns
+      realT fw; ///< The full width of the filter in microns
+      realT dlam; ///< The wavelength sampling to use in microns.
+   } paramsT;
+   
+   ///Convert from um to SI m
+   static constexpr realT wavelengthUnits = static_cast<realT>(1e6);
+   
+   ///No conversion is performed on filter transmission.
+   static constexpr realT fluxUnits = static_cast<realT>(1); 
+   
+   static constexpr const char * dataDirEnvVar = 0;
+   
+   static std::string fileName( const paramsT & params )
+   {
+      return "";
+   }
+   
+   static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
+                            std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
+                          )
+   {
+      rawLambda.resize(4);
+      rawSpectrum.resize(4);
+      
+      rawLambda[0] = params.lam0 - 0.5*params.fw - 0.5*params.dlam;
+      rawSpectrum[0] = 0.0;
+      
+      rawLambda[1] = params.lam0 - 0.5*params.fw + 0.5*params.dlam;
+      rawSpectrum[1] = 1.0;
+   
+      rawLambda[2] = params.lam0 + 0.5*params.fw - 0.5*params.dlam;
+      rawSpectrum[2] = 1.0;
+      
+      rawLambda[3] = params.lam0 + 0.5*params.fw + 0.5*params.dlam;
+      rawSpectrum[3] = 0.0;
+      
+      return 0;
+      
+   }
+   
+};
 
 /// A spectrum from the HST calspec library
 /** See http://www.stsci.edu/hst/observatory/crds/calspec.html
@@ -147,7 +209,8 @@ struct calspecSpectrum
    ///Read a CALSPEC spectrum, which is a simple two column ASCII format.
    static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
                             std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-                            const std::string & path ///< [in] the full path to the file.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
       return mx::readColumns(path, rawLambda, rawSpectrum);
@@ -187,7 +250,8 @@ struct picklesSpectrum
    ///Read a Pickles spectrum, which for these purposes is a simple two column ASCII format.
    static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
                             std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-                            const std::string & path ///< [in] the full path to the file.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
       return mx::readColumns(path, rawLambda, rawSpectrum);
@@ -196,7 +260,58 @@ struct picklesSpectrum
 };
 
 
-
+/// Earth Albedo Spectra
+/** The spectra can be one of:
+  * - "EPOXI" returns the apparent albedo spectrum from Cowan and Strait (2013) \cite cowan_2013.
+  * - "RawEarthshine" returns the unormalized albedo spectrum measured using Earthshine by Turnbull et al (2006) \cite turnbull_20016.
+  * - "Earthshine" returns the Earthshine spectrum normalized to match the EPOXI result of 0.27 in the 550 nm band.
+  * 
+  * \ingroup astrophot_spectra 
+  */
+template<typename _units>
+struct earthAlbedo
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+   
+   static const bool freq = false;
+   
+   typedef std::string paramsT; ///< The name of the spectrum can be "EPOXI", "Earthshine", or "RawEarthshine".
+      
+   ///Convert from A to SI m
+   static constexpr realT wavelengthUnits = static_cast<realT>(1e6);
+   
+   ///The Earthshine is a dimensionless albedo.
+   static constexpr realT fluxUnits = static_cast<realT>(1); 
+   
+   ///The location is specified by the EARTHSHINE_DATADIR environment variable. 
+   static constexpr const char * dataDirEnvVar = "EARTHSHINE_DATADIR";
+   
+   ///The name of the datafile is a constant.
+   static std::string fileName( const std::string & name )
+   {
+      if(name == "EPOXI") return "cowan_2013_EPOXI_albedo.dat";
+      if(name == "Earthshine") return "earthshine_epoxi_normalized.dat";
+      if(name == "RawEarthshine") return "Earthshine/F7_opt_NIR_ES_data.txt";
+      
+      mxError("earthAlbeo::fileName", MXE_INVALIDARG, "name not recognized.");
+      
+      return "";
+   }
+   
+   ///Read the Earthshine albedo spectrum, which is a simple two column ASCII format.
+   static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
+                            std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
+                          )
+   {
+      
+      if(mx::readColumns(path, rawLambda, rawSpectrum) < 0) return -1;
+      
+   }
+   
+};
 
 } //namespace astro
 

@@ -179,7 +179,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
       
       std::string path = _dataDir + "/" + spectrumT::fileName(_params);
    
-      if( spectrumT::readSpectrum(rawLambda, rawSpectrum, path) < 0)
+      if( spectrumT::readSpectrum(rawLambda, rawSpectrum, path, _params) < 0)
       {
          return -1; ///\returns -1 on an error reading the spectrum.
       }

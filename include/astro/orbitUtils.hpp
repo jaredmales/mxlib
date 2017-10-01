@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __mx_astro_orbitUtils_hpp__
-#define __mx_astro_orbitUtils_hpp__
+#ifndef mx_astro_orbitUtils_hpp
+#define mx_astro_orbitUtils_hpp
 
 #include "kepler.hpp"
 
@@ -15,15 +15,13 @@ namespace mx
 namespace astro
 {
 
-/** \addtogroup orbits
-  * @{
-  */
-
 ///Calculate the period of an orbit, given the masses and semi-major axis.
 /** 
   * \tparam units specifies the unit system and precision, see \ref astrounits. 
   * 
-  * \returns the period in days
+  * \returns the period in the specified units
+  * 
+  * \ingroup orbits
   */ 
 template<typename units>
 typename units::realT orbitPeriod( typename units::realT m1, ///< [in] mass of one object. 
@@ -40,6 +38,8 @@ typename units::realT orbitPeriod( typename units::realT m1, ///< [in] mass of o
   * \tparam units specifies the unit system and precision, see \ref astrounits.
   * 
   * \returns the semi-major axis in the specified units
+  * 
+  * \ingroup orbits
   */ 
 template<typename units>
 typename units::realT orbitSemiMaj( typename units::realT m1, ///< [in] mass of one object.
@@ -55,6 +55,9 @@ typename units::realT orbitSemiMaj( typename units::realT m1, ///< [in] mass of 
 }
 
 ///Calculate the mean anomaly at time t, given the time of pericenter passage t0 and period P.  
+/**
+  * \ingroup orbits
+  */
 template<typename realT>
 realT orbitMeanAnol( realT t,
                      realT t0,
@@ -70,6 +73,8 @@ realT orbitMeanAnol( realT t,
   * 
   * \returns the numer of iterations in solving Kepler's equation, if successful.
   * \returns -1 if itmax is exceeded.
+  * 
+  * \ingroup orbits
   */
 template<typename realT>
 long orbitElements( realT & r,             ///< [out] is the orbital separation
@@ -128,6 +133,7 @@ long orbitElements( realT & r,             ///< [out] is the orbital separation
   * 
   * \returns the cosine of the phase angle
   * 
+  * \ingroup orbits
   */ 
 template<typename realT>
 realT orbitPhaseCosine( realT f,   ///< [in] is the true anomoaly at which to calculate alfa
@@ -144,6 +150,8 @@ realT orbitPhaseCosine( realT f,   ///< [in] is the true anomoaly at which to ca
   * \tparam realT is the type used for arithmetic
   * 
   * \returns the lambert phase function at alpha
+  * 
+  * \ingroup orbits
   */
 template<typename realT>
 realT orbitLambertPhase( realT cos_alf /**< [in] the cosine of the phase angle*/)
@@ -162,6 +170,8 @@ realT orbitLambertPhase( realT cos_alf /**< [in] the cosine of the phase angle*/
   *  
   * \retval -1 on error calculating the orbit (from rf_elements)
   * \retval 0 on success.
+  * 
+  * \ingroup orbits
   */
 template<typename vectorT, typename realT>
 int orbitCartesianWork( vectorT  * x,       ///< [out] [optional] If not NULL, will be the projected x positions of the orbit.  Must be at least as long as t.
@@ -253,6 +263,8 @@ int orbitCartesianWork( vectorT  * x,       ///< [out] [optional] If not NULL, w
   * 
   * \retval -1 on error calculating the orbit (from orbitCartesianWork)
   * \retval 0 on success.
+  * 
+  * \ingroup orbits
   */
 template<typename vectorT, typename arithT>
 int orbitCartesian2DPhi( vectorT &x, ///< [out] the projected x positions of the orbit.  Must be at least as long as t.
@@ -275,9 +287,8 @@ int orbitCartesian2DPhi( vectorT &x, ///< [out] the projected x positions of the
 }
 
 
-///@}
 
 } //namespace astro
 } //namespace mx
 
-#endif //__mx_astro_orbitUtils_hpp__
+#endif //mx_astro_orbitUtils_hpp

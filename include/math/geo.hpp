@@ -5,8 +5,8 @@
   *
   */
 
-#ifndef __geo_hpp__
-#define __geo_hpp__
+#ifndef geo_hpp
+#define geo_hpp
 
 #include <vector>
 
@@ -20,20 +20,29 @@ namespace mx
 namespace math
 {
    
-/** \ingroup geo
-  * @{
-  */
 
 ///Calculate the semi-latus rectum of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>
+/**
+  * \ingroup geo
+  */  
 #define semilatrect(a,e) (e == 0.0 ? a : (e == 1.0 ? 2.*a : (e < 1. ? a*(1-e*e) : a*(e*e-1))))
 
 ///Calculate the focal parameter of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>
+/**
+  * \ingroup geo
+  */
 #define focus(a,e) (e == 0.0 ? 1e34 : (e == 1.0 ? 2.*a : (e < 1. ? a*(1-e*e)/e : a*(e*e-1)/e)))
 
 ///Calculate the semi-major axis of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a>, given the focal parameter and the eccentricity
+/**
+  * \ingroup geo
+  */
 #define semimaj(p,e) (e == 1.0 ? 1e34 : (e < 1 ? p*e/(1-e*e) : p*e/(e*e-1) ))
 
 ///Calculate the eccentricity of a <a href="http://en.wikipedia.org/wiki/Conic_section">conic section</a> given the semi-major axis and the focal parameter
+/**
+  * \ingroup geo
+  */
 #define eccent(a, p) (a == 0.0 ? 1e34 : (p >= 1e9 ? 0.0 : (p>0 ? (-p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) : (p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) ) ))
 
 
@@ -47,6 +56,8 @@ namespace math
   * \param q is the angle to convert
   * 
   * \return the angle q converted to radians
+  * 
+  * \ingroup geo
   */
 template<typename realT>
 realT dtor(realT q)
@@ -108,6 +119,7 @@ realT angleMod(realT q /**< [in] the angle */)
   * \tparam degrad controls whether this is in degrees (0, default) or radians (1)
   * \tparam realT is the type in which to do arithmetic
   * 
+  *  \ingroup geo
   */
 template<int degrad = 0, typename realT>
 realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
@@ -149,6 +161,7 @@ realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
   * \tparam degrad controls whether angles are degrees (false) or radians (true)
   * \tparam realT is the type in which to do arithmetic
   * 
+  *  \ingroup geo
   */
 template<int degrad = 0, typename realT>
 realT angleMean(std::vector<realT> & q)
@@ -182,6 +195,8 @@ realT angleMean(std::vector<realT> & q)
   * 
   * \tparam degrad controls whether angles are degrees (false) or radians (true)
   * \tparam realT is the type in which to do arithmetic
+  * 
+  *  \ingroup geo
   */
 template<int degrad = 0, typename realT>
 int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
@@ -226,9 +241,7 @@ int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
 }
 
 
-/// @}
-
 } //namespaace math
 } //namespace mx
 
-#endif //__geo_hpp__
+#endif //geo_hpp
