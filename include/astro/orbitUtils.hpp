@@ -160,6 +160,33 @@ realT orbitLambertPhase( realT cos_alf /**< [in] the cosine of the phase angle*/
    return (sin(alf) + (pi<realT>()-alf)*cos_alf)/pi<realT>();   
 }
 
+///Calculate the radial velocity of an orbiting body inclined relative to an observer.
+/** \returns the radial velocity of the body with mass m1 as it orbits the barycenter of its orbit w.r.t. m2.
+  * 
+  * \ingroup orbits 
+  */
+template<typename units>
+typename units::realT orbitRV( typename units::realT m1,  ///< [in] the mass of the body for which the RV is computer
+                               typename units::realT m2,  ///< [in] the mass of the other body in the orbiting pair
+                               typename units::realT inc, ///< [in] the inclination of thte orbit of m2.
+                               typename units::realT a,   ///< [in] the semi-major axis of the orbit
+                               typename units::realT e,   ///< [in] the eccentricity of the orbit
+                               typename units::realT w,   ///< [in] the argument of pericenter
+                               typename units::realT f    ///< [in] the true anomaly at which the RV is to be calculated.
+                             )
+{
+   typedef typename units::realT realT;
+   
+   realT msini = m2*sin(inc); 
+
+   realT rv = (msini)*std::sqrt((constants::G<units>()/(m1+m2))/(a*(1-e*e)));
+   
+   rv *= (std::cos(w+f) + e*std::cos(w));
+   
+   return rv;
+}
+
+
 ///Calculate various quantities of an orbit given the keplerian elements and a vector of times.
 /** Only those quantities with non-null pointers are actually calculated.
   * 

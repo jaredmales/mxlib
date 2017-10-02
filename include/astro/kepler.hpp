@@ -181,71 +181,7 @@ long solve_kepler( realT & E, ///< [out] is the eccentric anomaly
 
 
 #if 0
-///Calculate the radial velocity at a point in an orbit specfied by time t.
-/** \param rv [output] the radial velocity in meters per second.
-  * \param r [output] is the radius
-  * \param f [output] is the true anomaly
-  * \param t [input] the time
-  * \param mstar [input] is the mass of the central star
-  * \param msini [input] is the mass of the orbiting body, times the sin of inclination.  Set to 0 if unknown.
-  * \param a [input] is the semi-major axis.
-  * \param e [input] is the eccentricity
-  * \param t0 [input] is the time of pericenter passage
-  * \param w [input] is the argument of pericenter
-  * \param tol [input] is the desired tolerance
-  * \param itmax [input] is the maximum number of iterations
-  * \retval 0 on success, -1 otherwise.
-  * \todo get_rv needs to be put into the same format as other astro functions
-  * \todo specify units for get_rv
-  * \todo error handling in astrodynamics!
-  */
-template<typename arithT>
-long get_rv(arithT *rv, arithT * r, arithT *f, arithT *E, arithT *D, arithT t, arithT mstar, arithT msini, arithT a, arithT e, arithT t0, arithT w, arithT tol=KEPLER_TOL, long itmax=KEPLER_ITMAX)
-//int get_rv(arithT *rv, arithT * r, arithT *f, arithT *E, arithT *D, arithT t, arithT mstar, arithT msini, arithT a, arithT e, arithT t0, arithT w, arithT tol, long itmax)
-{
-   arithT fpa, M, m2;
-   long its;
-  
-   if(e < 0.0)
-   {
-      std::cerr << "e < 0.0 in get_rv\n";
-      exit(0);
-   }
-   if(e == 1.0)
-   {
-      std::cerr << "e == 1.0 in get_rv\n";
-      exit(0);
-   }
 
-   m2 = 0.0;//msini/MR_JUDPITER;
-   if(e < 1.0) M = std::sqrt(GM_SOL_AUD*(mstar+m2) / POW_F(a,3))*(t-t0);
-   else if(a < 0) M = std::sqrt(GM_SOL_AUD*(mstar+m2) / POW_F(-a,3))*(t-t0);
-   else
-   {
-      std::cerr << "Bad conic parameters in get_rv\n";
-      std::cerr << "a=" << a << " e=" << e << "\n";
-      exit(0);
-   }
-
-   its = rf_elements(r, f, E, D, e, M, a, tol, itmax);
-
-   if(*r <= 0 || (*r > 2.0*a && a > 0.0))
-   {
-      std::cerr << "r <= 0 || r < 0.5a in get_rv\n";
-      std::cerr << "a=" << a << " e=" << e << " r=" << *r <<"\n";
-      return -1;
-   }
-   else 
-   {
-      //*rv = (msini/MR_JUDPITER)*std::sqrt((GM_SOL_AUD/(mstar+m2))*(2.0/(*r) - 1.0/a)) * AU_M /DAY_SEC;
-      *rv = (msini/MR_JUPITER)*std::sqrt((GM_SOL_AUD/(mstar+m2))/(a*(1-e*e))) * AU_M /DAYSEC;
-   }
-   //fpa = std::atan(e*SIN_F(*f)/(1+e*std::cos(*f)));
-   //*rv *= std::cos(*f + w - fpa);
-   *rv *= (std::cos(w+*f) + e*std::cos(w));
-   //*rv = (msini/MR_JUDPITER)*std::sqrt(GM_SOL_AUD/(mstar*a*(1-e*e)))*(cos(*f+w)+e*cos(w))*AU_M /DAY_SEC;
-   return its;
-}
 #endif
 
 
