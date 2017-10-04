@@ -10,8 +10,8 @@ LIB_PATH = $(INSTALL_DIR)/lib
 BIN_PATH = $(INSTALL_DIR)/bin 
 
 ###### Use these for MKL BLAS & Lapack:
-BLASPACK_INC = -DMXLIB_MKL -DMKL_ILP64 -m64 -I${MKLROOT}/include
-BLASPACK_LIB = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+BLASPACK_INC = -m64 -I${MKLROOT}/include
+BLASPACK_LIB = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 
 ###### Use these for MKL FFT (along with Blas and Lapack):
 #FFT_LIB = 

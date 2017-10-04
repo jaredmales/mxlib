@@ -8,7 +8,7 @@
 #ifndef __templateLapack_hpp__
 #define __templateLapack_hpp__
 
-//MKL uses different integer types, standard BLAS and LAPACK use int
+//MKL can use a 64-bit integer types, standard BLAS and LAPACK use int
 #ifdef MXLIB_MKL
    typedef MKL_INT MXLAPACK_INT;
 #else
@@ -101,7 +101,17 @@ double lamch<double>(char CMACH)
   * \ingroup template_lapack
   */
 template<typename dataT>
-MXLAPACK_INT sytrd( char UPLO, MXLAPACK_INT N, dataT * A, MXLAPACK_INT LDA, dataT *D, dataT *E, dataT *TAU, dataT *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
+MXLAPACK_INT sytrd( char UPLO, 
+                    MXLAPACK_INT N, 
+                    dataT * A, 
+                    MXLAPACK_INT LDA, 
+                    dataT *D, 
+                    dataT *E, 
+                    dataT *TAU, 
+                    dataT *WORK, 
+                    MXLAPACK_INT LWORK, 
+                    MXLAPACK_INT INFO
+                  )
 {
    return -1;
 }

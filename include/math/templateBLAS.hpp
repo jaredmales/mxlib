@@ -21,8 +21,8 @@ extern "C"
 }
 
 
-#ifndef __templateBLAS_hpp__
-#define __templateBLAS_hpp__
+#ifndef templateBLAS_hpp
+#define templateBLAS_hpp
 
 
 namespace mx
@@ -118,7 +118,7 @@ void hadp_impl( const int N,
 }
 
 /// Template wrapper for cblas-extension xHADP
-/** Computes the the Hadamard or element-wise product: X <- alpha*X*Y
+/** Computes the the Hadamard or element-wise product: X \<- alpha*X*Y
   * 
   * \param N [in] the length of the two vectors
   * \param alpha [in] scalar to multiply each element by
@@ -141,7 +141,7 @@ void hadp( const int N,
 }
 
 ///Implementation of the Hadamard (element-wise) division of two vectors 
-/** Computes the the Hadamard or element-wise product: X <- alpha*X/Y
+/** Computes the the Hadamard or element-wise product: X \<- alpha*X/Y
   * 
   * \param N [in] the length of the two vectors
   * \param alpha [in] scalar to multiply each element by
@@ -362,6 +362,6 @@ void syrk<std::complex<double> >(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
 } //namespace math
 } //namespace mx
 
-#endif //__templateBLAS_hpp__
+#endif //templateBLAS_hpp
 
 

@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __levmarInterface_hpp__
-#define __levmarInterface_hpp__
+#ifndef levmarInterface_hpp
+#define levmarInterface_hpp
 
 
 #include "templateLevmar.hpp"
@@ -22,10 +22,6 @@ namespace fit
 //Forwards
 template <typename T>
 struct hasJacobian;
-
-/** \ingroup fitting
-  * @{
-  */
 
 ///An interface to the levmar package
 /** Requires a fitter class, which conforms to one of the following minimum specifications.
@@ -75,6 +71,8 @@ struct hasJacobian;
   * for it to be used.
   * 
   * \tparam fitterT a class with at least the minimum interface described above.
+  * 
+  * \ingroup fitting
   */
 template<class fitterT>
 class levmarInterface
@@ -498,7 +496,7 @@ void levmarInterface<fitterT>::allocate_work()
       if(work) free(work);
       
       work_sz = alloc_sz(m,n);
-      work = (realT *) malloc( LM_DIF_WORKSZ(m,n) * sizeof(realT));
+      work = (realT *) malloc( work_sz * sizeof(realT));
    }
    
    //Allocate if covar is desired and unallocated.
@@ -631,8 +629,6 @@ int levmarInterface<fitterT>::fit()
    //Create one of the above functors, which depends on whether fitterT has a Jacobian.
    do_levmar<fitterT> fitter;
    
-   
-   
    fitter(p,x,m,n,itmax,_opts,info,work,covar,adata);
    
    deltaT = get_curr_time() - t0;
@@ -716,10 +712,11 @@ std::string levmarInterface<fitterT>::get_reason_string()
 
 ///Test whether a function type has a Jacobian function by testing whether it has a typedef of "hasJacobian"
 /** Used for compile-time determination of whether the fitter has a Jacobian.
+  * 
+  * \ingroup fitting
   */
-//This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
 template <typename T>
-struct hasJacobian
+struct hasJacobian //This was taken directly from the example at http://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
 {
    // Types "yes" and "no" are guaranteed to have different sizes,
    // specifically sizeof(yes) == 1 and sizeof(no) == 2.
@@ -740,6 +737,9 @@ struct hasJacobian
 };
 
 ///Wrapper for a native array to pass to \ref levmarInterface
+/**
+  * \ingroup fitting
+  */ 
 template<typename realT>
 struct array2Fit
 {
@@ -748,10 +748,10 @@ struct array2Fit
    size_t ny; ///Y dimension of the array
 };
 
-///@}
+
 } //namespace fit 
 } //namespace math
 } //namespace mx
 
-#endif //__levmarInterface_hpp__
+#endif //levmarInterface_hpp
 

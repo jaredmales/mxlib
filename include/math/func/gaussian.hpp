@@ -5,32 +5,27 @@
  *
  */
 
-#ifndef __gaussian_hpp__
-#define __gaussian_hpp__
+#ifndef gaussian_hpp
+#define gaussian_hpp
 
 #include <cmath>
 
 
-//#include <sofa.h>  //for DPI
-
 namespace mx
 {
-
 namespace math 
 {
 namespace func 
 {
    
-/** \addtogroup gen_math_gaussians
-  * @{
-  */
-
 ///Constant to convert between the Gaussian width parameter and FWHM
 /** Used for
   * 
   * \f$ FWHM = 2\sqrt{2\log2}\sigma \f$
   *
   * This was calculated in long double precision.
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 #define twosqrt2log2 2.354820045030949382091484
    
@@ -39,6 +34,7 @@ namespace func
   * 
   * \f$ \sigma = 2\sqrt{2\log2}FWHM \f$
   *
+  * \ingroup gen_math_gaussians
   */ 
 #define fwhm2sigma(fw)   ( (fw) / twosqrt2log2)
 
@@ -47,6 +43,7 @@ namespace func
   * 
   * \f$ FWHM = 2\sqrt{2\log2}\sigma \f$
   *
+  * \ingroup gen_math_gaussians
   */ 
 #define sigma2fwhm(sig)  ( (sig) * twosqrt2log2)
    
@@ -59,6 +56,8 @@ namespace func
   * \returns the value of the 1D arbitrarily-centered symmetric Gaussian at (x)
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 realT gaussian( const realT & x, ///< [in] is the x-position at which to evaluate the Gaussian
@@ -81,6 +80,8 @@ realT gaussian( const realT & x, ///< [in] is the x-position at which to evaluat
   * \returns the value of the 2D arbitrarily-centered symmetric Gaussian at (x,y)
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 realT gaussian2D( const realT  x, ///< [in] the x-position at which to evaluate the Gaussian
@@ -101,26 +102,20 @@ realT gaussian2D( const realT  x, ///< [in] the x-position at which to evaluate 
   * 
   * \f$ (x,y) = G_0 + A\exp[-(0.5/\sigma^2)((x-x_0)^2+(y-y_0)^2)] \f$
   * 
-  * \param arr is the allocated array to fill in
-  * \param nx is the size of the x dimension of the array
-  * \param ny is the size of the y dimension of the array
-  * \param G0 is the constant to add to the Gaussian
-  * \param A is the scaling factor (peak = A)
-  * \param x0 is the x-coordinate of the center
-  * \param y0 is the y-coordinate of the center
-  * \param sigma is the third rotation and scaling factor
-  * 
   * \tparam realT is the type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
-void gaussian2D( realT * arr,
-                 size_t nx,
-                 size_t ny,
-                 const realT & G0,
-                 const realT & A,
-                 const realT & x0,
-                 const realT & y0,
-                 const realT & sigma )
+void gaussian2D( realT * arr, ///< [out] is the allocated array to fill in
+                 size_t nx, ///< [in] is the size of the x dimension of the array
+                 size_t ny, ///< [in] is the size of the y dimension of the array
+                 const realT & G0, ///< [in] is the constant to add to the Gaussian
+                 const realT & A, ///< [in] is the scaling factor (peak = A)
+                 const realT & x0, ///< [in] is the x-coordinate of the center
+                 const realT & y0, ///< [in] is the y-coordinate of the center
+                 const realT & sigma  ///< [in] is the third rotation and scaling factor
+               )
 {
    size_t idx;
    
@@ -171,6 +166,8 @@ void gaussian2D( realT * arr,
   * \returns the value of the 2D elliptical Gaussian at (x,y)
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 realT gaussian2D( const realT & x, 
@@ -219,6 +216,8 @@ realT gaussian2D( const realT & x,
   * \param c [input]
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */
 template<typename realT>
 void gaussian2D_gen2rot( realT & sigma_x, 
@@ -308,6 +307,8 @@ void gaussian2D_gen2rot( realT & sigma_x,
   * \param theta [input]
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */
 template<typename realT>
 void gaussian2D_rot2gen( realT & a,
@@ -363,6 +364,8 @@ void gaussian2D_rot2gen( realT & a,
   * \returns the value of the 2D elliptical Gaussian at (x,y)
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 realT gaussian2D_ang( const realT & x, 
@@ -403,30 +406,22 @@ realT gaussian2D_ang( const realT & x,
   * (a,b,c) to  (\f$\sigma_x\f$,\f$\sigma_y\f$,\f$\theta\f$) and back.  The function \ref gaussian2D_ang is a
   * wrapper for this function, which instead accepts (\f$\sigma_x\f$,\f$\sigma_y\f$,\f$\theta\f$) as inputs.
   * 
-  * \param arr is the allocated array to fill in
-  * \param nx is the size of the x dimension of the array
-  * \param ny is the size of the y dimension of the array
-  * \param G0 is the constant to add to the Gaussian
-  * \param A is the scaling factor (peak = A)
-  * \param x0 is the x-coordinate (in pixels) of the center
-  * \param y0 is the y-coordinate (in pixels) of the center
-  * \param a is the first rotation and scaling factor
-  * \param b is the second rotation and scaling factor
-  * \param c is the third rotation and scaling factor
-  * 
   * \tparam realT is the type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
-void gaussian2D( realT * arr,
-                 size_t nx,
-                 size_t ny,
-                 const realT & G0,
-                 const realT & A,
-                 const realT & x0, 
-                 const realT & y0, 
-                 const realT & a,
-                 const realT & b,
-                 const realT & c )
+void gaussian2D( realT * arr,      ///< [out] is the allocated array to fill in
+                 size_t nx,        ///< [in] is the size of the x dimension of the array
+                 size_t ny,        ///< [in] is the size of the y dimension of the array
+                 const realT & G0, ///< [in] is the constant to add to the Gaussian
+                 const realT & A,  ///< [in] is the scaling factor (peak = A)
+                 const realT & x0, ///< [in] is the x-coordinate (in pixels) of the center
+                 const realT & y0, ///< [in] is the y-coordinate (in pixels) of the center
+                 const realT & a,  ///< [in] is the first rotation and scaling factor
+                 const realT & b,  ///< [in] is the second rotation and scaling factor
+                 const realT & c   ///< [in] is the third rotation and scaling factor
+               )
 {
    size_t idx;
    
@@ -475,6 +470,8 @@ void gaussian2D( realT * arr,
   * \returns the value of the 2D elliptical Gaussian at (x,y)
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 void gaussian2D_ang( realT * arr,
@@ -541,6 +538,8 @@ void gaussian2D_ang( realT * arr,
   * 
   * 
   * \tparam realT is type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
 void gaussian2D_jacobian( realT *j,
@@ -572,13 +571,11 @@ void gaussian2D_jacobian( realT *j,
    
 }
 
-///@}
-
 } //namespace func 
 }//namespace math
 } //namespace mx
 
-#endif //__gaussian_hpp__
+#endif //gaussian_hpp
 
 
 

@@ -16,7 +16,7 @@ Download the latest levmar from the above link.  I am currently on 2.6.
 
 I typically need to edit the following lines in the Makefile, like so:
 \verbatim
-CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -funroll-loops -Wall -fPIC
+CFLAGS=$(CONFIGFLAGS) $(ARCHFLAGS) -O3 -ffast-math -funroll-loops -Wall -fPIC
 AR=ar -r
 RANLIB=ar -s
 \endverbatim
@@ -36,9 +36,10 @@ If you installed ATLAS somewhere else, modify accordingly.
 For MKL:
 \verbatim
 LAPACKLIBS_PATH=${MKLROOT}/lib/intel64
-LAPACKLIBS=-Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+CFLAGS+=-m64
+LAPACKLIBS=-Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 \endverbatim
-Depending on your architecture, you may need to edit the path and these flags. The <a href="https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor" > MKL line advisor</a> is of great help in determining this.
+The m64 option is added to CFLAGS at the recommendation of the line advisor.  Depending on your architecture, you may need to edit the path and these flags. The <a href="https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor" > MKL line advisor</a> is of great help in determining this.
 
 
 \subsection levmarmt Multithreading
@@ -51,7 +52,7 @@ should be commented out if there is any chance you will use levmar in a multithr
 \subsection levmarbuild Bulding
 Type make to build.  Do not worry if it exits with an error -- as long liblevmar.a was made then everything is fine for our purposes.
 
-Finnaly, once the build is complete, turn liblevmar.a into a shared libary like so:
+Finally, once the build is complete, turn liblevmar.a into a shared libary like so:
 \code
 gcc -shared -Wl,-soname,liblevmar.so -o liblevmar.so *.o -rdynamic
 \endcode

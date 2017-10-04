@@ -8,8 +8,12 @@
 #ifndef fitGaussian_hpp
 #define fitGaussian_hpp
 
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
+
 
 namespace mx
 {
@@ -245,11 +249,10 @@ struct gaussian2D_sym_fitter
    
             hx[idx_dat] = func::gaussian2D<realT>(i,j,p[0],p[1], p[2], p[3], p[4]) - arr->data[idx_mat];
             
-            hx[idx_dat] *= fabs(arr->data[idx_mat]);
-            
             idx_dat++;
          }
       }
+      
    }
    
    ///Does nothing in this case.
@@ -270,7 +273,7 @@ struct gaussian2D_gen_fitter
    
    static const int nparams = 7;
    
-   //typedef bool hasJacobian; //The Jacobian may not be correct, possibly due to poss-def problem.
+   //typedef bool hasJacobian; //The Jacobian may not be correct, possibly due to poss-def problem.  It is often slower.
    
    static void func(realT *p, realT *hx, int m, int n, void *adata)
    {
@@ -279,7 +282,7 @@ struct gaussian2D_gen_fitter
       size_t idx_mat, idx_dat;
 
       //Check for positive-definiteness of {{a b}{b c}}
-      if( p[4]*p[6] - p[5]*p[5] <= 0 || p[4] <= 0 || p[6] <= 0 || p[4]+p[6] <= 2*fabs(p[6]))
+      if( p[4]*p[6] - p[5]*p[5] <= 0 || p[4] <= 0 || p[6] <= 0 || p[4]+p[6] <= 2*fabs(p[5]))
       {
          idx_dat = 0;
          //If it's not positive-definite, then we just fill in with the value of the image itself.
@@ -308,7 +311,8 @@ struct gaussian2D_gen_fitter
    
             hx[idx_dat] = func::gaussian2D<realT>(i,j, p[0], p[1], p[2], p[3], p[4], p[5], p[6]) - arr->data[idx_mat];
                         
-            hx[idx_dat] *= fabs(arr->data[idx_mat]);
+            //hx[idx_dat] *= fabs(arr->data[idx_mat]);
+            
             
             ++idx_dat;
          }
@@ -324,7 +328,7 @@ struct gaussian2D_gen_fitter
       realT j_tmp[7];
       
       //Check for positive-definiteness of {{a b}{b c}}
-      if( p[4]*p[6] - p[5]*p[5] <= 0)
+      if( p[4]*p[6] - p[5]*p[5] <= 0 || p[4] <= 0 || p[6] <= 0 || p[4]+p[6] <= 2*fabs(p[5]))
       {
          idx_dat = 0;
          //If it's not positive-definite, then we just fill in with 0s.
@@ -395,6 +399,95 @@ using fitGaussian2Dsym = mx::math::fit::fitGaussian2D<mx::math::fit::gaussian2D_
   */
 template<typename realT>
 using fitGaussian2Dgen = mx::math::fit::fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<realT>>;
+
+
+///Form an estimate of the parameters of an elliptical Gaussian from a 2D image.
+/** Note that this assumes that there is no constant value (i.e. it is zero-ed).
+  *
+  *  \ingroup gaussian_peak_fit 
+  */
+template<typename realT>
+int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
+                      realT & xg, ///< [out] estimate of the x-coordinate of the peak
+                      realT & yg, ///< [out] estimate of the y-coordinate of the peak
+                      realT & xFWHM, ///< [out] estimate of the x-FWHM
+                      realT & yFWHM, ///< [out] estimate of the y-FWHM
+                      realT & angG, ///< [out] estimate of the angle of the ellipse
+                      mx::improc::eigenImage<realT> & im,  ///< [in] the image with an elliptical gaussian
+                      realT maxWidth,   ///< [in] the width of the box to search for the maximum
+                      realT widthWidth,  ///< [in] the radius of the circle to search for the widths
+                      realT nAngs,  ///< [in] the number of angles at which to search for the widths
+                      realT xg0,  ///< [in] an initial guess at the x-coordinate of the peak
+                      realT yg0  ///< [in] an initial guess at the y-coordinate of the peak
+                    )
+{
+   xg = xg0;
+   yg = yg0;
+   Ag = im(xg, yg);
+   for(int i =0; i< 2*maxWidth+1; ++i)
+   {
+      for(int j=0; j< 2*maxWidth+1; ++j)
+      {
+         if(  im( xg0 - maxWidth + i, yg0 - maxWidth + j) > Ag )
+         {
+            Ag = im( xg0 - maxWidth + i, yg0 - maxWidth + j);
+            xg = xg0 - maxWidth + i;
+            yg = yg0 - maxWidth + j;
+         }
+      }
+   }
+   
+   realT dAng = two_pi<realT>()/nAngs;
+   //std::vector<realT> dist(nAngs);
+   
+   realT c, s;
+   
+   realT maxD = 0;
+   int maxDidx = 0;
+   realT minD = widthWidth;
+   int minDidx = 0;
+   
+   for(int i=0; i < nAngs; ++i)
+   {
+      c = cos(i*dAng);
+      s = sin(i*dAng);
+      
+      for(int j=0; j < widthWidth; ++j)
+      {
+         if( im( xg + j*c, yg + j*s) <= 0.5*Ag )
+         {
+            //dist[i] = j;
+            
+            if(j > maxD) 
+            {
+               maxD = j;
+               maxDidx = i;
+            }
+            
+            if(j < minD)
+            {
+               minD = j;
+               minDidx = i;
+            }
+            break;
+         }
+      }
+   }
+   
+   //Take minang and move it by 90 degrees
+   realT minang = fmod(minDidx * dAng - 0.5*pi<realT>(), pi<realT>());
+   if(minang < 0) minang = fmod(minang + two_pi<realT>(), pi<realT>());
+   
+   realT maxang = fmod(maxDidx * dAng, pi<realT>());
+   
+   //Now average
+   angG = 0.5*(minang + maxang);
+   
+   xFWHM = 2*maxD;
+   yFWHM = 2*minD;
+   
+   return 0; ///\returns 0 if successful
+}
 
 
 } //namespace fit
