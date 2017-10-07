@@ -48,13 +48,13 @@ struct basicSpectrum
    ///This function reads the spectrum, returning its raw wavelength and spectrum points.  
    /** No unit conversions or interpolations should take place.
      */
-   static std::string readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
+   static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
                                     std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
                                     const std::string & path, ///< [in] the full path to the file. 
                                     const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                                   )
    {
-      mx::readColumns(path, rawLambda, rawSpectrum);
+      return mx::readColumns(path, rawLambda, rawSpectrum);
    }
    
 };
@@ -306,9 +306,8 @@ struct earthAlbedo
                             const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
-      
       if(mx::readColumns(path, rawLambda, rawSpectrum) < 0) return -1;
-      
+      return 0;
    }
    
 };

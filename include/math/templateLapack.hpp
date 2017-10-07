@@ -14,7 +14,9 @@
 #else
    typedef int MXLAPACK_INT;
 #endif
-   
+
+//typedef int MXLAPACK_INT;
+
 namespace mx
 {
 namespace math
