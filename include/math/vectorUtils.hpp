@@ -205,7 +205,7 @@ typename vectorT::value_type vectorVariance( const vectorT & vec,  ///< [in] the
    var = 0;
    for(size_t i=0; i< vec.size(); ++i) var += (vec[i]-mean)*(vec[i]-mean);
    
-   var /= vec.size();
+   var /= (vec.size()-1);
    
    return var;
 }
