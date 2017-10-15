@@ -451,6 +451,7 @@ int fourierCovarMap( const std::string & fname,
    
    mx::ompLoopWatcher<> watcher(psz, std::cout);
    
+   std::cerr << "Starting . . .\n";
    #pragma omp parallel
    {   
       fourierCovariance<realT, aoSystem<realT, vonKarmanSpectrum<realT>, pywfsUnmod<realT> > > Pp;
