@@ -664,11 +664,7 @@ void makeFKL( const std::string & outFile,
    improc::eigenCube<realT> Rims;
    makeFourierBasis_Rect(Rims, pupSize, N, MX_FOURIER_MODIFIED);
    
-   
    std::cout << Rims.planes() << " " << evecs.cols() << "\n";
-   
-   
-   
    
    Eigen::Array<realT,-1,-1> kl;
    kl.resize( Rims.planes(), Rims.rows()*Rims.cols());

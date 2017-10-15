@@ -5,12 +5,15 @@
   * 
   */
 
-#ifndef __pupil_hpp__
-#define __pupil_hpp__
+#ifndef pupil_hpp
+#define pupil_hpp
 
-#include <mx/fitsFile.hpp>
-#include <mx/imagingUtils.hpp>
-#include <mx/signalWindows.hpp>
+#include <mx/improc/fitsFile.hpp>
+#include <mx/improc/eigenImage.hpp>
+
+#include <mx/wfp/imagingUtils.hpp>
+
+#include <mx/sigproc/signalWindows.hpp>
 
 #include "aoPaths.hpp"
 
@@ -25,24 +28,28 @@ template<typename realT>
 void circularPupil( const std::string & pupilName,
                     realT pupilDiamPixels,
                     realT pupilDiamMeters,
-                    realT centralObs = 0 )
+                    realT centralObs = 0,
+                    realT overscan = 0
+                  )
 {
-
-   
+   using namespace mx::improc;
+   using namespace mx::wfp;
+   using namespace mx::sigproc;   
 
    /*Create pupil*/
-   Eigen::Array<realT, -1, -1> pup;
+   eigenImage<realT> pup;
    
    pup.resize(pupilDiamPixels, pupilDiamPixels);
    
-   mx::circularPupil( pup, centralObs);
+   wfp::circularPupil( pup, centralObs,0,overscan);
    
-   mx::fitsHeader phead;
+   fitsHeader phead;
    phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
    phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
    phead.append("CENTOBS", centralObs, "Central obscuration ratio");
+   phead.append("OVERSCAN", overscan, "Fractional pixel overscan");
    
-   mx::fitsFile<realT> ff;
+   fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
 
@@ -63,6 +70,10 @@ void circularApodizedPupil( const std::string & pupilName,
                             realT overScan = 0)
 {
 
+   using namespace mx::improc;
+   using namespace mx::wfp;
+   using namespace mx::sigproc;   
+   
    /*Create pupil*/
    Eigen::Array<realT, -1, -1> pup;
    
@@ -82,14 +93,14 @@ void circularApodizedPupil( const std::string & pupilName,
    
    
    
-   mx::fitsHeader phead;
+   fitsHeader phead;
    phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
    phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
    phead.append("CENTOBS", centralObs, "Central obscuration ratio");
    phead.append("TUKALPHA", tukeyAlpha, "Tukey window alpha parameter");
    phead.append("OVERSCAN", overScan, "Apodization overscan");
     
-   mx::fitsFile<realT> ff;
+   fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
 
