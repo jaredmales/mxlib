@@ -112,7 +112,7 @@ struct fourierTemporalPSD
   int _mode_i; ///< Projected basis mode index
 
   Eigen::Array<realT, -1, -1> _modeCoeffs; ///< Coeeficients of the projection onto the Fourier modes 
-
+  realT _minCoeffVal;
   
   
   std::vector<realT> Jps;
@@ -473,7 +473,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    
    params._mode_i = _mode_i;
    params._modeCoeffs = _modeCoeffs;
-
+   params._minCoeffVal = _minCoeffVal;
    
    realT result, error, result2;
 
@@ -1117,7 +1117,7 @@ realT F_projMod (realT kv, void * params)
    
    for(int i=0; i< Fp->_modeCoeffs.cols(); ++i)
    {
-      if(Fp->_modeCoeffs(mode_i,i) == 0) continue;
+      if(Fp->_modeCoeffs(i, Fp->_modeCoeffs.cols()-1 - mode_i) == 0) continue;
       
       m = Fp->ms[i]*cq + Fp->ns[i]*sq;
       n = -Fp->ms[i]*sq + Fp->ns[i]*cq;
@@ -1136,18 +1136,21 @@ realT F_projMod (realT kv, void * params)
    
    for(int i=0; i< N ; ++i)
    {
-      if( abs(Fp->_modeCoeffs(mode_i,i)) == 0) break; //continue;
+      if( fabs(Fp->_modeCoeffs(i, Fp->_modeCoeffs.cols()-1 - mode_i)) < Fp->_minCoeffVal) continue;
       
       Jp = Fp->Jps[i];
       Jm = Fp->Jms[i];
       p = Fp->ps[i];
       
-      QQ += 2*( Jp*Jp + Jm*Jm)*Fp->_modeCoeffs(mode_i,i)*Fp->_modeCoeffs(mode_i,i);
+      QQ += 2*( Jp*Jp + Jm*Jm)*Fp->_modeCoeffs(i,Fp->_modeCoeffs.cols()-1 - mode_i)*Fp->_modeCoeffs(mode_i,i);
        
       for(int j=(i+1); j < N; ++j)
       {
-         if( abs(Fp->_modeCoeffs(mode_i,j)) == 0) break; //continue;
-         sc =  Fp->_modeCoeffs(mode_i,i)*Fp->_modeCoeffs(mode_i, j);
+         if( fabs(Fp->_modeCoeffs(j,Fp->_modeCoeffs.cols()-1 - mode_i)) < Fp->_minCoeffVal) continue;
+         sc =  Fp->_modeCoeffs(i,Fp->_modeCoeffs.cols()-1 - mode_i)*Fp->_modeCoeffs(j,Fp->_modeCoeffs.cols()-1 - mode_i);
+         
+         //if(fabs(sc) < _minCoeffProduct) continue;
+         
          //if( sc*sc < 1e-2) continue; 
          Jpp = Fp->Jps[j];
           

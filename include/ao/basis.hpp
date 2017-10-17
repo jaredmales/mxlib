@@ -8,13 +8,18 @@
 #ifndef __basis_hpp__
 #define __basis_hpp__
 
-#include <mx/fourierModes.hpp>
-#include <mx/fitsFile.hpp>
-#include <mx/gramSchmidt.hpp>
+#include <mx/sigproc/fourierModes.hpp>
+#include <mx/improc/fitsFile.hpp>
+#include <mx/sigproc/gramSchmidt.hpp>
 #include <mx/eigenUtils.hpp>
-#include <mx/imageFilters.hpp>
-#include <mx/imagePads.hpp>
-#include <mx/signalWindows.hpp>
+#include <mx/improc/imageFilters.hpp>
+#include <mx/improc/imagePads.hpp>
+#include <mx/sigproc/signalWindows.hpp>
+using namespace mx::improc;
+using namespace mx::sigproc;
+
+#include <mx/math/eigenLapack.hpp>
+using namespace mx::math;
 
 #include "aoPaths.hpp"
 
@@ -26,12 +31,12 @@ namespace AO
 
 ///Multiply a raw modal basis by a pupil mask.   
 template<typename realT>
-void applyPupil2Basis( mx::eigenCube<realT> & modes,
+void applyPupil2Basis( eigenCube<realT> & modes,
                        const std::string & basisName,
                        const std::string & pupilName,
                        realT fwhm = 0  )
 {
-   mx::fitsFile<realT> ff;
+   fitsFile<realT> ff;
    //mx::eigenCube<realT> modes;
    
    
@@ -82,10 +87,10 @@ void applyPupil2Basis( mx::eigenCube<realT> & modes,
 
 
 template<typename realT>
-int orthogonalizeBasis( mx::eigenCube<realT> & ortho,
+int orthogonalizeBasis( eigenCube<realT> & ortho,
                         Eigen::Array<realT, -1, -1>  & spect,
-                         mx::eigenCube<realT> & modes,
-                         int method )
+                        eigenCube<realT> & modes,
+                        int method )
 {
       
    
@@ -116,7 +121,7 @@ int orthogonalizeBasis( mx::eigenCube<realT> & ortho,
       
       //This maps to a cube, but does not copy or take ownership.
       
-      mx::eigenCube<realT> omodes( U.data(), modes.rows(), modes.cols(), modes.planes());
+      eigenCube<realT> omodes( U.data(), modes.rows(), modes.cols(), modes.planes());
       
       ortho.resize(modes.rows(), modes.cols(), modes.planes());
       ortho = omodes;
@@ -157,14 +162,14 @@ void orthogonalizeBasis( const std::string & orthoName,
                          const std::string & pupilName,
                          int method )
 {
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   fitsFile<realT> ff;
+   fitsHeader head;
    
    
-   mx::eigenCube<realT> modes;
+   eigenCube<realT> modes;
    applyPupil2Basis(modes, basisName, pupilName);
    
-   mx::eigenCube<realT> ortho;
+   eigenCube<realT> ortho;
    Eigen::Array<realT, -1, -1> spect;
    
    orthogonalizeBasis(ortho, spect, modes, method);
@@ -221,12 +226,12 @@ int slaveBasis( const std::string outputBasisN,
                 int firstMode = 0
               )
 {
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   fitsFile<realT> ff;
+   fitsHeader head;
 
    //get DM size and clear memory first
    std::string dmFName = mx::AO::path::dm::influenceFunctions(dmN);
-   mx::eigenCube<realT> inf;
+   eigenCube<realT> inf;
    ff.read(dmFName, inf);
 
    int dmSz = inf.rows();
@@ -235,7 +240,7 @@ int slaveBasis( const std::string outputBasisN,
 
    //Now load basis
    std::string basisFName = mx::AO::path::basis::modes(inputBasisN);//, pupilName); 
-   mx::eigenCube<realT> modes;
+   eigenCube<realT> modes;
    ff.read(basisFName, modes);
 
    //Now load pupil
@@ -256,7 +261,7 @@ int slaveBasis( const std::string outputBasisN,
       padw = cutw;
    }
 
-   mx::eigenCube<realT> oModes;
+   eigenCube<realT> oModes;
    
    oModes.resize( modes.rows()+2*cutw, modes.cols()+2*cutw, modes.planes());
    
@@ -329,11 +334,11 @@ int apodizeBasis( const std::string outputBasisN,
                   realT overScan,
                   int firstMode )
 {
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   fitsFile<realT> ff;
+   fitsHeader head;
    
    std::string basisFName = mx::AO::path::basis::modes(inputBasisN);//, pupilName); 
-   mx::eigenCube<realT> modes;
+   eigenCube<realT> modes;
    ff.read(basisFName, modes);
 
    realT cen = 0.5*(modes.rows() - 1.0);
@@ -370,19 +375,19 @@ int subtractBasis( const std::string basisName,
                    const std::string pupilName,
                    int method  )
 {
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   fitsFile<realT> ff;
+   fitsHeader head;
    
    std::string basisFName1 = mx::AO::path::basis::modes(basisName1);//, pupilName); 
-   mx::eigenCube<realT> modes1;
+   eigenCube<realT> modes1;
    ff.read(basisFName1, modes1);
    
    std::string basisFName2 = mx::AO::path::basis::modes(basisName2);//, pupilName); 
-   mx::eigenCube<realT> modes2;
+   eigenCube<realT> modes2;
    ff.read(basisFName2, modes2, head);
    realT fwhm = head["FWHM"].Value<realT>();
    
-   mx::eigenCube<realT> modes;
+   eigenCube<realT> modes;
    modes.resize( modes1.rows(), modes1.cols(), modes1.planes() + modes2.planes());
    
    std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilName);
@@ -399,7 +404,7 @@ int subtractBasis( const std::string basisName,
       modes.image( modes1.planes() + i) = modes2.image(i)*pupil;
    }
    
-   mx::eigenCube<realT> ortho;
+   eigenCube<realT> ortho;
       
    orthogonalizeBasis(ortho, modes, method);
 

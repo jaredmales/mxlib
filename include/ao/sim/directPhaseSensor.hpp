@@ -102,6 +102,7 @@ protected:
    wfsImageT<realT> wfsImage;
 
    improc::ds9Interface ds9;
+   improc::ds9Interface ds9f;
    
 public:   
    ///Default c'tor
@@ -232,6 +233,7 @@ directPhaseSensor<_realT, _detectorT>::directPhaseSensor()
    firstRun = true;
    
    ds9.title("DPWFS");
+   ds9f.title("DPWFS_Filtered");
    
    applyFilter = false;
 
@@ -416,14 +418,18 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
          
+      ds9(detectorImage.image);
       
       if(applyFilter)
       {
          _filter.filter(detectorImage.image);
+       
+         ds9f(detectorImage.image);
       }
       
       detectorImage.iterNo = wfsImage.iterNo;
        
+      
       //ds9_interface_display_raw( &ds9i, 1, detectorImage.image.data(), detectorImage.image.rows(), detectorImage.image.cols(),1, mx::getFitsBITPIX<realT>());
       
         _roTime_counter = 0;
@@ -538,45 +544,7 @@ void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
    
    realT v;
    
-//    for(int i=0; i< 0.5*nr; ++i)
-//    {
-//       for(int j=0; j< 0.5*nc; ++j)
-//       {
-//          if( i <= width && j <=width)
-//          {
-//             v = 1;
-//          }
-//          else
-//          {
-//             v = 0;
-//             if( i <= width )
-//             {
-//                v = (10 - (j-width))/10.;
-//             }
-//             else if(j <= width)
-//             {
-//                v = (10 - (i-width))/10.;
-//             }
-//             else
-//             {
-//                v = (10 - sqrt( pow(i-width,2) + pow(j-width,2)))/10.0;
-//             }
-//             
-//             if(v < 0) v = 0;
-//          }
-//          
-//          filterMask(i,j) = v;
-//          filterMask(i, nc-1-j) = v;
-//          filterMask(nr-1-i, j) = v;
-//          filterMask(nr-1-i, nc-1-j) = v;
-//             
-//       }
-//    }
-   
-   
-   //ds9_interface_display_raw( &ds9i, 1, filterMask.data(), nr, nc,1, mx::getFitsBITPIX<realT>());
-   
-   //exit(0);
+
    _filter.psdSqrt(filterMask);
    
 

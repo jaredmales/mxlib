@@ -280,7 +280,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    BREAD_CRUMB;   
 
-   //wfsImage.image *= *_pupil;
+   wfsImage.image *= *_pupil;
    
    BREAD_CRUMB;
    

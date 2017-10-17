@@ -63,7 +63,7 @@ protected:
    std::vector<std::complex<realT> > _H_dm, _H_wfs, _H_ma, _H_del, _H_con;
          
 public:
-   /** Paramaters for stability analysis
+   /** Parameters for stability analysis
      * @{
      */
    

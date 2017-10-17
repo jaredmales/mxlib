@@ -599,7 +599,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    
    //Apply the pupil mask just once.
-   wf.phase = (wf.phase-mn)*_pupilMask;
+   wf.phase = (wf.phase-mn)*_pupil;//_pupilMask;
 
 
    BREAD_CRUMB;
