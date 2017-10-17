@@ -418,13 +418,13 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
          
-      ds9(detectorImage.image);
+      //ds9(detectorImage.image);
       
       if(applyFilter)
       {
          _filter.filter(detectorImage.image);
        
-         ds9f(detectorImage.image);
+         //ds9f(detectorImage.image);
       }
       
       detectorImage.iterNo = wfsImage.iterNo;
