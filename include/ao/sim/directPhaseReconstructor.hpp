@@ -62,11 +62,13 @@ protected:
    
    imageT * _pupil;
 
-   imageT _mask;
+   
    
    realT norm;
    
 public:
+   imageT _mask;
+   
    improc::eigenImage<double> _spectrum;
    
    imageT * _gains; 
@@ -280,7 +282,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    BREAD_CRUMB;   
 
-   wfsImage.image *= *_pupil;
+   wfsImage.image *= _mask;
    
    BREAD_CRUMB;
    

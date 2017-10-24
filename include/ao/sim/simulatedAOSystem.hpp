@@ -27,6 +27,7 @@
 #include "wavefront.hpp"
 #include "../aoPaths.hpp"
 
+#include <mx/improc/ds9Interface.hpp>
 
 #ifdef DEBUG
 #define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n"; 
@@ -599,7 +600,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    
    //Apply the pupil mask just once.
-   wf.phase = (wf.phase-mn)*_pupil;//_pupilMask;
+   wf.phase = (wf.phase-mn)*_pupilMask;
 
 
    BREAD_CRUMB;
@@ -730,6 +731,11 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    }
    
    
+    //Mean subtraction on the system pupil.  
+   mn = (wf.phase * _pupil).sum()/_npix;
+   //Apply the pupil mask just once.
+   wf.phase = (wf.phase-mn)*_pupil;//_pupilMask;
+   
    wf.phase *= _postMask;
    wf.amplitude *= _postMask;
    
@@ -781,7 +787,9 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             
             //Create Coronagraph pupil.
             improc::padImage(_realPupil, _postMask, 0.5*(_wfSz-_pupil.rows()),0);
-            
+            //improc::ds9Interface ds9;
+            //ds9(_pupil,1);
+            //ds9(_realPupil,2);
          }            
       }
 
@@ -792,6 +800,10 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          wavefrontT cwf;
          cwf.phase = wf.phase;
          cwf.amplitude = wf.amplitude;
+         
+         //improc::ds9Interface ds9;
+         //ds9(cwf.phase,1);
+         //ds9(cwf.amplitude,2);
          
          bool ideal = true;
          if(_coronPhase.rows() > 0)

@@ -90,7 +90,9 @@ template<typename realT>
 int orthogonalizeBasis( eigenCube<realT> & ortho,
                         Eigen::Array<realT, -1, -1>  & spect,
                         eigenCube<realT> & modes,
-                        int method )
+                        int method,
+                        realT psum = 1.0
+                      )
 {
       
    
@@ -99,7 +101,7 @@ int orthogonalizeBasis( eigenCube<realT> & ortho,
       ortho.resize(modes.rows(), modes.cols(), modes.planes());
       Eigen::Map< Eigen::Array<realT, -1, -1>> gsout(ortho.data(), ortho.rows()*ortho.cols(), ortho.planes());
       
-      gramSchmidtSpectrum<1>(gsout, spect, modes.asVectors());
+      gramSchmidtSpectrum<1>(gsout, spect, modes.asVectors(), psum);
     
       std::cout << "out : " << "\n";
       

@@ -131,18 +131,20 @@ void baseSpectrum(eigenT & bspect, eigenT & gsspect)
   * by normalization of the result.  Also records the spectrum, that is the coefficients of the linear expansion
   * in the orginal basis set for the resultant basis set.
   *
-  * \param out [out] is the orthonormal basis set constructed from the input
-  * \param spect [out] is the spectrum 
-  * \param int [in] is a basis set, where each column represents one vector.
   * 
   * \tparam progress if true, then the loop index is printed for progress reporting
-  * \tparam eigenTout is the Eigen array type of the desired output
+  * \tparam eigenTout is the Eigen array type of the output orthogonalized array
+  * \tparam eigenTout2 is the Eigen array type of the spectrum
   * \tparam eigenTin is the Eigen array type of the input
   * 
   * \ingroup signal_processing 
   */ 
 template<int progress=0, typename eigenTout, typename eigenTout2, typename eigenTin>
-void gramSchmidtSpectrum(eigenTout & out, eigenTout2 & spect, const eigenTin & in)
+void gramSchmidtSpectrum( eigenTout & out,  ///< [out] the orthonormal basis set constructed from the input
+                          eigenTout2 & spect, ///< [out] the spectrum 
+                          const eigenTin & in, ///< [in] a basis set, where each column represents one vector
+                          typename eigenTin::Scalar normPix = 1.0 ///< [in] [optional] are of (usually number of pixels in) the orthogonal region for normalization.
+                        )
 {
    typedef typename eigenTout::Scalar Scalar;
    
@@ -182,7 +184,7 @@ void gramSchmidtSpectrum(eigenTout & out, eigenTout2 & spect, const eigenTin & i
       
    for(int i=0; i<out.cols(); ++i)
    {
-      norm = out.col(i).matrix().norm();
+      norm = out.col(i).matrix().norm() * normPix;
       
       out.col(i) /= norm;
       spect.row(i) /= norm;

@@ -608,7 +608,9 @@ void calcKLCoeffs( const std::string & outFile,
    math::syevrMem<double> mem;
    
    double t0 = get_curr_time<double>();
-   int info = math::eigenSYEVR<double,double>(evecs, evals, 0, cv, 0, -1, 'U', &mem);
+   
+   int info = math::eigenSYEVR<double,double>(evecs, evals, cv, 0, -1, 'U', &mem);
+   
    double t1 = get_curr_time<double>();
 
    std::cerr << "2\n";
@@ -663,7 +665,7 @@ void makeFKL( const std::string & outFile,
    ff.read(evecs, coeffs);
    
    improc::eigenCube<realT> Rims;
-   makeFourierBasis_Rect(Rims, pupSize, N, MX_FOURIER_MODIFIED);
+   sigproc::makeFourierBasis_Rect(Rims, pupSize, N, MX_FOURIER_MODIFIED);
    
    std::cout << Rims.planes() << " " << evecs.cols() << "\n";
    
