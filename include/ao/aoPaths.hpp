@@ -474,6 +474,71 @@ namespace sys
          return path;
       }  
 
+      ///Path for the system response interaction matrix
+      std::string U( const std::string & sysName, 
+                     const std::string & dmName,
+                     const std::string & wfsName, 
+                     const std::string & pupilName,
+                     const std::string & basisName,
+                     const std::string & id,
+                     bool create = false)
+      {
+
+         std::string path = sysResp(sysName, dmName, wfsName, pupilName, basisName, create);
+   
+         path += "/";
+
+         path += "U_";
+   
+         path += id;
+         path += ".fits";
+   
+         return path;
+      }  
+      
+      ///Path for the system response interaction matrix
+      std::string S( const std::string & sysName, 
+                     const std::string & dmName,
+                     const std::string & wfsName, 
+                     const std::string & pupilName,
+                     const std::string & basisName,
+                     const std::string & id,
+                     bool create = false)
+      {
+
+         std::string path = sysResp(sysName, dmName, wfsName, pupilName, basisName, create);
+   
+         path += "/";
+
+         path += "S_";
+   
+         path += id;
+         path += ".fits";
+   
+         return path;
+      }
+      
+      ///Path for the system response interaction matrix
+      std::string VT( const std::string & sysName, 
+                      const std::string & dmName,
+                      const std::string & wfsName, 
+                      const std::string & pupilName,
+                      const std::string & basisName,
+                      const std::string & id,
+                      bool create = false)
+      {
+
+         std::string path = sysResp(sysName, dmName, wfsName, pupilName, basisName, create);
+   
+         path += "/";
+
+         path += "VT_";
+   
+         path += id;
+         path += ".fits";
+   
+         return path;
+      }
    }// namespace cal
 
 } //namespace sys 

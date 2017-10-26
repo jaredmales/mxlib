@@ -272,10 +272,13 @@ int directPhaseReconstructor<realT>::detCols()
 template<typename realT> 
 void directPhaseReconstructor<realT>::loadRecon(std::string fname)
 {
+#if 0
    fitsFile<realT> ff;
    fitsHeader head;
    
    ff.read(_recon, head, fname);
+#endif
+
 }
 
 template<typename realT> 
@@ -306,6 +309,8 @@ template<typename realT>
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
+   
+#if 0
    measurementT slopes;
    
    calcMeasurement(slopes, wfsImage);
@@ -317,16 +322,20 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    commandVect.iterNo = wfsImage.iterNo;
    
-#if 0
+#endif
+#if 1
    BREAD_CRUMB;
    
    if(_npix == 0)
    {
       _npix = _pupil->sum();
+      
    }
    
    BREAD_CRUMB;   
 
+   realT rms_act = wfsImage.image.square().sum()/_npix;
+      
    wfsImage.image *= _mask;
    
    BREAD_CRUMB;
@@ -355,6 +364,17 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       commandVect.measurement(0,j) = amp;
    }
 
+
+   realT rms_amp = commandVect.measurement.square().sum();// - pow(commandVect.measurement.sum(),2);
+   
+   std::cerr << rms_act << " " << rms_amp << "\n";
+
+   //commandVect.measurement *= sqrt(rms_act/rms_amp);
+//    for(int j=0; j< _nModes;++j)
+//    {
+//       commandVect.measurement(0,j) *= sqrt(rms_act/rms_amp);//*( 1.0 - 0.5*((double) j)/_nModes);
+//    }
+   
    commandVect.iterNo = wfsImage.iterNo;
 #endif
 }
