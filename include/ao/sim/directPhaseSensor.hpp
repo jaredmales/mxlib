@@ -458,9 +458,18 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupil
    
    doSenseWavefront();
       
-   
-   detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1),             detectorImage.image.rows(), detectorImage.image.cols());
-
+   detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
+         
+   //ds9(detectorImage.image);
+      
+   if(applyFilter)
+   {
+      _filter.filter(detectorImage.image);
+       
+      //ds9f(detectorImage.image);
+   }
+      
+      
    
    return true;
    

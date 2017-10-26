@@ -441,15 +441,11 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
                                                                                                 std::string rmatID, 
                                                                                                 int nmodes )
 {
-
-   //if(nmodes > 0) dm.cutModes(nmodes);
-   
    complexImageT cpup;
    cpup.resize(_wfSz, _wfSz);
    
    recon.initializeRMat(dm.nModes(), amp, wfs.detRows(), wfs.detCols());
       
-   //typename reconT::measurementT measureVec;
    typename filterT::commandT measureVec;
    
    wavefrontT currWF;
@@ -465,10 +461,10 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
    
    tO = get_curr_time();
    
+   improc::ds9Interface ds9;
+      
    for(int i=0;i< dm.nModes(); ++i)
    {
-      //std::cout << i << "/" << dm.nModes() << "\n";
-      
       BREAD_CRUMB;
       
       currWF.setPhase(_pupil*0);
@@ -481,30 +477,17 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
       }
       else
       {
-         
-         
-         
          t0 = get_curr_time();
          dm.applyMode(currWF, i, s_amp, 0.8e-6);
          t1 = get_curr_time();
          t_applyMode += t1-t0;
       
          BREAD_CRUMB;
-      
-         
-         if(i==50 || i==51 || i==52 || i==53)
-         {
-            wfs.ref = 1;
-         }
-         else
-         {
-            wfs.ref = 0;
-         }
          
          t0 = get_curr_time();
          wfs.senseWavefrontCal(currWF);
          t1 = get_curr_time();
-         //std::cout << t1-t0 << "\n";
+         
          t_senseWF += t1-t0;
       }
       
@@ -514,8 +497,10 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
       
       recon.calcMeasurement(measureVec, wfs.detectorImage);
       
+      //ds9(wfs.detectorImage.image);
+      
       t1 = get_curr_time();
-      //std::cout << t1-t0 << "\n";
+ 
       t_calcMeas += t1-t0;
       
       BREAD_CRUMB;
@@ -524,6 +509,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::takeR
       recon.accumulateRMat(i, measureVec, wfs.detectorImage);
       t1 = get_curr_time();
       t_accum += t1-t0;
+      
+      BREAD_CRUMB;
       
       //ds9_display(1, wfs.detectorImage.data(), wfs.detectorImage.cols(), wfs.detectorImage.rows(),1, mx::getFitsBITPIX<realT>());
    }

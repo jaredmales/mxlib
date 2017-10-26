@@ -340,8 +340,10 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
    
    imageT shape( _infF.rows(), _infF.cols());
    
+
    shape = c(0,0)*_infF.image(0);
 
+   
    t0 = get_curr_time();
    #pragma omp parallel
    {
@@ -364,6 +366,17 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
   // ds9_interface_display_raw( &ds9i, 1, shape.data(), shape.rows(), shape.cols(),1, mx::getFitsBITPIX<realT>());
    
    wf.phase += 2*amp*shape*_pupil*two_pi<realT>()/lambda;
+   
+   if( display_shape > 0)
+   {
+      ++display_shape_counter;
+      
+      if(display_shape_counter >= display_shape)
+      {
+         ds9i_shape(wf.phase);
+         display_shape_counter = 0;
+      }
+   }
 
 }
 
@@ -622,7 +635,7 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    
    BREAD_CRUMB;
    
-   std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   //std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
 }
 
 } //sim

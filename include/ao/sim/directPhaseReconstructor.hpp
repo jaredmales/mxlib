@@ -5,6 +5,7 @@
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../improc/fitsFile.hpp"
+using namespace mx::improc;
 
 #include "../../sigproc/signalWindows.hpp"
 
@@ -16,17 +17,20 @@
 
 namespace mx
 {
-
-   
-   
 namespace AO
 {
-   
 namespace sim
 {
 
 
+struct directPhaseReconstructorSpec
+{
+   std::string dmName; 
+   std::string basisName; 
    
+   std::string rMatId;
+};
+
 ///A Pyramid Wavefront Sensor slope reconstructor.
 /** Calculates slopes, normalized by total flux in the image.
   */ 
@@ -44,10 +48,11 @@ public:
    ///The type of the response matrix
    typedef Eigen::Array<realT, -1, -1> rmatT;
  
-   typedef int specT;
+   typedef directPhaseReconstructorSpec specT;
       
 protected:
-   
+    Eigen::Array<realT,-1,-1> _recon; ///< The reconstructor matrix.
+    
    int _nModes; ///<The number of modes to be reconstructed
    
    int _detRows; ///<The size of the WFS image, in rows
@@ -55,8 +60,12 @@ protected:
    
    int _measurementSize; ///<The number of values in the measurement
       
+   realT _calAmp; ///<The calibration amplitude used for response matrix acquisition
+   
    imageT _rMat; ///<The response matrix
       
+   eigenCube<realT> _rImages;
+   
    //The mirror modes
    improc::eigenCube<realT> *_modes;
    
@@ -101,6 +110,14 @@ public:
       
       improc::fitsFile<realT> ff;
       ff.write("dprMask.fits", _mask);
+      
+      std::string recMatrix = mx::AO::path::sys::cal::iMat( AOSys._sysName, 
+                                                            spec.dmName, 
+                                                            AOSys._wfsName, 
+                                                            AOSys._pupilName, 
+                                                            spec.basisName, 
+                                                            spec.rMatId)  ;
+      loadRecon(recMatrix);
    
    }
    
@@ -171,12 +188,20 @@ public:
    template<typename measurementT>
    void accumulateRMat(int i, measurementT &measureVec);
 
+   
+   template<typename measurementT, typename wfsImageT>
+   void accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage);
+   
+      
+   
+   
    ///Write the accumulated response matrix to disk
    /**
      * \param fname the name, including path, of the response matrix
      */ 
    void saveRMat(std::string fname);
    
+   void saveRImages(std::string fname);
 };
 
 
@@ -247,12 +272,10 @@ int directPhaseReconstructor<realT>::detCols()
 template<typename realT> 
 void directPhaseReconstructor<realT>::loadRecon(std::string fname)
 {
-//    mx::fitsFile<realT> ff;
-//    mx::fitsHeader head;
-//    
-//    ff.read(fname, _recon, head);
-
+   fitsFile<realT> ff;
+   fitsHeader head;
    
+   ff.read(_recon, head, fname);
 }
 
 template<typename realT> 
@@ -265,14 +288,36 @@ template<typename realT>
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::calcMeasurement(measurementT & slopes, wfsImageT & wfsImage)
 {
-   slopes = wfsImage;
+   wfsImage.image *= _mask;
+
+   slopes.measurement.resize( 1, _measurementSize);
+   int k = 0;
+   for(int i=0; i< wfsImage.image.rows(); ++i)
+   {
+      for(int j=0; j<wfsImage.image.cols(); ++j)
+      {
+         slopes.measurement(0,k) = wfsImage.image(i,j);
+         ++k;
+      }
+   }
 }
      
 template<typename realT> 
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
+   measurementT slopes;
    
+   calcMeasurement(slopes, wfsImage);
+   
+   //std::cerr << slopes.measurement.rows() << " " << slopes.measurement.cols() << " " << _recon.rows() << " " << _recon.cols() << "\n";
+   
+   
+   commandVect.measurement = slopes.measurement.matrix()*_recon.matrix();
+   
+   commandVect.iterNo = wfsImage.iterNo;
+   
+#if 0
    BREAD_CRUMB;
    
    if(_npix == 0)
@@ -311,35 +356,76 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    }
 
    commandVect.iterNo = wfsImage.iterNo;
+#endif
 }
 
 template<typename realT> 
 void directPhaseReconstructor<realT>::initializeRMat(int nModes, realT calamp, int detRows, int detCols)
 {
-//    _nModes = nModes;
-//    
-//    _detRows = detRows;
-//    _detCols = detCols;
-//    
-//    _rMat.resize(measurementSize(), nModes);
-//    _rMat.setZero();
-//    
-//    _rImages.resize(_detRows, _detCols, _nModes);
+   _nModes = nModes;
+   
+   _detRows = detRows;
+   _detCols = detCols;
+   
+   _rMat.resize(measurementSize(), nModes);
+   _rMat.setZero();
+   
+   _rImages.resize(_detRows, _detCols, _nModes);
 }
 
 template<typename realT> 
 template<typename measurementT>
 void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec)
 {
-//   _rMat.col(i) = measureVec.row(0);
+   int l = 0;
+   for(int j=0; j<measureVec.measurement.rows(); ++j)
+   {
+      for(int k=0; k<measureVec.measurement.cols(); ++k)
+      {
+         _rMat(l, i) = measureVec.measurement(j,k);
+         ++l;
+      }
+   }
+   
+  //_rMat.col(i) = measureVec.measurement.row(0);
 }
   
+template<typename realT>   
+template<typename measurementT,typename wfsImageT>
+void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage)
+{
+   accumulateRMat(i, measureVec);
+   _rImages.image(i) = wfsImage.image;   
+}
+
 template<typename realT> 
 void directPhaseReconstructor<realT>::saveRMat(std::string fname)
 {
-//    accumulateRMat(i, measureVec);
-//    
-//    _rImages.image(i) = wfsImage;
+   fitsFile<realT> ff;
+   fitsHeader head;
+   
+   head.append("DETROWS", _detRows, "WFS detector rows");
+   head.append("DETCOLS", _detCols, "WFS detector cols");
+   head.append("CALAMP", _calAmp, "DM Calibration amplitude");
+   head.append("NMODES", _nModes, "Number of modes included in the response matrix.");
+   
+   ff.write(fname, _rMat, head);
+}
+
+template<typename realT> 
+void directPhaseReconstructor<realT>::saveRImages(std::string fname)
+{
+   fitsFile<realT> ff;
+   fitsHeader head;
+   
+   
+   head.append("DETROWS", _detRows, "WFS detector rows");
+   head.append("DETCOLS", _detCols, "WFS detector cols");
+   head.append("CALAMP", _calAmp, "DM Calibration amplitude");
+   head.append("NMODES", _nModes, "Number of modes included in the response matrix.");
+   
+   //ff.write(fname, _rImages.data(), _rImages.rows(), _rImages.cols(), _rImages.planes(), &head);
+   ff.write(fname, _rImages, head);
 }
 
 } //namespace sim
