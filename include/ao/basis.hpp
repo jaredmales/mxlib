@@ -86,9 +86,9 @@ void applyPupil2Basis( eigenCube<realT> & modes,
 #define MXAO_ORTHO_METHOD_SVD 1
 
 
-template<typename realT>
+template<typename realT, typename spectRealT>
 int orthogonalizeBasis( eigenCube<realT> & ortho,
-                        Eigen::Array<realT, -1, -1>  & spect,
+                        Eigen::Array<spectRealT, -1, -1>  & spect,
                         eigenCube<realT> & modes,
                         int method,
                         realT psum = 1.0

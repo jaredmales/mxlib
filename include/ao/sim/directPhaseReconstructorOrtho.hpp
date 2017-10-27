@@ -69,6 +69,9 @@ protected:
    //The mirror modes
    improc::eigenCube<realT> *_modes;
    
+   
+   
+   
    imageT * _pupil;
 
    
@@ -76,6 +79,15 @@ protected:
    realT norm;
    
 public:
+   
+   //The orthogonalized basis
+   improc::eigenCube<realT> ortho;
+   
+   //The orthogonal spectrum 
+   improc::eigenImage<realT> spectrum;
+   
+   std::vector<realT> b;
+   
    imageT _mask;
    
    improc::eigenImage<double> _spectrum;
@@ -102,19 +114,7 @@ public:
    
       _pupil = &AOSys._pupil;
    
-      _mask.resize(_pupil->rows(), _pupil->cols());
-   
       _mask = *_pupil;
-      
-      
-/*      std::string recMatrix = mx::AO::path::sys::cal::iMat( AOSys._sysName, 
-                                                            spec.dmName, 
-                                                            AOSys._wfsName, 
-                                                            AOSys._pupilName, 
-                                                            spec.basisName, 
-                                                            spec.rMatId)  ;*/
-//      loadRecon(recMatrix);
-   
    }
    
    template<typename AOSysT>
@@ -228,7 +228,6 @@ void directPhaseReconstructor<realT>::linkSystem(AOSysT & AOSys)
    _pupil = &AOSys._pupil;
    
    _mask = *_pupil;
-   
 }
 
 template<typename realT> 
@@ -264,13 +263,6 @@ int directPhaseReconstructor<realT>::detCols()
 template<typename realT> 
 void directPhaseReconstructor<realT>::loadRecon(std::string fname)
 {
-#if 0
-   fitsFile<realT> ff;
-   fitsHeader head;
-   
-   ff.read(_recon, head, fname);
-#endif
-
 }
 
 template<typename realT> 
@@ -283,18 +275,7 @@ template<typename realT>
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::calcMeasurement(measurementT & slopes, wfsImageT & wfsImage)
 {
-   wfsImage.image *= _mask;
 
-   slopes.measurement.resize( 1, _measurementSize);
-   int k = 0;
-   for(int i=0; i< wfsImage.image.rows(); ++i)
-   {
-      for(int j=0; j<wfsImage.image.cols(); ++j)
-      {
-         slopes.measurement(0,k) = wfsImage.image(i,j);
-         ++k;
-      }
-   }
 }
      
 template<typename realT> 
@@ -302,20 +283,6 @@ template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
    
-#if 0
-   measurementT slopes;
-   
-   calcMeasurement(slopes, wfsImage);
-   
-   //std::cerr << slopes.measurement.rows() << " " << slopes.measurement.cols() << " " << _recon.rows() << " " << _recon.cols() << "\n";
-   
-   
-   commandVect.measurement = slopes.measurement.matrix()*_recon.matrix();
-   
-   commandVect.iterNo = wfsImage.iterNo;
-   
-#endif
-#if 1
    BREAD_CRUMB;
    
    if(_npix == 0)
@@ -326,49 +293,33 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    BREAD_CRUMB;   
 
-   realT rms_act = wfsImage.image.square().sum()/_npix;
-      
    wfsImage.image *= _mask;
    
    BREAD_CRUMB;
    
-   
 
    
-   commandVect.measurement.setZero();
+   b.resize(_nModes);
    
    #pragma omp parallel for
    for(int j=0; j< _nModes; ++j)
    {
-      realT amp;
+      b[j] = (wfsImage.image*ortho.image(j)).sum()/ _npix;
+   }
+
+   //commandVect.measurement.setZero();
       
-      if(_gains)
-      {
-         if( (*_gains)(0,j) == 0)
-         {
-            commandVect.measurement(0,j) = 0;
-            continue;            
-         }
-      }
+   #pragma omp parallel for
+   for(int j=0; j< _nModes; ++j)
+   {
+      realT amp = b[0]*spectrum(j,0);
       
-      amp = (wfsImage.image*_modes->image(j)).sum()/ _npix;
+      for(int i=1;i<_nModes;++i) amp += b[i]*spectrum(j,i);
       
       commandVect.measurement(0,j) = amp;
    }
 
-
-   realT rms_amp = commandVect.measurement.square().sum();// - pow(commandVect.measurement.sum(),2);
-   
-   std::cerr << rms_act << " " << rms_amp << "\n";
-
-   //commandVect.measurement *= sqrt(rms_act/rms_amp);
-//    for(int j=0; j< _nModes;++j)
-//    {
-//       commandVect.measurement(0,j) *= sqrt(rms_act/rms_amp);//*( 1.0 - 0.5*((double) j)/_nModes);
-//    }
-   
    commandVect.iterNo = wfsImage.iterNo;
-#endif
 }
 
 template<typename realT> 

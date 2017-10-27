@@ -194,6 +194,8 @@ public:
    
    int closingGains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
    
+   int closingGains(realT g);
+   
    ///Set the gains for all modes, using a file to specify each gain
    /** The file format is a simple ASCII single column, with 1 gain per line.
      * Must be exactly as long as _nModes. 
@@ -460,6 +462,18 @@ int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
    
    return 0;
 }
+
+template<typename realT>
+int generalIntegrator<realT>::closingGains(realT g)
+{
+   for(int i=0;i<_closingGains.cols(); ++i) 
+   {
+      _closingGains(0,i) = g;
+   }
+   
+   return 0;
+}
+
 
 template<typename realT>
 int generalIntegrator<realT>::gains(const std::string & ogainf)

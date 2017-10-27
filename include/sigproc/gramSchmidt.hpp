@@ -115,6 +115,7 @@ void baseSpectrum(eigenT & bspect, eigenT & gsspect)
    bspect.resize(gsspect.rows(), gsspect.cols());
    bspect.setZero();
    
+//#pragma omp parallel for
    for(int i=0; i< gsspect.rows(); ++i)
    {      
       bspect(i,i) = gsspect(i,i);
@@ -184,7 +185,7 @@ void gramSchmidtSpectrum( eigenTout & out,  ///< [out] the orthonormal basis set
       
    for(int i=0; i<out.cols(); ++i)
    {
-      norm = out.col(i).matrix().norm() * normPix;
+      norm = sqrt(out.col(i).square().sum() / normPix);
       
       out.col(i) /= norm;
       spect.row(i) /= norm;
