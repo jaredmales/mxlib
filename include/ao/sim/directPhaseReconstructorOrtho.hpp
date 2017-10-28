@@ -309,16 +309,25 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
 
    //commandVect.measurement.setZero();
       
-   #pragma omp parallel for
-   for(int j=0; j< _nModes; ++j)
+   //#pragma omp parallel for
+   for(int j=0; j< modes.planes(); ++j)
    {
-      realT amp = b[0]*spectrum(j,0);
+      realT amp = b[0]*spectrum(0,j);
       
-      for(int i=1;i<_nModes;++i) amp += b[i]*spectrum(j,i);
-      
+      for(int i=1;i<modes.planes();++i) 
+      {
+         amp += b[i]*spectrum(i,j);
+      }
       commandVect.measurement(0,j) = amp;
    }
 
+   //std::cerr << "--- " << b[0] << " " << b[0]*spectrum(0,0) << " " << commandVect.measurement(0,0) << "\n";
+   for(int k=0; k< _nModes; ++k)
+   {
+      std::cerr << commandVect.measurement(0,k) << " ";
+   }
+   std::cerr << "\n";
+   
    commandVect.iterNo = wfsImage.iterNo;
 }
 

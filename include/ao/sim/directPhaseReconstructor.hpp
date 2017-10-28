@@ -326,14 +326,9 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    BREAD_CRUMB;   
 
-   realT rms_act = wfsImage.image.square().sum()/_npix;
-      
    wfsImage.image *= _mask;
    
    BREAD_CRUMB;
-   
-   
-
    
    commandVect.measurement.setZero();
    
@@ -355,17 +350,6 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       
       commandVect.measurement(0,j) = amp;
    }
-
-
-   realT rms_amp = commandVect.measurement.square().sum();// - pow(commandVect.measurement.sum(),2);
-   
-   std::cerr << rms_act << " " << rms_amp << "\n";
-
-   //commandVect.measurement *= sqrt(rms_act/rms_amp);
-//    for(int j=0; j< _nModes;++j)
-//    {
-//       commandVect.measurement(0,j) *= sqrt(rms_act/rms_amp);//*( 1.0 - 0.5*((double) j)/_nModes);
-//    }
    
    commandVect.iterNo = wfsImage.iterNo;
 #endif

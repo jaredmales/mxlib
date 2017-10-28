@@ -188,7 +188,7 @@ void gramSchmidtSpectrum( eigenTout & out,  ///< [out] the orthonormal basis set
       norm = sqrt(out.col(i).square().sum() / normPix);
       
       out.col(i) /= norm;
-      spect.row(i) /= norm;
+      //spect.row(i) /= norm;
    }
 }
 
