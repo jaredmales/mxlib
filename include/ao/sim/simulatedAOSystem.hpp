@@ -20,6 +20,7 @@
 #include "../../improc/fitsUtils.hpp"
 
 #include "../../improc/eigenImage.hpp"
+#include "../../improc/eigenCube.hpp"
 
 #include "../../timeUtils.hpp"
 #include "../../sigproc/signalWindows.hpp"
@@ -144,11 +145,11 @@ public:
    long _saveFrameStart;
    
    std::string _psfFileBase;
-   //eigenCube<realT> _psfs;
+   mx::improc::eigenCube<realT> _psfs;
    imageT _psfOut;
    
    bool _doCoron;
-   //eigenCube<realT> _corons;
+   mx::improc::eigenCube<realT> _corons;
    imageT _coronOut;
    
    int _nPerFile;
@@ -259,17 +260,17 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::~simulated
    if(_ampOut.is_open()) _ampOut.close();
    
    if(_rmsOut.is_open()) _rmsOut.close();
-#if 0   
+#if 1
    //Write out the psf and coron cubes one last time
    if(_psfFileBase !="" && _currImage > 0)
    {
-      fitsFile<realT> ff;
+      mx::improc::fitsFile<realT> ff;
          
       std::string fn = _psfFileBase + "_psf_" + mx::convertToString(_currFile) + ".fits";
    
       BREAD_CRUMB;
          
-      ff.write(fn, _psfs.data(), _psfs.rows(), _psfs.cols(), _currImage);
+      ff.write(fn, _psfs);//_psfs.data(), _psfs.rows(), _psfs.cols(), _currImage);
       
       if(_doCoron)
       {
@@ -277,7 +278,7 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::~simulated
             
          BREAD_CRUMB;
          
-         ff.write(fn, _corons.data(), _corons.rows(), _corons.cols(), _currImage);
+         ff.write(fn, _corons);// _corons.data(), _corons.rows(), _corons.cols(), _currImage);
       }
    }
 #endif
@@ -748,9 +749,9 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    if(_psfFileBase != "" && _frameCounter > _saveFrameStart)
    {
       //if(_psfs.planes() == 0)
-      if(_psfOut.rows() == 0)
+      if(_psfOut.rows() == 0 || _psfs.planes() == 0 )
       {
-         //_psfs.resize(_wfSz, _wfSz, _nPerFile);
+         _psfs.resize(_wfSz, _wfSz, _nPerFile);
          _psfOut.resize(_wfSz, _wfSz);
          _psfOut.setZero();
          
@@ -760,7 +761,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          
          if(_doCoron) 
          {
-            //_corons.resize(_wfSz, _wfSz, _nPerFile);
+            _corons.resize(_wfSz, _wfSz, _nPerFile);
             _coronOut.resize(_wfSz, _wfSz);
             _coronOut.setZero();
             
@@ -812,7 +813,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       
          wfp::extractIntensityImage(_realFocalCoron,0,_complexFocalCoron.rows(),0,_complexFocalCoron.cols(),_complexFocalCoron,0,0);
          
-         //_corons.image(_currImage) = _realFocalCoron;
+         _corons.image(_currImage) = _realFocalCoron;
          
          _coronOut += _realFocalCoron;
       }
@@ -829,7 +830,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             
       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
       wfp::extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
-      //_psfs.image(_currImage) = _realFocal;
+      _psfs.image(_currImage) = _realFocal;
       _psfOut += _realFocal;
       
       #if 0
@@ -837,16 +838,16 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       #endif
       
       ++_currImage;
-#if 0
+#if 1
       if(_currImage >= _nPerFile)
       {
-         fitsFile<realT> ff;
+         mx::improc::fitsFile<realT> ff;
          
          std::string fn = _psfFileBase + "_psf_" + mx::convertToString(_currFile) + ".fits";
    
          BREAD_CRUMB;
          
-         ff.write(fn, _psfs.data(), _psfs.rows(), _psfs.cols(), _psfs.planes());
+         ff.write(fn, _psfs);// _psfs.data(), _psfs.rows(), _psfs.cols(), _psfs.planes());
       
          if(_doCoron)
          {
@@ -854,7 +855,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             
             BREAD_CRUMB;
             
-            ff.write(fn, _corons.data(), _corons.rows(), _corons.cols(), _corons.planes());
+            ff.write(fn, _corons);//_corons.data(), _corons.rows(), _corons.cols(), _corons.planes());
          }
 
          ++_currFile;
