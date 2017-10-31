@@ -941,8 +941,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             ff.write( fn, vars_lp);
          
             mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
-            S = exp( -1*vars_lp.sum());
-            
+            //S = exp( -1*vars_lp.sum());            
             S = exp( -1*cim.sum());
             S_lp.push_back(S);
             
