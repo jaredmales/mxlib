@@ -45,8 +45,11 @@ struct clAOLinearPredictor
 
    sigproc::linearPredictor<realT> lp;
    
+   int extrap;
+   
    clAOLinearPredictor()
    {
+      extrap = 0;
    }
    
    ///Calculate the LP coefficients for a turbulence PSD and a noise PSD.
@@ -58,14 +61,23 @@ struct clAOLinearPredictor
    int calcCoefficients( std::vector<realT> & PSDt, ///< [in] the turbulence PSD
                          std::vector<realT> & PSDn, ///< [in] the WFS noise PSD
                          realT PSDreg,              ///< [in] the regularizing constant.  Set to 0 to not use.
-                         int Nc                     ///< [in] the number of LP coefficients.
+                         int Nc,                     ///< [in] the number of LP coefficients.
+                         realT condition = 0
                        )
    {
       PSDtn.resize(PSDt.size());
 
+      int ix = -1;
       for(int i=0; i< PSDt.size(); ++i)
       {
          PSDtn[i] = PSDt[i] +  PSDn[i] + PSDreg;
+         
+//          if(PSDtn[i] < PSDreg)
+//          {
+//             if(ix == -1) ix = i-1;
+//             
+//             PSDtn[i] += PSDreg;//(i-ix);
+//          }
       }
       
       sigproc::augment1SidedPSD( psd2s, PSDtn,1);
@@ -75,7 +87,7 @@ struct clAOLinearPredictor
       //#pragma omp critical
       acpsd(ac, psd2s);
 
-      return lp.calcCoefficients(ac, Nc);
+      return lp.calcCoefficients(ac, Nc, condition, extrap);
    }
    
 

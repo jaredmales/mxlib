@@ -38,7 +38,7 @@ struct wfsImageT
 {
    typedef _realT realT;
    
-   unsigned iterNo;
+   realT iterNo;
    
    ///The wavefront sensor detector image type
    typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
@@ -480,11 +480,11 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
 {
  
    wavefrontT pupilPlane;
-#if 0
+#if 1
    BREAD_CRUMB;
-   
+
    /* Here make average wavefront for now */
-   int _firstWavefront = _lastWavefront - _iTime+1;
+   int _firstWavefront = _lastWavefront - _iTime;
    if(_firstWavefront < 0) _firstWavefront += _wavefronts.size();
    
    pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
@@ -495,27 +495,40 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    //std::cerr << "DPS Averaging: " << _wavefronts[_firstWavefront].iterNo << " " ;
    BREAD_CRUMB;
    
-   for(int i=0; i < _iTime-1; ++i)
+   if(_wavefronts[_firstWavefront].iterNo < _iTime)
+   {
+      wfsImage.image = pupilPlane.phase;
+      wfsImage.iterNo  = pupilPlane.iterNo;
+      return;
+   }
+      
+   for(int i=0; i < _iTime; ++i)
    {
       ++_firstWavefront;
       if(_firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
+      
       
       pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
       pupilPlane.phase += _wavefronts[_firstWavefront].phase;      
       pupilPlane.iterNo += _wavefronts[_firstWavefront].iterNo;
       
+
       //std::cerr << _wavefronts[_firstWavefront].iterNo << " ";
    }
    //std::cerr  << " = " << _iTime << "\n";
    
-   pupilPlane.amplitude /= (_iTime);
-   pupilPlane.phase /= (_iTime);
-   pupilPlane.iterNo /= (_iTime);
+   pupilPlane.amplitude /= (_iTime+1);
+   pupilPlane.phase /= (_iTime+1);
+   pupilPlane.iterNo /= (_iTime+1);
+   
+   
    
    /*=====================================*/
 
    wfsImage.image = pupilPlane.phase;
    wfsImage.iterNo  = pupilPlane.iterNo;
+   
+   
 #else
 
    double _firstWavefront = _lastWavefront;// - 0.5*_iTime;

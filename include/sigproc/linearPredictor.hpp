@@ -46,12 +46,14 @@ struct linearPredictor
      */ 
    int calcCoefficients( std::vector<realT> & ac,
                          size_t Nc,
-                         realT condition = 0 )
+                         realT condition = 0,
+                         int extrap = 0
+                       )
    {
       
       if(condition == 0)
       {
-         return calcCoefficientsLevinson( ac, Nc );
+         return calcCoefficientsLevinson( ac, Nc, extrap );
       }
       
       
@@ -83,11 +85,14 @@ struct linearPredictor
       
       _c = Rvec.matrix()*PInv.matrix();
 
+      
+      
       return 0;
    }
 
    int calcCoefficientsLevinson( std::vector<realT> & ac,
-                                 size_t Nc 
+                                 size_t Nc,
+                                 int extrap = 0
                                )
    {
       std::vector<realT> r, x, y;
@@ -106,6 +111,27 @@ struct linearPredictor
       _c.resize(1, Nc);
       for(int i=0; i< Nc; ++i) _c(0,i) = x[i];
     
+      
+      if(extrap > 0)
+      {
+         Eigen::Array<realT, -1, -1> ex(_c.rows(), _c.cols());
+      
+         std::cerr << _c.sum() << " ";
+         for(int j=0; j < extrap; ++j)
+         {
+            for(int i=0; i< Nc-1; ++i)
+            {
+               ex(0,i) = _c(0,0)*_c(0,i) + _c(0,i+1);
+            }
+            ex(0,Nc-1) = _c(0,0)*_c(0,Nc-1);
+         
+            _c = ex;
+         }
+         std::cerr << _c.sum() << "\n";
+      }
+      
+      
+      
       return 0;
    }
    
@@ -115,16 +141,18 @@ struct linearPredictor
    }
    
    realT predict( std::vector<realT> & hist,
-                  size_t idx = 0 )
+                  int idx )
    {
       realT x = 0;
       
+      if(idx < _c.cols()) return 0;
+      
       for(int i=0; i< _c.cols(); ++i)
       {
-         x += _c[i]*hist[idx];
-         ++idx;
-         if(idx >= hist.size()) idx = 0; 
+         x += _c(0,i)*hist[idx-i];
       }
+      
+      return x;
    }
    
    realT spectralResponse( realT f, realT fs)

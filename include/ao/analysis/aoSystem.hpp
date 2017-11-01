@@ -215,7 +215,7 @@ public:
    {
       if( _wfsBeta == 0) wfsBetaUnalloc();
       
-      return _wfsBeta->beta_p(m, n, _D);
+      return _wfsBeta->beta_p(m, n, _D, d_opt(), atm.r_0(_lam_sci) );
    }
    
    ///Check for unassigned wfs pointer
@@ -1234,7 +1234,7 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    
    if (_wfsBeta == 0) wfsBetaUnalloc();
    
-   realT beta_p = _wfsBeta->beta_p(m,n,_D);
+   realT beta_p = _wfsBeta->beta_p(m,n,_D, d_opt(), atm.r_0(_lam_sci));
             
    realT snr2 = signal2Noise2( tau_wfs );
          
@@ -1467,7 +1467,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
 
    if (_wfsBeta == 0) wfsBetaUnalloc();
       
-   realT beta_p = _wfsBeta->beta_p(m,n,_D);
+   realT beta_p = _wfsBeta->beta_p(m,n,_D, d_opt(), atm.r_0(_lam_sci));
 
    //Set up for root finding:
    realT a, b, c, d, e;

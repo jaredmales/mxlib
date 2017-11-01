@@ -56,7 +56,9 @@ struct wfs
      */ 
    virtual realT beta_p( int m, ///< [in] the spatial frequency index for u
                          int n,  ///< [in] the spatial frequency index for v
-                         realT D ///< [in] the telescope diameter
+                         realT D, ///< [in] the telescope diameter
+                         realT d,
+                         realT r0  ///< [in] Fried's parameter, used by some derived WFS.
                        )
    {
       return static_cast<realT>(1);
@@ -98,7 +100,9 @@ struct pywfsUnmod : public wfs<realT, iosT>
      */ 
    realT beta_p( int m, ///< [in] the spatial frequency index for u
                  int n,  ///< [in] the spatial frequency index for v
-                 realT D ///< [in] the telescope diameter
+                 realT D, ///< [in] the telescope diameter
+                 realT d,
+                 realT r0 ///< [in] Fried's parameter, not used by PyWFS
                )
    {
       using namespace boost::math::constants;
@@ -132,11 +136,52 @@ struct pywfsModAsymptotic : public wfs<realT, iosT>
      */ 
    realT beta_p( int m, ///< [in] the spatial frequency index for u
                  int n,  ///< [in] the spatial frequency index for v
-                 realT D ///< [in] the telescope diameter
+                 realT D, ///< [in] the telescope diameter
+                 realT d,
+                 realT r0 ///< [in] Fried's parameter, not used by PyWFS
+               )
+   {
+      using namespace boost::math::constants;      
+      return static_cast<realT>(2) * root_two<realT>();
+   }
+   
+};
+
+///The shack hartmann wavefront sensor sensitivity function.
+/** Provides the \f$ \beta_p \f$ parameter of Guyon, 2005 \cite guyon_2005
+  * for the shack hartmann WFS.
+  * 
+  * \tparam realT is the floating point type used for calculations
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
+  * 
+  * \ingroup mxAOAnalytic
+  */ 
+template<typename realT, typename iosT = std::ostream>
+struct shwfs : public wfs<realT, iosT>
+{
+   shwfs()
+   {
+      this->_id = "Shack Hartmann";
+   }
+   
+   ///Get the sensitivity at a spatial frequency.
+   /** The sensitivity of the shack hartmann WFS
+     * 
+     * \returns the sensitivity to photon noise parameter
+     */ 
+   realT beta_p( int m, ///< [in] the spatial frequency index for u
+                 int n,  ///< [in] the spatial frequency index for v
+                 realT D, ///< [in] the telescope diameter
+                 realT d,
+                 realT r0 ///< [in] Fried's parameter
                )
    {
       using namespace boost::math::constants;
-      return static_cast<realT>(2) * root_two<realT>();
+      
+      realT k = sqrt(m*m + n*n)/D;
+      
+      return 1.48/(k*d)*sqrt(1 + pow(d/r0,2));
+      
    }
    
 };

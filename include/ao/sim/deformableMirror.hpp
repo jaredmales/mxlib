@@ -152,8 +152,8 @@ public:
    ///Apply a single mode.
    void applyMode(wavefrontT & wf, int modeNo, realT amp, realT lambda);
    
-   unsigned _settlingIter;
-   unsigned _settledIter;
+   realT _settlingIter;
+   realT _settledIter;
    
    template<typename commandT>
    void setShape(commandT commandV);

@@ -352,6 +352,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    }
    
    commandVect.iterNo = wfsImage.iterNo;
+   
 #endif
 }
 
