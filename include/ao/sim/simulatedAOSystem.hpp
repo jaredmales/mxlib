@@ -142,6 +142,8 @@ public:
      * @{ 
      */
 
+   bool _writeIndFrames;
+   
    long _saveFrameStart;
    
    std::string _psfFileBase;
@@ -244,6 +246,7 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::simulatedA
    
    _rmsUnwrap = false;
 
+   _writeIndFrames = false;
    _saveFrameStart = 0;
    _doCoron = false;
    _nPerFile = 500;
@@ -262,7 +265,7 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::~simulated
    if(_rmsOut.is_open()) _rmsOut.close();
 #if 1
    //Write out the psf and coron cubes one last time
-   if(_psfFileBase !="" && _currImage > 0)
+   if(_psfFileBase !="" && _currImage > 0 && _writeIndFrames)
    {
       mx::improc::fitsFile<realT> ff;
          
@@ -749,9 +752,9 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    if(_psfFileBase != "" && _frameCounter > _saveFrameStart)
    {
       //if(_psfs.planes() == 0)
-      if(_psfOut.rows() == 0 || _psfs.planes() == 0 )
+      if(_psfOut.rows() == 0 || (_psfs.planes() == 0 && _writeIndFrames))
       {
-         _psfs.resize(_wfSz, _wfSz, _nPerFile);
+         if(_writeIndFrames) _psfs.resize(_wfSz, _wfSz, _nPerFile);
          _psfOut.resize(_wfSz, _wfSz);
          _psfOut.setZero();
          
@@ -761,7 +764,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          
          if(_doCoron) 
          {
-            _corons.resize(_wfSz, _wfSz, _nPerFile);
+            if(_writeIndFrames) _corons.resize(_wfSz, _wfSz, _nPerFile);
             _coronOut.resize(_wfSz, _wfSz);
             _coronOut.setZero();
             
@@ -813,7 +816,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       
          wfp::extractIntensityImage(_realFocalCoron,0,_complexFocalCoron.rows(),0,_complexFocalCoron.cols(),_complexFocalCoron,0,0);
          
-         _corons.image(_currImage) = _realFocalCoron;
+         if(_writeIndFrames) _corons.image(_currImage) = _realFocalCoron;
          
          _coronOut += _realFocalCoron;
       }
@@ -830,7 +833,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             
       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
       wfp::extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
-      _psfs.image(_currImage) = _realFocal;
+      if(_writeIndFrames) _psfs.image(_currImage) = _realFocal;
       _psfOut += _realFocal;
       
       #if 0
@@ -839,7 +842,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       
       ++_currImage;
 #if 1
-      if(_currImage >= _nPerFile)
+      if(_currImage >= _nPerFile && _writeIndFrames)
       {
          mx::improc::fitsFile<realT> ff;
          

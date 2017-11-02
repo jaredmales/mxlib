@@ -112,11 +112,9 @@ struct linearPredictor
       for(int i=0; i< Nc; ++i) _c(0,i) = x[i];
     
       
-      if(extrap > 0)
+      if(extrap == 1)
       {
          Eigen::Array<realT, -1, -1> ex(_c.rows(), _c.cols());
-      
-         std::cerr << _c.sum() << " ";
          for(int j=0; j < extrap; ++j)
          {
             for(int i=0; i< Nc-1; ++i)
@@ -127,7 +125,6 @@ struct linearPredictor
          
             _c = ex;
          }
-         std::cerr << _c.sum() << "\n";
       }
       
       
