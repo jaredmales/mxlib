@@ -733,16 +733,19 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
    fout.open(fn);
    
    fout << "#---------------------------\n";
-   _aosys->dumpAOSystem(fout);
+   std::cerr << "2.1\n";   
+_aosys->dumpAOSystem(fout);
    fout << "#---------------------------\n";
    fout << "# Analysis Parameters\n";
    fout << "#    mnMax    = " << mnMax << '\n';
    fout << "#    mnCon    = " << mnCon << '\n';
    fout << "#    lpNc     = " << lpNc << '\n';
-   fout << "#    mags     = "; 
+   fout << "#    mags     = ";
+std::cerr << "2.2\n"; 
    for(int i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
    fout << "#    intTimes = "; 
+std::cerr << "2.3\n";   
    for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
    fout << intTimes[intTimes.size()-1] << '\n';
    
