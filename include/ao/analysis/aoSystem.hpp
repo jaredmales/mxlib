@@ -863,7 +863,7 @@ void aoSystem<realT, inputSpectT, iosT>::initialize()
 
    _d_min = 0;
    _d_opt = 0;
-   _optd = true;
+   _optd = false;//true;
    
    _lam_wfs = 0;
    _npix_wfs = 0;
