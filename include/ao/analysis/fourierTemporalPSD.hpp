@@ -846,7 +846,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                
                getGridPSD( tPSDp, psdDir, m, n );
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
-               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               
+               //var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               
+               var0 = 0;
+               for(int ww =0; ww < tPSDp; ++ww) var0 += tPSDp[ww];
+               var0*=(tfreq[1]-tfreq[0]);
                
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {

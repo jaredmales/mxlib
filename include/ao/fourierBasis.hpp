@@ -8,8 +8,9 @@
 #ifndef __fourierBasis_hpp__
 #define __fourierBasis_hpp__
 
-#include <mx/fourierModes.hpp>
-#include <mx/fitsFile.hpp>
+#include <mx/sigproc/fourierModes.hpp>
+#include <mx/improc/eigenCube.hpp>
+#include <mx/improc/fitsFile.hpp>
 
 
 namespace mx
@@ -29,11 +30,13 @@ namespace AO
 template<typename realT>
 void makeModfBasis( const std::string & basisName,
                     int dim,
-                    int N )
+                    int N,
+                    realT ang
+                  )
 {
-   mx::eigenCube<realT> modes;
+   mx::improc::eigenCube<realT> modes;
 
-   makeFourierBasis_Rect( modes, dim, N, MX_FOURIER_MODIFIED);
+   mx::sigproc::makeFourierBasis_Rect( modes, dim, N, MX_FOURIER_MODIFIED, ang);
 
 //    realT p2v;
 //    for(int i=0; i<N; ++i)
@@ -42,7 +45,7 @@ void makeModfBasis( const std::string & basisName,
 //       modes.image(i) /= p2v;
 //    }
 
-   mx::fitsFile<realT> ff;
+   mx::improc::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::basis::modes(basisName, true);
       

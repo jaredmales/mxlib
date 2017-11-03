@@ -16,6 +16,8 @@ using namespace boost::math::constants;
 
 #include "../mxError.hpp"
 
+#include "../math/geo.hpp"
+using namespace mx::math;
 
 //#include <mx/eigenImage.hpp>
 
@@ -176,7 +178,12 @@ int makeFourierMode(typeN  im, typename typeN::Scalar m, typename typeN::Scalar 
   * \tparam typeN is an Eigen-like reference type.
   */  
 template<class typeN>
-int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::Scalar n, int p)
+int makeModifiedFourierMode( typeN im, 
+                             typename typeN::Scalar m, 
+                             typename typeN::Scalar n, 
+                             int p,
+                             typename typeN::Scalar ang = 0
+                           )
 {
    typedef typename typeN::Scalar realT;
       
@@ -194,13 +201,30 @@ int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::
    yc = 0.5*(dim2-1.0);
    
    D = std::max(dim1, dim2);
+
+   realT c_ang, s_ang;
+   if(ang != 0)
+   {
+      c_ang = cos( dtor(ang));
+      s_ang = sin( dtor(ang));
+   }
    
    for(int i=0;i<dim1; ++i)
    {
-      x = i - xc;
+      
       for(int j=0;j<dim2; ++j)
       {
-         y = j-yc;
+         x = i - xc;
+         y = j - yc;
+         
+         if(ang != 0)
+         {
+            realT x0 = x*c_ang - y*s_ang;
+            realT y0 = x*s_ang + y*c_ang;
+            
+            x=x0;
+            y=y0;
+         }
          
          arg = two_pi<realT>()/D*(m*x + n*y);
          
@@ -222,9 +246,13 @@ int makeModifiedFourierMode(typeN im, typename typeN::Scalar m, typename typeN::
   * \tparam typeN is an Eigen-like reference type.
   */
 template<class typeN>
-int makeModifiedFourierModeP(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeModifiedFourierModeP( typeN im, 
+                              typename typeN::Scalar m, 
+                              typename typeN::Scalar n,
+                              typename typeN::Scalar ang = 0
+                            )
 {
-   return makeModifiedFourierMode(im, m, n, 1);
+   return makeModifiedFourierMode(im, m, n, 1, ang);
 }
  
 ///Populate a single modified Fourier -1 mode
@@ -237,9 +265,13 @@ int makeModifiedFourierModeP(typeN im, typename typeN::Scalar m, typename typeN:
   * \tparam typeN is an Eigen-like reference type.
   */
 template<class typeN>
-int makeModifiedFourierModeM(typeN im, typename typeN::Scalar m, typename typeN::Scalar n)
+int makeModifiedFourierModeM( typeN im, 
+                              typename typeN::Scalar m, 
+                              typename typeN::Scalar n,
+                              typename typeN::Scalar ang = 0
+                            )
 {
-   return makeModifiedFourierMode(im, m, n, -1);
+   return makeModifiedFourierMode(im, m, n, -1, ang);
 }
 
 
@@ -589,7 +621,9 @@ template<typename cubeT>
 int fillFourierBasis( cubeT & cube, 
                       int dim, 
                       std::vector<fourierModeDef> spf,
-                      int basisType )
+                      int basisType,
+                      typename cubeT::Scalar ang = 0
+                    )
 {
    typedef typename cubeT::Scalar floatT;
    
@@ -601,7 +635,7 @@ int fillFourierBasis( cubeT & cube,
    {
       if(basisType == MX_FOURIER_MODIFIED)
       {
-         if( makeModifiedFourierMode( cube.image(j), spf[j].m, spf[j].n, spf[j].p) < 0) return -1;
+         if( makeModifiedFourierMode( cube.image(j), spf[j].m, spf[j].n, spf[j].p, ang) < 0) return -1;
       }
       else 
       {
@@ -680,7 +714,9 @@ template<typename cubeT>
 int makeFourierBasis_Rect( cubeT & cube, 
                            int dim, 
                            int N,
-                           int basisType )
+                           int basisType,
+                           typename cubeT::Scalar ang = 0
+                         )
 {   
    std::vector<fourierModeDef> spf;
    
@@ -689,7 +725,7 @@ int makeFourierBasis_Rect( cubeT & cube,
       return -1;
    }
    
-   return fillFourierBasis(cube, dim, spf, basisType);   
+   return fillFourierBasis(cube, dim, spf, basisType, ang);   
 }
 
 ///@}
