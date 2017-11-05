@@ -879,13 +879,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
                   go_lp.b(std::vector<realT>({1}));
                }
                   
-               if(gopt > 0 && var > var0)
+               if(gopt > 0 && var > 1.3*var0)
                {
                   gopt = 0;
                   var = var0;
                }
 
-               if(gopt_lp > 0 && var_lp > var0)
+               if(gopt_lp > 0 && var_lp > 1.3*var0)
                {
                   gopt_lp = 0;
                   var_lp = var0;
@@ -926,8 +926,23 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits";
          ff.write( fn, vars);
    
+         
+         //Perform convolution for uncontrolled modes
          mx::AO::analysis::varmapToImage(cim, vars, psf);
-         //realT S = exp( -1*vars.sum());
+         
+         //Now switch to uncovolved variance for controlled modes
+         for(int m=0; m<= mnMax; ++m)
+         {
+            for(int n=0-mnMax; n<= mnMax; ++n)
+            {
+               if(gains(mnMax + m, mnMax + n) > 0)
+               {
+                  cim( mnMax + m, mnMax + n) = vars( mnMax + m, mnMax + n);
+                  cim( mnMax - m, mnMax - n ) = vars( mnMax + m, mnMax + n);
+               }
+            }
+         }
+
          realT S = exp(-1*cim.sum());
          S_si.push_back(S);
          cim /= S;
@@ -947,11 +962,23 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             ff.write( fn, vars_lp);
          
             mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
-            //S = exp( -1*vars_lp.sum());            
-            S = exp( -1*cim.sum());
+            //Now switch to uncovolved variance for controlled modes
+            for(int m=0; m<= mnMax; ++m)
+            {
+               for(int n=0-mnMax; n<= mnMax; ++n)
+               {
+                  if(gains_lp(mnMax + m, mnMax + n) > 0)
+                  {
+                     cim( mnMax + m, mnMax + n) = vars_lp( mnMax + m, mnMax + n);
+                     cim( mnMax - m, mnMax - n ) = vars_lp( mnMax + m, mnMax + n);
+                  }
+               }
+            }
+
+            realT S = exp(-1*cim.sum());
             S_lp.push_back(S);
-            
             cim /= S;
+            
             fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
             ff.write( fn, cim);
          }
