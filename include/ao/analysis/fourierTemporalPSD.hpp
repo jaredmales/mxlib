@@ -733,19 +733,16 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
    fout.open(fn);
    
    fout << "#---------------------------\n";
-   std::cerr << "2.1\n";   
-_aosys->dumpAOSystem(fout);
+   _aosys->dumpAOSystem(fout);
    fout << "#---------------------------\n";
    fout << "# Analysis Parameters\n";
    fout << "#    mnMax    = " << mnMax << '\n';
    fout << "#    mnCon    = " << mnCon << '\n';
    fout << "#    lpNc     = " << lpNc << '\n';
    fout << "#    mags     = ";
-std::cerr << "2.2\n"; 
    for(int i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
    fout << "#    intTimes = "; 
-std::cerr << "2.3\n";   
    for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
    fout << intTimes[intTimes.size()-1] << '\n';
    
@@ -850,11 +847,11 @@ std::cerr << "2.3\n";
                getGridPSD( tPSDp, psdDir, m, n );
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
-               //var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
                
-               var0 = 0;
-               for(int ww =0; ww < tPSDp.size(); ++ww) var0 += tPSDp[ww];
-               var0*=(tfreq[1]-tfreq[0]);
+//                var0 = 0;
+//                for(int ww =0; ww < tPSDp.size(); ++ww) var0 += tPSDp[ww];
+//                var0*=(tfreq[1]-tfreq[0]);
                
                if(fabs(m) <= mnCon && fabs(n) <= mnCon)
                {

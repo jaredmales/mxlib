@@ -20,6 +20,7 @@ using namespace boost::math::constants;
 #include "../../math/func/jinc.hpp"
 #include "../../sigproc/fourierModes.hpp"
 #include "../../improc/fitsFile.hpp"
+#include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib_uncomp_version.h"
 #include "../../mxlib.h"
@@ -27,10 +28,15 @@ using namespace boost::math::constants;
 #include "../../timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"
 
+#include "../../math/func/airyPattern.hpp"
+
+
+
 #include "aoAtmosphere.hpp"
 #include "aoPSDs.hpp"
 #include "aoSystem.hpp"
 #include "mxaoa_version.h"
+#include "varmapToImage.hpp"
 
 
 namespace mx
@@ -350,7 +356,7 @@ int fourierVarVec( const std::string & fname,
    
    std::vector<realT> var(N,0);
    
-   mx::ompLoopWatcher<> watcher(N, std::cout);
+   mx::ompLoopWatcher<> watcher(N, std::cerr);
    
    realT mnCon = 0;
    if( aosys.d_min() > 0)
@@ -413,7 +419,66 @@ int fourierVarVec( const std::string & fname,
    
 }
 
+///Calculate a map of Fourier variances by convolution with the PSD 
+/** Uses the Airy pattern for the circularly unobstructed aperture.
+  * 
+  * \returns 0 on success
+  * \returns -1 on error
+  */
+template<typename realT, typename aosysT>
+int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance estimated by convolution with the PSD
+                   improc::eigenImage<realT> & psd, ///< [out] the PSD map
+                   int N, ///< [in] the number of components to analyze
+                   aosysT & aosys ///< [in[ the AO system defining the PSD characteristics.
+                 )
+{
+   
+   psd.resize(2*N + 1, 2*N+1);
+   
+   realT mnCon = 0;
+   if( aosys.d_min() > 0)
+   {
+      mnCon = floor( aosys.D()/aosys.d_min()/2.0);
+   }
+   
+   for(int i=0; i<=N; ++i)
+   {
+      for(int j=-N; j<=N; ++j)
+      {
+         
+         realT D = aosys.D();
+         realT k = sqrt( pow(i,2) + pow(j,2))/D;
+      
+         realT P = aosys.psd(aosys.atm, k, aosys.lam_sci(), 0, aosys.lam_wfs(), 1.0);
+         
+         if(mnCon > 0 )
+         {
+            if( k*D < mnCon ) 
+            {           
+               P *= pow(two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+            }
+         }
 
+         psd(N+i, N + j) = P/pow(D,2);
+         psd(N-i, N - j) = P/pow(D,2);
+      }
+   }
+   
+   //Create Airy PSF for convolution with PSD psd.
+   Eigen::Array<realT, -1,-1> psf;
+   psf.resize(2*N+3,2*N+3);
+   for(int i=0;i<psf.rows();++i)
+   {
+      for(int j=0;j<psf.cols();++j)
+      {
+         psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
+      }
+   }
+   
+   mx::AO::analysis::varmapToImage(var, psd, psf);
+
+   
+}
 
 template<typename realT>
 int fourierCovarMap( const std::string & fname,

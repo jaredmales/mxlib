@@ -1832,17 +1832,11 @@ template<typename realT, class inputSpectT, typename iosT>
 iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
-   std::cerr << "2.1.1\n";
    ios << "#    D = " << D() << '\n';
-      std::cerr << "2.1.2\n";
    ios << "#    d_min = " << d_min() << '\n';
-      std::cerr << "2.1.3\n";
    ios << "#    optd = " << std::boolalpha << _optd << '\n';
-      std::cerr << "2.1.4\n";
    ios << "#    d_opt = " << d_opt() << '\n';
-      std::cerr << "2.1.5\n";
    ios << "#    lam_sci = " << lam_sci() << '\n';
-      std::cerr << "2.1.6\n";
    ios << "#    F0 = " << F0() << '\n';
    ios << "#    starMag = " << starMag() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
