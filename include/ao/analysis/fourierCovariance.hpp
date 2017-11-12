@@ -429,10 +429,11 @@ template<typename realT, typename aosysT>
 int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance estimated by convolution with the PSD
                    improc::eigenImage<realT> & psd, ///< [out] the PSD map
                    int N, ///< [in] the number of components to analyze
+                   int overSample,
                    aosysT & aosys ///< [in[ the AO system defining the PSD characteristics.
                  )
 {
-   
+   N *= overSample;
    psd.resize(2*N + 1, 2*N+1);
    
    realT mnCon = 0;
@@ -447,7 +448,7 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
       {
          
          realT D = aosys.D();
-         realT k = sqrt( pow(i,2) + pow(j,2))/D;
+         realT k = sqrt( pow(i,2) + pow(j,2))/D/overSample;
       
          realT P = aosys.psd(aosys.atm, k, aosys.lam_sci(), 0, aosys.lam_wfs(), 1.0);
          
@@ -459,8 +460,8 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
             }
          }
 
-         psd(N+i, N + j) = P/pow(D,2);
-         psd(N-i, N - j) = P/pow(D,2);
+         psd(N+i, N + j) = P/pow(D*overSample,2);
+         psd(N-i, N - j) = P/pow(D*overSample,2);
       }
    }
    
@@ -471,7 +472,7 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
    {
       for(int j=0;j<psf.cols();++j)
       {
-         psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
+         psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2))/overSample);
       }
    }
    

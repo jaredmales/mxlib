@@ -933,7 +933,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
          //Now switch to uncovolved variance for controlled modes
          for(int m=0; m<= mnMax; ++m)
          {
-            for(int n=0-mnMax; n<= mnMax; ++n)
+            for(int n=-mnMax; n<= mnMax; ++n)
             {
                if(gains(mnMax + m, mnMax + n) > 0)
                {
@@ -965,7 +965,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
             //Now switch to uncovolved variance for controlled modes
             for(int m=0; m<= mnMax; ++m)
             {
-               for(int n=0-mnMax; n<= mnMax; ++n)
+               for(int n=-mnMax; n<= mnMax; ++n)
                {
                   if(gains_lp(mnMax + m, mnMax + n) > 0)
                   {

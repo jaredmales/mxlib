@@ -36,14 +36,17 @@ struct phoenixSpectrum
    
    static constexpr const char * dataDirEnvVar = "PHOENIX_DATADIR";
    
-   static std::string fileName( const std::string name )
+   typedef std::string paramsT; ///< The parameter is a string name.
+   
+   static std::string fileName( const std::string & name )
    {
       return name;
    }
    
    static int readSpectrum( std::vector<realT> & rawLambda,
                             std::vector<realT> & rawSpectrum,
-                            const std::string & path 
+                            const std::string & path ,
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
       boost::filesystem::path p(path);
