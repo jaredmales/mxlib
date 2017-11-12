@@ -45,7 +45,19 @@ Follow these steps:
    
 -# In the mxlib directory, type make, and then make install.  The library is now installed.
 
+\section install_environment Build Environment 
+You can customize the files mx.makefile and mx.makefile.inc in the local directory.  Once that is done, set the following two environment variables (e.g. in bash_aliases):
+\code
+export MXMAKEFILEINC=/path/to/mxlib/local/mx.makefile.inc
+export MXMAKEFILE=/path/to/mxlib/local/mx.makefile
+\endcode
 
+You can then build a single .cpp program, let's say "myProgram.cpp", with the following line
+\code
+make -B -f $MXMAKEFILE t=myProgram 
+\endcode
+
+If you want to develop a more complicated build system, local/mx.makefile should give you all the information you need for how to link the dependencies.
 
 \section github I've Moved!
 
