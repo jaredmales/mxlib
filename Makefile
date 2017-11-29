@@ -15,14 +15,21 @@
 
 
 include local/mxlib.makefile.inc 
-
-
+UNAME := $(shell uname)
+LIBNAME = libmxlib
+ifeq ($(UNAME),Darwin)  # macOS
+	LIBEXT = dylib
+	LIBFLAGS = -dynamiclib -install_name "$(LIBNAME).$(LIBEXT)" -o $(LIBNAME).$(LIBEXT)
+else
+	LIBEXT = so
+    LIBFLAGS = -Wl,-soname,$(LIBNAME).$(LIBEXT) -o $(LIBNAME).$(LIBEXT) -lrt
+endif
 
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -c $<
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -c $<
 
 # programs to be made
 TARGETS = libmxlib
@@ -92,13 +99,13 @@ mxlib_uncomp_version:
 libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
 	$(AR) libmxlib.a $(OBJS)
 	$(RANLIB) libmxlib.a 
-	gcc -shared -Wl,-soname,libmxlib.so -o libmxlib.so $(OBJS) $(LIB_SOFA) -lrt -lc -rdynamic
+	$(CC) -shared $(LIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
 	
 install: libmxlib
 	install -d $(INCLUDE_PATH)
 	install -d $(LIB_PATH)
-	install libmxlib.a $(LIB_PATH)
-	install libmxlib.so $(LIB_PATH)
+	install $(LIBNAME).a $(LIB_PATH)
+	install $(LIBNAME).$(LIBEXT) $(LIB_PATH)
 	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
 	 (cp -r include/$$file $(INCLUDE_PATH)) || break; \

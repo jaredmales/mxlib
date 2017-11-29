@@ -19,7 +19,7 @@ OBJS = $(t).o
 
 
 all: $(OBJS) 
-	$(CPP) -o $(TARGET)  $(OBJS) $(OPTIMIZE) $(CPPFLAGS) -L$(LIB_PATH) -lmxlib  $(MXLIB_EXLIBS)
+	$(CXX) -o $(TARGET)  $(OBJS) $(OPTIMIZE) $(CXXFLAGS) -L$(LIB_PATH) -lmxlib  $(MXLIB_EXLIBS)
 
 install: all
 	install -d $(BIN_PATH)
