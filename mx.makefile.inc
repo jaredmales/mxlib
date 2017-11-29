@@ -27,10 +27,10 @@ MXLIB_EXLIBS = -lsofa_c -llevmar -L/usr/lib64/ -lcfitsio -lrt -L/usr/local/lib -
 
 OPTIMIZE = -O3 -fopenmp -ffast-math
 
-CPP = g++
+CXX = g++
 
 CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC
-CPPFLAGS += --std=c++14 -D_XOPEN_SOURCE=600 -fPIC
+CXXFLAGS += --std=c++14 -D_XOPEN_SOURCE=600 -fPIC
 
 INCLUDE = -I$(INCLUDE_PATH) $(BLASPACK_INC)
 
@@ -38,7 +38,7 @@ INCLUDE = -I$(INCLUDE_PATH) $(BLASPACK_INC)
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -c $<
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -c $<
 
 
 	

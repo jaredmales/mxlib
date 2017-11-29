@@ -5,11 +5,11 @@ MXLIB_EXLIBS = -lsofa_c -L/usr/lib64/ -lrt -lcfitsio -L/usr/local/lib -lfftw3 -l
 OPTIMIZE = -O3 -fopenmp 
 #-ffast-math -Wno-ignored-attributes
 
-CPP = g++
+CXX = g++
 
 CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC 
 #-fno-diagnostics-show-caret
-CPPFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC 
+CXXFLAGS += --std=c++0x -D_XOPEN_SOURCE=600 -fPIC 
 #-fno-diagnostics-show-caret
 
 INCLUDE = -I../include -I$(INCLUDE_PATH) -I/usr/local/atlas/include 
@@ -18,7 +18,7 @@ INCLUDE = -I../include -I$(INCLUDE_PATH) -I/usr/local/atlas/include
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -c $<
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -c $<
 
 # programs to be made
 TARGET = $(targname)
@@ -27,10 +27,10 @@ OBJS = $(targname).o
 
 
 all: git_version $(OBJS) 
-	$(CPP) -o ../bin/$(TARGET)  $(OBJS) $(OPTIMIZE) $(CPPFLAGS) -L$(LIB_PATH) -lmxlib  $(MXLIB_EXLIBS)
+	$(CXX) -o ../bin/$(TARGET)  $(OBJS) $(OPTIMIZE) $(CXXFLAGS) -L$(LIB_PATH) -lmxlib  $(MXLIB_EXLIBS)
 
 pch: 
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -x c++-header ../include/mxAOAnalytic.hpp
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -x c++-header ../include/mxAOAnalytic.hpp
 
 .PHONY: git_version
 git_version:

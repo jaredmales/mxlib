@@ -29,7 +29,7 @@ endif
 	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) $(INCLUDE) -c $<
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -c $<
 
 # programs to be made
 TARGETS = libmxlib

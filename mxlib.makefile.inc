@@ -11,7 +11,7 @@ LIB_SOFA = $(LIB_PATH)/libsofa_c.a
 
 OPTIMIZE = -O3
 
-CPP = g++
+CXX = g++
 AR = ar -r
 RANLIB = ar -s
 
@@ -19,5 +19,5 @@ RANLIB = ar -s
 INCLUDE = -Iinclude -I$(HOME)/include
 
 CFLAGS += --std=c99 -D_XOPEN_SOURCE=600  -fPIC
-CPPFLAGS += --std=c++14 -D_XOPEN_SOURCE=600 -fPIC
+CXXFLAGS += --std=c++14 -D_XOPEN_SOURCE=600 -fPIC
 

@@ -5,15 +5,15 @@ LIBS = -lmxlib
 
 OPTIMIZE = -O3
 
-CPP = g++
+CXX = g++
 
-CPPFLAGS += --std=c++0x
+CXXFLAGS += --std=c++0x
 
 .c.o:
 	$(CC) $(OPTIMIZE) $(CFLAGS) -I$(INCLUDE_PATH) -c $<
 
 .cpp.o:
-	$(CPP) $(OPTIMIZE) $(CPPFLAGS) -I$(INCLUDE_PATH) -c $<
+	$(CXX) $(OPTIMIZE) $(CXXFLAGS) -I$(INCLUDE_PATH) -c $<
 
 # programs to be made
 TARGETS = my_target
@@ -24,7 +24,7 @@ all: $(TARGETS)
 
 
 my_target: $(OBJS) my_target.hpp other_file.hpp 
-	$(CPP) -o my_target $(OBJS) $(CPPFLAGS) $(OPTIMIZE) -L$(LIB_PATH) $(LIBS)
+	$(CXX) -o my_target $(OBJS) $(CXXFLAGS) $(OPTIMIZE) -L$(LIB_PATH) $(LIBS)
 
 
 clean:
