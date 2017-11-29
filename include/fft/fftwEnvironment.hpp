@@ -46,11 +46,13 @@ inline std::string fftw_typename<long double>()
    return "long_double";
 }
 
+#ifdef HASQUAD
 template<>
 inline std::string fftw_typename<__float128>()
 {
    return "quad";
 }
+#endif
 
 ///Create the mxlib standard wisdom filename for the type.
 /** Looks for the environment variable MXFFTW_WISDOM.  If not found, then pwd "./" is used.
