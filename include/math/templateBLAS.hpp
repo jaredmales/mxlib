@@ -12,7 +12,8 @@ extern "C"
 #ifdef MXLIB_MKL
 
    #include <mkl.h>
-
+#elif defined(__APPLE__)
+#include <vecLib/cblas.h>
 #else
 
    #include <cblas.h>
