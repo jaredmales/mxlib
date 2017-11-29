@@ -114,7 +114,7 @@ struct fftwEnvironment
    {
       fftw_make_planner_thread_safe<realT>();
       
-      if(nThreads = 0) nThreads = 1; //Just to be safe, 1 disables threads but the fftw docs don't say what happens for 0.
+      if(nThreads == 0) nThreads = 1; //Just to be safe, 1 disables threads but the fftw docs don't say what happens for 0.
       fftw_plan_with_nthreads<realT>(nThreads);
 
       fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
