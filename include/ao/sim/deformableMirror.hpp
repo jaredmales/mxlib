@@ -16,6 +16,8 @@
 #include "../../improc/fitsFile.hpp"
 #include "../../improc/ds9Interface.hpp"
 
+#include "../../readColumns.hpp"
+
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
 
@@ -179,6 +181,7 @@ public:
    
    Eigen::Array<double,-1,-1> _pos, _map;
    
+   //std::vector<realT> sigma;
 };
 
 
@@ -209,6 +212,10 @@ deformableMirror<_realT>::deformableMirror()
    display_acts_counter = 0;
    
    _commandLimit = 0;
+   
+   //readColumns("sigma.dat", sigma);
+   
+   //std::cerr << "sigma.size() = " << sigma.size() << "\n";
 }
 
 
@@ -547,7 +554,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    }
    
    //_nextShape.setZero();
-   _nextShape = c(0,0)*_infF.image(0);
+   _nextShape = c(0,0)*_infF.image(0);//*sigma[0];
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp ;
@@ -557,7 +564,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       #pragma omp for
       for(int i=1;i < _infF.planes(); ++i)
       {
-         tmp +=  c(i,0) * _infF.image(i);
+         tmp +=  c(i,0) * _infF.image(i);//*sigma[i];
       }
       #pragma omp critical
       _nextShape += tmp;

@@ -39,8 +39,10 @@ typedef std::complex<double>      complexDT;
 ///The complex long double data type.
 typedef std::complex<long double> complexLT;
 
+#ifdef HASQUAD
 ///The complex __float128 data type.
 typedef std::complex<__float128>  complexQT;
+#endif
 
 //****** Plans ******//
 
@@ -94,6 +96,7 @@ struct fftwPlanSpec<long double>
    typedef fftwl_plan planT;
 };
 
+#ifdef HASQUAD
 ///Specialization of fftwPlanSpec for __float128
 template<>
 struct fftwPlanSpec<__float128>
@@ -101,6 +104,7 @@ struct fftwPlanSpec<__float128>
    /// Specifies fftwq_plan as planT
    typedef fftwq_plan planT;
 };
+#endif
 
 ///@}
 
@@ -252,6 +256,7 @@ struct fftwTypeSpec<complexLT,long double>
    typedef fftwPlanSpec<long double>::planT planT;
 };
 
+#ifdef HASQUAD
 ///Specialization of fftwTypeSpec for complex-quad input and complex-quad output
 template<>
 struct fftwTypeSpec<complexQT,complexQT>
@@ -284,6 +289,8 @@ struct fftwTypeSpec<complexQT,__float128>
    typedef __float128 outputDataT;
    typedef fftwPlanSpec<__float128>::planT planT;
 };
+#endif
+
 ///@}
 ///@}
 
@@ -328,13 +335,14 @@ inline int fftw_import_system_wisdom<long double>()
    return ::fftwl_import_system_wisdom();
 }
 
-
+#ifdef HASQUAD
 //Template wrapper for fftwq_import_system_wisdom();
 template<>
 inline int fftw_import_system_wisdom<__float128>()
 {
    return ::fftwq_import_system_wisdom();
 }
+#endif
 
 ///Template wrapper for fftwX_import_wisdom_from_filename(const char *);
 /**
@@ -369,12 +377,13 @@ inline int fftw_import_wisdom_from_filename<long double>( const char * filename 
    return ::fftwl_import_wisdom_from_filename( filename );
 }
 
-
+#ifdef HASQUAD
 template<>
 inline int fftw_import_wisdom_from_filename<__float128>( const char * filename )
 {
    return ::fftwq_import_wisdom_from_filename( filename );
 }
+#endif
 
 ///Template wrapper for fftwX_export_wisdom_to_filename(const char *);
 /**
@@ -409,12 +418,13 @@ inline int fftw_export_wisdom_to_filename<long double>(const char *filename)
    return ::fftwl_export_wisdom_to_filename( filename );
 }
 
-
+#ifdef HASQUAD
 template<>
 inline int fftw_export_wisdom_to_filename<__float128>(const char *filename)
 {
    return ::fftwq_export_wisdom_to_filename( filename );
 }
+#endif
 
 ///@} fftw_template_wisdom
 
@@ -476,6 +486,7 @@ inline complexLT * fftw_malloc<complexLT>(size_t n)
    return (complexLT *) ::fftwl_malloc(n*sizeof(complexLT));
 }
 
+#ifdef HASQUAD
 template<>
 inline __float128 * fftw_malloc<__float128>(size_t n)
 {
@@ -487,6 +498,8 @@ inline complexQT * fftw_malloc<complexQT>(size_t n)
 {
    return (complexQT *) ::fftwq_malloc(n*sizeof(complexQT));
 }
+
+#endif
 
 //************ De-Allocation ************************//
 
@@ -533,6 +546,7 @@ inline void fftw_free<complexLT>( complexLT * p)
    ::fftwl_free( p );
 }
 
+#ifdef HASQUAD
 template<>
 inline void fftw_free<__float128>( __float128 * p)
 {
@@ -544,7 +558,7 @@ inline void fftw_free<complexQT>( complexQT * p)
 {
    ::fftwq_free( p );
 }
-
+#endif
 
 ///@} fftw_template_alloc
 
@@ -584,13 +598,13 @@ inline void fftw_make_planner_thread_safe<long double>()
    ::fftwl_make_planner_thread_safe();
 }
 
-
+#ifdef HASQUAD
 template<>
 inline void fftw_make_planner_thread_safe<__float128>()
 {
    ::fftwl_make_planner_thread_safe();
 }
-
+#endif
 
 //********** Threads ****************//
 /// Tell the FFTW planner how many threads to use.
@@ -618,11 +632,13 @@ inline void fftw_plan_with_nthreads<long double>(int nthreads)
    ::fftwl_plan_with_nthreads(nthreads);
 }
 
+#ifdef HASQUAD
 template<>
 inline void fftw_plan_with_nthreads<__float128>(int nthreads)
 {
    ::fftwq_plan_with_nthreads(nthreads);
 }
+#endif
 
 //********* Plan Creation **************//
 
@@ -741,6 +757,7 @@ inline fftwTypeSpec<complexLT, long double>::planT fftw_plan_dft<complexLT, long
    return ::fftwl_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwl_complex*>(in), out, flags);
 }
 
+#ifdef HASQUAD
 template<>
 inline fftwTypeSpec<complexQT, complexQT>::planT fftw_plan_dft<complexQT, complexQT>( std::vector<int> n, 
                                                                                       complexQT * in, 
@@ -771,6 +788,8 @@ inline fftwTypeSpec<complexQT, __float128>::planT fftw_plan_dft<complexQT, __flo
    return ::fftwq_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwq_complex*>(in), out, flags);
 }
 
+#endif
+
 /********* Cleanup *************/
 
 ///Cleanup persistent planner data.
@@ -795,11 +814,13 @@ inline void fftw_cleanup<long double>()
    ::fftwl_cleanup();
 }
 
+#ifdef HASQUAD
 template<>
 inline void fftw_cleanup<__float128>()
 {
    ::fftwq_cleanup();
 }
+#endif
 
 /********* Thread Cleanup *************/
 
@@ -825,11 +846,13 @@ inline void fftw_cleanup_threads<long double>()
    ::fftwl_cleanup_threads();
 }
 
+#ifdef HASQUAD
 template<>
 inline void fftw_cleanup_threads<__float128>()
 {
    ::fftwq_cleanup_threads();
 }
+#endif
 
 ///@} fftw_template_plans
 
@@ -905,11 +928,14 @@ inline void fftw_destroy_plan<long double>( fftwPlanSpec<long double>::planT pla
    ::fftwl_destroy_plan(plan);
 }
 
+#ifdef HASQUAD
 template<>
 inline void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan )
 {
    ::fftwq_destroy_plan(plan);
 }
+
+#endif
 
 ///@} fftw_template_exec
 

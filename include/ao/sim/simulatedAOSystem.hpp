@@ -739,7 +739,7 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
 
-   //wfs._filter.filter(wf.phase);
+   wfs._filter.filter(wf.phase);
    
    if(_rmsFile != "")
    {
