@@ -10,5 +10,6 @@ testing/*
 local/*
 *.a
 *.so
+*.dylib
 a.out
 *.o
