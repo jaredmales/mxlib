@@ -51,8 +51,6 @@ INC_TO_INSTALL = ao \
                  sigproc \
                  wfp \
                  astrodyn.hpp \
-                 astroFilter.hpp \
-                 astroSpectrum.hpp \
                  astrotypes.h \
                  binVector.hpp \
                  eigenUtils.hpp \
