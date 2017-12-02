@@ -65,6 +65,9 @@ struct baseSpectrum
    }
 
    ///Calculate the mean value of the spectrum.
+   /**
+     * \returns the mean value of the spectrum 
+     */ 
    realT mean()
    {
       realT sum = 0;
@@ -81,6 +84,9 @@ struct baseSpectrum
       \f]
      * For instance, use this to get the mean value of a spectrum in a filter.
      * 
+     * \returns the mean value of the multiplied spectrum.
+     *
+     * \tparam compSpectrumT the vector-like type of the comparison spectrum.
      */
    template<typename compSpectrumT>
    realT mean( const compSpectrumT & T /**< [in] the spectrum to multiply by*/ )
