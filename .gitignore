@@ -13,3 +13,4 @@ local/*
 *.dylib
 a.out
 *.o
+*.swp
