@@ -6,7 +6,7 @@ include $(SELF_DIR)/../mk/Common.mk
 
 # Provide default build options in case they weren't defined in local/MxApp.mk
 ifeq ($UNAME,Darwin)  # macOS
-    USE_BLAS_FROM ?= vecLib
+    USE_BLAS_FROM ?= Accelerate
 else
     USE_BLAS_FROM ?= mkl
 endif
@@ -23,7 +23,7 @@ ifeq ($(USE_BLAS_FROM),ATLAS)
     BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
     BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas -lgfortran
 endif
-ifeq ($(USE_BLAS_FROM),vecLib)
+ifeq ($(USE_BLAS_FROM),Accelerate)
     BLAS_LDFLAGS ?= -framework Accelerate
 endif
 
