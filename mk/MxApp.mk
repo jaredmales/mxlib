@@ -23,15 +23,22 @@ ifeq ($(USE_BLAS_FROM),ATLAS)
     BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
     BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas -lgfortran
 endif
+ifeq ($(USE_BLAS_FROM),vecLib)
+    BLAS_LDFLAGS ?= -framework Accelerate
+endif
 
 ifeq ($(USE_FFT_FROM),fftw)
-    FFT_LDLIBS += -lfftw3f -lfftw3  -lfftw3l -lfftw3q -lfftw3f_threads -lfftw3_threads -lfftw3l_threads -lfftw3q_threads 
+    FFT_LDLIBS += -lfftw3f -lfftw3  -lfftw3l -lfftw3f_threads -lfftw3_threads -lfftw3l_threads
 endif
 
 OPTIMIZE ?= -O3 -fopenmp -ffast-math
-EXTRA_LDLIBS ?= -lsofa_c -llevmar -lcfitsio -lrt -lboost_system -lboost_filesystem -lgsl
+EXTRA_LDLIBS ?= -lmxlib -lsofa_c -llevmar -lcfitsio -lboost_system -lboost_filesystem -lgsl
+ifneq ($(UNAME),Darwin)
+    EXTRA_LDLIBS += -lrt
+endif
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
+INCLUDES += $(BLAS_INCLUDES)
 LDLIBS += $(BLAS_LDLIBS) $(FFT_LDLIBS) $(EXTRA_LDLIBS)
 LDFLAGS += $(BLAS_LDFLAGS) $(FFT_LDFLAGS) $(EXTRA_LDFLAGS)
 

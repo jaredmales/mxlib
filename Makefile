@@ -110,13 +110,13 @@ libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS)
 	$(CC) -shared $(SHAREDLIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
 	
 install: libmxlib
-	install -d $(INCLUDE_PATH)
+	install -d $(INCLUDE_PATH)/mx
 	install -d $(LIB_PATH)
 	install libmxlib.a $(LIB_PATH)
 	install libmxlib.$(LIBEXT) $(LIB_PATH)
 	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
-	  (cp -r include/$$file $(INCLUDE_PATH)) || break; \
+	  (cp -r include/$$file $(INCLUDE_PATH)/mx) || break; \
 	done
 
 clean:
