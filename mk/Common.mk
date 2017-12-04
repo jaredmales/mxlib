@@ -3,7 +3,7 @@
 # NOTE: This file should only be edited in mxlib/local, not in the root mxlib directory.
 #
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
-include $(SELF_DIR)/../local/Common.mk
+-include $(SELF_DIR)/../local/Common.mk
 
 UNAME ?= $(shell uname)
 ifeq ($(UNAME),Darwin)
