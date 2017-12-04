@@ -94,7 +94,8 @@ mxlib_uncomp_version:
 .PHONY: setup
 setup:
 	@for file in ./local/*.example.mk; do \
-		if [[ ! -e $${file//.example/} ]]; then cp -v $$file $${file//.example/}; fi \
+		dest=$$(echo $$file | sed 's/.example//'); \
+		if [[ ! -e $$dest ]]; then cp -v $$file $$dest; fi \
 	done
 	@echo "***\nBuild settings available in local/Common.mk\n***"
 	@grep "?=" mk/Common.mk
