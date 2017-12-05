@@ -96,13 +96,14 @@ setup:
 		if [ ! -e $$dest ]; then cp -v $$file $$dest; fi \
 	done
 	@echo "***\nBuild settings available in local/Common.mk\n***"
-	@grep "?=" mk/Common.mk
+	@grep "?=" mk/Common.mk || true
 	@echo "***"
 	@echo "Build settings available in local/MxLib.mk\n***"
-	@grep "?=" mk/MxLib.mk
+	@grep "?=" mk/MxLib.mk || true
 	@echo "***"
 	@echo "Build settings available in local/MxApp.mk\n***"
-	@grep "?=" mk/MxApp.mk
+	@grep  "?=" mk/MxApp.mk || true
+	@echo "***"
 
 libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
 	$(AR) $(ARFLAGS) libmxlib.a $(OBJS)
