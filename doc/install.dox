@@ -11,7 +11,8 @@ These are instructions for installing the "mxlib" c/c++ library.  This is my per
 \section install_depends Basic Dependencies
 This is the list of the other libraries and code-bases mxlib depends on.  
 
--# You need a c++11 compatible compiler (or c++14, or --std=c++0x in g++ works)
+-# You need a c++11 compatible compiler with OpenMP support (or c++14, or `--std=c++0x` in g++ works)
+ - macOS users: Apple does not ship OpenMP support in `clang++`, their official C++ compiler. To build mxlib apps, you will need to install gcc/g++. (We recommend <a href="https://brew.sh">Homebrew for macOS</a>.)
 -# You need the  <a href="https://www.gnu.org/software/gsl/">GNU Scientific Library (GSL)</a> (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
 -# You need the boost c++ library (this is probably obtainable from the linux distro package manager, fine to install with apt or yum)
 -# You need the <a href="http://heasarc.gsfc.nasa.gov/fitsio/"> cfitsio </a> FITS library. 
@@ -31,33 +32,33 @@ The relevant header files for each library need to be accessible to the compiler
 \section install_build Build and Install
 Follow these steps:
 -# Checkout mxlib from https://github.com/jaredmales/mxlib
--# In the mxlib folder just created by the clone, run "make -f Makefile.setup" 
-  - This will create a folder named "local" with three makefiles in it.
--# Examine the file \ref mxlib.makefile.inc "local/mxlib.makefile.inc", and edit as desired. It is probably only necessary to edit INSTALL_PATH.  But you can edit all of the following if needed:
-   \code
-   INSTALL_PATH = $(HOME)
-   INCLUDE_PATH = $(INSTALL_PATH)/include/mx
-   LIB_PATH = $(INSTALL_PATH)/lib
-   BIN_PATH = $(HOME)/bin 
-   \endcode
-   
-   \note You should only edit the mxlib.makefile.inc in the local directory -- this will preserve the git repo status.
-   
--# In the mxlib directory, type make, and then make install.  The library is now installed.
+-# Build mxlib by running `make`. If your install prefix is different from `$HOME`, you will want to invoke `make` with `make PREFIX=/path/to/libraries` (where `/path/to/libraries` is the path to the folder containing `lib` and `include` folders for things like levmar and Eigen.) Alternatively, set that variable permanently following the steps below.
+-# If you need to customize the build (e.g. switch the BLAS or FFT library used or modify paths), run `make setup`. This will create three Makefiles in `local/` for you to customize.
+  - If you want to change the install path from `$HOME` to something else, set `PREFIX`.
+  - `USE_BLAS_FROM` can be set to `mkl`, `ATLAS`, or `Accelerate` (macOS only). You may also need to override `BLAS_INCLUDES`, `BLAS_LDFLAGS`, and/or `BLAS_LDLIBS` to set paths and flags. (See `mk/MxApp.mk` for examples.)
+  - The Makefiles in `local/` are included at the beginning of the corresponding files in `mk/`. Any variable set with `?=` in the original Makefile can be overridden in the corresponding `local/` one.
+  - The files in `local/` are not tracked in git.
+-# Install mxlib with `make install`.
 
-\section install_environment Build Environment 
-You can customize the files mx.makefile and mx.makefile.inc in the local directory.  Once that is done, set the following two environment variables (e.g. in bash_aliases):
+\section install_environment Build Environment
+
+Once mxlib is built, set the `$MXMAKEFILE` variable in your shell (and/or shell profile files):
+
 \code
-export MXMAKEFILEINC=/path/to/mxlib/local/mx.makefile.inc
-export MXMAKEFILE=/path/to/mxlib/local/mx.makefile
+export MXMAKEFILE=/path/to/mxlib/mk/MxApp.mk
 \endcode
 
 You can then build a single .cpp program, let's say "myProgram.cpp", with the following line
 \code
-make -B -f $MXMAKEFILE t=myProgram 
+make -B -f $MXMAKEFILE myProgram 
 \endcode
 
-If you want to develop a more complicated build system, local/mx.makefile should give you all the information you need for how to link the dependencies.
+To install it, you need to give `make` a hint about what is to be installed. The command is
+\code
+make -B -f $MXMAKEFILE TARGET=myProgram install
+\endcode
+
+This installs the `myProgram` binary to `$PREFIX/bin` (which is `$HOME/bin` unless you have set `PREFIX` in one of the `local/` Makefiles).
 
 \section github I've Moved!
 
