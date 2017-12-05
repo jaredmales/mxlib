@@ -1,45 +1,40 @@
 ##########################################
 ##                                      ##
-##        Makefile for mxlib            ##
+##          Makefile for mxlib          ##
 ##                                      ##
 ##########################################
 
-# Instruction:
+# Are you here to customize the build?
+# 
+# Option 1: Override the options on the command line
+#     e.g. `make install PREFIX=$HOME`
+# Option 2: `make setup`
+#     This creates ./local/{Common,MxLib,MxApp}.mk and lists options.
+#     Define those options in the ./local Makefiles. These files are
+#     *not* tracked in git, so your tweaks won't cause warnings about
+#     uncommitted changes.
 
-# Step 1: run make -f Makefile.setup 
-#   -- this creates the ./local directory, and copies mxlib.makefile.inc there.
-#  
-# Step 2: edit local/mxlib.makefile.inc 
-# NOTE: in general, you should only edit ./local/mxlib.makefile.inc, not
-# any files in mxlib/.  This is to preserve the git repository state.
+include mk/Common.mk
+include mk/MxLib.mk
 
-
-include local/mxlib.makefile.inc 
-UNAME := $(shell uname)
-LIBNAME = libmxlib
 ifeq ($(UNAME),Darwin)  # macOS
 	LIBEXT = dylib
-	LIBFLAGS = -dynamiclib -install_name "$(LIBNAME).$(LIBEXT)" -o $(LIBNAME).$(LIBEXT)
+	SHAREDLIBFLAGS = -dynamiclib -install_name "libmxlib.$(LIBEXT)" -o libmxlib.$(LIBEXT)
 else
 	LIBEXT = so
-    LIBFLAGS = -Wl,-soname,$(LIBNAME).$(LIBEXT) -o $(LIBNAME).$(LIBEXT) -lrt
+	SHAREDLIBFLAGS = -Wl,-soname,libmxlib.$(LIBEXT) -o libmxlib.$(LIBEXT) -lrt
 endif
 
-.c.o:
-	$(CC) $(OPTIMIZE) $(CFLAGS) $(INCLUDE) -c $<
+CFLAGS += -std=c99 -D_XOPEN_SOURCE=600 -fPIC $(OPTIMIZE) $(INCLUDES)
+CXXFLAGS += -std=c++14 -D_XOPEN_SOURCE=600 -fPIC $(OPTIMIZE) $(INCLUDES)
 
-.cpp.o:
-	$(CXX) $(OPTIMIZE) $(CXXFLAGS) $(INCLUDE) -c $<
-
-# programs to be made
+# Programs to be made:
 TARGETS = libmxlib
 
 OBJS = msgq.o \
        mxlib.o\
        sharedmem_segment.o \
        process_interface.o 
-
-#astrodyn.o \
 
 INC_TO_INSTALL = ao \
                  app \
@@ -74,12 +69,12 @@ INC_TO_INSTALL = ao \
                  stringUtils.hpp \
                  textTable.hpp \
                  timeUtils.hpp \
-		 randomSeed.hpp \
-		 randomT.hpp 
+				 randomSeed.hpp \
+				 randomT.hpp 
 
 all: $(TARGETS) 
 
-#dependencies:
+# Dependencies:
 msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
@@ -93,26 +88,37 @@ mxlib_comp_version:
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
 	@sh ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
-	
+
+.PHONY: setup
+setup:
+	@for file in ./local/*.example.mk; do \
+		dest=$$(echo $$file | sed 's/.example//'); \
+		if [ ! -e $$dest ]; then cp -v $$file $$dest; fi \
+	done
+	@echo "***\nBuild settings available in local/Common.mk\n***"
+	@grep "?=" mk/Common.mk
+	@echo "***"
+	@echo "Build settings available in local/MxLib.mk\n***"
+	@grep "?=" mk/MxLib.mk
+	@echo "***"
+	@echo "Build settings available in local/MxApp.mk\n***"
+	@grep "?=" mk/MxApp.mk
+
 libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
-	$(AR) libmxlib.a $(OBJS)
-	$(RANLIB) libmxlib.a 
-	$(CC) -shared $(LIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
+	$(AR) $(ARFLAGS) libmxlib.a $(OBJS)
+	$(CC) -shared $(SHAREDLIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
 	
 install: libmxlib
-	install -d $(INCLUDE_PATH)
+	install -d $(INCLUDE_PATH)/mx
 	install -d $(LIB_PATH)
-	install $(LIBNAME).a $(LIB_PATH)
-	install $(LIBNAME).$(LIBEXT) $(LIB_PATH)
+	install libmxlib.a $(LIB_PATH)
+	install libmxlib.$(LIBEXT) $(LIB_PATH)
 	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
-	 (cp -r include/$$file $(INCLUDE_PATH)) || break; \
+	  (cp -r include/$$file $(INCLUDE_PATH)/mx) || break; \
 	done
-# 	for file in ${VMOP_TO_INSTALL}; do \
-# 	 (install vmop/$$file $(INCLUDE_PATH)) || break; \
-# 	done
 
 clean:
 	rm -f *.o *~
 	rm -f libmxlib.a
-	rm -f libmxlib.so
+	rm -f libmxlib.$(LIBEXT)
