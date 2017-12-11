@@ -142,9 +142,18 @@ struct baseSpectrum
       while(_spectrum[i] < 0.5*max && i < lambda.size()) ++i;
       left = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
    
-      while(_spectrum[i] < max && i < lambda.size()) ++i;
-   
-      while(_spectrum[i] > 0.5*max && i < lambda.size()) ++i;
+      while( _spectrum[i] < max )
+      {
+         ++i;
+         if(i >= lambda.size() ) break;
+      }
+      
+      while( _spectrum[i] > 0.5*max ) 
+      {
+         ++i;
+         if( i >= lambda.size() ) break;
+      }
+      
       right = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
    
       fwhm = right-left;
@@ -181,7 +190,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
    astroSpectrum(){}
    
    ///Constructor specifying name, the enivronment will be queried for data directory.
-   astroSpectrum( const paramsT & params /**< [in] The name of the spectrum */)
+   explicit astroSpectrum( const paramsT & params /**< [in] The name of the spectrum */)
    {
       setParameters(params);
    }

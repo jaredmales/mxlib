@@ -219,10 +219,10 @@ void orthogonalizeBasis( const std::string & orthoName,
 }
 
 template<typename realT>
-int slaveBasis( const std::string outputBasisN,
-                const std::string inputBasisN,
-                const std::string pupilN,
-                const std::string dmN,
+int slaveBasis( const std::string & outputBasisN,
+                const std::string & inputBasisN,
+                const std::string & pupilN,
+                const std::string & dmN,
                 realT fwhm,
                 realT fsmooth,
                 int firstMode = 0
@@ -329,8 +329,8 @@ int slaveBasis( const std::string outputBasisN,
 
 
 template<typename realT>
-int apodizeBasis( const std::string outputBasisN,
-                  const std::string inputBasisN,
+int apodizeBasis( const std::string & outputBasisN,
+                  const std::string & inputBasisN,
                   realT tukeyAlpha,
                   realT centralObs,
                   realT overScan,
@@ -371,10 +371,10 @@ int apodizeBasis( const std::string outputBasisN,
 
 
 template<typename realT>
-int subtractBasis( const std::string basisName,
-                   const std::string basisName1,
-                   const std::string basisName2,
-                   const std::string pupilName,
+int subtractBasis( const std::string & basisName,
+                   const std::string & basisName1,
+                   const std::string & basisName2,
+                   const std::string & pupilName,
                    int method  )
 {
    fitsFile<realT> ff;

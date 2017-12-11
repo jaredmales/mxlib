@@ -25,16 +25,17 @@ else
 	SHAREDLIBFLAGS = -Wl,-soname,libmxlib.$(LIBEXT) -o libmxlib.$(LIBEXT) -lrt
 endif
 
-CFLAGS += -std=c99 -D_XOPEN_SOURCE=600 -fPIC $(OPTIMIZE) $(INCLUDES)
-CXXFLAGS += -std=c++14 -D_XOPEN_SOURCE=600 -fPIC $(OPTIMIZE) $(INCLUDES)
+CFLAGS += -std=c99 -fPIC $(OPTIMIZE) $(INCLUDES)
+CXXFLAGS += -std=c++14 -fPIC $(OPTIMIZE) $(INCLUDES)
 
 # Programs to be made:
 TARGETS = libmxlib
 
 OBJS = msgq.o \
        mxlib.o\
-       sharedmem_segment.o \
-       process_interface.o 
+       sharedmem_segment.o 
+#\
+#process_interface.o 
 
 INC_TO_INSTALL = ao \
                  app \
@@ -78,8 +79,8 @@ all: $(TARGETS)
 msgq.o: include/IPC.h include/msgq.h
 mxlib.o: include/mxlib.h include/mxlib_comp_version.h
 sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
-process_interface.o: include/process_interface.h
-astrodyn.o: include/astrodyn.hpp
+#process_interface.o: include/process_interface.h
+#astrodyn.o: include/astrodyn.hpp
 
 .PHONY: mxlib_comp_version
 mxlib_comp_version:

@@ -616,21 +616,17 @@ std::string errno_CodeToName( int ec, std::string & message)
 
 ///Construct a rich error report given an mxlib error code
 /**
-  * \param[in] source is intended to identify the mxlib component (i.e. the class name)
-  * \param[in] code is an MXE_* error code
-  * \param[in] file should be passed the __FILE__ macro
-  * \param[in] line should be passed the __LINE__ macro
-  * \param[in] expl [optional] if more information can be provided, use this to inform the user.
   * 
   * \return the formatted error report.
   * 
   * \ingroup error_handling
   */ 
-std::string error_report(const std::string & source, 
-                           const int & code, 
-                           const std::string & file, 
-                           const int & line,
-                           const std::string & expl = "")
+std::string error_report( const std::string & source,   ///< [in] is intended to identify the mxlib component (i.e. the class name)
+                          const int & code,             ///< [in] is an MXE_* error code
+                          const std::string & file,     ///< [in] should be passed the __FILE__ macro
+                          const int & line,             ///< [in] should be passed the __LINE__ macro
+                          const std::string & expl = "" ///< [in] [optional] if more information can be provided, use this to inform the user.
+                        )
 {
    
    std::string codeName, codeMessage;

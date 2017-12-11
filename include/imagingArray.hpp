@@ -219,7 +219,7 @@ public:
    }
    
    template<typename eigenT>
-   imagingArray(eigenT & im)
+   explicit imagingArray(eigenT & im)
    {
       _data = im.data();
       _owner=false;

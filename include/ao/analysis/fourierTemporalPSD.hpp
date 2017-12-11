@@ -284,7 +284,7 @@ public:
      * this adds overhead and cfitisio handles parallelization poorly due to the limitation on number of created file pointers.
      * 
      */ 
-   void makePSDGrid( std::string dir, ///< [in] the directory for output of the PSDs
+   void makePSDGrid( const std::string & dir, ///< [in] the directory for output of the PSDs
                      int mnMax, ///< [in] the maximum value of m and n in the grid. 
                      realT dFreq, ///< [in] the temporal frequency spacing.
                      realT maxFreq, ///< [in] the maximum temporal frequency to calculate
@@ -295,8 +295,8 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( std::string subDir, ///< [in] the sub-directory of psdDir where to write the results.
-                       std::string psdDir,  ///< [in] the directory containing the grid of PSDs. 
+   int analyzePSDGrid( const std::string & subDir, ///< [in] the sub-directory of psdDir where to write the results.
+                       const std::string & psdDir,  ///< [in] the directory containing the grid of PSDs. 
                        int mnMax, ///< [in] the maximum value of m and n in the grid.
                        int mnCon, ///< [in] the maximum value of m and n which can be controlled.
                        int lpNc, ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
@@ -315,37 +315,29 @@ public:
      */
    ///Get the frequency scale for a PSD grid.
    /** 
-     * \param [out] freq is the vector to populate with the frequency scale.
-     * \param [in] dir specifies the directory containing the grid.
      */ 
-   void getGridFreq( std::vector<realT> & freq,
-                     const std::string & dir );
+   void getGridFreq( std::vector<realT> & freq, ///< [out] the vector to populate with the frequency scale.
+                     const std::string & dir  ///< [in] specifies the directory containing the grid.
+                   );
 
    ///Get a single PSD from a PSD grid.
    /** 
-     * \param [out] psd is the vector to populate with the PSD.
-     * \param [in] dir specifies the directory containing the grid.
-     * \param [in] m specifies the u component of spatial frequency.
-     * \param [in] n specifies the v component of spatial frequency.
      */ 
-   void getGridPSD( std::vector<realT> & psd,
-                    const std::string & dir,
-                    int m,
-                    int n );
+   void getGridPSD( std::vector<realT> & psd, ///< [out] the vector to populate with the PSD.
+                    const std::string & dir, ///< [in] specifies the directory containing the grid.
+                    int m,  ///< [in] specifies the u component of spatial frequency.
+                    int n  ///< [in] specifies the v component of spatial frequency.
+                  );
    
    ///Get both the frequency scale and a single PSD from a PSD grid.
    /** 
-     * \param [out] freq is the vector to populate with the frequency scale.
-     * \param [out] psd is the vector to populate with the PSD.
-     * \param [in] dir specifies the directory containing the grid.
-     * \param [in] m specifies the u component of spatial frequency.
-     * \param [in] n specifies the v component of spatial frequency.
      */ 
-   void getGridPSD( std::vector<realT> & freq,
-                    std::vector<realT> & psd,
-                    const std::string & dir,
-                    int m,
-                    int n );
+   void getGridPSD( std::vector<realT> & freq, ///< [out] the vector to populate with the frequency scale.
+                    std::vector<realT> & psd, ///< [out] the vector to populate with the PSD.
+                    const std::string & dir, ///< [in] specifies the directory containing the grid.
+                    int m, ///< [in] specifies the u component of spatial frequency.
+                    int n ///< [in] specifies the v component of spatial frequency.
+                  );
        
    ///@}
 };
@@ -633,11 +625,12 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
 }
       
 template<typename realT, typename aosysT>
-void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
-                                                      int mnMax,
-                                                      realT dFreq,
-                                                      realT maxFreq,
-                                                      realT fmax )
+void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
+                                                     int mnMax,
+                                                     realT dFreq,
+                                                     realT maxFreq,
+                                                     realT fmax 
+                                                   )
 {
    std::vector<realT> freq;
    
@@ -713,8 +706,8 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( std::string dir,
 }
   
 template<typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
-                                                       std::string psdDir,
+int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDir,
+                                                       const std::string & psdDir,
                                                        int mnMax,
                                                        int mnCon,
                                                        int lpNc,
@@ -1016,7 +1009,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( std::string subDir,
 
 template<typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::getGridFreq( std::vector<realT> & freq,
-                                                      const std::string & dir )
+                                                     const std::string & dir )
 {
    std::string fn;      
    fn = dir + '/' + "freq.binv";

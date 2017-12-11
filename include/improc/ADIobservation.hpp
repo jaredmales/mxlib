@@ -120,7 +120,7 @@ struct ADIobservation : public HCIobservation<_realT>
    
    ADIobservation();
    
-   ADIobservation( const std::string & fileListFile) ;
+   explicit ADIobservation( const std::string & fileListFile) ;
                    
    ADIobservation( const std::string & dir, 
                    const std::string & prefix, 

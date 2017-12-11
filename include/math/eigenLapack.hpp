@@ -185,6 +185,7 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    {
       mxError("eigenSYEVR", MXE_LAPACKERR, "error from SYEVR");
       if(localMem) delete mem;
+      free(work);
       return info;
    }
    

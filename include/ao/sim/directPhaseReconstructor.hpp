@@ -149,7 +149,7 @@ public:
    /** 
      * \param fname is the name of the FITS file, including path
      */   
-   void loadRecon(std::string fname);
+   void loadRecon(const std::string & fname);
    
    ///Return the size of the unbinned measurement
    int measurementSize();
@@ -262,7 +262,7 @@ int directPhaseReconstructor<realT>::detCols()
 }
 
 template<typename realT> 
-void directPhaseReconstructor<realT>::loadRecon(std::string fname)
+void directPhaseReconstructor<realT>::loadRecon(const std::string & fname)
 {
 #if 0
    fitsFile<realT> ff;

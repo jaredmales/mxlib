@@ -764,16 +764,16 @@ int fitsFile<dataT>::read(dataT * data)
       fitsErrText(explan, _fileName, fstatus);
       mxError("fitsFile", MXE_FILERERR, explan);
       
-      delete fpix;
-      delete lpix;
-      delete inc;
+      delete[] fpix;
+      delete[] lpix;
+      delete[] inc;
    
       return -1;
    }
 
-   delete fpix;
-   delete lpix;
-   delete inc;
+   delete[] fpix;
+   delete[] lpix;
+   delete[] inc;
    
    return 0;
 }

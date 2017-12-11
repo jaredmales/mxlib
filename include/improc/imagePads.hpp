@@ -231,7 +231,7 @@ int padImage( imOutT & imOut,
                   {
                      //if(nv == 0) nv = 1;
                      
-                     r = i*i + j*j;
+//                     r = i*i + j*j;
   
 //                      if(r == minr) //Equidistant pixels
 //                      {

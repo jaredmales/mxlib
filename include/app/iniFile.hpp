@@ -19,7 +19,7 @@ struct iniFile
       return section + "=" + name;
    }
 
-   void parse(const std::string fname)
+   void parse(const std::string & fname)
    {
       ini_parse(fname.c_str(), handler, this);
    }
@@ -39,8 +39,11 @@ struct iniFile
       return 0;
    }
 
-   static int handler(void* user, const char* section, const char* name,
-                            const char* value)
+   static int handler( void* user, 
+                       const char* section, 
+                       const char* name,
+                       const char* value
+                     )
    {
       iniFile * iF = (iniFile *) user;
       return iF->insert(section, name, value);

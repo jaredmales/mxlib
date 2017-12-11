@@ -57,7 +57,7 @@ struct lyotCoronagraph
    std::string _fileDir;
    
    ///The linear size of the wavefront in pixels
-   int _wfSz;
+   int _wfSz {0};
    
    ///Image containing the pupil apodization.
    imageT pupilApodizer;
