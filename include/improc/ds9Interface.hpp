@@ -328,7 +328,7 @@ int ds9Interface::addsegment( int frame )
    sharedmem_segment * tmpsegs;
    tmpsegs = (sharedmem_segment *) realloc( segs, sizeof(sharedmem_segment) * nsegs);
    
-   if(tempsegs == NULL)
+   if(tmpsegs == NULL)
    {
       if(segs) free(segs);
       segs = 0;
@@ -339,7 +339,6 @@ int ds9Interface::addsegment( int frame )
    else
    {
       segs = tmpsegs;
-      tmpsegs = 0;
    }
       
    for(i = curr_n; i< nsegs; i++)
