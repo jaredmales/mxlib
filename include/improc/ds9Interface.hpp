@@ -339,6 +339,7 @@ int ds9Interface::addsegment( int frame )
    else
    {
       segs = tmpsegs;
+      tmpsegs = 0;
    }
       
    for(i = curr_n; i< nsegs; i++)
