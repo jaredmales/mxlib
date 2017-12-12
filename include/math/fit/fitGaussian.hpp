@@ -349,7 +349,7 @@ struct gaussian2D_gen_fitter
       {
          for(int j=0;j<arr->ny; ++j)
          { 
-            idx_mat = i+j*arr->nx;
+            //idx_mat = i+j*arr->nx;
    
             func::gaussian2D_jacobian<realT>(j_tmp, i,j, p[0], p[1], p[2], p[3], p[4], p[5], p[6]); 
             for(int k=0;k<7;++k) jacob[idx_dat++] = j_tmp[k];

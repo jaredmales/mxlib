@@ -182,7 +182,7 @@ template<typename _floatT>
 template<typename commandT>
 void wooferTweeterDM<_floatT>::setShape( commandT & commandV )
 {
-   static int called = 0;
+   //static int called = 0;
    static commandT avgWoofV;
    
    commandT woofV, tweetV;

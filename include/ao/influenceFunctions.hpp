@@ -407,7 +407,7 @@ void ifPInv( const std::string & dmName,
    head.append("CONDN", condition, "Actual condition number of pseudo inverse");
    head.append("NREJECT", nRejected, "Number of s.v.s rejected");
    
-   std::string pinvFile = pinvName;//ifName + "_pinv.fits";
+   //std::string pinvFile = pinvName;//ifName + "_pinv.fits";
    
    ff.write(pinvName, PInv, head);
    

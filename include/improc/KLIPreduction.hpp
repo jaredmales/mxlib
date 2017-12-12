@@ -673,7 +673,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       
    ompLoopWatcher<> status( this->Nims, std::cerr);
    
-   int nTh = 0;
+   //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
       #ifdef _OPENMP

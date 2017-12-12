@@ -503,7 +503,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
    //Here we only calculate up to fmax.
    int i=0;      
-   while(freq[i] <= fmax && i < freq.size())
+   while( freq[i] <= fmax )
    {
       params._f = freq[i];
    
@@ -518,6 +518,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
       PSD[i] = scale*result;
    
       ++i;
+      if(i >= freq.size()) break;
    }
    
    //Now fill in from fmax to the actual max frequency with a -17/3 power law.
@@ -1088,7 +1089,7 @@ realT F_mod (realT kv, void * params)
    realT D = Fp->_aosys->D(); 
    realT m = Fp->_m;
    realT n = Fp->_n; 
-   int p = Fp->_p;
+  // int p = Fp->_p;
 
    realT ku = f/v_wind;
    

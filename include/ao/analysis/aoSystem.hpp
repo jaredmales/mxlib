@@ -1653,8 +1653,8 @@ void aoSystem<realT, inputSpectT, iosT>::C_Map( imageT & im,
    
    int m, n;
    
-   int mmax = _D/(2.*d_opt());
-   int nmax = mmax;
+   //int mmax = _D/(2.*d_opt());
+   //int nmax = mmax;
    
    //std::cerr << dim1 << " " << dim2 << "\n";
    for(int i=0; i< dim1; ++i)

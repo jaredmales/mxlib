@@ -90,6 +90,8 @@ public:
       except_explanation = e.except_explanation;
       
       build_what();
+      
+      return *this;
    }
 
    ///Destructor

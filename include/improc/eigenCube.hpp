@@ -449,7 +449,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
          for(Index j=0;j< _cols; ++j)
          {
             work.resize(_planes);//work could be smaller after sigmaMean
-            int ii=0;
+            //int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
             
             mim(i,j) = math::vectorMean(work, weights);             
