@@ -325,7 +325,21 @@ int ds9Interface::addsegment( int frame )
    
    nsegs = frame;
    
-   segs = (sharedmem_segment *) realloc( segs, sizeof(sharedmem_segment) * nsegs);
+   sharedmem_segment * tmpsegs;
+   tmpsegs = (sharedmem_segment *) realloc( segs, sizeof(sharedmem_segment) * nsegs);
+   
+   if(tempsegs == NULL)
+   {
+      if(segs) free(segs);
+      segs = 0;
+      
+      fprintf(stderr, "unable to allocate memory for segment\n");
+      return -1;
+   }
+   else
+   {
+      segs = tmpsegs;
+   }
       
    for(i = curr_n; i< nsegs; i++)
    {

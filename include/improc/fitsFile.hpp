@@ -1063,9 +1063,9 @@ int fitsFile<dataT>::read( cubeT & cube,
       
       mxError("cfitsio", MXE_FILERERR, explan); 
       
-      delete fpix;
-      delete lpix;
-      delete inc;
+      delete[] fpix;
+      delete[] lpix;
+      delete[] inc;
       
       return -1;
    }
