@@ -116,7 +116,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       initialize();
    }
    
-   KLIPreduction( const std::string & fileListFile ) : ADIobservation<_realT, _derotFunctObj>(fileListFile)
+   explicit KLIPreduction( const std::string & fileListFile ) : ADIobservation<_realT, _derotFunctObj>(fileListFile)
    {
       initialize();
    }

@@ -71,7 +71,7 @@ struct cubicConvolTransform
       cubic = -0.5;
    }
    
-   cubicConvolTransform(arithT c)
+   explicit cubicConvolTransform(arithT c)
    {
       cubic = c;
    }

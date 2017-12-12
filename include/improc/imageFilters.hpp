@@ -36,7 +36,7 @@ struct gaussKernel
    
    arithT _fwhm;
    
-   gaussKernel(arithT fwhm)
+   explicit gaussKernel(arithT fwhm)
    {
       _fwhm = fwhm;
       

@@ -147,7 +147,7 @@ public:
    /**
      * \param allocate if true, then the workspace for GSL integrators is allocated.
      */ 
-   fourierTemporalPSD(bool allocate);
+   explicit fourierTemporalPSD(bool allocate);
    
    ///Destructor
    /** Frees GSL workspace if it was allocated.

@@ -383,7 +383,7 @@ public:
      * 
      * \param [in] fileListFile is a file name to read.
      */
-   HCIobservation(const std::string &fileListFile);
+   explicit HCIobservation(const std::string &fileListFile);
    
    ///Load the file list from a file
    /** Populates the \ref fileList vector by reading the file, which should be a single
