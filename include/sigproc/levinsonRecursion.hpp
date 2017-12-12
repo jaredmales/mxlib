@@ -38,8 +38,8 @@ void levinsonRecursion(floatT * _r, floatT * _x, floatT * _y, int n)
 
    if(n == 1) 
    {
-      delete _g;
-      delete _h;
+      delete[] _g;
+      delete[] _h;
       return;
    }
    
@@ -65,8 +65,8 @@ void levinsonRecursion(floatT * _r, floatT * _x, floatT * _y, int n)
       {
          std::cerr<< "toeplz-2 singular principal minor" << "\n";
          
-         delete _g;
-         delete _h;
+         delete[] _g;
+         delete[] _h;
          return;
       }
       
@@ -76,8 +76,8 @@ void levinsonRecursion(floatT * _r, floatT * _x, floatT * _y, int n)
 
       if (m1 == n) 
       {
-         delete _g;
-         delete _h;
+         delete[] _g;
+         delete[] _h;
          return;
       }
 
@@ -98,8 +98,8 @@ void levinsonRecursion(floatT * _r, floatT * _x, floatT * _y, int n)
       {
          std::cerr << "toeplz-3 singular principal minor" << "\n";
          
-         delete _g;
-         delete _h;
+         delete[] _g;
+         delete[] _h;
          return;
       }
       
@@ -125,8 +125,8 @@ void levinsonRecursion(floatT * _r, floatT * _x, floatT * _y, int n)
 
    std::cerr << "toeplz - should not arrive here!" << "\n";
    
-   delete _g;
-   delete _h;
+   delete[] _g;
+   delete[] _h;
    return;
    
 }

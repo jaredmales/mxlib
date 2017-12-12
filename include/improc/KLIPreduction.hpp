@@ -111,7 +111,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    KLIPreduction( const std::string & dir, 
                   const std::string & prefix, 
-                  const std::string ext = ".fits") : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
+                  const std::string & ext = ".fits") : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
    {
       initialize();
    }

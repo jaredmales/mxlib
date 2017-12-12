@@ -374,7 +374,7 @@ public:
      * \param [in] prefix is the initial part of the file name.  Can be empty "".
      * \param [in] ext is the extension to append to the file name. If ommitted defaults to ".fits"
      */
-   HCIobservation(const std::string &dir, const std::string &prefix, const std::string ext=".fits");
+   HCIobservation(const std::string &dir, const std::string &prefix, const std::string & ext=".fits");
    
    
    ///Construct using a file containing the file lise
@@ -557,7 +557,7 @@ HCIobservation<_realT>::HCIobservation()
 }
 
 template<typename _realT>
-HCIobservation<_realT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string ext)
+HCIobservation<_realT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
    initialize();
    loadFileList(dir, prefix, ext);

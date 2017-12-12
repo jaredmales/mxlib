@@ -166,7 +166,7 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
    
-   delete line;
+   delete[] line;
    
    //getline will have set fail if there was no new line on the last line.
    if(fin.bad() && !fin.fail())

@@ -124,7 +124,7 @@ struct ADIobservation : public HCIobservation<_realT>
                    
    ADIobservation( const std::string & dir, 
                    const std::string & prefix, 
-                   const std::string ext = ".fits") ;
+                   const std::string & ext = ".fits") ;
 
    void initialize();
    
@@ -208,7 +208,7 @@ ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & file
 template<typename _realT, class _derotFunctObj>
 ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & dir, 
                                                          const std::string & prefix, 
-                                                         const std::string ext) : HCIobservation<realT>(dir,prefix,ext)
+                                                         const std::string & ext) : HCIobservation<realT>(dir,prefix,ext)
 {
    initialize();
 }
