@@ -67,14 +67,14 @@ public:
 
    ///Construct and fill in each of the values.
    mxException(const std::string & esrc, const int & ec, const std::string & emnem, 
-               const std::string & efile, const int & line, const std::string & expl)
+               const std::string & efile, const int & line, const std::string & expl) : except_code_source(esrc), except_code(ec), except_code_mnem(emnem), except_file(efile), except_line(line), except_explanation(expl)
    {
-      except_code_source = esrc;
-      except_code = ec;
-      except_code_mnem = emnem;
-      except_file = efile;
-      except_line = line;
-      except_explanation = expl;
+// //       except_code_source = esrc;
+// //       except_code = ec;
+// //       except_code_mnem = emnem;
+// //       except_file = efile;
+// //       except_line = line;
+// //       except_explanation = expl;
       
       build_what();
    }
