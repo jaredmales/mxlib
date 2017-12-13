@@ -53,14 +53,14 @@ public:
    }
 
    ///Copy constructor
-   mxException (const mxException & e) noexcept
+   mxException (const mxException & e) noexcept : except_code_source(e.except_code_source), except_code(e.except_code), except_code_mnem(e.except_code_mnem), except_file(e.except_file), except_line(e.except_line), except_explanation(e.except_explanation)
    {
-      except_code_source = e.except_code_source;
-      except_code = e.except_code;
-      except_code_mnem = e.except_code_mnem;
-      except_file = e.except_file;
-      except_line = e.except_line;
-      except_explanation = e.except_explanation;
+//       except_code_source = e.except_code_source;
+//       except_code = e.except_code;
+//       except_code_mnem = e.except_code_mnem;
+//       except_file = e.except_file;
+//       except_line = e.except_line;
+//       except_explanation = e.except_explanation;
       
       build_what();
    }
