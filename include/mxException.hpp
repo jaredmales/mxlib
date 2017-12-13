@@ -26,28 +26,28 @@ protected:
 public:
 
    ///The source of the exception, such as stdlib or cfitisio
-   std::string except_code_source;
+   std::string except_code_source {""};
    
    ///The source specific error code
-   int  except_code;
+   int  except_code {0};
    
    ///The mnemonic associated with the error code
-   std::string except_code_mnem;
+   std::string except_code_mnem {""};
    
    ///The source file where the exception originated
-   std::string except_file;
+   std::string except_file {""};
    
    ///The line number of the file where the exception originated
-   int  except_line;
+   int  except_line {0};
    
    ///The long explanation of the error
-   std::string except_explanation;
+   std::string except_explanation {""};
 
    ///Default constructor
    mxException () noexcept
    {
-      except_code = 0;
-      except_line = 0;
+      //except_code = 0;
+      //except_line = 0;
       
       build_what();
    }
