@@ -65,6 +65,9 @@ struct baseSpectrum
    }
 
    ///Calculate the mean value of the spectrum.
+   /**
+     * \returns the mean value of the spectrum 
+     */ 
    realT mean()
    {
       realT sum = 0;
@@ -81,6 +84,9 @@ struct baseSpectrum
       \f]
      * For instance, use this to get the mean value of a spectrum in a filter.
      * 
+     * \returns the mean value of the multiplied spectrum.
+     *
+     * \tparam compSpectrumT the vector-like type of the comparison spectrum.
      */
    template<typename compSpectrumT>
    realT mean( const compSpectrumT & T /**< [in] the spectrum to multiply by*/ )
@@ -94,6 +100,63 @@ struct baseSpectrum
       }
       
       return sum1/sum2;
+   }
+   
+
+   /// Characterize the spectrum as a filter transmission curve.
+   /** For a transmission curve given by \f$ T(\lambda ) \f$  The central wavelength is defined as
+     * \f$ \lambda_0 = \frac{1}{w_{eff}}\int T(\lambda ) \lambda d\lambda \f$
+     * where the effective width is defined by
+     * \f$ w_{eff} = \int T(\lambda ) d\lambda \f$
+     * 
+     * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ T(\lambda) \f$.
+     * 
+     */ 
+   void charTrans( realT & lambda0, ///< [out] the central wavelength of the filter 
+                   realT & weff, ///< [out] the effective width of the filter
+                   realT & max, ///< [out] the maximum value of the transmission curve
+                   realT & fwhm, ///< [out] the full-width at half-maximum of the filter profile
+                   std::vector<realT> & lambda ///< [in] the wavelength scale, should correspond to the spectrum.
+                 )
+   {
+      weff = 0;
+   
+      for(int i=0; i< lambda.size()-1; ++i) weff += _spectrum[i]*(lambda[i+1]-lambda[i]);
+      weff += _spectrum[_spectrum.size()-1]* (lambda[lambda.size()-1] -lambda[lambda.size()-2]);
+      
+      lambda0 = 0;
+      for(int i=0; i< lambda.size()-1; ++i) lambda0 += lambda[i]*_spectrum[i]*(lambda[i+1]-lambda[i]);
+      lambda0 += lambda[_spectrum.size()-1]* _spectrum[_spectrum.size()-1] * (lambda[lambda.size()-1] -lambda[lambda.size()-2]);
+
+      lambda0 /= weff;
+      
+      realT left, right;
+   
+      max = 0;
+      for(int i=0; i< lambda.size(); ++i)
+      {
+         if(_spectrum[i] > max) max = _spectrum[i];
+      }
+   
+      int i=1;
+      while(_spectrum[i] < 0.5*max && i < lambda.size()) ++i;
+      left = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
+   
+      while( _spectrum[i] < max )
+      {
+         ++i;
+         if(i >= lambda.size() ) break;
+      }
+      
+      while( _spectrum[i] > 0.5*max ) 
+      {
+         ++i;
+         if( i >= lambda.size() ) break;
+      }
+      
+      right = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
+   
+      fwhm = right-left;
    }
    
 };
@@ -127,7 +190,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
    astroSpectrum(){}
    
    ///Constructor specifying name, the enivronment will be queried for data directory.
-   astroSpectrum( const paramsT & params /**< [in] The name of the spectrum */)
+   explicit astroSpectrum( const paramsT & params /**< [in] The name of the spectrum */)
    {
       setParameters(params);
    }

@@ -402,7 +402,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int write( std::string fname, ///< [in] is the name of the file.
+   int write( const std::string & fname, ///< [in] is the name of the file.
               const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
@@ -414,7 +414,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int write( std::string fname, ///< [in] is the name of the file.
+   int write( const std::string  & fname, ///< [in] is the name of the file.
               const dataT * im, ///< [in] is the array
               int d1,  ///< [in] is the first dimension
               int d2,  ///< [in] is the second dimension
@@ -444,7 +444,7 @@ public:
      * \returns -1 on error
      */ 
    template<typename arrT>
-   int write( std::string fname, ///< [in] is the name of the file.
+   int write( const std::string & fname, ///< [in] is the name of the file.
               const arrT & im ///< [in] is the array
             ); 
   
@@ -463,7 +463,7 @@ public:
      * \returns -1 on error
      */ 
    template<typename arrT>
-   int write( std::string fname,  ///< [in] is the file path, which is passed to \ref fileName
+   int write( const std::string & fname,  ///< [in] is the file path, which is passed to \ref fileName
               const arrT & im, ///< [in] is the array
               fitsHeader & head ///< [in] is a fitsHeader object which is passed to \ref readHeader
             ); 
@@ -764,16 +764,16 @@ int fitsFile<dataT>::read(dataT * data)
       fitsErrText(explan, _fileName, fstatus);
       mxError("fitsFile", MXE_FILERERR, explan);
       
-      delete fpix;
-      delete lpix;
-      delete inc;
+      delete[] fpix;
+      delete[] lpix;
+      delete[] inc;
    
       return -1;
    }
 
-   delete fpix;
-   delete lpix;
-   delete inc;
+   delete[] fpix;
+   delete[] lpix;
+   delete[] inc;
    
    return 0;
 }
@@ -951,15 +951,15 @@ int fitsFile<dataT>::read(arrT & im)
       fitsErrText(explan, _fileName, fstatus);
       mxError("fitsFile", MXE_FILERERR, explan);
          
-      delete fpix;
-      delete lpix;
-      delete inc;
+      delete[] fpix;
+      delete[] lpix;
+      delete[] inc;
       
       return -1;
    }
-   delete fpix;
-   delete lpix;
-   delete inc;
+   delete[] fpix;
+   delete[] lpix;
+   delete[] inc;
    
    return 0;
       
@@ -1063,9 +1063,9 @@ int fitsFile<dataT>::read( cubeT & cube,
       
       mxError("cfitsio", MXE_FILERERR, explan); 
       
-      delete fpix;
-      delete lpix;
-      delete inc;
+      delete[] fpix;
+      delete[] lpix;
+      delete[] inc;
       
       return -1;
    }
@@ -1177,7 +1177,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
       fitsErrText( explan, _fileName, fstatus);
       mxError( "fitsFile", MXE_FILERERR, explan);
       
-      delete comment;
+      if(comment) delete[] comment;
       
       return -1;
    }
@@ -1192,7 +1192,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
          fitsErrText( explan, _fileName, fstatus);
          mxError( "fitsFile", MXE_FILERERR, explan);
       
-         delete comment;
+         if(comment) delete[] comment;
          
          return -1;
       }
@@ -1235,7 +1235,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
       }
    }
    
-   delete comment;
+   if(comment) delete[] comment;
    
    return 0;
 }
@@ -1372,7 +1372,7 @@ int fitsFile<dataT>::write( const dataT * im,
 
 
 template<typename dataT>
-int fitsFile<dataT>::write( std::string fname, 
+int fitsFile<dataT>::write( const std::string & fname, 
                             const dataT * im, 
                             int d1, 
                             int d2, 
@@ -1384,7 +1384,7 @@ int fitsFile<dataT>::write( std::string fname,
 }
 
 template<typename dataT>
-int fitsFile<dataT>::write( std::string fname, 
+int fitsFile<dataT>::write( const std::string & fname, 
                             const dataT * im, 
                             int d1, 
                             int d2, 
@@ -1399,7 +1399,7 @@ int fitsFile<dataT>::write( std::string fname,
 
 template<typename dataT>
 template<typename arrT>
-int fitsFile<dataT>::write( std::string fname, 
+int fitsFile<dataT>::write( const std::string & fname, 
                             const arrT & im
                           )
 {
@@ -1411,7 +1411,7 @@ int fitsFile<dataT>::write( std::string fname,
 
 template<typename dataT>
 template<typename arrT>
-int fitsFile<dataT>::write( std::string fname, 
+int fitsFile<dataT>::write( const std::string & fname, 
                             const arrT & im, 
                             fitsHeader & head)
 {

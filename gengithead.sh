@@ -8,9 +8,9 @@
 centerName(){
   textsize=${#1}
   width=42
-  span=$((($width + $textsize) / 2 ))
-  espan=$(($span - $textsize))
-  if [ $(($espan % 2)) -eq 1 ]; then espan=$(($espan - 1)); fi 
+  span=$(((width + textsize) / 2 ))
+  espan=$((span - textsize))
+  if [ $((espan % 2)) -eq 1 ]; then espan=$((espan - 1)); fi 
   printf "    #pragma message (\"*%${span}s%${espan}s\")\n" "$1" "*"
 }
 
@@ -46,7 +46,7 @@ if grep --quiet "modified" /tmp/git_status; then
    GIT_MODIFIED=1
 fi
 
-REPO_NAME=$(basename `git --exec-path=$GITPATH rev-parse --show-toplevel`)
+REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
 
 echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER

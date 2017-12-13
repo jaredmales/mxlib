@@ -38,11 +38,11 @@ struct fitsCommentType
    {
    }
    
-   fitsCommentType(char *v)
+   explicit fitsCommentType(char *v)
    {
    }
    
-   fitsCommentType(const char *v)
+   explicit fitsCommentType(const char *v)
    {
    }
 };
@@ -54,11 +54,11 @@ struct fitsHistoryType
    {
    }
 
-   fitsHistoryType(char *v)
+   explicit fitsHistoryType(char *v)
    {
    }
    
-   fitsHistoryType(const char *v)
+   explicit fitsHistoryType(const char *v)
    {
    }
    

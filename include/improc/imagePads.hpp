@@ -215,7 +215,7 @@ int padImage( imOutT & imOut,
             if(tMask(ii,jj) == 1) continue;
             
             typename imOutT::Scalar mv = 0;
-            int r, minr = 3;
+            //int r, minr;// = 3;
             int nv = 0;
             
             //Loop over the neighboring pixels
@@ -231,7 +231,7 @@ int padImage( imOutT & imOut,
                   {
                      //if(nv == 0) nv = 1;
                      
-                     r = i*i + j*j;
+//                     r = i*i + j*j;
   
 //                      if(r == minr) //Equidistant pixels
 //                      {

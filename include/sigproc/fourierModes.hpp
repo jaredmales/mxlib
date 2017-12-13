@@ -312,7 +312,7 @@ bool comp_fourierModeDef_PandV (const fourierModeDef & spf1, const fourierModeDe
          if(spf1.m == spf2.m) return (spf1.p < spf2.p);
          else   return (spf1.m < spf2.m);
       }
-      return (spf1.n < spf1.n);
+      return (spf1.n < spf2.n);
    }
    
    //Otherwise sort by lowest absolute value
@@ -497,7 +497,7 @@ int fourierModeNumber(int m, int n, int p)
    
    int i0 = 2*(m0*m0 - m0);
 
-   int di0= 4*m0;
+   //int di0= 4*m0;
 
    int di;
    

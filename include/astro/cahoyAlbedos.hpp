@@ -76,7 +76,7 @@ struct cahoySpectrumRaw
       fname += "x_albedos/00_Spectral_Albedos   ";  
    
       char pstr[9];
-      int l = snprintf(pstr, 9, "%0.5f", params.phase);
+      snprintf(pstr, 9, "%0.5f", params.phase);
    
       fname+=pstr;
    

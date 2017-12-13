@@ -143,7 +143,12 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
       //std::cerr << line << "\n";
       
       //Find start of comment and end line at that point.
-      while(line[i] != comment && i < l ) ++i;      
+      while(line[i] != comment ) 
+      {
+         ++i; 
+         if( i == l ) break;
+      }
+      
       if(i <= l-1) 
       {
          line[i] = '\0';
@@ -161,7 +166,7 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
       readcol<delim,eol>(line, strlen(line), arrays...);      
    }
    
-   delete line;
+   delete[] line;
    
    //getline will have set fail if there was no new line on the last line.
    if(fin.bad() && !fin.fail())

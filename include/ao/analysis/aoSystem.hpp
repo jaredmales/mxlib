@@ -577,6 +577,8 @@ public:
      * The varFunc function pointer is used to calculate the variance.  This handles the other details such
      * as Strehl normalization, fitting error (if appropriate), and bounds checking.
      *
+     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * 
      * \tparam varFuncT  is a function-pointer-to-member (of this class) with signature realT(*f)(realT, realT)
      */
    template<typename varFuncT>
@@ -590,6 +592,8 @@ public:
    ///Worker function for the contrast-map functions.
    /** The map calculation is the same for all terms, except for the calculation of contrast at each pixel.
      * The Cfunc function pointer is used to actually get the contrast.
+     * 
+     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \tparam imageT is an Eigen-like image
      * \tparam CfuncT is a function-pointer-to-member (of this class) with signature realT (*f)(realT, realT, bool)
@@ -611,6 +615,8 @@ public:
    ///Calculate the contrast due to uncorrected phase, C0.
    /** Contrast C0 is the uncorrected phase, with the effects of scintillation included.  See Guyon (2005) \cite guyon_2005, and the updated
      * derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * 
+     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \returns C0.
      */
@@ -649,6 +655,8 @@ public:
    ///Calculate a 2D map of contrast C1.
    /** The contrast is Strehl-normalized here.
      * 
+     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * 
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
@@ -679,6 +687,8 @@ public:
    ///Calculate a 2D map of contrast \ref C2().
    /** The contrast is Strehl-normalized here.
      * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * 
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
@@ -707,6 +717,8 @@ public:
    
    ///Calculate a 2D map of contrast C3.
    /** The contrast is Strehl-normalized here.
+     * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \tparam imageT is an Eigen-like image type.
      */ 
@@ -737,6 +749,8 @@ public:
    ///Calculate a 2D map of contrast C4
    /** The contrast is Strehl-normalized here.
      * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * 
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
@@ -745,6 +759,8 @@ public:
 
    ///Calculate the residual variance due to to scintilation-amplitude chromaticity.
    /** Used to calculate contrast \ref C5().
+     * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \returns variance at (m,n).
      */
@@ -765,6 +781,8 @@ public:
    
    ///Calculate a 2D map of contrast C5
    /** The contrast is Strehl-normalized here.
+     * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \tparam imageT is an Eigen-like image type.
      */ 
@@ -795,6 +813,8 @@ public:
    ///Calculate a 2D map of contrast C6
    /** The contrast is Strehl-normalized here.
      * 
+     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * 
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
@@ -823,6 +843,8 @@ public:
    
    ///Calculate a 2D map of contrast C7
    /** The contrast is Strehl-normalized here.
+     * 
+     *  \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \tparam imageT is an Eigen-like image type.
      */ 
@@ -1650,20 +1672,14 @@ void aoSystem<realT, inputSpectT, iosT>::C_Map( imageT & im,
 
    int mc = 0.5*(dim1-1);
    int nc = 0.5*(dim2-1);
-   
-   int m, n;
-   
-   int mmax = _D/(2.*d_opt());
-   int nmax = mmax;
-   
-   //std::cerr << dim1 << " " << dim2 << "\n";
+      
    for(int i=0; i< dim1; ++i)
    {
-      m = i - mc;
+      int m = i - mc;
       
       for(int j=0; j< dim2; ++j)
       {
-         n = j - nc;
+         int n = j - nc;
                   
          im(i,j) = (this->*Cfunc)(m, n, true);
       }

@@ -68,17 +68,9 @@ struct clAOLinearPredictor
    {
       PSDtn.resize(PSDt.size());
 
-      int ix = -1;
       for(int i=0; i< PSDt.size(); ++i)
       {
          PSDtn[i] = PSDt[i] +  PSDn[i] + PSDreg;
-         
-//          if(PSDtn[i] < PSDreg)
-//          {
-//             if(ix == -1) ix = i-1;
-//             
-//             PSDtn[i] += PSDreg;//(i-ix);
-//          }
       }
       
       sigproc::augment1SidedPSD( psd2s, PSDtn,1);

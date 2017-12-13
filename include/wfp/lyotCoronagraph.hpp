@@ -57,13 +57,13 @@ struct lyotCoronagraph
    std::string _fileDir;
    
    ///The linear size of the wavefront in pixels
-   int _wfSz;
+   int _wfSz {0};
    
    ///Image containing the pupil apodization.
    imageT pupilApodizer;
    
    
-   int maskSource; ///< 0= read frounobs8m_2048_128_fpm.fitsm file, 1 = constructed by makeFocalMask, 2 = trans optimized.
+   int maskSource; ///< 0= read from file, 1 = constructed by makeFocalMask, 2 = trans optimized.
    std::string maskFile; ///< Name of file from which mask was loaded.
    realT maskRad; ///<Radius of mask if it was constructed.
    realT maskTrans; ///<Transmission of mask if it was constructed.

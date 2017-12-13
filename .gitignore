@@ -8,7 +8,12 @@ include/mxlib_comp_version.h
 old/*
 testing/*
 local/*
+!local/Common.example.mk
+!local/MxApp.example.mk
+!local/MxLib.example.mk
 *.a
 *.so
+*.dylib
 a.out
 *.o
+*.swp

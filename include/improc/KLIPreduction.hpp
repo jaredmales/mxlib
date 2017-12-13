@@ -111,12 +111,12 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    KLIPreduction( const std::string & dir, 
                   const std::string & prefix, 
-                  const std::string ext = ".fits") : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
+                  const std::string & ext = ".fits") : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
    {
       initialize();
    }
    
-   KLIPreduction( const std::string & fileListFile ) : ADIobservation<_realT, _derotFunctObj>(fileListFile)
+   explicit KLIPreduction( const std::string & fileListFile ) : ADIobservation<_realT, _derotFunctObj>(fileListFile)
    {
       initialize();
    }
@@ -673,7 +673,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       
    ompLoopWatcher<> status( this->Nims, std::cerr);
    
-   int nTh = 0;
+   //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
       #ifdef _OPENMP

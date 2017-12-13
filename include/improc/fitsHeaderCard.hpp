@@ -118,7 +118,7 @@ struct fitsHeaderCard
    /**
      * \param k is the keyword
      */ 
-   fitsHeaderCard(std::string k);
+   explicit fitsHeaderCard(std::string k);
   
    
    //@}

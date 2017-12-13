@@ -26,55 +26,55 @@ protected:
 public:
 
    ///The source of the exception, such as stdlib or cfitisio
-   std::string except_code_source;
+   std::string except_code_source {""};
    
    ///The source specific error code
-   int  except_code;
+   int  except_code {0};
    
    ///The mnemonic associated with the error code
-   std::string except_code_mnem;
+   std::string except_code_mnem {""};
    
    ///The source file where the exception originated
-   std::string except_file;
+   std::string except_file {""};
    
    ///The line number of the file where the exception originated
-   int  except_line;
+   int  except_line {0};
    
    ///The long explanation of the error
-   std::string except_explanation;
+   std::string except_explanation {""};
 
    ///Default constructor
    mxException () noexcept
    {
-      except_code = 0;
-      except_line = 0;
+      //except_code = 0;
+      //except_line = 0;
       
       build_what();
    }
 
    ///Copy constructor
-   mxException (const mxException & e) noexcept
+   mxException (const mxException & e) noexcept : except_code_source(e.except_code_source), except_code(e.except_code), except_code_mnem(e.except_code_mnem), except_file(e.except_file), except_line(e.except_line), except_explanation(e.except_explanation)
    {
-      except_code_source = e.except_code_source;
-      except_code = e.except_code;
-      except_code_mnem = e.except_code_mnem;
-      except_file = e.except_file;
-      except_line = e.except_line;
-      except_explanation = e.except_explanation;
+//       except_code_source = e.except_code_source;
+//       except_code = e.except_code;
+//       except_code_mnem = e.except_code_mnem;
+//       except_file = e.except_file;
+//       except_line = e.except_line;
+//       except_explanation = e.except_explanation;
       
       build_what();
    }
 
    ///Construct and fill in each of the values.
    mxException(const std::string & esrc, const int & ec, const std::string & emnem, 
-               const std::string & efile, const int & line, const std::string & expl)
+               const std::string & efile, const int & line, const std::string & expl) : except_code_source(esrc), except_code(ec), except_code_mnem(emnem), except_file(efile), except_line(line), except_explanation(expl)
    {
-      except_code_source = esrc;
-      except_code = ec;
-      except_code_mnem = emnem;
-      except_file = efile;
-      except_line = line;
-      except_explanation = expl;
+// //       except_code_source = esrc;
+// //       except_code = ec;
+// //       except_code_mnem = emnem;
+// //       except_file = efile;
+// //       except_line = line;
+// //       except_explanation = expl;
       
       build_what();
    }
@@ -90,6 +90,8 @@ public:
       except_explanation = e.except_explanation;
       
       build_what();
+      
+      return *this;
    }
 
    ///Destructor

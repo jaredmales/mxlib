@@ -39,7 +39,7 @@ namespace math
   */
 template<typename dataT>
 void scal( const int N,
-           const dataT alpha,
+           const dataT & alpha,
            dataT * X,
            const int incX )
 {
@@ -50,7 +50,7 @@ void scal( const int N,
 template<>
 inline
 void scal<float>( const int N,
-                  const float alpha,
+                  const float & alpha,
                   float * X,
                   const int incX )
 {
@@ -60,9 +60,10 @@ void scal<float>( const int N,
 template<>
 inline
 void scal<double>( const int N,
-                  const double alpha,
-                  double * X,
-                  const int incX )
+                   const double & alpha,
+                   double * X,
+                   const int incX 
+                 )
 {
    cblas_dscal(N, alpha, X, incX);
 }
@@ -70,9 +71,10 @@ void scal<double>( const int N,
 template<>
 inline
 void scal<std::complex<float> >( const int N,
-                  const std::complex<float>  alpha,
-                  std::complex<float>  * X,
-                  const int incX )
+                                 const std::complex<float>  & alpha,
+                                 std::complex<float>  * X,
+                                 const int incX 
+                               )
 {
    cblas_cscal(N, &alpha, X, incX);
 }
@@ -81,9 +83,10 @@ void scal<std::complex<float> >( const int N,
 template<>
 inline
 void scal<std::complex<double> >( const int N,
-                  const std::complex<double>  alpha,
-                  std::complex<double>  * X,
-                  const int incX )
+                                  const std::complex<double> & alpha,
+                                  std::complex<double>  * X,
+                                  const int incX 
+                                )
 {
    cblas_zscal(N, &alpha, X, incX);
 }
@@ -208,9 +211,9 @@ template<typename dataT>
           const dataT beta, dataT *C, const int ldc)*/
 void gemm(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TransA,
           const CBLAS_TRANSPOSE TransB, const int M, const int N,
-          const int K, const dataT alpha, const dataT *A,
+          const int K, const dataT & alpha, const dataT *A,
           const int lda, const dataT *B, const int ldb,
-          const dataT beta, dataT *C, const int ldc)
+          const dataT & beta, dataT *C, const int ldc)
 {
    //static_assert(0, "templateBLAS: no gemm wrapper defined for type dataT");
    return; //No BLAS for this type.
@@ -227,9 +230,9 @@ inline
                  const float beta, float *C, const int ldc)*/
 void gemm<float>(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TransA,
                  const CBLAS_TRANSPOSE TransB, const int M, const int N,
-                 const int K, const float alpha, const float *A,
+                 const int K, const float & alpha, const float *A,
                  const int lda, const float *B, const int ldb,
-                 const float beta, float *C, const int ldc)
+                 const float & beta, float *C, const int ldc)
 {
    cblas_sgemm(Order, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
 }
@@ -243,9 +246,9 @@ inline
                   const double beta, double *C, const int ldc)*/
 void gemm<double>(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TransA,
                   const CBLAS_TRANSPOSE TransB, const int M, const int N,
-                  const int K, const double alpha, const double *A,
+                  const int K, const double & alpha, const double *A,
                   const int lda, const double *B, const int ldb,
-                  const double beta, double *C, const int ldc)
+                  const double & beta, double *C, const int ldc)
 {
    cblas_dgemm(Order, TransA, TransB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
 }
@@ -260,9 +263,9 @@ inline
                                 const std::complex<float> beta, std::complex<float> *C, const int ldc)*/
 void gemm<std::complex<float> >(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TransA,
                                 const CBLAS_TRANSPOSE TransB, const int M, const int N,
-                                const int K, const std::complex<float> alpha, const std::complex<float> *A,
+                                const int K, const std::complex<float> & alpha, const std::complex<float> *A,
                                 const int lda, const std::complex<float> *B, const int ldb,
-                                const std::complex<float> beta, std::complex<float> *C, const int ldc)
+                                const std::complex<float> & beta, std::complex<float> *C, const int ldc)
 {
    cblas_cgemm(Order, TransA, TransB, M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc);
 }
@@ -276,9 +279,9 @@ inline
                                  const std::complex<double> beta, std::complex<double> *C, const int ldc)*/
 void gemm<std::complex<double> >(const CBLAS_ORDER Order, const CBLAS_TRANSPOSE TransA,
                                  const CBLAS_TRANSPOSE TransB, const int M, const int N,
-                                 const int K, const std::complex<double> alpha, const std::complex<double> *A,
+                                 const int K, const std::complex<double> & alpha, const std::complex<double> *A,
                                  const int lda, const std::complex<double> *B, const int ldb,
-                                 const std::complex<double> beta, std::complex<double> *C, const int ldc)
+                                 const std::complex<double> & beta, std::complex<double> *C, const int ldc)
 {
    cblas_zgemm(Order, TransA, TransB, M, N, K, &alpha, A, lda, B, ldb, &beta, C, ldc);
 }
@@ -297,8 +300,8 @@ template<typename dataT>
           const dataT beta, dataT *C, const int ldc)*/
 void syrk(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
           const CBLAS_TRANSPOSE Trans, const int N, const int K,
-          const dataT alpha, const dataT *A, const int lda,
-          const dataT beta, dataT *C, const int ldc)
+          const dataT & alpha, const dataT *A, const int lda,
+          const dataT & beta, dataT *C, const int ldc)
 {
    //static_assert(0, "templateBLAS: no syrk wrapper defined for type dataT");
    return; //No BLAS for this time.
@@ -312,8 +315,8 @@ inline
                  const float beta, float *C, const int ldc)*/
 void syrk<float>(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
                  const CBLAS_TRANSPOSE Trans, const int N, const int K,
-                 const float alpha, const float *A, const int lda,
-                 const float beta, float *C, const int ldc)
+                 const float & alpha, const float *A, const int lda,
+                 const float & beta, float *C, const int ldc)
 {
    cblas_ssyrk( Order, Uplo, Trans, N, K, alpha, A, lda, beta, C, ldc);
 }
@@ -326,8 +329,8 @@ inline
                   const double beta, double *C, const int ldc)*/
 void syrk<double>(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
                   const CBLAS_TRANSPOSE Trans, const int N, const int K,
-                  const double alpha, const double *A, const int lda,
-                  const double beta, double *C, const int ldc)
+                  const double & alpha, const double *A, const int lda,
+                  const double & beta, double *C, const int ldc)
 {
    cblas_dsyrk( Order, Uplo, Trans, N, K, alpha, A, lda, beta, C, ldc);
 }
@@ -340,8 +343,8 @@ inline
                                 const std::complex<float> beta, std::complex<float> *C, const int ldc)*/
 void syrk<std::complex<float> >(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
                                 const CBLAS_TRANSPOSE Trans, const int N, const int K,
-                                const std::complex<float> alpha, const std::complex<float> *A, const int lda,
-                                const std::complex<float> beta, std::complex<float> *C, const int ldc)
+                                const std::complex<float> & alpha, const std::complex<float> *A, const int lda,
+                                const std::complex<float> & beta, std::complex<float> *C, const int ldc)
 {
    cblas_csyrk( Order, Uplo, Trans, N, K, &alpha, A, lda, &beta, C, ldc);
 }
@@ -354,8 +357,8 @@ inline
                                  const std::complex<double> beta, std::complex<double> *C, const int ldc)*/
 void syrk<std::complex<double> >(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
                                  const CBLAS_TRANSPOSE Trans, const int N, const int K,
-                                 const std::complex<double> alpha, const std::complex<double> *A, const int lda,
-                                 const std::complex<double> beta, std::complex<double> *C, const int ldc)
+                                 const std::complex<double> & alpha, const std::complex<double> *A, const int lda,
+                                 const std::complex<double> & beta, std::complex<double> *C, const int ldc)
 {
    cblas_zsyrk( Order, Uplo, Trans, N, K, &alpha, A, lda, &beta, C, ldc);
 }

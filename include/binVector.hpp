@@ -235,6 +235,7 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
    if( typecode != binVectorTypeCode<dataT>() )
    {
       mxError("readBinVector", MXE_SIZEERR, "Mismatch between type dataT and type in file.");
+      fclose(fin);
       return -1;
    }
 

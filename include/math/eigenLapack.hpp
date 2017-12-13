@@ -185,6 +185,11 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    {
       mxError("eigenSYEVR", MXE_LAPACKERR, "error from SYEVR");
       if(localMem) delete mem;
+      
+      if(iWork) free(iWork);
+      
+      if(work) free(work);
+      
       return info;
    }
    
@@ -350,8 +355,8 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1
    
    INFO = math::gesdd<dataT>(JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO);
    
-   delete WORK;
-   delete IWORK;
+   delete[] WORK;
+   delete[] IWORK;
    
    return INFO;
 }

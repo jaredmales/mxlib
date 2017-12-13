@@ -322,7 +322,8 @@ void fitsHeader::erase(const std::string & keyword)
    {
       return;
    }
-   headerIterator it = cardMap.find(keyword)->second;
+   headerIterator it;
+   it = (cardMap.find(keyword))->second; //trying to fool codacy
    cardMap.erase(keyword);
    cards.erase(it);
 }

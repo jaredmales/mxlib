@@ -83,7 +83,7 @@ struct astroFilter
    
    static constexpr const char * dataDirEnvVar = "ASTROFILT_DATADIR";
    
-   static std::string fileName( const std::string name )
+   static std::string fileName( const std::string & name )
    {
       return name + ".dat";
    }
@@ -242,7 +242,7 @@ struct picklesSpectrum
    static constexpr const char * dataDirEnvVar = "PICKLES_DATADIR";
    
    ///The name of the datafile is constructed from its spectral type string.
-   static std::string fileName( const std::string spt )
+   static std::string fileName( const std::string & spt )
    {
       return "uk"+ mx::toLower(spt) + ".dat";
    }
