@@ -5,8 +5,8 @@
   *
   */
 
-#ifndef __imagingUtils_hpp__
-#define __imagingUtils_hpp__
+#ifndef imagingUtils_hpp
+#define imagingUtils_hpp
 
 #include "../imagingArray.hpp"
 #include "../mxError.hpp"
@@ -261,10 +261,8 @@ void extractBlock(imageT1 & im,
                   int wfX0,
                   int wfY0)
 {
-   int im_idx;
    int im_rows = im.cols();
    
-   int wf_idx;
    int wf_rows = wf.cols();
    
    typedef typename imageT1::Scalar dataT;
@@ -294,10 +292,8 @@ void extractIntensityImage(realImageT & im,
                            int wfX0,
                            int wfY0)
 {
-   int im_idx;
    int im_rows = im.cols();
    
-   int wf_idx;
    int wf_rows = wf.cols();
    
    typename realImageT::Scalar * im_data;

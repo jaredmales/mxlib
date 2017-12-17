@@ -1,6 +1,6 @@
 
-#ifndef __fft_hpp__
-#define __fft_hpp__
+#ifndef fft_hpp
+#define fft_hpp
 
 
 #include <fftw3.h>
@@ -284,5 +284,5 @@ public:
 
 }//namespace mx
 
-#endif // __fft_hpp__
+#endif // fft_hpp
 

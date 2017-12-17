@@ -5,8 +5,8 @@
   *
   */
   
-#ifndef __fitsHeaderCard_hpp__
-#define __fitsHeaderCard_hpp__
+#ifndef fitsHeaderCard_hpp
+#define fitsHeaderCard_hpp
 
 #include "../stringUtils.hpp"
 
@@ -386,7 +386,7 @@ inline long double fitsHeaderCard::longDouble()
 
 inline int fitsHeaderCard::write(fitsfile *fptr)
 {
-   int fstatus;
+//   int fstatus;
    switch(type)
    {
       case TSTRING:
@@ -463,4 +463,4 @@ inline int fitsHeaderCard::write(fitsfile *fptr)
 
 
 
-#endif //__fitsHeaderCard__
+#endif //fitsHeaderCard_hpp

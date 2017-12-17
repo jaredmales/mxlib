@@ -641,7 +641,7 @@ int fitsFile<dataT>::open(const std::string & fname)
 template<typename dataT>
 int fitsFile<dataT>::close()
 {
-   int stat;
+   //int stat;
    int fstatus = 0;
       
    if(!_isOpen) 
@@ -649,7 +649,8 @@ int fitsFile<dataT>::close()
       return 0; //No error.
    }
    
-   stat = fits_close_file(_fptr, &fstatus);
+   //stat = 
+   fits_close_file(_fptr, &fstatus);
       
    if (fstatus)
    {
@@ -727,7 +728,7 @@ int fitsFile<dataT>::read(dataT * data)
       if( open() < 0) return -1;   
    }
    
-   long long nelements = 1;
+//   long long nelements = 1;
    long *fpix = new long[_naxis];
    long *lpix = new long[_naxis];
    long *inc = new long[_naxis];
@@ -1135,7 +1136,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
    //The keys to look for if head is already populated
    std::list<fitsHeader::headerIterator> head_keys;
    std::list<fitsHeader::headerIterator>::iterator head_keys_it;
-   int num_head_keys;
+//   int num_head_keys;
    
    bool head_keys_only = false;
    if(head.size() > 0) 
@@ -1147,7 +1148,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
          head_keys.push_back(headIt);
          ++headIt;
       }
-      num_head_keys = head.size();
+//      num_head_keys = head.size();
    }
    
    //If _noComment is set, then we don't read in the comment

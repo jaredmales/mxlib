@@ -5,8 +5,6 @@
 
 These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems (running CentOS or Ubuntu), and Joseph Long has successfully installed it on Darwin (Mac O/S).
 
-
-
 \section install_depends Basic Dependencies
 This is the list of the other libraries and code-bases mxlib depends on.  
 
@@ -66,7 +64,7 @@ make -f $MXMAKEFILE TARGET=myProgram install
 
 This installs the `myProgram` binary to `$PREFIX/bin` (which is `$HOME/bin` unless you have set `PREFIX` in one of the `local/` Makefiles).
 
-\section github I've Moved!
+\section github I've Moved
 
 On 2017-07-08 I moved from bitbucket to github.  To follow along, issue these commands:
 \verbatim

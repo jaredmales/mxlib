@@ -743,9 +743,9 @@ struct hasJacobian //This was taken directly from the example at http://en.wikip
 template<typename realT>
 struct array2Fit
 {
-   realT * data; ///Pointer to the array
-   size_t nx; ///X dimension of the array
-   size_t ny; ///Y dimension of the array
+   realT * data {0}; ///Pointer to the array
+   size_t nx {0}; ///X dimension of the array
+   size_t ny {0}; ///Y dimension of the array
 };
 
 

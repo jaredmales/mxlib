@@ -143,8 +143,8 @@ void fraunhoferPropagator<wavefrontT>::shiftPupil( wavefrontT & complexPupil )
 
 template<typename wavefrontT>
 void fraunhoferPropagator<wavefrontT>::propagatePupilToFocal( wavefrontT & complexFocal, 
-                            wavefrontT & complexPupil  
-                          )
+                                                              wavefrontT & complexPupil  
+                                                            )
 {
    //First setup the tilt screens (does nothing if there's no change in size)
    setWavefrontSizePixels(complexPupil.rows());

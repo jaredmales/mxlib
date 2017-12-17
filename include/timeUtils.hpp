@@ -145,6 +145,8 @@ int ISO8601dateBreakdown( int & yr, ///< [out] Gregorian calendar year
    hr = floor(_hr);
    min = floor(_min);
    
+   return 0;
+   
 }
 
 ///Parse an ISO8601 date of the form "YYYY-MM-DDTHH:MM:SS.S" and return the modified Julian date (MJD)
