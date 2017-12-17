@@ -479,7 +479,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
             work.clear();
             wwork.clear();
             
-            int ii=0;
+            //int ii=0;
             
             for(Index k =0; k< _planes; ++k) 
             {

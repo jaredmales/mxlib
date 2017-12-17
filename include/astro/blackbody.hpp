@@ -92,11 +92,11 @@ struct blackbody
       {
          if(!freq)
          {
-            _spectrum[i] = 2*h*pow(c,2)*solidang / pow(grid[i],5)  / (exp(h*c/(grid[i]*k*_temperature))-1.0);
+            _spectrum[i] = 2*h*pow(c,2)*solidang / pow(grid[i],5)  / expm1(h*c/(grid[i]*k*_temperature));// (exp(h*c/(grid[i]*k*_temperature))-1.0);
          }
          else
          {
-            _spectrum[i] = 2*h/pow(c,2)*solidang * pow(grid[i],3)  / (exp(h*grid[i]/(k*_temperature))-1.0);
+            _spectrum[i] = 2*h/pow(c,2)*solidang * pow(grid[i],3)  / expm1(exp(h*grid[i]/(k*_temperature)));// (exp(h*grid[i]/(k*_temperature))-1.0);
          }
       }
       return 0;
