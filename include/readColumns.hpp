@@ -49,21 +49,22 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
       array.push_back(convertFromString<typename arrT::value_type>(""));
       return;
    }
-   if(nargs >= 0) 
-   {
-      std::stringstream sinstr(sin);
+   
+   //if(nargs >= 0) 
+   //{
+   std::stringstream sinstr(sin);
       
-      std::getline(sinstr, str, delim);
+   std::getline(sinstr, str, delim);
 
-      //Last entry in line might contain eol
-      if( str[str.size()-1] == eol) 
-      {
-         str.erase(str.size()-1);
-      }
+   //Last entry in line might contain eol
+   if( str[str.size()-1] == eol) 
+   {
+      str.erase(str.size()-1);
+   }
       
   //    std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
-      array.push_back(convertFromString<typename arrT::value_type>(str));
-   }
+   array.push_back(convertFromString<typename arrT::value_type>(str));
+   //}
       
    sin += ( str.size()+1)*sizeof(char);
    sz -= ( str.size()+1)*sizeof(char);
