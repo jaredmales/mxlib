@@ -40,6 +40,7 @@ OBJS = msgq.o \
 INC_TO_INSTALL = ao \
                  app \
                  astro \
+                 cuda \
                  fft \
                  improc \
                  math \

@@ -6,8 +6,8 @@
   */
 
 
-#ifndef __fraunhoferPropagator_hpp__
-#define __fraunhoferPropagator_hpp__
+#ifndef wfp_fraunhoferPropagator_hpp
+#define wfp_fraunhoferPropagator_hpp
 
 #include "../imagingArray.hpp"
 #include "imagingUtils.hpp"
@@ -20,7 +20,11 @@ namespace mx
 namespace wfp 
 {
    
-/// Class to perform Fraunhofer propagation between pupil and focal planes
+template<typename _wavefrontT, int _cudaGPU = 0>
+class fraunhoferPropagator; 
+
+
+/// Class to perform Fraunhofer propagation between pupil and focal planes using the CPU
 /** This class uses the FFT to propagate between planes, and normalizes so that flux
   * is conserved.  For propagation from pupil to focal plane, the pupil wavefront is tilted so that 
   * the focal-plane image is centered at the geometric center of the array.  After propagation from 
@@ -32,7 +36,7 @@ namespace wfp
   * \ingroup imaging
   */ 
 template<typename _wavefrontT>
-class fraunhoferPropagator 
+class fraunhoferPropagator<_wavefrontT, 0> 
 {
    
 public:
@@ -216,5 +220,5 @@ void fraunhoferPropagator<wavefrontT>::makeShiftPhase()
 } //namespace wfp
 } //namespace mx
 
-#endif //__fraunhoferPropagator_hpp__
+#endif //wfp_fraunhoferPropagator_hpp
 
