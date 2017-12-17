@@ -243,10 +243,10 @@ inline void rectangleIndices( std::vector<size_t> & idx,
                             )
 {
       
-   if(xmin < 0) xmin = 0;
+   //if(xmin < 0) xmin = 0;
    if(xmax > rows-1) xmax = rows-1;
    
-   if(ymin < 0) ymin = 0;
+   //if(ymin < 0) ymin = 0;
    if(ymax > cols-1) ymax = cols-1;
    
    idx.reserve( (xmax-xmin+1)*(ymax-ymin + 1) );
