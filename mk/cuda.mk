@@ -2,7 +2,7 @@
 # from mk/MxApp.mk here.
 
 
-CUDA_PATH ?= /usr/local/cuda-9.0
+CUDA_PATH ?= /usr/local/cuda
 #TARGET_ARCH ?= x86_64
 #TARGET_SIZE ?= 64
 HOST_COMPILER ?= g++

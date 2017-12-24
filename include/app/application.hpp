@@ -50,8 +50,9 @@ namespace mx
        multiple_lines
        
   \endverbatim
-  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).  Additional entries within one file with the same
-  * section and key are appended with a newline to the previous entry.  So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such 
+  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).  
+  * Additional entries within one file with the same section and key are appended with a newline to the previous entry.  
+  * So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such 
   * that in the above example the result is key4=value6_over_multiple_lines.  Vectors are input as in section1.key4.
   *
   * \todo add handling of += 
@@ -132,7 +133,7 @@ protected:
 
    ///Sets up the application by executing the configuration steps
    /** This will not normally need to be implemented by derived clasess.
-     * Only do so if you intende to change the configuration process. 
+     * Only do so if you intend to change the configuration process. 
      */
    virtual void setup( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
                        char ** argv ///< [in] standard command line result containing the arguments.

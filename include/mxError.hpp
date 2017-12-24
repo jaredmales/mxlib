@@ -111,6 +111,13 @@ namespace mx
 #define MXE_PARAMNOTSET 35
 #define MXE_PARAMNOTSET_MSG "A parameter was not set."
 
+/** \def MXE_ENVNOTSET
+  * \brief An environment variable is not set
+  * \ingroup mxe_errors
+  */   
+#define MXE_ENVNOTSET 36
+#define MXE_ENVNOTSET_MSG "An environment varialbe is not set."
+
 /** \def MXE_NOTFOUND
   * \brief An item was not found
   * \ingroup mxe_errors
@@ -229,6 +236,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_PARAMNOTSET:
          message = MXE_PARAMNOTSET_MSG;
          return "MXE_PARAMNOTSET";
+      case MXE_ENVNOTSET:
+         message = MXE_ENVNOTSET_MSG;
+         return "MXE_ENVNOTSET";
       case MXE_NOTFOUND:
          message = MXE_NOTFOUND_MSG;
          return "MXE_NOTFOUND";
