@@ -37,7 +37,7 @@ GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 endif
 
-CUDA_LIBRARIES += -L/usr/local/cuda-9.0/lib64 -lcudart -lcufft
+CUDA_LIBRARIES += -L/usr/local/cuda/lib64 -lcudart -lcufft
 
 NVCC_INCLUDES := -I/home/jrmales/include -DMXLIB_MKL
 
