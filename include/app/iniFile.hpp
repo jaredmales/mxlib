@@ -1,13 +1,16 @@
 
 
-#ifndef __iniFile_hpp__
-#define __iniFile_hpp__
+#ifndef iniFile_hpp
+#define iniFile_hpp
 
 #include <unordered_map>
 
 #include "ini.hpp"
 
+namespace mx
+{
 
+///A wrapper for the ini functions.
 struct iniFile 
 {
    typedef std::unordered_map<std::string, std::string> nameMapT;
@@ -19,9 +22,9 @@ struct iniFile
       return section + "=" + name;
    }
 
-   void parse(const std::string & fname)
+   int parse(const std::string & fname)
    {
-      ini_parse(fname.c_str(), handler, this);
+      return ini_parse(fname.c_str(), handler, this);
    }
 
    int insert(const char *section, const char *name, const char * value)
@@ -75,5 +78,6 @@ struct iniFile
    
 };
 
+} //namespace mx
 
 #endif

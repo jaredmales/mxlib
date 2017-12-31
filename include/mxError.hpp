@@ -116,7 +116,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_ENVNOTSET 36
-#define MXE_ENVNOTSET_MSG "An environment varialbe is not set."
+#define MXE_ENVNOTSET_MSG "An environment variable is not set."
 
 /** \def MXE_NOTFOUND
   * \brief An item was not found

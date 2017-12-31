@@ -77,12 +77,12 @@ protected:
    
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
    
-   bool doHelp; ///< Flag to control whether the help message is printed or not.
+   bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
 
-   int helpWidth; ///< The total text width available for the help message.
+   int helpWidth {100} ; ///< The total text width available for the help message.
    
 public:
-   application();
+   //application();
    
    virtual ~application();
    
@@ -142,17 +142,29 @@ protected:
 
    ///Set the default search paths for config files
    /** In general you should not need to redefine this.
+     *
+     * The comand line arguments are not used by the default version, but are parameters in 
+     * case derived classes need access when overriding.
+     * 
      */
-   virtual void setDefaults();
+   virtual void setDefaults( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
+                             char ** argv ///< [in] standard command line result containing the arguments.
+                           );
 
    
-   ///Set up the help and command-line config options in a standard way.
-   /** This adds "-h and --help", and "-c --config" as command line options.
+   ///Set up the command-line config option in a standard way.
+   /** This adds "-c --config" as command line options.
      * You can override this function to change this behavior, or simply clear config
-     * at the beginning of \ref setupConfig().  If you do this, you should also override \ref loadStandardConfig() and \ref loadStandardHelp().
+     * at the beginning of \ref setupConfig().  If you do this, you should also override \ref loadStandardConfig().
      */
    virtual void setupStandardConfig();
   
+   ///Set up the help an options in a standard way.
+   /** This adds "-h and --help" as command line options.
+     * You can override this function to change this behavior, or simply clear config
+     * at the beginning of \ref setupConfig().  If you do this, you should also override \ref loadStandardHelp().
+     */
+   virtual void setupStandardHelp();
    
    ///Loads the values of "help" and "config".
    /** Override this function if you do not want to use these, or have different behavior.
@@ -171,6 +183,16 @@ protected:
                             textTable & tt ///< [out] the textTable being populated
                           );
    
+   /// Setup a basic configuration.  Can be used in an intermediate derived class to allow its children to use setupConfig.
+   /** This is called just before setupConfig().
+     */
+   virtual void setupBasicConfig();
+   
+   /// Load a basic configuration.  Can be used in an intermediate derived class to allow its children to use loadConfig.
+   /** This is called just before loadConfig().
+     */
+   virtual void loadBasicConfig();
+   
    ///Print a formatted help message, based on the config target inputs.
    virtual void help();
    
@@ -178,14 +200,7 @@ protected:
    
 };
 
-inline
-application::application()
-{
-   doHelp = false;
-   helpWidth = 100;
-   
-   return;
-}
+
 
 inline
 application::~application()
@@ -248,14 +263,18 @@ int application::execute() //virtual
 }
 
 inline
-void application::setup(int argc, char ** argv)
+void application::setup( int argc, 
+                         char ** argv
+                       )
 {
    invokedName = argv[0];
    
-   setDefaults();
+   setDefaults(argc, argv);
    
    setupStandardConfig();
+   setupStandardHelp();
    
+   setupBasicConfig();
    setupConfig();
    
    config.readConfig(configPathGlobal);
@@ -274,11 +293,14 @@ void application::setup(int argc, char ** argv)
    
    loadStandardHelp();
    
+   loadBasicConfig();
    loadConfig();
 }
 
 inline
-void application::setDefaults() //virtual
+void application::setDefaults( int argc, 
+                               char ** argv
+                             ) //virtual
 {
    char *tmpstr;
    std::string tmp;
@@ -322,9 +344,13 @@ void application::setDefaults() //virtual
 inline
 void application::setupStandardConfig() //virtual
 {
-   config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
    config.add("config","c", "config",mx::argType::Required, "", "config", false, "string", "A local config file");
+}
 
+inline
+void application::setupStandardHelp() //virtual
+{
+   config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
 }
 
 inline
@@ -337,6 +363,18 @@ inline
 void application::loadStandardHelp() //virtual
 {
    config(doHelp, "help");
+}
+
+inline
+void application::setupBasicConfig() //virtual
+{
+   return;
+}
+
+inline
+void application::loadBasicConfig() //virtual
+{
+   return;
 }
 
 inline
