@@ -31,17 +31,18 @@ CXXFLAGS += -std=c++14 -fPIC $(OPTIMIZE) $(INCLUDES)
 # Programs to be made:
 TARGETS = libmxlib
 
-OBJS = msgq.o \
-       mxlib.o\
-       sharedmem_segment.o 
+OBJS = mxlib.o\
+       
 #\
 #process_interface.o 
+#sharedmem_segment.o 
 
 INC_TO_INSTALL = ao \
                  app \
                  astro \
                  fft \
                  improc \
+                 ipc \
                  math \
                  meta \
                  sigproc \
@@ -54,24 +55,19 @@ INC_TO_INSTALL = ao \
                  fileUtils.hpp \
                  gnuPlot.hpp \
                  gslInterpolation.hpp \
-                 IPC.h \
                  imagingArray.hpp \
-                 msgq.h \
-                 msgQ \
                  mxException.hpp \
                  mxError.hpp \
                  mxlib.h\
                  mxlib_uncomp_version.h\
                  ompLoopWatcher.hpp \
                  pout.hpp \
-                 process_interface.h \
                  readColumns.hpp \
-                 sharedmem_segment.h \
                  stringUtils.hpp \
                  textTable.hpp \
                  timeUtils.hpp \
-				 randomSeed.hpp \
-				 randomT.hpp 
+		 randomSeed.hpp \
+		 randomT.hpp 
 
 all: $(TARGETS) 
 

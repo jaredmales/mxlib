@@ -132,8 +132,9 @@ protected:
      */
 
    ///Sets up the application by executing the configuration steps
-   /** This will not normally need to be implemented by derived clasess.
-     * Only do so if you intend to change the configuration process. 
+   /** This is the key method which defines the mx::application configuration system.
+     * This will not normally need to be implemented by derived clasess --
+     * only do so if you intend to change the configuration process! 
      */
    virtual void setup( int argc, ///< [in] standard command line result specifying number of argumetns in argv 
                        char ** argv ///< [in] standard command line result containing the arguments.
@@ -269,21 +270,21 @@ void application::setup( int argc,
 {
    invokedName = argv[0];
    
-   setDefaults(argc, argv);
-   
    setupStandardConfig();
    setupStandardHelp();
    
    setupBasicConfig();
    setupConfig();
    
+   setDefaults(argc, argv);
+   
    config.readConfig(configPathGlobal);
    config.readConfig(configPathUser);
    config.readConfig(configPathLocal);
-   
+      
    //Parse CL just to get the CL config.
    config.parseCommandLine(argc, argv, "config");
-
+   
    //And now get the value of it and parse it.
    loadStandardConfig();
    config.readConfig(configPathCL);
@@ -357,6 +358,7 @@ inline
 void application::loadStandardConfig() //virtual
 {
    config(configPathCL, "config");
+   std::cerr << "configPathCL: " << configPathCL << "\n";
 }
 
 inline

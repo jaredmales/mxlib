@@ -313,9 +313,13 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(it->second.shortOpt == "" && it->second.longOpt == "") continue; //No command line opts specified.
       
-      if(oneTarget != "" && it->second.name != oneTarget) continue;
+      //if(oneTarget != "" && it->second.name != oneTarget) continue;
+      
+      //std::cerr << "adding: " << it->second.shortOpt << " " << oneTarget << " " << it->second.name << "\n";
       
       clOpts.add(it->second.name,it->second.shortOpt.c_str(),it->second.longOpt.c_str(), it->second.clType);
+      
+      //if(oneTarget != "" && it->second.name == oneTarget) break;
    }
    
    //Then load the command-line-only options.
@@ -324,9 +328,11 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(cloit->shortOpt == "" && cloit->longOpt == "") continue; //Nothing to add?
       
-      if(oneTarget != "" && cloit->name != oneTarget) continue;
+      //if(oneTarget != "" && cloit->name != oneTarget) continue;
       
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
+      
+      //if(oneTarget != "" && cloit->name == oneTarget) break;
    }
 
    //If we get here and nothing to do, get out
@@ -341,8 +347,12 @@ void appConfigurator::parseCommandLine( int argc,
    //And then load the results in the config target map.
    for(it = targets.begin(); it != targets.end(); ++it)
    {
+      if(oneTarget != "" && it->second.name != oneTarget) continue;
+      
+      //std::cerr << "isn: " << it->second.name << "\n";
       if(clOpts.optSet(it->second.name)) 
       {
+         //std::cerr << "  Set!\n";
          std::vector<std::string> args;
 
          clOpts.getAll(args, it->second.name);

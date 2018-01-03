@@ -8,8 +8,8 @@
   *
   */
 
-#ifndef __fileUtils_hpp__
-#define __fileUtils_hpp__
+#ifndef filtUtils_hpp
+#define filtUtils_hpp
 
 #include <iostream>
 #include <string>
@@ -256,4 +256,4 @@ std::string getSequentialFilename( const std::string & basename,
 
 } //namespace mx
 
-#endif //__fileUtils_hpp__
+#endif //filtUtils_hpp

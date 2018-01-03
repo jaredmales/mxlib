@@ -99,11 +99,17 @@ struct clOptions
       if(it == map.end())
       {
          if(argT == argType::Optional)
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+         }
          else if(argT == argType::Required)
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+         }
          else
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+         }
          
          map.insert({optName, nOpts});
          typeMap.insert({optName, argT});
@@ -112,12 +118,12 @@ struct clOptions
          return;
       }
       
-      if(argT == argType::Optional)
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
-         else if(argT == argType::Required)
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
-         else
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+//       if(argT == argType::Optional)
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+//          else if(argT == argType::Required)
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+//          else
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
 //      descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
    }
 
@@ -132,7 +138,7 @@ struct clOptions
       options = new option::Option[stats.options_max];
       buffer  = new option::Option[stats.buffer_max];
       
-      option::Parser parse(descriptions.data(), argc, argv, options, buffer);
+      option::Parser parse(false, descriptions.data(), argc, argv, options, buffer);
             
       if(nonOptions)
       {
@@ -250,6 +256,7 @@ struct clOptions
    bool optSet(const std::string & key)
    {
      mapIterator it = map.find(key);
+     
      if(it == map.end()) return false; //Not found --> e.g. if neither command line short nor long option set.
      
      if( options[it->second].type() != argType::None) return true;

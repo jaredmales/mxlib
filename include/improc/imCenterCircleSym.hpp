@@ -8,7 +8,7 @@
 #ifndef __imCenterCircleSym_hpp__
 #define __imCenterCircleSym_hpp__
 
-#include "../vectorUtils.hpp"
+#include "../math/vectorUtils.hpp"
 #include "../math/fit/fitGaussian.hpp"
 #include "imageFilters.hpp"
 #include "eigenImage.hpp"
@@ -153,8 +153,8 @@ struct imCenterCircleSym
                for(int k =0; k< rads.size(); ++k)
                {
                   if(rads[k].size() <= 1) continue;
-                  mean = vectorMean(rads[k]);
-                  var = vectorVariance(rads[k], mean);
+                  mean = math::vectorMean(rads[k]);
+                  var = math::vectorVariance(rads[k], mean);
                
                   grid(i,j) += var/pow(mean,2);
                } 

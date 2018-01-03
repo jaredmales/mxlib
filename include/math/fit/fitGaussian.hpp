@@ -14,6 +14,7 @@ using namespace boost::math::constants;
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
 
+#include "../../improc/eigenImage.hpp"
 
 namespace mx
 {
