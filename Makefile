@@ -47,8 +47,6 @@ INC_TO_INSTALL = ao \
                  meta \
                  sigproc \
                  wfp \
-                 astrodyn.hpp \
-                 astrotypes.h \
                  binVector.hpp \
                  eigenUtils.hpp \
                  environment.hpp \
