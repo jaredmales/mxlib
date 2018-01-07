@@ -5,6 +5,25 @@
  *
  */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef __imageTransforms_hpp__
 #define __imageTransforms_hpp__
 
@@ -54,27 +73,31 @@ typedef bilinearTransform<double> bilinearTransd;
 
 
 ///Transformation by cubic convolution interpolation
-/** \ingroup image_transforms 
+/** Uses the cubic convolution interpolation kernel.  See <a href="https://en.wikipedia.org/wiki/Bicubic_interpolation">https://en.wikipedia.org/wiki/Bicubic_interpolation </a>. 
+  *
+  * The parameter \ref cubic should be left as the default -0.5 in most cases, which gives the bicubic spline interpolator.  See
+  * <a href="https://en.wikipedia.org/wiki/Cubic_Hermite_spline">https://en.wikipedia.org/wiki/Cubic_Hermite_spline</a>.
+  * 
+  * \tparam _arithT is the type in which to do all calculations.  Should be a floating point type.
+  * 
+  * \ingroup image_transforms 
   */
 template<typename _arithT>
 struct cubicConvolTransform
 {
-   typedef _arithT arithT;
+   typedef _arithT arithT; ///< The type in which all calculations are performed.
    
    static const size_t width = 4;
    static const size_t lbuff = 1;
 
-   arithT cubic;
-   
-   cubicConvolTransform()
-   {
-      cubic = -0.5;
-   }
-   
+   arithT cubic {-0.5}; ///< The kernel parameter.  The default value -0.5 gives the bicubic spline interpolator.
+      
    explicit cubicConvolTransform(arithT c)
    {
       cubic = c;
    }
+   
+   cubicConvolTransform() {}
    
    cubicConvolTransform(const cubicConvolTransform & t)
    {
@@ -149,18 +172,18 @@ typedef cubicConvolTransform<double> cubicConvolTransd;
 /// Rotate an image represented as an eigen array
 /** Uses the given transformation type to rotate an image.
   *
-  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
-  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
-  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
   * \tparam transformT specifies the transformation to use [will be resolved by compiler]
+  * \tparam arrT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam arrT2 is the eigen array type of the input [will be resolved by compiler]
+  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
   *
-  * \param [out] transim contains the shifted image.  Must be pre-allocated.
-  * \param [in] im is the image to be shifted.
-  * \param [in] dq is the amount in radians to rotate in the c.c.w. direction
-  * \param [in] trans is the transformation to use
   */
 template<typename transformT, typename arrT, typename arrT2, typename floatT>
-void imageRotate(arrT & transim, const arrT2 &im, floatT dq, transformT trans)
+void imageRotate( arrT & transim, ///< [out] The rotated image.  Must be pre-allocated. 
+                  const arrT2 &im, ///< [in] The image to be rotated.
+                  floatT dq, ///< [in] the angle, in radians, by which to rotate in the c.c.w. direction
+                  transformT trans ///< [in] is the transformation to use
+                )
 {
    typedef typename transformT::arithT arithT;
    arithT cosq, sinq;
