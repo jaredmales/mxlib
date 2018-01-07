@@ -220,30 +220,52 @@ struct imCenterCircleSym
       
    }
    
-   ///Dump the results to std::cout.
-   void results()
+   ///Output the results to a stream
+   /** Prints a result summary to the input stream.
+     *
+     * \tparam iosT is a std::ostream-like type.
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
+     */ 
+   template<typename iosT, char comment='#'>
+   iosT & dumpResults( iosT & ios )
    {
-      std::cout << "--------------------------------------\n";
-      std::cout << "mx::improc::imCenterCircleSym Results \n";
-      std::cout << "--------------------------------------\n";
-      std::cout << "Estimated x-center: " << _x0 - maxPix + fit.x0()*dPix << "\n";
-      std::cout << "Estimated y-center: " << _y0 - maxPix + fit.y0()*dPix << "\n";
-      std::cout << "Cost half-width: " << 0.5*sigma2fwhm( sqrt( pow(fit.sigma_x(),2) + pow(fit.sigma_y(),2)) * dPix) << " pixels\n";
-      std::cout << "--------------------------------------\n";
-      std::cout << "Setup:\n";
-      std::cout << "--------------------------------------\n";
-      std::cout << "maxPix: " << maxPix << "\n";
-      std::cout << "dPix: " << dPix << "\n";
-      std::cout << "minRad: " << minRad << "\n";
-      std::cout << "maxRad: " << maxRad << "\n";
-      std::cout << "dRad: " << dRad << "\n"; 
-      std::cout << "smWidth: " << smWidth << "\n";
-      std::cout << "guessWidth: " << guessWidth << "\n";
-      std::cout << "--------------------------------------\n";
-      std::cout << "Fit results:\n"   ;
-      fit.dumpReport();
-      std::cout << "--------------------------------------\n";
+      char c[] = {comment, '\0'};
+      
+      ios << c << "--------------------------------------\n";
+      ios << c << "mx::improc::imCenterCircleSym Results \n";
+      ios << c << "--------------------------------------\n";
+      ios << c << "Estimated x-center: " << _x0 - maxPix + fit.x0()*dPix << "\n";
+      ios << c << "Estimated y-center: " << _y0 - maxPix + fit.y0()*dPix << "\n";
+      ios << c << "Cost half-width: " << 0.5*sigma2fwhm( sqrt( pow(fit.sigma_x(),2) + pow(fit.sigma_y(),2)) * dPix) << " pixels\n";
+      ios << c << "--------------------------------------\n";
+      ios << c << "Setup:\n";
+      ios << c << "--------------------------------------\n";
+      ios << c << "maxPix: " << maxPix << "\n";
+      ios << c << "dPix: " << dPix << "\n";
+      ios << c << "minRad: " << minRad << "\n";
+      ios << c << "maxRad: " << maxRad << "\n";
+      ios << c << "dRad: " << dRad << "\n"; 
+      ios << c << "smWidth: " << smWidth << "\n";
+      ios << c << "guessWidth: " << guessWidth << "\n";
+      ios << c << "--------------------------------------\n";
+      ios << c << "Fit results:\n"   ;
+      fit.dumpReport(ios);
+      ios << c << "--------------------------------------\n";
+      
+      return ios;
    }
+   
+   ///Output the results to std::cout
+   /** Prints a result summary to std::cout
+     *
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
+     */
+   template<char comment ='#'>
+   std::ostream & dumpResults()
+   {
+      return dumpResults<std::ostream, comment>(std::cout);
+   }
+   
 };
    
 } //improc

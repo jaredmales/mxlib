@@ -305,11 +305,15 @@ public:
    /** Prints a formatted list of all current fit parameters.
      *
      * \tparam iosT is a std::ostream-like type.
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
      */ 
    template<typename iosT, char comment='#'>
    iosT & dumpParameters( iosT & ios /**< [in] a std::ostream-like stream. */);
    
    ///Dump the parameter vector to stdout.
+   /** 
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
+     */
    template<char comment='#'>
    std::ostream & dumpParameters();
    
@@ -317,6 +321,7 @@ public:
    /** Prints a formatted list of all current fit parameters.
      *
      * \tparam iosT is a std::ostream-like type.
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
      */
    template<typename iosT, char comment='#'>
    iosT & dumpReport( iosT & ios, ///< [in] a std::ostream-like stream.
@@ -324,6 +329,9 @@ public:
                     );
       
    ///Dump a status report to stdout
+   /** 
+     * \tparam comment is a comment character to start each line.  Can be '\0'.
+     */ 
    template<char comment='#'>
    std::ostream & dumpReport( bool dumpParams = true /**< [in] [optional] whether or not to dump the parameters.*/);
 
@@ -745,6 +753,8 @@ iosT & levmarInterface<fitterT>::dumpParameters( iosT & ios )
       ios << c;
       ios <<  "p[" << i << "] = " << p[i] << " (" << init_p[i] << ")\n";
    }
+   
+   return ios;
 }
 
 template<class fitterT>
@@ -774,6 +784,7 @@ iosT & levmarInterface<fitterT>::dumpReport( iosT & ios,
    ios << c << "Jacobian evals: " << get_jevals() << "\n";
    ios << c << "Elapsed time: " << get_deltaT() << " secs\n";
    dumpGitStatus<iosT,comment>(ios);
+   return ios;
    
 }
    
@@ -782,6 +793,7 @@ template<char comment>
 std::ostream & levmarInterface<fitterT>::dumpReport( bool dumpParams )
 {
    return dumpReport<std::ostream, comment>(std::cout);
+   
 }
    
    
