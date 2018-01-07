@@ -241,7 +241,8 @@ struct imCenterCircleSym
       std::cout << "guessWidth: " << guessWidth << "\n";
       std::cout << "--------------------------------------\n";
       std::cout << "Fit results:\n"   ;
-      fit.dump_report();
+      fit.dumpReport();
+      std::cout << "--------------------------------------\n";
    }
 };
    

@@ -27,6 +27,7 @@
 #ifndef levmarInterface_hpp
 #define levmarInterface_hpp
 
+#include "../../mxlib.hpp"
 
 #include "templateLevmar.hpp"
 #include "../../timeUtils.hpp"
@@ -42,7 +43,7 @@ namespace fit
 template <typename T>
 struct hasJacobian;
 
-///An interface to the levmar package
+///A templatized interface to the levmar package
 /** Requires a fitter class, which conforms to one of the following minimum specifications.
   * To use the finite difference jacobian calculation: 
   * \code
@@ -165,22 +166,20 @@ private:
 public:
    
    /// Default constructor.
+   /** With this constructor, you must set the parameter, data, and adata before calling fit().
+     */
    levmarInterface();
    
    /// Setup constructor
-   /** After construction fit() will work.
+   /** with this constructor fit() will work immediately.
      *
-     * \param i_p pointer to the initial parameter guess
-     * \param i_x pointer to the data (can be NULL)
-     * \param i_m the size of i_p
-     * \param i_n the size of i_x
-     * \param i_adata pointer to auxiliary data (can be NULL)
      */
-   levmarInterface( realT *i_p,
-                     realT *i_x,
-                     int i_m,
-                     int i_n,
-                     void *i_adata);
+   levmarInterface( realT *i_p, ///< [in] pointer to the initial parameter guess
+                    realT *i_x, ///< [in] pointer to the data (can be NULL)
+                    int i_m, ///< [in] the size of i_p
+                    int i_n, ///< [in] the size of i_x
+                    void *i_adata ///< [in] pointer to auxiliary data (can be NULL)
+                  );
 
    ///Destructor
    /** Frees the work and covar matrices.
@@ -188,12 +187,14 @@ public:
    ~levmarInterface();
    
    ///Set number of parameters, but don't allocate
-   void set_nparams(int i_m);
+   void nParams(int i_m /**< [in] the number of parameters */);
    
    ///Get the current number of parameters
-   int get_nparams();
+   /** \returns the current number of parameters (m)
+     */
+   int nParams();
    
-   ///Allocate parameters array based on previous call to \ref set_nparams
+   ///Allocate parameters array based on previous call to \ref nParams
    void allocate_params();
    
    ///Set number of parameters and allocate
@@ -225,9 +226,6 @@ public:
    ///Get the maximum number of iterations
    int get_itmax();
    
-   
-   
-   
    ///Allocate the work and covar matrices
    /** Uses a function object specialized for whether or not there is a jacobian
      * to determine the size of work. 
@@ -235,7 +233,7 @@ public:
    void allocate_work();
    
    ///Set one of the minimization options to val
-   /** The options correspond too:
+   /** The options correspond to:
      * 
      * 0: the scale factor the initial \f$ \mu \f$
      * 
@@ -303,27 +301,32 @@ public:
    
    //Status reports
    
-   ///Dump the parameter vector to stdout.
-   void dump_params()
-   {
-      std::cerr << "Current parameters (initial):\n";
-      for(int i=0;i<m;i++) std::cerr << "p[" << i << "] = " << p[i] << " (" << init_p[i] << ")\n";
-   }
+   ///Output current parameters to a stream
+   /** Prints a formatted list of all current fit parameters.
+     *
+     * \tparam iosT is a std::ostream-like type.
+     */ 
+   template<typename iosT, char comment='#'>
+   iosT & dumpParameters( iosT & ios /**< [in] a std::ostream-like stream. */);
    
-   ///Dump a status report to stdout
-   void dump_report(bool dumpParams = true)
-   {
-      std::cerr << "-------------------------------------------\n";
-      if(dumpParams) dump_params();
-      std::cerr << "Reason for termination: " << get_reason_string() << "\n";
-      std::cerr << "Initial norm: " << get_initial_norm() << "\n";
-      std::cerr << "Final norm: " << get_final_norm() << "\n";
-      std::cerr << "Number of iterations: " << get_iterations() << "\n";
-      std::cerr << "Function evals: " << get_fevals() << "\n";
-      std::cerr << "Jacobian evals: " << get_jevals() << "\n";
-      std::cerr << "Elapsed time: " << get_deltaT() << " secs\n";
-   }
+   ///Dump the parameter vector to stdout.
+   template<char comment='#'>
+   std::ostream & dumpParameters();
+   
+   ///Output current parameters to a stream
+   /** Prints a formatted list of all current fit parameters.
+     *
+     * \tparam iosT is a std::ostream-like type.
+     */
+   template<typename iosT, char comment='#'>
+   iosT & dumpReport( iosT & ios, ///< [in] a std::ostream-like stream.
+                      bool dumpParams = true ///< [in] [optional] whether or not to dump the parameters.
+                    );
       
+   ///Dump a status report to stdout
+   template<char comment='#'>
+   std::ostream & dumpReport( bool dumpParams = true /**< [in] [optional] whether or not to dump the parameters.*/);
+
 };
 
 template<class fitterT>
@@ -387,7 +390,7 @@ levmarInterface<fitterT>::~levmarInterface()
 }
    
 template<class fitterT>
-void levmarInterface<fitterT>::set_nparams(int i_m)
+void levmarInterface<fitterT>::nParams(int i_m)
 {
    //If we own and have allocated p, then de-alloc
    if(p && own_p) 
@@ -409,7 +412,7 @@ void levmarInterface<fitterT>::set_nparams(int i_m)
 }
 
 template<class fitterT>
-int levmarInterface<fitterT>::get_nparams()
+int levmarInterface<fitterT>::nParams()
 {
    return m;
 }
@@ -431,7 +434,7 @@ void levmarInterface<fitterT>::allocate_params()
 template<class fitterT>   
 void levmarInterface<fitterT>::allocate_params(int i_m)
 {
-   set_nparams(i_m);
+   nParams(i_m);
    
    allocate_params();
 }
@@ -451,7 +454,7 @@ void levmarInterface<fitterT>::point_params(realT * i_p)
 template<class fitterT>
 void levmarInterface<fitterT>::point_params(realT * i_p, int i_m)
 {
-   set_nparams(i_m);
+   nParams(i_m);
    point_params(i_p);
 }
 
@@ -729,6 +732,59 @@ std::string levmarInterface<fitterT>::get_reason_string()
      
 }
 
+template<class fitterT>
+template<typename iosT, char comment>
+iosT & levmarInterface<fitterT>::dumpParameters( iosT & ios )
+{
+   //This causes the stream to not output a '\0'
+   char c[] = {comment, '\0'};
+   
+   ios << c << "Current parameters (initial):\n";
+   for(int i=0;i<m;i++) 
+   {
+      ios << c;
+      ios <<  "p[" << i << "] = " << p[i] << " (" << init_p[i] << ")\n";
+   }
+}
+
+template<class fitterT>
+template<char comment>
+std::ostream & levmarInterface<fitterT>::dumpParameters()
+{
+   return dumpParameters<std::ostream,comment>(std::cout);
+}
+
+template<class fitterT>
+template<typename iosT, char comment>
+iosT & levmarInterface<fitterT>::dumpReport( iosT & ios,
+                                             bool dumpParams
+                                           )
+{
+   char c[] = {comment, '\0'}; //So a '\0' won't be written to stream.
+   
+   ios << c << "--------------------------------------\n";
+   ios << c << "mx::math::fit::levmarInterface Results \n";
+   ios << c << "--------------------------------------\n";
+   if(dumpParams) dumpParameters<iosT,comment>(ios);
+   ios << c << "Reason for termination: " << get_reason_string() << "\n";
+   ios << c << "Initial norm: " << get_initial_norm() << "\n";
+   ios << c << "Final norm: " << get_final_norm() << "\n";
+   ios << c << "Number of iterations: " << get_iterations() << "\n";
+   ios << c << "Function evals: " << get_fevals() << "\n";
+   ios << c << "Jacobian evals: " << get_jevals() << "\n";
+   ios << c << "Elapsed time: " << get_deltaT() << " secs\n";
+   dumpGitStatus<iosT,comment>(ios);
+   
+}
+   
+template<class fitterT>
+template<char comment>
+std::ostream & levmarInterface<fitterT>::dumpReport( bool dumpParams )
+{
+   return dumpReport<std::ostream, comment>(std::cout);
+}
+   
+   
 ///Test whether a function type has a Jacobian function by testing whether it has a typedef of "hasJacobian"
 /** Used for compile-time determination of whether the fitter has a Jacobian.
   * 

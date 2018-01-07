@@ -57,6 +57,7 @@ INC_TO_INSTALL = ao \
                  mxException.hpp \
                  mxError.hpp \
                  mxlib.h\
+                 mxlib.hpp\
                  mxlib_uncomp_version.h\
                  ompLoopWatcher.hpp \
                  pout.hpp \
