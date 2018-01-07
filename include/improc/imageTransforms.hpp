@@ -326,6 +326,8 @@ void imageShiftWP( outputArrT & out,
   * \param [in] dy is the amount to shift in the y direction
   * \param [in] trans is the transformation to use
   * 
+  * \todo This probably only needs to set the kernel once.  Might be handled with a change check in the transformT. 
+  * 
   */
 template<typename arrOutT, typename arrInT, typename floatT, typename transformT>
 void imageShift( arrOutT & transim, 
