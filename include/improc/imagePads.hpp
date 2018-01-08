@@ -5,8 +5,27 @@
   *
   */
 
-#ifndef __imagePads_hpp__
-#define __imagePads_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef improc_imagePads_hpp
+#define improc_imagePads_hpp
 
 #include <vector>
 
@@ -26,13 +45,8 @@ namespace improc
   * @{ 
   */
 
-///Pad an image with a constant value
+/// Pad an image with a constant value
 /** 
-  * \param [out] imOut is resized, and on return contains the padded image.
-  * \param [in] imIn the image to be padded.
-  * \param [in] padSz the size of the pad to be added.  The image will grow by 2*padSz rows and columns.
-  * \param [in] value the value to use for padding.
-  *
   * \retval 0 on success
   * \retval -1 on error
   * 
@@ -40,10 +54,11 @@ namespace improc
   * \tparam imInT is an Eigen-like array
   */ 
 template<typename imOutT, typename imInT>
-int padImage( imOutT & imOut, 
-              imInT & imIn, 
-              unsigned int padSz, 
-              typename imOutT::Scalar value)
+int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  This will be resized.
+              imInT & imIn, ///< [in] The image to be padded.
+              unsigned int padSz, ///< [in] The size of the pad.  The padded image (imOut) will be 2*padSz rows and cols larger than the input.
+              typename imOutT::Scalar value  ///< [in] the value to use for padding.
+            )
 {
    int nRows = imIn.rows() + 2*padSz;
    int nCols = imIn.cols() + 2*padSz;
@@ -55,14 +70,9 @@ int padImage( imOutT & imOut,
    return 0;
 }
 
-///Pad an image with a constant value
+/// Pad an image with a constant value for reference types.
 /** This version can be used with Eigen reference types.
   *  
-  * \param [out] imOut is resized, and on return contains the padded image.
-  * \param [in] imIn the image to be padded.  
-  * \param [in] padSz the size of the pad to be added.  The image will grow by 2*padSz rows and columns.
-  * \param [in] value the value to use for padding.
-  * 
   * \retval 0 on success
   * \retval -1 on error
   * 
@@ -70,10 +80,11 @@ int padImage( imOutT & imOut,
   * \tparam imInT is an Eigen-like array reference
   */ 
 template<typename imOutT, typename imInT>
-int padImageRef( imOutT imOut, 
-                 imInT imIn, 
-                 unsigned int padSz,
-                 typename imOutT::Scalar value)
+int padImageRef( imOutT imOut, ///< [out] On return contains the padded image.  This will be resized.
+                 imInT imIn, ///< [in] The image to be padded.
+                 unsigned int padSz, ///< [in] The size of the pad.  The padded image (imOut) will be 2*padSz rows and cols larger than the input.
+                 typename imOutT::Scalar value ///< [in] the value to use for padding.
+               )
 {
    int nRows = imIn.rows() + 2*padSz;
    int nCols = imIn.cols() + 2*padSz;
@@ -86,13 +97,9 @@ int padImageRef( imOutT imOut,
    return 0;
 }
 
-///Pad an image by repeating the values in the edge rows and columns
+/// Pad an image by repeating the values in the edge rows and columns
 /** Allocates imOut to hold 2*padSz more rows and columns, and copies imIn to the center.  Then fills in the new pixels
   * by copying the edge pixels outward.
-  *
-  * \param [out] imOut is resized, and on return contains the padded image.
-  * \param [in] imIn the image to be padded.  
-  * \param [in] padSz the size of the pad to be added.  The image will grow by 2*padSz rows and columns.
   * 
   * \retval 0 on success
   * \retval -1 on error
@@ -101,9 +108,10 @@ int padImageRef( imOutT imOut,
   * \tparam imInT is an Eigen-like array
   */
 template<typename imOutT, typename imInT>
-int padImage( imOutT & imOut,
-              imInT & imIn,
-              unsigned int padSz )
+int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  This will be resized.
+              imInT & imIn, ///< [in] The image to be padded.
+              unsigned int padSz ///< [in] The size of the pad.  The padded image (imOut) will be 2*padSz rows and cols larger than the input.
+            )
 {
    int dim1 = imIn.rows();
    int dim2 = imIn.cols();
@@ -149,16 +157,12 @@ int padImage( imOutT & imOut,
    return 0;
 }
 
-///Pad an image by repeating the values at the edge of a 1/0 mask
+/// Pad an image by repeating the values at the edge of a 1/0 mask
 /** Allocates imOut to match imMask, and copies imIn to the center multiplied by the mask.  Then fills in the new pixels
   * by copying the edge pixels outward. For each pixel on the edge of the mask (touching at least one 1-valued pixel
   * in the mask), the value is chosen as the value of the nearest pixel with a 1 in the mask.  If the closest pixels are more than one equidistant pixels,
   * their mean value is used.    
   * 
-  * \param [out] imOut is resized to match imMask, and on return contains the padded image.
-  * \param [in] imIn the image to be padded.  
-  * \param [in] imMask is the 1/0 mask.
-  * \param [in] padSz the number of iterations of the padding loop.
   * 
   * \retval 0 on success
   * \retval -1 on error
@@ -167,10 +171,11 @@ int padImage( imOutT & imOut,
   * \tparam imInT is an Eigen-like array 
   */
 template<typename imOutT, typename imInT>
-int padImage( imOutT & imOut,
-              imInT & imIn,
-              imInT & imMask,
-              unsigned int padSz )
+int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  This will be resized.
+              imInT & imIn, ///< [in] The image to be padded.
+              imInT & imMask, ///< [in] The 1/0 mask image.
+              unsigned int padSz ///< [in] The number of iterations of the padding loop.
+            )
 {
 
    typedef imInT imMaskT;
@@ -274,10 +279,6 @@ int padImage( imOutT & imOut,
 
 ///Cut down a padded image
 /**
-  * \param imOut is resized, and on return contains the cut image. 
-  * \param inIn is the image to be cut.  
-  * \param padSz the size of the pad.  The image will shrink by 2*padSz rows and columns.
-  * 
   * \retval 0 on success
   * \retval -1 on error
   * 
@@ -285,9 +286,10 @@ int padImage( imOutT & imOut,
   * \tparam imInT is an Eigen-like array
   */ 
 template<typename imOutT, typename imInT>
-int cutPaddedImage( imOutT & imOut, 
-                    const imInT & imIn, 
-                    unsigned int padSz )
+int cutPaddedImage( imOutT & imOut,  ///< [out] On return contains the cut image.  This will be resized.
+                    const imInT & imIn, ///< [in] The image to be cut down.
+                    unsigned int padSz ///< [in] The size of the pad.  The output image will be smaller by 2*padSz rows and cols.
+                  )
 {
    if(2*padSz > imIn.rows())
    {
@@ -309,11 +311,10 @@ int cutPaddedImage( imOutT & imOut,
    return 0;
 }
 
-
-
-
 ///@}
+
+   
 }// namespace improc 
 }// namespace mx
 
-#endif //__imagePads_hpp__
+#endif //improc_imagePads_hpp
