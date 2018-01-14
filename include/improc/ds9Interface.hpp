@@ -5,16 +5,34 @@
   * 
 */
 
-#ifndef __ds9Interface_hpp__
-#define __ds9Interface_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+
+#ifndef improc_ds9Interface_hpp
+#define improc_ds9Interface_hpp
 
 #include <signal.h>
 #include <sys/wait.h>
 
 #include "fitsUtils.hpp"
 #include "eigenImage.hpp"
-
-//#include "../eigenUtils.hpp"
 
 #include "../ipc/processInterface.hpp"
 #include "../ipc/sharedMemSegment.hpp"
@@ -24,7 +42,8 @@ namespace mx
 namespace improc 
 {
    
-///The maximum length of a ds9 command
+
+/// The maximum length of a ds9 command
 /** 
   * \ingroup image_processing
   * \ingroup plotting
@@ -232,9 +251,6 @@ int ds9Interface::init()
    
    _port = 0;
 
-   //nsegs = 0;
-   //segs = 0;
-
    return 0;
 }
 
@@ -325,28 +341,8 @@ int ds9Interface::addsegment( int frame )
    
    segs.resize(frame);
    
-//    nsegs = frame;
-//    
-//    sharedMemSegment * tmpsegs;
-//    tmpsegs = (sharedMemSegment *) realloc( segs, sizeof(sharedMemSegment) * nsegs);
-//    
-//    if(tmpsegs == NULL)
-//    {
-//       if(segs) free(segs);
-//       segs = 0;
-//       
-//       fprintf(stderr, "unable to allocate memory for segment\n");
-//       return -1;
-//    }
-//    else
-//    {
-//       segs = tmpsegs;
-//    }
-      
    for(i = curr_n; i< segs.size(); i++)
    {
-      //sharedmem_segment_initialize( &segs[i] );
-      //sharedmem_segment_set_key( &segs[i], 0, IPC_PRIVATE);
       segs[i].initialize();
       segs[i].setKey(0, IPC_PRIVATE);
       
@@ -486,10 +482,7 @@ int ds9Interface::shutdown()
    
    for(i=0; i < segs.size(); i++) segs[i].detach();
    
-   //free( segs );
    segs.clear();
-   
-   //nsegs = 0;
    
    return 0;
 }
@@ -498,5 +491,5 @@ int ds9Interface::shutdown()
 } //namespace improc 
 } //namespace mx
 
-#endif //__ds9Interface_hpp__
+#endif //improc_ds9Interface_hpp
 

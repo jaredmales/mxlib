@@ -1,13 +1,17 @@
+/** \file eigenImage.hpp
+  * \brief Tools for using the eigen library for image processing
+  * \ingroup image_processing_files
+  * \author Jared R. Males (jaredmales@gmail.com)
+  *
+  */
 
-
-#ifndef __eigenImage__
-#define __eigenImage__
+#ifndef improc_eigenImage_hpp
+#define improc_eigenImage_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
 
 #include "../math/vectorUtils.hpp"
-//#include "eigenCube.hpp"
 
 namespace mx
 {
@@ -20,34 +24,6 @@ namespace improc
 template<typename scalarT>
 using eigenImage = Eigen::Array<scalarT, -1, -1>;
 
-
-#if 0
-///Function object to get the number of planes in an eigenImage or eigenCube
-/** The Eigen types don't have a planes() member.  This uses the \ref is_eigenCube compile time test.
-  * \ingroup eigen_image_processing 
-  */
-template<typename eigenT, bool iscube = is_eigenCube<eigenT>::value>
-struct imPlanes
-{
-   typename eigenT::Index operator()(const eigenT & im)
-   {
-      return im.planes();
-   }
-};
-
-///Specialization of \ref imPlanes for a 2D image. 
-/** If this is used then the \ref is_eigenCube test is false.
-  * * \ingroup eigen_image_processing 
-  */
-template<typename eigenT>
-struct imPlanes<eigenT, false>
-{
-   typename eigenT::Index operator()(const eigenT &im)
-   {
-      return 1;
-   }
-};
-#endif
 
 ///Test whether a type is an eigenCube by testing whether it has a typedef of "is_eigenCube"
 /** Used for compile-time determination of type
@@ -189,5 +165,5 @@ typename imageT::Scalar imageMedian( const imageT & mat, ///< [in] the image to 
 } //namespace improc
 } //namespace mx
 
-#endif //__eigenImage__
+#endif //improc_eigenImage_hpp
 

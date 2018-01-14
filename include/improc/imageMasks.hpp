@@ -4,9 +4,9 @@
   * \author Jared R. Males (jaredmales@gmail.com)
   *
   */
-
-#ifndef __imageMasks_hpp__
-#define __imageMasks_hpp__
+   
+#ifndef improc_imageMasks_hpp
+#define improc_imageMasks_hpp
 
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
@@ -447,4 +447,4 @@ void rotateMask( imageT & rotMask,
 } //namespace improc 
 } //namespace mx
 
-#endif // __imageMasks_hpp__
+#endif // improc_imageMasks_hpp

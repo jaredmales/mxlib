@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef airyPattern_hpp
-#define airyPattern_hpp
+#ifndef math_func_airyPattern_hpp
+#define math_func_airyPattern_hpp
 
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
@@ -126,5 +126,5 @@ realT seeingHalo( realT x, ///< [in] the separation in the same units as fwhm.
 }//namespace math
 }//namespace mx
 
-#endif //airyPattern_hpp
+#endif //math_func_airyPattern_hpp
 

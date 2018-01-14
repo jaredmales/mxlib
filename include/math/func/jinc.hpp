@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __jinc_hpp__
-#define __jinc_hpp__
+#ifndef math_func_jinc_hpp
+#define math_func_jinc_hpp
 
 #include <boost/math/special_functions/bessel.hpp>
 
@@ -46,13 +46,11 @@ namespace func
   * where \f$ J_1 \f$ is the cylindrical bessel function of the first kind of order 1.
   * 
   * Follows the technique in boost sinc_pi, using the Taylor series for small arguments. If x
-  * is smaller than \f$ \epsilon \f$, then it returns 1/2.  If x is larger than \f$ \epsilon \f$ but smaler than \f$ \sqrt{\epsilon} \f$, then
+  * is smaller than \f$ \epsilon \f$, then it returns 1/2.  If x is larger than \f$ \epsilon \f$ but smaller than \f$ \sqrt{\epsilon} \f$, then
   * this function returns
   * \f[
   *    Ji(x) \approx \frac{1}{2} - \frac{x^2}{16}.
   * \f]
-  * 
-  * \param x is the argument
   * 
   * \returns the value of Ji(x)
   * 
@@ -61,12 +59,12 @@ namespace func
   * \ingroup functions
   */
 template<typename T> 
-T jinc( const T & x)
+T jinc( const T & x /**< [in] the argument */)
 {
    T const taylor_0_bound = boost::math::tools::epsilon<T>();
    T const taylor_2_bound = boost::math::tools::root_epsilon<T>();
    
-   if( abs(x) > taylor_2_bound)
+   if( fabs(x) > taylor_2_bound)
    {
       return boost::math::cyl_bessel_j<T>(1,x)/(x);
    }
@@ -96,18 +94,16 @@ T jinc( const T & x)
   * 
   * If x is smaller than \f$ \sqrt{\epsilon} \f$, returns 0.
   * 
-  * \param x is the argument
-  * 
   * \returns the value of Ji2(x)
   * 
   * \ingroup functions
   */
 template<typename T> 
-T jinc2(const T & x)
+T jinc2(const T & x /**< [in] the argument */)
 {
    T const taylor_2_bound = boost::math::tools::root_epsilon<T>();
       
-   if(abs(x) > taylor_2_bound)
+   if( fabs(x) > taylor_2_bound )
    {
       return boost::math::cyl_bessel_j(2,x)/(x);
    }
@@ -121,4 +117,4 @@ T jinc2(const T & x)
 } //namespace math
 } //namespace mx
 
-#endif //__jinc_hpp__
+#endif //math_func_jinc_hpp
