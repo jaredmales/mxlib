@@ -135,6 +135,14 @@
   * \ingroup signal_processing
   */
   
+/** \defgroup fourier_basis The Fourier Basis
+  * \ingroup signal_processing
+  */
+
+/** \defgroup zernike_basis The Zernike Basis
+  * \ingroup signal_processing
+  */
+  
 //see signal_processing_files below
 
 
@@ -225,13 +233,6 @@
   * \ingroup imaging
   */
   
-/** \defgroup fourier_basis The Fourier Basis
-  * \ingroup imaging
-  */
-
-/** \defgroup zernike_basis The Zernike Basis
-  * \ingroup imaging
-  */
   
 /** \defgroup coronagraphs Coronagraphs
   * \brief Modeling and optimizing coronagraphs

@@ -5,8 +5,27 @@
   *
   */
 
-#ifndef __imageMasks_hpp__
-#define __imageMasks_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef improc_imageMasks_hpp
+#define improc_imageMasks_hpp
 
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
@@ -243,10 +262,10 @@ inline void rectangleIndices( std::vector<size_t> & idx,
                             )
 {
       
-   if(xmin < 0) xmin = 0;
+   //if(xmin < 0) xmin = 0;
    if(xmax > rows-1) xmax = rows-1;
    
-   if(ymin < 0) ymin = 0;
+   //if(ymin < 0) ymin = 0;
    if(ymax > cols-1) ymax = cols-1;
    
    idx.reserve( (xmax-xmin+1)*(ymax-ymin + 1) );
@@ -447,4 +466,4 @@ void rotateMask( imageT & rotMask,
 } //namespace improc 
 } //namespace mx
 
-#endif // __imageMasks_hpp__
+#endif // improc_imageMasks_hpp

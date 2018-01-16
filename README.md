@@ -11,3 +11,4 @@ On 2017-07-08 I moved from bitbucket to github.  To follow along, issue these co
   git remote set-url origin https://github.com/jaredmales/mxlib.git
   git remote set-url --push origin https://github.com/jaredmales/mxlib.git
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a3171d09105445bcb7b0ea29487f3256)](https://www.codacy.com/app/jaredmales/mxlib?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jaredmales/mxlib&amp;utm_campaign=Badge_Grade)

@@ -5,6 +5,25 @@
   * 
 */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef __mxError__
 #define __mxError__
 
@@ -110,6 +129,13 @@ namespace mx
   */   
 #define MXE_PARAMNOTSET 35
 #define MXE_PARAMNOTSET_MSG "A parameter was not set."
+
+/** \def MXE_ENVNOTSET
+  * \brief An environment variable is not set
+  * \ingroup mxe_errors
+  */   
+#define MXE_ENVNOTSET 36
+#define MXE_ENVNOTSET_MSG "An environment variable is not set."
 
 /** \def MXE_NOTFOUND
   * \brief An item was not found
@@ -229,6 +255,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_PARAMNOTSET:
          message = MXE_PARAMNOTSET_MSG;
          return "MXE_PARAMNOTSET";
+      case MXE_ENVNOTSET:
+         message = MXE_ENVNOTSET_MSG;
+         return "MXE_ENVNOTSET";
       case MXE_NOTFOUND:
          message = MXE_NOTFOUND_MSG;
          return "MXE_NOTFOUND";

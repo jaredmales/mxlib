@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __appConfigurator_hpp__
-#define __appConfigurator_hpp__
+#ifndef appConfigurator_hpp
+#define appConfigurator_hpp
 
 #include "../stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
@@ -105,12 +105,12 @@ struct appConfigurator
    
    std::vector<std::string> nonOptions;
       
-   int nAdded;
+   int nAdded {0};
    
-   appConfigurator()
+/*   appConfigurator()
    {
       nAdded = 0;
-   }
+   }*/
    
    /// Clear the containers and free up the associated memory.
    void clear();
@@ -145,7 +145,9 @@ struct appConfigurator
    ///Parse a config/ini file, updating the targets
    /** \todo handle += here, by appending to the last value as if a vector.
      */
-   void readConfig(const std::string & fname /**< [in] the config file name */);
+   int readConfig( const std::string & fname, /**< [in] the config file name */
+                   bool reportFileNotFound = true ///< [in] [optiona] control whether a file not found is reported.
+                 );
       
    /// Check if a target has been set by the configuration
    /**
@@ -216,10 +218,10 @@ struct appConfigurator
           );
    
   
-   
+   /// Access operator, calls get.
    template<typename typeT>
-   int operator()( typeT & v,
-                   const std::string & name
+   int operator()( typeT & v, ///< [out] the variable to populate (either scalar or vector)
+                   const std::string & name ///< [in] the config target name.
                  );
 
 private:
@@ -313,8 +315,6 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(it->second.shortOpt == "" && it->second.longOpt == "") continue; //No command line opts specified.
       
-      if(oneTarget != "" && it->second.name != oneTarget) continue;
-      
       clOpts.add(it->second.name,it->second.shortOpt.c_str(),it->second.longOpt.c_str(), it->second.clType);
    }
    
@@ -323,8 +323,6 @@ void appConfigurator::parseCommandLine( int argc,
    for(cloit = clOnlyTargets.begin(); cloit != clOnlyTargets.end(); ++cloit)
    {
       if(cloit->shortOpt == "" && cloit->longOpt == "") continue; //Nothing to add?
-      
-      if(oneTarget != "" && cloit->name != oneTarget) continue;
       
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
    }
@@ -341,8 +339,12 @@ void appConfigurator::parseCommandLine( int argc,
    //And then load the results in the config target map.
    for(it = targets.begin(); it != targets.end(); ++it)
    {
+      if(oneTarget != "" && it->second.name != oneTarget) continue;
+      
+      //std::cerr << "isn: " << it->second.name << "\n";
       if(clOpts.optSet(it->second.name)) 
       {
+         //std::cerr << "  Set!\n";
          std::vector<std::string> args;
 
          clOpts.getAll(args, it->second.name);
@@ -353,11 +355,26 @@ void appConfigurator::parseCommandLine( int argc,
    
 }   
 
-void appConfigurator::readConfig(const std::string & fname)
+int appConfigurator::readConfig( const std::string & fname,
+                                 bool reportFileNotFound
+                               )
 {
+   //Handle empty string quietly
+   if(fname == "") return 0;
+   
    iniFile iF;
    
-   iF.parse(fname);
+   if( iF.parse(fname) < 0)
+   {
+      if(!reportFileNotFound) return -1;
+      
+      std::string errs = "The file ";
+      errs += fname;
+      errs += " was not found.";
+      
+      mxError("appConfigurator: ", MXE_FILENOTFOUND, errs);
+      return -1;
+   }
    
    targetIterator it;
    
@@ -370,6 +387,7 @@ void appConfigurator::readConfig(const std::string & fname)
       }
    }
    
+   return 0;
 }
    
 inline
@@ -519,4 +537,4 @@ typeT appConfigurator::get( const std::string & name )
 
 } //namespace mx
 
-#endif // __appConfigurator_hpp__
+#endif // appConfigurator_hpp

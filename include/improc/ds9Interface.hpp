@@ -5,8 +5,28 @@
   * 
 */
 
-#ifndef __ds9Interface_hpp__
-#define __ds9Interface_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+
+#ifndef improc_ds9Interface_hpp
+#define improc_ds9Interface_hpp
 
 #include <signal.h>
 #include <sys/wait.h>
@@ -14,17 +34,16 @@
 #include "fitsUtils.hpp"
 #include "eigenImage.hpp"
 
-//#include "../eigenUtils.hpp"
-
-#include "../IPC.h"
-
+#include "../ipc/processInterface.hpp"
+#include "../ipc/sharedMemSegment.hpp"
 
 namespace mx
 {
 namespace improc 
 {
    
-///The maximum length of a ds9 command
+
+/// The maximum length of a ds9 command
 /** 
   * \ingroup image_processing
   * \ingroup plotting
@@ -54,10 +73,10 @@ protected:
    int _port;
    
    ///An array of shared memory segments, one per frame
-   sharedmem_segment * segs;
+   std::vector<ipc::sharedMemSegment> segs;
    
    ///The number of segments in \ref segs
-   size_t nsegs;
+   //size_t nsegs;
    
 public:
    
@@ -232,9 +251,6 @@ int ds9Interface::init()
    
    _port = 0;
 
-   nsegs = 0;
-   segs = 0;
-
    return 0;
 }
 
@@ -278,7 +294,7 @@ int ds9Interface::spawn()
    snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaaccess %s", _title.c_str());
    
    resp[0] = 0;
-   if( command_response(cmd, resp, 128) ) return -1;
+   if( ipc::command_response(cmd, resp, 128) ) return -1;
    
    //Don't respawn if it already exists.
    if(strcmp(resp, "yes\n") == 0) return 0;
@@ -305,7 +321,7 @@ int ds9Interface::spawn()
    for(i=0;i<10000;i++)
    {
       resp[0] = 0;
-      if( command_response(cmd, resp, 128) ) return -1;
+      if( ipc::command_response(cmd, resp, 128) ) return -1;
       if(strcmp(resp, "yes\n") == 0) return 0;
       usleep(100);
    }
@@ -319,32 +335,18 @@ int ds9Interface::addsegment( int frame )
    int i;
    size_t curr_n;
    
-   if(frame-1 < nsegs) return 0;
+   if(frame-1 < segs.size()) return 0;
    
-   curr_n = nsegs;
+   curr_n = segs.size();
    
-   nsegs = frame;
+   segs.resize(frame);
    
-   sharedmem_segment * tmpsegs;
-   tmpsegs = (sharedmem_segment *) realloc( segs, sizeof(sharedmem_segment) * nsegs);
-   
-   if(tmpsegs == NULL)
+   for(i = curr_n; i< segs.size(); i++)
    {
-      if(segs) free(segs);
-      segs = 0;
+      segs[i].initialize();
+      segs[i].setKey(0, IPC_PRIVATE);
       
-      fprintf(stderr, "unable to allocate memory for segment\n");
-      return -1;
-   }
-   else
-   {
-      segs = tmpsegs;
-   }
       
-   for(i = curr_n; i< nsegs; i++)
-   {
-      sharedmem_segment_initialize( &segs[i] );
-      sharedmem_segment_set_key( &segs[i], 0, IPC_PRIVATE);
    }
    
    return 0;
@@ -397,7 +399,7 @@ int ds9Interface::display( const dataT * im,
    pixsz = sizeof(dataT);
       
    //If needed add a shared memory segment for this frame
-   if(frame-1 >= nsegs)
+   if(frame-1 >= segs.size())
    {
       addsegment( frame );
    }
@@ -413,9 +415,9 @@ int ds9Interface::display( const dataT * im,
    {
       if( segs[frame-1].size > 0 )
       {
-         sharedmem_segment_detach( &segs[frame-1]);
+         segs[frame-1].detach();
       }
-      sharedmem_segment_create( &segs[frame-1], tot_size);
+      segs[frame-1].create(tot_size);
    }
    
    memcpy( segs[frame-1].addr, im, tot_size );
@@ -478,11 +480,9 @@ int ds9Interface::shutdown()
 {
    size_t i;
    
-   for(i=0; i < nsegs; i++) sharedmem_segment_detach( &segs[i] );
+   for(i=0; i < segs.size(); i++) segs[i].detach();
    
-   free( segs );
-   
-   nsegs = 0;
+   segs.clear();
    
    return 0;
 }
@@ -491,5 +491,5 @@ int ds9Interface::shutdown()
 } //namespace improc 
 } //namespace mx
 
-#endif //__ds9Interface_hpp__
+#endif //improc_ds9Interface_hpp
 

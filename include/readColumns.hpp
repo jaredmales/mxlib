@@ -4,6 +4,25 @@
   * \ingroup ioutils
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef __readColumns_hpp__
 #define __readColumns_hpp__
 
@@ -49,21 +68,22 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
       array.push_back(convertFromString<typename arrT::value_type>(""));
       return;
    }
-   if(nargs >= 0) 
-   {
-      std::stringstream sinstr(sin);
+   
+   //if(nargs >= 0) 
+   //{
+   std::stringstream sinstr(sin);
       
-      std::getline(sinstr, str, delim);
+   std::getline(sinstr, str, delim);
 
-      //Last entry in line might contain eol
-      if( str[str.size()-1] == eol) 
-      {
-         str.erase(str.size()-1);
-      }
+   //Last entry in line might contain eol
+   if( str[str.size()-1] == eol) 
+   {
+      str.erase(str.size()-1);
+   }
       
   //    std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
-      array.push_back(convertFromString<typename arrT::value_type>(str));
-   }
+   array.push_back(convertFromString<typename arrT::value_type>(str));
+   //}
       
    sin += ( str.size()+1)*sizeof(char);
    sz -= ( str.size()+1)*sizeof(char);
