@@ -145,7 +145,9 @@ struct appConfigurator
    ///Parse a config/ini file, updating the targets
    /** \todo handle += here, by appending to the last value as if a vector.
      */
-   int readConfig(const std::string & fname /**< [in] the config file name */);
+   int readConfig( const std::string & fname, /**< [in] the config file name */
+                   bool reportFileNotFound = true ///< [in] [optiona] control whether a file not found is reported.
+                 );
       
    /// Check if a target has been set by the configuration
    /**
@@ -313,13 +315,7 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(it->second.shortOpt == "" && it->second.longOpt == "") continue; //No command line opts specified.
       
-      //if(oneTarget != "" && it->second.name != oneTarget) continue;
-      
-      //std::cerr << "adding: " << it->second.shortOpt << " " << oneTarget << " " << it->second.name << "\n";
-      
       clOpts.add(it->second.name,it->second.shortOpt.c_str(),it->second.longOpt.c_str(), it->second.clType);
-      
-      //if(oneTarget != "" && it->second.name == oneTarget) break;
    }
    
    //Then load the command-line-only options.
@@ -328,11 +324,7 @@ void appConfigurator::parseCommandLine( int argc,
    {
       if(cloit->shortOpt == "" && cloit->longOpt == "") continue; //Nothing to add?
       
-      //if(oneTarget != "" && cloit->name != oneTarget) continue;
-      
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
-      
-      //if(oneTarget != "" && cloit->name == oneTarget) break;
    }
 
    //If we get here and nothing to do, get out
@@ -363,7 +355,9 @@ void appConfigurator::parseCommandLine( int argc,
    
 }   
 
-int appConfigurator::readConfig(const std::string & fname)
+int appConfigurator::readConfig( const std::string & fname,
+                                 bool reportFileNotFound
+                               )
 {
    //Handle empty string quietly
    if(fname == "") return 0;
@@ -372,6 +366,8 @@ int appConfigurator::readConfig(const std::string & fname)
    
    if( iF.parse(fname) < 0)
    {
+      if(!reportFileNotFound) return -1;
+      
       std::string errs = "The file ";
       errs += fname;
       errs += " was not found.";

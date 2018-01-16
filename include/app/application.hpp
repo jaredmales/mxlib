@@ -358,7 +358,6 @@ inline
 void application::loadStandardConfig() //virtual
 {
    config(configPathCL, "config");
-   std::cerr << "configPathCL: " << configPathCL << "\n";
 }
 
 inline
