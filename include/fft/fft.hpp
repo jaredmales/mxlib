@@ -46,6 +46,9 @@ std::vector<int> fftwDimVec( int szX, int szY, int szZ);
 
 /// Fast Fourier Transforms using the FFTW library
 /**
+  * Calls the FFTW plan functions are protected by '#pragma omp critical' directives
+  * unless MX_FFTW_NOOMP is define prior to the first inclusion of this file.
+  * 
   * \todo document fftT 
   * \todo add execute interface with fftw like signature
   * \todo add plan interface where user passes in pointers (to avoid allocations)
@@ -163,11 +166,15 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
-      //#pragma omp critical
+#ifndef MX_FFTW_NOOMP
+      #pragma omp critical
       {
+#endif
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ), forplan1, forplan2,  pdir, FFTW_MEASURE);
+#ifndef MX_FFTW_NOOMP
       }
-      
+#endif
+
       fftw_free<inputT>(forplan1);
       fftw_free<outputT>(forplan2);
       
@@ -187,11 +194,15 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
 
-      //#pragma omp critical
-      {      
+#ifndef MX_FFTW_NOOMP
+      #pragma omp critical
+      {
+#endif
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ),  reinterpret_cast<inputT*>(forplan), reinterpret_cast<outputT*>(forplan),  pdir, FFTW_MEASURE);
+#ifndef MX_FFTW_NOOMP
       }
-      
+#endif
+
       fftw_free<inputT>(forplan);
    }
    

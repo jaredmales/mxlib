@@ -380,7 +380,7 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 template<typename realT>
 int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
                        std::vector<realT> & vec, ///< [in] the input vector, unaltered.
-                       int win ///< [in] the full-width of the smoothing window
+                       int win                   ///< [in] the full-width of the smoothing window
                      )
 {
    smVec = vec;
@@ -403,6 +403,46 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
       
       smVec[i] = sum/n;
       
+   }
+   
+   return 0;
+}
+
+
+/// Re-bin a vector by summing (or averaging) in bins of size n points.
+/**
+  * \returns 0 on success
+  * \returns -1 on error
+  * 
+  * \tparam vectorT is any vector-like type with resize(), size(), and the operator()[].
+  */ 
+template<typename vectorT>
+int vectorRebin( vectorT & binv,           ///< [out] the re-binned vector.  will be resized.
+                 vectorT & v,              ///< [in] the vector to bin.
+                 unsigned n,               ///< [in] the size of the bins, in points
+                 bool binMean = false      ///< [in] [optional] flag controlling whether sums (false) or means (true) are calculated.
+               )
+{
+   if( n==0 ) return -1;
+   
+   binv.resize( v.size()/n );
+   
+   for(int i=0; i< binv.size(); ++i)
+   {
+      binv[i] = 0;
+      
+      int j;
+      for(j=0; j < n; ++j)
+      {
+         if(i*n + j >= v.size()) break;
+         
+         binv[i] += v[ i*n + j];         
+      }
+      
+      if(binMean) 
+      {
+         if(j > 0) binv[i] /= j;
+      }
    }
    
    return 0;

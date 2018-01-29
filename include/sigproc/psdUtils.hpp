@@ -375,7 +375,6 @@ void averagePeriodogram( std::vector<realT> & pgram,  ///< [out] the resultant p
 
    for(int i=0;i<Navg;++i)
    {
-      
       realT v;
       
       for(int j=0;j<Nper;++j) 
@@ -402,7 +401,6 @@ void averagePeriodogram( std::vector<realT> & pgram,  ///< [out] the resultant p
    }
    
    for(int j=0;j<pgram.size();++j) pgram[j] *= varNorm / (Nper*Navg);
-   
 }
 
 ///Augment a 1-sided PSD to standard 2-sided FFT form.
