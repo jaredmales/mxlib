@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -156,7 +156,9 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int filter( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */);
+   int filter( realArrayT & noise,            ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+               realArrayT * noiseIm = nullptr ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+             );
    
    ///Apply the filter.
    /**
@@ -165,6 +167,14 @@ public:
      */ 
    int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ );
    
+   ///Apply the filter.
+   /**
+     * \returns 0 on success
+     * \returns -1 on error
+     */ 
+   int operator()( realArrayT & noise,  ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+                   realArrayT & noiseIm ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+                 ); 
 };
 
 template<typename realT>
@@ -293,7 +303,7 @@ void psdFilter<realT>::clear()
 }
    
 template<typename realT>
-int psdFilter<realT>::filter( realArrayT & noise )
+int psdFilter<realT>::filter( realArrayT & noise, realArrayT * noiseIm )
 {
    //Make noise a complex number
    for(int ii=0;ii<noise.rows();++ii)
@@ -315,6 +325,11 @@ int psdFilter<realT>::filter( realArrayT & noise )
    //Now take the real part, and normalize.
    noise = _ftWork.real()/(noise.rows()*noise.cols());
    
+   if(noiseIm != nullptr)
+   {
+      *noiseIm = _ftWork.imag()/(noise.rows()*noise.cols());
+   }
+   
    return 0;
 }
 
@@ -322,6 +337,14 @@ template<typename realT>
 int psdFilter<realT>::operator()( realArrayT & noise )
 {
    return filter(noise);
+}
+
+template<typename realT>
+int psdFilter<realT>::operator()( realArrayT & noise,
+                                  realArrayT & noiseIm
+                                )
+{
+   return filter(noise, &noiseIm);
 }
 
 } //namespace sigproc 
