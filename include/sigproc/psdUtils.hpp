@@ -256,6 +256,47 @@ void oneoverf_psd( eigenArrp  & psd,
       }
    }   
 }
+/// Generate a 1-D von Karman power spectrum
+/** 
+  * Populates an Eigen array  with
+  *
+  * \f[
+  *  P(f) = \frac{\beta}{ (f^2 + (1/T_0)^2)^{\alpha/2}} e^{ - f^2 t_0^2}
+  * \f]
+  * 
+  * If you set \f$ T_0 \le 0 \f$ and \f$ t_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e. 
+  * it treats this as infinite outer scale and inner scale).  
+  *
+  * \tparam floatT a floating point 
+  */
+template<typename floatT> 
+int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be resized.
+                  std::vector<floatT> & f,   ///< [in] the frequency vector
+                  floatT beta,               ///< [in] the scaling constant
+                  floatT T0,                 ///< [in] the outer scale 
+                  floatT t0,                 ///< [in] the inner scale
+                  floatT alpha               ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
+                )
+{   
+   
+   
+   floatT T02;
+   if(T0 > 0) T02 = 1.0/(T0*T0);
+   else T02 = 0;
+   
+   floatT sqrt_alpha = 0.5*alpha;
+   
+   psd.resize(f.size());
+   
+   for(int i=0; i< f.size(); ++i)
+   {
+      floatT p = beta / pow( pow(f[i],2) + T02, sqrt_alpha);
+      if(t0 > 0 ) p *= exp(-1*pow( f[i]*t0, 2)); 
+      psd[i] = p;
+   }   
+   
+   return 0;
+}
 
 /// Generates a von Karman power spectrum
 /** 

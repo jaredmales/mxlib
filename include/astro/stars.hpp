@@ -72,11 +72,11 @@ realT numSpType( std::string spType /**< [in] The spectral type string to parse.
          num = 90;
          break;
       default:
-         return -1;
+         return -1000;
    }
    
-   if(spType.size() < 2) return -1;
-   if(!isdigit(spType[1])) return -1;
+   if(spType.size() < 2) return -1000;
+   if(!isdigit(spType[1])) return -1000;
    
    int i=1;
    while( i < spType.size() && ( isdigit(spType[i]) || spType[i] == '.')) ++i;
@@ -88,7 +88,7 @@ realT numSpType( std::string spType /**< [in] The spectral type string to parse.
    if(spType.size() == i) return num;
    if(spType[i] == 'V') return num;
    
-   return -1;
+   return -1*num;
 }
 
 /// Provide various characteristics of main sequence stars according to their spectral type.
@@ -114,35 +114,35 @@ struct mainSequence
    std::vector<double> J_Hs; ///< The J-H colors from the sequence
    std::vector<double> H_Kss; ///< The H-Ks colors from the sequence
    
-   gslInterpolator interpT; ///< The interpolator for effective Temperature
+   gslInterpolator<double> interpT; ///< The interpolator for effective Temperature
    double minT; ///< The minimum numeric spectral type for effective Temperature
    double maxT; ///< The maximum numeric spectral type for effective Temperature
    
-   gslInterpolator interpL; ///< The interpolator for log luminosity
+   gslInterpolator<double> interpL; ///< The interpolator for log luminosity
    double minL; ///< The minimum numeric spectral type for log luminosity
    double maxL; ///< The maximum numeric spectral type for log luminosity
    
-   gslInterpolator interpMv; ///< The interpolator for absolute V magnitude
+   gslInterpolator<double> interpMv; ///< The interpolator for absolute V magnitude
    double minMv; ///< The minimum numeric spectral type for absolute V magnitude
    double maxMv; ///< The maximum numeric spectral type for absolute V magnitude
    
-   gslInterpolator interpVRc; ///< The interpolator for V-Rc color
+   gslInterpolator<double> interpVRc; ///< The interpolator for V-Rc color
    double minVRc; ///< The minimum numeric spectral type for V-Rc color
    double maxVRc; ///< The maximum numeric spectral type for V-Rc color
    
-   gslInterpolator interpVIc; ///< The interpolator for V-Ic color
+   gslInterpolator<double> interpVIc; ///< The interpolator for V-Ic color
    double minVIc; ///< The minimum numeric spectral type for V-Ic color
    double maxVIc; ///< The maximum numeric spectral type for V-Ic color
    
-   gslInterpolator interpVKs; ///< The interpolator for V-Ks color
+   gslInterpolator<double> interpVKs; ///< The interpolator for V-Ks color
    double minVKs; ///< The minimum numeric spectral type for V-Ks color
    double maxVKs; ///< The maximum numeric spectral type for V-Ks color
    
-   gslInterpolator interpJH; ///< The interpolator for J-H color
+   gslInterpolator<double> interpJH; ///< The interpolator for J-H color
    double minJH; ///< The minimum numeric spectral type for J-H color
    double maxJH; ///< The maximum numeric spectral type for J-H color
    
-   gslInterpolator interpHKs; ///< The interpolator for H-Ks color
+   gslInterpolator<double> interpHKs; ///< The interpolator for H-Ks color
    double minHKs; ///< The minimum numeric spectral type for H-Ks color
    double maxHKs; ///< The maximum numeric spectral type for H-Ks color
    

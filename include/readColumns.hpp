@@ -34,6 +34,8 @@
 #include "stringUtils.hpp"
 #include "mxError.hpp"
 
+#define MX_READCOL_MISSINGVALSTR "-99"
+
 namespace mx
 {
    
@@ -82,7 +84,14 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
    }
       
   //    std::cerr << str << " " << convertFromString<typename arrT::value_type>(str) << "\n";
-   array.push_back(convertFromString<typename arrT::value_type>(str));
+   if( str.size() == 0 )
+   {
+      array.push_back(convertFromString<typename arrT::value_type>(MX_READCOL_MISSINGVALSTR));
+   }
+   else
+   {
+      array.push_back(convertFromString<typename arrT::value_type>(str));
+   }
    //}
       
    sin += ( str.size()+1)*sizeof(char);

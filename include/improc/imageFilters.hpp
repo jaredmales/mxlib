@@ -363,7 +363,7 @@ void radprofim( radprofT & radprof,
    
    /* And finally, interpolate onto the radius image */
    radprof.resize(dim1, dim2);
-   gslInterpolator interp(gsl_interp_linear, med_r, med_v);
+   gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
    
    for(int i=0;i<dim1;++i)
    {
@@ -488,7 +488,7 @@ void stddevImage( eigenimT & stdIm,
       
    /* And finally, interpolate onto the radius image */
    stdIm.resize(dim1, dim2);
-   mx::gslInterpolator interp(gsl_interp_linear, std_r, std_v);
+   mx::gslInterpolator<double> interp(gsl_interp_linear, std_r, std_v);
    
    for(int i=0;i<dim1;++i)
    {
