@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -447,6 +447,51 @@ int vectorRebin( vectorT & binv,           ///< [out] the re-binned vector.  wil
    
    return 0;
 }
+
+/// Convolve (smooth) a vector with a Gaussian.
+/** 
+  * \returns 0 on success.
+  * \returns -1 on error.
+  * 
+  * \tparam realT is the real floating point type of the data.
+  */ 
+template<typename realT>
+int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoothed data vector.  Resized.
+                         const std::vector<realT> & dataIn, ///< [in] The data vector to smooth.
+                         const std::vector<realT> & scale,  ///< [in] The scale vector used to calculate the kernel.
+                         const realT fwhm,                  ///< [in] The FWHM of the Gaussian kernel, same units as scale.
+                         const int winhw                    ///< [in] The window half-width in pixels.
+                       )
+{
+
+   if(dataIn.size() != scale.size()) return -1;
+   
+   dataOut.resize(dataIn.size());
+   
+   realT sigma = fwhm2sigma(fwhm);
+   
+   for(int i=0; i< dataIn.size(); ++i)
+   {
+      realT G;
+      realT sum = 0;
+      realT norm = 0;
+      for(int j=i-winhw; j<i+winhw; ++j)
+      {
+         if(j < 0) continue;
+         if(j > dataIn.size()-1) continue;
+         
+         G = func::gaussian<realT>( scale[j], 0.0, 1.0, scale[i], sigma);
+         
+         sum += G*dataIn[j];
+         norm += G;
+      }
+      
+      dataOut[i] = sum/norm;
+   }
+   
+   return 0;
+}
+
 
 ///@}
 
