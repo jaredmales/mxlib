@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <numeric>
 
+#include "func/gaussian.hpp"
+
 namespace mx
 {
 namespace math 
@@ -408,6 +410,35 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
    return 0;
 }
 
+///Smooth a vector using the max in a window specified by its full-width
+template<typename realT>
+int vectorSmoothMax( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                     std::vector<realT> & vec, ///< [in] the input vector, unaltered.
+                     int win                   ///< [in] the full-width of the smoothing window
+                   )
+{
+   smVec = vec;
+   
+   realT sum;
+   int n;
+   for(int i=0; i < vec.size(); ++i)
+   {
+      int j = i - 0.5*win;
+      if(j < 0) j = 0;
+      
+      n = 0;
+      
+      smVec[i] = vec[j];
+      ++j;
+      while( j <= i+0.5*win && j < vec.size())
+      {
+         if(vec[j] > smVec[i]) smVec[i] = vec[j];
+         ++j;
+      }
+   }
+   
+   return 0;
+}
 
 /// Re-bin a vector by summing (or averaging) in bins of size n points.
 /**
