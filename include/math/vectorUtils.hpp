@@ -419,14 +419,10 @@ int vectorSmoothMax( std::vector<realT> &smVec, ///< [out] the smoothed version 
 {
    smVec = vec;
    
-   realT sum;
-   int n;
    for(int i=0; i < vec.size(); ++i)
    {
       int j = i - 0.5*win;
       if(j < 0) j = 0;
-      
-      n = 0;
       
       smVec[i] = vec[j];
       ++j;
