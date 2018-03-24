@@ -521,21 +521,21 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
       if(i >= freq.size()) break;
    }
    
-   //Now fill in from fmax to the actual max frequency with a -17/3 power law.
+   //Now fill in from fmax to the actual max frequency with a -(alpha+2) power law.
    int j=i;
    
    //First average result for last 50.
-   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], seventeen_thirds<realT>());
+   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], _aosys->psd.alpha()+2);//seventeen_thirds<realT>());
    for(int k=49; k> 0; --k)
    {
-      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], seventeen_thirds<realT>());
+      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], _aosys->psd.alpha()+2); //seventeen_thirds<realT>());
    }
    PSD[j] /= 50.0;
    ++j;
    ++i;
    while(j < freq.size()) 
    {
-      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], seventeen_thirds<realT>());
+      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], _aosys->psd.alpha()+2); //seventeen_thirds<realT>());
       ++j;
    }
    
@@ -1050,8 +1050,6 @@ realT F_basic (realT kv, void * params)
    realT f = Fp->_f;
    realT v_wind = Fp->_aosys->atm.layer_v_wind(Fp->_layer_i); 
    
-   //realT r_0 = Fp->_aosys->atm.r_0(); 
-   //realT L_0 = Fp->_aosys->atm.L_0(); 
    realT D = Fp->_aosys->D(); 
    realT m = Fp->_m;
    realT n = Fp->_n; 
@@ -1122,10 +1120,7 @@ realT F_projMod (realT kv, void * params)
    //For rotating the basis
    realT cq = cos(q_wind);
    realT sq = sin(q_wind);
-
    
-   //realT r_0 = Fp->_aosys->atm.r_0(); 
-   //realT L_0 = Fp->_aosys->atm.L_0(); 
    realT D = Fp->_aosys->D(); 
    
    int mode_i = Fp->_mode_i;
