@@ -519,6 +519,64 @@ int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoot
    return 0;
 }
 
+/// Calculate a cumulative histogram of a vector.
+/** Sorts the vector and sums.
+  *
+  * \retval 0 on success, -1 otherwise.
+  *
+  * \tparam floatT the floating point type of the vector contens.
+  */ 
+template<typename floatT>
+int vectorCumHist( std::vector<floatT> & svec, ///< [out] Contains the sorted vector.
+             std::vector<floatT> & sum,  ///< [out] Contains the cumulative or running sum of the sorted vector
+             std::vector<floatT> & vec   ///< [in]  The vector to sort and sum.
+           )
+{
+   svec = vec;
+   
+   std::sort(svec.begin(), svec.end());
+   
+   sum.resize(svec.size());
+   
+   sum[0] = svec[0];
+   
+   for(int i=1; i< svec.size(); ++i)
+   {
+      sum[i] = sum[i-1] + svec[i];
+   }
+   
+   return 0;
+}
+
+/// Calculate a reverse cumulative histogram of a vector.
+/** Reverse-sorts the vector and sums.
+  *
+  * \retval 0 on success, -1 otherwise.
+  *
+  * \tparam floatT the floating point type of the vector contens.
+  */ 
+template<typename floatT>
+int vectorCumHistReverse( std::vector<floatT> & svec, ///< [out] Contains the reverse-sorted vector.
+                    std::vector<floatT> & sum,  ///< [out] Contains the cumulative or running sum of the reverse-sorted vector
+                    std::vector<floatT> & vec   ///< [in]  The vector to reverse-sort and sum.
+                  )
+{
+   svec = vec;
+   
+   std::sort(svec.begin(), svec.end(), std::greater<floatT>());
+   
+   sum.resize(svec.size());
+   
+   sum[0] = svec[0];
+   
+   for(int i=1; i< svec.size(); ++i)
+   {
+      sum[i] = sum[i-1] + svec[i];
+      
+   }
+   
+   return 0;
+}
 
 ///@}
 

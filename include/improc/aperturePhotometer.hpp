@@ -62,6 +62,9 @@ protected:
    ///Maps a pixel in the image to the position in the radius vector.
    eigenImage<size_t> m_indexIm;
 
+   bool m_useNanMask {false};
+   eigenImage<realT> * m_nanMask {nullptr};
+   
 public:
    
    ///Resize the photometer, recalculating the radius vector and index image.
