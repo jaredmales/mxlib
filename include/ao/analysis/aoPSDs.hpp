@@ -55,109 +55,111 @@ struct vonKarmanSpectrum
 {
    
 protected:
-   bool _subPiston;///< flag controlling whether piston is subtracted from the PSD.  Default is true.
-   bool _subTipTilt; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
+   bool m_subPiston;///< flag controlling whether piston is subtracted from the PSD.  Default is true.
+   bool m_subTipTilt; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
    
-   bool _scintillation; ///< flag controlling whether or not scintillation is included
-   int _component; ///< If _scintillation is true, this controls whether phase (0), amplitude (1), or dispersive contrast (2) is returned.
+   bool m_scintillation; ///< flag controlling whether or not scintillation is included
+   int m_component; ///< If m_scintillation is true, this controls whether phase (0), amplitude (1), or dispersive contrast (2) is returned.
    
-   realT _D; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
+   realT m_D; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
 
-   const char * _id = "von Karman";
+   const char * m_id = "von Karman";
+   
+   realT m_alpha {eleven_thirds<realT>()}; ///< The power-law index, 11/3 for Kolmogorov
    
 public:   
    
    ///Default Constructor
    vonKarmanSpectrum()
    {
-      _subPiston = true;
-      _subTipTilt = false;
+      m_subPiston = true;
+      m_subTipTilt = false;
 
-      _scintillation = false;
-      _component = PSDComponent::phase;
+      m_scintillation = false;
+      m_component = PSDComponent::phase;
             
-      _D = 0;
+      m_D = 0;
    }
    
    ///Constructor specifying the parameters
    /**
      */ 
-   vonKarmanSpectrum( bool subP, ///< [in] is the value of _subPiston.
-                      bool subT, ///< [in] is the value of _subTipTilt.
-                      realT D ///< [in] is the value of _D.
+   vonKarmanSpectrum( bool subP, ///< [in] is the value of m_subPiston.
+                      bool subT, ///< [in] is the value of m_subTipTilt.
+                      realT D ///< [in] is the value of m_D.
                     )
    {
-      _subPiston = subP;
-      _subTipTilt = subT;
-      _D = D;
+      m_subPiston = subP;
+      m_subTipTilt = subT;
+      m_D = D;
    }
    
-   ///Get the value of _subPiston
+   ///Get the value of m_subPiston
    /**
-     * \returns _subPiston
+     * \returns m_subPiston
      */ 
    bool subPiston()
    {
-      return _subPiston;
+      return m_subPiston;
    }
    
-   ///Set the value of _subPiston
+   ///Set the value of m_subPiston
    /**
      */ 
-   void subPiston( bool sp /**< [in] is the new value of _subPiston */)
+   void subPiston( bool sp /**< [in] is the new value of m_subPiston */)
    {
-      _subPiston = sp;
+      m_subPiston = sp;
    }
    
-   ///Get the value of _subTipTilt
+   ///Get the value of m_subTipTilt
    /**
-     * \returns the value of _subTipTilt.
+     * \returns the value of m_subTipTilt.
      */ 
    bool subTipTilt()
    {
-      return _subTipTilt;
+      return m_subTipTilt;
    }
    
-   ///Set the value of the _subTipTilt flag.
+   ///Set the value of the m_subTipTilt flag.
    /**
-     * \param st is the new value of _subTipTilt.
+     * \param st is the new value of m_subTipTilt.
      */ 
    void subTipTilt(bool st)
    {
-      _subTipTilt = st;
+      m_subTipTilt = st;
    }
    
-   ///Get the value of _scintillation
+   ///Get the value of m_scintillation
    /**
-     * \returns _scintillation
+     * \returns m_scintillation
      */ 
    bool scintillation()
    {
-      return _scintillation;
+      return m_scintillation;
    }
    
-   ///Set the value of _scintillation
+   ///Set the value of m_scintillation
    /**
-     * \param sc is the new value of _scintillation
+     * \param sc is the new value of m_scintillation
      */ 
    void scintillation(bool sc)
    {
-      _scintillation = sc;
+      m_scintillation = sc;
    }
    
-   ///Get the value of _component
+   ///Get the value of m_component
    /**
-     * \returns _component
+     * \returns m_component
      */ 
    int component()
    {
-      return _component;
+      return m_component;
    }
    
-   ///Set the value of _component
+   ///Set the value of m_component
    /**
      */ 
-   int component( int cc /**< [in] the new value of _component */)
+   int component( int cc /**< [in] the new value of m_component */)
    {
       if( cc != PSDComponent::phase && cc != PSDComponent::amplitude && cc != PSDComponent::dispPhase && cc != PSDComponent::dispAmplitude )
       {
@@ -165,39 +167,54 @@ public:
          return -1;
       }
       
-      _component = cc;
+      m_component = cc;
       return 0;         
    }
 
-   ///Get the value of the diameter _D.
+   ///Get the value of the diameter m_D.
    /**
-     * \returns _D, the diameter in m.
+     * \returns m_D, the diameter in m.
      */ 
    realT D()
    {
-      return _D;
+      return m_D;
    }
    
    ///Set the aperture diameter
    /**
-     * \pararm nd is the new diameter in m. 
      */
-   void D(realT nd)
+   void D(realT nd /**< [in] the new diameter in m */)
    {
-      _D = nd;
+      m_D = nd;
+   }
+   
+   ///Get the value of the PSD index alpha.
+   /**
+     * \returns the current value of m_alpha, the PSD index.
+     */
+   realT alpha()
+   {
+      return m_alpha;
+   }
+   
+   ///Set the PSD index alpha
+   /**
+     */
+   void alpha(realT na /**< [in] the new PSD index*/ )
+   {
+      m_alpha = na;
    }
    
    ///Get the value of the PSD at spatial frequency k and a zenith distance.
    /**
-     *   
      * \returns the von Karman PSD at the specified spatial frequency.
      * \returns -1 if an error occurs.
      * 
      */ 
    realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
-                     realT k, ///< [in] is the spatial frequency in m^-1.
-                     int n, //place holder 
-                     realT sec_zeta ///< [in] is the secant of the zenith distance.
+                     realT k,                   ///< [in] is the spatial frequency in m^-1.
+                     int n,                     //place holder 
+                     realT sec_zeta             ///< [in] is the secant of the zenith distance.
                    )
    {
       realT k02;
@@ -215,23 +232,23 @@ public:
       
       realT Ppiston, Ptiptilt;
    
-      if( (_subPiston || _subTipTilt) )
+      if( (m_subPiston || m_subTipTilt) )
       {
-         if (_D == 0)
+         if (m_D == 0)
          {
             mxError("aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction.");
             return -1;
          }
          
-         if(_subPiston)
+         if(m_subPiston)
          {
-            Ppiston = pow(2*math::func::jinc(pi<realT>()*k*_D), 2);
+            Ppiston = pow(2*math::func::jinc(pi<realT>()*k*m_D), 2);
          }
          else Ppiston = 0;
  
-         if(_subTipTilt)
+         if(m_subTipTilt)
          {
-            Ptiptilt = pow(4*math::func::jinc2(pi<realT>()*k*_D), 2);
+            Ptiptilt = pow(4*math::func::jinc2(pi<realT>()*k*m_D), 2);
          }
          else Ptiptilt = 0;
       }
@@ -241,7 +258,7 @@ public:
          Ptiptilt = 0;
       }
       
-      return constants::a_PSD<realT>()*pow(atm.r_0(), -five_thirds<realT>())*pow(k*k+k02, -eleven_sixths<realT>()) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
+      return constants::a_PSD<realT>()*pow(atm.r_0(), -five_thirds<realT>())*pow(k*k+k02, -1*m_alpha/2) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
    }
    
    /// Get the value of the PSD at spatial frequency k and wavelength lambda, and a zenith distance, with a WFS at a different wavelength
@@ -251,32 +268,31 @@ public:
      * \returns -1 if an error occurs.
      */    
    realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
-                      realT k,                   ///< [in] is the spatial frequency in m^-1.
-                      realT lambda,              ///< [in] is the observation wavelength in m
-                     int n, //place holder
-                      realT lambda_wfs,      ///< [in] is the wavefront measurement wavelength in m
-                      realT secZeta             ///< [in] is the secant of the zenith distance
-                    )
+                     realT k,                   ///< [in] is the spatial frequency in m^-1.
+                     realT lambda,              ///< [in] is the observation wavelength in m
+                     realT lambda_wfs,         ///< [in] is the wavefront measurement wavelength in m
+                     realT secZeta             ///< [in] is the secant of the zenith distance
+                   )
    {
       realT psd = operator()(atm, k, 0, secZeta)* pow( atm.lam_0()/lambda, 2);
       
       if(psd < 0) return -1;
       
-      if(_scintillation)
+      if(m_scintillation)
       {
-         if(_component == PSDComponent::phase)
+         if(m_component == PSDComponent::phase)
          {
             psd *= atm.X(k, lambda, secZeta);
          }
-         else if (_component == PSDComponent::amplitude)
+         else if (m_component == PSDComponent::amplitude)
          {
             psd *= atm.Y(k, lambda, secZeta);
          }
-         else if (_component == PSDComponent::dispPhase)
+         else if (m_component == PSDComponent::dispPhase)
          {
             psd *= atm.X_Z(k, lambda, lambda_wfs, secZeta);
          }
-         else if (_component == PSDComponent::dispAmplitude)
+         else if (m_component == PSDComponent::dispAmplitude)
          {
             mxError("vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented");
             return 0;
@@ -306,21 +322,20 @@ public:
       }
       else k0 = 0;
 
-      realT lamc = 1.0;//pow( atm.lam_0()/(2*pi<realT>()),2);
-      
-      return (pi<realT>() * six_fifths<realT>())* a_PSD<realT>()/ pow(atm.r_0(), five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<realT>()))*lamc;
+      return (pi<realT>() * six_fifths<realT>())* a_PSD<realT>()/ pow(atm.r_0(), five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<realT>()));
    }
 
    template<typename iosT>
    iosT & dumpPSD(iosT & ios)
    {
       ios << "# PSD Parameters:" << '\n';
-      ios << "#    ID = " << _id << '\n';
-      ios << "#    D = " << _D  << '\n';
-      ios << "#    subPiston = " << std::boolalpha << _subPiston << '\n';
-      ios << "#    subTipTilt = " << std::boolalpha << _subTipTilt  << '\n';
-      ios << "#    Scintillation = " << std::boolalpha << _scintillation << '\n';
-      ios << "#    Component = " << PSDComponent::compName(_component) << '\n';
+      ios << "#    ID = " << m_id << '\n';
+      ios << "#    alpha = " << m_alpha << '\n';
+      ios << "#    D = " << m_D  << '\n';
+      ios << "#    subPiston = " << std::boolalpha << m_subPiston << '\n';
+      ios << "#    subTipTilt = " << std::boolalpha << m_subTipTilt  << '\n';
+      ios << "#    Scintillation = " << std::boolalpha << m_scintillation << '\n';
+      ios << "#    Component = " << PSDComponent::compName(m_component) << '\n';
       return ios;
    }
 

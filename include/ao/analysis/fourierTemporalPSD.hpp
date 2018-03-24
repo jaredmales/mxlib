@@ -1084,12 +1084,9 @@ realT F_mod (realT kv, void * params)
    realT f = Fp->_f;
    realT v_wind = Fp->_aosys->atm.layer_v_wind(Fp->_layer_i); 
    
-   //realT r_0 = Fp->_aosys->atm.r_0(); 
-   //realT L_0 = Fp->_aosys->atm.L_0(); 
    realT D = Fp->_aosys->D(); 
    realT m = Fp->_m;
    realT n = Fp->_n; 
-  // int p = Fp->_p;
 
    realT ku = f/v_wind;
    
@@ -1102,7 +1099,7 @@ realT F_mod (realT kv, void * params)
    
    realT QQ = 2*(Jp*Jp + Jm*Jm);
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), 0, Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
    
    return P*QQ ;
 }
@@ -1202,7 +1199,7 @@ realT F_projMod (realT kv, void * params)
    //realT QQ = 2*(Jp*Jp + Jm*Jm);
    
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), 0, Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
    
    return P*QQ ;
 }
