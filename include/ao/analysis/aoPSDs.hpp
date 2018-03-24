@@ -173,7 +173,7 @@ public:
 
    ///Get the value of the diameter m_D.
    /**
-     * \returns m_D, the diameter in m.
+     * \returns the current value of m_D, the diameter in m.
      */ 
    realT D()
    {
@@ -213,7 +213,6 @@ public:
      */ 
    realT operator()( aoAtmosphere<realT> & atm, ///< [in] gives the atmosphere parameters r_0 and L_0.
                      realT k,                   ///< [in] is the spatial frequency in m^-1.
-                     int n,                     //place holder 
                      realT sec_zeta             ///< [in] is the secant of the zenith distance.
                    )
    {
@@ -239,7 +238,6 @@ public:
             mxError("aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction.");
             return -1;
          }
-         
          if(m_subPiston)
          {
             Ppiston = pow(2*math::func::jinc(pi<realT>()*k*m_D), 2);
@@ -274,7 +272,7 @@ public:
                      realT secZeta             ///< [in] is the secant of the zenith distance
                    )
    {
-      realT psd = operator()(atm, k, 0, secZeta)* pow( atm.lam_0()/lambda, 2);
+      realT psd = operator()(atm, k, secZeta)* pow( atm.lam_0()/lambda, 2);
       
       if(psd < 0) return -1;
       

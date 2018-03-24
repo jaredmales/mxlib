@@ -1068,7 +1068,7 @@ realT F_basic (realT kv, void * params)
    
    realT Q = (Q1 + p*Q2);
    
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), 0, Fp->_aosys->lam_wfs());
+   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->_aosys->lam_wfs());
    
    return P*Q*Q ;
 }
