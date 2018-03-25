@@ -46,7 +46,7 @@ void calcConstants(floatT & a_sf, floatT & a_psd)
 ///The scaling constant for the Kolmorogov optical phase structure function 
 /** The optical phase structure function for Kolmogorov turbulence is
   * \f[
-  * \mathcal{D}_\phi(r) = a_SF \left(\frac{r}{r_0}\right)^{5/3}
+  * \mathcal{D}_\phi(r) = a_{SF} \left(\frac{r}{r_0}\right)^{5/3}
   * \f]
   * 
   * This constant, given to 50 digits, was caculated using calcConstants with boost::multiprecision::cpp_dec_float_100 (100 digits of precision)
@@ -65,7 +65,7 @@ floatT a_SF()
 ///The scaling constant for the Kolmorogov optical phase power spectral density 
 /** The optical phase PSD for Kolmogorov turbulence is
   * \f[
-  * \mathcal{P}_\phi(k) = a_PSD \left(\frac{1}{r_0^{5/3} k^{11/3}}\right)
+  * \mathcal{P}_\phi(k) = a_{PSD} \left(\frac{1}{r_0^{5/3} k^{11/3}}\right)
   * \f]
   * 
   * This constant, given to 50 digits, was caculated using calcConstants with boost::multiprecision::cpp_dec_float_100 (100 digits of precision)
