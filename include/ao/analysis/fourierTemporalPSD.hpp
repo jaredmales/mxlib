@@ -525,17 +525,17 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    int j=i;
    
    //First average result for last 50.
-   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], _aosys->psd.alpha()+2);//seventeen_thirds<realT>());
+   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], _aosys->atm.alpha()+2);//seventeen_thirds<realT>());
    for(int k=49; k> 0; --k)
    {
-      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], _aosys->psd.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], _aosys->atm.alpha()+2); //seventeen_thirds<realT>());
    }
    PSD[j] /= 50.0;
    ++j;
    ++i;
    while(j < freq.size()) 
    {
-      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], _aosys->psd.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], _aosys->atm.alpha()+2); //seventeen_thirds<realT>());
       ++j;
    }
    

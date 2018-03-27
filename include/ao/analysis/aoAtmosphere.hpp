@@ -104,6 +104,28 @@ public:
              const realT & l0 ///< [in] is the new value of _lam_0, if 0 then 0.5 microns is the default.
            ); 
    
+   ///Return the PSD index for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * \[
+       \alpha = \frac{11}{3}
+       \]
+     *
+     * \returns the PSD index.
+     */
+   realT alpha();
+   
+   ///Return the PSD normalization constant for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * \[
+       \alpha = \frac{0.0218}{r_0^{5/3}}
+       \]
+     *
+     * \returns the PSD normalization constant.
+     */
+   realT beta();
+   
    ///Get the current value of the reference wavelength.
    /** This is the wavelength at which r_0 is specified.
      *
@@ -442,7 +464,18 @@ void aoAtmosphere<realT>::r_0(const realT & r0, const realT  & l0)
    }
 }
 
+template<typename realT>
+realT aoAtmosphere<realT>::alpha()
+{
+   return eleven_thirds<realT>();
+}
 
+template<typename realT>
+realT aoAtmosphere<realT>::beta()
+{
+   return constants::a_PSD<realT>()*pow(_r_0, -five_thirds<realT>());
+}
+   
 template<typename realT>
 realT aoAtmosphere<realT>::lam_0()
 {
