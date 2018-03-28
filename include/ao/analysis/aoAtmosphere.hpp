@@ -80,6 +80,12 @@ protected:
    realT _z_mean; ///< \f$ C_n^2 \f$ averaged layer height
    
     
+   bool m_nonKolmogorov {false};
+   
+   realT m_alpha{2};
+   
+   realT m_beta{1};
+   
 public:
    
    ///Get the value of Fried's parameter r_0 at the reference wavelength lam_0.
@@ -103,28 +109,6 @@ public:
    void r_0( const realT & r0, ///< [in] is the new value of _r_0  
              const realT & l0 ///< [in] is the new value of _lam_0, if 0 then 0.5 microns is the default.
            ); 
-   
-   ///Return the PSD index for Kolmogorov turbulence.
-   /** Satifies the requirements of psdParamsT.
-     *
-     * \[
-       \alpha = \frac{11}{3}
-       \]
-     *
-     * \returns the PSD index.
-     */
-   realT alpha();
-   
-   ///Return the PSD normalization constant for Kolmogorov turbulence.
-   /** Satifies the requirements of psdParamsT.
-     *
-     * \[
-       \alpha = \frac{0.0218}{r_0^{5/3}}
-       \]
-     *
-     * \returns the PSD normalization constant.
-     */
-   realT beta();
    
    ///Get the current value of the reference wavelength.
    /** This is the wavelength at which r_0 is specified.
@@ -324,6 +308,43 @@ public:
      */
    void z_mean(const realT & zm /**< [in] is the new value of _v_wind. */);
    
+   ///Return the PSD index for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * If m_nonKolmogorov is false, this returns
+     * \[
+       \alpha = \frac{11}{3}
+       \]
+     * Otherwise it returns the current value of m_alpha.
+     *
+     * \returns the PSD index.
+     */
+   realT alpha();
+   
+   ///Set the PSD index alpha.
+   /** Setting alpha with this function also sets m_nonKolmogorov to true.
+     */
+   void alpha( realT a /**< [in] the new value of alpha */);
+   
+   ///Return the PSD normalization constant for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * I m_nonKolmogorov is false, this returns
+     * \[
+       \beta = \frac{0.0218}{r_0^{5/3}}
+       \]
+     *
+     * Otherwise it returns the current value of m_beta.
+     *
+     * \returns the PSD normalization constant.
+     */
+   realT beta();
+   
+   ///Set the PSD normalization alpha.
+   /** Setting beta with this function also sets m_nonKolmogorov to true.
+     */
+   void beta( realT b /**< [in] the new beta */);
+   
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (14) of Guyon (2005) \cite guyon_2005. 
      *
@@ -464,18 +485,6 @@ void aoAtmosphere<realT>::r_0(const realT & r0, const realT  & l0)
    }
 }
 
-template<typename realT>
-realT aoAtmosphere<realT>::alpha()
-{
-   return eleven_thirds<realT>();
-}
-
-template<typename realT>
-realT aoAtmosphere<realT>::beta()
-{
-   return constants::a_PSD<realT>()*pow(_r_0, -five_thirds<realT>());
-}
-   
 template<typename realT>
 realT aoAtmosphere<realT>::lam_0()
 {
@@ -734,6 +743,48 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
          _layer_z[i] = _layer_z[i]*(zm/zh_old);
       }
    }
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::alpha()
+{
+   if(!m_nonKolmogorov)
+   {
+      return eleven_thirds<realT>();
+   }
+   else
+   {
+      return m_alpha;
+   }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::alpha(realT a)
+{
+   m_nonKolmogorov = true;
+   
+   m_alpha = a;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::beta()
+{
+   if(!m_nonKolmogorov)
+   {
+      return constants::a_PSD<realT>()*pow(_r_0, -five_thirds<realT>());
+   }
+   else
+   {
+      return m_beta;
+   }
+}
+   
+template<typename realT>
+void aoAtmosphere<realT>::beta(realT b)
+{
+   m_nonKolmogorov = true;
+   
+   m_beta = b;
 }
 
 template<typename realT>

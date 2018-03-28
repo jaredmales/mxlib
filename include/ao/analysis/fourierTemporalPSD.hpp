@@ -440,8 +440,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
    realT v_wind = _aosys->atm.layer_v_wind(layer_i);
    realT q_wind = _aosys->atm.layer_dir(layer_i);
-   realT r_0 = _aosys->atm.r_0();
-   realT D = _aosys->D();
+   
 
    //Rotate the basis
    realT cq = cos(q_wind);
