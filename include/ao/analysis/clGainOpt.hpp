@@ -673,7 +673,7 @@ realT clGainOpt<realT>::clETF2(int fi, realT g)
 template<typename realT>   
 realT clGainOpt<realT>::clNTF2(int fi, realT g)
 {
-   if(_f[f] <= 0) return 0;
+   if(_f[fi] <= 0) return 0;
    
    complexT H_dm, H_del, H_con;
    

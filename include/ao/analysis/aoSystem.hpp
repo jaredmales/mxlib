@@ -1300,7 +1300,7 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    
    //std::cout << m << " " << n << " " << tau << "\n";
          
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1331,7 +1331,7 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m,
 {
    realT k = sqrt(m*m+n*n)/_D;
       
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1494,7 +1494,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k, 0, _secZeta)/pow(_D,2)*atm.X(k, _lam_sci, _secZeta)*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  _secZeta)/pow(_D,2)*atm.X(k, _lam_sci, _secZeta)*pow(2*pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(_lam_wfs*beta_p/F,2);
    
    a = Atmp;
