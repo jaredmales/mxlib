@@ -41,6 +41,26 @@ namespace sigproc
   * @{
   */
 
+///Calculate the variance of a PSD using trapezoid rule integration.
+/**
+  * \returns the variance of a PSD (the integral).
+  * 
+  * \tparam realT the real floating point type
+  */
+template<typename realT>
+realT psdVar( std::vector<realT> freq, ///< [in] the frequency scale of the PSD
+              std::vector<realT> PSD   ///< [in] the PSD to integrate.
+            )
+{
+   realT var = 0;
+   var = 0.5*PSD[0];
+   for(int i=1; i<freq.size()-1;++i) var += PSD[i];
+   var += 0.5*PSD[freq.size()-1];
+   var *= (freq[1]-freq[0]);
+   
+   return var;
+}
+
 /// Calculates the frequency sampling for a grid given maximum dimension and maximum frequency.
 /** The freq_sampling is
   * @f$ \Delta f = f_{max}/ (0.5*dim) @f$
@@ -555,6 +575,126 @@ void augment1SidedPSDFreq( std::vector<T> & freqTwoSided, ///< [out] on return c
 
 }
 
+///Rebin a PSD, including its frequency scale, to a larger frequency bin size (fewer bins)
+/** The rebinning uses trapezoid integration within bins to ensure minimum signal loss.
+  * 
+  * Maintains DFT sampling.  That is, if initial frequency grid is 0,0.1,0.2...
+  * and the binSize is 1.0, the new grid will be 0,1,2 (as opposed to 0.5, 1.5, 2.5).
+  *
+  * This introduces a question of what to do with first half-bin, which includes 0.  It can be
+  * integrated (binAtZero = true, the default).  This may cause inaccurate behavior if the value of the PSD when
+  * f=0 is important (e.g. when analyzing correlated noise), so setting binAtZero=false causes the f=0 value to be
+  * copied (using the nearest neighbor if no f=0 point is in the input.
+  * 
+  * The last half bin is always integrated.
+  * 
+  * The output is variance normalized to match the input variance.
+  *
+  * \tparam realT  the real floating point type
+  */ 
+template<typename realT>
+int rebin1SidedPSD( std::vector<realT> & binFreq, ///< [out] the binned frequency scale, resized.
+                    std::vector<realT> & binPSD,  ///< [out] the binned PSD, resized.
+                    std::vector<realT> & freq,    ///< [in] the frequency scale of the PSD to bin.
+                    std::vector<realT> & PSD,     ///< [in] the PSD to bin.
+                    realT binSize,                ///< [in] in same units as freq
+                    bool binAtZero = true         ///< [in] [optional] controls whether the zero point is binned for copied.
+                  )
+{
+   binFreq.clear();
+   binPSD.clear();
+   
+   realT sumPSD = 0;
+   realT startFreq = 0;
+   realT sumFreq = 0;
+   int nSum = 0;
+      
+   int i= 0;
+   
+   realT df = freq[1]-freq[0];
+   
+   
+   //Now move to first bin   
+   while(freq[i] <= 0.5*binSize + 0.5*df)
+   {
+      sumPSD += PSD[i];
+      ++nSum;
+      ++i;
+      if(i >= freq.size()) break;
+   }
+
+   if( !binAtZero )
+   {
+      binFreq.push_back(0);
+      binPSD.push_back(PSD[0]);
+   }
+   else
+   {
+      binFreq.push_back(0);
+      binPSD.push_back(sumPSD/nSum);
+   }
+   
+   
+   --i;
+   startFreq = freq[i];
+   nSum = 0;
+   sumFreq = 0;
+   sumPSD = 0;
+   
+   while(i < freq.size())
+   {
+      realT sc = 0.5; //First one is multiplied by 1/2 for trapezoid rule.
+      while( freq[i] - startFreq + 0.5*df < binSize )
+      {
+         sumFreq += freq[i];
+         sumPSD += sc*PSD[i];
+         sc = 1.0; 
+         ++nSum;
+      
+         ++i;
+         if(i >= freq.size()-1) break; //break 1 element early so last point is mult by 0.5
+      }
+      
+      if(i < freq.size())
+      {
+         sumFreq += freq[i];
+         sumPSD += 0.5*PSD[i]; //last one is multiplied by 1/2 for trapezoid rule
+         ++nSum;
+         ++i;
+      }
+
+      //Check if this is last point
+      if(i < freq.size())
+      {
+         binFreq.push_back(sumFreq/nSum);
+      }
+      else
+      {
+         //last point frequencyis not averaged.
+         binFreq.push_back( freq[freq.size()-1]);
+      }
+      
+      binPSD.push_back(sumPSD/(nSum-1));
+      
+      sumFreq = 0;
+      sumPSD = 0;
+      nSum = 0;
+      if(i >= freq.size()) break;
+      
+      --i; //Step back one, so averages are edge to edge.
+      
+      startFreq = freq[i];
+   }
+   
+   
+   //Now normalize variance
+   realT var = psdVar(freq,PSD); 
+   realT binv = psdVar(binFreq, binPSD);
+   
+   for(int i=0; i<binFreq.size();++i) binPSD[i] *= var/binv;
+
+   return 0;
+}
 ///@}
 
 } //namespace sigproc 
