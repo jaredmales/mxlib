@@ -211,6 +211,39 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
    return 1/integ;
 }
 
+/// Normalize a PSD to have a given variance
+/** A frequency range can be specified, otherwise f[0] to f[f.size()-1] is the range.
+  *
+  * \tparam floatT the floating point type of the PSD.
+  */
+template<typename floatT>
+int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will be altered.
+             std::vector<floatT> & f,   ///< [in] the frequency points for the PSD
+             floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
+             floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
+             floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.  
+           )
+{
+   floatT df = f[1] - f[0];
+   
+   if(fmax <= 0) fmax = f[f.size()-1];
+   
+   floatT s =0;
+   
+   for(int i = 0; i < psd.size(); ++i) 
+   {
+      if(f[i] < fmin || f[i] > fmax) continue;
+      
+      s += psd[i];
+   }
+   
+   s *= df;
+   
+   for(int i = 0; i < psd.size(); ++i) psd[i] *= norm/s;
+   
+   return 0;
+}
+
 /// Generates a @f$ 1/|f|^\alpha @f$ power spectrum
 /** 
   * Populates an Eigen array  with
