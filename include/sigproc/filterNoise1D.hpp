@@ -196,6 +196,8 @@ realT filterNoise1D<realT>::measureScaleFactor( realT expectVar,
                                                 int nTrials
                                               )
 {
+   m_scaleFactor = 1;
+   
    realArrayT cnoise;
    
    realT dv = 0;
@@ -204,11 +206,11 @@ realT filterNoise1D<realT>::measureScaleFactor( realT expectVar,
    {
       genNoise(cnoise);
    
-      dv += sqrt(cnoise.square().sum()/cnoise.rows());
-      ++n;
+      dv += cnoise.square().sum();//cnoise.rows();
+      n += cnoise.rows();
    }
    
-   m_scaleFactor = expectVar / (dv/n);
+   m_scaleFactor = sqrt(expectVar / (dv/n));
    return m_scaleFactor;
 }
 

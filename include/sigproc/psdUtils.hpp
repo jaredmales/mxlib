@@ -50,8 +50,8 @@ namespace sigproc
   * \tparam realT the real floating point type
   */
 template<typename realT>
-realT psdVar( std::vector<realT> freq, ///< [in] the frequency scale of the PSD
-              std::vector<realT> PSD   ///< [in] the PSD to integrate.
+realT psdVar( std::vector<realT> & freq, ///< [in] the frequency scale of the PSD
+              std::vector<realT> & PSD   ///< [in] the PSD to integrate.
             )
 {
    realT var = 0;
@@ -59,6 +59,24 @@ realT psdVar( std::vector<realT> freq, ///< [in] the frequency scale of the PSD
    for(int i=1; i<freq.size()-1;++i) var += PSD[i];
    var += 0.5*PSD[freq.size()-1];
    var *= (freq[1]-freq[0]);
+   
+   return var;
+}
+
+template<typename eigenArrT>
+typename eigenArrT::Scalar psdVar( eigenArrT & freq, ///< [in] the frequency scale of the PSD
+              eigenArrT & PSD,   ///< [in] the PSD to integrate.
+              bool trap=true
+            )
+{
+   typename eigenArrT::Scalar half = 0.5;
+   if(!trap) half = 1.0;
+   
+   typename eigenArrT::Scalar var = 0;
+   var = half*PSD(0,0);
+   for(int i=1; i<freq.rows()-1;++i) var += PSD(i,0);
+   var += half*PSD(freq.rows()-1,0);
+   var *= (freq(1,0)-freq(0,0));
    
    return var;
 }
@@ -246,13 +264,16 @@ int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will
    return 0;
 }
 
+
+
+
 template<typename floatT>
-int normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
-             Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f,
-             floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
-             floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
-             floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.  
-           )
+floatT normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
+                Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f,
+                floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
+                floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
+                floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.  
+              )
 {
    floatT df1, df2;
    
@@ -285,6 +306,7 @@ int normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [i
          psd(r,c) *= norm/s;
       }
    }
+   
    return 0;
 }
 
