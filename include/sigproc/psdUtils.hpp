@@ -29,6 +29,8 @@
 #ifndef psdUtils_hpp
 #define psdUtils_hpp
 
+#include <Eigen/Dense>
+
 #include "../fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
 
@@ -241,6 +243,48 @@ int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will
    
    for(int i = 0; i < psd.size(); ++i) psd[i] *= norm/s;
    
+   return 0;
+}
+
+template<typename floatT>
+int normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
+             Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f,
+             floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
+             floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
+             floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.  
+           )
+{
+   floatT df1, df2;
+   
+   if(f.rows() > 1) df1 = f(1,0) - f(0,0);
+   else df1 = 1;
+   
+   if(f.cols() > 1) df2 = f(0,1) - f(0,0);
+   else df2 = 1;
+   
+   if(fmax <= 0) fmax = f.abs().maxCoeff();
+   
+   floatT s =0;
+   
+   for(int r = 0; r < psd.rows(); ++r) 
+   {
+      for(int c = 0; c < psd.cols(); ++c)
+      {
+         if(fabs(f(r,c)) < fmin || fabs(f(r,c)) > fmax) continue;
+      
+         s += psd(r,c);
+      }
+   }
+   
+   s *= df1*df2;
+   
+   for(int r = 0; r < psd.rows(); ++r) 
+   {
+      for(int c = 0; c < psd.cols(); ++c)
+      {
+         psd(r,c) *= norm/s;
+      }
+   }
    return 0;
 }
 

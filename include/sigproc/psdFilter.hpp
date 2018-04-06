@@ -45,11 +45,11 @@ namespace sigproc
   * array of size N which contains the PSD as "power per unit frequency" vs frequency (i.e. the PSD) on some frequency scale with uniform spacing \f$ \Delta f \f$,
   * the normalization is
   \f[
-  PSD_{norm} = PSD * N * \Delta f 
+       PSD_{norm} = PSD * N * \Delta f 
   \f]
   * for a 1-dimensional PSD and  
   \f[
-  PSD_{norm} = PSD * N_0 * \Delta f_0 * N_1 * \Delta f_1 
+       PSD_{norm} = PSD * N_0 * \Delta f_0 * N_1 * \Delta f_1 
   \f]
   * for a 2-dimensional PSD. Remember that these are applied before taking the square root.
   *
