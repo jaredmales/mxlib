@@ -43,39 +43,61 @@ namespace sigproc
   * @{
   */
 
-///Calculate the variance of a PSD using trapezoid rule integration.
-/**
+///Calculate the variance of a PSD 
+/** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  * 
   * \returns the variance of a PSD (the integral).
   * 
   * \tparam realT the real floating point type
   */
 template<typename realT>
 realT psdVar( std::vector<realT> & freq, ///< [in] the frequency scale of the PSD
-              std::vector<realT> & PSD   ///< [in] the PSD to integrate.
+              std::vector<realT> & PSD,  ///< [in] the PSD to integrate.
+              bool trap=true             ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
             )
 {
+   realT half = 0.5;
+   if(!trap) half = 1.0;
+   
    realT var = 0;
-   var = 0.5*PSD[0];
+   
+   var = half*PSD[0];
+   
    for(int i=1; i<freq.size()-1;++i) var += PSD[i];
-   var += 0.5*PSD[freq.size()-1];
+   
+   var += half*PSD[freq.size()-1];
+   
    var *= (freq[1]-freq[0]);
    
    return var;
 }
 
+///Calculate the variance of a PSD 
+/** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  * 
+  * \overload
+  * 
+  * \returns the variance of a PSD (the integral).
+  * 
+  * \tparam realT the real floating point type
+  */
 template<typename eigenArrT>
 typename eigenArrT::Scalar psdVar( eigenArrT & freq, ///< [in] the frequency scale of the PSD
-              eigenArrT & PSD,   ///< [in] the PSD to integrate.
-              bool trap=true
-            )
+                                   eigenArrT & PSD,  ///< [in] the PSD to integrate.
+                                   bool trap=true    ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+                                 )
 {
    typename eigenArrT::Scalar half = 0.5;
    if(!trap) half = 1.0;
    
    typename eigenArrT::Scalar var = 0;
+   
    var = half*PSD(0,0);
+   
    for(int i=1; i<freq.rows()-1;++i) var += PSD(i,0);
+   
    var += half*PSD(freq.rows()-1,0);
+   
    var *= (freq(1,0)-freq(0,0));
    
    return var;
