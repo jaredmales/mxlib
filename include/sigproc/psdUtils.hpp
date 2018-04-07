@@ -51,9 +51,9 @@ namespace sigproc
   * \tparam realT the real floating point type
   */
 template<typename realT>
-realT psdVar( std::vector<realT> & freq, ///< [in] the frequency scale of the PSD
-              std::vector<realT> & PSD,  ///< [in] the PSD to integrate.
-              bool trap=true             ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
+              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
+              bool trap=true            ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
             )
 {
    realT half = 0.5;
@@ -63,11 +63,11 @@ realT psdVar( std::vector<realT> & freq, ///< [in] the frequency scale of the PS
    
    var = half*PSD[0];
    
-   for(int i=1; i<freq.size()-1;++i) var += PSD[i];
+   for(int i=1; i<PSD.size()-1;++i) var += PSD[i];
    
-   var += half*PSD[freq.size()-1];
+   var += half*PSD[PSD.size()-1];
    
-   var *= (freq[1]-freq[0]);
+   var *= df;
    
    return var;
 }
@@ -809,8 +809,8 @@ int rebin1SidedPSD( std::vector<realT> & binFreq, ///< [out] the binned frequenc
    
    
    //Now normalize variance
-   realT var = psdVar(freq,PSD); 
-   realT binv = psdVar(binFreq, binPSD);
+   realT var = psdVar(freq[1]-freq[0],PSD); 
+   realT binv = psdVar(binFreq[1]-binFreq[0], binPSD);
    
    for(int i=0; i<binFreq.size();++i) binPSD[i] *= var/binv;
 
