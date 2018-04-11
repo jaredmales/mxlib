@@ -101,8 +101,7 @@ std::string fftw_wisdom_filename()
 /** This class manages the FFTW environment.  On construction, wisdom is imported from the 
   * mxlib standard location, and if threads are used threading is initialized and planners are made thread safe.
   *
-  * \note the fftw docs recommend against using fftw_make_planner_thread_safe, and says it won't work with omp, but
-  * I have not seen any issues using it.
+  * \note the fftw docs recommend against using fftw_make_planner_thread_safe.  It does seem to play poorly with omp.
   *
   * On destruction, wisdom is exported and the fftw_cleanup[_threads] function is called.
   *
@@ -126,10 +125,29 @@ std::string fftw_wisdom_filename()
   * 
   * \ingroup fft
   */  
-template< typename realT, bool threads=true>
+template< typename realT, bool threads=false>
 struct fftwEnvironment
 {
-   explicit fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+   explicit fftwEnvironment(unsigned nThreads = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+   {
+      fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+   }
+   
+   ~fftwEnvironment()
+   {
+      fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+
+      fftw_cleanup<realT>();
+   }
+};   
+
+
+
+//Partial specialization for no threads.
+template< typename realT>
+struct fftwEnvironment<realT, true>
+{
+   explicit fftwEnvironment(unsigned nThreads = 1)
    {
       fftw_make_planner_thread_safe<realT>();
       
@@ -147,23 +165,6 @@ struct fftwEnvironment
    }
 };
 
-
-//Partial specialization for no threads.
-template< typename realT>
-struct fftwEnvironment<realT, false>
-{
-   explicit fftwEnvironment(unsigned nThreads = 0 )
-   {
-      fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
-   }
-   
-   ~fftwEnvironment()
-   {
-      fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
-
-      fftw_cleanup<realT>();
-   }
-};   
    
 }//namespace mx
 

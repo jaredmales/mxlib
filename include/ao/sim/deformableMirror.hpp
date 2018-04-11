@@ -429,7 +429,7 @@ void makeMap( Eigen::Array<realT, -1, -1> & map,  Eigen::Array<realT, -1, -1> & 
       
       y = ( pos(1,j) - miny ) / dy;
       
-      map(x,y) = act(j,0);
+      map( (int) x, (int) y) = act(j,0);
    }
    
    

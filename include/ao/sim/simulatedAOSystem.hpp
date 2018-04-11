@@ -177,6 +177,14 @@ public:
    int _commandDelay;
    std::vector<int> _goodCommands;
    
+   improc::ds9Interface ds9i_coron;
+   int display_coron {0};
+   int display_coron_counter {0};
+   
+   improc::ds9Interface ds9i_coron_avg;
+   int display_coron_avg {0};
+   int display_coron_avg_counter {0};
+   
    /** @}
      */
    
@@ -255,6 +263,8 @@ simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::simulatedA
    
    _npix = 0;
    
+   ds9i_coron.title("Coronagraph");
+   ds9i_coron_avg.title("Coron_Avg");
 }
    
 template<typename _realT, typename _wfsT, typename _reconT, typename _filterT, typename _dmT, typename _turbSeqT>
@@ -630,10 +640,6 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    BREAD_CRUMB;
    if(_loopClosed) dm.applyShape(wf, _wfsLambda);
 
-   
-   
-   
-   
    BREAD_CRUMB;
    if(_loopClosed)
    {
@@ -666,11 +672,9 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
             }
             _ampOut << std::endl;
          }
-            
-         
+
          BREAD_CRUMB;
          
-  
          int nAmps = ( _frameCounter % _delayedCommands.size() );
                   
          _delayedCommands[nAmps].measurement = measuredAmps.measurement;
@@ -741,6 +745,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
 
    wfs._filter.filter(wf.phase);
    
+   BREAD_CRUMB;
+   
    if(_rmsFile != "")
    {
       if(! _rmsOut.is_open() )
@@ -751,6 +757,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
       _rmsOut << rms_ol << " " << rms_cl << std::endl;
    }
       
+   BREAD_CRUMB;
+   
    if(_psfFileBase != "" && _frameCounter > _saveFrameStart)
    {
       //if(_psfs.planes() == 0)
@@ -788,7 +796,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          }            
       }
 
-      
+      BREAD_CRUMB;
+
       if(_doCoron)
       {
          
@@ -796,11 +805,8 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          cwf.phase = wf.phase;
          cwf.amplitude = wf.amplitude;
          
-         //improc::ds9Interface ds9;
-         //ds9(cwf.phase,1);
-         //ds9(cwf.amplitude,2);
-         
          bool ideal = true;
+         
          if(_coronPhase.rows() > 0)
          {
             cwf.phase += _coronPhase;
@@ -823,39 +829,58 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
          if(_writeIndFrames) _corons.image(_currImage) = _realFocalCoron;
          
          _coronOut += _realFocalCoron;
+         
+         
       }
 
+      BREAD_CRUMB;
+      
       wf.getWavefront(_complexPupil, _wfSz);
-#if 0
-      imageT nm;
-      nm.resize(_complexPupil.rows(), _complexPupil.cols());
-      for(int i=0;i<nm.rows();++i)
-      {
-         for(int j=0; j<nm.cols();++j)
-         {
-            nm(i,j) = real(_complexPupil(i,j));
-         }
-      }
-      improc::ds9Interface ds9;
-      ds9(nm);
-#endif
 
-//       for(int ni=0; ni< _complexPupilCoron.rows(); ++ni)
-//       {
-//          for(int nj=0; nj< _complexPupilCoron.cols(); ++nj)
-//          {
-//             _complexPupilCoron(ni,nj) = _complexPupilCoron(ni,nj)*_coronMask(ni,nj);
-//          }
-//       }
-            
+      BREAD_CRUMB;
+      
       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
       wfp::extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
       if(_writeIndFrames) _psfs.image(_currImage) = _realFocal;
+      
       _psfOut += _realFocal;
       
-      #if 0
-      ds9_display((ds9off*3) + 4, _realFocal.data(), _realFocal.rows(),_realFocal.cols(),1, mx::getFitsBITPIX<realT>());
-      #endif
+      BREAD_CRUMB;
+      
+      if( _doCoron && display_coron > 0)
+      {
+         ++display_coron_counter;
+      
+         if(display_coron_counter >= display_coron)
+         {
+            realT mxpk = _realFocal.maxCoeff();
+            _realFocalCoron /= mxpk; 
+            
+            ds9i_coron(_realFocalCoron);
+            display_coron_counter = 0;
+         }
+      }
+
+      BREAD_CRUMB;
+
+      if( _doCoron && display_coron_avg > 0)
+      {
+         ++display_coron_avg_counter;
+      
+         if(display_coron_avg_counter >= display_coron_avg)
+         {
+            realT mxpk = _psfOut.maxCoeff();
+            _realFocal = _coronOut / mxpk; 
+            
+            ds9i_coron_avg(_realFocal);
+            display_coron_avg_counter = 0;
+            
+            _psfOut.setZero();
+            _coronOut.setZero();
+         }
+      }
+      BREAD_CRUMB;
+      
       
       ++_currImage;
 #if 1
@@ -923,15 +948,18 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::runTu
    {
       improc::fitsFile<realT> ff;
       std::string fn = _psfFileBase + "_psf.fits";
+      BREAD_CRUMB;
       ff.write(fn, _psfOut);
       
       if(_doCoron)
       {
+         BREAD_CRUMB;
          fn = _psfFileBase + "_coron.fits";
          ff.write(fn, _coronOut);
       }
    }
    
+   BREAD_CRUMB;
       
 }//void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::runTurbulence()
    
