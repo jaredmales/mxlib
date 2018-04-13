@@ -101,6 +101,7 @@ public:
    std::string _pupilName; ///< The pupil name for use in the mx::AO::path
    std::string _pupilMaskName; ///< The pupil mask name for use in the mx::AO::path
    
+   bool m_sfImagePlane {false};
    
    wfsT wfs;
    reconT recon;
@@ -743,7 +744,10 @@ void simulatedAOSystem<_realT, _wfsT, _reconT, _filterT, _dmT, _turbSeqT>::nextW
    
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
 
-   wfs._filter.filter(wf.phase);
+   if(m_sfImagePlane)
+   {
+      wfs._filter.filter(wf.phase);
+   }
    
    BREAD_CRUMB;
    
