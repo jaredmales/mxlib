@@ -8,8 +8,8 @@
 #ifndef __zernikeBasis_hpp__
 #define __zernikeBasis_hpp__
 
-#include <mx/zernike.hpp>
-#include <mx/fitsFile.hpp>
+#include "../sigproc/zernike.hpp"
+#include "../improc/fitsFile.hpp"
 
 
 namespace mx
@@ -31,7 +31,7 @@ void makeZernikeBasis( const std::string & basisName,
                        int dim,
                        int N )
 {
-   mx::eigenCube<realT> rawModes;
+   improc::eigenCube<realT> rawModes;
 
    rawModes.resize(dim, dim, N);
    zernikeBasis( rawModes);
@@ -48,7 +48,7 @@ void makeZernikeBasis( const std::string & basisName,
    
    
    
-   mx::fitsFile<realT> ff;
+   improc::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::basis::modes(basisName, true);
       

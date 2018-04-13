@@ -14,6 +14,8 @@
 #include <mx/eigenUtils.hpp>
 #include <mx/improc/imageFilters.hpp>
 #include <mx/improc/imagePads.hpp>
+#include "../improc/eigenCube.hpp"
+
 #include <mx/sigproc/signalWindows.hpp>
 using namespace mx::improc;
 using namespace mx::sigproc;
@@ -41,11 +43,11 @@ void applyPupil2Basis( eigenCube<realT> & modes,
    
    
    std::string rawFName =  mx::AO::path::basis::modes(basisName);
-   ff.read(rawFName, modes);
+   ff.read(modes, rawFName);
    
    std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilName);
    Eigen::Array<realT, -1, -1> pupil;
-   ff.read(pupilFName, pupil);
+   ff.read(pupil, pupilFName);
    
    Eigen::Array<realT, -1, -1> im, pim, fim;
 
@@ -103,7 +105,6 @@ int orthogonalizeBasis( eigenCube<realT> & ortho,
       
       gramSchmidtSpectrum<1>(gsout, spect, modes.asVectors(), psum);
     
-      std::cout << "out : " << "\n";
       
       //ortho.asVectors() = gsout;
       
@@ -180,7 +181,7 @@ void orthogonalizeBasis( const std::string & orthoName,
    
    std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilName);
    Eigen::Array<realT, -1, -1> pupil;
-   ff.read(pupilFName, pupil);
+   ff.read(pupil, pupilFName);
    
    realT psum = pupil.sum();
    realT norm;

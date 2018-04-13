@@ -41,7 +41,7 @@ using namespace boost::math::constants;
 #include <boost/math/special_functions/factorials.hpp>
 
 
-#include "mxError.hpp"
+#include "../mxError.hpp"
 
 namespace mx
 {

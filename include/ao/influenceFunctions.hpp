@@ -9,9 +9,9 @@
 #define __influenceFunctions_hpp__
 
 
-#include <mx/eigenCube.hpp>
-#include <mx/gaussian.hpp>
-#include <mx/fitsFile.hpp>
+#include "../improc/eigenCube.hpp"
+#include "../math/func/gaussian.hpp"
+#include "../improc/fitsFile.hpp"
 
 #include <mx/eigenUtils.hpp>
 #include <mx/gnuPlot.hpp>
