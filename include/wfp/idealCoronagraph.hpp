@@ -72,6 +72,11 @@ struct idealCoronagraph
    
    imageT _realPupil;
    
+   complexFieldT m_focalPlane;
+   
+   ///Fraunhofer propagator
+   fraunhoferPropagator<complexFieldT> m_fi;
+   
    idealCoronagraph();
    
    ///Get the wavefront size in pixels
@@ -109,15 +114,22 @@ struct idealCoronagraph
      */ 
    int loadCoronagraph( const std::string & cName /**< The name of the coronagraph, without directory or file extensions */);
    
-   /// Propagate the given pupil-plane wavefront through the coronagraph
+   /// Propagate the given pupil-plane wavefront through the coronagraph to the exit pupil plane
    int propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
+   int propagate( imageT & fpIntensity,
+                  complexFieldT & pupilPlane /// [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
+                );
+   
    /// Propagate the given pupil-plane wavefront without the coronagraph. 
    /** For the ideal coronagraph nothing is done.  This method is included for compliance with
      * with the coronagraph interface.
      */ 
    int propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */);
    
+   int propagateNC( imageT & fpIntensity,
+                    complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */
+                  );
    
 };
 
@@ -137,6 +149,10 @@ template<typename _realT>
 void idealCoronagraph<_realT>::wfSz(int sz)
 {
    _wfSz = sz;   
+   
+   m_fi.setWavefrontSizePixels(sz);
+   m_focalPlane.resize(sz, sz);
+   
 }
 
 template<typename _realT>
@@ -202,13 +218,47 @@ int idealCoronagraph<_realT>::propagate( complexFieldT & pupilPlane )
    return 0;
 }
 
-template<typename _realT>
-int idealCoronagraph<_realT>::propagateNC( complexFieldT & pupilPlane )
+template<typename realT>
+int idealCoronagraph<realT>::propagate( imageT & fpIntensity,
+                                        complexFieldT & pupilPlane 
+                                      )
+{
+   //fpIntensity.resize(_wfSz, _wfSz);
+   
+   propagate(pupilPlane);
+   
+   m_fi.propagatePupilToFocal(m_focalPlane, pupilPlane);
+      
+   int x0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.rows()-1);
+   int y0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.cols()-1);
+   
+   extractIntensityImage(fpIntensity,0, fpIntensity.rows(),0,fpIntensity.cols(), m_focalPlane, x0,y0);
+   
+   return 0;
+}
+
+template<typename realT>
+int idealCoronagraph<realT>::propagateNC( complexFieldT & pupilPlane )
 {
    return 0;
 }
 
-
+template<typename realT>
+int idealCoronagraph<realT>::propagateNC( imageT & fpIntensity,
+                                          complexFieldT & pupilPlane )
+{
+   propagateNC(pupilPlane);
+   
+   m_fi.propagatePupilToFocal(m_focalPlane, pupilPlane);
+      
+   int x0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.rows()-1);
+   int y0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.cols()-1);
+   
+   extractIntensityImage(fpIntensity,0, fpIntensity.rows(),0,fpIntensity.cols(), m_focalPlane, x0,y0);
+   
+   return 0;
+   return 0;
+}
 
 
 } //namespace wfp 

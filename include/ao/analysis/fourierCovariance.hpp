@@ -124,7 +124,7 @@ realT phiInt_basic (realT phi, void * params)
    
    Q_mpnp = Np*(Ji_mpnp_p + pp*Ji_mpnp_m);
   
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 0, 1.0); //vonKarmanPSD(k, D, L0, Pp->subPiston, Pp->subTipTilt);
+   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 1.0); //vonKarmanPSD(k, D, L0, Pp->subPiston, Pp->subTipTilt);
    
    return P*k*(Q_mn*Q_mpnp);
 }
@@ -196,7 +196,7 @@ realT phiInt_mod (realT phi, void * params)
       QQ = 2.0*( Ji_mn_p*Ji_mpnp_m + Ji_mn_m*Ji_mpnp_p);
    }
   
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), 0, Pp->aosys->lam_wfs(), 1.0); 
+   realT P = Pp->aosys->psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0); 
    
    if(mnCon > 0 )
    {

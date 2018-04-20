@@ -322,7 +322,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::applyApodizer( complexFieldT &pupil
    {
       for(int j=0; j<pupilPlane.cols(); ++j)
       {
-         if(i >= xc-w && i <= xc+w && j >= yc-w && j <= yc+w) pupilPlane( i, j) *= pupilApodizer(i-(xc-w),j-(yc-w));
+         if(i >= xc-w && i <= xc+w && j >= yc-w && j <= yc+w) pupilPlane( i, j) *= pupilApodizer((int)(i-(xc-w)),(int)(j-(yc-w)));
          else pupilPlane(i,j) *= 0;
       }
    }
@@ -363,7 +363,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::applyLyotStop( complexFieldT & lyot
    {
       for(int j=0; j< lyotPlane.cols(); ++j)
       {
-         if(i >= xc-w && i <= xc+w && j >= yc-w && j <= yc+w) lyotPlane( i, j) *= lyotStop(i - (xc-w),j - (yc-w));
+         if(i >= xc-w && i <= xc+w && j >= yc-w && j <= yc+w) lyotPlane( i, j) *= lyotStop((int)(i - (xc-w)),(int)(j - (yc-w)));
          else lyotPlane(i,j) = 0;
       }
    }

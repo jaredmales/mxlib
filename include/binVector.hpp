@@ -26,6 +26,9 @@
 #ifndef binVector_hpp
 #define binVector_hpp
 
+
+#include <vector>
+
 #include "mxError.hpp"
 
 namespace mx
