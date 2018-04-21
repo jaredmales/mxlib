@@ -117,8 +117,10 @@ struct idealCoronagraph
    /// Propagate the given pupil-plane wavefront through the coronagraph to the exit pupil plane
    int propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
-   int propagate( imageT & fpIntensity,
-                  complexFieldT & pupilPlane /// [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
+   
+   /// Propagate the given pupil-plane wavefront through the coronagraph to the exit pupil plane, and then to the final focal plane.
+   int propagate( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
+                  complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
                 );
    
    /// Propagate the given pupil-plane wavefront without the coronagraph. 
@@ -127,8 +129,11 @@ struct idealCoronagraph
      */ 
    int propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */);
    
-   int propagateNC( imageT & fpIntensity,
-                    complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is un-modified. */
+   /// Propagate the given pupil-plane wavefront without the coronagraph to the exit pupil plane, and then to the final focal plane.
+   /** For the ideal coronagraph nothing is done to the input wavefront.  
+     */
+   int propagateNC( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
+                    complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is un-modified. 
                   );
    
 };
@@ -223,8 +228,6 @@ int idealCoronagraph<realT>::propagate( imageT & fpIntensity,
                                         complexFieldT & pupilPlane 
                                       )
 {
-   //fpIntensity.resize(_wfSz, _wfSz);
-   
    propagate(pupilPlane);
    
    m_fi.propagatePupilToFocal(m_focalPlane, pupilPlane);
@@ -256,7 +259,6 @@ int idealCoronagraph<realT>::propagateNC( imageT & fpIntensity,
    
    extractIntensityImage(fpIntensity,0, fpIntensity.rows(),0,fpIntensity.cols(), m_focalPlane, x0,y0);
    
-   return 0;
    return 0;
 }
 

@@ -138,6 +138,21 @@ public:
    std::ofstream _ampOut;
    
    
+   /** Wavefront Outputs
+     * @{
+     */
+   
+   bool m_writeWavefronts {true};
+   std::string m_wfFileBase {"simAOWF"};
+   mx::improc::eigenCube<realT> m_wfPhase;
+   mx::improc::eigenCube<realT> m_wfAmp;
+   
+   int m_nWFPerFile {500};
+   int m_currWF {0};
+   int m_currWFFile {0};
+   
+   ///@}
+   
    /** Image outputs
      * @{ 
      */
@@ -161,7 +176,8 @@ public:
    int _currFile;
    
    complexImageT _complexPupil;
-   complexImageT _complexFocal;
+   complexImageT _complexPupilCoron;
+   //complexImageT _complexFocal;
    imageT _realFocal;
 
    imageT _realPupil;
@@ -169,7 +185,7 @@ public:
    
    coronT m_coronagraph;
    
-   wfp::fraunhoferPropagator<complexImageT> _fi;
+   //wfp::fraunhoferPropagator<complexImageT> _fi;
          
    
    std::vector<typename filterT::commandT> _delayedCommands;
@@ -575,6 +591,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
 
    BREAD_CRUMB;
+   
   /* 
    if(_openLoopAmps)
    {
@@ -701,10 +718,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    wf.phase = (wf.phase-mn)*_pupil;
    
    //**** Calculate RMS phase ****//
-   realT rms_cl;
-   
-   //imageT uwphase = wf.phase;
-   //mn = wf.phase.sum()/_postMask.sum();
+   realT rms_cl;   
    rms_cl = sqrt( wf.phase.square().sum()/ _postMask.sum() );
    
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
@@ -728,6 +742,42 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       
    BREAD_CRUMB;
    
+   if( m_writeWavefronts )
+   {
+      if( m_wfPhase.rows() != wf.phase.rows() || m_wfPhase.cols() != wf.phase.cols() || m_wfPhase.planes() != m_nWFPerFile || 
+             m_wfAmp.rows() != wf.amplitude.rows() || m_wfAmp.cols() != wf.amplitude.cols() || m_wfAmp.planes() != m_nWFPerFile )
+      {
+         m_wfPhase.resize( wf.phase.rows(), wf.phase.cols(), m_nWFPerFile);
+         m_wfAmp.resize( wf.amplitude.rows(), wf.amplitude.cols(), m_nWFPerFile);
+         
+         m_currWF = 0;
+      }
+      
+      m_wfPhase.image(m_currWF) = wf.phase;
+      m_wfAmp.image(m_currWF) = wf.amplitude;
+      
+      ++m_currWF;
+      
+      if( m_currWF >= m_nWFPerFile )
+      {
+         std::cerr << "Write to WF file here . . . \n";
+         
+         mx::improc::fitsFile<realT> ff;
+         
+         std::string fn = m_wfFileBase + "_phase_" + mx::convertToString<int,5,'0'>(m_currWFFile) + ".fits";
+         ff.write(fn, m_wfPhase);
+         
+         fn = m_wfFileBase + "_amp_" + mx::convertToString<int,5,'0'>(m_currWFFile) + ".fits";
+         ff.write(fn, m_wfAmp);
+         
+         ++m_currWFFile;
+         m_currWF = 0;
+      }
+      
+   }
+   
+   BREAD_CRUMB;
+   
    if(_psfFileBase != "" && _frameCounter > _saveFrameStart)
    {
       if(_psfOut.rows() == 0 || (_psfs.planes() == 0 && _writeIndFrames))
@@ -738,8 +788,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
          _psfOut.resize(m_saveSz, m_saveSz);
          _psfOut.setZero();
          
-//          _complexPupil.resize( _wfSz, _wfSz);
-//          _complexFocal.resize( _wfSz, _wfSz);
          _realFocal.resize(m_saveSz, m_saveSz);
          
          if(_doCoron) 
@@ -749,39 +797,33 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
             _coronOut.setZero();
             
             _realFocalCoron.resize(m_saveSz, m_saveSz);
-                                    
          }            
       }
 
       BREAD_CRUMB;
 
+      //Propagate Coronagraph
       if(_doCoron)
       {
-         wf.getWavefront(_complexPupil, _wfSz);
-         
-         m_coronagraph.propagate(_realFocalCoron, _complexPupil);
-         
+         wf.getWavefront(_complexPupilCoron, _wfSz);
+   
+         m_coronagraph.propagate(_realFocalCoron, _complexPupilCoron);
+   
          if(_writeIndFrames) _corons.image(_currImage) = _realFocalCoron;
-         
+   
          _coronOut += _realFocalCoron;
-         
-         
       }
-
-      BREAD_CRUMB;
       
+      //Propagate PSF
       wf.getWavefront(_complexPupil, _wfSz);
 
-      BREAD_CRUMB;
-      
-      m_coronagraph.propagate(_realFocal, _complexPupil);
-//       _fi.propagatePupilToFocal(_complexFocal, _complexPupil);
-//       wfp::extractIntensityImage(_realFocal,0,_complexFocal.rows(),0,_complexFocal.cols(),_complexFocal,0,0);
-//       
-      
+      m_coronagraph.propagateNC(_realFocal, _complexPupil);
+
       if(_writeIndFrames) _psfs.image(_currImage) = _realFocal;
-      
+
       _psfOut += _realFocal;
+      
+      
       
       BREAD_CRUMB;
       

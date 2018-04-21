@@ -94,7 +94,7 @@ struct lyotCoronagraph
    imageT lyotStop;
 
    
-   complexFieldT focalPlane;
+   complexFieldT m_focalPlane;
 
    bool savePreMaskFocalPlane;
    complexFieldT preMaskFocalPlane;
@@ -170,13 +170,21 @@ struct lyotCoronagraph
    void applyLyotStop( complexFieldT &lyotPlane );
    
    ///Propagate the given pupil-plane wavefront through the coronagraph.
-   void propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   int propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
+   int propagate( imageT & fpIntensity,       ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
+                   complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph.
+                );
+   
    /// Propagate the given pupil-plane wavefront without the coronagraph. 
    /** For a Lyot coronagraph, this applies the pupil apodization and Lyot stop, but not the FPM, to the given pupil-plane wavefront such 
      * that the result will produce the non-coronagraphic (off-axis) PSF.
      */
-   void propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   int propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   
+   int propagateNC( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
+                    complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
+                  );
    
    ///Optimize the pupil amplitude apodization and focal-plane mask complex transmission.
    /** Uses the algorithm in Guyon (2014) \cite guyon_2014 for optimizing an Apodized-Pupil Lyot Complex Mask Coronagraph (APLCMC).
@@ -213,7 +221,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::wfSz(int sz)
    _wfSz = sz;
    
    fi.setWavefrontSizePixels(sz);
-   focalPlane.resize(sz, sz);
+   m_focalPlane.resize(sz, sz);
    
 }
 
@@ -371,20 +379,20 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::applyLyotStop( complexFieldT & lyot
 }
 
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::propagate( complexFieldT & pupilPlane )
+int lyotCoronagraph<_realT, _fpmaskFloatT>::propagate( complexFieldT & pupilPlane )
 {
    applyApodizer( pupilPlane);
    
-   fi.propagatePupilToFocal(focalPlane, pupilPlane); 
+   fi.propagatePupilToFocal(m_focalPlane, pupilPlane); 
    
    if(savePreMaskFocalPlane)
    {
-      preMaskFocalPlane = focalPlane;
+      preMaskFocalPlane = m_focalPlane;
    }
    
-   applyFocalMask( focalPlane);
+   applyFocalMask( m_focalPlane);
    
-   fi.propagateFocalToPupil(pupilPlane, focalPlane);
+   fi.propagateFocalToPupil(pupilPlane, m_focalPlane);
    
    if(savePreLyotPupilPlane)
    {
@@ -393,19 +401,54 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::propagate( complexFieldT & pupilPla
    
    applyLyotStop( pupilPlane);
    
+   return 0;
 }
 
 template<typename _realT, typename _fpmaskFloatT>
-void lyotCoronagraph<_realT, _fpmaskFloatT>::propagateNC( complexFieldT & pupilPlane )
+int lyotCoronagraph<_realT, _fpmaskFloatT>::propagate( imageT & fpIntensity,
+                                                       complexFieldT & pupilPlane 
+                                                     )
+{
+   propagate(pupilPlane);
+   
+   fi.propagatePupilToFocal(m_focalPlane, pupilPlane);
+      
+   int x0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.rows()-1);
+   int y0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.cols()-1);
+   
+   extractIntensityImage(fpIntensity,0, fpIntensity.rows(),0,fpIntensity.cols(), m_focalPlane, x0,y0);
+   
+   return 0;
+}
+template<typename _realT, typename _fpmaskFloatT>
+int lyotCoronagraph<_realT, _fpmaskFloatT>::propagateNC( complexFieldT & pupilPlane )
 {
    applyApodizer( pupilPlane);
    
-   fi.propagatePupilToFocal(focalPlane, pupilPlane); 
+   fi.propagatePupilToFocal(m_focalPlane, pupilPlane); 
       
-   fi.propagateFocalToPupil(pupilPlane, focalPlane);
+   fi.propagateFocalToPupil(pupilPlane, m_focalPlane);
    
    applyLyotStop( pupilPlane);
    
+   return 0;
+}
+
+template<typename _realT, typename _fpmaskFloatT>
+int lyotCoronagraph<_realT, _fpmaskFloatT>::propagateNC( imageT & fpIntensity,
+                                                         complexFieldT & pupilPlane 
+                                                       )
+{
+   propagateNC(pupilPlane);
+   
+   fi.propagatePupilToFocal(m_focalPlane, pupilPlane);
+      
+   int x0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.rows()-1);
+   int y0 = 0.5*(_wfSz-1) - 0.5*(fpIntensity.cols()-1);
+   
+   extractIntensityImage(fpIntensity,0, fpIntensity.rows(),0,fpIntensity.cols(), m_focalPlane, x0,y0);
+   
+   return 0;
 }
 
 
