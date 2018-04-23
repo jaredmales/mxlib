@@ -29,8 +29,10 @@
 
 #include <iostream>
 
-#include "../imagingArray.hpp"
+#include "fraunhoferPropagator.hpp"
 #include "imagingUtils.hpp"
+
+#include "../imagingArray.hpp"
 
 #include "../improc/fitsFile.hpp"
 #include "../improc/fitsUtils.hpp"
