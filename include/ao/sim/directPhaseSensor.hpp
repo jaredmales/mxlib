@@ -564,7 +564,7 @@ void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
    filterMask.block(nr - width, 0, width, width+1).setConstant(1.0);
    filterMask.block(nr - width, nc - width, width, width).setConstant(1.0);
    
-   realT v;
+   //realT v;
    
 
    _filter.psdSqrt(filterMask);

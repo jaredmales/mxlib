@@ -28,6 +28,7 @@ namespace AO
   */  
 template<typename realT>
 void makeZernikeBasis( const std::string & basisName,
+                       const std::string & pupilName,
                        int dim,
                        int N )
 {
@@ -36,19 +37,38 @@ void makeZernikeBasis( const std::string & basisName,
    rawModes.resize(dim, dim, N);
    zernikeBasis( rawModes);
 
-   realT p2v;
-   for(int i=0; i<N; ++i)
+   std::string pupilFName = mx::AO::path::pupil::pupilFile(pupilName);
+   Eigen::Array<realT, -1, -1> pupil;
+   
+   mx::improc::fitsFile<realT> ff;
+   ff.read(pupil, pupilFName);
+   
+   realT psum = pupil.sum();
+   realT norm;
+   
+   for(int i=0; i< rawModes.planes(); ++i)
    {
-      p2v = rawModes.image(i).maxCoeff() - rawModes.image(i).minCoeff();
-      rawModes.image(i) /= p2v;
+      rawModes.image(i) *= pupil;
+      
+      norm = rawModes.image(i).square().sum()/psum;
+      
+      rawModes.image(i)/= sqrt(norm);
    }
+ 
+ 
+ 
+//    realT p2v;
+//    for(int i=0; i<N; ++i)
+//    {
+//       p2v = rawModes.image(i).maxCoeff() - rawModes.image(i).minCoeff();
+//       rawModes.image(i) /= p2v;
+//    }
    
    
    
    
    
    
-   improc::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::basis::modes(basisName, true);
       
