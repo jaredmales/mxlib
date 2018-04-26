@@ -102,8 +102,6 @@ struct lyotCoronagraph
    bool savePreLyotPupilPlane;
    complexFieldT preLyotPupilPlane;
    
-   
-   
    ///Fraunhofer propagator
    fraunhoferPropagator<complexFieldT> fi;
 

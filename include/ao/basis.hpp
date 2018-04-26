@@ -39,8 +39,6 @@ void applyPupil2Basis( eigenCube<realT> & modes,
                        realT fwhm = 0  )
 {
    fitsFile<realT> ff;
-   //mx::eigenCube<realT> modes;
-   
    
    std::string rawFName =  mx::AO::path::basis::modes(basisName);
    ff.read(modes, rawFName);
@@ -61,12 +59,12 @@ void applyPupil2Basis( eigenCube<realT> & modes,
          im = modes.image(i);
          
          padImage(pim, im, pupil,3);
-         
-         
+                  
          filterImage(fim, pim, gaussKernel<Eigen::Array<realT, -1, -1>>(fwhm));
          
          modes.image(i) += fim* (pupil - 1).abs();
       }
+      
    }
 
    //std::string procFName = mx::AO::path::basis::pupilModes(basisName, pupilName, true);
@@ -105,9 +103,6 @@ int orthogonalizeBasis( eigenCube<realT> & ortho,
       
       gramSchmidtSpectrum<1>(gsout, spect, modes.asVectors(), psum);
     
-      
-      //ortho.asVectors() = gsout;
-      
    }
    else if (method == MXAO_ORTHO_METHOD_SVD)
    {
@@ -135,14 +130,6 @@ int orthogonalizeBasis( eigenCube<realT> & ortho,
       std::cerr << "Invalid orthogonalization method.\n";
       return -1;
    }
-   
-/*   
-   realT p2v;
-   for(int i=0; i<ortho.planes(); ++i)
-   {
-      p2v = ortho.image(i).maxCoeff() - ortho.image(i).minCoeff();
-      ortho.image(i) /= p2v;
-   }*/
    
    
    return 0;
@@ -186,16 +173,16 @@ void orthogonalizeBasis( const std::string & orthoName,
    realT psum = pupil.sum();
    realT norm;
    
-   for(int i=0; i< ortho.planes(); ++i)
-   {
-      norm = ortho.image(i).square().sum()/psum;
-      
-      ortho.image(i)/= sqrt(norm);
-      
+  for(int i=0; i< ortho.planes(); ++i)
+  {
+     norm = ortho.image(i).square().sum()/psum;
+     ortho.image(i)/= sqrt(norm);
       
       if(method == MXAO_ORTHO_METHOD_SGS)
       {
-         spect.row(i) /= sqrt(norm);
+         //if(i == 0) std::cout << sqrt(norm) << "\n";
+         
+         //spect.row(i) /= sqrt(norm);
       }
    }
  
@@ -217,6 +204,67 @@ void orthogonalizeBasis( const std::string & orthoName,
       ff.write(orthoFName, spect, head);
    }
    
+}
+
+template<typename spectRealT, typename realT>
+void normalizeSpectrum( mx::improc::eigenImage<spectRealT> & spectrum,
+                        mx::improc::eigenCube<realT> & modes,
+                        mx::improc::eigenCube<realT> & ortho,
+                        mx::improc::eigenImage<realT> & pupil
+                      )
+{
+   int nModes = modes.planes();
+   
+   std::vector<realT> w(nModes);
+   
+   size_t psum = pupil.sum();
+   
+   #pragma omp parallel
+   {
+      std::vector<realT> amps( nModes, 0.0 );
+      std::vector<realT> uwAmps(nModes);
+      std::vector<realT> rat(psum);
+      
+      #pragma omp for
+      for(int k=0; k< nModes; ++k)
+      {
+         amps[k] = 1.0;
+      
+         for(int j=0; j< nModes; ++j)
+         {
+            uwAmps[j] = 0;// amps(j, k)*spectrum(j,j);
+         
+            for(int i= j; i < nModes;  ++i)
+            {
+               uwAmps[j] += amps[i]*spectrum(i,j);
+            }
+         }
+      
+         mx::improc::eigenImage<realT> uwp(modes.rows(), modes.cols());
+         uwp.setZero();
+   
+         for(int i=0;i<nModes; ++i) uwp+= uwAmps[i]*modes.image(i);
+    
+         int idx = 0;
+         for(int r=0; r< pupil.rows(); ++r)
+         {
+            for(int c=0;c < pupil.cols(); ++c)
+            {
+               if(pupil(r,c) == 1) rat[idx++] = ( uwp(r,c) / ortho.image(k)(r,c));
+            }
+         }  
+      
+         w[k] = mx::math::vectorMedianInPlace(rat);
+      
+         if(k == 1200) std::cout << w[k] << "\n";
+         
+         amps[k] = 0.0;
+      }
+   }
+    
+   for(int i=0; i< nModes; ++i) spectrum.row(i)/= w[i];
+   
+   return;
 }
 
 template<typename realT>
