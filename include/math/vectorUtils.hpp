@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef vectorUtils_hpp
-#define vectorUtils_hpp 
+#ifndef math_vectorUtils_hpp
+#define math_vectorUtils_hpp 
 
 
 #include <vector>
@@ -585,5 +585,5 @@ int vectorCumHistReverse( std::vector<floatT> & svec, ///< [out] Contains the re
 
 
 
-#endif // vectorUtils_hpp
+#endif // math_vectorUtils_hpp
 

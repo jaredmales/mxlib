@@ -41,8 +41,8 @@ extern "C"
 }
 
 
-#ifndef templateBLAS_hpp
-#define templateBLAS_hpp
+#ifndef math_templateBLAS_hpp
+#define math_templateBLAS_hpp
 
 
 namespace mx
@@ -385,6 +385,6 @@ void syrk<std::complex<double> >(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
 } //namespace math
 } //namespace mx
 
-#endif //templateBLAS_hpp
+#endif //math_templateBLAS_hpp
 
 

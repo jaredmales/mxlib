@@ -27,8 +27,8 @@
 //***********************************************************************//
 
 
-#ifndef eigenLapack_hpp
-#define eigenLapack_hpp
+#ifndef math_eigenLapack_hpp
+#define math_eigenLapack_hpp
 
 #pragma GCC system_header
 #include <Eigen/Dense>
@@ -545,4 +545,4 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
 } //namespace math
 }//namespace mx
 
-#endif //eigenLapack_hpp
+#endif //math_eigenLapack_hpp

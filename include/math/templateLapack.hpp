@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __templateLapack_hpp__
-#define __templateLapack_hpp__
+#ifndef math_templateLapack_hpp
+#define math_templateLapack_hpp
 
 //MKL can use a 64-bit integer types, standard BLAS and LAPACK use int
 #ifdef MXLIB_MKL
@@ -616,4 +616,4 @@ MXLAPACK_INT gesdd<double>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, double *A,
 
 // 
 
-#endif //__templateLapack_hpp__
+#endif //math_templateLapack_hpp

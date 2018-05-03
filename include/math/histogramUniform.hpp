@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef histogramUniform_hpp
-#define histogramUniform_hpp
+#ifndef math_histogramUniform_hpp
+#define math_histogramUniform_hpp
 
 namespace mx
 {
@@ -140,4 +140,4 @@ public:
 }//namespace math
 }//namespace mx 
 
-#endif //histogramUniform_hpp 
+#endif //math_histogramUniform_hpp 

@@ -33,7 +33,8 @@
 
 namespace mx
 {
-
+namespace math 
+{
 
 /// Find the roots of the general quartic equation
 /** Finds the roots of
@@ -77,6 +78,7 @@ void quarticRoots( std::vector<std::complex<realT> > & x, ///< [out] On exit con
    
 } //quarticRoots
 
+} //namespace math
 } //namespace mx
 
 #endif //math_roots_hpp

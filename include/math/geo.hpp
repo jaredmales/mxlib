@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef geo_hpp
-#define geo_hpp
+#ifndef math_geo_hpp
+#define math_geo_hpp
 
 #include <vector>
 
@@ -291,4 +291,4 @@ void rotatePoint( realT & x0,  ///< [in/out] the x-coordinate of the point to ro
 } //namespaace math
 } //namespace mx
 
-#endif //geo_hpp
+#endif //math_geo_hpp
