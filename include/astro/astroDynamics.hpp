@@ -87,19 +87,39 @@ int getGMST( realT & GMST, ///< [out] GMST in hours
    
    //Get UTC time in SOFA 2-double format
    rv = sofa::iauDtf2d ( "UTC", Yr, Mo, Dy, hr, min, static_cast<double>(sec), &utc0, &utc1);
+   if(rv < 0)
+   {
+      /// \todo handle SOFA error.
+      return -1;
+   }
    
    //Convert UTC to TAI
    rv = sofa::iauUtctai(utc0, utc1, &tai0, &tai1);
+   if(rv < 0)
+   {
+      /// \todo handle SOFA error.
+      return -1;
+   }
    
    //Convert TAI to TT
    rv = sofa::iauTaitt (tai0, tai1, &tt0, &tt1);
+   if(rv < 0)
+   {
+      /// \todo handle SOFA error.
+      return -1;
+   }
    
    //Convert UTC to UT1
    rv = sofa::iauUtcut1(utc0, utc1, -.4, &ut10, &ut11); //The current DUT1 - how to keep updated?
+   if(rv < 0)
+   {
+      /// \todo handle SOFA error.
+      return -1;
+   }
    
    GMST = sofa::iauGmst06(ut10, ut11, tt0, tt1)/(two_pi<realT>())*static_cast<realT>(24);
    
-   return rv;
+   return 0;
 }
 
 ///Returns Greenwich Mean Sidereal Time for a given UTC time.
