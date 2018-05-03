@@ -351,6 +351,8 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
   * supplied value.
   *
   * \tparam realT a real floating point type
+  * 
+  * \ingroup image_masks
   */  
 template<typename realT>
 int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
@@ -443,6 +445,8 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
   * length equal to the specified width.
   *
   * \tparam realT a real floating point type
+  * 
+  * \ingroup image_masks
   */  
 template<typename realT>
 int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
@@ -562,6 +566,8 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
   * \returns 0 on success, -1 otherwise.
   * 
   * \tparam imT is an Eigen-like 2D array type.
+  * 
+  * \ingroup image_masks
   */ 
 template< typename imT >
 int ccdBleedMask( imT & im,  ///< [out] the mask, on output will be 1/0.  Must be allocated prior to call.
