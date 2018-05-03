@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -94,6 +94,8 @@ realT dtor(realT q)
   * \param q is the angle to convert
   * 
   * \return the angle q converted to degrees
+  * 
+  * \ingroup geo
   */
 template<typename realT>
 realT rtod(realT q)
@@ -109,6 +111,7 @@ realT rtod(realT q)
   * \tparam degrad controls whether this is in degrees (0, default) or radians (1)
   * \tparam realT is the type in which to do arithmetic
   * 
+  * \ingroup geo
   */
 template<int degrad = 0, typename realT>
 realT angleMod(realT q /**< [in] the angle */)
@@ -259,6 +262,31 @@ int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
    return 0;
 }
 
+/// Rotate a point about the origin.
+/** The rotation is counter-clockwise for positive angles.
+  *
+  * \tparam realT a real floating point type
+  * 
+  *  \ingroup geo
+  */ 
+template<typename realT>
+void rotatePoint( realT & x0,  ///< [in/out] the x-coordinate of the point to rotate.  On exit contains the rotated value.
+                  realT & y0,  ///< [in/out] the y-coordinate of the point to rotate.  On exit contains the rotated value.
+                  realT angle  ///< [in] the angle by which to rotate [radians]
+                )
+{
+   realT x1;
+   realT y1;
+   
+   realT cq = cos(angle);
+   realT sq = sin(angle);
+   
+   x1 = x0*cq - y0*sq;
+   y1 = x0*sq + y0*cq;
+   
+   x0 = x1;
+   y0 = y1;
+}
 
 } //namespaace math
 } //namespace mx

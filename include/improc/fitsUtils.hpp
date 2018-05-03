@@ -164,11 +164,6 @@ inline int getFitsType<double>()
    return TDOUBLE;
 }
 
-template<> 
-inline int getFitsType<std::complex<double>>()
-{
-   return TDBLCOMPLEX;
-}
 
 template<> 
 inline int getFitsType<fitsUnknownType>()

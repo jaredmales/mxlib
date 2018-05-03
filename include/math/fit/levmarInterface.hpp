@@ -27,10 +27,13 @@
 #ifndef levmarInterface_hpp
 #define levmarInterface_hpp
 
+#include <iostream>
+
 #include "../../mxlib.hpp"
 
 #include "templateLevmar.hpp"
 #include "../../timeUtils.hpp"
+
 
 namespace mx
 {

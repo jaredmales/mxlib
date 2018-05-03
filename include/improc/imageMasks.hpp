@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -345,6 +345,216 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
       }
    }
 }   
+
+///Draw a thin (1-pixel) line from one point to another.
+/** Calculates the line connecting the two points and sets the pixels along that line to the 
+  * supplied value.
+  *
+  * \tparam realT a real floating point type
+  */  
+template<typename realT>
+int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+              realT x0,                 ///< [in] The x coordinate of the first point
+              realT y0,                 ///< [in] The y coordinate of the first point
+              realT x1,                 ///< [in] The x coordinate of the second point
+              realT y1,                 ///< [in] The y coordinate of the second point
+              realT val                 ///< [in] The value to set on the pixels in the line
+            )
+{
+   if( fabs(x1-x0) <= 1 && fabs(y1-y0) <= 1)
+   {
+      //If it is a single pixel, plot at the rounded average point.
+      realT xa = 0.5*(x0+x1) + 0.5;
+      realT ya = 0.5*(y0+y1) + 0.5;
+      if( xa >=0 && xa < mask.rows() && ya >=0 && ya < mask.cols())  mask( (int) xa, (int) ya) = val;
+      return 0;
+   }
+   
+   realT _x0, _x1, _y0, _y1;
+   
+   realT length = sqrt( pow(x1-x0,2) + pow(y1-y0,2));
+   
+   //If X doesn't change enough, we try to do it as a function of y. 
+   if( fabs(x1-x0) <= 1 )
+   {
+      if( y0 < y1)
+      {
+         _x0 = x0;
+         _x1 = x1;
+         _y0 = y0;
+         _y1 = y1;
+      }
+      else
+      {
+         _x0 = x1;
+         _x1 = x0;
+         _y0 = y1;
+         _y1 = y0;
+      }
+   
+   
+      realT m = (_x1-_x0)/(_y1-_y0);
+      realT b = _x0 - m*_y0;
+      
+      realT dy = (_y1-_y0)/(2*length+1);
+      for(realT y = _y0; y <= _y1; y += dy)
+      {
+         realT x = m*y + b;
+      
+         if( x+0.5 >=0 && x+0.5 < mask.rows() && y+0.5 >=0 && y+0.5 < mask.cols())  mask( (int) (x+0.5), (int) (y+0.5)) = val;
+      }
+      
+      return 0;
+   }
+   
+   //Ordinarily draw in x.
+   if( x0 < x1)
+   {
+      _x0 = x0;
+      _x1 = x1;
+      _y0 = y0;
+      _y1 = y1;
+   }
+   else
+   {
+      _x0 = x1;
+      _x1 = x0;
+      _y0 = y1;
+      _y1 = y0;
+   }
+   
+   
+   realT m = (_y1-_y0)/(_x1-_x0);
+   realT b = _y0 - m*_x0;
+   
+   realT dx = (_x1-_x0)/(2*length+1);
+   for(realT x = _x0; x <= _x1; x += dx)
+   {
+      realT y = m*x + b;
+      
+      if( x+0.5 >=0 && x+0.5 < mask.rows() && y+0.5 >=0 && y+0.5 < mask.cols())  mask( (int) (x+0.5), (int) (y+0.5)) = val;
+   }
+}
+      
+      
+///Draw a thick line from one point to another.
+/** Calculates the line connecting the two points and sets the pixels along that line to the 
+  * supplied value.  Makes the line thick by drawing lines perpindicular to each point with
+  * length equal to the specified width.
+  *
+  * \tparam realT a real floating point type
+  */  
+template<typename realT>
+int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+              realT x0,                 ///< [in] The x coordinate of the first point
+              realT y0,                 ///< [in] The y coordinate of the first point
+              realT x1,                 ///< [in] The x coordinate of the second point
+              realT y1,                 ///< [in] The y coordinate of the second point
+              realT width,              ///< [in] The desired width of the line
+              realT val                 ///< [in] The value to set on the pixels in the line
+            )
+{
+   //You can't do this.
+   if( width <= 0 ) return -1;
+   
+   //If no reason to try this hard, don't.
+   if(width < 1) return drawLine(mask, x0, y0, x1, y1, val);
+   
+   realT _x0, _x1, _y0, _y1;
+   
+   //If X doesn't change enough, we try to do it as a function of y. 
+   if( fabs(x1-x0) <= 1 )
+   {
+      if( y0 < y1)
+      {
+         _x0 = x0;
+         _x1 = x1;
+         _y0 = y0;
+         _y1 = y1;
+      }
+      else
+      {
+         _x0 = x1;
+         _x1 = x0;
+         _y0 = y1;
+         _y1 = y0;
+      }
+   
+   
+      realT m = (_x1-_x0)/(_y1-_y0);
+      realT b = _x0 - m*_y0;
+      
+      realT dy = (_y1-_y0)/(mask.cols()+1);
+      for(realT y = _y0; y <= _y1; y += dy)
+      {
+         realT x = m*y + b;
+      
+         realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
+         
+         realT q1 = atan(m)+0.5*pi<realT>();
+         realT cq = cos(q1);
+         realT sq = sin(q1);
+         
+         xs = x + 0.5*width*cq;
+         ys = y + 0.5*width*sq;
+         
+         xe = x - 0.5*width*cq;
+         ye = y - 0.5*width*sq;
+         
+         drawLine(mask, xs, ys, xe, ye, val);
+      }
+      
+      return 0;
+   }
+   
+   //Ordinarily draw in x.
+   if( x0 < x1)
+   {
+      _x0 = x0;
+      _x1 = x1;
+      _y0 = y0;
+      _y1 = y1;
+   }
+   else
+   {
+      _x0 = x1;
+      _x1 = x0;
+      _y0 = y1;
+      _y1 = y0;
+   }
+   
+   
+   realT m = (_y1-_y0)/(_x1-_x0);
+   realT b = _y0 - m*_x0;
+   
+   realT dx = (_x1-_x0)/(mask.rows()+1);
+   for(realT x = _x0; x <= _x1; x += dx)
+   {
+      realT y = m*x + b;
+      
+         realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
+         
+         realT q1 = atan(m)+0.5*pi<realT>();
+         realT cq = cos(q1);
+         realT sq = sin(q1);
+         
+         xs = x + 0.5*width*cq;
+         ys = y + 0.5*width*sq;
+         
+         xe = x - 0.5*width*cq;
+         ye = y - 0.5*width*sq;
+         
+         drawLine(mask, xs, ys, xe, ye, val);
+         
+   }
+}
+
+
+
+
+
+
+
 
 ///Populate a mask based on a typical CCD bleeding pattern.
 /** Masks a circle for saturated pixels, as well as a horizontal bar for bleeding (in both directions if needed).
