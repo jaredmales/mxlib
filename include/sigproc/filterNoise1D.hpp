@@ -62,11 +62,11 @@ struct filterNoise1D
    filterNoise1D();
    
    filterNoise1D( int oversamp,
-                  realArrayT * psdSqrt
+                  realArrayT & psdSqrt
                 );
    
    int initialize( int oversamp,
-                   realArrayT * psdSqrt
+                   realArrayT & psdSqrt
                  );
    
    static int makeSqrtVonKarman( realArrayT & sqrtPD,
@@ -100,7 +100,7 @@ filterNoise1D<realT>::filterNoise1D()
 
 template<typename realT>
 filterNoise1D<realT>::filterNoise1D( int oversamp,
-                                         realArrayT * psdSqrt
+                                         realArrayT & psdSqrt
                                        )
 {
    initialize(oversamp, psdSqrt);
@@ -108,12 +108,12 @@ filterNoise1D<realT>::filterNoise1D( int oversamp,
 
 template<typename realT>
 int filterNoise1D<realT>::initialize( int oversamp,
-                                        realArrayT * psdSqrt
+                                        realArrayT & psdSqrt
                                       )
 {
    m_oversamp = oversamp;
  
-   m_nsamps = psdSqrt->rows() / oversamp;
+   m_nsamps = psdSqrt.rows() / oversamp;
    
    m_psdFilt.psdSqrt( psdSqrt );
    
