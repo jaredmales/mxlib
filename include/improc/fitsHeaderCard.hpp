@@ -51,95 +51,73 @@ struct fitsHeaderCard
 
    ///Construct from the three components, when value's type is unknown
    /**
-     * \param k is the keyword
-     * \param v is the value, must be cast-able to char*
-     * \param c is the comment
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   const void * v, 
-                   const std::string & c
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   const void * v,        ///< [in] the value, must be castable to char*
+                   const std::string & c  ///< [in] the comment
                  );
 
    ///Construct from the three components, when value's type is unknown
    /**
-     * \param k is the keyword
-     * \param v is the value, must be cast-able to char*
-     * \param c is the comment
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   void * v, 
-                   const std::string & c
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   void * v,              ///< [in] the value, must be castable to char*
+                   const std::string & c  ///< [in] the comment
                  );
    
    ///Construct from the three components, when it's really a comment card
    /** This overload is provided to facilitate handling of comments when re-writing the file.
      * 
-     * \param k is the keyword
-     * \param v is an object of type fitsCommentType
-     * \param c is the comment
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   fitsCommentType v, 
-                   const std::string & c 
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   fitsCommentType v,     ///< [in] an object of type fitsCommentType
+                   const std::string & c  ///< [in] the comment
                  );
    
    ///Construct from the three components, when it's really a history card
    /** This overload is provided to facilitate handling of history when re-writing the file.
      * 
-     * \param k is the keyword
-     * \param v is an object of type fitsHistoryType
-     * \param c is the comment
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   fitsHistoryType v, 
-                   const std::string & c
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword 
+                   fitsHistoryType v,     ///< [in] an object of type fitsHistoryType
+                   const std::string & c  ///< [in] the comment
                  );
    
    ///Construct from the three components for a known type.
    /**
-     * \param k is the keyword
-     * \param v is the value
-     * \param c is the comment
      */ 
    template<typename typeT> 
-   fitsHeaderCard( const std::string & k, 
-                   const typeT v, 
-                   const std::string & c
+   fitsHeaderCard( const std::string & k, ///< [in] they keyword
+                   const typeT v,         ///< [in] the value
+                   const std::string & c  ///< [in] the commend
                  );
    
    ///Construct from just two components, when value's type is unknown
    /**
-     * \param k is the keyword
-     * \param v is the value, must be cast-able to char*
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   void* v
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   void* v                ///< [in] the value, must be cast-able to char*
                  );
    
    ///Construct from just two components, when value's type is unknown
    /**
-     * \param k is the keyword
-     * \param v is the value, must be cast-able to char*
      */ 
-   fitsHeaderCard( const std::string & k, 
-                   const void* v
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   const void* v          ///< [in] the value, must be cast-able to char*
                  );
    
    ///Construct from just two components when value's type is known.
    /**
-     * \param k is the keyword
-     * \param v is the value
      */ 
    template<typename typeT> 
-   fitsHeaderCard( const std::string & k, 
-                   const typeT v
+   fitsHeaderCard( const std::string & k, ///< [in] the keyword
+                   const typeT v          ///< [in] the value
                  );
 
    ///Construct from just keyword, when value's type is unknown
    /**
-     * \param k is the keyword
      */ 
-   explicit fitsHeaderCard(const std::string & k);
+   explicit fitsHeaderCard(const std::string & k  /**< [in] the keyword*/);
   
    
    //@}
