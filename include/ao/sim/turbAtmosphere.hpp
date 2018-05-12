@@ -43,15 +43,15 @@ struct turbAtmosphere
    typedef _realT realT;
    typedef Eigen::Array<realT, -1, -1> arrayT;
     
-   realT _pupD; ///<Size of the wavefront in meters.
-   size_t _wfSz; ///<Size of the wavefront in pixels.
-   size_t _buffSz; ///<Buffer to apply around wavefront for interpolation
+   realT _pupD {0}; ///<Size of the wavefront in meters.
+   size_t _wfSz {0}; ///<Size of the wavefront in pixels.
+   size_t _buffSz {0}; ///<Buffer to apply around wavefront for interpolation
    
    realT _lambda0; ///< Wavelength at which r_0 was measured.
    realT _lambda; ///< Desired wavelength of the turbulence.
    
-   bool _subPiston; ///< Whether or not to subtract piston from the PSD
-   bool _subTipTilt; ///< Whether or not to subtract tip/tilt from the PSD.
+   bool _subPiston {true}; ///< Whether or not to subtract piston from the PSD
+   bool _subTipTilt {false}; ///< Whether or not to subtract tip/tilt from the PSD.
    
    std::vector<turbLayer<realT>> _layers; ///< Vector of turbulent layers.
    

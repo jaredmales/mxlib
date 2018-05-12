@@ -55,9 +55,9 @@ struct linearPredictor
    
    Eigen::Array<realT, -1, -1> _c;
    
-   realT _setCondition;
-   realT _actCondition;
-   int _nRejected;
+   realT _setCondition {0};
+   realT _actCondition {0};
+   int _nRejected {0};
    
    /// Calculate the LP coefficients given an autocorrelation.
    /** If condition==0 then the levinson recursion is used.
