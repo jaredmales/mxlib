@@ -56,7 +56,7 @@ public:
    generalIntegrator();
 
    imageT _closingGains;   ///< Column-vector of gains used for loop closing as pure integrator
-   int _closingRamp;
+   int _closingRamp; ///< Number of steps over which to ramp gains linearly during loop closing.
    
 protected:
 
@@ -233,6 +233,8 @@ generalIntegrator<realT>::generalIntegrator()
    _openLoop = false;
    
    _closingDelay = 0;
+   
+   _closingRamp = 0;
    
    _lowOrders = 0;
    
