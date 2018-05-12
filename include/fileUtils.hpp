@@ -54,10 +54,10 @@ namespace mx
   * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search.
+std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search. Can not be empty.
                                        const std::string & prefix,  ///< [in] the file name prefix (the beginning characters of the file name) to search for, if "" then not used.
                                        const std::string & substr,   ///< [in] a substring of the filename to earch for, if "" then not used.
-                                       const std::string & extension  ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in in ".ext".
+                                       const std::string & extension  ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in".ext".
                                      )
 {
    typedef std::vector<path> vec;             // store paths,
@@ -143,8 +143,8 @@ std::vector<std::string> getFileNames( const std::string & directory, ///< [in] 
   * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search.
-                                       const std::string & extension ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in in ".ext".
+std::vector<std::string> getFileNames( const std::string & directory, ///< [in] the path to the directory to search. Can not be empty.
+                                       const std::string & extension ///< [in] the file name extension to search for, if "" then not used.  Note that this must include the ".", as in ".ext".
                                      )
 {
    return getFileNames(directory, "", "", extension);
@@ -156,7 +156,7 @@ std::vector<std::string> getFileNames( const std::string & directory, ///< [in] 
   * \returns a std::vector\<std::string\> which contains the matching file names.
   */ 
 inline
-std::vector<std::string> getFileNames( const std::string & directory /**< [in] the path to the directory to search.*/)
+std::vector<std::string> getFileNames( const std::string & directory /**< [in] the path to the directory to search.  Can not be empty. */)
 {
    return getFileNames(directory, "", "", "");
 }
