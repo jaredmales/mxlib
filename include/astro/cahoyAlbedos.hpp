@@ -205,13 +205,25 @@ struct cahoyGrid : public baseSpectrum<typename _units::realT>
       while( _sep[i_l] > sep && i_l > 0) --i_l;
       
       i_u = 0;
-      while( _sep[i_u] < sep && i_u < _sep.size()-1) ++i_u;
+      while( i_u < _sep.size()-1) 
+      {
+         if(_sep[i_u] >= sep) break;
+         ++i_u;
+      }
       
       j_l = _phase.size()-1;
-      while( _phase[j_l] > phase && j_l > 0) --j_l;
+      while( j_l > 0) 
+      {
+         if(_phase[j_l] <= phase) break;
+         --j_l;
+      }
       
       j_u = 0;
-      while( _phase[j_u] < phase && j_u < _phase.size()-1) ++j_u;
+      while( j_u < _phase.size()-1) 
+      {
+         if(_phase[j_u] >= phase) break;
+         ++j_u;
+      }
       
       realT x = sep - _sep[i_l];
       if(x < 0) x = 0;
