@@ -77,22 +77,15 @@ struct turbAtmosphere
 
    ///Setup the overall atmosphere.
    /**
-     * \param [in] pupD  New value of _pupD, the size of the wavefront in meters.
-     * \param [in] wfSz  New value of _wfSz, the size of the wavefront in pixels.
-     * \param [in] buffSz New value of _buffSz, the size of the interpolation buffer to use.
-     * \param [in] lam0 New value of _lambda0, the wavelength at which r_0 is measured.
-     * \param [in] lam New value of _lambda, the wavelength at which the phase is specified.
-     * \param [in] subPist New value of _subPiston, whether or not piston is subtracted from the wavefront phase.
-     * \param [in] subTip New value of _subTipTilt, whether or not tip/tilt is subtracted from wavefront phase.
      */ 
-   int setup( realT pupD,
-              size_t wfSz,
-              size_t buffSz,
-              realT lam0,
-              realT lam,
-              bool subPist,
-              bool subTip );
-
+   int setup( realT pupD,    ///< [in] New value of _pupD, the size of the wavefront in meters.
+              size_t wfSz,   ///< [in] New value of _wfSz, the size of the wavefront in pixels.
+              size_t buffSz, ///< [in] New value of _buffSz, the size of the interpolation buffer to use.
+              realT lam0,    ///< [in] New value of _lambda0, the wavelength at which r_0 is measured.
+              realT lam,     ///< [in] New value of _lambda, the wavelength at which the phase is specified.
+              bool subPist,  ///< [in] New value of _subPiston, whether or not piston is subtracted from the wavefront phase.
+              bool subTip    ///< [in] New value of _subTipTilt, whether or not tip/tilt is subtracted from wavefront phase.
+            );
                
    int setLayers( const std::vector<size_t> & scrnSz,
                   const std::vector<realT> & r0,
