@@ -800,12 +800,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       for(int s=0; s< mags.size(); ++s)
       {
          std::string psdOutDir = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_si";
-         mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+         mkdir(psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
          
          if(doLP)
          {
             psdOutDir = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_lp";
-            mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            mkdir(psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
          }
       }
    }
