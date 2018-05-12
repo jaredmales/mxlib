@@ -139,7 +139,12 @@ struct baseSpectrum
       }
    
       int i=1;
-      while(_spectrum[i] < 0.5*max && i < lambda.size()) ++i;
+      while(i < lambda.size()) 
+      {
+         if(_spectrum[i] >= 0.5*max) break;
+         ++i;
+      }
+      
       left = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
    
       while( _spectrum[i] < max )
