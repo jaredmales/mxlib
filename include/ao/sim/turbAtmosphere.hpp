@@ -135,6 +135,7 @@ struct turbAtmosphere
 template<typename realT>
 turbAtmosphere<realT>::turbAtmosphere()
 {
+   _subPiston = true;
 }
 
 template<typename realT>
