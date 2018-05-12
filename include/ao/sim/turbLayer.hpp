@@ -36,23 +36,23 @@ struct turbLayer
    typedef _realT realT;
    typedef Eigen::Array<realT, -1, -1> arrayT;
    
-   size_t _wfSz;
-   size_t _buffSz;
-   size_t _scrnSz;
+   size_t _wfSz {0};
+   size_t _buffSz {0};
+   size_t _scrnSz {0};
    
-   realT _r0;
-   realT _L0;
-   realT _l0;
-   realT _pupD;
-   realT _Cn2;
-   realT _z;
-   realT _windV;
-   realT _windD;
+   realT _r0 {0};
+   realT _L0 {0};
+   realT _l0 {0};
+   realT _pupD {0};
+   realT _Cn2 {0};
+   realT _z {0};
+   realT _windV {0};
+   realT _windD {0};
    
-   realT _dx;
-   realT _dy;
+   realT _dx {0};
+   realT _dy {0};
 
-   int _nCombo;
+   int _nCombo {0};
    
    std::vector<_realT> _x0;
    std::vector<_realT> _y0;
@@ -67,7 +67,7 @@ struct turbLayer
 
    mx::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
    
-   turbLayer();
+   //turbLayer();
    
    void setLayer( int wfSz,
                   int buffSz,
@@ -105,10 +105,10 @@ struct turbLayer
    
 };
 
-template<typename realT>
-turbLayer<realT>::turbLayer()
-{
-}
+// template<typename realT>
+// turbLayer<realT>::turbLayer()
+// {
+// }
 
 template<typename realT>
 void turbLayer<realT>::setLayer( int wfSz,
@@ -187,13 +187,13 @@ void turbLayer<realT>::alloc()
 template<typename realT>
 void turbLayer<realT>::shift( realT dt )
 {
-   int wdx, wdy;
-   realT ddx, ddy;
-
    shiftPhase.setZero();
    
    for(int i=0; i < _nCombo; ++i)
    {
+      int wdx, wdy;
+      realT ddx, ddy;
+   
       ddx = _x0[i] + _dx*dt;
       ddy = _y0[i] + _dy*dt;
    
