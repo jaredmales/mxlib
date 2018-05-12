@@ -5,6 +5,25 @@
   * 
   */
 
+//***********************************************************************//
+// Copyright 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef fourierTemporalPSD_hpp
 #define fourierTemporalPSD_hpp
 
@@ -86,6 +105,7 @@ realT F_projMod (realT kv, void * params);
   * 
   * \todo Split off the integration parameters in a separate structure.
   * \todo once integration parameters are in a separate structure, make this a class with protected members.
+  * \todo GSL error handling
   * 
   * \ingroup mxAOAnalytic
   */
@@ -295,13 +315,13 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( const std::string & subDir, ///< [in] the sub-directory of psdDir where to write the results.
+   int analyzePSDGrid( const std::string & subDir,  ///< [in] the sub-directory of psdDir where to write the results.
                        const std::string & psdDir,  ///< [in] the directory containing the grid of PSDs. 
-                       int mnMax, ///< [in] the maximum value of m and n in the grid.
-                       int mnCon, ///< [in] the maximum value of m and n which can be controlled.
-                       int lpNc, ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
-                       std::vector<realT> & mags, ///< [in] the guide star magnitudes to analyze for.
-                       std::vector<int> & intTimes ///< [in] the integration times, in units of aosysT::minTauWFS.
+                       int mnMax,                   ///< [in] the maximum value of m and n in the grid.
+                       int mnCon,                   ///< [in] the maximum value of m and n which can be controlled.
+                       int lpNc,                    ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       std::vector<realT> & mags,   ///< [in] the guide star magnitudes to analyze for.
+                       bool writePSDs = false       ///< [in] [optional] flag controlling if resultant PSDs are saved
                      );
    
    /** \name Disk Storage
@@ -371,7 +391,7 @@ fourierTemporalPSD<realT, aosysT>::~fourierTemporalPSD()
 template<typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::initialize()
 {
-   _useBasis = basis::modified;//  MXAO_FTPSD_BASIS_MODIFIED;
+   _useBasis = basis::modified;
    _w = 0;
       
    _absTol = 1e-10; 
@@ -434,8 +454,6 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
                                                         int p, 
                                                         realT fmax )
 {
-   
-   
    if(fmax == 0) fmax = freq[freq.size()-1];
 
    realT v_wind = _aosys->atm.layer_v_wind(layer_i);
@@ -712,7 +730,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        int mnCon,
                                                        int lpNc,
                                                        std::vector<realT> & mags,
-                                                       std::vector<int> & intTimes
+                                                       bool writePSDs
                                                      )
 {
 
@@ -735,9 +753,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout << "#    mags     = ";
    for(int i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
-   fout << "#    intTimes = "; 
-   for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
-   fout << intTimes[intTimes.size()-1] << '\n';
+   fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
+   //fout << "#    intTimes = "; 
+   //for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
+   //fout << intTimes[intTimes.size()-1] << '\n';
    
    fout.close();
    
@@ -776,231 +795,295 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    
    std::vector<realT> S_si, S_lp;
    
-   mx::ompLoopWatcher<> watcher(nModes*mags.size()*intTimes.size(), std::cout);
-
-   for(int j=0; j<intTimes.size(); ++j)
-   {      
-      if(intTimes[j] == 0) continue;
-      
-      S_si.clear();
-      S_lp.clear();
-      
-      for(int s = 0; s < mags.size(); ++s)
+   if(writePSDs)
+   {
+      for(int s=0; s< mags.size(); ++s)
       {
-         //_aosys->starMag(mags[s]);
-   
-        #pragma omp parallel 
-        { 
-            realT localMag = mags[s];
-            realT localIntTime = intTimes[j];
-            
-            realT var0;
-            
-            realT gopt, var;
-      
-            realT gopt_lp, var_lp;
-
-            std::vector<realT> tfreq, tPSDp;
-            std::vector<realT> tPSDn;      
-      
-            getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
-            
-            int imax = 0;
-            while( tfreq[imax] <= 0.5*fs/localIntTime && imax < tfreq.size()) ++imax;
-            tfreq.erase(tfreq.begin() + imax, tfreq.end());
-   
-            tPSDn.resize(tfreq.size());
-   
-            mx::AO::analysis::clAOLinearPredictor<realT> tflp;
-            
-            mx::AO::analysis::clGainOpt<realT> go_si(localIntTime/fs, 1.5/fs);
-            mx::AO::analysis::clGainOpt<realT> go_lp(localIntTime/fs, 1.5/fs);
-            
-            go_si.f(tfreq);
-            go_lp.f(tfreq);
-            
-            realT gmax = 0;
-            realT gmax_lp = 0;
-            double t0, t1, t00, t11;
+         std::string psdOutDir = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_si";
+         mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
          
-            int m, n;
+         if(doLP)
+         {
+            psdOutDir = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_lp";
+            mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+         }
+      }
+   }
+   
+   mx::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
+   
+   for(int s = 0; s < mags.size(); ++s)
+   {
+      #pragma omp parallel 
+      { 
+         realT localMag = mags[s];
+         
+         realT var0;
+         
+         realT gopt, var;
+   
+         realT gopt_lp, var_lp;
+
+         std::vector<realT> tfreq, tPSDp;
+         std::vector<realT> tPSDn;      
+   
+         getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
+         
+         int imax = 0;
+         while( tfreq[imax] <= 0.5*fs && imax < tfreq.size()) ++imax;
+         tfreq.erase(tfreq.begin() + imax, tfreq.end());
+
+         tPSDn.resize(tfreq.size());
+
+         mx::AO::analysis::clAOLinearPredictor<realT> tflp;
+         
+         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.5/fs);
+         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.5/fs);
+         
+         go_si.f(tfreq);
+         go_lp.f(tfreq);
+         
+         realT gmax = 0;
+         realT gmax_lp = 0;
+         double t0, t1, t00, t11;
+      
+         int m, n;
+         
+         //want to schedule dynamic with small chunks so maximal processor usage, 
+         //otherwise we can end up with a small number of cores being used at the end
+         #pragma omp for schedule(dynamic, 5) 
+         for(int i=0; i<nModes; ++i)
+         {
+            m = fms[2*i].m;
+            n = fms[2*i].n;
+           
+            wfsNoisePSD<realT>( tPSDn, _aosys->beta_p(m,n), _aosys->Fg(localMag), (1.0/fs), _aosys->npix_wfs(), _aosys->Fbg(), _aosys->ron_wfs());
             
-            #pragma omp for schedule(dynamic, 5) //want to schedule dynamic with small chunks so maximal processor usage, otherwise we can end up with a small number of cores being used at the end
-            for(int i=0; i<nModes; ++i)
+            realT k = sqrt(m*m + n*n)/_aosys->D();
+            
+            getGridPSD( tPSDp, psdDir, m, n );
+            tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
+            
+            var0 = _aosys->psd(_aosys->atm, k,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+                           
+            if(fabs(m) <= mnCon && fabs(n) <= mnCon)
             {
-              
-               //if( fms[i].p == -1 ) continue;
-               m = fms[2*i].m;
-               n = fms[2*i].n;
-              
-               wfsNoisePSD( tPSDn, (realT) _aosys->beta_p(m,n), _aosys->Fg(localMag), (realT) (localIntTime/fs), (realT) _aosys->npix_wfs(), (realT) _aosys->Fbg(), (realT) _aosys->ron_wfs());
-               
-               realT k = sqrt(m*m + n*n)/_aosys->D();
-               
-               getGridPSD( tPSDp, psdDir, m, n );
-               tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
-               
-               var0 = _aosys->psd(_aosys->atm, k,0,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
-               
-//                var0 = 0;
-//                for(int ww =0; ww < tPSDp.size(); ++ww) var0 += tPSDp[ww];
-//                var0*=(tfreq[1]-tfreq[0]);
-               
-               if(fabs(m) <= mnCon && fabs(n) <= mnCon)
+               gmax = 0;
+               gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
+         
+               if(doLP)
                {
-                  gmax = 0;
-                  gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
-            
-                  if(doLP)
-                  {
-                     tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
-                     for(int n=0; n< lpNc; ++n) lpC(i,n) = go_lp.a(n);
-                  }
-                  else
-                  {
-                     gopt_lp = 0;
-                  }
-                  
+                  tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
+                  for(int n=0; n< lpNc; ++n) lpC(i,n) = go_lp.a(n);
                }
                else
                {
-                  gopt = 0;
-                  var = var0;
-                  var_lp = var0;
                   gopt_lp = 0;
-                  go_lp.a(std::vector<realT>({1}));
-                  go_lp.b(std::vector<realT>({1}));
                }
-                  
-               if(gopt > 0 && var > 1.3*var0)
-               {
-                  gopt = 0;
-                  var = var0;
-               }
-
-               if(gopt_lp > 0 && var_lp > 1.3*var0)
-               {
-                  gopt_lp = 0;
-                  var_lp = var0;
-               }
-         
-               gains( mnMax + m, mnMax + n ) = gopt;
-               gains( mnMax - m, mnMax - n ) = gopt;
-      
-               gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
-               gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
-         
-               vars( mnMax + m, mnMax + n) = var;
-               vars( mnMax - m, mnMax - n ) = var;
-      
-               vars_lp( mnMax + m, mnMax + n) = var_lp;
-               vars_lp( mnMax - m, mnMax - n ) = var_lp;
                
-               watcher.incrementAndOutputStatus();
-            } //omp for i..nModes
-         }//omp Parallel
-   
-         Eigen::Array<realT, -1,-1> cim, psf;
-         
-         //Create Airy PSF for convolution with variance map.
-         psf.resize(77,77);
-         for(int i=0;i<psf.rows();++i)
-         {
-            for(int j=0;j<psf.cols();++j)
+            }
+            else
             {
-               psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
+               gopt = 0;
+               var = var0;
+               var_lp = var0;
+               gopt_lp = 0;
+               go_lp.a(std::vector<realT>({1}));
+               go_lp.b(std::vector<realT>({1}));
+            }
+               
+            if(gopt > 0 && var > 1.3*var0)
+            {
+               gopt = 0;
+               var = var0;
+            }
+
+            if(gopt_lp > 0 && var_lp > 1.3*var0)
+            {
+               gopt_lp = 0;
+               var_lp = var0;
+            }
+      
+            gains( mnMax + m, mnMax + n ) = gopt;
+            gains( mnMax - m, mnMax - n ) = gopt;
+   
+            gains_lp( mnMax + m, mnMax + n ) = gopt_lp;
+            gains_lp( mnMax - m, mnMax - n ) = gopt_lp;
+      
+            vars( mnMax + m, mnMax + n) = var;
+            vars( mnMax - m, mnMax - n ) = var;
+   
+            vars_lp( mnMax + m, mnMax + n) = var_lp;
+            vars_lp( mnMax - m, mnMax - n ) = var_lp;
+            
+            //Output the controlled PSDs if desired.
+            if(writePSDs)
+            {
+               std::string psdOutFile = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_si/";
+               psdOutFile +=  "psd_" + mx::convertToString(m) + '_' + mx::convertToString(n) + ".binv";
+         
+               std::vector<realT> psdOut(tPSDp.size());
+               
+               //Calculate the output PSD if gains are applied
+               if(gopt > 0)
+               {
+                  realT ETF, NTF;
+
+                  for(int i=0; i< tfreq.size(); ++i)
+                  {
+                     go_si.clTF2( ETF, NTF, i,gopt);
+                     psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
+                  }
+               }
+               else //otherwise just copy
+               {
+                  psdOut = tPSDp;
+               }
+               
+               mx::writeBinVector( psdOutFile, psdOut);
+               
+               if(i==0)
+               {
+                  psdOutFile = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_si/freq.binv";
+                  mx::writeBinVector(psdOutFile, tfreq);
+               }
+               
+               if(doLP)
+               {
+                  psdOutFile = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_lp/";
+                  psdOutFile +=  "psd_" + mx::convertToString(m) + '_' + mx::convertToString(n) + ".binv";
+      
+                  //Calculate the output PSD if gains are applied
+                  if(gopt_lp > 0)
+                  {
+                     realT ETF, NTF;
+
+                     for(int i=0; i < tfreq.size(); ++i)
+                     {
+                        go_lp.clTF2( ETF, NTF, i, gopt_lp);
+                        psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
+                     }
+                  }
+                  else //otherwise just copy
+                  {
+                     psdOut = tPSDp;
+                  }
+               
+                  mx::writeBinVector( psdOutFile, psdOut);
+                  
+                  if(i==0)
+                  {
+                     psdOutFile = dir + "/" + "outputPSDs_" + convertToString(mags[s]) + "_lp/freq.binv";
+                     mx::writeBinVector(psdOutFile, tfreq);
+                  }
+               }
+         
+            }
+            
+            watcher.incrementAndOutputStatus();
+         } //omp for i..nModes
+      }//omp Parallel
+
+      Eigen::Array<realT, -1,-1> cim, psf;
+      
+      //Create Airy PSF for convolution with variance map.
+      psf.resize(77,77);
+      for(int i=0;i<psf.rows();++i)
+      {
+         for(int j=0;j<psf.cols();++j)
+         {
+            psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
+         }
+      }
+
+      mx::improc::fitsFile<realT> ff;
+      std::string fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_si.fits"; 
+      ff.write( fn, gains);
+
+      fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_si.fits";
+      ff.write( fn, vars);
+
+      
+      //Perform convolution for uncontrolled modes
+      mx::AO::analysis::varmapToImage(cim, vars, psf);
+      
+      //Now switch to uncovolved variance for controlled modes
+      for(int m=0; m<= mnMax; ++m)
+      {
+         for(int n=-mnMax; n<= mnMax; ++n)
+         {
+            if(gains(mnMax + m, mnMax + n) > 0)
+            {
+               cim( mnMax + m, mnMax + n) = vars( mnMax + m, mnMax + n);
+               cim( mnMax - m, mnMax - n ) = vars( mnMax + m, mnMax + n);
             }
          }
-   
-         mx::improc::fitsFile<realT> ff;
-         std::string fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
-         ff.write( fn, gains);
-   
-         fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits";
-         ff.write( fn, vars);
-   
+      }
+
+      realT S = exp(-1*cim.sum());
+      S_si.push_back(S);
+      cim /= S;
+      
+      fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_si.fits";
+      ff.write( fn, cim);
+      
+      if(doLP)
+      {
+         fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_lp.fits"; 
+         ff.write( fn, gains_lp);
+
+         fn = dir + "/lpcmap_" + mx::convertToString<int>(mags[s]) + "_lp.fits"; 
+         ff.write( fn, lpC);
          
-         //Perform convolution for uncontrolled modes
-         mx::AO::analysis::varmapToImage(cim, vars, psf);
+         fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_lp.fits";
+         ff.write( fn, vars_lp);
+      
+         mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
          
-         //Now switch to uncovolved variance for controlled modes
+         //Now switch to unconvolved variance for controlled modes
          for(int m=0; m<= mnMax; ++m)
          {
             for(int n=-mnMax; n<= mnMax; ++n)
             {
-               if(gains(mnMax + m, mnMax + n) > 0)
+               if(gains_lp(mnMax + m, mnMax + n) > 0)
                {
-                  cim( mnMax + m, mnMax + n) = vars( mnMax + m, mnMax + n);
-                  cim( mnMax - m, mnMax - n ) = vars( mnMax + m, mnMax + n);
+                  cim( mnMax + m, mnMax + n) = vars_lp( mnMax + m, mnMax + n);
+                  cim( mnMax - m, mnMax - n ) = vars_lp( mnMax + m, mnMax + n);
                }
             }
          }
 
          realT S = exp(-1*cim.sum());
-         S_si.push_back(S);
+         S_lp.push_back(S);
          cim /= S;
          
-         fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_si_" + mx::convertToString<int>(intTimes[j]) + ".fits";
+         fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp.fits";
          ff.write( fn, cim);
-         
-         if(doLP)
-         {
-            fn = dir + "/gainmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
-            ff.write( fn, gains_lp);
-   
-            fn = dir + "/lpcmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits"; 
-            ff.write( fn, lpC);
-            
-            fn = dir + "/varmap_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
-            ff.write( fn, vars_lp);
-         
-            mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
-            //Now switch to uncovolved variance for controlled modes
-            for(int m=0; m<= mnMax; ++m)
-            {
-               for(int n=-mnMax; n<= mnMax; ++n)
-               {
-                  if(gains_lp(mnMax + m, mnMax + n) > 0)
-                  {
-                     cim( mnMax + m, mnMax + n) = vars_lp( mnMax + m, mnMax + n);
-                     cim( mnMax - m, mnMax - n ) = vars_lp( mnMax + m, mnMax + n);
-                  }
-               }
-            }
-
-            realT S = exp(-1*cim.sum());
-            S_lp.push_back(S);
-            cim /= S;
-            
-            fn = dir + "/contrast_" + mx::convertToString<int>(mags[s]) + "_lp_" + mx::convertToString<int>(intTimes[j]) + ".fits";
-            ff.write( fn, cim);
-         }
-         
-      }//s (mag)
+      }
       
-      std::string fn = dir + "/strehl_si_" + mx::convertToString<int>(intTimes[j]) + ".txt";
+   }//s (mag)
+   
+   fn = dir + "/strehl_si.txt";
+   fout.open(fn);
+   for(int i=0;i<mags.size(); ++i)
+   {
+      fout << mags[i] << " " << S_si[i] << "\n";
+   }
+   
+   fout.close();
+   
+   if(doLP)
+   {
+      fn = dir + "/strehl_lp.txt";
       fout.open(fn);
       for(int i=0;i<mags.size(); ++i)
       {
-         fout << mags[i] << " " << S_si[i] << "\n";
+         fout << mags[i] << " " << S_lp[i] << "\n";
       }
-      
+   
       fout.close();
-      
-      if(doLP)
-      {
-         fn = dir + "/strehl_lp_" + mx::convertToString<int>(intTimes[j]) + ".txt";
-         fout.open(fn);
-         for(int i=0;i<mags.size(); ++i)
-         {
-            fout << mags[i] << " " << S_lp[i] << "\n";
-         }
-      
-         fout.close();
-      }
-      
-      
-   }//j (intTimes)
+   }
+
    
    return 0;
 }
