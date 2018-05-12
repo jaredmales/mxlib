@@ -52,7 +52,7 @@ struct configTarget
    /// Default c'tor
    configTarget()
    {
-      orderAdded = 0;
+      //orderAdded = 0;
    }
 
    /// Construct and set values
