@@ -199,7 +199,7 @@ struct calspecSpectrum
    static constexpr const char * dataDirEnvVar = "CALSPEC_DATADIR";
    
    ///The file name is found from the star's name.
-   static std::string fileName( const std::string name )
+   static std::string fileName( const std::string & name )
    {
       if(name == "alpha_lyr" || name == "vega") return "alpha_lyr_stis_005.asc";
       else if(name == "1740346") return "1740346_nic_002.ascii";
