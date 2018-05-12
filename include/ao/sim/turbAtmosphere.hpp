@@ -47,30 +47,30 @@ struct turbAtmosphere
    size_t _wfSz {0}; ///<Size of the wavefront in pixels.
    size_t _buffSz {0}; ///<Buffer to apply around wavefront for interpolation
    
-   realT _lambda0; ///< Wavelength at which r_0 was measured.
-   realT _lambda; ///< Desired wavelength of the turbulence.
+   realT _lambda0 {0.5e-6}; ///< Wavelength at which r_0 was measured.
+   realT _lambda {0}; ///< Desired wavelength of the turbulence.
    
    bool _subPiston {true}; ///< Whether or not to subtract piston from the PSD
    bool _subTipTilt {false}; ///< Whether or not to subtract tip/tilt from the PSD.
    
    std::vector<turbLayer<realT>> _layers; ///< Vector of turbulent layers.
    
-   size_t _frames; ///< Length of the turbulence sequence.
+   size_t _frames {0}; ///< Length of the turbulence sequence.
 
-   realT _F0Photons; ///< Photons per square meter from a 0 magnitude star at _lambda.
+   realT _F0Photons {0}; ///< Photons per square meter from a 0 magnitude star at _lambda.
    
-   realT _starMag; ///< Magnitude of the star being observed.
+   realT _starMag {0}; ///< Magnitude of the star being observed.
    
-   realT _pixVal; ///< Nominal amplitude value for one pixel, has units of photons/pixel.
+   realT _pixVal {0}; ///< Nominal amplitude value for one pixel, has units of photons/pixel.
    
-   arrayT * _pupil; ///< A pointer to the pupil mask.
+   arrayT * _pupil {0}; ///< A pointer to the pupil mask.
    
-   realT _timeStep; ///< Length of each iteration, in seconds.
-   int _nWf; ///< Number of iterations which have occurred.
+   realT _timeStep {0}; ///< Length of each iteration, in seconds.
+   int _nWf {0}; ///< Number of iterations which have occurred.
    
    std::string _dataDir; ///Specifies a path where phase screens are stored.
    
-   bool _forceGen; ///Force generation of new screens if true.
+   bool _forceGen {false}; ///Force generation of new screens if true.
    
    ///Default c'tor
    turbAtmosphere();
@@ -135,15 +135,6 @@ struct turbAtmosphere
 template<typename realT>
 turbAtmosphere<realT>::turbAtmosphere()
 {
-   _pupD = 0;
-         
-   _buffSz = 0;
-   _wfSz = 0;
-   
-   _F0Photons = 0;
-   _starMag = 0;
-   
-   _nWf = 0;
 }
 
 template<typename realT>
