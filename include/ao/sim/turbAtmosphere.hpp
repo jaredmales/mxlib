@@ -73,7 +73,7 @@ struct turbAtmosphere
    bool _forceGen {false}; ///Force generation of new screens if true.
    
    ///Default c'tor
-   turbAtmosphere();
+   //turbAtmosphere();
 
    ///Setup the overall atmosphere.
    /**
@@ -132,11 +132,11 @@ struct turbAtmosphere
    void nextWF(wavefront<realT> & wf);
 };   
    
-template<typename realT>
-turbAtmosphere<realT>::turbAtmosphere()
-{
-   //_subPiston = true;
-}
+// template<typename realT>
+// turbAtmosphere<realT>::turbAtmosphere()
+// {
+//    //_subPiston = true;
+// }
 
 template<typename realT>
 int turbAtmosphere<realT>::setup( realT pupD,
