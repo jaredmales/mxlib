@@ -92,9 +92,17 @@ std::vector<std::string> getFileNames( const std::string & directory, ///< [in] 
             if(prefix != "" && inc)
             {
                std::string p = it->filename().generic_string();
-               if(p.find(prefix) != 0)
+               
+               if( p.size() < prefix.size() )
                {
                   inc = false;
+               }
+               else
+               {
+                  if(p.compare(0, prefix.size(), prefix) != 0)
+                  {
+                     inc = false;
+                  }
                }
             }
          
