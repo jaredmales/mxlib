@@ -26,14 +26,16 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#ifndef stringUtils_hpp
+#define stringUtils_hpp
+
+
 #include <string>
 #include <sstream>
 #include <vector>
 #include <limits>
 #include <algorithm>
 
-#ifndef __stringUtils_hpp__
-#define __stringUtils_hpp__
 
 /// The mxlib c++ namespace
 namespace mx
@@ -491,4 +493,4 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
 
 } //namespace mx
 
-#endif //__stringUtils_hpp__
+#endif //stringUtils_hpp

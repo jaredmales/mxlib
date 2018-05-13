@@ -26,11 +26,12 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#ifndef textTable_hpp
+#define textTable_hpp
+
 #include <string>
 #include <sstream>
 
-#ifndef __textTable_hpp__
-#define __textTable_hpp__
 
 #include "stringUtils.hpp"
 
@@ -182,4 +183,4 @@ void textTable::outPut( iosT & ios )
 
 } //namespace mx
 
-#endif //__textTable_hpp__
+#endif //textTable_hpp
