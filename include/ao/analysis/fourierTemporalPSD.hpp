@@ -315,14 +315,22 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( const std::string & subDir,  ///< [in] the sub-directory of psdDir where to write the results.
-                       const std::string & psdDir,  ///< [in] the directory containing the grid of PSDs. 
-                       int mnMax,                   ///< [in] the maximum value of m and n in the grid.
-                       int mnCon,                   ///< [in] the maximum value of m and n which can be controlled.
-                       int lpNc,                    ///< [in] the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
-                       std::vector<realT> & mags,   ///< [in] the guide star magnitudes to analyze for.
-                       bool writePSDs = false       ///< [in] [optional] flag controlling if resultant PSDs are saved
+   int analyzePSDGrid( const std::string & subDir,  ///< [out] the sub-directory of psdDir where to write the results.
+                       const std::string & psdDir,  ///< [in]  the directory containing the grid of PSDs. 
+                       int mnMax,                   ///< [in]  the maximum value of m and n in the grid.
+                       int mnCon,                   ///< [in]  the maximum value of m and n which can be controlled.
+                       int lpNc,                    ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       std::vector<realT> & mags,   ///< [in]  the guide star magnitudes to analyze for.
+                       bool writePSDs = false       ///< [in]  [optional] flag controlling if resultant PSDs are saved
                      );
+   
+   
+   int calculateSpeckleLifetimes( const std::string & subDir, ///< [out] the sub-directory of psdDir where to write the results.
+                                  const std::string & psdDir, ///< [in]  the directory containing the grid of PSDs. 
+                                  std::vector<realT> & mags,   ///< [in]  the guide star magnitudes to analyze for.
+                                  int si_or_lp, ///< [in] Calculate lifetimes for SI (0), LP (1), or both (2) results.
+                                  int N ///< [in] The number of trials to use in calculating the amplitude PSD.
+                                );
    
    /** \name Disk Storage
      * These methods handle writing to and reading from disk.  The calculated PSDs are store in the mx::BinVector binary format.

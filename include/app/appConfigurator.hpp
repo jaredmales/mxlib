@@ -12,10 +12,10 @@
 #include "../stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
 #include "../meta/typeTraits.hpp"
+#include "../mxError.hpp"
 
 #include "clOptions.hpp"
 #include "iniFile.hpp"
-
 
 #include <list>
 
