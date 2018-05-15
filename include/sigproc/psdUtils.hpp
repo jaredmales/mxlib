@@ -529,17 +529,23 @@ void vonKarman_psd( eigenArrp  & psd,
   * 
   */
 template<typename realT>
-void averagePeriodogram( std::vector<realT> & pgram,  ///< [out] the resultant periodogram.
-                         std::vector<realT> & ts,  ///< [in] is input the time-series.
-                         realT dt,   ///< [in] is the sampling time of time-series.
-                         realT avgLen,    ///< [in] is the length of the averaging interval, same units as dt.
-                         realT olap,    ///< [in] is the length of the overlap region, same units as avgLen.
-                         std::vector<realT> & w   ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
+void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant periodogram.
+                         std::vector<realT> & ts,    ///< [in] is input the time-series.
+                         realT dt,                   ///< [in] is the sampling time of time-series.
+                         realT avgLen,               ///< [in] is the length of the averaging interval, same units as dt.
+                         realT olap,                 ///< [in] is the length of the overlap region, same units as avgLen.
+                         std::vector<realT> & w      ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
                        ) 
 {
    int Nper = avgLen/dt;
    int Nover = (avgLen-olap)/dt;
 
+   if( w.size() > 0 && w.size() != Nper )
+   {
+      std::cerr << "averagePeriodogram: Window size not correct.\n";
+   }
+   
+   
    pgram.resize(Nper/2., 0);
    
    std::vector<std::complex<realT> > fftwork, cwork;
@@ -573,16 +579,22 @@ void averagePeriodogram( std::vector<realT> & pgram,  ///< [out] the resultant p
       for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
    }
 
-   realT varNorm = 1;
+   for(int j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
+      
+   //realT varNorm = 1;
    if(w.size() == Nper)
    {
       realT sum = 0;
       realT df = 1.0/(2.0*pgram.size()*dt); //factor of 2 since it's a one-sided PSD 
-      for(int j =0; j< pgram.size(); ++j) sum += pgram[j]*df;
-      varNorm = mx::math::vectorVariance(ts) / sum;
+      realT pgramVar = psdVar(df, pgram);
+      
+      realT tsVar = mx::math::vectorVariance(ts);
+      
+      for(int j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
+
    }
    
-   for(int j=0;j<pgram.size();++j) pgram[j] *= varNorm / (Nper*Navg);
+
 }
 
 ///Augment a 1-sided PSD to standard 2-sided FFT form.
