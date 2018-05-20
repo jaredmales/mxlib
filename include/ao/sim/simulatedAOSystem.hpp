@@ -768,7 +768,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
          ff.write(fn, m_wfPhase);
          
          fn = m_wfFileBase + "_amp_" + mx::convertToString<int,5,'0'>(m_currWFFile) + ".fits";
-         ff.write(fn, m_wfAmp);
+         //ff.write(fn, m_wfAmp);
          
          ++m_currWFFile;
          m_currWF = 0;

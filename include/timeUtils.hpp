@@ -299,7 +299,7 @@ std::string ISO8601DateTimeStr<timespec>(const timespec &timeIn, int timeZone)
 inline 
 std::string ISO8601DateTimeStr(int timeZone = 0)
 {
-   return ISO8601DateTimeStr<time_t>(time(0), timeZone);
+   return ISO8601DateTimeStr<time_t>(::time(0), timeZone);
 }
 
 /// Get a date-time string in ISO 8601 format for an MJD
