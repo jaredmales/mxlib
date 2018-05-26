@@ -592,6 +592,11 @@ void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant pe
       
       for(int j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
 
+      std::cerr << "Normalized:" << tsVar << " " << psdVar(df, pgram) << "\n";
+   }
+   else
+   {
+      std::cerr << "Not normalized?\n";
    }
    
 
