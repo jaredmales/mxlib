@@ -46,10 +46,10 @@ namespace wfp
   * pupil to its original position.
   *
   * \tparam _wavefrontT is an Eigen::Array-like type, with std::complex values.
-  * \tparam wholePixel determines how the image is centered.  If false, it is at 0.5*(wfSz-1), if true it at 0.5*wfSz.
+  * \tparam wholePixel determines how the image is centered.  If 0 it is at 0.5*(wfSz-1), otherwise it is shifted by 0.5*wholePixel in each axis.
   * \ingroup imaging
   */
-template<typename _wavefrontT, bool wholePixel=false>
+template<typename _wavefrontT, int wholePixel=0>
 class fraunhoferPropagator
 {
 
@@ -133,7 +133,7 @@ protected:
 
 };//class fraunhoferPropagator
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::initialize()
 {
    wavefrontSizePixels = 0;
@@ -142,24 +142,24 @@ void fraunhoferPropagator<wavefrontT, wholePixel>::initialize()
    ycen = 0;
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 fraunhoferPropagator<wavefrontT, wholePixel>::fraunhoferPropagator()
 {
    initialize();
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 fraunhoferPropagator<wavefrontT, wholePixel>::~fraunhoferPropagator()
 {
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::shiftPupil( wavefrontT & complexPupil )
 {
    complexPupil *= centerFocal;
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::propagatePupilToFocal( wavefrontT & complexFocal,
                                                               wavefrontT & complexPupil
                                                             )
@@ -174,7 +174,7 @@ void fraunhoferPropagator<wavefrontT, wholePixel>::propagatePupilToFocal( wavefr
    fft_fwd( complexFocal.data(), complexPupil.data() );
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
 {
    //First setup the tilt screens (does nothing if there's no change in size)
@@ -187,7 +187,7 @@ void fraunhoferPropagator<wavefrontT, wholePixel>::propagateFocalToPupil(wavefro
    complexPupil *= centerPupil;
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::setWavefrontSizePixels(int wfsPix)
 {
    //If no change in size, do nothing
@@ -205,7 +205,7 @@ void fraunhoferPropagator<wavefrontT, wholePixel>::setWavefrontSizePixels(int wf
    fft_back.plan(wfsPix, wfsPix, MXFFT_BACKWARD);
 }
 
-template<typename wavefrontT, bool wholePixel>
+template<typename wavefrontT, int wholePixel>
 void fraunhoferPropagator<wavefrontT, wholePixel>::makeShiftPhase()
 {
    realT pi = boost::math::constants::pi<realT>();

@@ -51,7 +51,7 @@ namespace wfp
   *
   * \ingroup coronagraphs
   */
-template<typename _realT, bool wholePixel=false>
+template<typename _realT, int wholePixel=0>
 struct idealCoronagraph
 {
    ///The real floating point type
@@ -140,19 +140,19 @@ struct idealCoronagraph
 
 };
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 idealCoronagraph<_realT, wholePixel>::idealCoronagraph()
 {
    _wfSz = 0;
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 int idealCoronagraph<_realT, wholePixel>::wfSz()
 {
    return _wfSz;
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 void idealCoronagraph<_realT, wholePixel>::wfSz(int sz)
 {
    _wfSz = sz;
@@ -162,7 +162,7 @@ void idealCoronagraph<_realT, wholePixel>::wfSz(int sz)
 
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 int idealCoronagraph<_realT, wholePixel>::setPupil( imageT & pupil)
 {
    if(_wfSz <= 0)
@@ -177,7 +177,7 @@ int idealCoronagraph<_realT, wholePixel>::setPupil( imageT & pupil)
    return 0;
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 int idealCoronagraph<_realT, wholePixel>::loadPupil( const std::string & pupilFile)
 {
 
@@ -192,7 +192,7 @@ int idealCoronagraph<_realT, wholePixel>::loadPupil( const std::string & pupilFi
    return 0;
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 int idealCoronagraph<_realT, wholePixel>::loadCoronagraph( const std::string & cName)
 {
 
@@ -208,7 +208,7 @@ int idealCoronagraph<_realT, wholePixel>::loadCoronagraph( const std::string & c
 
 }
 
-template<typename _realT, bool wholePixel>
+template<typename _realT, int wholePixel>
 int idealCoronagraph<_realT, wholePixel>::propagate( complexFieldT & pupilPlane )
 {
    if( pupilPlane.rows() != _realPupil.rows() || pupilPlane.cols() != _realPupil.cols())
@@ -225,7 +225,7 @@ int idealCoronagraph<_realT, wholePixel>::propagate( complexFieldT & pupilPlane 
    return 0;
 }
 
-template<typename realT, bool wholePixel>
+template<typename realT, int wholePixel>
 int idealCoronagraph<realT, wholePixel>::propagate( imageT & fpIntensity,
                                         complexFieldT & pupilPlane
                                       )
@@ -242,13 +242,13 @@ int idealCoronagraph<realT, wholePixel>::propagate( imageT & fpIntensity,
    return 0;
 }
 
-template<typename realT, bool wholePixel>
+template<typename realT, int wholePixel>
 int idealCoronagraph<realT, wholePixel>::propagateNC( complexFieldT & pupilPlane )
 {
    return 0;
 }
 
-template<typename realT, bool wholePixel>
+template<typename realT, int wholePixel>
 int idealCoronagraph<realT, wholePixel>::propagateNC( imageT & fpIntensity,
                                           complexFieldT & pupilPlane )
 {
