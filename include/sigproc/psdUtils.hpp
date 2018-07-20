@@ -644,7 +644,7 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
    }
    else
    {
-      psdTwoSided[0] = outT(psdOneSided[0] * scale);
+      psdTwoSided[0] = outT(psdOneSided[0]);
    }
 
    //Now set all the rest.
