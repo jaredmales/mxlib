@@ -615,7 +615,7 @@ void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant pe
 template<typename vectorTout, typename vectorTin>
 void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
                        vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
-                       bool zeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
+                       bool addZeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
                        typename vectorTin::value_type scale = 1  ///< [in] [optional] value to scale the input by when copying to the output.  Use 0.5 if power needs to be re-normalized for 2-sided PSD.
                      )
 {
@@ -625,7 +625,7 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
 
    size_t N;
 
-   if( zeroFreq == 0 )
+   if( addZeroFreq == 0 )
    {
       needZero = 0;
       N = 2*psdOneSided.size()-2;
