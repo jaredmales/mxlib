@@ -1,4 +1,5 @@
 work/*
+doc/html
 doc/html/*
 doc/mxlib.tag.xml
 doc/citelist*
