@@ -246,13 +246,11 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
       //Have to handle case where EOF reached but no error.
       if(errno != 0)
       {
-         std::string expl = "Error reading data size [" + fname + "]";
-         mxPError("readBinVector", errno, expl);
+         mxPError("readBinVector", errno, "Error reading data size [" + fname + "]");
       }
       else
       {
-         std::string expl = "Error reading data size, did not read enough bytes. [" + fname + "]";
-         mxError("readBinVector", MXE_FILERERR, expl);
+         mxError("readBinVector", MXE_FILERERR, "Error reading data size, did not read enough bytes. [" + fname + "]");
       }
       fclose(fin);
       return -1;
@@ -260,8 +258,7 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
 
    if( typecode != binVectorTypeCode<dataT>() )
    {
-      std::string expl = "Mismatch between type dataT and type in file [" + fname + "]";
-      mxError("readBinVector", MXE_SIZEERR, expl);
+      mxError("readBinVector", MXE_SIZEERR, "Mismatch between type dataT and type in file [" + fname + "]");
       fclose(fin);
       return -1;
    }
@@ -275,13 +272,11 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
       //Have to handle case where EOF reached but no error.
       if(errno != 0)
       {
-         std::string expl = "Error reading vector size [" + fname + "]";
-         mxPError("readBinVector", errno, expl);
+         mxPError("readBinVector", errno, "Error reading vector size [" + fname + "]");
       }
       else
       {
-         std::string expl = "Error reading vector size, did not read enough bytes [" + fname + "]";
-         mxError("readBinVector", MXE_FILERERR, expl);
+         mxError("readBinVector", MXE_FILERERR, "Error reading vector size, did not read enough bytes [" + fname + "]");
       }
       fclose(fin);
       return -1;
@@ -297,13 +292,11 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
       //Have to handle case where EOF reached but no error.
       if(errno != 0)
       {
-         std::string expl = "Error reading data [" + fname + "]";
-         mxPError("readBinVector", errno, expl);
+         mxPError("readBinVector", errno, "Error reading data [" + fname + "]");
       }
       else
       {
-         std::string expl = "Did not read enough data [" + fname + "]";
-         mxError("readBinVector", MXE_FILERERR, expl);
+         mxError("readBinVector", MXE_FILERERR, "Did not read enough data [" + fname + "]");
       }
       fclose(fin);
       return -1;
@@ -336,16 +329,14 @@ int writeBinVector( const std::string & fname, ///< [in] fname is the name (full
    fout = fopen(fname.c_str(), "wb");
    if(fout == 0)
    {
-      std::string expl = "Error from fopen [" + fname + "]";
-      mxPError("writeBinVector", errno, expl);
+      mxPError("writeBinVector", errno, "Error from fopen [" + fname + "]");
       return -1;
    }
 
    nwr = fwrite( &typecode, sizeof(binVTypeT), 1, fout);
    if(nwr != 1)
    {
-      std::string expl = "Error writing typecode [" + fname + "]";
-      mxPError("writeBinVector", errno, expl);
+      mxPError("writeBinVector", errno, "Error writing typecode [" + fname + "]");
       fclose(fout);
       return -1;
    }
@@ -353,8 +344,7 @@ int writeBinVector( const std::string & fname, ///< [in] fname is the name (full
    nwr = fwrite( &sz, sizeof(binVSizeT), 1, fout);
    if(nwr != 1)
    {
-      std::string expl = "Error writing vector size [" + fname + "]";
-      mxPError("writeBinVector", errno, expl);
+      mxPError("writeBinVector", errno, "Error writing vector size [" + fname + "]");
       fclose(fout);
       return -1;
    }
@@ -362,8 +352,7 @@ int writeBinVector( const std::string & fname, ///< [in] fname is the name (full
    nwr = fwrite( vec.data(), sizeof(dataT), vec.size(), fout);
    if(nwr != sz)
    {
-      std::string expl = "Error writing data [" + fname + "]";
-      mxPError("writeBinVector", errno, expl);
+      mxPError("writeBinVector", errno, "Error writing data [" + fname + "]");
       fclose(fout);
       return -1;
    }
