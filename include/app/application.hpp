@@ -9,7 +9,7 @@
 
 
 #include "appConfigurator.hpp"
-#include "../textTable.hpp"
+#include "../ioutils/textTable.hpp"
 
 namespace mx
 {
@@ -185,8 +185,8 @@ protected:
    virtual void loadStandardHelp();
 
    /// Format a configTarget for the help message.
-   virtual void optionHelp( configTarget & tgt, ///< [in] The Target
-                            textTable & tt ///< [out] the textTable being populated
+   virtual void optionHelp( configTarget & tgt,     ///< [in] The Target
+                            ioutils::textTable & tt ///< [out] the textTable being populated
                           );
 
    /// Setup a basic configuration.  Can be used in an intermediate derived class to allow its children to use setupConfig.
@@ -385,7 +385,7 @@ void application::loadBasicConfig() //virtual
 
 inline
 void application::optionHelp( configTarget & tgt,
-                              textTable & tt
+                              ioutils::textTable & tt
                             ) //virtual
 {
    std::string tmp;
@@ -432,7 +432,7 @@ void application::help() //virtual
    appConfigurator::targetIterator targIt;
    appConfigurator::clOnlyTargetIterator clOnlyTargIt;
 
-   textTable tt;
+   ioutils::textTable tt;
 
    int otherColWidth = m_helpSOColWidth + m_helpLOColWidth + m_helpCFColWidth + m_helpTypeColWidth;
 

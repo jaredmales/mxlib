@@ -5,7 +5,7 @@
 ##########################################
 
 # Are you here to customize the build?
-# 
+#
 # Option 1: Override the options on the command line
 #     e.g. `make install PREFIX=$HOME`
 # Option 2: `make setup`
@@ -32,10 +32,10 @@ CXXFLAGS += -std=c++14 -fPIC $(OPTIMIZE) $(INCLUDES)
 TARGETS = libmxlib
 
 OBJS = mxlib.o\
-       
+
 #\
-#process_interface.o 
-#sharedmem_segment.o 
+#process_interface.o
+#sharedmem_segment.o
 
 INC_TO_INSTALL = ao \
                  app \
@@ -47,10 +47,9 @@ INC_TO_INSTALL = ao \
                  meta \
                  sigproc \
                  wfp \
-                 binVector.hpp \
+					  ioutils \
                  eigenUtils.hpp \
                  environment.hpp \
-                 fileUtils.hpp \
                  gnuPlot.hpp \
                  gslInterpolation.hpp \
                  imagingArray.hpp \
@@ -60,15 +59,11 @@ INC_TO_INSTALL = ao \
                  mxlib.hpp\
                  mxlib_uncomp_version.h\
                  ompLoopWatcher.hpp \
-                 pout.hpp \
-                 readColumns.hpp \
-                 stringUtils.hpp \
-                 textTable.hpp \
                  timeUtils.hpp \
-		 randomSeed.hpp \
-		 randomT.hpp 
+		 		  	  randomSeed.hpp \
+		 			  randomT.hpp 
 
-all: $(TARGETS) 
+all: $(TARGETS)
 
 # Dependencies:
 msgq.o: include/IPC.h include/msgq.h
@@ -101,10 +96,10 @@ setup:
 	@grep  "?=" mk/MxApp.mk || true
 	@echo "***"
 
-libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
+libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS)
 	$(AR) $(ARFLAGS) libmxlib.a $(OBJS)
 	$(CC) -shared $(SHAREDLIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
-	
+
 install: libmxlib
 	install -d $(INCLUDE_PATH)/mx
 	install -d $(LIB_PATH)

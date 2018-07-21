@@ -16,7 +16,7 @@
 #include "../../improc/fitsFile.hpp"
 #include "../../improc/ds9Interface.hpp"
 
-#include "../../readColumns.hpp"
+#include "../../ioutils/readColumns.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
