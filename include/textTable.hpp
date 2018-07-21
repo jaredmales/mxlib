@@ -1,8 +1,8 @@
 /** \file textTable.hpp
   * \brief declares and defines a simple text table manager
-  * 
+  *
   * \author Jared R. Males (jaredmales@gmail.com)
-  * 
+  *
   * \ingroup stringutils
   *
   */
@@ -46,38 +46,42 @@ namespace mx
 ///An ascii table formatter
 /** Manages a table of string content, including word-wrapping within cells.
   * Contents are output to an ostream line by line with a table structure.
-  * 
+  *
   * \todo have ability to add whole row, with a variadic template to handle different types
   * \todo allow non-wrapping (i.e. unlimited width) columns
   * \todo headers and footers
   * \todo add centering (h and v) and right and bottom justification
   * \todo have a latex() setup function
-  */ 
+  * \todo add sort capability, with vector of column choices to sort first by column N, then M, etc.
+  */
 struct textTable
 {
-   std::vector<int> colWidths; ///< The widths of each column, not including the separator.
-   
-   std::vector<std::vector<std::vector<std::string>>> rows; ///<The table cells.  A cell could be multiple lines.
- 
-   std::string lineStart; ///< Text to print at the beginning of the line.
-   
-   std::string lineEnd; ///< Text to print at the end of the line.
-   
-   std::string colSep; ///< Text to print between each column.
-   
-   std::string rowSep; ///< Text to print between each row.
+   std::vector<int> m_colWidths; ///< The widths of each column, not including the separator.
+
+   ///The table cells.
+   /** Organized as rows.cells.lines, where a cell could be multiple lines.
+     */
+   std::vector<std::vector<std::vector<std::string>>> m_rows;
+
+   std::string m_lineStart; ///< Text to print at the beginning of the line.
+
+   std::string m_lineEnd; ///< Text to print at the end of the line.
+
+   std::string m_colSep; ///< Text to print between each column.
+
+   std::string m_rowSep; ///< Text to print between each row.
 
    ///Add one cell to the table, overwriting if it already exists.
    void addCell( int row, ///< [in] the row of the cell.
                  int col, ///< [in] the column of the cell.
                  const std::string & cell  ///< [in] the new contents of the cell, will be wrapped.
                );
-   
+
    void addCell( int row, ///< [in] the row of the cell.
                  int col, ///< [in] the column of the cell.
                  const char * cell  ///< [in] the new contents of the cell, will be wrapped.
                );
-   
+
    ///Add one cell to the table, overwriting if it already exists.
    template<typename typeT>
    void addCell( int row, ///< [in] the row of the cell.
@@ -85,12 +89,12 @@ struct textTable
                  const typeT & cell,  ///< [in] the new contents of the cell, will be wrapped.
                  int precision=0
                );
-   
+
    ///Output the table to a stream
    /** Prints the table to the stream, with separators, etc.
      *
      * \tparam iosT is a std::ostream-like type.
-     */ 
+     */
    template<typename iosT>
    void outPut( iosT & ios /**< [in] a std::ostream-like stream.*/ );
 
@@ -99,21 +103,21 @@ struct textTable
 inline
 void textTable::addCell( int row,
                          int col,
-                         const std::string & cell 
+                         const std::string & cell
                        )
 {
    //Increase size if needed.
-   if( row >= rows.size() )
+   if( row >= m_rows.size() )
    {
-      int N = rows.size();
+      int N = m_rows.size();
       for(int i=0; i < row - N +1; ++i)
       {
-         rows.push_back( std::vector<std::vector<std::string>>( colWidths.size()));
+         m_rows.push_back( std::vector<std::vector<std::string>>( m_colWidths.size()));
       }
    }
-   
-   rows[row][col].clear();
-   stringWrap(rows[row][col], cell, colWidths[col]); 
+
+   m_rows[row][col].clear();
+   stringWrap(m_rows[row][col], cell, m_colWidths[col]);
 }
 
 void textTable::addCell(int row,
@@ -138,43 +142,43 @@ template<typename iosT>
 void textTable::outPut( iosT & ios )
 {
    std::string line;
-   
+
    int width = 0;
-   for(int i=0;i<colWidths.size();++i) width += colWidths[i];
-   width += colWidths.size()*(colSep.length()-1); //+100;
-   
+   for(int i=0;i<m_colWidths.size();++i) width += m_colWidths[i];
+   width += m_colWidths.size()*(m_colSep.length()-1); //+100;
+
    line.resize(width, ' ');
-   
-   for(int i=0; i< rows.size(); ++i)
+
+   for(int i=0; i< m_rows.size(); ++i)
    {
       int rowL = 0;
-      for(int j=0; j< colWidths.size(); ++j)
+      for(int j=0; j< m_colWidths.size(); ++j)
       {
-         if( rows[i][j].size() > rowL ) rowL = rows[i][j].size();
+         if( m_rows[i][j].size() > rowL ) rowL = m_rows[i][j].size();
       }
-      
+
       for(int k=0; k< rowL; ++k)
       {
          //line.insert( 0, line.length(), ' ');
          line.clear();
          line.resize(width, ' ');
          //line.replace(0, width, width, ' ');
-         
+
          int startPos = 0;
-         for(int j=0; j< colWidths.size(); ++j)
+         for(int j=0; j< m_colWidths.size(); ++j)
          {
-            if(rows[i][j].size() > k) line.replace(startPos, rows[i][j][k].length(), rows[i][j][k]);
-            startPos += colWidths[j];
-           
-            if( j < colWidths.size()-1) line.replace(startPos, colSep.length(), colSep);
-            startPos += colSep.length();
+            if(m_rows[i][j].size() > k) line.replace(startPos, m_rows[i][j][k].length(), m_rows[i][j][k]);
+            startPos += m_colWidths[j];
+
+            if( j < m_colWidths.size()-1) line.replace(startPos, m_colSep.length(), m_colSep);
+            startPos += m_colSep.length();
 
          }
-         
-         ios << lineStart << line << lineEnd << "\n";
+
+         ios << m_lineStart << line << m_lineEnd << "\n";
       }
-      
-     if(rowSep.length() > 0) ios << rowSep << "\n";
+
+     if(m_rowSep.length() > 0) ios << m_rowSep << "\n";
 
    }
 }
