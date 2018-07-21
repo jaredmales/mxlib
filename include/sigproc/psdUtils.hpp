@@ -291,7 +291,7 @@ int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will
 
 template<typename floatT>
 floatT normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
-                Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f,
+                Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f, ///< [in] the frequency grid for psd.
                 floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
                 floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
                 floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.
@@ -616,7 +616,7 @@ template<typename vectorTout, typename vectorTin>
 void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
                        vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
                        bool addZeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
-                       typename vectorTin::value_type scale = 1  ///< [in] [optional] value to scale the input by when copying to the output.  Use 0.5 if power needs to be re-normalized for 2-sided PSD.
+                       typename vectorTin::value_type scale = 0.5  ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
                      )
 {
    typedef typename vectorTout::value_type outT;
