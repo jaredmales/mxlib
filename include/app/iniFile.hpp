@@ -11,7 +11,7 @@ namespace mx
 {
 
 ///A wrapper for the ini functions.
-struct iniFile 
+struct iniFile
 {
    typedef std::unordered_map<std::string, std::string> nameMapT;
 
@@ -28,7 +28,7 @@ struct iniFile
    }
 
    int insert(const char *section, const char *name, const char * value)
-   {    
+   {
       std::string nkey = makeKey(section, name);
 
       names[nkey];
@@ -38,28 +38,28 @@ struct iniFile
 //       }
 
       names[nkey] += value; //This is just an update to the existing value.
-      
+
       return 0;
    }
 
-   static int handler( void* user, 
-                       const char* section, 
+   static int handler( void* user,
+                       const char* section,
                        const char* name,
                        const char* value
                      )
    {
-      iniFile * iF = (iniFile *) user;
+      iniFile * iF = static_cast<iniFile *>(user);
       return iF->insert(section, name, value);
    }
-   
+
    int count(const std::string &section, const std::string & name)
    {
       return names.count(makeKey(section, name));
    }
-   
+
    std::string operator()(const std::string &section, const std::string & name)
    {
-      std::string key = makeKey(section, name); 
+      std::string key = makeKey(section, name);
       if(names.count(key) > 0)
       {
          return names[key];
@@ -69,13 +69,13 @@ struct iniFile
          return std::string("");
       }
    }
-   
+
    std::string operator()(const std::string & name)
    {
       return names[makeKey("", name)];
    }
-   
-   
+
+
 };
 
 } //namespace mx

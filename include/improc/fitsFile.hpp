@@ -1232,7 +1232,7 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
          }
 
          //Quit if we're done.
-         if(head_keys.size() == 0) break;
+         if(head_keys.empty()) break;
       }
    }
 

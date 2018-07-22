@@ -233,8 +233,7 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
    fin = fopen(fname.c_str(), "r");
    if(fin == 0)
    {
-      std::string expl = "Error from fopen [" + fname + "]";
-      mxPError("readBinVector", errno, expl);
+      mxPError("readBinVector", errno, "Error from fopen [" + fname + "]");
       return -1;
    }
 

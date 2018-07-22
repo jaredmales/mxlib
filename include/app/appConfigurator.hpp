@@ -369,11 +369,7 @@ int appConfigurator::readConfig( const std::string & fname,
    {
       if(!reportFileNotFound) return -1;
 
-      std::string errs = "The file ";
-      errs += fname;
-      errs += " was not found.";
-
-      mxError("appConfigurator: ", MXE_FILENOTFOUND, errs);
+      mxError("appConfigurator: ", MXE_FILENOTFOUND, "The file " + fname + " was not found");
       return -1;
    }
 

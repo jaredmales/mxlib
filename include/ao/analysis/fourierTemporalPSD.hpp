@@ -113,7 +113,7 @@ template<typename realT, typename aosysT>
 struct fourierTemporalPSD
 {
    ///Pointer to an AO system structure.
-   aosysT * _aosys;
+   aosysT * _aosys {nullptr};
 
    realT _f; ///< the current temporal frequency
    realT _m; ///< the spatial frequency m index
