@@ -373,12 +373,14 @@ public:
 template<typename realT, typename aosysT>
 fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD()
 {
+   _aosys = nullptr;
    initialize();
 }
 
 template<typename realT, typename aosysT>
 fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD(bool allocate)
 {
+   _aosys = nullptr;
    initialize();
 
    if(allocate)
