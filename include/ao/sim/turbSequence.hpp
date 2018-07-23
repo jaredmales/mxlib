@@ -34,21 +34,21 @@ struct turbSequence
    std::vector<std::string> _phaseFnames;
    std::vector<std::string> _ampFnames;
 
-   int _size;
+   int _size {0};
 
-   int _nPerCube;
+   int _nPerCube {0};
 
-   int _files;
+   int _files {0};
 
-   int _frames;
+   int _frames {0};
 
-   int _currFileNo;
-   int _currFrameNo;
+   int _currFileNo {0};
+   int _currFrameNo {0};
 
-   realT _wfPS;
-   realT _F0Photons;
+   realT _wfPS {1};
+   realT _F0Photons {2e11};
 
-   realT _starMag;
+   realT _starMag {0};
 
    realT _pixVal;
 
@@ -59,23 +59,10 @@ struct turbSequence
    improc::eigenCube<realT> _currPhase;
    improc::eigenCube<realT> _currAmp;
 
-   bool _phaseOnly;
+   bool _phaseOnly {false};
 
    turbSequence()
    {
-      _size = 0;
-      _nPerCube = 0;
-      _files = 0;
-      _frames = 0;
-
-      _currFileNo = 0;
-      _currFrameNo = 0;
-
-      _wfPS = 1;
-      _F0Photons = 2e11;
-      _starMag = 0;
-
-      _phaseOnly = false;
    }
 
    /// Return the size of the turbulence screens
