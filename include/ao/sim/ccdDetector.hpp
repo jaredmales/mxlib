@@ -33,24 +33,24 @@ namespace sim
   *
   * \ingroup mxAOSim
   */
-template<typename _floatT>
+template<typename _realT>
 class ccdDetector
 {
 
 public:
 
-   typedef _floatT floatT;
+   typedef _realT realT;
 
-   typedef wavefront<floatT> wavefrontT;
+   typedef wavefront<realT> wavefrontT;
 
-   typedef Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> imageT;
+   typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
 
-   typedef mx::randomT<floatT, std::mt19937_64, std::normal_distribution<floatT> > norm_distT;
+   typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
    typedef mx::randomT<int, std::mt19937_64, std::poisson_distribution<int> > poisson_distT;
 
 
-   typedef mx::randomT<floatT, std::mt19937_64, std::gamma_distribution<floatT> > gamma_distT;
+   typedef mx::randomT<realT, std::mt19937_64, std::gamma_distribution<realT> > gamma_distT;
 
 
 
@@ -62,48 +62,54 @@ protected:
    poisson_distT m_poissonVar; ///<Gets Poisson distributed variates
    gamma_distT m_gammaVar; ///<Gets gamma distributed variates
 
-   floatT m_qe {1}; ///<The quantum efficiency.
+   realT m_qe {1}; ///<The quantum efficiency.
 
-   floatT m_darkCurrent {0}; ///<The dark current, per pixel per second
-   floatT m_ron {0}; ///<The readout noise, electrons per pixel per read #include "mx/randomT.hpp"
+   realT m_darkCurrent {0}; ///<The dark current, per pixel per second
+   realT m_ron {0}; ///<The readout noise, electrons per pixel per read #include "mx/randomT.hpp"
 
-   floatT m_cic {0}; ///< EMCCD clock induced charge, electrons per pixel per read.
-   floatT m_gain {1}; ///<Electron multiplication gain.  If >1, then EMCCD is modeled.
+   realT m_cic {0}; ///< EMCCD clock induced charge, electrons per pixel per read.
+   realT m_gain {1}; ///<Electron multiplication gain.  If >1, then EMCCD is modeled.
 
-   floatT m_expTime {1}; ///<The exposure time, in seconds.
+   realT m_expTime {1}; ///<The exposure time, in seconds.
 
    int m_rows {0}; ///<The detector size, in rows.
    int m_cols {0}; ///<The detector size, in columns.
 
-   bool m_noNoise {false};
+   bool m_noNoise {false}; ///< If true no noise is added to the exposed image.
 
-   long get_seed();
+   //This is probably vestigial, commented out on 2018-07-23
+   //Delete after testing with an aoSim compile.
+   //long get_seed();
 
 public:
 
-   floatT qe();
+   /// Get the current value of qe.
+   /**
+     * \returns the current value of m_qe
+     */
+   realT qe();
 
-   void qe(const floatT & q);
+   void qe(const realT & q);
 
-   floatT darkCurrent();
+   realT darkCurrent();
 
-   void darkCurrent(const floatT & dc);
+   void darkCurrent(const realT & dc);
 
-   floatT ron();
+   realT ron();
 
-   void ron(const floatT & r);
+   void ron(const realT & r);
 
-   floatT cic();
+   realT cic();
 
-   void cic(const floatT & c);
+   void cic(const realT & c);
 
-   floatT gain();
+   realT gain();
 
-   void gain(const floatT & g);
+   void gain(const realT & g);
 
-   floatT expTime();
+   realT expTime();
 
-   void expTime(const floatT &dt);
+   void expTime(const realT &dt);
 
    int rows();
 
@@ -140,8 +146,8 @@ public:
 
 
 
-template<typename floatT>
-ccdDetector<floatT>::ccdDetector()
+template<typename realT>
+ccdDetector<realT>::ccdDetector()
 {
    m_normVar.seed();
    m_poissonVar.seed();
@@ -149,8 +155,8 @@ ccdDetector<floatT>::ccdDetector()
 }
 
 
-template<typename floatT>
-long ccdDetector<floatT>::get_seed()
+/*template<typename realT>
+long ccdDetector<realT>::get_seed()
 {
    long int seedval;
 
@@ -172,131 +178,132 @@ long ccdDetector<floatT>::get_seed()
 
    return seedval;
 }
+*/
 
-template<typename floatT>
-floatT ccdDetector<floatT>::qe()
+template<typename realT>
+realT ccdDetector<realT>::qe()
 {
    return m_qe;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::qe(const floatT & q)
+template<typename realT>
+void ccdDetector<realT>::qe(const realT & q)
 {
    m_qe = q;
 }
 
-template<typename floatT>
-floatT ccdDetector<floatT>::darkCurrent()
+template<typename realT>
+realT ccdDetector<realT>::darkCurrent()
 {
    return m_darkCurrent;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::darkCurrent(const floatT & dc)
+template<typename realT>
+void ccdDetector<realT>::darkCurrent(const realT & dc)
 {
    m_darkCurrent = dc;
 }
 
-template<typename floatT>
-floatT ccdDetector<floatT>::ron()
+template<typename realT>
+realT ccdDetector<realT>::ron()
 {
    return m_ron;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::ron(const floatT & r)
+template<typename realT>
+void ccdDetector<realT>::ron(const realT & r)
 {
    m_ron = r;
 }
 
-template<typename floatT>
-floatT ccdDetector<floatT>::cic()
+template<typename realT>
+realT ccdDetector<realT>::cic()
 {
    return m_cic;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::cic(const floatT & c)
+template<typename realT>
+void ccdDetector<realT>::cic(const realT & c)
 {
    m_cic = c;
 }
 
-template<typename floatT>
-floatT ccdDetector<floatT>::gain()
+template<typename realT>
+realT ccdDetector<realT>::gain()
 {
    return m_gain;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::gain(const floatT & g)
+template<typename realT>
+void ccdDetector<realT>::gain(const realT & g)
 {
    m_gain = g;
 }
 
-template<typename floatT>
-floatT ccdDetector<floatT>::expTime()
+template<typename realT>
+realT ccdDetector<realT>::expTime()
 {
    return m_expTime;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::expTime(const floatT & dt)
+template<typename realT>
+void ccdDetector<realT>::expTime(const realT & dt)
 {
    m_expTime = dt;
 }
 
 
-template<typename floatT>
-int ccdDetector<floatT>::rows()
+template<typename realT>
+int ccdDetector<realT>::rows()
 {
    return m_rows;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::rows(const int & r)
+template<typename realT>
+void ccdDetector<realT>::rows(const int & r)
 {
    m_rows = r;
 }
 
-template<typename floatT>
-int ccdDetector<floatT>::cols()
+template<typename realT>
+int ccdDetector<realT>::cols()
 {
    return m_cols;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::cols(const int & c)
+template<typename realT>
+void ccdDetector<realT>::cols(const int & c)
 {
    m_cols = c;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::setSize(const int & r, const int & c)
+template<typename realT>
+void ccdDetector<realT>::setSize(const int & r, const int & c)
 {
    m_rows = r;
    m_cols = c;
 }
 
 
-template<typename floatT>
-bool ccdDetector<floatT>::noNoise()
+template<typename realT>
+bool ccdDetector<realT>::noNoise()
 {
    return m_noNoise;
 }
 
-template<typename floatT>
-void ccdDetector<floatT>::noNoise(bool nn)
+template<typename realT>
+void ccdDetector<realT>::noNoise(bool nn)
 {
    m_noNoise = nn;
 }
 
 
-template<typename floatT>
-void ccdDetector<floatT>::exposeImage(imageT & out, imageT & in)
+template<typename realT>
+void ccdDetector<realT>::exposeImage(imageT & out, imageT & in)
 {
 
    using poisson_param_t = typename std::poisson_distribution<int>::param_type;
-   using gamma_param_t = typename std::gamma_distribution<floatT>::param_type;
+   using gamma_param_t = typename std::gamma_distribution<realT>::param_type;
 
 
    out.resize(m_rows, m_cols);
@@ -309,7 +316,7 @@ void ccdDetector<floatT>::exposeImage(imageT & out, imageT & in)
    {
       for(int j=0; j<m_cols;++j)
       {
-         floatT charge = (out(i,j)*m_qe + m_darkCurrent) * m_expTime + m_cic;
+         realT charge = (out(i,j)*m_qe + m_darkCurrent) * m_expTime + m_cic;
 
          if(charge > 1000)
          {
