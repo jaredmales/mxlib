@@ -397,6 +397,7 @@ void oneoverf_psd( eigenArrp  & psd,
       }
    }
 }
+
 /// Generate a 1-D von Karman power spectrum
 /**
   * Populates an Eigen array  with
@@ -433,6 +434,42 @@ int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be 
    {
       floatT p = beta / pow( pow(f[i],2) + T02, sqrt_alpha);
       if(t0 > 0 ) p *= exp(-1*pow( f[i]*t0, 2));
+      psd[i] = p;
+   }
+
+   return 0;
+}
+
+/// Generate a 1-D "knee" PSD
+/**
+  * Populates an Eigen array  with
+  *
+  * \f[
+  *  P(f) = \frac{\beta}{ 1 + (f\f_n)^alpha}
+  * \f]
+  *
+  * If you set \f$ T_0 \le 0 \f$ and \f$ t_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e.
+  * it treats this as infinite outer scale and inner scale).
+  *
+  * \tparam floatT a floating point
+  */
+template<typename floatT>
+int kneePSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be resized.
+             std::vector<floatT> & f,   ///< [in] the frequency vector
+             floatT beta,               ///< [in] the scaling constant
+             floatT fn,                 ///< [in] the knee frequency
+             floatT alpha               ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
+           )
+{
+
+
+
+
+   psd.resize(f.size());
+
+   for(int i=0; i< f.size(); ++i)
+   {
+      floatT p = beta / (1 + pow(f[i]/fn, alpha));
       psd[i] = p;
    }
 
