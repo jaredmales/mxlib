@@ -104,14 +104,11 @@ struct appConfigurator
    std::list<configTarget> clOnlyTargets;
 
 
+   /// Non-option arguments from the command line.
    std::vector<std::string> nonOptions;
 
+   /// Running count of options added, used to track order.
    int nAdded {0};
-
-/*   appConfigurator()
-   {
-      nAdded = 0;
-   }*/
 
    /// Clear the containers and free up the associated memory.
    void clear();
@@ -328,14 +325,16 @@ void appConfigurator::parseCommandLine( int argc,
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
    }
 
-   //If we get here and nothing to do, get out
+
+
+   //Now we parse
+   clOpts.parse(argc, argv, &nonOptions);
+
+   //If nothing more to do, get out
    if(clOpts.nOpts == 0)
    {
       return;
    }
-
-   //Now we parse
-   clOpts.parse(argc, argv, &nonOptions);
 
    //And then load the results in the config target map.
    for(it = targets.begin(); it != targets.end(); ++it)
