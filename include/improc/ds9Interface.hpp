@@ -1,8 +1,8 @@
 /** \file ds9Interface.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Declarations for the mxlib c++ ds9 interface
+  * \brief Declarations for the mxlib c++ DS9 interface
   * \ingroup image_processing_files
-  * 
+  *
 */
 
 //***********************************************************************//
@@ -28,127 +28,160 @@
 #ifndef improc_ds9Interface_hpp
 #define improc_ds9Interface_hpp
 
-#include <signal.h>
-#include <sys/wait.h>
+#include <cstring>
+#include <iostream>
+#include <vector>
 
-#include "fitsUtils.hpp"
-#include "eigenImage.hpp"
+#include <unistd.h>
 
-#include "../ipc/processInterface.hpp"
+#include <xpa.h>
+
+
 #include "../ipc/sharedMemSegment.hpp"
+#include "fitsUtils.hpp"
 
 namespace mx
 {
-namespace improc 
+namespace improc
 {
-   
 
+#ifndef DS9INTERFACE_SPAWN_SLEEP
+/// The time to sleep after spawning, in msecs, while checking for the new instance to be ready.
+/**
+  * \ingroup image_processing
+  * \ingroup plotting
+  */
+#define DS9INTERFACE_SPAWN_SLEEP (100)
+#endif
+
+#ifndef DS9INTERFACE_SPAWN_TIMEOUT
+/// The maximum time to wait after spawning, in msecs, before giving up.
+/**
+  * \ingroup image_processing
+  * \ingroup plotting
+  */
+#define DS9INTERFACE_SPAWN_TIMEOUT (2000)
+#endif
+
+#ifndef DS9INTERFACE_CMD_MAX_LENGTH
 /// The maximum length of a ds9 command
-/** 
+/**
   * \ingroup image_processing
   * \ingroup plotting
-  */ 
-#define DS9_CMD_MAX_LENGTH 512
-   
-   
+  */
+#define DS9INTERFACE_CMD_MAX_LENGTH (512)
+#endif
+
+
+
 /// An interface to the ds9 image viewer.
-/** Handles spawning the ds9 window, and manages shared memory segments, 
-  * one for each frame.  
-  * 
-  * This makes use of system() calls.  In each case the result is checked and if SIGINT or SIGQUIT was caught
-  * by the ds9 child process, it will be re-raised in the calling process.
-  * 
+/** Handles spawning the ds9 window, and manages shared memory segments,
+  * one for each frame.
+  *
+  *
   * \ingroup image_processing
   * \ingroup plotting
-  */   
+  */
 class ds9Interface
 {
-   
+
 protected:
-   
-   ///The title of the window, which sets the XPA access point 
-   std::string _title;
-   
-   ///The port to use (normally 0)
-   int _port;
-   
-   ///An array of shared memory segments, one per frame
+
+   /// The XPA structure to hold connections.
+   XPA xpa {NULL};
+
+   ///The title of the window, which sets the XPA access point
+   std::string m_title;
+
+   ///The ip:port string to uniquely identify a single XPA access point
+   /** We use this so that we don't send to multiple "DS9:ds9" windows, and
+     * and always send to the same one.
+     */
+   std::string m_ipAndPort;
+
+   ///Whether or not the connect() procedure has completed successfully.
+   bool m_connected {false};
+
+   ///A vector of shared memory segments, one per frame
    std::vector<ipc::sharedMemSegment> segs;
-   
-   ///The number of segments in \ref segs
-   //size_t nsegs;
-   
+
+   bool m_preserveRegions{true};
+   bool m_regionsPreserved {false};
+
+   bool m_preservePan{true};
+   bool m_panPreserved {false};
+
+
 public:
-   
+
    ///Default c'tor
    ds9Interface();
-   
+
+   ///Constructor which initializes the access point title.
+   ds9Interface(const std::string & nn);
+
+   #ifndef DS9INTERFACE_NO_EIGEN
    /// Constructor which, after initialization, proceeds to display an Eigen-like array in ds9.
-   /** 
-     * see \ref display<typename arrayT>(arrayT & array, int frame=1) for more.
+   /**
+     * see \ref display<typename arrayT>(arrayT & array, int frame=1) for more info.
      */
    template<typename arrayT>
    ds9Interface( const arrayT & array, ///< [in] An array containing an image or cube of images
                  int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
                );
-   
-   
-   ///Destructor
+   #endif //DS9INTERFACE_NO_EIGEN
+
+   ///Destructor.
+   /** Calls shutdown, and closes the XPA connections.
+     */
    ~ds9Interface();
-   
+
    ///Initialize the ds9Interface structure
-   /** The title is set to "ds9", the port is set to 0, segs is set to NULL, and nsegs to 0.
-     * 
+   /** Established a persistent XPA connection.
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
-   int init();
+   void initialize();
 
-   
    ///Get the title of the ds9Interface
    /**
-     * \returns the current value of _title
-     */ 
+     * \returns the current value of m_title
+     */
    std::string title();
-   
-   ///Set the title of the ds9Interface 
-   /** The title is used as the name of the XPA access point
-     * 
-     * \retval 0 on sucess
-     * \retval -1 on an error
-     */
-   int title( const std::string & new_title /**< [in] the title to set. */);
 
-   ///Get the port of the ds9Interface
-   /**
-     * \returns the current value of _port
-     */ 
-   int port();
-   
-   ///Set the port of the ds9Interface 
-   /** 
+   ///Set the title of the ds9Interface
+   /** The title is used as the name of the XPA access point
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
-   int port( const int & new_port /**< [in] the port to set. */);
-   
+   int title(const std::string & nn /**< [in] the title to set. */);
+
+   ///Establish the existence of the desired DS9 XPA access point, spawning a new instance if needed.
+   /** This isn't really a "connection", the main point is to get the unique ip:port name of the
+     * DS9 instance we will be communicating with.
+     *
+     * \retval 0 on success.
+     * \retval -1 on error.
+     */
+   int connect();
+
+   int XPASet( const char * cmd );
+
    ///Spawn (open) the ds9 image viewer
-   /** This makes use of system() calls.  In each case the result is checked and if SIGINT or SIGQUIT was caught
-     * by the ds9 child process, it will be re-raised in the calling process.
-     * 
+   /** This forks and execs.  An error is returned if exec fails.
+     *
      * \retval 0 on sucess
-     * \retval -1 on an error, which may be caused by a response timeout.
+     * \retval -1 on an error.
      */
    int spawn();
 
    ///Add a segment corresponding to a particular frame in ds9
    /** Nothing is done if the frame already exists.  Note that this does not open a new frame in ds9.
-     * 
-     * This makes use of system() calls.  In each case the result is checked and if SIGINT or SIGQUIT was caught
-     * by the ds9 child process, it will be re-raised in the calling process.
-     * 
+     *
      * \param frame is the number of the new frame to initialize.  Note frame must be >= 1.
-     * 
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
@@ -156,24 +189,37 @@ public:
 
    ///Open a frame in ds9
    /** Nothing is done if the frame already exists.  First calls \ref addsegment.
-     * 
-     * This makes use of system() calls.  In each case the result is checked and if SIGINT or SIGQUIT was caught
-     * by the ds9 child process, it will be re-raised in the calling process.
-     * 
-     * \param frame is 
-     * 
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
    int addframe( int frame /**< [in] the number of the new frame to initialize.  \note frame must be >= 1. */);
 
+   int togglePreserveRegions(bool onoff);
+
+   int togglePreservePan(bool onoff);
+
    ///Display an image in ds9.
    /** A new ds9 instance is opened if necessary, and a new sharedmemory segment is added if necessary.
      * The image is described by a pointer and its 2 or 3 dimensions.
-     * 
-     * This makes use of system() calls.  In each case the result is checked and if SIGINT or SIGQUIT was caught
-     * by the ds9 child process, it will be re-raised in the calling process.
-     * 
+     *
+     * \retval 0 on sucess
+     * \retval -1 on an error
+     *
+     */
+   int display( const void *im, ///< [in] the address of the image
+                int bitpix,
+                size_t pixsz,
+                size_t dim1,     ///< [in] the first dimension of the image (in pixels)
+                size_t dim2,     ///< [in] the second dimension of the image (in pixels)
+                size_t dim3,     ///< [in] the third dimension of the image (in pixels), set to 1 if not a cube.
+                int frame = 1    ///< [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
+              );
+
+   ///Display an image in ds9.
+   /** A new ds9 instance is opened if necessary, and a new sharedmemory segment is added if necessary.
+     * The image is described by a pointer and its 2 or 3 dimensions.
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      *
@@ -186,13 +232,15 @@ public:
                 int frame = 1    ///< [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
               );
 
+   #ifndef DS9INTERFACE_NO_EIGEN
+
    /// Display an Eigen-like array in ds9.
    /** Uses the rows(), cols(), and possibly planes(), methods of arrayT.
-     * 
+     *
      * see \ref display<typename dataT>(const dataT *im, size_t dim1, size_t dim2, size_t dim3, int frame=1) for more.
-     * 
+     *
      * \overload
-     * 
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
@@ -200,11 +248,11 @@ public:
    int display( const arrayT & array, ///< [in] An array containing an image or cube of images
                 int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
               );
-   
+
    /// Display an Eigen-like array in ds9.
-   /** 
+   /**
      * see \ref display<typename arrayT>(arrayT & array, int frame=1) for more.
-     * 
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
@@ -212,10 +260,11 @@ public:
    int operator()( const arrayT & array, ///< [in] An array containing an image or cube of images
                    int frame = 1 ///<  [in] [optional] the number of the new frame to initialize.  \note frame must be >= 1.
                  );
-   
+   #endif //DS9INTERFACE_NO_EIGEN
+
    ///Shutdown the ds9 interface
-   /** Mainly detaches from the shared memory segments
-     *  
+   /** Detaches from the shared memory segments.
+     *
      * \retval 0 on sucess
      * \retval -1 on an error
      */
@@ -223,110 +272,146 @@ public:
 
 };
 
-inline
 ds9Interface::ds9Interface()
 {
-   init();
+   initialize();
 }
 
+ds9Interface::ds9Interface(const std::string & nn)
+{
+   initialize();
+   title(nn);
+}
+
+#ifndef DS9INTERFACE_NO_EIGEN
 template<typename arrayT>
 ds9Interface::ds9Interface( const arrayT & array,
                             int frame
                           )
 {
-   init();
+   initialize();
    display(array, frame);
 }
+#endif //DS9INTERFACE_NO_EIGEN
 
-inline
 ds9Interface::~ds9Interface()
 {
    shutdown();
+   XPAClose(xpa);
 }
 
 inline
-int ds9Interface::init()
+void ds9Interface::initialize()
 {
-   title("ds9");
-   
-   _port = 0;
-
-   return 0;
+   xpa = XPAOpen(NULL);
 }
 
 inline
 std::string ds9Interface::title()
 {
-   return _title;
+   return m_title;
 }
 
 inline
-int ds9Interface::title( const std::string & new_title)
+int ds9Interface::title(const std::string & nn)
 {
-   _title = new_title;
+   m_title = nn;
+   m_connected = false;
+}
+
+inline
+int ds9Interface::connect()
+{
+   char * mode = NULL;
+
+   int  n = 1;
+   char *names[1];
+   names[0] = NULL;
+
+   std::string tmpl;
+   if( m_title.find(':', 0) == std::string::npos)
+   {
+      if(m_title == "") m_title = "ds9";
+
+      tmpl = "DS9:";
+      tmpl += m_title;
+   }
+   else
+   {
+      tmpl = m_title;
+   }
+
+   char paramlist[] = "gsi";
+
+   int rv = XPAAccess(xpa, const_cast<char *>(tmpl.c_str()), paramlist, NULL, names, NULL, n);
+
+   if(rv == 0)
+   {
+      if( spawn() != 0) return -1;
+      if(names[0]) free(names[0]);
+
+      int slept = 0;
+      while(rv == 0 && slept < DS9INTERFACE_SPAWN_TIMEOUT)
+      {
+         rv = XPAAccess(xpa, const_cast<char *>(tmpl.c_str()), paramlist, NULL, names, NULL, n);
+
+         usleep(DS9INTERFACE_SPAWN_SLEEP*1000);
+         slept += DS9INTERFACE_SPAWN_SLEEP;
+      }
+
+      if(rv == 0)
+      {
+         std::cerr << "ds9Interface: failed to connect after attempting to spawn.  Timed out.\n";
+         if(names[0]) free(names[0]);
+         return -1;
+      }
+   }
+
+   char * st = strchr(names[0], ' ');
+
+   m_ipAndPort = st + 1;
+
+   free(names[0]);
+
+   m_connected = true;
 
    return 0;
 }
-
-inline
-int ds9Interface::port()
-{
-   return _port;
-}
-
-inline
-int ds9Interface::port( const int & new_port)
-{
-   _port = new_port;
-
-   return 0;
-}
-
 
 inline
 int ds9Interface::spawn()
 {
-   int i;
-   char resp[32];
-   char cmd[DS9_CMD_MAX_LENGTH];
-   int ret;
-   
-   snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaaccess %s", _title.c_str());
-   
-   resp[0] = 0;
-   if( ipc::command_response(cmd, resp, 128) ) return -1;
-   
-   //Don't respawn if it already exists.
-   if(strcmp(resp, "yes\n") == 0) return 0;
-   
-   ret = system("xpans &");
-   if (WIFSIGNALED(ret))
+   if(m_title == "" || m_title == "*") m_title = "ds9";
+
+   int pid = fork();
+   if (pid==0)
    {
-      if( WTERMSIG(ret) == SIGINT) raise(SIGINT);
-      if( WTERMSIG(ret) == SIGQUIT) raise(SIGQUIT);
+      errno = 0;
+      int rv = execlp("ds9", "ds9", "-title", m_title.c_str(), (char *) 0);
+
+      std::cerr << "ds9Interface: spawning failed, execlp returned.\n";
+      perror("ds9Interface");
+
+      return -1;
    }
-   
-   snprintf(cmd, DS9_CMD_MAX_LENGTH, "ds9 -title %s -port %i &", _title.c_str(), _port);
-   
-   ret = system(cmd);
-   if (WIFSIGNALED(ret))
+
+   return 0;
+}
+
+inline
+int ds9Interface::XPASet( const char * cmd )
+{
+   if(!m_connected) if(connect() < 0) return -1;
+
+   int rv = ::XPASet(xpa, const_cast<char *>(m_ipAndPort.c_str()), const_cast<char *>(cmd), NULL, NULL, 0, NULL, NULL, 1);
+
+   if(rv != 1)
    {
-      if( WTERMSIG(ret) == SIGINT) raise(SIGINT);
-      if( WTERMSIG(ret) == SIGQUIT) raise(SIGQUIT);
+      std::cerr << "ds9Interface::XPASet: did not send cmd properly.\n";
+      return -1;
    }
-   
-   //Now wait for ds9 to respond or timeout.
-   snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaaccess %s",  _title.c_str());
-   
-   for(i=0;i<10000;i++)
-   {
-      resp[0] = 0;
-      if( ipc::command_response(cmd, resp, 128) ) return -1;
-      if(strcmp(resp, "yes\n") == 0) return 0;
-      usleep(100);
-   }
-      
-   return -1; //a timeout
+
+   return 0;
 }
 
 inline
@@ -334,75 +419,119 @@ int ds9Interface::addsegment( int frame )
 {
    int i;
    size_t curr_n;
-   
+
    if(frame-1 < segs.size()) return 0;
-   
+
    curr_n = segs.size();
-   
+
    segs.resize(frame);
-   
+
    for(i = curr_n; i< segs.size(); i++)
    {
       segs[i].initialize();
       segs[i].setKey(0, IPC_PRIVATE);
-      
-      
    }
-   
+
    return 0;
-   
+
 }
 
 inline
 int ds9Interface::addframe( int frame )
 {
-   char cmd[DS9_CMD_MAX_LENGTH];
+   char cmd[DS9INTERFACE_CMD_MAX_LENGTH];
    int ret;
-   
+
    addsegment( frame );
 
-   snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s frame %i", _title.c_str(), frame);
-   ret = system(cmd);
-   if (WIFSIGNALED(ret))
+   snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "frame %i", frame);
+
+   if(!m_connected) if(connect() < 0) return -1;
+
+   int rv = XPASet(cmd);
+
+   if(rv != 0)
    {
-      if( WTERMSIG(ret) == SIGINT) raise(SIGINT);
-      if( WTERMSIG(ret) == SIGQUIT) raise(SIGQUIT);
+      std::cerr << "ds9Interface: could not add frame.\n";
+      m_connected = false;
+      return -1;
    }
-   
+
    return 0;
 }
 
-template<typename dataT>
-int ds9Interface::display( const dataT * im, 
-                            size_t dim1, 
-                            size_t dim2, 
-                            size_t dim3, 
-                            int frame
+inline
+int ds9Interface::togglePreserveRegions(bool onoff)
+{
+   int rv;
+
+   if(onoff == true)
+   {
+      rv = XPASet("preserve regions yes");
+      m_regionsPreserved = true;
+   }
+   else
+   {
+      rv = XPASet("preserve regions no");
+      m_regionsPreserved = false;
+   }
+
+   if(rv < 0)
+   {
+      std::cerr << "ds9Interface::preserveRegions: error sending preserve regions." << "\n";
+      return -1;
+   }
+
+   return 0;
+}
+
+inline
+int ds9Interface::togglePreservePan(bool onoff)
+{
+   int rv;
+
+   if(onoff == true)
+   {
+      rv = XPASet("preserve pan yes");
+      m_panPreserved = true;
+   }
+   else
+   {
+      rv = XPASet("preserve pan no");
+      m_panPreserved = false;
+   }
+
+   if(rv < 0)
+   {
+      std::cerr << "ds9Interface::preserveRegions: error sending preserve regions." << "\n";
+      return -1;
+   }
+
+   return 0;
+}
+
+int ds9Interface::display( const void * im,
+                           int bitpix,
+                           size_t pixsz,
+                           size_t dim1,
+                           size_t dim2,
+                           size_t dim3,
+                           int frame
                           )
 {
    size_t i, tot_size;
-   char cmd[DS9_CMD_MAX_LENGTH];
-   size_t pixsz;
-   int bitpix;
+   char cmd[DS9INTERFACE_CMD_MAX_LENGTH];
    int ret;
-   
+
    if(frame < 1)
    {
-      fprintf(stderr, "frame must >= 1\n");
+      std::cerr <<  "ds9Interface: frame must >= 1\n" << "\n";
       return -1;
    }
-   
-   spawn();
-   
-   bitpix = getFitsBITPIX<dataT>();
-   
-   pixsz = sizeof(dataT);
-      
-   //If needed add a shared memory segment for this frame
-   if(frame-1 >= segs.size())
-   {
-      addsegment( frame );
-   }
+
+   if(!m_connected) if(connect() < 0) return -1;
+
+   if(addframe(frame) < 0) return -1;
 
    //Calculate total size
    tot_size= pixsz;
@@ -419,51 +548,60 @@ int ds9Interface::display( const dataT * im,
       }
       segs[frame-1].create(tot_size);
    }
-   
+
    memcpy( segs[frame-1].addr, im, tot_size );
-   
-   
-   snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s frame %i", _title.c_str(), frame);
-   ret = system(cmd);
-   if (WIFSIGNALED(ret))
-   {
-      if( WTERMSIG(ret) == SIGINT) raise(SIGINT);
-      if( WTERMSIG(ret) == SIGQUIT) raise(SIGQUIT);
-   }
-   
-   
+
+
+
    //Handle single image so that the cube dialog doesn't open up if dim3=1
    if(dim3 == 1)
    {
-      snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s shm array shmid %i [xdim=%zu,ydim=%zu,bitpix=%i] &", 
-                                      _title.c_str(), segs[frame-1].shmemid,
+      snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,bitpix=%i]",
+                                      segs[frame-1].shmemid,
                                      dim1, dim2, bitpix);
    }
    else
    {
-      snprintf(cmd, DS9_CMD_MAX_LENGTH, "xpaset -p %s shm array shmid %i [xdim=%zu,ydim=%zu,zdim=%zu,bitpix=%i] &", 
-                                      _title.c_str(), segs[frame-1].shmemid,
+      snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,zdim=%zu,bitpix=%i]",
+                                      segs[frame-1].shmemid,
                                      dim1, dim2, dim3, bitpix);
    }
-   
-   ret = system(cmd);
-   if (WIFSIGNALED(ret))
+
+   int rv = XPASet(cmd);
+
+   if(rv != 0)
    {
-      if( WTERMSIG(ret) == SIGINT) raise(SIGINT);
-      if( WTERMSIG(ret) == SIGQUIT) raise(SIGQUIT);
+      std::cerr << "ds9Interface: sending shm array command to ds9 failed.\n";
+      return -1;
    }
-   
+
+   if( m_regionsPreserved != m_preserveRegions ) togglePreserveRegions(m_preserveRegions);
+   if( m_panPreserved != m_preservePan ) togglePreservePan(m_preservePan);
+
+
    return 0;
-   
+
 }
 
+template<typename dataT>
+int ds9Interface::display( const dataT * im,
+                           size_t dim1,
+                           size_t dim2,
+                           size_t dim3,
+                           int frame
+                          )
+{
+   return display(im, getFitsBITPIX<dataT>(), sizeof(dataT), dim1, dim2, dim3, frame);
+}
+
+#ifndef DS9INTERFACE_NO_EIGEN
 template<typename arrayT>
 int ds9Interface::display( const arrayT & array,
                            int frame
                          )
 {
    eigenArrPlanes<arrayT> planes;
-   
+
    return display(array.data(), array.rows(), array.cols(), planes(array), frame);
 }
 
@@ -474,22 +612,23 @@ int ds9Interface::operator()( const arrayT & array,
 {
    return display(array, frame);
 }
-   
+
+#endif //DS9INTERFACE_NO_EIGEN
+
 inline
 int ds9Interface::shutdown()
 {
    size_t i;
-   
+
    for(i=0; i < segs.size(); i++) segs[i].detach();
-   
+
    segs.clear();
-   
+
    return 0;
 }
 
-
-} //namespace improc 
+} //namespace improc
 } //namespace mx
 
-#endif //improc_ds9Interface_hpp
 
+#endif //improc_ds9Interface_hpp
