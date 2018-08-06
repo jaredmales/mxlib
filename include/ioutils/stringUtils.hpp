@@ -413,7 +413,7 @@ std::string toUpper(const std::string & instr /**< [in] is the string to convert
   * Uses std::remove_if.
   */
 inline
-void removeWhiteSpace( std::string & outstr, /// [out] will contain the new string with no whitespace.
+void removeWhiteSpace( std::string & outstr, ///< [out] will contain the new string with no whitespace.
                        const std::string & instr ///< [in] is the string to remove whitespace from
                      )
 {
@@ -492,7 +492,7 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
 
 /// @}
 
-} //namespace ioutils 
+} //namespace ioutils
 } //namespace mx
 
 #endif //stringUtils_hpp
