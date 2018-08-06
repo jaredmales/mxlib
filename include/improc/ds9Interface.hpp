@@ -118,7 +118,7 @@ public:
    ds9Interface();
 
    ///Constructor which initializes the access point title.
-   ds9Interface(const std::string & nn);
+   explicit ds9Interface(const std::string & nn);
 
    #ifndef DS9INTERFACE_NO_EIGEN
    /// Constructor which, after initialization, proceeds to display an Eigen-like array in ds9.
@@ -387,7 +387,7 @@ int ds9Interface::spawn()
    if (pid==0)
    {
       errno = 0;
-      int rv = execlp("ds9", "ds9", "-title", m_title.c_str(), (char *) 0);
+      execlp("ds9", "ds9", "-title", m_title.c_str(), (char *) 0);
 
       std::cerr << "ds9Interface: spawning failed, execlp returned.\n";
       perror("ds9Interface");

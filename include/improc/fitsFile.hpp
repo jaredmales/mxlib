@@ -516,6 +516,8 @@ void fitsErrText( std::string & explan, const std::string & filename, int fstatu
 template<typename dataT>
 void fitsFile<dataT>::construct()
 {
+   _fptr = 0;
+   
    _naxes = 0;
    _isOpen = 0;
 
