@@ -454,7 +454,7 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
               realT y0,                 ///< [in] The y coordinate of the first point
               realT x1,                 ///< [in] The x coordinate of the second point
               realT y1,                 ///< [in] The y coordinate of the second point
-              realT width,              ///< [in] The desired width of the line
+              realT width,              ///< [in] The desired full-width of the line
               realT val                 ///< [in] The value to set on the pixels in the line
             )
 {
