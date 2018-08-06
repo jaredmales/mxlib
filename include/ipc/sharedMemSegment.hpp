@@ -43,7 +43,7 @@ namespace ipc
   * @{
   */
 
-/// A c++ class to manage a shared memory segment with memory mapping
+/// A c++ class to manage a System V shared memory segment with memory mapping
 /** The associated functions create and/or attach to a shared memory segment.  If a segment is created, a block of
   * size sizeof(uintptr_t) is reserved where the address is stored.  This address is used when subsequently
   * attaching to the segment so that pointers stored in the block are valid, etc.
