@@ -43,7 +43,7 @@ protected:
    std::string _fileName;
 
    ///The cfitsio data structure
-   fitsfile * _fptr;
+   fitsfile * _fptr {nullptr};
 
    ///The dimensions of the image (1D, 2D, 3D etc)
    int _naxis;
@@ -515,9 +515,7 @@ void fitsErrText( std::string & explan, const std::string & filename, int fstatu
 
 template<typename dataT>
 void fitsFile<dataT>::construct()
-{
-   _fptr = 0;
-   
+{   
    _naxes = 0;
    _isOpen = 0;
 
