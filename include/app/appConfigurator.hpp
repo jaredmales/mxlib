@@ -162,7 +162,8 @@ struct appConfigurator
    int count( const std::string & name /**< [in] the target name */);
 
    ///Get the command line verbosity count for this option.
-   /** E.g., -v ==> 1, -vv ==> 2, -vvv ==> 3, etc.
+   /** E.g., -v ==> 1, -vv ==> 2, -vvv ==> 3, etc.  Note that for this to work
+     * properly, this must be of type mx::argType::True.
      * 
      * \returns the verbosity count.
      */
