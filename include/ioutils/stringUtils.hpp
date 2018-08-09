@@ -177,7 +177,7 @@ char convertFromString<char>(const std::string & str /**< [in] is the string to 
   *
   * \returns the converted numerical value.
   */
-template<>
+template<> inline
 unsigned char convertFromString<unsigned char>(const std::string & str /**< [in] is the string to convert*/ )
 {
    return (unsigned char) atoi(str.c_str());
@@ -286,7 +286,7 @@ unsigned long long convertFromString<unsigned long long>(const std::string & str
   *
   * \returns the converted numerical value.
   */
-template<>
+template<> inline
 float convertFromString<float>(const std::string & str /**< [in] is the string to convert*/ )
 {
    return strtof(str.c_str(), 0);
@@ -299,7 +299,7 @@ float convertFromString<float>(const std::string & str /**< [in] is the string t
   *
   * \returns the converted numerical value.
   */
-template<>
+template<> inline
 double convertFromString<double>(const std::string & str /**< [in] is the string to convert*/ )
 {
    return strtod(str.c_str(), 0);
@@ -311,7 +311,7 @@ double convertFromString<double>(const std::string & str /**< [in] is the string
   *
   * \returns the converted numerical value.
   */
-template<>
+template<> inline
 long double convertFromString<long double>(const std::string & str /**< [in] is the string to convert*/ )
 {
    return strtold(str.c_str(), 0);
