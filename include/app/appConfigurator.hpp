@@ -47,6 +47,7 @@ struct configTarget
 
    std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
 
+   int verbosity {0}; ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc. 
    int orderAdded {0}; ///< The order in which this was added.  Useful for displaying help messages.
 
    /// Default c'tor
@@ -160,6 +161,12 @@ struct appConfigurator
      */
    int count( const std::string & name /**< [in] the target name */);
 
+   ///Get the command line verbosity count for this option.
+   /** E.g., -v ==> 1, -vv ==> 2, -vvv ==> 3, etc.
+     * 
+     * \returns the verbosity count.
+     */
+   int verbosity( const std::string & name /**< [in] the target name */);
 
    /// Get the i-th value of the target, converted to the specified type
    /** The supplied value is only altered if the config target was set, which preserves.
@@ -349,6 +356,7 @@ void appConfigurator::parseCommandLine( int argc,
 
          clOpts.getAll(args, it->second.name);
          it->second.values.insert( it->second.values.end(), args.begin(), args.end());
+         it->second.verbosity = clOpts.count(it->second.name);
          it->second.set = true;
       }
    }
@@ -397,6 +405,12 @@ inline
 int appConfigurator::count(const std::string & name)
 {
    return targets[name].values.size();
+}
+
+inline
+int appConfigurator::verbosity(const std::string & name)
+{
+   return targets[name].verbosity;
 }
 
 template<typename typeT>

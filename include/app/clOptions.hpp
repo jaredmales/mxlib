@@ -185,6 +185,9 @@ struct clOptions
    int count(const std::string & key)
    {
       mapIterator it = map.find(key);
+      
+      if(it == map.end()) return -1;
+      
       return options[it->second].count();
    }
    
