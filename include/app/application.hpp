@@ -86,6 +86,9 @@ protected:
    int m_helpCFColWidth {25}; ///< The width of the config file option column in the help message.
    int m_helpTypeColWidth {15}; ///< The width of the argument type column in the help message.
 
+   int m_argc; ///< Store argc for later use. E.g. in reReadConfig().
+   char ** m_argv; ///< Store argv for later use. E.g. in reReadConfig().
+   
 public:
    //application();
 
@@ -146,6 +149,17 @@ protected:
                      );
 
 
+   ///Re-read the config stack.
+   /** This would be used if some config targets can only be constructed after 
+     * a first pass.  Note that all previously read values will be appended as if
+     * entered twice, so you must be careful to only access new targets
+     * after calling this.
+     *
+     * \returns 0 on success.
+     * \returns -1 on error.
+     */ 
+   int reReadConfig();
+   
    ///Set the default search paths for config files
    /** In general you should not need to redefine this.
      *
@@ -219,6 +233,9 @@ int application::main( int argc,
                        char **argv
                      )
 {
+   m_argc = argc;
+   m_argv = argv;
+   
    setup(argc, argv);
 
    if(doHelp)
@@ -268,6 +285,8 @@ int application::execute() //virtual
    return 0;
 }
 
+
+
 inline
 void application::setup( int argc,
                          char ** argv
@@ -301,6 +320,21 @@ void application::setup( int argc,
 
    loadBasicConfig();
    loadConfig();
+}
+
+inline
+int application::reReadConfig()
+{
+   config.readConfig(configPathGlobal);
+   config.readConfig(configPathUser);
+   config.readConfig(configPathLocal);
+
+   config.readConfig(configPathCL);
+
+   //Now parse the command line for real.
+   config.parseCommandLine(m_argc, m_argv);
+   
+   return 0;
 }
 
 inline
