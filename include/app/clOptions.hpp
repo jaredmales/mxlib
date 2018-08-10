@@ -66,17 +66,17 @@ struct clOptions
    /// D'tor.  Deletes the options and buffer pointers.
    ~clOptions()
    {
-      if(options) delete options;
-      if(buffer) delete buffer;
+      if(options) delete[] options;
+      if(buffer) delete[] buffer;
    }
 
    /// Clear the memory held by this object.
    void clear()
    {
-      if(options) delete options;
+      if(options) delete[] options;
       options = 0;
       
-      if(buffer) delete buffer;
+      if(buffer) delete[] buffer;
       buffer = 0;
       
       map.clear();
