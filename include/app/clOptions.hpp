@@ -57,26 +57,20 @@ struct clOptions
 
    std::vector<option::Descriptor> descriptions;
    
-   option::Option *  options;
-   option::Option* buffer;
+   option::Option * options {nullptr};
+   option::Option * buffer {nullptr};
    
-   unsigned int nOpts;
+   unsigned int nOpts {0};
 
 
-   
-   clOptions()
-   {
-      options = 0;
-      buffer = 0;
-      nOpts = 0;
-   }
-
+   /// D'tor.  Deletes the options and buffer pointers.
    ~clOptions()
    {
       if(options) delete options;
       if(buffer) delete buffer;
    }
 
+   /// Clear the memory held by this object.
    void clear()
    {
       if(options) delete options;
@@ -90,7 +84,12 @@ struct clOptions
       descriptions.clear();
    }
       
-   void add(const std::string & optName, const char * const shortOpt, const char * const longOpt, int argT)
+   /// Add a command line option target.
+   void add( const std::string & optName, ///< [in] The name of the option, used as its key 
+             const char * const shortOpt, ///< [in] The short option character 
+             const char * const longOpt,  ///< [in] The long option keyword
+             int argT                     ///< [in] The option type
+           )
    {
       mapIterator it;
       it = map.find(optName);
@@ -127,10 +126,13 @@ struct clOptions
 //      descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
    }
 
-   void parse(int argc, char **argv, std::vector<std::string> * nonOptions = 0)
+   ///Parse the command line
+   void parse( int argc,   ///< [in] From main(argc, argv), the number of command line arguments
+               char **argv, ///< in] From main(argc, argv), the command line arguments
+               std::vector<std::string> * nonOptions = 0 ///< [out] [optional] the elements in argv which are not option or option-arguments.
+             )
    {
       argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
-      
       
       descriptions.push_back({0,0,0,0,0,0});
       
@@ -151,7 +153,17 @@ struct clOptions
       }
    }
       
-   const char * operator[](const std::string & key)
+   ///Get the value of the option, if present.
+   /**
+     * For a true/false type, returns true or false as appropriate.
+     * Returns an empty string if no argument for the key. 
+     * Otherwise return the argument.
+     * 
+     * \returns 0 on error
+     * \returns an empty string on no argument
+     * \returns a string otherwise
+     */
+   const char * operator[](const std::string & key /**< [in] the key identifying the element */)
    {
       mapIterator it = map.find(key);
 
@@ -182,7 +194,8 @@ struct clOptions
       return options[it->second].last()->arg;
    }
    
-   int count(const std::string & key)
+   ///Get the number of times the option was set on the command line.
+   int count(const std::string & key /**< [in] the key identifying the element */)
    {
       mapIterator it = map.find(key);
       
@@ -192,7 +205,9 @@ struct clOptions
    }
    
    ///Fill a vector of strings with the arguments supplied for key, last first. 
-   void getAll(std::vector<std::string> & args, const std::string & key)
+   void getAll( std::vector<std::string> & args, ///< [out] will be resized and populated with the arguments.  Will be empty if no arguments specified.
+                const std::string & key ///< [in] the key identifying the element 
+              )
    {
       mapIterator it = map.find(key);
       
@@ -256,7 +271,8 @@ struct clOptions
       }
    }
       
-   bool optSet(const std::string & key)
+   ///Test whether this option was set.
+   bool optSet(const std::string & key /**< [in] the key identifying the element */)
    {
      mapIterator it = map.find(key);
      
