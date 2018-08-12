@@ -183,13 +183,6 @@ double ISO8601date2mjd(const std::string & fdate)
    //double hr, min, sec;
    double sec;
 
-/*   yr = atoi(fdate.substr(0,4).c_str());
-   mon = atoi(fdate.substr(5,2).c_str());
-   day = atoi(fdate.substr(8,2).c_str());
-
-   parse_hms(fdate.substr(11), hr, min, sec);
-  */
-
    ISO8601dateBreakdown( yr, mon, day, hr, min, sec, fdate);
 
    return Cal2mjd(yr,mon,day, hr, min, sec);

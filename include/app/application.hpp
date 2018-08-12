@@ -344,7 +344,6 @@ void application::setDefaults( int UNUSED(argc),
                                char ** UNUSED(argv)
                              ) //virtual
 {
-   char *tmpstr;
    std::string tmp;
 
    #ifdef MX_APP_DEFAULT_configPathGlobal
