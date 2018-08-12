@@ -8,6 +8,8 @@
 #ifndef fitsHeaderCard_hpp
 #define fitsHeaderCard_hpp
 
+#include "../mxlib.hpp"
+
 #include "../ioutils/stringUtils.hpp"
 
 #include "fitsUtils.hpp"
@@ -250,7 +252,7 @@ fitsHeaderCard::fitsHeaderCard( const std::string & k,
 
 inline
 fitsHeaderCard::fitsHeaderCard( const std::string & k,
-                                fitsCommentType v,
+                                fitsCommentType UNUSED(v),
                                 const std::string & c
                               )
 {
@@ -262,7 +264,7 @@ fitsHeaderCard::fitsHeaderCard( const std::string & k,
 
 inline
 fitsHeaderCard::fitsHeaderCard( const std::string & k,
-                                fitsHistoryType v,
+                                fitsHistoryType UNUSED(v),
                                 const std::string & c)
 {
    keyword = k;

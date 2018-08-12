@@ -115,12 +115,12 @@ struct autocorrelationFromPSD
       fftOut.resize(Npsd);
       fftIn.resize(Npsd);
       
-      for(int i=0; i< Npsd; ++i) fftIn[i] = psd[i];
+      for(size_t i=0; i< Npsd; ++i) fftIn[i] = psd[i];
       
       fft( fftOut.data(),fftIn.data() );
       
       T norm = fftOut[0].real();
-      for(int i=0; i < Npsd && i < Nac; ++i) ac[i] = fftOut[i].real()/norm;
+      for(size_t i=0; i < Npsd && i < Nac; ++i) ac[i] = fftOut[i].real()/norm;
    
    }
 

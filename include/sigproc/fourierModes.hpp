@@ -647,8 +647,6 @@ int fillFourierBasis( cubeT & cube,
                       typename cubeT::Scalar ang = 0
                     )
 {
-   typedef typename cubeT::Scalar floatT;
-
    int Nmodes = spf.size();
 
    cube.resize(dim,dim,Nmodes);

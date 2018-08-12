@@ -36,7 +36,7 @@ void wfsNoisePSD( std::vector<realT> &PSD,  ///< [out] A pre-allocated vector wh
 
    realT psd = 2*pow(beta_p_k,2)/snr2 * tau;
       
-   for(int i=0; i< PSD.size(); ++i)
+   for(size_t i=0; i< PSD.size(); ++i)
    {
       PSD[i] = psd;
    }

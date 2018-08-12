@@ -9,6 +9,8 @@
 #ifndef appConfigurator_hpp
 #define appConfigurator_hpp
 
+#include "../mxlib.hpp"
+
 #include "../ioutils/stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
 #include "../meta/typeTraits.hpp"
@@ -80,6 +82,8 @@ struct configTarget
       helpType = ht;
       helpExplanation = he;
 
+      orderAdded = oa;
+      
       set = false;
    }
 };
@@ -179,7 +183,7 @@ struct appConfigurator
    template<typename typeT>
    int get( typeT & v, ///< [out] the variable to store the value in
             const std::string & name, ///< [in] the config target name
-            int i ///< [in] the number of config specification to get.
+            size_t i ///< [in] the number of config specification to get.
           );
 
    /// Get the final value of the target, converted to the specified type
@@ -220,7 +224,7 @@ struct appConfigurator
    template<typename typeT>
    int get( std::vector<typeT> & v, ///< [out] the vector to populate
             const std::string & name, ///< [in] the config target name.
-            int i ///< [in] the number of config specification to get.
+            size_t i ///< [in] the number of config specification to get.
           );
 
 
@@ -417,7 +421,7 @@ int appConfigurator::verbosity(const std::string & name)
 template<typename typeT>
 int appConfigurator::get( typeT & v,
                           const std::string & name,
-                          int i
+                          size_t i
                         )
 {
    if(!isSet(name)) return 0;
@@ -446,7 +450,7 @@ int appConfigurator::get( typeT & v,
 template<typename typeT>
 int appConfigurator::get( std::vector<typeT> & v,
                           const std::string & name,
-                          int i
+                          size_t i
                         )
 {
 
@@ -464,8 +468,8 @@ int appConfigurator::get( std::vector<typeT> & v,
       return 0;
    }
 
-   int st;
-   int com;
+   size_t st;
+   size_t com;
 
    st = 0;
    com = s.find(',', st);
@@ -519,7 +523,7 @@ typeT appConfigurator::internalGet( const std::string & name,
 
    if(!isSet(name)) return typeT(); //this zero-initializes any fundamental types, calls default constructor for class-types.
 
-   typeT v;
+   typeT v = typeT();
    get(v, name);
 
    return v;

@@ -37,6 +37,8 @@
 #include <algorithm>
 
 
+#include "../mxlib.hpp"
+
 namespace mx
 {
 namespace ioutils
@@ -124,7 +126,7 @@ std::string convertToString( const typeT & value, ///< [in] the value of type ty
 /// Specialization of convertToString to avoid converting a string to a string
 template<> inline
 std::string convertToString<std::string>( const std::string & value,
-                                          int precision
+                                          int UNUSED(precision)
                                         )
 {
    return value;
@@ -328,7 +330,7 @@ template<> inline
 bool convertFromString<bool>(const std::string & str /**< [in] is the string to convert*/ )
 {
    char c = str[0];
-   int i=0;
+   size_t i=0;
    while(isspace(c) && i < str.length()) c = str[i++];
 
    if(c == '0' || c == 'f' || c == 'F') return false;
@@ -351,7 +353,7 @@ void toLower( std::string &outstr, ///< [out]  will be resized and populated wit
 {
    outstr.resize(instr.size());
 
-   for(int i=0; i < instr.size(); ++i) outstr[i] = tolower(instr[i]);
+   for(size_t i=0; i < instr.size(); ++i) outstr[i] = tolower(instr[i]);
 
 }
 
@@ -385,7 +387,7 @@ void toUpper( std::string &outstr, ///< [out]  will be resized and populated wit
 {
    outstr.resize(instr.size());
 
-   for(int i=0; i < instr.size(); ++i) outstr[i] = toupper(instr[i]);
+   for(size_t i=0; i < instr.size(); ++i) outstr[i] = toupper(instr[i]);
 
 }
 

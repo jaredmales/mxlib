@@ -74,20 +74,20 @@ struct textTable
    std::string m_rowSep; ///< Text to print between each row.
 
    ///Add one cell to the table, overwriting if it already exists.
-   void addCell( int row, ///< [in] the row of the cell.
-                 int col, ///< [in] the column of the cell.
+   void addCell( size_t row, ///< [in] the row of the cell.
+                 size_t col, ///< [in] the column of the cell.
                  const std::string & cell  ///< [in] the new contents of the cell, will be wrapped.
                );
 
-   void addCell( int row, ///< [in] the row of the cell.
-                 int col, ///< [in] the column of the cell.
+   void addCell( size_t row, ///< [in] the row of the cell.
+                 size_t col, ///< [in] the column of the cell.
                  const char * cell  ///< [in] the new contents of the cell, will be wrapped.
                );
 
    ///Add one cell to the table, overwriting if it already exists.
    template<typename typeT>
-   void addCell( int row, ///< [in] the row of the cell.
-                 int col, ///< [in] the column of the cell.
+   void addCell( size_t row, ///< [in] the row of the cell.
+                 size_t col, ///< [in] the column of the cell.
                  const typeT & cell,  ///< [in] the new contents of the cell, will be wrapped.
                  int precision=0
                );
@@ -103,16 +103,16 @@ struct textTable
 };
 
 inline
-void textTable::addCell( int row,
-                         int col,
+void textTable::addCell( size_t row,
+                         size_t col,
                          const std::string & cell
                        )
 {
    //Increase size if needed.
    if( row >= m_rows.size() )
    {
-      int N = m_rows.size();
-      for(int i=0; i < row - N +1; ++i)
+      size_t N = m_rows.size();
+      for(size_t i=0; i < row - N +1; ++i)
       {
          m_rows.push_back( std::vector<std::vector<std::string>>( m_colWidths.size()));
       }
@@ -122,8 +122,8 @@ void textTable::addCell( int row,
    stringWrap(m_rows[row][col], cell, m_colWidths[col]);
 }
 
-void textTable::addCell(int row,
-                        int col,
+void textTable::addCell(size_t row,
+                        size_t col,
                         const char * cell
                        )
 {
@@ -131,8 +131,8 @@ void textTable::addCell(int row,
 }
 
 template<typename typeT>
-void textTable::addCell(int row,
-                        int col,
+void textTable::addCell(size_t row,
+                        size_t col,
                         const typeT & cell,
                         int precision
                        )
@@ -145,29 +145,29 @@ void textTable::outPut( iosT & ios )
 {
    std::string line;
 
-   int width = 0;
-   for(int i=0;i<m_colWidths.size();++i) width += m_colWidths[i];
+   size_t width = 0;
+   for(size_t i=0;i<m_colWidths.size();++i) width += m_colWidths[i];
    width += m_colWidths.size()*(m_colSep.length()-1); //+100;
 
    line.resize(width, ' ');
 
-   for(int i=0; i< m_rows.size(); ++i)
+   for(size_t i=0; i< m_rows.size(); ++i)
    {
-      int rowL = 0;
-      for(int j=0; j< m_colWidths.size(); ++j)
+      size_t rowL = 0;
+      for(size_t j=0; j< m_colWidths.size(); ++j)
       {
          if( m_rows[i][j].size() > rowL ) rowL = m_rows[i][j].size();
       }
 
-      for(int k=0; k< rowL; ++k)
+      for(size_t k=0; k< rowL; ++k)
       {
          //line.insert( 0, line.length(), ' ');
          line.clear();
          line.resize(width, ' ');
          //line.replace(0, width, width, ' ');
 
-         int startPos = 0;
-         for(int j=0; j< m_colWidths.size(); ++j)
+         size_t startPos = 0;
+         for(size_t j=0; j< m_colWidths.size(); ++j)
          {
             if(m_rows[i][j].size() > k) line.replace(startPos, m_rows[i][j][k].length(), m_rows[i][j][k]);
             startPos += m_colWidths[j];

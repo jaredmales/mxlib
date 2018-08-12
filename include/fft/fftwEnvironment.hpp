@@ -29,6 +29,7 @@
 
 #include <string>
 
+#include "../mxlib.hpp"
 #include "../environment.hpp"
 
 
@@ -128,7 +129,7 @@ std::string fftw_wisdom_filename()
 template< typename realT, bool threads=false>
 struct fftwEnvironment
 {
-   explicit fftwEnvironment(unsigned nThreads = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+   explicit fftwEnvironment(unsigned UNUSED(nThreads) = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
    {
       fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
    }
@@ -143,7 +144,7 @@ struct fftwEnvironment
 
 
 
-//Partial specialization for no threads.
+//Partial specialization for threads.
 template< typename realT>
 struct fftwEnvironment<realT, true>
 {

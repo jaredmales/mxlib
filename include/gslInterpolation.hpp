@@ -133,13 +133,15 @@ int gsl_interpolate( const gsl_interp_type * interpT,
    
    gsl_interp_accel_reset(acc);
    
-   for(int i=0;i<Nout; ++i)
+   for(size_t i=0;i<Nout; ++i)
    {
-      int e = gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
+      gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
    }
    
    gsl_interp_free(interp);
    gsl_interp_accel_free (acc);
+   
+   return 0;
 }
 
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis (vector version)

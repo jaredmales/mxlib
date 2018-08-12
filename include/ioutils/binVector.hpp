@@ -228,7 +228,7 @@ int readBinVector( std::vector<dataT> & vec, ///< [out] vec is a vector which wi
    FILE *fin;
    binVTypeT typecode;
    binVSizeT sz;
-   int nrd;
+   size_t nrd;
 
    fin = fopen(fname.c_str(), "r");
    if(fin == 0)
@@ -321,7 +321,7 @@ int writeBinVector( const std::string & fname, ///< [in] fname is the name (full
 {
 
    FILE *fout;
-   int nwr;
+   size_t nwr;
    binVTypeT typecode = binVectorTypeCode<dataT>();
    binVSizeT sz = vec.size();
 

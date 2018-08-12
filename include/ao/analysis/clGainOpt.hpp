@@ -445,7 +445,7 @@ void clGainOpt<realT>::tau(realT newTau)
 template<typename realT>
 void clGainOpt<realT>::b( const std::vector<realT> & newB)
 {
-   if( newB.size() > _cs.cols() )
+   if( newB.size() > (size_t) _cs.cols() )
    {
       _fChanged = true;
    }
@@ -464,7 +464,7 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1>  & newB)
 
    _b.resize( newB.cols());
 
-   for(int i=0; i< _b.size(); ++i)
+   for(size_t i=0; i< _b.size(); ++i)
    {
       _b[i] = newB(0,i);
    }
@@ -475,7 +475,7 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1>  & newB)
 template<typename realT>
 void clGainOpt<realT>::a ( const std::vector<realT> & newA)
 {
-   if( newA.size()+1 > _cs.cols())
+   if( newA.size()+1 > (size_t) _cs.cols())
    {
       _fChanged = true;
    }
@@ -494,7 +494,7 @@ void clGainOpt<realT>::a( const Eigen::Array<realT, -1, -1>  & newA)
 
    _a.resize( newA.cols());
 
-   for(int i=0; i< _a.size(); ++i)
+   for(size_t i=0; i< _a.size(); ++i)
    {
       _a[i] = newA(0,i);
    }
@@ -569,17 +569,17 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
    #ifdef PRECALC_TRIG
    if(_fChanged)
    {
-      int jmax = std::max(_a.size()+1, _b.size());
+      size_t jmax = std::max(_a.size()+1, _b.size());
 
       _cs.resize(_f.size(), jmax);
       _ss.resize(_f.size(), jmax);
 
-      for(int i=0; i< _f.size(); ++i)
+      for(size_t i=0; i< _f.size(); ++i)
       {
          _cs(i,0) = 1.0;
          _ss(i,0) = 0.0;
 
-         for(int j = 1; j<jmax; ++j)
+         for(size_t j = 1; j<jmax; ++j)
          {
             _cs(i,j) = cos(two_pi<realT>()*_f[i]*_Ti*realT(j));
             _ss(i,j) = sin(two_pi<realT>()*_f[i]*_Ti*realT(j));
@@ -598,10 +598,10 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       _H_del.resize(_f.size(), 0);
       _H_con.resize(_f.size(), 0);
 
-      int jmax = std::min(_a.size(), _b.size());
+      size_t jmax = std::min(_a.size(), _b.size());
 
       //#pragma omp parallel for
-      for(int i=0; i<_f.size(); ++i)
+      for(size_t i=0; i<_f.size(); ++i)
       {
          if(_f[i] <= 0 ) continue;
 
@@ -620,7 +620,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
          complexT FIR = complexT(_b[0],0);
 
          complexT IIR = complexT(0.0, 0.0);
-         for(int j = 1; j < jmax; ++j)
+         for(size_t j = 1; j < jmax; ++j)
          {
             #ifdef PRECALC_TRIG
             realT cs = _cs(i,j);
@@ -634,7 +634,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             #endif
          }
 
-         for(int jj=jmax; jj< _a.size()+1; ++jj)
+         for(size_t jj=jmax; jj< _a.size()+1; ++jj)
          {
             #ifdef PRECALC_TRIG
             realT cs = _cs(i,jj);
@@ -646,7 +646,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
             #endif
          }
 
-         for(int jj=jmax; jj<_b.size(); ++jj)
+         for(size_t jj=jmax; jj<_b.size(); ++jj)
          {
             #ifdef PRECALC_TRIG
             realT cs = _cs(i,jj);
@@ -749,7 +749,7 @@ realT clGainOpt<realT>::clVariance( realT & varErr,
 
    df = _f[1] - _f[0];
 
-   for(int i=0; i< PSDerr.size(); ++i)
+   for(size_t i=0; i< PSDerr.size(); ++i)
    {
       if(g == 0)
       {
@@ -781,11 +781,11 @@ realT clGainOpt<realT>::clVariance( std::vector<realT> & PSDerr,
 
 
 template<typename realT>
-realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
+realT clGainOpt<realT>::maxStableGain( realT & ll, realT & UNUSED(ul))
 {
    std::vector<realT> re, im;
 
-   if(ll == 0) ll == _maxFindMin;
+   if(ll == 0) ll = _maxFindMin;
 
    nyquist( re, im, 1.0);
 
@@ -890,12 +890,14 @@ int clGainOpt<realT>::nyquist( std::vector<realT> & re,
 
    complexT etf;
 
-   for(int f=0; f< _f.size(); ++f)
+   for(size_t f=0; f< _f.size(); ++f)
    {
       etf = g*olXfer(f);// clETF(f, g);
       re[f] = real(etf);
       im[f] = imag(etf);
    }
+   
+   return 0;
 }
 
 //------------ Workers ---------------------

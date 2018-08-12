@@ -27,6 +27,8 @@
 #include <complex>
 
 
+#include "../mxlib.hpp"
+
 #include "fftwTemplates.hpp"
 #include "../meta/trueFalseT.hpp"
 
@@ -152,6 +154,8 @@ public:
          
    void doPlan(const meta::trueFalseT<false> & inPlace)
    {
+      (void) inPlace;
+      
       inputT * forplan1;
       outputT * forplan2;
       
@@ -182,6 +186,8 @@ public:
    
    void doPlan(const meta::trueFalseT<true> & inPlace)
    {
+      (void) inPlace;
+      
       complexT * forplan;
 
       int sz;
@@ -238,14 +244,18 @@ public:
 };
 
 template<>
-std::vector<int> fftwDimVec<1>( int szX, int szY, int szZ)
+std::vector<int> fftwDimVec<1>( int szX, 
+                                int UNUSED(szY), 
+                                int UNUSED(szZ))
 {
    std::vector<int> v({szX});
    return v;
 }
 
 template<>
-std::vector<int> fftwDimVec<2>( int szX, int szY, int szZ)
+std::vector<int> fftwDimVec<2>( int szX, 
+                                int szY, 
+                                int UNUSED(szZ))
 {
    std::vector<int> v({szX, szY});
    return v;

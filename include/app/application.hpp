@@ -8,6 +8,8 @@
 #define __application_hpp__
 
 
+#include "../mxlib.hpp"
+
 #include "appConfigurator.hpp"
 #include "../ioutils/textTable.hpp"
 
@@ -338,8 +340,8 @@ int application::reReadConfig()
 }
 
 inline
-void application::setDefaults( int argc,
-                               char ** argv
+void application::setDefaults( int UNUSED(argc),
+                               char ** UNUSED(argv)
                              ) //virtual
 {
    char *tmpstr;

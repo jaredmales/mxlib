@@ -66,7 +66,7 @@ struct linearPredictor
    int calcCoefficients( std::vector<realT> & ac,
                          size_t Nc,
                          realT condition = 0,
-                         int extrap = 0
+                         size_t extrap = 0
                        )
    {
       
@@ -81,9 +81,9 @@ struct linearPredictor
       Rmat.resize(Nc, Nc);
       Rvec.resize(1, Nc);
    
-      for(int i=0; i<Nc; ++i)
+      for(size_t i=0; i<Nc; ++i)
       {
-         for(int j=0; j<Nc; ++j)
+         for(size_t j=0; j<Nc; ++j)
          {
             Rmat(i,j) = ac[ fabs(i-j)];
          }
@@ -111,7 +111,7 @@ struct linearPredictor
 
    int calcCoefficientsLevinson( std::vector<realT> & ac,
                                  size_t Nc,
-                                 int extrap = 0
+                                 size_t extrap = 0
                                )
    {
       std::vector<realT> r, x, y;
@@ -120,23 +120,23 @@ struct linearPredictor
       x.resize(Nc);
       y.resize(Nc);
       
-      for(int i=0; i< Nc; ++i) r[i] = ac[Nc-i - 1];
-      for(int i=Nc; i< 2*Nc-1; ++i) r[i] = ac[i-Nc+1];
+      for(size_t i=0; i< Nc; ++i) r[i] = ac[Nc-i - 1];
+      for(size_t i=Nc; i< 2*Nc-1; ++i) r[i] = ac[i-Nc+1];
       
-      for(int i=0;i<Nc; ++i) y[i] = ac[i+1];
+      for(size_t i=0;i<Nc; ++i) y[i] = ac[i+1];
       
       levinsonRecursion(r.data(), x.data(), y.data(), Nc);
       
       _c.resize(1, Nc);
-      for(int i=0; i< Nc; ++i) _c(0,i) = x[i];
+      for(size_t i=0; i< Nc; ++i) _c(0,i) = x[i];
     
       
       if(extrap == 1)
       {
          Eigen::Array<realT, -1, -1> ex(_c.rows(), _c.cols());
-         for(int j=0; j < extrap; ++j)
+         for(size_t j=0; j < extrap; ++j)
          {
-            for(int i=0; i< Nc-1; ++i)
+            for(size_t i=0; i< Nc-1; ++i)
             {
                ex(0,i) = _c(0,0)*_c(0,i) + _c(0,i+1);
             }

@@ -443,7 +443,7 @@ realT fourierTemporalPSD<realT, aosysT>::fastestPeak( int m,
 
    realT f, fmax = 0;
 
-   for(int i=0; i< _aosys->atm.n_layers(); ++i)
+   for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
    {
       vu = _aosys->atm.layer_v_wind(i) * cos(_aosys->atm.layer_dir(i));
       vv = _aosys->atm.layer_v_wind(i) * sin(_aosys->atm.layer_dir(i));
@@ -494,7 +494,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    params._modeCoeffs = _modeCoeffs;
    params._minCoeffVal = _minCoeffVal;
 
-   realT result, error, result2;
+   realT result, error;
 
    //Setup the GSL calculation
    gsl_function func;
@@ -529,7 +529,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
 
    //Here we only calculate up to fmax.
-   int i=0;
+   size_t i=0;
    while( freq[i] <= fmax )
    {
       params._f = freq[i];
@@ -549,11 +549,11 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    }
 
    //Now fill in from fmax to the actual max frequency with a -(alpha+2) power law.
-   int j=i;
+   size_t j=i;
 
    //First average result for last 50.
    PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], _aosys->atm.alpha()+2);//seventeen_thirds<realT>());
-   for(int k=49; k> 0; --k)
+   for(size_t k=49; k> 0; --k)
    {
       PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], _aosys->atm.alpha()+2); //seventeen_thirds<realT>());
    }
@@ -581,19 +581,21 @@ int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
                                                        realT fmax,
                                                        isParallel<true> parallel )
 {
+   static_cast<void>(parallel);
+   
    #pragma omp parallel
    {
       //Records each layer PSD
       std::vector<realT> single_PSD(freq.size());
 
       #pragma omp for
-      for(int i=0; i< _aosys->atm.n_layers(); ++i)
+      for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
       {
          singleLayerPSD(single_PSD, freq, m, n, i, p, fmax);
 
          //Now add the single layer PSD to the overall PSD, weighted by Cn2
          #pragma omp critical
-         for(int j=0; j<freq.size(); ++j)
+         for(size_t j=0; j<freq.size(); ++j)
          {
            PSD[j] += _aosys->atm.layer_Cn2(i)*single_PSD[j];
          }
@@ -612,15 +614,17 @@ int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
                                                         realT fmax,
                                                         isParallel<false>  parallel )
 {
+   static_cast<void>(parallel);
+   
    //Records each layer PSD
    std::vector<realT> single_PSD(freq.size());
 
-   for(int i=0; i< _aosys->atm.n_layers(); ++i)
+   for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
    {
       singleLayerPSD(single_PSD, freq, m, n, i, p, fmax);
 
       //Now add the single layer PSD to the overall PSD, weighted by Cn2
-      for(int j=0; j<freq.size(); ++j)
+      for(size_t j=0; j<freq.size(); ++j)
       {
          PSD[j] += _aosys->atm.layer_Cn2(i)*single_PSD[j];
       }
@@ -640,7 +644,7 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
                                                        realT fmax )
 {
    //PSD is zeroed every time to make sure we don't accumulate on repeated calls
-   for(int j=0;j<PSD.size(); ++j) PSD[j] = 0;
+   for(size_t j=0;j<PSD.size(); ++j) PSD[j] = 0;
 
    if(fmax == 0)
    {
@@ -704,7 +708,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
 
    ioutils::writeBinVector( fn, freq);
 
-   int nLoops = 0.5*spf.size();
+   size_t nLoops = 0.5*spf.size();
 
    mx::ompLoopWatcher<> watcher(nLoops, std::cout);
 
@@ -717,7 +721,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
       int m, n;
 
       #pragma omp for
-      for(int i=0; i<nLoops; ++i)
+      for(size_t i=0; i<nLoops; ++i)
       {
          m = spf[i*2].m;
          n = spf[i*2].n;
@@ -761,7 +765,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout << "#    mnCon    = " << mnCon << '\n';
    fout << "#    lpNc     = " << lpNc << '\n';
    fout << "#    mags     = ";
-   for(int i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
+   for(size_t i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
    fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
    //fout << "#    intTimes = ";
@@ -777,7 +781,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    std::vector<sigproc::fourierModeDef> fms;
 
    sigproc::makeFourierModeFreqs_Rect(fms, 2*mnMax);
-   int nModes = 0.5*fms.size();
+   size_t nModes = 0.5*fms.size();
 
    Eigen::Array<realT, -1, -1> gains, vars, gains_lp, vars_lp;
 
@@ -807,7 +811,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
    if(writePSDs)
    {
-      for(int s=0; s< mags.size(); ++s)
+      for(size_t s=0; s< mags.size(); ++s)
       {
          std::string psdOutDir = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si";
          mkdir(psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -822,7 +826,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
    mx::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
 
-   for(int s = 0; s < mags.size(); ++s)
+   for(size_t s = 0; s < mags.size(); ++s)
    {
       #pragma omp parallel
       {
@@ -839,7 +843,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
 
-         int imax = 0;
+         size_t imax = 0;
          while( tfreq[imax] <= 0.5*fs && imax < tfreq.size()) ++imax;
          tfreq.erase(tfreq.begin() + imax, tfreq.end());
 
@@ -855,14 +859,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          realT gmax = 0;
          realT gmax_lp = 0;
-         double t0, t1, t00, t11;
 
          int m, n;
 
          //want to schedule dynamic with small chunks so maximal processor usage,
          //otherwise we can end up with a small number of cores being used at the end
          #pragma omp for schedule(dynamic, 5)
-         for(int i=0; i<nModes; ++i)
+         for(size_t i=0; i<nModes; ++i)
          {
             m = fms[2*i].m;
             n = fms[2*i].n;
@@ -939,7 +942,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                {
                   realT ETF, NTF;
 
-                  for(int i=0; i< tfreq.size(); ++i)
+                  for(size_t i=0; i< tfreq.size(); ++i)
                   {
                      go_si.clTF2( ETF, NTF, i,gopt);
                      psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
@@ -968,7 +971,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   {
                      realT ETF, NTF;
 
-                     for(int i=0; i < tfreq.size(); ++i)
+                     for(size_t i=0; i < tfreq.size(); ++i)
                      {
                         go_lp.clTF2( ETF, NTF, i, gopt_lp);
                         psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
@@ -1075,7 +1078,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
    fn = dir + "/strehl_si.txt";
    fout.open(fn);
-   for(int i=0;i<mags.size(); ++i)
+   for(size_t i=0;i<mags.size(); ++i)
    {
       fout << mags[i] << " " << S_si[i] << "\n";
    }
@@ -1086,7 +1089,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    {
       fn = dir + "/strehl_lp.txt";
       fout.open(fn);
-      for(int i=0;i<mags.size(); ++i)
+      for(size_t i=0;i<mags.size(); ++i)
       {
          fout << mags[i] << " " << S_lp[i] << "\n";
       }
@@ -1223,7 +1226,7 @@ realT F_projMod (realT kv, void * params)
 
    realT ku = f/v_wind;
 
-   realT kp, kpp, km, kmp, Jp, Jpp, Jm, Jmp, QQ;
+   realT kp, km, Jp, Jpp, Jm, Jmp, QQ;
 
    QQ = 0;
 

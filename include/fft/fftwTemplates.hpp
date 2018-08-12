@@ -32,6 +32,8 @@
 
 #include <fftw3.h>
 
+#include "../mxlib.hpp"
+
 namespace mx
 {
 /** \addtogroup fftw_templates
@@ -696,7 +698,7 @@ template<>
 inline fftwTypeSpec<float, complexFT>::planT fftw_plan_dft<float, complexFT>( std::vector<int> n, 
                                                                               float * in, 
                                                                               complexFT * out,
-                                                                              int sign,
+                                                                              int UNUSED(sign),
                                                                               unsigned flags )
 {
    return ::fftwf_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftwf_complex*>(out), flags);
@@ -706,7 +708,7 @@ template<>
 inline fftwTypeSpec<complexFT, float>::planT fftw_plan_dft<complexFT, float>( std::vector<int> n, 
                                                                               complexFT * in, 
                                                                               float * out,
-                                                                              int sign,
+                                                                              int UNUSED(sign),
                                                                               unsigned flags )
 {
    return ::fftwf_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwf_complex*>(in), out, flags);
@@ -728,7 +730,7 @@ template<>
 inline fftwTypeSpec<double, complexDT>::planT fftw_plan_dft<double, complexDT>( std::vector<int> n, 
                                                                                 double * in, 
                                                                                 complexDT * out,
-                                                                                int sign,
+                                                                                int UNUSED(sign),
                                                                                 unsigned flags )
 {
    return ::fftw_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftw_complex*>(out), flags);
@@ -738,7 +740,7 @@ template<>
 inline fftwTypeSpec<complexDT, double>::planT fftw_plan_dft<complexDT, double>( std::vector<int> n, 
                                                                                 complexDT * in, 
                                                                                 double * out,
-                                                                                int sign,
+                                                                                int UNUSED(sign),
                                                                                 unsigned flags )
 {
    return ::fftw_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftw_complex*>(in), out, flags);
@@ -760,7 +762,7 @@ template<>
 inline fftwTypeSpec<long double, complexLT>::planT fftw_plan_dft<long double, complexLT>( std::vector<int> n, 
                                                                                           long double * in, 
                                                                                           complexLT * out,
-                                                                                          int sign,
+                                                                                          int UNUSED(sign),
                                                                                           unsigned flags )
 {
    return ::fftwl_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftwl_complex*>(out), flags);
@@ -770,7 +772,7 @@ template<>
 inline fftwTypeSpec<complexLT, long double>::planT fftw_plan_dft<complexLT, long double>( std::vector<int> n, 
                                                                                           complexLT * in, 
                                                                                           long double * out,
-                                                                                          int sign,
+                                                                                          int UNUSED(sign),
                                                                                           unsigned flags )
 {
    return ::fftwl_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwl_complex*>(in), out, flags);
