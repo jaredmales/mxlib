@@ -350,6 +350,7 @@ void application::setDefaults( int UNUSED(argc),
       configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
    #endif
    #ifdef MX_APP_DEFAULT_configPathGlobal_env
+      char * tmpstr;
       tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
       if(tmpstr != 0) configPathGlobal = tmpstr;
    #endif
