@@ -21,9 +21,16 @@ ifeq ($(USE_BLAS_FROM),mkl)
     BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
 ifeq ($(USE_BLAS_FROM),ATLAS)
+    #These are probably what you want for self-compiled atlas
     BLAS_INCLUDES ?= -I/usr/local/atlas/include
     BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
     BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas -lgfortran
+    
+    #2018-08-13: These work for apt installed atlas on Ubuntu 18.04
+    #BLAS_INCLUDES ?= -I/usr/include/x86_64-linux-gnu/
+    #BLAS_LDFLAGS ?= -L/usr/lib/x86_64-linux-gnu/
+    #BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas
+
 endif
 ifeq ($(USE_BLAS_FROM),Accelerate)
     BLAS_LDFLAGS ?= -framework Accelerate
