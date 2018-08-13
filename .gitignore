@@ -19,3 +19,4 @@ license.blurb
 a.out
 *.o
 *.swp
+.*~
