@@ -24,14 +24,34 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+extern "C"
+{
+#ifdef MXLIB_MKL
+
+   #include <mkl.h>
+
+#elif defined(__APPLE__)
+
+   #include <vecLib/cblas.h>
+
+#else
+
+   #include <cblas.h>
+
+#endif
+}
+
 #ifndef math_templateLapack_hpp
 #define math_templateLapack_hpp
 
-//MKL can use a 64-bit integer types, standard BLAS and LAPACK use int
+//MKL can use 64-bit integer types, standard BLAS and LAPACK use int
+//MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
 #ifdef MXLIB_MKL
    typedef MKL_INT MXLAPACK_INT;
+   #define MKL_CONST_PTR const
 #else
    typedef int MXLAPACK_INT;
+   #define MKL_CONST_PTR
 #endif
 
 //typedef int MXLAPACK_INT;
@@ -76,8 +96,8 @@ dataT lamch (char CMACH)
 
 extern "C"
 {
-   extern  float  slamch_ (char *CMACHp);
-   extern  float  dlamch_ (char *CMACHp);
+   extern  float  slamch_ (MKL_CONST_PTR char *CMACHp);
+   extern  double  dlamch_ (MKL_CONST_PTR char *CMACHp);
 }
       
 // Float specialization of lamch, a wrapper for Lapack SLAMCH
@@ -140,8 +160,8 @@ MXLAPACK_INT sytrd( char UPLO,
 //Declarations of the actual LAPACK functions
 extern "C"
 {
-   void ssytrd_( char * UPLO, MXLAPACK_INT * N, float * A, MXLAPACK_INT * LDA, float *D, float *E, float* TAU, float *WORK, MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
-   void dsytrd_( char * UPLO, MXLAPACK_INT * N, double * A, MXLAPACK_INT * LDA, double *D, double *E, double* TAU, double *WORK, MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
+   void ssytrd_( MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, float * A, MKL_CONST_PTR MXLAPACK_INT * LDA, float *D, float *E, float* TAU, float *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
+   void dsytrd_( MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, double * A, MKL_CONST_PTR MXLAPACK_INT * LDA, double *D, double *E, double* TAU, double *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
 }
 
 template<>
@@ -188,18 +208,19 @@ MXLAPACK_INT syevr (  char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, dataT *A
 
 extern "C"
 {
-   void  ssyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, MXLAPACK_INT *Np,
-                             float *A, MXLAPACK_INT *LDAp, float *VLp, float *VUp,
-                              MXLAPACK_INT *ILp, MXLAPACK_INT *IUp, float *ABSTOLp, MXLAPACK_INT *Mp,
-                               float *W, float *Z, MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
-                                float *WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MXLAPACK_INT *LIWORKp,
-                                 MXLAPACK_INT *INFOp);
+   void  ssyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR MXLAPACK_INT *Np,
+                     float *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR float *VLp, MKL_CONST_PTR float *VUp,
+                       MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR float *ABSTOLp, MXLAPACK_INT *Mp,
+                         float *W, float *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
+                            float *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp,
+                              MXLAPACK_INT *INFOp);
    
-   void  dsyevr_ (char *JOBZp, char *RANGEp, char *UPLOp, MXLAPACK_INT *Np,
-                             double *A, MXLAPACK_INT *LDAp, double *VLp, double *VUp,
-                              MXLAPACK_INT *ILp, MXLAPACK_INT *IUp, double *ABSTOLp, MXLAPACK_INT *Mp,
-                               double *W, double *Z, MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
-                                double *WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MXLAPACK_INT *LIWORKp,
+   
+   void  dsyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR MXLAPACK_INT *Np,
+                     double *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR double *VLp, MKL_CONST_PTR double *VUp,
+                        MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR double *ABSTOLp, MXLAPACK_INT *Mp,
+                               double *W, double *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
+                                double *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp,
                                  MXLAPACK_INT *INFOp);
 }
 
@@ -398,11 +419,13 @@ MXLAPACK_INT gesvd( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, dataT
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesvd_( char *JOBUp, char *JOBVTp, MXLAPACK_INT *Mp, MXLAPACK_INT *Np, float * A, MXLAPACK_INT *LDAp, float * S, float *U, MXLAPACK_INT *LDUp, 
-                float * VT, MXLAPACK_INT *LDVTp, float * WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
+   void sgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR MXLAPACK_INT *Np, 
+                  float * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, float * S, float *U, MKL_CONST_PTR MXLAPACK_INT *LDUp, 
+                    float * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, float * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
 
-   void dgesvd_( char *JOBUp, char *JOBVTp, MXLAPACK_INT *Mp, MXLAPACK_INT *Np, double * A, MXLAPACK_INT *LDAp, double * S, double *U, MXLAPACK_INT *LDUp, 
-                double * VT, MXLAPACK_INT *LDVTp, double * WORK, MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
+   void dgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR MXLAPACK_INT *Np, 
+                  double * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, double * S, double *U, MKL_CONST_PTR MXLAPACK_INT *LDUp, 
+                    double * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, double * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
 }
 
 //float specialization of gesvd
@@ -587,9 +610,9 @@ MXLAPACK_INT gesdd(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, dataT *A, MXLAPACK
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesdd_(char * JOBZ, MXLAPACK_INT *M, MXLAPACK_INT *N, float *A, MXLAPACK_INT *LDA, float *S, float * U, MXLAPACK_INT *LDU, float * VT, MXLAPACK_INT *LDVT, float *WORK, MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
+   void sgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, float *A, MKL_CONST_PTR MXLAPACK_INT *LDA, float *S, float * U, MKL_CONST_PTR MXLAPACK_INT *LDU, float * VT, MKL_CONST_PTR MXLAPACK_INT *LDVT, float *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
    
-   void dgesdd_(char * JOBZ, MXLAPACK_INT *M, MXLAPACK_INT *N, double *A, MXLAPACK_INT *LDA, double *S, double * U, MXLAPACK_INT *LDU, double * VT, MXLAPACK_INT *LDVT, double *WORK, MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
+   void dgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, double *A, MKL_CONST_PTR MXLAPACK_INT *LDA, double *S, double * U, MKL_CONST_PTR MXLAPACK_INT *LDU, double * VT, MKL_CONST_PTR MXLAPACK_INT *LDVT, double *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
    
 }
 
