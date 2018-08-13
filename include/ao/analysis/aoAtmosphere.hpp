@@ -836,7 +836,7 @@ realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * layer_z[i])), 2);
+      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * _layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
    }
    
    return c;
