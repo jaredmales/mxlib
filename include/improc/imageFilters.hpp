@@ -71,6 +71,9 @@ struct gaussKernel
    
    void setKernel(arithT x, arithT y, arrayT & kernelArray)
    {
+      static_cast<void>(x);
+      static_cast<void>(y);
+      
       kernelArray = kernel;
    }
    
@@ -214,9 +217,9 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
       typename imageOutT::Scalar norm;
    
       #pragma omp for
-      for(size_t i=0; i< im.rows(); i++)
+      for(int i=0; i< im.rows(); i++)
       {
-         for(size_t j=0; j<im.cols(); j++)
+         for(int j=0; j<im.cols(); j++)
          {
             if((i >= mini && i< maxi) && (j>= minj && j<maxj))
             {
@@ -396,8 +399,6 @@ void radprofim( radprofT & radprof,
                 eigenimT & im, 
                 bool subtract = false)
 {
-   typedef typename eigenimT::Scalar floatT;
-   
    int dim1 = im.cols();
    int dim2 = im.rows();
    
@@ -529,8 +530,6 @@ void stddevImage( eigenimT & stdIm,
                   typename eigenimT::Scalar maxRad,
                   bool divide = false )
 {
-   typedef typename eigenimT::Scalar floatT;
-   
    int dim1 = im.cols();
    int dim2 = im.rows();
    
@@ -564,7 +563,6 @@ void stddevImageCube( eigencubeT & stdImc,
                       typename eigenimT::Scalar maxRad,
                       bool divide = false )
 {
-   typedef typename eigenimT::Scalar floatT;
    
    int dim1 = imc.cols();
    int dim2 = imc.rows();

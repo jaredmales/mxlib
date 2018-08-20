@@ -317,13 +317,13 @@ int ds9Interface::title(const std::string & nn)
 {
    m_title = nn;
    m_connected = false;
+   
+   return 0;
 }
 
 inline
 int ds9Interface::connect()
 {
-   char * mode = NULL;
-
    int  n = 1;
    char *names[1];
    names[0] = NULL;
@@ -417,10 +417,12 @@ int ds9Interface::XPASet( const char * cmd )
 inline
 int ds9Interface::addsegment( int frame )
 {
-   int i;
+   size_t i;
    size_t curr_n;
 
-   if(frame-1 < segs.size()) return 0;
+   if(frame == 0) return -1;
+   
+   if((size_t)(frame-1) < segs.size()) return 0;
 
    curr_n = segs.size();
 
@@ -440,7 +442,6 @@ inline
 int ds9Interface::addframe( int frame )
 {
    char cmd[DS9INTERFACE_CMD_MAX_LENGTH];
-   int ret;
 
    addsegment( frame );
 
@@ -519,9 +520,8 @@ int ds9Interface::display( const void * im,
                            int frame
                           )
 {
-   size_t i, tot_size;
+   size_t tot_size;
    char cmd[DS9INTERFACE_CMD_MAX_LENGTH];
-   int ret;
 
    if(frame < 1)
    {

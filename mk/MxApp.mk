@@ -4,6 +4,11 @@ SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(SELF_DIR)/../local/MxApp.mk
 include $(SELF_DIR)/../mk/Common.mk
 
+NEED_BLAS ?= yes
+NEED_SOFA ?= yes
+NEED_LEVAR ?= yes
+NEED_XPA ?= yes
+
 # Provide default build options in case they weren't defined in local/MxApp.mk
 ifeq ($UNAME,Darwin)  # macOS
     USE_BLAS_FROM ?= Accelerate
@@ -41,16 +46,40 @@ ifeq ($(USE_FFT_FROM),fftw)
     FFT_LDLIBS += -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
 endif
 
+ifeq ($(NEED_SOFA),yes)
+   SOFA_LIB = -lsofa_c
+else
+   SOFA_LIB =
+endif
+
+ifeq ($(NEED_LEVMAR),yes)
+   LEVMAR_LIB = -llevmar 
+else
+   LEVMAR_LIB =
+endif
+
+ifeq ($(NEED_XPA),yes)
+   XPA_LIB = -lxpa
+else
+   XPA_LIB =
+endif
+
 OPTIMIZE ?= -O3 -fopenmp -ffast-math
-EXTRA_LDLIBS ?= -lmxlib -lsofa_c -llevmar -lcfitsio -lboost_system -lboost_filesystem -lgsl
+EXTRA_LDLIBS ?= -lmxlib $(SOFA_LIB) $(LEVMAR_LIB) -lcfitsio -lboost_system -lboost_filesystem -lgsl $(XPA_LIB)
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
-INCLUDES += $(BLAS_INCLUDES)
-LDLIBS += $(EXTRA_LDLIBS) $(BLAS_LDLIBS) $(FFT_LDLIBS) 
-LDFLAGS += $(BLAS_LDFLAGS) $(FFT_LDFLAGS) $(EXTRA_LDFLAGS)
+ifeq ($(NEED_BLAS),yes)
+    INCLUDES += $(BLAS_INCLUDES)
+    LDLIBS += $(BLAS_LDLIBS)
+    LDFLAGS += $(BLAS_LDFLAGS)
+endif
+
+
+LDLIBS += $(EXTRA_LDLIBS)  $(FFT_LDLIBS) 
+LDFLAGS += $(FFT_LDFLAGS) $(EXTRA_LDFLAGS)
 
 CFLAGS += -std=c99 -fPIC $(INCLUDES) $(OPTIMIZE)
 CXXFLAGS += -std=c++14 -fPIC $(INCLUDES) $(OPTIMIZE)
