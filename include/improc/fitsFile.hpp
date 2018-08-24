@@ -850,7 +850,7 @@ int fitsFile<dataT>::read( dataT * im,
 
    long sz0 =0, sz1=0;
 
-   for(int i=0;i<flist.size(); ++i)
+   for(size_t i=0;i<flist.size(); ++i)
    {
       if( fileName(flist[i], 1) < 0 ) return -1;
 
@@ -887,6 +887,8 @@ struct eigenArrResize<arrT, false>
    //If it's not a cube, never pass zsz
    void resize(arrT & arr, int xsz, int ysz, int zsz)
    {
+      static_cast<void>(zsz);
+      
       arr.resize(xsz, ysz);
    }
 };

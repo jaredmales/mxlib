@@ -19,9 +19,9 @@
 #include "../mxException.hpp"
 
 #include "../math/templateBLAS.hpp"
-#include "../fileUtils.hpp"
+#include "../ioutils/fileUtils.hpp"
 #include "../timeUtils.hpp"
-#include "../readColumns.hpp"
+#include "../ioutils/readColumns.hpp"
 
 #include "eigenImage.hpp"
 #include "eigenCube.hpp"
@@ -574,7 +574,7 @@ template<typename _realT>
 inline void HCIobservation<_realT>::loadFileList(const std::string & fileListFile)
 {
    std::cerr << "Getting file list from file...\n";
-   readColumns(fileListFile, fileList);
+   ioutils::readColumns(fileListFile, fileList);
    filesDeleted = false;
    std::cerr << "done.\n";
 }
@@ -583,7 +583,7 @@ template<typename _realT>
 inline void HCIobservation<_realT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
    std::cerr << "Getting file list...\n";
-   fileList = getFileNames(dir, prefix, "", ext);
+   fileList = ioutils::getFileNames(dir, prefix, "", ext);
    filesDeleted = false;
    std::cerr << "done.\n";
 }
@@ -625,7 +625,7 @@ int HCIobservation<_realT>::readFiles()
       if(thresholdOnly)
       {
          std::cout << "#Files which passed thresholding:\n";
-         for(int i=0; i<fileList.size(); ++i)
+         for(size_t i=0; i<fileList.size(); ++i)
          {
             std::cout << fileList[i] << "\n";
          }
@@ -656,7 +656,7 @@ int HCIobservation<_realT>::readFiles()
 
    if(MJDKeyword != "") head.append(MJDKeyword);
 
-   for(int i=0;i<keywords.size();++i)
+   for(size_t i=0;i<keywords.size();++i)
    {
       head.append(keywords[i]);
    }
@@ -693,14 +693,14 @@ int HCIobservation<_realT>::readFiles()
 
       if(MJDisISO8601)
       {
-         for(int i=0;i<imageMJD.size();++i)
+         for(size_t i=0;i<imageMJD.size();++i)
          {
             imageMJD[i] =  mx::ISO8601date2mjd(heads[i][MJDKeyword].String());
          }
       }
       else
       {
-         for(int i=0;i<imageMJD.size();++i)
+         for(size_t i=0;i<imageMJD.size();++i)
          {
             imageMJD[i] =  heads[i][MJDKeyword].Value<realT>()*MJDUnits;
          }
@@ -763,6 +763,8 @@ int HCIobservation<_realT>::readFiles()
       outputPreProcessed();
    }
    filesRead = true;
+   
+   return 0;
 }
 
 template<typename _realT>
@@ -781,14 +783,14 @@ int HCIobservation<_realT>::threshold()
    std::vector<realT> imQ;
 
    //Read the quality file and load it into a map
-   readColumns(qualityFile, qfileNames, imQ);
+   ioutils::readColumns(qualityFile, qfileNames, imQ);
 
    std::map<std::string, realT> quality;
-   for(int i=0;i<qfileNames.size();++i) quality[basename(qfileNames[i].c_str())] = imQ[i];
+   for(size_t i=0;i<qfileNames.size();++i) quality[basename(qfileNames[i].c_str())] = imQ[i];
 
    realT q;
 
-   for(int i=0; i<fileList.size(); ++i)
+   for(size_t i=0; i<fileList.size(); ++i)
    {
       try
       {
@@ -807,6 +809,7 @@ int HCIobservation<_realT>::threshold()
    }
    std::cerr << "Done.  Selected " << fileList.size() << " out of " << origsize << "\n";
 
+   return 0;
 }
 
 template<typename _realT>
@@ -824,7 +827,7 @@ int HCIobservation<_realT>::readWeights()
    //Read the weight file and load it into a map
    std::vector<std::string> wfileNames;
    std::vector<realT> imW;
-   if( readColumns(weightFile, wfileNames, imW) < 0) return -1;
+//    if( ioutils::readColumns(weightFile, wfileNames, imW) < 0) return -1;
 
    if(imW.size() < fileList.size())
    {
@@ -833,13 +836,13 @@ int HCIobservation<_realT>::readWeights()
    }
 
    std::map<std::string, realT> weights;
-   for(int i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i])] = imW[i];
+   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i])] = imW[i];
 
    comboWeights.resize(fileList.size());
 
    realT wi;
    realT weightSum = 0;
-   for(int i=0; i<fileList.size(); ++i)
+   for(size_t i=0; i<fileList.size(); ++i)
    {
       try
       {
@@ -855,7 +858,7 @@ int HCIobservation<_realT>::readWeights()
    }
 
    //Finally normalize the weights
-   for(int i=0; i< comboWeights.size(); ++i)
+   for(size_t i=0; i< comboWeights.size(); ++i)
    {
       comboWeights[i] /= weightSum;
    }
@@ -922,7 +925,7 @@ void HCIobservation<_realT>::coaddImages()
       //Initialize the accumulators
       initMJD = imageMJD[im0];
 
-      for(int i=0;i<coaddKeywords.size(); ++i)
+      for(size_t i=0;i<coaddKeywords.size(); ++i)
       {
          initVals[i] = heads[im0][coaddKeywords[i]].Value<double>();
       }
@@ -963,7 +966,7 @@ void HCIobservation<_realT>::coaddImages()
       for(int imno = im0+1; imno < imF; ++imno)
       {
          initMJD += imageMJD[imno];
-         for(int i=0;i<coaddKeywords.size(); ++i)
+         for(size_t i=0;i<coaddKeywords.size(); ++i)
          {
             initVals[i] += heads[imno][coaddKeywords[i]].Value<double>();
          }
@@ -971,7 +974,7 @@ void HCIobservation<_realT>::coaddImages()
 
       //And then turn them into an average
       initMJD /= (imF - im0);
-      for(int i=0;i<coaddKeywords.size(); ++i)
+      for(size_t i=0;i<coaddKeywords.size(); ++i)
       {
          initVals[i] /= (imF-im0);
       }
@@ -1019,7 +1022,7 @@ void HCIobservation<_realT>::coaddImages()
    for(int i=0;i<Nims;++i)
    {
       imageMJD[i] = avgMJD[i];
-      for(int j=0;j<coaddKeywords.size(); ++j)
+      for(size_t j=0;j<coaddKeywords.size(); ++j)
       {
          heads[i][coaddKeywords[j]].setValue(avgVals[i][j]);
       }
@@ -1198,7 +1201,7 @@ void HCIobservation<_realT>::combineFinim()
    finim.resize(psfsub[0].rows(), psfsub[0].cols(), psfsub.size());
 
    //Now cycle through each set of psf subtractions
-   for(int n= 0; n < psfsub.size(); ++n)
+   for(size_t n= 0; n < psfsub.size(); ++n)
    {
       if(method == HCI::medianCombine)
       {
@@ -1207,7 +1210,7 @@ void HCIobservation<_realT>::combineFinim()
       }
       else if(method == HCI::meanCombine)
       {
-         if(comboWeights.size() == Nims)
+         if(comboWeights.size() == (size_t) Nims)
          {
             if( maskFile != "" )
             {
@@ -1233,7 +1236,7 @@ void HCIobservation<_realT>::combineFinim()
       }
       else if(method == HCI::sigmaMeanCombine)
       {
-         if(comboWeights.size() == Nims)
+         if(comboWeights.size() == (size_t) Nims)
          {
             if( maskFile != "" )
             {
@@ -1279,7 +1282,7 @@ inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 
    if(!exactFinimName)
    {
-      fname = getSequentialFilename(fname, ".fits");
+      fname = ioutils::getSequentialFilename(fname, ".fits");
    }
 //    else
 //    {
@@ -1379,12 +1382,12 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
    fitsFile<realT> f;
 
-   char num[16];
-   for(int n=0; n<psfsub.size(); ++n)
+   char num[256];
+   for(size_t n=0; n<psfsub.size(); ++n)
    {
       for(int p=0; p< psfsub[n].planes(); ++p)
       {
-         snprintf(num, 16, "_%03d_%05d.fits",n,p);
+         snprintf(num, 256, "_%03zu_%05d.fits",n,p);
          fname = PSFSubPrefix + num;
 
          fitsHeader h = head;

@@ -230,9 +230,9 @@ std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of th
    int y1 = ycen+max_y+1;
    if(y1 > rIm.cols()) y1 = rIm.cols();
    
-   for(size_t i = x0; i< x1; ++i)
+   for(int i = x0; i< x1; ++i)
    {
-      for(size_t j = y0; j< y1; ++j)
+      for(int j = y0; j< y1; ++j)
       { 
          if(rIm(i,j) >= min_r && rIm(i,j) < max_r && qIm(i,j) >= min_q && qIm(i,j) < max_q) 
          {
@@ -270,9 +270,9 @@ inline void rectangleIndices( std::vector<size_t> & idx,
    
    idx.reserve( (xmax-xmin+1)*(ymax-ymin + 1) );
    
-   for(int i=xmin; i<=xmax; ++i)
+   for(size_t i=xmin; i<=xmax; ++i)
    {
-      for(int j=ymin;j<=ymax; ++j)
+      for(size_t j=ymin;j<=ymax; ++j)
       {
          idx.push_back( j*rows + i);
       }
@@ -627,7 +627,7 @@ void cutImageRegion( imageTout & imout,  ///< [out] a row-image containing the p
    }
    
    //#pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<idx.size();++i)
+   for(size_t i=0;i<idx.size();++i)
    {
       imout(i) = imin( idx[i] );
    }
@@ -649,7 +649,7 @@ void insertImageRegion( imageTout imout, ///< [out] a row-image into which the p
                       )
 {
    //#pragma omp parallel for schedule(static, 1)
-   for(int i=0;i< idx.size();++i)
+   for(size_t i=0;i< idx.size();++i)
    {
       imout(idx[i],0) = imin(i,0);
    }
@@ -661,9 +661,7 @@ void rotateMask( imageT & rotMask,
                  imageT & mask,
                  typename imageT::Scalar angle
                )
-{
-   typedef typename imageT::Scalar Scalar;
-   
+{   
    imageRotate( rotMask, mask, angle, transformT());
    
    for(int ii=0; ii< rotMask.rows(); ++ii)

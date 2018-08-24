@@ -501,7 +501,7 @@ gnuPlot::~gnuPlot()
       remove(_errFName.c_str());
    }
    
-   for(int i=0; i < _tempFiles.size(); ++i)
+   for(size_t i=0; i < _tempFiles.size(); ++i)
    {
       remove(_tempFiles[i].c_str());
    }
@@ -567,6 +567,8 @@ int gnuPlot::connect()
    }
       
    _connected = 1;
+   
+   return 0;
 }
 
 inline
@@ -658,7 +660,7 @@ int gnuPlot::checkResponse(std::string & response, double timeout)
          }
       }
 
-      int first =0;
+      size_t first =0;
       while( isspace(response[first]) && first < response.length()-1) ++first;
       response.erase(0, first);
       

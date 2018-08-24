@@ -44,13 +44,16 @@ namespace ioutils
 template<char delim=' ', char eol='\n'>
 void readcol(char * sin, int sz)
 {
+   static_cast<void>(sin);
+   static_cast<void>(sz);
+   
    return;
 }
 
 template<char delim=' ', char eol='\n', typename arrT, typename... arrTs>
 void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
 {
-   static const unsigned short int nargs = sizeof...(arrTs);
+   //static const unsigned short int nargs = sizeof...(arrTs);
    std::string str;
 
    int i=0;

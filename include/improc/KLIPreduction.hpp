@@ -121,6 +121,8 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       initialize();
    }
    
+   virtual ~KLIPreduction() {}
+   
    void initialize()
    {
       mindpx = 0;
@@ -250,7 +252,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    this->t_begin = get_curr_time();
    
    maxNmodes = Nmodes[0];
-   for(int i = 1; i<Nmodes.size(); ++i)
+   for(size_t i = 1; i<Nmodes.size(); ++i)
    {
       if(Nmodes[i] > maxNmodes) maxNmodes = Nmodes[i];
    }
@@ -274,7 +276,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    }
 
    this->psfsub.resize(Nmodes.size());
-   for(int n=0;n<Nmodes.size(); ++n)
+   for(size_t n=0;n<Nmodes.size(); ++n)
    {
       this->psfsub[n].resize(this->Nrows, this->Ncols, this->Nims);
       this->psfsub[n].cube().setZero();
@@ -288,7 +290,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 
    std::cerr << "starting regions " << minr.size() << "\n";
    //******** For each region do this:
-   for(int regno = 0; regno < minr.size(); ++regno)
+   for(size_t regno = 0; regno < minr.size(); ++regno)
    {
       eigenImageT * maskPtr = 0;
       if( this->mask.rows() == this->Nrows && this->mask.cols() == this->Ncols) maskPtr = &this->mask;
@@ -359,7 +361,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       
       if(Nmodes.size() > 0)
       {
-         for(int nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
+         for(size_t nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
          str << Nmodes[Nmodes.size()-1];      
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
@@ -367,7 +369,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       if(minr.size() > 0)
       {
          str.str("");
-         for(int nm=0;nm < minr.size()-1; ++nm) str << minr[nm] << ",";
+         for(size_t nm=0;nm < minr.size()-1; ++nm) str << minr[nm] << ",";
          str << minr[minr.size()-1];      
          head.append<char *>("REGMINR", (char *)str.str().c_str(), "region inner edge(s)");
       }
@@ -375,7 +377,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       if(maxr.size() > 0)
       {
          str.str("");
-         for(int nm=0;nm < maxr.size()-1; ++nm) str << maxr[nm] << ",";
+         for(size_t nm=0;nm < maxr.size()-1; ++nm) str << maxr[nm] << ",";
          str << maxr[maxr.size()-1];      
          head.append<char *>("REGMAXR", (char *)str.str().c_str(), "region outer edge(s)");
       }
@@ -383,7 +385,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       if(minq.size() > 0)
       {
          str.str("");
-         for(int nm=0;nm < minq.size()-1; ++nm) str << minq[nm] << ",";
+         for(size_t nm=0;nm < minq.size()-1; ++nm) str << minq[nm] << ",";
          str << minq[minq.size()-1];      
          head.append<char *>("REGMINQ", (char *)str.str().c_str(), "region minimum angle(s)");
       }
@@ -391,7 +393,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       if(maxq.size() > 0)
       {
          str.str("");
-         for(int nm=0;nm < maxq.size()-1; ++nm) str << maxq[nm] << ",";
+         for(size_t nm=0;nm < maxq.size()-1; ++nm) str << maxq[nm] << ",";
          str << maxq[maxq.size()-1];      
          head.append<char *>("REGMAXQ", (char *)str.str().c_str(), "region maximum angle(s)");
       }
@@ -519,9 +521,9 @@ void extractRowsAndCols(eigenT & out, const eigenTin & in, const std::vector<cvE
    
    out.resize(idx.size(), idx.size());
    
-   for(int i=0; i< idx.size(); ++i)
+   for(size_t i=0; i< idx.size(); ++i)
    {
-      for(int j=0; j < idx.size(); ++j)
+      for(size_t j=0; j < idx.size(); ++j)
       {
          out(i,j) = in(idx[i].index, idx[j].index);
       }
@@ -535,7 +537,7 @@ void extractCols(eigenT & out, const eigenTin & in, const std::vector<cvEntry> &
    
    out.resize(in.rows(), idx.size()); 
    
-   for(int i=0; i< idx.size(); ++i)
+   for(size_t i=0; i< idx.size(); ++i)
    {
       out.col(i) = in.col(idx[i].index); //it1->index);
    }
@@ -630,7 +632,7 @@ void collapseCovar( eigenT & cutCV,
       if(rotoff1 > Nims-1) allidx.pop_back(); //Erase the last element if needed   
    }
    
-   if( includeRefNum > 0 && includeRefNum < allidx.size())
+   if( includeRefNum > 0 && (size_t) includeRefNum < allidx.size())
    {
       //First partially sort the correlation values
       std::nth_element(allidx.begin(), allidx.begin()+ includeRefNum, allidx.end(), cvEntryComp);
@@ -676,10 +678,10 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
    //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
-      #ifdef _OPENMP
-         #pragma omp critical
-         std::cerr << "This is thread " << nTh++ << "\n";
-      #endif
+//       #ifdef _OPENMP
+//          #pragma omp critical
+//          std::cerr << "This is thread " << nTh++ << "\n";
+//       #endif
       
       //We need local copies for each thread.  Only way this works, for whatever reason.
 
@@ -731,7 +733,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());    
          }
 
-         for(int mode_i =0; mode_i < Nmodes.size(); ++mode_i)
+         for(size_t mode_i =0; mode_i < Nmodes.size(); ++mode_i)
          {
             psf = cfs(cfs.size()-1)*klims.row(cfs.size()-1);
 
