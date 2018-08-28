@@ -492,6 +492,41 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
    return 0;
 }
 
+/// Parses a string into a vector of tokens delimited by a character
+/** E.g., the string 
+  * \code
+    std::string s={"0","1","2","3","4"};
+    \endcode
+  * is parse to a vector as if it was initialized with 
+    \code
+    std::vector<int> = {0,1,2,3,4};
+    \endcode 
+  *
+  * \tparam typeT the type to convert the tokens too.
+  */
+template<typename typeT>
+void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding the parsed and converted tokens.  Is cleared.
+                        const std::string & s,  ///< [in] the string to parse
+                        char delim = ','        ///< [in] [optional] the delimiter.  Default is comma \p ','.
+                      )
+{
+   size_t st;
+   size_t com;
+
+   st = 0;
+   com = s.find(delim, st);
+
+   v.clear();
+
+   while(com != std::string::npos)
+   {
+      v.push_back( convertFromString<typeT>(s.substr(st, com-st)) );
+      st = com + 1;
+      com = s.find(delim, st);
+   }
+   v.push_back( convertFromString<typeT>(s.substr(st, s.size()-st)));
+
+}
 /// @}
 
 } //namespace ioutils
