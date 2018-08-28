@@ -495,11 +495,13 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
 /// Parses a string into a vector of tokens delimited by a character
 /** E.g., the string 
   * \code
-    std::string s={"0","1","2","3","4"};
+    std::string s={"0,1,2,3,4"};
+    std::vector<int> v;
+    parseStringVector(v,s);
     \endcode
   * is parse to a vector as if it was initialized with 
     \code
-    std::vector<int> = {0,1,2,3,4};
+    std::vector<int> v = {0,1,2,3,4};
     \endcode 
   *
   * \tparam typeT the type to convert the tokens too.
@@ -523,6 +525,44 @@ void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding th
       v.push_back( convertFromString<typeT>(s.substr(st, com-st)) );
       st = com + 1;
       com = s.find(delim, st);
+   }
+   v.push_back( convertFromString<typeT>(s.substr(st, s.size()-st)));
+
+}
+
+/// Parses a string into a vector of tokens delimited by a set of characters
+/** E.g., the string 
+  * \code
+    std::string s={"0,1:2 3,4"};
+    std::vector<int> v;
+    parseStringVector(v, s, ",: ");
+    \endcode
+  * is parse to a vector as if it was initialized with 
+    \code
+    std::vector<int> v = {0,1,2,3,4};
+    \endcode 
+  *
+  * \tparam typeT the type to convert the tokens too.
+  */
+template<typename typeT>
+void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding the parsed and converted tokens.  Is cleared.
+                        const std::string & s,  ///< [in] the string to parse
+                        const std::string & delims  ///< [in] the delimiters. 
+                      )
+{
+   size_t st;
+   size_t com;
+
+   st = 0;
+   com = s.find_first_of(delims, st);
+
+   v.clear();
+
+   while(com != std::string::npos)
+   {
+      v.push_back( convertFromString<typeT>(s.substr(st, com-st)) );
+      st = com + 1;
+      com = s.find_first_of(delims, st);
    }
    v.push_back( convertFromString<typeT>(s.substr(st, s.size()-st)));
 
