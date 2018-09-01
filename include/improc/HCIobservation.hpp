@@ -144,7 +144,7 @@ struct HCIobservation
      *
      * Image sizes are not increased if this is larger than their size on disk.
      */
-   int imSize;
+   int imSize {0};
 
 
    ///@}
@@ -267,9 +267,11 @@ public:
 
 
 
-   ///The standard deviation threshold used if combineMethod == HCI::sigmaMeanCombine.
+   /// The standard deviation threshold used if combineMethod == HCI::sigmaMeanCombine.
    realT sigmaThreshold;
 
+   /// The minimum fraction of good (un-masked) pixels to include in the final combination (0.0 to 1.0). If not met, then the pixel will be NaN-ed.
+   realT m_minGoodFract {0.0};
 
    ///@}
 
@@ -495,8 +497,6 @@ void HCIobservation<_realT>::initialize()
    MJDisISO8601 = true;
    MJDUnits = 1.0;
 
-   imSize = 0;
-//   applyMask = false;
 
    coaddCombineMethod = HCI::noCombine;
    coaddMaxImno = 0;
@@ -1214,7 +1214,7 @@ void HCIobservation<_realT>::combineFinim()
          {
             if( maskFile != "" )
             {
-               psfsub[n].mean(tfinim, comboWeights, maskCube);
+               psfsub[n].mean(tfinim, comboWeights, maskCube, m_minGoodFract);
             }
             else
             {
@@ -1225,7 +1225,7 @@ void HCIobservation<_realT>::combineFinim()
          {
             if( maskFile != "" )
             {
-               psfsub[n].mean(tfinim, maskCube);
+               psfsub[n].mean(tfinim, maskCube, m_minGoodFract);
             }
             else
             {
@@ -1240,7 +1240,7 @@ void HCIobservation<_realT>::combineFinim()
          {
             if( maskFile != "" )
             {
-               psfsub[n].sigmaMean(tfinim, comboWeights, maskCube, sigmaThreshold);
+               psfsub[n].sigmaMean(tfinim, comboWeights, maskCube, sigmaThreshold, m_minGoodFract);
             }
             else
             {
@@ -1251,7 +1251,7 @@ void HCIobservation<_realT>::combineFinim()
          {
             if( maskFile != "" )
             {
-               psfsub[n].sigmaMean(tfinim, maskCube, sigmaThreshold);
+               psfsub[n].sigmaMean(tfinim, maskCube, sigmaThreshold, m_minGoodFract);
             }
             else
             {
@@ -1284,12 +1284,6 @@ inline void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
    {
       fname = ioutils::getSequentialFilename(fname, ".fits");
    }
-//    else
-//    {
-//       fname = finimName;
-//    }
-
-
 
    fitsHeader head;
 

@@ -121,7 +121,8 @@ public:
      */
    template<typename eigenT, typename eigenCubeT>
    void mean( eigenT & mim, ///< [out] the resultant mean image.  Is resized.
-              eigenCubeT & mask ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
             );
 
    ///Calculate the weighted mean image of the cube
@@ -141,7 +142,8 @@ public:
    template<typename eigenT, typename eigenCubeT>
    void mean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
               std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean
-              eigenCubeT & mask ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
             );
 
    ///Calculate the median image of the cube
@@ -168,7 +170,8 @@ public:
    template<typename eigenT, typename eigenCubeT>
    void sigmaMean( eigenT & mim,  ///< [out] the resultant mean image.  Is resized.
                    eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-                   Scalar sigma ///< [in] the sigma value at which to clip.
+                   Scalar sigma, ///< [in] the sigma value at which to clip.
+                   double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
 
    ///Calculate the sigma clipped weighted mean image of the cube
@@ -190,7 +193,8 @@ public:
    void sigmaMean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
                    std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean
                    eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-                   Scalar sigma ///< [in] the sigma value at which to clip.
+                   Scalar sigma, ///< [in] the sigma value at which to clip.
+                   double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
 };
 
@@ -395,7 +399,8 @@ void eigenCube<dataT>::mean(eigenT & mim)
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::mean( eigenT & mim,
-                             eigenCubeT & mask
+                             eigenCubeT & mask,
+                             double minGoodFract
                            )
 {
    mim.resize(_rows, _cols);
@@ -420,7 +425,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
                   work.push_back( (pixel(i,j))(k,0) );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
                mim(i,j) = math::vectorMean(work);
             }
@@ -462,7 +467,8 @@ template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::mean( eigenT & mim,
                              std::vector<dataT> & weights,
-                             eigenCubeT & mask
+                             eigenCubeT & mask,
+                             double minGoodFract
                            )
 {
    mim.resize(_rows, _cols);
@@ -489,7 +495,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
                   wwork.push_back( weights[k] );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
                mim(i,j) = math::vectorMean(work, wwork);
             }
@@ -545,7 +551,11 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, dataT sigma)
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::sigmaMean(eigenT & mim, eigenCubeT & mask, dataT sigma)
+void eigenCube<dataT>::sigmaMean( eigenT & mim, 
+                                  eigenCubeT & mask, 
+                                  dataT sigma,
+                                  double minGoodFract
+                                )
 {
    mim.resize(_rows, _cols);
 
@@ -568,7 +578,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, eigenCubeT & mask, dataT sigma)
                   work.push_back( (pixel(i,j))(k,0) );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
                mim(i,j) = math::vectorSigmaMean(work, sigma);
             }
@@ -610,7 +620,12 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, dat
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eigenCubeT & mask, dataT sigma)
+void eigenCube<dataT>::sigmaMean( eigenT & mim, 
+                                  std::vector<dataT> & weights, 
+                                  eigenCubeT & mask, 
+                                  dataT sigma,
+                                  double minGoodFract
+                                )
 {
    mim.resize(_rows, _cols);
 
@@ -636,7 +651,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eig
                   wwork.push_back( weights[k] );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
                mim(i,j) = math::vectorSigmaMean(work, wwork, sigma);
             }

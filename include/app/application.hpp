@@ -82,9 +82,9 @@ protected:
    bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
 
 
-   int m_helpWidth {100} ; ///< The total text width available for the help message.
+   int m_helpWidth {120} ; ///< The total text width available for the help message.
    int m_helpSOColWidth {2}; ///< The width of the short option (-o) column in the help message.
-   int m_helpLOColWidth {15}; ///< The width of the long option (--option) column in the help message.
+   int m_helpLOColWidth {25}; ///< The width of the long option (--option) column in the help message.
    int m_helpCFColWidth {25}; ///< The width of the config file option column in the help message.
    int m_helpTypeColWidth {15}; ///< The width of the argument type column in the help message.
 
