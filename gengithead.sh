@@ -1,8 +1,8 @@
 #!/bin/bash
-
-#$1 = directory of git repo 
+set -euo pipefail
+#$1 = directory of git repo
 #$2 = optional ouput path, default ./git_version.h
-#$3 = optional prefix, default is GIT 
+#$3 = optional prefix, default is GIT
 
 
 centerName(){
@@ -10,7 +10,7 @@ centerName(){
   width=42
   span=$(((width + textsize) / 2 ))
   espan=$((span - textsize))
-  if [ $((espan % 2)) -eq 1 ]; then espan=$((espan - 1)); fi 
+  if [ $((espan % 2)) -eq 1 ]; then espan=$((espan - 1)); fi
   printf "    #pragma message (\"*%${span}s%${espan}s\")\n" "$1" "*"
 }
 
@@ -40,11 +40,10 @@ GIT_HEADER="$HEADPATH"
 
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
-GIT_MODIFIED=0
-echo $(git --git-dir=$GITPATH/.git --work-tree=$GITPATH status) > /tmp/git_status
-if grep --quiet "modified" /tmp/git_status; then
-   GIT_MODIFIED=1
-fi
+set +e
+git --git-dir=$GITPATH/.git --work-tree=$GITPATH diff-index --quiet HEAD --
+GIT_MODIFIED=$?
+set -e
 
 REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
 
