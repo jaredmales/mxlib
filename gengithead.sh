@@ -40,8 +40,10 @@ GIT_HEADER="$HEADPATH"
 
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
+set +e
 git --git-dir=$GITPATH/.git --work-tree=$GITPATH diff-index --quiet HEAD --
 GIT_MODIFIED=$?
+set -e
 
 REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
 
