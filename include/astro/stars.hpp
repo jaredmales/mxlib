@@ -12,7 +12,7 @@
 #ifndef mx_astro_stars_hpp
 #define mx_astro_stars_hpp
 
-#include "../stringUtils.hpp"
+#include "../ioutils/stringUtils.hpp"
 
 namespace mx
 {
@@ -32,9 +32,9 @@ template<typename realT=float>
 realT numSpType( std::string spType /**< [in] The spectral type string to parse.*/)
 {
    
-   spType = removeWhiteSpace(spType);
+   spType = ioutils::removeWhiteSpace(spType);
 
-   spType = toUpper(spType);
+   spType = ioutils::toUpper(spType);
    
    
    realT num = 0;
@@ -83,7 +83,7 @@ realT numSpType( std::string spType /**< [in] The spectral type string to parse.
    
    std::string subType = spType.substr(1, i-1);
    
-   num += convertFromString<realT>(subType);
+   num += ioutils::convertFromString<realT>(subType);
    
    if(spType.size() == i) return num;
    if(spType[i] == 'V') return num;

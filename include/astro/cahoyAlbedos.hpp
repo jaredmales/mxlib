@@ -9,7 +9,7 @@
 #define mx_astro_cahoyAlbedos_hpp
 
 #include "units.hpp"
-#include "../readColumns.hpp"
+#include "../ioutils/readColumns.hpp"
 
 namespace mx
 {
@@ -72,7 +72,7 @@ struct cahoySpectrumRaw
       }
 
       fname += "au_";
-      fname += convertToString<int>(params.metal);
+      fname += ioutils::convertToString<int>(params.metal);
       fname += "x_albedos/00_Spectral_Albedos   ";  
    
       char pstr[9];
@@ -93,9 +93,9 @@ struct cahoySpectrumRaw
                             const paramsT & params
                           )
    {
-      skipCol sk;
+      ioutils::skipCol sk;
       
-      return readColumns(path, sk, rawLambda, sk, rawSpectrum);
+      return ioutils::readColumns(path, sk, rawLambda, sk, rawSpectrum);
    }
    
 };
