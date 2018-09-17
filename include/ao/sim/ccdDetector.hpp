@@ -16,6 +16,7 @@
 
 #include "wavefront.hpp"
 
+
 #include <fcntl.h>
 #include <iostream>
 
@@ -308,7 +309,7 @@ void ccdDetector<realT>::exposeImage(imageT & out, imageT & in)
 
    out.resize(m_rows, m_cols);
 
-   imageDownSample(out, in);
+   improc::imageDownSample(out, in);
 
    if(m_noNoise) return;
 

@@ -7,6 +7,7 @@
 #ifndef mxlib_hpp
 #define mxlib_hpp
 
+#include <ios>
 
 #include "mxlib_uncomp_version.h"
 

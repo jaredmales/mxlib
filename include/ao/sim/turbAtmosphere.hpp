@@ -214,7 +214,7 @@ int turbAtmosphere<realT>::setLayers( const std::vector<size_t> & scrnSz,
 
    _layers.resize(nLayers);
 
-   for(int i=0; i< nLayers; ++i)
+   for(size_t i=0; i< nLayers; ++i)
    {
       _layers[i]._nCombo = nCombo;
       _layers[i].setLayer( _wfSz, _buffSz, scrnSz[i], r0[i], L0[i], l0[i], _pupD, Cn2[i], z[i], windV[i], windD[i]);
@@ -251,7 +251,7 @@ int turbAtmosphere<realT>::genLayers()
 
       improc::fitsFile<realT> ff;
       std::string fname;
-      for(int i=0; i< _layers.size(); ++i)
+      for(size_t i=0; i< _layers.size(); ++i)
       {
          fname = fbase + ioutils::convertToString<int>(i) + ".fits";
          ff.read(_layers[i].phase, fname);
@@ -275,7 +275,7 @@ int turbAtmosphere<realT>::genLayers()
 
       realT p;
      // #pragma omp for
-      for(int i=0; i< _layers.size(); ++i)
+      for(size_t i=0; i< _layers.size(); ++i)
       {
          std::cerr << "Generating layer " << i << " ";
          scrnSz = _layers[i]._scrnSz;
@@ -347,7 +347,7 @@ int turbAtmosphere<realT>::genLayers()
 
       improc::fitsFile<realT> ff;
       std::string fname;
-      for(int i=0; i< _layers.size(); ++i)
+      for(size_t i=0; i< _layers.size(); ++i)
       {
          fname = fbase + ioutils::convertToString<int>(i) + ".fits";
          ff.write(fname, _layers[i].phase);
@@ -365,7 +365,7 @@ int turbAtmosphere<realT>::shift( arrayT & phase,
    phase.setZero();
 
    #pragma omp parallel for
-   for(int j=0; j< _layers.size(); ++j)
+   for(size_t j=0; j< _layers.size(); ++j)
    {
       _layers[j].shift( dt );
 
@@ -381,6 +381,8 @@ template<typename realT>
 int turbAtmosphere<realT>::frames(int f)
 {
    _frames = f;
+   
+   return 0;
 }
 
 template<typename realT>
@@ -392,6 +394,7 @@ size_t turbAtmosphere<realT>::frames()
 template<typename realT>
 int turbAtmosphere<realT>::wfPS(realT ps)
 {
+   static_cast<void>(ps);
    return 0;
 }
 
@@ -399,14 +402,18 @@ template<typename realT>
 int turbAtmosphere<realT>::F0Photons(realT f0)
 {
    _F0Photons = f0;
-   _pixVal = _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
+   _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
+   
+   return 0;
 }
 
 template<typename realT>
 int turbAtmosphere<realT>::starMag(realT mag)
 {
    _starMag = mag;
-   _pixVal = _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
+   _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
+   
+   return 0;
 }
 
 template<typename realT>

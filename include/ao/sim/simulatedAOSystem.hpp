@@ -43,7 +43,7 @@ namespace AO
 namespace sim
 {
 
-#if 1
+#if 0
 template<typename complexWavefrontT, typename realPupilT>
 void idealCoronagraph(complexWavefrontT & wf, realPupilT & pupil)
 {
@@ -110,16 +110,15 @@ public:
    dmT dm;
    turbSeqT turbSeq;
 
-   realT _simStep;
+  
 
-   int _wfSz;
-   realT _wfPS;
+   
 
    void wfPS(realT wps)
    {
    }
 
-   realT _D;
+   
 
    realT _wfsLambda;
    realT _sciLambda;
@@ -137,7 +136,20 @@ public:
    std::string _ampFile;
    std::ofstream _ampOut;
 
-
+   //Members which have implemented accessors are moved here as I go:
+protected:
+    realT m_simStep; ///< The simulation step size in seconds.
+    
+    realT m_D;
+    
+    realT m_wfPS;
+    
+    int m_wfSz;
+   
+    
+   
+    
+public:
    /** Wavefront Outputs
      * @{
      */
@@ -166,7 +178,7 @@ public:
    mx::improc::eigenCube<realT> _psfs;
    imageT _psfOut;
 
-   bool _doCoron;
+
    mx::improc::eigenCube<realT> _corons;
    imageT _coronOut;
 
@@ -256,6 +268,42 @@ public:
    void nextWF(wavefrontT & wf);
 
    void runTurbulence();
+   
+   /** \name Member Access 
+     * @{
+     */
+   
+   /// Set the simulation step size.
+   /** Units of step size are seconds.
+     * 
+     * \returns 0 on succces
+     * \returns -1 on error [currently none]
+     */ 
+   int simStep( const int & ss /**< [in] the new value of simulation stepsize [sec] */);
+   
+   /// Get the simulation step size.
+   /**
+     * \returns the current value of m_simStep [sec].
+     */ 
+   int simStep();
+
+   int D( const realT & nD );
+   
+   realT D();
+   
+   int wfPS (const realT & nwfPS);
+   
+   realT wfPS();
+   
+   int Dpix();
+   
+   int wfSz( const int & nwfSz);
+   
+   int wfSz();
+   
+   bool m_doCoron {false};
+      
+   ///@}
 
 
 };
@@ -272,12 +320,11 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simulate
 
    _writeIndFrames = false;
    _saveFrameStart = 0;
-   _doCoron = false;
    _nPerFile = 100;
    _currImage = 0;
    _currFile = 0;
 
-   m_coronagraph._fileDir = getEnv("MX_AO_DATADIR") + "/" + "coron/";
+   m_coronagraph._fileDir = getEnv("MX_AOm_DATADIR") + "/" + "coron/";
 
    _npix = 0;
 
@@ -303,7 +350,7 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::~simulat
 
       ff.write(fn, _psfs);//_psfs.data(), _psfs.rows(), _psfs.cols(), _currImage);
 
-      if(_doCoron)
+      if(m_doCoron)
       {
          std::string fn = _psfFileBase + "_coron_" + ioutils::convertToString(_currFile) + ".fits";
 
@@ -336,16 +383,16 @@ int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::init
 
    ff.read(_pupil, head, pupilFile);
 
-   _D = head["PUPILD"].Value<realT>(); //pupilD;
-   _wfPS = head["SCALE"].Value<realT>();
+   m_D = head["PUPILD"].Value<realT>(); //pupilD;
+   m_wfPS = head["SCALE"].Value<realT>();
 
    //Set the wavefront size.
-   _wfSz = wfSz;
-   wfs.wfSz(_wfSz);
+   m_wfSz = wfSz;
+   wfs.wfSz(m_wfSz);
 
    //Turbulence sequence
    turbSeq._pupil = &_pupil;
-   turbSeq.wfPS(_wfPS);
+   turbSeq.wfPS(m_wfPS);
 
    //DM Initialization.
    dm.initialize( dmSpec, _pupilName);
@@ -369,8 +416,8 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::ini
    improc::fitsFile<realT> ff;
    improc::fitsHeader head;
 
-   _simStep = simStep;
-   wfs.simStep(_simStep);
+   m_simStep = simStep;
+   wfs.simStep(m_simStep);
 
 
    filter.initialize(dm.nModes());
@@ -385,8 +432,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::ini
    _delayedCommands.resize((_commandDelay+1)*5);
    _goodCommands.resize((_commandDelay+1)*5);
 
-   m_coronagraph.wfSz(_wfSz);
-   m_coronagraph.loadCoronagraph(coronName);
+   if(coronName != "")
+   {
+      m_coronagraph.wfSz(m_wfSz);
+      m_coronagraph.loadCoronagraph(coronName);
+   }
 }
 
 
@@ -414,15 +464,15 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::ini
 //
 //    ff.read(pupilFile, _pupil, head);
 //
-//    //_D = head["SCALE"].Value<realT>(); //pupilD;
-//    _D = head["PUPILD"].Value<realT>(); //pupilD;
-//    _wfPS = head["SCALE"].Value<realT>();
+//    //m_D = head["SCALE"].Value<realT>(); //pupilD;
+//    m_D = head["PUPILD"].Value<realT>(); //pupilD;
+//    m_wfPS = head["SCALE"].Value<realT>();
 //
-//    _wfSz = wfSz;
-//    wfs.wfSz(_wfSz);
+//    m_wfSz = wfSz;
+//    wfs.wfSz(m_wfSz);
 //
-//    _wfPS = _D/std::max(_pupil.rows(), _pupil.cols());
-//    turbSeq.wfPS(_wfPS);
+//    m_wfPS = m_D/std::max(_pupil.rows(), _pupil.cols());
+//    turbSeq.wfPS(m_wfPS);
 //
 //    //DM Initialization.
 //    dm.initialize( _dmName, _basisName, _basisOrtho, _pupilName);
@@ -442,7 +492,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
                                                                                                 int nmodes )
 {
    complexImageT cpup;
-   cpup.resize(_wfSz, _wfSz);
+   cpup.resize(m_wfSz, m_wfSz);
 
    recon.initializeRMat(dm.nModes(), amp, wfs.detRows(), wfs.detCols());
 
@@ -613,7 +663,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
    if(_frameCounter == 0)
    {
-      for(int i=0; i<_delayedCommands.size();++i)
+      for(size_t i=0; i<_delayedCommands.size();++i)
       {
          _goodCommands[i] = 0;
       }
@@ -782,7 +832,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    {
       if(_psfOut.rows() == 0 || (_psfs.planes() == 0 && _writeIndFrames))
       {
-         if(m_saveSz <= 0) m_saveSz = _wfSz;
+         if(m_saveSz <= 0) m_saveSz = m_wfSz;
 
          if(_writeIndFrames) _psfs.resize(m_saveSz, m_saveSz, _nPerFile);
          _psfOut.resize(m_saveSz, m_saveSz);
@@ -790,7 +840,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
          _realFocal.resize(m_saveSz, m_saveSz);
 
-         if(_doCoron)
+         if(m_doCoron)
          {
             if(_writeIndFrames) _corons.resize(m_saveSz, m_saveSz, _nPerFile);
             _coronOut.resize(m_saveSz, m_saveSz);
@@ -803,9 +853,9 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       BREAD_CRUMB;
 
       //Propagate Coronagraph
-      if(_doCoron)
+      if(m_doCoron)
       {
-         wf.getWavefront(_complexPupilCoron, _wfSz);
+         wf.getWavefront(_complexPupilCoron, m_wfSz);
 
          m_coronagraph.propagate(_realFocalCoron, _complexPupilCoron);
 
@@ -815,7 +865,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       }
 
       //Propagate PSF
-      wf.getWavefront(_complexPupil, _wfSz);
+      wf.getWavefront(_complexPupil, m_wfSz);
 
       m_coronagraph.propagateNC(_realFocal, _complexPupil);
 
@@ -827,7 +877,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
       BREAD_CRUMB;
 
-      if( _doCoron && display_coron > 0)
+      if( m_doCoron && display_coron > 0)
       {
          ++display_coron_counter;
 
@@ -843,7 +893,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
       BREAD_CRUMB;
 
-      if( _doCoron && display_coron_avg > 0)
+      if( m_doCoron && display_coron_avg > 0)
       {
          ++display_coron_avg_counter;
 
@@ -874,7 +924,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
          ff.write(fn, _psfs);// _psfs.data(), _psfs.rows(), _psfs.cols(), _psfs.planes());
 
-         if(_doCoron)
+         if(m_doCoron)
          {
             std::string fn = _psfFileBase + "_coron_" + ioutils::convertToString(_currFile) + ".fits";
 
@@ -898,10 +948,19 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 {
    wavefrontT currWF;
 
+   if(m_doCoron)
+   {
+      if(m_coronagraph.wfSz() != m_wfSz)
+      {
+         std::cerr << "doCoron is true, but coronagraph not loaded or wavefront sizes don't match.\n";
+         std::cerr << "Continuing . . .\n";
+      }
+   }
+   
 
    _wfsLambda = wfs.lambda();
 
-   for(int i=0;i<turbSeq.frames();++i)
+   for(size_t i=0;i<turbSeq.frames();++i)
    {
       //std::cout << i << "/" << turbSeq.frames() << "\n" ;
 
@@ -912,7 +971,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
          //wfs.applyFilter = false;
       }
 
-      if(i == _loopClosedDelay) _loopClosed = true;
+      if(i == (size_t) _loopClosedDelay) _loopClosed = true;
 
 
 
@@ -931,7 +990,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
       BREAD_CRUMB;
       ff.write(fn, _psfOut);
 
-      if(_doCoron)
+      if(m_doCoron)
       {
          BREAD_CRUMB;
          fn = _psfFileBase + "_coron.fits";
@@ -943,6 +1002,68 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 
 }//void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::runTurbulence()
 
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep( const int & ss)
+{
+   m_simStep = ss;
+   
+   return 0;
+}
+
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep()
+{
+   return simStep();
+}
+
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::D( const realT & nD )
+{
+   m_D = nD;
+   
+   return 0;
+}
+ 
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+realT simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::D()
+{
+   return m_D;
+}
+   
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::wfPS (const realT & nwfPS)
+{
+   m_wfPS = nwfPS;
+   
+   return 0;
+}
+  
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+realT simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::wfPS()
+{
+   return m_wfPS;
+}
+ 
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::Dpix()
+{
+   return  (int)(m_D/m_wfPS +std::numeric_limits<realT>::epsilon());
+}
+
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::wfSz( const int & nwfSz)
+{
+   m_wfSz = nwfSz;
+   
+   return 0;
+}
+   
+template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::wfSz()
+{
+   return m_wfSz;
+}
+   
 } //namespace sim
 } //namespace AO
 } //namespace mx

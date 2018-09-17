@@ -42,7 +42,8 @@ ifeq ($(USE_FFT_FROM),fftw)
 endif
 
 OPTIMIZE ?= -O3 -fopenmp -ffast-math
-EXTRA_LDLIBS ?= -lmxlib -lsofa_c -llevmar -lcfitsio -lboost_system -lboost_filesystem -lgsl
+EXTRA_LDLIBS ?= -lmxlib -lsofa_c -llevmar -lcfitsio -lboost_system -lboost_filesystem -lgsl -lxpa
+
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif

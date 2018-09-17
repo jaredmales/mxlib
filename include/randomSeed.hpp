@@ -86,7 +86,9 @@ int randomSeed(intT & seedval)
    
    close(fd);
 
-   if(rv < sizeof(intT))
+   int sz = sizeof(intT);
+   
+   if(rv < sz)
    {
       mxError("randomSeed", MXE_FILERERR, "Read from /dev/urandom did not return enough bytes");
          

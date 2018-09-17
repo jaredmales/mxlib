@@ -296,7 +296,7 @@ template<typename _realT,  typename _detectorT>
 template<typename AOSysT>
 void directPhaseSensor<_realT, _detectorT>::linkSystem(AOSysT & AOSys)
 {
-
+   static_cast<void>(AOSys);
 }
 
 template<typename _realT,  typename _detectorT>
@@ -365,7 +365,7 @@ template<typename _realT, typename _detectorT>
 bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPlane)
 {
    ++_lastWavefront;
-   if(_lastWavefront >= _wavefronts.size()) _lastWavefront = 0;
+   if((size_t) _lastWavefront >= _wavefronts.size()) _lastWavefront = 0;
 
 
    wavefrontT pPlane = pupilPlane;
@@ -505,7 +505,7 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    for(int i=0; i < _iTime; ++i)
    {
       ++_firstWavefront;
-      if(_firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
+      if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
 
 
       pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
