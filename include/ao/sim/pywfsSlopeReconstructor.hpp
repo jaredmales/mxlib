@@ -1,8 +1,7 @@
 #ifndef __pywfsSlopeReconstructor_hpp__
 #define __pywfsSlopeReconstructor_hpp__
 
-#pragma GCC system_header
-#include <Eigen/Dense>
+#include <mx/improc/eigenCube.hpp>
 
 
 namespace mx
@@ -67,7 +66,7 @@ protected:
    
    
    imageT _rMat; ///<The response matrix
-   eigenCube<floatT> _rImages;
+   improc::eigenCube<floatT> _rImages;
    
 public:   
    
@@ -303,8 +302,8 @@ void pywfsSlopeReconstructor<floatT>::detCols(int dc)
 template<typename floatT> 
 void pywfsSlopeReconstructor<floatT>::loadRecon(std::string fname)
 {
-   mx::fitsFile<floatT> ff;
-   mx::fitsHeader head;
+   improc::fitsFile<floatT> ff;
+   improc::fitsHeader head;
    
    ff.read(fname, _recon, head);
 
@@ -329,7 +328,7 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
 {
    if(_maskType == 1)
    {
-      mx::fitsFile<floatT> ff;
+      improc::fitsFile<floatT> ff;
             
       std::cerr << "Loading Mask: " << _maskFile << "\n";
       ff.read(_maskFile, _quadMask);
@@ -338,14 +337,14 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
    }
    {
       _quadMask.resize(0.5*_detRows/_binFact,0.5*_detCols/_binFact);
-      mx::circularPupil( _quadMask, _maskObscuration,_maskRadius/_binFact);
+      wfp::circularPupil( _quadMask, _maskObscuration,_maskRadius/_binFact);
    }
       
    _measurementSize = 2* _quadMask.sum();// + 64*64;
    
    _maskMade = true;
    
-    mx::fitsFile<floatT> ff;
+    improc::fitsFile<floatT> ff;
     ff.write("quadMask.fits", _quadMask);
 }
 
@@ -429,7 +428,7 @@ void pywfsSlopeReconstructor<floatT>::calcMeasurement(measurementT & slopes, wfs
       {
          slopes.measurement(0, 2*nPix + i*wfsImage.tipImage.cols() + j) = wfsImage.tipImage(i,j);
       }
-   }/**/
+   }*/
    
 }
      
@@ -483,8 +482,8 @@ void pywfsSlopeReconstructor<floatT>::accumulateRMat(int i, measurementT &measur
 template<typename floatT> 
 void pywfsSlopeReconstructor<floatT>::saveRMat(std::string fname)
 {
-   mx::fitsFile<floatT> ff;
-   mx::fitsHeader head;
+   improc::fitsFile<floatT> ff;
+   improc::fitsHeader head;
    
    if(_maskType == 1)
    {
@@ -508,8 +507,8 @@ void pywfsSlopeReconstructor<floatT>::saveRMat(std::string fname)
 template<typename floatT> 
 void pywfsSlopeReconstructor<floatT>::saveRImages(std::string fname)
 {
-   mx::fitsFile<floatT> ff;
-   mx::fitsHeader head;
+   improc::fitsFile<floatT> ff;
+   improc::fitsHeader head;
    
    if(_maskType == 1)
    {

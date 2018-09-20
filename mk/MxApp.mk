@@ -66,6 +66,7 @@ endif
 
 OPTIMIZE ?= -O3 -fopenmp -ffast-math
 EXTRA_LDLIBS ?= -lmxlib $(SOFA_LIB) $(LEVMAR_LIB) -lcfitsio -lboost_system -lboost_filesystem -lgsl $(XPA_LIB)
+
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif

@@ -433,7 +433,7 @@ template<typename realT>
 int generalIntegrator<realT>::gains( const std::vector<realT> & gains )
 {
 
-   if( gains.size() != _gains.cols())
+   if( gains.size() != (size_t) _gains.cols())
    {
       mxError("generalIntegrator::gains", MXE_SIZEERR, "input gain vector not same size as number of modes");
       return -1; ///\retval -1 on vector size mismatch
@@ -451,7 +451,7 @@ template<typename realT>
 int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
 {
 
-   if( gains.size() != _closingGains.cols())
+   if( gains.size() != (size_t) _closingGains.cols())
    {
       mxError("generalIntegrator::closingGains", MXE_SIZEERR, "input gain vector not same size as number of modes");
       return -1; ///\retval -1 on vector size mismatch

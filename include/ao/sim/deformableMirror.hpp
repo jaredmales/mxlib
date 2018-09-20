@@ -286,7 +286,7 @@ int deformableMirror<_realT>::initialize( specT & spec,
    _nextShape = _shape;
    _oldShape = _shape;
 
-
+   return 0;
 }
 
 

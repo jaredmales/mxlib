@@ -566,10 +566,9 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    if(temp.rows() == imout.rows() && temp.cols() == imout.cols())
    {
       imout = temp;
-      Scalar outputTotal = fabs(imout.sum());
-
+      
       //Normalize
-      imout *= 1.0;//(1./    inputTotal/outputTotal;
+      imout *= 1.0;
       return;
    }
    //Otherwise, re-sample using bilinear interpolation.

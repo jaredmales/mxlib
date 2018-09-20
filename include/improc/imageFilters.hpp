@@ -71,6 +71,10 @@ struct gaussKernel
    
    void setKernel(arithT x, arithT y, arrayT & kernelArray)
    {
+<<<<<<< HEAD
+=======
+      //Unused parts of interface:
+>>>>>>> master
       static_cast<void>(x);
       static_cast<void>(y);
       
@@ -217,9 +221,15 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
       typename imageOutT::Scalar norm;
    
       #pragma omp for
+<<<<<<< HEAD
       for(int i=0; i< im.rows(); i++)
       {
          for(int j=0; j<im.cols(); j++)
+=======
+      for(int i=0; i< im.rows(); ++i)
+      {
+         for(int j=0; j<im.cols(); ++j)
+>>>>>>> master
          {
             if((i >= mini && i< maxi) && (j>= minj && j<maxj))
             {
@@ -328,7 +338,7 @@ void radprofim( radprofT & radprof,
    /* A vector of radvals will be sorted, then binned*/
    std::vector<radval<floatT> > rv(dim1*dim2);
    
-   for(int i=0;i<rv.size();++i)
+   for(size_t i=0;i<rv.size();++i)
    {
       rv[i].r = rad(i);
       rv[i].v = im(i);
@@ -529,7 +539,11 @@ void stddevImage( eigenimT & stdIm,
                   typename eigenimT::Scalar minRad,
                   typename eigenimT::Scalar maxRad,
                   bool divide = false )
+<<<<<<< HEAD
 {
+=======
+{   
+>>>>>>> master
    int dim1 = im.cols();
    int dim2 = im.rows();
    
@@ -563,7 +577,10 @@ void stddevImageCube( eigencubeT & stdImc,
                       typename eigenimT::Scalar maxRad,
                       bool divide = false )
 {
+<<<<<<< HEAD
    
+=======
+>>>>>>> master
    int dim1 = imc.cols();
    int dim2 = imc.rows();
    

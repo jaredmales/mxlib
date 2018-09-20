@@ -91,7 +91,8 @@ public:
    template<typename AOSysT>
    void initialize(AOSysT & AOSys, specT & spec)
    {
-         
+      static_cast<void>(spec);
+      
       _modes = &AOSys.dm._infF;
    
       _nModes = _modes->planes();

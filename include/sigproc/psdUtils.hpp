@@ -272,7 +272,7 @@ int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will
 
    floatT s =0;
 
-   for(int i = 0; i < psd.size(); ++i)
+   for(size_t i = 0; i < psd.size(); ++i)
    {
       if(f[i] < fmin || f[i] > fmax) continue;
 
@@ -281,7 +281,7 @@ int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will
 
    s *= df;
 
-   for(int i = 0; i < psd.size(); ++i) psd[i] *= norm/s;
+   for(size_t i = 0; i < psd.size(); ++i) psd[i] *= norm/s;
 
    return 0;
 }
@@ -430,7 +430,7 @@ int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be 
 
    psd.resize(f.size());
 
-   for(int i=0; i< f.size(); ++i)
+   for(size_t i=0; i< f.size(); ++i)
    {
       floatT p = beta / pow( pow(f[i],2) + T02, sqrt_alpha);
       if(t0 > 0 ) p *= exp(-1*pow( f[i]*t0, 2));

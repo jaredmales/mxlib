@@ -556,7 +556,7 @@ void headersToValues(std::vector<dataT> & v, const std::vector<fitsHeader> & hea
 {
    v.resize(heads.size());
    
-   for(int i=0;i<heads.size(); ++i)
+   for(size_t i=0;i<heads.size(); ++i)
    {
       v[i] = heads[i][keyw].Value<dataT>();//convertFromString<dataT>(heads[i][keyw].value);
    }
