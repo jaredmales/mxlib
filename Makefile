@@ -47,7 +47,7 @@ all: install
 
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
-	@sh ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
+	@bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
 
 .PHONY: setup
 setup:
