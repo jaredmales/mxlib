@@ -63,7 +63,7 @@ realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
 
    var = half*PSD[0];
 
-   for(int i=1; i<PSD.size()-1;++i) var += PSD[i];
+   for(size_t i=1; i<PSD.size()-1;++i) var += PSD[i];
 
    var += half*PSD[PSD.size()-1];
 
@@ -574,7 +574,7 @@ void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant pe
                          std::vector<realT> & w      ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
                        )
 {
-   int Nper = avgLen/dt;
+   size_t Nper = avgLen/dt;
    int Nover = (avgLen-olap)/dt;
 
    if( w.size() > 0 && w.size() != Nper )
@@ -602,7 +602,7 @@ void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant pe
    {
       realT v;
 
-      for(int j=0;j<Nper;++j)
+      for(size_t j=0;j<Nper;++j)
       {
          v = ts[i*Nover + j];
 
@@ -613,21 +613,20 @@ void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant pe
 
       fft( fftwork.data(), cwork.data());
 
-      for(int j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
+      for(size_t j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
    }
 
-   for(int j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
+   for(size_t j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
 
    //realT varNorm = 1;
    if(w.size() == Nper)
    {
-      realT sum = 0;
       realT df = 1.0/(2.0*pgram.size()*dt); //factor of 2 since it's a one-sided PSD
       realT pgramVar = psdVar(df, pgram);
 
       realT tsVar = mx::math::vectorVariance(ts);
 
-      for(int j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
+      for(size_t j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
 
    }
 

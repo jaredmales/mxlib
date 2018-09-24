@@ -19,7 +19,7 @@
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
 
-#include <mx/mxlib.h>
+#include <mx/mxlib.hpp>
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;

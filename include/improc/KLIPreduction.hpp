@@ -145,15 +145,31 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    void medianSubtract(eigenCube<realT> & ims, std::vector<realT> & sds);
    void getStdDevs(std::vector<realT> sd, eigenCube<realT> & ims);
    
-   int regions( std::vector<realT> minr, 
-                std::vector<realT> maxr, 
-                std::vector<realT> minq, 
-                std::vector<realT> maxq);
+   /// Run KLIP in a set of geometric search regions.
+   /** The arguments are 4 vectors, where each entry defines one component of the  search region.
+     *
+     * \returns 0 on success
+     * \returns -1 on error
+     * 
+     */
+   int regions( std::vector<realT> minr, ///< [in]
+                std::vector<realT> maxr, ///< [in]
+                std::vector<realT> minq, ///< [in]
+                std::vector<realT> maxq  ///< [in]
+              );
    
-   int regions( realT minr, 
-                realT maxr, 
-                realT minq, 
-                realT maxq)
+   /// Run KLIP in a geometric search region.
+   /** \overload
+     *
+     * \returns 0 on success
+     * \returns -1 on error
+     * 
+     */
+   int regions( realT minr, ///< [in]
+                realT maxr, ///< [in]
+                realT minq, ///< [in]
+                realT maxq  ///< [in]
+              )
    {
       std::vector<realT> vminr(1, minr);
       std::vector<realT> vmaxr(1, maxr);
@@ -245,9 +261,9 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::medianSubtract(eigenCube<r
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
 inline
 int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT> minr, 
-                                                                std::vector<_realT> maxr, 
-                                                                std::vector<_realT> minq, 
-                                                                std::vector<_realT> maxq)
+                                                              std::vector<_realT> maxr, 
+                                                              std::vector<_realT> minq, 
+                                                              std::vector<_realT> maxq)
 {   
    this->t_begin = get_curr_time();
    

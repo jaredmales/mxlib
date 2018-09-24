@@ -455,11 +455,11 @@ int vectorRebin( vectorT & binv,           ///< [out] the re-binned vector.  wil
 
    binv.resize( v.size()/n );
 
-   for(int i=0; i< binv.size(); ++i)
+   for(size_t i=0; i< binv.size(); ++i)
    {
       binv[i] = 0;
 
-      int j;
+      unsigned j;
       for(j=0; j < n; ++j)
       {
          if(i*n + j >= v.size()) break;

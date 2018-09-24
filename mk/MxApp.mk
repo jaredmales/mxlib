@@ -5,8 +5,12 @@ SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 include $(SELF_DIR)/../mk/Common.mk
 
 NEED_BLAS ?= yes
+NEED_FFTW ?= yes
 NEED_SOFA ?= yes
 NEED_LEVAR ?= yes
+NEED_FITS ?= yes
+NEED_BOOST ?= yes
+NEED_GSL ?= yes
 NEED_XPA ?= yes
 
 # Provide default build options in case they weren't defined in local/MxApp.mk
@@ -58,18 +62,37 @@ else
    LEVMAR_LIB =
 endif
 
+ifeq ($(NEED_FITS),yes)
+   FITS_LIB = -lcfitsio 
+else
+   FITS_LIB =
+endif
+
+ifeq ($(NEED_BOOST),yes)
+   BOOST_LIB = -lboost_system -lboost_filesystem
+else
+   BOOST_LIB =
+endif
+
 ifeq ($(NEED_XPA),yes)
    XPA_LIB = -lxpa
 else
-   XPA_LIB =
+   XPA_LIB = 
+endif
+
+ifeq ($(NEED_GSL),yes)
+   GSL_LIB = -lgsl 
+else
+   GSL_LIB = 
 endif
 
 OPTIMIZE ?= -O3 -fopenmp -ffast-math
-EXTRA_LDLIBS ?= -lmxlib $(SOFA_LIB) $(LEVMAR_LIB) -lcfitsio -lboost_system -lboost_filesystem -lgsl $(XPA_LIB)
+EXTRA_LDLIBS ?= $(SOFA_LIB) $(LEVMAR_LIB) $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(XPA_LIB)
 
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif
+
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
 ifeq ($(NEED_BLAS),yes)
@@ -78,9 +101,13 @@ ifeq ($(NEED_BLAS),yes)
     LDFLAGS += $(BLAS_LDFLAGS)
 endif
 
+ifeq ($(NEED_FFTW),yes)
+   LDLIBS += $(FFT_LDLIBS)
+   LDFLAGS += $(FFT_LDFLAGS)
+endif
 
-LDLIBS += $(EXTRA_LDLIBS)  $(FFT_LDLIBS) 
-LDFLAGS += $(FFT_LDFLAGS) $(EXTRA_LDFLAGS)
+LDLIBS += $(EXTRA_LDLIBS) 
+LDFLAGS += $(EXTRA_LDFLAGS)
 
 CFLAGS += -std=c99 -fPIC $(INCLUDES) $(OPTIMIZE)
 CXXFLAGS += -std=c++14 -fPIC $(INCLUDES) $(OPTIMIZE)
@@ -100,6 +127,6 @@ install: all
 
 .PHONY: clean
 clean:
-	rm $(TARGET)
+	rm -f $(TARGET)
 	rm -f *.o 
 	rm -f *~

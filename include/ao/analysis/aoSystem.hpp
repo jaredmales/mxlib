@@ -1895,8 +1895,6 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    atm.dumpAtmosphere(ios);
    
    ios << "# Software versions: " << '\n';
-   ios << "#    mxlib_comp sha1 = " << mxlib_compiled_git_sha1() << '\n';
-   ios << "#    mxlib_comp modified = " << mxlib_compiled_git_repo_modified() << '\n';
    ios << "#    mxlib_uncomp sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
    ios << "#    mxlib_uncomp modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
       
