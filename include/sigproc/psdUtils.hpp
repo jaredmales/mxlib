@@ -562,8 +562,9 @@ void vonKarman_psd( eigenArrp  & psd,
   * The frequency scale of the output periodogram is 1/(2*pgram.size()*dt), where the factor of 2 is due to the one-sided-ness of the result.
   *
   * If a window is supplied, the PSD is normalized so that the one-sided integral is equal to the variance of the input time-series.
-  *
-  *
+  * 
+  * If you just want the FFT of a timeseries with no overlap, set dt=1, avgLen=\<length of time series\>, olap=0.  This will still window
+  * and normalize if needed.
   */
 template<typename realT>
 void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant periodogram.
