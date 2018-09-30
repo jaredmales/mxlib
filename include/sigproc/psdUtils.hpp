@@ -445,7 +445,7 @@ int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be 
   * Populates an Eigen array  with
   *
   * \f[
-  *  P(f) = \frac{\beta}{ 1 + (f\f_n)^alpha}
+  *  P(f) = \frac{\beta}{ 1 + (f/f_n)^{\alpha}}
   * \f]
   *
   * If you set \f$ T_0 \le 0 \f$ and \f$ t_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e.
