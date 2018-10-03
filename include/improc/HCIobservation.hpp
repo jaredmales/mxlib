@@ -1382,6 +1382,11 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
          snprintf(num, 256, "_%03zu_%05d.fits",n,p);
          fname = PSFSubPrefix + num;
 
+         if(outputDir != "")
+         {
+            fname = outputDir + "/" + fname;
+         }
+   
          fitsHeader h = head;
 
          h.append(heads[p]);
