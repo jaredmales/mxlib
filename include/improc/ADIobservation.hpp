@@ -149,6 +149,15 @@ struct ADIobservation : public HCIobservation<_realT>
    ///Post read actions, including fake injection
    virtual int postReadFiles();
    
+   /// Read in already PSF-subtracted files
+   /** Used to take up final processing after applying some non-klipReduce processing steps to
+     * PSF-subtracted images.
+     */ 
+   int readPSFSub( const std::string & dir,
+                   const std::string & prefix,
+                   const std::string & ext,
+                   size_t nReductions 
+                 );
    
    /** \name Fake Planets
      * @{ 
@@ -269,6 +278,35 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
    {
       if( injectFake() < 0) return -1;
    }
+   
+   return 0;
+}
+
+template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
+                                                        const std::string & prefix,
+                                                        const std::string & ext,
+                                                        size_t nReductions 
+                                                      )
+{
+   this->keywords.clear();
+   
+   if(!derotF.isSetup())
+   {
+      mxError("ADIobservation::readFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
+      return -1;
+   }
+   
+   for(size_t i=0;i<derotF.keywords.size();++i)
+   {
+      this->keywords.push_back(derotF.keywords[i]);
+   }
+   
+   /*----- Append the ADI keywords to propagate them if needed -----*/
+      
+   if( HCIobservation<realT>::readPSFSub(dir,prefix,ext, nReductions) < 0) return -1;
+   
+   derotF.extractKeywords(this->heads);
    
    return 0;
 }

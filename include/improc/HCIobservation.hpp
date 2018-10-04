@@ -430,6 +430,16 @@ public:
    ///Perform post-read actions, for use by derived classes
    virtual int postReadFiles();
 
+   /// Read in already PSF-subtracted files
+   /** Used to take up final processing after applying some non-klipReduce processing steps to
+     * PSF-subtracted images.
+     */ 
+   int readPSFSub( const std::string & dir,
+                   const std::string & prefix,
+                   const std::string & ext,
+                   size_t nReductions 
+                 );
+   
    ///Populate the mask cube.  Derived classes can do this as appropriate, e.g. by rotating the mask.
    virtual void makeMaskCube();
 
@@ -573,19 +583,15 @@ HCIobservation<_realT>::HCIobservation(const std::string & fileListFile)
 template<typename _realT>
 inline void HCIobservation<_realT>::loadFileList(const std::string & fileListFile)
 {
-   std::cerr << "Getting file list from file...\n";
    ioutils::readColumns(fileListFile, fileList);
    filesDeleted = false;
-   std::cerr << "done.\n";
 }
 
 template<typename _realT>
 inline void HCIobservation<_realT>::loadFileList(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
-   std::cerr << "Getting file list...\n";
    fileList = ioutils::getFileNames(dir, prefix, "", ext);
    filesDeleted = false;
-   std::cerr << "done.\n";
 }
 
 template<typename _realT>
@@ -762,6 +768,154 @@ int HCIobservation<_realT>::readFiles()
 
       outputPreProcessed();
    }
+   filesRead = true;
+   
+   return 0;
+}
+
+template<typename _realT>
+int HCIobservation<_realT>::readPSFSub( const std::string & dir,
+                                        const std::string & prefix,
+                                        const std::string & ext,
+                                        size_t nReductions 
+                                      )
+{
+
+   psfsub.resize(nReductions);
+   
+   for(size_t n =0; n<nReductions; ++n)
+   {
+      char nstr[5];
+      snprintf(nstr, sizeof(nstr), "%03zu", n);
+      
+      std::string nprefix = prefix + "_" + nstr + "_";
+      loadFileList(dir, nprefix, ext);
+      
+      if(fileList.size() == 0)
+      {
+         mxError("HCIobservation", MXE_FILENOTFOUND, "The fileList has 0 length, there are no files to be read.");
+         return -1;
+      }
+
+      Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
+
+      fitsFile<realT> f(fileList[0]);
+
+      f.read(im);
+
+      fitsHeader head;
+
+      if(MJDKeyword != "") head.append(MJDKeyword);
+
+      for(size_t i=0;i<keywords.size();++i)
+      {
+         head.append(keywords[i]);
+      }
+
+      /*----- Append the HCI keywords to propagate them if needed -----*/
+
+      heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
+      heads.resize(fileList.size(), head);
+
+      if(imSize > 0)
+      {
+         //Now make sure we don't read too much.
+         if(imSize > im.rows()) imSize = im.rows();
+         if(imSize > im.cols()) imSize = im.cols();
+
+         //the +0.1 is just to make sure we don't have a problem with precision (we shouldn't)/
+         f.setReadSize( floor(0.5*(im.rows()-1) - 0.5*(imSize-1) +0.1), floor(0.5*(im.cols()-1.0) - 0.5*(imSize-1.0)+0.1), imSize, imSize);
+         im.resize(imSize, imSize);
+      }
+
+      
+      if(n > 0)
+      {
+         if(fileList.size() != (size_t) Nims)
+         {
+            mxError("HCIobservation", MXE_INVALIDARG, "Different number of images in reductions.");
+            return -1;
+         }
+         if(Nrows != im.rows())
+         {
+            mxError("HCIobservation", MXE_INVALIDARG, "Different number of rows in reductions.");
+            return -1;
+         }
+         if(Ncols != im.cols())
+         {
+            mxError("HCIobservation", MXE_INVALIDARG, "Different number of cols in reductions.");
+            return -1;
+         }
+      }
+      
+      Nims =  fileList.size();
+      Nrows = im.rows();
+      Ncols = im.cols();
+      Npix =  im.rows()*im.cols();
+   
+      psfsub[n].resize(Nrows, Ncols, Nims);
+      
+      t_load_begin = get_curr_time();
+
+      f.read(psfsub[n].data(), heads, fileList);
+
+      f.setReadSize();
+
+      if(MJDKeyword != "")
+      {
+         imageMJD.resize(heads.size());
+
+         if(MJDisISO8601)
+         {
+            for(size_t i=0;i<imageMJD.size();++i)
+            {
+               imageMJD[i] =  mx::ISO8601date2mjd(heads[i][MJDKeyword].String());
+            }
+         }
+         else
+         {
+            for(size_t i=0;i<imageMJD.size();++i)
+            {
+               imageMJD[i] =  heads[i][MJDKeyword].Value<realT>()*MJDUnits;
+            }
+         }
+      }
+
+      t_load_end = get_curr_time();
+
+      ///\todo zeroNaNs should be a member and be configurable.  Probably should be true by default.
+      bool zeroNaNs = true;
+
+      if( zeroNaNs )
+      {
+         for(int k=0; k<Nims; ++k)
+         {
+            for(int i=0; i< Nrows; ++i)
+            {
+               for(int j=0; j<Ncols; ++j)
+               {
+                  if( !std::isnormal( psfsub[n].image(k)(i,j)) )
+                  {
+                     psfsub[n].image(k)(i,j) = 0;
+                  }
+               }
+            }
+         }
+      }
+
+   }
+   
+   postReadFiles();
+  
+   /*** Load the mask ***/
+   if( maskFile != "")
+   {
+      fitsFile<realT> ff;
+      ff.read(mask, maskFile);
+
+      makeMaskCube();
+   }
+
    filesRead = true;
    
    return 0;
