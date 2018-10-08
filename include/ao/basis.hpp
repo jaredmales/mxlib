@@ -374,6 +374,7 @@ int slaveBasis( const std::string & outputBasisN,
    std::string oFName =  mx::AO::path::basis::modes(outputBasisN, true);
    ff.write(oFName, oModes);
    
+   return 0;
 }
 
 
@@ -416,6 +417,7 @@ int apodizeBasis( const std::string & outputBasisN,
    std::string oFName =  mx::AO::path::basis::modes(outputBasisN, true);
    ff.write(oFName, modes);
    
+   return 0;
 }
 
 

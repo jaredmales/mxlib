@@ -245,6 +245,7 @@ int idealCoronagraph<realT, wholePixel>::propagate( imageT & fpIntensity,
 template<typename realT, int wholePixel>
 int idealCoronagraph<realT, wholePixel>::propagateNC( complexFieldT & pupilPlane )
 {
+   static_cast<void>(pupilPlane);
    return 0;
 }
 

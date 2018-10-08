@@ -204,12 +204,11 @@ int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  T
    
    imOut *= imMask;
    
-   
    imMaskT tMask = imMask; //Need a modifiable mask, which grows as the image is extended
    
    std::vector<int> nmi, nmj; //Used to track which pixels of the mask need to be updated
    
-   for(int n=0; n < padSz; ++n)
+   for(unsigned int n=0; n < padSz; ++n)
    {
       nmi.clear();
       nmj.clear();
@@ -234,21 +233,6 @@ int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  T
                   
                   if( tMask( ii+i, jj+j) == 1)
                   {
-                     //if(nv == 0) nv = 1;
-                     
-//                     r = i*i + j*j;
-  
-//                      if(r == minr) //Equidistant pixels
-//                      {
-//                         mv += imOut( ii+i, jj+j); //So we average
-//                         ++nv;
-//                      }
-//                      else if(r < minr ) //New closest pixel
-//                      {
-//                         mv = imOut( ii+i, jj+j);
-//                         nv = 1;
-//                         minr = r;
-//                      }
                      mv += imOut( ii+i, jj+j);
                      ++nv;
   
@@ -266,7 +250,7 @@ int padImage( imOutT & imOut, ///< [out] On return contains the padded image.  T
          }
       }
       
-      for(int i=0; i< nmi.size(); ++i)
+      for(size_t i=0; i< nmi.size(); ++i)
       {
          tMask( nmi[i], nmj[i]) = 1;
       }
