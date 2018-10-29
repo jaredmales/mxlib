@@ -1076,7 +1076,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       if(lifetimeTrials > 0)
       {
          fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
-         ff.write( fn, cim);
+         ff.write( fn, speckleLifetimes);
       }
       
       
@@ -1116,7 +1116,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          if(lifetimeTrials > 0)
          {
             fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
-            ff.write( fn, cim);
+            ff.write( fn, speckleLifetimes_lp);
          }
       }
 

@@ -85,7 +85,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,  ///< [out] [optional] The bin
    int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
    
    int Nsamp = 0.5*psd2.rows();
-   std::cerr << "Nspeck = " << Nsamp << " (" << Nsamp*dt << ")\n";
+   //std::cerr << "Nspeck = " << Nsamp << " (" << Nsamp*dt << ")\n";
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
       
    std::vector<std::vector<realT>> means;
