@@ -852,8 +852,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
 
-         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.5/fs);
-         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.5/fs);
+         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.25/fs);
+         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.25/fs);
 
          go_si.f(tfreq);
          go_lp.f(tfreq);
@@ -967,8 +967,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                
                if(lifetimeTrials > 0)
                {
-                  std::vector<realT> bins = {1, 4.0};
-                  for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq[tfreq.size()-1]); //convert from seconds to number of measurements
+                  std::vector<realT> bins = {1,4};
+                  for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
                   std::vector<realT> vars(bins.size());
                   speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
                   realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
@@ -1012,7 +1012,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   if(lifetimeTrials > 0)
                   {
                      std::vector<realT> bins = {1, 4.0};
-                     for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq[tfreq.size()-1]); //convert from seconds to number of measurements
+                     for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
                      std::vector<realT> vars(bins.size());
                      speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
                      realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
