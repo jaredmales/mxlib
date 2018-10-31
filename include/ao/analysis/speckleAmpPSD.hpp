@@ -78,14 +78,10 @@ int speckleAmpVarMean( std::vector<realT> & vars,  ///< [out] [optional] The bin
    Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
    for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
 
-   //The time sampling
-   realT dt = 1./(2*freq.back());
-
    int Nwd = 0.5*psd2.rows();
    int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
    
    int Nsamp = 0.5*psd2.rows();
-   //std::cerr << "Nspeck = " << Nsamp << " (" << Nsamp*dt << ")\n";
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
       
    std::vector<std::vector<realT>> means;
