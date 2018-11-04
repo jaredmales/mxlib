@@ -13,9 +13,16 @@
 #include <vector>
 #include <iostream>
 
+#include <boost/math/constants/constants.hpp>
+using namespace boost::math::constants;
+
 #include "../../sigproc/psdFilter.hpp"
 #include "../../sigproc/psdUtils.hpp"
 #include "../../math/func/jinc.hpp"
+
+#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/stringUtils.hpp"
+
 
 #include "turbLayer.hpp"
 #include "wavefront.hpp"
