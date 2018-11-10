@@ -5,6 +5,25 @@
   *
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #include <complex>
 
 extern "C"
@@ -12,8 +31,11 @@ extern "C"
 #ifdef MXLIB_MKL
 
    #include <mkl.h>
+   
 #elif defined(__APPLE__)
-#include <vecLib/cblas.h>
+
+   #include <vecLib/cblas.h>
+
 #else
 
    #include <cblas.h>
@@ -22,8 +44,8 @@ extern "C"
 }
 
 
-#ifndef templateBLAS_hpp
-#define templateBLAS_hpp
+#ifndef math_templateBLAS_hpp
+#define math_templateBLAS_hpp
 
 
 namespace mx
@@ -366,6 +388,6 @@ void syrk<std::complex<double> >(const CBLAS_ORDER Order, const CBLAS_UPLO Uplo,
 } //namespace math
 } //namespace mx
 
-#endif //templateBLAS_hpp
+#endif //math_templateBLAS_hpp
 
 

@@ -5,6 +5,25 @@
   * 
 */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef __gnuPlot_hpp__
 #define __gnuPlot_hpp__
 
@@ -482,7 +501,7 @@ gnuPlot::~gnuPlot()
       remove(_errFName.c_str());
    }
    
-   for(int i=0; i < _tempFiles.size(); ++i)
+   for(size_t i=0; i < _tempFiles.size(); ++i)
    {
       remove(_tempFiles[i].c_str());
    }
@@ -548,6 +567,8 @@ int gnuPlot::connect()
    }
       
    _connected = 1;
+   
+   return 0;
 }
 
 inline
@@ -639,7 +660,7 @@ int gnuPlot::checkResponse(std::string & response, double timeout)
          }
       }
 
-      int first =0;
+      size_t first =0;
       while( isspace(response[first]) && first < response.length()-1) ++first;
       response.erase(0, first);
       

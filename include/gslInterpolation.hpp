@@ -6,7 +6,26 @@
   * \ingroup interpolation
   *
   */
-  
+
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef gslInterpolation_hpp
 #define gslInterpolation_hpp
 
@@ -16,16 +35,24 @@
 namespace mx
 {
 
+template<typename _realT = double>
 struct gslInterpolator
 {
-   gsl_interp * interp;
-   gsl_interp_accel * acc;
+   typedef _realT realT;
    
-   double *_xin;
-   double *_yin;
+   static_assert( std::is_same<double, typename std::remove_cv<realT>::type>::value, "GSL Interpolation only works with double");
    
-   void setup(const gsl_interp_type * interpT, double *xin, double *yin, size_t Nin)
+   gsl_interp * interp {0};
+   gsl_interp_accel * acc {0};
+   
+   realT *_xin;
+   realT *_yin;
+   
+   void setup(const gsl_interp_type * interpT, realT *xin, realT *yin, size_t Nin)
    {
+      if(interp) gsl_interp_free(interp);
+      if(acc) gsl_interp_accel_free(acc);
+      
       interp =  gsl_interp_alloc(interpT, Nin);
       acc = gsl_interp_accel_alloc ();
 
@@ -37,44 +64,46 @@ struct gslInterpolator
       _yin = yin;
    }
    
-   void setup(const gsl_interp_type * interpT, std::vector<double> & xin, std::vector<double> & yin)
+   void setup(const gsl_interp_type * interpT, std::vector<realT> & xin, std::vector<realT> & yin)
    {
       setup(interpT, xin.data(), yin.data(), xin.size());
    }
    
    gslInterpolator()
    {
+      
    }
    
-   gslInterpolator(const gsl_interp_type * interpT, double *xin, double *yin, size_t Nin)
+   gslInterpolator(const gsl_interp_type * interpT, realT *xin, realT *yin, size_t Nin)
    {
       setup(interpT, xin,yin,Nin);
    }
    
-   gslInterpolator(const gsl_interp_type * interpT, std::vector<double> & xin, std::vector<double> & yin)
+   gslInterpolator(const gsl_interp_type * interpT, std::vector<realT> & xin, std::vector<realT> & yin)
    {
       setup(interpT, xin.data(), yin.data(), xin.size());
    }
    
    ~gslInterpolator()
    {
-      gsl_interp_free(interp);
-      gsl_interp_accel_free (acc);
+      if(interp) gsl_interp_free(interp);
+      if(acc) gsl_interp_accel_free (acc);
    }
    
-   double interpolate(const double & x)
+   realT interpolate(const realT & x)
    {
-      double y;
+      realT y;
       gsl_interp_eval_e (interp, _xin, _yin, x, acc, &y);
       return y;
    }
    
-   double operator()(const double & x)
+   realT operator()(const realT & x)
    {
       return interpolate(x);
    }
    
 };
+
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
   * \param interpT one of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
@@ -104,13 +133,15 @@ int gsl_interpolate( const gsl_interp_type * interpT,
    
    gsl_interp_accel_reset(acc);
    
-   for(int i=0;i<Nout; ++i)
+   for(size_t i=0;i<Nout; ++i)
    {
-      int e = gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
+      gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
    }
    
    gsl_interp_free(interp);
    gsl_interp_accel_free (acc);
+   
+   return 0;
 }
 
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis (vector version)

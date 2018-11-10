@@ -1,4 +1,4 @@
-/** \file sharedmem_segment.h
+/** \file sharedMemSegment.hpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Declarations for the mxlib shared memory facility
   * \ingroup IPC_sharedmem
@@ -6,21 +6,44 @@
   * 
 */
 
-#ifndef __sharedMemSegment_hpp__
-#define __sharedMemSegment_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef ipc_sharedMemSegment_hpp
+#define ipc_sharedMemSegment_hpp
 
 #include <sys/shm.h>
 #include <stdint.h>
 #include <stdio.h>
 
-//#include "IPC.h"
+#include "ipc.hpp"
 
+namespace mx
+{
+namespace ipc 
+{
 
 /** \addtogroup IPC_sharedmem
   * @{
   */
 
-/// A c++ class to manage a shared memory segment with memory mapping
+/// A c++ class to manage a System V shared memory segment with memory mapping
 /** The associated functions create and/or attach to a shared memory segment.  If a segment is created, a block of
   * size sizeof(uintptr_t) is reserved where the address is stored.  This address is used when subsequently
   * attaching to the segment so that pointers stored in the block are valid, etc.
@@ -28,7 +51,7 @@
   */ 
 class sharedMemSegment
 {
-protected:
+public:
    ///The path to use for key creation
    char key_path[MX_IPC_KEYLEN];
    
@@ -86,7 +109,6 @@ public:
    
    ///Detach from the segment
    /**
-     * \param seg is the \ref sharedmem_segment to use
      *
      */ 
    int detach();
@@ -222,15 +244,16 @@ int sharedMemSegment::attach( bool donot_set_addr)
    return 0;
 }
 
-int sharedmem_segment_detach(sharedmem_segment *seg)
+inline
+int sharedMemSegment::detach()
 {
    
-   if(!seg->attached) return 0;
+   if(attached) return 0;
    
-   if(seg->addr == 0) return 0;
+   if(addr == 0) return 0;
 
    //now detach
-   if(shmdt(seg->addr) != 0)
+   if(shmdt(addr) != 0)
    {
       fprintf(stderr, "Unable to detach from shared memory\n");
       return -1;
@@ -241,6 +264,8 @@ int sharedmem_segment_detach(sharedmem_segment *seg)
    
 /// @}
 
+}//namespace ipc 
+}//namespace mx
 
-#endif //__sharedMemSegment_hpp__
+#endif //ipc_sharedMemSegment_hpp
 

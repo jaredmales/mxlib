@@ -43,8 +43,6 @@ public:
    ///The real data type
    typedef typename wavefrontT::Scalar::value_type realT;
    
-   //typedef complexT devicePtrT;
-   //typedef typename mx::cuda::cudaType<complexT>::deviceType devicePtrT;
    typedef complexT devicePtrT;
    
 protected:

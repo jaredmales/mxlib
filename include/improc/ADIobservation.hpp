@@ -149,6 +149,15 @@ struct ADIobservation : public HCIobservation<_realT>
    ///Post read actions, including fake injection
    virtual int postReadFiles();
    
+   /// Read in already PSF-subtracted files
+   /** Used to take up final processing after applying some non-klipReduce processing steps to
+     * PSF-subtracted images.
+     */ 
+   int readPSFSub( const std::string & dir,
+                   const std::string & prefix,
+                   const std::string & ext,
+                   size_t nReductions 
+                 );
    
    /** \name Fake Planets
      * @{ 
@@ -243,7 +252,7 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
       return -1;
    }
    
-   for(int i=0;i<derotF.keywords.size();++i)
+   for(size_t i=0;i<derotF.keywords.size();++i)
    {
       this->keywords.push_back(derotF.keywords[i]);
    }
@@ -274,6 +283,35 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 }
 
 template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
+                                                        const std::string & prefix,
+                                                        const std::string & ext,
+                                                        size_t nReductions 
+                                                      )
+{
+   this->keywords.clear();
+   
+   if(!derotF.isSetup())
+   {
+      mxError("ADIobservation::readFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
+      return -1;
+   }
+   
+   for(size_t i=0;i<derotF.keywords.size();++i)
+   {
+      this->keywords.push_back(derotF.keywords[i]);
+   }
+   
+   /*----- Append the ADI keywords to propagate them if needed -----*/
+      
+   if( HCIobservation<realT>::readPSFSub(dir,prefix,ext, nReductions) < 0) return -1;
+   
+   derotF.extractKeywords(this->heads);
+   
+   return 0;
+}
+
+template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::injectFake()
 {
    std::cerr << "injecting fake planets\n";
@@ -296,12 +334,12 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
       std::vector<realT> imS;
       
       //Read the quality file and load it into a map
-      if( readColumns(fakeScaleFileName, sfileNames, imS) < 0) return -1;
+      if( ioutils::readColumns(fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
-      for(int i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i])] = imS[i];
+      for(size_t i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i])] = imS[i];
       
-      for(int i=0; i<this->fileList.size(); ++i)
+      for(size_t i=0; i<this->fileList.size(); ++i)
       {
          if(scales.count(basename(this->fileList[i].c_str())) > 0)
          {
@@ -323,7 +361,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
 
    if(fakeMethod == 1)
    {
-      if( readColumns(fakeFileName, fakeFiles) < 0) return -1;
+      if( ioutils::readColumns(fakeFileName, fakeFiles) < 0) return -1;
    }
    
    for(int i=0; i<this->imc.planes(); ++i)
@@ -333,7 +371,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
          ff.read(fakePSF, fakeFiles[i]);
       }
 
-      for(int j=0;j<fakeSep.size(); ++j)
+      for(size_t j=0;j<fakeSep.size(); ++j)
       {
          if( injectFake(fakePSF, i, fakePA[j], fakeSep[j], fakeContrast[j], fakeScale[j]) < 0) return -1;
       }
@@ -429,7 +467,7 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
       realT derot;
       
       #pragma omp for schedule(static, 1)
-      for(int n=0; n<this->psfsub.size(); ++n)
+      for(size_t n=0; n<this->psfsub.size(); ++n)
       {
          for(int i=0; i<this->psfsub[n].planes();++i)
          {
@@ -468,7 +506,7 @@ void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader 
    
    if(fakeSep.size() > 0)
    {
-      for(int nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
+      for(size_t nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
       str << fakeSep[fakeSep.size()-1];      
       head->append<char *>("FAKESEP", (char *)str.str().c_str(), "separation of fake planets");
    }
@@ -476,7 +514,7 @@ void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader 
    if(fakePA.size() > 0 )
    {
       str.str("");
-      for(int nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
+      for(size_t nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
       str << fakePA[fakePA.size()-1];      
       head->append<char *>("FAKEPA", (char *)str.str().c_str(), "PA of fake planets");
    }
@@ -484,7 +522,7 @@ void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader 
    if( fakeContrast.size() > 0)
    {
       str.str("");
-      for(int nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
+      for(size_t nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
       str << fakeContrast[fakeContrast.size()-1];      
       head->append<char *>("FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets");
    }

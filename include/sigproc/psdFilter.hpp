@@ -5,6 +5,24 @@
   *
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
 
 #ifndef psdFilter_hpp
 #define psdFilter_hpp
@@ -18,7 +36,10 @@ namespace mx
 {
 namespace sigproc 
 {
-   
+
+template<typename _realT, int cuda = 0>
+class psdFilter;
+
 /// A class for filtering noise with PSDs
 /** The square-root of the PSD is maintained by this class, either as a pointer to an external array or using internally allocated memory (which will be
   * de-allocated on destruction. 
@@ -27,11 +48,11 @@ namespace sigproc
   * array of size N which contains the PSD as "power per unit frequency" vs frequency (i.e. the PSD) on some frequency scale with uniform spacing \f$ \Delta f \f$,
   * the normalization is
   \f[
-  PSD_{norm} = PSD * N * \Delta f 
+       PSD_{norm} = PSD * N * \Delta f 
   \f]
   * for a 1-dimensional PSD and  
   \f[
-  PSD_{norm} = PSD * N_0 * \Delta f_0 * N_1 * \Delta f_1 
+       PSD_{norm} = PSD * N_0 * \Delta f_0 * N_1 * \Delta f_1 
   \f]
   * for a 2-dimensional PSD. Remember that these are applied before taking the square root.
   *
@@ -41,7 +62,7 @@ namespace sigproc
   * \todo once fftT has a plan interface with pointers for working memory, use it.
   */
 template<typename _realT>
-class psdFilter
+class psdFilter<_realT, 0>
 {
 public:
    
@@ -138,7 +159,9 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int filter( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */);
+   int filter( realArrayT & noise,            ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+               realArrayT * noiseIm = nullptr ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+             );
    
    ///Apply the filter.
    /**
@@ -147,6 +170,14 @@ public:
      */ 
    int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ );
    
+   ///Apply the filter.
+   /**
+     * \returns 0 on success
+     * \returns -1 on error
+     */ 
+   int operator()( realArrayT & noise,  ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+                   realArrayT & noiseIm ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+                 ); 
 };
 
 template<typename realT>
@@ -275,7 +306,7 @@ void psdFilter<realT>::clear()
 }
    
 template<typename realT>
-int psdFilter<realT>::filter( realArrayT & noise )
+int psdFilter<realT>::filter( realArrayT & noise, realArrayT * noiseIm )
 {
    //Make noise a complex number
    for(int ii=0;ii<noise.rows();++ii)
@@ -297,6 +328,11 @@ int psdFilter<realT>::filter( realArrayT & noise )
    //Now take the real part, and normalize.
    noise = _ftWork.real()/(noise.rows()*noise.cols());
    
+   if(noiseIm != nullptr)
+   {
+      *noiseIm = _ftWork.imag()/(noise.rows()*noise.cols());
+   }
+   
    return 0;
 }
 
@@ -304,6 +340,14 @@ template<typename realT>
 int psdFilter<realT>::operator()( realArrayT & noise )
 {
    return filter(noise);
+}
+
+template<typename realT>
+int psdFilter<realT>::operator()( realArrayT & noise,
+                                  realArrayT & noiseIm
+                                )
+{
+   return filter(noise, &noiseIm);
 }
 
 } //namespace sigproc 

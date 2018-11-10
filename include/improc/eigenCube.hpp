@@ -1,8 +1,8 @@
 /** \file eigenCube.hpp
   * \brief An image cube with an Eigen API
-  * 
+  *
   * \author Jared R. Males (jaredmales@gmail.com)
-  * 
+  *
   * \ingroup image_processing_files
   *
   */
@@ -24,27 +24,27 @@ using namespace Eigen;
 
 namespace mx
 {
-namespace improc 
+namespace improc
 {
-   
+
 /// An image cube with an Eigen-like API
 /** \ingroup eigen_image_processing
   */
 template<typename dataT>
-class eigenCube 
+class eigenCube
 {
 public:
    typedef bool is_eigenCube;
    typedef dataT Scalar;
 
    typedef typename Array<dataT,Dynamic,Dynamic>::Index Index;
-   
+
    typedef Map<Array<dataT, Dynamic, Dynamic> > imageRef;
-   
+
    typedef Array<dataT,Dynamic,Dynamic> imageT;
-   
+
 protected:
-   
+
    Index _rows;
    Index _cols;
    Index _planes;
@@ -57,109 +57,111 @@ public:
 
    eigenCube();
 
-   eigenCube( Index nrows, 
-              Index ncols, 
+   eigenCube( Index nrows,
+              Index ncols,
               Index nplanes
             );
 
-   eigenCube( dataT * ndata, 
-              size_t nrows, 
-              size_t ncols, 
+   eigenCube( dataT * ndata,
+              size_t nrows,
+              size_t ncols,
               size_t nplanes
             );
 
    ~eigenCube();
 
    void setZero();
-   
+
    eigenCube<dataT> & operator=(eigenCube<dataT> & ec);
-   
+
    void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false);
-   
+
    void clear();
-   
+
    void resize(int r, int c, int p);
-   
+
    void resize(int r, int c);
-   
+
    dataT * data();
-   
+
    const dataT * data() const;
-   
+
    const Index rows() const;
-   
+
    const Index cols() const;
-   
+
    const Index planes() const;
 
    /// Returns a 2D Eigen::Map pointed at the entire cube.
    Map<Array<dataT, Dynamic, Dynamic> > cube();
-   
+
    /// Returns a 2D Eigen::Map pointed at the specified image.
    Map<Array<dataT, Dynamic, Dynamic> > image(Index n);
-   
+
    /// Returns an Eigen::Map-ed vector of the pixels at the given coordinate
    Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic> > pixel(Index i, Index j);
 
    ///Return an Eigen::Map of the cube where each image is a vector
    Map<Array<dataT, Dynamic, Dynamic> > asVectors();
- 
+
    ///Calculate the covariance matrix of the images in the cube
    void Covar(Matrix<dataT, Dynamic, Dynamic> & cv);
-   
+
    ///Calculate the mean image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
-     */ 
+     */
    template<typename eigenT>
    void mean( eigenT & mim /**< [out] the resultant mean image.  Is resized. */);
-   
+
    ///Calculate the mean image of the cube with a mask.
    /**
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
-     */ 
+     */
    template<typename eigenT, typename eigenCubeT>
-   void mean( eigenT & mim, ///< [out] the resultant mean image.  Is resized. 
-              eigenCubeT & mask ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+   void mean( eigenT & mim, ///< [out] the resultant mean image.  Is resized.
+              eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
             );
-   
+
    ///Calculate the weighted mean image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
      */
    template<typename eigenT>
-   void mean( eigenT & mim, ///< [out] the resultant mean image. Is resized. 
-              std::vector<dataT> & weights ///< [in] a vector of weights to use for calculating the mean 
+   void mean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
+              std::vector<dataT> & weights ///< [in] a vector of weights to use for calculating the mean
             );
-   
+
    ///Calculate the weighted mean image of the cube, with a mask cube.
    /**
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
      */
    template<typename eigenT, typename eigenCubeT>
-   void mean( eigenT & mim, ///< [out] the resultant mean image. Is resized. 
-              std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean 
-              eigenCubeT & mask ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+   void mean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
+              std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean
+              eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
+              double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
             );
-   
+
    ///Calculate the median image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
      */
    template<typename eigenT>
    void median( eigenT & mim /**< [out] the resultant median image. Is resized. */);
-   
+
    ///Calculate the sigma clipped mean image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
      */
    template<typename eigenT>
-   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image  
+   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image
                    Scalar sigma ///< [in] the sigma value at which to clip.
                  );
-   
+
    ///Calculate the sigma clipped mean image of the cube, with a mask cube
    /**
      * \tparam eigenT an Eigen-like type.
@@ -168,29 +170,31 @@ public:
    template<typename eigenT, typename eigenCubeT>
    void sigmaMean( eigenT & mim,  ///< [out] the resultant mean image.  Is resized.
                    eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-                   Scalar sigma ///< [in] the sigma value at which to clip.
+                   Scalar sigma, ///< [in] the sigma value at which to clip.
+                   double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
-   
+
    ///Calculate the sigma clipped weighted mean image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
      */
    template<typename eigenT>
-   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image. Is resized. 
-                   std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean 
+   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
+                   std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean
                    Scalar sigma ///< [in] the sigma value at which to clip.
                  );
-   
+
    ///Calculate the sigma clipped weighted mean image of the cube, with a mask cube.
    /**
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
      */
    template<typename eigenT, typename eigenCubeT>
-   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image. Is resized. 
-                   std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean 
+   void sigmaMean( eigenT & mim, ///< [out] the resultant mean image. Is resized.
+                   std::vector<dataT> & weights, ///< [in] a vector of weights to use for calculating the mean
                    eigenCubeT & mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-                   Scalar sigma ///< [in] the sigma value at which to clip.
+                   Scalar sigma, ///< [in] the sigma value at which to clip.
+                   double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
 };
 
@@ -239,7 +243,7 @@ template<typename dataT>
 void eigenCube<dataT>::setZero()
 {
    int N = _rows*_cols*_planes;
-   
+
    for(int i=0;i<N;++i) _data[i] = ((dataT) 0);
 }
 
@@ -247,11 +251,11 @@ template<typename dataT>
 eigenCube<dataT> & eigenCube<dataT>::operator=(eigenCube<dataT> & ec)
 {
    resize(ec.rows(), ec.cols(), ec.planes());
-   
+
    int N = _rows*_cols*_planes;
-   
+
    for(int i=0;i<N;++i) _data[i] = ec._data[i];
-   
+
    return *this;
 }
 
@@ -263,19 +267,19 @@ void eigenCube<dataT>::shallowCopy(eigenCube<dataT> & src, bool takeOwner)
       delete _data;
       _owner = false;
    }
-   
+
    _rows = src._rows;
    _cols = src._cols;
    _planes = src._planes;
    _data = src._data;
-   
-   if(takeOwner == true) 
+
+   if(takeOwner == true)
    {
       _owner = true;
       src._owner = false;
    }
    else
-   { 
+   {
       _owner = false;
    }
 }
@@ -287,7 +291,7 @@ void eigenCube<dataT>::clear()
    {
       delete _data;
    }
-   
+
    _rows = 0;
    _cols = 0;
    _planes = 0;
@@ -300,14 +304,14 @@ void eigenCube<dataT>::resize(int r, int c, int p)
    {
       delete _data;
    }
-   
+
    _rows = r;
    _cols = c;
    _planes = p;
-  
+
    _data = new dataT[_rows*_cols*_planes];
    _owner = true;
-  
+
 }
 
 template<typename dataT>
@@ -375,57 +379,58 @@ void eigenCube<dataT>::Covar(Matrix<dataT, Dynamic, Dynamic> & cv)
 {
    cv = asVectors().matrix().transpose()*asVectors().matrix();
 }
-   
+
 template<typename dataT>
 template<typename eigenT>
 void eigenCube<dataT>::mean(eigenT & mim)
 {
    mim.resize(_rows, _cols);
-   
+
    #pragma omp parallel for schedule(static, 1) num_threads(Eigen::nbThreads())
    for(Index i=0; i < _rows; ++i)
    {
       for(Index j=0;j< _cols; ++j)
       {
-         mim(i,j) = pixel(i,j).mean(); 
+         mim(i,j) = pixel(i,j).mean();
       }
    }
 }
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::mean( eigenT & mim, 
-                             eigenCubeT & mask
+void eigenCube<dataT>::mean( eigenT & mim,
+                             eigenCubeT & mask,
+                             double minGoodFract
                            )
 {
    mim.resize(_rows, _cols);
-   
+
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<dataT> work;
-      
-      #pragma omp for schedule(static, 1) 
+
+      #pragma omp for schedule(static, 1)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
          {
-            
+
             work.clear();
-            
+
             for(Index k=0; k<_planes; ++k)
             {
-            
+
                if( (mask.pixel(i,j))(k,0) == 1)
                {
                   work.push_back( (pixel(i,j))(k,0) );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
-               mim(i,j) = math::vectorMean(work); 
+               mim(i,j) = math::vectorMean(work);
             }
-            else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();   
-            
+            else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
+
          }
       }
    }
@@ -433,7 +438,7 @@ void eigenCube<dataT>::mean( eigenT & mim,
 
 template<typename dataT>
 template<typename eigenT>
-void eigenCube<dataT>::mean( eigenT & mim, 
+void eigenCube<dataT>::mean( eigenT & mim,
                              std::vector<dataT> & weights
                            )
 {
@@ -442,8 +447,8 @@ void eigenCube<dataT>::mean( eigenT & mim,
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
@@ -451,8 +456,8 @@ void eigenCube<dataT>::mean( eigenT & mim,
             work.resize(_planes);//work could be smaller after sigmaMean
             //int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
-            
-            mim(i,j) = math::vectorMean(work, weights);             
+
+            mim(i,j) = math::vectorMean(work, weights);
          }
       }
    }
@@ -460,9 +465,10 @@ void eigenCube<dataT>::mean( eigenT & mim,
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::mean( eigenT & mim, 
-                             std::vector<dataT> & weights, 
-                             eigenCubeT & mask 
+void eigenCube<dataT>::mean( eigenT & mim,
+                             std::vector<dataT> & weights,
+                             eigenCubeT & mask,
+                             double minGoodFract
                            )
 {
    mim.resize(_rows, _cols);
@@ -470,18 +476,18 @@ void eigenCube<dataT>::mean( eigenT & mim,
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work, wwork;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
          {
             work.clear();
             wwork.clear();
-            
+
             //int ii=0;
-            
-            for(Index k =0; k< _planes; ++k) 
+
+            for(Index k =0; k< _planes; ++k)
             {
                if( (mask.pixel(i,j))(k,0) == 1)
                {
@@ -489,9 +495,9 @@ void eigenCube<dataT>::mean( eigenT & mim,
                   wwork.push_back( weights[k] );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
-               mim(i,j) = math::vectorMean(work, wwork); 
+               mim(i,j) = math::vectorMean(work, wwork);
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
          }
@@ -504,7 +510,7 @@ template<typename eigenT>
 void eigenCube<dataT>::median(eigenT & mim)
 {
    mim.resize(_rows, _cols);
-   
+
    #pragma omp parallel for schedule(static, 10) num_threads(Eigen::nbThreads())
    for(Index i=0; i < _rows; ++i)
    {
@@ -512,7 +518,7 @@ void eigenCube<dataT>::median(eigenT & mim)
       std::vector<Scalar> work;
       for(Index j=0;j< _cols; ++j)
       {
-         mim(i,j) = imageMedian(pixel(i,j), &work);             
+         mim(i,j) = imageMedian(pixel(i,j), &work);
       }
    }
 }
@@ -526,59 +532,62 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, dataT sigma)
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
          {
             work.resize(_planes);//work could be smaller after sigmaMean
-            int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
-            
-            mim(i,j) = math::vectorSigmaMean(work, sigma);             
+
+            mim(i,j) = math::vectorSigmaMean(work, sigma);
          }
       }
-      
-      
+
+
    }
 }
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::sigmaMean(eigenT & mim, eigenCubeT & mask, dataT sigma)
+void eigenCube<dataT>::sigmaMean( eigenT & mim, 
+                                  eigenCubeT & mask, 
+                                  dataT sigma,
+                                  double minGoodFract
+                                )
 {
    mim.resize(_rows, _cols);
 
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
          {
             work.clear();
             int ii=0;
-            
-            for(Index k =0; k< _planes; ++k) 
+
+            for(Index k =0; k< _planes; ++k)
             {
                if( (mask.pixel(i,j))(k,0) == 1)
                {
                   work.push_back( (pixel(i,j))(k,0) );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
-               mim(i,j) = math::vectorSigmaMean(work, sigma); 
+               mim(i,j) = math::vectorSigmaMean(work, sigma);
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
-            
+
          }
       }
-      
-      
+
+
    }
 }
 
@@ -591,8 +600,8 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, dat
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
@@ -600,36 +609,41 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, dat
             work.resize(_planes);//work could be smaller after sigmaMean
             int ii=0;
             for(int k =0; k< _planes; ++k) work[k] = (pixel(i,j))(k,0);
-            
-            mim(i,j) = math::vectorSigmaMean(work, weights, sigma);             
+
+            mim(i,j) = math::vectorSigmaMean(work, weights, sigma);
          }
       }
-      
-      
+
+
    }
 }
 
 template<typename dataT>
 template<typename eigenT, typename eigenCubeT>
-void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eigenCubeT & mask, dataT sigma)
+void eigenCube<dataT>::sigmaMean( eigenT & mim, 
+                                  std::vector<dataT> & weights, 
+                                  eigenCubeT & mask, 
+                                  dataT sigma,
+                                  double minGoodFract
+                                )
 {
    mim.resize(_rows, _cols);
 
    #pragma omp parallel num_threads(Eigen::nbThreads())
    {
       std::vector<Scalar> work, wwork;
-      
-      #pragma omp for schedule(static, 10) 
+
+      #pragma omp for schedule(static, 10)
       for(Index i=0; i < _rows; ++i)
       {
          for(Index j=0;j< _cols; ++j)
          {
             work.clear();
             wwork.clear();
-            
+
             int ii=0;
-            
-            for(Index k =0; k< _planes; ++k) 
+
+            for(Index k =0; k< _planes; ++k)
             {
                if( (mask.pixel(i,j))(k,0) == 1)
                {
@@ -637,9 +651,9 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eig
                   wwork.push_back( weights[k] );
                }
             }
-            if(work.size() > 0.75*_planes)
+            if(work.size() > minGoodFract*_planes)
             {
-               mim(i,j) = math::vectorSigmaMean(work, wwork, sigma); 
+               mim(i,j) = math::vectorSigmaMean(work, wwork, sigma);
             }
             else mim(i,j) = std::numeric_limits<dataT>::quiet_NaN();
          }
@@ -653,7 +667,7 @@ void eigenCube<dataT>::sigmaMean(eigenT & mim, std::vector<dataT> & weights, eig
 
 
 
-} //namespace improc 
+} //namespace improc
 
 } //namespace mx
 

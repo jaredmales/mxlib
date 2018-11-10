@@ -19,7 +19,7 @@
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
 
-#include <mx/mxlib.h>
+#include <mx/mxlib.hpp>
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -80,6 +80,12 @@ protected:
    realT _z_mean; ///< \f$ C_n^2 \f$ averaged layer height
    
     
+   bool m_nonKolmogorov {false};
+   
+   realT m_alpha{2};
+   
+   realT m_beta{1};
+   
 public:
    
    ///Get the value of Fried's parameter r_0 at the reference wavelength lam_0.
@@ -226,7 +232,7 @@ public:
    /**
      * \returns the size of the _layer_Cn2 vector.
      */ 
-   int n_layers();
+   size_t n_layers();
    
    ///Get the weighted mean wind speed
    /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
@@ -301,6 +307,43 @@ public:
      * 
      */
    void z_mean(const realT & zm /**< [in] is the new value of _v_wind. */);
+   
+   ///Return the PSD index for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * If m_nonKolmogorov is false, this returns
+     * \[
+       \alpha = \frac{11}{3}
+       \]
+     * Otherwise it returns the current value of m_alpha.
+     *
+     * \returns the PSD index.
+     */
+   realT alpha();
+   
+   ///Set the PSD index alpha.
+   /** Setting alpha with this function also sets m_nonKolmogorov to true.
+     */
+   void alpha( realT a /**< [in] the new value of alpha */);
+   
+   ///Return the PSD normalization constant for Kolmogorov turbulence.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * I m_nonKolmogorov is false, this returns
+     * \[
+       \beta = \frac{0.0218}{r_0^{5/3}}
+       \]
+     *
+     * Otherwise it returns the current value of m_beta.
+     *
+     * \returns the PSD normalization constant.
+     */
+   realT beta();
+   
+   ///Set the PSD normalization alpha.
+   /** Setting beta with this function also sets m_nonKolmogorov to true.
+     */
+   void beta( realT b /**< [in] the new beta */);
    
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (14) of Guyon (2005) \cite guyon_2005. 
@@ -442,7 +485,6 @@ void aoAtmosphere<realT>::r_0(const realT & r0, const realT  & l0)
    }
 }
 
-
 template<typename realT>
 realT aoAtmosphere<realT>::lam_0()
 {
@@ -524,12 +566,12 @@ void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT 
    
    realT layer_norm = 0;
    
-   for(int i=0;i < _layer_Cn2.size();++i) 
+   for(size_t i=0;i < _layer_Cn2.size();++i) 
    {
       layer_norm += cn2[i];
    }
       
-   for(int i=0;i< _layer_Cn2.size();++i) _layer_Cn2[i] = _layer_Cn2[i]/layer_norm;
+   for(size_t i=0;i< _layer_Cn2.size();++i) _layer_Cn2[i] = _layer_Cn2[i]/layer_norm;
    
    if(l0 > 0)
    {   
@@ -581,7 +623,7 @@ void aoAtmosphere<realT>::layer_dir(const std::vector<realT> & dir)
 }
 
 template<typename realT>
-int aoAtmosphere<realT>::n_layers()
+size_t aoAtmosphere<realT>::n_layers()
 {
    return _layer_Cn2.size();
 }
@@ -616,9 +658,8 @@ void aoAtmosphere<realT>::update_v_wind()
    
    realT s = 0;
    realT c = 0;
-   realT t = 0;
    
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
       _v_wind += _layer_Cn2[i] * pow(_layer_v_wind[i], five_thirds<realT>() );
       s += pow(_layer_v_wind[i], five_thirds<realT>())*sin(_layer_dir[i]) ;//pow( sin(_layer_dir[i]), five_thirds<realT>() );
@@ -647,7 +688,7 @@ void aoAtmosphere<realT>::v_wind(const realT & vw)
    //Now update the layers if needed
    if( _layer_v_wind.size() > 0)
    {
-      for(int i=0; i< _layer_v_wind.size(); ++i)
+      for(size_t i=0; i< _layer_v_wind.size(); ++i)
       {
          _layer_v_wind[i] = _layer_v_wind[i]*(vw/vw_old);
       }
@@ -673,7 +714,7 @@ void aoAtmosphere<realT>::update_z_mean()
    
    _z_mean = 0;
    
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
       _z_mean += _layer_Cn2[i] * pow(_layer_z[i], five_thirds<realT>() );
    }
@@ -696,11 +737,53 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
    //Now update the layers if needed
    if( _layer_z.size() > 0)
    {
-      for(int i=0; i< _layer_z.size(); ++i)
+      for(size_t i=0; i< _layer_z.size(); ++i)
       {
          _layer_z[i] = _layer_z[i]*(zm/zh_old);
       }
    }
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::alpha()
+{
+   if(!m_nonKolmogorov)
+   {
+      return eleven_thirds<realT>();
+   }
+   else
+   {
+      return m_alpha;
+   }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::alpha(realT a)
+{
+   m_nonKolmogorov = true;
+   
+   m_alpha = a;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::beta()
+{
+   if(!m_nonKolmogorov)
+   {
+      return constants::a_PSD<realT>()*pow(_r_0, -five_thirds<realT>());
+   }
+   else
+   {
+      return m_beta;
+   }
+}
+   
+template<typename realT>
+void aoAtmosphere<realT>::beta(realT b)
+{
+   m_nonKolmogorov = true;
+   
+   m_beta = b;
 }
 
 template<typename realT>
@@ -710,7 +793,7 @@ realT aoAtmosphere<realT>::X( realT k,
 {
    realT c = 0;
     
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
       c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
    }
@@ -723,7 +806,7 @@ realT aoAtmosphere<realT>::dX(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
  
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
       c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lam_sci * _layer_z[i]) - cos( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
    }
@@ -739,7 +822,7 @@ realT aoAtmosphere<realT>::Y( realT k,
 {
    realT c = 0;
  
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
       c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
    }
@@ -751,9 +834,9 @@ realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
 
-   for(int i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * layer_z[i])), 2);
+      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * _layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
    }
    
    return c;
@@ -776,7 +859,7 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * _H*tanZ*secZ; 
    realT x;
    
-   for(int i = 0; i < _layer_Cn2.size(); ++i)
+   for(size_t i = 0; i < _layer_Cn2.size(); ++i)
    {
       x = x0*(1-exp((_layer_z[i]+_h_obs)/_H));
       c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i * _layer_z[i]*secZ), 2) * pow( sin(pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
@@ -840,18 +923,18 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "#    FWHM = " << fwhm(lam_0()) << '\n';
    ios << "#    n_layers = " << n_layers() << '\n';
    ios << "#    layer_z = ";
-   for(int i=0;i < n_layers()-1;++i) ios << layer_z()[i] << ", ";
+   for(size_t i=0;i < n_layers()-1;++i) ios << layer_z()[i] << ", ";
    ios <<  layer_z()[ n_layers()-1] << '\n';
    ios << "#    h_obs = " << h_obs() << '\n';
    ios << "#    H = " << H() << '\n';
    ios << "#    layer_Cn2 = ";
-   for(int i=0;i< n_layers()-1;++i) ios << layer_Cn2()[i] << ", ";
+   for(size_t i=0;i< n_layers()-1;++i) ios << layer_Cn2()[i] << ", ";
    ios << layer_Cn2()[n_layers()-1] << '\n';
    ios << "#    layer_v_wind = ";
-   for(int i=0;i< n_layers()-1;++i) ios << layer_v_wind()[i] << ", ";
+   for(size_t i=0;i< n_layers()-1;++i) ios << layer_v_wind()[i] << ", ";
    ios << layer_v_wind()[ n_layers()-1] << '\n';
    ios << "#    layer_dir = ";
-   for(int i=0;i< n_layers()-1;++i) ios << layer_dir()[i] << ", ";
+   for(size_t i=0;i< n_layers()-1;++i) ios << layer_dir()[i] << ", ";
    ios << layer_dir()[ n_layers()-1] << '\n';
    ios << "#    mean v_wind = " << v_wind() << '\n';
    ios << "#    mean dir_wind = " << dir_wind() << '\n';

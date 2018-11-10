@@ -68,7 +68,7 @@ struct clAOLinearPredictor
    {
       PSDtn.resize(PSDt.size());
 
-      for(int i=0; i< PSDt.size(); ++i)
+      for(size_t i=0; i< PSDt.size(); ++i)
       {
          PSDtn[i] = PSDt[i] +  PSDn[i] + PSDreg;
       }

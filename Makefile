@@ -5,7 +5,7 @@
 ##########################################
 
 # Are you here to customize the build?
-# 
+#
 # Option 1: Override the options on the command line
 #     e.g. `make install PREFIX=$HOME`
 # Option 2: `make setup`
@@ -17,25 +17,6 @@
 include mk/Common.mk
 include mk/MxLib.mk
 
-ifeq ($(UNAME),Darwin)  # macOS
-	LIBEXT = dylib
-	SHAREDLIBFLAGS = -dynamiclib -install_name "libmxlib.$(LIBEXT)" -o libmxlib.$(LIBEXT)
-else
-	LIBEXT = so
-	SHAREDLIBFLAGS = -Wl,-soname,libmxlib.$(LIBEXT) -o libmxlib.$(LIBEXT) -lrt
-endif
-
-CFLAGS += -std=c99 -fPIC $(OPTIMIZE) $(INCLUDES)
-CXXFLAGS += -std=c++14 -fPIC $(OPTIMIZE) $(INCLUDES)
-
-# Programs to be made:
-TARGETS = libmxlib
-
-OBJS = msgq.o \
-       mxlib.o\
-       sharedmem_segment.o 
-#\
-#process_interface.o 
 
 INC_TO_INSTALL = ao \
                  app \
@@ -43,53 +24,31 @@ INC_TO_INSTALL = ao \
                  cuda \
                  fft \
                  improc \
+                 ipc \
                  math \
                  meta \
                  sigproc \
                  wfp \
-                 astrodyn.hpp \
-                 astrotypes.h \
-                 binVector.hpp \
+                 ioutils \
                  eigenUtils.hpp \
                  environment.hpp \
-                 fileUtils.hpp \
                  gnuPlot.hpp \
                  gslInterpolation.hpp \
-                 IPC.h \
                  imagingArray.hpp \
-                 msgq.h \
-                 msgQ \
                  mxException.hpp \
                  mxError.hpp \
-                 mxlib.h\
+                 mxlib.hpp\
                  mxlib_uncomp_version.h\
                  ompLoopWatcher.hpp \
-                 pout.hpp \
-                 process_interface.h \
-                 readColumns.hpp \
-                 sharedmem_segment.h \
-                 stringUtils.hpp \
-                 textTable.hpp \
                  timeUtils.hpp \
-				 randomSeed.hpp \
-				 randomT.hpp 
+                 randomSeed.hpp \
+                 randomT.hpp 
 
-all: $(TARGETS) 
-
-# Dependencies:
-msgq.o: include/IPC.h include/msgq.h
-mxlib.o: include/mxlib.h include/mxlib_comp_version.h
-sharedmem_segment.o: include/IPC.h include/sharedmem_segment.h
-#process_interface.o: include/process_interface.h
-#astrodyn.o: include/astrodyn.hpp
-
-.PHONY: mxlib_comp_version
-mxlib_comp_version:
-	@sh ./gengithead.sh ./ ./include/mxlib_comp_version.h MXLIB_COMP
+all: install
 
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
-	@sh ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
+	@bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
 
 .PHONY: setup
 setup:
@@ -107,15 +66,9 @@ setup:
 	@grep  "?=" mk/MxApp.mk || true
 	@echo "***"
 
-libmxlib: mxlib_comp_version mxlib_uncomp_version $(OBJS) 
-	$(AR) $(ARFLAGS) libmxlib.a $(OBJS)
-	$(CC) -shared $(SHAREDLIBFLAGS) $(OBJS) $(LIB_SOFA) -lc -rdynamic
-	
-install: libmxlib
+
+install: mxlib_uncomp_version
 	install -d $(INCLUDE_PATH)/mx
-	install -d $(LIB_PATH)
-	install libmxlib.a $(LIB_PATH)
-	install libmxlib.$(LIBEXT) $(LIB_PATH)
 	install gengithead.sh $(BIN_PATH)
 	for file in ${INC_TO_INSTALL}; do \
 	  (cp -r include/$$file $(INCLUDE_PATH)/mx) || break; \
@@ -123,5 +76,4 @@ install: libmxlib
 
 clean:
 	rm -f *.o *~
-	rm -f libmxlib.a
-	rm -f libmxlib.$(LIBEXT)
+	rm -f include/mxlib_uncomp_version.h

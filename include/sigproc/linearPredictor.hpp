@@ -7,6 +7,25 @@
   *
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef linearPredictor_hpp
 #define linearPredictor_hpp
 
@@ -36,9 +55,9 @@ struct linearPredictor
    
    Eigen::Array<realT, -1, -1> _c;
    
-   realT _setCondition;
-   realT _actCondition;
-   int _nRejected;
+   realT _setCondition {0};
+   realT _actCondition {0};
+   int _nRejected {0};
    
    /// Calculate the LP coefficients given an autocorrelation.
    /** If condition==0 then the levinson recursion is used.
@@ -47,7 +66,7 @@ struct linearPredictor
    int calcCoefficients( std::vector<realT> & ac,
                          size_t Nc,
                          realT condition = 0,
-                         int extrap = 0
+                         size_t extrap = 0
                        )
    {
       
@@ -62,9 +81,9 @@ struct linearPredictor
       Rmat.resize(Nc, Nc);
       Rvec.resize(1, Nc);
    
-      for(int i=0; i<Nc; ++i)
+      for(size_t i=0; i<Nc; ++i)
       {
-         for(int j=0; j<Nc; ++j)
+         for(size_t j=0; j<Nc; ++j)
          {
             Rmat(i,j) = ac[ fabs(i-j)];
          }
@@ -92,7 +111,7 @@ struct linearPredictor
 
    int calcCoefficientsLevinson( std::vector<realT> & ac,
                                  size_t Nc,
-                                 int extrap = 0
+                                 size_t extrap = 0
                                )
    {
       std::vector<realT> r, x, y;
@@ -101,23 +120,23 @@ struct linearPredictor
       x.resize(Nc);
       y.resize(Nc);
       
-      for(int i=0; i< Nc; ++i) r[i] = ac[Nc-i - 1];
-      for(int i=Nc; i< 2*Nc-1; ++i) r[i] = ac[i-Nc+1];
+      for(size_t i=0; i< Nc; ++i) r[i] = ac[Nc-i - 1];
+      for(size_t i=Nc; i< 2*Nc-1; ++i) r[i] = ac[i-Nc+1];
       
-      for(int i=0;i<Nc; ++i) y[i] = ac[i+1];
+      for(size_t i=0;i<Nc; ++i) y[i] = ac[i+1];
       
       levinsonRecursion(r.data(), x.data(), y.data(), Nc);
       
       _c.resize(1, Nc);
-      for(int i=0; i< Nc; ++i) _c(0,i) = x[i];
+      for(size_t i=0; i< Nc; ++i) _c(0,i) = x[i];
     
       
       if(extrap == 1)
       {
          Eigen::Array<realT, -1, -1> ex(_c.rows(), _c.cols());
-         for(int j=0; j < extrap; ++j)
+         for(size_t j=0; j < extrap; ++j)
          {
-            for(int i=0; i< Nc-1; ++i)
+            for(size_t i=0; i< Nc-1; ++i)
             {
                ex(0,i) = _c(0,0)*_c(0,i) + _c(0,i+1);
             }

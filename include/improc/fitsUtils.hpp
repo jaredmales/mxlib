@@ -13,7 +13,10 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "fitsio.h"
+#include <fitsio.h>
+
+#include "../mxlib.hpp"
+
 
 
 namespace mx
@@ -38,11 +41,11 @@ struct fitsCommentType
    {
    }
    
-   explicit fitsCommentType(char *v)
+   explicit fitsCommentType(char * UNUSED(v))
    {
    }
    
-   explicit fitsCommentType(const char *v)
+   explicit fitsCommentType(const char * UNUSED(v))
    {
    }
 };
@@ -54,11 +57,11 @@ struct fitsHistoryType
    {
    }
 
-   explicit fitsHistoryType(char *v)
+   explicit fitsHistoryType(char * UNUSED(v))
    {
    }
    
-   explicit fitsHistoryType(const char *v)
+   explicit fitsHistoryType(const char * UNUSED(v))
    {
    }
    
@@ -163,6 +166,7 @@ inline int getFitsType<double>()
 {
    return TDOUBLE;
 }
+
 
 template<> 
 inline int getFitsType<fitsUnknownType>()

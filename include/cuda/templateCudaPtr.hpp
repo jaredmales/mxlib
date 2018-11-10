@@ -32,6 +32,11 @@ struct cudaPtr
    ///Destructor, frees memory if allocated.
    ~cudaPtr();
    
+   size_t size()
+   {
+      return m_size;
+   }
+   
    ///Resize the memory allocation
    /** If no size change, this is a no-op.
      *

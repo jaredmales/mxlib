@@ -5,8 +5,27 @@
   *
   */
 
-#ifndef __imageMasks_hpp__
-#define __imageMasks_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef improc_imageMasks_hpp
+#define improc_imageMasks_hpp
 
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
@@ -211,9 +230,9 @@ std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of th
    int y1 = ycen+max_y+1;
    if(y1 > rIm.cols()) y1 = rIm.cols();
    
-   for(size_t i = x0; i< x1; ++i)
+   for(int i = x0; i< x1; ++i)
    {
-      for(size_t j = y0; j< y1; ++j)
+      for(int j = y0; j< y1; ++j)
       { 
          if(rIm(i,j) >= min_r && rIm(i,j) < max_r && qIm(i,j) >= min_q && qIm(i,j) < max_q) 
          {
@@ -251,9 +270,9 @@ inline void rectangleIndices( std::vector<size_t> & idx,
    
    idx.reserve( (xmax-xmin+1)*(ymax-ymin + 1) );
    
-   for(int i=xmin; i<=xmax; ++i)
+   for(size_t i=xmin; i<=xmax; ++i)
    {
-      for(int j=ymin;j<=ymax; ++j)
+      for(size_t j=ymin;j<=ymax; ++j)
       {
          idx.push_back( j*rows + i);
       }
@@ -327,12 +346,228 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
    }
 }   
 
+///Draw a thin (1-pixel) line from one point to another.
+/** Calculates the line connecting the two points and sets the pixels along that line to the 
+  * supplied value.
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup image_masks
+  */  
+template<typename realT>
+int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+              realT x0,                 ///< [in] The x coordinate of the first point
+              realT y0,                 ///< [in] The y coordinate of the first point
+              realT x1,                 ///< [in] The x coordinate of the second point
+              realT y1,                 ///< [in] The y coordinate of the second point
+              realT val                 ///< [in] The value to set on the pixels in the line
+            )
+{
+   if( fabs(x1-x0) <= 1 && fabs(y1-y0) <= 1)
+   {
+      //If it is a single pixel, plot at the rounded average point.
+      realT xa = 0.5*(x0+x1) + 0.5;
+      realT ya = 0.5*(y0+y1) + 0.5;
+      if( xa >=0 && xa < mask.rows() && ya >=0 && ya < mask.cols())  mask( (int) xa, (int) ya) = val;
+      return 0;
+   }
+   
+   realT _x0, _x1, _y0, _y1;
+   
+   realT length = sqrt( pow(x1-x0,2) + pow(y1-y0,2));
+   
+   //If X doesn't change enough, we try to do it as a function of y. 
+   if( fabs(x1-x0) <= 1 )
+   {
+      if( y0 < y1)
+      {
+         _x0 = x0;
+         _x1 = x1;
+         _y0 = y0;
+         _y1 = y1;
+      }
+      else
+      {
+         _x0 = x1;
+         _x1 = x0;
+         _y0 = y1;
+         _y1 = y0;
+      }
+   
+   
+      realT m = (_x1-_x0)/(_y1-_y0);
+      realT b = _x0 - m*_y0;
+      
+      realT dy = (_y1-_y0)/(2*length+1);
+      for(realT y = _y0; y <= _y1; y += dy)
+      {
+         realT x = m*y + b;
+      
+         if( x+0.5 >=0 && x+0.5 < mask.rows() && y+0.5 >=0 && y+0.5 < mask.cols())  mask( (int) (x+0.5), (int) (y+0.5)) = val;
+      }
+      
+      return 0;
+   }
+   
+   //Ordinarily draw in x.
+   if( x0 < x1)
+   {
+      _x0 = x0;
+      _x1 = x1;
+      _y0 = y0;
+      _y1 = y1;
+   }
+   else
+   {
+      _x0 = x1;
+      _x1 = x0;
+      _y0 = y1;
+      _y1 = y0;
+   }
+   
+   
+   realT m = (_y1-_y0)/(_x1-_x0);
+   realT b = _y0 - m*_x0;
+   
+   realT dx = (_x1-_x0)/(2*length+1);
+   for(realT x = _x0; x <= _x1; x += dx)
+   {
+      realT y = m*x + b;
+      
+      if( x+0.5 >=0 && x+0.5 < mask.rows() && y+0.5 >=0 && y+0.5 < mask.cols())  mask( (int) (x+0.5), (int) (y+0.5)) = val;
+   }
+}
+      
+      
+///Draw a thick line from one point to another.
+/** Calculates the line connecting the two points and sets the pixels along that line to the 
+  * supplied value.  Makes the line thick by drawing lines perpindicular to each point with
+  * length equal to the specified width.
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup image_masks
+  */  
+template<typename realT>
+int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+              realT x0,                 ///< [in] The x coordinate of the first point
+              realT y0,                 ///< [in] The y coordinate of the first point
+              realT x1,                 ///< [in] The x coordinate of the second point
+              realT y1,                 ///< [in] The y coordinate of the second point
+              realT width,              ///< [in] The desired full-width of the line
+              realT val                 ///< [in] The value to set on the pixels in the line
+            )
+{
+   //You can't do this.
+   if( width <= 0 ) return -1;
+   
+   //If no reason to try this hard, don't.
+   if(width < 1) return drawLine(mask, x0, y0, x1, y1, val);
+   
+   realT _x0, _x1, _y0, _y1;
+   
+   //If X doesn't change enough, we try to do it as a function of y. 
+   if( fabs(x1-x0) <= 1 )
+   {
+      if( y0 < y1)
+      {
+         _x0 = x0;
+         _x1 = x1;
+         _y0 = y0;
+         _y1 = y1;
+      }
+      else
+      {
+         _x0 = x1;
+         _x1 = x0;
+         _y0 = y1;
+         _y1 = y0;
+      }
+   
+   
+      realT m = (_x1-_x0)/(_y1-_y0);
+      realT b = _x0 - m*_y0;
+      
+      realT dy = (_y1-_y0)/(mask.cols()+1);
+      for(realT y = _y0; y <= _y1; y += dy)
+      {
+         realT x = m*y + b;
+      
+         realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
+         
+         realT q1 = atan(m)+0.5*pi<realT>();
+         realT cq = cos(q1);
+         realT sq = sin(q1);
+         
+         xs = x + 0.5*width*cq;
+         ys = y + 0.5*width*sq;
+         
+         xe = x - 0.5*width*cq;
+         ye = y - 0.5*width*sq;
+         
+         drawLine(mask, xs, ys, xe, ye, val);
+      }
+      
+      return 0;
+   }
+   
+   //Ordinarily draw in x.
+   if( x0 < x1)
+   {
+      _x0 = x0;
+      _x1 = x1;
+      _y0 = y0;
+      _y1 = y1;
+   }
+   else
+   {
+      _x0 = x1;
+      _x1 = x0;
+      _y0 = y1;
+      _y1 = y0;
+   }
+   
+   
+   realT m = (_y1-_y0)/(_x1-_x0);
+   realT b = _y0 - m*_x0;
+   
+   realT dx = (_x1-_x0)/(mask.rows()+1);
+   for(realT x = _x0; x <= _x1; x += dx)
+   {
+      realT y = m*x + b;
+      
+         realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
+         
+         realT q1 = atan(m)+0.5*pi<realT>();
+         realT cq = cos(q1);
+         realT sq = sin(q1);
+         
+         xs = x + 0.5*width*cq;
+         ys = y + 0.5*width*sq;
+         
+         xe = x - 0.5*width*cq;
+         ye = y - 0.5*width*sq;
+         
+         drawLine(mask, xs, ys, xe, ye, val);
+         
+   }
+}
+
+
+
+
+
+
+
+
 ///Populate a mask based on a typical CCD bleeding pattern.
 /** Masks a circle for saturated pixels, as well as a horizontal bar for bleeding (in both directions if needed).
   *
   * \returns 0 on success, -1 otherwise.
   * 
   * \tparam imT is an Eigen-like 2D array type.
+  * 
+  * \ingroup image_masks
   */ 
 template< typename imT >
 int ccdBleedMask( imT & im,  ///< [out] the mask, on output will be 1/0.  Must be allocated prior to call.
@@ -392,7 +627,7 @@ void cutImageRegion( imageTout & imout,  ///< [out] a row-image containing the p
    }
    
    //#pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<idx.size();++i)
+   for(size_t i=0;i<idx.size();++i)
    {
       imout(i) = imin( idx[i] );
    }
@@ -414,7 +649,7 @@ void insertImageRegion( imageTout imout, ///< [out] a row-image into which the p
                       )
 {
    //#pragma omp parallel for schedule(static, 1)
-   for(int i=0;i< idx.size();++i)
+   for(size_t i=0;i< idx.size();++i)
    {
       imout(idx[i],0) = imin(i,0);
    }
@@ -426,9 +661,7 @@ void rotateMask( imageT & rotMask,
                  imageT & mask,
                  typename imageT::Scalar angle
                )
-{
-   typedef typename imageT::Scalar Scalar;
-   
+{   
    imageRotate( rotMask, mask, angle, transformT());
    
    for(int ii=0; ii< rotMask.rows(); ++ii)
@@ -447,4 +680,4 @@ void rotateMask( imageT & rotMask,
 } //namespace improc 
 } //namespace mx
 
-#endif // __imageMasks_hpp__
+#endif // improc_imageMasks_hpp

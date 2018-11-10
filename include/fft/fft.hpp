@@ -1,4 +1,23 @@
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef fft_hpp
 #define fft_hpp
 
@@ -7,6 +26,8 @@
 
 #include <complex>
 
+
+#include "../mxlib.hpp"
 
 #include "fftwTemplates.hpp"
 #include "../meta/trueFalseT.hpp"
@@ -27,6 +48,9 @@ std::vector<int> fftwDimVec( int szX, int szY, int szZ);
 
 /// Fast Fourier Transforms using the FFTW library
 /**
+  * Calls the FFTW plan functions are protected by '#pragma omp critical' directives
+  * unless MX_FFTW_NOOMP is define prior to the first inclusion of this file.
+  * 
   * \todo document fftT 
   * \todo add execute interface with fftw like signature
   * \todo add plan interface where user passes in pointers (to avoid allocations)
@@ -130,6 +154,8 @@ public:
          
    void doPlan(const meta::trueFalseT<false> & inPlace)
    {
+      (void) inPlace;
+      
       inputT * forplan1;
       outputT * forplan2;
       
@@ -144,11 +170,15 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
       
-      //#pragma omp critical
+#ifndef MX_FFTW_NOOMP
+      #pragma omp critical
       {
+#endif
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ), forplan1, forplan2,  pdir, FFTW_MEASURE);
+#ifndef MX_FFTW_NOOMP
       }
-      
+#endif
+
       fftw_free<inputT>(forplan1);
       fftw_free<outputT>(forplan2);
       
@@ -156,6 +186,8 @@ public:
    
    void doPlan(const meta::trueFalseT<true> & inPlace)
    {
+      (void) inPlace;
+      
       complexT * forplan;
 
       int sz;
@@ -168,11 +200,15 @@ public:
       int pdir = FFTW_FORWARD;
       if(_dir == MXFFT_BACKWARD) pdir = FFTW_BACKWARD;
 
-      //#pragma omp critical
-      {      
+#ifndef MX_FFTW_NOOMP
+      #pragma omp critical
+      {
+#endif
          _plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<dim>(_szX, _szY, _szZ),  reinterpret_cast<inputT*>(forplan), reinterpret_cast<outputT*>(forplan),  pdir, FFTW_MEASURE);
+#ifndef MX_FFTW_NOOMP
       }
-      
+#endif
+
       fftw_free<inputT>(forplan);
    }
    
@@ -208,14 +244,18 @@ public:
 };
 
 template<>
-std::vector<int> fftwDimVec<1>( int szX, int szY, int szZ)
+std::vector<int> fftwDimVec<1>( int szX, 
+                                int UNUSED(szY), 
+                                int UNUSED(szZ))
 {
    std::vector<int> v({szX});
    return v;
 }
 
 template<>
-std::vector<int> fftwDimVec<2>( int szX, int szY, int szZ)
+std::vector<int> fftwDimVec<2>( int szX, 
+                                int szY, 
+                                int UNUSED(szZ))
 {
    std::vector<int> v({szX, szY});
    return v;

@@ -1,4 +1,5 @@
 work/*
+doc/html
 doc/html/*
 doc/mxlib.tag.xml
 doc/citelist*
@@ -8,6 +9,7 @@ include/mxlib_comp_version.h
 old/*
 testing/*
 local/*
+license.blurb
 !local/Common.example.mk
 !local/MxApp.example.mk
 !local/MxLib.example.mk
@@ -17,3 +19,4 @@ local/*
 a.out
 *.o
 *.swp
+.*~

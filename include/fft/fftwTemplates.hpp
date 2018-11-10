@@ -5,6 +5,25 @@
   *
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef fftwTemplates_hpp
 #define fftwTemplates_hpp
 
@@ -12,6 +31,8 @@
 #include <vector>
 
 #include <fftw3.h>
+
+#include "../mxlib.hpp"
 
 namespace mx
 {
@@ -677,7 +698,7 @@ template<>
 inline fftwTypeSpec<float, complexFT>::planT fftw_plan_dft<float, complexFT>( std::vector<int> n, 
                                                                               float * in, 
                                                                               complexFT * out,
-                                                                              int sign,
+                                                                              int UNUSED(sign),
                                                                               unsigned flags )
 {
    return ::fftwf_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftwf_complex*>(out), flags);
@@ -687,7 +708,7 @@ template<>
 inline fftwTypeSpec<complexFT, float>::planT fftw_plan_dft<complexFT, float>( std::vector<int> n, 
                                                                               complexFT * in, 
                                                                               float * out,
-                                                                              int sign,
+                                                                              int UNUSED(sign),
                                                                               unsigned flags )
 {
    return ::fftwf_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwf_complex*>(in), out, flags);
@@ -709,7 +730,7 @@ template<>
 inline fftwTypeSpec<double, complexDT>::planT fftw_plan_dft<double, complexDT>( std::vector<int> n, 
                                                                                 double * in, 
                                                                                 complexDT * out,
-                                                                                int sign,
+                                                                                int UNUSED(sign),
                                                                                 unsigned flags )
 {
    return ::fftw_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftw_complex*>(out), flags);
@@ -719,7 +740,7 @@ template<>
 inline fftwTypeSpec<complexDT, double>::planT fftw_plan_dft<complexDT, double>( std::vector<int> n, 
                                                                                 complexDT * in, 
                                                                                 double * out,
-                                                                                int sign,
+                                                                                int UNUSED(sign),
                                                                                 unsigned flags )
 {
    return ::fftw_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftw_complex*>(in), out, flags);
@@ -741,7 +762,7 @@ template<>
 inline fftwTypeSpec<long double, complexLT>::planT fftw_plan_dft<long double, complexLT>( std::vector<int> n, 
                                                                                           long double * in, 
                                                                                           complexLT * out,
-                                                                                          int sign,
+                                                                                          int UNUSED(sign),
                                                                                           unsigned flags )
 {
    return ::fftwl_plan_dft_r2c( n.size(), n.data(), in, reinterpret_cast<fftwl_complex*>(out), flags);
@@ -751,7 +772,7 @@ template<>
 inline fftwTypeSpec<complexLT, long double>::planT fftw_plan_dft<complexLT, long double>( std::vector<int> n, 
                                                                                           complexLT * in, 
                                                                                           long double * out,
-                                                                                          int sign,
+                                                                                          int UNUSED(sign),
                                                                                           unsigned flags )
 {
    return ::fftwl_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwl_complex*>(in), out, flags);

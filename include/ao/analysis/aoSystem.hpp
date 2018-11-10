@@ -5,6 +5,25 @@
   * 
   */
 
+//***********************************************************************//
+// Copyright 2015-2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef aoSystem_hpp
 #define aoSystem_hpp
 
@@ -1300,7 +1319,7 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    
    //std::cout << m << " " << n << " " << tau << "\n";
          
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1331,7 +1350,7 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m,
 {
    realT k = sqrt(m*m+n*n)/_D;
       
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1494,7 +1513,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k, 0, _secZeta)/pow(_D,2)*atm.X(k, _lam_sci, _secZeta)*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  _secZeta)/pow(_D,2)*atm.X(k, _lam_sci, _secZeta)*pow(2*pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(_lam_wfs*beta_p/F,2);
    
    a = Atmp;
@@ -1506,7 +1525,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    std::vector<std::complex<realT> > x;
    
    //Get the roots
-   mx::quarticRoots(x, a, b , c, d, e);
+   math::quarticRoots(x, a, b , c, d, e);
    
    //Now pick the largest positive real root
    realT tauopt = 0.0;
@@ -1692,7 +1711,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C0var( realT m,
                                          )
 {
    realT k = sqrt(m*m + n*n)/_D;
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X(k, _lam_sci, _secZeta);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1719,7 +1738,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m,
 {
    realT k = sqrt(m*m + n*n)/_D;
             
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Y(k, _lam_sci, _secZeta);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.Y(k, _lam_sci, _secZeta);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1769,7 +1788,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m,
 {
    realT k = sqrt(m*m + n*n)/_D;
    
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.dX(k, _lam_sci, _lam_wfs);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.dX(k, _lam_sci, _lam_wfs);
 }
 
                                                   
@@ -1824,7 +1843,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C7var( realT m,
 {
    realT k = sqrt(m*m + n*n)/_D;
      
-   return psd(atm, k, 0, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X_Z(k, _lam_wfs, _lam_sci, _secZeta);
+   return psd(atm, k, _secZeta)/pow(_D,2) * pow(atm.lam_0()/_lam_sci, 2) * atm.X_Z(k, _lam_wfs, _lam_sci, _secZeta);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1876,8 +1895,6 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    atm.dumpAtmosphere(ios);
    
    ios << "# Software versions: " << '\n';
-   ios << "#    mxlib_comp sha1 = " << mxlib_compiled_git_sha1() << '\n';
-   ios << "#    mxlib_comp modified = " << mxlib_compiled_git_repo_modified() << '\n';
    ios << "#    mxlib_uncomp sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
    ios << "#    mxlib_uncomp modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
       

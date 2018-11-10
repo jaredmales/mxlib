@@ -5,11 +5,31 @@
   *
   */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef fftwEnvironment_hpp
 #define fftwEnvironment_hpp
 
 #include <string>
 
+#include "../mxlib.hpp"
 #include "../environment.hpp"
 
 
@@ -82,8 +102,7 @@ std::string fftw_wisdom_filename()
 /** This class manages the FFTW environment.  On construction, wisdom is imported from the 
   * mxlib standard location, and if threads are used threading is initialized and planners are made thread safe.
   *
-  * \note the fftw docs recommend against using fftw_make_planner_thread_safe, and says it won't work with omp, but
-  * I have not seen any issues using it.
+  * \note the fftw docs recommend against using fftw_make_planner_thread_safe.  It does seem to play poorly with omp.
   *
   * On destruction, wisdom is exported and the fftw_cleanup[_threads] function is called.
   *
@@ -107,10 +126,29 @@ std::string fftw_wisdom_filename()
   * 
   * \ingroup fft
   */  
-template< typename realT, bool threads=true>
+template< typename realT, bool threads=false>
 struct fftwEnvironment
 {
-   explicit fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+   explicit fftwEnvironment(unsigned UNUSED(nThreads) = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+   {
+      fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+   }
+   
+   ~fftwEnvironment()
+   {
+      fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+
+      fftw_cleanup<realT>();
+   }
+};   
+
+
+
+//Partial specialization for threads.
+template< typename realT>
+struct fftwEnvironment<realT, true>
+{
+   explicit fftwEnvironment(unsigned nThreads = 1)
    {
       fftw_make_planner_thread_safe<realT>();
       
@@ -128,23 +166,6 @@ struct fftwEnvironment
    }
 };
 
-
-//Partial specialization for no threads.
-template< typename realT>
-struct fftwEnvironment<realT, false>
-{
-   explicit fftwEnvironment(unsigned nThreads = 0 )
-   {
-      fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
-   }
-   
-   ~fftwEnvironment()
-   {
-      fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
-
-      fftw_cleanup<realT>();
-   }
-};   
    
 }//namespace mx
 

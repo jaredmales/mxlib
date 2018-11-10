@@ -14,6 +14,8 @@
 #include <string>
 #include <iostream>
 
+#include "../mxlib.hpp"
+
 #include "optionparser/optionparser.h"
 
 namespace mx
@@ -34,7 +36,7 @@ static const char * falseStr = "false";
 static const char * trueStr = "true";
 static const char * blankStr = "";
 
-static option::ArgStatus Arg_Required(const option::Option& option, bool msg)
+static option::ArgStatus Arg_Required(const option::Option& option, bool UNUSED(msg))
 {
    if (option.arg != 0)
    return option::ARG_OK;
@@ -57,32 +59,26 @@ struct clOptions
 
    std::vector<option::Descriptor> descriptions;
    
-   option::Option *  options;
-   option::Option* buffer;
+   option::Option * options {nullptr};
+   option::Option * buffer {nullptr};
    
-   unsigned int nOpts;
+   unsigned int nOpts {0};
 
 
-   
-   clOptions()
-   {
-      options = 0;
-      buffer = 0;
-      nOpts = 0;
-   }
-
+   /// D'tor.  Deletes the options and buffer pointers.
    ~clOptions()
    {
-      if(options) delete options;
-      if(buffer) delete buffer;
+      if(options) delete[] options;
+      if(buffer) delete[] buffer;
    }
 
+   /// Clear the memory held by this object.
    void clear()
    {
-      if(options) delete options;
+      if(options) delete[] options;
       options = 0;
       
-      if(buffer) delete buffer;
+      if(buffer) delete[] buffer;
       buffer = 0;
       
       map.clear();
@@ -90,7 +86,12 @@ struct clOptions
       descriptions.clear();
    }
       
-   void add(const std::string & optName, const char * const shortOpt, const char * const longOpt, int argT)
+   /// Add a command line option target.
+   void add( const std::string & optName, ///< [in] The name of the option, used as its key 
+             const char * const shortOpt, ///< [in] The short option character 
+             const char * const longOpt,  ///< [in] The long option keyword
+             int argT                     ///< [in] The option type
+           )
    {
       mapIterator it;
       it = map.find(optName);
@@ -99,11 +100,17 @@ struct clOptions
       if(it == map.end())
       {
          if(argT == argType::Optional)
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+         }
          else if(argT == argType::Required)
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+         }
          else
+         {
             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+         }
          
          map.insert({optName, nOpts});
          typeMap.insert({optName, argT});
@@ -112,19 +119,22 @@ struct clOptions
          return;
       }
       
-      if(argT == argType::Optional)
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
-         else if(argT == argType::Required)
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
-         else
-            descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
+//       if(argT == argType::Optional)
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::Optional, ""});
+//          else if(argT == argType::Required)
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, Arg_Required, ""});
+//          else
+//             descriptions.push_back({nOpts, argT, shortOpt, longOpt, option::Arg::None, ""});
 //      descriptions.push_back({it->second, argT, shortOpt, longOpt, option::Arg::Optional, ""});
    }
 
-   void parse(int argc, char **argv, std::vector<std::string> * nonOptions = 0)
+   ///Parse the command line
+   void parse( int argc,   ///< [in] From main(argc, argv), the number of command line arguments
+               char **argv, ///< in] From main(argc, argv), the command line arguments
+               std::vector<std::string> * nonOptions = 0 ///< [out] [optional] the elements in argv which are not option or option-arguments.
+             )
    {
       argc-=(argc>0); argv+=(argc>0); // skip program name argv[0] if present
-      
       
       descriptions.push_back({0,0,0,0,0,0});
       
@@ -132,7 +142,7 @@ struct clOptions
       options = new option::Option[stats.options_max];
       buffer  = new option::Option[stats.buffer_max];
       
-      option::Parser parse(descriptions.data(), argc, argv, options, buffer);
+      option::Parser parse(false, descriptions.data(), argc, argv, options, buffer);
             
       if(nonOptions)
       {
@@ -145,7 +155,17 @@ struct clOptions
       }
    }
       
-   const char * operator[](const std::string & key)
+   ///Get the value of the option, if present.
+   /**
+     * For a true/false type, returns true or false as appropriate.
+     * Returns an empty string if no argument for the key. 
+     * Otherwise return the argument.
+     * 
+     * \returns 0 on error
+     * \returns an empty string on no argument
+     * \returns a string otherwise
+     */
+   const char * operator[](const std::string & key /**< [in] the key identifying the element */)
    {
       mapIterator it = map.find(key);
 
@@ -176,14 +196,20 @@ struct clOptions
       return options[it->second].last()->arg;
    }
    
-   int count(const std::string & key)
+   ///Get the number of times the option was set on the command line.
+   int count(const std::string & key /**< [in] the key identifying the element */)
    {
       mapIterator it = map.find(key);
+      
+      if(it == map.end()) return -1;
+      
       return options[it->second].count();
    }
    
    ///Fill a vector of strings with the arguments supplied for key, last first. 
-   void getAll(std::vector<std::string> & args, const std::string & key)
+   void getAll( std::vector<std::string> & args, ///< [out] will be resized and populated with the arguments.  Will be empty if no arguments specified.
+                const std::string & key ///< [in] the key identifying the element 
+              )
    {
       mapIterator it = map.find(key);
       
@@ -247,9 +273,11 @@ struct clOptions
       }
    }
       
-   bool optSet(const std::string & key)
+   ///Test whether this option was set.
+   bool optSet(const std::string & key /**< [in] the key identifying the element */)
    {
      mapIterator it = map.find(key);
+     
      if(it == map.end()) return false; //Not found --> e.g. if neither command line short nor long option set.
      
      if( options[it->second].type() != argType::None) return true;
