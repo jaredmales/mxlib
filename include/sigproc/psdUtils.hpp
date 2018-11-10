@@ -31,8 +31,11 @@
 
 #include <Eigen/Dense>
 
+#include <iostream>
+
 #include "../fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
+
 
 namespace mx
 {
