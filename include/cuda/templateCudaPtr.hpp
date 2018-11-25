@@ -37,7 +37,7 @@ struct cudaPtr
       return m_size;
    }
    
-   ///Resize the memory allocation
+   ///Resize the memory allocation, in 1D
    /** If no size change, this is a no-op.
      *
      * \returns 0 on success.
@@ -45,6 +45,29 @@ struct cudaPtr
      * 
      */
    int resize( size_t sz /**< [in] the new size */);
+   
+   ///Resize the memory allocation, in 2D
+   /** If no size change, this is a no-op.
+     *
+     * \returns 0 on success.
+     * \returns a cuda error code otherwise.
+     * 
+     */
+   int resize( size_t x_sz, ///< [in] the new x size,
+               size_t y_sz  ///< [in] the new y size
+             );
+   
+   ///Resize the memory allocation, in 3D
+   /** If no size change, this is a no-op.
+     *
+     * \returns 0 on success.
+     * \returns a cuda error code otherwise.
+     * 
+     */
+   int resize( size_t x_sz, ///< [in] the new x size,
+               size_t y_sz, ///< [in] the new y size,
+               size_t z_sz  ///< [in] the new z size
+             );
    
    ///Free the memory allocation
    /** 
@@ -62,7 +85,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      * 
      */ 
-   int upload( hostPtrT * src /**< [in] The host location */);
+   int upload( const hostPtrT * src /**< [in] The host location */);
    
    ///Copy from the host to the device with allocation.
    /**
@@ -72,7 +95,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      * 
      */
-   int upload( hostPtrT * src, ///< [in] The host location
+   int upload( const hostPtrT * src, ///< [in] The host location
                size_t sz ///< [in] The size of the array
              );
    
@@ -113,6 +136,23 @@ int cudaPtr<T>::resize( size_t sz )
 }
 
 template<typename T>
+int cudaPtr<T>::resize( size_t x_sz,
+                        size_t y_sz
+                      )
+{
+   return resize(x_sz*y_sz);
+}
+
+template<typename T>
+int cudaPtr<T>::resize( size_t x_sz,
+                        size_t y_sz,
+                        size_t z_sz
+                      )
+{
+   return resize(x_sz*y_sz*z_sz);
+}
+
+template<typename T>
 int cudaPtr<T>::free()
 {
    if(m_devicePtr)
@@ -133,7 +173,7 @@ int cudaPtr<T>::free()
 }
 
 template<typename T>
-int cudaPtr<T>::upload( hostPtrT * src )
+int cudaPtr<T>::upload( const hostPtrT * src )
 {
     // Copy host memory to device
    int rv = cudaMemcpy( m_devicePtr, src, m_size*sizeof(devicePtrT), cudaMemcpyHostToDevice);
@@ -148,7 +188,7 @@ int cudaPtr<T>::upload( hostPtrT * src )
 }
 
 template<typename T>
-int cudaPtr<T>::upload( hostPtrT * src,
+int cudaPtr<T>::upload( const hostPtrT * src,
                         size_t sz
                       )
 {
@@ -159,8 +199,6 @@ int cudaPtr<T>::upload( hostPtrT * src,
    if(rv) return rv;
    
    return upload(src);
-   
-   return 0;
 }
 
 template<typename T>

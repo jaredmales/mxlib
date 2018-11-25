@@ -241,6 +241,7 @@ namespace mx
   * 
   * \ingroup error_handling
   */
+inline
 std::string MXE_CodeToName( int ec, std::string & message)
 {
    
@@ -312,6 +313,7 @@ std::string MXE_CodeToName( int ec, std::string & message)
   * 
   * \ingroup error_handling
   */
+inline
 std::string errno_CodeToName( int ec, std::string & message)
 {
    message = std::strerror(ec);
@@ -650,6 +652,7 @@ std::string errno_CodeToName( int ec, std::string & message)
   * 
   * \ingroup error_handling
   */ 
+inline
 std::string error_report( const std::string & source,   ///< [in] is intended to identify the mxlib component (i.e. the class name)
                           const int & code,             ///< [in] is an MXE_* error code
                           const std::string & file,     ///< [in] should be passed the __FILE__ macro
@@ -689,6 +692,7 @@ std::string error_report( const std::string & source,   ///< [in] is intended to
   * 
   * \ingroup error_handling
   */ 
+inline
 std::string errno_report( const std::string & source,
                           int ec,
                           const std::string & file, 

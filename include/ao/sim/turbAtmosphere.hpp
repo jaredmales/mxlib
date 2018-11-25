@@ -22,7 +22,7 @@ using namespace boost::math::constants;
 
 #include "../../improc/fitsFile.hpp"
 #include "../../ioutils/stringUtils.hpp"
-
+#include "../../timeUtils.hpp"
 
 #include "turbLayer.hpp"
 #include "wavefront.hpp"
@@ -269,44 +269,79 @@ int turbAtmosphere<realT>::genLayers()
 
    //#pragma omp parallel num_threads(2)
    {
-      arrayT psd;
       arrayT freq;
+      arrayT psub;
+      arrayT psd;
+      
+      
       sigproc::psdFilter<realT> filt;
 
       mx::normDistT<realT> normVar;
       normVar.seed();
 
-      realT beta, L02, scrnSz, r0, L0, l0;
+      size_t scrnSz;
+      realT beta, L02, r0, L0, l0;
 
       realT sqrt_alpha = 0.5*11./3.;
 
       realT p;
+
+      scrnSz = _layers[0]._scrnSz;
+      
+
+      freq.resize(scrnSz, scrnSz);
+      sigproc::frequency_grid(freq, _pupD/_wfSz);
+      
+      psub.resize(scrnSz, scrnSz);
+      
+      for(size_t ii =0; ii < scrnSz; ++ii)
+      {
+         for(size_t jj=0; jj < scrnSz; ++jj)
+         {
+            realT Ppiston = 0;
+            realT Ptiptilt = 0;
+            if(_subPiston)
+            {
+               Ppiston = pow(2*math::func::jinc(pi<realT>() * freq(ii,jj) * _pupD), 2);
+            }
+
+            if(_subTipTilt)
+            {
+               Ptiptilt = pow(4*math::func::jinc2(pi<realT>() * freq(ii,jj) * _pupD), 2);
+            }
+
+            psub(ii,jj) = (1 - Ppiston - Ptiptilt);
+         }
+      }
+
+      psd.resize(scrnSz, scrnSz);
+
+      filt.psd(psd);
+            
      // #pragma omp for
+      double t0, t1, t2, dt = 0, dt1=0;
       for(size_t i=0; i< _layers.size(); ++i)
       {
+         
          std::cerr << "Generating layer " << i << " ";
-         scrnSz = _layers[i]._scrnSz;
 
          r0 = _layers[i]._r0;
          L0 = _layers[i]._L0;
          l0 = _layers[i]._l0;
 
          std::cerr << scrnSz << " " << r0 << " " << L0 << " " << l0 << "\n";
-         psd.resize(scrnSz, scrnSz);
 
-         freq.resize(scrnSz, scrnSz);
-         sigproc::frequency_grid(freq, _pupD/_wfSz);
-
+         t0 = get_curr_time();
 
          beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
 
          if(L0 > 0) L02 = 1.0/(L0*L0);
          else L02 = 0;
 
-
-         for(int ii =0; ii < scrnSz; ++ii)
+         #pragma omp parallel for
+         for(size_t ii =0; ii < scrnSz; ++ii)
          {
-            for(int jj=0; jj < scrnSz; ++jj)
+            for(size_t jj=0; jj < scrnSz; ++jj)
             {
                if(freq(ii,jj) == 0 && L02 == 0)
                {
@@ -316,35 +351,30 @@ int turbAtmosphere<realT>::genLayers()
                {
                   p = beta / pow( pow(freq(ii,jj),2) + L02, sqrt_alpha);
                   if(l0 > 0 ) p *= exp(-1*pow( freq(ii,jj)*l0, 2));
-
-                  realT Ppiston = 0;
-                  realT Ptiptilt = 0;
-                  if(_subPiston)
-                  {
-                     Ppiston = pow(2*math::func::jinc(pi<realT>() * freq(ii,jj) * _pupD), 2);
-                  }
-
-                  if(_subTipTilt)
-                  {
-                     Ptiptilt = pow(4*math::func::jinc2(pi<realT>() * freq(ii,jj) * _pupD), 2);
-                  }
-
-                  p *= (1 - Ppiston - Ptiptilt);
-
                }
-               psd(ii,jj) = p;
+               psd(ii,jj) = sqrt(p*psub(ii,jj));
 
                _layers[i].phase(ii,jj) = normVar;
             }
          }
 
-         filt.psd(psd);
+         t1 = get_curr_time();
+         filt.psdSqrt(psd);
 
          filt(_layers[i].phase);
+         
+         t2 = get_curr_time();
+         
+         dt += t1-t0;
+         dt1 += t2-t1;
       }
+      
+      std::cerr << dt/7.0 << " " << dt1/7.0 << "\n";
+
    }//#pragma omp parallel
 
 
+   
    if(_dataDir != "")
    {
 

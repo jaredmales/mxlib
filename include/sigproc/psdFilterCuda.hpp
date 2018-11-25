@@ -27,17 +27,24 @@
 #ifndef psdFilterCuda_hpp
 #define psdFilterCuda_hpp
 
-#include "psdfilter.hpp"
+#include "../cuda/templateCudaPtr.hpp"
+#include "../cuda/templateCuda.hpp"
+
+#include "psdFilter.hpp"
+
+#include <cufft.h>
+#include <cufftXt.h>
+//#include <helper_functions.h>
+#include <helper_cuda.h>
+
 
 namespace mx
 {
 namespace sigproc 
 {
 
-template<typename _realT, int cuda = 0>
-class psdFilter;
 
-/// A class for filtering noise with PSDs
+/// A class for filtering noise with PSDs using CUDA cuFFT
 /** The square-root of the PSD is maintained by this class, either as a pointer to an external array or using internally allocated memory (which will be
   * de-allocated on destruction. 
   * 
@@ -79,8 +86,7 @@ protected:
    mx::cuda::cudaPtr<complexT> m_psdSqrt; ///< Pointer to the real array containing the square root of the PSD.
 
    
-   complexArrayT m_ranWork; ///< Working memory for the noise field on host.
-   mx::cuda::cudaPtr<complexT> m_ftWork; ///< Working memory for the FFT on the device.
+   mx::cuda::cudaPtr<complexT> m_scale; ///< the scale factor.
    
    ///Cuda FFT plan.  We only need one since the forward/inverse is part of execution.
    cufftHandle m_fftPlan {0};
@@ -127,6 +133,11 @@ public:
      */  
    int psdSqrt( const realArrayT & npsdSqrt /**< [in] an array containing the square root of the PSD.*/ );
    
+   int psdSqrt( const cuda::cudaPtr<std::complex<realT>> & npsdSqrt, /**< [in] an array containing the square root of the PSD.*/ 
+                size_t rows,
+                size_t cols
+              );
+   
    ///De-allocate all working memory and reset to initial state.
    void clear();
       
@@ -136,8 +147,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int filter( realArrayT & noise,            ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
-               realArrayT * noiseIm = nullptr ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+   int filter( deviceComplexPtrT * noise           ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
              );
    
    ///Apply the filter.
@@ -158,12 +168,12 @@ public:
 };
 
 template<typename realT>
-psdFilter<realT>::psdFilter()
+psdFilter<realT,1>::psdFilter()
 {
 }
 
 template<typename realT>
-psdFilter<realT>::~psdFilter()
+psdFilter<realT,1>::~psdFilter()
 {
    if( m_fftPlan )
    {
@@ -172,16 +182,13 @@ psdFilter<realT>::~psdFilter()
 }
 
 template<typename realT>
-int psdFilter<realT>::setSize()
+int psdFilter<realT,1>::setSize()
 {
-   if( m_rows * m_cols == m_ftWork.size())
-   {
-      return 0;
-   }
    
-   m_ranWork.resize(m_rows, m_cols);
-   m_ftWork.resize(m_rows*m_cols);
-
+   m_scale.resize(1);
+   std::complex<realT> scale(1./(m_rows*m_cols),0);
+   m_scale.upload(&scale,1);
+   
    checkCudaErrors(cufftPlan2d(&m_fftPlan, m_rows, m_cols, CUFFT_C2C));
    
    return 0;
@@ -190,19 +197,19 @@ int psdFilter<realT>::setSize()
 
 
 template<typename realT>
-int psdFilter<realT>::rows()
+int psdFilter<realT,1>::rows()
 {
    return m_rows;
 }
    
 template<typename realT>
-int psdFilter<realT>::cols()
+int psdFilter<realT,1>::cols()
 {
    return m_cols;
 }
    
 // template<typename realT>
-// int psdFilter<realT>::psdSqrt( realArrayT * npsdSqrt )
+// int psdFilter<realT,1>::psdSqrt( realArrayT * npsdSqrt )
 // {
 //    if(_psdSqrt && _owner)
 //    {
@@ -218,18 +225,17 @@ int psdFilter<realT>::cols()
 // }
 
 template<typename realT>
-int psdFilter<realT>::psdSqrt( const realArrayT & npsdSqrt )
+int psdFilter<realT,1>::psdSqrt( const realArrayT & npsdSqrt )
 {
-   if(m_psdSqrt && m_owner)
-   {
-      cudaFree(m_psdSqrt);
-   }
-   
    m_rows = npsdSqrt.rows();
    m_cols = npsdSqrt.cols();
    
    
-   m_psdSqrt.upload(npsdSqrt.data(), m_rows*m_cols);
+   complexArrayT tmp( m_rows, m_cols);
+   tmp.setZero();
+   tmp.real() = npsdSqrt;
+   
+   m_psdSqrt.upload(tmp.data(), m_rows*m_cols);
    
    setSize();
       
@@ -237,10 +243,28 @@ int psdFilter<realT>::psdSqrt( const realArrayT & npsdSqrt )
 }
 
 template<typename realT>
-void psdFilter<realT>::clear()
+int psdFilter<realT,1>::psdSqrt( const cuda::cudaPtr<std::complex<realT>> & npsdSqrt,
+                                 size_t rows,
+                                 size_t cols
+                               )
 {
-   m_ranWork.resize(0);
-   m_ftWork.resize(0);
+   m_rows = rows;
+   m_cols = cols;
+   
+   m_psdSqrt.resize(m_rows*m_cols);
+      
+   ///\todo move this into cudaPtr
+   cudaMemcpy( m_psdSqrt.m_devicePtr, npsdSqrt.m_devicePtr, m_rows*m_cols*sizeof(std::complex<realT>), cudaMemcpyDeviceToDevice);
+   
+   setSize();
+      
+   return 0;
+}
+
+template<typename realT>
+void psdFilter<realT,1>::clear()
+{
+   m_scale.resize(0);
    m_rows = 0;
    m_cols = 0;
       
@@ -248,50 +272,36 @@ void psdFilter<realT>::clear()
 }
    
 template<typename realT>
-int psdFilter<realT>::filter( realArrayT & noise, realArrayT * noiseIm )
+int psdFilter<realT,1>::filter( deviceComplexPtrT * noise )
 {
-   //Make noise a complex number
-   for(int ii=0;ii<noise.rows();++ii)
-   {
-      for(int jj=0; jj<noise.cols(); ++jj)
-      {
-         m_ranWork(ii,jj) = complexT(noise(ii,jj),0);
-      }
-   }
-   
-   m_ftWork.upload(m_ranWork, m_rows*m_cols);
-   
    
    //Transform complex noise to Fourier domain.
    
-   cufftExecC2C(m_fftPlan, (cufftComplex *) complexPupil, (cufftComplex *) complexFocal, CUFFT_FORWARD);    
-   
-   fft_fwd(_ftWork.data(), _ftWork.data() );
-   
+   cufftExecC2C(m_fftPlan, (cuComplex *) noise, (cuComplex *) noise, CUFFT_FORWARD);    
+      
    //Apply the filter.
-   _ftWork *= *_psdSqrt;
+   mx::cuda::pointwiseMul<cuComplex><<<32, 256>>>((cuComplex *) noise, (cufftComplex *) m_psdSqrt.m_devicePtr, m_rows*m_cols);
         
-   fft_back(_ftWork.data(), _ftWork.data());
+   cufftExecC2C(m_fftPlan, (cuComplex *)noise, (cuComplex *)noise, CUFFT_INVERSE);
    
+   
+   mx::cuda::scalarMul<cuComplex><<<32, 256>>>((cuComplex *) noise, (cuComplex *) m_scale.m_devicePtr, m_rows*m_cols);
    //Now take the real part, and normalize.
-   noise = _ftWork.real()/(noise.rows()*noise.cols());
    
-   if(noiseIm != nullptr)
-   {
-      *noiseIm = _ftWork.imag()/(noise.rows()*noise.cols());
-   }
+   //noise = noise/(noise.rows()*noise.cols());
+   
    
    return 0;
 }
 
 template<typename realT>
-int psdFilter<realT>::operator()( realArrayT & noise )
+int psdFilter<realT,1>::operator()( realArrayT & noise )
 {
    return filter(noise);
 }
 
 template<typename realT>
-int psdFilter<realT>::operator()( realArrayT & noise,
+int psdFilter<realT,1>::operator()( realArrayT & noise,
                                   realArrayT & noiseIm
                                 )
 {

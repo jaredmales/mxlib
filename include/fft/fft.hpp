@@ -244,6 +244,7 @@ public:
 };
 
 template<>
+inline
 std::vector<int> fftwDimVec<1>( int szX, 
                                 int UNUSED(szY), 
                                 int UNUSED(szZ))
@@ -253,6 +254,7 @@ std::vector<int> fftwDimVec<1>( int szX,
 }
 
 template<>
+inline
 std::vector<int> fftwDimVec<2>( int szX, 
                                 int szY, 
                                 int UNUSED(szZ))
@@ -262,6 +264,7 @@ std::vector<int> fftwDimVec<2>( int szX,
 }
 
 template<>
+inline
 std::vector<int> fftwDimVec<3>( int szX, int szY, int szZ)
 {
    std::vector<int> v({szX, szY, szZ});

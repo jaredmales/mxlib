@@ -145,7 +145,7 @@ void fraunhoferPropagator<wavefrontT,1>::propagatePupilToFocal( devicePtrT * com
                                                               )
 {
    //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
-   mx::cuda::pointwiseMul<complexT><<<32, 256>>>( complexPupil, m_centerFocal, wavefrontSizePixels*wavefrontSizePixels);
+   mx::cuda::pointwiseMul<cuComplex><<<32, 256>>>( (cuComplex *) complexPupil, (cuComplex *) m_centerFocal.m_devicePtr, wavefrontSizePixels*wavefrontSizePixels);
       
    cufftExecC2C(m_fftPlan, (cufftComplex *) complexPupil, (cufftComplex *) complexFocal, CUFFT_FORWARD);     
 
@@ -159,7 +159,7 @@ void fraunhoferPropagator<wavefrontT, 1>::propagateFocalToPupil( devicePtrT * co
    cufftExecC2C(m_fftPlan, (cufftComplex *) complexFocal, (cufftComplex *) complexPupil, CUFFT_INVERSE);
    
    //Unshift the wavefront and normalize
-   mx::cuda::pointwiseMul<complexT><<<32, 256>>>( complexPupil, m_centerPupil, wavefrontSizePixels*wavefrontSizePixels);   
+   mx::cuda::pointwiseMul<cuComplex><<<32, 256>>>( (cuComplex*) complexPupil, (cuComplex*) m_centerPupil.m_devicePtr, wavefrontSizePixels*wavefrontSizePixels);   
 }
 
 template<typename wavefrontT>

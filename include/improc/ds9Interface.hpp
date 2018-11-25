@@ -40,6 +40,10 @@
 #include "../ipc/sharedMemSegment.hpp"
 #include "fitsUtils.hpp"
 
+#ifndef DS9INTERFACE_NO_EIGEN
+#include "eigenImage.hpp"
+#endif
+
 namespace mx
 {
 namespace improc
