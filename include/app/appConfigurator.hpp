@@ -14,6 +14,8 @@
 #include "../ioutils/stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
 #include "../meta/typeTraits.hpp"
+#include "../meta/typeDescription.hpp"
+
 #include "../mxError.hpp"
 
 #include "clOptions.hpp"
@@ -234,37 +236,14 @@ struct appConfigurator
                    const std::string & name ///< [in] the config target name.
                  );
 
-private:
-   //Tag-dispatching: These overloads provide different behavior depending on whether typeT is a vector, effectively
-   // overloading get(name) based on return type.
-   template<typename typeT>
-   typeT internalGet( const std::string & name, //[in] the target name
-                      meta::trueFalseT<false> isNotVector //[in] the false type makes this the overload for non-std::vector typeT
-                    );
-
-   template<typename typeT>
-   typeT internalGet( const std::string & name, //[in] the target name
-                      meta::trueFalseT<true> isVector //[in] the true type makes this the overload for typeT == std::vector
-                    );
-
-public:
-   /// Get the final value of the target, returned as the specified type
-   /** The default-constructed/initialized value is returned if \ref isSet() == false, so this should carefully be used
-     * in conjunction with \ref isSet() to avoid overwriting default values.
-     *
-     * This works for vectors as well (through tag dispatching).  In any case, you must explicitly specify typeT, as in
-     * \code
-       float f = get<float>(name);
-       std::vector<float> v = get<std::vector<float>>(name);
-       \endcode
-     *
-     *
-     * \retval 0 on success.
-     * \retval -1 on error.
+   /// Call an external logging function whenever a config value is accessed by get or operator().
+   /** Only called if not nullptr (the default), otherwise no logging or reporting is done.
      */
-   template<typename typeT>
-   typeT get( const std::string & name /**< [in] the config target name */ );
-
+   void (*externalLog)( const std::string & name,     ///< [in] The name of the config target.
+                        const int & code,             ///< [in] The type code from mx::typeDescription
+                        const std::string & valueStr, ///< [in] The value in its string form as found in the configuration 
+                        const std::string & source    ///< [in] The source of the value, either default, command line, or a path.
+                      ) {nullptr};
 
 };
 
@@ -424,12 +403,26 @@ int appConfigurator::get( typeT & v,
                           size_t i
                         )
 {
-   if(!isSet(name)) return 0;
-
+   if(!isSet(name)) 
+   {
+      if(externalLog)
+      {
+         externalLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "[default]"); 
+      }
+      
+      return 0;
+   }
+   
    if( targets[name].values.size() <= i) return -1;
 
    v = ioutils::convertFromString<typeT>(targets[name].values[i]);
 
+   //Log it here.
+   if(externalLog)
+   {
+      externalLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "[source]");
+   }
+   
    return 0;
 }
 
@@ -438,8 +431,16 @@ int appConfigurator::get( typeT & v,
                           const std::string & name)
 {
 
-   if(!isSet(name)) return 0;
-
+   if(!isSet(name)) 
+   {
+      if(externalLog)
+      {
+         externalLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "[default]");
+      }
+      
+      return 0;
+   }
+   
    int i = targets[name].values.size() - 1;
 
    if(i < 0) return -1;
@@ -454,8 +455,16 @@ int appConfigurator::get( std::vector<typeT> & v,
                         )
 {
 
-   if(!isSet(name)) return 0;
-
+   if(!isSet(name)) 
+   {
+      if(externalLog)
+      {
+         externalLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "[default]");
+      }
+      
+      return 0;
+   }
+   
    if( targets[name].values.size() <= i) return -1;
 
    std::string s;
@@ -464,7 +473,12 @@ int appConfigurator::get( std::vector<typeT> & v,
    //Case that s was set to be empty.
    if(s.size() == 0)
    {
-      v.clear();
+      if(externalLog)
+      {
+         externalLog(name, meta::typeDescription<typeT>::code(), "", "[source]");
+      }
+      
+      v.clear(); //We clear the vector passed as default
       return 0;
    }
 
@@ -484,6 +498,11 @@ int appConfigurator::get( std::vector<typeT> & v,
    }
    v.push_back( ioutils::convertFromString<typeT>(s.substr(st, s.size()-st)));
 
+   //Log it here.
+   if(externalLog)
+   {
+      externalLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "[source]");
+   }
    return 0;
 }
 
@@ -493,8 +512,14 @@ int appConfigurator::get( std::vector<typeT> & v,
                         )
 {
 
-   if(!isSet(name)) return 0;
-
+   if(!isSet(name)) 
+   {
+      if(externalLog)
+      {
+         externalLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "[default]");
+      }
+      return 0;
+   }
    int i = targets[name].values.size() - 1;
 
    if(i < 0) return -1;
@@ -512,42 +537,6 @@ int appConfigurator::operator()( typeT & v,
 }
 
 
-
-
-template<typename typeT>
-typeT appConfigurator::internalGet( const std::string & name,
-                                    meta::trueFalseT<false> isNotVector
-                                  )
-{
-   static_cast<void>(isNotVector);
-
-   if(!isSet(name)) return typeT(); //this zero-initializes any fundamental types, calls default constructor for class-types.
-
-   typeT v = typeT();
-   get(v, name);
-
-   return v;
-}
-
-template<typename typeT>
-typeT appConfigurator::internalGet( const std::string & name,
-                                    meta::trueFalseT<true> isVector
-                                  )
-{
-   static_cast<void>(isVector);
-
-   typeT v;
-
-   get(v, name); //Will only be modified if isSet == true.
-
-   return v;
-}
-
-template<typename typeT>
-typeT appConfigurator::get( const std::string & name )
-{
-   return internalGet<typeT>(name, meta::trueFalseT< meta::is_std_vector<typeT>::value >());
-}
 
 
 } //namespace mx
