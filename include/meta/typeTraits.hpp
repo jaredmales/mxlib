@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __typeTraits_hpp__
-#define __typeTraits_hpp__
+#ifndef typeTraits_hpp
+#define typeTraits_hpp
 
 namespace mx
 {
@@ -91,4 +91,4 @@ struct is_std_vector<T,false>
 } //namespace mx
 
 
-#endif //__typeTraits_hpp__
+#endif //typeTraits_hpp
