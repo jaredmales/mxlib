@@ -50,10 +50,12 @@ struct configTarget
 
 
    std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
-
+   std::vector<std::string> sources; ///< holds the sources of the values (command line or config file path)
+   
    int verbosity {0}; ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc. 
    int orderAdded {0}; ///< The order in which this was added.  Useful for displaying help messages.
 
+   
    /// Default c'tor
    configTarget()
    {
@@ -117,6 +119,9 @@ struct appConfigurator
    /// Running count of options added, used to track order.
    int nAdded {0};
 
+   /// Flag controlling whether or not to record config sources
+   bool m_sources {false};
+   
    /// Clear the containers and free up the associated memory.
    void clear();
 
@@ -129,14 +134,14 @@ struct appConfigurator
    /**
      * \overload
      */
-   void add( const std::string &n,  ///< [in] The name of the target
-             const std::string &so, ///< [in] The command-line short option (e.g. "f" for -f)
-             const std::string &lo, ///< [in] The command-line long option (e.g. "file" for --file)
-             int clt,               ///< [in] The command-line option type, argType::false, argType::true, argType::optional, argType::required
-             const std::string & s, ///< [in] The config file section name, can be empty ""
-             const std::string & kw, ///< [in] The config file keyword, read in a "keyword=value" pair
-             bool isReq = false, ///< [in] Whether or not this is option is required to be set
-             const std::string & ht = "",  ///< [in] The type to display in the help message
+   void add( const std::string &n,        ///< [in] The name of the target
+             const std::string &so,       ///< [in] The command-line short option (e.g. "f" for -f)
+             const std::string &lo,       ///< [in] The command-line long option (e.g. "file" for --file)
+             int clt,                     ///< [in] The command-line option type, argType::false, argType::true, argType::optional, argType::required
+             const std::string & s,       ///< [in] The config file section name, can be empty ""
+             const std::string & kw,      ///< [in] The config file keyword, read in a "keyword=value" pair
+             bool isReq = false,          ///< [in] Whether or not this is option is required to be set
+             const std::string & ht = "", ///< [in] The type to display in the help message
              const std::string & he = ""  ///< [in] The explanation to display in the help message
            );
 
@@ -237,14 +242,14 @@ struct appConfigurator
                  );
 
    /// Call an external logging function whenever a config value is accessed by get or operator().
-   /** Only called if not nullptr (the default), otherwise no logging or reporting is done.
+   /** Only called if this is not a nullptr (the default), otherwise no logging or reporting is done.
      */
-   void (*externalLog)( const std::string & name,     ///< [in] The name of the config target.
-                        const int & code,             ///< [in] The type code from mx::typeDescription
-                        const std::string & valueStr, ///< [in] The value in its string form as found in the configuration 
-                        const std::string & source    ///< [in] The source of the value, either default, command line, or a path.
-                      ) {nullptr};
-
+   void (*configLog)( const std::string & name,     ///< [in] The name of the config target.
+                      const int & code,             ///< [in] The type code from mx::typeDescription
+                      const std::string & valueStr, ///< [in] The value in its string form as found in the configuration 
+                      const std::string & source    ///< [in] The source of the value, either default, command line, or a path.
+                    ) {nullptr};
+                  
 };
 
 inline
@@ -252,6 +257,7 @@ void appConfigurator::clear()
 {
    targets.clear();
    clOnlyTargets.clear();
+   nonOptions.clear();
 }
 
 inline
@@ -340,6 +346,11 @@ void appConfigurator::parseCommandLine( int argc,
 
          clOpts.getAll(args, it->second.name);
          it->second.values.insert( it->second.values.end(), args.begin(), args.end());
+         if(m_sources)
+         {
+            for(size_t n=0; n < args.size(); ++n) it->second.sources.push_back("command line");
+         }
+         
          it->second.verbosity = clOpts.count(it->second.name);
          it->second.set = true;
       }
@@ -371,6 +382,10 @@ int appConfigurator::readConfig( const std::string & fname,
       if(iF.count(it->second.section, it->second.keyword) > 0)
       {
          it->second.values.push_back(iF(it->second.section, it->second.keyword));
+         if(m_sources)
+         {
+            it->second.sources.push_back(fname);
+         }
          it->second.set = true;
       }
    }
@@ -405,9 +420,9 @@ int appConfigurator::get( typeT & v,
 {
    if(!isSet(name)) 
    {
-      if(externalLog)
+      if(configLog)
       {
-         externalLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "[default]"); 
+         configLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "default"); 
       }
       
       return 0;
@@ -418,9 +433,16 @@ int appConfigurator::get( typeT & v,
    v = ioutils::convertFromString<typeT>(targets[name].values[i]);
 
    //Log it here.
-   if(externalLog)
+   if(configLog)
    {
-      externalLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "[source]");
+      if(m_sources)
+      {
+         configLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], targets[name].sources[i]);
+      }
+      else
+      {
+         configLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "");
+      }
    }
    
    return 0;
@@ -433,9 +455,9 @@ int appConfigurator::get( typeT & v,
 
    if(!isSet(name)) 
    {
-      if(externalLog)
+      if(configLog)
       {
-         externalLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "[default]");
+         configLog(name, meta::typeDescription<typeT>::code(), ioutils::convertToString(v), "default");
       }
       
       return 0;
@@ -457,9 +479,9 @@ int appConfigurator::get( std::vector<typeT> & v,
 
    if(!isSet(name)) 
    {
-      if(externalLog)
+      if(configLog)
       {
-         externalLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "[default]");
+         configLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "default");
       }
       
       return 0;
@@ -473,9 +495,16 @@ int appConfigurator::get( std::vector<typeT> & v,
    //Case that s was set to be empty.
    if(s.size() == 0)
    {
-      if(externalLog)
+      if(configLog)
       {
-         externalLog(name, meta::typeDescription<typeT>::code(), "", "[source]");
+         if(m_sources)
+         {
+            configLog(name, meta::typeDescription<typeT>::code(), "", targets[name].sources[i]);
+         }
+         else
+         {
+            configLog(name, meta::typeDescription<typeT>::code(), "", "");
+         }
       }
       
       v.clear(); //We clear the vector passed as default
@@ -499,9 +528,16 @@ int appConfigurator::get( std::vector<typeT> & v,
    v.push_back( ioutils::convertFromString<typeT>(s.substr(st, s.size()-st)));
 
    //Log it here.
-   if(externalLog)
+   if(configLog)
    {
-      externalLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "[source]");
+      if(m_sources)
+      {
+         configLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], targets[name].sources[i]);
+      }
+      else
+      {
+         configLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "");
+      }
    }
    return 0;
 }
@@ -514,9 +550,9 @@ int appConfigurator::get( std::vector<typeT> & v,
 
    if(!isSet(name)) 
    {
-      if(externalLog)
+      if(configLog)
       {
-         externalLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "[default]");
+         configLog(name, meta::typeDescription<typeT>::code(), "[need a vector to string]", "default");
       }
       return 0;
    }
