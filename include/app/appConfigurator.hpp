@@ -112,10 +112,12 @@ struct appConfigurator
    ///Targets which are only for the command line are stored separately in a list.
    std::list<configTarget> clOnlyTargets;
 
-
    /// Non-option arguments from the command line.
    std::vector<std::string> nonOptions;
 
+   /// Config file entries present in the file(s), but not corresponding to a target when parsed. 
+   iniFile::nameMapT unusedConfigs;
+   
    /// Running count of options added, used to track order.
    int nAdded {0};
 
@@ -258,6 +260,7 @@ void appConfigurator::clear()
    targets.clear();
    clOnlyTargets.clear();
    nonOptions.clear();
+   unusedConfigs.clear();
 }
 
 inline
@@ -367,11 +370,26 @@ int appConfigurator::readConfig( const std::string & fname,
 
    iniFile iF;
 
-   if( iF.parse(fname) < 0)
+   ///\todo update error handling to include >0 (line numer of parse error) and -2 memory allocation error.
+   int prv = iF.parse(fname); 
+   
+   if( prv == -1)
    {
       if(!reportFileNotFound) return -1;
 
       mxError("appConfigurator: ", MXE_FILENOTFOUND, "The file " + fname + " was not found");
+      return -1;
+   }
+   
+   if( prv == -2)
+   {
+      mxError("appConfigurator: ", MXE_ALLOCERR, "Memory allocation error in config file parser");
+      return -1;
+   }
+   
+   if( prv > 0)
+   {
+      mxError("appConfigurator: ", MXE_PARSEERR, "Parsing error in " + fname + " at line " + std::to_string(prv));
       return -1;
    }
 
@@ -387,9 +405,14 @@ int appConfigurator::readConfig( const std::string & fname,
             it->second.sources.push_back(fname);
          }
          it->second.set = true;
+         
+         iF.erase(it->second.section, it->second.keyword); //Erase it from the iniFile map.
       }
    }
-
+   
+   //here set aside non-deleted iF entries
+   unusedConfigs.insert(iF.names.begin(), iF.names.end());
+   
    return 0;
 }
 
@@ -452,7 +475,6 @@ template<typename typeT>
 int appConfigurator::get( typeT & v,
                           const std::string & name)
 {
-
    if(!isSet(name)) 
    {
       if(configLog)
@@ -476,7 +498,6 @@ int appConfigurator::get( std::vector<typeT> & v,
                           size_t i
                         )
 {
-
    if(!isSet(name)) 
    {
       if(configLog)
@@ -515,6 +536,9 @@ int appConfigurator::get( std::vector<typeT> & v,
    size_t com;
 
    st = 0;
+   
+   while(::isspace(s[st]) && st < s.size()-1) ++st;
+   
    com = s.find(',', st);
 
    v.clear();
@@ -523,6 +547,8 @@ int appConfigurator::get( std::vector<typeT> & v,
    {
       v.push_back( ioutils::convertFromString<typeT>(s.substr(st, com-st)) );
       st = com + 1;
+      while(::isspace(s[st]) && st < s.size()-1) ++st;
+      
       com = s.find(',', st);
    }
    v.push_back( ioutils::convertFromString<typeT>(s.substr(st, s.size()-st)));
@@ -547,7 +573,6 @@ int appConfigurator::get( std::vector<typeT> & v,
                           const std::string & name
                         )
 {
-
    if(!isSet(name)) 
    {
       if(configLog)

@@ -7,7 +7,7 @@
 //   copied defines from ini.h
 //   copied documentation from ini.h, and updated for doxygen
 //   commented out ini.h
-// NOTE: original ini.h and ini.c are in the ini directory
+// NOTE: original ini.h and ini.c are in the inih directory
 
 
 #ifndef ini_hpp
@@ -32,17 +32,17 @@
 
 /* Nonzero to use stack, zero to use heap (malloc/free). */
 #ifndef INI_USE_STACK
-#define INI_USE_STACK 1
+#define INI_USE_STACK 0
 #endif
 
-/* Stop parsing on first error (default is to keep parsing). */
+/* Stop parsing on first error (default is to stop parsing). */
 #ifndef INI_STOP_ON_FIRST_ERROR
 #define INI_STOP_ON_FIRST_ERROR 0
 #endif
 
 /* Maximum line length for any line in INI file. */
 #ifndef INI_MAX_LINE
-#define INI_MAX_LINE 200
+#define INI_MAX_LINE 1024
 #endif
 
 /* inih -- simple .INI file parser

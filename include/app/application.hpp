@@ -53,11 +53,16 @@ namespace mx
 
   \endverbatim
   * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).
-  * Additional entries within one file with the same section and key are appended with a newline to the previous entry.
-  * So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such
-  * that in the above example the result is key4=value6_over_multiple_lines.  Vectors are input as in section1.key4.
+  * 
+  * Additional syntax rules:
+  * - Leading whitespace is stripped from the value, so `key=val` and `key= val` are equivalent.
+  * - Additional entries within one file with the same section and key are appended to the previous entry.
+  *   So the value of section2.key3 is "value5value5.1".   
+  * - Multi-line values are handled such that in the above example the result is key4=value6_over_multiple_lines.  
+  * - Vectors are input as comma separated lists, as in section1.key4 above.  Leading whitespace is stripped from each 
+  *   component of the vector.
   *
-  * \todo add handling of +=
+  * \todo add handling of += in subsequent files.
   *
   * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
   *
