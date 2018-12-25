@@ -417,13 +417,13 @@ void application::setDefaults( int UNUSED(argc),
 inline
 void application::setupStandardConfig() //virtual
 {
-   config.add("config","c", "config",mx::argType::Required, "", "config", false, "string", "A local config file");
+   config.add("config","c", "config",argType::Required, "", "config", false, "string", "A local config file");
 }
 
 inline
 void application::setupStandardHelp() //virtual
 {
-   config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
+   config.add("help", "h", "help", argType::True,  "", "", false, "none", "Print this message and exit");
 }
 
 inline
@@ -522,7 +522,7 @@ void application::help() //virtual
       }
    }
 
-   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
    {
       if( targIt->second.isRequired == true)
       {
@@ -546,7 +546,7 @@ void application::help() //virtual
       }
    }
 
-   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
    {
       if( targIt->second.isRequired == false)
       {
