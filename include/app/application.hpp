@@ -512,13 +512,11 @@ void application::help() //virtual
    std::cerr << "\n";
    std::cerr << "  Required arguments:\n";
 
-  // int row = 0;
    for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
    {
       if( clOnlyTargIt->isRequired == true)
       {
          optionHelp(*clOnlyTargIt, tt);
-         //++row;
       }
    }
 
@@ -527,7 +525,6 @@ void application::help() //virtual
       if( targIt->second.isRequired == true)
       {
          optionHelp(targIt->second, tt);
-         //++row;
       }
    }
 
@@ -542,7 +539,6 @@ void application::help() //virtual
       if( clOnlyTargIt->isRequired == false)
       {
          optionHelp(*clOnlyTargIt, tt);
-         //++row;
       }
    }
 
@@ -551,7 +547,6 @@ void application::help() //virtual
       if( targIt->second.isRequired == false)
       {
          optionHelp(targIt->second, tt);
-         //++row;
       }
    }
 
