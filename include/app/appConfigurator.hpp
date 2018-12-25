@@ -6,94 +6,77 @@
  *
  */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef appConfigurator_hpp
 #define appConfigurator_hpp
 
 #include "../mxlib.hpp"
-
-#include "../ioutils/stringUtils.hpp"
-#include "../meta/trueFalseT.hpp"
-#include "../meta/typeTraits.hpp"
-#include "../meta/typeDescription.hpp"
-
 #include "../mxError.hpp"
+
 
 #include "clOptions.hpp"
 #include "iniFile.hpp"
+#include "configTarget.hpp"
 
 #include <list>
 
 namespace mx
 {
-
-/// A configuration target
-/** Specifies the details of a configuration target, which is a value that can be set from the command line and/or a config file.
-  * A target has a name used as a key for accessing it, and defines how it is set with short and long command line options and the section and
-  * key for the config file.  Can also include help message details.
-  *
-  * \ingroup mxApp
-  */
-struct configTarget
+namespace app 
 {
-   std::string name; ///<The name of the target
-   std::string shortOpt; ///< The command-line short option (e.g. "f" for -f)
-   std::string longOpt; ///< The command-line long option (e.g. "file" for --file)
-   int clType {0}; ///< The command-line option type, argType::false, argType::true, argType::optional, argType::required
-   std::string section; ///< The config file section name, can be empty ""
-   std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
-   bool set {false}; ///< true if the value has been set by the configuration, use to distinguish empty strings
-
-
-   bool isRequired {false}; ///< Whether or not this is option is required to be set.
-   std::string helpType;         ///< The type to display in the help message.
-   std::string helpExplanation;  ///< The explanation to display in the help message.
-
-
-   std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
-   std::vector<std::string> sources; ///< holds the sources of the values (command line or config file path)
-   
-   int verbosity {0}; ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc. 
-   int orderAdded {0}; ///< The order in which this was added.  Useful for displaying help messages.
-
-   
-   /// Default c'tor
-   configTarget()
-   {
-      //orderAdded = 0;
-   }
-
-   /// Construct and set values
-   configTarget( const std::string &n,  ///< [in] The name of the target
-                 const std::string &so, ///< [in] The command-line short option (e.g. "f" for -f)
-                 const std::string &lo, ///< [in] The command-line long option (e.g. "file" for --file)
-                 int clt,               ///< [in] The command-line option type, argType::false, argType::true, argType::optional, argType::required
-                 const std::string & s, ///< [in] The config file section name, can be empty ""
-                 const std::string & kw, ///< [in] The config file keyword, read in a "keyword=value" pair
-                 bool isReq = false, ///< [in] Whether or not this is option is required to be set
-                 const std::string & ht = "",  ///< [in] The type to display in the help message
-                 const std::string & he = "",  ///< [in] The explanation to display in the help message
-                 int oa = 0 ///< [in] [optional] ///< the order in which this was added.
-               )
-   {
-      name = n;
-      shortOpt = so;
-      longOpt = lo;
-      clType = clt;
-      section = s;
-      keyword = kw;
-
-      isRequired = isReq;
-      helpType = ht;
-      helpExplanation = he;
-
-      orderAdded = oa;
-      
-      set = false;
-   }
-};
 
 /// Class to manage a set of configurable values, and read their values from config/ini files and the command line.
-/** \bug a config=value pair listed in a conf file twice seems to cause a failure, even if they are the same value.
+/** 
+  * The configuration files are ini-style, with sections.  That is
+  \verbatim
+  key1=value1
+  key2=value2
+
+  [section1]
+  key3=value3
+  key4=value4,value4.1, value4.2, value4.3
+
+  [section2]
+  key3=value5
+  key3=value5.1
+  key4=value6_over_
+       multiple_lines
+
+  \endverbatim
+  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).
+  * 
+  * Additional syntax rules:
+  * - Leading whitespace is stripped from the value, so `key=val` and `key= val` are equivalent.
+  * - Additional entries within one file with the same section and key are appended to the previous entry.
+  *   So the value of section2.key3 is "value5value5.1".   
+  * - Multi-line values are handled such that in the above example the result is key4=value6_over_multiple_lines.  
+  * - Vectors are input as comma separated lists, as in section1.key4 above.  Leading whitespace is stripped from each 
+  *   component of the vector.
+  *
+  * \todo add handling of += in subsequent files.
+  *
+  * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
+  * 
+  * 
+  * \bug a config=value pair listed in a conf file twice seems to cause a failure, even if they are the same value.
   *
   * \ingroup mxApp
   *
@@ -107,16 +90,18 @@ struct appConfigurator
    typedef std::list<configTarget>::iterator clOnlyTargetIterator;
 
    ///The targets are stored in an unordered_map for fast access by key.
-   std::unordered_map<std::string, configTarget> targets;
+   std::unordered_map<std::string, configTarget> m_targets;
 
+   /// Config file entries present in the file(s), but not corresponding to a target when parsed.   Set aside for possible analysis.
+   std::unordered_map<std::string, configTarget> m_unusedConfigs;
+
+   
    ///Targets which are only for the command line are stored separately in a list.
    std::list<configTarget> clOnlyTargets;
 
    /// Non-option arguments from the command line.
    std::vector<std::string> nonOptions;
 
-   /// Config file entries present in the file(s), but not corresponding to a target when parsed. 
-   iniFile::nameMapT unusedConfigs;
    
    /// Running count of options added, used to track order.
    int nAdded {0};
@@ -154,10 +139,10 @@ struct appConfigurator
                         );
 
 
-   ///Parse a config/ini file, updating the targets
+   ///Read and parse a config/ini file, updating the targets
    /** \todo handle += here, by appending to the last value as if a vector.
      */
-   int readConfig( const std::string & fname, /**< [in] the config file name */
+   int readConfig( const std::string & fname,     ///< [in] the config file name 
                    bool reportFileNotFound = true ///< [in] [optiona] control whether a file not found is reported.
                  );
 
@@ -166,10 +151,31 @@ struct appConfigurator
      * \returns true if the configuration set at least one value for this target
      * \returns false if no value was set.
      */
+   bool isSet( const std::string & name,                               ///< [in] the target name 
+               std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
+             );
+   
+   /// Check if a target has been set by the configuration
+   /**
+     * \overload
+     * 
+     * \returns true if the configuration set at least one value for this target
+     * \returns false if no value was set.
+     */
    bool isSet(const std::string & name /**< [in] the target name */);
 
    ///Get the number of different values set for the specified config target
    /**
+     * \returns the number of different values set for name.
+     */
+   int count( const std::string & name,                               ///< [in] the target name 
+              std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
+            );
+   
+   ///Get the number of different values set for the specified config target
+   /**
+     * \overload
+     * 
      * \returns the number of different values set for name.
      */
    int count( const std::string & name /**< [in] the target name */);
@@ -180,8 +186,20 @@ struct appConfigurator
      * 
      * \returns the verbosity count.
      */
-   int verbosity( const std::string & name /**< [in] the target name */);
+   int verbosity( const std::string & name,                               ///< [in] the target name 
+                  std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
+                );
 
+   ///Get the command line verbosity count for this option.
+   /** E.g., -v ==> 1, -vv ==> 2, -vvv ==> 3, etc.  Note that for this to work
+     * properly, this must be of type mx::argType::True.
+     * 
+     * \overload
+     * 
+     * \returns the verbosity count.
+     */
+   int verbosity( const std::string & name /**< [in] the target name */);
+   
    /// Get the i-th value of the target, converted to the specified type
    /** The supplied value is only altered if the config target was set, which preserves.
      * default values.
@@ -190,12 +208,43 @@ struct appConfigurator
      * \retval -1 on error
      */
    template<typename typeT>
-   int get( typeT & v, ///< [out] the variable to store the value in
-            const std::string & name, ///< [in] the config target name
-            size_t i ///< [in] the number of config specification to get.
+   int get( typeT & v,                                              ///< [out] the variable to store the value in, unaltered if not set.
+            const std::string & name,                               ///< [in] the config target name
+            size_t i,                                               ///< [in] the number of config specification to get.
+            std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
           );
 
+   /// Get the i-th value of the target from the used set, converted to the specified type
+   /** The supplied value is only altered if the config target was set, which preserves.
+     * default values.
+     * 
+     * \overload
+     *
+     * \retval 0 on success
+     * \retval -1 on error
+     */
+   template<typename typeT>
+   int get( typeT & v,                ///< [out] the variable to store the value in
+            const std::string & name, ///< [in] the config target name
+            size_t i                  ///< [in] the number of config specification to get.
+          );
+   
    /// Get the final value of the target, converted to the specified type
+   /** The supplied value is only altered if the config target was set, which preserves.
+     * default values.
+     *
+     * \overload
+     *
+     * \retval 0 on success.
+     * \retval -1 on error.
+     */
+   template<typename typeT>
+   int get( typeT & v,                                              ///< [out] the variable to store the value in
+            const std::string & name,                               ///< [in] the config target name
+            std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
+          );
+   
+   /// Get the final value of the target from the used set, converted to the specified type
    /** The supplied value is only altered if the config target was set, which preserves.
      * default values.
      *
@@ -209,19 +258,21 @@ struct appConfigurator
             const std::string & name ///< [in] the config target name
           );
 
-   /// Get the i-th value of the target as a vector containing the specified type.
+   /// Get the i-th value of the target, converted to the specified config target
    /** The vector is only populated if the config target was set.  If it is populated,
      * it is cleared first. Thus if a vector filled with default values is passed
      * in, it will only be overwritten if the user specified new values.
      *
-     * \retval 0 on success.
-     * \retval -1 on error.
+     * \returns 0 on success
+     * \returns -1 on error
      */
    template<typename typeT>
-   int get( std::vector<typeT> & v,   ///< [out] the vector to populate
-            const std::string & name ///< [in[ the config target name.
+   int get( std::vector<typeT> & v,                                 ///< [out] the vector to populate
+            const std::string & name,                               ///< [in] the config target name.
+            size_t i,                                               ///< [in] the number of config specification to get.
+            std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
           );
-
+   
    /// Get the i-th value of the target, converted to the specified config target
    /** The vector is only populated if the config target was set.  If it is populated,
      * it is cleared first. Thus if a vector filled with default values is passed
@@ -235,14 +286,72 @@ struct appConfigurator
             const std::string & name, ///< [in] the config target name.
             size_t i ///< [in] the number of config specification to get.
           );
-
-
-   /// Access operator, calls get.
+   
+   /// Get the i-th value of the target as a vector containing the specified type.
+   /** The vector is only populated if the config target was set.  If it is populated,
+     * it is cleared first. Thus if a vector filled with default values is passed
+     * in, it will only be overwritten if the user specified new values.
+     *
+     * \retval 0 on success.
+     * \retval -1 on error.
+     */
    template<typename typeT>
-   int operator()( typeT & v, ///< [out] the variable to populate (either scalar or vector)
+   int get( std::vector<typeT> & v,                                 ///< [out] the vector to populate
+            const std::string & name,                               ///< [in] the config target name.
+            std::unordered_map<std::string, configTarget> & targets ///< [in] the map of config targets to use
+          );
+
+   /// Get the i-th value of the target in the used set, as a vector containing the specified type.
+   /** The vector is only populated if the config target was set.  If it is populated,
+     * it is cleared first. Thus if a vector filled with default values is passed
+     * in, it will only be overwritten if the user specified new values.
+     *
+     * \retval 0 on success.
+     * \retval -1 on error.
+     */
+   template<typename typeT>
+   int get( std::vector<typeT> & v,   ///< [out] the vector to populate
+            const std::string & name ///< [in] the config target name.
+          );
+   
+   /// Access operator, configures a value by calling get.
+   /**
+     * \retval 0 on success
+     * \retval -1 on error
+     */ 
+   template<typename typeT>
+   int operator()( typeT & v,               ///< [out] the variable to populate (either scalar or vector), will be unaltered if not set.
                    const std::string & name ///< [in] the config target name.
                  );
 
+   /// Configure a value from the unused map, using the iniFile key.
+   /**
+     * \retval 0 on success
+     * \retval -1 on error
+     */
+   template<typename typeT>
+   int configUnused( typeT & v,              ///< [out] the variable to populate (either scalar or vector), will be unaltered if not set.
+                     const std::string & key ///< [in] the iniFile key for this target. 
+                   );
+   
+   /// Configure a value from the unused map, using the section and keyword.
+   /**
+     * \retval 0 on success
+     * \retval -1 on error
+     */
+   template<typename typeT>
+   int configUnused( typeT & v,                   ///< [out] the variable to populate (either scalar or vector), will be unaltered if not set.
+                     const std::string & section, ///< [in] the section name for this target
+                     const std::string & keyword  ///< [in] the keyword for this target.
+                   );
+   
+   /// Get the sections in the unused config targets.
+   /**
+     * \retval 0 on success
+     * \retval -1 on error
+     */
+   int unusedSections( std::vector<std::string> & sections );
+   
    /// Call an external logging function whenever a config value is accessed by get or operator().
    /** Only called if this is not a nullptr (the default), otherwise no logging or reporting is done.
      */
@@ -257,10 +366,10 @@ struct appConfigurator
 inline
 void appConfigurator::clear()
 {
-   targets.clear();
+   m_targets.clear();
    clOnlyTargets.clear();
    nonOptions.clear();
-   unusedConfigs.clear();
+   m_unusedConfigs.clear();
 }
 
 inline
@@ -268,14 +377,14 @@ void appConfigurator::add( const configTarget & tgt )
 {
 
    //First check for duplicate name and command line only
-   if(targets.count(tgt.name) > 0 && tgt.section == "" && tgt.keyword == "")
+   if(m_targets.count(tgt.name) > 0 && tgt.section == "" && tgt.keyword == "")
    {
       clOnlyTargets.push_back(tgt);
       clOnlyTargets.back().orderAdded = nAdded;
    }
    else
    {
-      std::pair<targetIterator, bool> res = targets.insert({tgt.name, tgt});
+      std::pair<targetIterator, bool> res = m_targets.insert({tgt.name, tgt});
       res.first->second.orderAdded = nAdded;
    }
 
@@ -309,7 +418,7 @@ void appConfigurator::parseCommandLine( int argc,
 
    //First load the options into the clOptions parser
    targetIterator it;
-   for(it = targets.begin(); it != targets.end(); ++it)
+   for(it = m_targets.begin(); it != m_targets.end(); ++it)
    {
       if(it->second.shortOpt == "" && it->second.longOpt == "") continue; //No command line opts specified.
 
@@ -337,14 +446,12 @@ void appConfigurator::parseCommandLine( int argc,
    }
 
    //And then load the results in the config target map.
-   for(it = targets.begin(); it != targets.end(); ++it)
+   for(it = m_targets.begin(); it != m_targets.end(); ++it)
    {
       if(oneTarget != "" && it->second.name != oneTarget) continue;
 
-      //std::cerr << "isn: " << it->second.name << "\n";
       if(clOpts.optSet(it->second.name))
       {
-         //std::cerr << "  Set!\n";
          std::vector<std::string> args;
 
          clOpts.getAll(args, it->second.name);
@@ -395,7 +502,7 @@ int appConfigurator::readConfig( const std::string & fname,
 
    targetIterator it;
 
-   for(it = targets.begin(); it != targets.end(); ++it)
+   for(it = m_targets.begin(); it != m_targets.end(); ++it)
    {
       if(iF.count(it->second.section, it->second.keyword) > 0)
       {
@@ -411,37 +518,77 @@ int appConfigurator::readConfig( const std::string & fname,
    }
    
    //here set aside non-deleted iF entries
-   unusedConfigs.insert(iF.names.begin(), iF.names.end());
+   for( auto iFit = iF.names.begin(); iFit != iF.names.end(); ++iFit)
+   {
+      //Insert or update existing
+      m_unusedConfigs[iFit->first].name = iFit->first;
+      
+      std::string sect, nam;
+      iniFile::parseKey(sect, nam, iFit->first);
+      m_unusedConfigs[iFit->first].section = sect;
+      m_unusedConfigs[iFit->first].keyword = nam;
+      
+      m_unusedConfigs[iFit->first].values.push_back(iFit->second);
+      
+      if(m_sources) m_unusedConfigs[iFit->first].sources.push_back(fname);
+      
+      m_unusedConfigs[iFit->first].set = true;
+   }
    
    return 0;
 }
 
 inline
-bool appConfigurator::isSet(const std::string & name)
+bool appConfigurator::isSet( const std::string & name,
+                             std::unordered_map<std::string, configTarget> & targets
+                           )
 {
    if(targets.count(name) == 0) return false;
    return targets[name].set;
 }
 
 inline
-int appConfigurator::count(const std::string & name)
+bool appConfigurator::isSet( const std::string & name )
+{
+   return isSet(name, m_targets);
+}
+
+inline
+int appConfigurator::count( const std::string & name,
+                            std::unordered_map<std::string, configTarget> & targets
+                          )
 {
    return targets[name].values.size();
 }
 
 inline
-int appConfigurator::verbosity(const std::string & name)
+int appConfigurator::count( const std::string & name )
+{
+   return count(name, m_targets);
+}
+
+inline
+int appConfigurator::verbosity( const std::string & name,
+                                std::unordered_map<std::string, configTarget> & targets
+                              )
 {
    return targets[name].verbosity;
+}
+
+inline
+int appConfigurator::verbosity( const std::string & name )
+{
+   return verbosity(name, m_targets);
 }
 
 template<typename typeT>
 int appConfigurator::get( typeT & v,
                           const std::string & name,
-                          size_t i
+                          size_t i,
+                          std::unordered_map<std::string, configTarget> & targets
                         )
 {
-   if(!isSet(name)) 
+   if(!isSet(name, targets)) 
    {
       if(configLog)
       {
@@ -473,9 +620,20 @@ int appConfigurator::get( typeT & v,
 
 template<typename typeT>
 int appConfigurator::get( typeT & v,
-                          const std::string & name)
+                          const std::string & name,
+                          size_t i
+                        )
 {
-   if(!isSet(name)) 
+   return get(v, name, i, m_targets);
+}
+
+template<typename typeT>
+int appConfigurator::get( typeT & v,
+                          const std::string & name,
+                          std::unordered_map<std::string, configTarget> & targets
+                        )
+{
+   if(!isSet(name, targets)) 
    {
       if(configLog)
       {
@@ -489,16 +647,24 @@ int appConfigurator::get( typeT & v,
 
    if(i < 0) return -1;
 
-   return get(v, name, i);
+   return get(v, name, i, targets);
+}
+
+template<typename typeT>
+int appConfigurator::get( typeT & v,
+                          const std::string & name)
+{
+   return get(v, name, m_targets);
 }
 
 template<typename typeT>
 int appConfigurator::get( std::vector<typeT> & v,
                           const std::string & name,
-                          size_t i
+                          size_t i,
+                          std::unordered_map<std::string, configTarget> & targets
                         )
 {
-   if(!isSet(name)) 
+   if(!isSet(name, targets)) 
    {
       if(configLog)
       {
@@ -570,10 +736,20 @@ int appConfigurator::get( std::vector<typeT> & v,
 
 template<typename typeT>
 int appConfigurator::get( std::vector<typeT> & v,
-                          const std::string & name
+                          const std::string & name,
+                          size_t i
                         )
 {
-   if(!isSet(name)) 
+   return get(v, name, i, m_targets);
+}
+
+template<typename typeT>
+int appConfigurator::get( std::vector<typeT> & v,
+                          const std::string & name,
+                          std::unordered_map<std::string, configTarget> & targets
+                        )
+{
+   if(!isSet(name, targets)) 
    {
       if(configLog)
       {
@@ -585,21 +761,72 @@ int appConfigurator::get( std::vector<typeT> & v,
 
    if(i < 0) return -1;
 
-   return get(v, name, i);
+   return get(v, name, i, targets);
 }
 
+template<typename typeT>
+int appConfigurator::get( std::vector<typeT> & v,
+                          const std::string & name
+                        )
+{
+   return get(v, name, m_targets);
+}
 
 template<typename typeT>
 int appConfigurator::operator()( typeT & v,
                                  const std::string & name
                                )
 {
-   return get(v, name);
+   return get(v, name, m_targets);
 }
 
+template<typename typeT>
+int appConfigurator::configUnused( typeT & v,
+                                   const std::string & key
+                                 )
+{
+   return get(v, key, m_unusedConfigs);
+}
 
+template<typename typeT>
+int appConfigurator::configUnused( typeT & v,
+                                   const std::string & section,
+                                   const std::string & keyword
+                                 )
+{
+   return configUnused(v, iniFile::makeKey(section,keyword));
+}
 
+inline
+int appConfigurator::unusedSections( std::vector<std::string> & sections )
+{
+   sections.clear();
+   
+   //Wind through all the targets
+   for(auto it = m_unusedConfigs.begin(); it != m_unusedConfigs.end(); ++it)
+   {
+      std::string sect = it->second.section;
+      
+      bool add = true;
 
+      //Check if this section is already in the vector -- is there a std::algorithms way to do this?
+      for(size_t i=0;i < sections.size(); ++i)
+      {
+         if(sections[i] == sect)
+         {
+            add = false;
+            break;
+         }
+      }
+      
+      //Add it if it wasn't found.
+      if(add) sections.push_back(sect);
+   }
+   
+   return 0;
+}
+
+} //namespace app
 } //namespace mx
 
 #endif // appConfigurator_hpp

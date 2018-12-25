@@ -46,7 +46,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key1", "key2",  "key3",  "key4",  "key5"},
                                             {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("key2", "", "", 0, "", "key2", false, "", "");
@@ -83,7 +83,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key1", "key2",  "key3",  "key4",  "key5"},
                                             {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("sect1.key2", "", "", 0, "sect1", "key2", false, "", "");
@@ -120,7 +120,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key1", "key2",  "key3",  "key2",  "key3"},
                                             {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("sect1.key2", "", "", 0, "sect1", "key2", false, "", "");
@@ -161,7 +161,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key1", "key2",  "key3",  "key4",  "key5"},
                                             {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("key2", "", "", 0, "", "key2", false, "", "");
@@ -189,17 +189,17 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
          REQUIRE( val == "val5");
 
          //Check that the unused one is available.
-         val = config.unusedConfigs["=key3"];
+         config.configUnused(val, "", "key3");
          REQUIRE( val == "val3");         
       }
       
-      WHEN("sections, repeated keys, unused section")
+      WHEN("sections, repeated keys, unused sections")
       {
-         writeConfigFile( "/tmp/test.conf", {"",     "",     "sect1", "sect1", "sect2", "sect2"},
-                                            {"key0", "key1", "key2",  "key3",  "key2",  "key3"},
-                                            {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
+         writeConfigFile( "/tmp/test.conf", {"",     "",     "sect1", "sect1", "sect2", "sect2", "sect3"},
+                                            {"key0", "key1", "key2",  "key3",  "key2",  "key3", "key4" },
+                                            {"val0", "val1", "val2",  "val3",  "val4",  "val5", "val6"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("sect2.key2", "", "", 0, "sect2", "key2", false, "", "");
@@ -221,15 +221,25 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
          config(val, "sect2.key3");
          REQUIRE( val == "val5");
          
-         val = config.unusedConfigs["sect1=key2"];
+         config.configUnused(val, "sect1", "key2");
          REQUIRE( val == "val2");
          
-         val = config.unusedConfigs["sect1=key3"];
+         config.configUnused(val, "sect1", "key3");
          REQUIRE( val == "val3");
+         
+         config.configUnused(val, "sect3", "key4");
+         REQUIRE( val == "val6");
+         
+         std::vector<std::string> sections;
+         config.unusedSections(sections);
+         REQUIRE( sections.size()==2);
+         REQUIRE( (sections[0] == "sect1" || sections[1] == "sect1") );
+         REQUIRE( (sections[0] == "sect3" || sections[1] == "sect3") );
          
       }
    }
    
+#if 1
    GIVEN("a config file with repeated keys")
    {
       WHEN("no sections")
@@ -238,7 +248,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key0", "key2",  "key2",  "key4",  "key4"},
                                             {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key2", "", "", 0, "", "key2", false, "", "");
          config.add("key4", "", "", 0, "", "key4", false, "", "");
@@ -264,7 +274,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0", "key1",  "key2",  "key1",  "key2",  "key2", "key3"},
                                             {"val0", "val1",  "val2",  "val3",  "val4",  "val4.1", "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "sect1", "key1", false, "", "");
          config.add("key2", "", "", 0, "sect2", "key2", false, "", "");
@@ -294,7 +304,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0",         "key1",  "key2",  "key1",          "key2",  "key3"},
                                             {"val0\n    val0.1", "val1",  "val2",  "val3\n val3.1",  "val4",  "val5"} );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "sect1", "key1", false, "", "");
          config.add("key2", "", "", 0, "sect2", "key2", false, "", "");
@@ -327,7 +337,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
                                             {"key0",           "key1",             "key2" },
                                             {"val0,val1,val2", " val3, val4,    ", "val5" } );
       
-         mx::appConfigurator config;
+         mx::app::appConfigurator config;
          config.add("key0", "", "", 0, "", "key0", false, "", "");
          config.add("key1", "", "", 0, "", "key1", false, "", "");
          config.add("key2", "", "", 0, "", "key2", false, "", "");
@@ -350,6 +360,6 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
          REQUIRE( vals[0] == "val5");
       }
    }
+#endif
 }
-
 

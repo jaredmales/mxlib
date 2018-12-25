@@ -4,8 +4,27 @@
   *
   */
 
-#ifndef __application_hpp__
-#define __application_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef application_hpp__
+#define application_hpp__
 
 
 #include "../mxlib.hpp"
@@ -15,7 +34,9 @@
 
 namespace mx
 {
-
+namespace app 
+{
+   
 /// A class for managing application configuration and execution
 /** Derived classes should implement at a minimum
   *
@@ -25,7 +46,7 @@ namespace mx
     virtual int execute();
    \endcode
   *
-  * These are executed in the order shown by the call to \ref main().
+  * These are executed in the order shown by the call to \ref main(). 
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
@@ -35,38 +56,42 @@ namespace mx
   * - The command line
   *
   * At each step in the above order, values read from that configuration source override any previous settings. So the command line has the highest precedence.
-  *
-  * The configuration files are ini-style, with sections.  That is
-  \verbatim
-  key1=value1
-  key2=value2
-
-  [section1]
-  key3=value3
-  key4=value4,value4.1, value4.2, value4.3
-
-  [section2]
-  key3=value5
-  key3=value5.1
-  key4=value6_over_
-       multiple_lines
-
-  \endverbatim
-  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).
   * 
-  * Additional syntax rules:
-  * - Leading whitespace is stripped from the value, so `key=val` and `key= val` are equivalent.
-  * - Additional entries within one file with the same section and key are appended to the previous entry.
-  *   So the value of section2.key3 is "value5value5.1".   
-  * - Multi-line values are handled such that in the above example the result is key4=value6_over_multiple_lines.  
-  * - Vectors are input as comma separated lists, as in section1.key4 above.  Leading whitespace is stripped from each 
-  *   component of the vector.
+  * The configuration is set up and accessed  using an object of type  \ref appConfigurator named `config`.
+  * For specification of the configuration file syntax and command line arguments see \ref appConfigurator.
   *
-  * \todo add handling of += in subsequent files.
+  * The configuration should be set up in the \ref setupConfig function.  This is normally done using
+  * the appConfigurator::add method, as in:
+  * \code
+    void derived_class::setupConfig()
+    {
+       config.add("name", "s", "long", argType::true, "section", "keyword", true, "int", "help message");
+    }
+    \endcode
+  * The configuration is then accessed using the `config` member's operator as in
+  \code
+    void derived_class::loadConfig()
+    {
+         int val = 0;
+         config(val, "name");
+    }
+  \endcode
+  * In these examples, a config target with name "name" is created.  If the user sets a value of 2
+  * via the command line with `-s 2`, `--long=2` or in a configuration file with
+  \verbatim
+  [section]
+  keyword=2
+  \endverbatim
+  then val will be set to 2.  Otherwise, `val` will remain 0.
   *
-  * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
+  * Standard target `-h`/`--help` with name "help" to trigger printing a help message,
+  * and `-c`/`--config` with name "config" to pass a config file via the command line. This
+  * behavior can be changed by overriding functions.
   *
   * \note After loadConfig() but before execute(), the containers in \ref config are de-allocated , so they can not be used inside execute.
+  *
+  * A standard help message is produced when requested by the `-h`/`--help` option.  This behavior can be changed
+  * by overriding the \ref help method.
   *
   * \ingroup mxApp
   */
@@ -85,7 +110,6 @@ protected:
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
    bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
-
 
    int m_helpWidth {120} ; ///< The total text width available for the help message.
    int m_helpSOColWidth {2}; ///< The width of the short option (-o) column in the help message.
@@ -130,13 +154,15 @@ protected:
      * @{
      */
 
-    ///In derived classes this is where the config targets are added to \ref config.
+   ///In derived classes this is where the config targets are added to \ref config.
    virtual void setupConfig();
 
-    ///Override this function to extract the configured values and set up the application.
+   ///Override this function to extract the configured values and set up the application.
    virtual void loadConfig();
 
-    ///This function is where the derived class should do its work.
+   ///This function is where the derived class should do its work.  
+   /** The application will exit with the return value of execute.
+     */
    virtual int execute();
 
    ///@}
@@ -193,8 +219,8 @@ protected:
      */
    virtual void setupStandardHelp();
 
-   ///Loads the values of "help" and "config".
-   /** Override this function if you do not want to use these, or have different behavior.
+   ///Loads the values of "config".
+   /** Override this function if you do not want to use this, or have different behavior.
      * See also \ref setupStandardConfig().
      */
    virtual void loadStandardConfig();
@@ -533,6 +559,7 @@ void application::help() //virtual
 
 }
 
+} //namespace app
 } //namespace mx
 
-#endif // __application_hpp__
+#endif // application_hpp__

@@ -6,6 +6,25 @@
  *
  */
 
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 #ifndef iniFile_hpp
 #define iniFile_hpp
 
@@ -15,10 +34,12 @@
 
 namespace mx
 {
-
+namespace app 
+{
+   
 /// A wrapper for the ini functions.
 /** Places results of the ini parser in an unordered map, with keys of "section=name", and value
-  * strings containting the value of the config item.
+  * strings containing the value of the config item.
   * 
   * \ingroup mxApp
   */
@@ -33,13 +54,35 @@ struct iniFile
     * 
     * \returns the created key.
     */
-   std::string makeKey( const std::string & section, ///< [in] The section for the key
-                        const std::string & name     ///< [in] the name for the key
-                      )
+   static std::string makeKey( const std::string & section, ///< [in] The section for the key
+                               const std::string & name     ///< [in] the name for the key
+                             )
    {
       return section + "=" + name;
    }
 
+   /// Parse a key into its section and name consituents.
+   /** Requires that `=` be present.
+     *
+     * \returns 0 on success
+     * \returns -1 on error, if no `=` found.
+     */  
+   static int parseKey( std::string & section,  ///< [out] the section extracted from the key
+                        std::string & name,     ///< [out] the name extracted from the key
+                        const std::string & key ///< [in] th key to parse.
+                      )
+   {
+      size_t eq = key.find('=', 0);
+      
+      if( eq == std::string::npos ) return -1;
+      
+      section = key.substr(0, eq);
+      
+      name = key.substr(eq+1);
+      
+      return 0;
+   }
+   
    /// Calls the inih parse function with this->handler.
    /** This returns the result of the ini_parse function.
      * 
@@ -73,7 +116,7 @@ struct iniFile
       return 0;
    }
 
-   /// Config entry handler for the parse.
+   /// Config entry handler for the parser.
    /** Calls insert, and returns its result.  Any non-zero return will cause ini_parse to report the current
      * line number as an error. 
      * 
@@ -148,6 +191,7 @@ struct iniFile
 
 };
 
+} //namespace app 
 } //namespace mx
 
 #endif
