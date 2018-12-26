@@ -28,6 +28,9 @@
 #ifndef appConfigurator_hpp
 #define appConfigurator_hpp
 
+#include <list>
+#include <fstream>
+
 #include "../mxlib.hpp"
 #include "../mxError.hpp"
 
@@ -36,7 +39,6 @@
 #include "iniFile.hpp"
 #include "configTarget.hpp"
 
-#include <list>
 
 namespace mx
 {
@@ -345,12 +347,20 @@ struct appConfigurator
                      const std::string & keyword  ///< [in] the keyword for this target.
                    );
    
-   /// Get the sections in the unused config targets.
+   /// Get the unique sections in the unused config targets.
    /**
      * \retval 0 on success
      * \retval -1 on error
      */
    int unusedSections( std::vector<std::string> & sections );
+   
+   /// Check if a target has been set in the unused configuration
+   /**
+     * \returns true if the unused configuration set at least one value for this target
+     * \returns false if no value was set.
+     */
+   int isSetUnused( const std::string & name /**< [in] the target name */);
+   
    
    /// Call an external logging function whenever a config value is accessed by get or operator().
    /** Only called if this is not a nullptr (the default), otherwise no logging or reporting is done.
@@ -677,7 +687,7 @@ int appConfigurator::get( std::vector<typeT> & v,
    if( targets[name].values.size() <= i) return -1;
 
    std::string s;
-   if( get<std::string>(s, name, i) < 0) return -1;
+   if( get<std::string>(s, name, i, targets) < 0) return -1;
 
    //Case that s was set to be empty.
    if(s.size() == 0)
@@ -824,6 +834,71 @@ int appConfigurator::unusedSections( std::vector<std::string> & sections )
    }
    
    return 0;
+}
+
+inline
+int appConfigurator::isSetUnused( const std::string & name )
+{
+   return isSet( name, m_unusedConfigs);
+}
+
+/// A simple config file writing function, useful for testing.
+/** Write a config file to the path specified by `fname`.  Each of the parameters
+  * is a vector, and each component is required of each vector.
+  * 
+  * Example:
+  *\code
+   writeConfigFile( "/tmp/test.conf", {"",     "",     "sect1", "sect1", "sect2", "sect2"},
+                                      {"key0", "key1", "key2",  "key3",  "key4",  "key5"},
+                                      {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
+                                            
+  *\endcode
+  *results in the file `/tmp/test.conf' containing
+  * \verbatim
+  key0=val0
+  key1=val1
+  
+  [sect1]
+  key2=val2
+  key3=val3
+  
+  [sect2]
+  key4=val4
+  key5=val5
+  
+  * \endverbatim
+  * 
+  * No error checking is done.
+  */
+inline
+void writeConfigFile( const std::string & fname,                 ///< [in] the complete path for the output file.
+                      const std::vector<std::string> & sections, ///< [in] sections, one per config value
+                      const std::vector<std::string> & keywords, ///< [in] keywords, one per config value
+                      const std::vector<std::string> & values    ///< [in] the values
+                    )
+{
+   std::ofstream fout;
+   
+   fout.open(fname);
+   
+   std::string lastSection;
+   for(size_t i=0; i< sections.size(); ++i)
+   {
+      std::string currSection = sections[i];
+      
+      if( currSection != lastSection && currSection != "")
+      {
+         fout << "\n[" << currSection << "]\n";
+      }
+         
+      fout << keywords[i] << "=" << values[i] << "\n";
+         
+      lastSection = currSection;
+   }
+   
+   fout.close();
+   
+   return;
 }
 
 } //namespace app

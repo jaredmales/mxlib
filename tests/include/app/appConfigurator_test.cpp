@@ -6,35 +6,7 @@
 #include "../../../include/app/appConfigurator.hpp"
 
 
-void writeConfigFile( const std::string & fname,
-                      const std::vector<std::string> & sections,
-                      const std::vector<std::string> & names,
-                      const std::vector<std::string> & values 
-                    )
-{
-   std::ofstream fout;
-   
-   fout.open(fname);
-   
-   std::string lastSection;
-   for(int i=0; i< sections.size(); ++i)
-   {
-      std::string currSection = sections[i];
-      
-      if( currSection != lastSection && currSection != "")
-      {
-         fout << "\n[" << currSection << "]\n";
-      }
-         
-      fout << names[i] << "=" << values[i] << "\n";
-         
-      lastSection = currSection;
-   }
-   
-   fout.close();
-   
-   return;
-}
+using namespace mx::app;
 
 SCENARIO( "config file parsing", "[appConfigurator]" ) 
 {
