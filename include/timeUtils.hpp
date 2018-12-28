@@ -8,7 +8,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -26,12 +26,15 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __timeUtils_hpp__
-#define __timeUtils_hpp__
+#ifndef timeUtils_hpp
+#define timeUtils_hpp
 
 #include <time.h>
 #include <sys/time.h>
 #include <cmath>
+
+#include <thread>
+#include <chrono>
 
 #include "ioutils/stringUtils.hpp"
 #include "astro/sofa.hpp"
@@ -59,6 +62,45 @@ typeT get_curr_time()
    return ((typeT)tsp.tv_sec) + ((typeT)tsp.tv_nsec)/1e9;
 }
 
+/// Sleep for a specified period in seconds.
+/** 
+  * \ingroup timeutils_sleep
+  */
+inline
+void sleep( unsigned sec /**< [in] the number of seconds to sleep. */)
+{
+   std::this_thread::sleep_for(std::chrono::seconds(sec));
+}
+
+/// Sleep for a specified period in milliseconds.
+/** 
+  * \ingroup timeutils_sleep
+  */
+inline
+void milliSleep( unsigned msec /**< [in] the number of milliseconds to sleep. */)
+{
+   std::this_thread::sleep_for(std::chrono::milliseconds(msec));
+}
+
+/// Sleep for a specified period in microseconds.
+/** 
+  * \ingroup timeutils_sleep
+  */
+inline
+void microSleep( unsigned usec /**< [in] the number of microseconds to sleep. */)
+{
+   std::this_thread::sleep_for(std::chrono::microseconds(usec));
+}
+
+/// Sleep for a specified period in nanoseconds.
+/** 
+  * \ingroup timeutils_sleep
+  */
+inline
+void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */)
+{
+   std::this_thread::sleep_for(std::chrono::nanoseconds(nsec));
+}
 
 
 /** Parse a string of format hh:mm:ss.s
@@ -386,6 +428,8 @@ int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * 
    return 0;
 }
 
+
+
 } //namespace mx
 
-#endif //__timeUtils_hpp__
+#endif //timeUtils_hpp
