@@ -687,7 +687,11 @@ int appConfigurator::get( std::vector<typeT> & v,
    if( targets[name].values.size() <= i) return -1;
 
    std::string s;
-   if( get<std::string>(s, name, i, targets) < 0) return -1;
+   
+   
+   s = ioutils::convertFromString<std::string>(targets[name].values[i]);
+   
+   //if( get<std::string>(s, name, i, targets) < 0) return -1;
 
    //Case that s was set to be empty.
    if(s.size() == 0)
@@ -741,6 +745,7 @@ int appConfigurator::get( std::vector<typeT> & v,
          configLog(name, meta::typeDescription<typeT>::code(), targets[name].values[i], "");
       }
    }
+   
    return 0;
 }
 
