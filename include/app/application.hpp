@@ -34,9 +34,9 @@
 
 namespace mx
 {
-namespace app
+namespace app 
 {
-
+   
 /// A class for managing application configuration and execution
 /** Derived classes should implement at a minimum
   *
@@ -46,7 +46,7 @@ namespace app
     virtual int execute();
    \endcode
   *
-  * These are executed in the order shown by the call to \ref main().
+  * These are executed in the order shown by the call to \ref main(). 
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
@@ -56,7 +56,7 @@ namespace app
   * - The command line
   *
   * At each step in the above order, values read from that configuration source override any previous settings. So the command line has the highest precedence.
-  *
+  * 
   * The configuration is set up and accessed  using an object of type  \ref appConfigurator named `config`.
   * For specification of the configuration file syntax and command line arguments see \ref appConfigurator.
   *
@@ -119,7 +119,7 @@ protected:
 
    int m_argc; ///< Store argc for later use. E.g. in reReadConfig().
    char ** m_argv; ///< Store argv for later use. E.g. in reReadConfig().
-
+   
 public:
    //application();
 
@@ -160,7 +160,7 @@ protected:
    ///Override this function to extract the configured values and set up the application.
    virtual void loadConfig();
 
-   ///This function is where the derived class should do its work.
+   ///This function is where the derived class should do its work.  
    /** The application will exit with the return value of execute.
      */
    virtual int execute();
@@ -183,16 +183,16 @@ protected:
 
 
    ///Re-read the config stack.
-   /** This would be used if some config targets can only be constructed after
+   /** This would be used if some config targets can only be constructed after 
      * a first pass.  Note that all previously read values will be appended as if
      * entered twice, so you must be careful to only access new targets
      * after calling this.
      *
      * \returns 0 on success.
      * \returns -1 on error.
-     */
+     */ 
    int reReadConfig();
-
+   
    ///Set the default search paths for config files
    /** In general you should not need to redefine this.
      *
@@ -268,7 +268,7 @@ int application::main( int argc,
 {
    m_argc = argc;
    m_argv = argv;
-
+   
    setup(argc, argv);
 
    if(doHelp)
@@ -366,7 +366,7 @@ int application::reReadConfig()
 
    //Now parse the command line for real.
    config.parseCommandLine(m_argc, m_argv);
-
+   
    return 0;
 }
 
