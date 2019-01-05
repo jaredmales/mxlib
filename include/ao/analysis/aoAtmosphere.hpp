@@ -20,6 +20,7 @@
 using namespace boost::math::constants;
 
 #include <mx/mxlib.hpp>
+#include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -51,13 +52,15 @@ public:
    aoAtmosphere();
 
 protected:
-   realT _r_0; ///< Fried's parameter, in m
+   realT m_r_0; ///< Fried's parameter, in m
    
-   realT _lam_0 ;///<Wavelength of Fried's paraemter, in m
+   realT m_lam_0; ///<Wavelength of Fried's paraemter, in m
 
-   realT _L_0; ///<The outer scale, in m
-
-   std::vector<realT> _layer_z; ///< Vector of layer heights, in m, above the observatory.
+   std::vector<realT> m_L_0; ///< The outer scale, in m
+   
+   std::vector<realT> m_l_0; ///< The inner scale of each layer, in m
+   
+   std::vector<realT> m_layer_z; ///< Vector of layer heights, in m, above the observatory.
    
    realT _h_obs; ///< Height of the observatory above sea level, in m.  
    
@@ -86,11 +89,18 @@ protected:
    
    realT m_beta{1};
    
+   /// Checks if layer vectors have consistent length.
+   /**
+     * \returns 0 if all layer vectors are the same length
+     * \returns -1 if not, and prints an error.
+     */ 
+   int checkLayers();
+   
 public:
    
    ///Get the value of Fried's parameter r_0 at the reference wavelength lam_0.
    /**
-     * \returns the curret value of _r_0.
+     * \returns the curret value of m_r_0.
      */ 
    realT r_0();
    
@@ -98,7 +108,7 @@ public:
    /**
      * \note This does not set the value of r_0.
      * 
-     * \returns the current value of _r_0 * pow(lam, 6/5).
+     * \returns the current value of m_r_0 * pow(lam, 6/5).
      */
    realT r_0( const realT & lam /**< [in] the wavelength at which to calculate r_0*/ );
    
@@ -106,44 +116,67 @@ public:
    /** If the provided reference wavelength is \<=0, then 0.5 microns is used.
      * 
      */ 
-   void r_0( const realT & r0, ///< [in] is the new value of _r_0  
-             const realT & l0 ///< [in] is the new value of _lam_0, if 0 then 0.5 microns is the default.
+   void r_0( const realT & r0, ///< [in] is the new value of r_0  
+             const realT & l0 ///< [in] is the new value of lam_0, if 0 then 0.5 microns is the default.
            ); 
    
    ///Get the current value of the reference wavelength.
    /** This is the wavelength at which r_0 is specified.
      *
-     * \returns the current value of _lam_0. 
+     * \returns the current value of m_lam_0. 
      */
    realT lam_0();
    
-   ///Get the value of the outer scale.
+   ///Get the value of the outer scale for a single layer.
    /**
-     * \returns the current value of _L_0.
+     * \returns the current value of m_L_0[n].
      */ 
-   realT L_0();
+   realT L_0( const size_t & n );
    
-   ///Set the value of the outer scale.
+   ///Set the vector of layer outer scales.
    /**
      */ 
-   void L_0( const realT & L0 /**< [in] is the new value of _L_0 */);
+   void L_0( const std::vector<realT> & L0 /**< [in] is the new vector of outer scales  */);
 
+   /// Get the vector of outer scales.
+   /**
+     * \returns a copy of the vector of layer outer scales 
+     */
+   std::vector<realT> L_0();
+   
+   ///Get the value of the inner scale for a single layer.
+   /**
+     * \returns the current value of m_l_0[n].
+     */ 
+   realT l_0( const size_t & n );
+   
+   ///Set the vector of layer inner scales.
+   /**
+     */ 
+   void l_0( const std::vector<realT> & l0 /**< [in] is the new vector of inner scales  */);
+
+   /// Get the vector of inner scales.
+   /**
+     * \returns a copy of the vector of layer inner scales 
+     */
+   std::vector<realT> l_0();
+   
    ///Get the height of a single layer.
    /**
-     * \returns the value of _layer_z[n].
+     * \returns the value ofm_layer_z[n].
      */
-   realT layer_z( const int n /**< [in] specifies the layer. */);
+   realT layer_z( const size_t n /**< [in] specifies the layer. */);
    
    ///Get the vector layer heights.
    /** 
-     * \returns a copy of the vector of layer heights: _layer_z.
+     * \returns a copy of the vector of layer heights:m_layer_z.
      */ 
    std::vector<realT> layer_z();
    
    ///Set the vector of layer heights.
    /**
      */
-   void layer_z(const std::vector<realT> & layz /**< [in] new vector of layer heights, which is copied to _layer_z. */ );
+   void layer_z(const std::vector<realT> & layz /**< [in] new vector of layer heights, m_layer_z. */ );
    
    /// Get the height of the observatory.
    /** 
@@ -287,7 +320,7 @@ public:
      \f]
      * See Hardy (1998) Section 3.3.6 and 3.7.2. \cite hardy_1998.
      * 
-     * This is only re-calculated if either _layer_Cn2 or _layer_z is changed, otherwise this just
+     * This is only re-calculated if either _layer_Cn2 orm_layer_z is changed, otherwise this just
      * returns the value of _z_mean.
      * 
      * \returns the current value of _z_mean.
@@ -302,7 +335,7 @@ protected:
   
 public:   
    ///Set the weighted mean _z_mean and renormalize the layer heights
-   /** Calling this function changes the values of _layer_z so that the 
+   /** Calling this function changes the values ofm_layer_z so that the 
      * Layer averaged 5/3 \f$C_n^2\f$ moment of the height is the new value specified.
      * 
      */
@@ -420,25 +453,25 @@ public:
    void loadLCO();
    
 
-   ///Set a single layer model.
-   /** 
+   /// Set a single layer model.
+   /** Sets all layer vectors to size=1 and populates their fields based on these arguments.
      * 
      */
-   void setSingleLayer( realT lz,   ///< [in] the layer height
+   void setSingleLayer( realT r0,   ///< [in] is the new value of r_0
+                        realT lam0, ///< [in] is the new value of lam_0, if 0 then 0.5 microns is the default.
+                        realT L0,   ///< [in] the new outer scale
+                        realT l0,   ///< [in] the new inner scale
+                        realT lz,   ///< [in] the layer height
                         realT vw,   ///< [in] the layer wind-speed
                         realT dir   ///< [in] the layer wind direction.
-                      )
-   {      
-      layer_Cn2(std::vector<realT>({1}));
-      layer_z(std::vector<realT>({lz}));
-      layer_v_wind(std::vector<realT>({vw}));
-      layer_dir(std::vector<realT>({dir}));
-   }
+                      );
       
    ///Output current parameters to a stream
    /** Prints a formatted list of all current parameters.
      *
      * \tparam iosT is a std::ostream-like type.
+     * 
+     * \todo update for new vector components (L_0, etc.)
      */ 
    template<typename iosT>
    iosT & dumpAtmosphere( iosT & ios /**< [in] a std::ostream-like stream. */);
@@ -447,9 +480,8 @@ public:
 template<typename realT>
 aoAtmosphere<realT>::aoAtmosphere()
 {
-   _lam_0 = 0.5e-6;
+   m_lam_0 = 0.5e-6;
    
-   _L_0 = 0;
    
    _h_obs = 0;
    _H = 8000;
@@ -459,60 +491,123 @@ aoAtmosphere<realT>::aoAtmosphere()
 }
 
 template<typename realT>
+int aoAtmosphere<realT>::checkLayers()
+{
+   size_t n = m_L_0.size();
+   
+   if( m_l_0.size() != n)
+   {
+      mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (inner scale vs. outer scale)");
+      return -1;
+   }
+   
+   if( m_layer_z.size() != n)
+   {
+      mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_z  vs. outer scale)");
+      return -1;
+   }
+   
+   if( _layer_Cn2.size() != n)
+   {
+      mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_Cn2  vs. outer scale)");
+      return -1;
+   }
+   
+   if( _layer_dir.size() != n)
+   {
+      mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_dir  vs. outer scale)");
+      return -1;
+   }
+   
+   if( _layer_v_wind.size() != n)
+   {
+      mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_v_wind vs. outer scale)");
+      return -1;
+   }
+   
+
+   return 0;
+}
+
+template<typename realT>
 realT aoAtmosphere<realT>::r_0()
 {
-   return _r_0;
+   return m_r_0;
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::r_0(const realT & lam)
 {
-   return _r_0*pow(lam/_lam_0, six_fifths<realT>());
+   return m_r_0*pow(lam/m_lam_0, six_fifths<realT>());
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::r_0(const realT & r0, const realT  & l0)
 {
-   _r_0 = r0;
+   m_r_0 = r0;
    
    if( l0 > 0)
    {
-      _lam_0 = l0;
+      m_lam_0 = l0;
    }
    else
    {
-      _lam_0 = 0.5e-6;
+      m_lam_0 = 0.5e-6;
    }
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::lam_0()
 {
-   return _lam_0;
+   return m_lam_0;
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::L_0()
+realT aoAtmosphere<realT>::L_0(const size_t & n)
 {
-   return _L_0;
+   return m_L_0[n];
 }
 
 template<typename realT>
-void aoAtmosphere<realT>::L_0(const realT & l0)
+void aoAtmosphere<realT>::L_0(const std::vector<realT> & L_0)
 {
-   _L_0 = l0;
+   m_L_0 = L_0;
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::layer_z(const int n)
+std::vector<realT> aoAtmosphere<realT>::L_0()
 {
-   return _layer_z[n];
+   return m_L_0;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::l_0(const size_t & n)
+{
+   return m_l_0[n];
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::l_0(const std::vector<realT> & l_0)
+{
+   m_l_0 = l_0;
+}
+
+template<typename realT>
+std::vector<realT> aoAtmosphere<realT>::l_0()
+{
+   return m_l_0;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::layer_z(const size_t n)
+{
+   return m_layer_z[n];
 }
 
 template<typename realT>
 std::vector<realT> aoAtmosphere<realT>::layer_z()
 {
-   return _layer_z;
+   return m_layer_z;
 }
 
 template<typename realT>
@@ -542,7 +637,7 @@ void aoAtmosphere<realT>::H( realT nH )
 template<typename realT>
 void aoAtmosphere<realT>::layer_z(const std::vector<realT> & z)
 {
-   _layer_z = z;
+  m_layer_z = z;
    _z_mean_updated = false;
 }
 
@@ -575,8 +670,8 @@ void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT 
    
    if(l0 > 0)
    {   
-      _r_0 = 1.0 / pow(layer_norm * 5.520e13, three_fifths<realT>() );  
-      _lam_0 = l0;
+      m_r_0 = 1.0 / pow(layer_norm * 5.520e13, three_fifths<realT>() );  
+      m_lam_0 = l0;
    }
 
    _v_wind_updated = false;
@@ -705,7 +800,7 @@ realT aoAtmosphere<realT>::z_mean()
 template<typename realT>
 void aoAtmosphere<realT>::update_z_mean()
 {
-   if( _layer_z.size() == 0 || _layer_Cn2.size() == 0)
+   if(m_layer_z.size() == 0 || _layer_Cn2.size() == 0)
    {
       _z_mean = 0;
       _z_mean_updated = true;
@@ -716,7 +811,7 @@ void aoAtmosphere<realT>::update_z_mean()
    
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
-      _z_mean += _layer_Cn2[i] * pow(_layer_z[i], five_thirds<realT>() );
+      _z_mean += _layer_Cn2[i] * pow(m_layer_z[i], five_thirds<realT>() );
    }
       
    _z_mean = pow(_z_mean, three_fifths<realT>());
@@ -735,11 +830,11 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
    _z_mean = zm;
    
    //Now update the layers if needed
-   if( _layer_z.size() > 0)
+   if(m_layer_z.size() > 0)
    {
-      for(size_t i=0; i< _layer_z.size(); ++i)
+      for(size_t i=0; i<m_layer_z.size(); ++i)
       {
-         _layer_z[i] = _layer_z[i]*(zm/zh_old);
+        m_layer_z[i] =m_layer_z[i]*(zm/zh_old);
       }
    }
 }
@@ -770,7 +865,7 @@ realT aoAtmosphere<realT>::beta()
 {
    if(!m_nonKolmogorov)
    {
-      return constants::a_PSD<realT>()*pow(_r_0, -five_thirds<realT>());
+      return constants::a_PSD<realT>()*pow(m_r_0, -five_thirds<realT>());
    }
    else
    {
@@ -795,7 +890,7 @@ realT aoAtmosphere<realT>::X( realT k,
     
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
-      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
+      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    
    return c;
@@ -808,7 +903,7 @@ realT aoAtmosphere<realT>::dX(realT f, realT lam_sci, realT lam_wfs)
  
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lam_sci * _layer_z[i]) - cos( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
+      c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lam_sci *m_layer_z[i]) - cos( pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -824,7 +919,7 @@ realT aoAtmosphere<realT>::Y( realT k,
  
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lam_sci * _layer_z[i] * secZ), 2);
+      c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    return c;
 }
@@ -836,7 +931,7 @@ realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci * _layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs * _layer_z[i])), 2);
+      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci *m_layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -861,8 +956,8 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    
    for(size_t i = 0; i < _layer_Cn2.size(); ++i)
    {
-      x = x0*(1-exp((_layer_z[i]+_h_obs)/_H));
-      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i * _layer_z[i]*secZ), 2) * pow( sin(pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
+      x = x0*(1-exp((m_layer_z[i]+_h_obs)/_H));
+      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i *m_layer_z[i]*secZ), 2) * pow( sin(pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
    }
    
    return 4*c;
@@ -906,12 +1001,31 @@ void aoAtmosphere<realT>::loadLCO()
    
    r_0(0.17, 0.5e-6);
    
-   L_0(25.0);
+   L_0({25.0,25.0,25.0,25.0, 25.0, 25.0, 25.0});
+   l_0({0.0,0,0,0,0,0,0});
    
    h_obs(2400);
 }
 
-
+template<typename realT>
+void aoAtmosphere<realT>::setSingleLayer( realT r0,
+                                          realT lam0,
+                                          realT L0,
+                                          realT l0,
+                                          realT lz,
+                                          realT vw,
+                                          realT dir
+                                        )
+{      
+   r_0(r0, lam0);
+   L_0(std::vector<realT>({L0}));
+   l_0(std::vector<realT>({l0}));
+   layer_Cn2(std::vector<realT>({1}));
+   layer_z(std::vector<realT>({lz}));
+   layer_v_wind(std::vector<realT>({vw}));
+   layer_dir(std::vector<realT>({dir}));
+}
+   
 template<typename realT>
 template<typename iosT>
 iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
