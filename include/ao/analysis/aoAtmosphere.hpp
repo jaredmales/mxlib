@@ -425,7 +425,7 @@ public:
      * 
      */
    void setSingleLayer( realT lz,   ///< [in] the layer height
-                        realT vw,   ///< [in] the layer wind-seed
+                        realT vw,   ///< [in] the layer wind-speed
                         realT dir   ///< [in] the layer wind direction.
                       )
    {      
