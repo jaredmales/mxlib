@@ -167,6 +167,14 @@ namespace mx
 #define MXE_FREEERR_MSG "An error occurred during memory de-allocation."
 
 
+/** \def MXE_PARSEERR
+  * \brief A parsing error occurred.
+  * \ingroup mxe_errors
+  */   
+#define MXE_PARSEERR 75
+#define MXE_PARSEERR_MSG "A parsing error occurred."
+
+
 /** \def MXE_FILEOERR
   * \brief An error occurred while opening a file.
   * \ingroup mxe_errors
@@ -271,6 +279,9 @@ std::string MXE_CodeToName( int ec, std::string & message)
       case MXE_FREEERR:
          message = MXE_FREEERR_MSG;
          return "MXE_FREEERR";
+      case MXE_PARSEERR:
+         message = MXE_PARSEERR_MSG;
+         return "MXE_PARSEERR";
       case MXE_FILEOERR:
          message = MXE_FILEOERR_MSG;
          return "MXE_FILEOERR";

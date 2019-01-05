@@ -1,3 +1,30 @@
+/** \file ini.hpp
+ * \author Jared R. Males
+ * \brief The inih  ini-style, file parser modified for mxlib.
+ *
+ * \ingroup mxApp_files
+ *
+ */
+
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
 // This file was originally ini.c
 // Modifications made by jaredmales@gmail.com to support inclusion
 // in a header only c++ library and other features:
@@ -7,7 +34,7 @@
 //   copied defines from ini.h
 //   copied documentation from ini.h, and updated for doxygen
 //   commented out ini.h
-// NOTE: original ini.h and ini.c are in the ini directory
+// NOTE: original ini.h and ini.c are in the inih directory
 
 
 #ifndef ini_hpp
@@ -32,17 +59,17 @@
 
 /* Nonzero to use stack, zero to use heap (malloc/free). */
 #ifndef INI_USE_STACK
-#define INI_USE_STACK 1
+#define INI_USE_STACK 0
 #endif
 
-/* Stop parsing on first error (default is to keep parsing). */
+/* Stop parsing on first error (default is to stop parsing). */
 #ifndef INI_STOP_ON_FIRST_ERROR
 #define INI_STOP_ON_FIRST_ERROR 0
 #endif
 
 /* Maximum line length for any line in INI file. */
 #ifndef INI_MAX_LINE
-#define INI_MAX_LINE 200
+#define INI_MAX_LINE 1024
 #endif
 
 /* inih -- simple .INI file parser

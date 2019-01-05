@@ -4,8 +4,27 @@
   *
   */
 
-#ifndef __application_hpp__
-#define __application_hpp__
+//***********************************************************************//
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef application_hpp__
+#define application_hpp__
 
 
 #include "../mxlib.hpp"
@@ -14,6 +33,8 @@
 #include "../ioutils/textTable.hpp"
 
 namespace mx
+{
+namespace app
 {
 
 /// A class for managing application configuration and execution
@@ -36,38 +57,41 @@ namespace mx
   *
   * At each step in the above order, values read from that configuration source override any previous settings. So the command line has the highest precedence.
   *
-  * The configuration files are ini-style, with sections.  That is
+  * The configuration is set up and accessed  using an object of type  \ref appConfigurator named `config`.
+  * For specification of the configuration file syntax and command line arguments see \ref appConfigurator.
+  *
+  * The configuration should be set up in the \ref setupConfig function.  This is normally done using
+  * the appConfigurator::add method, as in:
+  * \code
+    void derived_class::setupConfig()
+    {
+       config.add("name", "s", "long", argType::true, "section", "keyword", true, "int", "help message");
+    }
+    \endcode
+  * The configuration is then accessed using the `config` member's operator as in
+  \code
+    void derived_class::loadConfig()
+    {
+         int val = 0;
+         config(val, "name");
+    }
+  \endcode
+  * In these examples, a config target with name "name" is created.  If the user sets a value of 2
+  * via the command line with `-s 2`, `--long=2` or in a configuration file with
   \verbatim
-  key1=value1
-  key2=value2
-
-  [section1]
-  key3=value3
-  key4=value4,value4.1, value4.2, value4.3
-
-  [section2]
-  key3=value5
-  key3=value5.1
-  key4=value6_over_
-       multiple_lines
-
+  [section]
+  keyword=2
   \endverbatim
-<<<<<<< HEAD
-  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).  
-  * Additional entries within one file with the same section and key are appended with a newline to the previous entry.  
-  * So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such 
-=======
-  * such that section1.key3 is distinct from section2.key3  (they must have different config-target names though).
-  * Additional entries within one file with the same section and key are appended with a newline to the previous entry.
-  * So the value of section2.key3 is "value5\\nvalue5.1".   Multi-line values are handled such
->>>>>>> master
-  * that in the above example the result is key4=value6_over_multiple_lines.  Vectors are input as in section1.key4.
+  then val will be set to 2.  Otherwise, `val` will remain 0.
   *
-  * \todo add handling of +=
-  *
-  * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
+  * Standard target `-h`/`--help` with name "help" to trigger printing a help message,
+  * and `-c`/`--config` with name "config" to pass a config file via the command line. This
+  * behavior can be changed by overriding functions.
   *
   * \note After loadConfig() but before execute(), the containers in \ref config are de-allocated , so they can not be used inside execute.
+  *
+  * A standard help message is produced when requested by the `-h`/`--help` option.  This behavior can be changed
+  * by overriding the \ref help method.
   *
   * \ingroup mxApp
   */
@@ -87,7 +111,6 @@ protected:
 
    bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
 
-
    int m_helpWidth {120} ; ///< The total text width available for the help message.
    int m_helpSOColWidth {2}; ///< The width of the short option (-o) column in the help message.
    int m_helpLOColWidth {25}; ///< The width of the long option (--option) column in the help message.
@@ -96,7 +119,7 @@ protected:
 
    int m_argc; ///< Store argc for later use. E.g. in reReadConfig().
    char ** m_argv; ///< Store argv for later use. E.g. in reReadConfig().
-   
+
 public:
    //application();
 
@@ -131,13 +154,15 @@ protected:
      * @{
      */
 
-    ///In derived classes this is where the config targets are added to \ref config.
+   ///In derived classes this is where the config targets are added to \ref config.
    virtual void setupConfig();
 
-    ///Override this function to extract the configured values and set up the application.
+   ///Override this function to extract the configured values and set up the application.
    virtual void loadConfig();
 
-    ///This function is where the derived class should do its work.
+   ///This function is where the derived class should do its work.
+   /** The application will exit with the return value of execute.
+     */
    virtual int execute();
 
    ///@}
@@ -148,14 +173,9 @@ protected:
      */
 
    ///Sets up the application by executing the configuration steps
-<<<<<<< HEAD
-   /** This will not normally need to be implemented by derived clasess.
-     * Only do so if you intend to change the configuration process. 
-=======
    /** This is the key method which defines the mx::application configuration system.
      * This will not normally need to be implemented by derived clasess --
      * only do so if you intend to change the configuration process!
->>>>>>> master
      */
    virtual void setup( int argc, ///< [in] standard command line result specifying number of argumetns in argv
                        char ** argv ///< [in] standard command line result containing the arguments.
@@ -163,16 +183,16 @@ protected:
 
 
    ///Re-read the config stack.
-   /** This would be used if some config targets can only be constructed after 
+   /** This would be used if some config targets can only be constructed after
      * a first pass.  Note that all previously read values will be appended as if
      * entered twice, so you must be careful to only access new targets
      * after calling this.
      *
      * \returns 0 on success.
      * \returns -1 on error.
-     */ 
+     */
    int reReadConfig();
-   
+
    ///Set the default search paths for config files
    /** In general you should not need to redefine this.
      *
@@ -199,8 +219,8 @@ protected:
      */
    virtual void setupStandardHelp();
 
-   ///Loads the values of "help" and "config".
-   /** Override this function if you do not want to use these, or have different behavior.
+   ///Loads the values of "config".
+   /** Override this function if you do not want to use this, or have different behavior.
      * See also \ref setupStandardConfig().
      */
    virtual void loadStandardConfig();
@@ -248,7 +268,7 @@ int application::main( int argc,
 {
    m_argc = argc;
    m_argv = argv;
-   
+
    setup(argc, argv);
 
    if(doHelp)
@@ -346,7 +366,7 @@ int application::reReadConfig()
 
    //Now parse the command line for real.
    config.parseCommandLine(m_argc, m_argv);
-   
+
    return 0;
 }
 
@@ -397,13 +417,13 @@ void application::setDefaults( int UNUSED(argc),
 inline
 void application::setupStandardConfig() //virtual
 {
-   config.add("config","c", "config",mx::argType::Required, "", "config", false, "string", "A local config file");
+   config.add("config","c", "config",argType::Required, "", "config", false, "string", "A local config file");
 }
 
 inline
 void application::setupStandardHelp() //virtual
 {
-   config.add("help", "h", "help", mx::argType::True,  "", "", false, "none", "Print this message and exit");
+   config.add("help", "h", "help", argType::True,  "", "", false, "none", "Print this message and exit");
 }
 
 inline
@@ -492,22 +512,19 @@ void application::help() //virtual
    std::cerr << "\n";
    std::cerr << "  Required arguments:\n";
 
-  // int row = 0;
    for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
    {
       if( clOnlyTargIt->isRequired == true)
       {
          optionHelp(*clOnlyTargIt, tt);
-         //++row;
       }
    }
 
-   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
    {
       if( targIt->second.isRequired == true)
       {
          optionHelp(targIt->second, tt);
-         //++row;
       }
    }
 
@@ -522,16 +539,14 @@ void application::help() //virtual
       if( clOnlyTargIt->isRequired == false)
       {
          optionHelp(*clOnlyTargIt, tt);
-         //++row;
       }
    }
 
-   for( targIt = config.targets.begin(); targIt !=  config.targets.end(); ++targIt)
+   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
    {
       if( targIt->second.isRequired == false)
       {
          optionHelp(targIt->second, tt);
-         //++row;
       }
    }
 
@@ -539,6 +554,7 @@ void application::help() //virtual
 
 }
 
+} //namespace app
 } //namespace mx
 
-#endif // __application_hpp__
+#endif // application_hpp__

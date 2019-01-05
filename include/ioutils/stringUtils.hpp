@@ -499,7 +499,7 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
     std::vector<int> v;
     parseStringVector(v,s);
     \endcode
-  * is parse to a vector as if it was initialized with 
+  * is parsed to a vector as if it was initialized with 
     \code
     std::vector<int> v = {0,1,2,3,4};
     \endcode 
@@ -537,7 +537,7 @@ void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding th
     std::vector<int> v;
     parseStringVector(v, s, ",: ");
     \endcode
-  * is parse to a vector as if it was initialized with 
+  * is parsed to a vector as if it was initialized with 
     \code
     std::vector<int> v = {0,1,2,3,4};
     \endcode 

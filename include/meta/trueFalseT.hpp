@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __trueFalseT_hpp__
-#define __trueFalseT_hpp__
+#ifndef trueFalseT_hpp
+#define trueFalseT_hpp
 
 namespace mx
 {
@@ -74,4 +74,4 @@ struct trueFalseT<false>
 } //namespace mx
 
 
-#endif //__trueFalseT_hpp__
+#endif //trueFalseT_hpp

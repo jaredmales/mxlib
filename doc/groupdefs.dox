@@ -368,11 +368,16 @@
   * \brief ASCII input/output
   */
   
-  /** \defgroup timeutils Working with time
-    * \ingroup utils
-    * \brief Various tools for working with time
-    */
+/** \defgroup timeutils Working with time
+  * \ingroup utils
+  * \brief Various tools for working with time
+  */
 
+/** \defgroup timeutils_sleep Putting a thread to sleep
+  * \ingroup timeutils
+  * \brief Wrappers for std::this_thread::sleep_for
+  */
+  
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
   * \brief Various template-meta-programming utilities.
