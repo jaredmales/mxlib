@@ -54,7 +54,7 @@ public:
 protected:
    realT m_r_0; ///< Fried's parameter, in m
    
-   realT m_lam_0 ;///<Wavelength of Fried's paraemter, in m
+   realT m_lam_0; ///<Wavelength of Fried's paraemter, in m
 
    std::vector<realT> m_L_0; ///< The outer scale, in m
    
@@ -116,8 +116,8 @@ public:
    /** If the provided reference wavelength is \<=0, then 0.5 microns is used.
      * 
      */ 
-   void r_0( const realT & r0, ///< [in] is the new value of m_r_0  
-             const realT & l0 ///< [in] is the new value of m_lam_0, if 0 then 0.5 microns is the default.
+   void r_0( const realT & r0, ///< [in] is the new value of r_0  
+             const realT & l0 ///< [in] is the new value of lam_0, if 0 then 0.5 microns is the default.
            ); 
    
    ///Get the current value of the reference wavelength.
@@ -453,25 +453,25 @@ public:
    void loadLCO();
    
 
-   ///Set a single layer model.
-   /** 
+   /// Set a single layer model.
+   /** Sets all layer vectors to size=1 and populates their fields based on these arguments.
      * 
      */
-   void setSingleLayer( realT lz,   ///< [in] the layer height
+   void setSingleLayer( realT r0,   ///< [in] is the new value of r_0
+                        realT lam0, ///< [in] is the new value of lam_0, if 0 then 0.5 microns is the default.
+                        realT L0,   ///< [in] the new outer scale
+                        realT l0,   ///< [in] the new inner scale
+                        realT lz,   ///< [in] the layer height
                         realT vw,   ///< [in] the layer wind-speed
                         realT dir   ///< [in] the layer wind direction.
-                      )
-   {      
-      layer_Cn2(std::vector<realT>({1}));
-      layer_z(std::vector<realT>({lz}));
-      layer_v_wind(std::vector<realT>({vw}));
-      layer_dir(std::vector<realT>({dir}));
-   }
+                      );
       
    ///Output current parameters to a stream
    /** Prints a formatted list of all current parameters.
      *
      * \tparam iosT is a std::ostream-like type.
+     * 
+     * \todo update for new vector components (L_0, etc.)
      */ 
    template<typename iosT>
    iosT & dumpAtmosphere( iosT & ios /**< [in] a std::ostream-like stream. */);
@@ -1007,7 +1007,25 @@ void aoAtmosphere<realT>::loadLCO()
    h_obs(2400);
 }
 
-
+template<typename realT>
+void aoAtmosphere<realT>::setSingleLayer( realT r0,
+                                          realT lam0,
+                                          realT L0,
+                                          realT l0,
+                                          realT lz,
+                                          realT vw,
+                                          realT dir
+                                        )
+{      
+   r_0(r0, lam0);
+   L_0(std::vector<realT>({L0}));
+   l_0(std::vector<realT>({l0}));
+   layer_Cn2(std::vector<realT>({1}));
+   layer_z(std::vector<realT>({lz}));
+   layer_v_wind(std::vector<realT>({vw}));
+   layer_dir(std::vector<realT>({dir}));
+}
+   
 template<typename realT>
 template<typename iosT>
 iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
