@@ -47,7 +47,7 @@ cublasStatus_t cublasTscal<float>( cublasHandle_t handle,
                                    int incx
                                  )
 {
-   return cublasSscal( handle, n, alpha, x, incx);
+   return ::cublasSscal( handle, n, alpha, x, incx);
 }
 
 template<>
@@ -59,7 +59,7 @@ cublasStatus_t cublasTscal<double>( cublasHandle_t handle,
                                     int incx
                                   )
 {
-   return cublasDscal( handle, n, alpha, x, incx);
+   return ::cublasDscal( handle, n, alpha, x, incx);
 }
 
 template<typename floatT>
@@ -83,7 +83,7 @@ cublasStatus_t cublasTaxpy<float>( cublasHandle_t handle,
                                    int incy
                                  )
 {
-   return cublasSaxpy(handle, n, alpha, x, incx, y, incy);
+   return ::cublasSaxpy(handle, n, alpha, x, incx, y, incy);
 }
 
 template<>
@@ -97,7 +97,7 @@ cublasStatus_t cublasTaxpy<double>( cublasHandle_t handle,
                                     int incy
                                   )
 {
-   return cublasDaxpy(handle, n, alpha, x, incx, y, incy);
+   return ::cublasDaxpy(handle, n, alpha, x, incx, y, incy);
 }
    
 template<typename dataT>
@@ -242,7 +242,7 @@ cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle pla
                                                                  int direction
                                                                )
 {
-   return cufftExecC2C(plan, (cuComplex *) idata, (cuComplex *) odata, direction);
+   return ::cufftExecC2C(plan, (cuComplex *) idata, (cuComplex *) odata, direction);
 }
 
 template<>
@@ -253,7 +253,7 @@ cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan,
                                              int direction
                                            )
 {
-   return cufftExecC2C(plan, idata, odata, direction);
+   return ::cufftExecC2C(plan, idata, odata, direction);
 }
 
 template<>
@@ -264,7 +264,7 @@ cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle p
                                                                    int direction
                                                                  )
 {
-   return cufftExecZ2Z(plan, (cuDoubleComplex *) idata, (cuDoubleComplex *) odata, direction);
+   return ::cufftExecZ2Z(plan, (cuDoubleComplex *) idata, (cuDoubleComplex *) odata, direction);
 }
 
 template<>
@@ -275,7 +275,7 @@ cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
                                                          int direction
                                                        )
 {
-   return cufftExecZ2Z(plan, idata, odata, direction);
+   return ::cufftExecZ2Z(plan, idata, odata, direction);
 }
 
 template<typename realT>
@@ -295,7 +295,7 @@ curandStatus_t curandGenerateNormal<float>( curandGenerator_t generator,
                                             float stddev
                                           )
 {
-   return curandGenerateNormal(generator, outputPtr, n, mean, stddev);
+   return ::curandGenerateNormal(generator, outputPtr, n, mean, stddev);
 }
 
 template<>
@@ -307,7 +307,7 @@ curandStatus_t curandGenerateNormal<double>( curandGenerator_t generator,
                                              double stddev
                                            )
 {
-   return curandGenerateNormalDouble(generator, outputPtr, n, mean, stddev);
+   return ::curandGenerateNormalDouble(generator, outputPtr, n, mean, stddev);
 }
 
 }//namespace cuda 
