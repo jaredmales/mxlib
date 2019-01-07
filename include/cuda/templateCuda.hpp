@@ -62,6 +62,30 @@ cublasStatus_t cublasTscal<double>( cublasHandle_t handle,
    return ::cublasDscal( handle, n, alpha, x, incx);
 }
 
+template<>
+inline
+cublasStatus_t cublasTscal<cuComplex>( cublasHandle_t handle, 
+                                       int n,
+                                       const cuComplex *alpha,
+                                       cuComplex *x, 
+                                       int incx
+                                     )
+{
+   return ::cublasCscal( handle, n, alpha, x, incx);
+}
+
+template<>
+inline
+cublasStatus_t cublasTscal<cuDoubleComplex>( cublasHandle_t handle, 
+                                             int n,
+                                             const cuDoubleComplex *alpha,
+                                             cuDoubleComplex *x, 
+                                             int incx
+                                           )
+{
+   return ::cublasZscal( handle, n, alpha, x, incx);
+}
+
 template<typename floatT>
 cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLAS library context.
                             int n,                 ///< [in] scalar used for multiplication.
@@ -99,7 +123,35 @@ cublasStatus_t cublasTaxpy<double>( cublasHandle_t handle,
 {
    return ::cublasDaxpy(handle, n, alpha, x, incx, y, incy);
 }
-   
+ 
+template<>
+inline
+cublasStatus_t cublasTaxpy<cuComplex>( cublasHandle_t handle, 
+                                       int n,
+                                       const cuComplex *alpha,
+                                       const cuComplex *x, 
+                                       int incx,
+                                       cuComplex *y, 
+                                       int incy
+                                     )
+{
+   return ::cublasCaxpy(handle, n, alpha, x, incx, y, incy);
+}
+
+template<>
+inline
+cublasStatus_t cublasTaxpy<cuDoubleComplex>( cublasHandle_t handle, 
+                                             int n,
+                                             const cuDoubleComplex *alpha,
+                                             const cuDoubleComplex *x, 
+                                             int incx,
+                                             cuDoubleComplex *y, 
+                                             int incy
+                                           )
+{
+   return ::cublasZaxpy(handle, n, alpha, x, incx, y, incy);
+}
+
 template<typename dataT>
 static __device__ __host__ inline 
 dataT elementMul( dataT & a, 
