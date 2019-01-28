@@ -105,8 +105,12 @@ protected:
    std::string configPathGlobal; ///< The path to the gobal configuration file.
    std::string configPathUser; ///< The path to the user's configuration file.
    std::string configPathLocal; ///< The path to a local configuration file.
+   bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a configuration file should be reported.
+   
    std::string configPathCL; ///< The path to a configuration file specified on the command line.
 
+   
+   
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
    bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
@@ -337,7 +341,7 @@ void application::setup( int argc,
 
    config.readConfig(configPathGlobal);
    config.readConfig(configPathUser);
-   config.readConfig(configPathLocal);
+   config.readConfig(configPathLocal, m_requireConfigPathLocal);
 
    //Parse CL just to get the CL config.
    config.parseCommandLine(argc, argv, "config");
