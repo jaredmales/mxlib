@@ -7,7 +7,7 @@ include $(SELF_DIR)/../mk/Common.mk
 NEED_BLAS ?= yes
 NEED_FFTW ?= yes
 NEED_SOFA ?= yes
-NEED_LEVAR ?= yes
+NEED_LEVMAR ?= yes
 NEED_FITS ?= yes
 NEED_BOOST ?= yes
 NEED_GSL ?= yes
