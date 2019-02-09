@@ -173,52 +173,93 @@ void frequency_grid1D( eigenArr & vec,
 ///Create a frequency grid
 template<typename eigenArr>
 void frequency_grid( eigenArr & arr,
-                     typename eigenArr::Scalar dt)
+                     typename eigenArr::Scalar dt,
+                     eigenArr * k_x,
+                     eigenArr * k_y
+                   )
 {
    typename eigenArr::Index dim_1, dim_2;
-   typename eigenArr::Scalar f_1, f_2, df;
+   typename eigenArr::Scalar k_1, k_2, df;
 
    dim_1 = arr.rows();
    dim_2 = arr.cols();
 
+   if(k_x) k_x->resize(dim_1, dim_2);
+   if(k_y) k_y->resize(dim_1, dim_2);
+   
    df = freq_sampling(std::max(dim_1, dim_2), 0.5/dt);
 
    for(int ii=0; ii < 0.5*(dim_1-1) + 1; ++ii)
    {
-      f_1 = ii*df;
+      k_1 = ii*df;
       for(int jj=0; jj < 0.5*(dim_2-1)+1; ++jj)
       {
-         f_2 = jj*df;
+         k_2 = jj*df;
 
-         arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         arr(ii, jj) = sqrt(k_1*k_1 + k_2*k_2);
+         
+         if(k_x) (*k_x)(ii,jj) = k_1;
+         if(k_x) (*k_y)(ii,jj) = k_2;
       }
 
       for(int jj=0.5*(dim_2-1)+1; jj < dim_2; ++jj)
       {
-         f_2 = (jj-dim_2) * df;
+         k_2 = (jj-dim_2) * df;
 
-         arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         arr(ii, jj) = sqrt(k_1*k_1 + k_2*k_2);
+         
+         if(k_x) (*k_x)(ii,jj) = k_1;
+         if(k_x) (*k_y)(ii,jj) = k_2;
       }
    }
 
    for(int ii=0.5*(dim_1-1)+1; ii < dim_1; ++ii)
    {
-      f_1 = (ii-dim_1)*df;
+      k_1 = (ii-dim_1)*df;
       for(int jj=0; jj < 0.5*(dim_2-1) + 1; ++jj)
       {
-         f_2 = jj*df;
+         k_2 = jj*df;
 
-         arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         arr(ii, jj) = sqrt(k_1*k_1 + k_2*k_2);
+         
+         if(k_x) (*k_x)(ii,jj) = k_1;
+         if(k_x) (*k_y)(ii,jj) = k_2;
       }
 
       for(int jj=0.5*(dim_2-1)+1; jj < dim_2; ++jj)
       {
-         f_2 = (jj-dim_2) * df;
+         k_2 = (jj-dim_2) * df;
 
-         arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         arr(ii, jj) = sqrt(k_1*k_1 + k_2*k_2);
+         
+         if(k_x) (*k_x)(ii,jj) = k_1;
+         if(k_x) (*k_y)(ii,jj) = k_2;
       }
    }
 }
+
+///Create a frequency grid
+template<typename eigenArr>
+void frequency_grid( eigenArr & arr,
+                     typename eigenArr::Scalar dt
+                   )
+{
+   frequency_grid(arr, dt, (eigenArr *) 0, (eigenArr *) 0);
+}
+
+
+///Create a frequency grid
+template<typename eigenArr>
+void frequency_grid( eigenArr & arr,
+                     typename eigenArr::Scalar dt,
+                     eigenArr & k_x,
+                     eigenArr & k_y
+                   )
+{
+   frequency_grid(arr, dt, &k_x, &k_y);
+}
+
+
 
 ///Calculate the normalization for a 1-D @f$ 1/|f|^\alpha @f$ PSD.
 /**
