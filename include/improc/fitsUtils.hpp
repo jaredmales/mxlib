@@ -114,6 +114,12 @@ inline int getFitsType<signed char>()
 }
 
 template<> 
+inline int getFitsType<char>()
+{
+   return TSBYTE;
+}
+
+template<> 
 inline int getFitsType<short>()
 {
    return TSHORT;
@@ -200,6 +206,12 @@ template<typename scalarT> int getFitsBITPIX()
 
 template<> 
 inline int getFitsBITPIX<char>()
+{
+   return SBYTE_IMG;
+}
+
+template<> 
+inline int getFitsBITPIX<signed char>()
 {
    return SBYTE_IMG;
 }

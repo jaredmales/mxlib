@@ -119,8 +119,11 @@ LINK.o = $(LINK.cc)
 # or `t=` for short
 TARGET ?= $(t)
 
-all: $(TARGET)
+all: $(TARGET) $(OTHER_OBJS)
 
+$(TARGET):  $(TARGET).o  $(OTHER_OBJS)
+	$(LINK.o)  -o $(TARGET) $(TARGET).o $(OTHER_OBJS) $(LDFLAGS) $(LDLIBS)
+	
 install: all
 	install -d $(BIN_PATH)
 	install $(TARGET) $(BIN_PATH)
