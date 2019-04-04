@@ -443,14 +443,14 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
 {
    xg = xg0;
    yg = yg0;
-   Ag = im(xg, yg);
+   Ag = im( (int) xg, (int) yg);
    for(int i =0; i< 2*maxWidth+1; ++i)
    {
       for(int j=0; j< 2*maxWidth+1; ++j)
       {
-         if(  im( xg0 - maxWidth + i, yg0 - maxWidth + j) > Ag )
+         if(  im( (int)(xg0 - maxWidth + i), (int) (yg0 - maxWidth + j)) > Ag )
          {
-            Ag = im( xg0 - maxWidth + i, yg0 - maxWidth + j);
+            Ag = im( (int) (xg0 - maxWidth + i), (int) (yg0 - maxWidth + j));
             xg = xg0 - maxWidth + i;
             yg = yg0 - maxWidth + j;
          }
@@ -474,7 +474,7 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
       
       for(int j=0; j < widthWidth; ++j)
       {
-         if( im( xg + j*c, yg + j*s) <= 0.5*Ag )
+         if( im( (int)(xg + j*c), (int)(yg + j*s)) <= 0.5*Ag )
          {
             //dist[i] = j;
             
