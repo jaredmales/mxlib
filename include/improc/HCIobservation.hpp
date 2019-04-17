@@ -1074,6 +1074,9 @@ void HCIobservation<_realT>::coaddImages()
    std::vector<double> initVals;
    initVals.resize(coaddKeywords.size());
 
+   std::cerr << "coaddKeywords are: \n";
+   for(size_t i=0; i< coaddKeywords.size(); ++i) std::cerr << "   " << coaddKeywords[i] << "\n";
+   
    while(im0 < Nims)
    {
       //Initialize the accumulators
