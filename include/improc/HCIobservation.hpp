@@ -1077,6 +1077,7 @@ void HCIobservation<_realT>::coaddImages()
 
    std::ofstream fout;
    fout.open("coadd_diag.txt");
+   fout.precision(20);
    
    while(im0 < Nims)
    {
@@ -1135,11 +1136,12 @@ void HCIobservation<_realT>::coaddImages()
          for(size_t i=0;i<coaddKeywords.size(); ++i)
          {
             initVals[i] += heads[imno][coaddKeywords[i]].Value<double>();
-            fout << initVals[i] << " ";
+            fout << heads[imno][coaddKeywords[i]].Value<double>() << " ";
          }
+         fout << "\n";
       }
 
-      fout << "\n";
+      
       
       //And then turn them into an average
       initMJD /= (imF - im0);
@@ -1196,7 +1198,7 @@ void HCIobservation<_realT>::coaddImages()
    imageMJD.erase(imageMJD.begin()+Nims, imageMJD.end());
    heads.erase(heads.begin()+Nims, heads.end());
    
-   fout << "Writing averages to header: \n";
+   fout << "\nWriting averages to header: \n";
    for(int i=0;i<Nims;++i)
    {
       imageMJD[i] = avgMJD[i];
