@@ -23,7 +23,6 @@ using namespace boost::math::constants;
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib_uncomp_version.h"
-#include "../../mxlib.h"
 #include "../../ompLoopWatcher.hpp"
 #include "../../timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"
@@ -76,7 +75,6 @@ realT phiInt_basic (realT phi, void * params)
 
    fourierCovariance<realT, aosysT> * Pp = (fourierCovariance<realT, aosysT> *) params;
 
-   realT L0 = Pp->aosys->atm.L_0();
    realT D = Pp->aosys->D();
 
    int p = Pp->p;
@@ -164,8 +162,7 @@ realT phiInt_mod (realT phi, void * params)
    /*** no prime ***/
    realT kmn_p, kmn_m;
    realT Ji_mn_p, Ji_mn_m;
-   realT Qc_mn, Qs_mn;
-
+   
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
@@ -176,8 +173,7 @@ realT phiInt_mod (realT phi, void * params)
    /*** primed ***/
    realT kmpnp_p, kmpnp_m;
    realT Ji_mpnp_p, Ji_mpnp_m;
-   realT Qc_mpnp, Qs_mpnp;
-
+   
    kmpnp_p = sqrt( pow(k*cosp + mp/D, 2) + pow(k*sinp + np/D, 2));
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
@@ -417,6 +413,7 @@ int fourierVarVec( const std::string & fname,
 
    fout.close();
 
+   return 0;
 }
 
 ///Calculate a map of Fourier variances by convolution with the PSD
@@ -478,7 +475,7 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
 
    mx::AO::analysis::varmapToImage(var, psd, psf);
 
-
+   return 0;
 }
 
 template<typename realT>
@@ -558,13 +555,13 @@ int fourierCovarMap( const std::string & fname,
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
    head.append("RELTOL", relTol, "Relative tolerance in qagiu");
 
-   fitsHeaderGitStatus(head, "mxlib_comp",  mxlib_compiled_git_sha1(), mxlib_compiled_git_repo_modified());
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
-   fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
+   
 
    improc::fitsFile<realT> ff;
    ff.write(fname + ".fits", covar, head);
 
+   return 0;
 }
 
 
@@ -647,14 +644,14 @@ int fourierCovarMapSeparated( const std::string & fname,
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
    head.append("RELTOL", relTol, "Relative tolerance in qagiu");
 
-   fitsHeaderGitStatus(head, "mxlib_comp",  mxlib_compiled_git_sha1(), mxlib_compiled_git_repo_modified());
+   
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
-   fitsHeaderGitStatus(head, "mxaoanalytic",  MXAOANALYTIC_CURRENT_SHA1, MXAOANALYTIC_REPO_MODIFIED);
-
+   
    improc::fitsFile<realT> ff;
    ff.write(fname + "_pp.fits", covar_pp, head);
    ff.write(fname + "_ppp.fits", covar_ppp, head);
 
+   return 0;
 }
 
 template<typename realT>

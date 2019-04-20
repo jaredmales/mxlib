@@ -154,7 +154,7 @@ realT zernikeR( realT rho, int n, int m, std::vector<realT> & c )
    }
    
    realT R = 0.0;
-   for(int k=0; k< c.size(); ++k)
+   for(size_t k=0; k< c.size(); ++k)
    {
       R += c[k] * pow(rho, n-2*k);
    }

@@ -484,7 +484,8 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    BREAD_CRUMB;
 
    /* Here make average wavefront for now */
-   int _firstWavefront = _lastWavefront - _iTime;
+   int _firstWavefront = _lastWavefront - 0.5*_iTime;
+   
    if(_firstWavefront < 0) _firstWavefront += _wavefronts.size();
 
    pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
@@ -492,6 +493,7 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
 
    pupilPlane.iterNo = _wavefronts[_firstWavefront].iterNo;
 
+/*
    //std::cerr << "DPS Averaging: " << _wavefronts[_firstWavefront].iterNo << " " ;
    BREAD_CRUMB;
 
@@ -521,7 +523,7 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    pupilPlane.phase /= (_iTime+1);
    pupilPlane.iterNo /= (_iTime+1);
 
-
+*/
 
    /*=====================================*/
 

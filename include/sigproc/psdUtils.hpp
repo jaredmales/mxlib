@@ -31,8 +31,11 @@
 
 #include <Eigen/Dense>
 
+#include <iostream>
+
 #include "../fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
+
 
 namespace mx
 {
@@ -509,7 +512,7 @@ void vonKarman_psd( eigenArrp  & psd,
    typedef typename eigenArrp::Scalar Scalar;
 
    typename eigenArrp::Index dim_1, dim_2;
-   Scalar f_x, f_y, p;
+   Scalar p;
 
    dim_1 = psd.rows();
    dim_2 = psd.cols();

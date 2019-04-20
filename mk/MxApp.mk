@@ -97,13 +97,13 @@ EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
 ifeq ($(NEED_BLAS),yes)
     INCLUDES += $(BLAS_INCLUDES)
-    LDLIBS += $(BLAS_LDLIBS)
-    LDFLAGS += $(BLAS_LDFLAGS)
+    EXTRA_LDLIBS += $(BLAS_LDLIBS)
+    EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
 endif
 
 ifeq ($(NEED_FFTW),yes)
-   LDLIBS += $(FFT_LDLIBS)
-   LDFLAGS += $(FFT_LDFLAGS)
+   EXTRA_LDLIBS += $(FFT_LDLIBS)
+   EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 endif
 
 LDLIBS += $(EXTRA_LDLIBS) 
@@ -119,8 +119,11 @@ LINK.o = $(LINK.cc)
 # or `t=` for short
 TARGET ?= $(t)
 
-all: $(TARGET)
+all: $(TARGET) $(OTHER_OBJS)
 
+$(TARGET):  $(TARGET).o  $(OTHER_OBJS)
+	$(LINK.o)  -o $(TARGET) $(TARGET).o $(OTHER_OBJS) $(LDFLAGS) $(LDLIBS)
+	
 install: all
 	install -d $(BIN_PATH)
 	install $(TARGET) $(BIN_PATH)

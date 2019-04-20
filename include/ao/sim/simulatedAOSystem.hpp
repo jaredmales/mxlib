@@ -279,13 +279,13 @@ public:
      * \returns 0 on succces
      * \returns -1 on error [currently none]
      */ 
-   int simStep( const int & ss /**< [in] the new value of simulation stepsize [sec] */);
+   int simStep( const double & ss /**< [in] the new value of simulation stepsize [sec] */);
    
    /// Get the simulation step size.
    /**
      * \returns the current value of m_simStep [sec].
      */ 
-   int simStep();
+   double simStep();
 
    int D( const realT & nD );
    
@@ -324,7 +324,7 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simulate
    _currImage = 0;
    _currFile = 0;
 
-   m_coronagraph._fileDir = getEnv("MX_AOm_DATADIR") + "/" + "coron/";
+   m_coronagraph.m_fileDir = getEnv("MX_AO_DATADIR") + "/" + "coron/";
 
    _npix = 0;
 
@@ -1003,7 +1003,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 }//void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::runTurbulence()
 
 template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
-int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep( const int & ss)
+int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep( const double & ss)
 {
    m_simStep = ss;
    
@@ -1011,9 +1011,9 @@ int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simS
 }
 
 template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
-int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep()
+double simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simStep()
 {
-   return simStep();
+   return m_simStep;
 }
 
 template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>

@@ -49,7 +49,174 @@ namespace fit
   * 
   * \ingroup peak_fit 
   */
+
+
+
+//forward
+template<typename _realT>
+struct gaussian1D_fitter;
+
+
+///Class to manage fitting a 1D Gaussian to data via the \ref levmarInterface
+/** In addition to the requirements on fitterT specified by \ref levmarInterface
+  * this class also requires the following in fitterT
+  * \code
+  * static const int nparams = 4; 
+  * 
+  * \endcode
+  * 
+  *
+  * \tparam fitterT a type meeting the above requirements.
+  *
+  * \ingroup gaussian_peak_fit
+  *
+  */
+//template<typename fitterT>
+template<typename _realT>
+class fitGaussian1D : public levmarInterface<gaussian1D_fitter<_realT>> //fitterT>
+{
    
+public:
+   
+   typedef gaussian1D_fitter<_realT> fitterT;
+   
+   typedef typename fitterT::realT realT;
+
+   static const int nparams = fitterT::nparams;
+
+   array2Fit<realT> arr;
+   
+   void initialize()
+   {
+      this->allocate_params(nparams);
+      this->adata = &arr;      
+   }
+   
+   fitGaussian1D()
+   {
+      initialize();
+   }
+      
+   ~fitGaussian1D()
+   {
+   }
+   
+   ///Set the initial guess for a symmetric Gaussian.
+   /** Also works for the general case, setting the same width in both directions.
+     */
+   void setGuess( realT G0,    ///< [in] the constant background level
+                  realT A,     ///< [in] the peak scaling
+                  realT x0,     ///< [in] the center x-coordinate
+                  realT sigma   ///< [in] the width parameter
+                )
+   {
+      this->p[0] = G0;
+      this->p[1] = A;
+      this->p[2] = x0;
+      this->p[3] = sigma;
+   }
+   
+   ///Set the data aray.
+   void setArray( realT *data, 
+                  int nx
+                )
+   {
+      arr.data = data;
+      arr.nx = nx;
+      arr.ny = 1;
+      
+      this->n = nx;
+   }
+   
+   ///Do the fit.
+   int fit()
+   {
+      fitterT fitter;
+      
+      levmarInterface<fitterT>::fit();
+      
+   }
+     
+   ///Get the current value of G0, the constant.
+   /**
+     * \returns the current value of G0, which is p[0].
+     */ 
+   realT G0()
+   {
+      return this->p[0];
+   }
+
+   ///Get the peak scaling.
+   realT A()
+   {
+      return this->p[1];
+   }
+
+   ///Get the center x-coordinate
+   realT x0()
+   {
+      return this->p[2];
+   }
+      
+   ///Return the width parameter
+   /** As described for the symmetric Gaussian.
+     *
+     * For the general Gaussian, this returns \f$ \sigma = \sqrt{ \sigma_x^2 + \sigma_y^2} \f$.
+     */ 
+   realT sigma()
+   {
+      return this->p[3];
+   }
+      
+};
+
+
+///\ref levmarInterface fitter structure for the symmetric Gaussian.
+/** \ingroup gaussian_peak_fit
+  *
+  */
+template<typename _realT>
+struct gaussian1D_fitter
+{
+   typedef _realT realT;
+   
+   static const int nparams = 4;
+   
+   static void func(realT *p, realT *hx, int m, int n, void *adata)
+   {
+      array2Fit<realT> * arr = (array2Fit<realT> *) adata;
+   
+      for(size_t i=0;i<arr->nx; i++)
+      {
+         hx[i] = func::gaussian<realT>(i,p[0],p[1], p[2], p[3]) - arr->data[i];
+      }
+      
+   }
+   
+};
+
+///Alias for the fitGaussian1D type fitting the gaussian.
+/** \ingroup gaussian_peak_fit
+  */
+//template<typename realT>
+//using fitGaussian1D = mx::math::fit::fitGaussian1D<mx::math::fit::gaussian1D_fitter<realT>>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //forward
 template<typename _realT>
 struct gaussian2D_sym_fitter;

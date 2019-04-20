@@ -58,6 +58,7 @@ using namespace boost::math::constants;
 #include "clAOLinearPredictor.hpp"
 #include "clGainOpt.hpp"
 #include "varmapToImage.hpp"
+#include "speckleAmpPSD.hpp"
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -315,22 +316,17 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( const std::string & subDir,  ///< [out] the sub-directory of psdDir where to write the results.
-                       const std::string & psdDir,  ///< [in]  the directory containing the grid of PSDs.
-                       int mnMax,                   ///< [in]  the maximum value of m and n in the grid.
-                       int mnCon,                   ///< [in]  the maximum value of m and n which can be controlled.
-                       int lpNc,                    ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
-                       std::vector<realT> & mags,   ///< [in]  the guide star magnitudes to analyze for.
-                       bool writePSDs = false       ///< [in]  [optional] flag controlling if resultant PSDs are saved
+   int analyzePSDGrid( const std::string & subDir, ///< [out] the sub-directory of psdDir where to write the results.
+                       const std::string & psdDir, ///< [in]  the directory containing the grid of PSDs.
+                       int mnMax,                  ///< [in]  the maximum value of m and n in the grid.
+                       int mnCon,                  ///< [in]  the maximum value of m and n which can be controlled.
+                       int lpNc,                   ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       std::vector<realT> & mags,  ///< [in]  the guide star magnitudes to analyze for.
+                       int lifetimeTrials = 0,     ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
+                       bool writePSDs = false      ///< [in]  [optional] flag controlling if resultant PSDs are saved
                      );
 
 
-   int calculateSpeckleLifetimes( const std::string & subDir, ///< [out] the sub-directory of psdDir where to write the results.
-                                  const std::string & psdDir, ///< [in]  the directory containing the grid of PSDs.
-                                  std::vector<realT> & mags,   ///< [in]  the guide star magnitudes to analyze for.
-                                  int si_or_lp, ///< [in] Calculate lifetimes for SI (0), LP (1), or both (2) results.
-                                  int N ///< [in] The number of trials to use in calculating the amplitude PSD.
-                                );
 
    /** \name Disk Storage
      * These methods handle writing to and reading from disk.  The calculated PSDs are store in the mx::BinVector binary format.
@@ -744,6 +740,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        int mnCon,
                                                        int lpNc,
                                                        std::vector<realT> & mags,
+                                                       int lifetimeTrials,
                                                        bool writePSDs
                                                      )
 {
@@ -783,19 +780,23 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    sigproc::makeFourierModeFreqs_Rect(fms, 2*mnMax);
    size_t nModes = 0.5*fms.size();
 
-   Eigen::Array<realT, -1, -1> gains, vars, gains_lp, vars_lp;
+   Eigen::Array<realT, -1, -1> gains, vars, speckleLifetimes, gains_lp, vars_lp, speckleLifetimes_lp;
 
    gains.resize(2*mnMax+1, 2*mnMax+1);
    vars.resize(2*mnMax+1, 2*mnMax+1);
-
+   speckleLifetimes.resize(2*mnMax+1, 2*mnMax+1);
+   
    gains(mnMax, mnMax) = 0;
    vars(mnMax, mnMax) = 0;
-
+   speckleLifetimes(mnMax, mnMax) = 0;
+   
    gains_lp.resize(2*mnMax+1, 2*mnMax+1);
    vars_lp.resize(2*mnMax+1, 2*mnMax+1);
-
+   speckleLifetimes_lp.resize(2*mnMax+1, 2*mnMax+1);
+   
    gains_lp(mnMax, mnMax) = 0;
    vars_lp(mnMax, mnMax) = 0;
+   speckleLifetimes_lp(mnMax, mnMax) = 0;
 
    bool doLP = false;
    if(lpNc > 1) doLP = true;
@@ -851,8 +852,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
 
-         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.5/fs);
-         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.5/fs);
+         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.25/fs);
+         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.25/fs);
 
          go_si.f(tfreq);
          go_lp.f(tfreq);
@@ -929,8 +930,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             vars_lp( mnMax + m, mnMax + n) = var_lp;
             vars_lp( mnMax - m, mnMax - n ) = var_lp;
 
-            //Output the controlled PSDs if desired.
-            if(writePSDs)
+            //Calculate the controlled PSDs if needed
+            if(writePSDs || lifetimeTrials)
             {
                std::string psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/";
                psdOutFile +=  "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
@@ -953,14 +954,29 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   psdOut = tPSDp;
                }
 
-               ioutils::writeBinVector( psdOutFile, psdOut);
-
-               if(i==0)
+               if(writePSDs)
                {
-                  psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/freq.binv";
-                  ioutils::writeBinVector(psdOutFile, tfreq);
-               }
+                  ioutils::writeBinVector( psdOutFile, psdOut);
 
+                  if(i==0)
+                  {
+                     psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/freq.binv";
+                     ioutils::writeBinVector(psdOutFile, tfreq);
+                  }
+               }
+               
+               if(lifetimeTrials > 0)
+               {
+                  std::vector<realT> bins = {1,4};
+                  for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
+                  std::vector<realT> vars(bins.size());
+                  speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
+                  realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  
+                  speckleLifetimes( mnMax + m, mnMax + n ) = tau;
+                  speckleLifetimes( mnMax - m, mnMax - n ) = tau;
+               }
+               
                if(doLP)
                {
                   psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/";
@@ -982,13 +998,29 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      psdOut = tPSDp;
                   }
 
-                  ioutils::writeBinVector( psdOutFile, psdOut);
-
-                  if(i==0)
+                  if(writePSDs)
                   {
-                     psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/freq.binv";
-                     ioutils::writeBinVector(psdOutFile, tfreq);
+                     ioutils::writeBinVector( psdOutFile, psdOut);
+
+                     if(i==0)
+                     {
+                        psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/freq.binv";
+                        ioutils::writeBinVector(psdOutFile, tfreq);
+                     }
                   }
+                  
+                  if(lifetimeTrials > 0)
+                  {
+                     std::vector<realT> bins = {1, 4.0};
+                     for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
+                     std::vector<realT> vars(bins.size());
+                     speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
+                     realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  
+                     speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
+                     speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+               }
+               
                }
 
             }
@@ -1040,6 +1072,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       fn = dir + "/contrast_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
       ff.write( fn, cim);
 
+      
+      if(lifetimeTrials > 0)
+      {
+         fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
+         ff.write( fn, speckleLifetimes);
+      }
+      
+      
       if(doLP)
       {
          fn = dir + "/gainmap_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
@@ -1072,6 +1112,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          fn = dir + "/contrast_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
          ff.write( fn, cim);
+         
+         if(lifetimeTrials > 0)
+         {
+            fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+            ff.write( fn, speckleLifetimes_lp);
+         }
       }
 
    }//s (mag)

@@ -1,5 +1,5 @@
 /** \file basisUtils2D.hpp
-  * \brief Utilities for a working with a basis set
+  * \brief Utilities for a working with a 2D basis set
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
@@ -29,6 +29,9 @@
 #ifndef basisUtils_hpp
 #define basisUtils_hpp
 
+#include "../improc/eigenImage.hpp"
+#include "../improc/eigenCube.hpp"
+
 namespace mx
 {
 namespace sigproc 
@@ -45,8 +48,8 @@ namespace sigproc
   * \ingroup signal_processing
   */ 
 template<typename realT>
-int basisMask( eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
-               eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the basis
+int basisMask( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+               improc::eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the basis
              )
 {
    for(int i=0; i < modes.planes(); ++i)
@@ -68,8 +71,8 @@ int basisMask( eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
   * \ingroup signal_processing
   */
 template<typename realT>
-int basisMeanSub( eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
-                  eigenImage<realT> & mask, ///< [in] 1/0 mask defining the domain of the basis
+int basisMeanSub( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+                  improc::eigenImage<realT> & mask, ///< [in] 1/0 mask defining the domain of the basis
                   bool postMult = true      ///< [in] [optional] if true, then each image is multiplied by the mask after subtraction.
                 )
 {
@@ -97,8 +100,8 @@ int basisMeanSub( eigenCube<realT> & modes, ///< [in/out] the basis to normalize
   * \ingroup signal_processing
   */
 template<typename realT>
-int basisNormalize( eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
-                    eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the normalization
+int basisNormalize( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+                    improc::eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the normalization
                   )
 {
    realT maskSum = mask.sum();
@@ -123,13 +126,13 @@ int basisNormalize( eigenCube<realT> & modes, ///< [in/out] the basis to normali
   * \ingroup signal_processing
   */ 
 template<typename realT>
-int basisAmplitudes( std::vector<realT> & amps, ///< [out] the amplitudes of each mode fit to the image (will be resized).
-                     eigenImage<realT> & im,    ///< [in/out] the image to fit.  Is subtracted in place if desired.
-                     eigenCube<realT> & modes,  ///< [in] the modes to fit.
-                     eigenImage<realT> & mask,  ///< [in] the 1/0 mask which defines the domain of the fit.
-                     bool subtract = false,     ///< [in] [optional] if true then the modes are subtract as they are fit to the image
-                     int meanIgnore= 0,         ///< [in] [optional] if 1 then the mean, or median if 2, value is subtracted before fitting. If subtract  is false, this value is added back after the subtraction..
-                     int N = -1                 ///< [in] [optional] the number of modes to actually fit.  If N < 0 then all modes are fit.
+int basisAmplitudes( std::vector<realT> & amps,        ///< [out] the amplitudes of each mode fit to the image (will be resized).
+                     improc::eigenImage<realT> & im,   ///< [in/out] the image to fit.  Is subtracted in place if desired.
+                     improc::eigenCube<realT> & modes, ///< [in] the modes to fit.
+                     improc::eigenImage<realT> & mask, ///< [in] the 1/0 mask which defines the domain of the fit.
+                     bool subtract = false,            ///< [in] [optional] if true then the modes are subtracted as they are fit to the image
+                     int meanIgnore= 0,                ///< [in] [optional] if 1 then the mean, or median if 2, value is subtracted before fitting. If subtract  is false, this value is added back after the subtraction.
+                     int N = -1                        ///< [in] [optional] the number of modes to actually fit.  If N < 0 then all modes are fit.
                    )
 {
    if( N < 0) N = modes.planes();
@@ -140,7 +143,7 @@ int basisAmplitudes( std::vector<realT> & amps, ///< [out] the amplitudes of eac
    realT mean;
    if(meanIgnore)
    {
-      if(meanIgnore == 2) mean = imageMedian(im,&mask);
+      if(meanIgnore == 2) mean = improc::imageMedian(im,&mask);
       else mean = (im*mask).sum()/apertureNPix;
 
       im -= mean;
@@ -161,6 +164,7 @@ int basisAmplitudes( std::vector<realT> & amps, ///< [out] the amplitudes of eac
       im += mean;
    }
 
+   return 0;
 }   
 
 
