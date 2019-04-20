@@ -1042,6 +1042,7 @@ void HCIobservation<_realT>::coaddImages()
 {
    //Validate setup
    if(coaddMaxImno <=0 && coaddMaxTime <= 0) return;
+ 
    //Validate combine method
    if(coaddCombineMethod == HCI::noCombine) return;
 
@@ -1074,16 +1075,24 @@ void HCIobservation<_realT>::coaddImages()
    std::vector<double> initVals;
    initVals.resize(coaddKeywords.size());
 
+   std::ofstream fout;
+   fout.open("coadd_diag.txt");
+   
    while(im0 < Nims)
    {
+      fout << "*************************************************\nStarting image accumulation:\n*************************************************\n";
       //Initialize the accumulators
       initMJD = imageMJD[im0];
 
+      fout << im0 << " " << imageMJD[im0] << " ";
       for(size_t i=0;i<coaddKeywords.size(); ++i)
       {
          initVals[i] = heads[im0][coaddKeywords[i]].Value<double>();
+         fout << initVals[i] << " ";
       }
 
+      fout << "\n";
+      
       //Now increment imF, then test whether each variable is now outside the range
       bool increment = true;
       while(increment == true)
@@ -1120,26 +1129,39 @@ void HCIobservation<_realT>::coaddImages()
       for(int imno = im0+1; imno < imF; ++imno)
       {
          initMJD += imageMJD[imno];
+         
+         fout << imno << " " << imageMJD[imno] << " ";
+         
          for(size_t i=0;i<coaddKeywords.size(); ++i)
          {
             initVals[i] += heads[imno][coaddKeywords[i]].Value<double>();
+            fout << initVals[i] << " ";
          }
       }
 
+      fout << "\n";
+      
       //And then turn them into an average
       initMJD /= (imF - im0);
+      fout << "--------------------------------------------------------------\n";
+      fout << "avg: " << initMJD;
       for(size_t i=0;i<coaddKeywords.size(); ++i)
       {
          initVals[i] /= (imF-im0);
+         fout << " " << initVals[i];
       }
+      fout << "\n--------------------------------------------------------------\n";
 
       //Extract the images into the temporary
       imsToCoadd.resize(Nrows, Ncols, imF-im0);
       for(int i =0; i < (imF-im0); ++i)
       {
          imsToCoadd.image(i) = imc.image(im0 + i);
+         fout << "adding image " << im0 + i << "\n";
       }
 
+      
+      
       //Here do the combine and insert into the vector
       if(combineMethod == HCI::medianCombine)
       {
@@ -1173,15 +1195,20 @@ void HCIobservation<_realT>::coaddImages()
    //Now deal with imageMJD and headers
    imageMJD.erase(imageMJD.begin()+Nims, imageMJD.end());
    heads.erase(heads.begin()+Nims, heads.end());
+   
+   fout << "Writing averages to header: \n";
    for(int i=0;i<Nims;++i)
    {
       imageMJD[i] = avgMJD[i];
+      fout << i << " " << imageMJD[i];
       for(size_t j=0;j<coaddKeywords.size(); ++j)
       {
          heads[i][coaddKeywords[j]].setValue(avgVals[i][j]);
+         fout << " " << coaddKeywords[j] << ":" << heads[i][coaddKeywords[j]].Double() << "\n";
       }
    }
-
+   fout << "\n";
+   
    t_coadd_end = get_curr_time();
 
 }//void HCIobservation<_realT>::coaddImages()
