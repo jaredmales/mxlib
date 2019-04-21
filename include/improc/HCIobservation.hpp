@@ -446,6 +446,14 @@ public:
    ///Coadd the images
    void coaddImages();
 
+   ///Perform post-coadd actions, for use by derived classes.
+   /** A key example is to update keywords after the averaging occurs in coaddImages().
+     *
+     * \returns 0 on success
+     * \returns \<0 on error.
+     */
+   virtual int postCoadd();
+   
    ///Do the pre-processing
    void preProcess();
 
@@ -761,6 +769,11 @@ int HCIobservation<_realT>::readFiles()
       if(coaddCombineMethod != HCI::noCombine)
       {
          coaddImages();
+         if( postCoadd() < 0)
+         {
+            std::cerr << "Post coadd error " << __FILE__ << " " << __LINE__ << "\n";
+            return -1;
+         }
       }
 
       /*** Now do any pre-processing if not done already***/
@@ -1215,6 +1228,11 @@ void HCIobservation<_realT>::coaddImages()
 
 }//void HCIobservation<_realT>::coaddImages()
 
+template<typename _realT>
+int HCIobservation<_realT>::postCoadd()
+{
+   return 0;
+}
 
 template<typename _realT>
 void HCIobservation<_realT>::preProcess()

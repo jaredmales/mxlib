@@ -149,6 +149,11 @@ struct ADIobservation : public HCIobservation<_realT>
    ///Post read actions, including fake injection
    virtual int postReadFiles();
    
+   ///Post coadd actions.
+   /** Here updates derotation for new average values.
+     */
+   virtual int postCoadd();
+   
    /// Read in already PSF-subtracted files
    /** Used to take up final processing after applying some non-klipReduce processing steps to
      * PSF-subtracted images.
@@ -279,6 +284,13 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
       if( injectFake() < 0) return -1;
    }
    
+   return 0;
+}
+
+template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::postCoadd()
+{
+   derotF.extractKeywords(this->heads);
    return 0;
 }
 
