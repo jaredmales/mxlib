@@ -19,7 +19,7 @@ CUDA_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 CUDA_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I/home/jrmales/cuda/samples/NVIDIA_CUDA-9.0_Samples/common/inc/
+#INCLUDES  := -I/home/jrmales/cuda/samples/NVIDIA_CUDA-9.0_Samples/common/inc/
 LIBRARIES :=
 
 # Gencode arguments
