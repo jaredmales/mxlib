@@ -102,6 +102,25 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */)
    std::this_thread::sleep_for(std::chrono::nanoseconds(nsec));
 }
 
+/** Adds two timespecs
+  * Result is `ts1 = ts1 + ts2`
+  */
+inline
+void timespecAddNsec( timespec & ts,
+                      unsigned nsec 
+                    )
+{
+   ts.tv_nsec += nsec % 1000000000; 
+   ts.tv_nsec += nsec / 1000000000; 
+
+   if(ts.tv_nsec > 999999999)
+   {
+      ts.tv_nsec -= 1000000000;
+      ts.tv_sec += 1;
+   }
+         
+         
+}
 
 /** Parse a string of format hh:mm:ss.s
   * Breaks a time string into constituent parts.  Handles -h by distributing the sign to m and s.
