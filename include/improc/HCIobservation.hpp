@@ -778,10 +778,13 @@ int HCIobservation<_realT>::readFiles()
          //Re-make the mask cube if we coadded...
          if( maskFile != "")
          {
+            std::cout << "Re-making mask . . .\n";
             fitsFile<realT> ff;
             ff.read(mask, maskFile);
 
             makeMaskCube();
+            
+            std::cout << "Mask re-made . . . \n";
          }
       }
 
