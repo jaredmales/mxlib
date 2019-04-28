@@ -774,6 +774,15 @@ int HCIobservation<_realT>::readFiles()
             std::cerr << "Post coadd error " << __FILE__ << " " << __LINE__ << "\n";
             return -1;
          }
+         
+         //Re-make the mask cube if we coadded...
+         if( maskFile != "")
+         {
+            fitsFile<realT> ff;
+            ff.read(mask, maskFile);
+
+            makeMaskCube();
+         }
       }
 
       /*** Now do any pre-processing if not done already***/
@@ -781,6 +790,8 @@ int HCIobservation<_realT>::readFiles()
 
       outputPreProcessed();
    }
+   
+   
    filesRead = true;
    
    return 0;
