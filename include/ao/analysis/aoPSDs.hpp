@@ -325,9 +325,10 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
 {
    realT k02;
    
-   if(par.L_0() > 0)
+   ///\todo this needs to handle layers with different L_0
+   if(par.L_0(0) > 0)
    {
-      k02 = (1)/(par.L_0()*par.L_0());
+      k02 = (1)/(par.L_0(0)*par.L_0(0));
    }
    else k02 = 0;
 

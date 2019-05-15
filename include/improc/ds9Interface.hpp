@@ -421,6 +421,15 @@ int ds9Interface::spawn()
    int pid = fork();
    if (pid==0)
    {
+      /* Create a new SID for the child process so it is detached*/
+      pid_t sid = setsid();
+     
+      if (sid < 0) 
+      {
+         std::cerr << "ds9Interface: failed to detach.\n";
+         perror("ds9Interface");
+      }
+      
       errno = 0;
       execlp("ds9", "ds9", "-title", m_title.c_str(), (char *) 0);
 

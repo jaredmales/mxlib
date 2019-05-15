@@ -282,6 +282,13 @@ public:
      */ 
    realT v_wind();
    
+   realT v_max()
+   {
+      auto max = std::max_element(std::begin(_layer_v_wind), std::end(_layer_v_wind));
+      
+      return *max;
+   }
+   
    ///Get the weighted mean wind direction
    /** Returns the weighted mean wind direction according to the 5/3's turbulence moment.  This is defined as
      * 
@@ -312,6 +319,7 @@ public:
      * 
      */
    void v_wind(const realT & vw /**< [in] the new value of _v_wind. */);
+   
    
    ///Get the weighted mean layer height
    /** Returns the weighted layer height according to the 5/3's turbulence moment.  This is defined as
@@ -427,7 +435,17 @@ public:
               realT secZ ///< [in] is the secant of the zenith distance.
             );
    
-   ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere.
+   ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere for a small telescope (ignoring L_0)
+   /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite floyd_2010
+     \f[
+      \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}.
+      \f]
+     *
+     * \returns the value of the FWHM for the current atmosphere parameters.
+     */ 
+   realT fwhm0(realT lam_sci /**< [in] the wavelength of the science observation. */ );
+   
+   ///Calculate the full-width at half-maximum of a seeing limited image for this atmosphere for a large telescope (including L_0)
    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite floyd_2010
      \f[
       \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}.
@@ -441,6 +459,18 @@ public:
      * \returns the value of the FWHM (\f$ \epsilon_{0/vK} \f$) for the current atmosphere parameters.
      */ 
    realT fwhm(realT lam_sci /**< [in] the wavelength of the science observation. */ );
+   
+   ///Get the greenwood frequency
+   /**
+     * \todo derive full value of the constant 
+     */
+   realT f_g(realT lam_sci /**< [in] the wavelength of the science observation. */);
+   
+   //Get tau_0
+   /**
+     * \todo derive full value of the constant
+     */ 
+   realT tau_0(realT lam_sci /**< [in] the wavelength of the science observation. */);
    
    ///Load the default atmosphere model from Guyon (2005).
    /** Sets the parameters from Table 4 of Guyon (2005) \cite guyon_2005.
@@ -963,20 +993,43 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    return 4*c;
 }
 
+
+template<typename realT>
+realT aoAtmosphere<realT>::fwhm0(realT lam_sci)
+{
+   realT r0lam = r_0(lam_sci);
+   
+   realT fwhm = 0.98*(lam_sci/r0lam);
+
+   return fwhm;
+}
+
 template<typename realT>
 realT aoAtmosphere<realT>::fwhm(realT lam_sci)
 {
    realT r0lam = r_0(lam_sci);
    
-   //std::cerr << r0lam << "\n";
    realT fwhm = 0.98*(lam_sci/r0lam);
-   //std::cerr << fwhm << "\n";
-   
-   if( L_0() > 0) fwhm *= sqrt( 1 - 2.183*pow(r0lam/L_0(), 0.356));
+
+   ///\todo this needs to handle layers with different L_0
+   if( L_0(0) > 0) fwhm *= sqrt( 1 - 2.183*pow(r0lam/L_0(0), 0.356));
    
    return fwhm;
 }
 
+template<typename realT>
+realT aoAtmosphere<realT>::f_g(realT lam_sci)
+{
+   realT r0 = r_0(m_lam_0);
+   
+   return 0.428*pow(m_lam_0/lam_sci, six_fifths<realT>())*v_wind()/r0;
+}
+   
+template<typename realT>
+realT aoAtmosphere<realT>::tau_0(realT lam_sci)
+{
+   return 0.134/f_g(lam_sci);
+}
    
 template<typename realT>
 void aoAtmosphere<realT>::loadGuyon2005()
@@ -1033,7 +1086,9 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "# Atmosphere Parameters:\n";
    ios << "#    r_0 = " << r_0() << '\n';
    ios << "#    lam_0 = " << lam_0() << '\n';
-   ios << "#    L_0 = " << L_0() << '\n';
+   ios << "#    L_0 = ";
+   for(size_t i=0;i < n_layers()-1;++i) ios << L_0()[i] << ", ";
+   ios <<  L_0()[n_layers()-1] << '\n';
    ios << "#    FWHM = " << fwhm(lam_0()) << '\n';
    ios << "#    n_layers = " << n_layers() << '\n';
    ios << "#    layer_z = ";
