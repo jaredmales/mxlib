@@ -458,7 +458,6 @@ void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
    
    for(int i=0; i< this->Nims; ++i)
    {
-      std::cerr << "Mask angle " << i << ": " << derotF.derotAngle(i) << "\n";
       rotateMask( rm, this->mask, derotF.derotAngle(i));
       
       this->maskCube.image(i) = rm;
