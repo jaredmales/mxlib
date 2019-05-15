@@ -370,7 +370,9 @@ struct appConfigurator
                       const std::string & valueStr, ///< [in] The value in its string form as found in the configuration 
                       const std::string & source    ///< [in] The source of the value, either default, command line, or a path.
                     ) {nullptr};
-                  
+    
+   /// Get the number of unknown options found during config processing.
+   int numUnknownOptions();
 };
 
 inline
@@ -444,17 +446,28 @@ void appConfigurator::parseCommandLine( int argc,
       clOpts.add(cloit->name,cloit->shortOpt.c_str(),cloit->longOpt.c_str(), cloit->clType);
    }
 
-
-
    //Now we parse
    clOpts.parse(argc, argv, &nonOptions);
 
+   if(clOpts.numUnknown() > 0)
+   {
+      std::vector<std::string> unk;
+      clOpts.unknown(unk);
+      
+      for (size_t n=0;n<unk.size();++n)
+      {
+         //Insert or update existing
+         m_unusedConfigs[unk[n]].name = unk[n];
+         if(m_sources) m_unusedConfigs[unk[n]].sources.push_back("command line");
+         m_unusedConfigs[unk[n]].set = true;
+      }
+   }
+      
    //If nothing more to do, get out
    if(clOpts.nOpts == 0)
    {
       return;
    }
-
    //And then load the results in the config target map.
    for(it = m_targets.begin(); it != m_targets.end(); ++it)
    {
@@ -465,6 +478,7 @@ void appConfigurator::parseCommandLine( int argc,
          std::vector<std::string> args;
 
          clOpts.getAll(args, it->second.name);
+         
          it->second.values.insert( it->second.values.end(), args.begin(), args.end());
          if(m_sources)
          {
@@ -475,6 +489,7 @@ void appConfigurator::parseCommandLine( int argc,
          it->second.set = true;
       }
    }
+
 
 }
 

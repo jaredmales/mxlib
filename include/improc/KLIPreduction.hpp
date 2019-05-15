@@ -714,6 +714,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
    std::cerr << "Beginning\n";
       
+   this->skipPreProcess = true;
 
    this->readPSFSub(dir, prefix, ext, Nmodes.size());
    
@@ -754,39 +755,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
          str << Nmodes[Nmodes.size()-1];      
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
-      
-//       if(minr.size() > 0)
-//       {
-//          str.str("");
-//          for(size_t nm=0;nm < minr.size()-1; ++nm) str << minr[nm] << ",";
-//          str << minr[minr.size()-1];      
-//          head.append<char *>("REGMINR", (char *)str.str().c_str(), "region inner edge(s)");
-//       }
-//       
-//       if(maxr.size() > 0)
-//       {
-//          str.str("");
-//          for(size_t nm=0;nm < maxr.size()-1; ++nm) str << maxr[nm] << ",";
-//          str << maxr[maxr.size()-1];      
-//          head.append<char *>("REGMAXR", (char *)str.str().c_str(), "region outer edge(s)");
-//       }
-//       
-//       if(minq.size() > 0)
-//       {
-//          str.str("");
-//          for(size_t nm=0;nm < minq.size()-1; ++nm) str << minq[nm] << ",";
-//          str << minq[minq.size()-1];      
-//          head.append<char *>("REGMINQ", (char *)str.str().c_str(), "region minimum angle(s)");
-//       }
-//       
-//       if(maxq.size() > 0)
-//       {
-//          str.str("");
-//          for(size_t nm=0;nm < maxq.size()-1; ++nm) str << maxq[nm] << ",";
-//          str << maxq[maxq.size()-1];      
-//          head.append<char *>("REGMAXQ", (char *)str.str().c_str(), "region maximum angle(s)");
-//       }
-      
+            
       head.append<int>("EXCLMTHD", excludeMethod, "value of excludeMethod");
       head.append<realT>("MINDPX", mindpx, "minimum pixel delta");
       head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
