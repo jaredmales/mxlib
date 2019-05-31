@@ -114,7 +114,7 @@ template<typename realT, typename aosysT>
 struct fourierTemporalPSD
 {
    ///Pointer to an AO system structure.
-   aosysT * _aosys {nullptr};
+   aosysT * m_aosys {nullptr};
 
    realT _f; ///< the current temporal frequency
    realT _m; ///< the spatial frequency m index
@@ -369,14 +369,14 @@ public:
 template<typename realT, typename aosysT>
 fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD()
 {
-   _aosys = nullptr;
+   m_aosys = nullptr;
    initialize();
 }
 
 template<typename realT, typename aosysT>
 fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD(bool allocate)
 {
-   _aosys = nullptr;
+   m_aosys = nullptr;
    initialize();
 
    if(allocate)
@@ -434,15 +434,15 @@ realT fourierTemporalPSD<realT, aosysT>::fastestPeak( int m,
 {
    realT ku, kv, vu,vv;
 
-   ku = ( (realT) m / _aosys->D());
-   kv = ( (realT) n / _aosys->D());
+   ku = ( (realT) m / m_aosys->D());
+   kv = ( (realT) n / m_aosys->D());
 
    realT f, fmax = 0;
 
-   for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
+   for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
    {
-      vu = _aosys->atm.layer_v_wind(i) * cos(_aosys->atm.layer_dir(i));
-      vv = _aosys->atm.layer_v_wind(i) * sin(_aosys->atm.layer_dir(i));
+      vu = m_aosys->atm.layer_v_wind(i) * cos(m_aosys->atm.layer_dir(i));
+      vv = m_aosys->atm.layer_v_wind(i) * sin(m_aosys->atm.layer_dir(i));
 
       f = fabs(ku*vu + kv*vv);
       if(f > fmax) fmax = f;
@@ -462,8 +462,8 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 {
    if(fmax == 0) fmax = freq[freq.size()-1];
 
-   realT v_wind = _aosys->atm.layer_v_wind(layer_i);
-   realT q_wind = _aosys->atm.layer_dir(layer_i);
+   realT v_wind = m_aosys->atm.layer_v_wind(layer_i);
+   realT q_wind = m_aosys->atm.layer_dir(layer_i);
 
 
    //Rotate the basis
@@ -479,7 +479,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    //Create a local instance so that we're reentrant
    fourierTemporalPSD<realT, aosysT> params(true);
 
-   params._aosys = _aosys;
+   params.m_aosys = m_aosys;
    params._layer_i = layer_i;
    params._m = m*cq + n*sq;
    params._n = -m*sq + n*cq;
@@ -548,17 +548,17 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    size_t j=i;
 
    //First average result for last 50.
-   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], _aosys->atm.alpha()+2);//seventeen_thirds<realT>());
+   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], m_aosys->atm.alpha()+2);//seventeen_thirds<realT>());
    for(size_t k=49; k> 0; --k)
    {
-      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], _aosys->atm.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], m_aosys->atm.alpha()+2); //seventeen_thirds<realT>());
    }
    PSD[j] /= 50.0;
    ++j;
    ++i;
    while(j < freq.size())
    {
-      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], _aosys->atm.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], m_aosys->atm.alpha()+2); //seventeen_thirds<realT>());
       ++j;
    }
 
@@ -585,7 +585,7 @@ int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
       std::vector<realT> single_PSD(freq.size());
 
       #pragma omp for
-      for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
+      for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
       {
          singleLayerPSD(single_PSD, freq, m, n, i, p, fmax);
 
@@ -593,7 +593,7 @@ int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
          #pragma omp critical
          for(size_t j=0; j<freq.size(); ++j)
          {
-           PSD[j] += _aosys->atm.layer_Cn2(i)*single_PSD[j];
+           PSD[j] += m_aosys->atm.layer_Cn2(i)*single_PSD[j];
          }
       }
    }
@@ -615,14 +615,14 @@ int fourierTemporalPSD<realT, aosysT>::_multiLayerPSD( std::vector<realT> & PSD,
    //Records each layer PSD
    std::vector<realT> single_PSD(freq.size());
 
-   for(size_t i=0; i< _aosys->atm.n_layers(); ++i)
+   for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
    {
       singleLayerPSD(single_PSD, freq, m, n, i, p, fmax);
 
       //Now add the single layer PSD to the overall PSD, weighted by Cn2
       for(size_t j=0; j<freq.size(); ++j)
       {
-         PSD[j] += _aosys->atm.layer_Cn2(i)*single_PSD[j];
+         PSD[j] += m_aosys->atm.layer_Cn2(i)*single_PSD[j];
       }
    }
 
@@ -681,7 +681,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
    fout.open(fn);
 
    fout << "#---------------------------\n";
-   _aosys->dumpAOSystem(fout);
+   m_aosys->dumpAOSystem(fout);
    fout << "#---------------------------\n";
    fout << "# PSD Grid Parameters\n";
    fout << "#    absTol " << _absTol << '\n';
@@ -755,7 +755,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout.open(fn);
 
    fout << "#---------------------------\n";
-   _aosys->dumpAOSystem(fout);
+   m_aosys->dumpAOSystem(fout);
    fout << "#---------------------------\n";
    fout << "# Analysis Parameters\n";
    fout << "#    mnMax    = " << mnMax << '\n';
@@ -773,8 +773,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
    //**** Calculating A Variance Map ****//
 
-   realT fs = 1.0/_aosys->minTauWFS();
-
+   realT fs = 1.0/m_aosys->tauWFS();
+   realT tauWFS = m_aosys->tauWFS();
+   realT deltaTau = m_aosys->deltaTau();
+   
    std::vector<sigproc::fourierModeDef> fms;
 
    sigproc::makeFourierModeFreqs_Rect(fms, 2*mnMax);
@@ -852,8 +854,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
 
-         mx::AO::analysis::clGainOpt<realT> go_si(1.0/fs, 1.25/fs);
-         mx::AO::analysis::clGainOpt<realT> go_lp(1.0/fs, 1.25/fs);
+         mx::AO::analysis::clGainOpt<realT> go_si(tauWFS, deltaTau);
+         mx::AO::analysis::clGainOpt<realT> go_lp(tauWFS, deltaTau);
 
          go_si.f(tfreq);
          go_lp.f(tfreq);
@@ -871,14 +873,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             m = fms[2*i].m;
             n = fms[2*i].n;
 
-            wfsNoisePSD<realT>( tPSDn, _aosys->beta_p(m,n), _aosys->Fg(localMag), (1.0/fs), _aosys->npix_wfs(), _aosys->Fbg(), _aosys->ron_wfs());
+            wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs(), m_aosys->Fbg(), m_aosys->ron_wfs());
 
-            realT k = sqrt(m*m + n*n)/_aosys->D();
+            realT k = sqrt(m*m + n*n)/m_aosys->D();
 
             getGridPSD( tPSDp, psdDir, m, n );
             tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
 
-            var0 = _aosys->psd(_aosys->atm, k,1.0)*pow(_aosys->atm.lam_0()/_aosys->lam_wfs(),2) / pow(_aosys->D(),2); //
+            var0 = m_aosys->psd(m_aosys->atm, k,1.0)*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
 
             if(fabs(m) <= mnCon && fabs(n) <= mnCon)
             {
@@ -1189,9 +1191,9 @@ realT F_basic (realT kv, void * params)
    fourierTemporalPSD<realT, aosysT> * Fp = (fourierTemporalPSD<realT, aosysT> *) params;
 
    realT f = Fp->_f;
-   realT v_wind = Fp->_aosys->atm.layer_v_wind(Fp->_layer_i);
+   realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
 
-   realT D = Fp->_aosys->D();
+   realT D = Fp->m_aosys->D();
    realT m = Fp->_m;
    realT n = Fp->_n;
    int p = Fp->_p;
@@ -1207,7 +1209,7 @@ realT F_basic (realT kv, void * params)
 
    realT Q = (Q1 + p*Q2);
 
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->_aosys->lam_wfs());
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->m_aosys->lam_wfs());
 
    return P*Q*Q ;
 }
@@ -1221,9 +1223,9 @@ realT F_mod (realT kv, void * params)
    fourierTemporalPSD<realT, aosysT> * Fp = (fourierTemporalPSD<realT, aosysT> *) params;
 
    realT f = Fp->_f;
-   realT v_wind = Fp->_aosys->atm.layer_v_wind(Fp->_layer_i);
+   realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
 
-   realT D = Fp->_aosys->D();
+   realT D = Fp->m_aosys->D();
    realT m = Fp->_m;
    realT n = Fp->_n;
 
@@ -1238,7 +1240,7 @@ realT F_mod (realT kv, void * params)
 
    realT QQ = 2*(Jp*Jp + Jm*Jm);
 
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
    return P*QQ ;
 }
@@ -1254,15 +1256,15 @@ realT F_projMod (realT kv, void * params)
    fourierTemporalPSD<realT, aosysT> * Fp = (fourierTemporalPSD<realT, aosysT> *) params;
 
    realT f = Fp->_f;
-   realT v_wind = Fp->_aosys->atm.layer_v_wind(Fp->_layer_i);
+   realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
 
-   realT q_wind = Fp->_aosys->atm.layer_dir(Fp->_layer_i);
+   realT q_wind = Fp->m_aosys->atm.layer_dir(Fp->_layer_i);
 
    //For rotating the basis
    realT cq = cos(q_wind);
    realT sq = sin(q_wind);
 
-   realT D = Fp->_aosys->D();
+   realT D = Fp->m_aosys->D();
 
    int mode_i = Fp->_mode_i;
 
@@ -1335,7 +1337,7 @@ realT F_projMod (realT kv, void * params)
    //realT QQ = 2*(Jp*Jp + Jm*Jm);
 
 
-   realT P =  Fp->_aosys->psd(Fp->_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->_aosys->lam_sci(), Fp->_aosys->lam_wfs(), Fp->_aosys->secZeta() );
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
    return P*QQ ;
 }
