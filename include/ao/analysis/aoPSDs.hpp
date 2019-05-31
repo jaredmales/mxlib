@@ -304,18 +304,6 @@ void vonKarmanSpectrum<realT>::D(realT nd /**< [in] the new diameter in m */)
    m_D = nd;
 }
 
-// template< typename realT>
-// realT vonKarmanSpectrum<realT>::alpha()
-// {
-//    return m_alpha;
-// }
-// 
-// template< typename realT>
-// void vonKarmanSpectrum<realT>::alpha(realT na /**< [in] the new PSD index*/ )
-// {
-//    m_alpha = na;
-// }
-
 template< typename realT>
 template< class psdParamsT >
 realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the PSD parameters.
