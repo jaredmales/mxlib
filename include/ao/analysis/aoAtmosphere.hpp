@@ -370,7 +370,7 @@ public:
    ///Return the PSD normalization constant for Kolmogorov turbulence.
    /** Satifies the requirements of psdParamsT.
      *
-     * I m_nonKolmogorov is false, this returns
+     * If m_nonKolmogorov is false, this returns
      * \[
        \beta = \frac{0.0218}{r_0^{5/3}}
        \]
