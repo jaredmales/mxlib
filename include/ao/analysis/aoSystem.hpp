@@ -1856,6 +1856,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
    ios << "#    minTauWFS = " << minTauWFS() << '\n';
+   ios << "#    tauWFS = " << tauWFS() << '\n';
    ios << "#    deltaTau = " << deltaTau() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
    ios << "#    fit_mn_max = " << m_fit_mn_max << '\n';
