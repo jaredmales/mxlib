@@ -728,7 +728,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
 
          ioutils::writeBinVector( fname, PSD);
 
-         watcher.incrementAndOutputStatus();
+         watcher.incrementAndOutputStatus();fitsFile<float> ff;
       }
    }
 }
@@ -1044,10 +1044,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       }
 
       mx::improc::fitsFile<realT> ff;
-      std::string fn = dir + "/gainmap_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
+      std::string fn = dir + "/gainmap_" + ioutils::convertToString(mags[s]) + "_si.fits";
       ff.write( fn, gains);
 
-      fn = dir + "/varmap_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
+      fn = dir + "/varmap_" + ioutils::convertToString(mags[s]) + "_si.fits";
       ff.write( fn, vars);
 
 
@@ -1071,26 +1071,26 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       S_si.push_back(S);
       cim /= S;
 
-      fn = dir + "/contrast_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
+      fn = dir + "/contrast_" + ioutils::convertToString(mags[s]) + "_si.fits";
       ff.write( fn, cim);
 
       
       if(lifetimeTrials > 0)
       {
-         fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_si.fits";
+         fn = dir + "/speckleLifetimes_" + ioutils::convertToString(mags[s]) + "_si.fits";
          ff.write( fn, speckleLifetimes);
       }
       
       
       if(doLP)
       {
-         fn = dir + "/gainmap_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+         fn = dir + "/gainmap_" + ioutils::convertToString(mags[s]) + "_lp.fits";
          ff.write( fn, gains_lp);
 
-         fn = dir + "/lpcmap_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+         fn = dir + "/lpcmap_" + ioutils::convertToString(mags[s]) + "_lp.fits";
          ff.write( fn, lpC);
 
-         fn = dir + "/varmap_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+         fn = dir + "/varmap_" + ioutils::convertToString(mags[s]) + "_lp.fits";
          ff.write( fn, vars_lp);
 
          mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
@@ -1112,12 +1112,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          S_lp.push_back(S);
          cim /= S;
 
-         fn = dir + "/contrast_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+         fn = dir + "/contrast_" + ioutils::convertToString(mags[s]) + "_lp.fits";
          ff.write( fn, cim);
          
          if(lifetimeTrials > 0)
          {
-            fn = dir + "/speckleLifetimes_" + ioutils::convertToString<int>(mags[s]) + "_lp.fits";
+            fn = dir + "/speckleLifetimes_" + ioutils::convertToString(mags[s]) + "_lp.fits";
             ff.write( fn, speckleLifetimes_lp);
          }
       }
