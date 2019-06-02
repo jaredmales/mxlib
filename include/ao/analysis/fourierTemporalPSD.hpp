@@ -728,7 +728,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
 
          ioutils::writeBinVector( fname, PSD);
 
-         watcher.incrementAndOutputStatus();fitsFile<float> ff;
+         watcher.incrementAndOutputStatus();
       }
    }
 }
