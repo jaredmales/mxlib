@@ -109,6 +109,8 @@ protected:
    bool m_specsChanged {true};///< Flag to indicate that a specification has changed.
    bool m_dminChanged {true};///< Flag to indicate that d_min has changed.
    
+   bool m_circularLimit {false}; ///< Flag to indicate that the spatial frequency limit is circular, not square.
+   
    realT m_wfeMeasurement {0}; ///< Total WFE due to measurement a error [rad^2 at m_lam_sci]
    realT m_wfeTimeDelay {0}; ///< Total WFE due to time delay [rad^2 at m_lam_sci]
    realT m_wfeFitting {0}; ///< Total WFE due to fitting error [rad^2 at m_lam_sci]
@@ -170,6 +172,10 @@ public:
      * \returns the current value of m_starMag
      */ 
    realT starMag();
+   
+   int circularLimit( bool cl );
+   
+   bool circularLimit();
    
    ///The photon flux at a given star magnitude.
    /**
@@ -1030,6 +1036,22 @@ realT aoSystem<realT, inputSpectT, iosT>::starMag()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+int aoSystem<realT, inputSpectT, iosT>::circularLimit(bool cl)
+{
+   m_circularLimit = cl;
+   m_specsChanged = true;
+   m_dminChanged = true;
+   
+   return 0;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+bool aoSystem<realT, inputSpectT, iosT>::circularLimit()
+{
+   return m_circularLimit;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::Fg(realT mag)
 {
    return m_F0*pow(10.0, -0.4*mag);
@@ -1340,6 +1362,11 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError()
       {
          if(n == 0 && m == 0) continue;
          
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
+         
          sum += measurementError(m,n);
       }
    }
@@ -1387,6 +1414,11 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError()
       {
          if(n == 0 && m == 0) continue;
          
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
+         
          sum += timeDelayError(m,n);
       }
    }
@@ -1416,7 +1448,14 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError()
    {
       for(int n = -m_fit_mn_max; n <= m_fit_mn_max; ++n)
       {
-         if( abs(m) <= mn_max && abs(n) <= mn_max) continue;
+         if(m_circularLimit)
+         {
+            if( m*m + n*n <= mn_max*mn_max) continue;
+         }
+         else 
+         {
+            if( abs(m) <= mn_max && abs(n) <= mn_max) continue;
+         }
          
          sum += fittingError(m,n);
       }
@@ -1437,6 +1476,11 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDError()
       for(int n = -mn_max; n <= mn_max; ++n)
       {
          if(n == 0 && m == 0) continue;
+         
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
          
          sum += C4var(m,n);
       }
@@ -1482,6 +1526,11 @@ realT aoSystem<realT, inputSpectT, iosT>::chromIndexError()
       {
          if(n == 0 && m == 0) continue;
          
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
+         
          sum += C6var(m,n);
       }
    }
@@ -1502,6 +1551,11 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDError()
       for(int n = -mn_max; n <= mn_max; ++n)
       {
          if(n == 0 && m == 0) continue;
+         
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
          
          sum += C7var(m,n);
       }
@@ -1526,6 +1580,11 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
       for(int n = -mn_max; n <= mn_max; ++n)
       {
          if(n == 0 && m == 0) continue;
+         
+         if( m_circularLimit )
+         {
+            if( m*m + n*n > mn_max*mn_max ) continue;
+         }
          
          sum += C8var(m,n);
       }
@@ -1696,11 +1755,11 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl()
 template<typename realT, class inputSpectT, typename iosT>
 template<typename varFuncT>
 realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m, 
-                                         realT n,
-                                         bool normStrehl,
-                                         varFuncT varFunc,
-                                         int doFittingError
-                                      )
+                                               realT n,
+                                               bool normStrehl,
+                                               varFuncT varFunc,
+                                               int doFittingError
+                                            )
 {
    if(m ==0 && n == 0) return 0;
    
@@ -1713,7 +1772,17 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
    {
       int mn_max = m_D/(2.*d_opt());
    
-      if(mn_max > 0 && (abs(m) > mn_max || abs(n) > mn_max))
+      bool outside = false;
+      if(m_circularLimit)
+      {
+         if(m*m + n*n > mn_max*mn_max) outside = true;
+      }
+      else
+      {
+         if(abs(m) > mn_max || abs(n) > mn_max) outside = true;
+      }
+      
+      if(mn_max > 0 && outside )
       {
          if(doFittingError == FITTING_ERROR_ZERO) return 0;
          
@@ -1817,17 +1886,17 @@ void aoSystem<realT, inputSpectT, iosT>::C1Map( imageT & im )
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C2var(  realT m, 
-                                                      realT n
-                                                   )
+                                                  realT n
+                                               )
 {
    return measurementError(m, n) + timeDelayError(m,n);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C2(  realT m, 
-                                                   realT n,
-                                                   bool normStrehl
-                                                )
+                                               realT n,
+                                               bool normStrehl
+                                            )
 {
    return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C2var, FITTING_ERROR_X);
 }

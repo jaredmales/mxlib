@@ -1086,6 +1086,7 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "# Atmosphere Parameters:\n";
    ios << "#    r_0 = " << r_0() << '\n';
    ios << "#    lam_0 = " << lam_0() << '\n';
+   ios << "#    tau_0 = " << tau_0(lam_0()) << '\n';
    ios << "#    L_0 = ";
    for(size_t i=0;i < n_layers()-1;++i) ios << L_0()[i] << ", ";
    ios <<  L_0()[n_layers()-1] << '\n';
