@@ -79,6 +79,7 @@ protected:
    realT m_d_min {0}; ///< Minimum AO system actuator pitch [m]
    realT m_d_opt {0}; ///< Current optimum AO system actuator pitch [m]
    bool m_optd {false}; ///< Flag controlling whether actuator pitch is optimized (true) or just uses m_d_min (false).  Default: true.
+   realT m_optd_delta {1.0}; ///< The fractional change from d_min used in optimization.  Set to 1 for integer binnings, > 1 for finer sampling.
    
    wfs<realT, iosT> * m_wfsBeta {nullptr}; ///< The WFS beta_p class.
    
@@ -212,9 +213,20 @@ public:
    
    /// Get the value of m_optd.
    /**
-     * \returns the new value of m_optd.
+     * \returns the new value of m_optd_delta.
      */ 
    bool optd();
+   
+   /// Set the fractional change in actuator spacing for optimization.
+   /** Sets the fraction of m_d_min by which the optimizer changes actautor spacing.
+     */
+   void optd_delta( realT odd /**< [in] is the new value of m_optd_delta */);
+   
+   /// Get the value of the fractional change in actuator spacing for optimization..
+   /**
+     * \returns the value of m_optd_delta.
+     */ 
+   realT optd_delta();
    
    template<typename wfsT>
    void wfsBeta( const wfsT & w)
@@ -413,9 +425,21 @@ public:
      */
    realT signal2Noise2( realT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
    
-   ///Calculate the measurement noise at a spatial frequency
+   ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
    /** Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      *
+     * \returns the measurement noise in rad^2 rms at the science wavelength
+     */ 
+   realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
+                           realT n, ///< [in] specifies the v component of the spatial frequency
+                           realT d  ///< [in] the actuator spacing in meters
+                         );
+   
+   ///Calculate the measurement noise at a spatial frequency using the optimum actuator spacing
+   /** 
+     * Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
+     * If optd == false this uses the minimum actuator spacing.
+     * 
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
    realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
@@ -435,14 +459,25 @@ public:
      * @{
      */
    
-   ///Calculate the time delay at a spatial frequency at the optimum exposure time.
+   ///Calculate the time delay at a spatial frequency at the optimum exposure time and the specified actuator spacing
    /** Calculates the wavefront phase variance due to time delay at \f$ f = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
      * \returns the measurement noise in rad^2 rms at the science wavelength
      */ 
    realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
+                         realT n, ///< [in] specifies the v component of the spatial frequency
+                         realT d  ///< [in] the actuator spacing, in meters
+                       );
+   
+   ///Calculate the time delay at a spatial frequency at the optimum exposure time at the optimum actuator spacing.
+   /** Calculates the wavefront phase variance due to time delay at \f$ f = (m/D)\hat{u} + (n/D)\hat{v} \f$.
+     * If optd == false this uses the minimum actuator spacing.
+     * 
+     * \returns the measurement noise in rad^2 rms at the science wavelength
+     */ 
+   realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
                           realT n  ///< [in] specifies the v component of the spatial frequency
-                        );
+                       );
 
    /// Calculate the time delay error over all corrected spatial frequencies
    /**
@@ -520,7 +555,7 @@ public:
      * @{
      */
    
-   ///Calculate the optimum exposure time for a given spatial frequency.
+   ///Calculate the optimum exposure time for a given spatial frequency at a specified actuator spacing
    /** Finds the optimum exposure time at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
      * 
      * \todo Check inclusion of X in parameters
@@ -528,8 +563,21 @@ public:
      * \returns the optimum expsoure time.
      */
    realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
-                         realT n  ///< [in] is the spatial frequency index in v
-                       );
+                        realT n,  ///< [in] is the spatial frequency index in v
+                        realT d
+                      );
+   
+   ///Calculate the optimum exposure time for a given spatial frequency at the optimum actuator spacing.
+   /** Finds the optimum exposure time at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
+     * If optd == false this uses the minimum actuator spacing.
+     * 
+     * \todo Check inclusion of X in parameters
+     * 
+     * \returns the optimum expsoure time.
+     */
+   realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
+                        realT n  ///< [in] is the spatial frequency index in v
+                      );
 
    ///Calculate the optimum actuator spacing.
    /** Finds the value of m_d_opt where the fitting error is less than than the combined time delay and measurement error.
@@ -1040,6 +1088,20 @@ bool aoSystem<realT, inputSpectT, iosT>::optd()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::optd_delta(realT odd)
+{
+   m_optd_delta = odd;
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::optd_delta()
+{
+   return m_optd_delta;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::lam_wfs(realT nlam)
 {
    m_lam_wfs = nlam;
@@ -1238,18 +1300,27 @@ realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs )
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
-                                                                  realT n )
+                                                            realT n )
+{
+   return measurementError(m, n, d_opt());
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
+                                                            realT n,
+                                                            realT d
+                                                          )
 {
    if(m ==0 and n == 0) return 0;
    
    realT tau_wfs;
    
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n);
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
    else tau_wfs = m_tauWFS;
    
    if (m_wfsBeta == 0) wfsBetaUnalloc();
    
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d_opt(), atm.r_0(m_lam_sci));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_sci));
             
    realT snr2 = signal2Noise2( tau_wfs );
          
@@ -1275,10 +1346,12 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError()
 
    return sum;
 }
-         
+
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
-                                                    realT n )
+                                                          realT n,
+                                                          realT d
+                                                        )
 {
    if(m ==0 and n == 0) return 0;
    
@@ -1286,14 +1359,19 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    
    realT tau_wfs;
    
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n);
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
    else tau_wfs = m_tauWFS;
    
    realT tau = tau_wfs + m_deltaTau;
-   
-   //std::cout << m << " " << n << " " << tau << "\n";
          
    return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.X(k, m_lam_sci, m_secZeta) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
+                                                          realT n )
+{
+   return timeDelayError(m,n,d_opt());
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1320,7 +1398,7 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError()
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m, 
-                                                  realT n )
+                                                        realT n )
 {
    realT k = sqrt(m*m+n*n)/m_D;
       
@@ -1459,7 +1537,9 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
-                                                               realT n )
+                                                         realT n,
+                                                         realT dact //here called dact due to parameter collision with root-finding
+                                                       )
 {
    if(m_D == 0)
    {
@@ -1473,16 +1553,13 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
       return -1;
    }
    
-   
-   //if(m == 0) return 0; //Just a big number
-   
    realT k = sqrt(m*m + n*n)/m_D;
    
    realT F = Fg();
 
    if (m_wfsBeta == 0) wfsBetaUnalloc();
       
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d_opt(), atm.r_0(m_lam_sci));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_sci));
 
    //Set up for root finding:
    realT a, b, c, d, e;
@@ -1516,6 +1593,13 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    
 }
 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
+                                                         realT n )
+{
+   return optimumTauWFS(m, n, d_opt());
+}
+
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::d_opt()
@@ -1542,9 +1626,9 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    int m = m_D/(2*d);
    int n = 0;
    
-   while( measurementError(m,n) + timeDelayError(m,n) > fittingError(m, n) && d < m_D/2 ) 
+   while( measurementError(m,n, d) + timeDelayError(m,n,d) > fittingError(m, n) && d < m_D/2 ) 
    {
-      d += m_d_min/1000.0;
+      d += m_d_min/m_optd_delta;
       m = m_D/(2*d);
       n = 0;
    }
@@ -1844,21 +1928,19 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    D = " << D() << '\n';
    ios << "#    d_min = " << d_min() << '\n';
    ios << "#    optd = " << std::boolalpha << m_optd << '\n';
-   ios << "#    d_opt = " << d_opt() << '\n';
+   ios << "#    d_opt_delta = " << optd_delta() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    F0 = " << F0() << '\n';
-   ios << "#    starMag = " << starMag() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
-   ios << "#    zeta    = " << zeta() << '\n';
-   
+   ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
    ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
    ios << "#    minTauWFS = " << minTauWFS() << '\n';
    ios << "#    tauWFS = " << tauWFS() << '\n';
-   ios << "#    deltaTau = " << deltaTau() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
+   ios << "#    deltaTau = " << deltaTau() << '\n';
    ios << "#    fit_mn_max = " << m_fit_mn_max << '\n';
    ios << "#    ncp_wfe = " << m_ncp_wfe << '\n';
    ios << "#    ncp_alpha = " << m_ncp_alpha << '\n';
