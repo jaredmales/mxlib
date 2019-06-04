@@ -878,8 +878,16 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             realT k = sqrt(m*m + n*n)/m_aosys->D();
 
             getGridPSD( tPSDp, psdDir, m, n );
+            
+            //Get integral of entire PSD
+            realT limVar = psdVar( tfreq[1]-tfreq[0], tPSDp);
+
+            //erase points above Nyquis limit
             tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
 
+            //And now determine the variance which has been erased.
+            limVar -= psdVar( tfreq[1]-tfreq[0], tPSDp);
+            
             var0 = m_aosys->psd(m_aosys->atm, k,1.0)*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
 
             bool inside = false;
@@ -898,15 +906,21 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                gmax = 0;
                gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
 
+               var += limVar;
+               
                if(doLP)
                {
                   tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDp, tPSDn, lpNc);
                   for(int n=0; n< lpNc; ++n) lpC(i,n) = go_lp.a(n);
+                  
+                  var_lp += limVar;
                }
                else
                {
                   gopt_lp = 0;
                }
+               
+               
 
             }
             else
@@ -919,6 +933,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                go_lp.b(std::vector<realT>({1}));
             }
 
+            //1.3 is a hack since we haven't yet done the convolution...
             if(gopt > 0 && var > 1.3*var0)
             {
                gopt = 0;
