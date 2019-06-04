@@ -882,7 +882,18 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
             var0 = m_aosys->psd(m_aosys->atm, k,1.0)*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
 
-            if(fabs(m) <= mnCon && fabs(n) <= mnCon)
+            bool inside = false;
+            
+            if( m_aosys->circularLimit() )
+            {
+               if( m*m + n*n <= mnCon*mnCon) inside = true;
+            }
+            else
+            {
+               if(fabs(m) <= mnCon && fabs(n) <= mnCon) inside = true;
+            }
+            
+            if(inside)
             {
                gmax = 0;
                gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
