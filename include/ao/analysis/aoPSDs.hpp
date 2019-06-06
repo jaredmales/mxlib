@@ -372,15 +372,15 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
    {
       if(m_component == PSDComponent::phase)
       {
-         psd *= par.X(k, lambda, secZeta);
+         psd *= sqrt(par.X(k, lambda, secZeta));
       }
       else if (m_component == PSDComponent::amplitude)
       {
-         psd *= par.Y(k, lambda, secZeta);
+         psd *= sqrt(par.Y(k, lambda, secZeta));
       }
       else if (m_component == PSDComponent::dispPhase)
       {
-         psd *= par.X_Z(k, lambda, lambda_wfs, secZeta);
+         psd *= sqrt(par.X_Z(k, lambda, lambda_wfs, secZeta));
       }
       else if (m_component == PSDComponent::dispAmplitude)
       {
