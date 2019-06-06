@@ -888,7 +888,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             //And now determine the variance which has been erased.
             limVar -= psdVar( tfreq[1]-tfreq[0], tPSDp);
             
-            var0 = m_aosys->psd(m_aosys->atm, k,1.0)*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
+            var0 = m_aosys->psd(m_aosys->atm, k, m_aosys->secZeta())*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
 
             bool inside = false;
             
@@ -1235,7 +1235,7 @@ realT F_basic (realT kv, void * params)
 
    realT Q = (Q1 + p*Q2);
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->m_aosys->lam_wfs());
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->m_aosys->secZeta());
 
    return P*Q*Q ;
 }
