@@ -908,6 +908,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                gmax = 0;
                gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
 
+	       //gopt = 0.5;
+               //var = go_si.clVariance(tPSDp, tPSDn, gopt);
+
                var += limVar;
                
                if(doLP)
