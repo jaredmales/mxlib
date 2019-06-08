@@ -1342,7 +1342,7 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    
    if (m_wfsBeta == 0) wfsBetaUnalloc();
    
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_sci));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
    realT snr2 = signal2Noise2( tau_wfs );
          
@@ -1618,12 +1618,12 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
 
    if (m_wfsBeta == 0) wfsBetaUnalloc();
       
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_sci));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_wfs));
 
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*sqrt(atm.X(k, m_lam_sci, m_secZeta))*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(2*pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(m_lam_wfs*beta_p/F,2);
    
    a = Atmp;
@@ -1790,8 +1790,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
          
          realT k = sqrt(m*m + n*n)/m_D;
          
-         if(doFittingError == FITTING_ERROR_X) fe *= sqrt(atm.X(k, m_lam_sci, m_secZeta));
-         else if(doFittingError == FITTING_ERROR_Y) fe *= sqrt(atm.Y(k, m_lam_sci, m_secZeta));
+         if(doFittingError == FITTING_ERROR_X) fe *= (atm.X(k, m_lam_sci, m_secZeta));
+         else if(doFittingError == FITTING_ERROR_Y) fe *= (atm.Y(k, m_lam_sci, m_secZeta));
          else
          {
             std::cerr << "Unknown doFittingError\n";
@@ -1838,7 +1838,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C0var( realT m,
                                          )
 {
    realT k = sqrt(m*m + n*n)/m_D;
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta));
+   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.X(k, m_lam_sci, m_secZeta));
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1865,7 +1865,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m,
 {
    realT k = sqrt(m*m + n*n)/m_D;
             
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.Y(k, m_lam_sci, m_secZeta));
+   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.Y(k, m_lam_sci, m_secZeta));
 }
 
 template<typename realT, class inputSpectT, typename iosT>
