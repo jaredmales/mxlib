@@ -993,8 +993,6 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    return 4*c;
 }
 
-
-<<<<<<< HEAD
 template<typename realT>
 realT aoAtmosphere<realT>::fwhm0(realT lam_sci)
 {
