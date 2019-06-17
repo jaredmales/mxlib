@@ -370,7 +370,7 @@ public:
    ///Return the PSD normalization constant for Kolmogorov turbulence.
    /** Satifies the requirements of psdParamsT.
      *
-     * I m_nonKolmogorov is false, this returns
+     * If m_nonKolmogorov is false, this returns
      * \[
        \beta = \frac{0.0218}{r_0^{5/3}}
        \]
@@ -994,6 +994,7 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
 }
 
 
+<<<<<<< HEAD
 template<typename realT>
 realT aoAtmosphere<realT>::fwhm0(realT lam_sci)
 {
@@ -1003,6 +1004,7 @@ realT aoAtmosphere<realT>::fwhm0(realT lam_sci)
 
    return fwhm;
 }
+
 
 template<typename realT>
 realT aoAtmosphere<realT>::fwhm(realT lam_sci)
@@ -1086,6 +1088,7 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << "# Atmosphere Parameters:\n";
    ios << "#    r_0 = " << r_0() << '\n';
    ios << "#    lam_0 = " << lam_0() << '\n';
+   ios << "#    tau_0 = " << tau_0(lam_0()) << '\n';
    ios << "#    L_0 = ";
    for(size_t i=0;i < n_layers()-1;++i) ios << L_0()[i] << ", ";
    ios <<  L_0()[n_layers()-1] << '\n';
