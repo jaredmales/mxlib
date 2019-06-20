@@ -137,6 +137,9 @@ struct idealCoronagraph
    int propagateNC( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
                     complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is un-modified.
                   );
+   
+   bool apodize {false};
+   imageT apodizer;
 
 };
 
@@ -221,6 +224,11 @@ int idealCoronagraph<_realT, wholePixel>::propagate( complexFieldT & pupilPlane 
    Eigen::Map<Eigen::Array<realT,-1,-1> > eigPup(_realPupil.data(), _realPupil.cols(), _realPupil.rows());
 
    eigWf = eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum())*eigPup;
+   
+   if(apodize)
+   {
+      eigWf *= apodizer;
+   }
 
    return 0;
 }
