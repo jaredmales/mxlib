@@ -223,7 +223,7 @@ int idealCoronagraph<_realT, wholePixel>::propagate( complexFieldT & pupilPlane 
    Eigen::Map<Eigen::Array<complexT,-1,-1> > eigWf(pupilPlane.data(), pupilPlane.cols(), pupilPlane.rows());
    Eigen::Map<Eigen::Array<realT,-1,-1> > eigPup(_realPupil.data(), _realPupil.cols(), _realPupil.rows());
 
-   eigWf = eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum())*eigPup;
+   eigWf = (eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum()))*eigPup;
    
    if(apodize)
    {
