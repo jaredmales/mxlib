@@ -71,12 +71,14 @@ protected:
    
    imageT * _pupil;
 
-   
+
    
    realT norm;
    
 public:
    imageT _mask;
+
+   imageT * _apod {0};
    
    improc::eigenImage<double> _spectrum;
    
@@ -333,6 +335,15 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    commandVect.measurement.setZero();
    
+   
+   //Setup for apodization
+   realT rms0, rms1;
+   if(_apod)
+   {
+      rms0 = sqrt(wfsImage.image.square().sum()/_pupil->sum());
+      wfsImage.image *= *_apod;
+   }
+   
    #pragma omp parallel for
    for(int j=0; j< _nModes; ++j)
    {
@@ -350,6 +361,22 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       amp = (wfsImage.image*_modes->image(j)).sum()/ _npix;
       
       commandVect.measurement(0,j) = amp;
+   }
+   
+   if(_apod)
+   {
+      rms1 = 0;
+      for(int j=0; j< _nModes; ++j)
+      {
+         rms1 += pow(commandVect.measurement(0,j),2);
+      }
+      rms1 = sqrt(rms1/_nModes);
+      
+      for(int j=0; j< _nModes; ++j)
+      {
+         commandVect.measurement(0,j) *= rms0/rms1;
+      }
+      
    }
    
    commandVect.iterNo = wfsImage.iterNo;
