@@ -340,7 +340,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    realT rms0, rms1;
    if(_apod)
    {
-      rms0 = sqrt(wfsImage.image.square().sum()/_pupil->sum());
+      rms0 = (wfsImage.image.square().sum()/_npix);
       wfsImage.image *= *_apod;
    }
    
@@ -370,7 +370,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       {
          rms1 += pow(commandVect.measurement(0,j),2);
       }
-      rms1 = sqrt(rms1/_nModes);
+      //rms1 = sqrt(rms1);///_nModes);
       
       for(int j=0; j< _nModes; ++j)
       {
