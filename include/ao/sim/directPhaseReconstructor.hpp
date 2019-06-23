@@ -374,7 +374,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       
       for(int j=0; j< _nModes; ++j)
       {
-         commandVect.measurement(0,j) *= rms0/rms1;
+         commandVect.measurement(0,j) *= sqrt(rms0/rms1);
       }
       
    }
