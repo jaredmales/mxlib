@@ -639,6 +639,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    //Apply the pupil mask just once.
    wf.phase = (wf.phase-mn)*_pupil;
 
+   if(_pupilMask.rows() == _pupil.rows() && _pupilMask.cols() == _pupil.cols())
+   {
+      wf.phase *= _pupilMask;
+   }
+   
 
    BREAD_CRUMB;
 
