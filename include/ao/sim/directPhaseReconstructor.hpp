@@ -237,7 +237,7 @@ void directPhaseReconstructor<realT>::linkSystem(AOSysT & AOSys)
 template<typename realT> 
 realT directPhaseReconstructor<realT>::calAmp()
 {
-   return 0.5*780.0e-9/two_pi<realT>();
+   return 0.5*800.0e-9/two_pi<realT>();
 }
 
 template<typename realT> 
