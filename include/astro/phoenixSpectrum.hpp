@@ -10,14 +10,14 @@
 
 
 #include "../math/vectorUtils.hpp"
-#include "../fileUtils.hpp"
+#include "../ioutils/fileUtils.hpp"
 
 namespace mx
 {
 namespace astro
 {
 
-/// A spectrum from the Phoenix model, for use with mx::astro::astroSpectrum.
+/// A spectrum from the Phoenix model, for use with ioutils::astro::astroSpectrum.
 /** \ingroup astrophot_spectra
   */
 template<typename _units>
@@ -51,9 +51,9 @@ struct phoenixSpectrum
    {
       boost::filesystem::path p(path);
       
-      if( mx::readColumns(path, rawSpectrum) < 0) return -1;
+      if( ioutils::readColumns(path, rawSpectrum) < 0) return -1;
       
-      if( mx::readColumns(p.parent_path().string() + "/wavelength.dat", rawLambda)) return -1;
+      if( ioutils::readColumns(p.parent_path().string() + "/wavelength.dat", rawLambda)) return -1;
       
       return 0;
    }
@@ -129,7 +129,7 @@ void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complet
       std::cerr << "Error reading file: " << filename << "\n";
    }
    
-   lambda = mx::convertFromString<floatT>(sline.substr(1,12));
+   lambda = ioutils::convertFromString<floatT>(sline.substr(1,12));
    
    //First have to diagnose if this has the column problem
    int nst;
@@ -141,7 +141,7 @@ void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complet
    sline[dpos] = 'e';
    
    
-   flambda = mx::convertFromString<floatT>(sline.substr(nst,12));
+   flambda = ioutils::convertFromString<floatT>(sline.substr(nst,12));
    
    if(lambda >= lmin*1e4 && lambda <= lmax*1e4)
    {
@@ -159,8 +159,8 @@ void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complet
       dpos = sline.find('D', nst);
       sline[dpos] = 'e';
    
-      lambda = mx::convertFromString<floatT>(sline.substr(1,12));
-      flambda = mx::convertFromString<floatT>(sline.substr(nst,12));
+      lambda = ioutils::convertFromString<floatT>(sline.substr(1,12));
+      flambda = ioutils::convertFromString<floatT>(sline.substr(nst,12));
       
       if(lambda >= lmin*1e4 && lambda <= lmax*1e4)
       {
@@ -220,7 +220,7 @@ void rewritePhoenixSpectrumBatch( const std::string & dir,
                                   floatT DF = -8.0
                                 )
 {
-   std::vector<std::string> flist = mx::getFileNames(dir, "lte", "", ".7");
+   std::vector<std::string> flist = ioutils::getFileNames(dir, "lte", "", ".7");
    
    int sepWavelength = 1;
    for(int i=0; i< flist.size(); ++i)

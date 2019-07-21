@@ -316,7 +316,7 @@ void directPhaseSensor<_realT, _detectorT>::iTime(int it)
 
    _iTime = it;
 
-   _wavefronts.resize(_iTime+2);
+   _wavefronts.resize(_iTime+2+100);
    _lastWavefront = -1;
 
    detector.expTime(_simStep*_iTime);
@@ -482,18 +482,23 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
    wavefrontT pupilPlane;
 #if 1
    BREAD_CRUMB;
+   
 
    /* Here make average wavefront for now */
-   int _firstWavefront = _lastWavefront - 0.5*_iTime;
+   int _firstWavefront = _lastWavefront - _iTime;
+   
+   
    
    if(_firstWavefront < 0) _firstWavefront += _wavefronts.size();
 
-   pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
-   pupilPlane.phase = _wavefronts[_firstWavefront].phase;
+   std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
+   
+   pupilPlane.amplitude = 0.5*_wavefronts[_firstWavefront].amplitude;
+   pupilPlane.phase = 0.5*_wavefronts[_firstWavefront].phase;
 
-   pupilPlane.iterNo = _wavefronts[_firstWavefront].iterNo;
+   pupilPlane.iterNo = 0.5*_wavefronts[_firstWavefront].iterNo;
 
-/*
+
    //std::cerr << "DPS Averaging: " << _wavefronts[_firstWavefront].iterNo << " " ;
    BREAD_CRUMB;
 
@@ -504,26 +509,34 @@ void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
       return;
    }
 
-   for(int i=0; i < _iTime; ++i)
+   for(int i=0; i < _iTime - 1; ++i)
    {
       ++_firstWavefront;
       if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
 
+      std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
 
       pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
       pupilPlane.phase += _wavefronts[_firstWavefront].phase;
       pupilPlane.iterNo += _wavefronts[_firstWavefront].iterNo;
 
-
-      //std::cerr << _wavefronts[_firstWavefront].iterNo << " ";
    }
-   //std::cerr  << " = " << _iTime << "\n";
 
-   pupilPlane.amplitude /= (_iTime+1);
-   pupilPlane.phase /= (_iTime+1);
-   pupilPlane.iterNo /= (_iTime+1);
+   ++_firstWavefront;
+   if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
 
-*/
+   std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
+
+   pupilPlane.amplitude += 0.5*_wavefronts[_firstWavefront].amplitude;
+   pupilPlane.phase += 0.5*_wavefronts[_firstWavefront].phase;
+   pupilPlane.iterNo += 0.5*_wavefronts[_firstWavefront].iterNo;
+   
+   
+   pupilPlane.amplitude /= (_iTime);
+   pupilPlane.phase /= (_iTime);
+   pupilPlane.iterNo /= (_iTime);
+
+/**/
 
    /*=====================================*/
 
