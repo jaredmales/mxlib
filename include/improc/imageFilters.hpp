@@ -329,7 +329,6 @@ void radprofim( radprofT & radprof,
    /* A vector of radvals will be sorted, then binned*/
    std::vector<radval<floatT> > rv(dim1*dim2);
    
-   std::cerr << 1 << "\n";
    for(size_t i=0;i<rv.size();++i)
    {
       rv[i].r = rad(i);
@@ -370,7 +369,6 @@ void radprofim( radprofT & radprof,
    radprof.resize(dim1, dim2);
    gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
    
-   std::cerr << 2 << "\n";
    for(int i=0;i<dim1;++i)
    {
       for(int j=0;j<dim2;++j)
@@ -380,7 +378,6 @@ void radprofim( radprofT & radprof,
       }
    }
    
-   std::cerr << 3 << "\n";
 }
 
 

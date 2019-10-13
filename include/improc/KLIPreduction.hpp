@@ -218,10 +218,11 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       printf("    Preprocessing: %f sec\n", this->t_preproc_end - this->t_preproc_begin);
       printf("      Az USM: %f sec\n", this->t_azusm_end - this->t_azusm_begin);
       printf("      Gauss USM: %f sec\n", this->t_gaussusm_end - this->t_gaussusm_begin);
-      printf("    KLIP algorithm: %f sec\n", this->t_worker_end - this->t_worker_begin);
-      printf("      EigenDecomposition %f sec\n", this->t_eigenv);
-      printf("      KL image calc %f sec\n", this->t_klim);
-      printf("      PSF calc/sub %f sec \n", this->t_psf);
+      printf("    KLIP algorithm: %f elapsed real sec\n", this->t_worker_end - this->t_worker_begin);
+      double klip_cpu = this->t_eigenv + this->t_klim + this->t_psf;
+      printf("      EigenDecomposition %f cpu sec (%f%%)\n", this->t_eigenv, this->t_eigenv/klip_cpu*100);
+      printf("      KL image calc %f cpu sec (%f%%)\n", this->t_klim, this->t_klim/klip_cpu*100);
+      printf("      PSF calc/sub %f cpu sec (%f%%)\n", this->t_psf, this->t_psf/klip_cpu*100);
       printf("    Derotation: %f sec\n", this->t_derotate_end-this->t_derotate_begin);
       printf("    Combination: %f sec\n", this->t_combo_end-this->t_combo_begin);
    }
@@ -641,7 +642,11 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          /**** Now calculate the K-L Images ****/
       
          //calcKLIms(klims, cv, rims.cube(), maxNmodes);
-         math::calcKLModes(klims, cv, rims.cube(), maxNmodes);
+         double teigenv;
+         double tklim;
+         math::calcKLModes<double>(klims, cv, rims.cube(), maxNmodes, nullptr, &teigenv, &tklim);
+         t_eigenv += teigenv;
+         t_klim += tklim;
       }
    
       #pragma omp for 
@@ -653,18 +658,15 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          
          if( excludeMethod != HCI::excludeNone )
          {         
-            /// \bug 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed. 
-            //Symptom is segfaults after running for a while.  
-            //Note that this may have been fixed by switching to satlas from tatlas, but probably not 
-            //Possible problem: this uses rims which is not thread private.
-            //#pragma omp critical
-            //{
-               collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
-            //} 
+
+            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
             
             /**** Now calculate the K-L Images ****/
             //calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);
-            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem);
+            double teigenv, tklim;
+            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem, &teigenv, &tklim);
+            t_eigenv += teigenv;
+            t_klim += tklim;
          }
          cfs.resize(1, klims.rows());
    
@@ -692,7 +694,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          }
          
 
-         t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
+         t_psf += (get_curr_time() - t0) ;/// omp_get_num_threads();
          
          
       } //for imno
