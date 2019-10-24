@@ -2045,6 +2045,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
+   ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
    ios << "#    minTauWFS = " << minTauWFS() << '\n';
    ios << "#    tauWFS = " << tauWFS() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
