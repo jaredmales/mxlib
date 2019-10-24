@@ -88,6 +88,8 @@ protected:
    realT m_ron_wfs {0}; ///< WFS readout noise [electrons/pix]
    realT m_Fbg {0}; ///< Background flux, [photons/sec/pixel]
    
+   bool m_bin_npix {true};
+   
    
    realT m_minTauWFS {0}; ///< Minimum WFS exposure time [sec]
    realT m_tauWFS {0}; ///< Actual WFS exposure time [sec]
@@ -295,7 +297,7 @@ public:
      */ 
    realT ron_wfs();
    
-   /// Set the value of the background blux.
+   /// Set the value of the background flux.
    /**
      */
    void Fbg(realT fbg /**< [in] is the new value of m_Fbg */);
@@ -305,6 +307,17 @@ public:
      * \returns
      */ 
    realT Fbg();
+   
+   /// Set the value of the pixel binning flag
+   /**
+     */
+   void bin_npix(bool bnp /**< [in] is the new value of m_bin_npix */);
+   
+   /// Get the value of the pixel binngin flag
+   /**
+     * \returns
+     */ 
+   bool bin_npix();
    
    /// Set the value of the minimum WFS exposure time.
    /**
@@ -1180,6 +1193,20 @@ realT aoSystem<realT, inputSpectT, iosT>::Fbg()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::bin_npix(bool bnp)
+{
+   m_bin_npix = bnp;
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+bool aoSystem<realT, inputSpectT, iosT>::bin_npix()
+{
+   return m_bin_npix;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::minTauWFS(realT ntau)
 {
    m_minTauWFS = ntau;
@@ -1317,7 +1344,13 @@ realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs )
 {      
    realT F = Fg();
                
-   return pow(F*tau_wfs,2)/((F+m_npix_wfs*m_Fbg)*tau_wfs + m_npix_wfs*m_ron_wfs*m_ron_wfs);
+   double binfact = 1.0;
+   if( m_bin_npix )
+   {
+      binfact = pow(m_d_min/ m_d_opt,2);
+   }
+   
+   return pow(F*tau_wfs,2)/((F+m_npix_wfs*binfact*m_Fbg)*tau_wfs + m_npix_wfs*binfact*m_ron_wfs*m_ron_wfs);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1611,6 +1644,12 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
       mxError("aoSystem::optimumTauWFS", MXE_PARAMNOTSET, "0-mag photon flux (F0) not set.");
       return -1;
    }
+
+   double binfact = 1.0;
+   if( m_bin_npix )
+   {
+      binfact = pow(m_d_min/m_d_opt,2);
+   }
    
    realT k = sqrt(m*m + n*n)/m_D;
    
@@ -1629,8 +1668,8 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    a = Atmp;
    b = Atmp *m_deltaTau;
    c = 0;
-   d = -Dtmp * (F+m_npix_wfs*m_Fbg);
-   e = -Dtmp * 2*(m_npix_wfs*pow(m_ron_wfs,2));
+   d = -Dtmp * (F+m_npix_wfs*binfact*m_Fbg);
+   e = -Dtmp * 2*(m_npix_wfs*binfact*pow(m_ron_wfs,2));
    
    std::vector<std::complex<realT> > x;
    
