@@ -496,6 +496,7 @@ public:
 
 ///@}
 
+inline
 void fitsErrText( std::string & explan, const std::string & filename, int fstatus )
 {
    char emnem[31];

@@ -340,6 +340,7 @@ typeT fitsHeaderCard::Value() const
 
 //Specialization for strings, removing the apostrophe.
 template<>
+inline
 std::string fitsHeaderCard::Value<std::string>() const
 {
    std::string s = value;
