@@ -102,8 +102,8 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */)
    std::this_thread::sleep_for(std::chrono::nanoseconds(nsec));
 }
 
-/** Adds two timespecs
-  * Result is `ts1 = ts1 + ts2`
+/** Adds a time offset to an existing timespec
+  * 
   */
 inline
 void timespecAddNsec( timespec & ts,
@@ -111,7 +111,7 @@ void timespecAddNsec( timespec & ts,
                     )
 {
    ts.tv_nsec += nsec % 1000000000; 
-   ts.tv_nsec += nsec / 1000000000; 
+   ts.tv_sec += nsec / 1000000000; 
 
    if(ts.tv_nsec > 999999999)
    {

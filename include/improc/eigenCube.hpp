@@ -57,15 +57,22 @@ public:
 
    eigenCube();
 
-   eigenCube( Index nrows,
-              Index ncols,
-              Index nplanes
+   /// C'tor which will allocate space..
+   /** 
+     */
+   eigenCube( Index nrows,  ///< [in] Number of rows in the cube
+              Index ncols,  ///< [in] Number of columns the cube
+              Index nplanes ///< [in] Number of planes in the cube
             );
 
-   eigenCube( dataT * ndata,
-              size_t nrows,
-              size_t ncols,
-              size_t nplanes
+   /// C'tor taking an existing array as an argument.
+   /** The existing array is used as is, as in a map, and ownership is not taken.  You are
+     * responsible for memory management, e.g. free-ing this array.
+     */
+   eigenCube( dataT * ndata, ///< [in] Allocated array with a cube of nrows x ncols x nplanes
+              size_t nrows,  ///< [in] Number of rows in the cube
+              size_t ncols,  ///< [in] Number of columns the cube
+              size_t nplanes ///< [in] Number of planes in the cube
             );
 
    ~eigenCube();
