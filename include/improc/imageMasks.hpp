@@ -346,6 +346,54 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
    }
 }   
 
+///Mask an ellipse in an image.
+/** The ellipse is describe by its center coordinates and x and y direction radii (the semi-major and -minor axes, in either order). Any value can be set for the mask,
+  * with 0 being the default.  The ellipse axes must be horizontal and vertical, i.e. there is no rotation provided.
+  * 
+  * \tparam arrayT is an Eigen-like type.
+  * 
+  * \ingroup image_masks
+  */
+template<class arrayT> 
+void maskEllipse( arrayT & m,                         ///< [in/out] the image to be masked, is modified.
+                 typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
+                 typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
+                 typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
+                 typename arrayT::Scalar yrad,        ///< [in] the y radius of the ellipse
+                 typename arrayT::Scalar val = 0,     ///< [in] [optional] the mask value.  Default is 0.
+                 typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+               )
+{
+   size_t l0 = m.rows();
+   size_t l1 = m.cols();
+   
+   typename arrayT::Scalar r;
+   typename arrayT::Scalar x;
+   typename arrayT::Scalar y;
+   typename arrayT::Scalar xe, ye;
+   typename arrayT::Scalar rad;
+   
+   
+   for(size_t i=0; i < l0; i++)
+   {
+      x = i-xcen;
+      for(size_t j=0; j < l1; j++)
+      {
+         y = j-ycen;
+         
+         xe = (pow(xrad*yrad,2)/ (pow(yrad,2) + pow(xrad*y/x,2)));
+         ye = (pow(yrad,2) - xe*pow(yrad/xrad,2));
+         
+         rad = sqrt(xe + ye); 
+         
+         r = sqrt( pow(i-xcen, 2) + pow(j-ycen, 2) );
+         
+         if(r <= rad+pixbuf) m(i,j) = val;
+      }
+   }
+}   
+
+
 ///Draw a thin (1-pixel) line from one point to another.
 /** Calculates the line connecting the two points and sets the pixels along that line to the 
   * supplied value.
@@ -607,7 +655,7 @@ int ccdBleedMask( imT & im,  ///< [out] the mask, on output will be 1/0.  Must b
 }
 
 /// Cut out a region of an image specified by an index-mask.
-/** The output sill be a row-image containing the pixel values.
+/** The output will be a row-image containing the pixel values.
   * 
   * \tparam imageTout is the output image Eigen-like type.
   * \tparam imageTin is the input image Eigen-like type.
