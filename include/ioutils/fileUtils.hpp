@@ -281,6 +281,31 @@ std::string getSequentialFilename( const std::string & basename,
    return getSequentialFilename<ndigit>(basename, "", startat);
 }
 
+///Get the size in bytes of a file
+/** Uses fstat.
+  *
+  * \returns the file size if fd is valid and no errors occur
+  * \returns -1 on an error 
+  */ 
+inline
+off_t fileSize( int fd /**< [in] an open file descriptor */)
+{
+   if (fd == -1) 
+   {
+      return -1;
+   }
+ 
+   struct stat stbuf;
+ 
+   if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode))) 
+   {
+      return -1; 
+   }
+  
+   return stbuf.st_size;
+  
+}
+
 ///@} -fileutils
 
 } //namespace ioutils
