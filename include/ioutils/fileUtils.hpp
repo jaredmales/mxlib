@@ -37,6 +37,10 @@
 #include <libgen.h>
 #include <cmath>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <boost/filesystem.hpp>
 
 

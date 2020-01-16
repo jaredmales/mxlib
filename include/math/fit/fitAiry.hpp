@@ -224,21 +224,12 @@ public:
 template<typename realT>
 struct array2FitAiry
 {
-   realT * data; ///Pointer to the array
-   size_t nx; ///X dimension of the array
-   size_t ny; ///Y dimension of the array
+   realT * data {nullptr}; ///< Pointer to the array
+   size_t nx {0}; ///< X dimension of the array
+   size_t ny {0}; ///< Y dimension of the array
    
-   realT cenObs;
-   realT ps;
-   
-   array2FitAiry()
-   {
-      data = 0;
-      nx = 0;
-      ny = 0;
-      cenObs = 0;
-      ps = 0;
-   }
+   realT cenObs {0}; ///< the platescale in \f$ (\lambda/D)/pixel  \f$
+   realT ps {0}; ///< is the ratio of the circular central obscuration diameter to the diameter.
 };
 
 ///\ref levmarInterface fitter structure for the obstructed Airy pattern.
@@ -372,15 +363,15 @@ struct airy2D_obs_fitter_ps_eps
         p[5] = cen-obs
       */
       
-      realT r;
+      //realT r;
       
-      for(int i=0;i<arr->nx; i++)
+      for(int i=0;i<arr->nx; ++i)
       {
-         for(int j=0;j<arr->ny;j++)
+         for(int j=0;j<arr->ny; ++j)
          { 
             idx_mat = i+j*arr->nx;
    
-            r = sqrt( pow( i-p[2],2) + pow(j-p[3],2));
+            //r = sqrt( pow( i-p[2],2) + pow(j-p[3],2));
             
             hx[idx_dat] = func::airyPattern( static_cast<realT>(i), static_cast<realT>(j), p[0], p[1], p[2], p[3], p[4], p[5])  - arr->data[idx_mat];
             

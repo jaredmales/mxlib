@@ -476,6 +476,29 @@ int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * 
    return 0;
 }
 
+timespec meanTimespec( timespec ts1, timespec ts2)
+{
+   double means = (ts1.tv_sec + ts2.tv_sec)/2.0;
+   double meanns = (ts1.tv_nsec + ts2.tv_nsec)/2.0;
+   
+   ts1.tv_sec = floor(means);
+   ts1.tv_nsec = round(meanns);
+   
+   if( means != floor(means) )
+   {
+      ts1.tv_nsec += 5e8;
+      
+      if(ts1.tv_nsec >= 1e9)
+      {
+         ts1.tv_sec += 1;
+         ts1.tv_nsec -= 1e9;
+      }
+   }
+   
+   return ts1;
+}
+
+   
 namespace tscomp
 {
    
@@ -565,6 +588,55 @@ bool operator>=( timespec const& tsL, ///< [in] the left hand side of the compar
 }
 
 } //namespace tscomp
+
+namespace tsop
+{
+   
+/// Add an amount of time specified in seconds to a timespec
+/**
+  * \returns the resulting timespec after addition
+  */  
+template<typename arithT>
+timespec operator+( timespec ts, ///< [in] the timespec to add to
+                    arithT add   ///< [in] the seconds to add
+                  )
+{
+   ts.tv_sec += floor(add);
+   
+   ts.tv_nsec += (add - floor(add))*1e9;
+   
+   if(ts.tv_nsec >= 1e9)
+   {
+      ts.tv_sec += 1;
+      ts.tv_nsec -= 1e9;
+   }
+   
+   return ts;
+}
+
+/// Subtract an amount of time specified in seconds from a timespec
+/**
+  * \returns the resulting timespec after subtraction
+  */
+template<typename arithT>
+timespec operator-( timespec ts, ///< [in] the timespec to subtract from
+                    arithT sub   ///< [in] the seconds to subtract
+                  )
+{
+   ts.tv_sec -= floor(sub);
+   
+   ts.tv_nsec -= (sub - floor(sub))*1e9;
+   
+   if(ts.tv_nsec < 0)
+   {
+      ts.tv_sec -= 1;
+      ts.tv_nsec += 1e9;
+   }
+   
+   return ts;
+}
+
+} //namespace tsop
 
 
 
