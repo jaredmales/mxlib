@@ -378,6 +378,11 @@
   * \brief Wrappers for std::this_thread::sleep_for
   */
   
+/** \defgroup timeutils_tscomp Timespec comparisons
+  * \ingroup timeutils
+  * \brief Comparison of timespec structures
+  */
+  
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
   * \brief Various template-meta-programming utilities.

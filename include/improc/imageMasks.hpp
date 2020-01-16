@@ -348,7 +348,7 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
 
 ///Mask an ellipse in an image.
 /** The ellipse is describe by its center coordinates and x and y direction radii (the semi-major and -minor axes, in either order). Any value can be set for the mask,
-  * with 0 being the default.  The ellipse axes must be horizontal and vertical, i.e. there is not rotation provided.
+  * with 0 being the default.  The ellipse axes must be horizontal and vertical, i.e. there is no rotation provided.
   * 
   * \tparam arrayT is an Eigen-like type.
   * 

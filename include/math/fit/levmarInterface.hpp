@@ -238,7 +238,7 @@ public:
    ///Set one of the minimization options to val
    /** The options correspond to:
      * 
-     * 0: the scale factor the initial \f$ \mu \f$
+     * 0: the scale factor of the initial \f$ \mu \f$
      * 
      * 1: \f$ \epsilon_1 \f$ Stopping threshold for ||J^T e||_inf
      * 
