@@ -205,6 +205,8 @@ int getLMST( realT & LMST, ///< [out] LMST in hours
  * 
  * \returns 0 on success
  * \returns -1 on error
+ * 
+ * \ingroup posastro
  */
 template<typename realT>
 int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
@@ -234,7 +236,7 @@ int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
 /** 
   * \returns the  parallactic angle in radians.
   * 
-  * \ingroup astrodynamics
+  * \ingroup posastro
   */
 template<typename realT>
 realT parAngRad( realT sinHA,  ///< [in] the sine of the target hour angle
@@ -251,7 +253,7 @@ realT parAngRad( realT sinHA,  ///< [in] the sine of the target hour angle
 /** 
   * \returns the  parallactic angle in degrees.
   * 
-  * \ingroup astrodynamics
+  * \ingroup posastro
   */
 template<typename realT>
 realT parAngDeg( realT sinHA,  ///< [in] the sine of the target hour angle
@@ -268,7 +270,7 @@ realT parAngDeg( realT sinHA,  ///< [in] the sine of the target hour angle
 /**
   * \return the parallactic angle in radians. 
   * 
-  * \ingroup astrodynamics
+  * \ingroup posastro
   */
 template<typename realT>
 realT parAngRad( realT ha,  ///< [in] the hour angle, in radians, negative to the east
@@ -283,7 +285,7 @@ realT parAngRad( realT ha,  ///< [in] the hour angle, in radians, negative to th
 /**
   * \return the parallactic angle in degrees. 
   * 
-  * \ingroup astrodynamics
+  * \ingroup posastro
   * 
   * \note 2020-Jan-19: re-reordered arguments and added newflag to prevent compilation of current programs so the new order is implemented.  
   */

@@ -321,6 +321,11 @@
   * \brief Utilities for solving the Kepler problem.
   */
 
+/** \defgroup posastro Positional Astronomy
+  * \ingroup astrodynamics
+  * \brief Utilities for calculating sky positions
+  */
+  
 /** \defgroup astrophot Astronomical Photometry
   * \ingroup genastro
   */
