@@ -209,7 +209,7 @@ public:
       }
 #endif
 
-      fftw_free<inputT>(forplan);
+      fftw_free<inputT>(reinterpret_cast<inputT*>(forplan));
    }
    
    void plan(int nx, int ny, int ndir=MXFFT_FORWARD, bool inPlace=false)

@@ -53,24 +53,25 @@ namespace sigproc
   * 
   * \ingroup signal_processing
   */
-template<typename floatT>
-void tukey1d(floatT *filt, int N, floatT alpha)
+template<typename floatT, typename alphaT>
+void tukey1d(floatT *filt, int N, alphaT alpha)
 {
    floatT pi = boost::math::constants::pi<floatT>();
+   floatT falpha = static_cast<floatT>(alpha); 
    
-   floatT lim1 = alpha*(N-1.0)/2.0;
-   floatT lim2 = (N-1.0)*(1.0-0.5*alpha);
+   floatT lim1 = falpha*(N-1.0)/2.0;
+   floatT lim2 = (N-1.0)*(1.0-0.5*falpha);
    
    for(int ii=0; ii<N; ++ii)
    {
     
-      if(ii < lim1 && alpha > 0.)
+      if(ii < lim1 && falpha > 0.)
       {
-         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(alpha*(N-1)) - 1.0) ));
+         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(falpha*(N-1)) - 1.0) ));
       }
-      else if(ii > lim2 && alpha > 0.)
+      else if(ii > lim2 && falpha > 0.)
       {
-         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(alpha*(N-1)) - 2./alpha + 1.0) ));
+         filt[ii] = 0.5*(1.0 + cos(pi * ( 2.*(ii)/(falpha*(N-1)) - 2./falpha + 1.0) ));
       }
       else
       {
