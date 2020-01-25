@@ -7,11 +7,14 @@
 
 #include <cuda_runtime.h>
 
+#include "templateCuda.hpp"
+
 namespace mx
 {
 namespace cuda
 {
    
+
 template<typename T>
 struct cudaPtr
 {
@@ -103,9 +106,9 @@ struct cudaPtr
    int download( hostPtrT * dest /**< [in] The host location, allocated.*/ );
    
    ///Conversion operator, accesses the device pointer for use in Cuda functions.
-   operator devicePtrT *()
+   typename cpp2cudaType<devicePtrT>::cudaType* operator()()
    {
-      return m_devicePtr;
+      return (typename cpp2cudaType<devicePtrT>::cudaType*) m_devicePtr;
    }
    
 };

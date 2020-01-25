@@ -30,6 +30,25 @@ struct complex<double>
    typedef cuDoubleComplex cudaType;
 };
 
+
+template<typename cppType>
+struct cpp2cudaType
+{
+   typedef cppType cudaType;
+};
+
+template<>
+struct cpp2cudaType<std::complex<float>>
+{
+   typedef complex<float>::cudaType cudaType;
+};
+
+template<>
+struct cpp2cudaType<std::complex<double>>
+{
+   typedef complex<double>::cudaType cudaType;
+};
+
 template<typename floatT>
 cublasStatus_t cublasTscal( cublasHandle_t handle, 
                             int n,
@@ -152,22 +171,22 @@ cublasStatus_t cublasTaxpy<cuDoubleComplex>( cublasHandle_t handle,
    return ::cublasZaxpy(handle, n, alpha, x, incx, y, incy);
 }
 
-template<typename dataT>
+template<typename dataT1, typename dataT2>
 static __device__ __host__ inline 
-dataT elementMul( dataT & a, 
-                  dataT & b
+dataT1 elementMul( dataT1 & a, 
+                  dataT2 & b
                 )
 {
     return a*b;
 }
 
 
-// Complex multiplication
+// complex-float by complex-float multiplication
 template<>
 __device__ __host__ inline 
-cuComplex elementMul<cuComplex>( cuComplex & a, 
-                                 cuComplex & b
-                               )
+cuComplex elementMul<cuComplex, cuComplex>( cuComplex & a, 
+                                            cuComplex & b
+                                          )
 {
     cuComplex c;
     
@@ -178,7 +197,23 @@ cuComplex elementMul<cuComplex>( cuComplex & a,
     
 }
 
-// Complex multiplication
+// complex-float by scalar multiplication
+template<>
+__device__ __host__ inline 
+cuComplex elementMul<cuComplex, float>( cuComplex & a, 
+                                        float & b
+                                      )
+{
+    cuComplex c;
+    
+    ((float*) &c)[0] = ((float*) &a)[0] * b; 
+    ((float*) &c)[1] = ((float*) &a)[0] * b; 
+    return c;
+
+    
+}
+
+// complex-double by complex-double multiplication
 template<>
 __device__ __host__ inline 
 cuDoubleComplex elementMul<cuDoubleComplex>( cuDoubleComplex & a, 
@@ -194,30 +229,26 @@ cuDoubleComplex elementMul<cuDoubleComplex>( cuDoubleComplex & a,
     
 }
 
-// Complex pointwise multiplicationtemplate<>template<>
-
-#if 0
-template<typename dataT>
-static __global__ 
-void scalarMul(dataT *a, dataT * b, int size)
+// complex-float by scalar multiplication
+template<>
+__device__ __host__ inline 
+cuDoubleComplex elementMul<cuDoubleComplex, double>( cuDoubleComplex & a, 
+                                                     double & b
+                                                   )
 {
-   #ifdef __CUDACC__
-
-    const int numThreads = blockDim.x * gridDim.x;
-    const int threadID = blockIdx.x * blockDim.x + threadIdx.x;
-
-    for (int i = threadID; i < size; i += numThreads)
-    {
-        a[i] = elementMul<cuComplex>( a[i],  b[0]);
-    }
+    cuDoubleComplex c;
     
-    #endif //__CUDACC__
-}
-#endif
+    ((double*) &c)[0] = ((double*) &a)[0] * b; 
+    ((double*) &c)[1] = ((double*) &a)[0] * b;
+    
+    return c;
 
-template<typename dataT>
+    
+}
+
+template<typename dataT1, typename dataT2>
 static __global__ 
-void pointwiseMul(dataT *a, dataT *b, int size)
+void elwiseMul(dataT1 *a, dataT2 *b, int size)
 {   
    #ifdef __CUDACC__
 
@@ -226,10 +257,28 @@ void pointwiseMul(dataT *a, dataT *b, int size)
 
     for (int i = threadID; i < size; i += numThreads)
     {
-        a[i] = elementMul<dataT>( a[i],  b[i]);
+        a[i] = elementMul<dataT1, dataT2>( a[i],  b[i]);
     }
     
     #endif //__CUDACC__
+}
+
+/// Calculates the element-wise product of two vectors, storing the result in the first.
+/** Calculates
+  \f$
+  x = x * y
+  \f$
+  * element by element, a.k.a. the Hadamard product.
+  */
+template<typename dataT1, typename dataT2>
+void elementwiseXxY( dataT1 * x,
+                     dataT2 * y,
+                     int size
+                   )
+{
+   #ifdef __CUDACC__
+   elwiseMul<dataT1,dataT2><<<(size+255)/256, 256>>>( x, y, size);
+   #endif
 }
 
 
