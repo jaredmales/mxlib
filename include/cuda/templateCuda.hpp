@@ -207,7 +207,7 @@ cuComplex elementMul<cuComplex, float>( cuComplex & a,
     cuComplex c;
     
     ((float*) &c)[0] = ((float*) &a)[0] * b; 
-    ((float*) &c)[1] = ((float*) &a)[0] * b; 
+    ((float*) &c)[1] = ((float*) &a)[1] * b; 
     return c;
 
     
@@ -239,7 +239,7 @@ cuDoubleComplex elementMul<cuDoubleComplex, double>( cuDoubleComplex & a,
     cuDoubleComplex c;
     
     ((double*) &c)[0] = ((double*) &a)[0] * b; 
-    ((double*) &c)[1] = ((double*) &a)[0] * b;
+    ((double*) &c)[1] = ((double*) &a)[1] * b;
     
     return c;
 
