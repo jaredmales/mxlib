@@ -307,6 +307,9 @@
 /** \defgroup phyconstants Physical Constants
   * \brief Various physical constants
   * \ingroup genastro
+  * \ingroup gen_math
+  * \ingroup signal_processing
+  * \ingroup image_processing
   */
 
 /** \defgroup genphyconstants General Constants
