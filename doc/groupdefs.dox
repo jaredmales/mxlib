@@ -112,6 +112,7 @@
   * \brief Tools for processing signals
   */
 
+  
 /** \defgroup fft Fast Fourier Transforms
   * \brief Tools for using the FFT
   * \ingroup signal_processing
@@ -143,6 +144,24 @@
   * \ingroup signal_processing
   */
 
+/** \defgroup signal_windows Window Functions
+  * \brief Various window functions for spectral analysis
+  * 
+  * Windows are provided in both 1 dimensional and 2 dimensional forms.
+  *
+  * \ingroup signal_processing
+  */
+  
+/** \defgroup signal_windows1D 1-D Window Functions
+  * \brief 1-D window functions for spectral analysis
+  * \ingroup signal_windows
+  */
+  
+/** \defgroup signal_windows2D 2-D Window Functions
+  * \brief 2-D window functions for spectral analysis
+  * \ingroup signal_windows
+  */
+  
 //see signal_processing_files below
 
 
@@ -288,6 +307,9 @@
 /** \defgroup phyconstants Physical Constants
   * \brief Various physical constants
   * \ingroup genastro
+  * \ingroup gen_math
+  * \ingroup signal_processing
+  * \ingroup image_processing
   */
 
 /** \defgroup genphyconstants General Constants
@@ -321,6 +343,11 @@
   * \brief Utilities for solving the Kepler problem.
   */
 
+/** \defgroup posastro Positional Astronomy
+  * \ingroup astrodynamics
+  * \brief Utilities for calculating sky positions
+  */
+  
 /** \defgroup astrophot Astronomical Photometry
   * \ingroup genastro
   */

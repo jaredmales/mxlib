@@ -46,7 +46,7 @@ namespace sigproc
   * @{
   */
 
-///Calculate the variance of a PSD
+/// Calculate the variance of a PSD
 /** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
   *
   * \returns the variance of a PSD (the integral).
@@ -54,25 +54,41 @@ namespace sigproc
   * \tparam realT the real floating point type
   */
 template<typename realT>
-realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
-              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
-              bool trap=true            ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+realT psdVar( realT df,      ///< [in] the frequency scale of the PSD
+              realT * PSD,   ///< [in] the PSD to integrate.
+              size_t sz,     ///< [in] the size of the PSD vector
+              realT half=0.5 ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
             )
 {
-   realT half = 0.5;
-   if(!trap) half = 1.0;
-
    realT var = 0;
 
    var = half*PSD[0];
 
-   for(size_t i=1; i<PSD.size()-1;++i) var += PSD[i];
+   for(size_t i=1; i<sz-1;++i) var += PSD[i];
 
-   var += half*PSD[PSD.size()-1];
+   var += half*PSD[sz-1];
 
    var *= df;
 
    return var;
+}
+
+/// Calculate the variance of a PSD
+/** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  * 
+  * \returns the variance of a PSD (the integral).
+  *
+  * \tparam realT the real floating point type
+  * 
+  * \overload
+  */
+template<typename realT>
+realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
+              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
+              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
+            )
+{
+   return psdVar(df, PSD.data(), PSD.size(), half);
 }
 
 ///Calculate the variance of a PSD
@@ -598,85 +614,6 @@ void vonKarman_psd( eigenArrp  & psd,
    }
 }
 
-
-
-///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
-/** The time series should be mean subtracted before passing to this function.
-  *
-  * The frequency scale of the output periodogram is 1/(2*pgram.size()*dt), where the factor of 2 is due to the one-sided-ness of the result.
-  *
-  * If a window is supplied, the PSD is normalized so that the one-sided integral is equal to the variance of the input time-series.
-  * 
-  * If you just want the FFT of a timeseries with no overlap, set dt=1, avgLen=\<length of time series\>, olap=0.  This will still window
-  * and normalize if needed.
-  */
-template<typename realT>
-void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant periodogram.
-                         std::vector<realT> & ts,    ///< [in] is input the time-series.
-                         realT dt,                   ///< [in] is the sampling time of time-series.
-                         realT avgLen,               ///< [in] is the length of the averaging interval, same units as dt.
-                         realT olap,                 ///< [in] is the length of the overlap region, same units as avgLen.
-                         std::vector<realT> & w      ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
-                       )
-{
-   size_t Nper = avgLen/dt;
-   int Nover = (avgLen-olap)/dt;
-
-   if( w.size() > 0 && w.size() != Nper )
-   {
-      std::cerr << "averagePeriodogram: Window size not correct.\n";
-   }
-
-
-   pgram.resize(Nper/2., 0);
-
-   std::vector<std::complex<realT> > fftwork, cwork;
-
-   fftwork.resize(Nper);
-   cwork.resize(Nper);
-
-   int Navg = ts.size()/Nover;
-
-   while(Navg*Nover + Nper > ts.size()) --Navg;
-
-   if(Navg < 1) Navg = 1; //Always do at least 1!
-
-   mx::fftT<std::complex<realT>, std::complex<realT>, 1, 0> fft(Nper);
-
-   for(int i=0;i<Navg;++i)
-   {
-      realT v;
-
-      for(size_t j=0;j<Nper;++j)
-      {
-         v = ts[i*Nover + j];
-
-         if(w.size() == Nper) v *= w[j];
-
-         cwork[j] = std::complex<realT>(v, 0);
-      }
-
-      fft( fftwork.data(), cwork.data());
-
-      for(size_t j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
-   }
-
-   for(size_t j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
-
-   //realT varNorm = 1;
-   if(w.size() == Nper)
-   {
-      realT df = 1.0/(2.0*pgram.size()*dt); //factor of 2 since it's a one-sided PSD
-      realT pgramVar = psdVar(df, pgram);
-
-      realT tsVar = mx::math::vectorVariance(ts);
-
-      for(size_t j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
-
-   }
-
-
-}
 
 ///Augment a 1-sided PSD to standard 2-sided FFT form.
 /** Allocates psdTwoSided to hold a flipped copy of psdOneSided.
