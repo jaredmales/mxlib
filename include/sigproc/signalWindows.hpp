@@ -36,8 +36,6 @@ namespace mx
 {
 namespace sigproc 
 {
-   
-
 
 /// The Tukey Window
 /** 
@@ -348,12 +346,6 @@ void blackmanNuttal( std::vector<realT> & filt /**< [out] The pre-allocated vect
 {
    blackmanNuttal(filt.data(), filt.size());
 }
-
-
-
-
-
-
 
 /** \brief Create a 2-D Tukey window
   * 

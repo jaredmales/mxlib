@@ -70,7 +70,7 @@ protected:
       
    ///@}
    
-   size_t m_size {0} ///< The size of the periodogram vector, calculated as m_avgLen/2 + 1;
+   size_t m_size {0}; ///< The size of the periodogram vector, calculated as m_avgLen/2 + 1;
    
    int m_nOver {0}; ///< The number of overlapping segments.  Calculated from m_avgLen and m_overlap;
    
