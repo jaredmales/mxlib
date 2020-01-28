@@ -3,7 +3,7 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup signal_processing_files
+  * \ingroup signal_windows1D_files
   *
   */
 
@@ -37,42 +37,7 @@ namespace mx
 namespace sigproc 
 {
    
-/// The Hann Window
-/** 
-  * See https://en.wikipedia.org/wiki/Window_function
-  * 
-  * \tparam realT a floating point type
-  * 
-  * \ingroup signal_processing
-  */
-template<typename realT>
-void hann( realT *filt, ///< [out] the pre-allocated array to hold the filter
-           int N        ///< [in] the size of the filter
-         )
-{
-   constexpr realT pi = boost::math::constants::pi<realT>();
-   
-   for(int n=0; n<N; ++n)
-   {
-      filt[n] = 0.5*(1.0 - cos(2*pi*n/N));
-   }
-}
 
-/// The Hann Window
-/** 
-  * See https://en.wikipedia.org/wiki/Window_function
-  * 
-  * \overload
-  * 
-  * \tparam realT a floating point type
-  * 
-  * \ingroup signal_processing
-  */
-template<typename realT>
-void hann( std::vector<realT> & filt /**< [out] the pre-allocated array to hold the filter */)
-{
-   hann(filt.data(), filt.size());
-}
 
 /// The Tukey Window
 /** 
@@ -82,7 +47,7 @@ void hann( std::vector<realT> & filt /**< [out] the pre-allocated array to hold 
   * 
   * \tparam realT a floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */
 template<typename realT>
 void tukey( realT *filt, ///< [out] the pre-allocated array to hold the filter
@@ -123,31 +88,52 @@ void tukey( realT *filt, ///< [out] the pre-allocated array to hold the filter
   * 
   * \tparam realT a floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */
 template<typename realT>
-void tukey( std::vector<realT> & filt, ///< [out] the pre-allocated array to hold the filter
+void tukey( std::vector<realT> & filt, ///< [out] the pre-allocated vector to hold the filter
             realT alpha                ///< [in] the width parameter
           )
 {
    tukey(filt.data(), filt.size(), alpha);
 }
 
-
-/// The generalized 3 parameter Blackman Window
+/// The generalized 2 parameter cosine Window
 /** See https://en.wikipedia.org/wiki/Window_function
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
-void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
-                  size_t N,     ///< [in] the size of the filter vector
-                  realT a0,
-                  realT a1,
-                  realT a2
-                )
+void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                size_t N,     ///< [in] the size of the filter vector
+                realT a0,     ///< [in] parameter of the general Blackman window
+                realT a1      ///< [in] parameter of the general Blackman window
+              )
+{
+   constexpr realT pi = boost::math::constants::pi<realT>();
+
+   for( size_t n=0; n<N; ++n)
+   {
+      filt[n] = a0 - a1*cos(2*pi*n/N);
+   }
+}
+
+/// The generalized 3 parameter cosine Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_windows1D
+  */ 
+template<typename realT>
+void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                size_t N,     ///< [in] the size of the filter vector
+                realT a0,     ///< [in] parameter of the general Blackman window
+                realT a1,     ///< [in] parameter of the general Blackman window
+                realT a2      ///< [in] parameter of the general Blackman window
+              )
 {
    constexpr realT pi = boost::math::constants::pi<realT>();
 
@@ -157,21 +143,21 @@ void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will s
    }
 }
 
-/// The generalized 4 parameter Blackman Window
+/// The generalized 4 parameter cosine Window
 /** See https://en.wikipedia.org/wiki/Window_function
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
-void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
-                  size_t N,     ///< [in] the size of the filter vector
-                  realT a0,
-                  realT a1,
-                  realT a2,
-                  realT a3
-                )
+void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                size_t N,     ///< [in] the size of the filter vector
+                realT a0,     ///< [in] parameter of the general Blackman window
+                realT a1,     ///< [in] parameter of the general Blackman window
+                realT a2,     ///< [in] parameter of the general Blackman window
+                realT a3      ///< [in] parameter of the general Blackman window
+              )
 {
    constexpr realT pi = boost::math::constants::pi<realT>();
 
@@ -181,19 +167,83 @@ void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will s
    }
 }
 
+/// The Hann Window
+/** 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_windows1D
+  */
+template<typename realT>
+void hann( realT *filt, ///< [out] the pre-allocated array to hold the filter
+           int N        ///< [in] the size of the filter
+         )
+{
+   genCosine<realT>(filt, N, 0.5, 0.5);
+}
+
+/// The Hann Window
+/** 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \overload
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_windows1D
+  */
+template<typename realT>
+void hann( std::vector<realT> & filt /**< [out] the pre-allocated vector to hold the filter */)
+{
+   hann(filt.data(), filt.size());
+}
+
+/// The Hamming Window
+/** 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_windows1D
+  */
+template<typename realT>
+void hamming( realT *filt, ///< [out] the pre-allocated array to hold the filter
+              int N        ///< [in] the size of the filter
+            )
+{
+   genCosine<realT>(filt, N, 25.0/46.0, 1.0-25.0/46.0);
+}
+
+/// The Hamming Window
+/** 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \overload
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_windows1D
+  */
+template<typename realT>
+void hamming( std::vector<realT> & filt /**< [out] the pre-allocated vector to hold the filter */)
+{
+   hamming(filt.data(), filt.size());
+}
+
 /// The Blackman Window
 /** See https://en.wikipedia.org/wiki/Window_function
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void blackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                size_t N      ///< [in] the size of the filter vector
              )
 {
-   genBlackman<realT>(filt, N, 0.42, 0.5, 0.08);
+   genCosine<realT>(filt, N, 0.42, 0.5, 0.08);
 }
 
 /// The Blackman Window
@@ -203,7 +253,7 @@ void blackman( realT * filt, ///< [out] The pre-allocated vector which will stor
   * 
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void blackman( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
@@ -216,14 +266,14 @@ void blackman( std::vector<realT> & filt /**< [out] The pre-allocated vector whi
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void exactBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                     size_t N      ///< [in] the size of the filter vector
                   )
 {
-   genBlackman<realT>(filt, N,  0.42659, 0.49656, 0.076849);
+   genCosine<realT>(filt, N,  0.42659, 0.49656, 0.076849);
 }
 
 /// The Exact Blackman Windwo
@@ -244,14 +294,14 @@ void exactBlackman( std::vector<realT> & filt /**< [out] The pre-allocated vecto
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void nuttal( realT * filt, ///< [out] The pre-allocated vector which will store the filter
              size_t N      ///< [in] the size of the filter vector
            )
 {
-   genBlackman<realT>(filt, N, 0.355768, 0.487396, 0.144232, 0.012604);
+   genCosine<realT>(filt, N, 0.355768, 0.487396, 0.144232, 0.012604);
 }
 
 /// The Nuttal Window
@@ -261,7 +311,7 @@ void nuttal( realT * filt, ///< [out] The pre-allocated vector which will store 
   * 
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void nuttal( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
@@ -274,14 +324,14 @@ void nuttal( std::vector<realT> & filt /**< [out] The pre-allocated vector which
   *
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void blackmanNuttal( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                      size_t N      ///< [in] the size of the filter vector
                    )
 {
-   genBlackman<realT>(filt, N, 0.3635819, 0.4891775, 0.1365995, 0.0106411 );
+   genCosine<realT>(filt, N, 0.3635819, 0.4891775, 0.1365995, 0.0106411 );
 }
 
 /// The Blackman-Nuttal Windwo
@@ -291,7 +341,7 @@ void blackmanNuttal( realT * filt, ///< [out] The pre-allocated vector which wil
   * 
   * \tparam realT a real floating point type
   * 
-  * \ingroup signal_processing
+  * \ingroup signal_windows1D
   */ 
 template<typename realT>
 void blackmanNuttal( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
@@ -320,7 +370,7 @@ void blackmanNuttal( std::vector<realT> & filt /**< [out] The pre-allocated vect
   * \param xc is the desired x center of the window
   * \param yc is the desired y center of the window
   * 
-  *  \ingroup signal_processing
+  *  \ingroup signal_windows2D
   */
 template<typename realT>
 void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
@@ -381,7 +431,7 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
   *
   * \tparam realT is a floating point type 
   * 
-  *  \ingroup signal_processing
+  *  \ingroup signal_windows2D
   */
 template<typename realT>
 void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT xc, realT yc)
