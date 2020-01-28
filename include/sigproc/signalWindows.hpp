@@ -8,7 +8,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015 - 2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -29,6 +29,7 @@
 #ifndef signalWindows_hpp
 #define signalWindows_hpp
 
+#include <cmath>
 #include <boost/math/constants/constants.hpp>
 
 namespace mx
@@ -36,30 +37,63 @@ namespace mx
 namespace sigproc 
 {
    
-
-/// Create a 1-D Tukey window
+/// The Hann Window
 /** 
-  * Function to create a 1-D Tukey window.  
-  * 
-  * The width of the window is controlled by alpha.  alpha = 0 is a square wave, alpha=1.0 is the Hann window.
-  * 
   * See https://en.wikipedia.org/wiki/Window_function
-  *
-  * \param filt is a pre-allocated array of size N
-  * \param N is the size of the array
-  * \param alpha controls the window width.
   * 
-  * \tparam floatT specifies the floating point type
+  * \tparam realT a floating point type
   * 
   * \ingroup signal_processing
   */
-template<typename floatT>
-void tukey1d(floatT *filt, int N, floatT alpha)
+template<typename realT>
+void hann( realT *filt, ///< [out] the pre-allocated array to hold the filter
+           int N        ///< [in] the size of the filter
+         )
 {
-   floatT pi = boost::math::constants::pi<floatT>();
+   constexpr realT pi = boost::math::constants::pi<realT>();
    
-   floatT lim1 = alpha*(N-1.0)/2.0;
-   floatT lim2 = (N-1.0)*(1.0-0.5*alpha);
+   for(int n=0; n<N; ++n)
+   {
+      filt[n] = 0.5*(1.0 - cos(2*pi*n/N));
+   }
+}
+
+/// The Hann Window
+/** 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \overload
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_processing
+  */
+template<typename realT>
+void hann( std::vector<realT> & filt /**< [out] the pre-allocated array to hold the filter */)
+{
+   hann(filt.data(), filt.size());
+}
+
+/// The Tukey Window
+/** 
+  * The width of the window is controlled by alpha.  alpha = 0 is a square wave, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_processing
+  */
+template<typename realT>
+void tukey( realT *filt, ///< [out] the pre-allocated array to hold the filter
+            int N,       ///< [in] the size of the filter
+            realT alpha  ///< [in] the width parameter
+          )
+{
+   constexpr realT pi = boost::math::constants::pi<realT>();
+   
+   realT lim1 = alpha*(N-1.0)/2.0;
+   realT lim2 = (N-1.0)*(1.0-0.5*alpha);
    
    for(int ii=0; ii<N; ++ii)
    {
@@ -78,7 +112,199 @@ void tukey1d(floatT *filt, int N, floatT alpha)
       }
    }
 }
-   
+ 
+/// The Tukey Window
+/** 
+  * The width of the window is controlled by alpha.  alpha = 0 is a square wave, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  * 
+  * \overload
+  * 
+  * \tparam realT a floating point type
+  * 
+  * \ingroup signal_processing
+  */
+template<typename realT>
+void tukey( std::vector<realT> & filt, ///< [out] the pre-allocated array to hold the filter
+            realT alpha                ///< [in] the width parameter
+          )
+{
+   tukey(filt.data(), filt.size(), alpha);
+}
+
+
+/// The generalized 3 parameter Blackman Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                  size_t N,     ///< [in] the size of the filter vector
+                  realT a0,
+                  realT a1,
+                  realT a2
+                )
+{
+   constexpr realT pi = boost::math::constants::pi<realT>();
+
+   for( size_t n=0; n<N; ++n)
+   {
+      filt[n] = a0 - a1*cos(2*pi*n/N) + a2*cos(4*pi*n/N);
+   }
+}
+
+/// The generalized 4 parameter Blackman Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void genBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                  size_t N,     ///< [in] the size of the filter vector
+                  realT a0,
+                  realT a1,
+                  realT a2,
+                  realT a3
+                )
+{
+   constexpr realT pi = boost::math::constants::pi<realT>();
+
+   for( size_t n=0; n<N; ++n)
+   {
+      filt[n] = a0 - a1*cos(2*pi*n/N) + a2*cos(4*pi*n/N) - a3*cos(6*pi*n/N);
+   }
+}
+
+/// The Blackman Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void blackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+               size_t N      ///< [in] the size of the filter vector
+             )
+{
+   genBlackman<realT>(filt, N, 0.42, 0.5, 0.08);
+}
+
+/// The Blackman Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \overload
+  * 
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void blackman( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
+{
+   blackman(filt.data(), filt.size());
+}
+
+/// The Exact Blackman Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void exactBlackman( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                    size_t N      ///< [in] the size of the filter vector
+                  )
+{
+   genBlackman<realT>(filt, N,  0.42659, 0.49656, 0.076849);
+}
+
+/// The Exact Blackman Windwo
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \overload
+  * 
+  * \tparam realT a real floating point type
+  */ 
+template<typename realT>
+void exactBlackman( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
+{
+   exactBlackman(filt.data(), filt.size());
+}
+
+/// The Nuttal Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void nuttal( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+             size_t N      ///< [in] the size of the filter vector
+           )
+{
+   genBlackman<realT>(filt, N, 0.355768, 0.487396, 0.144232, 0.012604);
+}
+
+/// The Nuttal Window
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \overload
+  * 
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void nuttal( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
+{
+   nuttal(filt.data(), filt.size());
+}
+
+/// The Blackman-Nuttal Windwo
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void blackmanNuttal( realT * filt, ///< [out] The pre-allocated vector which will store the filter
+                     size_t N      ///< [in] the size of the filter vector
+                   )
+{
+   genBlackman<realT>(filt, N, 0.3635819, 0.4891775, 0.1365995, 0.0106411 );
+}
+
+/// The Blackman-Nuttal Windwo
+/** See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \overload
+  * 
+  * \tparam realT a real floating point type
+  * 
+  * \ingroup signal_processing
+  */ 
+template<typename realT>
+void blackmanNuttal( std::vector<realT> & filt /**< [out] The pre-allocated vector which will store the filter */)
+{
+   blackmanNuttal(filt.data(), filt.size());
+}
+
+
+
+
+
+
+
 /** \brief Create a 2-D Tukey window
   * 
   * Function to create a 2-D Tukey window.  
@@ -96,23 +322,23 @@ void tukey1d(floatT *filt, int N, floatT alpha)
   * 
   *  \ingroup signal_processing
   */
-template<typename floatT>
-void tukey2d(floatT *filt, int dim, floatT N, floatT alpha, floatT xc, floatT yc)
+template<typename realT>
+void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
 {
    
    int ii, jj;
-   floatT x, y, r;
+   realT x, y, r;
 
-   floatT rad = 0.5*(N-1.0);
+   realT rad = 0.5*(N-1.0);
 
-   floatT pi = boost::math::constants::pi<floatT>();
+   realT pi = boost::math::constants::pi<realT>();
    
    for(ii=0; ii<dim; ++ii)
    {
-      x = ( (floatT) ii) - xc;
+      x = ( (realT) ii) - xc;
       for(jj=0; jj<dim; ++jj)
       {
-         y = ( (floatT) jj) - yc;
+         y = ( (realT) jj) - yc;
 
          r = sqrt(x*x + y*y);
 
@@ -124,7 +350,7 @@ void tukey2d(floatT *filt, int dim, floatT N, floatT alpha, floatT xc, floatT yc
          else if(rad + r > (N-1)*(1-0.5*alpha) && alpha > 0.)
          {
             //Have to prevent going greater than N-1 due to half pixel inclusion.
-            floatT dr = rad+r;
+            realT dr = rad+r;
             if(dr > N-1) dr = N-1;
             
             filt[ii*dim + jj] = 0.5*(1.0 + cos(pi * ( 2.*(dr)/(alpha*(N-1)) - 2./alpha + 1.0) ));
@@ -153,29 +379,29 @@ void tukey2d(floatT *filt, int dim, floatT N, floatT alpha, floatT xc, floatT yc
   * \param xc is the desired x center of the window.
   * \param yc is the desired y center of the window.
   *
-  * \tparam floatT is a floating point type 
+  * \tparam realT is a floating point type 
   * 
   *  \ingroup signal_processing
   */
-template<typename floatT>
-void tukey2dAnnulus(floatT *filt, int dim, floatT N, floatT eps, floatT alpha, floatT xc, floatT yc)
+template<typename realT>
+void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT xc, realT yc)
 {
 
    int ii, jj;
-   floatT x, y, r, z, Z;
+   realT x, y, r, z, Z;
 
-   floatT rad = 0.5*(N-1.0);
+   realT rad = 0.5*(N-1.0);
    
    Z = (1-eps)*rad+1.0; //floor((1.0-eps)*(rad)) + 1.0;
    
-   floatT pi = boost::math::constants::pi<floatT>();
+   realT pi = boost::math::constants::pi<realT>();
       
    for(ii=0; ii<dim; ++ii)
    {
-      x = ( (floatT) ii) - xc;
+      x = ( (realT) ii) - xc;
       for(jj=0; jj<dim; ++jj)
       {
-         y = ( (floatT) jj) - yc;
+         y = ( (realT) jj) - yc;
 
          r = sqrt(x*x + y*y);
 
