@@ -108,8 +108,8 @@ void tukey( std::vector<realT> & filt, ///< [out] the pre-allocated vector to ho
 template<typename realT>
 void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                 size_t N,     ///< [in] the size of the filter vector
-                realT a0,     ///< [in] parameter of the general Blackman window
-                realT a1      ///< [in] parameter of the general Blackman window
+                realT a0,     ///< [in] parameter of the generalized cosine window
+                realT a1      ///< [in] parameter of the generalized cosine window
               )
 {
    constexpr realT pi = boost::math::constants::pi<realT>();
@@ -130,9 +130,9 @@ void genCosine( realT * filt, ///< [out] The pre-allocated vector which will sto
 template<typename realT>
 void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                 size_t N,     ///< [in] the size of the filter vector
-                realT a0,     ///< [in] parameter of the general Blackman window
-                realT a1,     ///< [in] parameter of the general Blackman window
-                realT a2      ///< [in] parameter of the general Blackman window
+                realT a0,     ///< [in] parameter of the generalized cosine window
+                realT a1,     ///< [in] parameter of the generalized cosine window
+                realT a2      ///< [in] parameter of the generalized cosine window
               )
 {
    constexpr realT pi = boost::math::constants::pi<realT>();
@@ -153,10 +153,10 @@ void genCosine( realT * filt, ///< [out] The pre-allocated vector which will sto
 template<typename realT>
 void genCosine( realT * filt, ///< [out] The pre-allocated vector which will store the filter
                 size_t N,     ///< [in] the size of the filter vector
-                realT a0,     ///< [in] parameter of the general Blackman window
-                realT a1,     ///< [in] parameter of the general Blackman window
-                realT a2,     ///< [in] parameter of the general Blackman window
-                realT a3      ///< [in] parameter of the general Blackman window
+                realT a0,     ///< [in] parameter of the generalized cosine window
+                realT a1,     ///< [in] parameter of the generalized cosine window
+                realT a2,     ///< [in] parameter of the generalized cosine window
+                realT a3      ///< [in] parameter of the generalized cosine window
               )
 {
    constexpr realT pi = boost::math::constants::pi<realT>();
