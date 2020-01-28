@@ -174,8 +174,8 @@ cublasStatus_t cublasTaxpy<cuDoubleComplex>( cublasHandle_t handle,
 template<typename dataT1, typename dataT2>
 static __device__ __host__ inline 
 dataT1 elementMul( dataT1 & a, 
-                  dataT2 & b
-                )
+                   dataT2 & b
+                 )
 {
     return a*b;
 }
@@ -229,7 +229,7 @@ cuDoubleComplex elementMul<cuDoubleComplex>( cuDoubleComplex & a,
     
 }
 
-// complex-float by scalar multiplication
+// complex-double by real-double multiplication
 template<>
 __device__ __host__ inline 
 cuDoubleComplex elementMul<cuDoubleComplex, double>( cuDoubleComplex & a, 
