@@ -112,7 +112,6 @@
   * \brief Tools for processing signals
   */
 
-  
 /** \defgroup fft Fast Fourier Transforms
   * \brief Tools for using the FFT
   * \ingroup signal_processing
@@ -380,10 +379,10 @@
   * \brief Various input/output utilities
   */
 
-  /** \defgroup stringutils Working with strings
-    * \ingroup ioutils
-    * \brief Various tools for working with strings
-    */
+/** \defgroup stringutils Working with strings
+  * \ingroup ioutils
+  * \brief Various tools for working with strings
+  */
 
 /** \defgroup fileutils File System Utilities
   * \ingroup ioutils

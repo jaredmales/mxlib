@@ -3,7 +3,7 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup signal_windows1D_files
+  * \ingroup signal_processing_files
   *
   */
 
