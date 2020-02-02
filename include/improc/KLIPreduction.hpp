@@ -617,18 +617,25 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
  
    math::eigenSYRK(cv, rims.cube());
       
+   fitsFile<realT> ff;
+   ff.write("cv.fits", cv);
    ompLoopWatcher<> status( this->Nims, std::cerr);
    
+   //Pre-calculate KL images once if we are exclude none
+   eigenImageT master_klims;
+   if( excludeMethod == HCI::excludeNone )
+   {
+      double teigenv;
+      double tklim;
+      math::calcKLModes<double>(master_klims, cv, rims.cube(), maxNmodes, nullptr, &teigenv, &tklim);
+      t_eigenv += teigenv;
+      t_klim += tklim;
+   }
+      
    //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
-//       #ifdef _OPENMP
-//          #pragma omp critical
-//          std::cerr << "This is thread " << nTh++ << "\n";
-//       #endif
-      
       //We need local copies for each thread.  Only way this works, for whatever reason.
-
       eigenImageT cfs; //The coefficients
       eigenImageT psf;
       eigenImageT rims_cut;
@@ -639,21 +646,12 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
 
       if( excludeMethod == HCI::excludeNone )
       {
-         /**** Now calculate the K-L Images ****/
-      
-         //calcKLIms(klims, cv, rims.cube(), maxNmodes);
-         double teigenv;
-         double tklim;
-         math::calcKLModes<double>(klims, cv, rims.cube(), maxNmodes, nullptr, &teigenv, &tklim);
-         t_eigenv += teigenv;
-         t_klim += tklim;
+         klims = master_klims;
       }
    
       #pragma omp for 
       for(int imno = 0; imno < this->Nims; ++imno)
       {
-         //if(imno != 847) continue;
-         
          status.incrementAndOutputStatus();
          
          if( excludeMethod != HCI::excludeNone )
@@ -662,7 +660,6 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
             
             /**** Now calculate the K-L Images ****/
-            //calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);
             double teigenv, tklim;
             math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem, &teigenv, &tklim);
             t_eigenv += teigenv;

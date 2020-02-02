@@ -50,8 +50,8 @@ namespace app
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
-  * - A user configuration file
-  * - A local configuration file
+  * - A user configuration file (specified relative to the users home directory)
+  * - A local configuration file (in the pwd)
   * - A configuration file specified on the command line
   * - The command line
   *

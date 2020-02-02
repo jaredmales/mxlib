@@ -36,6 +36,8 @@
 #include <thread>
 #include <chrono>
 
+#include <iostream>
+
 #include "ioutils/stringUtils.hpp"
 #include "astro/sofa.hpp"
 
