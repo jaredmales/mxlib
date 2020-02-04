@@ -1,12 +1,12 @@
 /** \file gaussian.hpp
  * \author Jared R. Males
  * \brief Declarations for utilities related to the Gaussian function.
- * \ingroup gen_math_gaussians
+ * \ingroup gen_math_files
  *
  */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2018, 2019, 2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -46,7 +46,11 @@ namespace func
   * 
   * \ingroup gen_math_gaussians
   */ 
-#define twosqrt2log2 2.354820045030949382091484
+template<typename floatT>
+constexpr floatT twosqrt2log2()
+{
+   return static_cast<floatT>(2.3548200450309493820231386529193992754947713787716);
+}
    
 ///Convert from FWHM to the Gaussian width parameter
 /** Performs the conversion:
@@ -55,7 +59,12 @@ namespace func
   *
   * \ingroup gen_math_gaussians
   */ 
-#define fwhm2sigma(fw)   ( (fw) / twosqrt2log2)
+template<typename floatT>
+floatT fwhm2sigma(floatT fw)
+{
+   return fw / twosqrt2log2<floatT>();
+}
+//#define fwhm2sigma(fw)   ( (fw) / twosqrt2log2)
 
 ///Convert from Gaussian width parameter to FWHM
 /** Performs the conversion:
@@ -64,7 +73,12 @@ namespace func
   *
   * \ingroup gen_math_gaussians
   */ 
-#define sigma2fwhm(sig)  ( (sig) * twosqrt2log2)
+template<typename floatT>
+floatT sigma2fwhm(floatT sig)
+{
+   return sig*twosqrt2log2<floatT>();
+}
+//#define sigma2fwhm(sig)  ( (sig) * twosqrt2log2)
    
 ///Find value at position (x) of the 1D arbitrarily-centered symmetric Gaussian
 /**
@@ -79,12 +93,12 @@ namespace func
   * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
-realT gaussian( const realT & x, ///< [in] is the x-position at which to evaluate the Gaussian
-                 const realT G0, ///< [in] is the constant to add to the Gaussian
-                 const realT A, ///< [in] is the scaling factor (peak = A)
-                 const realT &x0, ///< [in] is the x-coordinate of the center
-                 const realT & sigma ///< [in] is the width of the Gaussian.
-               )
+realT gaussian( const realT x,    ///< [in] is the x-position at which to evaluate the Gaussian
+                const realT G0,   ///< [in] is the constant to add to the Gaussian
+                const realT A,    ///< [in] is the scaling factor (peak = A)
+                const realT x0,   ///< [in] is the x-coordinate of the center
+                const realT sigma ///< [in] is the width of the Gaussian.
+             )
 { 
    return G0 + A * exp( -( static_cast<realT>(0.5)/(sigma*sigma) * ( ( (x-x0)*(x-x0))) ));
 }
@@ -103,14 +117,14 @@ realT gaussian( const realT & x, ///< [in] is the x-position at which to evaluat
   * \ingroup gen_math_gaussians
   */ 
 template<typename realT>
-realT gaussian2D( const realT  x, ///< [in] the x-position at which to evaluate the Gaussian
-                   const realT y, ///< [in] the y-positoin at which to evaluate the Gaussian
-                   const realT G0,  ///< [in] the constant to add to the Gaussian
-                   const realT A,   ///< [in] the scaling factor (peak height is  A-G0)
-                   const realT x0,  ///< [in] the x-coordinate of the center
-                   const realT y0,  ///< [in] the y-coordinate of the center
-                   const realT sigma  ///< [in] the width of the Gaussian.
-                 )
+realT gaussian2D( const realT  x,   ///< [in] the x-position at which to evaluate the Gaussian
+                  const realT y,    ///< [in] the y-positoin at which to evaluate the Gaussian
+                  const realT G0,   ///< [in] the constant to add to the Gaussian
+                  const realT A,    ///< [in] the scaling factor (peak height is  A-G0)
+                  const realT x0,   ///< [in] the x-coordinate of the center
+                  const realT y0,   ///< [in] the y-coordinate of the center
+                  const realT sigma ///< [in] the width of the Gaussian.
+               )
 { 
    return G0 + A*std::exp( -( 0.5/(sigma*sigma) * ( ( (x-x0)*(x-x0)) + ((y-y0)*(y-y0))) ));
 }

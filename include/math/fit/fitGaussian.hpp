@@ -385,6 +385,14 @@ public:
       }
    }
    
+   ///Return the full-width at half maximum
+   /** This is a simple scaling of the sigma() result 
+     */
+   realT fwhm()
+   {
+      return func::sigma2fwhm(sigma());
+   }
+   
    ///Return the width parameter on the long axis.
    realT sigma_x()
    {

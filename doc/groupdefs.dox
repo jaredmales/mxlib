@@ -34,6 +34,11 @@
   * \ingroup functions
   */
 
+/** \defgroup gen_math_moffats The Moffat Function
+  * \brief Utilities for working with the Moffat function
+  * \ingroup functions
+  */
+  
 /** \defgroup gen_math_airy_pattern The Airy Pattern
   * \brief Utilities for working with the Airy Pattern.
   * \ingroup functions

@@ -20,6 +20,9 @@ int main()
          
    tan_arcsec = tan( static_cast<floatT>(1.0) * pi<floatT>()/static_cast<floatT>(180)/static_cast<floatT>(3600));
    
+   
+   floatT twosqrt2log2 = static_cast<floatT>(2.0) * sqrt(static_cast<floatT>(2.0)*log(static_cast<floatT>(2.0))); 
+   
    for(int i=0;i<5;++i)
    {
       std::cout << i;
@@ -28,4 +31,5 @@ int main()
    std::cout << "5\n";
    
    std::cout << tan_arcsec << "\n";
+   std::cout << twosqrt2log2 << "\n";
 }
