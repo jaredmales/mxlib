@@ -65,7 +65,7 @@ namespace app
   * \code
     void derived_class::setupConfig()
     {
-       config.add("name", "s", "long", argType::true, "section", "keyword", true, "int", "help message");
+       config.add("name", "s", "long", argType::Required, "section", "keyword", false, "int", "help message");
     }
     \endcode
   * The configuration is then accessed using the `config` member's operator as in
