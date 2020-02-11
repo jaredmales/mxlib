@@ -37,7 +37,18 @@ namespace math
 namespace func 
 {
    
-   
+/** \addtogroup gen_math_moffats
+  * The Moffat Function\cite moffat_1969, a.k.a. the Moffat Profile, a.k.a. the Moffat Distribution, has the form
+  * \f[
+    I(x) = I_{pk}\left[ 1 + \frac{x^2}{\alpha^2}\right]^{-\beta}
+  * \f] 
+  * With \f$\beta=1\f$ it is the 
+  * Lorentzian or Cauchy distribution.  See also https://en.wikipedia.org/wiki/Moffat_distribution and
+  * https://en.wikipedia.org/wiki/Cauchy_distribution.
+  *
+  * 1-D and 2-D symmetric forms are provided.  Utilities are provided for normalizing and calculating the full-width at half-maximum.
+  */
+  
 ///Find value at position (x) of the 1D arbitrarily-centered symmetric unnormalized Moffat function
 /** The Moffat distribution is due to \cite moffat_1969.  With \f$\beta=1\f$ it is the 
   * Lorentzian or Cauchy distribution.  See also https://en.wikipedia.org/wiki/Moffat_distribution and
@@ -46,8 +57,9 @@ namespace func
   * Here we use the unnormalized general form, most useful for peak fitting.
   * 
   * This function computes:
-  * \f$ I(x) = I_0 + I\left[ 1 + \frac{(x-x_0)^2}{\alpha^2}\right]^{-\beta} \f$
-  * 
+  * \f[
+    I(x) = I_0 + I_{pk}\left[ 1 + \frac{(x-x_0)^2}{\alpha^2}\right]^{-\beta} 
+  * \f] 
   * 
   * \returns the value of the 1D arbitrarily-centered unnormalized Moffat at (x)
   * 
@@ -56,9 +68,9 @@ namespace func
   * \ingroup gen_math_moffats
   */ 
 template<typename realT>
-realT moffat( const realT x,   ///< [in] is the x-position at which to evaluate the Moffat function
+realT moffat( const realT x,     ///< [in] is the x-position at which to evaluate the Moffat function
               const realT I0,    ///< [in] is the constant to add to the Moffat function
-              const realT I,     ///< [in] is the scaling factor (peak = A)
+              const realT Ipk,   ///< [in] is the scaling factor (peak = A)
               const realT x0,    ///< [in] is the x-coordinate of the center
               const realT alpha, ///< [in] is the width parameter of the Moffat function.
               const realT beta   ///< [in] is the shape parameter of the Moffat function
@@ -67,7 +79,7 @@ realT moffat( const realT x,   ///< [in] is the x-position at which to evaluate 
    return I0 + I * pow( static_cast<realT>(1) + pow(x-x0,2)/pow(alpha,2), -beta);
 }
 
-///Find value at position (x,y) of the 2D arbitrarily-centered unnormalized symmetric Moffat function
+/// Find value at position (x,y) of the 2D arbitrarily-centered unnormalized symmetric Moffat function
 /** The Moffat distribution is due to \cite moffat_1969.  With \f$\beta=1\f$ it is the 
   * Lorentzian or Cauchy distribution.  See also https://en.wikipedia.org/wiki/Moffat_distribution and
   * https://en.wikipedia.org/wiki/Cauchy_distribution.
@@ -76,7 +88,7 @@ realT moffat( const realT x,   ///< [in] is the x-position at which to evaluate 
   * 
   * This function omputes:
   * \f[ 
-    I(x) = I_0 + I\left[ 1 + \frac{(x-x_0)^2 + (y-y_0)^2}{\alpha^2}\right]^{-\beta} 
+    I(x) = I_0 + I_{pk}\left[ 1 + \frac{(x-x_0)^2 + (y-y_0)^2}{\alpha^2}\right]^{-\beta} 
   * \f]
   * 
   * \returns the value of the 2D arbitrarily-centered symmetric Moffat function at (x,y)
@@ -89,14 +101,14 @@ template<typename realT>
 realT moffat2D( const realT x,     ///< [in] the x-position at which to evaluate the Moffat function
                 const realT y,     ///< [in] the y-positoin at which to evaluate the Moffat function
                 const realT I0,    ///< [in] the constant to add to the Moffat function
-                const realT I,     ///< [in] the scaling factor (peak height is  A-G0)
+                const realT Ipk,   ///< [in] the scaling factor (peak height is  A-G0)
                 const realT x0,    ///< [in] the x-coordinate of the center
                 const realT y0,    ///< [in] the y-coordinate of the center
                 const realT alpha, ///< [in] the width parameter of the Moffat function.
                 const realT beta   ///< [in] the shape parameter of the Moffat function.
               )
 { 
-   return I0 + I * pow( static_cast<realT>(1) + (pow(x-x0,2)+pow(y-y0,2))/pow(alpha,2), -beta);
+   return I0 + Ipk * pow( static_cast<realT>(1) + (pow(x-x0,2)+pow(y-y0,2))/pow(alpha,2), -beta);
 }
 
 /// Compute the full-width at half-maximum of a Moffat profile

@@ -39,11 +39,19 @@ namespace math
 namespace fit
 {
 
-/** \defgroup moffat_peak_fit Moffat functions
+/** \defgroup moffat_peak_fit Moffat Functions
   * \brief Fitting Moffat functions to data.
   * 
-  * The Moffat function is fit to data.  
+  * The Moffat Function\cite moffat_1969, a.k.a. the Moffat Profile, a.k.a. the Moffat Distribution, has the form
+  * \f[
+    I(x) = I_{pk}\left[ 1 + \frac{x^2}{\alpha^2}\right]^{-\beta}
+  * \f] 
+  * With \f$\beta=1\f$ it is the 
+  * Lorentzian or Cauchy distribution.  See also https://en.wikipedia.org/wiki/Moffat_distribution and
+  * https://en.wikipedia.org/wiki/Cauchy_distribution.
   * 
+  * For utilities for working with Moffat functions see \ref gen_math_moffats.
+  *
   * \ingroup peak_fit 
   */
 
@@ -56,23 +64,11 @@ template<typename _realT>
 struct moffat2D_sym_fitter;
 
 ///Class to manage fitting a 2D Moffat to data via the \ref levmarInterface
-/** In addition to the requirements on fitterT specified by \ref levmarInterface
-  * this class also requires the following in fitterT
-  * \code
-    static const int nparams = 6; //where the number 7 is replaced by the number of parameters that fitterT expects to fit. 
-   
-    static realT I0( array2FitMoffat<realT> & arr,
-                     realT * p
-                   );
-                  
-    static void I0( array2FitMoffat<realT> & arr,
-                    realT * p,
-                    realT nI0
-                  );
-  * \endcode
-  * 
+/** Fits \ref gen_math_moffats to a 2-dimensional array of data.
   *
-  * \tparam fitterT a type meeting the above requirements.
+  * This class allows for treating any of the parameters as fixed.
+  * 
+  * \tparam fitterT a type meeting the requirements specified in \ref levmarInterface.
   *
   * \ingroup moffat_peak_fit
   *
@@ -85,15 +81,17 @@ public:
    
    typedef typename fitterT::realT realT;
 
-   static const int nparams = fitterT::nparams;
-
+protected:
+   
    array2FitMoffat<realT> arr;
    
    void initialize()
    {
-      this->allocate_params(nparams);
+      this->allocate_params(arr.nparams());
       this->adata = &arr;      
    }
+
+public:
    
    fitMoffat2D()
    {
@@ -102,6 +100,21 @@ public:
       
    ~fitMoffat2D()
    {
+   }
+   
+   /// Set whether each parameter is fixed.
+   /** Sets the parameter indices appropriately.
+     */
+   void setFixed( bool I0,    ///< [in] if true, then I0 will be not be part of the fit
+                  bool I,     ///< [in] if true, then I will be not be part of the fit
+                  bool x0,    ///< [in] if true, then x0 will be not be part of the fit
+                  bool y0,    ///< [in] if true, then y0 will be not be part of the fit
+                  bool alpha, ///< [in] if true, then alpha will be not be part of the fit
+                  bool beta   ///< [in] if true, then beta will be not be part of the fit
+                )
+   {
+      arr.setFixed(I0, I, x0, y0, alpha, beta);
+      this->allocate_params(arr.nparams());
    }
    
    ///Set the initial guess for a symmetric Moffat.
@@ -113,20 +126,18 @@ public:
                   realT beta   ///< [in] the shape parameter
                 )
    {
-      fitterT::I0(arr,this->p,I0);
-      fitterT::I(arr,this->p,I);
-      fitterT::x0(arr,this->p,x0);
-      fitterT::y0(arr,this->p,y0);
-      fitterT::alpha(arr,this->p,alpha);
-      fitterT::beta(arr,this->p,beta);
+      arr.I0(this->p,I0);
+      arr.I(this->p,I);
+      arr.x0(this->p,x0);
+      arr.y0(this->p,y0);
+      arr.alpha(this->p,alpha);
+      arr.beta(this->p,beta);
    }
    
-   
-   
    ///Set the data aray.
-   void setArray( realT *data, 
-                  int nx, 
-                  int ny
+   void setArray( realT *data, ///< [in] pointer to an nx X ny array of data to be fit
+                  int nx,      ///< [in] the number of pixels in the x direction of the data array
+                  int ny       ///< [in] the number of pixels in the y direction of the data array
                 )
    {
       arr.data = data;
@@ -137,52 +148,64 @@ public:
       
    }
    
-   ///Do the fit.
-   int fit()
-   {
-      fitterT fitter;
-      levmarInterface<fitterT>::fit();      
-   }
-     
    ///Get the current value of I0, the constant.
    /**
-     * \returns the current value of I0, which is p[0].
+     * \returns the current value of I0
      */ 
    realT I0()
    {
-      return fitterT::I0( this->arr, this->p );
+      return arr.I0( this->p );
    }
 
-   ///Get the peak scaling.
+   ///Get the current value of I, the peak scaling.
+   /**
+     * \returns the current value of I
+     */
    realT I()
    {
-      return fitterT::I( this->arr, this->p );
+      return arr.I( this->p );
    }
 
-   ///Get the center x-coordinate
+   ///Get the center x-
+   /**
+     * \returns the current value of x0
+     */ 
    realT x0()
    {
-      return fitterT::x0( this->arr, this->p );
+      return arr.x0( this->p );
    }
    
    ///Get the center y-coordinate
+   /**
+     * \returns the current value of y0
+     */ 
    realT y0()
    {
-      return fitterT::y0( this->arr, this->p );
+      return arr.y0( this->p );
    }
    
    ///Return the width parameter
+   /**
+     * \returns the current value of alpha
+     */ 
    realT alpha()
    {
-      return fitterT::alpha( this->arr, this->p );
+      return arr.alpha( this->p );
    }
    
+   /// Return the shape parameter
+   /**
+     * \returns the current value of beta
+     */ 
    realT beta()
    {
-      return fitterT::beta( this->arr, this->p );
+      return arr.beta( this->p );
    }
    
    ///Return the full-width at half maximum
+   /**
+     * \returns the FWHM calculated from alpha and beta
+     */ 
    realT fwhm()
    {
       return func::moffatFWHM(alpha(), beta());
@@ -208,6 +231,214 @@ struct array2FitMoffat
    realT m_y0 {0};
    realT m_alpha {0};
    realT m_beta {0};
+   
+   int m_I0_idx {0};
+   int m_I_idx {1};
+   int m_x0_idx {2};
+   int m_y0_idx {3};
+   int m_alpha_idx {4};
+   int m_beta_idx {5};
+   
+   int m_nparams = 6;
+   
+   /// Set whether each parameter is fixed.
+   /** Sets the parameter indices appropriately.
+     */
+   void setFixed( bool I0, 
+                  bool I, 
+                  bool x0, 
+                  bool y0, 
+                  bool alpha, 
+                  bool beta 
+                )
+   {
+      int idx = 0;
+      
+      if(I0) m_I0_idx = -1;
+      else m_I0_idx = idx++;
+      
+      if(I) m_I_idx = -1;
+      else m_I_idx = idx++;
+   
+      if(x0) m_x0_idx = -1;
+      else m_x0_idx = idx++;
+      
+      if(y0) m_y0_idx = -1;
+      else m_y0_idx = idx++;
+      
+      if(alpha) m_alpha_idx = -1;
+      else m_alpha_idx = idx++;
+      
+      if(beta) m_beta_idx = -1;
+      else m_beta_idx = idx++;
+      
+      m_nparams = idx;
+   }
+   
+   realT I0( realT * p )
+   {
+      if( m_I0_idx < 0 )
+      {
+         return m_I0;
+      }
+      else
+      {
+         return p[m_I0_idx];
+      }
+   }
+   
+   void I0( realT * p,
+            realT nI0
+           )
+   {
+      if( m_I0_idx < 0 )
+      {
+         m_I0 = nI0;
+      }
+      else
+      {
+         p[m_I0_idx]=nI0;
+      }
+   }
+   
+   realT I( realT * p )
+   {
+      if( m_I_idx < 0 )
+      {
+         return m_I;
+      }
+      else
+      {
+         return p[m_I_idx];
+      }
+   }
+   
+   void I( realT * p,
+           realT nI
+         )
+   {
+      if( m_I_idx < 0 )
+      {
+         m_I = nI;
+      }
+      else
+      {
+         p[m_I_idx] = nI;
+      }
+   }
+   
+   realT x0( realT * p )
+   {
+      if( m_x0_idx < 0 )
+      {
+         return m_x0;
+      }
+      else
+      {
+         return p[m_x0_idx];
+      }
+   }
+   
+   void x0( realT * p,
+            realT nx0
+          )
+   {
+      if( m_x0_idx < 0 )
+      {
+         m_x0 = nx0;
+      }
+      else
+      {
+         p[m_x0_idx] = nx0;
+      }
+   }
+   
+   realT y0( realT * p )
+   {
+      if( m_y0_idx < 0 )
+      {
+         return m_y0;
+      }
+      else
+      {
+         return p[m_y0_idx];
+      }
+   }
+   
+   void y0( realT * p,
+            realT ny0
+          )
+   {
+      if( m_y0_idx < 0 )
+      {
+         m_y0 = ny0;
+      }
+      else
+      {
+         p[m_y0_idx] = ny0;
+      }
+   }
+   
+   
+   realT alpha( realT * p )
+   {
+      if( m_alpha_idx < 0 )
+      {
+         return m_alpha;
+      }
+      else
+      {
+         return p[m_alpha_idx];
+      }
+   }
+   
+   void alpha( realT * p,
+               realT nalpha
+             )
+   {
+      if( m_alpha_idx < 0 )
+      {
+         m_alpha = nalpha;
+      }
+      else
+      {
+         p[m_alpha_idx] = nalpha;
+      }
+   }
+   
+   
+   realT beta( realT * p )
+   {
+      if( m_beta_idx < 0 )
+      {
+         return m_beta;
+      }
+      else
+      {
+         return p[m_beta_idx];
+      }
+   }
+   
+   void beta( realT * p,
+              realT nbeta
+            )
+   {
+      if( m_beta_idx < 0 )
+      {
+         m_beta = nbeta;
+      }
+      else
+      {
+         p[m_beta_idx] = nbeta;
+      }
+   }
+   
+   int nparams()
+   {
+      return m_nparams;
+   }
+   
+   
 };
 
 ///\ref levmarInterface fitter structure for the symmetric Moffat.
@@ -229,257 +460,27 @@ struct moffat2D_sym_fitter
 
       idx_dat = 0;
    
-      for(int i=0;i<arr->nx; i++)
+      realT I0 = arr->I0(p);
+      realT I = arr->I(p);
+      realT x0 = arr->x0(p);
+      realT y0 = arr->y0(p);
+      realT alpha = arr->alpha(p);
+      realT beta = arr->beta(p);
+      
+      for(int i=0; i<arr->nx; ++i)
       {
-         for(int j=0;j<arr->ny;j++)
+         for(int j=0; j<arr->ny; ++j)
          { 
             idx_mat = i+j*arr->nx;
    
-            hx[idx_dat] = func::moffat2D<realT>(i,j,p[0],p[1], p[2], p[3], p[4], p[5]) - arr->data[idx_mat];
+            hx[idx_dat] = func::moffat2D<realT>(i,j,I0,I, x0, y0, alpha, beta) - arr->data[idx_mat];
             
-            idx_dat++;
+            ++idx_dat;
          }
       }
-   }
-   
-   static realT I0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(arr);
-      return p[0];
-   }
-   
-   static void I0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT nI0
-                 )
-   {
-      static_cast<void>(arr);
-      p[0] = nI0;
-   }
-   
-   static realT I( array2FitMoffat<realT> & arr,
-                   realT * p
-                 )
-   {
-      static_cast<void>(arr);
-      return p[1];
-   }
-   
-   static void I( array2FitMoffat<realT> & arr,
-                  realT * p,
-                  realT nI
-                )
-   {
-      static_cast<void>(arr);
-      p[1] = nI;
-   }
-   
-   static realT x0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(arr);
-      return p[2];
-   }
-   
-   static void x0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT nx0
-                 )
-   {
-      static_cast<void>(arr);
-      p[2] = nx0;
-   }
-   
-   static realT y0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(arr);
-      return p[3];
-   }
-
-   static void y0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT ny0
-                 )
-   {
-      static_cast<void>(arr);
-      p[3] = ny0;
-   }
-   
-   static realT alpha( array2FitMoffat<realT> & arr,
-                       realT * p
-                     )
-   {
-      static_cast<void>(arr);
-      return p[4];
-   }
-   
-   static void alpha( array2FitMoffat<realT> & arr,
-                      realT * p,
-                      realT na
-                    )
-   {
-      static_cast<void>(arr);
-      p[4] = na;
-   }
-   
-   static realT beta( array2FitMoffat<realT> & arr,
-                      realT * p
-                    )
-   {
-      static_cast<void>(arr);
-      return p[5];
-   }
-   
-   static void beta( array2FitMoffat<realT> & arr,
-                     realT * p,
-                     realT nb
-                   )
-   {
-      static_cast<void>(arr);
-      p[5] = nb;
-   }
+   }   
 };
 
-///\ref levmarInterface fitter structure for the symmetric Moffat.
-/** \ingroup moffat_peak_fit
-  *
-  */
-template<typename _realT>
-struct moffat2D_sym_fitter_alpha_beta_only
-{
-   typedef _realT realT;
-   
-   static const int nparams = 6;
-   
-   static void func(realT *p, realT *hx, int m, int n, void *adata)
-   {
-      array2FitMoffat<realT> * arr = (array2FitMoffat<realT> *) adata;
-   
-      size_t idx_mat, idx_dat;
-
-      idx_dat = 0;
-   
-      for(int i=0;i<arr->nx; i++)
-      {
-         for(int j=0;j<arr->ny;j++)
-         { 
-            idx_mat = i+j*arr->nx;
-   
-            hx[idx_dat] = func::moffat2D<realT>(i,j,arr->m_I0,arr->m_I, arr->m_x0, arr->m_y0, p[0], p[1]) - arr->data[idx_mat];
-            
-            idx_dat++;
-         }
-      }
-   }
-   
-   static realT I0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(p);
-      return arr->m_I0;
-   }
-   
-   static void I0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT nI0
-                 )
-   {
-      static_cast<void>(p);
-      arr.m_I0 = nI0;
-   }
-   
-   static realT I( array2FitMoffat<realT> & arr,
-                   realT * p
-                 )
-   {
-      static_cast<void>(p);
-      return arr.m_I;
-   }
-   
-   static void I( array2FitMoffat<realT> & arr,
-                  realT * p,
-                  realT nI
-                )
-   {
-      static_cast<void>(p);
-      arr.m_I = nI;
-   }
-   
-   static realT x0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(p);
-      return arr.m_x0;
-   }
-   
-   static void x0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT nx0
-                 )
-   {
-      static_cast<void>(p);
-      arr.m_x0 = nx0;
-   }
-   
-   static realT y0( array2FitMoffat<realT> & arr,
-                    realT * p
-                  )
-   {
-      static_cast<void>(p);
-      return arr.m_y0;
-   }
-
-   static void y0( array2FitMoffat<realT> & arr,
-                   realT * p,
-                   realT ny0
-                 )
-   {
-      static_cast<void>(p);
-      arr.m_y0 = ny0;
-   }
-   
-   static realT alpha( array2FitMoffat<realT> & arr,
-                       realT * p
-                     )
-   {
-      static_cast<void>(arr);
-      return p[0];
-   }
-   
-   static void alpha( array2FitMoffat<realT> & arr,
-                      realT * p,
-                      realT a
-                    )
-   {
-      static_cast<void>(arr);
-      p[0] = a;
-   }
-   
-   static realT beta( array2FitMoffat<realT> & arr,
-                      realT * p
-                    )
-   {
-      static_cast<void>(arr);
-      return p[1];
-   }
-   
-   static void beta( array2FitMoffat<realT> & arr,
-                     realT * p,
-                     realT b
-                   )
-   {
-      static_cast<void>(arr);
-      p[1] = b;
-   }
-   
-};
 
 ///Alias for the fitMoffat2D type fitting the symmetric Moffat profile.
 /** \ingroup moffat_peak_fit
@@ -487,11 +488,6 @@ struct moffat2D_sym_fitter_alpha_beta_only
 template<typename realT>
 using fitMoffat2Dsym = mx::math::fit::fitMoffat2D<mx::math::fit::moffat2D_sym_fitter<realT>>;
 
-///Alias for the fitMoffat2D type fitting the symmetric Moffat profile with only \f$\alpha\f$ and \f$\beta\f$ free.
-/** \ingroup moffat_peak_fit
-  */
-template<typename realT>
-using fitMoffat2Dsym_alpha_beta_only = mx::math::fit::fitMoffat2D<mx::math::fit::moffat2D_sym_fitter_alpha_beta_only<realT>>;
 
 } //namespace fit
 } //namespace math
