@@ -108,9 +108,13 @@ struct baseSpectrum
 
    /// Characterize the spectrum as a filter transmission curve.
    /** For a transmission curve given by \f$ T(\lambda ) \f$  The central wavelength is defined as
-     * \f$ \lambda_0 = \frac{1}{w_{eff}}\int T(\lambda ) \lambda d\lambda \f$
+     * \f[ 
+       \lambda_0 = \frac{1}{w_{eff}}\int \frac{T(\lambda )}{T_{max}} \lambda d\lambda 
+       \f]
      * where the effective width is defined by
-     * \f$ w_{eff} = \int T(\lambda ) d\lambda \f$
+       \f[ 
+        w_{eff} = \int \frac{T(\lambda )} { T_{max}} d\lambda 
+        \f]
      *
      * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ T(\lambda) \f$.
      *
@@ -122,24 +126,25 @@ struct baseSpectrum
                    std::vector<realT> & lambda ///< [in] the wavelength scale, should correspond to the spectrum.
                  )
    {
-      weff = 0;
-
-      for(int i=0; i< lambda.size()-1; ++i) weff += _spectrum[i]*(lambda[i+1]-lambda[i]);
-      weff += _spectrum[_spectrum.size()-1]* (lambda[lambda.size()-1] -lambda[lambda.size()-2]);
-
-      lambda0 = 0;
-      for(int i=0; i< lambda.size()-1; ++i) lambda0 += lambda[i]*_spectrum[i]*(lambda[i+1]-lambda[i]);
-      lambda0 += lambda[_spectrum.size()-1]* _spectrum[_spectrum.size()-1] * (lambda[lambda.size()-1] -lambda[lambda.size()-2]);
-
-      lambda0 /= weff;
-
-      realT left, right;
-
       max = 0;
       for(int i=0; i< lambda.size(); ++i)
       {
          if(_spectrum[i] > max) max = _spectrum[i];
       }
+      
+      weff = 0;
+      for(int i=0; i< lambda.size()-1; ++i) weff += _spectrum[i]*(lambda[i+1]-lambda[i])/max;
+      weff += _spectrum[_spectrum.size()-1]* (lambda[lambda.size()-1] -lambda[lambda.size()-2])/max;
+
+      lambda0 = 0;
+      for(int i=0; i< lambda.size()-1; ++i) lambda0 += lambda[i]*_spectrum[i]*(lambda[i+1]-lambda[i])/max;
+      lambda0 += lambda[_spectrum.size()-1]* _spectrum[_spectrum.size()-1] * (lambda[lambda.size()-1] -lambda[lambda.size()-2])/max;
+
+      lambda0 /= weff;
+
+      realT left, right;
+
+      
 
       int i=1;
       while(i < lambda.size())
@@ -167,38 +172,43 @@ struct baseSpectrum
       fwhm = right-left;
    }
 
-   /// Characterize the fluxes of the spectrum w.r.t. a filter transmission curve
-   /**
+   /// Characterize the flux densities of the spectrum w.r.t. a filter transmission curve
+   /** To obtain the flux (e.g. W/m^2) multiply these quantities by the effective width calculated using
+     * \ref charTrans.
+     * 
      * \warning this only produces correct fphot0 for a spectrum in W/m^3.  DO NOT USE FOR ANYTHING ELSE.
      *
      * \todo use unit conversions to make it work for everything.
      * \todo check on integration method, should it be trap?
      *
      */
-   void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in ergs/sec/um/cm^2
-                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy
-                  realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^2
+   void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy [currently not valid]
+                  realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
                   std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
                   std::vector<realT> & trans  ///< [in] the filter transmission curve over which to characterize.
                 )
    {
 
-      realT min_l = 1e30;
-      realT max_l = 0;
-
-      for(int i=0; i< lambda.size(); ++i)
-      {
-         if( lambda[i] < min_l) min_l = lambda[i];
-         if( lambda[i] > max_l) max_l = lambda[i];
-      }
+//       realT min_l = 1e30;
+//       realT max_l = 0;
+// 
+//       for(int i=0; i< lambda.size(); ++i)
+//       {
+//          if( lambda[i] < min_l) min_l = lambda[i];
+//          if( lambda[i] > max_l) max_l = lambda[i];
+//       }
+// 
+//       int min_l_i = 0;
+//       int max_l_i = 0;
+// 
+//       while( lambda[min_l_i] < min_l) ++min_l_i;
+//       max_l_i = min_l_i;
+//       while( lambda[max_l_i] <= max_l) ++max_l_i;
 
       int min_l_i = 0;
-      int max_l_i = 0;
-
-      while( lambda[min_l_i] < min_l) ++min_l_i;
-      max_l_i = min_l_i;
-      while( lambda[max_l_i] <= max_l) ++max_l_i;
-
+      int max_l_i = lambda.size();
+      
       realT tottrans = 0;
 
       for(int i=min_l_i; i< max_l_i-1; ++i) tottrans += trans[i]*(lambda[i+1]-lambda[i]);
@@ -217,12 +227,12 @@ struct baseSpectrum
 
       // fnu0
 
-      fnu0 = 0;
+      fnu0 = -1;
 
-      for(int i=min_l_i; i< max_l_i-1; ++i) fnu0 += _spectrum[i]*3.33564095E+08*pow(lambda[i],2)*trans[i]*(lambda[i+1]-lambda[i]);
+      /*for(int i=min_l_i; i< max_l_i-1; ++i) fnu0 += _spectrum[i]*3.33564095E+08*pow(lambda[i],2)*trans[i]*(lambda[i+1]-lambda[i]);
       fnu0 += _spectrum[max_l_i-1]*3.33564095E+08*pow(lambda[max_l_i-1],2)*trans[max_l_i-1]*(lambda[max_l_i-1]-lambda[max_l_i-2]);
 
-      fnu0 /= tottrans;
+      fnu0 /= tottrans;*/
 
       //fphot0
 
@@ -231,7 +241,6 @@ struct baseSpectrum
 
       fphot0 = 0;
 
-      //Conversions to wavelength-meters and area-meters^2
       for(int i=min_l_i; i< max_l_i-1; ++i) fphot0 += _spectrum[i]/( (h*c)/(lambda[i]))*trans[i]*(lambda[i+1]-lambda[i]);
       fphot0 += _spectrum[max_l_i-1]/( (h*c)/(lambda[max_l_i-1]))*trans[max_l_i-1]*(lambda[max_l_i-1]-lambda[max_l_i-2]);
 
