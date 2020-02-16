@@ -30,6 +30,8 @@
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
 
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
 
 #include "jinc.hpp"
 
@@ -120,6 +122,84 @@ realT seeingHalo( realT x, ///< [in] the separation in the same units as fwhm.
                  )
 {
    return (0.488/(fwhm*fwhm))*pow(1. + (11./6.)*pow(x/fwhm,2), -11./6.);
+}
+
+/// Calculate the fraction of enclosed power at a given radius for the unobscured Airy Pattern 
+/** See Mahajan (1986) \cite mahajan_1986 and https://en.wikipedia.org/wiki/Airy_disk.
+  *
+  * \returns the fraction of enclosed power at radius x
+  * 
+  * \ingroup psfs
+  * \ingroup gen_math_airy_pattern
+  */ 
+template<typename realT>
+realT airyPatternEnclosed( realT x /**< [in] the radius */)
+{
+   realT x1 = x*pi<realT>();
+   
+   realT b0 = boost::math::cyl_bessel_j<realT>(0,x1);
+   b0=b0*b0;
+   
+   realT b1 = boost::math::cyl_bessel_j<realT>(1,x1);
+   b1=b1*b1;
+   
+   realT encp = static_cast<realT>(1) - b0 - b1;
+   
+   return encp;
+}
+
+template<typename realT>
+realT apeInt( realT x,
+              void * params
+            )
+{
+   realT eps = *static_cast<realT*>(params);
+   
+   return boost::math::cyl_bessel_j<realT>(1,x)*boost::math::cyl_bessel_j<realT>(1,eps*x)/x;
+}
+
+/// Calculate the fraction of enclosed power at a given radius for the centrally obscured Airy Pattern 
+/** See Mahajan (1986) \cite mahajan_1986 and https://en.wikipedia.org/wiki/Airy_disk.
+  * If eps = 0, this calls the unobscured version.
+  * 
+  * \returns the fraction of enclosed power at radius x
+  * 
+  * \ingroup psfs
+  * \ingroup gen_math_airy_pattern
+  */ 
+template<typename realT>
+realT airyPatternEnclosed( realT x,  ///< [in] the radius
+                           realT eps ///< [in] the central obscuration fraction
+                         )
+{
+   if(eps == 0) return airyPatternEnclosed(x);
+   
+   gsl_function func;
+   func.function = apeInt<realT>;
+   func.params = &eps;
+   
+   realT jint;
+   realT abserr;
+   size_t neval;
+   
+   realT x1 = x*pi<realT>();
+   
+   //gsl_set_error_handler_off();
+   gsl_integration_qng( &func, 0, x1, 1e-7, 1e-7, &jint,&abserr, &neval);
+   
+   realT b0 = boost::math::cyl_bessel_j<realT>(0,x1);
+   b0=b0*b0;
+   realT b1 = boost::math::cyl_bessel_j<realT>(1,x1);
+   b1=b1*b1;
+   
+   realT eps2 = pow(eps,2);
+   
+   realT encp = static_cast<realT>(1) - b0 - b1 + eps2*(static_cast<realT>(1) - b0 - b1);
+   
+   encp = encp - 4*eps*jint;
+   encp = encp/(static_cast<realT>(1)-eps2);
+   
+   return encp;
 }
 
 } //namespace func
