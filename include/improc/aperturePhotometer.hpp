@@ -79,7 +79,7 @@ public:
                int sizeY  ///< [in] The new size in columns
              )
    {
-      //Don't bother if we don't have too.
+      //Don't bother if we don't have to.
       if( sizeX == m_indexIm.rows() && sizeY == m_indexIm.cols()) return 0;
 
       m_indexIm.resize(sizeX, sizeY);
@@ -92,11 +92,13 @@ public:
       std::map<realT, size_t> unrads; // Map of unique radii to their indices in the radius vector.
    
       //First populate the map
-      for(int i=0;i<radIm.rows();++i)
+      //Note: switched order of cols/rows indices for speeed
+      for(int i=0;i<radIm.cols();++i)
       {
-         for(int j=0;j<radIm.cols();++j)
+         for(int j=0;j<radIm.rows();++j)
          {
-            unrads[radIm(i,j)] = 0;
+            //unrads[radIm(j,i)] = 0;
+            unrads.insert(std::pair<realT, size_t>( radIm(j,i), 0));
          }
       }
       
@@ -110,14 +112,15 @@ public:
          it->second = n;
          ++n;
       }
-      
+
       //Finally, fill in the index image with index of the radius vector for that pixel.
-      for(int i=0;i<radIm.rows();++i)
+      //Note: switched order of cols/rows indices for speeed
+      for(int i=0;i<radIm.cols();++i)
       {
-         for(int j=0;j<radIm.cols();++j)
+         for(int j=0;j<radIm.rows();++j)
          {
-            it = unrads.find(radIm(i,j));
-            m_indexIm(i,j) = it->second;
+            it = unrads.find(radIm(j,i));
+            m_indexIm(j,i) = it->second;
          }
       }
       
@@ -125,8 +128,9 @@ public:
    }
 
    /// Get the cumulative photometry of an image as a function of radius.
-   /**
+   /** 
      * \note Source must be at geometric center of image.
+     * 
      * \returns 0 on success
      * \returns -1 on error
      */
@@ -154,11 +158,25 @@ public:
       if(y1 > m_indexIm.cols()-1) y1 = m_indexIm.rows()-1;
       
       //First get sum at each unique radius
-      for(int i= x0; i<= x1; ++i)
+      //Note: switched order of cols/rows indices for speeed
+      if(maxr == m_radius.back())
       {
-         for(int j=y0; j<=y1; ++j)
+         for(int i= y0; i<= y1; ++i)
          {
-            if(m_radius[m_indexIm(i,j)] <= maxr) cumPhot[ m_indexIm(i,j) ] += im(i,j);
+            for(int j=x0; j<=x1; ++j)
+            {
+               cumPhot[ m_indexIm(j,i) ] += im(j,i);
+            }
+         }
+      }
+      else
+      {
+         for(int i= y0; i<= y1; ++i)
+         {
+            for(int j=x0; j<=x1; ++j)
+            {
+               if(m_radius[m_indexIm(j,i)] <= maxr) cumPhot[ m_indexIm(j,i) ] += im(j,i);
+            }
          }
       }
 
@@ -166,7 +184,9 @@ public:
       for(int i=1; i<cumPhot.size(); ++i)
       {
          cumPhot[i] += cumPhot[i-1];
-      }      
+      }  
+      
+      return 0;
    }
 
    ///Get the radius value at an index of the vector.
