@@ -184,7 +184,7 @@ realT airyPatternEnclosed( realT x,  ///< [in] the radius
    
    realT x1 = x*pi<realT>();
    
-   //gsl_set_error_handler_off();
+   gsl_set_error_handler_off();
    gsl_integration_qng( &func, 0, x1, 1e-7, 1e-7, &jint,&abserr, &neval);
    
    realT b0 = boost::math::cyl_bessel_j<realT>(0,x1);
@@ -192,9 +192,14 @@ realT airyPatternEnclosed( realT x,  ///< [in] the radius
    realT b1 = boost::math::cyl_bessel_j<realT>(1,x1);
    b1=b1*b1;
    
+   realT b0e = boost::math::cyl_bessel_j<realT>(0,eps*x1);
+   b0e=b0e*b0e;
+   realT b1e = boost::math::cyl_bessel_j<realT>(1,eps*x1);
+   b1e=b1e*b1e;
+   
    realT eps2 = pow(eps,2);
    
-   realT encp = static_cast<realT>(1) - b0 - b1 + eps2*(static_cast<realT>(1) - b0 - b1);
+   realT encp = static_cast<realT>(1) - b0 - b1 + eps2*(static_cast<realT>(1) - b0e - b1e);
    
    encp = encp - 4*eps*jint;
    encp = encp/(static_cast<realT>(1)-eps2);
