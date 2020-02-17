@@ -31,6 +31,15 @@ struct baseSpectrum
 {
    std::vector<realT> _spectrum; ///< Contains the spectrum after it is set.
 
+   /// Get the current size of the spectrum
+   /**
+     * \returns the number of points in the spectrum
+     */ 
+   size_t size()
+   {
+      return _spectrum.size();
+   }
+   
    ///Access a single point in the spectrum, specified by its vector index.
    /**
      * \returns a reference to the value at i.
@@ -126,25 +135,28 @@ struct baseSpectrum
                    std::vector<realT> & lambda ///< [in] the wavelength scale, should correspond to the spectrum.
                  )
    {
+      size_t N = lambda.size();
+      realT dl = lambda[1] - lambda[0];
+      realT half = static_cast<realT>(0.5);
+      
+      
       max = 0;
-      for(int i=0; i< lambda.size(); ++i)
+      for(int i=0; i< N; ++i)
       {
          if(_spectrum[i] > max) max = _spectrum[i];
       }
       
-      weff = 0;
-      for(int i=0; i< lambda.size()-1; ++i) weff += _spectrum[i]*(lambda[i+1]-lambda[i])/max;
-      weff += _spectrum[_spectrum.size()-1]* (lambda[lambda.size()-1] -lambda[lambda.size()-2])/max;
-
-      lambda0 = 0;
-      for(int i=0; i< lambda.size()-1; ++i) lambda0 += lambda[i]*_spectrum[i]*(lambda[i+1]-lambda[i])/max;
-      lambda0 += lambda[_spectrum.size()-1]* _spectrum[_spectrum.size()-1] * (lambda[lambda.size()-1] -lambda[lambda.size()-2])/max;
-
-      lambda0 /= weff;
+      weff = half * _spectrum[0];
+      for(int i=1; i< N-1; ++i) weff += _spectrum[i];
+      weff += half * _spectrum[N-1];
+      weff *= dl/max;
+      
+      lambda0 = half*lambda[0]*_spectrum[0];
+      for(int i=1; i< N-1; ++i) lambda0 += lambda[i]*_spectrum[i];
+      lambda0 += half*lambda[N-1]*_spectrum[N-1];
+      lambda0 *= dl/max/weff;
 
       realT left, right;
-
-      
 
       int i=1;
       while(i < lambda.size())
@@ -153,21 +165,17 @@ struct baseSpectrum
          ++i;
       }
 
-      left = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
+      //Interpolate
+      left = lambda[i-1] + (0.5*max - _spectrum[i-1])* ( dl / (_spectrum[i]-_spectrum[i-1]));
 
-      while( _spectrum[i] < max )
+      i = N-2;
+      while( _spectrum[i] < 0.5*max )
       {
-         ++i;
-         if(i >= lambda.size() ) break;
+         --i;
+         if(i < 0 ) break;
       }
 
-      while( _spectrum[i] > 0.5*max )
-      {
-         ++i;
-         if( i >= lambda.size() ) break;
-      }
-
-      right = lambda[i-1] + (0.5 - _spectrum[i-1])* ( (lambda[i] - lambda[i-1]) / (_spectrum[i]-_spectrum[i-1]));
+      right = lambda[i] + (_spectrum[i]-0.5*max)* ( dl / (_spectrum[i]-_spectrum[i+1]));
 
       fwhm = right-left;
    }
@@ -183,68 +191,49 @@ struct baseSpectrum
      *
      */
    void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
-                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy [currently not valid]
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
                   realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
                   std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
-                  std::vector<realT> & trans  ///< [in] the filter transmission curve over which to characterize.
+                  std::vector<realT> & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
                 )
    {
-
-//       realT min_l = 1e30;
-//       realT max_l = 0;
-// 
-//       for(int i=0; i< lambda.size(); ++i)
-//       {
-//          if( lambda[i] < min_l) min_l = lambda[i];
-//          if( lambda[i] > max_l) max_l = lambda[i];
-//       }
-// 
-//       int min_l_i = 0;
-//       int max_l_i = 0;
-// 
-//       while( lambda[min_l_i] < min_l) ++min_l_i;
-//       max_l_i = min_l_i;
-//       while( lambda[max_l_i] <= max_l) ++max_l_i;
-
-      int min_l_i = 0;
-      int max_l_i = lambda.size();
+      size_t N = lambda.size();
+      realT dl = lambda[1] - lambda[0];
+      realT half = static_cast<realT>(0.5);
       
-      realT tottrans = 0;
-
-      for(int i=min_l_i; i< max_l_i-1; ++i) tottrans += trans[i]*(lambda[i+1]-lambda[i]);
-      tottrans += trans[max_l_i-1]* (lambda[max_l_i-1] - lambda[max_l_i-2]);
-
-
+      realT tottrans = half*trans[0];
+      for(int i=1; i< N-1; ++i) tottrans += trans[i];
+      tottrans += half*trans[N-1];
+      
+      tottrans *= dl;
+      
       // flambda0
 
-      flambda0 = 0;
-
-      for(int i=min_l_i; i< max_l_i-1; ++i) flambda0 += _spectrum[i]*trans[i]*(lambda[i+1]-lambda[i]);
-      flambda0 += _spectrum[max_l_i-1]*trans[max_l_i-1]*(lambda[max_l_i-1]-lambda[max_l_i-2]);
-
-      flambda0 /= tottrans;
+      flambda0 = half*_spectrum[0]*trans[0];
+      for(int i=1; i< N-1; ++i) flambda0 += _spectrum[i]*trans[i];
+      flambda0 += half*_spectrum[N-1]*trans[N-1];
+      flambda0  *= dl/tottrans;
 
 
       // fnu0
 
-      fnu0 = -1;
-
-      /*for(int i=min_l_i; i< max_l_i-1; ++i) fnu0 += _spectrum[i]*3.33564095E+08*pow(lambda[i],2)*trans[i]*(lambda[i+1]-lambda[i]);
-      fnu0 += _spectrum[max_l_i-1]*3.33564095E+08*pow(lambda[max_l_i-1],2)*trans[max_l_i-1]*(lambda[max_l_i-1]-lambda[max_l_i-2]);
-
-      fnu0 /= tottrans;*/
-
+      fnu0 = half*_spectrum[0]*pow(lambda[0],2)*trans[0];
+      for(int i=1; i< N-1; ++i) fnu0 += _spectrum[i]*pow(lambda[i],2)*trans[i];
+      fnu0 += half*_spectrum[N-1]*pow(lambda[N-1],2)*trans[N-1];
+      
+      fnu0 *= 3.33564095E+17 * dl / tottrans;
+      
       //fphot0
 
-      realT h = boost::units::si::constants::codata::h / boost::units::si::joule/boost::units::si::seconds;
-      realT c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
+      static realT h = boost::units::si::constants::codata::h / boost::units::si::joule/boost::units::si::seconds;
+      static realT c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
 
-      fphot0 = 0;
+      fphot0 = half*_spectrum[0] * lambda[0]*trans[0];
 
-      for(int i=min_l_i; i< max_l_i-1; ++i) fphot0 += _spectrum[i]/( (h*c)/(lambda[i]))*trans[i]*(lambda[i+1]-lambda[i]);
-      fphot0 += _spectrum[max_l_i-1]/( (h*c)/(lambda[max_l_i-1]))*trans[max_l_i-1]*(lambda[max_l_i-1]-lambda[max_l_i-2]);
+      for(int i=1; i< N-1; ++i) fphot0 += _spectrum[i] * lambda[i] *trans[i];
+      fphot0 += half*_spectrum[N-1] * lambda[N-1]*trans[N-1];
 
-      fphot0 /= tottrans;
+      fphot0 *= dl / (h*c*tottrans);
 
    }
 };
