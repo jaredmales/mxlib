@@ -480,7 +480,7 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
  Note that the routine returns \f$ V^T \f$, not \f$ V \f$.
 
  The divide and conquer algorithm makes very mild assumptions about
- floating poMXLAPACK_INT arithmetic. It will work on machines with a guard
+ floating point arithmetic. It will work on machines with a guard
  digit in add/subtract, or on those binary machines without guard
  digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
  Cray-2. It could conceivably fail on hexadecimal or decimal machines

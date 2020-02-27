@@ -36,6 +36,8 @@
 #include <thread>
 #include <chrono>
 
+#include <iostream>
+
 #include "ioutils/stringUtils.hpp"
 #include "astro/sofa.hpp"
 
@@ -102,8 +104,8 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */)
    std::this_thread::sleep_for(std::chrono::nanoseconds(nsec));
 }
 
-/** Adds two timespecs
-  * Result is `ts1 = ts1 + ts2`
+/** Adds a time offset to an existing timespec
+  * 
   */
 inline
 void timespecAddNsec( timespec & ts,
@@ -111,7 +113,7 @@ void timespecAddNsec( timespec & ts,
                     )
 {
    ts.tv_nsec += nsec % 1000000000; 
-   ts.tv_nsec += nsec / 1000000000; 
+   ts.tv_sec += nsec / 1000000000; 
 
    if(ts.tv_nsec > 999999999)
    {
@@ -357,14 +359,13 @@ std::string ISO8601DateTimeStr(int timeZone = 0)
 /** Returns a string in the ISO 8601 format:
   * YYYY-MM-DDYHH:MM:SS.SSSSSSSSS, with optional timezone designation such as Z or +00:00.
   *
-  * \param [in] timeIn is the input time
-  * \param [in] timeZone specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
-  *
   * \retval std::string containing the format date/time
   *
   * \ingroup timeutils
   */
-std::string ISO8601DateTimeStrMJD(const double &timeIn, int timeZone = 0)
+std::string ISO8601DateTimeStrMJD( const double &timeIn, ///< [in] the input time
+                                   int timeZone = 0      ///< [in] specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
+                                 )
 {
    int iy, im, id;
    double fd;
@@ -392,6 +393,36 @@ std::string ISO8601DateTimeStrMJD(const double &timeIn, int timeZone = 0)
    return result;
 }
 
+/// Get a timestamp string in the form YYYYMMDDHHMMSS.SSSSSSSSS
+/** Assumes the input timespec is in UTC.
+  *
+  * \returns 0 on success
+  * \returns -1 on error.
+  * 
+  * \ingroup timeutils
+  */ 
+int timeStamp( std::string & tstamp, ///< [out] the string to hold the formatted time 
+               timespec & ts         ///< [in] the timespec from which to produce the timestamp string
+             )
+{
+   tm uttime;//The broken down time.
+
+   time_t t0 = ts.tv_sec;
+
+   if(gmtime_r(&t0, &uttime) == 0)
+   {
+      std::cerr << "Error getting UT time (gmtime_r returned 0). At: " <<  __FILE__ << " " << __LINE__ << "\n";
+      return -1;
+   }
+
+   char buffer[24];
+
+   snprintf(buffer, 24, "%04i%02i%02i%02i%02i%02i%09i", uttime.tm_year+1900, uttime.tm_mon+1, uttime.tm_mday, uttime.tm_hour, uttime.tm_min, uttime.tm_sec, static_cast<int>(ts.tv_nsec)); //casting in case we switch type of time_ns.
+
+   tstamp = buffer;
+
+   return 0;   
+}
 
 /// Convert a UTC timespec to TAI modified Julian date
 /** Converts a timespec assumed to be in <a href="https://en.wikipedia.org/wiki/Coordinated_Universal_Time">Coordinated
@@ -446,6 +477,168 @@ int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * 
    if(rv1) return rv1;
    return 0;
 }
+
+timespec meanTimespec( timespec ts1, timespec ts2)
+{
+   double means = (ts1.tv_sec + ts2.tv_sec)/2.0;
+   double meanns = (ts1.tv_nsec + ts2.tv_nsec)/2.0;
+   
+   ts1.tv_sec = floor(means);
+   ts1.tv_nsec = round(meanns);
+   
+   if( means != floor(means) )
+   {
+      ts1.tv_nsec += 5e8;
+      
+      if(ts1.tv_nsec >= 1e9)
+      {
+         ts1.tv_sec += 1;
+         ts1.tv_nsec -= 1e9;
+      }
+   }
+   
+   return ts1;
+}
+
+   
+namespace tscomp
+{
+   
+/// Timespec comparison operator \< (see caveats)
+/** Caveats:
+  * - If the inputs are in UTC (or similar scale) this does not account for leap seconds
+  * - Assumes that the `tv_nsec` field does not exceed 999999999 nanoseconds
+  * 
+  * \returns true if tsL is earlier than tsR
+  * \returns false otherwise
+  * 
+  * \ingroup timeutils_tscomp
+  */  
+bool operator<( timespec const& tsL, ///< [in] the left hand side of the comparison
+                timespec const& tsR  ///< [in] the right hand side of the comparison 
+              )
+{
+   return ( ((tsL.tv_sec == tsR.tv_sec) && (tsL.tv_nsec < tsR.tv_nsec)) || (tsL.tv_sec < tsR.tv_sec));   
+}
+
+/// Timespec comparison operator \> (see caveats)
+/** Caveats:
+  * - If the inputs are in UTC (or similar scale) this does not account for leap seconds
+  * - Assumes that the `tv_nsec` field does not exceed 999999999 nanoseconds
+  * 
+  * \returns true if tsL is later than tsR
+  * \returns false otherwise
+  * 
+  * \ingroup timeutils_tscomp
+  */
+bool operator>( timespec const& tsL, ///< [in] the left hand side of the comparison
+                timespec const& tsR  ///< [in] the right hand side of the comparison 
+              )
+{
+   return ( ((tsL.tv_sec == tsR.tv_sec) && (tsL.tv_nsec > tsR.tv_nsec)) || (tsL.tv_sec > tsR.tv_sec)); 
+}
+
+/// Timespec comparison operator == (see caveats)
+/** Caveats:
+  * - If the inputs are in UTC (or similar scale) this does not account for leap seconds
+  * - Assumes that the `tv_nsec` field does not exceed 999999999 nanoseconds
+  * 
+  * \returns true if tsL is exactly the same as tsR
+  * \returns false otherwise
+  * 
+  * \ingroup timeutils_tscomp
+  */
+bool operator==( timespec const& tsL, ///< [in] the left hand side of the comparison
+                 timespec const& tsR  ///< [in] the right hand side of the comparison 
+               )
+{
+   return ( (tsL.tv_sec == tsR.tv_sec)  &&  (tsL.tv_nsec == tsR.tv_nsec) );
+}
+
+/// Timespec comparison operator \<= (see caveats)
+/** Caveats:
+  * - If the inputs are in UTC (or similar scale) this does not account for leap seconds
+  * - Assumes that the `tv_nsec` field does not exceed 999999999 nanoseconds.  
+  * 
+  * \returns true if tsL is earlier than or exactly equal to tsR
+  * \returns false otherwise
+  * 
+  * \ingroup timeutils_tscomp
+  */
+bool operator<=( timespec const& tsL, ///< [in] the left hand side of the comparison
+                 timespec const& tsR  ///< [in] the right hand side of the comparison 
+               )
+{
+   return ( tsL < tsR || tsL == tsR );   
+}
+
+/// Timespec comparison operator \>= (see caveats)
+/** Caveats:
+  * - If the inputs are in UTC (or similar scale) this does not account for leap seconds
+  * - Assumes that the `tv_nsec` field does not exceed 999999999 nanoseconds
+  * 
+  * \returns true if tsL is exactly equal to or is later than tsR
+  * \returns false otherwise
+  * 
+  * \ingroup timeutils_tscomp
+  */
+bool operator>=( timespec const& tsL, ///< [in] the left hand side of the comparison
+                 timespec const& tsR  ///< [in] the right hand side of the comparison 
+               )
+{
+   return ( tsL > tsR || tsL == tsR );   
+}
+
+} //namespace tscomp
+
+namespace tsop
+{
+   
+/// Add an amount of time specified in seconds to a timespec
+/**
+  * \returns the resulting timespec after addition
+  */  
+template<typename arithT>
+timespec operator+( timespec ts, ///< [in] the timespec to add to
+                    arithT add   ///< [in] the seconds to add
+                  )
+{
+   ts.tv_sec += floor(add);
+   
+   ts.tv_nsec += (add - floor(add))*1e9;
+   
+   if(ts.tv_nsec >= 1e9)
+   {
+      ts.tv_sec += 1;
+      ts.tv_nsec -= 1e9;
+   }
+   
+   return ts;
+}
+
+/// Subtract an amount of time specified in seconds from a timespec
+/**
+  * \returns the resulting timespec after subtraction
+  */
+template<typename arithT>
+timespec operator-( timespec ts, ///< [in] the timespec to subtract from
+                    arithT sub   ///< [in] the seconds to subtract
+                  )
+{
+   ts.tv_sec -= floor(sub);
+   
+   ts.tv_nsec -= (sub - floor(sub))*1e9;
+   
+   if(ts.tv_nsec < 0)
+   {
+      ts.tv_sec -= 1;
+      ts.tv_nsec += 1e9;
+   }
+   
+   return ts;
+}
+
+} //namespace tsop
 
 
 

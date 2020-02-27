@@ -39,6 +39,8 @@
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 
+#include "../timeUtils.hpp"
+
 //#include "vectorUtils.hpp"
 
 #include "../gnuPlot.hpp"
@@ -267,7 +269,9 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
                           eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
                           const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
                           int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
-                          syevrMem<_evCalcT> * mem = 0 ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+                          syevrMem<_evCalcT> * mem = 0, ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
+                          double * t_eigenv = nullptr, ///< [out] [optional] if not null, will be filled in with the time taken to calculate eigenvalues.
+                          double * t_klim = nullptr ///< [out] [optional] if not null, will be filled in with the time taken to calculate eigenvalues.
                         )
 {
    typedef _evCalcT evCalcT;
@@ -295,11 +299,15 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
 
    if(n_modes <= 0 || n_modes > tNims) n_modes = tNims;
 
+   if( t_eigenv) *t_eigenv = get_curr_time();
+   
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem);
       
+   if( t_eigenv) *t_eigenv = get_curr_time() - *t_eigenv;
+   
    if(info !=0 ) 
    {
       std::cerr << "info =" << info << "\n";
@@ -317,6 +325,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
 
    klModes.resize(n_modes, tNpix);
 
+   if( t_klim) *t_klim = get_curr_time();
    
    //Now calculate KL images
    /*
@@ -326,6 +335,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
                               tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
                                  0., klModes.data(), klModes.rows());
 
+   if( t_klim) *t_klim = get_curr_time() - *t_klim;
    
 } //calcKLModes        
 

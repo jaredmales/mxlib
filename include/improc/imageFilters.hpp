@@ -321,8 +321,8 @@ void radprofim( radprofT & radprof,
 {
    typedef typename eigenimT::Scalar floatT;
    
-   int dim1 = im.cols();
-   int dim2 = im.rows();
+   int dim1 = im.rows();
+   int dim2 = im.cols();
    
    floatT mr = rad.maxCoeff();
    

@@ -108,6 +108,28 @@ std::vector<size_t> vectorSortOrder( std::vector<memberT> const& values /**< [in
   * \tparam vectorT the std::vector type of vec
   *
   */
+template<typename valueT>
+valueT vectorMean( const valueT * vec, ///< [in] the vector 
+                   size_t sz           ///< [in] the size of the vector
+                 )
+{
+   valueT mean = 0;
+
+   for(size_t i=0; i< sz; ++i) mean += vec[i];
+
+   mean /= sz;
+
+   return mean;
+}
+
+///Calculate the mean of a vector.
+/**
+  *
+  * \returns the mean of vec
+  *
+  * \tparam vectorT the std::vector type of vec
+  *
+  */
 template<typename vectorT>
 typename vectorT::value_type vectorMean(const vectorT & vec /**< [in] the vector */)
 {
@@ -215,6 +237,29 @@ typename vectorT::value_type vectorMedian( const vectorT & vec, ///< [in] the ve
 /**
   * \returns the variance of vec w.r.t. mean
   *
+  * \tparam valueT the data type
+  *
+  */
+template<typename valueT>
+valueT vectorVariance( const valueT * vec, ///< [in] the vector
+                       size_t sz,          ///< [in] the size of the vector
+                       valueT mean         ///< [in] the mean value with which to calculate the variance
+                     )
+{
+   valueT var;
+
+   var = 0;
+   for(size_t i=0; i<sz; ++i) var += pow(vec[i]-mean,2);
+
+   var /= (sz-1);
+
+   return var;
+}
+
+///Calculate the variance of a vector relative to a supplied mean value.
+/**
+  * \returns the variance of vec w.r.t. mean
+  *
   * \tparam vectorT the std::vector type of vec
   *
   */
@@ -239,6 +284,25 @@ typename vectorT::value_type vectorVariance( const vectorT & vec,  ///< [in] the
   *
   * \tparam vectorT the std::vector type of vec
   *
+  */
+template<typename valueT>
+valueT vectorVariance( const valueT * vec, ///< [in] the vector
+                       size_t sz           ///< [in] the size of the vector
+                     )
+{
+   valueT mean;
+   mean = vectorMean(vec, sz);
+
+   return vectorVariance(vec, sz, mean);
+}
+
+///Calculate the variance of a vector.
+/**
+  * \returns the variance of vec
+  *
+  * \tparam vectorT the std::vector type of vec
+  *
+  * \overload
   */
 template<typename vectorT>
 typename vectorT::value_type vectorVariance( const vectorT & vec /**< [in] the vector */)

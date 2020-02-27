@@ -83,26 +83,37 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    int maxNmodes;
    
    /// Specify the minimum pixel difference at the inner edge of the search region 
-   realT mindpx;
+   realT m_minDPx {0};
    
+   /// Specify the maximum pixel difference at the inner edge of the search region 
+   realT m_maxDPx {0};
    
-   /// Controls how reference images are excluded, if at all, from the covariance matrix for each target image.
+   /// Controls how reference images are excluded, if at all, from the covariance matrix for each target image based on a minimum criterion.
    /** Can have the following values:
-     *  - <b>HCI::excludeNone</b> = no exclusion, all images included
+     *  - <b>HCI::excludeNone</b> = no exclusion, all images included [default]
      *  - <b>HCI::excludePixel</b> = exclude based on pixels of rotation at the inner edge of the region
      *  - <b>HCI::excludeAngle</b> = exclude based on degrees of rotation at the inner edge of the region
      *  - <b>HCI::excludeImno</b> = exclude based on number of images
      */
-   int excludeMethod;
+   int m_excludeMethod {HCI::excludeNone};
+   
+   /// Controls how reference images are excluded, if at all, from the covariance matrix for each target image based on a maximum criterion.
+   /** Can have the following values:
+     *  - <b>HCI::excludeNone</b> = no exclusion, all images included [default]
+     *  - <b>HCI::excludePixel</b> = exclude based on pixels of rotation at the inner edge of the region
+     *  - <b>HCI::excludeAngle</b> = exclude based on degrees of rotation at the inner edge of the region
+     *  - <b>HCI::excludeImno</b> = exclude based on number of images
+     */
+   int m_excludeMethodMax  {HCI::excludeNone};
    
    ///Number of reference images to include in the covariance matrix
    /** If > 0, then at most this many images, determined by highest cross-correlation, are included.
      * This is determined after rotational/image-number exclusion. 
      * If == 0, then all reference images are included. 
      */
-   int includeRefNum; 
+   int m_includeRefNum; 
    
-   
+   eigenImage<int> m_imsIncluded;
    
    KLIPreduction()
    {
@@ -125,9 +136,6 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    void initialize()
    {
-      mindpx = 0;
-      excludeMethod = HCI::excludeNone;
-      includeRefNum = 0;
       padSize = 4;
       
       t_worker_begin =0;
@@ -179,28 +187,8 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       return regions(vminr, vmaxr, vminq, vmaxq);
    }
    
-   void worker(eigenCube<realT> & rims, std::vector<size_t> & idx, realT dang);
-   //void worker(eigenCube<realT> rims, vector<size_t> idx, realT dang);
-   
-   ///Calculate the KL images for a given covariance matrix
-/*   template<typename eigenT, typename eigenT1>
-   void calcKLIms( eigenT & klims, 
-                   eigenT & cv, 
-                   const eigenT1 & Rims, 
-                   int n_modes = 0,
-                   math::syevrMem<evCalcT> * mem = 0);   
-*/
+   void worker(eigenCube<realT> & rims, std::vector<size_t> & idx, realT dang, realT dangMax);
 
-   /*template<typename eigenT, typename eigenTv>
-   void collapseCovar( eigenT & cutCV, 
-                       const eigenT & CV,
-                       const std::vector<realT> & sds,
-                       eigenT & rimsCut,
-                       const eigenTv & rims,
-                       int imno,
-                       double dang );
-     */                 
-   
    double t_worker_begin;
    double t_worker_end;
    
@@ -218,10 +206,11 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       printf("    Preprocessing: %f sec\n", this->t_preproc_end - this->t_preproc_begin);
       printf("      Az USM: %f sec\n", this->t_azusm_end - this->t_azusm_begin);
       printf("      Gauss USM: %f sec\n", this->t_gaussusm_end - this->t_gaussusm_begin);
-      printf("    KLIP algorithm: %f sec\n", this->t_worker_end - this->t_worker_begin);
-      printf("      EigenDecomposition %f sec\n", this->t_eigenv);
-      printf("      KL image calc %f sec\n", this->t_klim);
-      printf("      PSF calc/sub %f sec \n", this->t_psf);
+      printf("    KLIP algorithm: %f elapsed real sec\n", this->t_worker_end - this->t_worker_begin);
+      double klip_cpu = this->t_eigenv + this->t_klim + this->t_psf;
+      printf("      EigenDecomposition %f cpu sec (%f%%)\n", this->t_eigenv, this->t_eigenv/klip_cpu*100);
+      printf("      KL image calc %f cpu sec (%f%%)\n", this->t_klim, this->t_klim/klip_cpu*100);
+      printf("      PSF calc/sub %f cpu sec (%f%%)\n", this->t_psf, this->t_psf/klip_cpu*100);
       printf("    Derotation: %f sec\n", this->t_derotate_end-this->t_derotate_begin);
       printf("    Combination: %f sec\n", this->t_combo_end-this->t_combo_begin);
    }
@@ -308,6 +297,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    
    radAngImage(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1));
 
+   
+   m_imsIncluded.resize(this->Nims,this->Nims);
+   m_imsIncluded.setConstant(1);
+   
    std::cerr << "starting regions " << minr.size() << "\n";
    //******** For each region do this:
    for(size_t regno = 0; regno < minr.size(); ++regno)
@@ -329,27 +322,46 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       }
 
       realT dang = 0;
+      realT dangMax = 0;
       
-      if(mindpx < 0) excludeMethod = HCI::excludeNone;
+      if(m_minDPx < 0) m_excludeMethod = HCI::excludeNone;
+      if(m_maxDPx < 0) m_excludeMethodMax = HCI::excludeNone;
       
-      if(excludeMethod == HCI::excludePixel)
+      if(m_excludeMethod == HCI::excludePixel)
       {
-         dang = fabs(atan(mindpx/minr[regno]));
+         dang = fabs(atan(m_minDPx/minr[regno]));
       }
-      else if(excludeMethod == HCI::excludeAngle)
+      else if(m_excludeMethod == HCI::excludeAngle)
       {
-         dang = math::dtor(mindpx);
+         dang = math::dtor(m_minDPx);
       }
-      else if(excludeMethod == HCI::excludeImno)
+      else if(m_excludeMethod == HCI::excludeImno)
       {
-         dang = mindpx;
+         dang = m_minDPx;
+      }
+      
+      
+      if(m_excludeMethodMax == HCI::excludePixel)
+      {
+         dangMax = fabs(atan(m_maxDPx/minr[regno]));
+      }
+      else if(m_excludeMethodMax == HCI::excludeAngle)
+      {
+         dangMax = math::dtor(m_maxDPx);
+      }
+      else if(m_excludeMethodMax == HCI::excludeImno)
+      {
+         dangMax = m_maxDPx;
       }
       
       //*** Dispatch the work
-      worker(rims, idx, dang);
+      worker(rims, idx, dang, dangMax);
       std::cerr << "worker done\n";
       
    }
+   
+   fitsFile<int> ffii;
+   ffii.write("imsIncluded.fits", m_imsIncluded);
    
    if(this->doDerotate)
    {
@@ -418,9 +430,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
          head.append<char *>("REGMAXQ", (char *)str.str().c_str(), "region maximum angle(s)");
       }
       
-      head.append<int>("EXCLMTHD", excludeMethod, "value of excludeMethod");
-      head.append<realT>("MINDPX", mindpx, "minimum pixel delta");
-      head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
+      head.append<int>("EXCLMTHD", m_excludeMethod, "value of excludeMethod");
+      head.append<realT>("MINDPX", m_minDPx, "minimum pixel delta");
+      head.append<realT>("MAXDPX", m_minDPx, "maximum pixel delta");
+      head.append<int>("INCLREFN", m_includeRefNum, "value of includeRefNum");
 
       if(this->doWriteFinim == true && this->combineMethod > 0)
       {
@@ -444,22 +457,13 @@ struct cvEntry
 {
    int index;
    double cvVal;
+   double angle;
+   bool included {true};
 };
 
-//This sorts with greater-than
-bool cvEntryComp( const cvEntry & cvE1, const cvEntry & cvE2)
-{
-   return ( fabs(cvE1.cvVal) > fabs(cvE2.cvVal) );
-}
-
-//This sorts with less-than
-bool cvEntryCompIndex( const cvEntry & cvE1, const cvEntry & cvE2)
-{
-   return ( cvE1.index < cvE2.index );
-}
 
 template<typename eigenT, typename eigenTin>
-void extractRowsAndCols(eigenT & out, const eigenTin & in, const std::vector<cvEntry> & idx)
+void extractRowsAndCols(eigenT & out, const eigenTin & in, const std::vector<size_t> & idx)
 {
    
    out.resize(idx.size(), idx.size());
@@ -468,48 +472,52 @@ void extractRowsAndCols(eigenT & out, const eigenTin & in, const std::vector<cvE
    {
       for(size_t j=0; j < idx.size(); ++j)
       {
-         out(i,j) = in(idx[i].index, idx[j].index);
+         out(i,j) = in(idx[i], idx[j]);
       }
    }
    
 }
 
 template<typename eigenT, typename eigenTin>
-void extractCols(eigenT & out, const eigenTin & in, const std::vector<cvEntry> & idx)
+void extractCols(eigenT & out, const eigenTin & in, const std::vector<size_t> & idx)
 {
    
    out.resize(in.rows(), idx.size()); 
    
    for(size_t i=0; i< idx.size(); ++i)
    {
-      out.col(i) = in.col(idx[i].index); //it1->index);
+      out.col(i) = in.col(idx[i]); //it1->index);
    }
    
 }
 
-//template<typename realT, class derotFunctObj>
-//KLIPreduction<realT, derotFunctObj>::
 template<typename realT, typename eigenT, typename eigenTv, class derotFunctObj>
 void collapseCovar( eigenT & cutCV, 
-                                                          const eigenT & CV,
-                                                          const std::vector<realT> & sds,
-                                                          eigenT & rimsCut,
-                                                          const eigenTv & rims,
-                                                          int imno,
-                                                          double dang,
-                                                          int Nims,
-                                                          int excludeMethod,
-                                                          int includeRefNum,
-                                                          const derotFunctObj & derotF
-                                                        )
+                    const eigenT & CV,
+                    const std::vector<realT> & sds,
+                    eigenT & rimsCut,
+                    const eigenTv & rims,
+                    int imno,
+                    double dang,
+                    double dangMax,
+                    int Nims,
+                    int excludeMethod,
+                    int excludeMethodMax,
+                    int includeRefNum,
+                    const derotFunctObj & derotF,
+                    eigenImage<int> & imsIncluded
+                  )
 {   
    std::vector<cvEntry> allidx(Nims);
    
+   std::cerr << "dangs: " << dang << " " << dangMax << "\n";
    
-   //Initialize the vector cvEntries
+   
+   //Initialize the vector of cvEntries
    for(int i=0; i < Nims; ++i)
    {
       allidx[i].index = i;
+      allidx[i].angle = derotF.derotAngle(i);
       
       //CV is lower-triangular
       if(i <= imno)
@@ -527,80 +535,93 @@ void collapseCovar( eigenT & cutCV,
    
    if(excludeMethod == HCI::excludePixel || excludeMethod == HCI::excludeAngle )
    {
-      rotoff1 = Nims;
-      
-      //Find first rotoff within dang
-      int j;
-      for(j=0; j< Nims; ++j)
+      for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang )
-         {
-            rotoff0 = j;
-            ++j;
-            break;
-         }
-      }
-      //Find first rotoff outside dang --> this is the first image that will be included again
-      for(; j< Nims; ++j)
-      {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dang )
-         {
-            rotoff1 = j;
-            break;
-         }
+         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
       }
    }
    else if(excludeMethod == HCI::excludeImno)
    {
-      rotoff0 = imno-dang;
-      if(rotoff0 < 0) rotoff0= 0;
-      
-      rotoff1 = imno+dang+1;
-      if(rotoff1 > Nims-1) rotoff1 = Nims;      
+      for(size_t j=0; j < Nims; ++j) 
+      {
+         if( fabs( (long) j - imno)  <= dang ) allidx[j].included = false;
+      }      
    }
       
-   if(rotoff1-rotoff0 > 0)
+   if(excludeMethodMax == HCI::excludePixel || excludeMethodMax == HCI::excludeAngle )
    {
-      
-      //Note: erase(first, end()+n) does not erase the last element properly
-      //      have to handle this case as a possible error 
-      
-      std::vector<cvEntry>::iterator last;
-         
-      if(rotoff1 < Nims) last = allidx.begin() + rotoff1;
-      else last = allidx.begin() + (Nims-1); //Make sure we don't try to erase end() or more
-      
-      allidx.erase(allidx.begin()+rotoff0, last);
-      
-      if(rotoff1 > Nims-1) allidx.pop_back(); //Erase the last element if needed   
+      for(size_t j=0; j < Nims; ++j)
+      {
+         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
+      }
    }
+   else if(excludeMethodMax == HCI::excludeImno)
+   {
+      for(size_t j=0; j < Nims; ++j)
+      {
+         if( fabs( (long) j - imno)  > dangMax ) allidx[j].included = false;
+      }  
+   }      
    
+     
    if( includeRefNum > 0 && (size_t) includeRefNum < allidx.size())
    {
-      //First partially sort the correlation values
-      std::nth_element(allidx.begin(), allidx.begin()+ includeRefNum, allidx.end(), cvEntryComp);
-      std::cerr << "    Minimum correlation: " << allidx[includeRefNum].cvVal << "\n";
+      long kept = 0;
+      for(size_t j=0; j < Nims; ++j)
+      {
+         if(allidx[j].included == true) ++kept;
+      }
       
-      //Now delete the lower correlation values
-      allidx.erase(allidx.begin()+includeRefNum, allidx.end());
+      //Get a vector for sorting
+      std::vector<realT> cvVal;
+      cvVal.resize(kept);
+      size_t k = 0;
+      for(size_t j=0; j < Nims; ++j)
+      {
+         if(allidx[j].included == true) 
+         {  
+            cvVal[k] = allidx[j].cvVal;
+            ++k;
+         }
+      }
       
-      //Now we have to re-sort the remaining indices so that the CV matrix will still be U.T.
-      std::sort(allidx.begin(), allidx.end(), cvEntryCompIndex);
+      //Partially sort the correlation values
+      std::nth_element(cvVal.begin(), cvVal.begin()+ (kept-includeRefNum), cvVal.end());
+      
+      realT mincorr = cvVal[kept-includeRefNum];
+      std::cerr << "    Minimum correlation: " << mincorr << "\n";
+      
+      
+      for(size_t j=0; j < Nims; ++j)
+      {
+         if( allidx[j].cvVal < mincorr ) allidx[j].included = false;
+      }
+         
    }
-    
-   std::cerr << "  Keeping " << allidx.size() << " reference images out of " << Nims << " (" << rotoff1-rotoff0 << " rejected)\n";
-   
 
-   extractRowsAndCols(cutCV, CV, allidx);
-   extractCols(rimsCut, rims, allidx);
+   std::vector<size_t> keepidx;
+   for(size_t j=0;j<Nims;++j)
+   {
+      imsIncluded(imno,j) = allidx[j].included;
+      
+      if(allidx[j].included) keepidx.push_back(j);
+   }
+   
+   std::cerr << "  Keeping " << keepidx.size() << " reference images out of " << Nims << " (" << Nims-keepidx.size() << " rejected)\n";
+   
+   if(keepidx.size() == 0)
+   {
+      std::cerr << "\n\n" << imno << "\n\n";
+   }
+
+   extractRowsAndCols(cutCV, CV, keepidx);
+   extractCols(rimsCut, rims, keepidx);
    
 }
 
 
-
-
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> & rims, std::vector<size_t> & idx, realT dang)
+void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> & rims, std::vector<size_t> & idx, realT dang, realT dangMax)
 {
    std::cerr << "beginning worker\n";
 
@@ -616,18 +637,25 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
  
    math::eigenSYRK(cv, rims.cube());
       
+   fitsFile<realT> ff;
+   ff.write("cv.fits", cv);
    ompLoopWatcher<> status( this->Nims, std::cerr);
    
+   //Pre-calculate KL images once if we are exclude none
+   eigenImageT master_klims;
+   if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0)
+   {
+      double teigenv;
+      double tklim;
+      math::calcKLModes<double>(master_klims, cv, rims.cube(), maxNmodes, nullptr, &teigenv, &tklim);
+      t_eigenv += teigenv;
+      t_klim += tklim;
+   }
+      
    //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
-//       #ifdef _OPENMP
-//          #pragma omp critical
-//          std::cerr << "This is thread " << nTh++ << "\n";
-//       #endif
-      
       //We need local copies for each thread.  Only way this works, for whatever reason.
-
       eigenImageT cfs; //The coefficients
       eigenImageT psf;
       eigenImageT rims_cut;
@@ -636,35 +664,26 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       
       math::syevrMem<evCalcT> mem;
 
-      if( excludeMethod == HCI::excludeNone )
+      if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0 )
       {
-         /**** Now calculate the K-L Images ****/
-      
-         //calcKLIms(klims, cv, rims.cube(), maxNmodes);
-         math::calcKLModes(klims, cv, rims.cube(), maxNmodes);
+         klims = master_klims;
       }
    
       #pragma omp for 
       for(int imno = 0; imno < this->Nims; ++imno)
       {
-         //if(imno != 847) continue;
-         
          status.incrementAndOutputStatus();
          
-         if( excludeMethod != HCI::excludeNone )
+         if( m_excludeMethod != HCI::excludeNone || m_excludeMethodMax != HCI::excludeNone || m_includeRefNum != 0 )
          {         
-            /// \bug 2017-07-18 this omp critical is necessary on jetstream install.  Investigation needed. 
-            //Symptom is segfaults after running for a while.  
-            //Note that this may have been fixed by switching to satlas from tatlas, but probably not 
-            //Possible problem: this uses rims which is not thread private.
-            //#pragma omp critical
-            //{
-               collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, this->Nims, this->excludeMethod, this->includeRefNum, this->derotF);
-            //} 
+
+            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, dangMax, this->Nims, this->m_excludeMethod, this->m_excludeMethodMax, this->m_includeRefNum, this->derotF, m_imsIncluded);
             
             /**** Now calculate the K-L Images ****/
-            //calcKLIms(klims, cv_cut, rims_cut, maxNmodes, &mem);
-            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem);
+            double teigenv, tklim;
+            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem, &teigenv, &tklim);
+            t_eigenv += teigenv;
+            t_klim += tklim;
          }
          cfs.resize(1, klims.rows());
    
@@ -692,7 +711,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          }
          
 
-         t_psf = (get_curr_time() - t0) ;/// omp_get_num_threads();
+         t_psf += (get_curr_time() - t0) ;/// omp_get_num_threads();
          
          
       } //for imno
@@ -756,9 +775,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
             
-      head.append<int>("EXCLMTHD", excludeMethod, "value of excludeMethod");
-      head.append<realT>("MINDPX", mindpx, "minimum pixel delta");
-      head.append<int>("INCLREFN", includeRefNum, "value of includeRefNum");
+      head.append<int>("EXCLMTHD", m_excludeMethod, "value of excludeMethod");
+      head.append<realT>("MINDPX", m_minDPx, "minimum pixel delta");
+      head.append<realT>("MAXDPX", m_maxDPx, "maximum pixel delta");
+      head.append<int>("INCLREFN", m_includeRefNum, "value of includeRefNum");
 
       if(this->doWriteFinim == true && this->combineMethod > 0)
       {

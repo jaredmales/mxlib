@@ -205,6 +205,8 @@ int getLMST( realT & LMST, ///< [out] LMST in hours
  * 
  * \returns 0 on success
  * \returns -1 on error
+ * 
+ * \ingroup posastro
  */
 template<typename realT>
 int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
@@ -230,19 +232,76 @@ int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
    return 0 ;
 }
 
-///Calculate the Parallactic angle, with angles in degrees
-/** \param lat is the observer latitude
- * \param dec is the object declination
- * \param ha is the hour angle, in degrees, positive to the east
- */
+///Calculate the Parallactic Angle from the pre-calculated trig functions.  Result in radians.
+/** 
+  * \returns the  parallactic angle in radians.
+  * 
+  * \ingroup posastro
+  */
 template<typename realT>
-realT parAngDeg( realT lat, 
-                      realT dec, 
-                      realT ha
-                  )
+realT parAngRad( realT sinHA,  ///< [in] the sine of the target hour angle
+                 realT cosHA,  ///< [in] the cosine of the target hour angle
+                 realT sinDec, ///< [in] the sine of the target declination
+                 realT cosDec, ///< [in] the cosine of the target declination
+                 realT tanLat  ///< [in] the tangent of the observer latitude
+               )
 {
-   return math::rtod(atan2(cos(math::dtor(lat))*sin(math::dtor(ha)), sin(math::dtor(lat))*cos(math::dtor(dec)) - cos(math::dtor(lat))*sin(math::dtor(dec))*cos(math::dtor(ha))));
+   return atan2( sinHA, cosDec*tanLat - sinDec*cosHA);
 }
+
+///Calculate the Parallactic Angle from the pre-calculated trig functions.  Result in degrees.
+/** 
+  * \returns the  parallactic angle in degrees.
+  * 
+  * \ingroup posastro
+  */
+template<typename realT>
+realT parAngDeg( realT sinHA,  ///< [in] the sine of the target hour angle
+                 realT cosHA,  ///< [in] the cosine of the target hour angle
+                 realT sinDec, ///< [in] the sine of the target declination
+                 realT cosDec, ///< [in] the cosine of the target declination
+                 realT tanLat  ///< [in] the tangent of the observer latitude
+               )
+{
+   return math::rtod( parAngRad(sinHA, cosHA, sinDec, cosDec, tanLat) );
+}
+
+/// Calculate the Parallactic Angle, with angles in radians
+/**
+  * \return the parallactic angle in radians. 
+  * 
+  * \ingroup posastro
+  */
+template<typename realT>
+realT parAngRad( realT ha,  ///< [in] the hour angle, in radians, negative to the east
+                 realT dec, ///< [in] the object declination, in radians.
+                 realT lat  ///< [in] the observer latitude, in radians.
+               )
+{
+   return parAngRad( sin(ha), cos(ha), sin(dec), cos(dec), tan(lat));
+}
+
+/// Calculate the Parallactic Angle, with angles in degrees
+/**
+  * \return the parallactic angle in degrees. 
+  * 
+  * \ingroup posastro
+  * 
+  * \note 2020-Jan-19: re-reordered arguments and added newflag to prevent compilation of current programs so the new order is implemented.  
+  */
+template<typename realT>
+realT parAngDeg( realT ha,  ///< [in] the hour angle, in degrees, negative to the east
+                 realT dec, ///< [in] the object declination, in degrees.
+                 realT lat, ///< [in] the observer latitude, in degrees.
+                 bool newflag ///< [in] [temporary] to force adaptation of new argument order.  Unused, so can be true or false. Added 2020-Jan-19.
+               )
+{
+   static_cast<void>(newflag); //be unused
+   
+   return math::rtod( parAngRad( math::dtor(ha), math::dtor(dec), math::dtor(lat)) );
+}
+
+
 
 
 } //namespace astro 

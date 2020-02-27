@@ -80,7 +80,7 @@ void pout()
   */
 template<char space=' ', bool flush=true, char eol='\n', typename valT, typename... valTs>
 void pout( valT value,  ///<  [in] a value to print.
-           const valTs&... values ///< [in] a variadic list of additional values. Any number of values can be specified, with any type hangled by std::cout.
+           const valTs&... values ///< [in] a variadic list of additional values. Any number of values can be specified, with any type handled by std::cout.
          )
 {
    static const unsigned short int nargs = sizeof...(valTs);

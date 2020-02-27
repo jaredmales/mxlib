@@ -77,7 +77,7 @@ struct idealCoronagraph
    complexFieldT m_focalPlane;
 
    ///Fraunhofer propagator
-   fraunhoferPropagator<complexFieldT, wholePixel> m_fi;
+   fraunhoferPropagator<complexFieldT> m_fi;
 
    idealCoronagraph();
 
