@@ -92,7 +92,7 @@ struct phoenixSpectrum
   * 
   * \tparam floatT the floating point type in which to work
   * 
-  * \ingroup astropho_spectra
+  * \ingroup astrophot_spectra
   */
 template<typename floatT>
 void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complete name of the file to rewrite
