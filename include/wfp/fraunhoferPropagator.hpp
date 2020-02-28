@@ -74,7 +74,9 @@ protected:
    realT m_xcen {0}; ///<x-coordinate of focal plane center, in pixels
    realT m_ycen {0}; ///<x-coordinate of focal plane center, in pixels
 
-   /// Determines how the image is centered.  If 0 (default) it is at 0.5*(wfSz-1), if true it is shifted by 0.5*m_wholePixel in each axis.
+   /// Determines how the image is centered.  
+   /** If 0 (default) it is at 0.5*(wfSz-1), if true it is shifted by 0.5*m_wholePixel in each axis.
+     */
    realT m_wholePixel {0};
    
    ///Phase screen for tilting the pupil plane so that the focal plane image is centered.
