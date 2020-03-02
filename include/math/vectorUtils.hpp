@@ -446,9 +446,9 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 ///Smooth a vector using the mean in a window specified by its full-width
 template<typename realT>
 int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
-                       std::vector<realT> & vec, ///< [in] the input vector, unaltered.
-                       int win                   ///< [in] the full-width of the smoothing window
-                     )
+                      std::vector<realT> & vec, ///< [in] the input vector, unaltered.
+                      int win                   ///< [in] the full-width of the smoothing window
+                    )
 {
    smVec = vec;
 
@@ -469,6 +469,36 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
       }
 
       smVec[i] = sum/n;
+
+   }
+
+   return 0;
+}
+
+///Smooth a vector using the median in a window specified by its full-width
+template<typename realT>
+int vectorSmoothMedian( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                        std::vector<realT> & vec, ///< [in] the input vector, unaltered.
+                        int win                   ///< [in] the full-width of the smoothing window
+                      )
+{
+   smVec = vec;
+
+   std::vector<realT> tvec;
+   int n;
+   for(int i=0; i < vec.size(); ++i)
+   {
+      int j = i - 0.5*win;
+      if(j < 0) j = 0;
+
+      tvec.clear();
+      while( j <= i+0.5*win && j < vec.size())
+      {
+         tvec.push_back(vec[j]);
+         ++j;
+      }
+
+      smVec[i] = vectorMedianInPlace(tvec);
 
    }
 
