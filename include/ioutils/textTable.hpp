@@ -122,6 +122,7 @@ void textTable::addCell( size_t row,
    stringWrap(m_rows[row][col], cell, m_colWidths[col]);
 }
 
+inline
 void textTable::addCell(size_t row,
                         size_t col,
                         const char * cell
