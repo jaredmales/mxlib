@@ -453,13 +453,18 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
 template<typename _realT, class _derotFunctObj>
 void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
 {
+   if( this->mask.rows() != this->Nrows || this->mask.cols() != this->Ncols)
+   {
+      std::cerr << "\nMask is not the same size as images.\n\n";
+      exit(-1);
+   }
    this->maskCube.resize( this->Nrows, this->Ncols, this->Nims);
+   
    eigenImageT rm;
    
    for(int i=0; i< this->Nims; ++i)
    {
       rotateMask( rm, this->mask, derotF.derotAngle(i));
-      
       this->maskCube.image(i) = rm;
    }
    

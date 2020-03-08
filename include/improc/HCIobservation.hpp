@@ -107,7 +107,7 @@ struct HCIobservation
    /** If this is not empty and \ref qualityThreshold is > 0, then only images where
      * qualityValue >= qualityThreshold.
      *
-     * The only restriction on qualityTValue is that it is > 0.  It is intendend to be
+     * The only restriction on qualityThreshold is that it is > 0.  It is intendend to be
      * something like Strehl ratio.
      */
    std::string qualityFile;
@@ -757,7 +757,6 @@ int HCIobservation<_realT>::readFiles()
    {
       fitsFile<realT> ff;
       ff.read(mask, maskFile);
-
       makeMaskCube();
    }
 
@@ -1054,7 +1053,13 @@ int HCIobservation<_realT>::postReadFiles()
 template<typename _realT>
 void HCIobservation<_realT>::makeMaskCube()
 {
+   if( this->mask.rows() != this->Nrows || this->mask.cols() != this->Ncols)
+   {
+      std::cerr << "\nMask is not the same size as images.\n\n";
+      exit(-1);
+   }
    maskCube.resize( Nrows, Ncols, Nims);
+   
    for(int i=0; i< Nims; ++i)
    {
       maskCube.image(i) = mask;
