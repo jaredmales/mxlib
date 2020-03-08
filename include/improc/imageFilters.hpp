@@ -271,7 +271,232 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
 }   
    
    
-  
+/// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
+/** Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the corresonding center pixel of imOut.
+  * Does not smooth the 0.5*meanFullwidth rows and columns of the input image, and the values of these pixels are not
+  * changed in imOut (i.e. you should 0 them before the call). 
+  * 
+  * imOut is not re-allocated.
+  * 
+  * If rejectMinMax is `true` then the minimum and maximum value in the box are not included in the mean.  Rejection makes
+  * the algorithm somewhat slower, depending on box width.
+  *
+  * \tparam imageTout is an eigen-like image array
+  * \tparam imageTin is an eigen-like image array
+  * 
+  * \returns 0 on success
+  * \returns -1 on error.
+  */
+template<typename imageTout, typename imageTin>
+int meanSmooth( imageTout & imOut,        ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
+                const imageTin & imIn,    ///< [in] the image to smooth
+                int meanFullWidth,        ///< [in] the full-width of the smoothing box
+                bool rejectMinMax = false ///< [in] whether or not to reject the min and max value.
+              )
+{
+   typedef typename imageTout::Scalar scalarT;
+      
+   int buff = 0.5*meanFullWidth;
+   
+   int nPix = meanFullWidth*meanFullWidth;
+   
+   if(rejectMinMax) //avoid the branch on every pixel
+   {
+      nPix -= 2;
+      for(int jj=buff; jj< imIn.cols()-buff; ++jj)
+      {
+         for(int ii=buff; ii < imIn.rows()-buff; ++ii)
+         {
+            scalarT sum = 0;
+            scalarT max = sum;
+            scalarT min = sum;
+            for(int ll = jj-buff; ll < jj+buff+1; ++ll)
+            {
+               for(int kk = ii-buff; kk < ii+buff+1; ++kk)
+               {
+                  //scalarT val = imIn(kk,ll);
+                  sum += imIn(kk,ll);
+                  if(imIn(kk,ll) > max) max = imIn(kk,ll);
+                  if(imIn(kk,ll) < min) min = imIn(kk,ll);
+               }
+            }
+            imOut(ii,jj) = (sum-max-min)/nPix;
+         }
+      }
+   }
+   else
+   {
+      for(int jj=buff; jj< imIn.cols()-buff; ++jj)
+      {
+         for(int ii=buff; ii < imIn.rows()-buff; ++ii)
+         {
+            scalarT sum = 0;
+            for(int ll = jj-buff; ll < jj+buff+1; ++ll)
+            {
+               for(int kk = ii-buff; kk < ii+buff+1; ++kk)
+               {
+                  sum += imIn(kk,ll);
+               }
+            }
+            imOut(ii,jj) = sum/nPix;
+         }
+      }
+   }
+}
+
+/// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.  Determines the location and value of the highest pixel.
+/** Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the corresonding center pixel of imOut.
+  * Does not smooth the 0.5*meanFullwidth rows and columns of the input image, and the values of these pixels are not
+  * changed in imOut (i.e. you should 0 them before the call). 
+  * 
+  * imOut is not re-allocated.
+  * 
+  * If rejectMinMax is `true` then the minimum and maximum value in the box are not included in the mean.  Rejection makes
+  * the somewhat slower, depending on box width.
+  *
+  * This version also determines the location and value of the maximum pixel.  This adds some overhead, maybe on the order of 10% slower than without.
+  * 
+  * \overload
+  * 
+  * \tparam imageTout is an eigen-like image array
+  * \tparam imageTin is an eigen-like image array
+  * 
+  * \returns 0 on success
+  * \returns -1 on error.
+  */
+template<typename imageTout, typename imageTin>
+int meanSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
+                int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                typename imageTout::Scalar & pMax, ///< [out] the value of the max pixel
+                const imageTin & imIn,             ///< [in] the image to smooth
+                int meanFullWidth,                 ///< [in] the full-width of the smoothing box
+                bool rejectMinMax = false          ///< [in] whether or not to reject the min and max value.
+              )
+{
+   typedef typename imageTout::Scalar scalarT;
+      
+   int buff = 0.5*meanFullWidth;
+   
+   int nPix = meanFullWidth*meanFullWidth;
+   
+   pMax = std::numeric_limits<scalarT>::lowest();
+   
+   if(rejectMinMax) //avoid the branch on every pixel.
+   {
+      nPix -= 2;
+      for(int jj=buff; jj< imIn.cols()-buff; ++jj)
+      {
+         for(int ii=buff; ii < imIn.rows()-buff; ++ii)
+         {
+            scalarT sum = 0;
+            scalarT max = sum;
+            scalarT min = sum;
+            for(int ll = jj-buff; ll < jj+buff+1; ++ll)
+            {
+               for(int kk = ii-buff; kk < ii+buff+1; ++kk)
+               {
+                  //scalarT val = imIn(kk,ll);
+                  sum += imIn(kk,ll);
+                  if(imIn(kk,ll) > max) max = imIn(kk,ll);
+                  if(imIn(kk,ll) < min) min = imIn(kk,ll);
+               }
+            }
+            imOut(ii,jj) = (sum-max-min)/nPix;
+            if(imOut(ii,jj) > pMax)
+            {
+               pMax = imOut(ii,jj);
+               xMax = ii;
+               yMax = jj;
+            }
+         }
+      }
+   }
+   else
+   {
+      for(int jj=buff; jj< imIn.cols()-buff; ++jj)
+      {
+         for(int ii=buff; ii < imIn.rows()-buff; ++ii)
+         {
+            scalarT sum = 0;
+            for(int ll = jj-buff; ll < jj+buff+1; ++ll)
+            {
+               for(int kk = ii-buff; kk < ii+buff+1; ++kk)
+               {
+                  sum += imIn(kk,ll);
+               }
+            }
+            imOut(ii,jj) = sum/nPix;
+            if(imOut(ii,jj) > pMax)
+            {
+               pMax = imOut(ii,jj);
+               xMax = ii;
+               yMax = jj;
+            }
+         }
+      }
+   }
+}      
+         
+
+/// Smooth an image using the median in a rectangular box.  Also Determines the location and value of the highest pixel in the smoothed image.
+/** Calculates the median value in a rectangular box of imIn, of size medianFullSidth X medianFullWidth and stores it in the corresonding center pixel of imOut.
+  * Does not smooth the 0.5*medianFullwidth rows and columns of the input image, and the values of these pixels are not
+  * changed in imOut (i.e. you should 0 them before the call). 
+  * 
+  * imOut is not re-allocated.
+  * 
+  * Also determines the location and value of the maximum pixel.  This is a negligble overhead compared to the median operation.
+  * 
+  * 
+  * \tparam imageTout is an eigen-like image array
+  * \tparam imageTin is an eigen-like image array
+  * 
+  * \returns 0 on success
+  * \returns -1 on error.
+  */
+template<typename imageTout, typename imageTin>
+int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
+                  int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                  int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                  typename imageTout::Scalar & pMax, ///< [out] the value of the max pixel
+                  const imageTin & imIn,             ///< [in] the image to smooth
+                  int medianFullWidth                ///< [in] the full-width of the smoothing box
+                )
+{
+   typedef typename imageTout::Scalar scalarT;
+      
+   int buff = 0.5*medianFullWidth;
+   
+   std::vector<scalarT> pixs(medianFullWidth*medianFullWidth);
+   
+   pMax = std::numeric_limits<scalarT>::lowest();
+   
+   for(int jj=buff; jj< imIn.cols()-buff; ++jj)
+   {
+      for(int ii=buff; ii < imIn.rows()-buff; ++ii)
+      {
+         int n=0;
+         for(int ll = jj-buff; ll < jj+buff+1; ++ll)
+         {
+            for(int kk = ii-buff; kk < ii+buff+1; ++kk)
+            {
+               pixs[n] = imIn(kk,ll);
+               ++n;
+            }
+         }
+         
+         imOut(ii,jj) = math::vectorMedianInPlace(pixs);
+         if(imOut(ii,jj) > pMax)
+         {
+            pMax = imOut(ii,jj);
+            xMax = ii;
+            yMax = jj;
+         }
+      }
+   }
+}      
+
   
 //------------ Radial Profile --------------------//
 

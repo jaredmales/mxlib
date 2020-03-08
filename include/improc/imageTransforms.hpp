@@ -521,6 +521,191 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
 
 }
 
+/// Re-bin an image using the sum, reducing its size while conserving the total flux.
+/** Optionally this can be the mean instead of the sum filter, in which case total flux is not conserved.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinSum( imageOutT & imout,     ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                   const imageInT & imin, ///< [in] the image to rebin
+                   bool mean = false      ///< [in] if true the output is the mean rather than the sum.
+                 )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = 1;
+   if(mean) N = rebin*rebin;
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         imout(i,j) = imin.block( i*rebin, j*rebin, rebin, rebin).sum()/N;
+      }
+   }
+   
+   return 0;
+}
+
+/// Re-bin an image using the sum, reducing its size while conserving the total flux.  Records the value and position of the re-binned max pixel.
+/** Optionally this can be the mean instead of the sum filter, in which case total flux is not conserved.
+  * 
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinSum( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                   int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                   int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                   typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                   const imageInT & imin,             ///< [in] the image to rebin
+                   bool mean = false                  ///< [in] if true the output is the mean rather than the sum.
+                 )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = 1;
+   if(mean) N = rebin*rebin;
+   
+   xMax = 0;
+   yMax = 0;
+   pMax = std::numeric_limits<typename imageOutT::Scalar>::lowest();
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         imout(i,j) = imin.block( i*rebin, j*rebin, rebin, rebin).sum()/N;
+         if(imout(i,j) > pMax)
+         {
+            pMax = imout(i,j);
+            xMax = i;
+            yMax = j;
+         }
+      }
+      
+   }
+
+   return 0;
+}
+
+/// Re-bin an image using the mean.
+/** This is a wrapper for imageRebinSum with `mean=true`.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMean( imageOutT & imout,    ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                    const imageInT & imin ///< [in] the image to rebin
+                  )
+{
+   return imageRebinSum(imout, imin, true);
+}
+
+/// Re-bin an image using the mean.  Records the value and position of the re-binned max pixel.
+/** This is a wrapper for imageRebinSum with `mean=true`.
+  *
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMean( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                    int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                    int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                    typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                    const imageInT & imin,             ///< [in] the image to rebin
+                    bool mean = false                  ///< [in] if true the output is the mean rather than the sum.
+                  )
+{
+   return imageRebinSum(imout, xMax, yMax, pMax, imin, true);
+}
+
+/// Re-bin an image, takes the mean with a min/max rejection.
+/** The mean is calculated after rejecting the minimuma and maximum value.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMeanReject( imageOutT & imout,    ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                          const imageInT & imin ///< [in] the image to rebin
+                        )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = rebin*rebin - 2;
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         register typename imageOutT::Scalar sum = 0;
+         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         for(int k=0;k<rebin;++k)
+         {
+            for(int l=0;l<rebin;++l)
+            {
+               sum += imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) > max) max = imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) < min) min = imin(i*rebin+k, j*rebin+l);
+               
+            }
+         }
+         imout(i,j) = (sum-max-min)/N;/**/
+      }
+   }
+   
+   return 0;
+}
+
+/// Re-bin an image, takes the mean with a min/max rejection.  Records the value and position of the re-binned max pixel.
+/** The mean is calculated after rejecting the minimuma and maximum value.
+  * 
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMeanReject( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                          int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                          int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                          typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                          const imageInT & imin              ///< [in] the image to rebin
+                        )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = rebin*rebin - 2;
+   
+   xMax = 0;
+   yMax = 0;
+   pMax = std::numeric_limits<typename imageOutT::Scalar>::lowest();
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         register typename imageOutT::Scalar sum = 0;
+         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         for(int k=0;k<rebin;++k)
+         {
+            for(int l=0;l<rebin;++l)
+            {
+               sum += imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) > max) max = imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) < min) min = imin(i*rebin+k, j*rebin+l);
+               
+            }
+         }
+         imout(i,j) = (sum-max-min)/N;
+         
+         if(imout(i,j) > pMax)
+         {
+            pMax = imout(i,j);
+            xMax = i;
+            yMax = j;
+         }
+      }
+   }
+   
+   return 0;
+}
+
 /// Down-sample an image, reducing its size while conserving the total flux.
 /** If the old size is an integer multiple of the new size, this is just a re-bin.  If not an integer multiple,
   * the image is interpolated after performing the closest re-bin, and then re-normalized to conserve flux.
@@ -535,7 +720,6 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
 
    //Record this for normalization later
    Scalar inputTotal = fabs(imin.sum());
-
 
 
    //As a first step, rebin to nearest whole pixel factor which is larger than the desired output size
@@ -566,9 +750,6 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    if(temp.rows() == imout.rows() && temp.cols() == imout.cols())
    {
       imout = temp;
-      
-      //Normalize
-      imout *= 1.0;
       return;
    }
    //Otherwise, re-sample using bilinear interpolation.
