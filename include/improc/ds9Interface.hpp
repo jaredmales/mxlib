@@ -124,6 +124,9 @@ public:
    ///Constructor which initializes the access point title.
    explicit ds9Interface(const std::string & nn);
 
+   ///Constructor which initializes the access point title.
+   explicit ds9Interface(const char * nn);
+   
    #ifndef DS9INTERFACE_NO_EIGEN
    /// Constructor which, after initialization, proceeds to display an Eigen-like array in ds9.
    /**
@@ -297,6 +300,12 @@ ds9Interface::ds9Interface()
 }
 
 ds9Interface::ds9Interface(const std::string & nn)
+{
+   initialize();
+   title(nn);
+}
+
+ds9Interface::ds9Interface(const char * nn)
 {
    initialize();
    title(nn);
