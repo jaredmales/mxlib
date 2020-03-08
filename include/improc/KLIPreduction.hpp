@@ -45,6 +45,17 @@ namespace HCI
                         excludeAngle, ///< Exclude by angle of roration
                         excludeImno ///< Exclude by number of images
                       };   
+
+   ///Image inclusion methods
+   /** \ingroup hc_imaging_enums
+     */
+   enum includeMethods{ includeAll,   ///< include all images
+                        includeCorr,  ///< include images which are most correlated with the target
+                        includeTime,  ///< include images which are closest in time to the target
+                        includeAngle, ///< include images which are closest in angle to the target
+                        includeImno   ///< include images which are closest in imno to the target
+                      };
+
 }
 
 /// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
@@ -68,17 +79,17 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    int padSize;
    
    /// Specifies the number of modes to include in the PSF.
-   /** The output image is a cube with a plane for each entry in Nmodes.
-     * Only the number of eigenvalues required for the maximum value of Nmodes
+   /** The output image is a cube with a plane for each entry in m_Nmodes.
+     * Only the number of eigenvalues required for the maximum value of m_Nmodes
      * are calculated, so this can have an important impact on speed.
      * 
      * Can be initialized as:
      * \code 
-     * red.Nmodes={5,10,15,20};
+     * red.m_Nmodes={5,10,15,20};
      * \endcode
      * 
      */ 
-   std::vector<int> Nmodes;
+   std::vector<int> m_Nmodes;
    
    int maxNmodes;
    
@@ -111,7 +122,18 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
      * This is determined after rotational/image-number exclusion. 
      * If == 0, then all reference images are included. 
      */
-   int m_includeRefNum; 
+   int m_includeRefNum {0}; 
+   
+   /// Controls how number of included images is calculated.
+   /** The number of included images is calculated after exclusion is complete.
+     * Can have the following values:
+     * - <b>HCI::includeAll</b> = all remaining images are included [default]
+     * - <b>HCI::includeCorr</b> = the m_includeRefNum of the remaining images which are most correlated with the target are included
+     * - <b>HCI::includeTime</b> = the m_includeRefNum of the remaining images which are closest in time to the target are included
+     * - <b>HCI::includeAngle</b> = the m_includeRefNum of the remaining images which are closest in angle to the target are included
+     * - <b>HCI::includeImno</b> = the m_includeRefNum of the remaining images which are closest in image number to the target are included
+     */
+   int m_includeMethod {HCI::includeAll};
    
    eigenImage<int> m_imsIncluded;
    
@@ -260,10 +282,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 {   
    this->t_begin = get_curr_time();
    
-   maxNmodes = Nmodes[0];
-   for(size_t i = 1; i<Nmodes.size(); ++i)
+   maxNmodes = m_Nmodes[0];
+   for(size_t i = 1; i < m_Nmodes.size(); ++i)
    {
-      if(Nmodes[i] > maxNmodes) maxNmodes = Nmodes[i];
+      if( m_Nmodes[i] > maxNmodes) maxNmodes = m_Nmodes[i];
    }
    
    std::cerr << "Beginning\n";
@@ -284,8 +306,8 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       return 0;
    }
 
-   this->psfsub.resize(Nmodes.size());
-   for(size_t n=0;n<Nmodes.size(); ++n)
+   this->psfsub.resize(m_Nmodes.size());
+   for(size_t n=0;n<m_Nmodes.size(); ++n)
    {
       this->psfsub[n].resize(this->Nrows, this->Ncols, this->Nims);
       this->psfsub[n].cube().setZero();
@@ -391,10 +413,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    
       std::stringstream str;
       
-      if(Nmodes.size() > 0)
+      if(m_Nmodes.size() > 0)
       {
-         for(size_t nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
-         str << Nmodes[Nmodes.size()-1];      
+         for(size_t nm=0;nm < m_Nmodes.size()-1; ++nm) str << m_Nmodes[nm] << ",";
+         str << m_Nmodes[m_Nmodes.size()-1];      
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
       
@@ -695,13 +717,13 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());    
          }
 
-         for(size_t mode_i =0; mode_i < Nmodes.size(); ++mode_i)
+         for(size_t mode_i =0; mode_i < m_Nmodes.size(); ++mode_i)
          {
             psf = cfs(cfs.size()-1)*klims.row(cfs.size()-1);
 
             //Count down, since eigenvalues are returned in increasing order
-            //  handle case where cfs.size() < Nmodes[mode_i], i.e. when more modes than images.
-            for(int j=cfs.size()-2; j>=cfs.size()-Nmodes[mode_i] && j >= 0; --j)
+            //  handle case where cfs.size() < m_Nmodes[mode_i], i.e. when more modes than images.
+            for(int j=cfs.size()-2; j>=cfs.size()-m_Nmodes[mode_i] && j >= 0; --j)
             {
                psf += cfs(j)*klims.row(j);
             }  
@@ -735,7 +757,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
       
    this->skipPreProcess = true;
 
-   this->readPSFSub(dir, prefix, ext, Nmodes.size());
+   this->readPSFSub(dir, prefix, ext, m_Nmodes.size());
    
    
    //This is generic to both regions and this from here on . . .
@@ -768,10 +790,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
       std::stringstream str;
       
-      if(Nmodes.size() > 0)
+      if(m_Nmodes.size() > 0)
       {
-         for(size_t nm=0;nm < Nmodes.size()-1; ++nm) str << Nmodes[nm] << ",";
-         str << Nmodes[Nmodes.size()-1];      
+         for(size_t nm=0;nm < m_Nmodes.size()-1; ++nm) str << m_Nmodes[nm] << ",";
+         str << m_Nmodes[m_Nmodes.size()-1];      
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
             
