@@ -1005,7 +1005,8 @@ int HCIobservation<_realT>::readWeights()
    //Read the weight file and load it into a map
    std::vector<std::string> wfileNames;
    std::vector<realT> imW;
-//    if( ioutils::readColumns(weightFile, wfileNames, imW) < 0) return -1;
+
+   if( ioutils::readColumns(weightFile, wfileNames, imW) < 0) return -1;
 
    if(imW.size() < fileList.size())
    {
