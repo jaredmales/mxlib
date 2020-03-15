@@ -443,6 +443,31 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 }
 
 
+/// Subtract a constant value from a vector
+template<typename vecT, typename constT>
+void vectorSub( vecT &vec,       ///<  [in/out] the vector, each element will have the constant subtracted from it
+                const constT & c ///< [in] the constant to subtract from each element
+              )
+{
+   for(size_t n=0; n< vec.size();++n) vec[n] -= c;
+}
+
+/// Subtract the mean from a vector
+template<typename vecT>
+void vectorMeanSub( vecT &vec /**<  [in/out] the vector, each element will have the mean subtracted from it*/)
+{
+   typename vecT::value_type m = vectorMean(vec);
+   vectorSub(vec,m);
+}
+
+/// Subtract the median from a vector
+template<typename vecT>
+void vectorMedianSub( vecT &vec /**<  [in/out] the vector, each element will have the median subtracted from it*/)
+{
+   typename vecT::value_type m = vectorMedian(vec);
+   vectorSub(vec,m);
+}
+
 ///Smooth a vector using the mean in a window specified by its full-width
 template<typename realT>
 int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector

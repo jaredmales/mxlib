@@ -36,7 +36,9 @@ namespace mx
 {
 namespace sigproc 
 {
-
+namespace window
+{
+   
 /// The Tukey Window
 /** 
   * The width of the window is controlled by alpha.  alpha = 0 is a square wave, alpha=1.0 is the Hann window.
@@ -472,7 +474,7 @@ void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT
    }
 }
 
-
+} //namespace window
 } //namespace sigproc 
 } //namespace mx
 
