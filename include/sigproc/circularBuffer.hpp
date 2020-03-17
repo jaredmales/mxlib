@@ -93,7 +93,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */ 
-   circularBufferBase(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/);
+   explicit circularBufferBase(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/);
    
    /// Set the maximum size of the buffer.
    /** Note that this will not be the size until 
@@ -224,7 +224,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   circularBufferBranch(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferBranch,storedT,indexT>(maxEnt)
+   explicit circularBufferBranch(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferBranch,storedT,indexT>(maxEnt)
    {
    }
    
@@ -287,7 +287,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   circularBufferMod(indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferMod,storedT,indexT>(maxEnt)
+   explicit circularBufferMod(indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferMod,storedT,indexT>(maxEnt)
    {
    }
    
@@ -351,7 +351,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   circularBufferIndex(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferIndex,storedT,indexT>(maxEnt)
+   explicit circularBufferIndex(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferIndex,storedT,indexT>(maxEnt)
    {
    }
    
