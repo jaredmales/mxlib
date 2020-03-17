@@ -468,7 +468,6 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
       if(endPos >= L)
       {
          lines.push_back( str.substr( startPos, L-startPos ));
-         done = true;
          break;
       }
 
