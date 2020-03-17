@@ -1,5 +1,5 @@
 /** \file averagePeriodogram.hpp
-  * \brief A class to manage calculation of periodograms from timeseries data.
+  * \brief A class to manage calculation of periodograms from time series data.
   *
   * \author Jared R. Males (jaredmales@gmail.com)
   *
@@ -44,7 +44,7 @@ namespace sigproc
   * 
   * Optionally includes a window (by default no window is used, which is equivalent to the rectangle window). 
   * 
-  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time-series.
+  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time series.
   * 
   * Example:
   \code
@@ -53,6 +53,8 @@ namespace sigproc
    mx::fftwEnvironment<realT> fftwEnv; //for efficient fft planning
    
    std::vector<realT> ts = getTimeSeries(); //Some function to populate ts.
+   
+   math::vectorMeanSub(ts); //The time series should be overall mean subtracted.
    
    realT dt = 0.1; //The sampling of ts is 0.1 seconds.
    
@@ -116,7 +118,7 @@ public:
        averagePeriogram p( avgLen, 0, dt);
        \endcode
      */
-   averagePeriodogram( size_t avgLen /**< [in] The length of averaging in samples.*/ );
+   explicit averagePeriodogram( size_t avgLen /**< [in] The length of averaging in samples.*/ );
    
    /// C'tor which sets up the optimum overlapped periodogram of the timeseries and sets the sampling.
    /** Sets m_overlap = 2*m_avgLen.  If you desire the non-overlapped case use 
@@ -319,6 +321,7 @@ int averagePeriodogram<realT>::resize( size_t avgLen,
    m_tsWork = fftw_malloc<realT>( m_avgLen );
    
    if(m_fftWork) fftw_free(m_fftWork);
+   
    m_fftWork = fftw_malloc<std::complex<realT>>( (m_avgLen/2 + 1) );
    
    return 0;
