@@ -91,7 +91,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
      */ 
    std::vector<int> m_Nmodes;
    
-   int maxNmodes;
+   int maxNmodes {0};
    
    /// Specify the minimum pixel difference at the inner edge of the search region 
    realT m_minDPx {0};
@@ -551,9 +551,6 @@ void collapseCovar( eigenT & cutCV,
          allidx[i].cvVal = CV(i,imno)/(sds[i]*sds[imno]);
       }
    }
-   
-   int rotoff0 = 0;
-   int rotoff1 = 0;
    
    if(excludeMethod == HCI::excludePixel || excludeMethod == HCI::excludeAngle )
    {
