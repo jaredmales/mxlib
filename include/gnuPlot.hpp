@@ -157,14 +157,14 @@ class gnuPlot
 {
 protected:   
 
-   int _connected;
+   int _connected {0};
    
    ///Set to true if the response indicates a gnuplot error
-   bool _gpError;
+   bool _gpError {false};
    std::string _gpErrorMsg;
    
    ///File stream for the gnuplot interface
-   FILE * _pipeH;
+   FILE * _pipeH {0};
    
    ///Where to create gnuplot stderr fifo
    /** Default is /dev/shm/
@@ -175,7 +175,7 @@ protected:
    std::string _errFName;
    
    ///File descriptor for the gnuplot stderr fifo
-   int _errFD;
+   int _errFD {0};
    
    ///Location of temporary files 
    /** Default is /dev/shm/
@@ -186,9 +186,9 @@ protected:
    std::vector<std::string> _tempFiles;
 
    ///Flag to control whether temporary files are deleted on destruction.  Default is true (files deleted).
-   bool _deleteTemp;
+   bool _deleteTemp {true};
 
-   bool _plotted;
+   bool _plotted {false};
    
 public:
    
@@ -471,16 +471,9 @@ gnuPlot::gnuPlot()
 inline
 void gnuPlot::init()
 {
-   _connected = 0;
-
-   _pipeH = 0;
-
    _errLocation = "/dev/shm";
-   _errFD = 0;
-
    _tempLocation = "/dev/shm";
-   
-   _plotted = false;
+
 }
 
 inline
