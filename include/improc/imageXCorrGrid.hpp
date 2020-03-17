@@ -74,7 +74,7 @@ public:
    imageXCorrGrid();
    
    /// Construct seeting maxLag.
-   imageXCorrGrid(int maxLag);
+   explicit imageXCorrGrid(int maxLag);
    
    /// Get the current maximum lag 
    /**

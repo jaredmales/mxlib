@@ -73,7 +73,7 @@ public:
    imageXCorrFit();
    
    /// Construct seeting maxLag.
-   imageXCorrFit(int maxLag);
+   explicit imageXCorrFit(int maxLag);
    
    /// Get the current maximum lag 
    /**

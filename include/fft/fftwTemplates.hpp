@@ -920,6 +920,15 @@ inline void fftw_execute_dft<float,complexFT>( fftwTypeSpec<float, complexFT>::p
 }
 
 template<>
+inline void fftw_execute_dft<complexFT,float>( fftwTypeSpec<complexFT,float>::planT plan, 
+                                               complexFT * in,
+                                               float * out 
+                                             )
+{
+   ::fftwf_execute_dft_c2r( plan, reinterpret_cast<fftwf_complex*>(in), out );
+}
+
+template<>
 inline void fftw_execute_dft<complexDT,complexDT>( fftwTypeSpec<complexDT, complexDT>::planT plan, 
                                                    complexDT * in, 
                                                    complexDT * out )
@@ -933,6 +942,15 @@ inline void fftw_execute_dft<double,complexDT>( fftwTypeSpec<double, complexDT>:
                                                 complexDT * out )
 {
    ::fftw_execute_dft_r2c( plan, in, reinterpret_cast<fftw_complex*>(out));
+}
+
+template<>
+inline void fftw_execute_dft<complexDT, double>( fftwTypeSpec<complexDT,double>::planT plan, 
+                                                 complexDT * in, 
+                                                 double * out
+                                               )
+{
+   ::fftw_execute_dft_c2r( plan, reinterpret_cast<fftw_complex*>(in), out);
 }
 
 
