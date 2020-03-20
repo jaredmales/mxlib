@@ -266,6 +266,7 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
       
    if( HCIobservation<realT>::readFiles() < 0) return -1;
    
+   std::cerr << "extracting keywords\n";
    derotF.extractKeywords(this->heads);
    
    return 0;

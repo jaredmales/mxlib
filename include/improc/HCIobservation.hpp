@@ -728,12 +728,14 @@ int HCIobservation<_realT>::readFiles()
    Ncols = imc.cols();
    Npix =  imc.rows()*imc.cols();
 
-
+   std::cerr << "loading complete\n";
+   
    ///\todo zeroNaNs should be a member and be configurable.  Probably should be true by default.
    bool zeroNaNs = true;
 
    if( zeroNaNs )
    {
+      std::cerr << "zero-ing NaNs\n";
       for(int k=0; k<Nims; ++k)
       {
          for(int i=0; i< Nrows; ++i)
@@ -755,6 +757,7 @@ int HCIobservation<_realT>::readFiles()
    /*** Load the mask ***/
    if( maskFile != "")
    {
+      std::cerr << "creating mask cube\n";
       fitsFile<realT> ff;
       ff.read(mask, maskFile);
       makeMaskCube();

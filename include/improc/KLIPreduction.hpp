@@ -306,6 +306,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       return 0;
    }
 
+   std::cerr << "allocating psf subtracted cubes\n";
    this->psfsub.resize(m_Nmodes.size());
    for(size_t n=0;n<m_Nmodes.size(); ++n)
    {
