@@ -459,14 +459,19 @@ void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
       std::cerr << "\nMask is not the same size as images.\n\n";
       exit(-1);
    }
+   
    this->maskCube.resize( this->Nrows, this->Ncols, this->Nims);
    
-   eigenImageT rm;
-   
-   for(int i=0; i< this->Nims; ++i)
+   #pragma omp parallel
    {
-      rotateMask( rm, this->mask, derotF.derotAngle(i));
-      this->maskCube.image(i) = rm;
+      eigenImageT rm;
+      
+      #pragma omp for
+      for(int i=0; i< this->Nims; ++i)
+      {
+         rotateMask( rm, this->mask, derotF.derotAngle(i));
+         this->maskCube.image(i) = rm;
+      }
    }
    
    fitsFile<realT> ff; 
