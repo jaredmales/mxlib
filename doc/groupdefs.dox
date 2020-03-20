@@ -175,6 +175,11 @@
   * \brief Tools for processing images
   */
 
+/** \defgroup image_utils Image Utilities
+  * \brief Useful functions for working with images
+  * \ingroup image_processing
+  */
+  
 /** \defgroup image_padding Image Padding
   * \brief Functions for padding images.
   * \ingroup image_processing

@@ -179,9 +179,9 @@ typedef cubicConvolTransform<double> cubicConvolTransd;
   *
   */
 template<typename transformT, typename arrT, typename arrT2, typename floatT>
-void imageRotate( arrT & transim, ///< [out] The rotated image.  Must be pre-allocated.
+void imageRotate( arrT & transim,  ///< [out] The rotated image.  Must be pre-allocated.
                   const arrT2 &im, ///< [in] The image to be rotated.
-                  floatT dq, ///< [in] the angle, in radians, by which to rotate in the c.c.w. direction
+                  floatT dq,       ///< [in] the angle, in radians, by which to rotate in the c.c.w. direction
                   transformT trans ///< [in] is the transformation to use
                 )
 {
@@ -222,13 +222,17 @@ void imageRotate( arrT & transim, ///< [out] The rotated image.  Must be pre-all
    xc_x_sinq -= yc_x_cosq;
 
 
+   #ifdef MXLIB_USE_OMP
    #pragma omp parallel private(x0,y0,i0,j0,x,y)
+   #endif
    {
       arithT i_x_cosq, i_x_sinq;
       arrT kern;
       kern.resize(width,width);
 
+      #ifdef MXLIB_USE_OMP
       #pragma omp for schedule(static, 1)
+      #endif
       for(int i=0;i<Nrows; ++i)
       {
          i_x_cosq = i*cosq - xc_x_cosq;// + xcen;
