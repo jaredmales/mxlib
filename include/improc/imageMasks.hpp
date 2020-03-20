@@ -712,9 +712,9 @@ void rotateMask( imageT & rotMask,
 {   
    imageRotate( rotMask, mask, angle, transformT());
    
-   for(int ii=0; ii< rotMask.rows(); ++ii)
+   for(int jj=0; jj < rotMask.cols(); ++jj)
    {
-      for(int jj=0; jj < rotMask.cols(); ++jj)
+      for(int ii=0; ii< rotMask.rows(); ++ii)   
       {
          if( rotMask(ii,jj) < 0.5) rotMask(ii,jj) = 0;
          else rotMask(ii,jj) = 1;
