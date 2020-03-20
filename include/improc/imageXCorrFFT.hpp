@@ -31,6 +31,7 @@
 #include "../fft/fft.hpp"
 #include "../math/fit/fitGaussian.hpp"
 
+#include "imageUtils.hpp"
 #include "imageTransforms.hpp"
 
 namespace mx
@@ -108,12 +109,23 @@ public:
    /// Set the maximum lag
    void maxLag( int ml /**< [in] the new maximum lag */);
    
-   
-   int resize( int nrows,
-               int ncols
+   /// Set the size of the cross-correlation images.
+   /** This resizes all working memory and conducts fftw planning.
+     *
+     * \returns 0 on success
+     * \returns -1 on error
+     */ 
+   int resize( int nrows, ///< [in] the number of rows in the images to register
+               int ncols  ///< [in] the number of columns in the images to register
              );
    
-   int setReference( ccImT & im0 );
+   /// Set the reference image
+   /** Normalizes, fourier transforms, and conjugates the reference image
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int setReference( const ccImT & im0 );
    
 protected:
 
@@ -129,7 +141,7 @@ public:
    template<class imT>
    int operator()( Scalar & xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                    Scalar & yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
-                   imT & im         ///< [in] the image to cross-correlate with the reference
+                   const imT & im   ///< [in] the image to cross-correlate with the reference
                  );
    
    /// Conduct the cross correlation to a specified tolerance
@@ -196,46 +208,8 @@ int imageXCorrFFT<ccImT>::resize( int nrows,
    return 0;
 }
 
-template< class imageT>
-typename imageT::Scalar imageMean(imageT & im)
-{
-   typename imageT::Scalar m = 0;
-   
-   for(int c=0;c<im.cols();++c)
-   {
-      for(int r=0;r<im.rows();++r)
-      {
-         m += im(r,c);
-      }
-   }
-   
-   m/=(im.rows()*im.cols());
-   
-   return m;
-}
-
-template< class imageT>
-typename imageT::Scalar imageVariance( imageT & im,
-                                       typename imageT::Scalar mean
-                                     )
-{
-   typename imageT::Scalar v = 0;
-   
-   for(int c=0;c<im.cols();++c)
-   {
-      for(int r=0;r<im.rows();++r)
-      {
-         v += pow(im(r,c)-mean,2);
-      }
-   }
-   
-   v /= (im.rows()*im.cols());
-   
-   return v;
-}
-
 template< class ccImT>
-int imageXCorrFFT<ccImT>::setReference( ccImT & im0 )
+int imageXCorrFFT<ccImT>::setReference( const ccImT & im0 )
 {
    resize(im0.rows(), im0.cols());
    
@@ -264,7 +238,7 @@ template< class ccImT>
 template< class imT>
 int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
                                       Scalar & yShift,
-                                      imT & im
+                                      const imT & im
                                     )
 {
    if( im.rows() != m_rows )
