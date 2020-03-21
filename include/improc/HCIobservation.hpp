@@ -824,6 +824,11 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          return -1;
       }
 
+      if(weightFile != "")
+      {
+         if(readWeights() < 0) return -1;
+      }
+   
       Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
 
       fitsFile<realT> f(fileList[0]);
@@ -932,7 +937,8 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 
    }
    
-   postReadFiles();
+   /*** Now do the post-read actions ***/
+   if( postReadFiles() < 0) return -1;
   
    /*** Load the mask ***/
    if( maskFile != "")
