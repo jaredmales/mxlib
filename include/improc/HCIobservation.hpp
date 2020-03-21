@@ -1604,6 +1604,18 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
    fitsFile<realT> f;
 
+   std::fstream wout;
+   
+   if(comboWeights.size() > 0)
+   {
+      fname = PSFSubPrefix + "weights.dat";
+      if(outputDir != "")
+      {
+         fname = outputDir + "/" + fname;
+      }
+      wout.open(fname);
+   }
+   
    char num[256];
    for(size_t n=0; n<psfsub.size(); ++n)
    {
@@ -1621,9 +1633,18 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
          h.append(heads[p]);
          f.write(fname, psfsub[n].image(p).data(), psfsub[n].rows(), psfsub[n].cols(), 1, h);
+         
+         if(comboWeights.size() > 0 && n == 0)
+         {
+            wout << fname << " " << comboWeights[p] << "\n";
+         }
       }
    }
 
+   if(comboWeights.size() > 0)
+   {
+      wout.close();
+   }
 }
 
 ///@}
