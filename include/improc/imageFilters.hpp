@@ -497,7 +497,17 @@ int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed ima
    }
 }      
 
-  
+template<typename imageTout, typename imageTin>
+int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
+                  const imageTin & imIn,             ///< [in] the image to smooth
+                  int medianFullWidth                ///< [in] the full-width of the smoothing box
+                )
+{
+   int xMax, yMax;
+   typename imageTout::Scalar pMax;
+   return medianSmooth(imOut, xMax, yMax, pMax, imIn, medianFullWidth);
+}
+
 //------------ Radial Profile --------------------//
 
 template<typename floatT>
@@ -536,19 +546,20 @@ struct radvalValComp
   * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
   * 
   * \tparam radprofT the eigen array type of the output
-  * \tparam eigenimT the eigen array type of the input
+  * \tparam eigenImT the eigen array type of the input
   */ 
-template<typename radprofT, typename eigenimT>
+template<typename radprofT, typename eigenImT>
 void radprofim( radprofT & radprof, 
-                eigenimT & im,
+                eigenImT & im,
                 radprofT & rad,
                 bool subtract = false)
 {
-   typedef typename eigenimT::Scalar floatT;
+   typedef typename eigenImT::Scalar floatT;
    
    int dim1 = im.rows();
    int dim2 = im.cols();
    
+
    floatT mr = rad.maxCoeff();
    
    /* A vector of radvals will be sorted, then binned*/
@@ -559,6 +570,7 @@ void radprofim( radprofT & radprof,
       rv[i].r = rad(i);
       rv[i].v = im(i);
    }
+   
    
    sort(rv.begin(), rv.end(), radvalRadComp<floatT>());
    
@@ -618,11 +630,11 @@ void radprofim( radprofT & radprof,
   * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
   * 
   * \tparam radprofT the eigen array type of the output
-  * \tparam eigenimT the eigen array type of the input
+  * \tparam eigenImT the eigen array type of the input
   */ 
-template<typename radprofT, typename eigenimT>
+template<typename radprofT, typename eigenImT>
 void radprofim( radprofT & radprof, 
-                eigenimT & im, 
+                eigenImT & im, 
                 bool subtract = false)
 {
    int dim1 = im.cols();
@@ -637,29 +649,22 @@ void radprofim( radprofT & radprof,
    
 }
   
-///Form a standard deviation image, and optionally divide the input by it
+/// Form a standard deviation image, and optionally divide the input by it to form a S/N map.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * 
-  * \param [out] stdIm is the standard deviation image.  This will be resized.
-  * \param [in] im is the image to form the standard deviation profile of. 
-  * \param [in] rad is an array of radius values
-  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
-  * \param [in] minRad is the minimum radius to analyze
-  * \param [in] maxRad is the maximum radius to analyze
-  * \param [in] divide if true, the input image is divided by the std-def profile
-  * 
-  * \tparam eigenimT the eigen array type of the output and non-reference images
+  * \tparam eigenImT the eigen array type of the output and non-reference images.  Each image input can be a different type to allow references, etc.
   */ 
-template<typename eigenimT>
-void stddevImage( eigenimT & stdIm, 
-                  eigenimT & im,
-                  eigenimT & rad,
-                  eigenimT & mask,
-                  typename eigenimT::Scalar minRad,
-                  typename eigenimT::Scalar maxRad, 
-                  bool divide = false )
+template<typename eigenImT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
+void stddevImage( eigenImT & stdIm,                 ///< [out] the standard deviation image.  This will be resized.
+                  const eigenImT1 & im,             ///< [in] the image to form the standard deviation profile of, never altered.
+                  const eigenImT2 & rad,            ///< [in] array of radius values
+                  const eigenImT3 & mask,           ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+                  typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
+                  typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
+                  bool divide = false               ///< [in] [optional] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
+                )
 {
-   typedef typename eigenimT::Scalar floatT;
+   typedef typename eigenImT::Scalar floatT;
    
    int dim1 = im.cols();
    int dim2 = im.rows();
@@ -688,14 +693,20 @@ void stddevImage( eigenimT & stdIm,
    floatT stdVal;
      
    std::vector<double> std_r, std_v;
+   
    while(r1 < mr)
    {
-      while(rv[i1].r < r0 && i1 < rv.size()) ++i1;
-      if(i1 == rv.size()) break;
+      while(rv[i1].r < r0 && i1 < rv.size())
+      {
+          ++i1;
+      }
+      if(i1 == rv.size()) 
+      {
+          break;
+      }
       
       i2 = i1;
       while(rv[i2].r <= r1 && i2 < rv.size()) ++i2;
-      
       n = 0.5*(i2-i1);
 
       std::vector<double> vals;
@@ -724,95 +735,83 @@ void stddevImage( eigenimT & stdIm,
          if(rad(i,j) < minRad || rad(i,j) > maxRad)
          {
             stdIm(i,j) = 0;
-            if(divide) im(i,j) = 0;
          }
          else
          {
             stdIm(i,j) = interp.interpolate( ((double) rad(i,j)) );
-            if(divide) im(i,j) /= stdIm(i,j);
+            if(divide) stdIm(i,j) = im(i,j) / stdIm(i,j);
          }
       }
    }
    
 }
  
-///Form a standard deviation image, and optionally divide the input by it
+/// Form a standard deviation image, and optionally divide the input by it to form a S/N map.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * 
-  * \param [out] stdIm is the standard deviation image.  This will be resized.
-  * \param [in] im is the image to form the standard deviation profile of. 
-  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
-  * \param [in] minRad is the minimum radius to analyze
-  * \param [in] maxRad is the maximum radius to analyze
-  * \param [in] divide if true, the input image is divided by the std-def profile
+  * This version creates a radius map on each call, and calls the above version.  This should not 
+  * be used for repeated alls, rather create a radius map ahead of time.
   * 
-  * \tparam eigenimT the eigen array type of the output and non-reference images
+  * \overload 
+  * 
+  * \tparam eigenImT the eigen array type of the output and non-reference images
   */ 
-template<typename eigenimT>
-void stddevImage( eigenimT & stdIm, 
-                  eigenimT & im,
-                  eigenimT & mask,
-                  typename eigenimT::Scalar minRad,
-                  typename eigenimT::Scalar maxRad,
-                  bool divide = false )
+template<typename eigenImT, typename eigenImT1, typename eigenImT2>
+void stddevImage( eigenImT & stdIm,                 ///< [out] the standard deviation image.  This will be resized.
+                  const eigenImT1 & im,             ///< [in] the image to form the standard deviation profile of, never altered.
+                  const eigenImT2 & mask,           ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+                  typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
+                  typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
+                  bool divide = false               ///< [in] [optional] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
+                )
 {   
    int dim1 = im.cols();
    int dim2 = im.rows();
    
-   eigenimT rad;
+   eigenImage<typename eigenImT::Scalar> rad;
    rad.resize(dim1, dim2);
    
    radiusImage(rad);
-   
    stddevImage(stdIm, im, rad, mask, minRad, maxRad, divide );
    
 }
 
-///Form a standard deviation image for each imamge in a cube, and optionally divide the input by it
+/// Form a standard deviation image for each imamge in a cube, and optionally divide the input by it forming a S/N map cube.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * 
-  * \param [out] stdImc is the standard deviation image cube.  This will be resized.
-  * \param [in] imc is the image cube to form the standard deviation profile of. 
-  * \param [in] mask is an array which is a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
-  * \param [in] minRad is the minimum radius to analyze
-  * \param [in] maxRad is the maximum radius to analyze
-  * \param [in] divide if true, the input image is divided by the std-def profile
   * 
-  * \tparam eigencubeT is the eigen cube type of the input and output cubes
-  * \tparam eigenimT the eigen array type of the output and non-reference images
+  * \tparam eigencubeT is the eigen cube type of the input and output cubes.
+  * \tparam eigenImT the eigen array type of the output and non-reference images.
   */ 
-template<typename eigencubeT, typename eigenimT>
-void stddevImageCube( eigencubeT & stdImc, 
-                      eigencubeT & imc,
-                      eigenimT & mask,
-                      typename eigenimT::Scalar minRad,
-                      typename eigenimT::Scalar maxRad,
-                      bool divide = false )
+template<typename eigenCubeT, typename eigenCubeT1, typename eigenImT>
+void stddevImageCube( eigenCubeT & stdImc,              ///< [out]  the standard deviation image cube.  This will be resized.
+                      const eigenCubeT1 & imc,          ///< [in] the image cube to form the standard deviation profile of. 
+                      const eigenImT & mask,            ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+                      typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
+                      typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
+                      bool divide = false               ///< [in] [optional] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
+                    )
 {
    int dim1 = imc.cols();
    int dim2 = imc.rows();
    
-   eigenimT rad;
+   eigenImage<typename eigenCubeT::Scalar> rad;
    rad.resize(dim1, dim2);
    
    radiusImage(rad);
-
-   
    
    stdImc.resize(imc.rows(), imc.cols(), imc.planes());
    
-   #pragma omp parallel for
+   //#pragma omp parallel for
    for(int i=0; i< imc.planes(); ++i)
    {
-      eigenimT im, stdIm;
+      eigenImage<typename eigenCubeT::Scalar> im, stdIm;
       
       im = imc.image(i);
       
       stddevImage(stdIm, im, rad, mask, minRad, maxRad, divide );
 
       stdImc.image(i) = stdIm;
-      
-      if(divide) imc.image(i) = im;
       
    }
 }

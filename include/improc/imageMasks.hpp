@@ -332,16 +332,16 @@ void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
    size_t l0 = m.rows();
    size_t l1 = m.cols();
    
-   typename arrayT::Scalar r;
+   typename arrayT::Scalar rr;
    
    
-   for(size_t i=0; i < l0; i++)
+   for(size_t c=0; c < m.cols(); c++)
    {
-      for(size_t j=0; j < l1; j++)
+      for(size_t r=0; r < m.rows(); r++)
       {
-         r = sqrt( pow(i-xcen, 2) + pow(j-ycen, 2) );
+         rr = sqrt( pow(r-xcen, 2) + pow(c-ycen, 2) );
          
-         if(r <= rad+pixbuf) m(i,j) = val;
+         if(rr <= rad+pixbuf) m(r,c) = val;
       }
    }
 }   
