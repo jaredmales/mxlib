@@ -53,11 +53,19 @@ public:
    typedef _ccImT ccImT; ///< the Eigen-like array type used for image processing
    typedef typename _ccImT::Scalar Scalar; ///< the scalar type of the image type
    
-protected:
+public:
    
    /** \name Working Memory
      * @{
      */ 
+   ccImT m_refIm;  ///< The normalized reference image.
+   
+   ccImT m_maskIm; ///< Mask image to use, may be needed for proper normalization even if refIm has 0 mask applied.
+   
+   bool m_haveMask {false};
+   
+   ccImT m_normIm; ///< The normalized image.
+   
    ccImT m_ccIm;     ///< The coarses cross-correlation image
    ccImT m_subGrid0; ///< One of the fine cross-correlation images, always 5x5
    ccImT m_subGrid1; ///< One of the fine cross-correlation images, always 5x5
@@ -94,6 +102,29 @@ public:
    /// Set the grid tolerance
    void gridTol( Scalar gt /**< [in] the new grid tolerance */);
    
+   /// Set the mask image
+   /** 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int maskIm( const ccImT & mask );
+   
+   ccImT & maskIm(){ return m_maskIm; };
+   
+   /// Set the reference image
+   /** Normalizes the reference image by mean subtraction and variance division.  Applies
+     * the mask first if supplied.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int refIm( const ccImT & im0 );
+      
+   ccImT& refIm(){ return m_refIm; }
+   
+   ccImT & ccIm(){ return m_ccIm; }
+
+   
 protected:
 
    /// Calculate the cross-correlation of a 5x5 subgrid of a sub-pixel spacing
@@ -104,7 +135,7 @@ protected:
      * \returns 0 on success
      * \returns -1 on an error 
      */
-   template<class im0T, class imT>
+   template<class imT>
    int subGrid( Scalar & xShift,     ///< [out] the total pixel shift corresponding to the peak c.c., in x
                 Scalar & yShift,     ///< [out] the total pixel shift corresponding to the peak c.c., in y
                 int & xLag,          ///< [out] the lag in pixels on the 5x5 grid corresponding to the peak c.c., in x
@@ -116,7 +147,6 @@ protected:
                 int yLag0,           ///< [in] the previous the lag in pixels on the 5x5 grid corresponding to the peak c.c., in y
                 ccImT & lastSubGrid, ///< [in] 5x5 grid of c.c. values on the previous sampling
                 Scalar dLag,         ///< [in] the lag per pixel of lastSubGrid
-                im0T & im0,          ///< [in] the reference image
                 imT & im,            ///< [in] the image to cross-correlate with the reference
                 int maxLag           ///< [in] the maximum lag considered
               );
@@ -128,10 +158,9 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   template<class im0T, class imT>
+   template<class imT>
    int operator()( Scalar & xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                    Scalar & yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
-                   im0T & im0,      ///< [in] the reference image
                    imT & im         ///< [in] the image to cross-correlate with the reference
                  );
 };
@@ -174,9 +203,44 @@ void imageXCorrGrid<ccImT>::gridTol( Scalar gt )
 {
    m_gridTol = gt;
 }
-   
+
 template< class ccImT>
-template< class im0T, class imT>
+int imageXCorrGrid<ccImT>::maskIm( const ccImT & mask )
+{
+   m_maskIm = mask;
+   m_haveMask = true;
+   
+   return 0;
+}
+
+template< class ccImT>
+int imageXCorrGrid<ccImT>::refIm( const ccImT & im )
+{
+   ccImT im0;
+   if(m_haveMask)
+   {
+      if(im.rows()!=m_maskIm.rows() && im.cols() != m_maskIm.cols())
+      {
+         mxError("imageXCorGrid::refIm", MXE_SIZEERR, "reference and mask are not the same size");
+         return -1;
+      }
+      
+      im0 = im*m_maskIm;
+   }
+   else
+   {
+      im0 = im;
+   }
+   
+   Scalar m = imageMean(im0);
+   Scalar v = imageVariance(im0, m);
+   m_refIm = (im0 - m)/sqrt(v);
+      
+   return 0;
+}
+
+template< class ccImT>
+template< class imT>
 int imageXCorrGrid<ccImT>::subGrid( Scalar & xShift, 
                                 Scalar & yShift,
                                 int & xLag,
@@ -188,18 +252,17 @@ int imageXCorrGrid<ccImT>::subGrid( Scalar & xShift,
                                 int yLag0,
                                 ccImT & lastSubGrid,
                                 Scalar dLag,
-                                im0T & im0,
                                 imT & im,
                                 int maxLag
                               )
 {
-   if( im0.rows() < im.rows() )
+   if( m_refIm.rows() < im.rows() )
    {
       mxError("imageXCorrGrid", MXE_SIZEERR, "image must be same size or smaller than reference (rows)");
       return -1;
    }
    
-   if( im0.cols() < im.cols() )
+   if( m_refIm.cols() < im.cols() )
    {
       mxError("imageXCorrGrid", MXE_SIZEERR, "image must be same size or smaller than reference (cols)");
       return -1;
@@ -224,7 +287,7 @@ int imageXCorrGrid<ccImT>::subGrid( Scalar & xShift,
          {
             nextSubGrid( 2 +  xL, 2 + yL) = 0;
          
-            imageShift(m_shiftIm, im0, xShift0 + xL*0.5*dLag, yShift0 + yL*0.5*dLag, cubicConvolTransform<Scalar>(-0.5));
+            imageShift(m_shiftIm, m_refIm, xShift0 + xL*0.5*dLag, yShift0 + yL*0.5*dLag, cubicConvolTransform<Scalar>(-0.5));
          
             for(int c=cMin; c < cMax; ++c)
             {
@@ -246,41 +309,58 @@ int imageXCorrGrid<ccImT>::subGrid( Scalar & xShift,
 
 
 template< class ccImT>
-template< class im0T, class imT>
+template< class imT>
 int imageXCorrGrid<ccImT>::operator()( Scalar & xShift,
                                    Scalar & yShift,
-                                   im0T & im0,
                                    imT & im
                                  )
 {
-   if( im0.rows() < im.rows() )
+   if( m_refIm.rows() < im.rows() )
    {
       mxError("imageXCorrGrid", MXE_SIZEERR, "image must be same size or smaller than reference (rows)");
       return -1;
    }
    
-   if( im0.cols() < im.cols() )
+   if( m_refIm.cols() < im.cols() )
    {
       mxError("imageXCorrGrid", MXE_SIZEERR, "image must be same size or smaller than reference (cols)");
       return -1;
    }
    
+   
+    if(m_haveMask)
+    {
+       m_normIm = im*m_maskIm;
+    }
+    else
+    {  
+       m_normIm = im;
+    }
+    
+    Scalar m = imageMean(m_normIm);
+    Scalar sv = sqrt(imageVariance(m_normIm,m));
+   
+   m_normIm = (m_normIm-m)/sv;
+   
+   
+   
+   
    int maxLag = m_maxLag;
    if(maxLag == 0) 
    {
-      maxLag = 0.25*im0.rows()-1;
+      maxLag = 0.25*m_refIm.rows()-1;
    }
    
    m_ccIm.resize(2*maxLag + 1, 2*maxLag + 1);
    
-   int x0 = 0.5*im0.rows() - 0.5*im.rows() + maxLag;
-   int y0 = 0.5*im0.cols() - 0.5*im.cols() + maxLag;
+   int x0 = 0.5*m_refIm.rows() - 0.5*m_normIm.rows() + maxLag;
+   int y0 = 0.5*m_refIm.cols() - 0.5*m_normIm.cols() + maxLag;
 
    int cMin = maxLag;
-   int cMax = im.cols()-cMin;
+   int cMax = m_normIm.cols()-cMin;
    
    int rMin = maxLag;
-   int rMax = im.rows()-rMin;
+   int rMax = m_normIm.rows()-rMin;
       
    for( int xL = -maxLag; xL <= maxLag; ++xL)
    {
@@ -292,7 +372,7 @@ int imageXCorrGrid<ccImT>::operator()( Scalar & xShift,
          {
             for(int r=rMin; r < rMax; ++r)
             {
-               m_ccIm(maxLag +  xL, maxLag + yL) += im(r,c) * im0(x0+xL + r-rMin, y0+yL+c - cMin);
+               m_ccIm(maxLag +  xL, maxLag + yL) += m_normIm(r,c) * m_refIm(x0+xL + r-rMin, y0+yL+c - cMin);
             }
          }
       }
@@ -315,7 +395,7 @@ int imageXCorrGrid<ccImT>::operator()( Scalar & xShift,
    int xLag, yLag;
    
    //First halving:
-   subGrid( xShift, yShift, xLag, yLag, m_subGrid0, xShift0, yShift0, xLag0, yLag0, m_ccIm, 1, im0, im, maxLag);
+   subGrid( xShift, yShift, xLag, yLag, m_subGrid0, xShift0, yShift0, xLag0, yLag0, m_ccIm, 1, m_normIm, maxLag);
    xShift0=xShift;
    yShift0=yShift;
    
@@ -324,11 +404,11 @@ int imageXCorrGrid<ccImT>::operator()( Scalar & xShift,
    {
       if(n%2 == 1)
       {
-         subGrid( xShift, yShift, xLag, yLag, m_subGrid1, xShift0, yShift0, xLag0, yLag0, m_subGrid0, pow(0.5, n), im0, im, maxLag);
+         subGrid( xShift, yShift, xLag, yLag, m_subGrid1, xShift0, yShift0, xLag0, yLag0, m_subGrid0, pow(0.5, n), m_normIm, maxLag);
       }
       else
       {
-         subGrid( xShift, yShift, xLag, yLag, m_subGrid0, xShift0, yShift0, xLag0, yLag0, m_subGrid1, pow(0.5, n), im0, im, maxLag);
+         subGrid( xShift, yShift, xLag, yLag, m_subGrid0, xShift0, yShift0, xLag0, yLag0, m_subGrid1, pow(0.5, n), m_normIm, maxLag);
       }
       
       //std::cerr << n << " " << pow(0.5, n+1) << " " << xShift << " " << yShift << "\n";
