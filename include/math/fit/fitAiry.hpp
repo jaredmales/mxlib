@@ -232,7 +232,7 @@ struct array2FitAiry
    realT ps {0}; ///< is the ratio of the circular central obscuration diameter to the diameter.
 };
 
-///\ref levmarInterface fitter structure for the obstructed Airy pattern.
+///\ref levmarInterface fitter structure for the centrally obscured Airy pattern.
 /**
   * Platescale and central obscuration are fixed.
   * 
