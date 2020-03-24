@@ -422,7 +422,7 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
     im2.resize(1024,1024);
     imageMagnify(im2,im1, cubicConvolTransform<double>());
     \endcode
-  * In this exmple, the image in im1 will be magnified 2x and placed in im2.
+  * In this exmple, the image in im1 will be magnified by `1023.0/511.0 = 2.002x` and placed in im2.
   *
   * \tparam arrOutT is the eigen array type of the output.
   * \tparam arrInT is the eigen array type of the input.
@@ -431,7 +431,7 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
 template<typename arrOutT, typename arrInT, typename transformT>
 void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  Must be pre-allocated.
                    const arrInT  &im, ///< [in] is the image to be magnified.
-                   transformT trans ///< [in] is the transformation to use
+                   transformT trans   ///< [in] is the transformation to use
                  )
 {
    typedef typename transformT::arithT arithT;
