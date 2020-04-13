@@ -100,6 +100,44 @@ std::vector<size_t> vectorSortOrder( std::vector<memberT> const& values /**< [in
     return indices; /// \returns the indices of the vector in sorted order.
 }
 
+///Calculate the sum of a vector.
+/**
+  *
+  * \returns the sum of vec
+  *
+  * \tparam vectorT the std::vector type of vec
+  *
+  */
+template<typename valueT>
+valueT vectorSum( const valueT * vec, ///< [in] the vector 
+                  size_t sz           ///< [in] the size of the vector
+                )
+{
+   valueT sum = 0;
+
+   for(size_t i=0; i< sz; ++i) sum += vec[i];
+
+   return sum;
+}
+
+///Calculate the sum of a vector.
+/**
+  *
+  * \returns the sum of vec
+  *
+  * \tparam vectorT the std::vector type of vec
+  *
+  */
+template<typename vectorT>
+typename vectorT::value_type vectorSum(const vectorT & vec /**< [in] the vector */)
+{
+   typename vectorT::value_type sum = 0;
+
+   for(size_t i=0; i< vec.size(); ++i) sum += vec[i];
+
+   return sum;
+}
+
 ///Calculate the mean of a vector.
 /**
   *
@@ -565,7 +603,7 @@ int vectorSmoothMax( std::vector<realT> &smVec, ///< [out] the smoothed version 
   */
 template<typename vectorT>
 int vectorRebin( vectorT & binv,           ///< [out] the re-binned vector.  will be resized.
-                 vectorT & v,              ///< [in] the vector to bin.
+                 const vectorT & v,        ///< [in] the vector to bin.
                  unsigned n,               ///< [in] the size of the bins, in points
                  bool binMean = false      ///< [in] [optional] flag controlling whether sums (false) or means (true) are calculated.
                )
@@ -636,6 +674,35 @@ int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoot
       dataOut[i] = sum/norm;
    }
 
+   return 0;
+}
+
+
+/// Calculate and accumulate the means of a timeseries in bins of various sizes.
+/** Useful mainly to calculate the variance of the mean as a function of sample size.
+  * The output is a vector of vectors, where each element is a vector which contains the means in the 
+  * unique bins of size corresponding to the same index in the in put binSzs vector.
+  * 
+  * \returns 0 on success.
+  */ 
+template<typename vectorT, typename binVectorT>
+int vectorBinMeans( std::vector<vectorT> & means, ///< [out] the means in each distinct bin.  Not cleared, but Will be resized with new means appended.
+                    binVectorT & binSzs,          ///< [in] the bin sizes in which to calculate the means
+                    const vectorT & v             ///< [in] the input vector to bin .
+                  )
+{
+   vectorT binv;
+
+   means.resize(binSzs.size());
+   
+   for(size_t i=0; i< binSzs.size(); ++i)
+   {
+      vectorRebin(binv, v, binSzs[i], true);
+
+      means[i].resize(means[i].size() + binv.size());
+      for(size_t j=0; j< binv.size(); ++j)  means[i][ means[i].size() - binv.size() + j] = binv[j];
+   }
+   
    return 0;
 }
 
