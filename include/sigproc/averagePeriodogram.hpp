@@ -112,7 +112,7 @@ protected:
 public:
    
    /// C'tor which sets up the optimum overlapped periodogram of the timeseries.
-   /** Sets m_overlap = 2*m_avgLen.  If you desire the non-overlapped case use 
+   /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
      * the alternate constructor:
      * \code
        averagePeriogram p( avgLen, 0, dt);
@@ -121,7 +121,7 @@ public:
    explicit averagePeriodogram( size_t avgLen /**< [in] The length of averaging in samples.*/ );
    
    /// C'tor which sets up the optimum overlapped periodogram of the timeseries and sets the sampling.
-   /** Sets m_overlap = 2*m_avgLen.  If you desire the non-overlapped case use 
+   /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
      * the alternate constructor:
      * \code
        averagePeriogram p( avgLen, 0, dt);
@@ -132,8 +132,7 @@ public:
                      );
    
    /// C'tor setting up an arbitrary overlap.
-   /** Set olap to 0 for the unoverlapped case.  Set avgLen to 0 to cause the full length of the time-series to be 
-     * used.
+   /** Set olap to 0 for the unoverlapped case.  
      */
    averagePeriodogram( size_t avgLen, ///< [in] The number of samples in each periodgoram estimate.
                        size_t olap,   ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
