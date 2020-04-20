@@ -880,13 +880,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             getGridPSD( tPSDp, psdDir, m, n );
             
             //Get integral of entire PSD
-            realT limVar = psdVar( tfreq[1]-tfreq[0], tPSDp);
+            realT limVar = sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
 
             //erase points above Nyquis limit
             tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
 
             //And now determine the variance which has been erased.
-            limVar -= psdVar( tfreq[1]-tfreq[0], tPSDp);
+            limVar -= sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
             
             //var0 = m_aosys->psd(m_aosys->atm, k, m_aosys->secZeta())*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
             
@@ -1003,7 +1003,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   std::vector<realT> bins = {1,4};
                   for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
                   std::vector<realT> vars(bins.size());
-                  speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
+                  speckleAmpVarMean( vars, bins, tfreq, psdOut, m, n, lifetimeTrials);
                   realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
                   
                   speckleLifetimes( mnMax + m, mnMax + n ) = tau;
@@ -1047,7 +1047,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      std::vector<realT> bins = {1, 4.0};
                      for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
                      std::vector<realT> vars(bins.size());
-                     speckleAmpVarMean( vars, bins, tfreq, psdOut, lifetimeTrials);
+                     speckleAmpVarMean( vars, bins, tfreq, psdOut, m, n, lifetimeTrials);
                      realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
                   
                      speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
