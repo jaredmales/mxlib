@@ -266,6 +266,7 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
       
    if( HCIobservation<realT>::readFiles() < 0) return -1;
    
+   std::cerr << "extracting keywords\n";
    derotF.extractKeywords(this->heads);
    
    return 0;
@@ -453,14 +454,24 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
 template<typename _realT, class _derotFunctObj>
 void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
 {
-   this->maskCube.resize( this->Nrows, this->Ncols, this->Nims);
-   eigenImageT rm;
-   
-   for(int i=0; i< this->Nims; ++i)
+   if( this->mask.rows() != this->Nrows || this->mask.cols() != this->Ncols)
    {
-      rotateMask( rm, this->mask, derotF.derotAngle(i));
+      std::cerr << "\nMask is not the same size as images.\n\n";
+      exit(-1);
+   }
+   
+   this->maskCube.resize( this->Nrows, this->Ncols, this->Nims);
+   
+   #pragma omp parallel
+   {
+      eigenImageT rm;
       
-      this->maskCube.image(i) = rm;
+      #pragma omp for
+      for(int i=0; i< this->Nims; ++i)
+      {
+         rotateMask( rm, this->mask, derotF.derotAngle(i));
+         this->maskCube.image(i) = rm;
+      }
    }
    
    fitsFile<realT> ff; 
@@ -473,14 +484,18 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
    t_derotate_begin = get_curr_time();
    
    //On magaoarx it doesn't seem worth it to use more than 4 threads
-   #pragma omp parallel num_threads(4)
-   {
-      eigenImageT rotim;
-      realT derot;
+   //#pragma omp parallel num_threads(4)
+   
       
-      #pragma omp for schedule(static, 1)
-      for(size_t n=0; n<this->psfsub.size(); ++n)
+   //#pragma omp for schedule(static, 1)
+   for(size_t n=0; n<this->psfsub.size(); ++n)
+   {
+      #pragma omp parallel
       {
+         eigenImageT rotim;
+         realT derot;
+
+         #pragma omp for
          for(int i=0; i<this->psfsub[n].planes();++i)
          {
             derot = derotF.derotAngle(i);

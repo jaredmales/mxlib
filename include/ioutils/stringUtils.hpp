@@ -469,24 +469,25 @@ int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry cont
       {
          lines.push_back( str.substr( startPos, L-startPos ));
          done = true;
-         break;
       }
+      else
+      {
+         //Backup to nearest space
+         tmpPos = endPos;
+         while( !isspace(str[tmpPos]) && tmpPos >= startPos ) --tmpPos;
 
-      //Backup to nearest space
-      tmpPos = endPos;
-      while( !isspace(str[tmpPos]) && tmpPos >= startPos ) --tmpPos;
-
-      //If we aren't at the beginning (i.e. splitting consecutive characters) we use new end position
-      if(tmpPos > startPos) endPos = tmpPos;
-
-
-      lines.push_back( str.substr( startPos, endPos-startPos) );
+         //If we aren't at the beginning (i.e. splitting consecutive characters) we use new end position
+         if(tmpPos > startPos) endPos = tmpPos;
 
 
-      startPos = endPos;
+         lines.push_back( str.substr( startPos, endPos-startPos) );
 
-      //Clear 1 space
-      if( str[startPos] == ' ') ++startPos;
+
+         startPos = endPos;
+
+         //Clear 1 space
+         if( str[startPos] == ' ') ++startPos;
+      }
    }
 
    return 0;

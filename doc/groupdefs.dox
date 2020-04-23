@@ -34,6 +34,11 @@
   * \ingroup functions
   */
 
+/** \defgroup gen_math_moffats The Moffat Function
+  * \brief Utilities for working with the Moffat function
+  * \ingroup functions
+  */
+  
 /** \defgroup gen_math_airy_pattern The Airy Pattern
   * \brief Utilities for working with the Airy Pattern.
   * \ingroup functions
@@ -170,6 +175,11 @@
   * \brief Tools for processing images
   */
 
+/** \defgroup image_utils Image Utilities
+  * \brief Useful functions for working with images
+  * \ingroup image_processing
+  */
+  
 /** \defgroup image_padding Image Padding
   * \brief Functions for padding images.
   * \ingroup image_processing

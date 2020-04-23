@@ -103,8 +103,11 @@ public:
    Map<Array<dataT, Dynamic, Dynamic> > cube();
 
    /// Returns a 2D Eigen::Map pointed at the specified image.
-   Map<Array<dataT, Dynamic, Dynamic> > image(Index n);
+   Map<Array<dataT, Dynamic, Dynamic> > image(Index n /**< [in] the image number */);
 
+   /// Returns a 2D Eigen::Map pointed at the specified image.
+   const Map<Array<dataT, Dynamic, Dynamic> > image(Index n /**< [in] the image number */) const;
+   
    /// Returns an Eigen::Map-ed vector of the pixels at the given coordinate
    Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic> > pixel(Index i, Index j);
 
@@ -365,6 +368,12 @@ Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::cube()
 
 template<typename dataT>
 Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n)
+{
+   return Map<Array<dataT, Dynamic, Dynamic> >(_data + n*_rows*_cols, _rows, _cols);
+}
+
+template<typename dataT>
+const Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n) const
 {
    return Map<Array<dataT, Dynamic, Dynamic> >(_data + n*_rows*_cols, _rows, _cols);
 }

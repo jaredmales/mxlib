@@ -313,37 +313,55 @@ void applyMask( eigenT & maskedIm,  ///< [out] the image to mask (will be modifi
 
 
 ///Mask a circle in an image.
-/** The circle is describe by its center coordinates and radius. Any value can be set for the mask,
-  * with 0 being the default.  
+/** The circle is describe by its center coordinates and radius. Any value can be set for the mask.
+  * Pixels outside the masked circle are not altered.
   * 
   * \tparam arrayT is an Eigen-like type.
   * 
   * \ingroup image_masks
   */
 template<class arrayT> 
-void maskCircle( arrayT & m, ///< [in/out] the image to be masked, is modified.
-                 typename arrayT::Scalar xcen, ///< [in] the x coordinate of the center of the circle
-                 typename arrayT::Scalar ycen, ///< [in] the y coordinate of the center of the circle
-                 typename arrayT::Scalar rad,  ///< [in] the radius of the circle
-                 typename arrayT::Scalar val = 0,  ///< [in] [optional] the mask value.  Default is 0.
-                 typename arrayT::Scalar pixbuf = 0.5  ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+void maskCircle( arrayT & m,                          ///< [in/out] the image to be masked, is modified.
+                 typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
+                 typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
+                 typename arrayT::Scalar rad,         ///< [in] the radius of the circle
+                 typename arrayT::Scalar val,         ///< [in] the mask value. 
+                 typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
                )
 {
    size_t l0 = m.rows();
    size_t l1 = m.cols();
    
-   typename arrayT::Scalar r;
+   typename arrayT::Scalar rr;
    
    
-   for(size_t i=0; i < l0; i++)
+   for(size_t c=0; c < m.cols(); c++)
    {
-      for(size_t j=0; j < l1; j++)
+      for(size_t r=0; r < m.rows(); r++)
       {
-         r = sqrt( pow(i-xcen, 2) + pow(j-ycen, 2) );
+         rr = sqrt( pow(r-xcen, 2) + pow(c-ycen, 2) );
          
-         if(r <= rad+pixbuf) m(i,j) = val;
+         if(rr <= rad+pixbuf) m(r,c) = val;
       }
    }
+}   
+
+///Mask a circle in an image at the standard center.
+/** The circle is centered at 0.5*(rows-1) and 0.5*(cols-1), and described by its radius. Any value can be set for the mask.  
+  * Pixels outside the masked circle are not altered.
+  * 
+  * \tparam arrayT is an Eigen-like type.
+  * 
+  * \ingroup image_masks
+  */
+template<class arrayT> 
+void maskCircle( arrayT & m,                          ///< [in/out] the image to be masked, is modified.
+                 typename arrayT::Scalar rad,         ///< [in] the radius of the circle
+                 typename arrayT::Scalar val,         ///< [in] the mask value.
+                 typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+               )
+{
+   return maskCircle(m, 0.5*(m.rows()-1.0), 0.5*(m.cols()-1.0), rad, val, pixbuf);
 }   
 
 ///Mask an ellipse in an image.
@@ -712,9 +730,9 @@ void rotateMask( imageT & rotMask,
 {   
    imageRotate( rotMask, mask, angle, transformT());
    
-   for(int ii=0; ii< rotMask.rows(); ++ii)
+   for(int jj=0; jj < rotMask.cols(); ++jj)
    {
-      for(int jj=0; jj < rotMask.cols(); ++jj)
+      for(int ii=0; ii< rotMask.rows(); ++ii)   
       {
          if( rotMask(ii,jj) < 0.5) rotMask(ii,jj) = 0;
          else rotMask(ii,jj) = 1;

@@ -36,7 +36,7 @@ namespace mx
 namespace improc
 {
 
-double t_begin;
+/*double t_begin;
 double t_end;
 
 double t_load_begin;
@@ -49,7 +49,7 @@ double t_preproc_begin;
 double t_preproc_end;
 
 double t_combo_begin;
-double t_combo_end;
+double t_combo_end;*/
 
 
 ///Namespace for high contrast imaging enums.
@@ -97,17 +97,17 @@ struct HCIobservation
    std::vector<std::string> fileList;
 
    ///Specify how many files from fileList to delete from the front of the list
-   int deleteFront;
+   int deleteFront {0};
 
    ///Specify how many files from fileList to delete from the back of the list
-   int deleteBack;
+   int deleteBack {0};
 
 
    ///File containing 2 space-delimited columns of fileVame qualityValue pairs.
    /** If this is not empty and \ref qualityThreshold is > 0, then only images where
      * qualityValue >= qualityThreshold.
      *
-     * The only restriction on qualityTValue is that it is > 0.  It is intendend to be
+     * The only restriction on qualityThreshold is that it is > 0.  It is intendend to be
      * something like Strehl ratio.
      */
    std::string qualityFile;
@@ -115,10 +115,10 @@ struct HCIobservation
    ///Threshold to apply to qualityValues read from \ref qualityFile.
    /** If <= 0, then thresholding is not performed.
     */
-   realT qualityThreshold;
+   realT qualityThreshold {0};
 
    ///Just prints the names and qualities of the files which pass threshold, and stop.
-   bool thresholdOnly;
+   bool thresholdOnly {false};
 
    ///Name of the keyword to use for the image date.
    /** Specifies the keyword corresponding to the date.  This is
@@ -128,13 +128,13 @@ struct HCIobservation
      *
      * If empty "", then image date is not read.
      */
-   std::string MJDKeyword;
+   std::string MJDKeyword {"DATE-OBS"};
 
    ///Whether or not the date is in ISO 8601 format
-   bool MJDisISO8601;
+   bool MJDisISO8601 {true};
 
    ///If the date is not ISO 8601, this specifies the conversion to Julian Days (i.e. seconds to days)
-   realT MJDUnits;
+   realT MJDUnits {1.0};
 
    ///Vector of FITS header keywords to read from the files in fileList.
    std::vector<std::string> keywords;
@@ -165,13 +165,13 @@ struct HCIobservation
      *
      * No other types of combination are currently supported for coadding.
      */
-   int coaddCombineMethod;
+   int coaddCombineMethod {HCI::noCombine};
 
    ///Maximum number of images to coadd
-   int coaddMaxImno;
+   int coaddMaxImno {0};
 
    ///Maximum elapsed time over which to coadd the images.
-   int coaddMaxTime;
+   int coaddMaxTime {0};
 
    ///The values of these keywords will be averaged and replaced.
    std::vector<std::string> coaddKeywords;
@@ -208,29 +208,29 @@ public:
      * @{
      */
 
-   bool skipPreProcess; ///<Don't do any of the pre-processing steps (including coadding).
+   bool skipPreProcess {false}; ///<Don't do any of the pre-processing steps (including coadding).
 
-   bool preProcess_beforeCoadd; ///<controls whether pre-processing takes place before or after coadding
+   bool preProcess_beforeCoadd {false}; ///<controls whether pre-processing takes place before or after coadding
 
-   bool preProcess_mask; ///<If true, the mask is applied during each pre-processing step.
+   bool preProcess_mask {true}; ///<If true, the mask is applied during each pre-processing step.
 
-   bool preProcess_subradprof; ///<If true, a radial profile is subtracted from each image.
+   bool preProcess_subradprof {false}; ///<If true, a radial profile is subtracted from each image.
 
    ///Azimuthal boxcar width for azimuthal unsharp mask
    /** If this is 0 then azimuthal-USM is not performed.
      */
-   realT preProcess_azUSM_azW;
+   realT preProcess_azUSM_azW {0};
 
    ///Radial boxcar width for azimuthal unsharp mask
    /** If this is 0 then azimuthal-USM is not performed.
      */
-   realT preProcess_azUSM_radW;
+   realT preProcess_azUSM_radW {0};
 
 
    ///Kernel FWHM for symmetric unsharp mask (USM)
    /** USM is not performed if this is 0.
     */
-   realT preProcess_gaussUSM_fwhm;
+   realT preProcess_gaussUSM_fwhm {0};
 
    ///Set path and file prefix to output the pre-processed images.
    /** If empty, then pre-processed images are not output.
@@ -238,7 +238,7 @@ public:
    std::string preProcess_outputPrefix;
 
    /// If true, then we stop after pre-processing.
-   bool preProcess_only;
+   bool preProcess_only {false};
 
 
    ///@}
@@ -257,7 +257,7 @@ public:
      * - HCI::weightedMeanCombine -- final image is the weighted mean.  weightFile must be provided.
      * - HCI::sigmaMeanCombine -- final image is sigma clipped mean.  If sigmaThreshold \<= 0, then it reverts to meanCombine.
      */
-   int combineMethod;
+   int combineMethod {HCI::meanCombine};
 
    ///Specifies a file containing the image weights, for combining with weighted mean.
    /** This 2-column space-delimited ASCII file containing  filenames and weights. It must be specified before readFiles()
@@ -268,7 +268,7 @@ public:
 
 
    /// The standard deviation threshold used if combineMethod == HCI::sigmaMeanCombine.
-   realT sigmaThreshold;
+   realT sigmaThreshold {0};
 
    /// The minimum fraction of good (un-masked) pixels to include in the final combination (0.0 to 1.0). If not met, then the pixel will be NaN-ed.
    realT m_minGoodFract {0.0};
@@ -281,7 +281,7 @@ public:
      */
 
    ///Set whether the final combined image is written to disk
-   int doWriteFinim;
+   int doWriteFinim {1};
 
    ///The directory where to write output files.
    std::string outputDir;
@@ -290,19 +290,19 @@ public:
    /** The complete name is formed by combining with a sequential number and the ".fits" extension.
      * that is: finimName0000.fits.  This behavior can be modified with exactFinimName.
      */
-   std::string finimName;
+   std::string finimName {"finim_"};
 
    ///Use finimName exactly as specified, without appending a number or an extension.
    /** Output is still FITS format, regardless of extension.  This will overwrite
      * an existing file without asking.
      */
-   bool exactFinimName;
+   bool exactFinimName {false};
 
    ///Controls whether or not the individual PSF subtracted images are written to disk.
    /** - true -- write to disk
      * - false -- [default] don't write to disk
      */
-   bool doOutputPSFSub;
+   bool doOutputPSFSub {false};
 
    ///Prefix of the FITS file names used to write individual PSF subtracted images to disk if doOutputPSFSub is true.
    std::string PSFSubPrefix;
@@ -320,10 +320,10 @@ public:
    std::vector<fitsHeader> heads;
 
    ///Whether or not the fileList has been read.
-   bool filesRead;
+   bool filesRead {false};
 
    ///Whether or not the specified files have been deleted from fileList
-   bool filesDeleted;
+   bool filesDeleted {false};
 
 
    eigenImageT mask; ///< The mask
@@ -478,27 +478,27 @@ public:
    void outputPSFSub(fitsHeader * addHead = 0);
 
 
-   double t_begin;
-   double t_end;
+   double t_begin {0};
+   double t_end  {0};
 
-   double t_load_begin;
-   double t_load_end;
+   double t_load_begin  {0};
+   double t_load_end  {0};
 
-   double t_coadd_begin;
-   double t_coadd_end;
+   double t_coadd_begin  {0};
+   double t_coadd_end  {0};
 
-   double t_preproc_begin;
-   double t_preproc_end;
+   double t_preproc_begin  {0};
+   double t_preproc_end  {0};
 
-   double t_azusm_begin;
-   double t_azusm_end;
+   double t_azusm_begin  {0};
+   double t_azusm_end  {0};
 
-   double t_gaussusm_begin;
-   double t_gaussusm_end;
+   double t_gaussusm_begin  {0};
+   double t_gaussusm_end  {0};
 
 
-   double t_combo_begin;
-   double t_combo_end;
+   double t_combo_begin  {0};
+   double t_combo_end  {0};
 
 };
 
@@ -571,20 +571,20 @@ void HCIobservation<_realT>::initialize()
 template<typename _realT>
 HCIobservation<_realT>::HCIobservation()
 {
-   initialize();
+   //initialize();
 }
 
 template<typename _realT>
 HCIobservation<_realT>::HCIobservation(const std::string & dir, const std::string & prefix, const std::string & ext)
 {
-   initialize();
+   //initialize();
    loadFileList(dir, prefix, ext);
 }
 
 template<typename _realT>
 HCIobservation<_realT>::HCIobservation(const std::string & fileListFile)
 {
-   initialize();
+   //initialize();
    loadFileList(fileListFile);
 }
 
@@ -728,12 +728,14 @@ int HCIobservation<_realT>::readFiles()
    Ncols = imc.cols();
    Npix =  imc.rows()*imc.cols();
 
-
+   std::cerr << "loading complete\n";
+   
    ///\todo zeroNaNs should be a member and be configurable.  Probably should be true by default.
    bool zeroNaNs = true;
 
    if( zeroNaNs )
    {
+      std::cerr << "zero-ing NaNs\n";
       for(int k=0; k<Nims; ++k)
       {
          for(int i=0; i< Nrows; ++i)
@@ -755,9 +757,9 @@ int HCIobservation<_realT>::readFiles()
    /*** Load the mask ***/
    if( maskFile != "")
    {
+      std::cerr << "creating mask cube\n";
       fitsFile<realT> ff;
       ff.read(mask, maskFile);
-
       makeMaskCube();
    }
 
@@ -872,7 +874,10 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
             return -1;
          }
       }
-      
+      else
+      {
+         std::cerr << "found " << nReductions << " sets of " << fileList.size() << " " << im.rows() << " x " << im.cols() << " files\n";
+      }    
       Nims =  fileList.size();
       Nrows = im.rows();
       Ncols = im.cols();
@@ -884,7 +889,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 
       f.read(psfsub[n].data(), heads, fileList);
 
-      f.setReadSize();
+      f.setReadSize(); 
 
       if(MJDKeyword != "")
       {
@@ -929,8 +934,16 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       }
 
    }
-   
-   postReadFiles();
+   if(weightFile != "")
+   {
+      std::vector<std::string> fn;
+      ioutils::readColumns(weightFile, fn, comboWeights);
+
+      std::cerr << "read: " << weightFile << " (" << comboWeights.size() << ")\n";
+   }
+         
+   /*** Now do the post-read actions ***/
+   if( postReadFiles() < 0) return -1;
   
    /*** Load the mask ***/
    if( maskFile != "")
@@ -1006,7 +1019,8 @@ int HCIobservation<_realT>::readWeights()
    //Read the weight file and load it into a map
    std::vector<std::string> wfileNames;
    std::vector<realT> imW;
-//    if( ioutils::readColumns(weightFile, wfileNames, imW) < 0) return -1;
+
+   if( ioutils::readColumns(weightFile, wfileNames, imW) < 0) return -1;
 
    if(imW.size() < fileList.size())
    {
@@ -1054,7 +1068,13 @@ int HCIobservation<_realT>::postReadFiles()
 template<typename _realT>
 void HCIobservation<_realT>::makeMaskCube()
 {
+   if( this->mask.rows() != this->Nrows || this->mask.cols() != this->Ncols)
+   {
+      std::cerr << "\nMask is not the same size as images.\n\n";
+      exit(-1);
+   }
    maskCube.resize( Nrows, Ncols, Nims);
+   
    for(int i=0; i< Nims; ++i)
    {
       maskCube.image(i) = mask;
@@ -1589,6 +1609,19 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
    fitsFile<realT> f;
 
+   std::ofstream wout;
+   
+   if(comboWeights.size() > 0)
+   {
+      fname = PSFSubPrefix + "weights.dat";
+      if(outputDir != "")
+      {
+         fname = outputDir + "/" + fname;
+      }
+      wout.open(fname);
+      std::cerr << "writing comboWeights: " << fname << "\n";
+   }
+   
    char num[256];
    for(size_t n=0; n<psfsub.size(); ++n)
    {
@@ -1606,9 +1639,18 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
          h.append(heads[p]);
          f.write(fname, psfsub[n].image(p).data(), psfsub[n].rows(), psfsub[n].cols(), 1, h);
+         
+         if(comboWeights.size() > 0 && n == 0)
+         {
+            wout << fname << " " << comboWeights[p] << "\n";
+         }
       }
    }
 
+   if(comboWeights.size() > 0)
+   {
+      wout.close();
+   }
 }
 
 ///@}

@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __imageTransforms_hpp__
-#define __imageTransforms_hpp__
+#ifndef improc_imageTransforms_hpp
+#define improc_imageTransforms_hpp
 
 #include <cstddef>
 #include <cmath>
@@ -179,9 +179,9 @@ typedef cubicConvolTransform<double> cubicConvolTransd;
   *
   */
 template<typename transformT, typename arrT, typename arrT2, typename floatT>
-void imageRotate( arrT & transim, ///< [out] The rotated image.  Must be pre-allocated.
+void imageRotate( arrT & transim,  ///< [out] The rotated image.  Must be pre-allocated.
                   const arrT2 &im, ///< [in] The image to be rotated.
-                  floatT dq, ///< [in] the angle, in radians, by which to rotate in the c.c.w. direction
+                  floatT dq,       ///< [in] the angle, in radians, by which to rotate in the c.c.w. direction
                   transformT trans ///< [in] is the transformation to use
                 )
 {
@@ -222,13 +222,17 @@ void imageRotate( arrT & transim, ///< [out] The rotated image.  Must be pre-all
    xc_x_sinq -= yc_x_cosq;
 
 
+   #ifdef MXLIB_USE_OMP
    #pragma omp parallel private(x0,y0,i0,j0,x,y)
+   #endif
    {
       arithT i_x_cosq, i_x_sinq;
       arrT kern;
       kern.resize(width,width);
 
+      #ifdef MXLIB_USE_OMP
       #pragma omp for schedule(static, 1)
+      #endif
       for(int i=0;i<Nrows; ++i)
       {
          i_x_cosq = i*cosq - xc_x_cosq;// + xcen;
@@ -313,37 +317,31 @@ void imageShiftWP( outputArrT & out,
 }
 
 /// Shift an image.
-/** Uses the given transformation type to shift an image.
-  *
-  * \tparam arrOutT is the eigen array type of the output [will be resolved by compiler]
-  * \tparam arrInT is the eigen array type of the input [will be resolved by compiler]
-  * \tparam floatT is a floating point type [will be resolved by compiler in most cases]
+/** Uses the given transformation type to shift an image.  
+  * 
+  * Note that this does not treat the edges
+  * of the image, determined by the buffer width (lbuff) of the kernel and the size of shift.  If you wish to 
+  * treat the edges, you must pad the image by at least lbuff+abs(shift) pixels in each direction, and
+  * implement a strategy (zeros, mirror, wrap) prior to calling this function.
+  * 
+  * \tparam arrOutT is the Eigen-like array type of the output [will be resolved by compiler]
+  * \tparam arrInT is the Eigen-like array type of the input [will be resolved by compiler]
+  * \tparam floatT1 is a floating point type [will be resolved by compiler]
+  * \tparam floatT2 is a floating point type [will be resolved by compiler]
   * \tparam transformT specifies the transformation to use [will be resolved by compiler]
   *
-  * \param [out] transim contains the shifted image.  Must be pre-allocated.
-  * \param [in] im is the image to be shifted.
-  * \param [in] dx is the amount to shift in the x direction
-  * \param [in] dy is the amount to shift in the y direction
-  * \param [in] trans is the transformation to use
-  *
-  * \todo This probably only needs to set the kernel once.  Might be handled with a change check in the transformT.
-  *
   */
-template<typename arrOutT, typename arrInT, typename floatT, typename transformT>
-void imageShift( arrOutT & transim,
-                 const arrInT  &im,
-                 floatT dx,
-                 floatT dy,
-                 transformT trans )
+template<typename arrOutT, typename arrInT, typename floatT1, typename floatT2, typename transformT>
+void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  Will be allocated.
+                 const arrInT  &im, ///< [in] the image to be shifted.
+                 floatT1 dx,        ///< [in] the amount to shift in the x direction
+                 floatT2 dy,        ///< [in] the amount to shift in the y direction
+                 transformT trans   ///< [in] trans is the transformation to use
+               )
 {
    typedef typename transformT::arithT arithT;
 
-   arithT x0, y0, x,y;
-   //arithT xcen, ycen;
-
    int Nrows, Ncols;
-
-   int i0, j0;
 
    const int lbuff = transformT::lbuff;
    const int width = transformT::width;
@@ -351,32 +349,29 @@ void imageShift( arrOutT & transim,
    Nrows = im.rows();
    Ncols = im.cols();
 
+   int xulim = Nrows-width+lbuff;
+   int yulim = Ncols-width+lbuff;
 
    transim.resize(Nrows, Ncols);
 
-   //The geometric image center
-   //xcen = 0.5*(Nrows-1.);
-   //ycen = 0.5*(Ncols-1.);
-
-   int xulim = Nrows-width+lbuff;// - 1;
-   int yulim = Ncols-width+lbuff;// - 1;
-
-
-   #pragma omp parallel private(x0,y0,i0,j0,x,y) num_threads(4)
+   //#pragma omp parallel
    {
+      int i0, j0;
+      // (rx, ry) is fractional residual of shift
+      arithT rx = 1-(dx-floor(dx));    
+      arithT ry = 1-(dy-floor(dy));
+   
       arrOutT kern;
       kern.resize(width,width);
+      trans(kern, rx, ry);
 
-      #pragma omp for
+      //#pragma omp for
       for(int i=0;i<Nrows; ++i)
       {
          // (i,j) is position in new image
-         // (x0,y0) is true position in old image
          // (i0,j0) is integer position in old image
-         // (x, y) is fractional residual of (x0-i0, y0-j0)
 
-         x0 = i-dx;
-         i0 = x0; //just converting to int
+         i0 = i-dx;
 
          if(i0 <= lbuff || i0 >= xulim)
          {
@@ -389,9 +384,7 @@ void imageShift( arrOutT & transim,
 
          for(int j=0;j<Ncols; ++j)
          {
-
-            y0 = j-dy;
-            j0 = y0;
+            j0 = j-dy;
 
             if(j0 <= lbuff || j0 >= yulim)
             {
@@ -399,17 +392,12 @@ void imageShift( arrOutT & transim,
                continue;
             }
 
-            //Get the residual
-            x = x0-i0;
-            y = y0-j0;
-
-            trans(kern, x, y);
             transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
          }//for j
       }//for i
    }//#pragam omp
 
-} //void imageShift(arrOutT & transim, const arrInT  &im, floatT dx, floatT dy)
+} //imageShift
 
 
 /// Magnify an image.
@@ -434,7 +422,7 @@ void imageShift( arrOutT & transim,
     im2.resize(1024,1024);
     imageMagnify(im2,im1, cubicConvolTransform<double>());
     \endcode
-  * In this exmple, the image in im1 will be magnified 2x and place in im2.
+  * In this exmple, the image in im1 will be magnified by `1023.0/511.0 = 2.002x` and placed in im2.
   *
   * \tparam arrOutT is the eigen array type of the output.
   * \tparam arrInT is the eigen array type of the input.
@@ -443,7 +431,7 @@ void imageShift( arrOutT & transim,
 template<typename arrOutT, typename arrInT, typename transformT>
 void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  Must be pre-allocated.
                    const arrInT  &im, ///< [in] is the image to be magnified.
-                   transformT trans ///< [in] is the transformation to use
+                   transformT trans   ///< [in] is the transformation to use
                  )
 {
    typedef typename transformT::arithT arithT;
@@ -521,6 +509,191 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
 
 }
 
+/// Re-bin an image using the sum, reducing its size while conserving the total flux.
+/** Optionally this can be the mean instead of the sum filter, in which case total flux is not conserved.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinSum( imageOutT & imout,     ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                   const imageInT & imin, ///< [in] the image to rebin
+                   bool mean = false      ///< [in] if true the output is the mean rather than the sum.
+                 )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = 1;
+   if(mean) N = rebin*rebin;
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         imout(i,j) = imin.block( i*rebin, j*rebin, rebin, rebin).sum()/N;
+      }
+   }
+   
+   return 0;
+}
+
+/// Re-bin an image using the sum, reducing its size while conserving the total flux.  Records the value and position of the re-binned max pixel.
+/** Optionally this can be the mean instead of the sum filter, in which case total flux is not conserved.
+  * 
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinSum( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                   int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                   int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                   typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                   const imageInT & imin,             ///< [in] the image to rebin
+                   bool mean = false                  ///< [in] if true the output is the mean rather than the sum.
+                 )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = 1;
+   if(mean) N = rebin*rebin;
+   
+   xMax = 0;
+   yMax = 0;
+   pMax = std::numeric_limits<typename imageOutT::Scalar>::lowest();
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         imout(i,j) = imin.block( i*rebin, j*rebin, rebin, rebin).sum()/N;
+         if(imout(i,j) > pMax)
+         {
+            pMax = imout(i,j);
+            xMax = i;
+            yMax = j;
+         }
+      }
+      
+   }
+
+   return 0;
+}
+
+/// Re-bin an image using the mean.
+/** This is a wrapper for imageRebinSum with `mean=true`.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMean( imageOutT & imout,    ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                    const imageInT & imin ///< [in] the image to rebin
+                  )
+{
+   return imageRebinSum(imout, imin, true);
+}
+
+/// Re-bin an image using the mean.  Records the value and position of the re-binned max pixel.
+/** This is a wrapper for imageRebinSum with `mean=true`.
+  *
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMean( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                    int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                    int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                    typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                    const imageInT & imin,             ///< [in] the image to rebin
+                    bool mean = false                  ///< [in] if true the output is the mean rather than the sum.
+                  )
+{
+   return imageRebinSum(imout, xMax, yMax, pMax, imin, true);
+}
+
+/// Re-bin an image, takes the mean with a min/max rejection.
+/** The mean is calculated after rejecting the minimuma and maximum value.
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMeanReject( imageOutT & imout,    ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                          const imageInT & imin ///< [in] the image to rebin
+                        )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = rebin*rebin - 2;
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         register typename imageOutT::Scalar sum = 0;
+         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         for(int k=0;k<rebin;++k)
+         {
+            for(int l=0;l<rebin;++l)
+            {
+               sum += imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) > max) max = imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) < min) min = imin(i*rebin+k, j*rebin+l);
+               
+            }
+         }
+         imout(i,j) = (sum-max-min)/N;/**/
+      }
+   }
+   
+   return 0;
+}
+
+/// Re-bin an image, takes the mean with a min/max rejection.  Records the value and position of the re-binned max pixel.
+/** The mean is calculated after rejecting the minimuma and maximum value.
+  * 
+  * \overload 
+  */
+template<typename imageOutT, typename imageInT>
+int imageRebinMeanReject( imageOutT & imout,                 ///< [out] the re-binned image.  Must be allocated to size which is an integer factor smaller than imin.
+                          int & xMax,                        ///< [out] the x-locatioin of the max pixel
+                          int & yMax,                        ///< [out] the y-locatioin of the max pixel
+                          typename imageOutT::Scalar & pMax, ///< [out] the value of the max pixel
+                          const imageInT & imin              ///< [in] the image to rebin
+                        )
+{
+   int rebin = imin.rows()/imout.rows();
+   if(imin.cols()/imout.cols() != rebin) return -1;
+
+   int N = rebin*rebin - 2;
+   
+   xMax = 0;
+   yMax = 0;
+   pMax = std::numeric_limits<typename imageOutT::Scalar>::lowest();
+   
+   for(int i=0;i<imout.rows(); ++i)
+   {
+      for(int j=0; j<imout.cols(); ++j)
+      {
+         register typename imageOutT::Scalar sum = 0;
+         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         for(int k=0;k<rebin;++k)
+         {
+            for(int l=0;l<rebin;++l)
+            {
+               sum += imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) > max) max = imin(i*rebin+k, j*rebin+l);
+               if(imin(i*rebin+k, j*rebin+l) < min) min = imin(i*rebin+k, j*rebin+l);
+               
+            }
+         }
+         imout(i,j) = (sum-max-min)/N;
+         
+         if(imout(i,j) > pMax)
+         {
+            pMax = imout(i,j);
+            xMax = i;
+            yMax = j;
+         }
+      }
+   }
+   
+   return 0;
+}
+
 /// Down-sample an image, reducing its size while conserving the total flux.
 /** If the old size is an integer multiple of the new size, this is just a re-bin.  If not an integer multiple,
   * the image is interpolated after performing the closest re-bin, and then re-normalized to conserve flux.
@@ -535,7 +708,6 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
 
    //Record this for normalization later
    Scalar inputTotal = fabs(imin.sum());
-
 
 
    //As a first step, rebin to nearest whole pixel factor which is larger than the desired output size
@@ -566,9 +738,6 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
    if(temp.rows() == imout.rows() && temp.cols() == imout.cols())
    {
       imout = temp;
-      
-      //Normalize
-      imout *= 1.0;
       return;
    }
    //Otherwise, re-sample using bilinear interpolation.
@@ -608,4 +777,4 @@ void imageDownSample(imageOutT & imout, const imageInT & imin)
 
 
 
-#endif //__imageTransforms_hpp__
+#endif //improc_imageTransforms_hpp

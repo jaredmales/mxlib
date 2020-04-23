@@ -50,8 +50,8 @@ namespace app
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
-  * - A user configuration file
-  * - A local configuration file
+  * - A user configuration file (specified relative to the users home directory)
+  * - A local configuration file (in the pwd)
   * - A configuration file specified on the command line
   * - The command line
   *
@@ -65,7 +65,7 @@ namespace app
   * \code
     void derived_class::setupConfig()
     {
-       config.add("name", "s", "long", argType::true, "section", "keyword", true, "int", "help message");
+       config.add("name", "s", "long", argType::Required, "section", "keyword", false, "int", "help message");
     }
     \endcode
   * The configuration is then accessed using the `config` member's operator as in
@@ -109,10 +109,10 @@ protected:
    
    std::string configPathCL; ///< The path to a configuration file specified on the command line.
 
-   
-   
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
+   bool m_preserveConfig {false}; ///< Flag controlling whether the configuration is cleared before execution.  Set in derived constructor.
+   
    bool doHelp {false}; ///< Flag to control whether the help message is printed or not.
 
    int m_helpWidth {120} ; ///< The total text width available for the help message.
@@ -123,7 +123,7 @@ protected:
 
    int m_argc; ///< Store argc for later use. E.g. in reReadConfig().
    char ** m_argv; ///< Store argv for later use. E.g. in reReadConfig().
-   
+
 public:
    //application();
 
@@ -133,7 +133,9 @@ public:
    /** Call this from the true main function, passing the command line arguments to be processed.
      * This calls \ref setup(), then checks if the doHelp flag was set.  If so, it calls \ref help() and returns.
      * If doHelp is not set, it then clears the config structure, and then calls \ref execute().
-     *
+     * 
+     * The configuration is cleared before the call to execute, unless m_preserveConfig = true.
+     * 
      * \returns 1 if help is executed.
      * \returns -1 on error.
      * \returns the value of \ref execute() otherwise.
@@ -281,8 +283,11 @@ int application::main( int argc,
       return 1;
    }
 
-   config.clear();
-
+   if(!m_preserveConfig)
+   {
+      config.clear();
+   }
+   
    return execute();
 }
 

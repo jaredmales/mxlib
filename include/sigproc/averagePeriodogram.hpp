@@ -1,5 +1,5 @@
 /** \file averagePeriodogram.hpp
-  * \brief A class to manage calculation of periodograms from timeseries data.
+  * \brief A class to manage calculation of periodograms from time series data.
   *
   * \author Jared R. Males (jaredmales@gmail.com)
   *
@@ -37,18 +37,42 @@ namespace mx
 namespace sigproc
 {
 
-/** \ingroup psds
-  * @{
-  */
-
-
 /// Calculate the average periodogram of a time-series.
 /**
-  * Implements the overlapped average periodogram, cf. pp 843 to 845 of \cite 10.5555.1795494. 
-  * Optionally includes a window (by default no window is used, which is equivalent to the rectangle window). 
-  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time-series.
+  * Implements the overlapped average periodogram, cf. pp 843 to 845 of \cite 10.5555.1795494. This produces
+  * the variance normalized 1-sided PSD estimate of the periodogram.  
   * 
-  * \todo this is currently a mess.  We don't need dt.  If avgLen is the same as sz, or 0 it is size, then just do the non-overlapped case.
+  * Optionally includes a window (by default no window is used, which is equivalent to the rectangle window). 
+  * 
+  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time series.
+  * 
+  * Example:
+  \code
+   typedef float realT;
+   
+   mx::fftwEnvironment<realT> fftwEnv; //for efficient fft planning
+   
+   std::vector<realT> ts = getTimeSeries(); //Some function to populate ts.
+   
+   math::vectorMeanSub(ts); //The time series should be overall mean subtracted.
+   
+   realT dt = 0.1; //The sampling of ts is 0.1 seconds.
+   
+   averagePeriodogram<realt> avgPgram(2.0/dt, dt); //This sets the averaging length to 2 seconds (20 samples), with a 1 second overlap (set automatically)
+   
+   avgPgram.win(window::hann); //Set the Hann window
+   
+   std::vector<realT> pgram = avgPgram(ts); //Calculate the half-overlapped periodogram estimate for ts.
+   
+   //Now output the periodogram estimate.  This will give two columns, the first frequency, the second power at that frequency.
+   for(size_t n=0; n< avgPgram.size(); ++n)
+   {
+      std::cout << avgPgram[n] << " " << pgram[n] << "\n"; 
+   }
+  
+  \endcode
+  * 
+  * \ingroup psds
   */
 template<typename realT>
 class averagePeriodogram
@@ -61,12 +85,12 @@ protected:
      *@{
      */
    
-   size_t m_avgLen {0};
-   size_t m_overlap {0};
+   size_t m_avgLen {0};  ///< The number of samples in each periodgoram estimate.
+   size_t m_overlap {0}; ///< The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
    
    realT m_dt {1}; ///< The time sampling.  Only used for normalization and calculation of the frequency scale.
 
-   std::vector<realT> m_win;
+   std::vector<realT> m_win; ///< The window function.  By default this is empty, which is equivalent to setting it to the rectanbular window.
       
    ///@}
    
@@ -74,7 +98,7 @@ protected:
    
    int m_nOver {0}; ///< The number of overlapping segments.  Calculated from m_avgLen and m_overlap;
    
-   realT m_df {1};
+   realT m_df {1}; ///< The frequency sampling.  This is used only for normalization and frequency scale output.
 
    
    mx::fftT< realT, std::complex<realT>, 1, 0> m_fft;
@@ -87,52 +111,159 @@ protected:
    
 public:
    
-   /// C'tor which sets up the non overlapped periodogram of the timeseries.
-   averagePeriodogram( size_t avgLen /**< [in] The length of averaging.*/ );
+   /// C'tor which sets up the optimum overlapped periodogram of the timeseries.
+   /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
+     * the alternate constructor:
+     * \code
+       averagePeriogram p( avgLen, 0, dt);
+       \endcode
+     */
+   explicit averagePeriodogram( size_t avgLen /**< [in] The length of averaging in samples.*/ );
    
-   /// C'tor setting up an arbitrary overlap.
-   averagePeriodogram( size_t avgLen,
-                       size_t olap
+   /// C'tor which sets up the optimum overlapped periodogram of the timeseries and sets the sampling.
+   /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
+     * the alternate constructor:
+     * \code
+       averagePeriogram p( avgLen, 0, dt);
+       \endcode
+     */
+   averagePeriodogram( size_t avgLen, ///< [in] The length of averaging in samples. 
+                       realT dt ///< [in] the sampling interval of the time-series
                      );
    
+   /// C'tor setting up an arbitrary overlap.
+   /** Set olap to 0 for the unoverlapped case.  
+     */
+   averagePeriodogram( size_t avgLen, ///< [in] The number of samples in each periodgoram estimate.
+                       size_t olap,   ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
+                       realT dt       ///< [in] the sampling interval of the time-series
+                     );
+   
+   /// D'tor, frees all working memory.
    ~averagePeriodogram();
    
-   int resize( size_t avgLen, 
-               size_t olap 
+   /// Set the sampling interval of the time-series 
+   /** This also sets the frequency scale of the output.
+     */
+   void dt( realT ndt);
+   
+   /// Get the sampling interval of the time-series
+   /** \returns m_dt
+     */
+   realT dt();
+   
+   /// Get the frequency interval of the periodogram
+   /** \returns m_df
+     */
+   realT df();
+   
+   /// Resize the periodogram working memory, setting up the 1/2-overlapped optimum case.
+   /** This sets the overlap to 0.5*avgLen.
+     *
+     * Also performs fft planning.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */ 
+   int resize( size_t avgLen /**< [in] The number of samples in each periodgoram estimate. */);
+   
+   /// Resize the periodogram working memory.
+   /** Also performs fft planning.
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */ 
+   int resize( size_t avgLen, ///< [in] The number of samples in each periodgoram estimate.
+               size_t olap    ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
              );
       
+   /// Get a reference to the window vector.
+   /** This allows population of the window with any arbitrary function.  You should call
+     * resizeWin() before using this to make sure that the vector has the correct length.
+     *
+     * \returns a reference to m_win.
+     */ 
    std::vector<realT> & win();
    
-   int resizeWin();
+   /// Set the window vector using a function.
+   /** This will resize m_win, and then call the function with m_win as the argument.
+     * For example to use the hann window defined \ref signal_windows1D:
+     * \code
+       avgPgram.win( window::hann );
+       \endcode
+     * which will set the Hann window.
+     */
+   void win( void(*winFunc)(std::vector<realT> &) /**<[in] pointer to a function which takes a pre-allocated vector and fills it in with a window function*/);
    
-   size_t pgramSize();
+   /// Resize the window and, unless not desired, initialize to the rectangular window by setting all 1s.
+   /** If `setRect=false` then the window is not initialized.
+     */
+   void resizeWin( bool setRect=true /**< [in] [optional] if false, then the window is not initialized to 1 */);
    
-   void operator()( realT * pgram,
-                    const realT * ts,
-                    size_t sz
+   /// Calculate the periodogram for a time-series.
+   /** 
+     *
+     */ 
+   void operator()( realT * pgram,    ///< [out] a pre-allocated to size() array which will be populated with the periodogram of the time-series 
+                    const realT * ts, ///< [in] the time-series
+                    size_t sz         ///< [in] the length of the time-series array
                   );
 
    
-   void operator()( std::vector<realT> & pgram,
-                    const std::vector<realT> & ts
+   /// Calculate the periodogram for a time-series.
+   /** \overload
+     *
+     */ 
+   void operator()( std::vector<realT> & pgram,   ///< [out] a vector which will be allocated and populated with the periodogram of the time-series 
+                    const std::vector<realT> & ts ///< [in] the time-series
                   );
    
-   std::vector<realT> operator()(std::vector<realT> & ts);
+   /// Calculate the periodogram for a time-series.
+   /** \overload
+     *
+     * \returns the periodogram as a vector.
+     */ 
+   std::vector<realT> operator()(std::vector<realT> & ts /**< [in] the time-series*/ );
+   
+   /// Return the size of the periodogram.
+   /** 
+     *
+     * \returns the size of the periodogram estimate for the current setup.
+     */ 
+   size_t size();
+   
+   /// Get the frequency at a given point in the periodogram.
+   /** 
+     * \returns the frequency at point n in the periodogram.
+     */ 
+   realT operator[]( size_t n /**<[in] the point in the periodogram at which the frequency is desired*/ );
 
 };
 
 template<typename realT>
-averagePeriodogram<realT>::averagePeriodogram(size_t avgLen)
+averagePeriodogram<realT>::averagePeriodogram( size_t avgLen )
 {
-   resize(avgLen, 0);
+   resize(avgLen, 0.5*avgLen);
+   dt(1);
 }
 
 template<typename realT>
 averagePeriodogram<realT>::averagePeriodogram( size_t avgLen,
-                                               size_t olap
+                                               realT ndt
+                                             )
+{
+   resize(avgLen, 0.5*avgLen);
+   dt(ndt);
+} 
+
+template<typename realT>
+averagePeriodogram<realT>::averagePeriodogram( size_t avgLen,
+                                               size_t olap,
+                                               realT ndt
                                              )
 {
    resize(avgLen, olap);
+   dt(ndt);
 }
 
 template<typename realT>
@@ -143,11 +274,42 @@ averagePeriodogram<realT>::~averagePeriodogram()
 }
 
 template<typename realT>
+void averagePeriodogram<realT>::dt( realT ndt)
+{
+   m_dt = ndt;
+   m_df = 1.0/(m_avgLen*m_dt);
+}
+
+template<typename realT>
+realT averagePeriodogram<realT>::dt()
+{
+   return m_dt;
+}
+   
+template<typename realT>
+realT averagePeriodogram<realT>::df()
+{
+   return m_df;
+}
+
+   
+template<typename realT>
+int averagePeriodogram<realT>::resize( size_t avgLen )
+{
+   return resize(avgLen, 0.5*avgLen);
+}
+
+template<typename realT>
 int averagePeriodogram<realT>::resize( size_t avgLen, 
                                        size_t olap 
                                      )
 {
    m_avgLen = avgLen;
+    
+   m_size = m_avgLen/2 + 1;
+   
+   m_df = 1.0/(m_avgLen*m_dt);
+    
    m_overlap = olap;
    
    m_nOver = (m_avgLen-m_overlap);
@@ -158,6 +320,7 @@ int averagePeriodogram<realT>::resize( size_t avgLen,
    m_tsWork = fftw_malloc<realT>( m_avgLen );
    
    if(m_fftWork) fftw_free(m_fftWork);
+   
    m_fftWork = fftw_malloc<std::complex<realT>>( (m_avgLen/2 + 1) );
    
    return 0;
@@ -170,17 +333,23 @@ std::vector<realT> & averagePeriodogram<realT>::win()
 }
 
 template<typename realT>
-int averagePeriodogram<realT>::resizeWin()
+void averagePeriodogram<realT>::win( void(*winFunc)(std::vector<realT> &) )
 {
-   m_win.resize(m_avgLen, static_cast<realT>(1));
-   
-   return 0;
+   resizeWin(false);
+   winFunc(m_win);
 }
-
+   
 template<typename realT>
-size_t averagePeriodogram<realT>::pgramSize()
+void averagePeriodogram<realT>::resizeWin(bool setRect)
 {
-   return  m_avgLen/2 + 1;
+   if(setRect)
+   {
+      m_win.resize(m_avgLen, static_cast<realT>(1));
+   }
+   else
+   {
+      m_win.resize(m_avgLen);
+   }
 }
 
 template<typename realT>
@@ -194,8 +363,6 @@ void averagePeriodogram<realT>::operator()( realT * pgram,
       std::cerr << "averagePeriodogram: Window size not correct.\n";
    }
 
-   size_t pgSize = pgramSize();
-   
    int Navg = sz/m_nOver;
 
    while(Navg*m_nOver + m_avgLen > sz) --Navg;
@@ -223,22 +390,19 @@ void averagePeriodogram<realT>::operator()( realT * pgram,
 
       m_fft( m_fftWork, m_tsWork);
 
-      for(size_t j=0;j<pgSize;++j) pgram[j] += norm(m_fftWork[j]);
+      for(size_t j=0;j<m_size;++j) pgram[j] += norm(m_fftWork[j]);
    }
 
    //This is what you'd do to normalize for dt=1
-   //for(size_t j=0;j<pgSize;++j) pgram[j] /= (m_avgLen*Navg);
+   //for(size_t j=0;j<m_size;++j) pgram[j] /= (m_avgLen*Navg);
 
    //but we will just always normalize:
 
-   realT df = 1.0/(2.0*pgSize*m_dt); //factor of 2 since it's a one-sided PSD
-   
-   realT pgramVar = psdVar(df, pgram, pgSize);
+   realT pgramVar = psdVar(m_df, pgram, m_size);
    
    realT tsVar = mx::math::vectorVariance(ts, sz);
 
-   for(size_t j =0; j< pgSize; ++j) pgram[j] *= tsVar/pgramVar; //*df;
-   
+   for(size_t j =0; j< m_size; ++j) pgram[j] *= tsVar/pgramVar; 
    
 }
 
@@ -247,7 +411,7 @@ void averagePeriodogram<realT>::operator()( std::vector<realT> & pgram,
                                             const std::vector<realT> & ts
                                           )
 {
-   pgram.resize(pgramSize());
+   pgram.resize(m_size);
    operator()( pgram.data(), ts.data(), ts.size());
    
 }
@@ -259,89 +423,19 @@ std::vector<realT> averagePeriodogram<realT>::operator()(std::vector<realT> & ts
    operator()(pgram, ts);
    return pgram;
 }
-   
-#if 0
-///Calculate the average periodogram from a time series for a specified averaging interval and overlap.
-/** The time series should be mean subtracted before passing to this function.
-  *
-  * The frequency scale of the output periodogram is 1/(2*pgram.size()*dt), where the factor of 2 is due to the one-sided-ness of the result.
-  *
-  * If a window is supplied, the PSD is normalized so that the one-sided integral is equal to the variance of the input time-series.
-  * 
-  * If you just want the FFT of a timeseries with no overlap, set dt=1, avgLen=\<length of time series\>, olap=0.  This will still window
-  * and normalize if needed.
-  */
+  
 template<typename realT>
-void averagePeriodogram( std::vector<realT> & pgram, ///< [out] the resultant periodogram.
-                         std::vector<realT> & ts,    ///< [in] is input the time-series.
-                         realT dt,                   ///< [in] is the sampling time of time-series.
-                         realT avgLen,               ///< [in] is the length of the averaging interval, same units as dt.
-                         realT olap,                 ///< [in] is the length of the overlap region, same units as avgLen.
-                         std::vector<realT> & w      ///< [in] a vector of length ( (int) avgLen/dt) containing a window.  If empty then then the square window is used.
-                       )
+size_t averagePeriodogram<realT>::size()
 {
-   size_t Nper = avgLen/dt;
-   int Nover = (avgLen-olap)/dt;
+   return m_size;
+}
 
-   if( w.size() > 0 && w.size() != Nper )
-   {
-      std::cerr << "averagePeriodogram: Window size not correct.\n";
-   }
-
-
-   pgram.resize(Nper/2., 0);
-
-   std::vector<std::complex<realT> > fftwork, cwork;
-
-   fftwork.resize(Nper);
-   cwork.resize(Nper);
-
-   int Navg = ts.size()/Nover;
-
-   while(Navg*Nover + Nper > ts.size()) --Navg;
-
-   if(Navg < 1) Navg = 1; //Always do at least 1!
-
-   mx::fftT<std::complex<realT>, std::complex<realT>, 1, 0> fft(Nper);
-
-   for(int i=0;i<Navg;++i)
-   {
-      realT v;
-
-      for(size_t j=0;j<Nper;++j)
-      {
-         v = ts[i*Nover + j];
-
-         if(w.size() == Nper) v *= w[j];
-
-         cwork[j] = std::complex<realT>(v, 0);
-      }
-
-      fft( fftwork.data(), cwork.data());
-
-      for(size_t j=0;j<pgram.size();++j) pgram[j] += norm(fftwork[j]); //pow(abs(fftwork[j]),2);
-   }
-
-   for(size_t j=0;j<pgram.size();++j) pgram[j] /= (Nper*Navg);
-
-   //realT varNorm = 1;
-   if(w.size() == Nper)
-   {
-      realT df = 1.0/(2.0*pgram.size()*dt); //factor of 2 since it's a one-sided PSD
-      realT pgramVar = psdVar(df, pgram);
-
-      realT tsVar = mx::math::vectorVariance(ts);
-
-      for(size_t j =0; j< pgram.size(); ++j) pgram[j] *= tsVar/pgramVar; //*df;
-
-   }
-
-
-};
-
-#endif
-
-///@}
+template<typename realT>
+realT averagePeriodogram<realT>::operator[]( size_t n )
+{
+   return n*m_df;
+}
+   
 
 } //namespace sigproc
 } //namespace mx

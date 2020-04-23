@@ -56,30 +56,30 @@ protected:
    imageT _rMat; ///<The response matrix
    eigenCube<realT> _rImages;
    
-   int _nModes; ///<The number of modes to be reconstructed
+   int _nModes {0}; ///<The number of modes to be reconstructed
    
-   int _detRows; ///<The size of the WFS image, in rows
-   int _detCols;///<The size of the WFS image, in columns
+   int _detRows {0}; ///<The size of the WFS image, in rows
+   int _detCols {0};///<The size of the WFS image, in columns
    
-   int _measurementSize; ///<The number of values in the measurement
+   int _measurementSize {0}; ///<The number of values in the measurement
       
       
    //The mirror modes
-   mx::eigenCube<realT> *_modes;
+   mx::eigenCube<realT> *_modes {nullptr};
    
-   imageT * _pupil;
+   imageT * _pupil {nullptr};
    
    
    imageT _mask;
    
-   realT norm;
+   realT norm {0};
    
    ds9_interface ds9i;
       
 public:
    mx::eigenImaged _spectrum;
    
-   imageT * _gains; 
+   imageT * _gains {nullptr}; 
    
 public:   
    ///Default c'tor
@@ -203,15 +203,7 @@ public:
 template<typename realT> 
 directPhaseReconstructor<realT>::directPhaseReconstructor()
 {
-   _nModes = 0;
    
-   norm = 0;
-   
-   _gains =0;
-   
-   _pupil = 0;
-   
-   _measurementSize = 0;
 }
 
 template<typename realT> 

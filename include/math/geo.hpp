@@ -234,8 +234,6 @@ int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
    
    realT adj = 0;
    
-   realT last = angles[0];
-   
    if( fabs(angles[1] - angles[0]) > threshold)
    {
       if( angles[1] > angles[0]) adj = -full;

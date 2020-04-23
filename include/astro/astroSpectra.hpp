@@ -190,7 +190,7 @@ struct calspecSpectrum
 
    typedef std::string paramsT; ///< The calspec Spectra are parameterized by star name.
 
-   ///Convert from nm to SI m
+   ///Convert from A to SI m
    static constexpr realT wavelengthUnits = static_cast<realT>(1e10);
 
    ///Convert from erg s-1 cm-2 A-1 to SI W m-3

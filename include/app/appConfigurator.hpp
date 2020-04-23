@@ -493,6 +493,7 @@ void appConfigurator::parseCommandLine( int argc,
 
 }
 
+inline
 int appConfigurator::readConfig( const std::string & fname,
                                  bool reportFileNotFound
                                )
