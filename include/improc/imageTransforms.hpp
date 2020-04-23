@@ -408,7 +408,7 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
     x_center = 0.5*(im.rows()-1);
     y_center = 0.5*(im.cols()-1);
   * \endcode
-  * Some care is necessary to prevent magnification from shifting with respect to this center.  The main result is that the
+  * Some care is necessary to prevent magnification from shifting the image with respect to this center.  The main result is that the
   * magnification factors (which can be different in x and y) are defined thus:
   * \code
     x_mag = (transim.rows()-1.0) / (im.rows()-1.0);
@@ -423,6 +423,10 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
     imageMagnify(im2,im1, cubicConvolTransform<double>());
     \endcode
   * In this exmple, the image in im1 will be magnified by `1023.0/511.0 = 2.002x` and placed in im2.
+  *
+  * This transform function does not handle edges.  If treatment of edges is desired, you must pad the input
+  * image using the desired strategy before calling this function.  Note that the padded-size of the input image
+  * will affect the magnification factor.
   *
   * \tparam arrOutT is the eigen array type of the output.
   * \tparam arrInT is the eigen array type of the input.
@@ -507,6 +511,24 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
       }//for i
    }//#pragam omp
 
+}
+
+/// Magnify an image with the cubic convolution interpolator.
+/** Uses the cubic convolution interpolator to magnify the input image to the size of the output image.
+  * 
+  * This is a wrapper for imageMagnify with the transform type specified.
+  *
+  * \tparam arrOutT is the eigen array type of the output.
+  * \tparam arrInT is the eigen array type of the input.
+  * 
+  * \overload
+  */
+template<typename arrOutT, typename arrInT>
+void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  Must be pre-allocated.
+                   const arrInT  &im  ///< [in] is the image to be magnified.
+                 )
+{
+   return imageMagnify(transim, im, cubicConvolTransform<typename arrInT::Scalar>());
 }
 
 /// Re-bin an image using the sum, reducing its size while conserving the total flux.
