@@ -314,7 +314,7 @@ int averagePeriodogram<realT>::resize( size_t avgLen,
    
    m_nOver = (m_avgLen-m_overlap);
    
-   m_fft.plan(m_avgLen, 0, MXFFT_FORWARD, false);
+   m_fft.plan(m_avgLen, MXFFT_FORWARD, false);
    
    if(m_tsWork) fftw_free(m_tsWork);
    m_tsWork = fftw_malloc<realT>( m_avgLen );

@@ -232,6 +232,14 @@ public:
                    realT g  ///< [in] the loop gain.
                  );
 
+   /// Return the closed loop error transfer function (ETF) phase at frequency f for gain g.
+   /**
+     * \returns the phase of the closed loop ETF at f and g.
+     */
+   realT clETFPhase( int fi,  ///< [in] the index of the frequency at which to calculate the ETF
+                     realT g  ///< [in] the loop gain.
+                   );
+   
    /// Return the norm of the closed loop error transfer function (ETF) at frequency f for gain g.
    /**
      * \returns the norm of the closed loop ETF at f and g.
@@ -239,6 +247,14 @@ public:
    realT clETF2( int fi, ///< [in] the index of the frequency at which to calculate the ETF.
                  realT g ///< [in] the loop gain.
                );
+
+   /// Return the closed loop noise transfer function (NTF) at frequency f for gain g.
+   /**
+     * \returns the closed loop NTF at f and g.
+     */
+   complexT clNTF( int fi,  ///< [in] the index of the frequency at which to calculate the NTF
+                   realT g  ///< [in] the loop gain.
+                 );
 
    /// Return the norm of the closed loop noise transfer function (NTF) at frequency f for gain g.
    /**
@@ -688,6 +704,14 @@ std::complex<realT> clGainOpt<realT>::clETF(int fi, realT g)
 }
 
 template<typename realT>
+realT clGainOpt<realT>::clETFPhase(int fi, realT g)
+{
+   if(_f[fi] <= 0) return 0;
+
+   return std::arg((realT(1)/( realT(1) + g*olXfer(fi))));
+}
+
+template<typename realT>
 realT clGainOpt<realT>::clETF2(int fi, realT g)
 {
    if(_f[fi] <= 0) return 0;
@@ -696,7 +720,24 @@ realT clGainOpt<realT>::clETF2(int fi, realT g)
 }
 
 template<typename realT>
-realT clGainOpt<realT>::clNTF2(int fi, realT g)
+std::complex<realT> clGainOpt<realT>::clNTF( int fi, 
+                                             realT g
+                                           )
+{
+   if(_f[fi] <= 0) return 0;
+
+   complexT H_dm, H_del, H_con;
+
+   complexT olX =  olXfer(fi, H_dm, H_del, H_con); //H_dm*H_wfs*H_ma*H_del*H_con;
+
+   return -(H_dm*H_del*g*H_con)/(realT(1) + g*olX);
+
+}
+
+template<typename realT>
+realT clGainOpt<realT>::clNTF2( int fi, 
+                                realT g
+                              )
 {
    if(_f[fi] <= 0) return 0;
 
@@ -710,7 +751,11 @@ realT clGainOpt<realT>::clNTF2(int fi, realT g)
 }
 
 template<typename realT>
-void clGainOpt<realT>::clTF2(realT & ETF, realT & NTF, int fi, realT g)
+void clGainOpt<realT>::clTF2( realT & ETF, 
+                              realT & NTF, 
+                              int fi, 
+                              realT g
+                            )
 {
    if(_f[fi] <= 0)
    {

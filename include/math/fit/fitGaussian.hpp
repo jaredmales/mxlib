@@ -27,9 +27,12 @@
 #ifndef fitGaussian_hpp
 #define fitGaussian_hpp
 
+#include "array2FitGaussian2D.hpp"
+
 #include <boost/math/constants/constants.hpp>
 using namespace boost::math::constants;
 
+#include "../../mxError.hpp"
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
 
@@ -211,11 +214,6 @@ struct gaussian1D_fitter
 
 
 
-
-//forward
-template<typename realT>
-struct array2FitGaussian2D;
-
 //forward
 template<typename _realT>
 struct gaussian2D_sym_fitter;
@@ -256,9 +254,7 @@ public:
    
    typedef typename fitterT::realT realT;
 
-   //static const int nparams = fitterT::nparams;
-
-   array2FitGaussian2D<realT> arr;
+   array2FitGaussian2D<realT> arr; ///< Data array to pass to the levmar library.  Contains the actual data plus the parameters if fixed.
    
    void initialize()
    {
@@ -353,17 +349,43 @@ public:
    }
    
    ///Set the data aray.
-   void setArray( realT *data, 
-                  int nx, 
-                  int ny
+   void setArray( realT *data, ///< [in] The 2D array of data to fit.
+                  int nx,      ///< [in] the x size of the data
+                  int ny       ///< [in] the y size of the data
                 )
    {
       arr.data = data;
       arr.nx = nx;
       arr.ny = ny;
-      
+      arr.mask = nullptr;
       this->n = nx*ny;
       
+   }
+   
+   ///Set the data aray, with a mask.
+   void setArray( realT *data, ///< [in] The 2D array of data to fit.
+                  int nx,      ///< [in] the x size of the data
+                  int ny,      ///< [in] the y size of the data
+                  realT *mask  ///< [in] Array of same size as data.  Any 0 pixels in this array will be excluded from the fit.
+                )
+   {
+      arr.data = data;
+      arr.nx = nx;
+      arr.ny = ny;
+      arr.mask = mask;
+      
+      this->n = 0;
+      int idx_mat;
+      for(int j=0;j<nx; ++j)
+      {
+         for(int i=0;i<ny; ++i)
+         { 
+            idx_mat = i+j*nx;
+   
+            this->n += arr.mask[idx_mat];
+         }
+      }
+            
    }
    
    ///Do the fit.
@@ -445,408 +467,7 @@ public:
    
 };
 
-///Wrapper for a native array to pass to \ref levmarInterface, with 2D Gaussian details.
-/** Supports fixing G0, G, x0, and y0 independently.  The shape and orientation can be fixed, but
-  * for the general form, sigma_x, sigma_y, and theta can only be fixed together. 
-  * \ingroup gaussian_peak_fit
-  */
-template<typename realT>
-struct array2FitGaussian2D
-{
-   realT * data {nullptr}; ///< Pointer to the array
-   size_t nx {0}; ///< X dimension of the array
-   size_t ny {0}; ///< Y dimension of the array
-   
-   realT m_G0 {0};
-   realT m_G {0};
-   realT m_x0 {0};
-   realT m_y0 {0};
-   realT m_sigma_x {0};
-   realT m_sigma_y {0};
-   realT m_theta {0};
-   
-   realT m_a {0};
-   realT m_b {0};
-   realT m_c {0};
-   
-   realT m_sigma {0};
-   
-   int m_G0_idx {0};
-   int m_G_idx {1};
-   int m_x0_idx {2};
-   int m_y0_idx {3};
-   int m_sigma_x_idx {4}; ///< Index of sigma_x in the parameters.  Re-used for a.
-   int m_sigma_y_idx {5}; ///< Index of sigma_y in the parameters.  Re-used for b.
-   int m_theta_idx {6};  ///< Index of theta in the parameters.  Re-used for c.
-   
-   realT m_sigma_idx {4};  ///< Index of sigma in the symmetric case
-   
-   int m_nparams {7};
-   int m_maxNparams {7};
-   
-   void setSymmetric()
-   {
-      m_maxNparams = 5;
-   }
-   
-   void setGeneral()
-   {
-      m_maxNparams = 7;
-   }
-   
-   /// Set whether each parameter is fixed.
-   /** Sets the parameter indices appropriately.
-     */
-   void setFixed( bool G0, 
-                  bool G, 
-                  bool x0, 
-                  bool y0, 
-                  bool sigma_x, 
-                  bool sigma_y,
-                  bool theta
-                )
-   {
-      int idx = 0;
-      
-      if(G0) m_G0_idx = -1;
-      else m_G0_idx = idx++;
-      
-      if(G) m_G_idx = -1;
-      else m_G_idx = idx++;
-   
-      if(x0) m_x0_idx = -1;
-      else m_x0_idx = idx++;
-      
-      if(y0) m_y0_idx = -1;
-      else m_y0_idx = idx++;
-      
-      if(m_maxNparams == 5)
-      {
-         if(sigma_x) m_sigma_idx = -1;
-         else m_sigma_idx = idx++;
-      }
-      else if(sigma_x && sigma_y && theta)
-      {
-         m_sigma_x_idx = -1;
-         m_sigma_y_idx = -1;
-         m_theta_idx = -1;
-      }
-      else
-      {
-         if(sigma_x || sigma_y || theta)
-         {
-            mxError("array2FitGaussian2D::setFixed", MXE_NOTIMPL, "cannot fix sigma_x, sigma_y, and theta separately");
-         }
-         
-         m_sigma_x_idx = idx++;
-         m_sigma_y_idx = idx++;
-         m_theta_idx = idx++;
-      }
-      
-      m_nparams = idx;
-   }
-   
-   realT G0( realT * p )
-   {
-      if( m_G0_idx < 0 )
-      {
-         return m_G0;
-      }
-      else
-      {
-         return p[m_G0_idx];
-      }
-   }
-   
-   void G0( realT * p,
-            realT nG0
-          )
-   {
-      if( m_G0_idx < 0 )
-      {
-         m_G0 = nG0;
-      }
-      else
-      {
-         p[m_G0_idx]=nG0;
-      }
-   }
-   
-   realT G( realT * p )
-   {
-      if( m_G_idx < 0 )
-      {
-         return m_G;
-      }
-      else
-      {
-         return p[m_G_idx];
-      }
-   }
-   
-   void G( realT * p,
-           realT nG
-         )
-   {
-      if( m_G_idx < 0 )
-      {
-         m_G = nG;
-      }
-      else
-      {
-         p[m_G_idx] = nG;
-      }
-   }
-   
-   realT x0( realT * p )
-   {
-      if( m_x0_idx < 0 )
-      {
-         return m_x0;
-      }
-      else
-      {
-         return p[m_x0_idx];
-      }
-   }
-   
-   void x0( realT * p,
-            realT nx0
-          )
-   {
-      if( m_x0_idx < 0 )
-      {
-         m_x0 = nx0;
-      }
-      else
-      {
-         p[m_x0_idx] = nx0;
-      }
-   }
-   
-   realT y0( realT * p )
-   {
-      if( m_y0_idx < 0 )
-      {
-         return m_y0;
-      }
-      else
-      {
-         return p[m_y0_idx];
-      }
-   }
-   
-   void y0( realT * p,
-            realT ny0
-          )
-   {
-      if( m_y0_idx < 0 )
-      {
-         m_y0 = ny0;
-      }
-      else
-      {
-         p[m_y0_idx] = ny0;
-      }
-   }
-   
-   
-   realT sigma_x( realT * p )
-   {
-      if( m_sigma_x_idx < 0 )
-      {
-         return m_sigma_x;
-      }
-      else
-      {
-         return p[m_sigma_x_idx];
-      }
-   }
-   
-   void sigma_x( realT * p,
-                 realT nsigma_x
-               )
-   {
-      if( m_sigma_x_idx < 0 )
-      {
-         m_sigma_x = nsigma_x;
-      }
-      else
-      {
-         p[m_sigma_x_idx] = nsigma_x;
-      }
-   }
-   
-   realT sigma_y( realT * p )
-   {
-      if( m_sigma_y_idx < 0 )
-      {
-         return m_sigma_y;
-      }
-      else
-      {
-         return p[m_sigma_y_idx];
-      }
-   }
-   
-   void sigma_y( realT * p,
-                 realT nsigma_y
-               )
-   {
-      if( m_sigma_y_idx < 0 )
-      {
-         m_sigma_y = nsigma_y;
-      }
-      else
-      {
-         p[m_sigma_y_idx] = nsigma_y;
-      }
-   }
-   
-   realT theta( realT * p )
-   {
-      if( m_theta_idx < 0 )
-      {
-         return m_theta;
-      }
-      else
-      {
-         return p[m_theta_idx];
-      }
-   }
-   
-   void theta( realT * p,
-               realT ntheta
-             )
-   {
-      if( m_theta_idx < 0 )
-      {
-         m_theta = ntheta;
-      }
-      else
-      {
-         p[m_theta_idx] = ntheta;
-      }
-   }
-   
-   realT sigma( realT * p )
-   {
-      if( m_sigma_idx < 0 )
-      {
-         return m_sigma;
-      }
-      else
-      {
-         return p[m_sigma_idx];
-      }
-   }
-   
-   void sigma( realT * p,
-               realT nsigma
-             )
-   {
-      if( m_sigma_idx < 0 )
-      {
-         m_sigma = nsigma;
-      }
-      else
-      {
-         p[m_sigma_idx] = nsigma;
-      }
-   }
-   
-   
-   realT a( realT * p )
-   {
-      //This aliases sigma_x after param normalization
-      if( m_sigma_x_idx < 0 )
-      {
-         return m_a;
-      }
-      else
-      {
-         return p[m_sigma_x_idx];
-      }
-   }
-   
-   void a( realT * p,
-           realT na
-         )
-   {
-      //This aliases sigma_x after param normalization
-      if( m_sigma_x_idx < 0 )
-      {
-         m_a = na;
-      }
-      else
-      {
-         p[m_sigma_x_idx] = na;
-      }
-   }
-   
-   realT b( realT * p )
-   {
-      //This aliases sigma_y after param normalization
-      if( m_sigma_y_idx < 0 )
-      {
-         return m_b;
-      }
-      else
-      {
-         return p[m_sigma_y_idx];
-      }
-   }
-   
-   void b( realT * p,
-           realT nb
-         )
-   {
-      //This aliases sigma_y after param normalization
-      if( m_sigma_y_idx < 0 )
-      {
-         m_b = nb;
-      }
-      else
-      {
-         p[m_sigma_y_idx] = nb;
-      }
-   }
-   
-   realT c( realT * p )
-   {
-      //This aliases theta after param normalization
-      if( m_theta_idx < 0 )
-      {
-         return m_c;
-      }
-      else
-      {
-         return p[m_theta_idx];
-      }
-   }
-   
-   void c( realT * p,
-           realT nc
-         )
-   {
-      //This aliases theta after param normalization
-      if( m_theta_idx < 0 )
-      {
-         m_c = nc;
-      }
-      else
-      {
-         p[m_theta_idx] = nc;
-      }
-   }
-   
-   int nparams()
-   {
-      return m_nparams;
-   }
-   
-   
-};
+
 
 ///\ref levmarInterface fitter structure for the symmetric Gaussian.
 /** \ingroup gaussian_peak_fit
@@ -918,34 +539,75 @@ struct gaussian2D_gen_fitter
       {
          idx_dat = 0;
          //If it's not positive-definite, then we just fill in with the value of the image itself.
-         for(int j=0;j<arr->ny; ++j)
+         if(arr->mask == nullptr)
          {
-            for(int i=0;i<arr->ny; ++i)
-            { 
-               idx_mat = i+j*arr->nx;
-   
-               hx[idx_dat] = arr->data[idx_mat];
-                        
-               ++idx_dat;
+            for(int j=0;j<arr->ny; ++j)
+            {
+               for(int i=0;i<arr->ny; ++i)
+               { 
+                  idx_mat = i+j*arr->nx;
+                  hx[idx_dat] = arr->data[idx_mat];
+                  ++idx_dat;
+               }
             }
-         }         
+         }
+         else
+         {
+            for(int j=0;j<arr->ny; ++j)
+            {
+               for(int i=0;i<arr->ny; ++i)
+               { 
+                  idx_mat = i+j*arr->nx;
+                  if(arr->mask[idx_mat]==0) continue;
+                  hx[idx_dat] = arr->data[idx_mat];
+                  ++idx_dat;
+               }
+            }
+         }   
          return;
       }
+      
       
       //If positive-definite, now actually calculate
       idx_dat = 0;
    
-      for(int j=0;j<arr->ny; ++j)
+      if(arr->mask == nullptr)
       {
-         for(int i=0;i<arr->nx; ++i)
-         { 
-            idx_mat = i+j*arr->nx;
+         for(int j=0;j<arr->ny; ++j)
+         {
+            for(int i=0;i<arr->nx; ++i)
+            { 
+               idx_mat = i+j*arr->nx;
    
-            hx[idx_dat] = func::gaussian2D<realT>(i,j, G0, G, x0, y0, a, b, c) - arr->data[idx_mat];
+               hx[idx_dat] = func::gaussian2D<realT>(i,j, G0, G, x0, y0, a, b, c) - arr->data[idx_mat];
                         
-            ++idx_dat;
+               ++idx_dat;
+            }
          }
       }
+      else
+      {
+         for(int j=0;j<arr->ny; ++j)
+         {
+            for(int i=0;i<arr->nx; ++i)
+            { 
+               idx_mat = i+j*arr->nx;
+               
+               if(arr->mask[idx_mat] == 0) 
+               {
+                  continue;
+               }
+               else
+               {
+                  hx[idx_dat] = func::gaussian2D<realT>(i,j, G0, G, x0, y0, a, b, c) - arr->data[idx_mat];
+               
+                  ++idx_dat;
+               }
+            }
+         }
+      }
+      
+      
    }
       
    void paramNormalizer( array2FitGaussian2D<realT> * arr,

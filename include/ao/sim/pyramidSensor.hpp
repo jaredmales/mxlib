@@ -774,8 +774,6 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    
    if(!_opdMaskMade) makeOpdMask();
    
-   
-   
    for(size_t l = 0; l<_wavelengths.size(); ++l)
    {
       
@@ -784,8 +782,6 @@ void pyramidSensor<_realT, _detectorT>::doSenseWavefront()
    pupilPlane.lambda = _lambda;
    pupilPlane.getWavefront(pupilPlaneCF, _wavelengths[l], _wfSz); //_wavelengths[i]
    
-
-
    #pragma omp parallel 
    {
       complexFieldT tiltedPlane;

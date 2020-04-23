@@ -36,7 +36,7 @@ namespace mx
 namespace improc
 {
    
-enum class xcorrPeakMethod{ centroid, gaussfit };
+enum class xcorrPeakMethod{ centroid, gaussfit, interp };
 
 /// Find the optimum shift to align two images using the discrete cross correlation.
 /** The reference image must be smaller than the target image.  Both the reference image and the section of
@@ -78,11 +78,17 @@ protected:
    
    ccImT m_ccIm;   ///< The cross-correlation image
    
+   ccImT m_magIm; ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interp
+   
    ///@}
    
    math::fit::fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<Scalar>> m_fitter;
    
    int m_maxLag {0}; ///< The maximum lag to consider in the initial cross-correlation.  
+   
+   Scalar m_tol {0.1}; ///< The tolerance of the interpolated-magnified image, in pixels.
+   
+   Scalar m_magSize {0}; ///< Magnified size of the ccIm when using interp.  Set as function of m_tol and m_maxLag.
    
 public:
    xcorrPeakMethod m_peakMethod {xcorrPeakMethod::centroid};
@@ -104,6 +110,10 @@ public:
    /// Set the maximum lag
    void maxLag( int ml /**< [in] the new maximum lag */);
    
+   Scalar tol();
+   
+   void tol( Scalar nt );
+   
    /// Set the size of the cross-correlation images.
    /** This resizes all working memory.
      *
@@ -119,9 +129,14 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int setMask( const ccImT & mask );
+   int maskIm( const ccImT & mask /**< [in] the new mask image */ );
    
-   ccImT & maskIm(){ return m_maskIm; };
+   /// Get a reference to the mask image.
+   /**
+     * \returns a const referance to the mask image.
+     */ 
+   const ccImT & maskIm();
+   
    /// Set the reference image
    /** Normalizes the reference image by mean subtraction and variance division.  Applies
      * the mask first if supplied.
@@ -129,12 +144,32 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */
-   int setReference( const ccImT & im0 );
+   int refIm( const ccImT & im0 );
       
-   ccImT& refIm(){ return m_refIm; }
+   /// Get a reference to the reference image.
+   /**
+     * \returns a const referent to m_refIm.
+     */  
+   const ccImT& refIm();
    
-   ccImT & ccIm(){ return m_ccIm; }
+   /// Get a reference to the normalized image.
+   /**
+     * \returns a const referent to m_normIm.
+     */
+   const ccImT & normIm();
+   
+   /// Get a reference to the cross correlation image.
+   /**
+     * \returns a const referent to m_ccIm.
+     */
+   const ccImT & ccIm();
 
+   /// Get a reference to the magnified image.
+   /**
+     * \returns a const referent to m_magIm.
+     */
+   const ccImT & magIm();
+   
    /// Conduct the cross correlation to a specified tolerance
    /** 
      * \returns 0 on success
@@ -153,9 +188,9 @@ imageXCorrDiscrete<ccImT>::imageXCorrDiscrete()
 }
 
 template< class ccImT>
-imageXCorrDiscrete<ccImT>::imageXCorrDiscrete(int maxLag)
+imageXCorrDiscrete<ccImT>::imageXCorrDiscrete(int mL)
 {
-   m_maxLag = maxLag;
+   maxLag(mL);
 }
 
 template< class ccImT>
@@ -168,10 +203,32 @@ template< class ccImT>
 void imageXCorrDiscrete<ccImT>::maxLag( int ml )
 {
    m_maxLag = ml;
+   tol(m_tol);
 }
 
 template< class ccImT>
-int imageXCorrDiscrete<ccImT>::setMask( const ccImT & mask )
+typename ccImT::Scalar imageXCorrDiscrete<ccImT>::tol()
+{
+   return m_tol;
+}
+
+
+template< class ccImT>
+void imageXCorrDiscrete<ccImT>::tol( Scalar nt )
+{
+   
+   m_magSize = ceil(((2.*m_maxLag + 1) - 1.0)/ nt)+1;
+   std::cerr << "mag size: " << m_magSize << "\n";
+   
+   Scalar mag = (m_magSize-1.0)/((2.*m_maxLag + 1) - 1.0);
+   
+   m_tol = 1.0/mag;
+   
+   std::cerr << "actual tolerance: " << m_tol << "\n";
+}
+
+template< class ccImT>
+int imageXCorrDiscrete<ccImT>::maskIm( const ccImT & mask )
 {
    m_maskIm = mask;
    m_haveMask = true;
@@ -180,7 +237,13 @@ int imageXCorrDiscrete<ccImT>::setMask( const ccImT & mask )
 }
 
 template< class ccImT>
-int imageXCorrDiscrete<ccImT>::setReference( const ccImT & im )
+const ccImT & imageXCorrDiscrete<ccImT>::maskIm()
+{ 
+   return m_maskIm; 
+}
+
+template< class ccImT>
+int imageXCorrDiscrete<ccImT>::refIm( const ccImT & im )
 {
    ccImT im0;
    if(m_haveMask)
@@ -206,11 +269,35 @@ int imageXCorrDiscrete<ccImT>::setReference( const ccImT & im )
 }
 
 template< class ccImT>
+const ccImT & imageXCorrDiscrete<ccImT>::refIm()
+{ 
+   return m_refIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrDiscrete<ccImT>::normIm()
+{ 
+   return m_normIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrDiscrete<ccImT>::ccIm()
+{ 
+   return m_ccIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrDiscrete<ccImT>::magIm()
+{ 
+   return m_magIm; 
+}
+
+template< class ccImT>
 template< class imT>
 int imageXCorrDiscrete<ccImT>::operator()( Scalar & xShift,
-                                      Scalar & yShift,
-                                      const imT & im
-                                    )
+                                           Scalar & yShift,
+                                           const imT & im
+                                         )
 {
    if( im.rows() <= m_refIm.rows() )
    {
@@ -282,12 +369,21 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar & xShift,
       xShift = m_fitter.x0() - maxLag_r;
       yShift = m_fitter.y0() - maxLag_c;
    }
+   else if(m_peakMethod == xcorrPeakMethod::interp)
+   {
+      m_magIm.resize(m_magSize, m_magSize);
+      imageMagnify(m_magIm, m_ccIm, cubicConvolTransform<Scalar>());
+      int x, y;
+      m_magIm.maxCoeff(&x,&y);
+      xShift = x*m_tol - maxLag_r;
+      yShift = y*m_tol - maxLag_c;
+   }
    else
    {
       Scalar x,y;
       centerOfLight(x,y,m_ccIm);
       xShift = x - maxLag_r;
-      yShift = y - maxLag_r;
+      yShift = y - maxLag_c;
    }
    
    return 0;

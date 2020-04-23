@@ -39,23 +39,42 @@ namespace analysis
   *
   */
 template<typename realT>
-int speckleAmpVarMean( std::vector<realT> & vars,  ///< [out] [optional] The binned variances of the time series generated.
-                       std::vector<realT> & bins,  ///< [in]  [optional] The bin sizes to use in calculating vars.
-                       std::vector<realT> & freq,  ///< [in] The Frequency grid of the input PSD
-                       std::vector<realT> & fmPSD, ///< [in] The Fourier mode PSD.
+int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] The binned variances of the time series generated.
+                       std::vector<realT> & bins,                    ///< [in] The bin sizes to use to calculate the variances.
+                       std::vector<realT> & freq,                    ///< [in] The Frequency grid of the input PSD
+                       std::vector<realT> & fmPSD,                   ///< [in] The Fourier mode PSD.
+                       std::vector<realT> & fmDeltaPhase,            ///< [in] The phase angle between the two Fourier components, as a function of freq.
+                       std::vector<std::complex<realT>> & fmXferFxn, ///< [in] The complex error transfer function, as a function of freq
+                       std::vector<realT> & nPSD,                    ///< [in] The noise PSD
+                       std::vector<std::complex<realT>> & nXferFxn,  ///< [in] The noise transfer function, as a function of freq
                        int m,
                        int n,
                        int N                       ///< [in] The number of trials to use in calculating the amplitude time-series.
                      )
 {
-   std::vector<realT> vpsd2;
+   std::vector<realT> vpsd2, dphase2, npsd2;
+   std::vector<std::complex<realT>> xfer2, nxfer2;
 
    bool hasZero = false;
    if(freq[0] == 0) hasZero = true;
 
    //First augment to two-sided DFT form
-   mx::sigproc::augment1SidedPSD( vpsd2, fmPSD, !hasZero, 1.0);// 0.5);
+   sigproc::augment1SidedPSD( vpsd2, fmPSD, !hasZero, 0.5); //<<<<<<<<****** This needs to be the open loop PSD.
 
+   //And augment the h+ to h- phase shift to two sided form
+   sigproc::augment1SidedPSD( dphase2, fmDeltaPhase, !hasZero, 1.0);
+   
+   //And augment the xfer fxn to two sided form
+   sigproc::augment1SidedPSD( xfer2, fmXferFxn, !hasZero, 1.0);
+   
+   //Now augment the noise PSD to two-sided DFT form
+   sigproc::augment1SidedPSD( npsd2, nPSD, !hasZero, 0.5);
+   
+   //And augment the noise xfer fx
+   sigproc::augment1SidedPSD( nxfer2, nXferFxn, !hasZero, 1.0);
+   
+   
+   
    Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
    for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
 
@@ -74,16 +93,18 @@ int speckleAmpVarMean( std::vector<realT> & vars,  ///< [out] [optional] The bin
             
    jincFuncs( Jp, Jm, m, n, m, n);
             
-   std::cerr << "jfuncs: " << Jp << " " << Jm << "\n";
+   //std::cerr << "jfuncs: " << Jp << " " << Jm << "\n";
    
    #pragma omp parallel
    {
       mx::sigproc::psdFilter<realT> filt;
-      filt.psd(psd2);
+      filt.psd(psd2); 
 
       fftT<realT, std::complex<realT>, 1, 0> fft(vpsd2.size());
       fftT<std::complex<realT>, realT, 1, 0> fftB(vpsd2.size(), MXFFT_BACKWARD);
-      std::vector<std::complex<realT>> tform(vpsd2.size());
+      
+      std::vector<std::complex<realT>> tform1(vpsd2.size());
+      std::vector<std::complex<realT>> tform2(vpsd2.size());
    
       mx::normDistT<realT> normVar;
       normVar.seed();
@@ -103,21 +124,29 @@ int speckleAmpVarMean( std::vector<realT> & vars,  ///< [out] [optional] The bin
          for(int i=0; i< psd2.rows(); ++i) 
          {
             n(i,0) = normVar;
-            nm(i,0) = normVar;
+            //nm(i,0) = normVar;
          }
          
          filt.filter(n);//, &nm);
 
-         fft(tform.data(), n.data());
-   
-         for(size_t n=0;n<tform.size();++n)
+         //<<<<<<<<****** At this point this needs to the open loop time-series
+         
+         fft(tform1.data(), n.data());
+            
+         //<<<<<<<<****** Apply the phase shift to the second one.
+         for(size_t m=0;m<tform1.size();++m)
          {
-            tform[n] = tform[n]*exp( std::complex<realT>(0, -half_pi<realT>()))/std::complex<realT>(tform.size(),0) ;//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
+            // Apply the phase shift to form the 2nd time series
+            tform2[m] = tform1[m]*exp( std::complex<realT>(0, dphase2[m] ));//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
+
+            //Xpply the augmented ETF to two time-series
+            tform1[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
+            tform2[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
          }
- 
-         fftB(nm.data(), tform.data());
-         
-         
+
+         //<<<<<<<<****** This needs to be the open loop PSD.
+         fftB(n.data(), tform1.data());
+         fftB(nm.data(), tform2.data());
          
          //Calculate the speckle amplitude
          for(int i= 0; i< Nwd; ++i)

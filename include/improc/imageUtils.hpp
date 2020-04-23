@@ -28,6 +28,7 @@
 #define improc_imageUtils_hpp
 
 
+#include "imageTransforms.hpp"
 
 namespace mx
 {
@@ -87,10 +88,10 @@ typename imageT::Scalar imageVariance( imageT & im,                 ///< [in] th
 }
 
 template<typename imageT>
-int centerOfLight( typename imageT::Scalar & x,
-                   typename imageT::Scalar & y,
-                   imageT & im
-                 )
+int imageCenterOfLight( typename imageT::Scalar & x,
+                        typename imageT::Scalar & y,
+                        imageT & im
+                      )
 {
    x =0;
    y= 0;
@@ -110,6 +111,61 @@ int centerOfLight( typename imageT::Scalar & x,
    y = y/sum - 1;
    
    return 0;
+}
+
+/// Fine the maximum in an image at sub-pixel resolution by interpolation
+/** Uses imageMagnify() to expand the image to the desired scale.  Because of the
+  * scaling used in imageMagnify, the desired scale may not be exact.  As a result
+  * the actual scale is returned in scale_x and scale_y.
+  *
+  */ 
+template<typename floatT, typename imageT, typename magImageT, typename transformT>
+int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum, in pixels of the input image
+                    floatT & y,        ///< [out] the y-position of the maximum, in pixels of the input image
+                    floatT & scale_x,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
+                    floatT & scale_y,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
+                    magImageT & magIm, ///< [in] the magnified image.  This is used as working memory, will be resized.
+                    const imageT & im, ///< [in] the image to find the maximum of
+                    transformT trans   ///< [in] the transform to use for interpolation
+                  )
+{
+   floatT magSize_x = ceil( (im.rows() - 1.0)/ scale_x) + 1;
+   floatT magSize_y = ceil( (im.cols() - 1.0)/ scale_y) + 1;
+   
+   floatT mag_x = ((floatT) magSize_x-1.0)/((floatT) im.rows() - 1.0);
+   floatT mag_y = ((floatT) magSize_y-1.0)/((floatT) im.cols() - 1.0);
+   
+   scale_x = 1.0/mag_x;
+   scale_y = 1.0/mag_y;
+   
+   magIm.resize(magSize_x, magSize_y);
+   
+   imageMagnify(magIm, im, trans);
+   
+   int ix, iy;
+   magIm.maxCoeff(&ix,&iy);
+   x = ix*scale_x;
+   y = iy*scale_y;
+      
+   return 0;
+}
+
+/// Fine the maximum in an image at sub-pixel resolution by cubic convolution interpolation
+/** Uses imageMagnify() to expand the image to the desired scale.  Because of the
+  * scaling used in imageMagnify, the desired scale may not be exact.  As a result
+  * the actual scale is returned in scale_x and scale_y.
+  *
+  */ 
+template<typename floatT, typename imageT, typename magImageT>
+int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum, in pixels of the input image
+                    floatT & y,        ///< [out] the y-position of the maximum, in pixels of the input image
+                    floatT & scale_x,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
+                    floatT & scale_y,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
+                    magImageT & magIm, ///< [in] the magnified image.  This is used as working memory, will be resized.
+                    const imageT & im  ///< [in] the image to find the maximum of
+                  )
+{
+   return imageMaxInterp(x,y,scale_x,scale_y, magIm, im, cubicConvolTransform<typename imageT::Scalar>());
 }
 
 ///@}
