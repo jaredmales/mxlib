@@ -824,11 +824,6 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          return -1;
       }
 
-      if(weightFile != "")
-      {
-         if(readWeights() < 0) return -1;
-      }
-   
       Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
 
       fitsFile<realT> f(fileList[0]);
@@ -879,7 +874,10 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
             return -1;
          }
       }
-      
+      else
+      {
+         std::cerr << "found " << nReductions << " sets of " << fileList.size() << " " << im.rows() << " x " << im.cols() << " files\n";
+      }    
       Nims =  fileList.size();
       Nrows = im.rows();
       Ncols = im.cols();
@@ -891,7 +889,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 
       f.read(psfsub[n].data(), heads, fileList);
 
-      f.setReadSize();
+      f.setReadSize(); 
 
       if(MJDKeyword != "")
       {
@@ -936,7 +934,14 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       }
 
    }
-   
+   if(weightFile != "")
+   {
+      std::vector<std::string> fn;
+      ioutils::readColumns(weightFile, fn, comboWeights);
+
+      std::cerr << "read: " << weightFile << " (" << comboWeights.size() << ")\n";
+   }
+         
    /*** Now do the post-read actions ***/
    if( postReadFiles() < 0) return -1;
   
@@ -1604,7 +1609,7 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 
    fitsFile<realT> f;
 
-   std::fstream wout;
+   std::ofstream wout;
    
    if(comboWeights.size() > 0)
    {
@@ -1614,6 +1619,7 @@ inline void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
          fname = outputDir + "/" + fname;
       }
       wout.open(fname);
+      std::cerr << "writing comboWeights: " << fname << "\n";
    }
    
    char num[256];
