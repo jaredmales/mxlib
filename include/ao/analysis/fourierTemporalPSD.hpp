@@ -841,19 +841,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          realT gopt_lp, var_lp;
 
-         std::vector<realT> tfreq, tPSDp;
-         std::vector<realT> tPSDn;
-
+         std::vector<realT> tfreq; //The frequency scale of the PSDs
+         std::vector<realT> tPSDp; //The open-loop turbulence PSD for a Fourier mode
+         
+         //**< Get the frequency grid, and nyquist limit it to f_s/2
          getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
 
          size_t imax = 0;
          while( tfreq[imax] <= 0.5*fs && imax < tfreq.size()) ++imax;
          tfreq.erase(tfreq.begin() + imax, tfreq.end());
+         //**>
+         
+         std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
+         tPSDn.resize(tfreq.size()); 
 
-         tPSDn.resize(tfreq.size());
-
+         //**< Setup the controllers
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
-
          mx::AO::analysis::clGainOpt<realT> go_si(tauWFS, deltaTau);
          mx::AO::analysis::clGainOpt<realT> go_lp(tauWFS, deltaTau);
 
@@ -862,36 +865,59 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          realT gmax = 0;
          realT gmax_lp = 0;
-
+         //**>
+         
          int m, n;
-
+         
+         
+         //**< For use in lifetime calculations
+         std::vector<realT> dPhase;
+         std::vector<std::complex<realT>> ETFxn;
+         std::vector<std::complex<realT>> NTFxn;
+         
+         if(lifetimeTrials > 0)
+         {
+            dPhase.resize(tfreq.size(), -1*boost::math::constants::half_pi<realT>());
+            ETFxn.resize(tfreq.size());
+            NTFxn.resize(tfreq.size());
+         }
+         
+         //**>
+         
          //want to schedule dynamic with small chunks so maximal processor usage,
          //otherwise we can end up with a small number of cores being used at the end
          #pragma omp for schedule(dynamic, 5)
          for(size_t i=0; i<nModes; ++i)
          {
+            //Determine the spatial frequency at this step
             m = fms[2*i].m;
             n = fms[2*i].n;
+            realT k = sqrt(m*m + n*n)/m_aosys->D();
+   
 
+            //Get the WFS noise PSD (which is already resized to match tfreq)
             wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs(), m_aosys->Fbg(), m_aosys->ron_wfs());
 
-            realT k = sqrt(m*m + n*n)/m_aosys->D();
-
+         
+            //**< Get the open-loop turb. PSD
             getGridPSD( tPSDp, psdDir, m, n );
             
-            //Get integral of entire PSD
-            realT limVar = sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
+            //Get integral of entire open-loop PSD
+            var0 = sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
 
-            //erase points above Nyquis limit
+            //erase points above Nyquist limit
             tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
-
+            
             //And now determine the variance which has been erased.
-            limVar -= sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
+            //limVar is the out-of-band variance, which we add back in for completeness
+            realT limVar = var0 - sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
+            //**>
             
-            //var0 = m_aosys->psd(m_aosys->atm, k, m_aosys->secZeta())*pow(m_aosys->atm.lam_0()/m_aosys->lam_wfs(),2) / pow(m_aosys->D(),2); //
+            //Get the variance of the theoretical PSD
+            //var0 = m_aosys->psd(m_aosys->atm, k, m_aosys->lam_sci(), m_aosys->lam_wfs(), m_aosys->secZeta() ) / pow(m_aosys->D(),2);
             
-            var0 = m_aosys->psd(m_aosys->atm, k, m_aosys->lam_sci(), m_aosys->lam_wfs(), m_aosys->secZeta() ) / pow(m_aosys->D(),2);
-
+            
+            //**< Determine if we're inside the hardwarecontrol limit
             bool inside = false;
             
             if( m_aosys->circularLimit() )
@@ -902,14 +928,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             {
                if(fabs(m) <= mnCon && fabs(n) <= mnCon) inside = true;
             }
+            //**>
+            
             
             if(inside)
             {
                gmax = 0;
                gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
-
-	       //gopt = 0.5;
-               //var = go_si.clVariance(tPSDp, tPSDn, gopt);
 
                var += limVar;
                
@@ -924,9 +949,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                {
                   gopt_lp = 0;
                }
-               
-               
-
             }
             else
             {
@@ -938,19 +960,26 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                go_lp.b(std::vector<realT>({1}));
             }
 
-            //1.3 is a hack since we haven't yet done the convolution...
-            if(gopt > 0 && var > 1.3*var0)
+            //**< Determine if closed-loop is making a difference:
+            
+            //mult used to be 1.3 when using the vonKarman PSD instead of open-loop integral
+            // 1.3 was a hack since we haven't yet done the convolution...
+            
+            realT mult = 1;
+            if(gopt > 0 && var > mult*var0)
             {
                gopt = 0;
                var = var0;
             }
 
-            if(gopt_lp > 0 && var_lp > 1.3*var0)
+            if(gopt_lp > 0 && var_lp > mult*var0)
             {
                gopt_lp = 0;
                var_lp = var0;
             }
-
+            //**>
+            
+            //**< Fill in the gain and variance maps
             gains( mnMax + m, mnMax + n ) = gopt;
             gains( mnMax - m, mnMax - n ) = gopt;
 
@@ -962,9 +991,72 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
             vars_lp( mnMax + m, mnMax + n) = var_lp;
             vars_lp( mnMax - m, mnMax - n ) = var_lp;
-
-            //Calculate the controlled PSDs if needed
-            if(writePSDs || lifetimeTrials)
+            //**>
+             
+            //**< Calulcate Speckle Lifetimes
+            if(lifetimeTrials > 0)
+            {
+               std::vector<realT> bins = {1,4};
+               for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
+               std::vector<realT> vars();
+               
+               if(gopt > 0)
+               {
+                  for(size_t i=0;i<tfreq.size();++i)
+                  {
+                     ETFxn[i] = go_si.clETF(i, gopt);
+                     NTFxn[i] = go_si.clNTF(i, gopt);
+                  }
+               }
+               else
+               {
+                  for(size_t i=0;i<tfreq.size();++i)
+                  {
+                     ETFxn[i] = 1;
+                     NTFxn[i] = 0;
+                  }
+               }
+               
+               speckleAmpVarMean( vars, bins, tfreq, tPSDp, dPhase, ETFxn, tPSDn, NTFxn, m, n, lifetimeTrials);
+               
+               realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  
+               speckleLifetimes( mnMax + m, mnMax + n ) = tau;
+               speckleLifetimes( mnMax - m, mnMax - n ) = tau;
+               
+               
+               if(doLP)
+               {
+                  if(gopt_lp > 0)
+                  {
+                     for(size_t i=0;i<tfreq.size();++i)
+                     {
+                        ETFxn[i] = go_lp.clETF(i, gopt_lp);
+                        NTFxn[i] = go_lp.clNTF(i, gopt_lp);
+                     }
+                  }
+                  else
+                  {
+                     for(size_t i=0;i<tfreq.size();++i)
+                     {
+                        ETFxn[i] = 1;
+                        NTFxn[i] = 0;
+                     }
+                  }   
+               
+                  speckleAmpVarMean( vars, bins, tfreq, tPSDp, dPhase, ETFxn, tPSDn, NTFxn, m, n, lifetimeTrials);
+                     
+                  realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  
+                  speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
+                  speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+               }
+               
+            }
+            //**>
+            
+            //Calculate the controlled PSDs and output
+            if(writePSDs)
             {
                std::string psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/";
                psdOutFile +=  "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
@@ -987,28 +1079,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   psdOut = tPSDp;
                }
 
-               if(writePSDs)
-               {
-                  ioutils::writeBinVector( psdOutFile, psdOut);
+               ioutils::writeBinVector( psdOutFile, psdOut);
 
-                  if(i==0)
-                  {
-                     psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/freq.binv";
-                     ioutils::writeBinVector(psdOutFile, tfreq);
-                  }
+               if(i==0) //Write freq on the first one
+               {
+                  psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/freq.binv";
+                  ioutils::writeBinVector(psdOutFile, tfreq);
                }
                
-               if(lifetimeTrials > 0)
-               {
-                  std::vector<realT> bins = {1,4};
-                  for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
-                  std::vector<realT> vars(bins.size());
-                  speckleAmpVarMean( vars, bins, tfreq, psdOut, m, n, lifetimeTrials);
-                  realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
-                  
-                  speckleLifetimes( mnMax + m, mnMax + n ) = tau;
-                  speckleLifetimes( mnMax - m, mnMax - n ) = tau;
-               }
+               
                
                if(doLP)
                {
@@ -1031,34 +1110,18 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      psdOut = tPSDp;
                   }
 
-                  if(writePSDs)
-                  {
-                     ioutils::writeBinVector( psdOutFile, psdOut);
+                  ioutils::writeBinVector( psdOutFile, psdOut);
 
-                     if(i==0)
-                     {
-                        psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/freq.binv";
-                        ioutils::writeBinVector(psdOutFile, tfreq);
-                     }
+                  if(i==0)
+                  {
+                     psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/freq.binv";
+                     ioutils::writeBinVector(psdOutFile, tfreq);
                   }
-                  
-                  if(lifetimeTrials > 0)
-                  {
-                     std::vector<realT> bins = {1, 4.0};
-                     for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
-                     std::vector<realT> vars(bins.size());
-                     speckleAmpVarMean( vars, bins, tfreq, psdOut, m, n, lifetimeTrials);
-                     realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
-                  
-                     speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
-                     speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
                }
-               
-               }
-
             }
 
             watcher.incrementAndOutputStatus();
+            
          } //omp for i..nModes
       }//omp Parallel
 

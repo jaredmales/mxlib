@@ -42,10 +42,10 @@ template<typename realT>
 int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] The binned variances of the time series generated.
                        std::vector<realT> & bins,                    ///< [in] The bin sizes to use to calculate the variances.
                        std::vector<realT> & freq,                    ///< [in] The Frequency grid of the input PSD
-                       std::vector<realT> & fmPSD,                   ///< [in] The Fourier mode PSD.
+                       std::vector<realT> & fmPSD,                   ///< [in] The open-loop Fourier mode PSD.
                        std::vector<realT> & fmDeltaPhase,            ///< [in] The phase angle between the two Fourier components, as a function of freq.
                        std::vector<std::complex<realT>> & fmXferFxn, ///< [in] The complex error transfer function, as a function of freq
-                       std::vector<realT> & nPSD,                    ///< [in] The noise PSD
+                       std::vector<realT> & nPSD,                    ///< [in] The open-loop noise PSD
                        std::vector<std::complex<realT>> & nXferFxn,  ///< [in] The noise transfer function, as a function of freq
                        int m,
                        int n,
@@ -80,8 +80,6 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
 
    int Nwd = 0.5*psd2.rows();
    int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
-   
-   std::cout << "Nwd: " << Nwd << "\n";
    
    int Nsamp = 0.5*psd2.rows();
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
@@ -129,8 +127,6 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
          
          filt.filter(n);//, &nm);
 
-         //<<<<<<<<****** At this point this needs to the open loop time-series
-         
          fft(tform1.data(), n.data());
             
          //<<<<<<<<****** Apply the phase shift to the second one.
