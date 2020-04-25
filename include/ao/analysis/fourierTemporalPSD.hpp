@@ -993,12 +993,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             vars_lp( mnMax - m, mnMax - n ) = var_lp;
             //**>
              
-            //**< Calulcate Speckle Lifetimes
+            //**< Calculate Speckle Lifetimes
             if(lifetimeTrials > 0)
             {
                std::vector<realT> bins = {1,4};
                for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
-               std::vector<realT> vars();
+               std::vector<realT> vars;
                
                if(gopt > 0)
                {
@@ -1053,9 +1053,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                }
                
             }
-            //**>
+            //**> (Calculate Speckle Lifetimes)
             
-            //Calculate the controlled PSDs and output
+            //**< Calculate the controlled PSDs and output
             if(writePSDs)
             {
                std::string psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/";
@@ -1119,7 +1119,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   }
                }
             }
-
+            //**> (Calculate the controlled PSDs and output)
+            
             watcher.incrementAndOutputStatus();
             
          } //omp for i..nModes
