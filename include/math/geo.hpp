@@ -130,6 +130,40 @@ realT angleMod(realT q /**< [in] the angle */)
    return q;
 }
 
+// template<typename _realT>
+// struct radians
+// {
+//    typedef _realT realT;
+//    
+//    static constexpr realT half = boost::math::constants::pi<realT>();
+// };
+// 
+// template<typename _realT>
+// struct degrees
+// {
+//    typedef _realT realT;
+//    
+//    static constexpr realT half = static_cast<realT>(180.0);
+// };
+
+struct radians;
+
+struct degrees;
+
+template<typename degrad, typename realT>
+struct degradT;
+
+template<typename realT>
+struct degradT<degrees,realT>
+{
+   static constexpr realT half = static_cast<realT>(180.0);
+};
+
+template<typename realT>
+struct degradT<radians,realT>
+{
+   static constexpr realT half = boost::math::constants::pi<realT>();
+};
 
 ///Calculate the difference between two angles, correctly across 0/360.
 /** Calculates \f$ dq = q2- q1 \f$, but accounts for crossing 0/360.  This implies
@@ -143,19 +177,18 @@ realT angleMod(realT q /**< [in] the angle */)
   * 
   *  \ingroup geo
   */
-template<int degrad = 0, typename realT>
+template<typename degrad = radians, typename realT>
 realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
-                 realT q2 ///< [in] angle to subtract q1 from, in degrees.
-               )
+                                   realT q2 ///< [in] angle to subtract q1 from, in degrees.
+                                 )
 { 
+   //typedef typename degradT::realT realT;
+   
    static_assert(std::is_floating_point<realT>::value, "angleDiff: realT must be floating point");
    
    realT dq = q2-q1;
 
-   realT half;
-   
-   if(degrad) half = boost::math::constants::pi<realT>();
-   else half = static_cast<realT>(180);
+   realT half = degradT<degrad,realT>::half;//   degradT::half;
    
    if (abs(dq) > half)
    {
