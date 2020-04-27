@@ -75,8 +75,6 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
       
       if(i0 < 0) i0 = 0;
       if(i1 > fmDeltaPhase.size()-1) i1 = fmDeltaPhase.size()-1;
-      std::cerr << i0 << " " << i1 << "\n";
-      
       for(int i=i0; i<= i1; ++i) fmDeltaPhase[i] = half_pi<realT>();
    }
    
