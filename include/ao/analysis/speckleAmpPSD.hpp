@@ -43,7 +43,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
                        std::vector<realT> & bins,                    ///< [in] The bin sizes to use to calculate the variances.
                        std::vector<realT> & freq,                    ///< [in] The Frequency grid of the input PSD
                        std::vector<realT> & fmPSD,                   ///< [in] The open-loop Fourier mode PSD.
-                       std::vector<realT> & fmDeltaPhase,            ///< [in] The phase angle between the two Fourier components, as a function of freq.
+                       std::vector<realT> & pkFreqs,            ///< [in] The phase angle between the two Fourier components, as a function of freq.
                        std::vector<std::complex<realT>> & fmXferFxn, ///< [in] The complex error transfer function, as a function of freq
                        std::vector<realT> & nPSD,                    ///< [in] The open-loop noise PSD
                        std::vector<std::complex<realT>> & nXferFxn,  ///< [in] The noise transfer function, as a function of freq
@@ -61,8 +61,29 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
    //First augment to two-sided DFT form
    sigproc::augment1SidedPSD( vpsd2, fmPSD, !hasZero, 0.5); //<<<<<<<<****** This needs to be the open loop PSD.
 
+   //**< Fill in the delta phase from the peaks
    //And augment the h+ to h- phase shift to two sided form
+   std::vector<realT> fmDeltaPhase(fmPSD.size(),0);
+
+   realT f0 = freq[0];
+   realT df = freq[1] - freq[0];
+   
+   for(size_t n=0; n<pkFreqs.size(); ++n)
+   {
+      int i0 = (pkFreqs[n]-1.5-f0)/df;
+      int i1 = i0 + 3./df;
+      
+      if(i0 < 0) i0 = 0;
+      if(i1 > fmDeltaPhase.size()-1) i1 = fmDeltaPhase.size()-1;
+      std::cerr << i0 << " " << i1 << "\n";
+      
+      for(int i=i0; i<= i1; ++i) fmDeltaPhase[i] = half_pi<realT>();
+   }
+   
    sigproc::augment1SidedPSD( dphase2, fmDeltaPhase, !hasZero, 1.0);
+
+   //*>
+   
    
    //And augment the xfer fxn to two sided form
    sigproc::augment1SidedPSD( xfer2, fmXferFxn, !hasZero, 1.0);
@@ -72,20 +93,17 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
    
    //And augment the noise xfer fx
    sigproc::augment1SidedPSD( nxfer2, nXferFxn, !hasZero, 1.0);
-   
-   
-   
+
    Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
    for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
 
    int Nwd = 0.5*psd2.rows();
    int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
-   
+
    int Nsamp = 0.5*psd2.rows();
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
-      
+
    std::vector<std::vector<realT>> means;
-   
 
    realT Jp, Jm;
             
@@ -122,19 +140,24 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
          for(int i=0; i< psd2.rows(); ++i) 
          {
             n(i,0) = normVar;
-            //nm(i,0) = normVar;
+            nm(i,0) = normVar;
          }
          
          filt.filter(n);//, &nm);
-
+         filt.filter(nm);
+         
          fft(tform1.data(), n.data());
-            
+         fft(tform2.data(), nm.data());
+         
          //<<<<<<<<****** Apply the phase shift to the second one.
          for(size_t m=0;m<tform1.size();++m)
          {
             // Apply the phase shift to form the 2nd time series
-            tform2[m] = tform1[m]*exp( std::complex<realT>(0, dphase2[m] ));//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
-
+            if(dphase2[m] != 0)
+            {
+               tform2[m] = tform1[m]*exp( std::complex<realT>(0, dphase2[m] ));//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
+            }
+            
             //Xpply the augmented ETF to two time-series
             tform1[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
             tform2[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
@@ -147,7 +170,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
          //Calculate the speckle amplitude
          for(int i= 0; i< Nwd; ++i)
          {
-            vnl[i] = (pow(n(i+NwdStart,0),2)   + pow(nm(i+NwdStart,0),2));//*(Jp*Jp + Jm*Jm) + 8*n(i+NwdStart,0)*nm(i+NwdStart,0)*Jp*Jm;
+            vnl[i] = (pow(n(i+NwdStart,0),2)   + pow(nm(i+NwdStart,0),2))*(Jp*Jp + Jm*Jm) + 8*n(i+NwdStart,0)*nm(i+NwdStart,0)*Jp*Jm;
          }
 
          //Get the middle sample
