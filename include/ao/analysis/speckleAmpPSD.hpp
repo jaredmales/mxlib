@@ -70,8 +70,8 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
    
    for(size_t n=0; n<pkFreqs.size(); ++n)
    {
-      int i0 = (pkFreqs[n]-1.5-f0)/df;
-      int i1 = i0 + 3./df;
+      int i0 = (pkFreqs[n]-0.2-f0)/df;
+      int i1 = i0 + 0.4/df;
       
       if(i0 < 0) i0 = 0;
       if(i1 > fmDeltaPhase.size()-1) i1 = fmDeltaPhase.size()-1;
