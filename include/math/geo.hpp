@@ -29,6 +29,7 @@
 
 #include <vector>
 
+#include <cmath>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -189,8 +190,8 @@ realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
    realT dq = q2-q1;
 
    realT half = degradT<degrad,realT>::half;//   degradT::half;
-   
-   if (abs(dq) > half)
+  
+   if(std::abs(dq) > half)
    {
       if(dq < 0)
       {
