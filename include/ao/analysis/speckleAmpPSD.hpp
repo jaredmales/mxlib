@@ -63,15 +63,15 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
 
    //**< Fill in the delta phase from the peaks
    //And augment the h+ to h- phase shift to two sided form
-   std::vector<realT> fmDeltaPhase(fmPSD.size(),0);
+   std::vector<realT> fmDeltaPhase(fmPSD.size(),0);//pi<realT>());
 
    realT f0 = freq[0];
    realT df = freq[1] - freq[0];
    
    for(size_t n=0; n<pkFreqs.size(); ++n)
    {
-      int i0 = (pkFreqs[n]-.2-f0)/df;
-      int i1 = i0 + 0.4/df;
+      int i0 = (pkFreqs[n]-.01*pkFreqs[n]-f0)/df;
+      int i1 = i0 + (2*0.01*pkFreqs[n])/df;
       
       if(i0 < 0) i0 = 0;
       if(i1 > fmDeltaPhase.size()-1) i1 = fmDeltaPhase.size()-1;
@@ -168,7 +168,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
          //Calculate the speckle amplitude
          for(int i= 0; i< Nwd; ++i)
          {
-            vnl[i] = (pow(n(i+NwdStart,0),2)   + pow(nm(i+NwdStart,0),2))*(Jp*Jp + Jm*Jm) + 8*n(i+NwdStart,0)*nm(i+NwdStart,0)*Jp*Jm;
+            vnl[i] = (pow(n(i+NwdStart,0),2)   + pow(nm(i+NwdStart,0),2));//*(Jp*Jp + Jm*Jm) + 8*n(i+NwdStart,0)*nm(i+NwdStart,0)*Jp*Jm;
          }
 
          //Get the middle sample
