@@ -848,9 +848,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
 
          size_t imax = 0;
-         while( tfreq[imax] <= 0.5*fs && imax < tfreq.size()) ++imax;
+         while( tfreq[imax] <= 0.5*fs ) 
+         {
+            ++imax;
+            if(imax > tfreq.size()-1) break;
+         }
+         
+         if(imax < tfreq.size()-1 && tfreq[imax] <= 0.5*fs*(1.0 + 1e-7)) ++imax;
+         
          tfreq.erase(tfreq.begin() + imax, tfreq.end());
          //**>
+         
+         #pragma omp master
+         {
+            std::cerr << "min freq: " << tfreq[0] << "\n";
+            std::cerr << "max freq: " << tfreq.back() << "\n";
+         }
          
          std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
          tPSDn.resize(tfreq.size()); 
@@ -860,6 +873,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          mx::AO::analysis::clGainOpt<realT> go_si(tauWFS, deltaTau);
          mx::AO::analysis::clGainOpt<realT> go_lp(tauWFS, deltaTau);
 
+         #pragma omp master
+         {
+            std::cerr << "tauWFS: " << tauWFS << "\n";
+            std::cerr << "deltaTau: " << deltaTau << " (" << deltaTau/tauWFS << " frames)\n";
+         }
+         
          go_si.f(tfreq);
          go_lp.f(tfreq);
 
@@ -1003,10 +1022,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                }*/
                
                
-               
                std::vector<realT> bins = {1,4};
                for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
-               std::vector<realT> vars();
+               std::vector<realT> vars;
                
                if(gopt > 0)
                {

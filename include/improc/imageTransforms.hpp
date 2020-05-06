@@ -292,11 +292,15 @@ void imageShiftWP( outputArrT & out,
    dx %= in.rows();
    dy %= in.cols();
 
-   #pragma omp parallel num_threads(4)
+   #ifdef MXLIB_USE_OMP
+   #pragma omp parallel
+   #endif
    {
       int x, y;
 
+      #ifdef MXLIB_USE_OMP
       #pragma omp for
+      #endif
       for(int i=0;i<out.rows(); ++i)
       {
          x = i - dx;
@@ -354,7 +358,9 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
 
    transim.resize(Nrows, Ncols);
 
-   //#pragma omp parallel
+   #ifdef MXLIB_USE_OMP
+   #pragma omp parallel
+   #endif
    {
       int i0, j0;
       // (rx, ry) is fractional residual of shift
@@ -365,7 +371,9 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
       kern.resize(width,width);
       trans(kern, rx, ry);
 
-      //#pragma omp for
+      #ifdef MXLIB_USE_OMP
+      #pragma omp for
+      #endif
       for(int i=0;i<Nrows; ++i)
       {
          // (i,j) is position in new image
