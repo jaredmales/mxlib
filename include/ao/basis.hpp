@@ -400,11 +400,11 @@ int apodizeBasis( const std::string & outputBasisN,
    
    if(centralObs == 0)
    {
-      tukey2d<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, tukeyAlpha, cen,cen);
+      window::tukey2d<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, tukeyAlpha, cen,cen);
    }
    else
    {
-      tukey2dAnnulus<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, centralObs, tukeyAlpha, cen,cen);
+      window::tukey2dAnnulus<realT>(pupil.data(), modes.rows(), modes.rows() + overScan, centralObs, tukeyAlpha, cen,cen);
    }
    
    
