@@ -557,7 +557,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
       }
    }
    else if(excludeMethod == HCI::excludeImno)
@@ -572,7 +572,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
       }
    }
    else if(excludeMethodMax == HCI::excludeImno)
