@@ -19,48 +19,15 @@ namespace mx
 namespace improc
 {
    
-#if 0
-   
- VisAO:     return dtor(rotoff[imno]+90-0.6);
-   
- Clio:      return DTOR(rotoff[imno]-180-1.8);
-   
-
-template<typename _realT>
-struct derotODI
+namespace HCI
 {
-   typedef  _realT realT;
-
-   ///Vector of keywords to extract from the fits headers
-   std::vector<std::string> keywords;
-   
-   ///Vector(s) to hold the keyword values
-   std::vector<realT> dateobs;
-   
-   ///The period of the orbit
-   _realT period;
-   
-   ///Constructor should populate keywords
-   derotODI()
-   {
-      period = 365.25;
-      keywords.push_back("DATEOBS");
-   }
-   
-
-   ///Method called by DIobservation to get keyword-values
-   void extractKeywords(std::vector<fitsHeader> & heads)
-   {
-      dateobs = headersToValues<realT>(heads, "DATEOBS");
-   }
-   
-   ///Calculate the derotation angle for a given image number
-   realT derotAngle(size_t imno) const
-   {
-      return D2PI-(fmod(dateobs[imno], period)/period)*D2PI;
-   }
-};
-#endif
+   /// Fake injection PSF file specification methods
+   /** \ingroup hc_imaging_enums
+     */
+   enum fakeMethods{ single, ///< A single PSF is used
+                     list ///< A list of PSF files, one per input image, is used.
+                   };
+}
 
 ///Process an angular differential imaging (ADI) observation
 /** Angular differential imaging (ADI) uses sky rotation to differentiate real objects from
@@ -116,7 +83,7 @@ struct ADIobservation : public HCIobservation<_realT>
    
    derotFunctObj derotF;
 
-   bool doDerotate;
+   bool m_doDerotate {true};
    
    ADIobservation();
    
@@ -126,9 +93,6 @@ struct ADIobservation : public HCIobservation<_realT>
                    const std::string & prefix, 
                    const std::string & ext = ".fits") ;
 
-   void initialize();
-   
-   
    /** \name Rotation Setup
      * Configuration of the rotation system.
      * @{ 
@@ -167,11 +131,10 @@ struct ADIobservation : public HCIobservation<_realT>
    /** \name Fake Planets
      * @{ 
      */
-//   int doFake; ///<Flag controlling whether or not fake planets are injected
-   int fakeMethod; // 0 == 1 file total, 1 == 1 file per image 
+   int m_fakeMethod {HCI::single}; ///< Method for reading fake files, either HCI::single or HCI::list.
+   
    std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject or a list of fake images
    
-//   bool doFakeScale; ///<Flag controlling whether or not a separate scale is used at each point in time
    std::string fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
    
    std::vector<realT> fakeSep; ///< Separation(s) of the fake planet(s)
@@ -199,24 +162,22 @@ struct ADIobservation : public HCIobservation<_realT>
    ///De-rotate the PSF subtracted images
    void derotate();
 
-   double t_fake_begin;
-   double t_fake_end;
+   double t_fake_begin {0};
+   double t_fake_end {0};
    
-   double t_derotate_begin;
-   double t_derotate_end;
+   double t_derotate_begin {0};
+   double t_derotate_end {0};
    
 };
 
 template<typename _realT, class _derotFunctObj>
 ADIobservation<_realT, _derotFunctObj>::ADIobservation()
 {
-   initialize();
 }
 
 template<typename _realT, class _derotFunctObj>
 ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & fileListFile) : HCIobservation<realT>(fileListFile)
 {
-   initialize();
 }
 
 template<typename _realT, class _derotFunctObj>
@@ -224,26 +185,6 @@ ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & dir,
                                                          const std::string & prefix, 
                                                          const std::string & ext) : HCIobservation<realT>(dir,prefix,ext)
 {
-   initialize();
-}
-
-template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::initialize()
-{
-   doDerotate = true;
-   
-   fakeMethod = 0;
-   
-   t_fake_begin = 0;
-   t_fake_end = 0;
-   
-   t_derotate_begin = 0;
-   t_derotate_end = 0;
-   
-//    derotF.angleKeyword("ROTOFF");
-//    derotF.angleScale = 1.0;
-//    derotF.angleConstant = 89.4;
-   
 }
 
 template<typename _realT, class _derotFunctObj>
@@ -333,7 +274,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
    
    //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imT;
    eigenImageT fakePSF;
-   std::vector<std::string> fakeFiles; //used if fakeMethod == 1
+   std::vector<std::string> fakeFiles; //used if m_fakeMethod == HCI::list
    
    fitsFile<realT> ff;
    std::ifstream scaleFin; //for reading the scale file.
@@ -367,19 +308,19 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
       }
    } //if(fakeScaleFileName != "")
       
-   if(fakeMethod == 0)
+   if(m_fakeMethod == HCI::single)
    {
       if( ff.read( fakePSF, fakeFileName ) < 0) return -1;
    }
 
-   if(fakeMethod == 1)
+   if(m_fakeMethod == HCI::list)
    {
       if( ioutils::readColumns(fakeFileName, fakeFiles) < 0) return -1;
    }
    
    for(int i=0; i<this->imc.planes(); ++i)
    {
-      if(fakeMethod == 1)
+      if(m_fakeMethod == HCI::list)
       {
          ff.read(fakePSF, fakeFiles[i]);
       }

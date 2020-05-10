@@ -37,6 +37,18 @@ namespace improc
 
 namespace HCI 
 {
+   
+   ///Mean subtraction methods
+   /** These control how the data in each search region is centered to meet the PCA requirement.
+     * \ingroup hc_imaging_enums 
+     */
+   enum meansubMethods{ imageMean,   ///< The mean of each image (within the search region) is subtracted from itself
+                        imageMedian, ///< The median of each image (within the search region) is subtracted from itself
+                        imageMode,   ///< The mode of each image (within the search region) is subtracted from itself
+                        meanImage,   ///< The mean image of the data is subtracted from each image
+                        medianImage  ///< The median image of the data is subtracted from each image
+                      };
+   
    ///Image exclusion methods
    /** \ingroup hc_imaging_enums
      */
@@ -76,7 +88,19 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    typedef _evCalcT evCalcT;
    
-   int padSize;
+   
+   /// Specify how the data are centered for PCA within each search region
+   /** Can have the following values:
+     * - <b>HCI::imageMean</b> = the mean of each image (within the search region) is subtracted from itself
+     * - <b>HCI::imageMedian</b> = the median of each image (within the search region) is subtracted from itself
+     * - <b>HCI::imageMode</b>  = the mode of each image (within the search region) is subtracted from itself
+     * - <b>HCI::meanImage</b> = the mean image of the data is subtracted from each image
+     * - <b>HCI::medianImage</b> = the median image of the data is subtracted from each image
+     */
+   int m_meanSubMethod {HCI::imageMean};
+   
+   
+   int padSize {4};
    
    /// Specifies the number of modes to include in the PSF.
    /** The output image is a cube with a plane for each entry in m_Nmodes.
@@ -136,45 +160,23 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    int m_includeMethod {HCI::includeAll};
    
    eigenImage<int> m_imsIncluded;
+
+   /// Default c'tor
+   KLIPreduction();
    
-   KLIPreduction()
-   {
-      initialize();
-   }
+   /// C'tor specifying the file search parameters
+   KLIPreduction( const std::string & dir,          ///< [in] the directory to search for files.
+                  const std::string & prefix,       ///< [in] the prefix of the files
+                  const std::string & ext = ".fits" ///< [in] the extension of the files, default is .fits
+                );
    
-   KLIPreduction( const std::string & dir, 
-                  const std::string & prefix, 
-                  const std::string & ext = ".fits") : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
-   {
-      initialize();
-   }
+   /// C'tor with the name of a file which contains a list of files
+   explicit KLIPreduction( const std::string & fileListFile /**< [in] the full path to a file containing a list of files */ );
    
-   explicit KLIPreduction( const std::string & fileListFile ) : ADIobservation<_realT, _derotFunctObj>(fileListFile)
-   {
-      initialize();
-   }
-   
-   virtual ~KLIPreduction() {}
-   
-   void initialize()
-   {
-      padSize = 4;
+   virtual ~KLIPreduction();
       
-      t_worker_begin =0;
-      t_worker_end = 0;
-      
-      t_eigenv = 0;
-      
-      t_klim = 0;
-      
-      t_psf = 0;
-      
-   }
-   
    void meanSubtract(eigenCube<realT> & ims, std::vector<realT> & sds);
-   void medianSubtract(eigenCube<realT> & ims, std::vector<realT> & sds);
-   void getStdDevs(std::vector<realT> sd, eigenCube<realT> & ims);
-   
+
    /// Run KLIP in a set of geometric search regions.
    /** The arguments are 4 vectors, where each entry defines one component of the  search region.
      *
@@ -211,12 +213,12 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    void worker(eigenCube<realT> & rims, std::vector<size_t> & idx, realT dang, realT dangMax);
 
-   double t_worker_begin;
-   double t_worker_end;
+   double t_worker_begin {0};
+   double t_worker_end {0};
    
-   double t_eigenv;
-   double t_klim;
-   double t_psf;
+   double t_eigenv {0};
+   double t_klim {0};
+   double t_psf {0};
    
    void dump_times()
    {
@@ -245,33 +247,83 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
 };
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction()
+{
+}
+
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction( const std::string & dir, 
+                                                                const std::string & prefix, 
+                                                                const std::string & ext
+                                                              ) : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext)
+{
+}
+   
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction( const std::string & fileListFile
+                                                              ) : ADIobservation<_realT, _derotFunctObj>(fileListFile) 
+{
+}
+   
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::~KLIPreduction() 
+{
+}
+   
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
 void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<realT> & ims, std::vector<_realT> & norms)
 {
 
    norms.resize(ims.planes());
 
-   for(int n=0;n<ims.planes(); ++n)
+   if(m_meanSubMethod == HCI::meanImage || m_meanSubMethod == HCI::medianImage)
    {
-      ims.image(n) -= ims.image(n).mean();
-      norms[n] = ims.image(n).matrix().norm();
+      eigenImageT mean;
+      
+      if(m_meanSubMethod == HCI::meanImage)
+      {
+         ims.mean(mean);
+      }
+      else if(m_meanSubMethod == HCI::medianImage)
+      {
+         ims.median(mean);
+      }  
+      
+      for(int n=0;n<ims.planes(); ++n)
+      {
+         ims.image(n) -= mean;
+         
+         realT immean = ims.image(n).mean();
+         norms[n] = (ims.image(n)-immean).matrix().norm();
+      }
+   }
+   else
+   {
+      realT mean;
+      std::vector<realT> work; //Working memmory for median calc
+      
+      for(int n=0;n<ims.planes(); ++n)
+      {
+         if( m_meanSubMethod == HCI::imageMean )
+         {
+            mean = ims.image(n).mean();
+         }
+         else if(m_meanSubMethod == HCI::imageMedian)
+         {
+            mean = imageMedian(ims.image(n), &work);
+         }
+         
+         ims.image(n) -= mean;
+         
+         //Because we might not have used the mean, we need to re-mean to make this the standard deviation
+         realT immean = ims.image(n).mean();
+         norms[n] = (ims.image(n)-immean).matrix().norm();
+         
+      }
    }
 }
  
-template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
-void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::medianSubtract(eigenCube<realT> & ims, std::vector<_realT> & sds)
-{
-         
-   sds.resize(ims.planes());
-   //#pragma omp parallel for schedule(static, 1)
-   for(int i=0;i<ims.planes(); ++i)
-   {
-      _realT med = eigenMedian(ims.image(i));
-      ims.image(i) -= med;
-      sds[i] = ims.image(i).matrix().norm();//This is the standard deviation relative to the median.
-   }
-} 
+
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
 inline
@@ -386,7 +438,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    fitsFile<int> ffii;
    ffii.write("imsIncluded.fits", m_imsIncluded);
    
-   if(this->doDerotate)
+   if(this->m_doDerotate)
    {
       std::cerr << "derotating\n";
       this->derotate();
@@ -557,7 +609,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
       }
    }
    else if(excludeMethod == HCI::excludeImno)
@@ -572,7 +624,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<1>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
       }
    }
    else if(excludeMethodMax == HCI::excludeImno)
@@ -760,7 +812,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
    //This is generic to both regions and this from here on . . .
    
-   if(this->doDerotate)
+   if(this->m_doDerotate)
    {
       std::cerr << "derotating\n";
       this->derotate();
@@ -786,6 +838,31 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
       head.append("", fitsCommentType(), "mx::KLIPreduction parameters:");
       head.append("", fitsCommentType(), "----------------------------------------");
    
+      if(m_meanSubMethod == HCI::imageMean)
+      {
+         head.append("MEANSUBM", "imageMean", "PCA mean subtraction method");
+      }
+      else if(m_meanSubMethod == HCI::imageMedian)
+      {
+         head.append("MEANSUBM", "imageMedian", "PCA mean subtraction method");
+      }
+      else if(m_meanSubMethod == HCI::imageMode)
+      {
+         head.append("MEANSUBM", "imageMode", "PCA mean subtraction method");
+      }
+      else if(m_meanSubMethod == HCI::meanImage)
+      {
+         head.append("MEANSUBM", "meanImage", "PCA mean subtraction method");
+      }
+      else if(m_meanSubMethod == HCI::medianImage)
+      {
+         head.append("MEANSUBM", "medianImage", "PCA mean subtraction method");
+      }
+      else 
+      {
+         head.append("MEANSUBM", "UNKNOWN", "PCA mean subtraction method");
+      }
+      
       std::stringstream str;
       
       if(m_Nmodes.size() > 0)

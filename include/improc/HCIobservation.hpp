@@ -36,20 +36,6 @@ namespace mx
 namespace improc
 {
 
-/*double t_begin;
-double t_end;
-
-double t_load_begin;
-double t_load_end;
-
-double t_coadd_begin;
-double t_coadd_end;
-
-double t_preproc_begin;
-double t_preproc_end;
-
-double t_combo_begin;
-double t_combo_end;*/
 
 
 ///Namespace for high contrast imaging enums.
