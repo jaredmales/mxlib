@@ -104,10 +104,9 @@ int basisNormalize( improc::eigenCube<realT> & modes, ///< [in/out] the basis to
                     improc::eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the normalization
                   )
 {
-   realT maskSum = mask.sum();
    for(int i=0; i < modes.planes(); ++i)
    {
-      float norm = (modes.image(i)*mask).square().sum()/maskSum;
+      float norm = (modes.image(i)*mask).square().sum();
       
       modes.image(i)/=sqrt(norm);
    }  
