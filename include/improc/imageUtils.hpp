@@ -168,6 +168,41 @@ int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum,
    return imageMaxInterp(x,y,scale_x,scale_y, magIm, im, cubicConvolTransform<typename imageT::Scalar>());
 }
 
+/// Combine two images, each with their own mask defining good pixels.
+/** The combined image is made up of the pixels in im1 where mask1 is 1, and the pixels of im2 where mask2 is 1.
+  * If a pixel in both mask1 and mask2 has a value of 1, that pixel in the combo is the average of im1 and im2.
+  * All other pixels are set to 0 in the combined image.
+  *
+  * Separate template types are used for each argument to allow references, etc.
+  * 
+  * \tparam imageT the eigen-like array type of the combined image 
+  * \tparam imageT1 the eigen-like array type of image 1
+  * \tparam imageT2 the eigen-like array type of mask 1
+  * \tparam imageT3 the eigen-like array type of image 2
+  * \tparam imageT4 the eigen-like array type of mask 2
+  */
+template<typename imageT, typename imageT1, typename imageT2, typename imageT3, typename imageT4>
+void combine2ImagesMasked( imageT & combo,        ///< [out] the combined image.  will be resized.
+                           const imageT1 & im1,   ///< [in] the first image
+                           const imageT2 & mask1, ///< [in] the mask for the first image
+                           const imageT3 & im2,   ///< [in] the second image
+                           const imageT4 & mask2  ///< [in] the mask for the second image
+                         )
+{
+   combo.resize(im1.rows(), im2.cols());
+   
+   for(int c=0; c < combo.cols(); ++c)
+   {
+      for(int r=0;r<combo.rows();++r)
+      {
+         if(mask1(r,c) == 1 && mask2(r,c) == 0) combo(r,c) = im1(r,c);
+         else if(mask2(r,c) == 1 & mask1(r,c) == 0) combo(r,c) = im2(r,c);
+         else if(mask1(r,c) == 1 && mask2(r,c) == 1) combo(r,c) = 0.5*(im1(r,c) + im2(r,c));
+         else combo(r,c) = 0;
+      }
+   }
+}
+
 ///@}
 
 } //namespace math
