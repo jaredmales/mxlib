@@ -717,8 +717,8 @@ void radprof( vecT & rad,          ///< [out] the radius points for the profile.
   * \ingroup rad_prof
   */ 
 template<typename radprofT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
-void radprofim( radprofT & radprof,     ///< [out] the radial profile image.  This will be resized.
-                const eigenImT1 & im,   ///< [in the image to form the profile of. 
+void radprofim( radprofT & radprofIm,     ///< [out] the radial profile image.  This will be resized.
+                eigenImT1 & im,   ///< [in the image to form the profile of. 
                 const eigenImT2 & rad,  ///< [in] an array of radius values for each pixel
                 const eigenImT3 * mask, ///< [in] [optional 1/0 mask, only pixels with a value of 1 are included in the profile. Can be nullptr.
                 bool subtract           ///< [in] if true, then on ouput im will have had its radial profile subtracted.
@@ -731,7 +731,7 @@ void radprofim( radprofT & radprof,     ///< [out] the radial profile image.  Th
    radprof(med_r, med_v, im, rad, mask);
    
    /* And finally, interpolate onto the radius image */
-   radprof.resize(im.rows(), im.cols() );
+   radprofIm.resize(im.rows(), im.cols() );
    
    gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
    
@@ -743,13 +743,13 @@ void radprofim( radprofT & radprof,     ///< [out] the radial profile image.  Th
          {
             if( (*mask)(r,c) == 0) 
             {
-               radprof(r,c) = 0;
+               radprofIm(r,c) = 0;
                continue;
             }
          }
          
-         radprof(r,c) = interp.interpolate( ((double) rad(r,c)) );
-         if(subtract) im(r,c) -= radprof(r,c);
+         radprofIm(r,c) = interp.interpolate( ((double) rad(r,c)) );
+         if(subtract) im(r,c) -= radprofIm(r,c);
       }
    }
    
