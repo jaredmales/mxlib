@@ -49,6 +49,16 @@ namespace HCI
                         medianImage  ///< The median image of the data is subtracted from each image
                       };
    
+   std::string meansubMethodStr( int method )
+   {
+      if(method == imageMean) return "imageMean";
+      else if(method == imageMedian) return "imageMedian";
+      else if(method == imageMode) return "imageMode";
+      else if(method == meanImage) return "meanImage";
+      else if(method == medianImage) return "medianImage";
+      else return "UNKNOWN";
+   }
+      
    ///Image exclusion methods
    /** \ingroup hc_imaging_enums
      */
@@ -57,7 +67,17 @@ namespace HCI
                         excludeAngle, ///< Exclude by angle of roration
                         excludeImno ///< Exclude by number of images
                       };   
-
+                      
+   std::string excludeMethodStr(int method)
+   {
+      if(method == excludeNone) return "none";
+      else if(method == excludePixel) return "pixel";
+      else if(method == excludeAngle) return "angle";
+      else if(method == excludeImno) return "imno";
+      else return "UNKNOWN";
+   }
+                      
+                      
    ///Image inclusion methods
    /** \ingroup hc_imaging_enums
      */
@@ -88,6 +108,59 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    typedef _evCalcT evCalcT;
    
+   /// Default c'tor
+   KLIPreduction();
+   
+   /// Construct and load the target file list.
+   /** Populates the \ref m_fileList vector by searching on disk for files which match
+     * "dir/prefix*.ext".  See \ref load_fileList
+     *
+     */
+   KLIPreduction( const std::string & dir,    ///< [in] the directory to search for files.
+                  const std::string & prefix, ///< [in] the prefix of the files
+                  const std::string & ext     ///< [in] the extension of the files
+                );
+   
+   /// Construct using a file containing the target file list
+   /** Populates the \ref m_fileList vector by reading the file, which should be a single
+     * column of new-line delimited file names.
+     */
+   explicit KLIPreduction( const std::string & fileListFile /**< [in] the full path to a file containing a list of files */ );
+   
+   //Construct and load the target file list and the RDI file list
+   /** Populates the \ref m_fileList vector by searching on disk for files which match
+     * "dir/prefix*.ext".  See \ref load_fileList
+     *
+     *  Populates the \ref m_RDIfileList vector by searching on disk for files which match
+     * "RDIdir/RDIprefix*.RDIext".  See \ref load_RDIfileList
+     */   
+   KLIPreduction( const std::string & dir,       ///< [in] the directory to search for files.
+                  const std::string & prefix,    ///< [in] the prefix of the files
+                  const std::string & ext,       ///< [in] the extension of the files, default is .fits
+                  const std::string & RDIdir,    ///< [in] the directory to search for the reference files.
+                  const std::string & RDIprefix, ///< [in] the initial part of the file name for the reference files.  Can be empty "".
+                  const std::string & RDIext=""  ///< [in] [optional] the extension to append to the RDI file name, must include the '.'.  If empty "" then same extension as target files is used.
+                );
+   
+   /// Construct using a file containing the target file list and a file containing the RDI target file list
+   /** Populates the \ref m_fileList vector by reading the file, which should be a single
+     * column of new-line delimited file names.
+     * 
+     * Populates the \ref m_RDIfileList vector by reading the file, which should be a single
+     * column of new-line delimited file names.
+     */
+   explicit KLIPreduction( const std::string & fileListFile,   ///< [in] a file name path to read for the target file names.
+                           const std::string & RDIfileListFile ///< [in] a file name path to read for the reference file names.
+                        );
+   
+   
+   virtual ~KLIPreduction();
+   
+   
+   
+   
+   
+   
    
    /// Specify how the data are centered for PCA within each search region
    /** Can have the following values:
@@ -100,7 +173,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    int m_meanSubMethod {HCI::imageMean};
    
    
-   int padSize {4};
+   int m_padSize {4};
    
    /// Specifies the number of modes to include in the PSF.
    /** The output image is a cube with a plane for each entry in m_Nmodes.
@@ -115,7 +188,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
      */ 
    std::vector<int> m_Nmodes;
    
-   int maxNmodes {0};
+   int m_maxNmodes {0};
    
    /// Specify the minimum pixel difference at the inner edge of the search region 
    realT m_minDPx {0};
@@ -161,21 +234,14 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    
    eigenImage<int> m_imsIncluded;
 
-   /// Default c'tor
-   KLIPreduction();
-   
-   /// C'tor specifying the file search parameters
-   KLIPreduction( const std::string & dir,          ///< [in] the directory to search for files.
-                  const std::string & prefix,       ///< [in] the prefix of the files
-                  const std::string & ext = ".fits" ///< [in] the extension of the files, default is .fits
-                );
-   
-   /// C'tor with the name of a file which contains a list of files
-   explicit KLIPreduction( const std::string & fileListFile /**< [in] the full path to a file containing a list of files */ );
-   
-   virtual ~KLIPreduction();
       
-   void meanSubtract(eigenCube<realT> & ims, std::vector<realT> & sds);
+   /// Subtract the basis mean from each of the images
+   /** The mean is subtracted according to m_meanSubMethod.
+    */
+   void meanSubtract( eigenCube<realT> & rims, ///< [in/out] The reference images.  These are mean subtracted on output.
+                      eigenCube<realT> & tims, ///< [in/out] The target images, which can be the same cube as rims (tested by pointer comparison), in which case they will be ignored.  Mean subtractedon output.
+                      std::vector<realT> & sds ///< [out] The standard deviation of the mean subtracted refernce images.
+                    );
 
    /// Run KLIP in a set of geometric search regions.
    /** The arguments are 4 vectors, where each entry defines one component of the  search region.
@@ -211,7 +277,12 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
       return regions(vminr, vmaxr, vminq, vmaxq);
    }
    
-   void worker(eigenCube<realT> & rims, std::vector<size_t> & idx, realT dang, realT dangMax);
+   void worker( eigenCube<realT> & rims,
+                eigenCube<realT> & tims,
+                std::vector<size_t> & idx, 
+                realT dang, 
+                realT dangMax
+              );
 
    double t_worker_begin {0};
    double t_worker_end {0};
@@ -264,14 +335,36 @@ KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction( const std::strin
                                                               ) : ADIobservation<_realT, _derotFunctObj>(fileListFile) 
 {
 }
+
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction( const std::string & dir, 
+                                                                const std::string & prefix, 
+                                                                const std::string & ext,
+                                                                const std::string & RDIdir, 
+                                                                const std::string & RDIprefix, 
+                                                                const std::string & RDIext
+                                                              ) : ADIobservation<_realT, _derotFunctObj>(dir, prefix, ext, RDIdir, RDIprefix, RDIext)
+{
+   std::cerr << "KLIP 6\n";
+}
    
+template<typename _realT, class _derotFunctObj, typename _evCalcT>
+KLIPreduction<_realT, _derotFunctObj, _evCalcT>::KLIPreduction( const std::string & fileListFile,
+                                                                const std::string & RDIfileListFile
+                                                              ) : ADIobservation<_realT, _derotFunctObj>(fileListFile, RDIfileListFile) 
+{
+}
+
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
 KLIPreduction<_realT, _derotFunctObj, _evCalcT>::~KLIPreduction() 
 {
 }
    
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<realT> & ims, std::vector<_realT> & norms)
+void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<realT> & ims,
+                                                                    eigenCube<realT> & tims,
+                                                                    std::vector<_realT> & norms
+                                                                  )
 {
 
    norms.resize(ims.planes());
@@ -295,6 +388,14 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<rea
          
          realT immean = ims.image(n).mean();
          norms[n] = (ims.image(n)-immean).matrix().norm();
+      }
+      
+      if(&tims != &ims)
+      {
+         for(int n=0;n<tims.planes(); ++n)
+         {
+            tims.image(n) -= mean;
+         }
       }
    }
    else
@@ -320,6 +421,23 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract(eigenCube<rea
          norms[n] = (ims.image(n)-immean).matrix().norm();
          
       }
+      
+      if(&tims != &ims)
+      {
+         for(int n=0;n<tims.planes(); ++n)
+         {
+            if( m_meanSubMethod == HCI::imageMean )
+            {  
+               mean = tims.image(n).mean();
+            }
+            else if(m_meanSubMethod == HCI::imageMedian)
+            {
+               mean = imageMedian(tims.image(n), &work);
+            }
+         
+            tims.image(n) -= mean;
+         }
+      }
    }
 }
  
@@ -334,74 +452,103 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
 {   
    this->t_begin = get_curr_time();
    
-   maxNmodes = m_Nmodes[0];
+   m_maxNmodes = m_Nmodes[0];
    for(size_t i = 1; i < m_Nmodes.size(); ++i)
    {
-      if( m_Nmodes[i] > maxNmodes) maxNmodes = m_Nmodes[i];
+      if( m_Nmodes[i] > m_maxNmodes) m_maxNmodes = m_Nmodes[i];
    }
    
    std::cerr << "Beginning\n";
       
-   if(this->imSize == 0)
+   if(this->m_imSize == 0)
    {
-      this->imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + padSize);
+      this->m_imSize = 2*(*std::max_element(maxr.begin(),maxr.end()) + m_padSize);
    }
    
-   if(!this->filesRead) 
+   if(!this->m_filesRead) 
    {         
       if( this->readFiles() < 0) return -1;
    }
    
-   if(this->preProcess_only && !this->skipPreProcess)
+   //CHECK IF RDI HERE
+   if(!this->m_RDIfilesRead && this->m_RDIfileList.size() != 0 )
+   {
+      if( this->readRDIFiles() < 0) return -1;
+   }
+   
+   
+   
+   if(this->m_preProcess_only && !this->m_skipPreProcess)
    {
       std::cerr << "Pre-processing complete, stopping.\n";
       return 0;
    }
 
    std::cerr << "allocating psf subtracted cubes\n";
-   this->psfsub.resize(m_Nmodes.size());
+   this->m_psfsub.resize(m_Nmodes.size());
    for(size_t n=0;n<m_Nmodes.size(); ++n)
    {
-      this->psfsub[n].resize(this->Nrows, this->Ncols, this->Nims);
-      this->psfsub[n].cube().setZero();
+      this->m_psfsub[n].resize(this->m_Nrows, this->m_Ncols, this->m_Nims);
+      this->m_psfsub[n].cube().setZero();
    }
    
    //Make radius and angle images
-   eigenImageT rIm(this->Nrows,this->Ncols);
-   eigenImageT qIm(this->Nrows,this->Ncols);
+   eigenImageT rIm(this->m_Nrows,this->m_Ncols);
+   eigenImageT qIm(this->m_Nrows,this->m_Ncols);
    
-   radAngImage(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1));
+   radAngImage(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1));
 
-   
-   m_imsIncluded.resize(this->Nims,this->Nims);
+   m_imsIncluded.resize(this->m_Nims,this->m_Nims);
    m_imsIncluded.setConstant(1);
    
    std::cerr << "starting regions " << minr.size() << "\n";
+   
    //******** For each region do this:
    for(size_t regno = 0; regno < minr.size(); ++regno)
    {
       eigenImageT * maskPtr = 0;
-      if( this->mask.rows() == this->Nrows && this->mask.cols() == this->Ncols) maskPtr = &this->mask;
+      if( this->m_mask.rows() == this->m_Nrows && this->m_mask.cols() == this->m_Ncols) maskPtr = &this->m_mask;
       
-      std::vector<size_t> idx = annulusIndices(rIm, qIm, .5*(this->Nrows-1), .5*(this->Ncols-1), 
+      std::vector<size_t> idx = annulusIndices(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1), 
                                                     minr[regno], maxr[regno], minq[regno], maxq[regno], maskPtr);
    
       //Create storage for the R-ims and psf-subbed Ims
-      eigenCube<realT> rims(idx.size(), 1, this->Nims);
-   
-      //#pragma omp parallel for schedule(static, 1)
-      for(int i=0;i< this->Nims; ++i)
+      eigenCube<realT> tims(idx.size(), 1, this->m_Nims);
+
+      //------If doing RDI, create bims
+      eigenCube<realT> rims;
+      
+      if(this->m_refIms.planes() > 0)
       {
-         auto rim = rims.image(i);
-         cutImageRegion(rim, this->imc.image(i), idx, false);
+         rims.resize(idx.size(), 1, this->m_Nims);
+      }
+      
+      //#pragma omp parallel for schedule(static, 1)
+      for(int i=0;i< this->m_Nims; ++i)
+      {
+         auto tim = tims.image(i);
+         cutImageRegion(tim, this->m_tgtIms.image(i), idx, false);
+      }
+      
+      for(int p=0;p<this->m_refIms.planes();++p)
+      {
+         auto rim = rims.image(p);
+         cutImageRegion(rim, this->m_refIms.image(p), idx, false);
       }
 
       realT dang = 0;
       realT dangMax = 0;
-      
+
       if(m_minDPx < 0) m_excludeMethod = HCI::excludeNone;
       if(m_maxDPx < 0) m_excludeMethodMax = HCI::excludeNone;
-      
+
+      //------- If doing RDI, excludeMethod and excludeMethodMax must be none!
+      if(this->m_refIms.planes() > 0)
+      {
+         m_excludeMethod = HCI::excludeNone;
+         m_excludeMethodMax = HCI::excludeNone;
+      }
+
       if(m_excludeMethod == HCI::excludePixel)
       {
          dang = fabs(atan(m_minDPx/minr[regno]));
@@ -414,7 +561,6 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       {
          dang = m_minDPx;
       }
-      
       
       if(m_excludeMethodMax == HCI::excludePixel)
       {
@@ -429,8 +575,18 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
          dangMax = m_maxDPx;
       }
       
+      //------- If doing RDI, call this with rims, bims
       //*** Dispatch the work
-      worker(rims, idx, dang, dangMax);
+      if(this->m_refIms.planes() > 0) //RDI
+      {
+         std::cerr << "\n\n******* RDI MODE **********\n\n";
+         worker(rims, tims, idx, dang, dangMax);
+      }
+      else //ADI
+      {
+         std::cerr << "\n\n******* ADI MODE **********\n\n";
+         worker(tims, tims, idx, dang, dangMax);
+      }
       std::cerr << "worker done\n";
       
    }
@@ -445,14 +601,14 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    }
    
    
-   if(this->combineMethod > 0)
+   if(this->m_combineMethod > 0)
    {
       std::cerr << "combining\n";
       this->combineFinim();
       
    }
    
-   if(this->doWriteFinim == true || this->doOutputPSFSub == true)
+   if(this->m_doWriteFinim == true || this->m_doOutputPSFSub == true)
    {
       std::cerr << "writing\n";
       
@@ -464,6 +620,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       head.append("", fitsCommentType(), "mx::KLIPreduction parameters:");
       head.append("", fitsCommentType(), "----------------------------------------");
    
+      
+      head.append("MEANSUBM", HCI::meansubMethodStr(m_meanSubMethod), "PCA mean subtraction method");
+      
+      
       std::stringstream str;
       
       if(m_Nmodes.size() > 0)
@@ -505,17 +665,17 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
          head.append<char *>("REGMAXQ", (char *)str.str().c_str(), "region maximum angle(s)");
       }
       
-      head.append<int>("EXCLMTHD", m_excludeMethod, "value of excludeMethod");
+      head.append<std::string>("EXCLMTHD", HCI::excludeMethodStr(m_excludeMethod), "value of excludeMethod");
       head.append<realT>("MINDPX", m_minDPx, "minimum pixel delta");
-      head.append<realT>("MAXDPX", m_minDPx, "maximum pixel delta");
+      head.append<realT>("MAXDPX", m_maxDPx, "maximum pixel delta");
       head.append<int>("INCLREFN", m_includeRefNum, "value of includeRefNum");
 
-      if(this->doWriteFinim == true && this->combineMethod > 0)
+      if(this->m_doWriteFinim == true && this->m_combineMethod > 0)
       {
          this->writeFinim(&head);
       }
       
-      if(this->doOutputPSFSub)
+      if(this->m_doOutputPSFSub)
       {
          this->outputPSFSub(&head);
       }
@@ -693,7 +853,12 @@ void collapseCovar( eigenT & cutCV,
 
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> & rims, std::vector<size_t> & idx, realT dang, realT dangMax)
+void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> & rims,
+                                                              eigenCube<_realT> & tims,
+                                                              std::vector<size_t> & idx, 
+                                                              realT dang, 
+                                                              realT dangMax
+                                                            )
 {
    std::cerr << "beginning worker\n";
 
@@ -701,8 +866,10 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
    
    std::vector<realT> sds;
 
+   eigenImageT meanim;
+   
    //*** First mean subtract ***//   
-   meanSubtract(rims, sds);  
+   meanSubtract(rims, tims, sds);  
 
    //*** Form lower-triangle covariance matrix      
    eigenImageT cv;
@@ -711,15 +878,15 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       
    fitsFile<realT> ff;
    ff.write("cv.fits", cv);
-   ompLoopWatcher<> status( this->Nims, std::cerr);
+   ompLoopWatcher<> status( this->m_Nims, std::cerr);
    
-   //Pre-calculate KL images once if we are exclude none
+   //Pre-calculate KL images once if we are exclude none OR IF RDI
    eigenImageT master_klims;
    if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0)
    {
       double teigenv;
       double tklim;
-      math::calcKLModes<double>(master_klims, cv, rims.cube(), maxNmodes, nullptr, &teigenv, &tklim);
+      math::calcKLModes<double>(master_klims, cv, rims.cube(), m_maxNmodes, nullptr, &teigenv, &tklim);
       t_eigenv += teigenv;
       t_klim += tklim;
    }
@@ -736,24 +903,23 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
       
       math::syevrMem<evCalcT> mem;
 
-      if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0 )
+      if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0 ) //OR RDI
       {
          klims = master_klims;
       }
    
       #pragma omp for 
-      for(int imno = 0; imno < this->Nims; ++imno)
+      for(int imno = 0; imno < this->m_Nims; ++imno)
       {
          status.incrementAndOutputStatus();
          
          if( m_excludeMethod != HCI::excludeNone || m_excludeMethodMax != HCI::excludeNone || m_includeRefNum != 0 )
          {         
-
-            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, dangMax, this->Nims, this->m_excludeMethod, this->m_excludeMethodMax, this->m_includeRefNum, this->derotF, m_imsIncluded);
+            collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, dangMax, this->m_Nims, this->m_excludeMethod, this->m_excludeMethodMax, this->m_includeRefNum, this->m_derotF, m_imsIncluded);
             
             /**** Now calculate the K-L Images ****/
             double teigenv, tklim;
-            math::calcKLModes(klims, cv_cut, rims_cut, maxNmodes, &mem, &teigenv, &tklim);
+            math::calcKLModes(klims, cv_cut, rims_cut, m_maxNmodes, &mem, &teigenv, &tklim);
             t_eigenv += teigenv;
             t_klim += tklim;
          }
@@ -764,7 +930,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
          
          for(int j=0; j<cfs.size(); ++j)
          {
-            cfs(j) = klims.row(j).matrix().dot(rims.cube().col(imno).matrix());    
+            cfs(j) = klims.row(j).matrix().dot(tims.cube().col(imno).matrix());    
          }
 
          for(size_t mode_i =0; mode_i < m_Nmodes.size(); ++mode_i)
@@ -779,7 +945,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker(eigenCube<_realT> &
             }  
             
             //#pragma omp critical
-            insertImageRegion( this->psfsub[mode_i].cube().col(imno), rims.cube().col(imno) - psf.transpose(), idx);
+            insertImageRegion( this->m_psfsub[mode_i].cube().col(imno), tims.cube().col(imno) - psf.transpose(), idx);
          }
          
 
@@ -805,7 +971,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
    std::cerr << "Beginning\n";
       
-   this->skipPreProcess = true;
+   this->m_skipPreProcess = true;
 
    this->readPSFSub(dir, prefix, ext, m_Nmodes.size());
    
@@ -819,14 +985,14 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    }
    
    
-   if(this->combineMethod > 0)
+   if(this->m_combineMethod > 0)
    {
       std::cerr << "combining\n";
       this->combineFinim();
       
    }
    
-   if(this->doWriteFinim == true || this->doOutputPSFSub == true)
+   if(this->m_doWriteFinim == true || this->m_doOutputPSFSub == true)
    {
       std::cerr << "writing\n";
       
@@ -872,17 +1038,18 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
          head.append<char *>("NMODES", (char *)str.str().c_str(), "number of modes");
       }
             
-      head.append<int>("EXCLMTHD", m_excludeMethod, "value of excludeMethod");
+      
+      head.append<std::string>("EXCLMTHD", HCI::excludeMethodStr(m_excludeMethod), "exclusion method");
       head.append<realT>("MINDPX", m_minDPx, "minimum pixel delta");
       head.append<realT>("MAXDPX", m_maxDPx, "maximum pixel delta");
       head.append<int>("INCLREFN", m_includeRefNum, "value of includeRefNum");
 
-      if(this->doWriteFinim == true && this->combineMethod > 0)
+      if(this->m_doWriteFinim == true && this->m_combineMethod > 0)
       {
          this->writeFinim(&head);
       }
       
-      if(this->doOutputPSFSub)
+      if(this->m_doOutputPSFSub)
       {
          this->outputPSFSub(&head);
       }

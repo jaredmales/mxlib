@@ -30,49 +30,50 @@ struct ADIDerotator
    typedef  _realT realT;
 
    ///Vector of keywords to extract from the fits headers
-   std::vector<std::string> keywords;
+   std::vector<std::string> m_keywords;
    
    ///Vector(s) to hold the keyword values
-   std::vector<realT> angles;
+   std::vector<realT> m_angles;
    
 
-   std::string _angleKeyword; ///<The keyword for the angle attribute.  Do not set this directly.
+   std::string m_angleKeyword; ///<The keyword for the angle attribute.  Do not set this directly.
    
    ///Set the angle keyword
    /** Populates the kewords vector appropriately.
      */
    void angleKeyword( const std::string & akw /**< [in] The angle keyword */)
    {
-      _angleKeyword = akw;
-      keywords = {akw};
+      m_angleKeyword = akw;
+      m_keywords = {akw};
    }
    
-   realT angleScale; ///< The scale to multiply the angle by
-   realT angleConstant; ///< The constant to add to the scaled-angle.
+   realT m_angleScale {0}; ///< The scale to multiply the angle by
+   realT m_angleConstant {0}; ///< The constant to add to the scaled-angle.
    
    ADIDerotator()
    {
-      angleScale = 0;
-      angleConstant = 0;
    }
    
    ///To allow ADIobservation to check for errors.
    bool isSetup()
    {
-      if( (_angleKeyword == "" || keywords.size() == 0) || (angleScale == 0 && angleConstant == 0)) return false;
+      if( (m_angleKeyword == "" || m_keywords.size() == 0) || (m_angleScale == 0 && m_angleConstant == 0)) return false;
       return true;
    }
          
    ///Method called by ADIobservation to get keyword-values
    void extractKeywords(std::vector<fitsHeader> & heads /**< [in] The headers from the images being reduced.*/)
    {
-      angles = headersToValues<realT>(heads, _angleKeyword);
+      m_angles = headersToValues<realT>(heads, m_angleKeyword);
    }
    
    ///Calculate the derotation angle for a given image number
+   /**
+     * \returns the angle in radians by which to de-rotate the image c.c.w.
+     */ 
    realT derotAngle(size_t imno /**< [in] the image number */) const
    {
-      realT derot = angleScale*angles[imno]+ angleConstant;
+      realT derot = m_angleScale*m_angles[imno] + m_angleConstant;
       derot = math::angleMod(derot);
       return math::dtor(derot );
    }

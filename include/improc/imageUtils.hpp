@@ -39,6 +39,41 @@ namespace improc
   *@{
   */
 
+/// Zero any NaNs in an image
+template<class imageT>
+void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels set to zero */)
+{
+   for(int c=0; c< im.cols(); ++c)
+   {
+      for(int r=0; r< im.rows(); ++r)
+      {
+         if( !std::isnormal( im(r,c) ) )
+         {
+            im(r,c) = 0;
+         }
+      }
+   }
+}
+
+/// Zero any NaNs in an image cube
+template<class cubeT>
+void zeroNaNCube( cubeT & imc /**< [in/out] cube which will have any NaN pixels set to zero */)
+{
+   for(int p=0; p< imc.planes(); ++p) 
+   {
+      for(int c=0; c< imc.cols(); ++c)
+      {
+         for(int r=0; r< imc.rows(); ++r)
+         {
+            if( !std::isnormal( imc.image(p)(r,c) ) )
+            {
+               imc.image(p)(r,c) = 0;
+            }
+         }
+      }
+   }
+}
+
 /// Calculate the mean value of an image
 /**
   *

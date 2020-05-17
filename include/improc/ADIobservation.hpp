@@ -27,6 +27,28 @@ namespace HCI
    enum fakeMethods{ single, ///< A single PSF is used
                      list ///< A list of PSF files, one per input image, is used.
                    };
+                
+   /// Get the string name of a fake injection method 
+   /**
+     * \returns the string name corresponding to the fake injection method
+     */ 
+   std::string fakeMethodsStr( int method /**< [in] the fake injection method */)
+   {
+      if(method == single) return "single";
+      else if(method == list) return "list";
+      else return "unknown";
+   }
+   
+   /// Get the fake injection method from its string name
+   /**
+     * \returns the corresponding member of the fakeMethods enum
+     */ 
+   int fakeMethodFmStr( const std::string & method  /**< [in] the fake injection method name*/)
+   {
+      if(method == "single") return single;
+      else if(method == "list") return list;
+      else return -1;
+   }
 }
 
 ///Process an angular differential imaging (ADI) observation
@@ -53,7 +75,7 @@ namespace HCI
   *    ///To allow ADIobservation to check for errors.
   *    bool isSetup()
   *    {
-  *      if( <any condition indicatint not set up>) return false;
+  *      if( <any condition indicating not set up>) return false;
   *      return true;
   *    }
   * 
@@ -81,42 +103,59 @@ struct ADIobservation : public HCIobservation<_realT>
    typedef _derotFunctObj derotFunctObj;
    typedef Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
    
-   derotFunctObj derotF;
+   derotFunctObj m_derotF;
 
+   derotFunctObj m_RDIderotF;
+   
    bool m_doDerotate {true};
    
    ADIobservation();
    
-   explicit ADIobservation( const std::string & fileListFile) ;
-                   
-   ADIobservation( const std::string & dir, 
-                   const std::string & prefix, 
-                   const std::string & ext = ".fits") ;
+   ADIobservation( const std::string &dir,     ///< [in] the directory to search.
+                   const std::string &prefix,  ///< [in] the initial part of the file name.  Can be empty "".
+                   const std::string &ext      ///< [in] the extension to append to the file name, must include the '.'.
+                 );
+   
+   explicit ADIobservation( const std::string & fileListFile /**< [in] a file name path to read.*/);
 
-   /** \name Rotation Setup
-     * Configuration of the rotation system.
-     * @{ 
-     */
+   ADIobservation( const std::string &dir,       ///< [in] the directory to search.
+                   const std::string &prefix,    ///< [in] the initial part of the file name.  Can be empty "".
+                   const std::string &ext,       ///< [in] the extension to append to the file name, must include the '.'.
+                   const std::string &RDIdir,    ///< [in] the directory to search for the reference files.
+                   const std::string &RDIprefix, ///< [in] the initial part of the file name for the reference files.  Can be empty "".
+                   const std::string &RDIext=""  ///< [in] [optional] the extension to append to the RDI file name, must include the '.'.  If empty "" then same extension as target files is used.
+                 );
    
-   std::string angleKeyword;
+   ADIobservation( const std::string & fileListFile,   ///< [in] a file name path to read for the target file names.
+                   const std::string & RDIfileListFile ///< [in] a file name path to read for the reference file names.
+                 );
    
-   realT angleScale;
-   realT angleConstant;
    
-   ///@}
-   
-   ///Read in the files
+   ///Read in the target files
    /** First sets up the keywords, then calls HCIobservation readFiles
      */
    int readFiles();
    
-   ///Post read actions, including fake injection
+   ///Post target read actions, including fake injection
    virtual int postReadFiles();
    
-   ///Post coadd actions.
+   ///Post target coadd actions.
    /** Here updates derotation for new average values.
      */
    virtual int postCoadd();
+   
+   ///Read in the RDI files
+   /** First sets up the keywords, then calls HCIobservation readRDIFiles
+     */
+   int readRDIFiles();
+   
+   ///Post reference read actions, including fake injection
+   virtual int postRDIReadFiles();
+   
+   ///Post reference coadd actions.
+   /** Here updates derotation for new average values.
+     */
+   virtual int postRDICoadd();
    
    /// Read in already PSF-subtracted files
    /** Used to take up final processing after applying some non-klipReduce processing steps to
@@ -133,25 +172,37 @@ struct ADIobservation : public HCIobservation<_realT>
      */
    int m_fakeMethod {HCI::single}; ///< Method for reading fake files, either HCI::single or HCI::list.
    
-   std::string fakeFileName; ///<FITS file containing the fake planet PSF to inject or a list of fake images
+   std::string m_fakeFileName; ///<FITS file containing the fake planet PSF to inject or a list of fake images
    
-   std::string fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
+   std::string m_fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
    
-   std::vector<realT> fakeSep; ///< Separation(s) of the fake planet(s)
-   std::vector<realT> fakePA; ///< Position angles(s) of the fake planet(s)
-   std::vector<realT> fakeContrast; ///< Contrast(s) of the fake planet(s)
+   std::vector<realT> m_fakeSep; ///< Separation(s) of the fake planet(s)
+   std::vector<realT> m_fakePA; ///< Position angles(s) of the fake planet(s)
+   std::vector<realT> m_fakeContrast; ///< Contrast(s) of the fake planet(s)
    
+   realT m_RDIFluxScale {1}; ///< Flux scaling to apply to fake planets injected in RDI.  Would depend on the assumed spectrum in SDI.
+   realT m_RDISepScale {1}; ///< Scaling to apply to fake planet separation in RDI.  Would be ratio of wavelengths for SDI.
 
    
    ///Inect the fake plants
-   int injectFake();
+   int injectFake( eigenCube<realT> & ims,              ///< [in/out] the image cube in which to inject the fakes.
+                   std::vector<std::string> & fileList, ///< [in] a list of file paths used for per-image fake PSFs.  If empty, then m_fakeFileName is used.
+                   derotFunctObj & derotF,
+                   realT RDIfluxScale,                  ///< [in] the flux scaling for RDI.  In SDI, this is from the planet spectrum.
+                   realT RDISepScale                    ///< [in] the separation scale for RDI.  In SDI, this is the ratio of wavlengths after lambda/D scaling.
+                 );
    
    int injectFake( eigenImageT & fakePSF,
-                    int image_i,
-                    realT PA,
-                    realT sep,
-                    realT contrast,
-                    realT scale = 1.0 );
+                   eigenCube<realT> & ims,
+                   int image_i,
+                   realT derotAngle,
+                   realT PA,
+                   realT sep,
+                   realT contrast,
+                   realT scale,
+                   realT RDIfluxScale,
+                   realT RDISepScale
+                 );
 
    /// @}
    
@@ -176,54 +227,67 @@ ADIobservation<_realT, _derotFunctObj>::ADIobservation()
 }
 
 template<typename _realT, class _derotFunctObj>
+ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & dir, 
+                                                        const std::string & prefix, 
+                                                        const std::string & ext
+                                                      ) : HCIobservation<realT>(dir,prefix,ext)
+{
+}
+
+template<typename _realT, class _derotFunctObj>
 ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & fileListFile) : HCIobservation<realT>(fileListFile)
 {
 }
 
 template<typename _realT, class _derotFunctObj>
 ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & dir, 
-                                                         const std::string & prefix, 
-                                                         const std::string & ext) : HCIobservation<realT>(dir,prefix,ext)
+                                                        const std::string & prefix, 
+                                                        const std::string & ext,
+                                                        const std::string & RDIdir,
+                                                        const std::string & RDIprefix,
+                                                        const std::string & RDIext
+                                                      ) : HCIobservation<realT>(dir,prefix,ext, RDIdir, RDIprefix, RDIext)
+{
+}
+
+template<typename _realT, class _derotFunctObj>
+ADIobservation<_realT, _derotFunctObj>::ADIobservation( const std::string & fileListFile,
+                                                        const std::string & RDIfileListFile
+                                                      ) : HCIobservation<realT>(fileListFile, RDIfileListFile)
 {
 }
 
 template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::readFiles()
 {      
-   this->keywords.clear();
+   this->m_keywords.clear();
    
-   if(!derotF.isSetup())
+   if(!m_derotF.isSetup())
    {
       mxError("ADIobservation::readFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
       return -1;
    }
-   
-   for(size_t i=0;i<derotF.keywords.size();++i)
-   {
-      this->keywords.push_back(derotF.keywords[i]);
-   }
-   
+
    /*----- Append the ADI keywords to propagate them if needed -----*/
-      
+
+   for(size_t i=0;i<m_derotF.m_keywords.size();++i)
+   {
+      this->m_keywords.push_back(m_derotF.m_keywords[i]);
+   }
+         
    if( HCIobservation<realT>::readFiles() < 0) return -1;
    
-   std::cerr << "extracting keywords\n";
-   derotF.extractKeywords(this->heads);
-   
-   return 0;
-   
-   /*---- Check for ADI keywords -----*/
-   //Maybe fill in a structure of values, in case things are overwritten by new settings
+   return 0;   
 }
 
 template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 {
-   derotF.extractKeywords(this->heads);
+   m_derotF.extractKeywords(this->m_heads);
    
-   if(fakeFileName != ""  && !this->skipPreProcess) 
+   if(m_fakeFileName != ""  && !this->m_skipPreProcess) 
    {
-      if( injectFake() < 0) return -1;
+      if( injectFake(this->m_tgtIms, this->m_fileList, m_derotF, 1, 1) < 0) return -1;
    }
    
    return 0;
@@ -232,9 +296,55 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::postCoadd()
 {
-   derotF.extractKeywords(this->heads);
+   m_derotF.extractKeywords(this->m_heads);
    return 0;
 }
+
+template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::readRDIFiles()
+{      
+   this->m_RDIkeywords.clear();
+   
+   if(!m_RDIderotF.isSetup())
+   {
+      mxError("ADIobservation::readRDIFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
+      return -1;
+   }
+
+   /*----- Append the ADI keywords to propagate them if needed -----*/
+
+   for(size_t i=0;i<m_RDIderotF.m_keywords.size();++i)
+   {
+      this->m_RDIkeywords.push_back(m_RDIderotF.m_keywords[i]);
+   }
+         
+   if( HCIobservation<realT>::readRDIFiles() < 0) return -1;
+   
+   return 0;
+}
+
+template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::postRDIReadFiles()
+{
+   m_RDIderotF.extractKeywords(this->m_RDIheads);
+   
+   if(m_fakeFileName != ""  && !this->m_skipPreProcess) 
+   {
+      if( injectFake(this->m_refIms, this->m_RDIfileList, m_RDIderotF, m_RDIFluxScale, m_RDISepScale) < 0) return -1;
+   }
+   
+   return 0;
+}
+
+template<typename _realT, class _derotFunctObj>
+int ADIobservation<_realT, _derotFunctObj>::postRDICoadd()
+{
+   m_RDIderotF.extractKeywords(this->m_RDIheads);
+   return 0;
+}
+
+
+
 
 template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
@@ -243,33 +353,36 @@ int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
                                                         size_t nReductions 
                                                       )
 {
-   this->keywords.clear();
-   
-   if(!derotF.isSetup())
+   if(!m_derotF.isSetup())
    {
       mxError("ADIobservation::readFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
       return -1;
    }
-   
-   for(size_t i=0;i<derotF.keywords.size();++i)
+ 
+   this->m_keywords.clear();
+ 
+   for(size_t i=0;i<m_derotF.m_keywords.size();++i)
    {
-      this->keywords.push_back(derotF.keywords[i]);
+      this->m_keywords.push_back(m_derotF.m_keywords[i]);
    }
    
    /*----- Append the ADI keywords to propagate them if needed -----*/
       
    if( HCIobservation<realT>::readPSFSub(dir,prefix,ext, nReductions) < 0) return -1;
    
-   derotF.extractKeywords(this->heads);
+   m_derotF.extractKeywords(this->m_heads);
    
    return 0;
 }
 
 template<typename _realT, class _derotFunctObj>
-int ADIobservation<_realT, _derotFunctObj>::injectFake()
+int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
+                                                        std::vector<std::string> & fileList,
+                                                        derotFunctObj & derotF,
+                                                        realT RDIFluxScale,
+                                                        realT RDISepScale
+                                                      )
 {
-   std::cerr << "injecting fake planets\n";
-
    t_fake_begin = get_curr_time();
    
    //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imT;
@@ -281,28 +394,28 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
       
 
    //Fake Scale -- default to 1, read from file otherwise
-   std::vector<realT> fakeScale(this->imc.planes(), 1.0);
-   if(fakeScaleFileName != "")
+   std::vector<realT> fakeScale(ims.planes(), 1.0);
+   if(m_fakeScaleFileName != "")
    {      
       std::vector<std::string> sfileNames;
       std::vector<realT> imS;
       
       //Read the quality file and load it into a map
-      if( ioutils::readColumns(fakeScaleFileName, sfileNames, imS) < 0) return -1;
+      if( ioutils::readColumns(m_fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
       for(size_t i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i])] = imS[i];
       
-      for(size_t i=0; i<this->fileList.size(); ++i)
+      for(size_t i=0; i<fileList.size(); ++i)
       {
-         if(scales.count(basename(this->fileList[i].c_str())) > 0)
+         if(scales.count(basename(fileList[i].c_str())) > 0)
          {
-            fakeScale[i] = scales[basename(this->fileList[i].c_str())];
+            fakeScale[i] = scales[basename(fileList[i].c_str())];
          }
          else
          {
             std::cerr << "File name not found in fakeScaleFile:\n";
-            std::cerr << basename(this->fileList[i].c_str()) << "\n";
+            std::cerr << basename(fileList[i].c_str()) << "\n";
             exit(-1);
          }
       }
@@ -310,29 +423,27 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
       
    if(m_fakeMethod == HCI::single)
    {
-      if( ff.read( fakePSF, fakeFileName ) < 0) return -1;
+      if( ff.read( fakePSF, m_fakeFileName ) < 0) return -1;
    }
 
    if(m_fakeMethod == HCI::list)
    {
-      if( ioutils::readColumns(fakeFileName, fakeFiles) < 0) return -1;
+      if( ioutils::readColumns(m_fakeFileName, fakeFiles) < 0) return -1;
    }
    
-   for(int i=0; i<this->imc.planes(); ++i)
+   for(int i=0; i<ims.planes(); ++i)
    {
       if(m_fakeMethod == HCI::list)
       {
          ff.read(fakePSF, fakeFiles[i]);
       }
 
-      for(size_t j=0;j<fakeSep.size(); ++j)
+      for(size_t j=0;j<m_fakeSep.size(); ++j)
       {
-         if( injectFake(fakePSF, i, fakePA[j], fakeSep[j], fakeContrast[j], fakeScale[j]) < 0) return -1;
+         if( injectFake(fakePSF, ims, i, derotF.derotAngle(i), m_fakePA[j], m_fakeSep[j], m_fakeContrast[j], fakeScale[j], RDIFluxScale, RDISepScale) < 0) return -1;
       }
    }
    
-   
-   std::cerr << "fake injected\n";
    
    t_fake_end = get_curr_time();
    
@@ -342,34 +453,38 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake()
 
 template<typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
-                                                          int image_i,
-                                                          _realT PA,
-                                                          _realT sep,
-                                                          _realT contrast,
-                                                          _realT scale)
+                                                        eigenCube<realT> & ims,
+                                                        int image_i,
+                                                        realT derotAngle,
+                                                        realT PA,
+                                                        realT sep,
+                                                        realT contrast,
+                                                        realT scale,
+                                                        realT RDIFluxScale,
+                                                        realT RDISepScale
+                                                      )
 {
-   //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imT;
 
    //Check for correct sizing
-   if( (fakePSF.rows() < this->imc.rows() && fakePSF.cols() >= this->imc.cols()) || 
-                        (fakePSF.rows() >= this->imc.rows() && fakePSF.cols() < this->imc.cols()))
+   if( (fakePSF.rows() < ims.rows() && fakePSF.cols() >= ims.cols()) || 
+                        (fakePSF.rows() >= ims.rows() && fakePSF.cols() < ims.cols()))
    {
       throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
    }
    
    //Check if fake needs to be padded out
-   if(fakePSF.rows() < this->imc.rows() && fakePSF.cols() < this->imc.cols())
+   if(fakePSF.rows() < ims.rows() && fakePSF.cols() < ims.cols())
    {
-      eigenImageT pfake(this->imc.rows(), this->imc.cols());
-      padImage(pfake, fakePSF, 0.5*(this->imc.rows()-fakePSF.rows()), 0);
+      eigenImageT pfake(ims.rows(), ims.cols());
+      padImage(pfake, fakePSF, 0.5*(ims.rows()-fakePSF.rows()), 0);
       fakePSF = pfake;
    }
    
    //Check if fake needs to be cut down
-   if(fakePSF.rows() > this->imc.rows() && fakePSF.cols() > this->imc.cols())
+   if(fakePSF.rows() > ims.rows() && fakePSF.cols() > ims.cols())
    {
-      eigenImageT cfake(this->imc.rows(), this->imc.cols());
-      cutPaddedImage(cfake, fakePSF, 0.5*(fakePSF.rows() - this->imc.rows()));
+      eigenImageT cfake(ims.rows(), ims.cols());
+      cutPaddedImage(cfake, fakePSF, 0.5*(fakePSF.rows() - ims.rows()));
       fakePSF = cfake;
    }
 
@@ -379,14 +494,14 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
    
    realT ang, dx, dy;
 
-   ang = math::dtor(-1*PA) + derotF.derotAngle(image_i);
+   ang = math::dtor(-1*PA) + derotAngle;
       
-   dx = sep * sin(ang);
-   dy = sep * cos(ang);
+   dx = sep * RDISepScale * sin(ang);
+   dy = sep * RDISepScale * cos(ang);
                
    imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<realT>());
    
-   this->imc.image(image_i) = this->imc.image(image_i) + shiftFake*scale*contrast;
+   ims.image(image_i) = ims.image(image_i) + shiftFake*scale*RDIFluxScale*contrast;
 
    return 0;
    
@@ -395,28 +510,28 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
 template<typename _realT, class _derotFunctObj>
 void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
 {
-   if( this->mask.rows() != this->Nrows || this->mask.cols() != this->Ncols)
+   if( this->m_mask.rows() != this->m_Nrows || this->m_mask.cols() != this->m_Ncols)
    {
       std::cerr << "\nMask is not the same size as images.\n\n";
       exit(-1);
    }
    
-   this->maskCube.resize( this->Nrows, this->Ncols, this->Nims);
+   this->m_maskCube.resize( this->m_Nrows, this->m_Ncols, this->m_Nims);
    
    #pragma omp parallel
    {
       eigenImageT rm;
       
       #pragma omp for
-      for(int i=0; i< this->Nims; ++i)
+      for(int i=0; i< this->m_Nims; ++i)
       {
-         rotateMask( rm, this->mask, derotF.derotAngle(i));
-         this->maskCube.image(i) = rm;
+         rotateMask( rm, this->m_mask, m_derotF.derotAngle(i));
+         this->m_maskCube.image(i) = rm;
       }
    }
    
    fitsFile<realT> ff; 
-   ff.write("maskCube.fits", this->maskCube);
+   ff.write("maskCube.fits", this->m_maskCube);
 }
 
 template<typename _realT, class _derotFunctObj>
@@ -429,7 +544,7 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
    
       
    //#pragma omp for schedule(static, 1)
-   for(size_t n=0; n<this->psfsub.size(); ++n)
+   for(size_t n=0; n<this->m_psfsub.size(); ++n)
    {
       #pragma omp parallel
       {
@@ -437,13 +552,13 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
          realT derot;
 
          #pragma omp for
-         for(int i=0; i<this->psfsub[n].planes();++i)
+         for(int i=0; i<this->m_psfsub[n].planes();++i)
          {
-            derot = derotF.derotAngle(i);
+            derot = m_derotF.derotAngle(i);
             if(derot != 0) 
             {
-               imageRotate(rotim, this->psfsub[n].image(i), derot, cubicConvolTransform<realT>());
-               this->psfsub[n].image(i) = rotim;
+               imageRotate(rotim, this->m_psfsub[n].image(i), derot, cubicConvolTransform<realT>());
+               this->m_psfsub[n].image(i) = rotim;
             }
          }
       }
@@ -464,34 +579,34 @@ void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader 
    head->append("", fitsCommentType(), "mx::ADIobservation parameters:");
    head->append("", fitsCommentType(), "----------------------------------------");
 
-   if(fakeFileName != "")
-   head->append("FAKEFILE", fakeFileName, "name of fake planet PSF file");
+   if(m_fakeFileName != "")
+   head->append("FAKEFILE", m_fakeFileName, "name of fake planet PSF file");
    
-   if(fakeScaleFileName != "")
-   head->append("FAKESCFL", fakeScaleFileName, "name of fake planet scale file name");
+   if(m_fakeScaleFileName != "")
+   head->append("FAKESCFL", m_fakeScaleFileName, "name of fake planet scale file name");
 
    std::stringstream str;
    
-   if(fakeSep.size() > 0)
+   if(m_fakeSep.size() > 0)
    {
-      for(size_t nm=0;nm < fakeSep.size()-1; ++nm) str << fakeSep[nm] << ",";
-      str << fakeSep[fakeSep.size()-1];      
+      for(size_t nm=0;nm < m_fakeSep.size()-1; ++nm) str << m_fakeSep[nm] << ",";
+      str << m_fakeSep[m_fakeSep.size()-1];      
       head->append<char *>("FAKESEP", (char *)str.str().c_str(), "separation of fake planets");
    }
    
-   if(fakePA.size() > 0 )
+   if(m_fakePA.size() > 0 )
    {
       str.str("");
-      for(size_t nm=0;nm < fakePA.size()-1; ++nm) str << fakePA[nm] << ",";
-      str << fakePA[fakePA.size()-1];      
+      for(size_t nm=0;nm < m_fakePA.size()-1; ++nm) str << m_fakePA[nm] << ",";
+      str << m_fakePA[m_fakePA.size()-1];      
       head->append<char *>("FAKEPA", (char *)str.str().c_str(), "PA of fake planets");
    }
    
-   if( fakeContrast.size() > 0)
+   if( m_fakeContrast.size() > 0)
    {
       str.str("");
-      for(size_t nm=0;nm < fakeContrast.size()-1; ++nm) str << fakeContrast[nm] << ",";
-      str << fakeContrast[fakeContrast.size()-1];      
+      for(size_t nm=0;nm < m_fakeContrast.size()-1; ++nm) str << m_fakeContrast[nm] << ",";
+      str << m_fakeContrast[m_fakeContrast.size()-1];      
       head->append<char *>("FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets");
    }
 }
