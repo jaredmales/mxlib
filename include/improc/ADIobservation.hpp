@@ -328,10 +328,10 @@ int ADIobservation<_realT, _derotFunctObj>::postRDIReadFiles()
 {
    m_RDIderotF.extractKeywords(this->m_RDIheads);
    
-   if(m_fakeFileName != ""  && !this->m_skipPreProcess) 
+   /*if(m_fakeFileName != ""  && !this->m_skipPreProcess) 
    {
       if( injectFake(this->m_refIms, this->m_RDIfileList, m_RDIderotF, m_RDIFluxScale, m_RDISepScale) < 0) return -1;
-   }
+   }*/
    
    return 0;
 }
