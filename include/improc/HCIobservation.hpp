@@ -574,6 +574,8 @@ public:
    ///Set whether the final combined image is written to disk
    int m_doWriteFinim {1};
 
+   ///\todo should mkdir on output directory
+   
    ///The directory where to write output files.
    std::string m_outputDir;
 
@@ -1745,6 +1747,8 @@ void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 template<typename _realT>
 void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
 {
+   
+   
    std::string fname;
 
    fitsHeader head;

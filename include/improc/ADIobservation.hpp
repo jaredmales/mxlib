@@ -400,7 +400,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
       std::vector<std::string> sfileNames;
       std::vector<realT> imS;
       
-      //Read the quality file and load it into a map
+      //Read the scale file and load it into a map
       if( ioutils::readColumns(m_fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
