@@ -109,6 +109,8 @@ struct ADIobservation : public HCIobservation<_realT>
    
    bool m_doDerotate {true};
    
+   bool m_postMedSub {true};
+   
    ADIobservation();
    
    ADIobservation( const std::string &dir,     ///< [in] the directory to search.
@@ -287,6 +289,7 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
    
    if(m_fakeFileName != ""  && !this->m_skipPreProcess) 
    {
+      std::cerr << "Injecting fakes in target images...\n";
       if( injectFake(this->m_tgtIms, this->m_fileList, m_derotF, 1, 1) < 0) return -1;
    }
    
@@ -539,11 +542,6 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
 {
    t_derotate_begin = get_curr_time();
    
-   //On magaoarx it doesn't seem worth it to use more than 4 threads
-   //#pragma omp parallel num_threads(4)
-   
-      
-   //#pragma omp for schedule(static, 1)
    for(size_t n=0; n<this->m_psfsub.size(); ++n)
    {
       #pragma omp parallel

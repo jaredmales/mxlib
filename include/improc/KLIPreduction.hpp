@@ -476,8 +476,6 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       if( this->readRDIFiles() < 0) return -1;
    }
    
-   
-   
    if(this->m_preProcess_only && !this->m_skipPreProcess)
    {
       std::cerr << "Pre-processing complete, stopping.\n";
@@ -593,6 +591,13 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    
    fitsFile<int> ffii;
    ffii.write("imsIncluded.fits", m_imsIncluded);
+   
+   if(this->m_postMedSub)
+   {
+      eigenImage<realT> medim;
+      this->m_tgtIms.median(medim);
+      for(int p=0;p<this->m_tgtIms.planes();++p) this->m_tgtIms.image(p) -= medim;
+   }
    
    if(this->m_doDerotate)
    {

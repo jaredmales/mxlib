@@ -81,7 +81,7 @@ struct gaussKernel
 };
 
 /// Azimuthally variable boxcare smoothing kernel.
-/**
+/** Averages the image in a boxcare defined by a radial and azimuthal extent.
   * 
   * \ingroup image_filters_kernels
   */
@@ -98,7 +98,9 @@ struct azBoxKernel
    arithT _azWidth;
    int _maxWidth;
    
-   azBoxKernel(arithT radWidth, arithT azWidth)
+   azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
+                arithT azWidth   ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
+              )
    {
       _radWidth = radWidth;
       _azWidth = azWidth;
@@ -131,20 +133,28 @@ struct azBoxKernel
       arithT sinq2, cosq2, sindq;
       for(int i=0; i < w; ++i)
       {
+         arithT xP = i -0.5;
          for(int j=0; j < h; ++j)
          {
-            rad = sqrt( pow(i-xcen,2) + pow(j-ycen,2) );
-            sinq2 = (j-ycen)/rad;
-            cosq2 = (i-xcen)/rad;
+            arithT yP = j-0.5;
+            arithT radP = sqrt( pow(x+xP-xcen,2) + pow(y+yP-ycen,2) );
+            if( fabs(rad-radP) > _radWidth) 
+            {
+               kernel(i,j) = 0;
+               continue;
+            }
+            
+            sinq2 = (yP-ycen)/radP;
+            cosq2 = (xP-xcen)/radP;
             sindq = sinq2*cosq - cosq2*sinq;
-            if( rad <= _radWidth && fabs(rad*sindq) <= _azWidth) kernel(i,j) = 1;
+            if( fabs(radP*sindq) <= _azWidth) kernel(i,j) = 1;
             else kernel(i,j) = 0;
          }
       }
       if(kernel.sum() == 0)
       {
          std::cerr << "Kernel sum 0: " << x << " " << y << "\n";
-         exit(-1);
+         //exit(-1);
       }
       kernel /= kernel.sum();
    }
