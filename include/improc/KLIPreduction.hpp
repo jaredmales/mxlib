@@ -596,25 +596,21 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    {
       std::cerr << "Subtracting medians in post\n";
       
-   for(size_t n=0; n<this->m_psfsub.size(); ++n)
-   {
-      #pragma omp parallel
+      for(size_t n=0; n<this->m_psfsub.size(); ++n)
       {
-         eigenImage<realT> medim;
-         
-         this->m_psfsub[n].median(medim);
-         
-         #pragma omp for
-         for(int i=0; i<this->m_psfsub[n].planes();++i)
+         #pragma omp parallel
          {
-            this->m_psfsub[n].image(i) -= medim;
+            eigenImage<realT> medim;
+         
+            this->m_psfsub[n].median(medim);
+         
+            #pragma omp for
+            for(int i=0; i<this->m_psfsub[n].planes();++i)
+            {
+               this->m_psfsub[n].image(i) -= medim;
+            }
          }
-      }
-   }
-   
-      eigenImage<realT> medim;
-      this->m_tgtIms.median(medim);
-      for(int p=0;p<this->m_tgtIms.planes();++p) this->m_tgtIms.image(p) -= medim;
+      }   
    }
    
    if(this->m_doDerotate)
@@ -1000,6 +996,26 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
    
    //This is generic to both regions and this from here on . . .
+   if(this->m_postMedSub)
+   {
+      std::cerr << "Subtracting medians in post\n";
+      
+      for(size_t n=0; n<this->m_psfsub.size(); ++n)
+      {
+         #pragma omp parallel
+         {
+            eigenImage<realT> medim;
+         
+            this->m_psfsub[n].median(medim);
+         
+            #pragma omp for
+            for(int i=0; i<this->m_psfsub[n].planes();++i)
+            {
+               this->m_psfsub[n].image(i) -= medim;
+            }
+         }
+      }   
+   }
    
    if(this->m_doDerotate)
    {
