@@ -89,6 +89,13 @@ public:
    /// Clear all cards from the header
    void clear();
    
+   /// Get number of cards with a given keyword 
+   /** Reeturns the result of the count() method of the header map.
+     * 
+     * \retval the number of cards with  keyword.
+     */
+   size_t count( const std::string & keyword /**< [in] the keyword to loop up*/);
+   
    /// Erase card by keyword
    /** This can not be used to erase COMMENT or HISTORY cards.
      *
@@ -313,6 +320,12 @@ void fitsHeader::clear()
 {
    cards.clear();
    cardMap.clear();
+}
+
+inline
+size_t fitsHeader::count( const std::string & keyword)
+{
+   return cardMap.count(keyword);
 }
 
 inline

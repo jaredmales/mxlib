@@ -427,7 +427,7 @@ struct HCIobservation
    int m_coaddMaxImno {0};
 
    ///Maximum elapsed time over which to coadd the images.
-   int m_coaddMaxTime {0};
+   realT m_coaddMaxTime {0};
 
    ///The values of these keywords will be averaged and replaced.
    std::vector<std::string> m_coaddKeywords;
@@ -606,15 +606,20 @@ public:
    ///Output the pre-processed reference images
    void outputRDIPreProcessed();
    
+   /// Fill in the HCIobservation standard FITS header 
+   /**
+     */
+   void stdFitsHeader(improc::fitsHeader & head /**< [in/out] the fistHeader structure which will have cards appended to it. */);
+   
    ///Write the final combined image to disk
    /**
      */
-   void writeFinim(fitsHeader * addHead = 0);
+   void writeFinim(improc::fitsHeader * addHead = 0);
    
    ///Write the PSF subtracted images to disk
    /**
     */
-   void outputPSFSub(fitsHeader * addHead = 0);
+   void outputPSFSub(improc::fitsHeader * addHead = 0);
 
 
    ///@}
@@ -824,7 +829,7 @@ int HCIobservation<_realT>::readFiles()
 
    /*----- Append the HCI keywords to propagate them if needed -----*/
    
-   fitsHeader head;
+   improc::fitsHeader head;
 
    if(m_MJDKeyword != "") head.append(m_MJDKeyword);
 
@@ -1025,7 +1030,7 @@ int HCIobservation<_realT>::readRDIFiles()
 
    /*----- Append the HCI keywords to propagate them if needed -----*/
 
-   fitsHeader head;
+   improc::fitsHeader head;
 
    if(m_MJDKeyword != "") head.append(m_MJDKeyword); //Currently assuming the MJD keyword will be the same
 
@@ -1189,7 +1194,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
                                           int coaddMaxTime,
                                           std::vector<std::string> & coaddKeywords,
                                           std::vector<double> & imageMJD,
-                                          std::vector<fitsHeader> & heads,
+                                          std::vector<improc::fitsHeader> & heads,
                                           eigenCube<realT> & ims
                                         )
 {
@@ -1674,22 +1679,8 @@ void HCIobservation<_realT>::outputPreProcessed()
 } //void HCIobservation<_realT>::outputPreProcessed()
 
 template<typename _realT>
-void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
+void HCIobservation<_realT>::stdFitsHeader(improc::fitsHeader & head)
 {
-   std::string fname = m_finimName;
-
-   if(m_outputDir != "")
-   {
-      fname = m_outputDir + "/" + fname;
-   }
-
-   if(!m_exactFinimName)
-   {
-      fname = ioutils::getSequentialFilename(fname, ".fits");
-   }
-
-   fitsHeader head;
-
    head.append("", fitsCommentType(), "----------------------------------------");
    head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
    head.append("", fitsCommentType(), "----------------------------------------");
@@ -1708,9 +1699,14 @@ void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
    if(m_coaddCombineMethod != HCI::noCombine)
    {
       head.append<int>("COADIMNO", m_coaddMaxImno, "max number of images in each coadd");
-      head.append<int>("COADTIME", m_coaddMaxTime, "max time  in each coadd");
+      head.append<realT>("COADTIME", m_coaddMaxTime, "max time in each coadd");
    }
-
+   else
+   {
+      head.append<int>("COADIMNO", 0, "max number of images in each coadd");
+      head.append<realT>("COADTIME", 0, "max time in each coadd");
+   }
+   
    head.append("MASKFILE", m_maskFile, "mask file");
 
    head.append<int>("PPBEFORE", m_preProcess_beforeCoadd, "pre-process before coadd flag");
@@ -1721,6 +1717,29 @@ void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 
    head.append<realT>("PPGUSMFW", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm");
 
+}
+
+template<typename _realT>
+void HCIobservation<_realT>::writeFinim(improc::fitsHeader * addHead)
+{
+   std::string fname = m_finimName;
+
+   if(m_outputDir != "")
+   {
+      fname = m_outputDir + "/" + fname;
+   }
+
+   if(!m_exactFinimName)
+   {
+      fname = ioutils::getSequentialFilename(fname, ".fits");
+   }
+
+   improc::fitsHeader head;
+
+   //Add HCIobservation standard header:
+   stdFitsHeader(head);
+   
+   //Now add the final combination details:
    head.append<std::string>("COMBMTHD", HCI::combineMethodStr(m_combineMethod), "combination method");
 
    if(m_weightFile != "")
@@ -1745,29 +1764,17 @@ void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 } //void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
 
 template<typename _realT>
-void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
+void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
 {
    
    
    std::string fname;
 
-   fitsHeader head;
+   improc::fitsHeader head;
 
-   head.append("", fitsCommentType(), "----------------------------------------");
-   head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
-   head.append("", fitsCommentType(), "----------------------------------------");
-
-   head.append<int>("FDELFRNT", m_deleteFront, "image deleted from front of file list");
-   head.append<int>("FDELBACK", m_deleteBack, "image deleted from back of file list");
-
-   head.append<int>("IMSIZE", m_imSize, "image size after reading");
-
-   head.append<std::string>("COADMTHD", HCI::combineMethodStr(m_coaddCombineMethod), "coadd combination method");
-   if(m_coaddCombineMethod != HCI::noCombine)
-   {
-      head.append<int>("COADIMNO", m_coaddMaxImno, "max number of images in each coadd");
-      head.append<int>("COADTIME", m_coaddMaxTime, "max time  in each coadd");
-   }
+   //Add the HCIobservation standard fits header
+   stdFitsHeader(head);
+   
 
    if(addHead)
    {
@@ -1834,7 +1841,137 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
                                       )
 {
 
+   
    m_psfsub.resize(nReductions);
+   
+   //Load first file to condigure based on its header.
+   std::vector<std::string> flist = ioutils::getFileNames(dir, prefix, "000", ext);
+   improc::fitsHeader fh;
+   eigenImage<realT> im;
+   fitsFile<realT> ff;
+   
+   ff.read(im, fh, flist[0]);
+   
+   if(fh.count("FDELFRNT") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "FDELFRNT not found in FITS header.");
+      return -1;
+   }
+   m_deleteFront = fh["FDELFRNT"].Value<int>();
+   std::cerr << "deleteFront: " << m_deleteFront << "\n";
+   
+   if(fh.count("FDELBACK") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "FDELBACK not found in FITS header.");
+      return -1;
+   }
+   m_deleteBack = fh["FDELBACK"].Value<int>();
+   std::cerr << "deleteBack: " << m_deleteBack << "\n";
+   
+   if(fh.count("QFILE") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "QFILE not found in FITS header.");
+      return -1;
+   }
+   m_qualityFile = fh["QFILE"].String();
+   std::cerr << "qualityFile: " << m_qualityFile << "\n";
+   
+   if(fh.count("QTHRESH") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "QTHRESH not found in FITS header.");
+      return -1;
+   }
+   m_qualityThreshold = fh["QTHRESH"].Value<realT>();
+   std::cerr << "qualityThreshold: " << m_qualityThreshold << "\n";
+   
+   if(fh.count("COADMTHD") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "COADMTHD not found in FITS header.");
+      return -1;
+   }
+   m_coaddCombineMethod = HCI::combineMethodFmStr(fh["COADMTHD"].String());
+   std::cerr << "coaddCombineMethod: " << m_coaddCombineMethod << "\n";
+   
+   if(fh.count("COADIMNO") != 0)
+   {
+      m_coaddMaxImno = fh["COADIMNO"].Value<int>();
+      std::cerr << "coaddMaxImno: " << m_coaddMaxImno << "\n";
+   }
+   
+   if(fh.count("COADTIME") != 0)
+   {
+      m_coaddMaxImno = fh["COADTIME"].Value<realT>();
+      std::cerr << "coaddMaxtime: " << m_coaddMaxTime << "\n";
+   }
+   
+   if(m_maskFile == "")
+   {
+      if(fh.count("MASKFILE") == 0)
+      {
+         mxError("KLIPReduction", MXE_PARAMNOTSET, "MASKFILE not found in FITS header and not set in configuration.");
+         return -1;
+      }
+      m_maskFile = fh["MASKFILE"].String();
+   }   
+   std::cerr << "maskFile: " << m_maskFile << "\n";
+
+   if(fh.count("PPBEFORE") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPBEFORE not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_beforeCoadd = fh["PPBEFORE"].Value<bool>();
+   std::cerr << "preProcess_beforeCoadd: " << m_preProcess_beforeCoadd << "\n";
+   
+   if(fh.count("PPMASK") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPMASK not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_mask = fh["PPMASK"].Value<bool>();
+   std::cerr << "preProcess_mask: " << m_preProcess_mask << "\n";
+   
+   if(fh.count("PPSUBRAD") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPSUBRAD not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_subradprof = fh["PPSUBRAD"].Value<bool>();
+   std::cerr << "preProcess_subradprof: " << m_preProcess_subradprof << "\n";
+   
+   if(fh.count("PPAUSMAW") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPAUSMAW not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_azUSM_azW = fh["PPAUSMAW"].Value<realT>();
+   std::cerr << "preProcess_azUSM_azW: " << m_preProcess_azUSM_azW << "\n";
+   
+   if(fh.count("PPAUSMRW") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPAUSMRW not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_azUSM_radW = fh["PPAUSMRW"].Value<realT>();
+   std::cerr << "preProcess_azUSM_radW: " << m_preProcess_azUSM_radW << "\n";
+   
+   if(fh.count("PPGUSMFW") == 0)
+   {
+      mxError("KLIPReduction", MXE_PARAMNOTSET, "PPGUSMFW not found in FITS header.");
+      return -1;
+   }
+   m_preProcess_gaussUSM_fwhm = fh["PPGUSMFW"].Value<realT>();
+   std::cerr << "preProcess_gaussUSM_fwhm: " << m_preProcess_gaussUSM_fwhm << "\n";
+   
+
+   fitsHeader head;
+
+   if(m_MJDKeyword != "") head.append(m_MJDKeyword);
+
+   for(size_t i=0;i<m_keywords.size();++i)
+   {
+      head.append(m_keywords[i]);
+   }
    
    for(size_t n =0; n<nReductions; ++n)
    {
@@ -1854,22 +1991,14 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 
       fitsFile<realT> f(m_fileList[0]);
 
-      f.read(im);
+      fitsHeader fh = head;
+      f.read(im, fh);
 
-      fitsHeader head;
-
-      if(m_MJDKeyword != "") head.append(m_MJDKeyword);
-
-      for(size_t i=0;i<m_keywords.size();++i)
+      if(n == 0)
       {
-         head.append(m_keywords[i]);
+         std::cerr << fh["FAKEPA"].String() << "\n";
       }
-
-      /*----- Append the HCI keywords to propagate them if needed -----*/
-
-      m_heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
-      m_heads.resize(m_fileList.size(), head);
-
+      
       //We set imSize to match the first image, but we make it a square.
       if(m_imSize == 0)
       {
@@ -1887,7 +2016,6 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       f.setReadSize( floor(0.5*(im.rows()-1) - 0.5*(m_imSize-1) +0.1), floor(0.5*(im.cols()-1.0) - 0.5*(m_imSize-1.0)+0.1), m_imSize, m_imSize);
       im.resize(m_imSize, m_imSize);
 
-      
       if(n > 0)
       {
          if(m_fileList.size() != (size_t) m_Nims)
@@ -1917,8 +2045,11 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
    
       m_psfsub[n].resize(m_Nrows, m_Ncols, m_Nims);
       
-      t_load_begin = get_curr_time();
+      m_heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
+      m_heads.resize(m_fileList.size(), head);
 
+      t_load_begin = get_curr_time();
+      
       f.read(m_psfsub[n].data(), m_heads, m_fileList);
 
       f.setReadSize(); 
@@ -1944,28 +2075,14 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       }
 
       t_load_end = get_curr_time();
-
-      ///\todo zeroNaNs should be a member and be configurable.  Probably should be true by default.
-      bool zeroNaNs = true;
-
-      if( zeroNaNs )
+      
+      for(size_t n=0; n<m_psfsub.size(); ++n)
       {
-         for(int k=0; k<m_Nims; ++k)
-         {
-            for(int i=0; i< m_Nrows; ++i)
-            {
-               for(int j=0; j< m_Ncols; ++j)
-               {
-                  if( !std::isnormal( m_psfsub[n].image(k)(i,j)) )
-                  {
-                     m_psfsub[n].image(k)(i,j) = 0;
-                  }
-               }
-            }
-         }
+         zeroNaNCube(m_psfsub[n]);
       }
 
    }
+   
    if(m_weightFile != "")
    {
       std::vector<std::string> fn;

@@ -6,13 +6,15 @@
   *
   */
 
+#ifndef __ADIobservation_hpp__
+#define __ADIobservation_hpp__
+
 #include "HCIobservation.hpp"
 #include "fitsHeader.hpp"
 
 #include "imagePads.hpp"
 
-#ifndef __ADIobservation_hpp__
-#define __ADIobservation_hpp__
+
 
 namespace mx
 {
@@ -208,7 +210,7 @@ struct ADIobservation : public HCIobservation<_realT>
 
    /// @}
    
-   void fitsHeader(fitsHeader * head);
+   void stdFitsHeader(fitsHeader * head);
    
    virtual void makeMaskCube();
    
@@ -356,20 +358,77 @@ int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
                                                         size_t nReductions 
                                                       )
 {
+   //Load first file to condigure based on its header.
+   std::vector<std::string> flist = ioutils::getFileNames(dir, prefix, "000", ext);
+   
+   improc::fitsHeader fh;
+   eigenImage<realT> im;
+   fitsFile<realT> ff;
+   
+   ff.read(im, fh, flist[0]);
+   
    if(!m_derotF.isSetup())
    {
       mxError("ADIobservation::readFiles", MXE_PARAMNOTSET, "Derotator is not configured.");
       return -1;
    }
  
-   this->m_keywords.clear();
- 
+   if(fh.count("FAKEFILE") != 0)
+   {
+      m_fakeFileName = fh["FAKEFILE"].String();
+      std::cerr << "fakeFileName: " << m_fakeFileName << "\n";
+   }
+   
+   if(fh.count("FAKESCFL") != 0)
+   {
+      m_fakeScaleFileName = fh["FAKESCFL"].String();
+      std::cerr << "fakeScaleFileName: " << m_fakeScaleFileName << "\n";
+   }
+   
+   if(fh.count("FAKESEP") != 0)
+   {
+      ioutils::parseStringVector(m_fakeSep, fh["FAKESEP"].String(), ",");
+      
+      if(m_fakeSep.size() == 0)
+      {
+         mxError("KLIPReduction", MXE_PARSEERR, "FAKESEP vector did not parse correctly.");
+         return -1;
+      }
+      std::cerr << "fakeSep: " << fh["FAKESEP"].String() << "\n";
+   }
+   
+   if(fh.count("FAKEPA") != 0)
+   {
+      ioutils::parseStringVector(m_fakePA, fh["FAKEPA"].String(), ",");
+      
+      if(m_fakePA.size() == 0)
+      {
+         mxError("KLIPReduction", MXE_PARSEERR, "FAKEPA vector did not parse correctly.");
+         return -1;
+      }
+      std::cerr << "fakePA: " << fh["FAKEPA"].String() << "\n";
+   }
+   
+   if(fh.count("FAKECONT") != 0)
+   {
+      ioutils::parseStringVector(m_fakeContrast, fh["FAKECONT"].String(), ",");
+      
+      if(m_fakeContrast.size() == 0)
+      {
+         mxError("KLIPReduction", MXE_PARSEERR, "FAKECONT vector did not parse correctly.");
+         return -1;
+      }
+      std::cerr << "fakeContrast: " << fh["FAKECONT"].String() << "\n";
+   }
+   
+   
+   /*----- Append the ADI keywords to propagate them if needed -----*/
+
    for(size_t i=0;i<m_derotF.m_keywords.size();++i)
    {
       this->m_keywords.push_back(m_derotF.m_keywords[i]);
    }
    
-   /*----- Append the ADI keywords to propagate them if needed -----*/
       
    if( HCIobservation<realT>::readPSFSub(dir,prefix,ext, nReductions) < 0) return -1;
    
@@ -569,7 +628,7 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
 //If fakeFileName == "" or skipPreProcess == true then use the structure of propagated values
 
 template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::fitsHeader( mx::improc::fitsHeader * head)
+void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( mx::improc::fitsHeader * head)
 {
    if(head == 0) return;
    
