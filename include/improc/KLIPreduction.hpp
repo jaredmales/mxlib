@@ -932,7 +932,7 @@ template<typename _realT, class _derotFunctObj, typename _evCalcT>
 inline
 int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
 {
-      if(this->m_postMedSub)
+   if(this->m_postMedSub)
    {
       std::cerr << "Subtracting medians in post\n";
       

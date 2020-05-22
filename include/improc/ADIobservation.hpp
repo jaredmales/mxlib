@@ -111,7 +111,7 @@ struct ADIobservation : public HCIobservation<_realT>
    
    bool m_doDerotate {true};
    
-   bool m_postMedSub {true};
+   bool m_postMedSub {false};
    
    ADIobservation();
    
@@ -373,6 +373,12 @@ int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
       return -1;
    }
  
+   if(fh.count("POSTMEDS") != 0)
+   {
+      m_postMedSub = fh["POSTMEDS"].Int();
+      std::cerr << "postMedSub: " << m_postMedSub << "\n";
+   }
+   
    if(fh.count("FAKEFILE") != 0)
    {
       m_fakeFileName = fh["FAKEFILE"].String();
@@ -636,6 +642,8 @@ void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( mx::improc::fitsHead
    head->append("", fitsCommentType(), "mx::ADIobservation parameters:");
    head->append("", fitsCommentType(), "----------------------------------------");
 
+   head->append("POSTMEDS", m_postMedSub, "median subtraction after processing");
+   
    if(m_fakeFileName != "")
    head->append("FAKEFILE", m_fakeFileName, "name of fake planet PSF file");
    
