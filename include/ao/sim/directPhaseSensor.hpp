@@ -418,6 +418,22 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
 
+      //*** Adding Noise:
+      //1) Subtract the min
+      realT phaseMin = detectorImage.image.minCoeff();
+      typename wfsImageT<realT>::imageT noiseIm = detectorImage.image - phaseMin;
+      //2) Normalize to total photons
+      realT phaseSum = noiseIm.sum();
+      realT totalPhots = pupilPlane.amplitude.square().sum()*detector.expTime();
+      
+      realT mult = totalPhots/phaseSum;
+      noiseIm *= mult;
+      //3) Add Poisson noise
+      
+      //4) Unnormalize, and unsubtract the min.
+      noiseIm /= mult;
+      detectorImage.image = noiseIm - phaseMin;
+      
       //ds9(detectorImage.image);
 
       if(applyFilter)

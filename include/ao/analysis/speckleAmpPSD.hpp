@@ -38,13 +38,11 @@ namespace analysis
   * calculates the binned-variances in the generated time-series.
   *
   */
-template<typename realT, typename probImageT>
+template<typename realT>
 int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] The binned variances of the time series generated.
                        std::vector<realT> & bins,                    ///< [in] The bin sizes to use to calculate the variances.
                        std::vector<realT> & freq,                    ///< [in] The Frequency grid of the input PSD
                        std::vector<realT> & fmPSD,                   ///< [in] The open-loop Fourier mode PSD.
-                       std::vector<realT> & pkFreqs,            ///< [in] The phase angle between the two Fourier components, as a function of freq.*/
-                       probImageT & phProb,
                        std::vector<std::complex<realT>> & fmXferFxn, ///< [in] The complex error transfer function, as a function of freq
                        std::vector<realT> & nPSD,                    ///< [in] The open-loop noise PSD
                        std::vector<std::complex<realT>> & nXferFxn,  ///< [in] The noise transfer function, as a function of freq
@@ -66,7 +64,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
    //And augment the h+ to h- phase shift to two sided form
    std::vector<realT> fmDeltaPhase(fmPSD.size(),0);
 
-   realT f0 = freq[0];
+/*   realT f0 = freq[0];
    realT df = freq[1] - freq[0];
    
    for(size_t n=0; n<pkFreqs.size(); ++n)
@@ -78,7 +76,7 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
       i0 = 0;
       if(i1 > fmDeltaPhase.size()-1) i1 = fmDeltaPhase.size()-1;
       for(int i=i0; i<= i1; ++i) fmDeltaPhase[i] = half_pi<realT>();
-   }
+   }*/
 //    uniDistT<realT> uniRand;
 //    uniRand.seed();
 //    
@@ -105,10 +103,10 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
 //    }
 //    std::cerr << '\n';
 //    
-   std::vector<realT> dphase2;
+/*   std::vector<realT> dphase2;
    
    sigproc::augment1SidedPSD( dphase2, fmDeltaPhase, !hasZero, 1.0);
-
+*/
    //*>
    
    
@@ -205,19 +203,37 @@ int speckleAmpVarMean( std::vector<realT> & vars,                    ///< [out] 
          for(int i=0; i< psd2.rows(); ++i) 
          {
             n(i,0) = normVar;
-            nm(i,0) = normVar;
+            //nm(i,0) = normVar;
          }
          
          filt.filter(n);//, &nm);
-         filt.filter(nm);
+         //filt.filter(nm);
          
          fft(tform1.data(), n.data());
-         fft(tform2.data(), nm.data());
+         //fft(tform2.data(), nm.data());
          
          //<<<<<<<<****** Apply the phase shift to the second one.
          for(size_t m=0;m<tform1.size();++m)
          {
             // Apply the phase shift to form the 2nd time series
+
+            //if(dphase2[m] != 0)
+            //{
+           /*  realT ang1 = std::arg(tform1[m]);
+             realT ang2 = std::arg(tform2[m]);
+             realT dang = ang2-ang1;
+           */ 
+             /*
+            if(dphase2[m] != 0)
+            {
+            //tform2[m] = tform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
+            
+               tform2[m] = tform1[m]*exp( std::complex<realT>(0, -dphase2[m] ));//+ 0.02*std::complex<realT>(nm(n,0), nm(n,0));
+            }
+            else
+            {
+               tform2[m] = tform2[m]*exp( std::complex<realT>(0, -1*(dang-half_pi<realT>()) ));
+            }*/
              
             tform2[m] = tform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
             

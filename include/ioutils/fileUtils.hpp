@@ -285,7 +285,7 @@ std::string getSequentialFilename( const std::string & basename,
    return getSequentialFilename<ndigit>(basename, "", startat);
 }
 
-///Get the size in bytes of a file
+/// Get the size in bytes of a file
 /** Uses fstat.
   *
   * \returns the file size if fd is valid and no errors occur
@@ -308,6 +308,20 @@ off_t fileSize( int fd /**< [in] an open file descriptor */)
   
    return stbuf.st_size;
   
+}
+
+/// Get the size in bytes of a file pointed to by a FILE pointer
+/** Uses fileno to get the associated descriptor, then uses fstat.
+  * 
+  * \returns the file size if fd is valid and no errors occur
+  * \returns -1 on an error
+  *
+  * \overload 
+  */ 
+inline
+off_t fileSize( FILE * f /**< [in] an open file */)
+{
+   return fileSize(fileno(f));  
 }
 
 ///@} -fileutils

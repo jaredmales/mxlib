@@ -722,6 +722,9 @@ void insertImageRegion( imageTout imout, ///< [out] a row-image into which the p
    
 } 
 
+/// Rotate a binary mask
+/** Sets edge pixels to 0 or 1 depending on the interpolation, being below/above 0.5.
+  */
 template< typename imageT, typename transformT = cubicConvolTransform<typename imageT::Scalar>>
 void rotateMask( imageT & rotMask,
                  imageT & mask,

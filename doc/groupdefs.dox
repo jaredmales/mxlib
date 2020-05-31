@@ -202,11 +202,26 @@
   * \ingroup signal_processing
   */
 
-/** \defgroup image_filters_kernels Image Filter Kernels
-  * \brief Kernels to use in image filtering functions.
+/** \defgroup image_filters_kernels Filter With Kernels
+  * \brief Image filtering with a kernel.
   * \ingroup image_filters
   */
 
+/** \defgroup image_filters_average Filter With Averaging 
+  * \brief Image filtering with averaging, mean or median
+  * \ingroup image_filters
+  */
+
+/** \defgroup rad_prof Radial Profiles
+  * \brief Radial profiles of images
+  * \ingroup image_filters 
+  */
+  
+/** \defgroup std_prof Noise Profiles
+  * \brief Noise profiles of images
+  * \ingroup image_filters 
+  */
+  
 /** \defgroup image_reg Image Registration
   * \brief Tools for registering images.
   * \ingroup image_processing

@@ -20,11 +20,11 @@ namespace mx
 namespace improc 
 {
    
-/** \ingroup image_filters_kernels
-  * @{
-  */
 
 ///Symetric Gaussian smoothing kernel
+/** \ingroup image_filters_kernels
+  * 
+  */
 template<typename _arrayT, size_t _kernW=4>
 struct gaussKernel
 {
@@ -81,7 +81,7 @@ struct gaussKernel
 };
 
 /// Azimuthally variable boxcare smoothing kernel.
-/**
+/** Averages the image in a boxcare defined by a radial and azimuthal extent.
   * 
   * \ingroup image_filters_kernels
   */
@@ -98,7 +98,9 @@ struct azBoxKernel
    arithT _azWidth;
    int _maxWidth;
    
-   azBoxKernel(arithT radWidth, arithT azWidth)
+   azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
+                arithT azWidth   ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
+              )
    {
       _radWidth = radWidth;
       _azWidth = azWidth;
@@ -131,31 +133,35 @@ struct azBoxKernel
       arithT sinq2, cosq2, sindq;
       for(int i=0; i < w; ++i)
       {
+         arithT xP = i -0.5;
          for(int j=0; j < h; ++j)
          {
-            rad = sqrt( pow(i-xcen,2) + pow(j-ycen,2) );
-            sinq2 = (j-ycen)/rad;
-            cosq2 = (i-xcen)/rad;
+            arithT yP = j-0.5;
+            arithT radP = sqrt( pow(x+xP-xcen,2) + pow(y+yP-ycen,2) );
+            if( fabs(rad-radP) > _radWidth) 
+            {
+               kernel(i,j) = 0;
+               continue;
+            }
+            
+            sinq2 = (yP-ycen)/radP;
+            cosq2 = (xP-xcen)/radP;
             sindq = sinq2*cosq - cosq2*sinq;
-            if( rad <= _radWidth && fabs(rad*sindq) <= _azWidth) kernel(i,j) = 1;
+            if( fabs(radP*sindq) <= _azWidth) kernel(i,j) = 1;
             else kernel(i,j) = 0;
          }
       }
       if(kernel.sum() == 0)
       {
          std::cerr << "Kernel sum 0: " << x << " " << y << "\n";
-         exit(-1);
+         //exit(-1);
       }
       kernel /= kernel.sum();
    }
    
 };
 
-///@}
 
-/** \ingroup image_filters 
-  * @{
-  */ 
 
 ///Filter an image with a kernel.
 /** Applies the kernel to each pixel in the image, storing the filtered result in the output image.
@@ -192,6 +198,8 @@ struct azBoxKernel
   * \tparam imageOutT the type of the output image (must have an Eigen like interface)
   * \tparam imageInT the type of the input image (must have an Eigen like interface)
   * \tparam kernelT is the kernel type (see above)
+  * 
+  * \ingroup image_filters_kernels
   *
   */ 
 template<typename imageOutT, typename imageInT, typename kernelT>
@@ -270,6 +278,8 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    }// pragma omp parallel
 }   
    
+///@}
+
    
 /// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
 /** Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the corresonding center pixel of imOut.
@@ -286,6 +296,8 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
   * 
   * \returns 0 on success
   * \returns -1 on error.
+  * 
+  * \ingroup image_filters_average
   */
 template<typename imageTout, typename imageTin>
 int meanSmooth( imageTout & imOut,        ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
@@ -363,6 +375,8 @@ int meanSmooth( imageTout & imOut,        ///< [out] the smoothed image. Not re-
   * 
   * \returns 0 on success
   * \returns -1 on error.
+  * 
+  * \ingroup image_filters_average
   */
 template<typename imageTout, typename imageTin>
 int meanSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
@@ -454,6 +468,8 @@ int meanSmooth( imageTout & imOut,                 ///< [out] the smoothed image
   * 
   * \returns 0 on success
   * \returns -1 on error.
+  * 
+  * \ingroup  image_filters_average
   */
 template<typename imageTout, typename imageTin>
 int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
@@ -497,6 +513,23 @@ int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed ima
    }
 }      
 
+/// Smooth an image using the median in a rectangular box.  
+/** Calculates the median value in a rectangular box of imIn, of size medianFullSidth X medianFullWidth and stores it in the corresponding center pixel of imOut.
+  * Does not smooth the outer 0.5*medianFullwidth rows and columns of the input image, and the values of these pixels are not
+  * changed in imOut (i.e. you should 0 them before the call). 
+  * 
+  * imOut is not re-allocated.
+  * 
+  * \overload 
+  * 
+  * \tparam imageTout is an eigen-like image array
+  * \tparam imageTin is an eigen-like image array
+  * 
+  * \returns 0 on success
+  * \returns -1 on error.
+  * 
+  * \ingroup image_filters_average
+  */
 template<typename imageTout, typename imageTin>
 int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
                   const imageTin & imIn,             ///< [in] the image to smooth
@@ -536,54 +569,77 @@ struct radvalValComp
 };
 
 
-
-///Form a radial profile image, and optionally subtract it from the input
-/** The radial profile is calculated using linear interpolation on a 1 pixel grid
+/// Calculate the the radial profile
+/** The median radial profile is calculated by rebinning to a 1 pixel grid.
   * 
-  * \param [out] radprof is the radial profile image.  This will be resized.
-  * \param [in] im is the image to form the profile of. 
-  * \param [in] rad is an array of radius values
-  * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
   * 
-  * \tparam radprofT the eigen array type of the output
-  * \tparam eigenImT the eigen array type of the input
+  * \tparam vecT the std::vector-like type to contain the profile 
+  * \tparam eigenImT1 the eigen-array-like type of the input image
+  * \tparam eigenImT2 the eigen-array-like type of the radius and mask image
+  * \tparam eigenImT3 the eigen-array-like type of the mask image
+  * 
+  * \ingroup rad_prof
   */ 
-template<typename radprofT, typename eigenImT>
-void radprofim( radprofT & radprof, 
-                eigenImT & im,
-                radprofT & rad,
-                bool subtract = false)
+template<typename vecT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
+void radprof( vecT & rad,              ///< [out] the radius points for the profile. Should be empty.
+              vecT & prof,             ///< [out] the median image value at the corresponding radius. Should be empty.
+              const eigenImT1 & im,    ///< [in] the image of which to calculate the profile
+              const eigenImT2 & radim, ///< [in] image of radius values per pixel
+              const eigenImT3 * mask   ///< [in] [optional] 1/0 mask, only pixels with a value of 1 are included in the profile 
+            )
 {
-   typedef typename eigenImT::Scalar floatT;
+   typedef typename eigenImT1::Scalar floatT;
    
    int dim1 = im.rows();
    int dim2 = im.cols();
    
-
-   floatT mr = rad.maxCoeff();
+   floatT maxr; 
+   floatT minr;
    
-   /* A vector of radvals will be sorted, then binned*/
-   std::vector<radval<floatT> > rv(dim1*dim2);
-   
-   for(size_t i=0;i<rv.size();++i)
+   size_t nPix;
+   if(mask)
    {
-      rv[i].r = rad(i);
-      rv[i].v = im(i);
+      nPix = mask->sum();
+   }
+   else
+   {
+      nPix = dim1*dim2;
    }
    
+   /* A vector of radvals will be sorted, then binned*/
+   std::vector<radval<floatT> > rv(nPix);
+   
+   size_t i=0;
+   
+   for(int c=0;c<im.cols();++c)
+   {
+      for(int r=0;r<im.rows();++r)
+      {
+         if(mask)
+         {
+            if( (*mask)(r,c) == 0) continue;
+         }
+         
+         rv[i].r = radim(r,c);
+         rv[i].v = im(r,c);
+         ++i;
+      }
+   }
    
    sort(rv.begin(), rv.end(), radvalRadComp<floatT>());
    
+   minr = rv[0].r;
+   maxr = rv.back().r;
+   
    /*Now bin*/
    floatT dr = 1;
-   floatT r0 = 0;
-   floatT r1 = dr;
+   floatT r0 = minr;
+   floatT r1 = minr + dr;
    int i1=0, i2, n;
    
    floatT med;
   
-   std::vector<double> med_r, med_v;
-   while(r1 < mr)
+   while(r1 < maxr)
    {
       while(rv[i1].r < r0) ++i1;
       i2 = i1;
@@ -595,23 +651,115 @@ void radprofim( radprofT & radprof,
       
       med = (rv.begin()+i1+n)->v;
       
-      med_r.push_back(.5*(r0+r1));
-      med_v.push_back(med);
+      rad.push_back(.5*(r0+r1));
+      prof.push_back(med);
       i1 = i2;
       r0 += dr;
       r1 += dr;
    }
    
+
+   
+}
+
+/// Calculate the the radial profile
+/** The median radial profile is calculated by rebinning to a 1 pixel grid.
+  * This version calculates a centered radius image.
+  * 
+  * \overload
+  * 
+  * \tparam vecT the std::vector-like type to contain the profile 
+  * \tparam eigenImT1 the eigen-array-like type of the input image
+  * \tparam eigenImT2 the eigen-array-like type of the radius and mask image
+  * \tparam eigenImT3 the eigen-array-like type of the mask image
+  * 
+  * \ingroup rad_prof
+  */ 
+template<typename vecT, typename eigenImT1, typename eigenImT2>
+void radprof( vecT & rad,            ///< [out] the radius points for the profile. Should be empty.
+              vecT & prof,           ///< [out] the median image value at the corresponding radius. Should be empty.
+              const eigenImT1 & im,  ///< [in] the image of which to calculate the profile
+              const eigenImT2 & mask ///< [in] 1/0 mask, only pixels with a value of 1 are included in the profile 
+            )
+{
+   eigenImage<typename eigenImT1::Scalar> radim;
+   radim.resize(im.cols(), im.rows());
+   
+   radiusImage(radim);
+   
+   radprof(rad, prof, im, radim, &mask);
+}
+
+/// Calculate the the radial profile
+/** The median radial profile is calculated by rebinning to a 1 pixel grid.
+  * This version calculates a centered radius image.
+  * 
+  * \overload
+  * 
+  * \tparam vecT the std::vector-like type to contain the profile 
+  * \tparam eigenImT1 the eigen-array-like type of the input image
+  * 
+  * \ingroup rad_prof
+  */ 
+template<typename vecT, typename eigenImT1>
+void radprof( vecT & rad,          ///< [out] the radius points for the profile. Should be empty.
+              vecT & prof,         ///< [out] the median image value at the corresponding radius. Should be empty.
+              const eigenImT1 & im ///< [in] the image of which to calculate the profile
+            )
+{
+   eigenImage<typename eigenImT1::Scalar> radim;
+   radim.resize(im.cols(), im.rows());
+   
+   radiusImage(radim);
+   
+   radprof(rad, prof, im, radim, (eigenImage<typename eigenImT1::Scalar> *) nullptr);
+}
+
+///Form a radial profile image, and optionally subtract it from the input
+/** The radial profile is calculated using linear interpolation on a 1 pixel grid
+  * 
+  * 
+  * \tparam radprofT the eigen array type of the output
+  * \tparam eigenImT1 the eigen array type of the input image
+  * \tparam eigenImT2 the eigen array type of the radius image
+  * \tparam eigenImT3 the eigen array type of the mask image
+  * 
+  * \ingroup rad_prof
+  */ 
+template<typename radprofT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
+void radprofim( radprofT & radprofIm,     ///< [out] the radial profile image.  This will be resized.
+                eigenImT1 & im,   ///< [in the image to form the profile of. 
+                const eigenImT2 & rad,  ///< [in] an array of radius values for each pixel
+                const eigenImT3 * mask, ///< [in] [optional 1/0 mask, only pixels with a value of 1 are included in the profile. Can be nullptr.
+                bool subtract           ///< [in] if true, then on ouput im will have had its radial profile subtracted.
+              )
+{
+  
+  
+   std::vector<double> med_r, med_v; //Must be double for GSL interpolator
+  
+   radprof(med_r, med_v, im, rad, mask);
+   
    /* And finally, interpolate onto the radius image */
-   radprof.resize(dim1, dim2);
+   radprofIm.resize(im.rows(), im.cols() );
+   
    gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
    
-   for(int i=0;i<dim1;++i)
+   for(int c=0;c<im.cols();++c)
    {
-      for(int j=0;j<dim2;++j)
+      for(int r=0;r<im.rows();++r)
       {
-         radprof(i,j) = interp.interpolate( ((double) rad(i,j)) );
-         if(subtract) im(i,j) -= radprof(i,j);
+         if(mask)
+         {
+            if( (*mask)(r,c) == 0) 
+            {
+               radprofIm(r,c) = 0;
+               continue;
+            }
+         }
+         
+         radprofIm(r,c) = interp.interpolate( ((double) rad(r,c)) );
+         if(subtract) im(r,c) -= radprofIm(r,c);
       }
    }
    
@@ -624,35 +772,36 @@ void radprofim( radprofT & radprof,
 /** The radial profile is calculated using linear interpolation on a 1 pixel grid.
   * This version calculates a centered radius image.
   * 
-  * 
-  * \param [out] radprof is the radial profile image.  This will be resized.
-  * \param [in] im is the image to form the profile of. 
-  * \param [in] subtract if true, then on ouput im will have had its radial profile subtracted.
-  * 
   * \tparam radprofT the eigen array type of the output
   * \tparam eigenImT the eigen array type of the input
+  * 
+  * \ingroup rad_prof
   */ 
 template<typename radprofT, typename eigenImT>
-void radprofim( radprofT & radprof, 
-                eigenImT & im, 
-                bool subtract = false)
+void radprofim( radprofT & radprof,   ///< [out] the radial profile image.  This will be resized.
+                eigenImT & im,        ///< [in] the image to form the profile of. 
+                bool subtract = false ///< [in] [optional] if true, then on ouput im will have had its radial profile subtracted.
+              )
 {
-   int dim1 = im.cols();
-   int dim2 = im.rows();
-   
-   radprofT rad;
-   rad.resize(dim1, dim2);
+   eigenImage<typename eigenImT::Scalar> rad;
+   rad.resize(im.rows(), im.cols());
    
    radiusImage(rad);
    
-   radprofim(radprof, im, rad, subtract);
+   radprofim(radprof, im, rad, (eigenImage<typename eigenImT::Scalar> *) nullptr, subtract);
    
 }
   
+
+/** \ingroup std_prof 
+  * @{
+  */
+
 /// Form a standard deviation image, and optionally divide the input by it to form a S/N map.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
   * 
   * \tparam eigenImT the eigen array type of the output and non-reference images.  Each image input can be a different type to allow references, etc.
+  * 
   */ 
 template<typename eigenImT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
 void stddevImage( eigenImT & stdIm,                 ///< [out] the standard deviation image.  This will be resized.
@@ -661,7 +810,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
                   const eigenImT3 & mask,           ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
                   typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
                   typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
-                  bool divide = false               ///< [in] [optional] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
+                  bool divide                ///< [in] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
                 )
 {
    typedef typename eigenImT::Scalar floatT;
@@ -755,6 +904,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
   * \overload 
   * 
   * \tparam eigenImT the eigen array type of the output and non-reference images
+  * 
   */ 
 template<typename eigenImT, typename eigenImT1, typename eigenImT2>
 void stddevImage( eigenImT & stdIm,                 ///< [out] the standard deviation image.  This will be resized.
@@ -782,6 +932,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
   * 
   * \tparam eigencubeT is the eigen cube type of the input and output cubes.
   * \tparam eigenImT the eigen array type of the output and non-reference images.
+  * 
   */ 
 template<typename eigenCubeT, typename eigenCubeT1, typename eigenImT>
 void stddevImageCube( eigenCubeT & stdImc,              ///< [out]  the standard deviation image cube.  This will be resized.
