@@ -810,7 +810,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
                   const eigenImT3 & mask,           ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
                   typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
                   typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
-                  bool divide = false               ///< [in] [optional] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
+                  bool divide                ///< [in] if true, the output is the input image is divided by the std-dev profile, i.e. a S/N map.  default is false.
                 )
 {
    typedef typename eigenImT::Scalar floatT;
