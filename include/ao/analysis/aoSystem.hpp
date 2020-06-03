@@ -442,7 +442,9 @@ public:
      * 
      * \returns the S/N squared
      */
-   realT signal2Noise2( realT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
+   realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
+                        realT d          ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                      );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
    /** Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
@@ -1340,14 +1342,16 @@ realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs )
+realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
+                                                         realT d
+                                                       )
 {      
    realT F = Fg();
                
    double binfact = 1.0;
    if( m_bin_npix )
    {
-      binfact = pow(m_d_min/ m_d_opt,2);
+      binfact = pow(m_d_min/ d,2);
    }
    
    return pow(F*tau_wfs,2)/((F+m_npix_wfs*binfact*m_Fbg)*tau_wfs + m_npix_wfs*binfact*m_ron_wfs*m_ron_wfs);
@@ -1377,9 +1381,8 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
-   realT snr2 = signal2Noise2( tau_wfs );
-         
-  
+   realT snr2 = signal2Noise2( tau_wfs, d );
+   
    return pow(beta_p,2)/snr2*pow(m_lam_wfs/m_lam_sci, 2);
 }
 
@@ -1723,7 +1726,7 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
       
    int m = m_D/(2*d);
    int n = 0;
-   
+
    while( measurementError(m,n, d) + timeDelayError(m,n,d) > fittingError(m, n) && d < m_D/2 ) 
    {
       d += m_d_min/m_optd_delta;
