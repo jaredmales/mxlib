@@ -84,11 +84,11 @@ void circularApodizedPupil( const std::string & pupilName,
    
    if(centralObs == 0)
    {
-      tukey2d<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, tukeyAlpha, cen,cen);
+      window::tukey2d<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, tukeyAlpha, cen,cen);
    }
    else
    {
-      tukey2dAnnulus<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, centralObs, tukeyAlpha, cen,cen);
+      window::tukey2dAnnulus<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, centralObs, tukeyAlpha, cen,cen);
    }
    
    

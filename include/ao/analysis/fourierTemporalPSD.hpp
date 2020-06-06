@@ -228,27 +228,20 @@ public:
 
    ///Calculate the temporal PSD for a Fourier mode for a single layer.
    /**
-     * \param[out] PSD is the calculated PSD
-     * \param[in] freq is the populated temporal frequency grid defining the frequencies at which the PSD is calculated
-     * \param[in] m is the first index of the spatial frequency
-     * \param[in] n is the second index of the spatial frequency
-     * \param[in] layer_i the index of the layer, for accessing the atmosphere parameters
-     * \param[in] p sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-     * \param[in] fmax [optional] set the maximum temporal frequency for the calculation.  The PSD is filled in
-     *                             with a -17/3 power law past this frequency.
      *
      * \todo implement error checking.
      * \todo need a way to track convergence failures in integral without throwing an error.
      * \todo need better handling of averaging for the -17/3 extension.
      *
      */
-   int singleLayerPSD( std::vector<realT> &PSD,
-                       std::vector<realT> &freq,
-                       realT m,
-                       realT n,
-                       int layer_i,
-                       int p,
-                       realT fmax = 0);
+   int singleLayerPSD( std::vector<realT> &PSD,  ///< [out] the calculated PSD
+                       std::vector<realT> &freq, ///< [in] the populated temporal frequency grid defining the frequencies at which the PSD is calculated
+                       realT m,                  ///< [in] the first index of the spatial frequency
+                       realT n,                  ///< [in] the second index of the spatial frequency
+                       int layer_i,              ///< [in] the index of the layer, for accessing the atmosphere parameters
+                       int p,                    ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
+                       realT fmax = 0            ///< [in] [optional] set the maximum temporal frequency for the calculation.  The PSD is filled in with a -17/3 power law past this frequency.
+                     );      
 
    ///\cond multilayer_parallel
    //Conditional to exclude from Doxygen.
@@ -289,13 +282,13 @@ public:
      *
      */
    template<bool parallel=true>
-   int multiLayerPSD( std::vector<realT> & PSD, ///< [out] the calculated PSD
+   int multiLayerPSD( std::vector<realT> & PSD,  ///< [out] the calculated PSD
                       std::vector<realT> & freq, ///< [in] the populated temporal frequency grid defining at which frequencies the PSD is calculated
-                      realT m, ///< [in] the first index of the spatial frequency
-                      realT n, ///< [in] the second index of the spatial frequency
-                      int p, ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-                      realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
-                                     /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+                      realT m,                   ///< [in] the first index of the spatial frequency
+                      realT n,                   ///< [in] the second index of the spatial frequency
+                      int p,                     ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
+                      realT fmax = 0             ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
+                                                 /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
                     );
 
    ///Calculate PSDs over a grid of spatial frequencies.
@@ -306,11 +299,11 @@ public:
      *
      */
    void makePSDGrid( const std::string & dir, ///< [in] the directory for output of the PSDs
-                     int mnMax, ///< [in] the maximum value of m and n in the grid.
-                     realT dFreq, ///< [in] the temporal frequency spacing.
-                     realT maxFreq, ///< [in] the maximum temporal frequency to calculate
-                     realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in with a -17/3 power law past
-                                    /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+                     int mnMax,               ///< [in] the maximum value of m and n in the grid.
+                     realT dFreq,             ///< [in] the temporal frequency spacing.
+                     realT maxFreq,           ///< [in] the maximum temporal frequency to calculate
+                     realT fmax = 0           ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in with a -17/3 power law past
+                                              /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
                    );
 
    ///Analyze a PSD grid under closed-loop control.
