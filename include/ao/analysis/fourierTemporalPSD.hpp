@@ -1013,7 +1013,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   pkFreqs[i] = fabs(fwind);
                }
                
-               std::vector<realT> bins = {1,4};
+               std::vector<realT> bins = {1,1};
                for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
                std::vector<realT> vars;
                
