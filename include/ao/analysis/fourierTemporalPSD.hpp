@@ -1034,7 +1034,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   }
                }
                
-               speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, m, n, lifetimeTrials);
+               speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
                
                realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
                   
@@ -1061,7 +1061,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      }
                   }   
                
-                  speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, m, n, lifetimeTrials);
+                  speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
                      
                   realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
                   
