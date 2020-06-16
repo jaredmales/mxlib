@@ -417,7 +417,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
 
       //Just do the read
       detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
-
+#if 0
       //*** Adding Noise:
       //1) Subtract the min
       realT phaseMin = detectorImage.image.minCoeff();
@@ -433,22 +433,17 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //4) Unnormalize, and unsubtract the min.
       noiseIm /= mult;
       detectorImage.image = noiseIm - phaseMin;
-      
+#endif
       //ds9(detectorImage.image);
 
       if(applyFilter)
       {
          _filter.filter(detectorImage.image);
-
-         //ds9f(detectorImage.image);
       }
 
       detectorImage.iterNo = wfsImage.iterNo;
 
-
-      //ds9_interface_display_raw( &ds9i, 1, detectorImage.image.data(), detectorImage.image.rows(), detectorImage.image.cols(),1, mx::getFitsBITPIX<realT>());
-
-        _roTime_counter = 0;
+      _roTime_counter = 0;
       _reading=0;
       rv = true;
 

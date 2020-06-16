@@ -181,7 +181,11 @@ public:
 
    Eigen::Array<double,-1,-1> _pos, _map;
 
-   //std::vector<realT> sigma;
+   sigproc::psdFilter<realT> m_filter;
+
+   bool m_applyFilter {false};
+
+   void setFilter( int width );
 };
 
 
@@ -570,12 +574,15 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       _nextShape += tmp;
    }
 
+    //================ filter here!!
+    
 
-    _nextShape *= _pupil;
-
-    _nextShape = (_nextShape - _nextShape.sum()/_pupil.sum())*_pupil;
-
-
+   if(m_applyFilter)
+   {
+      std::cerr << "filtering\n";
+      m_filter.filter(_nextShape);
+   }
+      
    _oldShape = _shape;
 #if 1
    _settling = 1;
@@ -624,8 +631,10 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
 
    BREAD_CRUMB;
 
-   wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
+   //wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
 
+   wf.phase += 2*_shape*two_pi<realT>()/lambda;
+   
    if( display_phase > 0)
    {
       ++display_phase_counter;
@@ -645,6 +654,29 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
    #ifdef MXAO_DIAG_LOOPCOUNTS
    std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
    #endif
+}
+
+template<typename _realT>
+void deformableMirror<_realT>::setFilter( int width )
+{
+   int nr = _shape.rows();
+   int nc = _shape.cols();
+
+   typename wfsImageT<_realT>::imageT filterMask;
+
+   filterMask.resize( nr, nc );
+   filterMask.setZero();
+
+   filterMask.block(0,0, width+1, width+1).setConstant(1.0);
+   filterMask.block(0, nc - width, width+1, width).setConstant(1.0);
+   filterMask.block(nr - width, 0, width, width+1).setConstant(1.0);
+   filterMask.block(nr - width, nc - width, width, width).setConstant(1.0);
+
+         
+   m_filter.psdSqrt(filterMask);
+
+
+
 }
 
 } //sim

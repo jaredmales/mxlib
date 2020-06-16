@@ -764,8 +764,8 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
 
     //Mean subtraction on the system pupil.
-   mn = (wf.phase * _pupil).sum()/_npix;
-   wf.phase = (wf.phase-mn)*_pupil;
+//    mn = (wf.phase * _pupil).sum()/_npix;
+//    wf.phase = (wf.phase-mn)*_pupil;
 
    //**** Calculate RMS phase ****//
    realT rms_cl;

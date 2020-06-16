@@ -432,7 +432,7 @@ void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
    shift( wf.phase, _nWf * _timeStep);
    ++_nWf;
 
-   wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
+   //wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
 
    wf.amplitude = _pixVal*(*_pupil);
 }
