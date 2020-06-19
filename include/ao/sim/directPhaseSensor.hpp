@@ -8,6 +8,8 @@
 #ifndef directPhaseSensor_hpp
 #define directPhaseSensor_hpp
 
+#include "../../randomT.hpp"
+
 #include "../../improc/fitsFile.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../improc/ds9Interface.hpp"
@@ -62,47 +64,48 @@ public:
    ///The wavefront complex field type
    typedef mx::imagingArray<std::complex<_realT>,fftwAllocator<std::complex<_realT> >, 0> complexFieldT;
 
-   ///The wavefront sensor detector image type
-   //typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> wfsImageT;
-
    typedef _detectorT detectorT;
+
+   typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
 protected:
 
    /* Standard WFS Interface: */
-   int _wfSz; ///< Size of the wavefront in pixels
+   int m_wfSz {0}; ///< Size of the wavefront in pixels
 
-   int _detRows; ///<The number of rows of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
-   int _detCols; ///<The number of columns of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
+   int m_detRows {0}; ///<The number of rows of the WFS m_detector.  After forming the image the WFS detector plane is re-binned to this.
+   int m_detCols {0}; ///<The number of columns of the WFS m_detector.  After forming the image the WFS detector plane is re-binned to this.
 
-   realT _lambda; ///< Central wavelength, in meters
+   realT m_lambda {0}; ///< Central wavelength, in meters
 
-   int _iTime; ///<Integration time in loop steps
+   int m_iTime {0}; ///<Integration time in loop steps
 
-   int _roTime; ///<Readout time in loop steps
+   int m_roTime {1}; ///<Readout time in loop steps
 
-   realT _simStep; ///<The simulation stepsize in seconds.
+   realT m_simStep {0.001}; ///<The simulation stepsize in seconds.
 
 
    /* Direct Phase Sensor specific: */
 
-   int _iTime_counter;
+   int m_iTime_counter {0};
 
-   int _reading;
+   int m_reading {0};
 
-   int _roTime_counter;
+   int m_roTime_counter {0};
 
-   bool firstRun;
+   bool m_firstRun {true};
 
-   std::vector<wavefrontT> _wavefronts;
+   std::vector<wavefrontT> m_wavefronts;
 
-   int _lastWavefront;
+   int m_lastWavefront;
 
    ///The image formed by the WFS
-   wfsImageT<realT> wfsImage;
+   wfsImageT<realT> m_wfsImage;
 
-   improc::ds9Interface ds9;
-   improc::ds9Interface ds9f;
+
+   
+   improc::ds9Interface m_ds9;
+   improc::ds9Interface m_ds9f;
 
 public:
    ///Default c'tor
@@ -110,12 +113,11 @@ public:
 
    /* The standard WFS interface: */
 
-   detectorT detector;
+   detectorT m_detector;
 
    ///The image on the detector, resized from wfsImage
-   wfsImageT<realT> detectorImage;
-   //detectorImageT detectorImage;
-
+   wfsImageT<realT> m_detectorImage;
+  
    ///Get the wavefront size in pixels
    /**
      * \returns the wavefront size in pixels
@@ -127,7 +129,7 @@ public:
 
    ///Get the detector rows  in pixels
    /**
-     * \returns _detRows
+     * \returns m_detRows
      */
    int detRows();
 
@@ -139,7 +141,7 @@ public:
 
    ///Get the detector Cols  in pixels
    /**
-     * \returns _detCols
+     * \returns m_detCols
      */
    int detCols();
 
@@ -202,80 +204,121 @@ public:
 
    void doSenseWavefront();
 
+   /** \name Spatial Filtering
+     * @{
+     */
+protected:
+   sigproc::psdFilter<realT> m_filter; ///< The spatial filter class object.
 
+   bool m_applyFilter {false}; ///< Flag to control whether or not the spatial filter is applied.
+   
+   int m_filterWidth {0}; ///< The half-width of the filter, in Fourier domain pixels corresponding to 1/D spatial frequency units.
 
-   sigproc::psdFilter<realT> _filter;
-
-   bool applyFilter;
-
-   void setFilter( int width );
-
-
+public:
+   
+   /// Set the flag controlling whether or not the spatial filter is applied
+   void applyFilter(bool af /**< [in] true to apply the filter, false to not apply*/); 
+   
+   /// Get the current value of the flag controlling whether or not the spatial filter is applied
+   /**
+     * \returns the current value of m_applyFilter
+     */ 
+   bool applyFilter();
+   
+   /// Set the spatial filter half-width
+   /** This sets up the filter and loads it into m_filter.  The filter is a hard-edged square of width 2*width+1 pixels in the Fourier plane.
+     * 
+     * m_filterWidth must still be set to true after calling this function.
+     */ 
+   void filterWidth( int width /**< [in] the desired half-width of the filter*/);
+   
+   /// Get the current value of the filter half-width
+   /**
+     * \returns the current value of m_filterWidth
+     */
+   int filterWidth();
+   
+   ///@}
+   
+   /** \name Photon Noise
+     *
+     * @{
+     */ 
+protected:
+   
+   norm_distT m_normVar; ///< Gets normal-distributed variates
+   
+   /// The photon noise senstivity parameter.  
+   /** If 0 (default) no noise is applied.  A value of 1 represents the ideal interferomter.
+     * Note that this is constant vs. spatial frequency.  See Guyon (2005) \cite guyon_2005 for more information about \f$ \beta_p \f$.
+     */ 
+   realT m_beta_p {0};
+   
+public:
+   
+   /// Set the new value of the photon noise sensitivity parameter, beta_p.
+   void beta_p(realT bp /**< [in] the new value of beta_p */);
+   
+   /// Get the current value of the photon noise sensitivity parameter.
+   /**
+     * \returns the current value of m_beta_p.
+     */  
+   realT beta_p();
+   
+   ///@}
 };
 
 template<typename _realT, typename _detectorT>
 directPhaseSensor<_realT, _detectorT>::directPhaseSensor()
 {
-   _wfSz = 0;
-   _detRows = 0;
-   _detCols = 0;
-   _lambda = 0;
-
    iTime(1);
-   _iTime_counter = 0;
 
-   _reading = 0;
-   _roTime = 1;
-   _roTime_counter = 0;
 
-   _simStep = 0.001;
 
-   firstRun = true;
+   m_ds9.title("DPWFS");
+   m_ds9f.title("DPWFS_Filtered");
 
-   ds9.title("DPWFS");
-   ds9f.title("DPWFS_Filtered");
 
-   applyFilter = false;
-
+   m_normVar.seed();
 }
 
 
 template<typename _realT, typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::wfSz()
 {
-   return _wfSz;
+   return m_wfSz;
 }
 
 template<typename _realT, typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::wfSz(int sz)
 {
-   if( _wfSz == sz) return;
+   if( m_wfSz == sz) return;
 
-   _wfSz = sz;
+   m_wfSz = sz;
 }
 
 template<typename _realT, typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::detRows()
 {
-   return _detRows;
+   return m_detRows;
 }
 
 template<typename _realT, typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::detCols()
 {
-   return _detCols;
+   return m_detCols;
 }
 
 template<typename _realT,  typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::detSize(int nrows, int ncols)
 {
-   if( _detRows == nrows && _detCols == ncols) return;
+   if( m_detRows == nrows && m_detCols == ncols) return;
 
-   _detRows = nrows;
-   _detCols = ncols;
+   m_detRows = nrows;
+   m_detCols = ncols;
 
-   detector.setSize(_detRows, _detCols);
-   detectorImage.image.resize(_detRows, _detCols);
+   m_detector.setSize(m_detRows, m_detCols);
+   m_detectorImage.image.resize(m_detRows, m_detCols);
 
 
 }
@@ -283,13 +326,13 @@ void directPhaseSensor<_realT, _detectorT>::detSize(int nrows, int ncols)
 template<typename _realT, typename _detectorT>
 _realT directPhaseSensor<_realT, _detectorT>::lambda()
 {
-   return _lambda;
+   return m_lambda;
 }
 
 template<typename _realT, typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::lambda(_realT l)
 {
-   _lambda = l;
+   m_lambda = l;
 }
 
 template<typename _realT,  typename _detectorT>
@@ -302,7 +345,7 @@ void directPhaseSensor<_realT, _detectorT>::linkSystem(AOSysT & AOSys)
 template<typename _realT,  typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::iTime()
 {
-   return _iTime;
+   return m_iTime;
 }
 
 template<typename _realT,  typename _detectorT>
@@ -314,12 +357,12 @@ void directPhaseSensor<_realT, _detectorT>::iTime(int it)
       it = 1;
    }
 
-   _iTime = it;
+   m_iTime = it;
 
-   _wavefronts.resize(_iTime+2+100);
-   _lastWavefront = -1;
+   m_wavefronts.resize(m_iTime+2+100);
+   m_lastWavefront = -1;
 
-   detector.expTime(_simStep*_iTime);
+   m_detector.expTime(m_simStep*m_iTime);
 
 }
 
@@ -338,7 +381,7 @@ void directPhaseSensor<_realT, _detectorT>::roTime(int rt)
       rt = 1;
    }
 
-   _roTime = rt;
+   m_roTime = rt;
 
 
 }
@@ -353,9 +396,9 @@ template<typename _realT,  typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::simStep(_realT st)
 {
 
-   _simStep = st;
+   m_simStep = st;
 
-   detector.expTime(_simStep*_iTime);
+   m_detector.expTime(m_simStep*m_iTime);
 
 
 }
@@ -364,92 +407,116 @@ void directPhaseSensor<_realT, _detectorT>::simStep(_realT st)
 template<typename _realT, typename _detectorT>
 bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPlane)
 {
-   ++_lastWavefront;
-   if((size_t) _lastWavefront >= _wavefronts.size()) _lastWavefront = 0;
+   ++m_lastWavefront;
+   if((size_t) m_lastWavefront >= m_wavefronts.size()) m_lastWavefront = 0;
 
 
    wavefrontT pPlane = pupilPlane;
 
-   _wavefronts[_lastWavefront].amplitude = pPlane.amplitude;
-   _wavefronts[_lastWavefront].phase = pPlane.phase;
-   _wavefronts[_lastWavefront].iterNo = pPlane.iterNo;
+   m_wavefronts[m_lastWavefront].amplitude = pPlane.amplitude;
+   m_wavefronts[m_lastWavefront].phase = pPlane.phase;
+   m_wavefronts[m_lastWavefront].iterNo = pPlane.iterNo;
 
-   //std::cerr << _lastWavefront << " " << pPlane.iterNo << "\n";
+   //std::cerr << m_lastWavefront << " " << pPlane.iterNo << "\n";
    //Always skip the first one for averaging to center of iTime.
-   if(firstRun)
+   if(m_firstRun)
    {
-      firstRun = false;
+      m_firstRun = false;
       return false;
    }
 
-   ++_iTime_counter;
+   ++m_iTime_counter;
 
 
    bool rv = false;
 
-   if(0)//_reading)
+   if(0)//m_reading)
    {
-      ++_roTime_counter;
+      ++m_roTime_counter;
 
-      if(_roTime_counter >= _roTime)
+      if(m_roTime_counter >= m_roTime)
       {
-         detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
+         m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
-         detectorImage.iterNo = wfsImage.iterNo;
+         m_detectorImage.iterNo = m_wfsImage.iterNo;
 
-         //ds9_interface_display_raw( &ds9i, 1, detectorImage.data(), detectorImage.rows(), detectorImage.cols(),1, mx::getFitsBITPIX<realT>());
+         //ds9_interface_display_raw( &ds9i, 1, m_detectorImage.data(), m_detectorImage.rows(), m_detectorImage.cols(),1, mx::getFitsBITPIX<realT>());
 
-         _roTime_counter = 0;
-         _reading=0;
+         m_roTime_counter = 0;
+         m_reading=0;
          rv = true;
       }
    }
 
-   if( _iTime_counter >= _iTime)
+   if( m_iTime_counter >= m_iTime)
    {
       //std::cerr << "DPWFS: sensing\n";
       doSenseWavefront();
 
-      _iTime_counter = 0;
+      m_iTime_counter = 0;
 
-      _reading = 1;
-      _roTime_counter = 0;
+      m_reading = 1;
+      m_roTime_counter = 0;
 
       //Just do the read
-      detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
-#if 0
-      //*** Adding Noise:
-      //1) Subtract the min
-      realT phaseMin = detectorImage.image.minCoeff();
-      typename wfsImageT<realT>::imageT noiseIm = detectorImage.image - phaseMin;
-      //2) Normalize to total photons
-      realT phaseSum = noiseIm.sum();
-      realT totalPhots = pupilPlane.amplitude.square().sum()*detector.expTime();
-      
-      realT mult = totalPhots/phaseSum;
-      noiseIm *= mult;
-      //3) Add Poisson noise
-      
-      //4) Unnormalize, and unsubtract the min.
-      noiseIm /= mult;
-      detectorImage.image = noiseIm - phaseMin;
-#endif
-      //ds9(detectorImage.image);
+      m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
-      if(applyFilter)
+      //*** Adding Noise:
+      if(m_beta_p > 0)
       {
-         _filter.filter(detectorImage.image);
+         //1) Subtract the min
+         realT phaseMin = m_detectorImage.image.minCoeff();
+         typename wfsImageT<realT>::imageT noiseIm = m_detectorImage.image - phaseMin;
+         
+         //2) Set to 0 outside the pupil
+         for(int r=0;r<noiseIm.rows();++r)
+         {
+            for(int c=0;c<noiseIm.cols();++c)
+            {
+               if(pupilPlane.amplitude(r,c) == 0) noiseIm(r,c)=0;
+            }
+         }
+         
+         //3) Normalize to total photons for an interferometer
+         realT phaseSum = noiseIm.sum();
+         realT totalPhots = 2*pupilPlane.amplitude.square().sum()*m_detector.expTime();
+         
+         
+         //4) Add Poisson noise
+         
+         for(int r=0;r<noiseIm.rows();++r)
+         {
+            for(int c=0;c<noiseIm.cols();++c)
+            {
+               if(noiseIm(r,c) == 0)
+               {
+                  continue;
+               }
+               else
+               {
+                  m_detectorImage.image(r,c) += m_beta_p*sqrt(noiseIm(r,c)*phaseSum/totalPhots)*m_normVar;
+               }
+            }
+         }
+         
+      } //if(m_beta_p > 0)
+
+      //ds9(m_detectorImage.image);
+
+      if(m_applyFilter)
+      {
+         m_filter.filter(m_detectorImage.image);
       }
 
-      detectorImage.iterNo = wfsImage.iterNo;
+      m_detectorImage.iterNo = m_wfsImage.iterNo;
 
-      _roTime_counter = 0;
-      _reading=0;
+      m_roTime_counter = 0;
+      m_reading=0;
       rv = true;
 
    }
 
-   //std::cerr << "DPWFS: " << _iTime_counter << " " << _reading << " " << _roTime_counter << " " << rv << "\n";
+   //std::cerr << "DPWFS: " << m_iTime_counter << " " << m_reading << " " << m_roTime_counter << " " << rv << "\n";
 
    return rv;
 
@@ -459,25 +526,25 @@ template<typename _realT,  typename _detectorT>
 bool directPhaseSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupilPlane)
 {
 
-   _lastWavefront = 1;
+   m_lastWavefront = 1;
 
-   _wavefronts[0].amplitude = pupilPlane.amplitude;
-   _wavefronts[0].phase = pupilPlane.phase;
+   m_wavefronts[0].amplitude = pupilPlane.amplitude;
+   m_wavefronts[0].phase = pupilPlane.phase;
 
-   _wavefronts[1].amplitude = pupilPlane.amplitude;
-   _wavefronts[1].phase = pupilPlane.phase;
+   m_wavefronts[1].amplitude = pupilPlane.amplitude;
+   m_wavefronts[1].phase = pupilPlane.phase;
 
    doSenseWavefront();
 
-   detectorImage.image = wfsImage.image.block( 0.5*(wfsImage.image.rows()-1) - 0.5*(detectorImage.image.rows()-1), 0.5*(wfsImage.image.cols()-1) - 0.5*(detectorImage.image.cols()-1), detectorImage.image.rows(), detectorImage.image.cols());
+   m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
-   //ds9(detectorImage.image);
+   //ds9(m_detectorImage.image);
 
-   if(applyFilter)
+   if(m_applyFilter)
    {
-      _filter.filter(detectorImage.image);
+      m_filter.filter(m_detectorImage.image);
 
-      //ds9f(detectorImage.image);
+      //ds9f(m_detectorImage.image);
    }
 
 
@@ -489,96 +556,81 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupil
 template<typename _realT,  typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::doSenseWavefront()
 {
-
    wavefrontT pupilPlane;
-#if 1
+
    BREAD_CRUMB;
    
-
    /* Here make average wavefront for now */
-   int _firstWavefront = _lastWavefront - _iTime;
-   
-   
-   
-   if(_firstWavefront < 0) _firstWavefront += _wavefronts.size();
+   int _firstWavefront = m_lastWavefront - m_iTime;
+   if(_firstWavefront < 0) _firstWavefront += m_wavefronts.size();
 
-   std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
+   //std::cerr << m_lastWavefront << " " << m_iTime_counter << " " << _firstWavefront << "\n";
    
-   pupilPlane.amplitude = 0.5*_wavefronts[_firstWavefront].amplitude;
-   pupilPlane.phase = 0.5*_wavefronts[_firstWavefront].phase;
+   pupilPlane.amplitude = 0.5*m_wavefronts[_firstWavefront].amplitude;
+   pupilPlane.phase = 0.5*m_wavefronts[_firstWavefront].phase;
 
-   pupilPlane.iterNo = 0.5*_wavefronts[_firstWavefront].iterNo;
+   pupilPlane.iterNo = 0.5*m_wavefronts[_firstWavefront].iterNo;
 
 
-   //std::cerr << "DPS Averaging: " << _wavefronts[_firstWavefront].iterNo << " " ;
+   //std::cerr << "DPS Averaging: " << m_wavefronts[_firstWavefront].iterNo << " " ;
    BREAD_CRUMB;
 
-   if(_wavefronts[_firstWavefront].iterNo < _iTime)
+   if(m_wavefronts[_firstWavefront].iterNo < m_iTime)
    {
-      wfsImage.image = pupilPlane.phase;
-      wfsImage.iterNo  = pupilPlane.iterNo;
+      m_wfsImage.image = pupilPlane.phase;
+      m_wfsImage.iterNo  = pupilPlane.iterNo;
       return;
    }
 
-   for(int i=0; i < _iTime - 1; ++i)
+   for(int i=0; i < m_iTime - 1; ++i)
    {
       ++_firstWavefront;
-      if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
+      if( (size_t) _firstWavefront >= m_wavefronts.size()) _firstWavefront = 0;
 
-      std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
+      //std::cerr << m_lastWavefront << " " << m_iTime_counter << " " << _firstWavefront << "\n";
 
-      pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
-      pupilPlane.phase += _wavefronts[_firstWavefront].phase;
-      pupilPlane.iterNo += _wavefronts[_firstWavefront].iterNo;
+      pupilPlane.amplitude += m_wavefronts[_firstWavefront].amplitude;
+      pupilPlane.phase += m_wavefronts[_firstWavefront].phase;
+      pupilPlane.iterNo += m_wavefronts[_firstWavefront].iterNo;
 
    }
 
    ++_firstWavefront;
-   if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
+   if( (size_t) _firstWavefront >= m_wavefronts.size()) _firstWavefront = 0;
 
-   std::cerr << _lastWavefront << " " << _iTime_counter << " " << _firstWavefront << "\n";
+   //std::cerr << m_lastWavefront << " " << m_iTime_counter << " " << _firstWavefront << "\n";
 
-   pupilPlane.amplitude += 0.5*_wavefronts[_firstWavefront].amplitude;
-   pupilPlane.phase += 0.5*_wavefronts[_firstWavefront].phase;
-   pupilPlane.iterNo += 0.5*_wavefronts[_firstWavefront].iterNo;
-   
-   
-   pupilPlane.amplitude /= (_iTime);
-   pupilPlane.phase /= (_iTime);
-   pupilPlane.iterNo /= (_iTime);
+   pupilPlane.amplitude += 0.5*m_wavefronts[_firstWavefront].amplitude;
+   pupilPlane.phase += 0.5*m_wavefronts[_firstWavefront].phase;
+   pupilPlane.iterNo += 0.5*m_wavefronts[_firstWavefront].iterNo;
+      
+   pupilPlane.amplitude /= (m_iTime);
+   pupilPlane.phase /= (m_iTime);
+   pupilPlane.iterNo /= (m_iTime);
 
-/**/
-
-   /*=====================================*/
-
-   wfsImage.image = pupilPlane.phase;
-   wfsImage.iterNo  = pupilPlane.iterNo;
-
-
-#else
-
-   double _firstWavefront = _lastWavefront;// - 0.5*_iTime;
-   if(_firstWavefront < 0)
-   {
-      _firstWavefront += _wavefronts.size();
-   }
-
-   wfsImage.image = _wavefronts[(int)floor(_firstWavefront)].phase;
-   wfsImage.iterNo = _wavefronts[(int)floor(_firstWavefront)].iterNo;
-
-   //std::cerr << "DPS Averagxing: " << _lastWavefront << " " << _firstWavefront << " " <<  wfsImage.iterNo << " 1\n";
-
-#endif
-
+   m_wfsImage.image = pupilPlane.phase;
+   m_wfsImage.iterNo  = pupilPlane.iterNo;
 
 }
 
+template<typename _realT,  typename _detectorT>
+void directPhaseSensor<_realT, _detectorT>::applyFilter(bool af)
+{
+   m_applyFilter = af;
+}
 
 template<typename _realT,  typename _detectorT>
-void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
+bool directPhaseSensor<_realT, _detectorT>::applyFilter()
 {
-   int nr = detectorImage.image.rows();
-   int nc = detectorImage.image.cols();
+   return m_applyFilter;
+}
+   
+
+template<typename _realT,  typename _detectorT>
+void directPhaseSensor<_realT, _detectorT>::filterWidth( int width )
+{
+   int nr = m_detectorImage.image.rows();
+   int nc = m_detectorImage.image.cols();
 
    typename wfsImageT<_realT>::imageT filterMask;
 
@@ -590,15 +642,29 @@ void directPhaseSensor<_realT, _detectorT>::setFilter( int width )
    filterMask.block(nr - width, 0, width, width+1).setConstant(1.0);
    filterMask.block(nr - width, nc - width, width, width).setConstant(1.0);
 
-   //realT v;
+   m_filter.psdSqrt(filterMask);
 
-
-   _filter.psdSqrt(filterMask);
-
-
+   m_filterWidth = width;
 
 }
 
+template<typename _realT,  typename _detectorT>
+int directPhaseSensor<_realT, _detectorT>::filterWidth()
+{
+   return m_filterWidth;
+}
+
+template<typename _realT,  typename _detectorT>
+void directPhaseSensor<_realT, _detectorT>::beta_p(realT bp)
+{
+   m_beta_p = bp;
+}
+
+template<typename realT,  typename detectorT>
+realT directPhaseSensor<realT, detectorT>::beta_p()
+{
+   return m_beta_p;
+}
 
 } //namespace sim
 
