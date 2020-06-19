@@ -278,10 +278,20 @@ public:
      */  
    realT beta_p();
    
-   void pupil(pupilT * pupil);
+   /// Set the pupil
+   /** Sets the m_pupil pointer to the value provided.
+     */
+   void pupil(pupilT * pupil /**< [in] pointer to the pupil image */);
    
-   void pupil(pupilT & pupil);
+   /// Set the pupil
+   /** Sets the m_pupil pointer to the address of the image provided.
+     */
+   void pupil(pupilT & pupil /**< [in] the pupil image */);
    
+   /// Get the current pupil as a pointer
+   /** 
+     * \returns the current value of m_pupil
+     */ 
    pupilT * pupil();
    
    ///@}
