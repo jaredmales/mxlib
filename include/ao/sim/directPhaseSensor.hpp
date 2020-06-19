@@ -61,6 +61,9 @@ public:
    ///The wavefront data type
    typedef wavefront<_realT> wavefrontT;
 
+   ///The pupil type
+   typedef eigenImage<realT> pupilT;
+   
    ///The wavefront complex field type
    typedef mx::imagingArray<std::complex<_realT>,fftwAllocator<std::complex<_realT> >, 0> complexFieldT;
 
@@ -241,7 +244,9 @@ public:
    ///@}
    
    /** \name Photon Noise
-     *
+     * To turn on the addition of photon noise to the WFS image, you must set beta_p to be greater than 0, 
+     * and must supply the pupil image.
+     * 
      * @{
      */ 
 protected:
@@ -254,6 +259,14 @@ protected:
      */ 
    realT m_beta_p {0};
    
+   /// The pupil is needed to properly normalize poisson noise. 
+   /** If null, then no noise will be applied.
+     */
+   pupilT * m_pupil {nullptr};
+   
+   /// Array used internally to calculated noise, global to avoid re-allocations.
+   typename wfsImageT<realT>::imageT m_noiseIm;
+   
 public:
    
    /// Set the new value of the photon noise sensitivity parameter, beta_p.
@@ -264,6 +277,12 @@ public:
      * \returns the current value of m_beta_p.
      */  
    realT beta_p();
+   
+   void pupil(pupilT * pupil);
+   
+   void pupil(pupilT & pupil);
+   
+   pupilT * pupil();
    
    ///@}
 };
@@ -461,52 +480,59 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
+      //*** Spatial Filter:
+      if(m_applyFilter)
+      {
+         m_filter.filter(m_detectorImage.image);
+      }
+
       //*** Adding Noise:
-      if(m_beta_p > 0)
+      if(m_beta_p > 0 && m_pupil != nullptr)
       {
          //1) Subtract the min
-         realT phaseMin = m_detectorImage.image.minCoeff();
-         typename wfsImageT<realT>::imageT noiseIm = m_detectorImage.image - phaseMin;
+         //2) Normalize to total photons for an interferometer
+         //3) Add noise such that S/N in the phase image is correct for number of photons.
          
-         //2) Set to 0 outside the pupil
-         for(int r=0;r<noiseIm.rows();++r)
+         realT phaseMin = m_detectorImage.image.minCoeff();
+         
+         realT phaseSum = 0;
+         realT totalPhots = 0;
+         m_noiseIm.resize(m_detectorImage.image.rows(), m_detectorImage.image.cols());
+         
+         //This loop does the mean subtraction with pupil masking, and the summations
+         //All in one to avoid multiple loops
+         for(int c=0;c<m_noiseIm.cols();++c)
          {
-            for(int c=0;c<noiseIm.cols();++c)
+            for(int r=0;r<m_noiseIm.rows();++r)
             {
-               if(pupilPlane.amplitude(r,c) == 0) noiseIm(r,c)=0;
+               m_noiseIm(r,c) = (m_detectorImage.image(r,c) - phaseMin)*(*m_pupil)(r,c);
+               phaseSum += m_noiseIm(r,c);
+               totalPhots += pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c);
             }
          }
          
-         //3) Normalize to total photons for an interferometer
-         realT phaseSum = noiseIm.sum();
-         realT totalPhots = 2*pupilPlane.amplitude.square().sum()*m_detector.expTime();
+         totalPhots *= 2*m_detector.expTime();
          
-         
-         //4) Add Poisson noise
-         
-         for(int r=0;r<noiseIm.rows();++r)
+         //3) Add Poisson noise -- added so the S/N of the phase map is correct
+         for(int c=0;c<m_noiseIm.cols();++c)
          {
-            for(int c=0;c<noiseIm.cols();++c)
+            for(int r=0;r<m_noiseIm.rows();++r)
             {
-               if(noiseIm(r,c) == 0)
+               if(m_noiseIm(r,c) == 0) //assuming branch prediction makes this worth it
                {
                   continue;
                }
                else
                {
-                  m_detectorImage.image(r,c) += m_beta_p*sqrt(noiseIm(r,c)*phaseSum/totalPhots)*m_normVar;
+                  m_detectorImage.image(r,c) += m_beta_p*sqrt(m_noiseIm(r,c)*phaseSum/totalPhots)*m_normVar;
                }
             }
          }
          
-      } //if(m_beta_p > 0)
+      } //if(m_beta_p > 0 && m_pupil != nullptr)
 
       //ds9(m_detectorImage.image);
 
-      if(m_applyFilter)
-      {
-         m_filter.filter(m_detectorImage.image);
-      }
 
       m_detectorImage.iterNo = m_wfsImage.iterNo;
 
@@ -666,6 +692,24 @@ realT directPhaseSensor<realT, detectorT>::beta_p()
    return m_beta_p;
 }
 
+template<typename realT,  typename detectorT>
+void directPhaseSensor<realT, detectorT>::pupil(pupilT * pupil)
+{
+   m_pupil = pupil;
+}
+
+template<typename realT,  typename detectorT>
+void directPhaseSensor<realT, detectorT>::pupil(pupilT & pupil)
+{
+   m_pupil = &pupil;
+}
+   
+template<typename realT,  typename detectorT>
+typename directPhaseSensor<realT, detectorT>::pupilT * directPhaseSensor<realT, detectorT>::pupil()
+{
+   return m_pupil;
+}
+   
 } //namespace sim
 
 } //namespace AO

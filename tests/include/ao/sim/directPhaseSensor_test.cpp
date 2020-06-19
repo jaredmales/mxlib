@@ -46,6 +46,7 @@ int main()
    fitsFile<realT> ff;
    
    ff.read(pupil, "/home/jrmales/Data/mxAO/pupil/circular_0percent_128_0os/pupil.fits");
+   dps.pupil(pupil);
    
    mode.resize(Dpix, Dpix);
    Eigen::Map<eigenImage<realT>> mm(mode.data(), mode.rows(), mode.cols());
@@ -72,7 +73,7 @@ int main()
    
    newCV = dps.senseWavefront(wf);
    wf.iterNo = 2;
-//   std::cerr << 
+   
    for(size_t n=0; n<amps.size();++n)
    {
       newCV = dps.senseWavefront(wf);
