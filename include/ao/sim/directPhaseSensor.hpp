@@ -62,13 +62,14 @@ public:
    typedef wavefront<_realT> wavefrontT;
 
    ///The pupil type
-   typedef eigenImage<realT> pupilT;
+   typedef improc::eigenImage<realT> pupilT;
    
    ///The wavefront complex field type
    typedef mx::imagingArray<std::complex<_realT>,fftwAllocator<std::complex<_realT> >, 0> complexFieldT;
 
    typedef _detectorT detectorT;
 
+   
    typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
 protected:
@@ -90,6 +91,9 @@ protected:
 
    /* Direct Phase Sensor specific: */
 
+   realT m_npix {7280}; ///< The number of pixels assumed actually used for WFS in the S/N calc.
+   realT m_Fbg {0.22}; ///< The background flux in photons/sec/pixel.
+   
    int m_iTime_counter {0};
 
    int m_reading {0};
@@ -211,12 +215,12 @@ public:
      * @{
      */
 protected:
-   sigproc::psdFilter<realT> m_filter; ///< The spatial filter class object.
-
    bool m_applyFilter {false}; ///< Flag to control whether or not the spatial filter is applied.
    
    int m_filterWidth {0}; ///< The half-width of the filter, in Fourier domain pixels corresponding to 1/D spatial frequency units.
 
+   sigproc::psdFilter<realT> m_filter; ///< The spatial filter class object.
+   
 public:
    
    /// Set the flag controlling whether or not the spatial filter is applied
@@ -240,6 +244,12 @@ public:
      * \returns the current value of m_filterWidth
      */
    int filterWidth();
+   
+   /// Provides access to the filter for use by other parts of the simulation.
+   /** 
+     * \returns a const reference to m_filter.
+     */ 
+   const sigproc::psdFilter<realT> & filter();
    
    ///@}
    
@@ -490,11 +500,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
-      //*** Spatial Filter:
-      if(m_applyFilter)
-      {
-         m_filter.filter(m_detectorImage.image);
-      }
+      
 
       //*** Adding Noise:
       if(m_beta_p > 0 && m_pupil != nullptr)
@@ -520,9 +526,9 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                totalPhots += pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c);
             }
          }
+         totalPhots *= m_detector.expTime();
          
-         totalPhots *= 2*m_detector.expTime();
-         
+         realT SNR = totalPhots/sqrt(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
          //3) Add Poisson noise -- added so the S/N of the phase map is correct
          for(int c=0;c<m_noiseIm.cols();++c)
          {
@@ -534,13 +540,19 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                }
                else
                {
-                  m_detectorImage.image(r,c) += m_beta_p*sqrt(m_noiseIm(r,c)*phaseSum/totalPhots)*m_normVar;
+                  m_detectorImage.image(r,c) += m_beta_p*sqrt(m_noiseIm(r,c)*phaseSum/2)/SNR*m_normVar;
                }
             }
          }
          
       } //if(m_beta_p > 0 && m_pupil != nullptr)
 
+      //*** Spatial Filter:
+      if(m_applyFilter)
+      {
+         m_filter.filter(m_detectorImage.image);
+      }
+      
       //ds9(m_detectorImage.image);
 
 
@@ -689,6 +701,13 @@ int directPhaseSensor<_realT, _detectorT>::filterWidth()
 {
    return m_filterWidth;
 }
+
+template<typename realT,  typename detectorT>
+const sigproc::psdFilter<realT> & directPhaseSensor<realT, detectorT>::filter()
+{
+   return m_filter;
+}
+
 
 template<typename _realT,  typename _detectorT>
 void directPhaseSensor<_realT, _detectorT>::beta_p(realT bp)

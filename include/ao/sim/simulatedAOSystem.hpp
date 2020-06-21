@@ -690,7 +690,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       {
          BREAD_CRUMB;
 
-         recon.reconstruct(measuredAmps, wfs.detectorImage);
+         recon.reconstruct(measuredAmps, wfs.m_detectorImage);
 
          BREAD_CRUMB;
 
@@ -775,7 +775,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
    if(m_sfImagePlane)
    {
-      wfs._filter.filter(wf.phase);
+      wfs.filter().filter(wf.phase);
    }
 
    BREAD_CRUMB;

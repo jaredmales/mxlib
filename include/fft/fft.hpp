@@ -144,7 +144,7 @@ public:
    /// Conduct the FFT
    void operator()( outputT *out, ///< [out] the output of the FFT, must be pre-allocated
                     inputT * in   ///< [in] the input to the FFT
-                  );
+                  ) const;
    
 };
 
@@ -341,7 +341,7 @@ void fftT<inputT,outputT,rank,0>::plan( int nx,
 template<typename inputT, typename outputT, size_t rank>
 void fftT<inputT,outputT,rank,0>::operator()( outputT *out, 
                                               inputT * in
-                                            )
+                                            ) const
 {
    fftw_execute_dft<inputT,outputT>(m_plan, in, out);
 } 

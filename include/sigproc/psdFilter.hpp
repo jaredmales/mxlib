@@ -71,16 +71,16 @@ public:
    
 protected:
 
-   int _rows; ///< The number of rows in the filter, and the required number of rows in the noise array.
-   int _cols; ///< The number of columns in the filter, and the required number of columns in the noise array.
+   int m_rows; ///< The number of rows in the filter, and the required number of rows in the noise array.
+   int m_cols; ///< The number of columns in the filter, and the required number of columns in the noise array.
 
-   realArrayT * _psdSqrt; ///< Pointer to the real array containing the square root of the PSD.
-   bool _owner; ///< Flag indicates whether or not _psdSqrt was allocated by this instance, and so must be deallocated.
+   realArrayT * m_psdSqrt; ///< Pointer to the real array containing the square root of the PSD.
+   bool m_owner; ///< Flag indicates whether or not m_psdSqrt was allocated by this instance, and so must be deallocated.
 
-   complexArrayT _ftWork;   ///< Working memory for the FFT.
+   mutable complexArrayT m_ftWork;   ///< Working memory for the FFT.  Declared mutable so it can be accessed in the const filter method.
    
-   fftT< complexT, complexT,2,0> fft_fwd; ///< FFT object for the forward transform.
-   fftT< complexT, complexT,2,0> fft_back; ///< FFT object for the backward transfsorm.
+   fftT< complexT, complexT,2,0> m_fft_fwd; ///< FFT object for the forward transform.
+   fftT< complexT, complexT,2,0> m_fft_back; ///< FFT object for the backward transfsorm.
    
 
 public:
@@ -94,9 +94,9 @@ public:
 protected:
 
    ///Set the size of the filter.
-   /** Handles allocation of the _ftWork array and fftw planning.
+   /** Handles allocation of the m_ftWork array and fftw planning.
      *
-     * Requires _psdSqrt to be set first.  This is called by the psdSqrt() and psd() methods.
+     * Requires m_psdSqrt to be set first.  This is called by the psdSqrt() and psd() methods.
      * 
      */
    int setSize();
@@ -105,13 +105,13 @@ public:
 
    ///Get the number of rows in the filter
    /**
-     * \returns the current value of _rows.
+     * \returns the current value of m_rows.
      */ 
    int rows();
    
    ///Get the number of columns in the filter
    /**
-     * \returns the current value of _cols.
+     * \returns the current value of m_cols.
      */
    int cols();
    
@@ -158,14 +158,14 @@ public:
      */ 
    int filter( realArrayT & noise,            ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
                realArrayT * noiseIm = nullptr ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
-             );
+             ) const;
    
    ///Apply the filter.
    /**
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ );
+   int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
    
    ///Apply the filter.
    /**
@@ -174,50 +174,50 @@ public:
      */ 
    int operator()( realArrayT & noise,  ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
                    realArrayT & noiseIm ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
-                 ); 
+                 ) const; 
 };
 
 template<typename realT>
 psdFilter<realT>::psdFilter()
 {
-   _rows = 0;
-   _cols = 0;
+   m_rows = 0;
+   m_cols = 0;
    
-   _psdSqrt = 0;
-   _owner = false;
+   m_psdSqrt = 0;
+   m_owner = false;
 }
 
 template<typename realT>
 psdFilter<realT>::~psdFilter()
 {
-   if(_psdSqrt && _owner)
+   if(m_psdSqrt && m_owner)
    {
-      delete _psdSqrt;
+      delete m_psdSqrt;
    }
 }
 
 template<typename realT>
 int psdFilter<realT>::setSize()
 {
-   if( _psdSqrt == 0)
+   if( m_psdSqrt == 0)
    {
-      mxError("psdFilter", MXE_PARAMNOTSET, "_psdSqrt has not been set yet, is still NULL.");
+      mxError("psdFilter", MXE_PARAMNOTSET, "m_psdSqrt has not been set yet, is still NULL.");
       return -1;
    }
    
-   if( _rows == _psdSqrt->rows() && _cols == _psdSqrt->cols())
+   if( m_rows == m_psdSqrt->rows() && m_cols == m_psdSqrt->cols())
    {
       return 0;
    }
    
-   _rows = _psdSqrt->rows();
-   _cols = _psdSqrt->cols();
+   m_rows = m_psdSqrt->rows();
+   m_cols = m_psdSqrt->cols();
    
-   _ftWork.resize(_rows, _cols);
+   m_ftWork.resize(m_rows, m_cols);
 
-   fft_fwd.plan(_rows, _cols, MXFFT_FORWARD, true);
+   m_fft_fwd.plan(m_rows, m_cols, MXFFT_FORWARD, true);
       
-   fft_back.plan(_rows, _cols, MXFFT_BACKWARD, true);      
+   m_fft_back.plan(m_rows, m_cols, MXFFT_BACKWARD, true);      
 
    return 0;
 }
@@ -227,25 +227,25 @@ int psdFilter<realT>::setSize()
 template<typename realT>
 int psdFilter<realT>::rows()
 {
-   return _rows;
+   return m_rows;
 }
    
 template<typename realT>
 int psdFilter<realT>::cols()
 {
-   return _cols;
+   return m_cols;
 }
    
 template<typename realT>
 int psdFilter<realT>::psdSqrt( realArrayT * npsdSqrt )
 {
-   if(_psdSqrt && _owner)
+   if(m_psdSqrt && m_owner)
    {
-      delete _psdSqrt;
+      delete m_psdSqrt;
    }
    
-   _psdSqrt = npsdSqrt;
-   _owner = false;
+   m_psdSqrt = npsdSqrt;
+   m_owner = false;
    
    setSize();
    
@@ -255,15 +255,15 @@ int psdFilter<realT>::psdSqrt( realArrayT * npsdSqrt )
 template<typename realT>
 int psdFilter<realT>::psdSqrt( const realArrayT & npsdSqrt )
 {
-   if(_psdSqrt && _owner)
+   if(m_psdSqrt && m_owner)
    {
-      delete _psdSqrt;
+      delete m_psdSqrt;
    }
    
-   _psdSqrt = new realArrayT;
+   m_psdSqrt = new realArrayT;
    
-   (*_psdSqrt) = npsdSqrt;
-   _owner = true;
+   (*m_psdSqrt) = npsdSqrt;
+   m_owner = true;
    
    setSize();
       
@@ -273,15 +273,15 @@ int psdFilter<realT>::psdSqrt( const realArrayT & npsdSqrt )
 template<typename realT>
 int psdFilter<realT>::psd( const realArrayT & npsd )
 {
-   if(_psdSqrt && _owner)
+   if(m_psdSqrt && m_owner)
    {
-      delete _psdSqrt;
+      delete m_psdSqrt;
    }
    
-   _psdSqrt = new realArrayT;
+   m_psdSqrt = new realArrayT;
    
-   (*_psdSqrt) = npsd.sqrt();
-   _owner = true;
+   (*m_psdSqrt) = npsd.sqrt();
+   m_owner = true;
    
    setSize();
       
@@ -291,50 +291,52 @@ int psdFilter<realT>::psd( const realArrayT & npsd )
 template<typename realT>
 void psdFilter<realT>::clear()
 {
-   _ftWork.resize(0,0);
-   _rows = 0;
-   _cols = 0;
+   m_ftWork.resize(0,0);
+   m_rows = 0;
+   m_cols = 0;
       
-   if(_psdSqrt && _owner)
+   if(m_psdSqrt && m_owner)
    {
-      delete _psdSqrt;
-      _psdSqrt = 0;
+      delete m_psdSqrt;
+      m_psdSqrt = 0;
    }
 }
    
 template<typename realT>
-int psdFilter<realT>::filter( realArrayT & noise, realArrayT * noiseIm )
+int psdFilter<realT>::filter( realArrayT & noise, 
+                              realArrayT * noiseIm 
+                            ) const
 {
    //Make noise a complex number
    for(int ii=0;ii<noise.rows();++ii)
    {
       for(int jj=0; jj<noise.cols(); ++jj)
       {
-         _ftWork(ii,jj) = complexT(noise(ii,jj),0);
+         m_ftWork(ii,jj) = complexT(noise(ii,jj),0);
       }
    }
    
    //Transform complex noise to Fourier domain.
-   fft_fwd(_ftWork.data(), _ftWork.data() );
+   m_fft_fwd(m_ftWork.data(), m_ftWork.data() );
    
    //Apply the filter.
-   _ftWork *= *_psdSqrt;
+   m_ftWork *= *m_psdSqrt;
         
-   fft_back(_ftWork.data(), _ftWork.data());
+   m_fft_back(m_ftWork.data(), m_ftWork.data());
    
    //Now take the real part, and normalize.
-   noise = _ftWork.real()/(noise.rows()*noise.cols());
+   noise = m_ftWork.real()/(noise.rows()*noise.cols());
    
    if(noiseIm != nullptr)
    {
-      *noiseIm = _ftWork.imag()/(noise.rows()*noise.cols());
+      *noiseIm = m_ftWork.imag()/(noise.rows()*noise.cols());
    }
    
    return 0;
 }
 
 template<typename realT>
-int psdFilter<realT>::operator()( realArrayT & noise )
+int psdFilter<realT>::operator()( realArrayT & noise ) const
 {
    return filter(noise);
 }
@@ -342,7 +344,7 @@ int psdFilter<realT>::operator()( realArrayT & noise )
 template<typename realT>
 int psdFilter<realT>::operator()( realArrayT & noise,
                                   realArrayT & noiseIm
-                                )
+                                ) const
 {
    return filter(noise, &noiseIm);
 }

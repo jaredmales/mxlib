@@ -27,7 +27,7 @@ int main()
    
    dps.lambda(0.8e-6);
    dps.detSize(Dpix, Dpix);
-   dps.m_detector.ron(150.0);
+   dps.m_detector.ron(0.5);
    dps.m_detector.gain(500.0);
    dps.m_detector.qe(0.25);
 
