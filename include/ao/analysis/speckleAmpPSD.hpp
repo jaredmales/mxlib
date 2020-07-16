@@ -193,7 +193,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
             tform1[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
             tform2[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
             
-            //Ntform2[m] = Ntform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
+            Ntform2[m] = Ntform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
             
             Ntform1[m] *= nxfer2[m]/std::complex<realT>(Ntform1.size(),0); 
             Ntform2[m] *= nxfer2[m]/std::complex<realT>(Ntform1.size(),0);
@@ -209,8 +209,8 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
          realT mn = 0;
          for(int i= 0; i< Nwd; ++i)
          {
-            //vnl[i] = ( pow(fm_n(i+NwdStart,0)+N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0)+N_nm(i+NwdStart,0),2) ); 
-            vnl[i] = pow(fm_n(i+NwdStart,0),2) + pow(1.0*N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0),2)+ pow(1.0*N_nm(i+NwdStart,0),2); 
+            vnl[i] = ( pow(fm_n(i+NwdStart,0)+N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0)+N_nm(i+NwdStart,0),2) ); 
+            //vnl[i] = pow(fm_n(i+NwdStart,0),2) + pow(1.0*N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0),2)+ pow(1.0*N_nm(i+NwdStart,0),2); 
             mn += vnl[i];
          }
          mn /= vnl.size();
