@@ -759,6 +759,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout << "#    mags     = ";
    for(size_t i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
+   fout << "#    lifetimeTrials = " << lifetimeTrials << '\n';
+   fout << "#    uncontrolledLifetimes = " << uncontrolledLifetimes << '\n';
    fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
    //fout << "#    intTimes = ";
    //for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
@@ -994,7 +996,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             //**>
              
             //**< Calulcate Speckle Lifetimes
-            if(lifetimeTrials > 0 && ( uncontrolledLifetimes || (!uncontrolledLifetimes && inside) ))
+            if(lifetimeTrials > 0 && ( uncontrolledLifetimes || inside ))
             {
                for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
                {
