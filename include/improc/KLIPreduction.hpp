@@ -841,14 +841,20 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
    //*** First mean subtract ***//   
    meanSubtract(rims, tims, sds);  
 
+   std::cerr << "1\n";
+   
    //*** Form lower-triangle covariance matrix      
    eigenImageT cv;
  
    math::eigenSYRK(cv, rims.cube());
-      
+    
+   std::cerr << "2\n";
+   
    fitsFile<realT> ff;
    ff.write("cv.fits", cv);
    ompLoopWatcher<> status( this->m_Nims, std::cerr);
+   
+   std::cerr << "3\n";
    
    //Pre-calculate KL images once if we are exclude none OR IF RDI
    eigenImageT master_klims;
@@ -856,11 +862,15 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
    {
       double teigenv;
       double tklim;
+      std::cerr << "3.1\n";
+      std::cerr << cv.rows() << " " << cv.cols() << " " << rims.rows() << " " << rims.cols() << " " << rims.planes() << " " << m_maxNmodes << "\n";
       math::calcKLModes<double>(master_klims, cv, rims.cube(), m_maxNmodes, nullptr, &teigenv, &tklim);
+      std::cerr << "3.2\n";
       t_eigenv += teigenv;
       t_klim += tklim;
    }
       
+   
    //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {
@@ -873,6 +883,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
       
       math::syevrMem<evCalcT> mem;
 
+      std::cerr << "4\n";
       if( m_excludeMethod == HCI::excludeNone && m_excludeMethodMax == HCI::excludeNone && m_includeRefNum == 0 ) //OR RDI
       {
          klims = master_klims;

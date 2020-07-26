@@ -1332,16 +1332,22 @@ template<typename realT, typename aosysT>
 realT F_mod (realT kv, void * params)
 {
    fourierTemporalPSD<realT, aosysT> * Fp = (fourierTemporalPSD<realT, aosysT> *) params;
+   
+   //immediately return if spatially filtered
+   if(fabs(kv) >= Fp->m_aosys->spatialFilter_kv()) return 0;
 
    realT f = Fp->_f;
    realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
 
+   realT ku = f/v_wind;
+      
+   //Return if spatially filtered
+   if(fabs(ku) >= Fp->m_aosys->spatialFilter_ku()) return 0;
+
    realT D = Fp->m_aosys->D();
    realT m = Fp->_m;
    realT n = Fp->_n;
-
-   realT ku = f/v_wind;
-
+   
    realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
    realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
 

@@ -103,6 +103,9 @@ protected:
    
    int m_fit_mn_max {100}; ///< Maximum spatial frequency index to use for fitting error calculation.
    
+   realT m_spatialFilter_ku {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in u, [m^-1]
+   realT m_spatialFilter_kv {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in v, [m^-1]
+   
    realT m_ncp_wfe {0}; ///<Static WFE [m rms]
    realT m_ncp_alpha {2}; ///< Power-law exponent for the NCP aberations.  Default is 2.
    
@@ -402,6 +405,25 @@ public:
      */
    int fit_mn_max();
    
+   /// Set the value of spatialFilter_ku
+   /**
+     */
+   void spatialFilter_ku( realT ku /**< [in] is the new value of spatialFilter_ku*/ );
+   
+   /// Get the value of spatialFilter_ku
+   /** \returns the current value of m_spatialFilter_ku
+     */
+   realT spatialFilter_ku();
+   
+   /// Set the value of spatialFilter_kv
+   /**
+     */
+   void spatialFilter_kv( realT kv /**< [in] is the new value of spatialFilter_kv*/ );
+   
+   /// Get the value of spatialFilter_kv
+   /** \returns the current value of m_spatialFilter_kv
+     */
+   realT spatialFilter_kv();
    
    /// Set the value of the non-common path WFE.
    /**
@@ -1312,7 +1334,35 @@ int aoSystem<realT, inputSpectT, iosT>::fit_mn_max()
 {
    return m_fit_mn_max;
 }
-   
+ 
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::spatialFilter_ku( realT kx )
+{
+   m_spatialFilter_ku = fabs(kx);
+   m_specsChanged = true; //not sure if needed
+   m_dminChanged = true; //not sure if needed
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::spatialFilter_ku()
+{
+   return m_spatialFilter_ku;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::spatialFilter_kv( realT ky )
+{
+   m_spatialFilter_kv = fabs(ky);
+   m_specsChanged = true; //not sure if needed
+   m_dminChanged = true; //not sure if needed
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::spatialFilter_kv()
+{
+   return m_spatialFilter_kv;
+}
+
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::ncp_wfe(realT nwfe)
 {
