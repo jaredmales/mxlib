@@ -72,6 +72,10 @@ public:
    
    typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
+   ///Alias for a poisson random variate
+   typedef mx::randomT<long, std::mt19937_64, std::poisson_distribution<long> > poisson_distT;
+
+
 protected:
 
    /* Standard WFS Interface: */
@@ -91,8 +95,8 @@ protected:
 
    /* Direct Phase Sensor specific: */
 
-   realT m_npix {7280}; ///< The number of pixels assumed actually used for WFS in the S/N calc.
-   realT m_Fbg {0.22}; ///< The background flux in photons/sec/pixel.
+   realT m_npix {0}; ///< The number of pixels assumed actually used for WFS in the S/N calc.
+   realT m_Fbg {0.0}; ///< The background flux in photons/sec/pixel.
    
    int m_iTime_counter {0};
 
@@ -115,6 +119,8 @@ protected:
    improc::ds9Interface m_ds9f;
 
 public:
+   bool m_poissonNoise {true};
+   
    ///Default c'tor
    directPhaseSensor();
 
@@ -195,9 +201,37 @@ public:
    ///Set the simulation step-size, in seconds.
    void simStep(realT st);
 
+   ///Get the number of pixels used for noise calculations
+   /**
+     * \returns the number of pixels used by the wfs, m_npix.
+     */ 
+   realT npix();
+   
+   ///Set the number of pixels used fo rnoise calculations
+   /**
+     */
+   void npix( realT np /**< [in] the number of pixels to be used by the WFS*/);
+
+   ///Get the background rate
+   /**
+     * \returns the background rate in photons/pixel/sec, the current value of m_Fbg.
+     */ 
+   realT Fbg();
+   
+   ///Set the background rate
+   /**
+     */
+   void Fbg( realT bg /**< [in] the background rate in photons/pixel/sec.*/);
+   
    template<typename AOSysT>
    void linkSystem(AOSysT & AOSys);
 
+   ///Record a wavefront without sensing
+   /** This merely inserts the wavefront in the circular buffer but does no other processing
+     * Retruns 0 on success
+     */
+   int recordWavefront(wavefrontT & pupilPlane);
+   
    ///Sense the wavefront aberrations
    /** Returns true if a new wavefront measurement is ready.
      * Retruns false if still integrating.
@@ -262,6 +296,8 @@ public:
 protected:
    
    norm_distT m_normVar; ///< Gets normal-distributed variates
+   poisson_distT m_poissonVar;
+   
    
    /// The photon noise senstivity parameter.  
    /** If 0 (default) no noise is applied.  A value of 1 represents the ideal interferomter.
@@ -319,6 +355,7 @@ directPhaseSensor<_realT, _detectorT>::directPhaseSensor()
 
 
    m_normVar.seed();
+   m_poissonVar.seed();
 }
 
 
@@ -442,10 +479,53 @@ void directPhaseSensor<_realT, _detectorT>::simStep(_realT st)
 
 }
 
+template<typename realT,  typename _detectorT>
+realT directPhaseSensor<realT, _detectorT>::npix()
+{
+   return m_npix;
+}
+   
+template<typename realT,  typename _detectorT>
+void directPhaseSensor<realT, _detectorT>::npix( realT np )
+{
+   m_npix = np;
+}
+
+template<typename realT,  typename _detectorT>
+realT directPhaseSensor<realT, _detectorT>::Fbg()
+{
+   return m_Fbg;
+}
+   
+template<typename realT,  typename _detectorT>
+void directPhaseSensor<realT, _detectorT>::Fbg( realT bg)
+{
+   m_Fbg = bg;
+}
+
+template<typename _realT, typename _detectorT>
+int directPhaseSensor<_realT, _detectorT>::recordWavefront(wavefrontT & pupilPlane)
+{
+   
+   ++m_lastWavefront;
+   if((size_t) m_lastWavefront >= m_wavefronts.size()) m_lastWavefront = 0;
+
+
+   wavefrontT pPlane = pupilPlane;
+
+   m_wavefronts[m_lastWavefront].amplitude = pPlane.amplitude;
+   m_wavefronts[m_lastWavefront].phase = pPlane.phase;
+   m_wavefronts[m_lastWavefront].iterNo = pPlane.iterNo;
+
+   return 0;
+}
+
 
 template<typename _realT, typename _detectorT>
 bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPlane)
 {
+   using poisson_param_t = typename std::poisson_distribution<long>::param_type;
+   
    ++m_lastWavefront;
    if((size_t) m_lastWavefront >= m_wavefronts.size()) m_lastWavefront = 0;
 
@@ -509,7 +589,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
          //2) Normalize to total photons for an interferometer
          //3) Add noise such that S/N in the phase image is correct for number of photons.
          
-         realT phaseMin = m_detectorImage.image.minCoeff();
+         realT phaseMin = 0;//m_detectorImage.image.minCoeff();
          
          realT phaseSum = 0;
          realT totalPhots = 0;
@@ -521,14 +601,15 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
          {
             for(int r=0;r<m_noiseIm.rows();++r)
             {
-               m_noiseIm(r,c) = (m_detectorImage.image(r,c) - phaseMin)*(*m_pupil)(r,c);
+               m_noiseIm(r,c) = fabs((m_detectorImage.image(r,c) - phaseMin)*(*m_pupil)(r,c));
                phaseSum += m_noiseIm(r,c);
                totalPhots += pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c);
             }
          }
          totalPhots *= m_detector.expTime();
          
-         realT SNR = totalPhots/sqrt(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
+         realT SNR2 = pow(totalPhots,2)/(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
+         //realT SNR = sqrt(SNR);//totalPhots/sqrt(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
          //3) Add Poisson noise -- added so the S/N of the phase map is correct
          for(int c=0;c<m_noiseIm.cols();++c)
          {
@@ -540,7 +621,16 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                }
                else
                {
-                  m_detectorImage.image(r,c) += m_beta_p*sqrt(m_noiseIm(r,c)*phaseSum/2)/SNR*m_normVar;
+                  realT charge = sqrt((m_noiseIm(r,c)*phaseSum)/SNR2);
+//                   if(charge > 1000)
+//                   {
+                     m_detectorImage.image(r,c) += m_beta_p*charge*m_normVar;
+//                   }
+//                   else
+//                   {
+//                      m_poissonVar.distribution.param(poisson_param_t{charge});
+//                      m_detectorImage.image(r,c) = copysign(m_beta_p*m_poissonVar,(long) m_detectorImage.image(r,c));
+//                   }
                }
             }
          }
@@ -569,6 +659,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
    return rv;
 
 }
+
 
 template<typename _realT,  typename _detectorT>
 bool directPhaseSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupilPlane)

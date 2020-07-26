@@ -309,14 +309,15 @@ public:
    ///Analyze a PSD grid under closed-loop control.
    /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
      */
-   int analyzePSDGrid( const std::string & subDir, ///< [out] the sub-directory of psdDir where to write the results.
-                       const std::string & psdDir, ///< [in]  the directory containing the grid of PSDs.
-                       int mnMax,                  ///< [in]  the maximum value of m and n in the grid.
-                       int mnCon,                  ///< [in]  the maximum value of m and n which can be controlled.
-                       int lpNc,                   ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
-                       std::vector<realT> & mags,  ///< [in]  the guide star magnitudes to analyze for.
-                       int lifetimeTrials = 0,     ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
-                       bool writePSDs = false      ///< [in]  [optional] flag controlling if resultant PSDs are saved
+   int analyzePSDGrid( const std::string & subDir,         ///< [out] the sub-directory of psdDir where to write the results.
+                       const std::string & psdDir,         ///< [in]  the directory containing the grid of PSDs.
+                       int mnMax,                          ///< [in]  the maximum value of m and n in the grid.
+                       int mnCon,                          ///< [in]  the maximum value of m and n which can be controlled.
+                       int lpNc,                           ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       std::vector<realT> & mags,          ///< [in]  the guide star magnitudes to analyze for.
+                       int lifetimeTrials = 0,             ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
+                       bool uncontrolledLifetimes = false, ///< [in] [optional] flag controlling whether lifetimes are calculate for uncontrolled modes.
+                       bool writePSDs = false              ///< [in]  [optional] flag controlling if resultant PSDs are saved
                      );
 
 
@@ -734,6 +735,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        int lpNc,
                                                        std::vector<realT> & mags,
                                                        int lifetimeTrials,
+                                                       bool uncontrolledLifetimes,
                                                        bool writePSDs
                                                      )
 {
@@ -757,6 +759,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout << "#    mags     = ";
    for(size_t i=0; i<mags.size()-1; ++i) fout << mags[i] << ",";
    fout << mags[mags.size()-1] << '\n';
+   fout << "#    lifetimeTrials = " << lifetimeTrials << '\n';
+   fout << "#    uncontrolledLifetimes = " << uncontrolledLifetimes << '\n';
    fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
    //fout << "#    intTimes = ";
    //for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
@@ -852,12 +856,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          tfreq.erase(tfreq.begin() + imax, tfreq.end());
          //**>
          
-         #pragma omp master
-         {
-            std::cerr << "min freq: " << tfreq[0] << "\n";
-            std::cerr << "max freq: " << tfreq.back() << "\n";
-         }
-         
          std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
          tPSDn.resize(tfreq.size()); 
 
@@ -866,12 +864,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          mx::AO::analysis::clGainOpt<realT> go_si(tauWFS, deltaTau);
          mx::AO::analysis::clGainOpt<realT> go_lp(tauWFS, deltaTau);
 
-         #pragma omp master
-         {
-            std::cerr << "tauWFS: " << tauWFS << "\n";
-            std::cerr << "deltaTau: " << deltaTau << " (" << deltaTau/tauWFS << " frames)\n";
-         }
-         
          go_si.f(tfreq);
          go_lp.f(tfreq);
 
@@ -1004,7 +996,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             //**>
              
             //**< Calulcate Speckle Lifetimes
-            if(lifetimeTrials > 0)
+            if(lifetimeTrials > 0 && ( uncontrolledLifetimes || inside ))
             {
                for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
                {
@@ -1070,6 +1062,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                }
                
             }
+
             //**>
             
             //Calculate the controlled PSDs and output

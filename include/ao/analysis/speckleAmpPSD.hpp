@@ -64,7 +64,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
                  )
 {
 
-   std::vector<realT> vpsd2;
+   std::vector<realT> vpsd2, nvpsd2;
    std::vector<std::complex<realT>> xfer2, nxfer2;
 
    bool hasZero = false;
@@ -72,20 +72,27 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
 
    //First augment to two-sided DFT form
    mx::sigproc::augment1SidedPSD( vpsd2, fmPSD, !hasZero, 0.5);
+   mx::sigproc::augment1SidedPSD( nvpsd2, nPSD, !hasZero, 0.5);
 
+   //And copy into Eigen Arrays for filtering
    Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
    for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
 
-   //And augment the xfer fxn to two sided form
+   Eigen::Array<realT, -1,-1> npsd2( nvpsd2.size(), 1);
+   for(size_t i=0; i< nvpsd2.size(); ++i) npsd2(i,0) = nvpsd2[i];
+   
+   //And augment the xfer fxns to two sided form
    sigproc::augment1SidedPSD( xfer2, fmXferFxn, !hasZero, 1.0);
+   sigproc::augment1SidedPSD( nxfer2, nXferFxn, !hasZero, 1.0);
    
    //The time sampling
    realT dt = 1./(2*freq.back());
 
+   //Indices for getting the middle half
    int Nwd = 1*psd2.rows();
    int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
    
-   int Nsamp = 1*psd2.rows();
+   int Nsamp = 1.0*psd2.rows();
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
       
    spPSD.resize(Nsamp/2,0);
@@ -95,31 +102,46 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
 
    //Calculate the Fourier Mode variance for normalization
    realT fmVar = sigproc::psdVar( freq[1]-freq[0], fmPSD);
-
-
+   //and the noise variance
+   realT nVar = sigproc::psdVar( freq[1]-freq[0], nPSD);
+   
    #pragma omp parallel
    {
+      //Filters for imposing the PSDs
       mx::sigproc::psdFilter<realT> filt;
       filt.psd(psd2);
 
+      mx::sigproc::psdFilter<realT> nfilt;
+      nfilt.psd(npsd2);
+      
+      //FFTs for going to Fourier domain and back to time domain.
       fftT<realT, std::complex<realT>, 1, 0> fft(vpsd2.size());
       fftT<std::complex<realT>, realT, 1, 0> fftB(vpsd2.size(), MXFFT_BACKWARD);
-      
+
+      //Fourier transform working memmory
       std::vector<std::complex<realT>> tform1(vpsd2.size());
       std::vector<std::complex<realT>> tform2(vpsd2.size());
 
-      
+      std::vector<std::complex<realT>> Ntform1(vpsd2.size());
+      std::vector<std::complex<realT>> Ntform2(vpsd2.size());
+
+      //Normally distributed random numbers
       mx::normDistT<realT> normVar;
       normVar.seed();
 
       //The two modal amplitude series
-      Eigen::Array<realT, -1, -1> n( psd2.rows(), 1);
-      Eigen::Array<realT, -1, -1> nm( psd2.rows(), 1);
+      Eigen::Array<realT, -1, -1> fm_n( psd2.rows(), 1);
+      Eigen::Array<realT, -1, -1> fm_nm( psd2.rows(), 1);
 
+      //The two noise amplitude series
+      Eigen::Array<realT, -1, -1> N_n( psd2.rows(), 1);
+      Eigen::Array<realT, -1, -1> N_nm( psd2.rows(), 1);
+      
       //The speckle amplitude
       std::vector<realT> vnl( Nwd );
       std::vector<realT> vn( Nsamp );
 
+      //Periodogram averager
       sigproc::averagePeriodogram<realT> avgPgram(Nsamp, 0, 1);
       avgPgram.win(sigproc::window::hann);
       
@@ -129,47 +151,76 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
       #pragma omp for
       for(int k=0; k < N; ++k)
       {
-         //Generate the two time-series
-         //Note don't use the 2-for-1 option of psdFilter, it will produce correlated noise series.
+         //Generate the time-series
          for(int i=0; i< psd2.rows(); ++i) 
          {
-            n(i,0) = normVar;
+            fm_n(i,0) = normVar;
+            N_n(i,0) = normVar;
+            N_nm(i,0) = normVar;
          }
          
-         filt(n);
-
-         fft(tform1.data(), n.data());
+         //Filter and normalize the fourier mode time series
+         filt(fm_n);
+         //vectorMeanSub(fm_n.data(), fm_n.rows());
+         realT actvar = vectorVariance(fm_n.data(), fm_n.rows());
+         realT norm = sqrt(fmVar/actvar);
+         fm_n*= norm;
          
-          //<<<<<<<<****** Apply the phase shift to the second one.
+         //And move it to the Fourier domain
+         fft(tform1.data(), fm_n.data());
+         
+
+         //Filter and normalize the measurement mode time series
+         nfilt.filter(N_n);
+         nfilt.filter(N_nm);
+
+         realT Nactvar = 0.5*(vectorVariance(N_n.data(), N_n.rows()) + vectorVariance(N_nm.data(), N_nm.rows()));
+         norm = sqrt(nVar/Nactvar);
+         N_n *= norm;
+         N_nm *= norm;
+
+         //And move them to the Fourier domain
+         fft(Ntform1.data(), N_n.data());
+         fft(Ntform2.data(), N_nm.data());
+
+         //Apply the modal phase shift, and apply the measurement noise.
          for(size_t m=0;m<tform1.size();++m)
          {
             // Apply the phase shift to form the 2nd time series
             tform2[m] = tform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
             
-            //Xpply the augmented ETF to two time-series
+            //Apply the augmented ETF to two time-series
             tform1[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
             tform2[m] *= xfer2[m]/std::complex<realT>(tform1.size(),0) ;
+            
+            Ntform2[m] = Ntform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
+            
+            Ntform1[m] *= nxfer2[m]/std::complex<realT>(Ntform1.size(),0); 
+            Ntform2[m] *= nxfer2[m]/std::complex<realT>(Ntform1.size(),0);
          }
 
          //<<<<<<<<****** Transform back to the time domain.
-         fftB(n.data(), tform1.data());
-         fftB(nm.data(), tform2.data());
+         fftB(fm_n.data(), tform1.data());
+         fftB(fm_nm.data(), tform2.data());
+         fftB(N_n.data(), Ntform1.data());
+         fftB(N_nm.data(), Ntform2.data());
          
          //Calculate the speckle amplitude and mean-subtract
          realT mn = 0;
          for(int i= 0; i< Nwd; ++i)
          {
-            vnl[i] = (pow(n(i+NwdStart,0),2) + pow(nm(i+NwdStart,0),2));
-
+            vnl[i] = ( pow(fm_n(i+NwdStart,0)+N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0)+N_nm(i+NwdStart,0),2) ); 
+            //vnl[i] = pow(fm_n(i+NwdStart,0),2) + pow(1.0*N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0),2)+ pow(1.0*N_nm(i+NwdStart,0),2); 
             mn += vnl[i];
          }
          mn /= vnl.size();
-
+         //std::cerr << "mn: " << mn << "\n";
          
-         //Mean subtract, and normalize by the Fourier-Mode variance and the mean-squared variance in MR distro.
-         for(size_t i=0; i< vnl.size(); ++i) vnl[i] = (vnl[i]-mn);
+         //Mean subtract
+         //for(size_t i=0; i< vnl.size(); ++i) vnl[i] = (vnl[i]-mn);
          
-         for(int i=0; i<Nsamp; ++i) vn[i] = vnl[i+NsampStart];
+         //Extract middle sample and mean subtract
+         for(int i=0; i<Nsamp; ++i) vn[i] = vnl[i+NsampStart] - mn;
          
          //Calculate PSD of the speckle amplitude
          if(!noPSD) avgPgram(tpgram, vn);

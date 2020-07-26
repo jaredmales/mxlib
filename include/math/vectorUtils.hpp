@@ -470,8 +470,8 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
   * \overload
   */
 template<typename vectorT>
-typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
-                                              const vectorT & weights, ///<  [in] [optional] the weights (unaltered)
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,               ///< [in] the vector (unaltered)
+                                              const vectorT & weights,           ///< [in] [optional] the weights (unaltered)
                                               typename vectorT::value_type sigma ///< [in] the standard deviation threshold to apply.
                                             )
 {
@@ -482,20 +482,39 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 
 
 /// Subtract a constant value from a vector
-template<typename vecT, typename constT>
-void vectorSub( vecT &vec,       ///<  [in/out] the vector, each element will have the constant subtracted from it
+template<typename valueT, typename constT>
+void vectorSub( valueT *vec,     ///< [in/out] the vector, each element will have the constant subtracted from it
+                size_t sz,       ///< [in] the size of the vector
                 const constT & c ///< [in] the constant to subtract from each element
               )
 {
-   for(size_t n=0; n< vec.size();++n) vec[n] -= c;
+   for(size_t n=0; n< sz;++n) vec[n] -= c;
+}
+
+/// Subtract a constant value from a vector
+template<typename vecT, typename constT>
+void vectorSub( vecT &vec,       ///< [in/out] the vector, each element will have the constant subtracted from it
+                const constT & c ///< [in] the constant to subtract from each element
+              )
+{
+   vectorSub(vec.data(), vec.size(), c);
+}
+
+/// Subtract the mean from a vector
+template<typename valueT>
+void vectorMeanSub( valueT *vec, ///< [in/out] the vector, each element will have the mean subtracted from it
+                    size_t sz    ///< [in] the vector size
+                  )
+{
+   valueT m = vectorMean(vec,sz);
+   vectorSub(vec,sz,m);
 }
 
 /// Subtract the mean from a vector
 template<typename vecT>
-void vectorMeanSub( vecT &vec /**<  [in/out] the vector, each element will have the mean subtracted from it*/)
+void vectorMeanSub( vecT &vec /**< [in/out] the vector, each element will have the mean subtracted from it*/)
 {
-   typename vecT::value_type m = vectorMean(vec);
-   vectorSub(vec,m);
+   vectorMeanSub( vec.data(), vec.size());
 }
 
 /// Subtract the median from a vector
