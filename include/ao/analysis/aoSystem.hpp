@@ -2104,6 +2104,8 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
    ios << "#    deltaTau = " << deltaTau() << '\n';
    ios << "#    fit_mn_max = " << m_fit_mn_max << '\n';
+   ios << "#    spatialFilter_ku = " << m_spatialFilter_ku << '\n';
+   ios << "#    spatialFilter_kv = " << m_spatialFilter_kv << '\n';
    ios << "#    ncp_wfe = " << m_ncp_wfe << '\n';
    ios << "#    ncp_alpha = " << m_ncp_alpha << '\n';
    
