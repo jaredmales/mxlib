@@ -169,7 +169,6 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
       IU = ev1;
    }
    
-   
    eigvec.resize(n,IU-IL+1);
    eigval.resize(n, 1); 
       
@@ -190,7 +189,6 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
          return -1000;
       }
    }
-   
    
    //  Allocate minimum allowed sizes for workspace
    MXLAPACK_INT sizeWork = 26*n;
@@ -227,7 +225,6 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    }
    free(work);
    
-   
    if(mem->sizeIWork < iWork[0]*1)
    {
       if(mem->iWork) free(mem->iWork);
@@ -237,18 +234,17 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
    }   
    free(iWork);
    
-
    if ((mem->work==NULL)||(mem->iWork==NULL)) 
    {
       mxError("eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR.");
       if(localMem) delete mem;
       return -1000;
    }
-                
+   
    // Now actually do the calculationg
    info=math::syevr<calcT>('V', RANGE, UPLO, n, Xc.data(), n, 0, 0, IL, IU, math::lamch<calcT>('S'), &numeig, eigval.data(), eigvec.data(), n, mem->iSuppZ, mem->work, mem->sizeWork, mem->iWork, mem->sizeIWork);     
-   
-    /*  Cleanup and exit  */
+
+   /*  Cleanup and exit  */
       
    if(localMem) delete mem;
    
@@ -305,7 +301,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem);
-      
+   
    if( t_eigenv) *t_eigenv = get_curr_time() - *t_eigenv;
    
    if(info !=0 ) 
@@ -316,7 +312,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
    
    evecs = evecsd.template cast<realT>();
    evals = evalsd.template cast<realT>();
-      
+   
    //Normalize the eigenvectors
    for(MXLAPACK_INT i=0;i< n_modes; ++i)
    {
@@ -336,6 +332,10 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
                                  0., klModes.data(), klModes.rows());
 
    if( t_klim) *t_klim = get_curr_time() - *t_klim;
+   
+   std::cerr << "calcKLModes: " << __LINE__ << "\n";
+   
+   return 0;
    
 } //calcKLModes        
 
