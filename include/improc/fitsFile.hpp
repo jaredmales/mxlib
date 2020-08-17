@@ -49,7 +49,7 @@ protected:
    int _naxis;
 
    ///The size of each dimension
-   long * _naxes;
+   long * m_naxes {nullptr};
 
    ///Flag indicating whether the file is open or not
    bool _isOpen;
@@ -113,9 +113,9 @@ public:
      */
    int naxis();
 
-   ///Get the current value of _naxes for the specified dimension
+   ///Get the current value of m_naxes for the specified dimension
    /**
-     * \returns the current value of _naxes for the specified dimension
+     * \returns the current value of m_naxes for the specified dimension
      */
    long naxes( int dim /**< [in] the dimension */);
 
@@ -517,7 +517,6 @@ void fitsErrText( std::string & explan, const std::string & filename, int fstatu
 template<typename dataT>
 void fitsFile<dataT>::construct()
 {   
-   _naxes = 0;
    _isOpen = 0;
 
    _nulval = 0;
@@ -547,7 +546,7 @@ fitsFile<dataT>::~fitsFile()
 {
    if(_isOpen) close();
 
-   if(_naxes) delete _naxes;
+   if(m_naxes) delete[] m_naxes;
 }
 
 template<typename dataT>
@@ -584,7 +583,9 @@ int fitsFile<dataT>::naxis()
 template<typename dataT>
 long fitsFile<dataT>::naxes( int dim)
 {
-   return _naxes[dim];
+   if(m_naxes == nullptr) return -1;
+   
+   return m_naxes[dim];
 }
 
 template<typename dataT>
@@ -615,10 +616,10 @@ int fitsFile<dataT>::open()
 
    }
 
-   if(_naxes) delete _naxes;
-   _naxes = new long[_naxis];
+   if(m_naxes) delete[] m_naxes;
+   m_naxes = new long[_naxis];
 
-   fits_get_img_size(_fptr, _naxis, _naxes, &fstatus);
+   fits_get_img_size(_fptr, _naxis, m_naxes, &fstatus);
    if (fstatus)
    {
       std::string explan = "Error getting dimensions in file";
@@ -665,9 +666,9 @@ int fitsFile<dataT>::close()
    _isOpen = 0;
    fstatus = 0;
 
-   if(_naxes) delete _naxes;
+   if(m_naxes) delete[] m_naxes;
 
-   _naxes = 0;
+   m_naxes = nullptr;
 
    return 0;
 }
@@ -675,7 +676,7 @@ int fitsFile<dataT>::close()
 template<typename dataT>
 int fitsFile<dataT>::getDimensions()
 {
-   if(!_isOpen or !_naxes) return -1;
+   if(!_isOpen or !m_naxes) return -1;
 
    return _naxis;
 }
@@ -683,7 +684,7 @@ int fitsFile<dataT>::getDimensions()
 template<typename dataT>
 long fitsFile<dataT>::getSize()
 {
-   if(!_isOpen or !_naxes) return -1;
+   if(!_isOpen or !m_naxes) return -1;
 
    long sz = 1;
 
@@ -693,7 +694,7 @@ long fitsFile<dataT>::getSize()
    }
    else
    {
-      for(int i=0;i<_naxis;++i) sz*= _naxes[i];
+      for(int i=0;i<_naxis;++i) sz*= m_naxes[i];
    }
 
    return sz;
@@ -702,7 +703,7 @@ long fitsFile<dataT>::getSize()
 template<typename dataT>
 long fitsFile<dataT>::getSize(size_t axis)
 {
-   if(!_isOpen or !_naxes) return -1;
+   if(!_isOpen or !m_naxes) return -1;
 
    if(_x0 > -1 && _y0 > -1 && _xpix > -1 && _ypix > -1 && _naxis ==2)
    {
@@ -711,7 +712,7 @@ long fitsFile<dataT>::getSize(size_t axis)
    }
    else
    {
-      return _naxes[axis];
+      return m_naxes[axis];
    }
 }
 
@@ -749,9 +750,9 @@ int fitsFile<dataT>::read(dataT * data)
       for(int i=0;i<_naxis; i++)
       {
          fpix[i] = 1;
-         lpix[i] = _naxes[i];
+         lpix[i] = m_naxes[i];
          inc[i] = 1;
-         //nelements *= _naxes[i];
+         //nelements *= m_naxes[i];
       }
    }
 
@@ -930,19 +931,19 @@ int fitsFile<dataT>::read(arrT & im)
       for(int i=0;i<_naxis; i++)
       {
          fpix[i] = 1;
-         lpix[i] = _naxes[i];
+         lpix[i] = m_naxes[i];
          inc[i] = 1;
-         //nelements *= _naxes[i];
+         //nelements *= m_naxes[i];
       }
 
 
       if(_naxis > 2)
       {
-         arrresz.resize(im, _naxes[0], _naxes[1], _naxes[2]);
+         arrresz.resize(im, m_naxes[0], m_naxes[1], m_naxes[2]);
       }
       else
       {
-         arrresz.resize(im, _naxes[0], _naxes[1],1);
+         arrresz.resize(im, m_naxes[0], m_naxes[1],1);
       }
    }
 
@@ -1046,11 +1047,11 @@ int fitsFile<dataT>::read( cubeT & cube,
       for(int i=0;i<_naxis; i++)
       {
          fpix[i] = 1;
-         lpix[i] = _naxes[i];
+         lpix[i] = m_naxes[i];
          inc[i] = 1;
       }
 
-      cube.resize( _naxes[0], _naxes[1], flist.size());
+      cube.resize( m_naxes[0], m_naxes[1], flist.size());
    }
 
 
@@ -1280,7 +1281,7 @@ int fitsFile<dataT>::write( const dataT * im,
    int fstatus = 0;
 
    if(_isOpen) close();
-   if(_naxes) delete _naxes;
+   if(m_naxes) delete[] m_naxes;
 
    fstatus = 0;
    _naxis = 1;
@@ -1290,11 +1291,11 @@ int fitsFile<dataT>::write( const dataT * im,
       else _naxis = 2;
    }
 
-   _naxes = new long[_naxis];
+   m_naxes = new long[_naxis];
 
-   _naxes[0] = d1;
-   if(_naxis > 1) _naxes[1] = d2;
-   if(_naxis > 2) _naxes[2] = d3;
+   m_naxes[0] = d1;
+   if(_naxis > 1) m_naxes[1] = d2;
+   if(_naxis > 2) m_naxes[2] = d3;
 
    std::string forceFileName = "!"+_fileName;
 
@@ -1309,7 +1310,7 @@ int fitsFile<dataT>::write( const dataT * im,
    }
    _isOpen = true;
 
-   fits_create_img( _fptr, getFitsBITPIX<dataT>(), _naxis, _naxes, &fstatus);
+   fits_create_img( _fptr, getFitsBITPIX<dataT>(), _naxis, m_naxes, &fstatus);
    if (fstatus)
    {
       std::string explan = "Error creating image";
@@ -1326,7 +1327,7 @@ int fitsFile<dataT>::write( const dataT * im,
 
    LONGLONG nelements = 1;
 
-   for(int i=0;i<_naxis;++i) nelements *= _naxes[i];
+   for(int i=0;i<_naxis;++i) nelements *= m_naxes[i];
 
    fits_write_pix( _fptr,  getFitsType<dataT>(), fpixel, nelements, (void *) im, &fstatus);
    if (fstatus)

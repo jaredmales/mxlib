@@ -49,7 +49,7 @@ protected:
    Index _cols;
    Index _planes;
 
-   dataT * _data;
+   dataT * m_data {nullptr};
 
    bool _owner;
 
@@ -214,7 +214,6 @@ eigenCube<dataT>::eigenCube()
    _rows = 0;
    _cols = 0;
    _planes = 0;
-   _data = 0;
    _owner = false;
 }
 
@@ -225,7 +224,7 @@ eigenCube<dataT>::eigenCube(Index nrows, Index ncols, Index nplanes)
    _cols = ncols;
    _planes = nplanes;
 
-   _data = new dataT[_rows*_cols*_planes];
+   m_data = new dataT[_rows*_cols*_planes];
    _owner = true;
 }
 
@@ -236,16 +235,16 @@ eigenCube<dataT>::eigenCube(dataT * ndata, size_t nrows, size_t ncols, size_t np
    _cols = ncols;
    _planes = nplanes;
 
-   _data = ndata;
+   m_data = ndata;
    _owner = false;
 }
 
 template<typename dataT>
 eigenCube<dataT>::~eigenCube()
 {
-   if(_owner && _data)
+   if(_owner && m_data)
    {
-      delete _data;
+      delete[] m_data;
    }
 }
 
@@ -254,7 +253,7 @@ void eigenCube<dataT>::setZero()
 {
    int N = _rows*_cols*_planes;
 
-   for(int i=0;i<N;++i) _data[i] = ((dataT) 0);
+   for(int i=0;i<N;++i) m_data[i] = ((dataT) 0);
 }
 
 template<typename dataT>
@@ -264,7 +263,7 @@ eigenCube<dataT> & eigenCube<dataT>::operator=(eigenCube<dataT> & ec)
 
    int N = _rows*_cols*_planes;
 
-   for(int i=0;i<N;++i) _data[i] = ec._data[i];
+   for(int i=0;i<N;++i) m_data[i] = ec.m_data[i];
 
    return *this;
 }
@@ -272,16 +271,16 @@ eigenCube<dataT> & eigenCube<dataT>::operator=(eigenCube<dataT> & ec)
 template<typename dataT>
 void eigenCube<dataT>::shallowCopy(eigenCube<dataT> & src, bool takeOwner)
 {
-   if(_owner && _data)
+   if(_owner && m_data)
    {
-      delete _data;
+      delete m_data;
       _owner = false;
    }
 
    _rows = src._rows;
    _cols = src._cols;
    _planes = src._planes;
-   _data = src._data;
+   m_data = src.m_data;
 
    if(takeOwner == true)
    {
@@ -297,9 +296,9 @@ void eigenCube<dataT>::shallowCopy(eigenCube<dataT> & src, bool takeOwner)
 template<typename dataT>
 void eigenCube<dataT>::clear()
 {
-   if(_owner && _data)
+   if(_owner && m_data)
    {
-      delete _data;
+      delete[] m_data;
    }
 
    _rows = 0;
@@ -310,16 +309,16 @@ void eigenCube<dataT>::clear()
 template<typename dataT>
 void eigenCube<dataT>::resize(int r, int c, int p)
 {
-   if(_owner && _data)
+   if(_owner && m_data)
    {
-      delete _data;
+      delete[] m_data;
    }
 
    _rows = r;
    _cols = c;
    _planes = p;
 
-   _data = new dataT[_rows*_cols*_planes];
+   m_data = new dataT[_rows*_cols*_planes];
    _owner = true;
 
 }
@@ -333,13 +332,13 @@ void eigenCube<dataT>::resize(int r, int c)
 template<typename dataT>
 dataT * eigenCube<dataT>::data()
 {
-   return _data;
+   return m_data;
 }
 
 template<typename dataT>
 const dataT * eigenCube<dataT>::data() const
 {
-   return _data;
+   return m_data;
 }
 
 template<typename dataT>
@@ -363,31 +362,31 @@ const typename eigenCube<dataT>::Index eigenCube<dataT>::planes() const
 template<typename dataT>
 Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::cube()
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(_data, _rows*_cols, _planes);
+   return Map<Array<dataT, Dynamic, Dynamic> >(m_data, _rows*_cols, _planes);
 }
 
 template<typename dataT>
 Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n)
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(_data + n*_rows*_cols, _rows, _cols);
+   return Map<Array<dataT, Dynamic, Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
 }
 
 template<typename dataT>
 const Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n) const
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(_data + n*_rows*_cols, _rows, _cols);
+   return Map<Array<dataT, Dynamic, Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
 }
 
 template<typename dataT>
 Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic> > eigenCube<dataT>::pixel(Index i, Index j)
 {
-   return Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic>  >(_data + j*_rows + i, _planes, 1, Stride<Dynamic, Dynamic>(0,_rows*_cols));
+   return Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic>  >(m_data + j*_rows + i, _planes, 1, Stride<Dynamic, Dynamic>(0,_rows*_cols));
 }
 
 template<typename dataT>
 Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::asVectors()
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(_data,  _rows*_cols, _planes);
+   return Map<Array<dataT, Dynamic, Dynamic> >(m_data,  _rows*_cols, _planes);
 }
 
 template<typename dataT>
