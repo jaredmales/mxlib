@@ -124,11 +124,11 @@ TARGET ?= $(t)
 ifeq ($(GIT_VERSION),yes)
    #change target name to uppercase
    GIT_VERSION_DEF = $(shell echo $(TARGET) | tr a-z A-Z)_GIT
-   OTHER_TARGETS += git_version
+   PRE_TARGETS += git_version
 endif
 
 
-all: $(TARGET) $(OTHER_OBJS) $(OTHER_TARGETS)
+all: $(PRE_TARGETS) $(TARGET) $(OTHER_OBJS) 
 
 $(TARGET):  $(TARGET).o  $(OTHER_OBJS)
 	$(LINK.o)  -o $(TARGET) $(TARGET).o $(OTHER_OBJS) $(LDFLAGS) $(LDLIBS)
