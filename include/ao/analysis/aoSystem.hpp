@@ -2082,7 +2082,6 @@ void aoSystem<realT, inputSpectT, iosT>::C7Map( imageT & im )
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-//template<typename iosT>
 iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
@@ -2115,9 +2114,9 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
    
-   ios << "# Software versions: " << '\n';
-   ios << "#    mxlib_uncomp sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
-   ios << "#    mxlib_uncomp modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
+   ios << "#    Software version: " << '\n';
+   ios << "#       mxlib sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
+   ios << "#       mxlib modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
       
    return ios;
 }
