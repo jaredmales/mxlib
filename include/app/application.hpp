@@ -107,8 +107,9 @@ protected:
    std::string configPathLocal; ///< The path to a local configuration file.
    bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a configuration file should be reported.
    
-   std::string configPathCL; ///< The path to a configuration file specified on the command line.
-
+   std::string m_configPathCL; ///< The path to a configuration file specified on the command line.
+   std::string m_configPathCLBase; ///< A base path to add to the CL path.  Can be set by environment variable defined in MX_APP_DEFAULT_configPathCLBase_env.
+   
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
    bool m_preserveConfig {false}; ///< Flag controlling whether the configuration is cleared before execution.  Set in derived constructor.
@@ -353,7 +354,7 @@ void application::setup( int argc,
 
    //And now get the value of it and parse it.
    loadStandardConfig();
-   config.readConfig(configPathCL);
+   config.readConfig(m_configPathCL);
 
    //Now parse the command line for real.
    config.parseCommandLine(argc, argv);
@@ -371,7 +372,7 @@ int application::reReadConfig()
    config.readConfig(configPathUser);
    config.readConfig(configPathLocal);
 
-   config.readConfig(configPathCL);
+   config.readConfig(m_configPathCL);
 
    //Now parse the command line for real.
    config.parseCommandLine(m_argc, m_argv);
@@ -386,11 +387,12 @@ void application::setDefaults( int UNUSED(argc),
 {
    std::string tmp;
 
+   char * tmpstr;
+   
    #ifdef MX_APP_DEFAULT_configPathGlobal
       configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
    #endif
    #ifdef MX_APP_DEFAULT_configPathGlobal_env
-      char * tmpstr;
       tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
       if(tmpstr != 0) configPathGlobal = tmpstr;
    #endif
@@ -419,6 +421,14 @@ void application::setDefaults( int UNUSED(argc),
       if(tmpstr != 0) configPathLocal = tmpstr;
    #endif
 
+   #ifdef MX_APP_DEFAULT_configPathCLBase_env 
+      tmpstr = getenv(MX_APP_DEFAULT_configPathCLBase_env);
+      if(tmpstr != 0) m_configPathCLBase = tmpstr;
+      if(m_configPathCLBase.size()>0)
+         if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
+            m_configPathCLBase += '/';
+   #endif
+      
    return;
 
 }
@@ -438,7 +448,8 @@ void application::setupStandardHelp() //virtual
 inline
 void application::loadStandardConfig() //virtual
 {
-   config(configPathCL, "config");
+   config(m_configPathCL, "config");
+   m_configPathCL = m_configPathCLBase + m_configPathCL; 
 }
 
 inline
