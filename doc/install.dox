@@ -34,7 +34,10 @@ This is the list of the other libraries and code-bases mxlib depends on.
 -# For displaying images and arrays, you need ds9 (http://ds9.si.edu/site/Home.html) and the XPA library (http://hea-www.harvard.edu/RD/xpa/).  Note that pre-packaged versions of XPA often don't install the header file, so you may need to install from source.
 -# You need the \ref astro_sofa "IAU sofa libary".  
 -# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
-  - I normally unpack the Eigen directory in $HOME/include, and create a symbolic link $Home/include/Eigen --> eigen-eigen-xxyyzz/Eigen
+  - I normally unpack the Eigen directory in $HOME/include, but this is optional.
+  - You must create a symbolic link , such as `$HOME/include/Eigen --> /path/to/eigen-eigen-xxyyzz/Eigen`.  The command for this would be
+    \verbatim $ ln -s /path/to/eigen-eigen-xxyyzz/Eigen $HOME/include/Eigen \endverbatim
+    This symbolic link could be placed in any location known to your compiler, say `/usr/local/include`
 
 The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.
 

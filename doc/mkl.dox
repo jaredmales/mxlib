@@ -6,12 +6,18 @@ To install the MKL:
   
 -# Download the library from Intel.  This requires registration and following some links in emails, etc.  Unpack it.
 
--# Install the MKL library by running the install.sh script.  The default paths, etc, should be fine.
+-# Install the MKL library by running the install.sh script.  The default paths, etc, should be fine.  Be sure to do this with root privileges if you can.
 
 -# Then add the following line to your profile:
    \verbatim source /opt/intel/mkl/bin/mklvars.sh intel64\endverbatim
 
    This can be done in your ~/.bashrc or ~/.bash_profile or ~/.bash_aliases file (whichever you use for this). Or to set it for all users add it to /etc/profile.d/mkl.sh (create the file).
 
+-# You will also need to update ld.  The system wide way to do this is to create a file called `/etc/ld.so.conf.d/mkl.conf` with the contents
+   \verbatim /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl/lib/intel64_lin/ \endverbatim
+   edited as appropriate for your version.
+   
+   Then run 
+   \verbatim $ sudo ldconfig \endverbatim
 */
  
