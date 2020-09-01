@@ -50,7 +50,7 @@ struct turbAtmosphere
    typedef _realT realT;
    typedef Eigen::Array<realT, -1, -1> arrayT;
 
-   realT _pupD {0}; ///<Size of the wavefront in meters.
+   realT _pupD {0}; ///<Size of the wavefront in meters. <--This is really wavefront diameter
    size_t _wfSz {0}; ///<Size of the wavefront in pixels.
    size_t _buffSz {0}; ///<Buffer to apply around wavefront for interpolation
 

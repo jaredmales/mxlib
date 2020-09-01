@@ -672,7 +672,7 @@ int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoot
 
    dataOut.resize(dataIn.size());
 
-   realT sigma = fwhm2sigma(fwhm);
+   realT sigma = func::fwhm2sigma<realT>(fwhm);
 
    for(int i=0; i< dataIn.size(); ++i)
    {

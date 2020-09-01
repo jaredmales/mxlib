@@ -299,6 +299,7 @@ using uniDistT = randomT<realT, std::mt19937_64, std::uniform_real_distribution<
 template<typename realT>
 using normDistT = randomT<realT, std::mt19937_64, std::normal_distribution<realT>>;
 
+
 ///Alias for an exponential random variate
 template<typename realT>
 using expDistT = randomT<realT, std::mt19937_64, std::exponential_distribution<realT>>;
@@ -307,6 +308,9 @@ using expDistT = randomT<realT, std::mt19937_64, std::exponential_distribution<r
 template<typename realT>
 using lapDistT = randomT<realT, std::mt19937_64, laplace_distribution<realT>>;
 
+///Alias for a poisson random variate
+template<typename intT>
+using poissonDistT = randomT<intT, std::mt19937_64, std::poisson_distribution<intT>>;
 
 
 /// @}
