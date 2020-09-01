@@ -73,6 +73,7 @@ struct configTarget
    int verbosity {0}; ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc. 
    int orderAdded {0}; ///< The order in which this was added.  Useful for displaying help messages.
 
+   bool used {false};
    
    /// Default c'tor
    configTarget()

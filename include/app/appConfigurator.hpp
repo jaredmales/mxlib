@@ -614,6 +614,8 @@ int appConfigurator::get( typeT & v,
                           std::unordered_map<std::string, configTarget> & targets
                         )
 {
+   targets[name].used = true; //This means this was checked.
+   
    if(!isSet(name, targets)) 
    {
       if(configLog)
@@ -627,7 +629,7 @@ int appConfigurator::get( typeT & v,
    if( targets[name].values.size() <= i) return -1;
 
    v = ioutils::convertFromString<typeT>(targets[name].values[i]);
-
+   
    //Log it here.
    if(configLog)
    {
@@ -659,6 +661,8 @@ int appConfigurator::get( typeT & v,
                           std::unordered_map<std::string, configTarget> & targets
                         )
 {
+   targets[name].used = true; //This means this was checked.
+   
    if(!isSet(name, targets)) 
    {
       if(configLog)
@@ -690,6 +694,8 @@ int appConfigurator::get( std::vector<typeT> & v,
                           std::unordered_map<std::string, configTarget> & targets
                         )
 {
+   targets[name].used = true; //This means this was checked.
+   
    if(!isSet(name, targets)) 
    {
       if(configLog)
@@ -780,6 +786,8 @@ int appConfigurator::get( std::vector<typeT> & v,
                           std::unordered_map<std::string, configTarget> & targets
                         )
 {
+   targets[name].used = true; //This means this was checked.
+   
    if(!isSet(name, targets)) 
    {
       if(configLog)

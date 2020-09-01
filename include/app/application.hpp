@@ -252,7 +252,13 @@ protected:
    /** This is called just before loadConfig().
      */
    virtual void loadBasicConfig();
-
+   
+   /// Check the config.  This is called at the end of setup, before the configuration is cleared.
+   /** It is up to you to decide how to handle the outcome.  If a bad config results in printing help,
+     * you can set the doHelp flag.
+     */
+   virtual void checkConfig();
+   
    ///Print a formatted help message, based on the config target inputs.
    virtual void help();
 
@@ -363,6 +369,8 @@ void application::setup( int argc,
 
    loadBasicConfig();
    loadConfig();
+   
+   checkConfig();
 }
 
 inline
@@ -466,6 +474,12 @@ void application::setupBasicConfig() //virtual
 
 inline
 void application::loadBasicConfig() //virtual
+{
+   return;
+}
+
+inline
+void application::checkConfig() //virtual
 {
    return;
 }
