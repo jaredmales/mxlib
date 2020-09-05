@@ -557,6 +557,62 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
    return 0;
 }
 
+/// Smooth a vector using the mean in windows specified by their full-widths
+/** You supply a window width for each point.  This is useful for, say, logarithmically growing bin sizes in a 
+  * PSD.
+  * 
+  * \returns 0 on success
+  * \returns -1 but who are we kidding it we don't check for errors
+  * 
+  */ 
+template<typename realT>
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                      std::vector<realT> & vec,  ///< [in] the input vector, unaltered.
+                      std::vector<int> & wins,   ///< [in] the full-widths of the smoothing windows, same size as vec.
+                      bool norm = false          ///< [in] if true the output will normalized to have the same integral as the input. 
+                    )
+{
+   smVec = vec;
+
+   realT sum;
+   int n;
+   for(int i=0; i < vec.size(); ++i)
+   {
+      int j = i - 0.5*wins[i];
+      if(j < 0) j = 0;
+
+      sum = 0;
+      n = 0;
+      while( j <= i+0.5*wins[i] && j < vec.size())
+      {
+         sum += vec[j];
+         ++n;
+         ++j;
+      }
+
+      smVec[i] = sum/n;
+
+   }
+
+   if(norm)
+   {
+      realT sumin = 0, sumout = 0;
+      
+      for(int i=0; i < vec.size(); ++i)
+      {
+         sumin += vec[i];
+         sumout += smVec[i];
+      }
+      
+      for(int i=0; i < vec.size(); ++i)
+      {
+         smVec[i] *= sumin/sumout;
+      }
+   }
+   
+   return 0;
+}
+
 ///Smooth a vector using the median in a window specified by its full-width
 template<typename realT>
 int vectorSmoothMedian( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
