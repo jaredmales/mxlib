@@ -548,7 +548,9 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
    //Now fill in from fmax to the actual max frequency with a -(alpha+2) power law.
    size_t j=i;
-
+   
+   if(j == freq.size()) return 0;
+   
    //First average result for last 50.
    PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], m_aosys->atm.alpha()+2);//seventeen_thirds<realT>());
    for(size_t k=49; k> 0; --k)
@@ -558,12 +560,12 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    PSD[j] /= 50.0;
    ++j;
    ++i;
+   if(j == freq.size()) return 0;
    while(j < freq.size())
    {
       PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], m_aosys->atm.alpha()+2); //seventeen_thirds<realT>());
       ++j;
    }
-
 
 
    return 0;
@@ -648,7 +650,7 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
    {
       fmax = 150 + 2*fastestPeak(m, n);
    }
-
+  
    return m_multiLayerPSD( PSD, freq, m, n, p, fmax, isParallel<parallel>());
 
 
