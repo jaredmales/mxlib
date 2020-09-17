@@ -186,10 +186,13 @@ void frequency_grid1D( eigenArr & vec,
    }
 }
 
-///Create a frequency grid
+///Create a 2D frequency grid in FFT order
 template<typename eigenArr>
 void frequency_grid( eigenArr & arr,
-                     typename eigenArr::Scalar dt)
+                     typename eigenArr::Scalar dk,
+                     typename eigenArr::Scalar dr,
+                     eigenArr * phi = nullptr
+                   )
 {
    typename eigenArr::Index dim_1, dim_2;
    typename eigenArr::Scalar f_1, f_2, df;
@@ -197,41 +200,45 @@ void frequency_grid( eigenArr & arr,
    dim_1 = arr.rows();
    dim_2 = arr.cols();
 
-   df = freq_sampling(std::max(dim_1, dim_2), 0.5/dt);
+   if(dk == 0) dk = freq_sampling(std::max(dim_1, dim_2), 0.5/dr);
 
    for(int ii=0; ii < 0.5*(dim_1-1) + 1; ++ii)
    {
-      f_1 = ii*df;
+      f_1 = ii*dk;
       for(int jj=0; jj < 0.5*(dim_2-1)+1; ++jj)
       {
-         f_2 = jj*df;
+         f_2 = jj*dk;
 
          arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         if(phi) (*phi)(ii,jj) = atan2(f_2,f_1);
       }
 
       for(int jj=0.5*(dim_2-1)+1; jj < dim_2; ++jj)
       {
-         f_2 = (jj-dim_2) * df;
+         f_2 = (jj-dim_2) * dk;
 
          arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         if(phi) (*phi)(ii,jj) = atan2(f_2,f_1);
       }
    }
 
    for(int ii=0.5*(dim_1-1)+1; ii < dim_1; ++ii)
    {
-      f_1 = (ii-dim_1)*df;
+      f_1 = (ii-dim_1)*dk;
       for(int jj=0; jj < 0.5*(dim_2-1) + 1; ++jj)
       {
-         f_2 = jj*df;
+         f_2 = jj*dk;
 
          arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         if(phi) (*phi)(ii,jj) = atan2(f_2,f_1);
       }
 
       for(int jj=0.5*(dim_2-1)+1; jj < dim_2; ++jj)
       {
-         f_2 = (jj-dim_2) * df;
+         f_2 = (jj-dim_2) * dk;
 
          arr(ii, jj) = sqrt(f_1*f_1 + f_2*f_2);
+         if(phi) (*phi)(ii,jj) = atan2(f_2,f_1);
       }
    }
 }

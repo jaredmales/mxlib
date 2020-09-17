@@ -55,17 +55,22 @@ namespace sigproc
 
 
 /// Get the Zernike coefficients n,m corrresponding the Noll index j.
-/** Calculates the single index j for (n,m) following Noll (1976) \cite noll_1976
+/** Calculates the values of (n,m) for an index j following Noll (1976) \cite noll_1976
   * See also: http://en.wikipedia.org/wiki/Zernike_polynomials
   * 
-  * \param[out] n the radial index of the Zernike polynomial
-  * \param[out] m the azimuthal index of the Zernnike polynomial  
-  * \param[in]  j the Noll index, \f$j > 0\f$
+  * If j is odd, this returns m <= 0.
+  * 
   * 
   * \retval 0 on success
   * \retval -1 on error (j < 1)
+  * 
+  * \test Verify calculation of Noll nm values from j \ref tests_sigproc_zernike_noll_nm "[test doc]"
   */
-int noll_nm( int & n, int & m, int j )
+inline
+int noll_nm( int & n, ///< [out] n the radial index of the Zernike polynomial
+             int & m, ///< [out] m the azimuthal index of the Zernnike polynomial.  m < 0 if j odd.
+             int j    ///< [in]  j the Noll index, j > 0.
+           )
 {
    if( j < 1)
    {
@@ -401,10 +406,17 @@ int zernike( arrayT & arr,
    return zernike(arr, j, xcen, ycen, rad);
 }
 
+///Fill in an Eigencube-like array with Zernike polynomials in Noll order
+/** The cube is pre-allocated to set the image size and the number of modes.
+  *
+  * \returns 0 on success
+  * \returns -1 on error
+  */  
 template<typename cubeT>
-int zernikeBasis( cubeT & cube,
-                  typename cubeT::Scalar rad = -1,
-                  int minj = 2 )
+int zernikeBasis( cubeT & cube,                    ///< [in/out] the pre-allocated cube which will be filled with the Zernike basis
+                  typename cubeT::Scalar rad = -1, ///< [in] [optional] the radius of the aperture.  If -1 then the full image size is used.
+                  int minj = 2                     ///< [in] [optional] the minimum j value to include.  The default is j=2, which skips piston (j=1). 
+                )          
 {
    typename cubeT::imageT im;
    
@@ -425,15 +437,32 @@ int zernikeBasis( cubeT & cube,
    return 0;
 }
 
+///Calculate the square-normed Fourier transform of a Zernike polynomial at position (k,phi)
+/** Implements Equation (8) of Noll (1976) \cite noll_1976.
+  * 
+  * \todo need a more robust jinc_n function for n > 1
+  * 
+  * \test Verify compilation and execution of zernikeQNorm. This does not validate the output. \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
+  * 
+  * \returns the value of |Q(k,phi)|^2
+  * 
+  * \tparam realT is the floating point type used for arithmetic
+  */
 template<typename realT>
-realT zernikeQNorm(int n, int m, realT k, realT phi)
+realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency
+                    realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
+                    int n,     ///< [in] the Zernike polynomial n
+                    int m      ///< [in] the Zernike polynomial m
+                  )
 {
    
    realT B;
 
+   //sloppy implementation of jinc_n for k ~ 0
    if(k < 0.00001)
    {
-      B = 1.0;
+      if( n == 0 ) B = 1.0;
+      else B = 0.0;
    }
    else
    {
@@ -442,31 +471,79 @@ realT zernikeQNorm(int n, int m, realT k, realT phi)
 
    realT Q2 = (n+1) * (B * B);
 
-   if (m != 0)
+   if (m > 0 ) // Even j (see Noll 1976)
    {
-      Q2 = Q2*2; 
-    
-      if (m > 0) // Even j (see Noll 1976)
-      {
-        Q2 = Q2 * pow(cos(m*phi), 2);
-      }
-      else //%Odd j (see Noll 1976)
-      {
-        Q2 = Q2 * pow(sin(-m*phi), 2);
-      }
+      Q2 = 2*Q2 * pow(cos(m*phi), 2);
    }
-
+   else if( m < 0 ) //%Odd j (see Noll 1976)
+   {
+      Q2 = 2*Q2 * pow(sin(-m*phi), 2);
+   }
+  
    return Q2;
 }
 
+///Calculate the square-normed Fourier transform of a Zernike polynomial at position (k,phi)
+/** Implements Equation (8) of Noll (1976) \cite noll_1976.
+  * 
+  * \returns the value of |Q(k,phi)|^2
+  * 
+  * \tparam realT is the floating point type used for arithmetic
+  * 
+  */
 template<typename realT>
-realT zernikeQNorm(int j, realT k, realT phi)
+realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency
+                    realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
+                    int j      ///< [in] the Zernike polynomial index j (Noll convention)
+                  )
 {
    int n, m;
    
    noll_nm(n,m,j);
    
-   return zernikeQNorm(n, m, k, phi);
+   return zernikeQNorm(k, phi, n, m);
+}
+
+///Fill in an Eigen-like array with the square-normed Fourier transform of a Zernike polynomial
+/** The array is filled in with the values of |Q(k,phi)|^2 according to Equation (8) of Noll (1976) \cite noll_1976.
+  * 
+  * \test Verify compilation and execution of zernikeQNorm. \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
+  *  
+  * \returns 0 on success
+  * \returns -1 on error
+  * 
+  * \tparam arrayT is the Eigen-like array type.  Arithmetic will be done in arrayT::Scalar.
+  */
+template<typename arrayT>
+int zernikeQNorm( arrayT & arr, ///< [out] the allocated array. The rows() and cols() members are used to size the transform.
+                  arrayT & k,   ///< [in] the normalized spatial frequency magnitude at each pixel
+                  arrayT & phi, ///< [in] the spatial frequency angle at each pixel
+                  int j         ///< [in] the polynomial index in the Noll convention \cite noll_1976
+                )
+{
+   if(arr.rows() != k.rows() || arr.cols() != k.cols())
+   {
+      mxError("zernikeQNorm", MXE_INVALIDARG, "output array and input k are not the same size");
+      return -1;
+   }
+   
+   if(arr.rows() != phi.rows() || arr.cols() != phi.cols())
+   {
+      mxError("zernikeQNorm", MXE_INVALIDARG, "output array and input phi are not the same size");
+      return -1;
+   }
+   
+   int n,m;
+   if(noll_nm(n,m,j) < 0) return -1; //noll_nm will explain error
+   
+   for(size_t i=0; i < arr.rows(); ++i)
+   {
+      for(size_t j=0; j < arr.cols(); ++j)
+      {
+         arr(i,j) = zernikeQNorm(k(i,j), phi(i,j), n, m);
+      }
+   }
+   return 0;
 }
 
 ///@} signal_processing
