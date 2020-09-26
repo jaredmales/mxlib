@@ -105,6 +105,15 @@ public:
          bool inPlace = false,     ///< [in] [optional] whether or not this is an in-place transform.  Default is false, out-of-place.
          typename std::enable_if<crank==2>::type* = 0 );
    
+   ///Constructor for rank 3 FFT.
+   template<int crank = _rank>
+   fftT( int nx,                   ///< [in] the desired x size of the FFT
+         int ny,                   ///< [in] the desired y size of the FFT
+         int nz,                   ///< [in] the desired z size of the FFT
+         int ndir = MXFFT_FORWARD, ///< [in] [optional] direction of this FFT, either MXFFT_FORWARD (default) or MXFFT_BACKWARD
+         bool inPlace = false,     ///< [in] [optional] whether or not this is an in-place transform.  Default is false, out-of-place.
+         typename std::enable_if<crank==3>::type* = 0 );
+   
    ///Destructor
    ~fftT();
    
@@ -141,6 +150,16 @@ public:
               typename std::enable_if<crank==2>::type* = 0 
             );
 
+   /// Planning routine for rank 2 transforms.
+   template<int crank = _rank>
+   void plan( int nx,                 ///< [in] the desired x size of the FFT
+              int ny,                 ///< [in] the desired y size of the FFT
+              int nz,                 ///< [in] the desired z size of the FFT
+              int ndir=MXFFT_FORWARD, ///< [in] [optional] direction of this FFT, either MXFFT_FORWARD (default) or MXFFT_BACKWARD
+              bool inPlace=false,     ///< [in] [optional] whether or not this is an in-place transform.  Default is false, out-of-place.
+              typename std::enable_if<crank==3>::type* = 0 
+            );
+   
    /// Conduct the FFT
    void operator()( outputT *out, ///< [out] the output of the FFT, must be pre-allocated
                     inputT * in   ///< [in] the input to the FFT
@@ -161,12 +180,6 @@ fftT<inputT,outputT,rank,0>::fftT( int nx,
                                    typename std::enable_if<crank==1>::type* 
                                  )
 {
-   m_plan = 0;
-   
-   m_szX = 0;
-   m_szY = 0;
-   m_szZ = 0;
-   
    m_dir = ndir;
    
    plan(nx, ndir, inPlace);
@@ -181,15 +194,24 @@ fftT<inputT,outputT,rank,0>::fftT( int nx,
                                    typename std::enable_if<crank==2>::type* 
                                  )
 {
-   m_plan = 0;
-   
-   m_szX = 0;
-   m_szY = 0;
-   m_szZ = 0;
-   
    m_dir = ndir;
    
    plan(nx, ny, ndir, inPlace);
+}
+
+template<typename inputT, typename outputT, size_t rank>
+template<int crank>
+fftT<inputT,outputT,rank,0>::fftT( int nx, 
+                                   int ny,
+                                   int nz,
+                                   int ndir,
+                                   bool inPlace,
+                                   typename std::enable_if<crank==3>::type* 
+                                 )
+{
+   m_dir = ndir;
+   
+   plan(nx, ny, nz, ndir, inPlace);
 }
 
 template<typename inputT, typename outputT, size_t rank>
@@ -228,6 +250,7 @@ void fftT<inputT,outputT,rank,0>::doPlan(const meta::trueFalseT<false> & inPlace
    
    if(rank == 1) sz = m_szX;
    if(rank == 2) sz = m_szX*m_szY;
+   if(rank == 3) sz = m_szX*m_szY*m_szZ;
    
    forplan1 = fftw_malloc<inputT>(sz);
    forplan2 = fftw_malloc<outputT>(sz);
@@ -258,6 +281,7 @@ void fftT<inputT,outputT,rank,0>::doPlan(const meta::trueFalseT<true> & inPlace)
    
    if(rank == 1) sz = m_szX;
    if(rank == 2) sz = m_szX*m_szY;
+   if(rank == 3) sz = m_szX*m_szY*m_szZ;
    
    forplan = fftw_malloc<complexT>(sz);
    
@@ -327,6 +351,39 @@ void fftT<inputT,outputT,rank,0>::plan( int nx,
    m_szX = nx;
    m_szY = ny;
    m_szZ = 0;
+   
+   if(inPlace == false)
+   {
+      doPlan(meta::trueFalseT<false>());
+   }
+   else
+   {
+      doPlan(meta::trueFalseT<true>());
+   }
+}
+
+template<typename inputT, typename outputT, size_t rank>
+template<int crank>
+void fftT<inputT,outputT,rank,0>::plan( int nx, 
+                                        int ny,
+                                        int nz,
+                                        int ndir, 
+                                        bool inPlace,
+                                        typename std::enable_if<crank==3>::type* 
+                                      )
+{
+   if(m_szX == nx && m_szY == ny && m_szZ == nz && m_dir == ndir && m_plan)
+   {
+      return;
+   }
+   
+   destroyPlan();
+   
+   m_dir = ndir;
+   
+   m_szX = nx;
+   m_szY = ny;
+   m_szZ = nz;
    
    if(inPlace == false)
    {
