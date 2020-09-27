@@ -9,14 +9,14 @@
 
 #include "../../../include/math/randomT.hpp"
 
-/** Verify compilation and basic operation of randomT.
-  * Basic test include verification that seeding works.  Note that there is the very slight
+/** Verify compilation and basic operation of randomT with std::distributions.
+  * Basic tests include verification that seeding works.  Note that there is the very slight
   * possibility that normal operation could return two consecutive variates with the same value
   * which would cause some of the below tests to fail.  Will probably never happen . . .
   * 
   * \anchor tests_math_randomT_basic
   */
-SCENARIO( "testing randomT basics", "[math::randomT]" ) 
+SCENARIO( "testing randomT basics with std", "[math::randomT]" ) 
 {
    GIVEN("a uniform distribution is desired")
    {
@@ -98,7 +98,7 @@ SCENARIO( "testing randomT basics", "[math::randomT]" )
 }
 
 /** Verify compilation and basic operation of randomT with the Lapace distribution
-  * Basic test include verification that seeding works.  Note that there is the very slight
+  * Basic tests include verification that seeding works.  Note that there is the very slight
   * possibility that normal operation could return two consecutive variates with the same value
   * which would cause some of the below tests to fail.  Will probably never happen . . .
   * 

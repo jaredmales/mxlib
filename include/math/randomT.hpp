@@ -44,7 +44,7 @@ namespace math
   * Example:
   * 
     \code
-    //This can also be done using the alias definition mx::normDistT.  
+    //This can also be done using the alias definition mx::math::normDistT.  
     randomT<double, std::mt19937_64, std::normal_distribution<double> > norm_distd;
     norm_distd.seed(); // 
   
@@ -52,7 +52,8 @@ namespace math
     double d2 = norm_distd; //get the next normally distributed value
    \endcode
   * 
-  * \test Verify compilation and basic operation of randomT \ref tests_math_randomT_basic "[test doc]" 
+  * \test Verify compilation and basic operation of randomT with std::distributions \ref tests_math_randomT_basic "[test doc]" 
+  * \test Verify compilation and basic operation of randomT with the Laplace distribution \ref tests_math_randomT_basic_laplace "[test doc]" 
   *
   * \ingroup random
   */
@@ -118,9 +119,9 @@ public:
    *
    * <table border=1 cellpadding=10 cellspacing=0>
    * <caption align=top>Distribution Statistics</caption>
-   * <tr><td>Mean</td><td>@f$zero@f$</td></tr>
-   * <tr><td>Median</td><td>@f$zero@f$</td></tr>
-   * <tr><td>Mode</td><td>@f$zero@f$</td></tr>
+   * <tr><td>Mean</td><td>@f$0@f$</td></tr>
+   * <tr><td>Median</td><td>@f$0@f$</td></tr>
+   * <tr><td>Mode</td><td>@f$0@f$</td></tr>
    * <tr><td>Range</td><td>@f$[-\infty, \infty]@f$</td></tr>
    * <tr><td>Standard Deviation</td><td>@f$\frac{\sqrt{2}}{\lambda}@f$</td></tr>
    * </table>
