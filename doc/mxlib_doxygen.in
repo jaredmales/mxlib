@@ -789,6 +789,7 @@ INPUT                  = ./groupdefs.dox \
                          ./atlas.dox \
                          ./mkl.dox \
                          ./fftw.dox \
+                         ./documenting.dox \
                          ../ \
                          ../include \
                          ../include/ao \
@@ -808,7 +809,8 @@ INPUT                  = ./groupdefs.dox \
                          ../include/sigproc \
                          ../include/wfp \
                          ../include/ioutils \
-                         ../tests/include/sigproc
+                         ../tests/include/sigproc \
+                         ../tests/include/math
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

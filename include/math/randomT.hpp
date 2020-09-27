@@ -1,12 +1,12 @@
 /** \file randomT.hpp
   * \author Jared R. Males
   * \brief Defines a random number type
-  * \ingroup random
+  * \ingroup gen_math_files
   *
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __randomT__
-#define __randomT__
+#ifndef mx_math_randomT_hpp
+#define mx_math_randomT_hpp
 
 #include <random>
 
@@ -33,7 +33,8 @@
 
 namespace mx
 {
-
+namespace math
+{
 
 ///A random number type, which functions like any other arithmetic type.  
 /** 
@@ -51,6 +52,8 @@ namespace mx
     double d2 = norm_distd; //get the next normally distributed value
    \endcode
   * 
+  * \test Verify compilation and basic operation of randomT \ref tests_math_randomT_basic "[test doc]" 
+  *
   * \ingroup random
   */
 template<class typeT, class _ranengT, class _randistT> class randomT
@@ -58,15 +61,21 @@ template<class typeT, class _ranengT, class _randistT> class randomT
 
 public:
 
-   ///Constructor
-   randomT(){}
-
    ///Typedef for the distribution type
    typedef _randistT randistT;
       
    ///Typedef for the engine type
    typedef _ranengT ranengT;
 
+   ///Constructor
+   /** By default this calls the seed method, which will use /dev/random to seed the generator on linux, and time(0) on other systems.
+     * Set to false to suppress seeding, and/or set a seed with seed(x).
+     */ 
+   randomT(bool doSeed = true /**< [in] [optional] if true then the seed method is called upon construction.*/ )
+   {
+      if(doSeed) seed();
+   }
+   
    ///The random distribution
    _randistT distribution;
 
@@ -76,7 +85,6 @@ public:
    ///The conversion operator, returns the next value in the sequence, according to the distribution.
    operator typeT()  
    {
-      //return distribution(random_engine<_ranengT>());
       return distribution(engine);
    }
    
@@ -118,6 +126,8 @@ public:
    * </table>
    * 
    * This is based on the implementation of the exponential distribution in the GNU ISO C++ Library version 4.6.
+   * 
+   * \test Verify compilation and basic operation of randomT with the Laplace distribution \ref tests_math_randomT_basic_laplace "[test doc]" 
    * 
    * \ingroup random
    */
@@ -242,8 +252,8 @@ private:
   * @brief Return true if two exponential distributions have the same
   *        parameters.
   */
-template<typename _RealType> inline bool operator==(const mx::laplace_distribution<_RealType>& __d1,
-                                                    const mx::laplace_distribution<_RealType>& __d2)
+template<typename _RealType> inline bool operator==(const laplace_distribution<_RealType>& __d1,
+                                                    const laplace_distribution<_RealType>& __d2)
 { 
    return __d1.param() == __d2.param(); 
 }
@@ -252,8 +262,8 @@ template<typename _RealType> inline bool operator==(const mx::laplace_distributi
   * @brief Return true if two exponential distributions have different
   *        parameters.
   */
-template<typename _RealType> inline bool operator!=(const mx::laplace_distribution<_RealType>& __d1,
-                                                    const mx::laplace_distribution<_RealType>& __d2)
+template<typename _RealType> inline bool operator!=(const laplace_distribution<_RealType>& __d1,
+                                                    const laplace_distribution<_RealType>& __d2)
 { 
    return !(__d1 == __d2); 
 }
@@ -269,7 +279,7 @@ template<typename _RealType> inline bool operator!=(const mx::laplace_distributi
   * an error state.
   */
 template<typename _RealType, typename _CharT, typename _Traits> std::basic_ostream<_CharT, _Traits>&
-   operator<<(std::basic_ostream<_CharT, _Traits>&, const mx::laplace_distribution<_RealType>&);
+   operator<<(std::basic_ostream<_CharT, _Traits>&, const laplace_distribution<_RealType>&);
 
 /**
   * @brief Extracts a %laplace_distribution random number distribution
@@ -282,7 +292,7 @@ template<typename _RealType, typename _CharT, typename _Traits> std::basic_ostre
   * @returns The input stream with @p __x extracted or in an error state.
   */
 template<typename _RealType, typename _CharT, typename _Traits> std::basic_istream<_CharT, _Traits>&
-   operator>>(std::basic_istream<_CharT, _Traits>&, mx::laplace_distribution<_RealType>&);
+   operator>>(std::basic_istream<_CharT, _Traits>&, laplace_distribution<_RealType>&);
 
 
 
@@ -315,9 +325,10 @@ using poissonDistT = randomT<intT, std::mt19937_64, std::poisson_distribution<in
 
 /// @}
 
+} //namespace math
 } //namespace mx
 
-#endif //__randomT__
+#endif //mx_math_randomT_hpp
 
 
 

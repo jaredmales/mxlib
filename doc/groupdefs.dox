@@ -102,7 +102,6 @@
   * \ingroup gen_math
   */
 
-
 /** \defgroup vectorutils Vector Utilities
   * \ingroup gen_math
   * \brief Utilities for working with std::vector.
@@ -528,8 +527,9 @@
   * \ingroup mxApp
   * \ingroup utils_files
   */
-
-//This stuff is at the very end to make sure it is last in whatever group listings it is in.
+  
+  
+//This stuff is at the end to make sure it is last in whatever group listings it is in.
 
 /** \defgroup astro_sofa The SOFA Library
   * \ingroup genastro
@@ -539,4 +539,16 @@
 /** \defgroup levmar The levmar library
   * \ingroup fitting
   * \brief A c language Levenberg-Marquardt facility
+  */
+  
+  
+//The very end is for the coding standards
+
+/** \defgroup coding mxlib Coding Standards
+  * \brief how to write mxlib code 
+  */
+  
+/** \defgroup documenting mxlib Documentation Standards
+  * \ingroup coding
+  * \brief how to document mxlib code
   */
