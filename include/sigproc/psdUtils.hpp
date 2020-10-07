@@ -581,25 +581,40 @@ void vonKarman_psd( eigenArrp  & psd,
 }
 
 
-///Augment a 1-sided PSD to standard 2-sided FFT form.
+/// Augment a 1-sided PSD to standard 2-sided FFT form.
 /** Allocates psdTwoSided to hold a flipped copy of psdOneSided.
   * Default assumes that psdOneSided[0] corresponds to 0 frequency,
   * but this can be changed by setting zeroFreq to a non-zero value.
   * In this case psdTwoSided[0] is set to 0, and the augmented psd
   * is shifted by 1.
+  * 
+  * If the psdOneSided vector does have the zero frequency power (addZeroFreq==false), then the 
+  * size of the augmented psdTwoSided will be 2*psdOneSided.size() - 2.
+  * 
+  * If the psdOneSided vector does not have the zero frequency power (addZeroFreq==true), then 
+  * the size of the augmented psdTwoSided will be 2*psdOneSided.size().
+  * 
+  * 
+  * Examples:
   *
-  * Example:
-  *
+  * When addZeroFreq == false, the resulting frequency indices of the PSD will be:
+  * \verbatim
+  * {0,1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * \endverbatim
+  * 
+  * When addZeroFreq == true, the resulting frequency indices of the PSD will be:
+  * \verbatim
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
-  *
+  *\endverbatim
+  * 
   * Entries in psdOneSided are cast to the value_type of psdTwoSided,
   * for instance to allow for conversion to complex type.
   *
   */
 template<typename vectorTout, typename vectorTin>
-void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
-                       vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
-                       bool addZeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
+void augment1SidedPSD( vectorTout & psdTwoSided,                   ///< [out] on return contains the FFT storage order copy of psdOneSided.
+                       vectorTin  & psdOneSided,                   ///< [in] the one-sided PSD to augment
+                       bool addZeroFreq = false,                   ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
                        typename vectorTin::value_type scale = 0.5  ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
                      )
 {
@@ -642,14 +657,28 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
 
 }
 
-///Augment a 1-sided frequency scale to standard FFT form.
+/// Augment a 1-sided frequency vector to standard 2-sided FFT form.
 /** Allocates freqTwoSided to hold a flipped copy of freqOneSided.
-  * If freqOneSided[0] is not 0, freqTwoSided[0] is set to 0, and the augmented
-  * frequency scale is shifted by 1.
+  * 
+  * If the freqOneSided vector does have the zero frequency power, then the 
+  * size of the augmented freqTwoSided will be 2*freqOneSided.size() - 2.
+  * 
+  * If the freqOneSided vector does not have the zero frequency power, then 
+  * the size of the augmented freqTwoSided will be 2*freqOneSided.size().
+  * 
+  * 
+  * Examples:
   *
-  * Example:
-  *
+  * When freqOneSide[0] == 0, the resulting freqTwoSided will be:
+  * \verbatim
+  * {0,1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * \endverbatim
+  * 
+  * When freqOneSide[0] != 0, the resulting freqTwoSided will be:
+  * \verbatim
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  *\endverbatim
+  * 
   *
   */
 template<typename T>

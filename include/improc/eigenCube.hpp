@@ -79,7 +79,7 @@ public:
 
    void setZero();
 
-   eigenCube<dataT> & operator=(eigenCube<dataT> & ec);
+   eigenCube<dataT> & operator=(const eigenCube<dataT> & ec);
 
    void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false);
 
@@ -213,6 +213,8 @@ public:
                    Scalar sigma, ///< [in] the sigma value at which to clip.
                    double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
+   
+   
 };
 
 template<typename dataT>
@@ -264,7 +266,7 @@ void eigenCube<dataT>::setZero()
 }
 
 template<typename dataT>
-eigenCube<dataT> & eigenCube<dataT>::operator=(eigenCube<dataT> & ec)
+eigenCube<dataT> & eigenCube<dataT>::operator=(const eigenCube<dataT> & ec)
 {
    resize(ec.rows(), ec.cols(), ec.planes());
 

@@ -303,7 +303,7 @@ valueT vectorVariance( const valueT * vec, ///< [in] the vector
   */
 template<typename vectorT>
 typename vectorT::value_type vectorVariance( const vectorT & vec,  ///< [in] the vector
-                                             typename vectorT::value_type & mean ///< [in] the mean value with which to calculate the variance
+                                             const typename vectorT::value_type & mean ///< [in] the mean value with which to calculate the variance
                                            )
 {
    typename vectorT::value_type var;

@@ -1,0 +1,21 @@
+/** \addtogroup psds
+
+The mxlib PSD utilities are based on the variance normalization for PSDs.  For a 1-sided 1-dimensional PSD that is
+\f[
+\sigma^2 = \int_0^{f_{max}} PSD(f) df
+\f]
+or for a 2-sided 1-D PSD 
+\f[
+\sigma^2 = \int_{f_{min}}^{f_{max}} PSD(f) df.
+\f]
+More generally 
+\f[
+\sigma^2 = \int_{\vec{k}} PSD(\vec{k}) d\vec{k}.
+\f]
+
+
+
+
+
+
+*/

@@ -12,7 +12,7 @@
 
 #include <Eigen/Dense>
 
-#include "../../randomT.hpp"
+#include "../../math/randomT.hpp"
 #include "../../math/vectorUtils.hpp"
 
 #include "../../sigproc/signalWindows.hpp"
@@ -64,22 +64,22 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
                  )
 {
 
-   std::vector<realT> vpsd2, nvpsd2;
+   std::vector<realT> psd2, npsd2;
    std::vector<std::complex<realT>> xfer2, nxfer2;
 
    bool hasZero = false;
    if(freq[0] == 0) hasZero = true;
 
    //First augment to two-sided DFT form
-   mx::sigproc::augment1SidedPSD( vpsd2, fmPSD, !hasZero, 0.5);
-   mx::sigproc::augment1SidedPSD( nvpsd2, nPSD, !hasZero, 0.5);
+   mx::sigproc::augment1SidedPSD( psd2, fmPSD, !hasZero, 0.5);
+   mx::sigproc::augment1SidedPSD( npsd2, nPSD, !hasZero, 0.5);
 
    //And copy into Eigen Arrays for filtering
-   Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
-   for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
+   //Eigen::Array<realT, -1,-1> psd2( vpsd2.size(), 1);
+   //for(size_t i=0; i< vpsd2.size(); ++i) psd2(i,0) = vpsd2[i];
 
-   Eigen::Array<realT, -1,-1> npsd2( nvpsd2.size(), 1);
-   for(size_t i=0; i< nvpsd2.size(); ++i) npsd2(i,0) = nvpsd2[i];
+   //Eigen::Array<realT, -1,-1> npsd2( nvpsd2.size(), 1);
+   //for(size_t i=0; i< nvpsd2.size(); ++i) npsd2(i,0) = nvpsd2[i];
    
    //And augment the xfer fxns to two sided form
    sigproc::augment1SidedPSD( xfer2, fmXferFxn, !hasZero, 1.0);
@@ -89,10 +89,10 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
    realT dt = 1./(2*freq.back());
 
    //Indices for getting the middle half
-   int Nwd = 1*psd2.rows();
-   int NwdStart = 0.5*psd2.rows() - 0.5*Nwd;
+   int Nwd = 1*psd2.size();
+   int NwdStart = 0.5*psd2.size() - 0.5*Nwd;
    
-   int Nsamp = 1.0*psd2.rows();
+   int Nsamp = 1.0*psd2.size();
    int NsampStart = 0.5*Nwd - 0.5*Nsamp;
       
    spPSD.resize(Nsamp/2,0);
@@ -108,34 +108,38 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
    #pragma omp parallel
    {
       //Filters for imposing the PSDs
-      mx::sigproc::psdFilter<realT> filt;
-      filt.psd(psd2);
+      mx::sigproc::psdFilter<realT,1> filt;
+      filt.psd(psd2,freq[1]-freq[0]);
 
-      mx::sigproc::psdFilter<realT> nfilt;
-      nfilt.psd(npsd2);
+      mx::sigproc::psdFilter<realT,1> nfilt;
+      nfilt.psd(npsd2,freq[1]-freq[0]);
       
       //FFTs for going to Fourier domain and back to time domain.
-      fftT<realT, std::complex<realT>, 1, 0> fft(vpsd2.size());
-      fftT<std::complex<realT>, realT, 1, 0> fftB(vpsd2.size(), MXFFT_BACKWARD);
+      fftT<realT, std::complex<realT>, 1, 0> fft(psd2.size());
+      fftT<std::complex<realT>, realT, 1, 0> fftB(psd2.size(), MXFFT_BACKWARD);
 
       //Fourier transform working memmory
-      std::vector<std::complex<realT>> tform1(vpsd2.size());
-      std::vector<std::complex<realT>> tform2(vpsd2.size());
+      std::vector<std::complex<realT>> tform1(psd2.size());
+      std::vector<std::complex<realT>> tform2(psd2.size());
 
-      std::vector<std::complex<realT>> Ntform1(vpsd2.size());
-      std::vector<std::complex<realT>> Ntform2(vpsd2.size());
+      std::vector<std::complex<realT>> Ntform1(psd2.size());
+      std::vector<std::complex<realT>> Ntform2(psd2.size());
 
       //Normally distributed random numbers
-      mx::normDistT<realT> normVar;
+      math::normDistT<realT> normVar;
       normVar.seed();
 
       //The two modal amplitude series
-      Eigen::Array<realT, -1, -1> fm_n( psd2.rows(), 1);
-      Eigen::Array<realT, -1, -1> fm_nm( psd2.rows(), 1);
+      std::vector<realT> fm_n(psd2.size());
+      std::vector<realT> fm_nm(psd2.size());
+      //Eigen::Array<realT, -1, -1> fm_n( psd2.rows(), 1);
+      //Eigen::Array<realT, -1, -1> fm_nm( psd2.rows(), 1);
 
       //The two noise amplitude series
-      Eigen::Array<realT, -1, -1> N_n( psd2.rows(), 1);
-      Eigen::Array<realT, -1, -1> N_nm( psd2.rows(), 1);
+      std::vector<realT> N_n(psd2.size());
+      std::vector<realT> N_nm(psd2.size());
+      //Eigen::Array<realT, -1, -1> N_n( psd2.rows(), 1);
+      //Eigen::Array<realT, -1, -1> N_nm( psd2.rows(), 1);
       
       //The speckle amplitude
       std::vector<realT> vnl( Nwd );
@@ -152,19 +156,19 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
       for(int k=0; k < N; ++k)
       {
          //Generate the time-series
-         for(int i=0; i< psd2.rows(); ++i) 
+         for(int i=0; i< psd2.size(); ++i) 
          {
-            fm_n(i,0) = normVar;
-            N_n(i,0) = normVar;
-            N_nm(i,0) = normVar;
+            fm_n[i] = normVar;
+            N_n[i] = normVar;
+            N_nm[i] = normVar;
          }
          
          //Filter and normalize the fourier mode time series
          filt(fm_n);
          //vectorMeanSub(fm_n.data(), fm_n.rows());
-         realT actvar = vectorVariance(fm_n.data(), fm_n.rows());
+         realT actvar = vectorVariance(fm_n);
          realT norm = sqrt(fmVar/actvar);
-         fm_n*= norm;
+         for(size_t q=0; q<fm_n.size(); ++q) fm_n[q] *= norm;
          
          //And move it to the Fourier domain
          fft(tform1.data(), fm_n.data());
@@ -174,10 +178,10 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
          nfilt.filter(N_n);
          nfilt.filter(N_nm);
 
-         realT Nactvar = 0.5*(vectorVariance(N_n.data(), N_n.rows()) + vectorVariance(N_nm.data(), N_nm.rows()));
+         realT Nactvar = 0.5*(vectorVariance(N_n) + vectorVariance(N_nm));
          norm = sqrt(nVar/Nactvar);
-         N_n *= norm;
-         N_nm *= norm;
+         for(size_t q=0; q<fm_n.size(); ++q) N_n[q] *= norm;
+         for(size_t q=0; q<fm_n.size(); ++q) N_nm[q] *= norm;
 
          //And move them to the Fourier domain
          fft(Ntform1.data(), N_n.data());
@@ -209,7 +213,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
          realT mn = 0;
          for(int i= 0; i< Nwd; ++i)
          {
-            vnl[i] = ( pow(fm_n(i+NwdStart,0)+N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0)+N_nm(i+NwdStart,0),2) ); 
+            vnl[i] = ( pow(fm_n[i+NwdStart]+N_n[i+NwdStart],2) + pow(fm_nm[i+NwdStart]+N_nm[i+NwdStart],2) ); 
             //vnl[i] = pow(fm_n(i+NwdStart,0),2) + pow(1.0*N_n(i+NwdStart,0),2) + pow(fm_nm(i+NwdStart,0),2)+ pow(1.0*N_nm(i+NwdStart,0),2); 
             mn += vnl[i];
          }
