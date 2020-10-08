@@ -398,7 +398,7 @@ void averagePeriodogram<realT>::operator()( realT * pgram,
 
    //but we will just always normalize:
 
-   realT pgramVar = psdVar(m_df, pgram, m_size);
+   realT pgramVar = psdVar1sided(m_df, pgram, m_size);
    
    realT tsVar = mx::math::vectorVariance(ts, sz);
 

@@ -943,14 +943,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                getGridPSD( tPSDp, psdDir, m, n );
                
                //Get integral of entire open-loop PSD
-               var0 = sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
+               var0 = sigproc::psdVar( tfreq, tPSDp);
                
                //erase points above Nyquist limit
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
                //And now determine the variance which has been erased.
                //limVar is the out-of-band variance, which we add back in for completeness
-               realT limVar = var0 - sigproc::psdVar( tfreq[1]-tfreq[0], tPSDp);
+               realT limVar = var0 - sigproc::psdVar( tfreq, tPSDp);
                //**>
                
                //Get the variance of the theoretical PSD

@@ -101,9 +101,9 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
    if( bins != nullptr && vars != nullptr) means.resize(bins->size());
 
    //Calculate the Fourier Mode variance for normalization
-   realT fmVar = sigproc::psdVar( freq[1]-freq[0], fmPSD);
+   realT fmVar = sigproc::psdVar( freq, fmPSD);
    //and the noise variance
-   realT nVar = sigproc::psdVar( freq[1]-freq[0], nPSD);
+   realT nVar = sigproc::psdVar( freq, nPSD);
    
    #pragma omp parallel
    {
@@ -246,7 +246,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                  ///< [out] The 
       spFreq.resize(spPSD.size());
       for(size_t i =0; i< spFreq.size(); ++i) spFreq[i] = i*df;
 
-      realT spVar = sigproc::psdVar(df, spPSD);
+      realT spVar = sigproc::psdVar1sided(df, spPSD.data(), spPSD.size());
       for(size_t i=0; i< spPSD.size(); ++i) spPSD[i] *= (fmVar*fmVar/spVar);
    }
    

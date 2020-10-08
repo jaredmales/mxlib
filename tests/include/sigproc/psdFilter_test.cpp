@@ -229,12 +229,14 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          for(size_t n=1;n<psd.size();++n) psd[n] = pow(f[n], -2.5);
          psd[0] = psd[1];
          
+         mx::sigproc::normPSD(psd, f, 1.0, -1e5, 1e5);
+         
          std::vector<double> f2s, psd2s;
          mx::sigproc::augment1SidedPSDFreq(f2s, f);
          mx::sigproc::augment1SidedPSD(psd2s, psd);
          
          double df = f2s[1]-f2s[0];
-         mx::sigproc::normPSD(psd2s, f2s, 1.0, -1e5, 1e5);
+         //mx::sigproc::normPSD(psd2s, f2s, 1.0, -1e5, 1e5);
          int rv = psdF.psd(psd2s, df);
          
          REQUIRE(rv == 0);
