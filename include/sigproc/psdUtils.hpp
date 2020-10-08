@@ -124,7 +124,7 @@ realT psdVar2sided( realT df,      ///< [in] the frequency scale of the PSD
 template<typename realT>
 realT psdVar( std::vector<realT> f,     ///< [in] the frequency scale of the PSD.  
               std::vector<realT> & PSD, ///< [in] the PSD to integrate.
-              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
+              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
             )
 {
    if(f.back() < 0) return psdVar2sided(f[1]-f[0], PSD.data(), PSD.size(), half);
