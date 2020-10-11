@@ -458,6 +458,7 @@ int ds9Interface::XPASet( const char * cmd )
 
    int rv = ::XPASet(xpa, const_cast<char *>(m_ipAndPort.c_str()), const_cast<char *>(cmd), NULL, NULL, 0, NULL, NULL, 1);
 
+   std::cerr << cmd << "\n";
    if(rv != 1)
    {
       std::cerr << "ds9Interface::XPASet: did not send cmd properly.\n";
@@ -499,6 +500,8 @@ int ds9Interface::addframe( size_t frame )
 
    snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "frame %zu", frame);
 
+   std::cerr << cmd << "\n";
+   
    if(!m_connected) if(connect() < 0) return -1;
 
    int rv = XPASet(cmd);
