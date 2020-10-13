@@ -271,9 +271,9 @@ int turbAtmosphere<realT>::genLayers()
    {
       arrayT psd;
       arrayT freq;
-      sigproc::psdFilter<realT> filt;
+      sigproc::psdFilter<realT,2> filt;
 
-      mx::normDistT<realT> normVar;
+      mx::math::normDistT<realT> normVar;
       normVar.seed();
 
       realT beta, L02, scrnSz, r0, L0, l0;
@@ -295,10 +295,11 @@ int turbAtmosphere<realT>::genLayers()
          psd.resize(scrnSz, scrnSz);
 
          freq.resize(scrnSz, scrnSz);
-         sigproc::frequency_grid(freq, _pupD/_wfSz);
+         sigproc::frequency_grid<arrayT>(freq, 0.0, _pupD/_wfSz);
 
 
-         beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
+         //beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
+         beta = 0.0218/pow( r0, 5./3.) * pow(_lambda0/_lambda, 2);
 
          if(L0 > 0) L02 = 1.0/(L0*L0);
          else L02 = 0;
@@ -338,7 +339,7 @@ int turbAtmosphere<realT>::genLayers()
             }
          }
 
-         filt.psd(psd);
+         filt.psd(psd, freq(1,0)-freq(0,0),freq(0,1)-freq(0,0) );
 
          filt(_layers[i].phase);
       }

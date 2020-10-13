@@ -181,7 +181,7 @@ public:
 
    Eigen::Array<double,-1,-1> _pos, _map;
 
-   sigproc::psdFilter<realT> m_filter;
+   sigproc::psdFilter<realT,2> m_filter;
 
    bool m_applyFilter {false};
 
@@ -673,7 +673,7 @@ void deformableMirror<_realT>::setFilter( int width )
    filterMask.block(nr - width, nc - width, width, width).setConstant(1.0);
 
          
-   m_filter.psdSqrt(filterMask);
+   m_filter.psdSqrt(filterMask, 1.0/_shape.rows(), 1.0/_shape.cols());
 
 
 
