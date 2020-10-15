@@ -84,7 +84,7 @@ protected:
 
    ///The system pupil, possibly apodized, etc.
    imageT _pupil;
-
+   realT m_pupilSum;
 
 public:
    improc::ds9Interface ds9i_shape, ds9i_phase, ds9i_acts;
@@ -236,7 +236,7 @@ int deformableMirror<_realT>::initialize( specT & spec,
    std::string pName;
    pName = mx::AO::path::pupil::pupilFile(_pupilName);
    ff.read(_pupil, pName);
-
+   m_pupilSum = _pupil.sum();
 
    if(_name == "modalDM")
    {
@@ -607,6 +607,9 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
       BREAD_CRUMB;
        _shape = _oldShape + (_nextShape-_oldShape)*( (realT) _settleTime_counter+1.0)/( (realT) _settleTime);
 
+       realT mn = (_shape*_pupil).sum()/m_pupilSum;
+       _shape = (_shape - mn)*_pupil;
+       
        ++_settleTime_counter;
 
        if(_settleTime_counter >= _settleTime)
@@ -616,6 +619,7 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
        }
    }
 #endif
+
 
    if( display_shape > 0)
    {

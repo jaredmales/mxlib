@@ -32,7 +32,7 @@ int main()
    dps.m_detector.qe(0.25);
 
    dps.filterWidth(24.0);
-   dps.applyFilter(false);
+   dps.applyFilter(true);
 
    dps.simStep(1);
    dps.iTime(1);
@@ -85,7 +85,7 @@ int main()
    wf.iterNo = 1;
    std::vector<realT> amps(1000);
    
-   realT F0 = 0.6e8;
+   realT F0 = 5.9e10*0.0005;
    
    wf.amplitude = pupil * sqrt(F0)/sqrt(psum);
    

@@ -580,6 +580,9 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
+      realT psum = m_pupil->sum();
+      std::cerr << "mean in: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
+      
       //*** Spatial Filter:
       if(m_applyFilter)
       {
@@ -588,6 +591,12 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
          if(m_pupil != nullptr) m_detectorImage.image *= *m_pupil; 
       }
 
+      realT mnf= (m_detectorImage.image*(*m_pupil)).sum()/psum;
+      std::cerr << "mean filtered: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
+      
+      m_detectorImage.image -= mnf;
+      m_detectorImage.image *= (*m_pupil);
+      
       realT sqrtFbg = sqrt(m_Fbg*m_detector.expTime());
       //*** Adding Noise:
       if(m_beta_p > 0 && m_pupil != nullptr)
@@ -602,7 +611,7 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                m_noiseIm(r,c) = pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c) * m_detector.expTime(); 
             }
          }
-         
+         std::cerr << "Total Phots: " << m_noiseIm.sum() << "\n";
          
          //Add noise
          for(int c=0;c<m_noiseIm.cols();++c)
@@ -623,6 +632,8 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                }
             }
          }
+         
+         std::cerr << "mean out: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
       } //if(m_beta_p > 0 && m_pupil != nullptr)
 
 
