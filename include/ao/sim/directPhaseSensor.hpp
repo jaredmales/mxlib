@@ -8,7 +8,7 @@
 #ifndef directPhaseSensor_hpp
 #define directPhaseSensor_hpp
 
-#include "../../randomT.hpp"
+#include "../../math/randomT.hpp"
 
 #include "../../improc/fitsFile.hpp"
 #include "../../improc/eigenCube.hpp"
@@ -70,10 +70,10 @@ public:
    typedef _detectorT detectorT;
 
    
-   typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
+   typedef mx::math::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
    ///Alias for a poisson random variate
-   typedef mx::randomT<long, std::mt19937_64, std::poisson_distribution<long> > poisson_distT;
+   typedef mx::math::randomT<long, std::mt19937_64, std::poisson_distribution<long> > poisson_distT;
 
 
 protected:
@@ -253,7 +253,7 @@ protected:
    
    int m_filterWidth {0}; ///< The half-width of the filter, in Fourier domain pixels corresponding to 1/D spatial frequency units.
 
-   sigproc::psdFilter<realT> m_filter; ///< The spatial filter class object.
+   sigproc::psdFilter<realT,2> m_filter; ///< The spatial filter class object.
    
 public:
    
@@ -283,7 +283,7 @@ public:
    /** 
      * \returns a const reference to m_filter.
      */ 
-   const sigproc::psdFilter<realT> & filter();
+   const sigproc::psdFilter<realT, 2> & filter();
    
    ///@}
    
@@ -580,37 +580,40 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
       //Just do the read
       m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
+      realT psum = m_pupil->sum();
+      std::cerr << "mean in: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
       
+      //*** Spatial Filter:
+      if(m_applyFilter)
+      {
+         //std::cerr << "Filtering . . . \n";
+         m_filter.filter(m_detectorImage.image);
+         if(m_pupil != nullptr) m_detectorImage.image *= *m_pupil; 
+      }
 
+      realT mnf= (m_detectorImage.image*(*m_pupil)).sum()/psum;
+      std::cerr << "mean filtered: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
+      
+      m_detectorImage.image -= mnf;
+      m_detectorImage.image *= (*m_pupil);
+      
+      realT sqrtFbg = sqrt(m_Fbg*m_detector.expTime());
       //*** Adding Noise:
       if(m_beta_p > 0 && m_pupil != nullptr)
       {
-         //1) Subtract the min
-         //2) Normalize to total photons for an interferometer
-         //3) Add noise such that S/N in the phase image is correct for number of photons.
-         
-         realT phaseMin = 0;//m_detectorImage.image.minCoeff();
-         
-         realT phaseSum = 0;
-         realT totalPhots = 0;
          m_noiseIm.resize(m_detectorImage.image.rows(), m_detectorImage.image.cols());
-         
-         //This loop does the mean subtraction with pupil masking, and the summations
-         //All in one to avoid multiple loops
+       
+         //Calculate intensity at each pixel
          for(int c=0;c<m_noiseIm.cols();++c)
          {
             for(int r=0;r<m_noiseIm.rows();++r)
             {
-               m_noiseIm(r,c) = fabs((m_detectorImage.image(r,c) - phaseMin)*(*m_pupil)(r,c));
-               phaseSum += m_noiseIm(r,c);
-               totalPhots += pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c);
+               m_noiseIm(r,c) = pow(pupilPlane.amplitude(r,c),2)*(*m_pupil)(r,c) * m_detector.expTime(); 
             }
          }
-         totalPhots *= m_detector.expTime();
+         std::cerr << "Total Phots: " << m_noiseIm.sum() << "\n";
          
-         realT SNR2 = pow(totalPhots,2)/(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
-         //realT SNR = sqrt(SNR);//totalPhots/sqrt(totalPhots + m_npix*m_Fbg*m_detector.expTime() + m_npix*pow(m_detector.ron(),2));
-         //3) Add Poisson noise -- added so the S/N of the phase map is correct
+         //Add noise
          for(int c=0;c<m_noiseIm.cols();++c)
          {
             for(int r=0;r<m_noiseIm.rows();++r)
@@ -621,29 +624,17 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
                }
                else
                {
-                  realT charge = sqrt((m_noiseIm(r,c)*phaseSum)/SNR2);
-//                   if(charge > 1000)
-//                   {
-                     m_detectorImage.image(r,c) += m_beta_p*charge*m_normVar;
-//                   }
-//                   else
-//                   {
-//                      m_poissonVar.distribution.param(poisson_param_t{charge});
-//                      m_detectorImage.image(r,c) = copysign(m_beta_p*m_poissonVar,(long) m_detectorImage.image(r,c));
-//                   }
+                  realT err = sqrt(m_noiseIm(r,c))*m_normVar;
+                  if(sqrtFbg > 0) err += sqrtFbg*m_normVar;
+                  if(m_detector.ron() > 0) err += m_detector.ron()*m_normVar;
+                  
+                  m_detectorImage.image(r,c) += m_beta_p * err/m_noiseIm(r,c); //Fractional noise in photons is noise in radians
                }
             }
          }
          
+         std::cerr << "mean out: " << (m_detectorImage.image*(*m_pupil)).sum()/psum << "\n";
       } //if(m_beta_p > 0 && m_pupil != nullptr)
-
-      //*** Spatial Filter:
-      if(m_applyFilter)
-      {
-         m_filter.filter(m_detectorImage.image);
-      }
-      
-      //ds9(m_detectorImage.image);
 
 
       m_detectorImage.iterNo = m_wfsImage.iterNo;
@@ -781,7 +772,7 @@ void directPhaseSensor<_realT, _detectorT>::filterWidth( int width )
    filterMask.block(nr - width, 0, width, width+1).setConstant(1.0);
    filterMask.block(nr - width, nc - width, width, width).setConstant(1.0);
 
-   m_filter.psdSqrt(filterMask);
+   m_filter.psdSqrt(filterMask,static_cast<realT>(1)/nr,static_cast<realT>(1)/nc);
 
    m_filterWidth = width;
 
@@ -794,7 +785,7 @@ int directPhaseSensor<_realT, _detectorT>::filterWidth()
 }
 
 template<typename realT,  typename detectorT>
-const sigproc::psdFilter<realT> & directPhaseSensor<realT, detectorT>::filter()
+const sigproc::psdFilter<realT,2> & directPhaseSensor<realT, detectorT>::filter()
 {
    return m_filter;
 }

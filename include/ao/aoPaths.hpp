@@ -70,11 +70,7 @@ namespace basis
 
       return path;
    }
-   
-
-
-
-   } //namespace basis
+} //namespace basis
 
 //--------------------------------------------------------------------------------
 

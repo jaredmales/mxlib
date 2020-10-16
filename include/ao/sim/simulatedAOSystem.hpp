@@ -769,7 +769,9 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
    //**** Calculate RMS phase ****//
    realT rms_cl;
-   rms_cl = sqrt( wf.phase.square().sum()/ _postMask.sum() );
+   mn = (wf.phase * _pupil).sum()/_npix;
+   std::cerr << "mean at rms_cl: " << mn << "\n";
+   rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
 
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
 
