@@ -77,6 +77,15 @@ namespace improc
 #endif
 
 
+class ds9Segment : public ipc::sharedMemSegment
+{
+public:
+   size_t dim1 {0};
+   size_t dim2 {0};
+   size_t dim3 {0};
+   int bitpix {0};
+   
+};
 
 /// An interface to the ds9 image viewer.
 /** Handles spawning the ds9 window, and manages shared memory segments,
@@ -107,7 +116,8 @@ protected:
    bool m_connected {false};
 
    ///A vector of shared memory segments, one per frame
-   std::vector<ipc::sharedMemSegment> segs;
+   //std::vector<ipc::sharedMemSegment> m_segs;
+   std::vector<ds9Segment> m_segs;
 
    bool m_preserveRegions{true};
    bool m_regionsPreserved {false};
@@ -474,16 +484,16 @@ int ds9Interface::addsegment( size_t frame )
 
    if(frame == 0) return -1;
    
-   if((size_t)(frame-1) < segs.size()) return 0;
+   if((size_t)(frame-1) < m_segs.size()) return 0;
 
-   curr_n = segs.size();
+   curr_n = m_segs.size();
 
-   segs.resize(frame);
+   m_segs.resize(frame);
 
-   for(size_t i = curr_n; i< segs.size(); ++i)
+   for(size_t i = curr_n; i< m_segs.size(); ++i)
    {
-      segs[i].initialize();
-      segs[i].setKey(0, IPC_PRIVATE);
+      m_segs[i].initialize();
+      m_segs[i].setKey(0, IPC_PRIVATE);
    }
 
    return 0;
@@ -517,7 +527,7 @@ inline
 int ds9Interface::togglePreserveRegions( bool onoff)
 {
    
-   for(size_t frame=1; frame< segs.size()+1; ++frame)
+   for(size_t frame=1; frame< m_segs.size()+1; ++frame)
    {
       int rv = togglePreserveRegions(frame, onoff);
       if(rv < 0) return -1;
@@ -619,33 +629,54 @@ int ds9Interface::display( const void * im,
    tot_size*=dim1;
    tot_size*=dim2;
    tot_size*=dim3;
+   
+   bool realloc = false;
 
    //Re-allocate shared memory if necessary
-   if(tot_size > segs[frame-1].size)
+   if(tot_size > m_segs[frame-1].size)
    {
-      if( segs[frame-1].size > 0 )
+      if( m_segs[frame-1].size > 0 )
       {
-         segs[frame-1].detach();
+         m_segs[frame-1].detach();
       }
-      segs[frame-1].create(tot_size);
-   }
-
-   memcpy( segs[frame-1].addr, im, tot_size );
-
-
-
-   //Handle single image so that the cube dialog doesn't open up if dim3=1
-   if(dim3 == 1)
-   {
-      snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,bitpix=%i]",
-                                      segs[frame-1].shmemid,
-                                     dim1, dim2, bitpix);
+      m_segs[frame-1].create(tot_size);
+      
+      realloc = true;
    }
    else
    {
-      snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,zdim=%zu,bitpix=%i]",
-                                      segs[frame-1].shmemid,
-                                     dim1, dim2, dim3, bitpix);
+      if( dim1 != m_segs[frame-1].dim1 || dim2 != m_segs[frame-1].dim2 || dim3 != m_segs[frame-1].dim3 || bitpix != m_segs[frame-1].bitpix)
+      {
+         realloc = true; //force a new shm command
+      }
+   }
+
+   memcpy( m_segs[frame-1].addr, im, tot_size );
+
+   m_segs[frame-1].dim1 = dim1;
+   m_segs[frame-1].dim2 = dim2;
+   m_segs[frame-1].dim3 = dim3;
+   m_segs[frame-1].bitpix = bitpix;
+   
+   if(realloc)
+   {
+      //Handle single image so that the cube dialog doesn't open up if dim3=1
+      if(dim3 == 1)
+      {
+         snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,bitpix=%i]",
+                                         m_segs[frame-1].shmemid,
+                                        dim1, dim2, bitpix);
+      }
+      else
+      {
+         snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "shm array shmid %i [xdim=%zu,ydim=%zu,zdim=%zu,bitpix=%i]",
+                                         m_segs[frame-1].shmemid,
+                                        dim1, dim2, dim3, bitpix);
+      }
+   }
+   else
+   {
+      snprintf(cmd, DS9INTERFACE_CMD_MAX_LENGTH, "update");
    }
 
    int rv = XPASet(cmd);
@@ -749,9 +780,9 @@ int ds9Interface::shutdown()
 {
    size_t i;
 
-   for(i=0; i < segs.size(); i++) segs[i].detach();
+   for(i=0; i < m_segs.size(); i++) m_segs[i].detach();
 
-   segs.clear();
+   m_segs.clear();
 
    return 0;
 }
