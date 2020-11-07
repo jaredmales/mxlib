@@ -28,7 +28,9 @@ struct wfMeasurement
 };
 
 ///Implements a general integrator controller.
-/**
+/** \todo document the math for the G.I.
+  * \todo document the filter coefficients, etc.
+  * 
   * \tparam _realT is the floating point type for all calculations.
   */
 template<typename _realT>
@@ -55,31 +57,31 @@ public:
    ///Default c'tor.
    generalIntegrator();
 
-   imageT _closingGains;   ///< Column-vector of gains used for loop closing as pure integrator
-   int _closingRamp; ///< Number of steps over which to ramp gains linearly during loop closing.
 
 protected:
 
-   int _nModes; ///< The number of modes being filtered.
+   int m_nModes {0};        ///< The number of modes being filtered.
 
-   bool _openLoop; ///< If true, then commands are not integrated.
+   bool m_openLoop {false}; ///< If true, then commands are not integrated.
 
-   int _closingDelay; ///< If > 0, then the gains are ramped linearly up to this value. Default = 0.
+   imageT m_closingGains;   ///< Column-vector of gains used for loop closing as pure integrator
 
-   int _lowOrders; ///< If > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.  Default = 0.
+   int m_closingRamp {0};   ///< If > 0, then gains are famped linearly up to m_closingGains over this interval in time steps.
 
+   int m_closingDelay {0};  ///< If > 0, then the pure integrator,with m_closingGains is used up to this timestep. Default = 0.
 
+   int m_lowOrders {0};    ///< If > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.  Default = 0.
 
-   imageT _a;
-   int _currA;
+   imageT m_a;
+   int m_currA;
 
-   imageT _b;
-   int _currB;
+   imageT m_b;
+   int m_currB;
 
-   imageT _gains;   ///< Column-vector of gains
+   imageT m_gains;   ///< Column-vector of gains
 
-   imageT _commandsIn;
-   imageT _commandsOut;
+   imageT m_commandsIn;
+   imageT m_commandsOut;
 
 public:
 
@@ -92,51 +94,65 @@ public:
    ///Get the number of modes
    /** nModes is only set by calling initialize.
      *
-     * \returns the current value of _nModes
+     * \returns the current value of m_nModes
      */
    int nModes();
 
-   ///Set the _openLoop flag.
-   /** If _openLoop is true, then commands are not filtered.
+   ///Set the m_openLoop flag.
+   /** If m_openLoop is true, then commands are not filtered.
      *
      * \returns 0 on success, a negative integer on error.
      */
-   int openLoop(bool ol /**< [in] the new value of _openLoop */ );
+   int openLoop(bool ol /**< [in] the new value of m_openLoop */ );
 
-   ///Get the value of the _openLoop flag.
+   ///Get the value of the m_openLoop flag.
    /**
-     * \returns the current value of _openLoop.
+     * \returns the current value of m_openLoop.
      */
    bool openLoop();
 
-   ///Set _closingDelay.
-   /** If _closingDelay  > 0, then the gains are ramped linearly up to this value.
+   ///Set the closing ramp.
+   /** If m_closingRamp  > 0, then the gains are ramped linearly up to m_closingGains over this timer interval in timesteps.
+     * Requires m_closingDelay > 0.
+     * 
+     * \returns 0 on success, a negative integer on error.
+     */
+   int closingRamp( int cr /**< [in] The new value of m_closingRamp */);
+
+   ///Get the value of the m_closingRamp.
+   /**
+     * \returns the current value of m_closingRamp.
+     */
+   int closingRamp();
+   
+   ///Set the closing delay.
+   /** If m_closingDelay  > 0, then the simple integragor is used until this timestep.
      *
      * \returns 0 on success, a negative integer on error.
      */
-   int closingDelay( int cd /**< [in] The new value of _closingDelay */);
+   int closingDelay( int cd /**< [in] The new value of m_closingDelay */);
 
-   ///Get the value of the _closingDelay.
+   ///Get the value of the m_closingDelay.
    /**
-     * \returns the current value of _closingDelay.
+     * \returns the current value of m_closingDelay.
      */
    int closingDelay();
 
-   ///Set _lowOrders.
-   /** If _lowOrders > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.
+   ///Set m_lowOrders.
+   /** If m_lowOrders > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.
      *
      * \returns 0 on success, a negative integer on error.
      */
-   int lowOrders( int lo /**< [in] The new value of _lowOrders */);
+   int lowOrders( int lo /**< [in] The new value of m_lowOrders */);
 
-   ///Get the value of the _lowOrders.
+   ///Get the value of the m_lowOrders.
    /**
-     * \returns the current value of _lowOrders.
+     * \returns the current value of m_lowOrders.
      */
    int lowOrders();
 
    ///Set the size of the IIR vector (the a coefficients)
-   /** This allocates _a to be _nModes X n in size.
+   /** This allocates m_a to be m_nModes X n in size.
      *
      * \returns 0 on success, negative number on error.
      */
@@ -151,7 +167,7 @@ public:
            );
 
    ///Set the size of the FIR vector (the b coefficients)
-   /** This allocates _b to be _nModes X n in size.
+   /** This allocates m_b to be m_nModes X n in size.
      *
      * \returns 0 on success, negative number on error.
      */
@@ -186,7 +202,7 @@ public:
    int gains(realT g /**< The new gain value*/ );
 
    ///Set the gains for all modes, using a vector to specify each gain
-   /** The vector must be exactly as long as _nModes.
+   /** The vector must be exactly as long as m_nModes.
      *
      * \returns 0 on success, negative number on error.
      */
@@ -198,7 +214,7 @@ public:
 
    ///Set the gains for all modes, using a file to specify each gain
    /** The file format is a simple ASCII single column, with 1 gain per line.
-     * Must be exactly as long as _nModes.
+     * Must be exactly as long as m_nModes.
      *
      * \returns 0 on success, negative number on error.
      */
@@ -228,16 +244,6 @@ public:
 template<typename realT>
 generalIntegrator<realT>::generalIntegrator()
 {
-   _nModes = 0;
-
-   _openLoop = false;
-
-   _closingDelay = 0;
-
-   _closingRamp = 0;
-
-   _lowOrders = 0;
-
 }
 
 
@@ -245,39 +251,39 @@ generalIntegrator<realT>::generalIntegrator()
 template<typename realT>
 int generalIntegrator<realT>::initialize(int nModes)
 {
-   _nModes = nModes;
+   m_nModes = nModes;
 
-   //If _a has been sized, resize it
-   if(_a.cols() > 0)
+   //If m_a has been sized, resize it
+   if(m_a.cols() > 0)
    {
-      int n = _a.cols();
-      _a.resize(_nModes, n);
-      _a.setZero();
-      _currA = 0;
+      int n = m_a.cols();
+      m_a.resize(m_nModes, n);
+      m_a.setZero();
+      m_currA = 0;
 
-      _commandsOut.resize( _nModes, n);
-      _commandsOut.setZero();
+      m_commandsOut.resize( m_nModes, n);
+      m_commandsOut.setZero();
    }
 
-   //If _b has been sized, resize it
-   if(_b.cols() > 0)
+   //If m_b has been sized, resize it
+   if(m_b.cols() > 0)
    {
-      int n = _b.cols();
-      _b.resize(_nModes, n);
-      _b.setZero();
-      _currB = 0;
+      int n = m_b.cols();
+      m_b.resize(m_nModes, n);
+      m_b.setZero();
+      m_currB = 0;
 
-      _commandsIn.resize( _nModes, n);
-      _commandsIn.setZero();
+      m_commandsIn.resize( m_nModes, n);
+      m_commandsIn.setZero();
    }
 
-   _closingGains.resize(1,_nModes);
+   m_closingGains.resize(1,m_nModes);
 
-   _closingGains.setZero();
+   m_closingGains.setZero();
 
-   _gains.resize(1,_nModes);
+   m_gains.resize(1,m_nModes);
 
-   _gains.setZero();
+   m_gains.setZero();
 
 
    return 0;
@@ -286,26 +292,40 @@ int generalIntegrator<realT>::initialize(int nModes)
 template<typename realT>
 int generalIntegrator<realT>::nModes()
 {
-   return _nModes;
+   return m_nModes;
 }
 
 template<typename realT>
 int generalIntegrator<realT>::openLoop( bool ol )
 {
-   _openLoop = ol;
+   m_openLoop = ol;
    return 0;
 }
 
 template<typename realT>
 bool generalIntegrator<realT>::openLoop()
 {
-   return _openLoop;
+   return m_openLoop;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingRamp( int cr )
+{
+   m_closingRamp = cr;
+
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingRamp()
+{
+   return m_closingRamp;
 }
 
 template<typename realT>
 int generalIntegrator<realT>::closingDelay( int cd )
 {
-   _closingDelay = cd;
+   m_closingDelay = cd;
 
    return 0;
 }
@@ -313,13 +333,13 @@ int generalIntegrator<realT>::closingDelay( int cd )
 template<typename realT>
 int generalIntegrator<realT>::closingDelay()
 {
-   return _closingDelay;
+   return m_closingDelay;
 }
 
 template<typename realT>
 int generalIntegrator<realT>::lowOrders( int lo )
 {
-   _lowOrders = lo;
+   m_lowOrders = lo;
 
    return 0;
 }
@@ -327,27 +347,27 @@ int generalIntegrator<realT>::lowOrders( int lo )
 template<typename realT>
 int generalIntegrator<realT>::lowOrders()
 {
-   return _lowOrders;
+   return m_lowOrders;
 }
 
 template<typename realT>
 int generalIntegrator<realT>::setASize(int n)
 {
-   //Resize with _nModes if set
-   if( _nModes > 0)
+   //Resize with m_nModes if set
+   if( m_nModes > 0)
    {
-      _a.resize(_nModes, n);
-      _commandsOut.resize(_nModes, n);
+      m_a.resize(m_nModes, n);
+      m_commandsOut.resize(m_nModes, n);
    }
    else
    {
-      _a.resize(1,n);
-      _commandsOut.resize(1, n);
+      m_a.resize(1,n);
+      m_commandsOut.resize(1, n);
    }
 
-   _a.setZero();
-   _currA = 0;
-   _commandsOut.setZero();
+   m_a.setZero();
+   m_currA = 0;
+   m_commandsOut.setZero();
 
    return 0;
 }
@@ -355,7 +375,7 @@ int generalIntegrator<realT>::setASize(int n)
 template<typename realT>
 int generalIntegrator<realT>::setA(int i, const imageT & a)
 {
-   _a.row(i) = a;
+   m_a.row(i) = a;
 
    return 0;
 }
@@ -363,21 +383,21 @@ int generalIntegrator<realT>::setA(int i, const imageT & a)
 template<typename realT>
 int generalIntegrator<realT>::setBSize(int n)
 {
-   //Resize with _nModes if set
-   if( _nModes > 0)
+   //Resize with m_nModes if set
+   if( m_nModes > 0)
    {
-      _b.resize(_nModes, n);
-      _commandsIn.resize(_nModes,n);
+      m_b.resize(m_nModes, n);
+      m_commandsIn.resize(m_nModes,n);
    }
    else
    {
-      _b.resize(1,n);
-      _commandsIn.resize(1,n);
+      m_b.resize(1,n);
+      m_commandsIn.resize(1,n);
    }
 
-   _b.setZero();
-   _currB = 0;
-   _commandsIn.setZero();
+   m_b.setZero();
+   m_currB = 0;
+   m_commandsIn.setZero();
 
    return 0;
 }
@@ -385,7 +405,7 @@ int generalIntegrator<realT>::setBSize(int n)
 template<typename realT>
 int generalIntegrator<realT>::setB(int i, const imageT & b)
 {
-   _b.row(i) = b;
+   m_b.row(i) = b;
 
    return 0;
 }
@@ -394,25 +414,25 @@ int generalIntegrator<realT>::setB(int i, const imageT & b)
 template<class realT>
 realT generalIntegrator<realT>::gain(int i)
 {
-   if(i < 0 || i >= _nModes)
+   if(i < 0 || i >= m_nModes)
    {
       mxError("generalIntegrator::gain", MXE_INVALIDARG, "mode index out of range");
       return 0; ///\retval 0 if the mode doesn't exist.
    }
 
-   return _gains(i);
+   return m_gains(i);
 }
 
 template<typename realT>
 int generalIntegrator<realT>::gain(int i, realT g)
 {
-   if(i < 0 || i >= _nModes)
+   if(i < 0 || i >= m_nModes)
    {
       mxError("generalIntegrator::gain", MXE_INVALIDARG, "mode index out of range");
       return 0; ///\retval 0 if the mode doesn't exist.
    }
 
-   _gains(0,i) = g;
+   m_gains(0,i) = g;
 
    return 0;
 }
@@ -421,9 +441,9 @@ int generalIntegrator<realT>::gain(int i, realT g)
 template<typename realT>
 int generalIntegrator<realT>::gains(realT g)
 {
-   for(int i=0;i<_gains.cols(); ++i)
+   for(int i=0;i<m_gains.cols(); ++i)
    {
-      _gains(0,i) = g;
+      m_gains(0,i) = g;
    }
 
    return 0;
@@ -433,15 +453,15 @@ template<typename realT>
 int generalIntegrator<realT>::gains( const std::vector<realT> & gains )
 {
 
-   if( gains.size() != (size_t) _gains.cols())
+   if( gains.size() != (size_t) m_gains.cols())
    {
       mxError("generalIntegrator::gains", MXE_SIZEERR, "input gain vector not same size as number of modes");
       return -1; ///\retval -1 on vector size mismatch
    }
 
-   for(int i=0;i<_gains.cols(); ++i)
+   for(int i=0;i<m_gains.cols(); ++i)
    {
-      _gains(0,i) = gains[i];
+      m_gains(0,i) = gains[i];
    }
 
    return 0;
@@ -451,15 +471,15 @@ template<typename realT>
 int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
 {
 
-   if( gains.size() != (size_t) _closingGains.cols())
+   if( gains.size() != (size_t) m_closingGains.cols())
    {
       mxError("generalIntegrator::closingGains", MXE_SIZEERR, "input gain vector not same size as number of modes");
       return -1; ///\retval -1 on vector size mismatch
    }
 
-   for(int i=0;i<_closingGains.cols(); ++i)
+   for(int i=0;i<m_closingGains.cols(); ++i)
    {
-      _closingGains(0,i) = gains[i];
+      m_closingGains(0,i) = gains[i];
    }
 
    return 0;
@@ -468,9 +488,9 @@ int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
 template<typename realT>
 int generalIntegrator<realT>::closingGains(realT g)
 {
-   for(int i=0;i<_closingGains.cols(); ++i)
+   for(int i=0;i<m_closingGains.cols(); ++i)
    {
-      _closingGains(0,i) = g;
+      m_closingGains(0,i) = g;
    }
 
    return 0;
@@ -491,7 +511,7 @@ int generalIntegrator<realT>::gains(const std::string & ogainf)
 
    std::string tmpstr;
    realT g;
-   for(int i=0;i<_gains.cols();++i)
+   for(int i=0;i<m_gains.cols();++i)
    {
       fin >> tmpstr;
       g = ioutils::convertFromString<realT>(tmpstr);
@@ -505,10 +525,10 @@ int generalIntegrator<realT>::gains(const std::string & ogainf)
 template<class realT>
 int generalIntegrator<realT>::initMeasurements(commandT & filtAmps, commandT & rawAmps)
 {
-   filtAmps.measurement.resize(1, _nModes);
+   filtAmps.measurement.resize(1, m_nModes);
    filtAmps.measurement.setZero();
 
-   rawAmps.measurement.resize(1, _nModes);
+   rawAmps.measurement.resize(1, m_nModes);
    rawAmps.measurement.setZero();
 
    return 0;
@@ -521,7 +541,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 {
    filtAmps.iterNo = rawAmps.iterNo;
 
-   if(_openLoop)
+   if(m_openLoop)
    {
       filtAmps.measurement.setZero();
       return 0;
@@ -530,37 +550,37 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
    realT aTot, bTot;
 
-   if( iterNo < _closingDelay)
+   if( iterNo < m_closingDelay)
    {
       BREAD_CRUMB;
 
-      for(int i=0; i< _nModes; ++i)
+      for(int i=0; i< m_nModes; ++i)
       {
          if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
 
 
-         _commandsIn(i, _currB) = rawAmps.measurement(0,i);
+         m_commandsIn(i, m_currB) = rawAmps.measurement(0,i);
 
-         aTot = _commandsOut(i, _currA);
-         //std::cerr << _currA << " " << aTot << "\n";
+         aTot = m_commandsOut(i, m_currA);
+         //std::cerr << m_currA << " " << aTot << "\n";
 
 
-         int cA = _currA + 1;
-         if(cA >= _a.cols()) cA = 0;
+         int cA = m_currA + 1;
+         if(cA >= m_a.cols()) cA = 0;
 
 
          realT gf = 1.0;
 
-         if( iterNo < _closingRamp) gf = ((realT) iterNo)/_closingRamp;
+         if( iterNo < m_closingRamp) gf = ((realT) iterNo)/m_closingRamp;
 
 
-         _commandsOut(i, cA) = aTot + gf*_closingGains(i) * rawAmps.measurement(0,i);
+         m_commandsOut(i, cA) = aTot + gf*m_closingGains(i) * rawAmps.measurement(0,i);
 
-         //std::cerr << cA << " " << _commandsOut(i, cA) << "\n";
+         //std::cerr << cA << " " << m_commandsOut(i, cA) << "\n";
 
-         if( i <= _lowOrders || _lowOrders <= 0)
+         if( i <= m_lowOrders || m_lowOrders <= 0)
          {
-            filtAmps.measurement(0,i) = _commandsOut(i, cA);
+            filtAmps.measurement(0,i) = m_commandsOut(i, cA);
          }
          else
          {
@@ -568,12 +588,12 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
          }
       }
 
-      ++_currB;
-      if(_currB >= _b.cols()) _currB = 0;
+      ++m_currB;
+      if(m_currB >= m_b.cols()) m_currB = 0;
 
 
-      ++_currA;
-      if(_currA >= _a.cols()) _currA = 0;
+      ++m_currA;
+      if(m_currA >= m_a.cols()) m_currA = 0;
 
       return 0;
    }
@@ -581,9 +601,9 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
 
 
-   for(int i=0; i< _nModes; ++i)
+   for(int i=0; i< m_nModes; ++i)
    {
-      if(_gains(i) == 0)
+      if(m_gains(i) == 0)
       {
          filtAmps.measurement(0,i) = 0;
          continue;
@@ -593,38 +613,38 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
       if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
 
       aTot = 0;
-      for(int j = 0; j < _a.cols(); ++j)
+      for(int j = 0; j < m_a.cols(); ++j)
       {
-         int k = _currA - j;
-         if(k < 0) k += _a.cols();
-         aTot += _a(i,j) * _commandsOut(i,k);
+         int k = m_currA - j;
+         if(k < 0) k += m_a.cols();
+         aTot += m_a(i,j) * m_commandsOut(i,k);
       }
 
-      _commandsIn(i, _currB) = rawAmps.measurement(0,i);
+      m_commandsIn(i, m_currB) = rawAmps.measurement(0,i);
 
       bTot = 0;
-      for(int j = 0; j < _b.cols(); ++j)
+      for(int j = 0; j < m_b.cols(); ++j)
       {
-         int k = _currB - j;
-         if(k < 0) k += _b.cols();
+         int k = m_currB - j;
+         if(k < 0) k += m_b.cols();
 
-         bTot += _b(i,j) * _commandsIn(i,k);
+         bTot += m_b(i,j) * m_commandsIn(i,k);
       }
 
 
-      int cA= _currA + 1;
-      if( cA >= _a.cols()) cA = 0;
+      int cA= m_currA + 1;
+      if( cA >= m_a.cols()) cA = 0;
 
-      _commandsOut(i, cA) = aTot + _gains(i) * bTot;
+      m_commandsOut(i, cA) = aTot + m_gains(i) * bTot;
 
-      filtAmps.measurement(0,i) = _commandsOut(i, cA);
+      filtAmps.measurement(0,i) = m_commandsOut(i, cA);
    }
 
-   ++_currB;
-   if(_currB >= _b.cols()) _currB = 0;
+   ++m_currB;
+   if(m_currB >= m_b.cols()) m_currB = 0;
 
-   ++_currA;
-   if(_currA >= _a.cols()) _currA = 0;
+   ++m_currA;
+   if(m_currA >= m_a.cols()) m_currA = 0;
 
    return 0;
 }
