@@ -62,13 +62,15 @@ protected:
 
    int m_nModes {0};        ///< The number of modes being filtered.
 
-   bool m_openLoop {false}; ///< If true, then commands are not integrated.
+   bool m_openLoop {false}; ///< If true, then commands are not integrated. Default is false.
 
-   imageT m_closingGains;   ///< Column-vector of gains used for loop closing as pure integrator
+   int m_openLoopDelay {0}; ///< If > 0, then the loop is open for this time in time steps. Default is 0.
+   
+   int m_closingRamp {0};   ///< If > 0, then gains are famped linearly up to m_closingGains over this interval in time steps.  Default is 0. This is relative m_openLoopDelay.
 
-   int m_closingRamp {0};   ///< If > 0, then gains are famped linearly up to m_closingGains over this interval in time steps.
+   int m_closingDelay {0};  ///< If > 0, then the simple integrator,with m_closingGains is used up to this timestep.   This is relative m_openLoopDelay. Default = 0.
 
-   int m_closingDelay {0};  ///< If > 0, then the pure integrator,with m_closingGains is used up to this timestep. Default = 0.
+   imageT m_closingGains;   ///< Column-vector of gains used for loop closing as simple integrator
 
    int m_lowOrders {0};    ///< If > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.  Default = 0.
 
@@ -111,6 +113,20 @@ public:
      */
    bool openLoop();
 
+   ///Set the open loop delay.
+   /** If m_openLoopDelay  > 0, then the loop is open for this period in time-steps
+     * Requires m_closingDelay > 0.
+     * 
+     * \returns 0 on success, a negative integer on error.
+     */
+   int openLoopDelay( int cr /**< [in] The new value of m_openLoopDelay */);
+
+   ///Get the value of the m_openLoopDelay.
+   /**
+     * \returns the current value of m_openLoopDelay.
+     */
+   int openLoopDelay();
+   
    ///Set the closing ramp.
    /** If m_closingRamp  > 0, then the gains are ramped linearly up to m_closingGains over this timer interval in timesteps.
      * Requires m_closingDelay > 0.
@@ -138,6 +154,21 @@ public:
      */
    int closingDelay();
 
+   /// Set the simple integrator gains to use during closing.
+   /**
+     * \returns 0 on success
+     * \returns < 0 on error 
+     */
+   int closingGains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
+
+   /// Set the simple integrator gain to use for all modes during closing.
+   /**
+     * \returns 0 on success
+     * \returns < 0 on error 
+     */
+   int closingGains(realT g);
+
+   
    ///Set m_lowOrders.
    /** If m_lowOrders > 0, then this sets the maximum mode number which is filtered. All remaining modes are set to 0.
      *
@@ -208,9 +239,6 @@ public:
      */
    int gains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
 
-   int closingGains( const std::vector<realT> & gains /**< [in] vector of gains.*/);
-
-   int closingGains(realT g);
 
    ///Set the gains for all modes, using a file to specify each gain
    /** The file format is a simple ASCII single column, with 1 gain per line.
@@ -309,6 +337,20 @@ bool generalIntegrator<realT>::openLoop()
 }
 
 template<typename realT>
+int generalIntegrator<realT>::openLoopDelay( int old )
+{
+   m_openLoopDelay = old;
+
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::openLoopDelay()
+{
+   return m_openLoopDelay;
+}
+
+template<typename realT>
 int generalIntegrator<realT>::closingRamp( int cr )
 {
    m_closingRamp = cr;
@@ -334,6 +376,35 @@ template<typename realT>
 int generalIntegrator<realT>::closingDelay()
 {
    return m_closingDelay;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
+{
+
+   if( gains.size() != (size_t) m_closingGains.cols())
+   {
+      mxError("generalIntegrator::closingGains", MXE_SIZEERR, "input gain vector not same size as number of modes");
+      return -1; ///\retval -1 on vector size mismatch
+   }
+
+   for(int i=0;i<m_closingGains.cols(); ++i)
+   {
+      m_closingGains(0,i) = gains[i];
+   }
+
+   return 0;
+}
+
+template<typename realT>
+int generalIntegrator<realT>::closingGains(realT g)
+{
+   for(int i=0;i<m_closingGains.cols(); ++i)
+   {
+      m_closingGains(0,i) = g;
+   }
+
+   return 0;
 }
 
 template<typename realT>
@@ -467,34 +538,7 @@ int generalIntegrator<realT>::gains( const std::vector<realT> & gains )
    return 0;
 }
 
-template<typename realT>
-int generalIntegrator<realT>::closingGains( const std::vector<realT> & gains )
-{
 
-   if( gains.size() != (size_t) m_closingGains.cols())
-   {
-      mxError("generalIntegrator::closingGains", MXE_SIZEERR, "input gain vector not same size as number of modes");
-      return -1; ///\retval -1 on vector size mismatch
-   }
-
-   for(int i=0;i<m_closingGains.cols(); ++i)
-   {
-      m_closingGains(0,i) = gains[i];
-   }
-
-   return 0;
-}
-
-template<typename realT>
-int generalIntegrator<realT>::closingGains(realT g)
-{
-   for(int i=0;i<m_closingGains.cols(); ++i)
-   {
-      m_closingGains(0,i) = g;
-   }
-
-   return 0;
-}
 
 
 template<typename realT>
@@ -541,7 +585,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 {
    filtAmps.iterNo = rawAmps.iterNo;
 
-   if(m_openLoop)
+   if(m_openLoop || iterNo < m_openLoopDelay)
    {
       filtAmps.measurement.setZero();
       return 0;
@@ -550,7 +594,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
    realT aTot, bTot;
 
-   if( iterNo < m_closingDelay)
+   if( iterNo - m_openLoopDelay < m_closingDelay)
    {
       BREAD_CRUMB;
 
@@ -571,7 +615,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
          realT gf = 1.0;
 
-         if( iterNo < m_closingRamp) gf = ((realT) iterNo)/m_closingRamp;
+         if( iterNo - m_openLoopDelay < m_closingRamp) gf = ((realT) iterNo - m_openLoopDelay)/m_closingRamp;
 
 
          m_commandsOut(i, cA) = aTot + gf*m_closingGains(i) * rawAmps.measurement(0,i);
