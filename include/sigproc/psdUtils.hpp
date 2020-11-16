@@ -56,10 +56,10 @@ namespace sigproc
   * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar1sided( realT df,      ///< [in] the frequency scale of the PSD
-                    realT * PSD,   ///< [in] the PSD to integrate.
-                    size_t sz,     ///< [in] the size of the PSD vector
-                    realT half=0.5 ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+realT psdVar1sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
                   )
 {
    realT var = 0;
@@ -87,10 +87,10 @@ realT psdVar1sided( realT df,      ///< [in] the frequency scale of the PSD
   * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar2sided( realT df,      ///< [in] the frequency scale of the PSD
-                    realT * PSD,   ///< [in] the PSD to integrate.
-                    size_t sz,     ///< [in] the size of the PSD vector
-                    realT half=0.5 ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+realT psdVar2sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
                   )
 {
    realT var = 0;
@@ -122,9 +122,9 @@ realT psdVar2sided( realT df,      ///< [in] the frequency scale of the PSD
   * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar( std::vector<realT> f,     ///< [in] the frequency scale of the PSD.  
-              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
-              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+realT psdVar( const std::vector<realT> & f,   ///< [in] the frequency scale of the PSD.  
+              const std::vector<realT> & PSD, ///< [in] the PSD to integrate.
+              realT half=0.5                  ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
             )
 {
    if(f.back() < 0) return psdVar2sided(f[1]-f[0], PSD.data(), PSD.size(), half);
@@ -142,8 +142,8 @@ realT psdVar( std::vector<realT> f,     ///< [in] the frequency scale of the PSD
   */
 template<typename eigenArrT>
 typename eigenArrT::Scalar psdVarDisabled( eigenArrT & freq, ///< [in] the frequency scale of the PSD
-                                   eigenArrT & PSD,  ///< [in] the PSD to integrate.
-                                   bool trap=true    ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+                                   eigenArrT & PSD,          ///< [in] the PSD to integrate.
+                                   bool trap=true            ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
                                  )
 {
    typename eigenArrT::Scalar half = 0.5;

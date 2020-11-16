@@ -8,7 +8,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2018,2019,2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -160,7 +160,7 @@ protected:
    /// Initializes the gsl library.
    void init()
    {
-      //We'll get the occasional failure to reach tolerance error, just ignore them all for now.
+      ///\todo We'll get the occasional failure to reach tolerance error, just ignore them all for now.
       gsl_set_error_handler_off();
    }
    
