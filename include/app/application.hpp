@@ -50,7 +50,7 @@ namespace app
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
-  * - A user configuration file (specified relative to the users home directory)
+  * - A user configuration file (which may be specified relative to the users home directory)
   * - A local configuration file (in the pwd)
   * - A configuration file specified on the command line
   * - The command line
@@ -103,7 +103,7 @@ protected:
    std::string invokedName; ///< The name used to invoke this application.
 
    std::string configPathGlobal; ///< The path to the gobal configuration file.
-   std::string configPathUser; ///< The path to the user's configuration file.
+   std::string m_configPathUser; ///< The path to the user's configuration file.  If the first character is not '/' or '~', this is added to HOME.
    std::string configPathLocal; ///< The path to a local configuration file.
    bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a configuration file should be reported.
    
@@ -149,7 +149,10 @@ public:
    void setConfigPathGlobal(const std::string & s /**< [in] the new path */);
 
    ///Set the user configuration path
-   void setConfigPathUser(const std::string & s /**< [in] the new path */);
+   /** If the provided path does not star with a '/' or '~', then it will appended to
+     * the users HOME directory obtained from the environment.
+     */ 
+   void setConfigPathUser(const std::string & s /**< [in] the new path to the user config file*/);
 
    ///Set the local configuration path
    void setConfigPathLocal( const std::string & s /**< [in] the new path */);
@@ -307,7 +310,7 @@ void application::setConfigPathGlobal(const std::string & s)
 inline
 void application::setConfigPathUser(const std::string & s)
 {
-   configPathUser = s;
+   m_configPathUser = s;
 }
 
 inline
@@ -352,7 +355,7 @@ void application::setup( int argc,
    setDefaults(argc, argv);
 
    config.readConfig(configPathGlobal);
-   config.readConfig(configPathUser);
+   config.readConfig(m_configPathUser);
    config.readConfig(configPathLocal, m_requireConfigPathLocal);
 
    //Parse CL just to get the CL config.
@@ -377,7 +380,7 @@ inline
 int application::reReadConfig()
 {
    config.readConfig(configPathGlobal);
-   config.readConfig(configPathUser);
+   config.readConfig(m_configPathUser);
    config.readConfig(configPathLocal);
 
    config.readConfig(m_configPathCL);
@@ -389,10 +392,13 @@ int application::reReadConfig()
 }
 
 inline
-void application::setDefaults( int UNUSED(argc),
-                               char ** UNUSED(argv)
+void application::setDefaults( int argc,
+                               char ** argv
                              ) //virtual
 {
+   static_cast<void>(argc);
+   static_cast<void>(argv);
+   
    std::string tmp;
 
    char * tmpstr;
@@ -407,18 +413,22 @@ void application::setDefaults( int UNUSED(argc),
 
 
    #ifdef MX_APP_DEFAULT_configPathUser
-      configPathUser = MX_APP_DEFAULT_configPathUser;
+      m_configPathUser = MX_APP_DEFAULT_configPathUser;
    #endif
    #ifdef MX_APP_DEFAULT_configPathUser_env
       tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
-      if(tmpstr != 0) configPathUser = tmpstr;
+      if(tmpstr != 0) m_configPathUser = tmpstr;
    #endif
 
-   if(configPathUser != "")
+   if(m_configPathUser != "")
    {
-      tmp = getenv("HOME");
-      tmp += "/" + configPathUser;
-      configPathUser = tmp;
+      //If it's a relative path, add it to the HOME directory
+      if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
+      {
+         tmp = getenv("HOME");
+         tmp += "/" + m_configPathUser;
+         m_configPathUser = tmp;
+      }
    }
 
    #ifdef MX_APP_DEFAULT_configPathLocal
