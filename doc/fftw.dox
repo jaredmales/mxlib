@@ -15,52 +15,28 @@ Folow these steps to build the FFTW library.
 
 -# Build fftw.  This requires building each of the precisions and threading possibilities.  The commands do this are below.  You can also download <a href="https://gist.github.com/jaredmales/0aacc00b0ce493cd63d3c5c75ccc6cdd">
    this script</a> which will perform each of these. 
-  - To build single precision single-threaded:
+  - To build single precision:
        \verbatim
-       $ ./configure --enable-float
-       $ make
+       $ ./configure --enable-float --with-combined-threads --enable-threads --enable-shared
+       $ make -j
        $ sudo make install
        \endverbatim
-  -  To build single precision multi-threaded:
+  -  To build double precision:
        \verbatim
-       $ ./configure --enable-float --enable-threads
-       $ make
+       $ ./configure --with-combined-threads --enable-threads --enable-shared
+       $ make -j
        $ sudo make install
        \endverbatim
-  -  To build double precision single-threaded:
+  -  To build long double precision:
        \verbatim
-       $ ./configure
-       $ make
+       $ ./configure --enable-long-double --with-combined-threads --enable-threads --enable-shared
+       $ make -j
        $ sudo make install
        \endverbatim
-  -  To build double precision multi-threaded:
+  -  To build quad (__float128) precision:
        \verbatim
-       $ ./configure --enable-threads
-       $ make
-       $ sudo make install
-       \endverbatim
-  -  To build long double precision single-threaded:
-       \verbatim
-       $ ./configure --enable-long-double
-       $ make
-       $ sudo make install
-       \endverbatim
-  -  To build long double precision multi-threaded:
-       \verbatim
-       $ ./configure --enable-long-double --enable-threads
-       $ make
-       $ sudo make install
-       \endverbatim
-  -  To build quad (__float128) precision single-threaded:
-       \verbatim
-       $ ./configure --enable-quad-precision
-       $ make
-       $ sudo make install
-       \endverbatim
-  -  To build quad (__float128) precision multi-threaded:
-       \verbatim
-       $ ./configure --enable-quad-precision --enable-threads
-       $ make
+       $ ./configure --enable-quad-precision --with-combined-threads --enable-threads --enable-shared
+       $ make -j
        $ sudo make install
        \endverbatim
 

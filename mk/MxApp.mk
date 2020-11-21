@@ -47,7 +47,10 @@ endif
 
 ifeq ($(USE_FFT_FROM),fftw)
     #Order matters, _threads first.
-    FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
+    #FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
+    
+    #with new combined-threads:
+    FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q 
 endif
 
 ifeq ($(NEED_SOFA),yes)
