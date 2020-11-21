@@ -2091,6 +2091,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    d_opt_delta = " << optd_delta() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    F0 = " << F0() << '\n';
+   ios << "#    starMag = " << starMag() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';

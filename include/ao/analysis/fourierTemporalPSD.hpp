@@ -45,6 +45,7 @@ using namespace boost::math::constants;
 #include "../../math/vectorUtils.hpp"
 #include "../../improc/fitsFile.hpp"
 #include "../../sigproc/fourierModes.hpp"
+#include "../../sigproc/psdVarMean.hpp"
 #include "../../ioutils/stringUtils.hpp"
 #include "../../ioutils/readColumns.hpp"
 #include "../../ioutils/binVector.hpp"
@@ -891,13 +892,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          
          
          //**< For use in lifetime calculations
-         std::vector<realT> pkFreqs;
+         sigproc::psdVarMean<sigproc::psdVarMeanParams<realT>> pvm;
          std::vector<std::complex<realT>> ETFxn;
          std::vector<std::complex<realT>> NTFxn;
          
          if(lifetimeTrials > 0)
          {
-            pkFreqs.resize(m_aosys->atm.n_layers());
             ETFxn.resize(tfreq.size());
             NTFxn.resize(tfreq.size());
          }
@@ -1036,17 +1036,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                //**< Calulcate Speckle Lifetimes
                if(lifetimeTrials > 0 && ( uncontrolledLifetimes || inside ))
                {
-                  for(size_t i=0; i< m_aosys->atm.n_layers(); ++i)
-                  {
-                     realT fwind = (m/m_aosys->D())*m_aosys->atm.layer_v_wind(i)*cos(m_aosys->atm.layer_dir(i)) + (n/m_aosys->D())*m_aosys->atm.layer_v_wind(i)*sin(m_aosys->atm.layer_dir(i));
-               
-                     pkFreqs[i] = fabs(fwind);
-                  }
-                  
-                  std::vector<realT> bins = {1,1};
-                  for(size_t i=1; i< bins.size(); ++i) bins[i] = bins[i] * (2.*tfreq.back()); //convert from seconds to number of measurements
-                  std::vector<realT> vars;
-                  
+                  std::vector<realT> spfreq, sppsd;
+                                    
                   if(gopt > 0)
                   {
                      for(size_t i=0;i<tfreq.size();++i)
@@ -1064,9 +1055,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      }
                   }
                   
-                  speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
+                  speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
+                  realT spvar = sigproc::psdVar(spfreq, sppsd);
                   
-                  realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  realT splifeT = 100.0;
+                  realT error;
+                  //realT tau = sppsd[0]/(2*spvar);// bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                  realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
                      
                   speckleLifetimes( mnMax + m, mnMax + n ) = tau;
                   speckleLifetimes( mnMax - m, mnMax - n ) = tau;
@@ -1091,10 +1086,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                         }
                      }   
                   
-                     speckleAmpVarMean<realT>( vars, bins, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
-                        
-                     realT tau = bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
-                     
+                     speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
+                     realT spvar = sigproc::psdVar(spfreq, sppsd);
+                  
+                     //realT tau = sppsd[0]/(2*spvar);// bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
+                     realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
+                  
                      speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
                      speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
                   }
