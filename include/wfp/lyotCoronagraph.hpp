@@ -205,6 +205,15 @@ public:
                         const std::string & cname ///< Name of coronagraph, used as base-name for output files in m_fileDir.
                       );  
    
+   void optimizeAPLCMC( imageT & geomPupil,  ///< The geometric pupil mask, binary 1/0 transmission.
+                        realT fpmRadPix, ///< The radius in pixels of the FPM.
+                        imageT & fpmPhase,
+                        realT relTol, ///< Relative tolerance for convergence.
+                        realT absTol, ///< Absolute tolerance for convergence.
+                        int maxIter, ///< Maximum number of iterations to allow.
+                        const std::string & cname ///< Name of coronagraph, used as base-name for output files in m_fileDir.
+                      );  
+   
 };
 
 template<typename _realT, typename _fpmaskFloatT>
@@ -633,10 +642,161 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    
    fname = "coron/" + cname + "_lyot.fits";
    ff.write(fname, m_lyotStop, head);
-   
-   
+}
 
+template<typename _realT, typename _fpmaskFloatT>
+void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil, 
+                                                             realT fpmRadPix, 
+                                                             imageT & fpmPhase,
+                                                             realT relTol, 
+                                                             realT absTol, 
+                                                             int maxIter,
+                                                             const std::string & cname )
+{
+   complexFieldT focalPlane, pupilPlane;
+
+   pupilPlane.resize(m_wfSz, m_wfSz);
+   focalPlane.resize(m_wfSz, m_wfSz);
    
+   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
+   mx::wfp::circularPupil( mask, 0., fpmRadPix);   
+  
+   //Initialize pupilImage
+   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
+   pupilImage.setZero();
+   
+   int gpLLi = 0.5*(m_wfSz-1) - 0.5*(geomPupil.rows()-1);
+   int gpLLj = 0.5*(m_wfSz-1) - 0.5*(geomPupil.cols()-1);
+   
+   int gpURi = gpLLi + geomPupil.rows();
+   int gpURj = gpLLj + geomPupil.cols();
+   
+   for(int i=0;i<geomPupil.rows();++i) 
+   {
+      for(int j=0;j< geomPupil.cols();++j) 
+      {
+         pupilImage(gpLLi + i, gpLLj + j) = geomPupil(i,j);
+      }
+   }
+   
+   realT lastLambdaA, LambdaA;
+   
+   lastLambdaA = 1;
+   int n;
+   std::string reason;
+   for(n=0; n< maxIter; ++n)
+   {
+      mx::wfp::makeComplexPupil(pupilPlane, pupilImage, m_wfSz);
+      
+      m_fp.propagatePupilToFocal(focalPlane, pupilPlane);            
+
+      for(int i=0; i < m_wfSz; ++i)
+      {
+         for(int j=0;j < m_wfSz; ++j)
+         {
+            focalPlane(i,j) *= mask(i,j)*exp( std::complex<realT>(0, fpmPhase(i,j)));;
+         }
+      }  
+   
+      m_fp.propagateFocalToPupil(pupilPlane, focalPlane);
+   
+      for(int i=0; i< m_wfSz; ++i) for(int j=0;j< m_wfSz; ++j) pupilImage(i,j) = abs(pupilPlane(i,j));
+      
+      
+      LambdaA = 0;
+      for(int i=0; i< m_wfSz; ++i)
+      {
+         for(int j=0;j< m_wfSz; ++j)
+         {
+            if( i >= gpLLi && i < gpURi && j >= gpLLj && j < gpURj)
+            {
+               pupilImage(i,j) *= geomPupil(i-gpLLi,j-gpLLj); 
+               if(pupilImage(i,j) > LambdaA) LambdaA = pupilImage(i,j);
+            }
+            else
+            {
+               pupilImage(i,j) = 0;
+            }
+         }
+      }
+      //LambdaA = 1.0/LambdaA;
+      for(int i=0; i< m_wfSz; ++i) for(int j=0;j<m_wfSz; ++j) pupilImage(i,j) /= LambdaA;
+   
+      std::cout <<  n << " " << LambdaA << "\n";
+      if( fabs(LambdaA - lastLambdaA) < absTol)
+      {
+         std::cout << "Converged on absTol.\n";
+         reason = "absTol";
+         break;
+      }
+      if( fabs((LambdaA - lastLambdaA)/lastLambdaA) < relTol)
+      {
+         std::cout << "Converged on relTol.\n";
+         reason = "relTol";
+         break;
+      }
+      
+      if(n == maxIter - 1)
+      {
+         std::cout << "maxIter reached.\n";
+         reason = "maxIter";
+      }
+      
+      lastLambdaA = LambdaA;
+   }
+   if(LambdaA > 1) LambdaA = 1;
+      
+   std::cout << "LambdaA: = " << LambdaA << "\n";
+   
+   realT trans = 1.0 - 1.0/LambdaA;
+
+   int pupSize = geomPupil.rows();
+   
+   m_pupilApodizer.resize(pupSize, pupSize);
+   
+   extractBlock(m_pupilApodizer, 0, pupSize, 0, pupSize, pupilImage, 0.5*( (pupilImage.rows()-1) - (pupSize-1)), 0.5*( (pupilImage.rows()-1) - (pupSize-1))); 
+
+   makeFocalMask(fpmRadPix, trans, pupSize);
+   m_maskSource = 2;
+   
+   m_lyotStop = geomPupil;
+   
+   
+   improc::fitsHeader head;
+   
+   head.append("", improc::fitsCommentType(), "----------------------------------------");
+   head.append("", improc::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
+   head.append("", improc::fitsCommentType(), "----------------------------------------");
+   head.append<int>("WFSZ", m_wfSz, "Size of wavefront used for FFTs (pixels)");
+   head.append<realT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
+   head.append<realT>("ABSTOL", absTol , "input absolute tolerance");
+   head.append<realT>("RELTOL", relTol , "input relative tolerance");
+   head.append<int>("MAXITER", maxIter , "input maximum iterations");
+   head.append<int>("NITER", n , "actual number of iterations");
+   head.append<std::string>("XREASON", reason , "reason for convergence");
+   head.append<realT>("FPMTRANS", trans, "transmission of FPM");
+   
+   
+   mx::improc::fitsFile<double> ff;
+
+   std::string fname = "coron/" + cname + "_apod.fits";
+   
+   ff.write(fname, m_pupilApodizer, head);
+   
+   fname = "coron/" + cname + "_fpm.fits";
+   improc::eigenImage<fpmaskFloatT> fpm(m_focalMask.rows(), m_focalMask.cols());
+   for(int r=0;r<m_focalMask.rows(); ++r)
+   {
+      for(int c=0; c< m_focalMask.cols(); ++c)
+      {
+         fpm(r,c) = m_focalMask(r,c).real();
+      }
+   }
+   
+   ff.write(fname, fpm,head);
+   
+   fname = "coron/" + cname + "_lyot.fits";
+   ff.write(fname, m_lyotStop, head);
 }
 
 } //namespace wfp   

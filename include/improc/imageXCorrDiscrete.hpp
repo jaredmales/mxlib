@@ -51,6 +51,10 @@ enum class xcorrPeakMethod{ centroid, gaussfit, interp };
   * to shift the input image by the negative of the shifts, it will align with the 
   * reference at the center of the array.
   *
+  * Three peak finding methods are provided.  xcorrPeakMethod::centroid uses center of light, 
+  * xcorrPeakMethod::centroid uses Gaussian centroiding, and xcorrPeakMethod::interp uses interpolation
+  * to find the peak to a given tolerance.
+  * 
   * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
   * 
   * \ingroup image_reg
@@ -110,9 +114,14 @@ public:
    /// Set the maximum lag
    void maxLag( int ml /**< [in] the new maximum lag */);
    
+   /// Get the tolerance of the interpolated-magnified image, in pixels.
+   /**
+     * \returns the current value of m_tol.
+     */ 
    Scalar tol();
    
-   void tol( Scalar nt );
+   /// Set the tolerance of the interpolated-magnified image, in pixels.
+   void tol( Scalar nt /**< [in] The new value of the interpolation tolerance. */ );
    
    /// Set the size of the cross-correlation images.
    /** This resizes all working memory.
@@ -218,13 +227,10 @@ void imageXCorrDiscrete<ccImT>::tol( Scalar nt )
 {
    
    m_magSize = ceil(((2.*m_maxLag + 1) - 1.0)/ nt)+1;
-   std::cerr << "mag size: " << m_magSize << "\n";
    
    Scalar mag = (m_magSize-1.0)/((2.*m_maxLag + 1) - 1.0);
    
    m_tol = 1.0/mag;
-   
-   std::cerr << "actual tolerance: " << m_tol << "\n";
 }
 
 template< class ccImT>
@@ -381,7 +387,7 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar & xShift,
    else
    {
       Scalar x,y;
-      centerOfLight(x,y,m_ccIm);
+      imageCenterOfLight(x,y,m_ccIm);
       xShift = x - maxLag_r;
       yShift = y - maxLag_c;
    }

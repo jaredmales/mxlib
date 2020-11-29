@@ -1520,7 +1520,7 @@ int HCIobservation<_realT>::readWeights()
    }
 
    std::map<std::string, realT> weights;
-   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i])] = imW[i];
+   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i].c_str())] = imW[i];
 
    m_comboWeights.resize(m_fileList.size());
 
@@ -1530,7 +1530,7 @@ int HCIobservation<_realT>::readWeights()
    {
       try
       {
-         wi = weights.at(basename(m_fileList[i]));
+         wi = weights.at(basename(m_fileList[i].c_str()));
       }
       catch(...)
       {
