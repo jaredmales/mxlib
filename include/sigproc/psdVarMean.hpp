@@ -92,7 +92,7 @@ struct psdVarMeanParams
          }
          
          
-         terp.setup(gsl_interp_cspline, *freq, *psd);
+         terp.setup(gsl_interp_steffen, *freq, *psd);
          
          minf = (*freq)[0];
          maxf = (*freq)[freq->size()-1];
