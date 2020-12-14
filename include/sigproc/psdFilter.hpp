@@ -40,6 +40,7 @@ namespace mx
 namespace sigproc 
 {
 
+
 namespace psdFilterTypes
 {
 
@@ -101,6 +102,10 @@ struct arrayT<realT, 3>
 
 }
 
+//Forward declaration
+template<typename _realT, size_t rank, int cuda = 0>
+class psdFilter;
+
 /// A class for filtering noise with PSDs
 /** The square-root of the PSD is maintained by this class, either as a pointer to an external array or using internally allocated memory (which will be
   * de-allocated on destruction). 
@@ -126,7 +131,7 @@ struct arrayT<realT, 3>
   * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile "[test doc]" 
   */
 template<typename _realT, size_t _rank>
-class psdFilter
+class psdFilter<_realT, _rank, 0>
 {
 public:
    
