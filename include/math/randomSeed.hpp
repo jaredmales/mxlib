@@ -1,12 +1,12 @@
 /** \file randomSeed.hpp
   * \author Jared R. Males
   * \brief Defines a random number seed generator
-  * \ingroup random
+  * \ingroup gen_math_files
   *
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015, 2016, 2017, 2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,26 +24,26 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef __randomSeed_hpp__
-#define __randomSeed_hpp__
+#ifndef mx_math_randomSeed_hpp
+#define mx_math_randomSeed_hpp
 
 
 #include <unistd.h>
 #include <fcntl.h>
 
 
-#include "mxError.hpp"
+#include "../mxError.hpp"
 
 
 
 namespace mx
 {
+namespace math 
+{
 
 ///Get a value to use as a random seed 
 /** On Linux systems, uses /dev/urandom to populate the value with sizeof(intT) bytes.  
   * Otherwise, uses time(0) to get time since the epoch.
-  *
-  * \param [out] seedval will be populated with the seed.
   * 
   * \returns 0 on success.
   * \returns -1 on error.
@@ -54,9 +54,8 @@ namespace mx
   * 
   */ 
 template<typename intT>
-int randomSeed(intT & seedval)
+int randomSeed(intT & seedval /**< [out] will be populated with the seed.*/ )
 {   
-   
    #ifdef __linux__
    
    int fd;
@@ -107,7 +106,8 @@ int randomSeed(intT & seedval)
 
 }
 
+} //namespace math
 } //namespace mx
 
 
-#endif //__randomSeed_hpp__
+#endif //mx_math_randomSeed_hpp

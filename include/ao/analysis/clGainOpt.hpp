@@ -769,7 +769,7 @@ void clGainOpt<realT>::clTF2( realT & ETF,
    complexT olX =  olXfer(fi, H_dm, H_del, H_con); //H_dm*H_wfs*H_ma*H_del*H_con;
 
    ETF = norm(realT(1)/( realT(1) + g*olX));
-   NTF = norm(-(H_dm*H_del*g*H_con))*ETF;
+   NTF = norm(-(H_dm*H_del*g*H_con) /( realT(1) + g*olX) );
 
 }
 

@@ -312,6 +312,53 @@ struct earthAlbedo
 
 };
 
+/// Venus Spectra
+/** 
+  *
+  * \ingroup astrophot_spectra
+  */
+template<typename _units>
+struct venusAlbedo
+{
+   typedef _units units;
+   typedef typename units::realT realT;
+
+   static const bool freq = false;
+
+   typedef std::string paramsT; ///< The name of the spectrum can be "venus"
+
+   ///Convert from A to SI m
+   static constexpr realT wavelengthUnits = static_cast<realT>(1e6);
+
+   ///The Earthshine is a dimensionless albedo.
+   static constexpr realT fluxUnits = static_cast<realT>(1);
+
+   ///The location is specified by the EARTHSHINE_DATADIR environment variable.
+   static constexpr const char * dataDirEnvVar = "VENUS_DATADIR";
+
+   ///The name of the datafile is a constant.
+   static std::string fileName( const std::string & name )
+   {
+      if(name == "Venus") return "venus_albedo_normalized.dat";
+
+      mxError("earthAlbeo::fileName", MXE_INVALIDARG, "name not recognized.");
+
+      return "";
+   }
+
+   ///Read the Earthshine albedo spectrum, which is a simple two column ASCII format.
+   static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
+                            std::vector<realT> & rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
+                            const std::string & path, ///< [in] the full path to the file.
+                            const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
+                          )
+   {
+      if(mx::ioutils::readColumns(path, rawLambda, rawSpectrum) < 0) return -1;
+      return 0;
+   }
+
+};
+
 } //namespace astro
 
 } //namespace mx

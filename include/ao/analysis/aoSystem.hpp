@@ -103,6 +103,9 @@ protected:
    
    int m_fit_mn_max {100}; ///< Maximum spatial frequency index to use for fitting error calculation.
    
+   realT m_spatialFilter_ku {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in u, [m^-1]
+   realT m_spatialFilter_kv {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in v, [m^-1]
+   
    realT m_ncp_wfe {0}; ///<Static WFE [m rms]
    realT m_ncp_alpha {2}; ///< Power-law exponent for the NCP aberations.  Default is 2.
    
@@ -402,6 +405,25 @@ public:
      */
    int fit_mn_max();
    
+   /// Set the value of spatialFilter_ku
+   /**
+     */
+   void spatialFilter_ku( realT ku /**< [in] is the new value of spatialFilter_ku*/ );
+   
+   /// Get the value of spatialFilter_ku
+   /** \returns the current value of m_spatialFilter_ku
+     */
+   realT spatialFilter_ku();
+   
+   /// Set the value of spatialFilter_kv
+   /**
+     */
+   void spatialFilter_kv( realT kv /**< [in] is the new value of spatialFilter_kv*/ );
+   
+   /// Get the value of spatialFilter_kv
+   /** \returns the current value of m_spatialFilter_kv
+     */
+   realT spatialFilter_kv();
    
    /// Set the value of the non-common path WFE.
    /**
@@ -442,7 +464,9 @@ public:
      * 
      * \returns the S/N squared
      */
-   realT signal2Noise2( realT & tau_wfs /**< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used*/);
+   realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
+                        realT d          ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                      );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
    /** Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
@@ -1310,7 +1334,35 @@ int aoSystem<realT, inputSpectT, iosT>::fit_mn_max()
 {
    return m_fit_mn_max;
 }
-   
+ 
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::spatialFilter_ku( realT kx )
+{
+   m_spatialFilter_ku = fabs(kx);
+   m_specsChanged = true; //not sure if needed
+   m_dminChanged = true; //not sure if needed
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::spatialFilter_ku()
+{
+   return m_spatialFilter_ku;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::spatialFilter_kv( realT ky )
+{
+   m_spatialFilter_kv = fabs(ky);
+   m_specsChanged = true; //not sure if needed
+   m_dminChanged = true; //not sure if needed
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::spatialFilter_kv()
+{
+   return m_spatialFilter_kv;
+}
+
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::ncp_wfe(realT nwfe)
 {
@@ -1340,14 +1392,16 @@ realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs )
+realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
+                                                         realT d
+                                                       )
 {      
    realT F = Fg();
                
    double binfact = 1.0;
    if( m_bin_npix )
    {
-      binfact = pow(m_d_min/ m_d_opt,2);
+      binfact = pow(m_d_min/ d,2);
    }
    
    return pow(F*tau_wfs,2)/((F+m_npix_wfs*binfact*m_Fbg)*tau_wfs + m_npix_wfs*binfact*m_ron_wfs*m_ron_wfs);
@@ -1377,9 +1431,8 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
-   realT snr2 = signal2Noise2( tau_wfs );
-         
-  
+   realT snr2 = signal2Noise2( tau_wfs, d );
+   
    return pow(beta_p,2)/snr2*pow(m_lam_wfs/m_lam_sci, 2);
 }
 
@@ -1723,7 +1776,7 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
       
    int m = m_D/(2*d);
    int n = 0;
-   
+
    while( measurementError(m,n, d) + timeDelayError(m,n,d) > fittingError(m, n) && d < m_D/2 ) 
    {
       d += m_d_min/m_optd_delta;
@@ -2029,7 +2082,6 @@ void aoSystem<realT, inputSpectT, iosT>::C7Map( imageT & im )
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-//template<typename iosT>
 iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
@@ -2039,6 +2091,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    d_opt_delta = " << optd_delta() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    F0 = " << F0() << '\n';
+   ios << "#    starMag = " << starMag() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
@@ -2051,6 +2104,8 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
    ios << "#    deltaTau = " << deltaTau() << '\n';
    ios << "#    fit_mn_max = " << m_fit_mn_max << '\n';
+   ios << "#    spatialFilter_ku = " << m_spatialFilter_ku << '\n';
+   ios << "#    spatialFilter_kv = " << m_spatialFilter_kv << '\n';
    ios << "#    ncp_wfe = " << m_ncp_wfe << '\n';
    ios << "#    ncp_alpha = " << m_ncp_alpha << '\n';
    
@@ -2060,9 +2115,9 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
    
-   ios << "# Software versions: " << '\n';
-   ios << "#    mxlib_uncomp sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
-   ios << "#    mxlib_uncomp modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
+   ios << "#    Software version: " << '\n';
+   ios << "#       mxlib sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
+   ios << "#       mxlib modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
       
    return ios;
 }

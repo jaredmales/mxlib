@@ -50,7 +50,7 @@ struct turbAtmosphere
    typedef _realT realT;
    typedef Eigen::Array<realT, -1, -1> arrayT;
 
-   realT _pupD {0}; ///<Size of the wavefront in meters.
+   realT _pupD {0}; ///<Size of the wavefront in meters. <--This is really wavefront diameter
    size_t _wfSz {0}; ///<Size of the wavefront in pixels.
    size_t _buffSz {0}; ///<Buffer to apply around wavefront for interpolation
 
@@ -272,11 +272,10 @@ int turbAtmosphere<realT>::genLayers()
       arrayT freq;
       arrayT psub;
       arrayT psd;
-      
-      
-      sigproc::psdFilter<realT> filt;
+            
+      sigproc::psdFilter<realT,2> filt;
 
-      mx::normDistT<realT> normVar;
+      mx::math::normDistT<realT> normVar;
       normVar.seed();
 
       size_t scrnSz;
@@ -316,7 +315,7 @@ int turbAtmosphere<realT>::genLayers()
 
       psd.resize(scrnSz, scrnSz);
 
-      filt.psd(psd);
+      //filt.psd(psd);
             
      // #pragma omp for
       double t0, t1, t2, dt = 0, dt1=0;
@@ -330,10 +329,15 @@ int turbAtmosphere<realT>::genLayers()
          l0 = _layers[i]._l0;
 
          std::cerr << scrnSz << " " << r0 << " " << L0 << " " << l0 << "\n";
+         psd.resize(scrnSz, scrnSz);
+
+         freq.resize(scrnSz, scrnSz);
+         sigproc::frequency_grid<arrayT>(freq, _pupD/_wfSz);
 
          t0 = get_curr_time();
 
-         beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
+         //beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
+         beta = 0.0218/pow( r0, 5./3.) * pow(_lambda0/_lambda, 2);
 
          if(L0 > 0) L02 = 1.0/(L0*L0);
          else L02 = 0;
@@ -359,7 +363,8 @@ int turbAtmosphere<realT>::genLayers()
          }
 
          t1 = get_curr_time();
-         filt.psdSqrt(psd);
+         
+         filt.psdSqrt(psd, freq(1,0)-freq(0,0),freq(0,1)-freq(0,0) );
 
          filt(_layers[i].phase);
          
@@ -462,7 +467,7 @@ void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
    shift( wf.phase, _nWf * _timeStep);
    ++_nWf;
 
-   wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
+   //wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
 
    wf.amplitude = _pixVal*(*_pupil);
 }

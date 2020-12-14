@@ -574,8 +574,6 @@ public:
    ///Set whether the final combined image is written to disk
    int m_doWriteFinim {1};
 
-   ///\todo should mkdir on output directory
-   
    ///The directory where to write output files.
    std::string m_outputDir;
 
@@ -835,7 +833,7 @@ int HCIobservation<_realT>::readFiles()
 
    for(size_t i=0;i<m_keywords.size();++i)
    {
-      head.append(m_keywords[i]);
+      if(head.count(m_keywords[i]) == 0) head.append(m_keywords[i]);
    }
 
    m_heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
@@ -1522,7 +1520,7 @@ int HCIobservation<_realT>::readWeights()
    }
 
    std::map<std::string, realT> weights;
-   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i])] = imW[i];
+   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i].c_str())] = imW[i];
 
    m_comboWeights.resize(m_fileList.size());
 
@@ -1532,7 +1530,7 @@ int HCIobservation<_realT>::readWeights()
    {
       try
       {
-         wi = weights.at(basename(m_fileList[i]));
+         wi = weights.at(basename(m_fileList[i].c_str()));
       }
       catch(...)
       {
@@ -1726,6 +1724,8 @@ void HCIobservation<_realT>::writeFinim(improc::fitsHeader * addHead)
 
    if(m_outputDir != "")
    {
+      mkdir(m_outputDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+   
       fname = m_outputDir + "/" + fname;
    }
 
@@ -1792,6 +1792,7 @@ void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
       fname = m_PSFSubPrefix + "weights.dat";
       if(m_outputDir != "")
       {
+         mkdir(m_outputDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
          fname = m_outputDir + "/" + fname;
       }
       wout.open(fname);
@@ -1808,12 +1809,15 @@ void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
 
          if(m_outputDir != "")
          {
+            mkdir(m_outputDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             fname = m_outputDir + "/" + fname;
          }
    
          fitsHeader h = head;
 
          h.append(m_heads[p]);
+         
+         
          f.write(fname, m_psfsub[n].image(p).data(), m_psfsub[n].rows(), m_psfsub[n].cols(), 1, h);
          
          if(m_comboWeights.size() > 0 && n == 0)

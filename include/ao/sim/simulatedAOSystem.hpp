@@ -695,7 +695,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       {
          BREAD_CRUMB;
 
-         recon.reconstruct(measuredAmps, wfs.detectorImage);
+         recon.reconstruct(measuredAmps, wfs.m_detectorImage);
 
          BREAD_CRUMB;
 
@@ -769,18 +769,20 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
 
     //Mean subtraction on the system pupil.
-   mn = (wf.phase * _pupil).sum()/_npix;
-   wf.phase = (wf.phase-mn)*_pupil;
+//    mn = (wf.phase * _pupil).sum()/_npix;
+//    wf.phase = (wf.phase-mn)*_pupil;
 
    //**** Calculate RMS phase ****//
    realT rms_cl;
-   rms_cl = sqrt( wf.phase.square().sum()/ _postMask.sum() );
+   mn = (wf.phase * _pupil).sum()/_npix;
+   std::cerr << "mean at rms_cl: " << mn << "\n";
+   rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
 
    std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
 
    if(m_sfImagePlane)
    {
-      wfs._filter.filter(wf.phase);
+      wfs.filter().filter(wf.phase);
    }
 
    BREAD_CRUMB;

@@ -86,7 +86,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
          REQUIRE( val == "val5");
       }
       
-      WHEN("sections, repeated keys")
+      WHEN("sections, repeated keys still unique within sections")
       {
          writeConfigFile( "/tmp/test.conf", {"",     "",     "sect1", "sect1", "sect2", "sect2"},
                                             {"key0", "key1", "key2",  "key3",  "key2",  "key3"},
@@ -160,9 +160,15 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
          config(val, "key5");
          REQUIRE( val == "val5");
 
+         //Check taht the unused on is unused
+         REQUIRE(config.m_unusedConfigs[iniFile::makeKey("","key3")].used == false);
+         
          //Check that the unused one is available.
          config.configUnused(val, "", "key3");
-         REQUIRE( val == "val3");         
+         REQUIRE( val == "val3");        
+         
+         //Check taht the unused on is now used
+         REQUIRE(config.m_unusedConfigs[iniFile::makeKey("","key3")].used == true);
       }
       
       WHEN("sections, repeated keys, unused sections")
@@ -212,7 +218,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
    }
    
 #if 1
-   GIVEN("a config file with repeated keys")
+   GIVEN("a config file with repeated keys within the same section")
    {
       WHEN("no sections")
       {

@@ -50,7 +50,7 @@ namespace app
   *
   * This class uses a cascaded configuration system.  The application configuration is built up from the following sources, in increasing order of precedence:
   * - A global configuration file
-  * - A user configuration file (specified relative to the users home directory)
+  * - A user configuration file (which may be specified relative to the users home directory)
   * - A local configuration file (in the pwd)
   * - A configuration file specified on the command line
   * - The command line
@@ -103,12 +103,13 @@ protected:
    std::string invokedName; ///< The name used to invoke this application.
 
    std::string configPathGlobal; ///< The path to the gobal configuration file.
-   std::string configPathUser; ///< The path to the user's configuration file.
+   std::string m_configPathUser; ///< The path to the user's configuration file.  If the first character is not '/' or '~', this is added to HOME.
    std::string configPathLocal; ///< The path to a local configuration file.
    bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a configuration file should be reported.
    
-   std::string configPathCL; ///< The path to a configuration file specified on the command line.
-
+   std::string m_configPathCL; ///< The path to a configuration file specified on the command line.
+   std::string m_configPathCLBase; ///< A base path to add to the CL path.  Can be set by environment variable defined in MX_APP_DEFAULT_configPathCLBase_env.
+   
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
    bool m_preserveConfig {false}; ///< Flag controlling whether the configuration is cleared before execution.  Set in derived constructor.
@@ -148,7 +149,10 @@ public:
    void setConfigPathGlobal(const std::string & s /**< [in] the new path */);
 
    ///Set the user configuration path
-   void setConfigPathUser(const std::string & s /**< [in] the new path */);
+   /** If the provided path does not star with a '/' or '~', then it will appended to
+     * the users HOME directory obtained from the environment.
+     */ 
+   void setConfigPathUser(const std::string & s /**< [in] the new path to the user config file*/);
 
    ///Set the local configuration path
    void setConfigPathLocal( const std::string & s /**< [in] the new path */);
@@ -251,7 +255,13 @@ protected:
    /** This is called just before loadConfig().
      */
    virtual void loadBasicConfig();
-
+   
+   /// Check the config.  This is called at the end of setup, before the configuration is cleared.
+   /** It is up to you to decide how to handle the outcome.  If a bad config results in printing help,
+     * you can set the doHelp flag.
+     */
+   virtual void checkConfig();
+   
    ///Print a formatted help message, based on the config target inputs.
    virtual void help();
 
@@ -300,7 +310,7 @@ void application::setConfigPathGlobal(const std::string & s)
 inline
 void application::setConfigPathUser(const std::string & s)
 {
-   configPathUser = s;
+   m_configPathUser = s;
 }
 
 inline
@@ -345,7 +355,7 @@ void application::setup( int argc,
    setDefaults(argc, argv);
 
    config.readConfig(configPathGlobal);
-   config.readConfig(configPathUser);
+   config.readConfig(m_configPathUser);
    config.readConfig(configPathLocal, m_requireConfigPathLocal);
 
    //Parse CL just to get the CL config.
@@ -353,7 +363,7 @@ void application::setup( int argc,
 
    //And now get the value of it and parse it.
    loadStandardConfig();
-   config.readConfig(configPathCL);
+   config.readConfig(m_configPathCL);
 
    //Now parse the command line for real.
    config.parseCommandLine(argc, argv);
@@ -362,16 +372,18 @@ void application::setup( int argc,
 
    loadBasicConfig();
    loadConfig();
+   
+   checkConfig();
 }
 
 inline
 int application::reReadConfig()
 {
    config.readConfig(configPathGlobal);
-   config.readConfig(configPathUser);
+   config.readConfig(m_configPathUser);
    config.readConfig(configPathLocal);
 
-   config.readConfig(configPathCL);
+   config.readConfig(m_configPathCL);
 
    //Now parse the command line for real.
    config.parseCommandLine(m_argc, m_argv);
@@ -380,35 +392,43 @@ int application::reReadConfig()
 }
 
 inline
-void application::setDefaults( int UNUSED(argc),
-                               char ** UNUSED(argv)
+void application::setDefaults( int argc,
+                               char ** argv
                              ) //virtual
 {
+   static_cast<void>(argc);
+   static_cast<void>(argv);
+   
    std::string tmp;
 
+   char * tmpstr;
+   
    #ifdef MX_APP_DEFAULT_configPathGlobal
       configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
    #endif
    #ifdef MX_APP_DEFAULT_configPathGlobal_env
-      char * tmpstr;
       tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
       if(tmpstr != 0) configPathGlobal = tmpstr;
    #endif
 
 
    #ifdef MX_APP_DEFAULT_configPathUser
-      configPathUser = MX_APP_DEFAULT_configPathUser;
+      m_configPathUser = MX_APP_DEFAULT_configPathUser;
    #endif
    #ifdef MX_APP_DEFAULT_configPathUser_env
       tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
-      if(tmpstr != 0) configPathUser = tmpstr;
+      if(tmpstr != 0) m_configPathUser = tmpstr;
    #endif
 
-   if(configPathUser != "")
+   if(m_configPathUser != "")
    {
-      tmp = getenv("HOME");
-      tmp += "/" + configPathUser;
-      configPathUser = tmp;
+      //If it's a relative path, add it to the HOME directory
+      if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
+      {
+         tmp = getenv("HOME");
+         tmp += "/" + m_configPathUser;
+         m_configPathUser = tmp;
+      }
    }
 
    #ifdef MX_APP_DEFAULT_configPathLocal
@@ -419,6 +439,14 @@ void application::setDefaults( int UNUSED(argc),
       if(tmpstr != 0) configPathLocal = tmpstr;
    #endif
 
+   #ifdef MX_APP_DEFAULT_configPathCLBase_env 
+      tmpstr = getenv(MX_APP_DEFAULT_configPathCLBase_env);
+      if(tmpstr != 0) m_configPathCLBase = tmpstr;
+      if(m_configPathCLBase.size()>0)
+         if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
+            m_configPathCLBase += '/';
+   #endif
+      
    return;
 
 }
@@ -438,7 +466,8 @@ void application::setupStandardHelp() //virtual
 inline
 void application::loadStandardConfig() //virtual
 {
-   config(configPathCL, "config");
+   config(m_configPathCL, "config");
+   m_configPathCL = m_configPathCLBase + m_configPathCL; 
 }
 
 inline
@@ -455,6 +484,12 @@ void application::setupBasicConfig() //virtual
 
 inline
 void application::loadBasicConfig() //virtual
+{
+   return;
+}
+
+inline
+void application::checkConfig() //virtual
 {
    return;
 }

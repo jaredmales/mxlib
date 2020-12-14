@@ -45,6 +45,8 @@ namespace improc
   * The shift is reported in pixels such that if the mxlib imageShift function is used
   * to shift the input image by the negative of the shifts, it will align with the 
   * reference.
+  * 
+  * \todo This needs to be brought up to the same standard as imageXCorrFFT.  Perhaps folded in as an alternative method?
   *
   * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
   * 
@@ -97,7 +99,7 @@ public:
    /// Default c'tor
    imageXCorrFFT();
    
-   /// Construct seeting maxLag.
+   /// Constructor setting maxLag.
    explicit imageXCorrFFT(int maxLag);
    
    /// Get the current maximum lag 

@@ -303,7 +303,7 @@ valueT vectorVariance( const valueT * vec, ///< [in] the vector
   */
 template<typename vectorT>
 typename vectorT::value_type vectorVariance( const vectorT & vec,  ///< [in] the vector
-                                             typename vectorT::value_type & mean ///< [in] the mean value with which to calculate the variance
+                                             const typename vectorT::value_type & mean ///< [in] the mean value with which to calculate the variance
                                            )
 {
    typename vectorT::value_type var;
@@ -470,8 +470,8 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
   * \overload
   */
 template<typename vectorT>
-typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] the vector (unaltered)
-                                              const vectorT & weights, ///<  [in] [optional] the weights (unaltered)
+typename vectorT::value_type vectorSigmaMean( const vectorT & vec,               ///< [in] the vector (unaltered)
+                                              const vectorT & weights,           ///< [in] [optional] the weights (unaltered)
                                               typename vectorT::value_type sigma ///< [in] the standard deviation threshold to apply.
                                             )
 {
@@ -482,20 +482,39 @@ typename vectorT::value_type vectorSigmaMean( const vectorT & vec,  ///<  [in] t
 
 
 /// Subtract a constant value from a vector
-template<typename vecT, typename constT>
-void vectorSub( vecT &vec,       ///<  [in/out] the vector, each element will have the constant subtracted from it
+template<typename valueT, typename constT>
+void vectorSub( valueT *vec,     ///< [in/out] the vector, each element will have the constant subtracted from it
+                size_t sz,       ///< [in] the size of the vector
                 const constT & c ///< [in] the constant to subtract from each element
               )
 {
-   for(size_t n=0; n< vec.size();++n) vec[n] -= c;
+   for(size_t n=0; n< sz;++n) vec[n] -= c;
+}
+
+/// Subtract a constant value from a vector
+template<typename vecT, typename constT>
+void vectorSub( vecT &vec,       ///< [in/out] the vector, each element will have the constant subtracted from it
+                const constT & c ///< [in] the constant to subtract from each element
+              )
+{
+   vectorSub(vec.data(), vec.size(), c);
+}
+
+/// Subtract the mean from a vector
+template<typename valueT>
+void vectorMeanSub( valueT *vec, ///< [in/out] the vector, each element will have the mean subtracted from it
+                    size_t sz    ///< [in] the vector size
+                  )
+{
+   valueT m = vectorMean(vec,sz);
+   vectorSub(vec,sz,m);
 }
 
 /// Subtract the mean from a vector
 template<typename vecT>
-void vectorMeanSub( vecT &vec /**<  [in/out] the vector, each element will have the mean subtracted from it*/)
+void vectorMeanSub( vecT &vec /**< [in/out] the vector, each element will have the mean subtracted from it*/)
 {
-   typename vecT::value_type m = vectorMean(vec);
-   vectorSub(vec,m);
+   vectorMeanSub( vec.data(), vec.size());
 }
 
 /// Subtract the median from a vector
@@ -535,6 +554,62 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
 
    }
 
+   return 0;
+}
+
+/// Smooth a vector using the mean in windows specified by their full-widths
+/** You supply a window width for each point.  This is useful for, say, logarithmically growing bin sizes in a 
+  * PSD.
+  * 
+  * \returns 0 on success
+  * \returns -1 but who are we kidding it we don't check for errors
+  * 
+  */ 
+template<typename realT>
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                      std::vector<realT> & vec,  ///< [in] the input vector, unaltered.
+                      std::vector<int> & wins,   ///< [in] the full-widths of the smoothing windows, same size as vec.
+                      bool norm = false          ///< [in] if true the output will normalized to have the same integral as the input. 
+                    )
+{
+   smVec = vec;
+
+   realT sum;
+   int n;
+   for(int i=0; i < vec.size(); ++i)
+   {
+      int j = i - 0.5*wins[i];
+      if(j < 0) j = 0;
+
+      sum = 0;
+      n = 0;
+      while( j <= i+0.5*wins[i] && j < vec.size())
+      {
+         sum += vec[j];
+         ++n;
+         ++j;
+      }
+
+      smVec[i] = sum/n;
+
+   }
+
+   if(norm)
+   {
+      realT sumin = 0, sumout = 0;
+      
+      for(int i=0; i < vec.size(); ++i)
+      {
+         sumin += vec[i];
+         sumout += smVec[i];
+      }
+      
+      for(int i=0; i < vec.size(); ++i)
+      {
+         smVec[i] *= sumin/sumout;
+      }
+   }
+   
    return 0;
 }
 
@@ -653,7 +728,7 @@ int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoot
 
    dataOut.resize(dataIn.size());
 
-   realT sigma = fwhm2sigma(fwhm);
+   realT sigma = func::fwhm2sigma<realT>(fwhm);
 
    for(int i=0; i< dataIn.size(); ++i)
    {

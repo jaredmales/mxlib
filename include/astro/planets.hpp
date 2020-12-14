@@ -23,7 +23,7 @@ namespace astro
   * @{
   */
 
-///An ad-hoc planetary mass-to-radius relationship.
+///An ad-hoc planetary mass-to-radius relationship (old version)
 /** The goal of this function is to provide a radius given an exoplanet mass, for lightly-irradiated exoplanets.  By lightly-irradiated we mean (roughly) planet's at 
   * Mercury's separation or further, scaled for stellar luminosity.
   * Here we make use of the transition from rocky to gas-dominated composition at \f$ 1.6  R_e \f$ identified by Rogers \cite rogers_2015 
@@ -81,6 +81,77 @@ typename units::realT planetMass2Radius( typename units::realT mass /**< The mas
    }
    
 
+}
+
+///An ad-hoc planetary mass-to-radius relationship.
+/** The goal of this function is to provide a radius given an exoplanet mass, for cool, lightly-irradiated exoplanets.  Here cool means \f$T_{eq} < 1000 \f$ K.
+  * 
+  * We make use of the transition from rocky to gas-dominated composition at \f$ 1.6  R_\oplus \f$ identified by Rogers \cite rogers_2015 
+  * (see also Marcy et al. (2014) \cite marcy_2014).  Below this radius we assume Earth composition and so
+  * \f$ R \propto M^{1/3}\f$.  
+  * 
+  * Above \f$ 15 M_\oplus\f$ we use the empirical relationship of Thorngren et al (2019) \cite{Thorngren_2019}.
+  * 
+  * Between these two cases we scale with a power law matched to the endpoints.
+  *
+  * Above  \f$ 12 M_{Jup} we scale as \f$ M^{-1/8} \f$ based on the curve shown in Fortney et al. (2011) \cite fortney_2010.
+  * 
+  * \image html planet_mrdiag_2017.06.19.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue circles are the Solar system.  Points
+  * with error bars are from the NASA exoplanet catalog, selected for \f$T_{eq} < 1000\f$ K
+  *
+  * This function makes use of the units type system (\ref astrounits) so it can be used with Earth masses, Jupiter masses, kg (SI units), etc.
+  *
+  * \returns the estimated radius of the planet.
+  * 
+  * \tparam units is the units-type specifying the units of mass.  See \ref astrounits.
+  */ 
+template<typename units>
+typename units::realT planetMass2RadiusWThorngren( typename units::realT mass /**< The mass of the planet. */)
+{
+   typedef typename units::realT realT;
+   
+   using namespace mx::astro::constants;
+
+   if( mass <  4.1*massEarth<units>())
+   {
+      return pow( mass/massEarth<units>(), boost::math::constants::third<realT>())*radEarth<units>();
+   }
+   else if( mass < static_cast<realT>(15.00)*massEarth<units>() )
+   {
+      return 0.6413*pow( mass/massEarth<units>(), static_cast<realT>(0.6477))*radEarth<units>();
+   }
+   else if( mass < 12*massJupiter<units>())
+   {
+      realT lM = log10(mass/massJupiter<units>());
+     
+      return (static_cast<realT>(0.96)+static_cast<realT>(0.21)*lM - static_cast<realT>(0.20)*pow(lM,2))*radJupiter<units>();
+   }
+   else
+   {
+      return static_cast<realT>(29.97)*pow(mass/massEarth<units>(), static_cast<realT>(-0.125))* radEarth<units>();
+   }
+   
+
+}
+
+/// Empirical mass-to-radius relationship for cool EGPs from Thorngren et al. (2019)
+/** A polynomial in log(M) fit to cool (T < 1000 K) exoplanets by Thorngren et al. (2019) \cite Thorngren_2019.
+  * Only valid for \f$ 15 M_\oplus < M < 12 M_{Jup} \f$
+  * 
+  * \returns the estimated radius of the planet.
+  * 
+  * \tparam units is the units-type specifying the units of mass.  See \ref astrounits.
+  */ 
+template<typename units>
+typename units::realT planetMass2RadiusThorngren( typename units::realT mass /**< The mass of the planet. */)
+{
+   typedef typename units::realT realT;
+   
+   using namespace mx::astro::constants;
+   
+   realT lM = log10(mass/massJupiter<units>());
+   
+   return (0.96+0.21*lM - 0.2*pow(lM,2))*radJupiter<units>();
 }
 
 ///The planetary mass-to-radius of Fabrycky et al. (2014)..

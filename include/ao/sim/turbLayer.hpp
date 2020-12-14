@@ -14,7 +14,7 @@
 
 #include <Eigen/Dense>
 
-#include "../../randomT.hpp"
+#include "../../math/randomT.hpp"
 
 #include "../../improc/imageTransforms.hpp"
 
@@ -65,7 +65,7 @@ struct turbLayer
    arrayT shiftPhase;
    arrayT shiftPhaseWork;
 
-   mx::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
+   mx::math::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
    
    //turbLayer();
    

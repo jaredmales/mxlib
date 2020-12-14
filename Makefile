@@ -40,9 +40,7 @@ INC_TO_INSTALL = ao \
                  mxlib.hpp\
                  mxlib_uncomp_version.h\
                  ompLoopWatcher.hpp \
-                 timeUtils.hpp \
-                 randomSeed.hpp \
-                 randomT.hpp 
+                 timeUtils.hpp 
 
 all: install
 

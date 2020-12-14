@@ -12,7 +12,7 @@
 //#include <Eigen/Dense>
 
 #include "../../improc/imageTransforms.hpp"
-#include "../../randomT.hpp"
+#include "../../math/randomT.hpp"
 
 #include "wavefront.hpp"
 
@@ -46,12 +46,12 @@ public:
 
    typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
 
-   typedef mx::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
+   typedef mx::math::randomT<realT, std::mt19937_64, std::normal_distribution<realT> > norm_distT;
 
-   typedef mx::randomT<int, std::mt19937_64, std::poisson_distribution<int> > poisson_distT;
+   typedef mx::math::randomT<int, std::mt19937_64, std::poisson_distribution<int> > poisson_distT;
 
 
-   typedef mx::randomT<realT, std::mt19937_64, std::gamma_distribution<realT> > gamma_distT;
+   typedef mx::math::randomT<realT, std::mt19937_64, std::gamma_distribution<realT> > gamma_distT;
 
 
 

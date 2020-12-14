@@ -70,11 +70,7 @@ namespace basis
 
       return path;
    }
-   
-
-
-
-   } //namespace basis
+} //namespace basis
 
 //--------------------------------------------------------------------------------
 
@@ -537,6 +533,74 @@ namespace sys
          path += id;
          path += ".fits";
    
+         return path;
+      }
+      
+      std::string siGains( const std::string & sysName,
+                           const std::string & dmName,
+                           const std::string & wfsName, 
+                           const std::string & pupilName,
+                           const std::string & basisName,
+                           double mag,
+                           bool create = false
+                         )
+      {
+         std::string path = root(sysName, create);
+         path += "/" + dmName + "/" + wfsName + "/" + pupilName + "/" + basisName + "/gains/si";
+
+         if(create)
+         {
+            boost::filesystem::create_directories(path);
+         }
+
+         path += "/optg_" + std::to_string(mag) + "mag.fits";
+         
+         return path;
+      }
+      
+      std::string lpGains( const std::string & sysName,
+                           const std::string & dmName,
+                           const std::string & wfsName, 
+                           const std::string & pupilName,
+                           const std::string & basisName,
+                           double mag,
+                           int lpNc,
+                           bool create = false
+                         )
+      {
+         std::string path = root(sysName, create);
+         path += "/" + dmName + "/" + wfsName + "/" + pupilName + "/" + basisName + "/gains/lp";
+
+         if(create)
+         {
+            boost::filesystem::create_directories(path);
+         }
+
+         path += "/optg_" + std::to_string(mag) + "mag_lpNc_" + std::to_string(lpNc) + ".fits";
+         
+         return path;
+      }
+       
+      std::string lpCoeff( const std::string & sysName,
+                           const std::string & dmName,
+                           const std::string & wfsName, 
+                           const std::string & pupilName,
+                           const std::string & basisName,
+                           double mag,
+                           int lpNc,
+                           bool create = false
+                         )
+      {
+         std::string path = root(sysName, create);
+         path += "/" + dmName + "/" + wfsName + "/" + pupilName + "/" + basisName + "/gains/lp";
+
+         if(create)
+         {
+            boost::filesystem::create_directories(path);
+         }
+
+         path += "/lpc_" + std::to_string(mag) + "mag_lpNc_" + std::to_string(lpNc) + ".fits";
+         
          return path;
       }
    }// namespace cal

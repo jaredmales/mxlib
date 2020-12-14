@@ -845,7 +845,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
    eigenImageT cv;
  
    math::eigenSYRK(cv, rims.cube());
-      
+    
    fitsFile<realT> ff;
    ff.write("cv.fits", cv);
    ompLoopWatcher<> status( this->m_Nims, std::cerr);
@@ -856,11 +856,15 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
    {
       double teigenv;
       double tklim;
+      
+      std::cerr << cv.rows() << " " << cv.cols() << " " << rims.rows() << " " << rims.cols() << " " << rims.planes() << " " << m_maxNmodes << "\n";
       math::calcKLModes<double>(master_klims, cv, rims.cube(), m_maxNmodes, nullptr, &teigenv, &tklim);
+      
       t_eigenv += teigenv;
       t_klim += tklim;
    }
       
+   
    //int nTh = 0;
    #pragma omp parallel //num_threads(20) 
    {

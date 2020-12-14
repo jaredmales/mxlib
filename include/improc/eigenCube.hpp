@@ -79,7 +79,7 @@ public:
 
    void setZero();
 
-   eigenCube<dataT> & operator=(eigenCube<dataT> & ec);
+   eigenCube<dataT> & operator=(const eigenCube<dataT> & ec);
 
    void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false);
 
@@ -117,6 +117,13 @@ public:
    ///Calculate the covariance matrix of the images in the cube
    void Covar(Matrix<dataT, Dynamic, Dynamic> & cv);
 
+   ///Calculate the sum image of the cube
+   /**
+     * \tparam eigenT an Eigen-like type.
+     */
+   template<typename eigenT>
+   void sum( eigenT & mim /**< [out] the resultant sum image.  Is resized. */);
+   
    ///Calculate the mean image of the cube
    /**
      * \tparam eigenT an Eigen-like type.
@@ -206,6 +213,8 @@ public:
                    Scalar sigma, ///< [in] the sigma value at which to clip.
                    double minGoodFract = 0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
                  );
+   
+   
 };
 
 template<typename dataT>
@@ -257,7 +266,7 @@ void eigenCube<dataT>::setZero()
 }
 
 template<typename dataT>
-eigenCube<dataT> & eigenCube<dataT>::operator=(eigenCube<dataT> & ec)
+eigenCube<dataT> & eigenCube<dataT>::operator=(const eigenCube<dataT> & ec)
 {
    resize(ec.rows(), ec.cols(), ec.planes());
 
@@ -393,6 +402,22 @@ template<typename dataT>
 void eigenCube<dataT>::Covar(Matrix<dataT, Dynamic, Dynamic> & cv)
 {
    cv = asVectors().matrix().transpose()*asVectors().matrix();
+}
+
+template<typename dataT>
+template<typename eigenT>
+void eigenCube<dataT>::sum(eigenT & mim)
+{
+   mim.resize(_rows, _cols);
+
+   #pragma omp parallel for schedule(static, 1) num_threads(Eigen::nbThreads())
+   for(Index i=0; i < _rows; ++i)
+   {
+      for(Index j=0;j< _cols; ++j)
+      {
+         mim(i,j) = pixel(i,j).sum();
+      }
+   }
 }
 
 template<typename dataT>

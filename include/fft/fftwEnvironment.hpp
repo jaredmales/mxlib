@@ -131,12 +131,15 @@ struct fftwEnvironment
 {
    explicit fftwEnvironment(unsigned UNUSED(nThreads) = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
    {
-      fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+      errno = 0;
+      int rv = fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+      
    }
    
    ~fftwEnvironment()
    {
-      fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
+      errno = 0;
+      int rv = fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
 
       fftw_cleanup<realT>();
    }

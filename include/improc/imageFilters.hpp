@@ -585,7 +585,9 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
               vecT & prof,             ///< [out] the median image value at the corresponding radius. Should be empty.
               const eigenImT1 & im,    ///< [in] the image of which to calculate the profile
               const eigenImT2 & radim, ///< [in] image of radius values per pixel
-              const eigenImT3 * mask   ///< [in] [optional] 1/0 mask, only pixels with a value of 1 are included in the profile 
+              const eigenImT3 * mask,  ///< [in] [optional] 1/0 mask, only pixels with a value of 1 are included in the profile. Set to 0 to not use.
+              bool mean = false,       ///< [in] [optional] set to true to use the mean.  If false (default) the median is used.
+              typename eigenImT1::Scalar minr = 0
             )
 {
    typedef typename eigenImT1::Scalar floatT;
@@ -594,7 +596,7 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
    int dim2 = im.cols();
    
    floatT maxr; 
-   floatT minr;
+   //floatT minr;
    
    size_t nPix;
    if(mask)
@@ -628,11 +630,19 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
    
    sort(rv.begin(), rv.end(), radvalRadComp<floatT>());
    
-   minr = rv[0].r;
+//    for(auto it=rv.begin(); it != rv.end(); ++it)
+//    {
+//       std::cout << it->r << " " << it->v << "\n";
+//    }
+//    
+//    exit(0);
+   
+   
+   if(minr == 0) minr = rv[0].r;
    maxr = rv.back().r;
    
    /*Now bin*/
-   floatT dr = 1;
+   floatT dr = 1.0;
    floatT r0 = minr;
    floatT r1 = minr + dr;
    int i1=0, i2, n;
@@ -645,11 +655,26 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
       i2 = i1;
       while(rv[i2].r <= r1) ++i2;
       
-      n = 0.5*(i2-i1);
+      if(mean)
+      {
+         med = 0;
+         for(int in=i1; in<i2; ++in) med += rv[in].v;
+         med /= (i2-i1);
+      }
+      else
+      {
+         n = 0.5*(i2-i1);
 
-      std::nth_element(rv.begin()+i1, rv.begin()+i1+n, rv.begin()+i2, radvalValComp<floatT>());
+         std::nth_element(rv.begin()+i1, rv.begin()+i1+n, rv.begin()+i2, radvalValComp<floatT>());
       
-      med = (rv.begin()+i1+n)->v;
+         med = (rv.begin()+i1+n)->v;
+         
+         //Average two points if even number of points
+         if((i2-i1)%2 == 0)
+         {
+            med = 0.5*(med + (*std::max_element(rv.begin()+i1, rv.begin()+i1+n, radvalValComp<floatT>())).v);
+         }
+      }
       
       rad.push_back(.5*(r0+r1));
       prof.push_back(med);
@@ -676,10 +701,11 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
   * \ingroup rad_prof
   */ 
 template<typename vecT, typename eigenImT1, typename eigenImT2>
-void radprof( vecT & rad,            ///< [out] the radius points for the profile. Should be empty.
-              vecT & prof,           ///< [out] the median image value at the corresponding radius. Should be empty.
-              const eigenImT1 & im,  ///< [in] the image of which to calculate the profile
-              const eigenImT2 & mask ///< [in] 1/0 mask, only pixels with a value of 1 are included in the profile 
+void radprof( vecT & rad,             ///< [out] the radius points for the profile. Should be empty.
+              vecT & prof,            ///< [out] the median image value at the corresponding radius. Should be empty.
+              const eigenImT1 & im,   ///< [in] the image of which to calculate the profile
+              const eigenImT2 & mask, ///< [in] 1/0 mask, only pixels with a value of 1 are included in the profile 
+              bool mean = false       ///< [in] [optional] set to true to use the mean.  If false (default) the median is used.
             )
 {
    eigenImage<typename eigenImT1::Scalar> radim;
@@ -687,7 +713,7 @@ void radprof( vecT & rad,            ///< [out] the radius points for the profil
    
    radiusImage(radim);
    
-   radprof(rad, prof, im, radim, &mask);
+   radprof(rad, prof, im, radim, &mask, mean);
 }
 
 /// Calculate the the radial profile
@@ -702,9 +728,11 @@ void radprof( vecT & rad,            ///< [out] the radius points for the profil
   * \ingroup rad_prof
   */ 
 template<typename vecT, typename eigenImT1>
-void radprof( vecT & rad,          ///< [out] the radius points for the profile. Should be empty.
-              vecT & prof,         ///< [out] the median image value at the corresponding radius. Should be empty.
-              const eigenImT1 & im ///< [in] the image of which to calculate the profile
+void radprof( vecT & rad,           ///< [out] the radius points for the profile. Should be empty.
+              vecT & prof,          ///< [out] the median image value at the corresponding radius. Should be empty.
+              const eigenImT1 & im, ///< [in] the image of which to calculate the profile
+              bool mean = false,     ///< [in] [optional] set to true to use the mean.  If false (default) the median is used.
+              double dr = 1
             )
 {
    eigenImage<typename eigenImT1::Scalar> radim;
@@ -712,7 +740,7 @@ void radprof( vecT & rad,          ///< [out] the radius points for the profile.
    
    radiusImage(radim);
    
-   radprof(rad, prof, im, radim, (eigenImage<typename eigenImT1::Scalar> *) nullptr);
+   radprof(rad, prof, im, radim, (eigenImage<typename eigenImT1::Scalar> *) nullptr, mean, dr);
 }
 
 ///Form a radial profile image, and optionally subtract it from the input
@@ -727,11 +755,12 @@ void radprof( vecT & rad,          ///< [out] the radius points for the profile.
   * \ingroup rad_prof
   */ 
 template<typename radprofT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
-void radprofim( radprofT & radprofIm,     ///< [out] the radial profile image.  This will be resized.
-                eigenImT1 & im,   ///< [in the image to form the profile of. 
+void radprofim( radprofT & radprofIm,   ///< [out] the radial profile image.  This will be resized.
+                eigenImT1 & im,         ///< [in the image to form the profile of. 
                 const eigenImT2 & rad,  ///< [in] an array of radius values for each pixel
                 const eigenImT3 * mask, ///< [in] [optional 1/0 mask, only pixels with a value of 1 are included in the profile. Can be nullptr.
-                bool subtract           ///< [in] if true, then on ouput im will have had its radial profile subtracted.
+                bool subtract,          ///< [in] if true, then on ouput im will have had its radial profile subtracted.
+                bool mean = false       ///< [in] [optional] set to true to use the mean.  If false (default) the median is used. 
               )
 {
   
@@ -778,9 +807,10 @@ void radprofim( radprofT & radprofIm,     ///< [out] the radial profile image.  
   * \ingroup rad_prof
   */ 
 template<typename radprofT, typename eigenImT>
-void radprofim( radprofT & radprof,   ///< [out] the radial profile image.  This will be resized.
-                eigenImT & im,        ///< [in] the image to form the profile of. 
-                bool subtract = false ///< [in] [optional] if true, then on ouput im will have had its radial profile subtracted.
+void radprofim( radprofT & radprof,    ///< [out] the radial profile image.  This will be resized.
+                eigenImT & im,         ///< [in] the image to form the profile of. 
+                bool subtract = false, ///< [in] [optional] if true, then on ouput im will have had its radial profile subtracted.
+                bool mean = false      ///< [in] [optional] set to true to use the mean.  If false (default) the median is used. 
               )
 {
    eigenImage<typename eigenImT::Scalar> rad;

@@ -47,7 +47,10 @@ endif
 
 ifeq ($(USE_FFT_FROM),fftw)
     #Order matters, _threads first.
-    FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
+    #FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
+    
+    #with new combined-threads:
+    FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q 
 endif
 
 ifeq ($(NEED_SOFA),yes)
@@ -106,6 +109,7 @@ ifeq ($(NEED_FFTW),yes)
    EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 endif
 
+
 LDLIBS += $(EXTRA_LDLIBS) 
 LDFLAGS += $(EXTRA_LDFLAGS)
 
@@ -119,7 +123,15 @@ LINK.o = $(LINK.cc)
 # or `t=` for short
 TARGET ?= $(t)
 
-all: $(TARGET) $(OTHER_OBJS)
+#Check if we want a target specific git version header
+ifeq ($(GIT_VERSION),yes)
+   #change target name to uppercase
+   GIT_VERSION_DEF = $(shell echo $(TARGET) | tr a-z A-Z)_GIT
+   PRE_TARGETS += git_version
+endif
+
+
+all: $(PRE_TARGETS) $(TARGET) $(OTHER_OBJS) 
 
 $(TARGET):  $(TARGET).o  $(OTHER_OBJS)
 	$(LINK.o)  -o $(TARGET) $(TARGET).o $(OTHER_OBJS) $(LDFLAGS) $(LDLIBS)
@@ -128,8 +140,12 @@ install: all
 	install -d $(BIN_PATH)
 	install $(TARGET) $(BIN_PATH)
 
+.PHONY: git_version
+git_version:
+	@bash gengithead.sh ./ ./$(TARGET)_git_version.h $(GIT_VERSION_DEF)
+	
 .PHONY: clean
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(TARGET)_git_version.h
 	rm -f *.o 
 	rm -f *~
