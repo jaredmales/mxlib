@@ -323,6 +323,9 @@ using lapDistT = randomT<realT, std::mt19937_64, laplace_distribution<realT>>;
 template<typename intT>
 using poissonDistT = randomT<intT, std::mt19937_64, std::poisson_distribution<intT>>;
 
+///Alias for a log normal variate
+template<typename realT>
+using lognormDistT = randomT<realT, std::mt19937_64, std::lognormal_distribution<realT>>;
 
 /// @}
 
