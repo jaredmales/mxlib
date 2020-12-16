@@ -111,6 +111,12 @@ struct cudaPtr
       return (typename cpp2cudaType<devicePtrT>::cudaType*) m_devicePtr;
    }
    
+   ///Conversion operator, accesses the device pointer for use in Cuda functions.
+   const typename cpp2cudaType<devicePtrT>::cudaType* operator()() const
+   {
+      return (typename cpp2cudaType<devicePtrT>::cudaType*) m_devicePtr;
+   }
+   
 };
 
 template<typename T>

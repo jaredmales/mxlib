@@ -29,6 +29,10 @@
 #ifndef psdUtils_hpp
 #define psdUtils_hpp
 
+#ifndef EIGEN_NO_CUDA
+#define EIGEN_NO_CUDA
+#endif
+
 #include <Eigen/Dense>
 
 #include <iostream>
@@ -46,19 +50,21 @@ namespace sigproc
   * @{
   */
 
-/// Calculate the variance of a PSD
+/// Calculate the variance of a 1-D, 1-sided PSD
 /** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
   *
   * \returns the variance of a PSD (the integral).
   *
   * \tparam realT the real floating point type
+  * 
+  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar( realT df,      ///< [in] the frequency scale of the PSD
-              realT * PSD,   ///< [in] the PSD to integrate.
-              size_t sz,     ///< [in] the size of the PSD vector
-              realT half=0.5 ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
-            )
+realT psdVar1sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+                  )
 {
    realT var = 0;
 
@@ -73,22 +79,60 @@ realT psdVar( realT df,      ///< [in] the frequency scale of the PSD
    return var;
 }
 
-/// Calculate the variance of a PSD
+/// Calculate the variance of a 1-D, 2-sided PSD
 /** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  *
+  * Assumes the 2-sided PSD is in standard FFT storage order, and that sz is even.
   * 
   * \returns the variance of a PSD (the integral).
   *
   * \tparam realT the real floating point type
   * 
-  * \overload
+  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
-              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
-              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
+realT psdVar2sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+                  )
+{
+   realT var = 0;
+
+   var = PSD[0];
+   
+   size_t i=1;
+   for(; i< sz/2; ++i) 
+   {
+      var += PSD[i];
+      var += PSD[sz-i];
+   }
+   var += half*PSD[i]; //The mid-point is double.  It is also the endpoint of integration from each side, so it would enter twice, hence once here.
+   
+   var *= df;
+
+   return var;
+}
+
+/// Calculate the variance of a 1-D PSD
+/** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  * 
+  * If f.back() < 0, then a 2-sided PSD in FFT storage order is assumed.  Otherwise, PSD is treated as 1-sided.
+  * 
+  * \returns the variance of a PSD (the integral).
+  *
+  * \tparam realT the real floating point type
+  * 
+  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
+  */
+template<typename realT>
+realT psdVar( const std::vector<realT> & f,   ///< [in] the frequency scale of the PSD.  
+              const std::vector<realT> & PSD, ///< [in] the PSD to integrate.
+              realT half=0.5                  ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
             )
 {
-   return psdVar(df, PSD.data(), PSD.size(), half);
+   if(f.back() < 0) return psdVar2sided(f[1]-f[0], PSD.data(), PSD.size(), half);
+   else return psdVar1sided(f[1]-f[0], PSD.data(), PSD.size(), half);
 }
 
 ///Calculate the variance of a PSD
@@ -101,9 +145,9 @@ realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
   * \tparam realT the real floating point type
   */
 template<typename eigenArrT>
-typename eigenArrT::Scalar psdVar( eigenArrT & freq, ///< [in] the frequency scale of the PSD
-                                   eigenArrT & PSD,  ///< [in] the PSD to integrate.
-                                   bool trap=true    ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+typename eigenArrT::Scalar psdVarDisabled( eigenArrT & freq, ///< [in] the frequency scale of the PSD
+                                   eigenArrT & PSD,          ///< [in] the PSD to integrate.
+                                   bool trap=true            ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
                                  )
 {
    typename eigenArrT::Scalar half = 0.5;
