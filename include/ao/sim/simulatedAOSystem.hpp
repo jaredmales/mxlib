@@ -616,6 +616,8 @@ template<typename realT, typename wfsT, typename reconT, typename filterT, typen
 void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nextWF(wavefrontT & wf)
 {
 
+   realT rms_ol, rms_cl;
+   
    BREAD_CRUMB;
 
    if(_npix == 0)
@@ -628,13 +630,10 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    turbSeq.nextWF(wf);
    wf.iterNo = _frameCounter;
 
-   //std::cout << "Input Photons: " << wf.amplitude.square().sum() << "\n";
-
    BREAD_CRUMB;
 
    //Mean subtraction on the system pupil.
    realT mn = (wf.phase * _pupil).sum()/_npix;
-
 
    //Apply the pupil mask just once.
    wf.phase = (wf.phase-mn)*_pupil;
@@ -647,22 +646,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
    BREAD_CRUMB;
 
-  /*
-   if(_openLoopAmps)
-   {
-      calcOpenLoopAmps(wf);
-   }*/
-
-
-   BREAD_CRUMB;
-
-   realT rms_ol = sqrt(  wf.phase.square().sum()/ _npix );
+   if(_frameCounter % 10 == 0) rms_ol = sqrt(  wf.phase.square().sum()/ _npix );
 
    BREAD_CRUMB;
 
    typename filterT::commandT measuredAmps, commandAmps;
-
-   BREAD_CRUMB;
 
    filter.initMeasurements(measuredAmps, commandAmps);
 
@@ -674,17 +662,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       }
    }
 
-
-   BREAD_CRUMB;
-
-//   _wfsLambda = 0.78e-6;;
-
-   BREAD_CRUMB;
-   if(_loopClosed) dm.applyShape(wf, _wfsLambda);
-
    BREAD_CRUMB;
    if(_loopClosed)
    {
+      dm.applyShape(wf, _wfsLambda);
+      
       bool newCV;
 
       BREAD_CRUMB;
@@ -708,9 +690,9 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
             }
 
             _ampOut << measuredAmps.iterNo << "> ";
-            for(int i=0;i<measuredAmps.measurement.cols(); ++i)
+            for(int i=0;i<measuredAmps.measurement.size(); ++i)
             {
-               _ampOut << measuredAmps.measurement(0,i) << " ";
+               _ampOut << measuredAmps.measurement[i] << " ";
             }
             _ampOut << std::endl;
          }
@@ -723,23 +705,17 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
          _delayedCommands[nAmps].iterNo = measuredAmps.iterNo;
 
          _goodCommands[nAmps] = 1;
-
-
-         //std::cerr << "nAmps: " << nAmps <<  " " << 1 << "\n";
       }
       else
       {
          int nAmps = ( _frameCounter % _delayedCommands.size() );
          _goodCommands[nAmps] = 0;
-         //std::cerr << "nAmps: " << nAmps <<  " " << 0 << "\n";
       }
 
 
       int _currCommand = ( _frameCounter % _delayedCommands.size() ) - _commandDelay;
       if(_currCommand < 0) _currCommand += _delayedCommands.size();
 
-
-      //std::cerr << "\t\t Current Command: " << ( _frameCounter % _delayedCommands.size() ) << " " << _currCommand << " " << _goodCommands[_currCommand] << "\n";
       if(_goodCommands[_currCommand])
       {
          BREAD_CRUMB;
@@ -757,7 +733,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    {
       int nAmps = ( _frameCounter % _delayedCommands.size() );
       _goodCommands[nAmps] = 0;
-      //std::cerr << "nAmps: " << nAmps <<  " " << 0 << "\n";
    }
 
 
@@ -768,18 +743,14 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    }
 
 
-    //Mean subtraction on the system pupil.
-//    mn = (wf.phase * _pupil).sum()/_npix;
-//    wf.phase = (wf.phase-mn)*_pupil;
-
    //**** Calculate RMS phase ****//
-   realT rms_cl;
-   mn = (wf.phase * _pupil).sum()/_npix;
-   std::cerr << "mean at rms_cl: " << mn << "\n";
-   rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
-
-   std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
-
+   if(_frameCounter % 10 == 0)
+   {
+      mn = (wf.phase * _pupil).sum()/_npix;
+      rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
+      std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
+   }
+   
    if(m_sfImagePlane)
    {
       wfs.filter().filter(wf.phase);

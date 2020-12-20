@@ -14,9 +14,10 @@
 //#include <mx/fraunhoferImager.hpp>
 #include "../../timeUtils.hpp"
 #include "../../improc/fitsFile.hpp"
-#include "../../improc/ds9Interface.hpp"
 
 #include "../../ioutils/readColumns.hpp"
+
+#include "../../cuda/templateCudaPtr.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
@@ -64,13 +65,13 @@ public:
 
    typedef deformableMirrorSpec specT;
 
-protected:
+public: //<-give these accesors and make protected
 
    std::string _name;
 
    std::string _basisName;
 
-   std::string _pupilName;
+   std::string m_pupilName;
 
    ///Time to move from old shape to new shape, in loop time steps
    int _settleTime;
@@ -82,19 +83,25 @@ protected:
    ///The amplitude used when measuring the response matrix of the current basis set.
    float _calAmp;
 
-   ///The system pupil, possibly apodized, etc.
-   imageT _pupil;
-   realT m_pupilSum;
+
+   imageT m_pupil;    ///The system pupil, possibly apodized, etc.
+   realT m_pupilSum; ///The sum of the pupil mask, nominally the number of pixels.
+   std::vector<size_t> m_idx; /// The offset coordinates of non-zero pixels in the pupil
+   
 
 public:
-   improc::ds9Interface ds9i_shape, ds9i_phase, ds9i_acts;
 
    //The modes-2-command matrix for the basis
    Eigen::Array<realT, -1, -1> _m2c;
 
    //The mirror influence functions
-   improc::eigenCube<realT> _infF;
-
+   improc::eigenCube<realT> m_infF;
+   cuda::cudaPtr<realT> m_infFGPU;
+   
+   
+   size_t m_nActs;
+   size_t m_nRows;
+   size_t m_nCols;
 
 protected:
    //The current shape of the mirror
@@ -169,14 +176,6 @@ public:
    std::string _commandFile;
    std::ofstream _commandFout;
 
-   int display_phase;
-   int display_phase_counter;
-   int display_shape;
-   int display_shape_counter;
-
-   int display_acts;
-   int display_acts_counter;
-
    realT _commandLimit;
 
    Eigen::Array<double,-1,-1> _pos, _map;
@@ -196,24 +195,12 @@ deformableMirror<_realT>::deformableMirror()
    _settling = 0;
    _settleTime_counter = 0;
    _calAmp = 1e-6;
-
-   ds9i_shape.title("DM_Shape");
-   ds9i_phase.title("DM_Phase");
-   ds9i_acts.title("DM_Actuators");
-
+   
    t_mm = 0;
    t_sum = 0;
 
    _writeCommands = false;
    _commandFileOpen = false;
-
-   display_phase = 0;
-   display_phase_counter = 0;
-   display_shape = 0;
-   display_shape_counter = 0;
-
-   display_acts = 0;
-   display_acts_counter = 0;
 
    _commandLimit = 0;
 
@@ -229,24 +216,57 @@ int deformableMirror<_realT>::initialize( specT & spec,
 {
    _name = spec.name;
    _basisName = spec.basisName;
-   _pupilName = pupil;
+   m_pupilName = pupil;
 
    improc::fitsFile<_realT> ff;
 
    std::string pName;
-   pName = mx::AO::path::pupil::pupilFile(_pupilName);
-   ff.read(_pupil, pName);
-   m_pupilSum = _pupil.sum();
+   pName = mx::AO::path::pupil::pupilFile(m_pupilName);
+   ff.read(m_pupil, pName);
+   m_pupilSum = m_pupil.sum();
 
+   m_idx.clear();
+   int kk = 0;
+   for(int rr=0;rr<m_pupil.rows();++rr)
+   {
+      for(int cc=0;cc<m_pupil.cols();++cc)
+      {
+         if(m_pupil(rr,cc) == 1)
+         {
+            m_idx.push_back(kk);
+         }
+         ++kk;
+      }
+   }
+   
    if(_name == "modalDM")
    {
       std::cerr << "modalDM\n";
 
       std::string ifName;
       ifName = mx::AO::path::basis::modes(_basisName);
-      ff.read(_infF, ifName);
+      
+      ff.read(m_infF, ifName);
 
-      _m2c.resize( _infF.planes(), _infF.planes());
+      m_nActs = m_infF.planes();
+      m_nRows = m_infF.rows();
+      m_nCols = m_infF.cols();
+      
+      mx::improc::eigenImage<realT> modft;
+      
+      modft.resize(m_nActs, m_idx.size());
+   
+      for(int pp=0;pp<m_nActs;++pp)
+      {
+         for(int nn=0; nn < m_idx.size(); ++nn)
+         {
+            modft(pp,nn) = *(m_infF.image(pp).data() + m_idx[nn])/m_pupilSum; //(m_idx_r[nn], m_idx_c[nn])/m_pupilSum;
+         }
+      }
+   
+      m_infFGPU.upload(modft.data(), modft.rows()*modft.cols());
+      
+      _m2c.resize( m_nActs, m_nActs);
       _m2c.setZero();
 
       for(int i=0;i<_m2c.rows();++i) _m2c(i,i) = 1.0;
@@ -254,6 +274,9 @@ int deformableMirror<_realT>::initialize( specT & spec,
    }
    else
    {
+      std::cerr << "Non-modal DM is currently not implemented\n";
+      exit(-1);
+#if 0
       std::string ifName;
       ifName = mx::AO::path::dm::influenceFunctions(_name);
 
@@ -262,13 +285,13 @@ int deformableMirror<_realT>::initialize( specT & spec,
       ff.read(infFLoad, ifName);
 
       realT c = 0.5*(infFLoad.rows()-1);
-      realT w = 0.5*(_pupil.rows()-1);
+      realT w = 0.5*(m_pupil.rows()-1);
 
-      _infF.resize( _pupil.rows(), _pupil.cols(), infFLoad.planes());
+      m_infF.resize( m_pupil.rows(), m_pupil.cols(), infFLoad.planes());
 
       for(int i=0;i<infFLoad.planes(); ++i)
       {
-         _infF.image(i) = infFLoad.image(i).block( c-w, c-w, _pupil.rows(), _pupil.rows());
+         m_infF.image(i) = infFLoad.image(i).block( c-w, c-w, m_pupil.rows(), m_pupil.rows());
       }
 
       std::string m2cName;
@@ -281,10 +304,11 @@ int deformableMirror<_realT>::initialize( specT & spec,
       std::string posName =  mx::AO::path::dm::actuatorPositions(_name, true);
 
       ff.read(_pos, posName);
+#endif
 
    }
 
-   _shape.resize(_infF.rows(), _infF.cols());
+   _shape.resize(m_nRows, m_nCols);
 
    _shape.setZero();
    _nextShape = _shape;
@@ -349,24 +373,24 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
    t1 = get_curr_time();
    t_mm += t1-t0;
 
-   imageT shape( _infF.rows(), _infF.cols());
+   imageT shape( m_nRows, m_nCols);
 
 
-   shape = c(0,0)*_infF.image(0);
+   shape = c(0,0)*m_infF.image(0);
 
 
    t0 = get_curr_time();
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp;
-      //tmp.resize(_infF.rows(), _infF.cols());
+      //tmp.resize(m_nRows, m_nCols);
       //tmp.setZero();
-      tmp.setZero(_infF.rows(), _infF.cols());
+      tmp.setZero(m_nRows, m_nCols);
 
       #pragma omp for schedule(static)
-      for(int i=1;i < _infF.planes(); ++i)
+      for(int i=1;i < m_nActs; ++i)
       {
-         tmp +=  c(i,0) * _infF.image(i);
+         tmp +=  c(i,0) * m_infF.image(i);
       }
       #pragma omp critical
       shape += tmp;
@@ -374,20 +398,8 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
 
    t1 = get_curr_time();
    t_sum += t1-t0;
-  // ds9_interface_display_raw( &ds9i, 1, shape.data(), shape.rows(), shape.cols(),1, mx::getFitsBITPIX<realT>());
 
-   wf.phase += 2*amp*shape*_pupil*two_pi<realT>()/lambda;
-
-   if( display_shape > 0)
-   {
-      ++display_shape_counter;
-
-      if(display_shape_counter >= display_shape)
-      {
-         ds9i_shape(wf.phase);
-         display_shape_counter = 0;
-      }
-   }
+   wf.phase += 2*amp*shape*m_pupil*two_pi<realT>()/lambda;
 
 }
 
@@ -453,10 +465,11 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    }
 
 
-   Eigen::Array<_realT, -1, -1> c;
+   static Eigen::Array<_realT, -1, -1> c; //static to avoid re-alloc, todo: make class member
 
    //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
-   c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
+   Eigen::Map<Eigen::Array<realT,-1,-1>> commandV_measurement(commandV.measurement.data(), 1, commandV.measurement.size());
+   c = -1*_calAmp*_m2c.matrix() * commandV_measurement.matrix().transpose();
 
    if(_commandLimit > 0)
    {
@@ -489,24 +502,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       if(nLimited > 0) std::cerr << nLimited << " strokes limited\n";
 
    }
-
-
-
-
-   if( display_acts > 0)
-   {
-      ++display_acts_counter;
-
-      if(display_acts_counter >= display_acts)
-      {
-         makeMap( _map, _pos, c);
-
-         ds9i_acts(_map);
-//          ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
-         display_acts_counter = 0;
-      }
-   }
-
 
 #if 0
    if(_commandLimit > 0 )
@@ -542,7 +537,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    bool skipFrame = 0;
 
    ///\todo Should check for command limits here.
-   for(int i=0; i< _infF.planes(); ++i)
+   for(int i=0; i< m_nActs; ++i)
    {
       if( std::isnan( c(i,0) ) || !std::isfinite(c(i,0)))
       {
@@ -558,17 +553,17 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    }
 
    //_nextShape.setZero();
-   _nextShape = c(0,0)*_infF.image(0);//*sigma[0];
+   _nextShape = c(0,0)*m_infF.image(0);//*sigma[0];
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp ;
-      tmp.resize(_infF.rows(), _infF.cols());
+      tmp.resize(m_nRows, m_nCols);
       tmp.setZero();
 
       #pragma omp for
-      for(int i=1;i < _infF.planes(); ++i)
+      for(int i=1;i < m_nActs; ++i)
       {
-         tmp +=  c(i,0) * _infF.image(i);//*sigma[i];
+         tmp +=  c(i,0) * m_infF.image(i);//*sigma[i];
       }
       #pragma omp critical
       _nextShape += tmp;
@@ -579,7 +574,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
 
    if(m_applyFilter)
    {
-      std::cerr << "filtering\n";
+      std::cerr << "DM filtering\n";
       m_filter.filter(_nextShape);
    }
       
@@ -607,8 +602,8 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
       BREAD_CRUMB;
        _shape = _oldShape + (_nextShape-_oldShape)*( (realT) _settleTime_counter+1.0)/( (realT) _settleTime);
 
-       realT mn = (_shape*_pupil).sum()/m_pupilSum;
-       _shape = (_shape - mn)*_pupil;
+       realT mn = (_shape*m_pupil).sum()/m_pupilSum;
+       _shape = (_shape - mn)*m_pupil;
        
        ++_settleTime_counter;
 
@@ -621,42 +616,14 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
 #endif
 
 
-   if( display_shape > 0)
-   {
-      ++display_shape_counter;
-
-      if(display_shape_counter >= display_shape)
-      {
-         ds9i_shape(_shape);
-//          ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
-         display_shape_counter = 0;
-      }
-   }
-
    BREAD_CRUMB;
-
-   //wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
 
    wf.phase += 2*_shape*two_pi<realT>()/lambda;
    
-   if( display_phase > 0)
-   {
-      ++display_phase_counter;
-
-      if(display_phase_counter >= display_phase)
-      {
-         ds9i_phase(wf.phase);
-//          ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
-
-         display_phase_counter = 0;
-      }
-   }
-
-
    BREAD_CRUMB;
 
    #ifdef MXAO_DIAG_LOOPCOUNTS
-   std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   std::cerr << "DM " << m_nActs << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
    #endif
 }
 
