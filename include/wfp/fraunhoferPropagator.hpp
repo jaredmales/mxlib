@@ -37,12 +37,8 @@ namespace mx
 
 namespace wfp
 {
-   
-template<typename _wavefrontT, int wholePixel=0, int _cudaGPU = 0>
-class fraunhoferPropagator; 
 
-
-/// Class to perform Fraunhofer propagation between pupil and focal planes using the CPU
+/// Class to perform Fraunhofer propagation between pupil and focal planes
 /** This class uses the FFT to propagate between planes, and normalizes so that flux
   * is conserved.  For propagation from pupil to focal plane, the pupil wavefront is tilted so that
   * the focal-plane image is centered at the geometric center of the array.  After propagation from
@@ -287,5 +283,3 @@ void fraunhoferPropagator<wavefrontT>::makeShiftPhase()
 } //namespace mx
 
 #endif //wfp_fraunhoferPropagator_hpp
-
-
