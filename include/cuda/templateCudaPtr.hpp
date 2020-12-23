@@ -72,6 +72,12 @@ struct cudaPtr
                size_t z_sz  ///< [in] the new z size
              );
    
+   /// Initialize the array bytes to 0.
+   /** Just a wrapper to cudaMemset.
+     *
+     */  
+   cudaError_t initialize();
+   
    ///Free the memory allocation
    /** 
      * \returns 0 on success.
@@ -106,13 +112,13 @@ struct cudaPtr
    int download( hostPtrT * dest /**< [in] The host location, allocated.*/ );
    
    ///Conversion operator, accesses the device pointer for use in Cuda functions.
-   typename cpp2cudaType<devicePtrT>::cudaType* operator()()
+   operator typename cpp2cudaType<devicePtrT>::cudaType*()
    {
       return (typename cpp2cudaType<devicePtrT>::cudaType*) m_devicePtr;
    }
    
    ///Conversion operator, accesses the device pointer for use in Cuda functions.
-   const typename cpp2cudaType<devicePtrT>::cudaType* operator()() const
+   operator const typename cpp2cudaType<devicePtrT>::cudaType*() const
    {
       return (typename cpp2cudaType<devicePtrT>::cudaType*) m_devicePtr;
    }
@@ -161,6 +167,12 @@ int cudaPtr<T>::resize( size_t x_sz,
    return resize(x_sz*y_sz*z_sz);
 }
 
+template<typename T>
+cudaError_t cudaPtr<T>::initialize()
+{
+   return ::cudaMemset(m_devicePtr, 0, m_size*sizeof(devicePtrT));
+}
+   
 template<typename T>
 int cudaPtr<T>::free()
 {
