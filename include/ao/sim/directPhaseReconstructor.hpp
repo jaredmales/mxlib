@@ -7,6 +7,9 @@
 #include "../../improc/fitsFile.hpp"
 using namespace mx::improc;
 
+#include "../../cuda/templateCudaPtr.hpp"
+#include "../../cuda/templateCublas.hpp"
+
 #include "../../sigproc/signalWindows.hpp"
 
 #ifdef DEBUG
@@ -71,7 +74,21 @@ protected:
    /** \name The Reconstructor
      * @{
      */
+   
+   #ifdef MXAO_USE_GPU
+   cublasHandle_t *m_cublasHandle;
+   
+   cuda::cudaPtr<realT> m_one;
+   cuda::cudaPtr<realT> m_zero;
+   
+   cuda::cudaPtr<realT> m_devRecon;
+   cuda::cudaPtr<realT> m_devSlopes;
+   cuda::cudaPtr<realT> m_devAmps;
+   
+   #else
    Eigen::Array<realT,-1,-1> m_recon; ///< The reconstructor matrix.
+   #endif
+
    int m_measurementSize {0}; ///<The number of values in the measurement
    std::vector<size_t> * m_idx {nullptr}; /// The offset coordinates of non-zero pixels in the pupil.  Set by the DM.
    ///@}
@@ -199,6 +216,39 @@ void directPhaseReconstructor<realT>::initialize( AOSysT & AOSys,
          
    m_measurementSize = m_idx->size();
    
+   #ifdef MXAO_USE_GPU
+   
+   m_cublasHandle = &AOSys.m_cublasHandle;
+   //m_cublasHandle = new cublasHandle_t; //&AOSys.m_cublasHandle;
+   //cublasCreate(m_cublasHandle);
+   //cublasSetPointerMode(*m_cublasHandle, CUBLAS_POINTER_MODE_DEVICE);
+   
+   
+   m_one.resize(1);
+   realT one = 1.0;
+   m_one.upload(&one, 1);
+      
+   m_zero.resize(1);
+   m_zero.initialize();
+      
+   imageT recon;
+   recon.resize(m_nModes, m_measurementSize);
+   for(int pp=0; pp<m_nModes; ++pp)
+   {
+      for(int nn=0; nn < m_idx->size(); ++nn)
+      {
+         recon(pp,nn) = *(m_modes->image(pp).data() + (*m_idx)[nn])/m_nPix;
+      }
+   }
+   
+   m_devRecon.upload(recon.data(), recon.rows()*recon.cols());
+   
+   m_devSlopes.resize(m_measurementSize);
+
+   m_devAmps.resize(m_nModes);
+
+   #else
+
    m_recon.resize(m_measurementSize, m_nModes);
 
    for(int pp=0; pp<m_nModes; ++pp)
@@ -209,7 +259,7 @@ void directPhaseReconstructor<realT>::initialize( AOSysT & AOSys,
       }
    }
    
-   
+   #endif
 
    
 }
@@ -283,37 +333,34 @@ template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
    
-#if 0
-   measurementT slopes;
+   #ifdef MXAO_USE_GPU
+   
+   static measurementT slopes; //static to prevent re-alloc
    
    calcMeasurement(slopes, wfsImage);
    
-   //std::cerr << slopes.measurement.rows() << " " << slopes.measurement.cols() << " " << m_recon.rows() << " " << m_recon.cols() << "\n";
-   Eigen::Map<Eigen::Array<realT,-1,-1>> slopes_measurement(slopes.measurement.data(), 1, slopes.measurement.size());
+   m_devSlopes.upload(slopes.measurement.data(), slopes.measurement.size());
    
+   //realT alpha = 1.;
+   //realT zero = 0;
+   
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nModes, m_measurementSize, m_one, m_devRecon, m_devSlopes, m_zero, m_devAmps);
+   if(stat != CUBLAS_STATUS_SUCCESS)
+   {
+      std::cerr << "cublas error\n";
+   }
+        
    commandVect.measurement.resize(m_nModes);
-   //Eigen::Map<Eigen::Array<realT,-1,-1>> commandVect_measurement(commandVect.measurement.data(), 1, commandVect.measurement.size());
-   Eigen::Array<realT,-1,-1> commandVect_measurement;
-   std::cerr << "ha ha " << std::endl;
-   std::cerr << "recon: " << m_recon.rows() << " " << m_recon.cols() << std::endl;
-   std::cerr << "slopes: " << slopes_measurement.rows() << " " << slopes_measurement.cols() << std::endl;
-   std::cerr << slopes_measurement(0,0) << "\n";
-   
-   commandVect_measurement = slopes_measurement.matrix()*m_recon.matrix();
-   
-   
-   for(size_t n=0;n<m_nModes;++n) commandVect.measurement[n] = commandVect_measurement(0,n)/m_nPix;
-   
-   std::cerr << "hee hee " << commandVect.measurement[0] <<  std::endl;
-   std::cerr << commandVect_measurement.rows() << " " << commandVect_measurement.cols() << std::endl;
+   m_devAmps.download(commandVect.measurement.data());
+         
    commandVect.iterNo = wfsImage.iterNo;
    
-#endif
-#if 1
+   #else
+   
    BREAD_CRUMB;   
    
-   /* Only needed if using "slopes" below:
-   measurementT slopes;
+   /* Only needed if using "slopes" below (keep for debugging):
+   static measurementT slopes;
    calcMeasurement(slopes, wfsImage);
    */
    
@@ -331,7 +378,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
       }
       commandVect.measurement[j] = amp;
       
-      /* Slightly slower, using the slopes calc:
+      /* Slightly slower, using the slopes calc (keep for debugging slopes calc):
       realT amp = 0;
       for(size_t k=0; k < slopes.measurement.size(); ++k)
       {
@@ -345,7 +392,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    
    commandVect.iterNo = wfsImage.iterNo;
    
-#endif
+   #endif
 }
 
 template<typename realT> 

@@ -18,6 +18,7 @@
 #include "../../ioutils/readColumns.hpp"
 
 #include "../../cuda/templateCudaPtr.hpp"
+#include "../../cuda/templateCublas.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
@@ -92,12 +93,24 @@ public: //<-give these accesors and make protected
 public:
 
    //The modes-2-command matrix for the basis
-   Eigen::Array<realT, -1, -1> _m2c;
+   Eigen::Array<realT, -1, -1> m_m2c;
 
    //The mirror influence functions
    improc::eigenCube<realT> m_infF;
-   cuda::cudaPtr<realT> m_infFGPU;
    
+   #ifdef MXAO_USE_GPU
+   cublasHandle_t *m_cublasHandle;
+   cuda::cudaPtr<realT> m_one;
+   cuda::cudaPtr<realT> m_alpha;
+   cuda::cudaPtr<realT> m_zero;
+   
+   cuda::cudaPtr<realT> m_devM2c;
+   cuda::cudaPtr<realT> m_devInfF;
+   
+   cuda::cudaPtr<realT> m_devModeCommands;
+   cuda::cudaPtr<realT> m_devActCommands;
+   cuda::cudaPtr<realT> m_devShape;
+   #endif
    
    size_t m_nActs;
    size_t m_nRows;
@@ -127,8 +140,11 @@ public:
       }
    }
 
-   int initialize( specT & spec,
-                   const std::string & pupil);
+   template<typename AOSysT>
+   void initialize( AOSysT & AOSys, 
+                    specT & spec,
+                    const std::string & pupil
+                  );
 
    std::string name()
    {
@@ -165,9 +181,11 @@ public:
    realT _settledIter;
 
    template<typename commandT>
-   void setShape(commandT commandV);
+   void setShape(commandT & commandV);
 
-   void applyShape(wavefrontT & wf,  realT lambda);
+   void applyShape( wavefrontT & wf,  
+                    realT lambda
+                  );
 
    double t0, t1, t_mm, t_sum;
 
@@ -209,9 +227,10 @@ deformableMirror<_realT>::deformableMirror()
    //std::cerr << "sigma.size() = " << sigma.size() << "\n";
 }
 
-
 template<typename _realT>
-int deformableMirror<_realT>::initialize( specT & spec,
+template<typename AOSysT>
+void deformableMirror<_realT>::initialize( AOSysT & AOSys, 
+                                           specT & spec,
                                            const std::string & pupil )
 {
    _name = spec.name;
@@ -251,26 +270,48 @@ int deformableMirror<_realT>::initialize( specT & spec,
       m_nActs = m_infF.planes();
       m_nRows = m_infF.rows();
       m_nCols = m_infF.cols();
+
+      m_m2c.resize( m_nActs, m_nActs);
+      m_m2c.setZero();
+
+      for(int i=0;i<m_m2c.rows();++i) m_m2c(i,i) = 1.0;
+      
+      #ifdef MXAO_USE_GPU
+      
+      m_cublasHandle = &AOSys.m_cublasHandle;
+      
+      m_one.resize(1);
+      realT one = 1.0;
+      m_one.upload(&one, 1);
+      
+      m_alpha.resize(1);
+      realT alpha = -1*_calAmp;
+      m_alpha.upload(&alpha, 1);
+      
+      m_zero.resize(1);
+      m_zero.initialize();
       
       mx::improc::eigenImage<realT> modft;
       
-      modft.resize(m_nActs, m_idx.size());
+      modft.resize( m_idx.size(),m_nActs);
    
       for(int pp=0;pp<m_nActs;++pp)
       {
          for(int nn=0; nn < m_idx.size(); ++nn)
          {
-            modft(pp,nn) = *(m_infF.image(pp).data() + m_idx[nn])/m_pupilSum; //(m_idx_r[nn], m_idx_c[nn])/m_pupilSum;
+            *(modft.data() + pp*m_idx.size() + nn) = *(m_infF.image(pp).data() + m_idx[nn]);
          }
       }
    
-      m_infFGPU.upload(modft.data(), modft.rows()*modft.cols());
+      m_devInfF.upload(modft.data(), modft.rows()*modft.cols());
       
-      _m2c.resize( m_nActs, m_nActs);
-      _m2c.setZero();
-
-      for(int i=0;i<_m2c.rows();++i) _m2c(i,i) = 1.0;
-
+      m_devM2c.upload(m_m2c.data(), m_m2c.rows()*m_m2c.cols());
+      
+      m_devModeCommands.resize(m_nActs);
+      m_devActCommands.resize(m_nActs);
+      
+      #endif
+      
    }
    else
    {
@@ -298,7 +339,7 @@ int deformableMirror<_realT>::initialize( specT & spec,
 
       m2cName = mx::AO::path::dm::M2c( _name, _basisName );
 
-      ff.read(_m2c, m2cName);
+      ff.read(m_m2c, m2cName);
 
 
       std::string posName =  mx::AO::path::dm::actuatorPositions(_name, true);
@@ -314,7 +355,7 @@ int deformableMirror<_realT>::initialize( specT & spec,
    _nextShape = _shape;
    _oldShape = _shape;
 
-   return 0;
+   return;
 }
 
 
@@ -353,7 +394,7 @@ void deformableMirror<_realT>::calAmp(realT ca)
 template<typename _realT>
 int deformableMirror<_realT>::nModes()
 {
-   return _m2c.cols();
+   return m_m2c.cols();
 }
 
 
@@ -369,7 +410,7 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
    Eigen::Array<_realT, -1, -1> c;
 
    t0 = get_curr_time();
-   c = _m2c.matrix() * commandV.matrix().transpose();
+   c = m_m2c.matrix() * commandV.matrix().transpose();
    t1 = get_curr_time();
    t_mm += t1-t0;
 
@@ -455,7 +496,7 @@ void makeMap( Eigen::Array<realT, -1, -1> & map,  Eigen::Array<realT, -1, -1> & 
 
 template<typename _realT>
 template<typename commandT>
-void deformableMirror<_realT>::setShape(commandT commandV)
+void deformableMirror<_realT>::setShape(commandT & commandV)
 {
 
    if(_settling)
@@ -467,14 +508,34 @@ void deformableMirror<_realT>::setShape(commandT commandV)
 
    static Eigen::Array<_realT, -1, -1> c; //static to avoid re-alloc, todo: make class member
 
-   //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
-   Eigen::Map<Eigen::Array<realT,-1,-1>> commandV_measurement(commandV.measurement.data(), 1, commandV.measurement.size());
-   c = -1*_calAmp*_m2c.matrix() * commandV_measurement.matrix().transpose();
+   #ifdef MXAO_USE_GPU
+   m_devModeCommands.upload(commandV.measurement.data(), commandV.measurement.size());
+   //realT alpha = -1*_calAmp;
+   //realT zero = 0;
+   //cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, &alpha, m_devM2c.m_devicePtr, m_devModeCommands.m_devicePtr, &zero, m_devActCommands.m_devicePtr);
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, m_alpha, m_devM2c, m_devModeCommands, m_zero, m_devActCommands);
 
+   if(stat != CUBLAS_STATUS_SUCCESS)
+   {
+      std::cerr << "cublas error\n";
+   }
+   
+
+   /*c.resize(m_nActs,1);
+   m_devActCommands.download(c.data());
+   */
+   
+   #else
+   Eigen::Map<Eigen::Array<realT,-1,-1>> commandV_measurement(commandV.measurement.data(), 1, commandV.measurement.size());
+   c = -1*_calAmp*m_m2c.matrix() * commandV_measurement.matrix().transpose();
+   #endif
+
+#if 0
+   
    if(_commandLimit > 0)
    {
-      realT r1 = sqrt( pow(_pos(0,1) - _pos(0,0),2) + pow(_pos(1,1) - _pos(1,0),2));
 
+      realT r1 = sqrt( pow(_pos(0,1) - _pos(0,0),2) + pow(_pos(1,1) - _pos(1,0),2));
 
       realT r;
 
@@ -552,22 +613,54 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       return;
    }
 
-   //_nextShape.setZero();
+#endif
+
+   #ifdef MXAO_USE_GPU
+   
+   static std::vector<realT> tmp;
+   tmp.resize(m_idx.size());
+   
+   m_devShape.resize(m_idx.size()); //no-op except first time.
+   m_devShape.initialize();
+   
+   for(int i=0; i < m_nActs; ++i)
+   {
+      //realT alpha = c(i,0);
+      cuda::cublasTaxpy<realT>(*m_cublasHandle, m_idx.size(), m_devActCommands+i, m_devInfF + i*m_idx.size(), 1, m_devShape, 1);
+   }
+   
+   m_devShape.download(tmp.data());
+   
+   _nextShape.setZero();
+   
+   realT * imP = _nextShape.data();
+   
+   for(size_t n=0; n<m_idx.size(); ++n)  imP[m_idx[n]] = tmp[n];
+         
+   #else
+   
    _nextShape = c(0,0)*m_infF.image(0);//*sigma[0];
+   
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp ;
       tmp.resize(m_nRows, m_nCols);
       tmp.setZero();
 
+      realT * tmpP = tmp.data();
       #pragma omp for
       for(int i=1;i < m_nActs; ++i)
       {
-         tmp +=  c(i,0) * m_infF.image(i);//*sigma[i];
+         realT * imP = m_infF.image(i).data();
+         for(size_t n=0; n<m_idx.size(); ++n) *(tmpP + m_idx[n]) += c(i,0) * *(imP + m_idx[n]);
       }
       #pragma omp critical
-      _nextShape += tmp;
+      {
+         realT * imP = _nextShape.data();
+         for(size_t n=0; n<m_idx.size(); ++n)  *(imP + m_idx[n]) += *(tmpP + m_idx[n]);
+      }
    }
+   #endif
 
     //================ filter here!!
     
