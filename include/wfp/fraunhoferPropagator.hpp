@@ -27,10 +27,11 @@
 #ifndef wfp_fraunhoferPropagator_hpp
 #define wfp_fraunhoferPropagator_hpp
 
-#include "../imagingArray.hpp"
+#include "../math/constants.hpp"
+#include "imagingArray.hpp"
 #include "imagingUtils.hpp"
 
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 
 namespace mx
 {
@@ -86,10 +87,10 @@ protected:
    wavefrontT m_centerPupil;
 
    ///FFT object for forward FFTs
-   mx::fftT<complexT, complexT,2,0> m_fft_fwd;
+   math::fft::fftT<complexT, complexT,2,0> m_fft_fwd;
    
    ///FFT object for backward FFTs
-   mx::fftT<complexT, complexT,2,0> m_fft_back;
+   math::fft::fftT<complexT, complexT,2,0> m_fft_back;
 
    ///Initialize members
    void initialize();
@@ -256,7 +257,7 @@ void fraunhoferPropagator<wavefrontT>::setWavefrontSizePixels(int wfsPix)
 template<typename wavefrontT>
 void fraunhoferPropagator<wavefrontT>::makeShiftPhase()
 {
-   realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
 
    //The normalization is included in the tilt.
    realT norm = 1./(m_wavefrontSizePixels*sqrt(2));

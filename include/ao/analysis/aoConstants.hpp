@@ -5,15 +5,14 @@
   * 
   */
 
-#ifndef aoConstants_hpp
-#define aoConstants_hpp
+#ifndef mx_AO_analysis_aoConstants_hpp
+#define mx_AO_analysis_aoConstants_hpp
 
 #include <cmath>
 
-#include <boost/math/special_functions/gamma.hpp>
-#include <boost/math/constants/constants.hpp>
 
-
+#include "../../math/constants.hpp"
+#include "../../math/func/gamma.hpp"
 
 
 
@@ -29,11 +28,11 @@ namespace constants
 template<typename floatT>
 void calcConstants(floatT & a_sf, floatT & a_psd)
 {
-   floatT pi = boost::math::constants::pi<floatT>();
+   floatT pi = math::pi<floatT>();
 
-   floatT gam1 = boost::math::tgamma<floatT>( static_cast<floatT>(6)/ static_cast<floatT>(5) );
+   floatT gam1 = math::func::tgamma<floatT>( static_cast<floatT>(6)/ static_cast<floatT>(5) );
 
-   floatT gam2 = boost::math::tgamma<floatT>( static_cast<floatT>(11)/ static_cast<floatT>(6) );
+   floatT gam2 = math::func::tgamma<floatT>( static_cast<floatT>(11)/ static_cast<floatT>(6) );
 
    a_sf = pow( static_cast<floatT>(24)/static_cast<floatT>(5) * gam1,  static_cast<floatT>(5) / static_cast<floatT>(6) );
    
@@ -55,9 +54,10 @@ void calcConstants(floatT & a_sf, floatT & a_psd)
   * 
   * \tparam floatT is the type to cast the value to.
   * \ingroup aoConstants
+  * 
   */
 template<typename floatT>
-floatT a_SF()
+constexpr floatT a_SF()
 {
    return static_cast<floatT>(6.8838771822938116152935575630969803178936813057678);
 }
@@ -77,78 +77,15 @@ floatT a_SF()
   * \ingroup aoConstants
   */
 template<typename floatT>
-floatT a_PSD()
+constexpr floatT a_PSD()
 {
    return static_cast<floatT>(0.0218139977034218241674821945866523430205216037234);
 }
 
-///Return 5/3 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT five_thirds()
-{
-   return static_cast<floatT>(5)/static_cast<floatT>(3);
-}
-
-
-///Return 5/6 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT five_sixths()
-{
-   return static_cast<floatT>(5)/static_cast<floatT>(6);
-}
-
-///Return 11/3 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT eleven_thirds()
-{
-   return static_cast<floatT>(11)/static_cast<floatT>(3);
-}
-
-///Return 11/6 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT eleven_sixths()
-{
-   return static_cast<floatT>(11)/static_cast<floatT>(6);
-}
-
-///Return 6/5 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT six_fifths()
-{
-   return static_cast<floatT>(6)/static_cast<floatT>(5);
-}
-
-///Return 3/5 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT three_fifths()
-{
-   return static_cast<floatT>(3)/static_cast<floatT>(5);
-}
-
-///Return 17/3 in the specified precision
-/** \ingroup aoConstants
-  */
-template<typename floatT>
-floatT seventeen_thirds()
-{
-   return static_cast<floatT>(17)/static_cast<floatT>(3);
-}
 
 
 } //namespace constants
 } //namespace AO
 } //namespace mx
 
-#endif //aoConstants_hpp
+#endif //mx_AO_analysis_aoConstants_hpp

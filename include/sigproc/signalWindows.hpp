@@ -30,7 +30,7 @@
 #define signalWindows_hpp
 
 #include <cmath>
-#include <boost/math/constants/constants.hpp>
+#include "../math/constants.hpp"
 
 namespace mx
 {
@@ -55,7 +55,7 @@ void tukey( realT *filt, ///< [out] the pre-allocated array to hold the filter
             realT alpha  ///< [in] the width parameter
           )
 {
-   constexpr realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
    
    realT lim1 = alpha*(N-1.0)/2.0;
    realT lim2 = (N-1.0)*(1.0-0.5*alpha);
@@ -112,7 +112,7 @@ void genCosine( realT * filt, ///< [out] The pre-allocated vector which will sto
                 realT a1      ///< [in] parameter of the generalized cosine window
               )
 {
-   constexpr realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
 
    for( size_t n=0; n<N; ++n)
    {
@@ -135,7 +135,7 @@ void genCosine( realT * filt, ///< [out] The pre-allocated vector which will sto
                 realT a2      ///< [in] parameter of the generalized cosine window
               )
 {
-   constexpr realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
 
    for( size_t n=0; n<N; ++n)
    {
@@ -159,7 +159,7 @@ void genCosine( realT * filt, ///< [out] The pre-allocated vector which will sto
                 realT a3      ///< [in] parameter of the generalized cosine window
               )
 {
-   constexpr realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
 
    for( size_t n=0; n<N; ++n)
    {
@@ -375,7 +375,7 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
 
    realT rad = 0.5*(N-1.0);
 
-   realT pi = boost::math::constants::pi<realT>();
+   realT pi = math::pi<realT>();
    
    for(ii=0; ii<dim; ++ii)
    {
@@ -438,7 +438,7 @@ void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT
    
    Z = (1-eps)*rad+1.0; //floor((1.0-eps)*(rad)) + 1.0;
    
-   realT pi = boost::math::constants::pi<realT>();
+   realT pi = math::pi<realT>();
       
    for(ii=0; ii<dim; ++ii)
    {

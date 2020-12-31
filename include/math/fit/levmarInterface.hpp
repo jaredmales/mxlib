@@ -32,7 +32,7 @@
 #include "../../mxlib.hpp"
 
 #include "templateLevmar.hpp"
-#include "../../timeUtils.hpp"
+#include "../../sys/timeUtils.hpp"
 
 
 namespace mx
@@ -609,7 +609,7 @@ struct do_levmar
                   realT *covar, 
                   void *adata)
    {
-      return ::levmar_dif<realT>( &fitterT::func, p, x, m, n, itmax, opts, info, work, covar, adata);
+      return levmar_dif<realT>( &fitterT::func, p, x, m, n, itmax, opts, info, work, covar, adata);
    }
 };
 
@@ -630,7 +630,7 @@ struct do_levmar<fitterT, true>
                   realT *covar, 
                   void *adata)
    {
-      return ::levmar_der<realT>( &fitterT::func, &fitterT::jacf, p, x, m, n, itmax, opts, info, work, covar, adata);
+      return levmar_der<realT>( &fitterT::func, &fitterT::jacf, p, x, m, n, itmax, opts, info, work, covar, adata);
    }
 };
 
@@ -657,14 +657,16 @@ int levmarInterface<fitterT>::fit()
    
    for(int i = 0; i < m; ++i) init_p[i] = p[i];
    
-   double t0 = get_curr_time();
+   double t0 = sys::get_curr_time();
    
    //Create one of the above functors, which depends on whether fitterT has a Jacobian.
    do_levmar<fitterT> fitter;
    
    fitter(p,x,m,n,itmax,_opts,info,work,covar,adata);
    
-   deltaT = get_curr_time() - t0;
+   deltaT = sys::get_curr_time() - t0;
+   
+   return 0;
 }
 
 

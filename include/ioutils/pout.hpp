@@ -23,8 +23,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef pout_hpp
-#define pout_hpp
+#ifndef ioutils_pout_hpp
+#define ioutils_pout_hpp
 
 #include <iostream>
 
@@ -42,8 +42,6 @@ void pout()
    return;
 }
 
-
-
 ///A simple formatted output function.
 /** This function writes its arguments, of any type and of any number, to stdout.  By default, the
   * arguments are separated by a space, the new line '\\n' is written at the end, and the std::cout
@@ -60,7 +58,7 @@ void pout()
   * Note that the types of the values do not need to be specified as templated arguments.
   * When run, this code results in
   * \verbatim
-  * $output: 2.567 3
+  * $ output: 2.567 3
   * $
   * \endverbatim
   *
@@ -79,7 +77,7 @@ void pout()
   * \ingroup ioutils
   */
 template<char space=' ', bool flush=true, char eol='\n', typename valT, typename... valTs>
-void pout( valT value,  ///<  [in] a value to print.
+void pout( valT value,            ///<  [in] a value to print.
            const valTs&... values ///< [in] a variadic list of additional values. Any number of values can be specified, with any type handled by std::cout.
          )
 {
@@ -96,4 +94,4 @@ void pout( valT value,  ///<  [in] a value to print.
 } //namespace ioutils 
 } //namespace mx
 
-#endif //pout_hpp
+#endif //ioutils_pout_hpp

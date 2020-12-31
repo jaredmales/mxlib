@@ -9,15 +9,16 @@
 #define __pyramidSensor_hpp__
 
 
-#include <mx/wfp/imagingUtils.hpp>
-#include <mx/wfp/fraunhoferPropagator.hpp>
-#include <mx/timeUtils.hpp>
-#include <mx/improc/fitsFile.hpp>
-#include <mx/improc/ds9Interface.hpp>
+#include "../../wfp/imagingUtils.hpp"
+#include "../../wfp/fraunhoferPropagator.hpp"
+#include "../../timeUtils.hpp"
+#include "../../improc/fitsFile.hpp"
+#include "../../improc/imageTransforms.hpp"
+#include "../../improc/ds9Interface.hpp"
+#include "../../math/constants.hpp"
 
 #include "wavefront.hpp"
 
-#include <mx/improc/imageTransforms.hpp>
 
 #ifdef DEBUG
 #define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n"; 
@@ -532,7 +533,7 @@ void pyramidSensor<_realT, _detectorT>::makeOpdMask()
 template<typename _realT,  typename _detectorT>
 void pyramidSensor<_realT, _detectorT>::makeTilts()
 {
-   _realT pi = boost::math::constants::pi<_realT>();
+   constexpr _realT pi = math::pi<_realT>();
    
    _realT dang = 2*pi/(_modSteps);
    _realT dx, dy;

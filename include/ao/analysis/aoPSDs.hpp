@@ -28,14 +28,12 @@
 #define aoPSDs_hpp
 
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
-#include <mx/mxError.hpp>
-#include <mx/math/func/jinc.hpp>
+#include "../../mxError.hpp"
+#include "../../math/constants.hpp"
+#include "../../math/func/jinc.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
 
 #include "aoAtmosphere.hpp"
 
@@ -336,13 +334,13 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
       }
       if(m_subPiston)
       {
-         Ppiston = pow(2*math::func::jinc(pi<realT>()*k*m_D), 2);
+         Ppiston = pow(2*math::func::jinc(math::pi<realT>()*k*m_D), 2);
       }
       else Ppiston = 0;
 
       if(m_subTipTilt)
       {
-         Ptiptilt = pow(4*math::func::jinc2(pi<realT>()*k*m_D), 2);
+         Ptiptilt = pow(4*math::func::jinc2(math::pi<realT>()*k*m_D), 2);
       }
       else Ptiptilt = 0;
    }
@@ -408,7 +406,7 @@ realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
    }
    else k0 = 0;
 
-   return (pi<realT>() * six_fifths<realT>())* a_PSD<realT>()/ pow(atm.r_0(), five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<realT>()));
+   return (math::pi<realT>() * math::six_fifths<realT>())* constants::a_PSD<realT>()/ pow(atm.r_0(), math::five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, math::five_sixths<realT>()));
 }
 
 template< typename realT>

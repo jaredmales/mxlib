@@ -48,7 +48,6 @@ struct wfsImageT
    imageT image;
 };
 
-using namespace boost::math::constants;
 
 template<typename _realT, typename _detectorT>
 class directPhaseSensor

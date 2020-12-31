@@ -31,8 +31,7 @@
 
 #include <cmath>
 
-#include <boost/math/constants/constants.hpp>
-
+#include "constants.hpp"
 
 
 namespace mx
@@ -68,10 +67,6 @@ namespace math
 
 ///Convert from degrees to radians
 /**
-  * Uses boost constants:
-  * \code
-  * return q*boost::math::constants::degree<realT>();
-  * \endcode
   * 
   * \param q is the angle to convert
   * 
@@ -82,15 +77,11 @@ namespace math
 template<typename realT>
 realT dtor(realT q)
 {
-   return q * boost::math::constants::degree<realT>();
+   return q * pi<realT>()/static_cast<realT>(180);
 }
 
 ///Convert from radians to degrees
 /**
-  * Uses boost constants:
-  * \code
-  * return q*boost::math::constants::radian<realT>();
-  * \endcode
   * 
   * \param q is the angle to convert
   * 
@@ -101,7 +92,7 @@ realT dtor(realT q)
 template<typename realT>
 realT rtod(realT q)
 {
-   return q * boost::math::constants::radian<realT>();
+   return q * static_cast<realT>(180)/pi<realT>();
 }
 
 ///Calculate the angle modulo full-circle, normalizing to a positive value.
@@ -121,7 +112,7 @@ realT angleMod(realT q /**< [in] the angle */)
    
    realT full;
    
-   if(degrad) full = boost::math::constants::two_pi<realT>();
+   if(degrad) full = two_pi<realT>();
    else full = static_cast<realT>(360);
    
    q = fmod(q,full);
@@ -130,22 +121,6 @@ realT angleMod(realT q /**< [in] the angle */)
    
    return q;
 }
-
-// template<typename _realT>
-// struct radians
-// {
-//    typedef _realT realT;
-//    
-//    static constexpr realT half = boost::math::constants::pi<realT>();
-// };
-// 
-// template<typename _realT>
-// struct degrees
-// {
-//    typedef _realT realT;
-//    
-//    static constexpr realT half = static_cast<realT>(180.0);
-// };
 
 struct radians;
 
@@ -163,7 +138,7 @@ struct degradT<degrees,realT>
 template<typename realT>
 struct degradT<radians,realT>
 {
-   static constexpr realT half = boost::math::constants::pi<realT>();
+   static constexpr realT half = pi<realT>();
 };
 
 ///Calculate the difference between two angles, correctly across 0/360.
@@ -230,7 +205,7 @@ realT angleMean(std::vector<realT> & q)
    realT d2r;
    
    if( degrad ) d2r = 1;
-   else d2r  = boost::math::constants::pi<realT>()/static_cast<realT>(180);
+   else d2r  = pi<realT>()/static_cast<realT>(180);
 
    for(int i=0; i< q.size(); ++i)
    {
@@ -261,7 +236,7 @@ int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
 {
    realT full;
    
-   if(degrad) full = boost::math::constants::two_pi<realT>();
+   if(degrad) full = two_pi<realT>();
    else full = static_cast<realT>(360);
 
    threshold*=full;

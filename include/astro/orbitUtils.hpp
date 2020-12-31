@@ -8,6 +8,7 @@
 #ifndef mx_astro_orbitUtils_hpp
 #define mx_astro_orbitUtils_hpp
 
+#include "../math/constants.hpp"
 #include "kepler.hpp"
 
 namespace mx
@@ -29,7 +30,7 @@ typename units::realT orbitPeriod( typename units::realT m1, ///< [in] mass of o
                                    typename units::realT a ///< [in] the semi-major axis of the orbit.
                                  )
 {
-   return two_pi<typename units::realT>()* sqrt( (a*a*a) / (constants::G<units>()*(m1+m2)));
+   return math::two_pi<typename units::realT>()* sqrt( (a*a*a) / (constants::G<units>()*(m1+m2)));
 }
 
 
@@ -51,7 +52,7 @@ typename units::realT orbitSemiMaj( typename units::realT m1, ///< [in] mass of 
    
    constexpr realT two = static_cast<realT>(2); //Just for convenience.
    
-   return  pow( pow(P/(two*pi<realT>()),two)  * constants::G<units>() *(m1+m2), third<realT>());
+   return  pow( pow(P/(math::two_pi<realT>()),two)  * constants::G<units>() *(m1+m2), math::third<realT>());
 }
 
 ///Calculate the mean anomaly at time t, given the time of pericenter passage t0 and period P.  
@@ -64,7 +65,7 @@ realT orbitMeanAnol( realT t,
                      realT P
                    )
 {
-   return two_pi<realT>()*(t-t0)/P;
+   return math::two_pi<realT>()*(t-t0)/P;
 }
 
 ///Calculate the separation and true anomaly for an orbit at the specified mean anomaly.
@@ -157,7 +158,7 @@ template<typename realT>
 realT orbitLambertPhase( realT cos_alf /**< [in] the cosine of the phase angle*/)
 {
    realT alf = std::acos(cos_alf);
-   return (sin(alf) + (pi<realT>()-alf)*cos_alf)/pi<realT>();   
+   return (sin(alf) + (math::pi<realT>()-alf)*cos_alf)/math::pi<realT>();   
 }
 
 ///Calculate the radial velocity of an orbiting body inclined relative to an observer.

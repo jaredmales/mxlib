@@ -29,7 +29,7 @@
 #ifndef autocorrelation_hpp
 #define autocorrelation_hpp
 
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 
 namespace mx
 {
@@ -98,7 +98,7 @@ struct autocorrelationFromPSD
    std::vector<std::complex<T>> fftOut;
    std::vector<std::complex<T>> fftIn;
    
-   mx::fftT<std::complex<T>, std::complex<T>, 1, 0> fft;
+   math::fft::fftT<std::complex<T>, std::complex<T>, 1, 0> fft;
    
    /// Calculate the A.C. as the inverse FFT of the PSD 
    /** This calculates the circular autocorrelation from the PSD.

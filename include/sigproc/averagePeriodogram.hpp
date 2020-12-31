@@ -101,7 +101,7 @@ protected:
    realT m_df {1}; ///< The frequency sampling.  This is used only for normalization and frequency scale output.
 
    
-   mx::fftT< realT, std::complex<realT>, 1, 0> m_fft;
+   math::fft::fftT< realT, std::complex<realT>, 1, 0> m_fft;
    
    realT * m_tsWork {nullptr};
    size_t m_tsWorkSize {0};
@@ -317,11 +317,11 @@ int averagePeriodogram<realT>::resize( size_t avgLen,
    m_fft.plan(m_avgLen, MXFFT_FORWARD, false);
    
    if(m_tsWork) fftw_free(m_tsWork);
-   m_tsWork = fftw_malloc<realT>( m_avgLen );
+   m_tsWork = math::fft::fftw_malloc<realT>( m_avgLen );
    
    if(m_fftWork) fftw_free(m_fftWork);
    
-   m_fftWork = fftw_malloc<std::complex<realT>>( (m_avgLen/2 + 1) );
+   m_fftWork = math::fft::fftw_malloc<std::complex<realT>>( (m_avgLen/2 + 1) );
    
    return 0;
 }

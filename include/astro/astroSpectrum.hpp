@@ -10,7 +10,6 @@
 
 #include <cmath>
 
-#include <boost/units/systems/si/codata/universal_constants.hpp>
 
 #include "../environment.hpp"
 #include "../ioutils/readColumns.hpp"
@@ -225,8 +224,8 @@ struct baseSpectrum
       
       //fphot0
 
-      static realT h = boost::units::si::constants::codata::h / boost::units::si::joule/boost::units::si::seconds;
-      static realT c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
+      constexpr realT h = constants::h<units::si<realT>>();
+      constexpr realT c = constants::c<units::si<realT>>();
 
       fphot0 = half*_spectrum[0] * lambda[0]*trans[0];
 
@@ -287,7 +286,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 
       if(spectrumT::dataDirEnvVar)
       {
-         _dataDir = getEnv(spectrumT::dataDirEnvVar);
+         _dataDir = sys::getEnv(spectrumT::dataDirEnvVar);
       }
 
       return 0;

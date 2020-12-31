@@ -28,11 +28,9 @@
 #define aoSystem_hpp
 
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
-#include <mx/math/roots.hpp>
-#include <mx/mxError.hpp>
+#include "../../math/constants.hpp"
+#include "../../math/roots.hpp"
+#include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
 using namespace mx::AO::constants;
@@ -998,7 +996,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
 {
    atm.loadGuyon2005();
    
-   F0(1.75e9*0.25*pi<realT>()*64.); //Converting to photons/sec
+   F0(1.75e9*0.25*math::pi<realT>()*64.); //Converting to photons/sec
    lam_wfs(0.55e-6);
    lam_sci(1.6e-6);
    D(8.);
@@ -1035,7 +1033,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadGMagAOX()
    loadMagAOX();
    
    
-   F0(7.6e10 * 368.0 / (0.25*pi<realT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
+   F0(7.6e10 * 368.0 / (0.25*math::pi<realT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
    
    D(25.4);
    
@@ -1477,7 +1475,7 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    
    realT tau = tau_wfs + m_deltaTau;
          
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1715,7 +1713,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(math::two_pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(m_lam_wfs*beta_p/F,2);
    
    a = Atmp;
@@ -1799,13 +1797,13 @@ realT aoSystem<realT, inputSpectT, iosT>::ncpError( int m,
    
    realT k = sqrt(m*m + n*n)/m_D;
    
-   return (m_ncp_alpha - 2)/(two_pi<realT>()) * pow(m_D, -m_ncp_alpha) * ncpError() * pow(k, -m_ncp_alpha);
+   return (m_ncp_alpha - 2)/(math::two_pi<realT>()) * pow(m_D, -m_ncp_alpha) * ncpError() * pow(k, -m_ncp_alpha);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::ncpError()
 {
-   return pow(m_ncp_wfe,2)*pow(2.0*pi<realT>()/m_lam_sci,2);
+   return pow(m_ncp_wfe,2)*pow(math::two_pi<realT>()/m_lam_sci,2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>

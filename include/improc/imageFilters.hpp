@@ -10,7 +10,7 @@
 
 #include <cstdlib>
 
-#include "../gslInterpolation.hpp"
+#include "../math/gslInterpolation.hpp"
 #include "../math/vectorUtils.hpp"
 
 #include "imageMasks.hpp"
@@ -354,6 +354,8 @@ int meanSmooth( imageTout & imOut,        ///< [out] the smoothed image. Not re-
          }
       }
    }
+   
+   return 0;
 }
 
 /// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.  Determines the location and value of the highest pixel.
@@ -450,6 +452,8 @@ int meanSmooth( imageTout & imOut,                 ///< [out] the smoothed image
          }
       }
    }
+   
+   return 0;
 }      
          
 
@@ -511,6 +515,8 @@ int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed ima
          }
       }
    }
+   
+   return 0;
 }      
 
 /// Smooth an image using the median in a rectangular box.  

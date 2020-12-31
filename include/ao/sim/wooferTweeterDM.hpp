@@ -18,8 +18,6 @@ namespace AO
 
 namespace sim
 {
-   
-using namespace boost::math::constants;
 
 struct wooferTweeterDMSpec
 {

@@ -27,8 +27,7 @@
 #ifndef improc_imageMasks_hpp
 #define improc_imageMasks_hpp
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
+#include "../math/constants.hpp"
 
 #include "imageTransforms.hpp"
 
@@ -45,9 +44,9 @@ namespace improc
   * \tparam eigenT is an Eigen-like 2D array type
   */  
 template<class eigenT> 
-void radiusImage( eigenT & m, ///< [out] the allocated radius array, will be filled in with radius values. 
-                  typename eigenT::Scalar xc, ///< [in] the x center
-                  typename eigenT::Scalar yc,  ///< [in] the y center
+void radiusImage( eigenT & m,                     ///< [out] the allocated radius array, will be filled in with radius values. 
+                  typename eigenT::Scalar xc,     ///< [in] the x center
+                  typename eigenT::Scalar yc,     ///< [in] the y center
                   typename eigenT::Scalar scale=1 ///< [in] [optional] a scaling to apply to each value (default = 1)
                 )
 {
@@ -80,7 +79,7 @@ void radiusImage( eigenT & m, ///< [out] the allocated radius array, will be fil
   * \tparam eigenT is an Eigen-like 2D array type
   */  
 template<class eigenT> 
-void radiusImage( eigenT & m, ///< [out] the allocated radius array, will be filled in with radius values.
+void radiusImage( eigenT & m,                     ///< [out] the allocated radius array, will be filled in with radius values.
                   typename eigenT::Scalar scale=1 ///< [in] [optional] a scaling to apply to each value (default = 1)
                 )
 {
@@ -103,10 +102,10 @@ void radiusImage( eigenT & m, ///< [out] the allocated radius array, will be fil
   * \tparam eigenT is an Eigen-like 2D array type
   */  
 template<class eigenT> 
-void angleImage( eigenT & m, ///< [out]  the allocated angle array.  Will be filled in with angle values.
-                 typename eigenT::Scalar xc, ///< [in] the x center
-                 typename eigenT::Scalar yc, ///< [in] the y center
-                 typename eigenT::Scalar scale=radian<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
+void angleImage( eigenT & m,                                                             ///< [out]  the allocated angle array.  Will be filled in with angle values.
+                 typename eigenT::Scalar xc,                                             ///< [in] the x center
+                 typename eigenT::Scalar yc,                                             ///< [in] the y center
+                 typename eigenT::Scalar scale=math::rad2deg<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
                )
 {
    typedef typename eigenT::Scalar arithT;
@@ -123,7 +122,7 @@ void angleImage( eigenT & m, ///< [out]  the allocated angle array.  Will be fil
       {
          f_y = (j-yc);
          
-         m(i,j) = fmod(atan2(f_y, f_x) + two_pi<typename eigenT::Scalar>(), two_pi<typename eigenT::Scalar>())  *scale;
+         m(i,j) = fmod(atan2(f_y, f_x) + math::two_pi<typename eigenT::Scalar>(), math::two_pi<typename eigenT::Scalar>())  *scale;
       }
    }
    
@@ -138,7 +137,7 @@ void angleImage( eigenT & m, ///< [out]  the allocated angle array.  Will be fil
   */  
 template<class eigenT> 
 void angleImage( eigenT & m, ///< [out] the allocated angle array.  Will be filled in with angle values.
-                 typename eigenT::Scalar scale = radian<typename eigenT::Scalar>() ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
+                 typename eigenT::Scalar scale = math::rad2deg<typename eigenT::Scalar>() ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
                )
 {
    typedef typename eigenT::Scalar arithT;
@@ -164,7 +163,7 @@ void radAngImage( eigenT & rIm, ///< [out] the allocated radius array, will be f
                   typename eigenT::Scalar xc, ///< [in] the x center
                   typename eigenT::Scalar yc, ///< [in] the y center
                   typename eigenT::Scalar rscale = 1, ///< [in] [optional] a scaling to apply to each radius value. Default is 1.0.
-                  typename eigenT::Scalar qscale= radian<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
+                  typename eigenT::Scalar qscale= math::rad2deg<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
                 )
 {
    typedef typename eigenT::Scalar arithT;
@@ -182,7 +181,7 @@ void radAngImage( eigenT & rIm, ///< [out] the allocated radius array, will be f
       {
          f_y = (((arithT)j)-yc);
          rIm(i,j) = std::sqrt( f_x*f_x + f_y*f_y)*rscale;
-         qIm(i,j) = fmod(atan2(f_y, f_x) + two_pi<arithT>(), two_pi<arithT>()) *qscale;
+         qIm(i,j) = fmod(atan2(f_y, f_x) + math::two_pi<arithT>(), math::two_pi<arithT>()) *qscale;
       }
    }
 }
@@ -216,7 +215,7 @@ std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of th
 
    if(max_q == 0) max_q = 360.;
    
-   size_t msize = ((pi<double>()*(max_r*max_r - min_r*min_r)) * (max_q-min_q)/360.) *1.01 + 1;
+   size_t msize = ((math::pi<double>()*(max_r*max_r - min_r*min_r)) * (max_q-min_q)/360.) *1.01 + 1;
    
    //This was tested, this is slightly faster than resize with an erase.
    idx.reserve(msize);
@@ -251,14 +250,14 @@ std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of th
 }
 
 
-
-inline void rectangleIndices( std::vector<size_t> & idx, 
-                              size_t rows, 
-                              size_t cols, 
-                              size_t xmin, 
-                              size_t xmax, 
-                              size_t ymin, 
-                              size_t ymax
+template<typename sizeT>
+void rectangleIndices( std::vector<sizeT> & idx, 
+                              sizeT rows, 
+                              sizeT cols, 
+                              sizeT xmin, 
+                              sizeT xmax, 
+                              sizeT ymin, 
+                              sizeT ymax
                             )
 {
       
@@ -270,9 +269,9 @@ inline void rectangleIndices( std::vector<size_t> & idx,
    
    idx.reserve( (xmax-xmin+1)*(ymax-ymin + 1) );
    
-   for(size_t i=xmin; i<=xmax; ++i)
+   for(sizeT i=xmin; i<=xmax; ++i)
    {
-      for(size_t j=ymin;j<=ymax; ++j)
+      for(sizeT j=ymin;j<=ymax; ++j)
       {
          idx.push_back( j*rows + i);
       }
@@ -288,7 +287,7 @@ void rectangleIndices( std::vector<size_t> & idx,
                        size_t ymax
                      )
 {
-   rectangleIndices(idx, (size_t) mask.rows(), (size_t) mask.cols(), xmin, xmax, ymin, ymax);  
+   rectangleIndices<size_t>(idx, (size_t) mask.rows(), (size_t) mask.cols(), xmin, xmax, ymin, ymax);  
 }
 
 ///Apply a mask to an image
@@ -561,7 +560,7 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
       
          realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
          
-         realT q1 = atan(m)+0.5*pi<realT>();
+         realT q1 = atan(m)+0.5*math::pi<realT>();
          realT cq = cos(q1);
          realT sq = sin(q1);
          
@@ -604,7 +603,7 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
       
          realT xs, ys, xe, ye; //The start and end point of the perpindicular line.
          
-         realT q1 = atan(m)+0.5*pi<realT>();
+         realT q1 = atan(m)+0.5*math::pi<realT>();
          realT cq = cos(q1);
          realT sq = sin(q1);
          

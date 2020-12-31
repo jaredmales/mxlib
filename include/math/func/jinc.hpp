@@ -27,7 +27,8 @@
 #ifndef math_func_jinc_hpp
 #define math_func_jinc_hpp
 
-#include <boost/math/special_functions/bessel.hpp>
+#include "bessel.hpp"
+#include "precision.hpp"
 
 namespace mx
 {
@@ -61,12 +62,12 @@ namespace func
 template<typename T> 
 T jinc( const T & x /**< [in] the argument */)
 {
-   T const taylor_0_bound = boost::math::tools::epsilon<T>();
-   T const taylor_2_bound = boost::math::tools::root_epsilon<T>();
+   T const taylor_0_bound = std::numeric_limits<T>::epsilon();
+   T const taylor_2_bound = root_epsilon<T>();
    
    if( fabs(x) > taylor_2_bound)
    {
-      return boost::math::cyl_bessel_j<T>(1,x)/(x);
+      return bessel_j<int, T>(1,x)/(x);
    }
    else
    {
@@ -101,11 +102,11 @@ T jinc( const T & x /**< [in] the argument */)
 template<typename T> 
 T jinc2(const T & x /**< [in] the argument */)
 {
-   T const taylor_2_bound = boost::math::tools::root_epsilon<T>();
+   T const taylor_2_bound = root_epsilon<T>();
       
    if( fabs(x) > taylor_2_bound )
    {
-      return boost::math::cyl_bessel_j(2,x)/(x);
+      return bessel_j<int, T>(2,x)/(x);
    }
    else
    {

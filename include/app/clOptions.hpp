@@ -33,8 +33,6 @@
 #include <string>
 #include <iostream>
 
-#include "../mxlib.hpp"
-
 #include "optionparser/optionparser.h"
 
 namespace mx
@@ -56,8 +54,12 @@ static const char * falseStr = "false";
 static const char * trueStr = "true";
 static const char * blankStr = "";
 
-static option::ArgStatus Arg_Required(const option::Option& option, bool UNUSED(msg))
+static option::ArgStatus Arg_Required( const option::Option& option, 
+                                       bool msg
+                                     )
 {
+   static_cast<void>(msg);
+   
    if (option.arg != 0)
    return option::ARG_OK;
 

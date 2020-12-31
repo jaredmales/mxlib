@@ -9,7 +9,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -32,13 +32,13 @@
 
 #include <cmath>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
-#include <boost/math/special_functions/bessel.hpp>
+#include "../math/func/bessel.hpp"
+#include "../math/func/factorial.hpp"
+#include "../math/func/sign.hpp"
 
-#include <boost/math/special_functions/sign.hpp>
-#include <boost/math/special_functions/factorials.hpp>
+#include "../math/constants.hpp"
+
 
 
 #include "../mxError.hpp"
@@ -82,7 +82,7 @@ int noll_nm( int & n, ///< [out] n the radial index of the Zernike polynomial
    n = ceil(-1.5 + sqrt(0.25 + 2*j) - 1e-10); // 1e-10 is to avoid wrong rounding due to numerical precision
 
    int  jrem = j - (n * (n+1)/2+1);
-   m = (jrem + (jrem % 2) * abs( (n % 2)-1) + fabs( (jrem % 2)-1) * (n %  2)) * (-boost::math::sign( (j % 2)-0.5));
+   m = (jrem + (jrem % 2) * abs( (n % 2)-1) + fabs( (jrem % 2)-1) * (n %  2)) * (-math::func::sign( (j % 2)-0.5));
    
    return 0;
 }
@@ -122,7 +122,7 @@ int zernikeRCoeffs( std::vector<realT> & c, int n, int m)
    
    for(int k=0; k < ul; ++k)
    {
-      c[k] = pow(-1.0, k) * boost::math::factorial<realT>(n - k) / ( boost::math::factorial<realT>(k) * boost::math::factorial<realT>(0.5*(n+m)  - k)* boost::math::factorial<realT>(0.5*(n-m)  - k));
+      c[k] = pow(-1.0, k) * math::func::factorial<realT>(n - k) / ( math::func::factorial<realT>(k) * math::func::factorial<realT>(0.5*(n+m)  - k)* math::func::factorial<realT>(0.5*(n-m)  - k));
    }
    
    return 0;
@@ -223,11 +223,11 @@ realT zernike(realT rho, realT phi, int n, int m, std::vector<realT> & c)
    
    if( m < 0 )
    {
-      azt = root_two<realT>()*sin(-m*phi);
+      azt = math::root_two<realT>()*sin(-m*phi);
    }
    else if (m > 0)
    {
-      azt = root_two<realT>()*cos(m*phi);
+      azt = math::root_two<realT>()*cos(m*phi);
    }
    else
    {
@@ -466,7 +466,7 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
    }
    else
    {
-      B = boost::math::cyl_bessel_j(n+1, 2*pi<realT>()*k) / (pi<realT>()*k);
+      B = math::func::bessel_j(n+1, math::two_pi<realT>()*k) / (math::pi<realT>()*k);
    }
 
    realT Q2 = (n+1) * (B * B);

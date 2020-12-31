@@ -28,7 +28,7 @@
 #define imageXCorrFFT_hpp
 
 #include "../mxError.hpp"
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 #include "../math/fit/fitGaussian.hpp"
 
 #include "imageUtils.hpp"
@@ -83,9 +83,9 @@ protected:
    
    complexArrayT m_ftWork; ///< Working memory for the FFT.
    
-   fftT< realT, complexT,2,0> m_fft_fwd; ///< FFT object for the forward transform.
+   math::fft::fftT< realT, complexT,2,0> m_fft_fwd; ///< FFT object for the forward transform.
    
-   fftT< complexT, realT,2,0> m_fft_back; ///< FFT object for the backward transfsorm.
+   math::fft::fftT< complexT, realT,2,0> m_fft_back; ///< FFT object for the backward transfsorm.
    
    ///@}
    

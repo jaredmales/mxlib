@@ -32,18 +32,16 @@
 
 #include <sys/stat.h>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
 #include <Eigen/Dense>
 
+#include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../math/func/airyPattern.hpp"
 #include "../../math/vectorUtils.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 #include "../../sigproc/fourierModes.hpp"
 #include "../../sigproc/psdVarMean.hpp"
 #include "../../ioutils/stringUtils.hpp"
@@ -51,9 +49,9 @@ using namespace boost::math::constants;
 #include "../../ioutils/binVector.hpp"
 
 
-#include "../../ompLoopWatcher.hpp"
+#include "../../ipc/ompLoopWatcher.hpp"
 #include "../../mxError.hpp"
-#include "../../gslInterpolation.hpp"
+#include "../../math/gslInterpolation.hpp"
 
 #include "wfsNoisePSD.hpp"
 #include "clAOLinearPredictor.hpp"
@@ -711,7 +709,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
 
    size_t nLoops = 0.5*spf.size();
 
-   mx::ompLoopWatcher<> watcher(nLoops, std::cout);
+   ipc::ompLoopWatcher<> watcher(nLoops, std::cout);
 
    #pragma omp parallel
    {
@@ -841,7 +839,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
       }
    }
 
-   mx::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
+   ipc::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
 
    for(size_t s = 0; s < mags.size(); ++s)
    {
@@ -1182,7 +1180,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          }
       }
 
-      mx::improc::fitsFile<realT> ff;
+      fits::fitsFile<realT> ff;
       std::string fn = dir + "/gainmap_" + ioutils::convertToString(mags[s]) + "_si.fits";
       ff.write( fn, gains);
 
@@ -1344,9 +1342,9 @@ realT F_basic (realT kv, void * params)
    realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
    realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
 
-   realT Q1 = math::func::jinc(pi<realT>()*D*kp);
+   realT Q1 = math::func::jinc(math::pi<realT>()*D*kp);
 
-   realT Q2 = math::func::jinc(pi<realT>()*D*kpp);
+   realT Q2 = math::func::jinc(math::pi<realT>()*D*kpp);
 
    realT Q = (Q1 + p*Q2);
 
@@ -1387,9 +1385,9 @@ realT F_mod (realT kv, void * params)
    realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
    realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
 
-   realT Jp = math::func::jinc(pi<realT>()*D*kp);
+   realT Jp = math::func::jinc(math::pi<realT>()*D*kp);
 
-   realT Jm = math::func::jinc(pi<realT>()*D*kpp);
+   realT Jm = math::func::jinc(math::pi<realT>()*D*kpp);
 
    realT QQ = 2*(Jp*Jp + Jm*Jm);
 
@@ -1441,8 +1439,8 @@ realT Fm_projMod (realT kv, void * params)
       kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
       km = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
 
-      Fp->Jps[i] = math::func::jinc(pi<realT>()*D*kp);
-      Fp->Jms[i] = math::func::jinc(pi<realT>()*D*km);
+      Fp->Jps[i] = math::func::jinc(math::pi<realT>()*D*kp);
+      Fp->Jms[i] = math::func::jinc(math::pi<realT>()*D*km);
 
    }
 

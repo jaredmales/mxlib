@@ -14,13 +14,16 @@
 #include <string>
 #include <fstream>
 
+#include <sys/stat.h>
+
+
 #include "../mxlib.hpp"
 
 #include "../mxException.hpp"
 
 #include "../math/templateBLAS.hpp"
 #include "../ioutils/fileUtils.hpp"
-#include "../timeUtils.hpp"
+#include "../sys/timeUtils.hpp"
 #include "../ioutils/readColumns.hpp"
 
 #include "eigenImage.hpp"
@@ -29,7 +32,7 @@
 #include "imageMasks.hpp"
 #include "imageTransforms.hpp"
 #include "imageUtils.hpp"
-#include "fitsFile.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
 
 namespace mx
 {
@@ -96,7 +99,7 @@ struct HCIobservation
    typedef _realT realT;
 
    ///The Eigen image array type basted on realT
-   typedef Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
+   typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
 
    ///\name Construction and Initialization
    /** @{
@@ -200,7 +203,7 @@ struct HCIobservation
    std::vector<double> m_imageMJD;
 
    ///Vector of FITS headers, one per file, populated with the values for the keywords.
-   std::vector<fitsHeader> m_heads;
+   std::vector<fits::fitsHeader> m_heads;
 
    ///Whether or not the m_fileList has been read.
    bool m_filesRead {false};
@@ -227,7 +230,7 @@ struct HCIobservation
    std::vector<double> m_RDIimageMJD;
 
    ///Vector of FITS headers, one per reference file, populated with the values for the keywords.
-   std::vector<fitsHeader> m_RDIheads;
+   std::vector<fits::fitsHeader> m_RDIheads;
 
    ///Whether or not the reference files have been read.
    bool m_RDIfilesRead {false};
@@ -438,7 +441,7 @@ struct HCIobservation
                      int coaddMaxTime,
                      std::vector<std::string> & coaddKeywords,
                      std::vector<double> & imageMJD,
-                     std::vector<fitsHeader> & heads,
+                     std::vector<fits::fitsHeader> & heads,
                      eigenCube<realT> & ims
                    );
 
@@ -607,17 +610,17 @@ public:
    /// Fill in the HCIobservation standard FITS header 
    /**
      */
-   void stdFitsHeader(improc::fitsHeader & head /**< [in/out] the fistHeader structure which will have cards appended to it. */);
+   void stdFitsHeader(fits::fitsHeader & head /**< [in/out] the fistHeader structure which will have cards appended to it. */);
    
    ///Write the final combined image to disk
    /**
      */
-   void writeFinim(improc::fitsHeader * addHead = 0);
+   void writeFinim(fits::fitsHeader * addHead = 0);
    
    ///Write the PSF subtracted images to disk
    /**
     */
-   void outputPSFSub(improc::fitsHeader * addHead = 0);
+   void outputPSFSub(fits::fitsHeader * addHead = 0);
 
 
    ///@}
@@ -827,7 +830,7 @@ int HCIobservation<_realT>::readFiles()
 
    /*----- Append the HCI keywords to propagate them if needed -----*/
    
-   improc::fitsHeader head;
+   fits::fitsHeader head;
 
    if(m_MJDKeyword != "") head.append(m_MJDKeyword);
 
@@ -843,7 +846,7 @@ int HCIobservation<_realT>::readFiles()
 
    Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
 
-   fitsFile<realT> f(m_fileList[0]);
+   fits::fitsFile<realT> f(m_fileList[0]);
 
    f.read(im);
 
@@ -868,7 +871,7 @@ int HCIobservation<_realT>::readFiles()
    
    m_tgtIms.resize(im.rows(), im.cols(), m_fileList.size());
 
-   t_load_begin = get_curr_time();
+   t_load_begin = sys::get_curr_time();
 
    f.read(m_tgtIms.data(), m_heads, m_fileList);
 
@@ -883,7 +886,7 @@ int HCIobservation<_realT>::readFiles()
       {
          for(size_t i=0;i<m_imageMJD.size();++i)
          {
-            m_imageMJD[i] =  mx::ISO8601date2mjd(m_heads[i][m_MJDKeyword].String());
+            m_imageMJD[i] =  sys::ISO8601date2mjd(m_heads[i][m_MJDKeyword].String());
          }
       }
       else
@@ -895,7 +898,7 @@ int HCIobservation<_realT>::readFiles()
       }
    }
 
-   t_load_end = get_curr_time();
+   t_load_end = sys::get_curr_time();
 
    m_Nims =  m_tgtIms.planes();
    m_Nrows = m_tgtIms.rows();
@@ -1028,7 +1031,7 @@ int HCIobservation<_realT>::readRDIFiles()
 
    /*----- Append the HCI keywords to propagate them if needed -----*/
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
 
    if(m_MJDKeyword != "") head.append(m_MJDKeyword); //Currently assuming the MJD keyword will be the same
 
@@ -1044,7 +1047,7 @@ int HCIobservation<_realT>::readRDIFiles()
    /*----- Read in first image to adjust size ----*/
    Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
 
-   fitsFile<realT> f(m_RDIfileList[0]);
+   fits::fitsFile<realT> f(m_RDIfileList[0]);
 
    f.read(im);
 
@@ -1060,7 +1063,7 @@ int HCIobservation<_realT>::readRDIFiles()
    
    m_refIms.resize(m_imSize, m_imSize, m_RDIfileList.size());
 
-   t_load_begin = get_curr_time();
+   t_load_begin = sys::get_curr_time();
 
    f.read(m_refIms.data(), m_RDIheads, m_RDIfileList);
 
@@ -1074,7 +1077,7 @@ int HCIobservation<_realT>::readRDIFiles()
       {
          for(size_t i=0;i<m_RDIimageMJD.size();++i)
          {
-            m_RDIimageMJD[i] =  mx::ISO8601date2mjd(m_RDIheads[i][m_MJDKeyword].String());
+            m_RDIimageMJD[i] =  sys::ISO8601date2mjd(m_RDIheads[i][m_MJDKeyword].String());
          }
       }
       else
@@ -1086,7 +1089,7 @@ int HCIobservation<_realT>::readRDIFiles()
       }
    }
 
-   t_load_end = get_curr_time();
+   t_load_end = sys::get_curr_time();
 
    std::cerr << "loading complete\n";
    
@@ -1192,7 +1195,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
                                           int coaddMaxTime,
                                           std::vector<std::string> & coaddKeywords,
                                           std::vector<double> & imageMJD,
-                                          std::vector<improc::fitsHeader> & heads,
+                                          std::vector<fits::fitsHeader> & heads,
                                           eigenCube<realT> & ims
                                         )
 {
@@ -1212,7 +1215,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
    int Nrows = ims.rows();
    int Ncols = ims.cols();
    
-   t_coadd_begin = get_curr_time();
+   t_coadd_begin = sys::get_curr_time();
 
    std::vector<eigenImageT> coadds;
 
@@ -1347,7 +1350,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
       }
    }
    
-   t_coadd_end = get_curr_time();
+   t_coadd_end = sys::get_curr_time();
 
    
 }//void HCIobservation<_realT>::coaddImages()
@@ -1359,7 +1362,7 @@ void HCIobservation<_realT>::readMask()
    if( m_maskFile != "")
    {
       std::cerr << "creating mask cube\n";
-      fitsFile<realT> ff;
+      fits::fitsFile<realT> ff;
       ff.read(m_mask, m_maskFile);
       
       ///\todo here re-size mask if needed to match imSize
@@ -1394,7 +1397,7 @@ void HCIobservation<_realT>::makeMaskCube()
 template<typename _realT>
 void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
 {
-   t_preproc_begin = get_curr_time();
+   t_preproc_begin = sys::get_curr_time();
 
    //The mask is applied first, and then after each subsequent P.P. step.
    if( m_maskFile != "" && m_preProcess_mask)
@@ -1436,7 +1439,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
    if( m_preProcess_gaussUSM_fwhm > 0 && m_preProcess_mask)
    {
       std::cerr << "Applying Gauss USM . . .\n";
-      t_gaussusm_begin = get_curr_time();
+      t_gaussusm_begin = sys::get_curr_time();
 
       #pragma omp parallel for
       for(int i=0;i<ims.planes(); ++i)
@@ -1458,14 +1461,14 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
          }
 
       }
-      t_gaussusm_end = get_curr_time();
+      t_gaussusm_end = sys::get_curr_time();
       std::cerr << "Done\n";
    }
 
    if( m_preProcess_azUSM_azW && m_preProcess_azUSM_radW )
    {
       std::cerr << "Applying azimuthal USM . . .\n";
-      t_azusm_begin = get_curr_time();
+      t_azusm_begin = sys::get_curr_time();
       #pragma omp parallel for
       for(int i=0;i<ims.planes(); ++i)
       {
@@ -1487,11 +1490,11 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
 
       }
 
-      t_azusm_end = get_curr_time();
+      t_azusm_end = sys::get_curr_time();
       std::cerr  << "Done\n";
    }
 
-   t_preproc_end = get_curr_time();
+   t_preproc_end = sys::get_curr_time();
    
 } //void HCIobservation<_realT>::preProcess()
 
@@ -1555,7 +1558,7 @@ void HCIobservation<_realT>::combineFinim()
 {
    if(m_combineMethod == HCI::noCombine) return;
 
-   t_combo_begin = get_curr_time();
+   t_combo_begin = sys::get_curr_time();
 
    //Validate the combineMethod setting
    int method = HCI::medianCombine;
@@ -1655,7 +1658,7 @@ void HCIobservation<_realT>::combineFinim()
       }
    }
 
-   t_combo_end = get_curr_time();
+   t_combo_end = sys::get_curr_time();
 } //void HCIobservation<_realT>::combineFinim()
 
 template<typename _realT>
@@ -1665,7 +1668,7 @@ void HCIobservation<_realT>::outputPreProcessed()
 
    std::string bname, fname;
 
-   fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
 
    /** \todo Should add a HISTORY card here */
    for(int i=0; i< m_Nims; ++i)
@@ -1677,11 +1680,11 @@ void HCIobservation<_realT>::outputPreProcessed()
 } //void HCIobservation<_realT>::outputPreProcessed()
 
 template<typename _realT>
-void HCIobservation<_realT>::stdFitsHeader(improc::fitsHeader & head)
+void HCIobservation<_realT>::stdFitsHeader(fits::fitsHeader & head)
 {
-   head.append("", fitsCommentType(), "----------------------------------------");
-   head.append("", fitsCommentType(), "mx::HCIobservation parameters:");
-   head.append("", fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "mx::HCIobservation parameters:");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
 
    head.append<int>("FDELFRNT", m_deleteFront, "images deleted from front of file list");
    head.append<int>("FDELBACK", m_deleteBack, "images deleted from back of file list");
@@ -1718,7 +1721,7 @@ void HCIobservation<_realT>::stdFitsHeader(improc::fitsHeader & head)
 }
 
 template<typename _realT>
-void HCIobservation<_realT>::writeFinim(improc::fitsHeader * addHead)
+void HCIobservation<_realT>::writeFinim(fits::fitsHeader * addHead)
 {
    std::string fname = m_finimName;
 
@@ -1734,7 +1737,7 @@ void HCIobservation<_realT>::writeFinim(improc::fitsHeader * addHead)
       fname = ioutils::getSequentialFilename(fname, ".fits");
    }
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
 
    //Add HCIobservation standard header:
    stdFitsHeader(head);
@@ -1754,23 +1757,23 @@ void HCIobservation<_realT>::writeFinim(improc::fitsHeader * addHead)
       head.append(*addHead);
    }
 
-   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
+   fits::fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
 
-   fitsFile<realT> f;
+   fits::fitsFile<realT> f;
 
    f.write(fname, m_finim, head);
 
    std::cerr << "Final image written to: " <<  fname << "\n";
-} //void HCIobservation<_realT>::writeFinim(fitsHeader * addHead)
+} //void HCIobservation<_realT>::writeFinim(fits::fitsHeader * addHead)
 
 template<typename _realT>
-void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
+void HCIobservation<_realT>::outputPSFSub(fits::fitsHeader * addHead)
 {
    
    
    std::string fname;
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
 
    //Add the HCIobservation standard fits header
    stdFitsHeader(head);
@@ -1781,9 +1784,9 @@ void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
       head.append(*addHead);
    }
 
-   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
+   fits::fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
 
-   fitsFile<realT> f;
+   fits::fitsFile<realT> f;
 
    std::ofstream wout;
    
@@ -1813,7 +1816,7 @@ void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
             fname = m_outputDir + "/" + fname;
          }
    
-         fitsHeader h = head;
+         fits::fitsHeader h = head;
 
          h.append(m_heads[p]);
          
@@ -1831,7 +1834,7 @@ void HCIobservation<_realT>::outputPSFSub(improc::fitsHeader * addHead)
    {
       wout.close();
    }
-} //void HCIobservation<_realT>::outputPSFSub(fitsHeader * addHead)
+} //void HCIobservation<_realT>::outputPSFSub(fits::fitsHeader * addHead)
 
 
 
@@ -1850,9 +1853,9 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
    
    //Load first file to condigure based on its header.
    std::vector<std::string> flist = ioutils::getFileNames(dir, prefix, "000", ext);
-   improc::fitsHeader fh;
+   fits::fitsHeader fh;
    eigenImage<realT> im;
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    ff.read(im, fh, flist[0]);
    
@@ -1968,7 +1971,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
    std::cerr << "preProcess_gaussUSM_fwhm: " << m_preProcess_gaussUSM_fwhm << "\n";
    
 
-   fitsHeader head;
+   fits::fitsHeader head;
 
    if(m_MJDKeyword != "") head.append(m_MJDKeyword);
 
@@ -1993,9 +1996,9 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 
       Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> im;
 
-      fitsFile<realT> f(m_fileList[0]);
+      fits::fitsFile<realT> f(m_fileList[0]);
 
-      fitsHeader fh = head;
+      fits::fitsHeader fh = head;
       f.read(im, fh);
 
       if(n == 0)
@@ -2052,7 +2055,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       m_heads.clear(); //This is necessary to make sure heads.resize() copies head on a 2nd call
       m_heads.resize(m_fileList.size(), head);
 
-      t_load_begin = get_curr_time();
+      t_load_begin = sys::get_curr_time();
       
       f.read(m_psfsub[n].data(), m_heads, m_fileList);
 
@@ -2066,7 +2069,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          {
             for(size_t i=0;i<m_imageMJD.size();++i)
             {
-               m_imageMJD[i] =  mx::ISO8601date2mjd(m_heads[i][m_MJDKeyword].String());
+               m_imageMJD[i] =  sys::ISO8601date2mjd(m_heads[i][m_MJDKeyword].String());
             }
          }
          else
@@ -2078,7 +2081,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          }
       }
 
-      t_load_end = get_curr_time();
+      t_load_end = sys::get_curr_time();
       
       for(size_t n=0; n<m_psfsub.size(); ++n)
       {

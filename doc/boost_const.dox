@@ -1,8 +1,9 @@
 /** \defgroup boost_constants Boost Constants
   * \brief Constants provided by the boost library
-  * \ingroup genphyconstants
+  * \ingroup genconstants
 
-  
+\warning including a boost header directly, instead of as wrapped in mx/math/constants.hpp, can significantly increase compilation times.
+
 Many constants of general utility are defined by the boost c++ library.  For example:
 
 \code
@@ -23,6 +24,7 @@ double oneDroot2 = one_div_root_two<double>();
 \endcode
 
 And many others defined in <a href="http://www.boost.org/doc/libs/1_64_0/libs/math/doc/html/math_toolkit/constants.html">boost/math/constants/constants.hpp</a>.
+
 
 
 */

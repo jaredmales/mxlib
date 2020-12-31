@@ -320,7 +320,7 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simulate
    _currImage = 0;
    _currFile = 0;
 
-   m_coronagraph.m_fileDir = getEnv("MX_AO_DATADIR") + "/" + "coron/";
+   m_coronagraph.m_fileDir = sys::getEnv("MX_AO_DATADIR") + "/" + "coron/";
 
    _npix = 0;
 

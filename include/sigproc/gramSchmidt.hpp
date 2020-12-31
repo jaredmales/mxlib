@@ -160,10 +160,10 @@ void baseSpectrum(eigenT & bspect, eigenT & gsspect)
   * \ingroup signal_processing 
   */ 
 template<int progress=0, typename eigenTout, typename eigenTout2, typename eigenTin>
-void gramSchmidtSpectrum( eigenTout & out,  ///< [out] the orthonormal basis set constructed from the input
-                          eigenTout2 & spect, ///< [out] the spectrum 
-                          const eigenTin & in, ///< [in] a basis set, where each column represents one vector
-                          typename eigenTin::Scalar normPix = 1.0 ///< [in] [optional] are of (usually number of pixels in) the orthogonal region for normalization.
+void gramSchmidtSpectrum( eigenTout & out,                        ///< [out] the orthonormal basis set constructed from the input
+                          eigenTout2 & spect,                     ///< [out] the spectrum 
+                          const eigenTin & in,                    ///< [in] a basis set, where each column represents one vector
+                          typename eigenTin::Scalar normPix = 1.0 ///< [in] [optional] area of (usually number of pixels in) the orthogonal region for normalization.
                         )
 {
    typedef typename eigenTout::Scalar Scalar;

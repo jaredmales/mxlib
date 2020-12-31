@@ -32,7 +32,7 @@
 #include <Eigen/Dense>
 
 #include "../mxError.hpp"
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 #include "../improc/eigenCube.hpp"
 
 namespace mx
@@ -128,7 +128,7 @@ class psdFilter;
   *
   * \todo once fftT has a plan interface with pointers for working memory, use it.
   *
-  * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile "[test doc]" 
+  * \test Scenario: compiling psdFilter. \ref tests_sigproc_psdFilter_compile "[test doc]" 
   */
 template<typename _realT, size_t _rank>
 class psdFilter<_realT, _rank, 0>
@@ -159,8 +159,8 @@ protected:
 
    mutable complexArrayT m_ftWork;   ///< Working memory for the FFT.  Declared mutable so it can be accessed in the const filter method.
    
-   fftT< complexT, complexT,rank,0> m_fft_fwd; ///< FFT object for the forward transform.
-   fftT< complexT, complexT,rank,0> m_fft_back; ///< FFT object for the backward transfsorm.
+   math::fft::fftT< complexT, complexT,rank,0> m_fft_fwd; ///< FFT object for the forward transform.
+   math::fft::fftT< complexT, complexT,rank,0> m_fft_back; ///< FFT object for the backward transfsorm.
    
 public:
    

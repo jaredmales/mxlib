@@ -32,6 +32,13 @@ extern "C"
 #include "levmar.h"
 }
 
+namespace mx
+{
+namespace math
+{
+namespace fit 
+{
+   
 template<typename floatT>
 int levmar_dif( void (*func)(floatT *p, floatT *hx, int m, int n, void *adata),
                 floatT *p, 
@@ -43,10 +50,8 @@ int levmar_dif( void (*func)(floatT *p, floatT *hx, int m, int n, void *adata),
                 floatT *info, 
                 floatT *work, 
                 floatT *covar, 
-                void *adata)
-{
-   return -1;
-}
+                void *adata
+              );
 
 template<>
 int levmar_dif<double>( void (*func)(double *p, double *hx, int m, int n, void *adata),
@@ -59,10 +64,8 @@ int levmar_dif<double>( void (*func)(double *p, double *hx, int m, int n, void *
                         double *info, 
                         double *work, 
                         double *covar, 
-                        void *adata)
-{
-   return dlevmar_dif(func,p,x,m,n,itmax,opts,info,work,covar,adata);
-}
+                        void *adata
+                      );
 
 template<>
 int levmar_dif<float>( void (*func)(float *p, float *hx, int m, int n, void *adata),
@@ -75,11 +78,8 @@ int levmar_dif<float>( void (*func)(float *p, float *hx, int m, int n, void *ada
                         float *info, 
                         float *work, 
                         float *covar, 
-                        void *adata)
-{
-   return slevmar_dif(func,p,x,m,n,itmax,opts,info,work,covar,adata);
-}
-
+                        void *adata
+                     );
 
 template<typename floatT>
 int levmar_der( void (*func)(floatT *p, floatT *hx, int m, int n, void *adata),
@@ -93,10 +93,8 @@ int levmar_der( void (*func)(floatT *p, floatT *hx, int m, int n, void *adata),
                 floatT *info, 
                 floatT *work, 
                 floatT *covar, 
-                void *adata)
-{
-   return -1;
-}
+                void *adata
+              );
 
 template<>
 int levmar_der<double>( void (*func)(double *p, double *hx, int m, int n, void *adata),
@@ -110,11 +108,8 @@ int levmar_der<double>( void (*func)(double *p, double *hx, int m, int n, void *
                         double *info, 
                         double *work, 
                         double *covar, 
-                        void *adata)
-{
-   return dlevmar_der(func,jacf,p,x,m,n,itmax,opts,info,work,covar,adata);
-}
-
+                        void *adata
+                      );
 
 template<>
 int levmar_der<float>( void (*func)(float *p, float *hx, int m, int n, void *adata),
@@ -128,10 +123,12 @@ int levmar_der<float>( void (*func)(float *p, float *hx, int m, int n, void *ada
                        float *info, 
                        float *work, 
                        float *covar, 
-                       void *adata)
-{
-   return slevmar_der(func,jacf,p,x,m,n,itmax,opts,info,work,covar,adata);
-}
+                       void *adata
+                     );
+
+} //namespace mx
+} //namespace math
+} //namespace fit 
 
 #endif // __templateLevmar_hpp__
 
