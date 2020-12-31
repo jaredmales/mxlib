@@ -388,6 +388,12 @@ template<typename _realT>
 void deformableMirror<_realT>::calAmp(realT ca)
 {
    _calAmp = ca;
+   
+    #ifdef MXAO_USE_GPU
+   realT alpha = -1*_calAmp;
+   m_alpha.upload(&alpha, 1);
+   #endif
+      
 }
 
 
@@ -510,9 +516,7 @@ void deformableMirror<_realT>::setShape(commandT & commandV)
 
    #ifdef MXAO_USE_GPU
    m_devModeCommands.upload(commandV.measurement.data(), commandV.measurement.size());
-   //realT alpha = -1*_calAmp;
-   //realT zero = 0;
-   //cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, &alpha, m_devM2c.m_devicePtr, m_devModeCommands.m_devicePtr, &zero, m_devActCommands.m_devicePtr);
+   realT alpha;
    cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, m_alpha, m_devM2c, m_devModeCommands, m_zero, m_devActCommands);
 
    if(stat != CUBLAS_STATUS_SUCCESS)
@@ -521,13 +525,14 @@ void deformableMirror<_realT>::setShape(commandT & commandV)
    }
    
 
-   /*c.resize(m_nActs,1);
-   m_devActCommands.download(c.data());
-   */
+   //c.resize(m_nActs,1);
+   //m_devActCommands.download(c.data());
+   
    
    #else
    Eigen::Map<Eigen::Array<realT,-1,-1>> commandV_measurement(commandV.measurement.data(), 1, commandV.measurement.size());
    c = -1*_calAmp*m_m2c.matrix() * commandV_measurement.matrix().transpose();
+   
    #endif
 
 #if 0
