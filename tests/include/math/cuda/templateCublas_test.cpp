@@ -520,4 +520,349 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
    }
 }
 
+/** Scenario: multiplying a vector by a matrix
+  * Tests mx::cuda::cublasTgemv, as well as basic cudaPtr operations.
+  * 
+  * \anchor test_math_templateCublas_cublasTgemv_inc
+  */ 
+SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::templateCublas]" ) 
+{
+   GIVEN("a 2x2 matrix, float")
+   {
+      WHEN("float precision, beta is 0")
+      {
+         std::vector<float> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dA;
+         
+         std::vector<float> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dx;
+         
+         std::vector<float> hy;
+         mx::cuda::cudaPtr<float> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         
+         dy.resize(2);
+         dy.initialize();
+         
+         float alpha = 1;
+         float beta = 0;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 7);
+         REQUIRE(hy[1] == 10);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+      
+      WHEN("float precision, beta is 1, but y is all 0")
+      {
+         std::vector<float> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dA;
+         
+         std::vector<float> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dx;
+         
+         std::vector<float> hy;
+         mx::cuda::cudaPtr<float> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         
+         dy.resize(2);
+         dy.initialize();
+         
+         float alpha = 1;
+         float beta = 1;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 7);
+         REQUIRE(hy[1] == 10);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+      WHEN("float precision, beta is 1, y is [1,2]")
+      {
+         std::vector<float> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dA;
+         
+         std::vector<float> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<float> dx;
+         
+         std::vector<float> hy;
+         mx::cuda::cudaPtr<float> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         hy[0] = 1;
+         hy[1] = 2;
+         
+         dy.resize(2);
+         dy.upload(hx.data());
+         
+         float alpha = 1;
+         float beta = 1;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 8);
+         REQUIRE(hy[1] == 12);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+   }
+   
+   GIVEN("a 2x2 matrix, double")
+   {
+      WHEN("double precision, beta is 0")
+      {
+         std::vector<double> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dA;
+         
+         std::vector<double> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dx;
+         
+         std::vector<double> hy;
+         mx::cuda::cudaPtr<double> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         
+         dy.resize(2);
+         dy.initialize();
+         
+         double alpha = 1;
+         double beta = 0;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 7);
+         REQUIRE(hy[1] == 10);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+      
+      WHEN("double precision, beta is 1, but y is all 0")
+      {
+         std::vector<double> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dA;
+         
+         std::vector<double> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dx;
+         
+         std::vector<double> hy;
+         mx::cuda::cudaPtr<double> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         
+         dy.resize(2);
+         dy.initialize();
+         
+         double alpha = 1;
+         double beta = 1;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 7);
+         REQUIRE(hy[1] == 10);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+      WHEN("double precision, beta is 1, y is [1,2]")
+      {
+         std::vector<double> hA; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dA;
+         
+         std::vector<double> hx; //This will actually be a vector
+         mx::cuda::cudaPtr<double> dx;
+         
+         std::vector<double> hy;
+         mx::cuda::cudaPtr<double> dy;
+         
+         /* Column major order:
+            1 3
+            2 4
+         */
+         hA.resize(4);
+         hA[0] = 1;
+         hA[1] = 2;
+         hA[2] = 3;
+         hA[3] = 4;
+         
+         dA.resize(2,2);
+         dA.upload(hA.data());
+         
+         hx.resize(2);
+         hx[0] = 1;
+         hx[1] = 2;
+         
+         dx.upload(hx.data(), hx.size());
+         
+         hy.resize(2);
+         hy[0] = 1;
+         hy[1] = 2;
+         
+         dy.resize(2);
+         dy.upload(hx.data());
+         
+         double alpha = 1;
+         double beta = 1;
+         
+         cublasHandle_t handle;
+         cublasStatus_t stat;
+         stat = cublasCreate(&handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         stat = mx::cuda::cublasTgemv(handle, CUBLAS_OP_N, 2, 2, &alpha, dA(), 2, dx(), 1, &beta, dy(),1); 
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+         
+         dy.download(hy.data());
+         
+         REQUIRE(hy[0] == 8);
+         REQUIRE(hy[1] == 12);
+         
+         stat = cublasDestroy(handle);
+         REQUIRE(stat == CUBLAS_STATUS_SUCCESS);
+      }
+   }
+}
 

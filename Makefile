@@ -72,3 +72,4 @@ install: all mxlib_uncomp_version
 clean:
 	rm -f *.o *~
 	rm -f include/mxlib_uncomp_version.h
+	cd source; ${MAKE} clean

@@ -1,9 +1,9 @@
 /** \file moffat.hpp
- * \author Jared R. Males
- * \brief Declarations for utilities related to the Moffat function.
- * \ingroup gen_math_files
- *
- */
+  * \author Jared R. Males
+  * \brief Declarations for utilities related to the Moffat function.
+  * \ingroup gen_math_files
+  *
+  */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef moffat_hpp
-#define moffat_hpp
+#ifndef math_func_moffat_hpp
+#define math_func_moffat_hpp
 
 #include <cmath>
 
@@ -65,6 +65,8 @@ namespace func
   * 
   * \tparam realT is type to use for arithmetic
   * 
+  * \test Scenario: compiling 1D Moffat function \ref tests_math_func_moffat1D "[test doc]"
+  *
   * \ingroup gen_math_moffats
   */ 
 template<typename realT>
@@ -76,7 +78,7 @@ realT moffat( const realT x,     ///< [in] is the x-position at which to evaluat
               const realT beta   ///< [in] is the shape parameter of the Moffat function
             )
 { 
-   return I0 + I * pow( static_cast<realT>(1) + pow(x-x0,2)/pow(alpha,2), -beta);
+   return I0 + Ipk * pow( static_cast<realT>(1) + pow(x-x0,2)/pow(alpha,2), -beta);
 }
 
 /// Find value at position (x,y) of the 2D arbitrarily-centered unnormalized symmetric Moffat function
@@ -95,6 +97,8 @@ realT moffat( const realT x,     ///< [in] is the x-position at which to evaluat
   * 
   * \tparam realT is type to use for arithmetic
   * 
+  * \test Scenario: compiling 2D Moffat function \ref tests_math_func_moffat2D "[test doc]"
+  *
   * \ingroup gen_math_moffats
   */ 
 template<typename realT>
@@ -121,6 +125,8 @@ realT moffat2D( const realT x,     ///< [in] the x-position at which to evaluate
   * 
   * \tparam realT is the type to use for arithmetic
   * 
+  * \test Scenario: compiling Moffat FWHM \ref tests_math_func_moffatFWHM "[test doc]"
+  * 
   * \ingroup gen_math_moffats
   */
 template<typename realT>
@@ -135,7 +141,7 @@ realT moffatFWHM( realT alpha, ///< [in] the width parameter of the Moffat funct
 } //namespace math
 } //namespace mx
 
-#endif //moffat_hpp
+#endif //math_func_moffat_hpp
 
 
 

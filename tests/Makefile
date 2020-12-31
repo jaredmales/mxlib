@@ -8,13 +8,14 @@ OBJS = testsMain.o \
        include/astro/astroDynamics_test.o \
        include/ioutils/fileUtils_test.o \
        include/math/cuda/templateCublas_test.o \
+       include/math/func/moffat_test.o \
        include/math/templateBLAS_test.o \
        include/math/templateLapack_test.o \
        include/math/randomT_test.o \
        include/sigproc/psdUtils_test.o \
        include/sigproc/psdFilter_test.o \
        include/sigproc/zernike_test.o \
-       include/sys/timeUtils_test.o \
+       include/sys/timeUtils_test.o 
        
        
        

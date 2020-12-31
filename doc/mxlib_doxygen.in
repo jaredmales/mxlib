@@ -821,6 +821,7 @@ INPUT                  = ./groupdefs.dox \
                          ../tests/include/ioutils \
                          ../tests/include/math \
                          ../tests/include/math/cuda \
+                         ../tests/include/math/func \
                          ../tests/include/sigproc \
                          ../tests/include/sys
                          

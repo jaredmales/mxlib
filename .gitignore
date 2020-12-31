@@ -13,6 +13,9 @@ license.blurb
 !local/Common.example.mk
 !local/MxApp.example.mk
 !local/MxLib.example.mk
+
+tests/mxlibTest
+
 *.a
 *.so
 *.dylib

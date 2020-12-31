@@ -116,12 +116,14 @@ void elementwiseXxY( dataT1 * x, ///< [in/out] device pointer for the 1st vector
 /// Perform a matrix-vector multiplication.
 /** Implements  
   * \f[
-  * \vec{y} = \alpha \bm{A} \vec{x} + \beta \vec{y}
+  * \vec{y} = \alpha \mathbf{A} \vec{x} + \beta \vec{y}
   * \f]
   * 
   * Specializations are provided for float, double, complex-float, and complex-double
   *
   * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
+  * 
+  * \tests Scenario: multiplying a vectory by a matrix \ref test_math_templateCublas_cublasTgemv_inc "[code doc]"
   * 
   * \ingroup cublas
   */ 
@@ -143,7 +145,7 @@ cublasStatus_t cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuB
 /// Perform a matrix-vector multiplication for stride-less arrays
 /** Implements  
   * \f[
-  * \vec{y} = \alpha \bm{A} \vec{x} + \beta \vec{y}
+  * \vec{y} = \alpha \mathbf{A} \vec{x} + \beta \vec{y}
   * \f]
   * 
   * Specializations are provided for float, double, complex-float, and complex-double
