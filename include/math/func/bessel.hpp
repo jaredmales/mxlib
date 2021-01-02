@@ -77,6 +77,27 @@ double bessel_j<int, double>( int v,
                               double x
                             );
 
+template<>
+long double bessel_j<long double, long double>( long double v, 
+                                 long double x
+                               );
+
+template<>
+long double bessel_j<int, long double>( int v,
+                              long double x
+                            );
+
+#ifdef HASQUAD
+template<>
+__float128 bessel_j<__float128, __float128>( __float128 v, 
+                                             __float128 x
+                                           );
+
+template<>
+__float128 bessel_j<int, __float128>( int v,
+                                      __float128 x
+                                    );
+#endif
 
 }
 }

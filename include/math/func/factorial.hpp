@@ -64,6 +64,11 @@ double factorial<double>( double x);
 template<>
 long double factorial<long double>( long double x);
 
+#ifdef HASQUAD
+template<>
+__float128 factorial<__float128>( __float128 x);
+#endif
+
 }
 }
 }

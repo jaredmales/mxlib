@@ -27,7 +27,7 @@
 #ifndef aoPSDs_hpp
 #define aoPSDs_hpp
 
-
+#include <string>
 
 #include "../../mxError.hpp"
 #include "../../math/constants.hpp"
@@ -53,17 +53,9 @@ namespace PSDComponent
           dispAmplitude  ///< The amplitude component of dispersive anisoplanatism
         };
         
-   std::string compName( int cc )
-   {
-      if( cc == phase ) return "phase";
-      if( cc == amplitude ) return "amplitude";
-      if( cc == dispPhase ) return "dispPhase";
-      if( cc == dispAmplitude ) return "dispAmplitude";
-      
-      return "unknown";
-   }
+   std::string compName( int cc );
 }
-
+   
 ///Manage calculations using the von Karman spatial power spectrum.
 /** This very general PSD has the form
   * 
@@ -400,9 +392,9 @@ template< typename realT>
 realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
 {
    realT k0;
-   if(atm.L_0() > 0)
+   if(atm.L_0(0) > 0)
    {
-      k0 = 1/ (atm.L_0()*atm.L_0());
+      k0 = 1/ (atm.L_0(0)*atm.L_0(0));
    }
    else k0 = 0;
 
@@ -423,6 +415,20 @@ iosT & vonKarmanSpectrum<realT>::dumpPSD(iosT & ios)
    return ios;
 }
    
+extern template
+struct vonKarmanSpectrum<float>;
+
+extern template
+struct vonKarmanSpectrum<double>;
+
+extern template
+struct vonKarmanSpectrum<long double>;
+
+#ifdef HASQUAD
+extern template
+struct vonKarmanSpectrum<__float128>;
+#endif
+
 } //namespace analysis
 } //namespace AO
 } //namespace mx

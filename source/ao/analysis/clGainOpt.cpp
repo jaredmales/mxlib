@@ -108,9 +108,41 @@ long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> & olg
    return _optGainOpenLoop<long double>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
 }
 
-
+#ifdef HASQUAD
+template<>
+__float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> & olgo,
+                                          __float128 & var,
+                                          __float128 & gmax,
+                                          __float128 & minFindMin,
+                                          __float128 & minFindMaxFact,
+                                          int minFindBits,
+                                          uintmax_t minFindMaxIter
+                                        )
+{
+   return _optGainOpenLoop<__float128>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
+}
+#endif
 
 } //namespace impl
+
+   
+//Explicit Instantiation
+template
+class clGainOpt<float>;
+
+template
+class clGainOpt<double>;
+
+template
+class clGainOpt<long double>;
+
+#ifdef HASQUAD
+template
+class clGainOpt<__float128>;
+#endif
+   
+   
+   
 } //namespace analysis
 } //namespace ao
 } //namespace mx

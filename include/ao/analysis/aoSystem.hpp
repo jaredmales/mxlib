@@ -33,10 +33,12 @@
 #include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
+
 
 #include "aoAtmosphere.hpp"
+#include "aoPSDs.hpp"
 #include "aoWFS.hpp"
+
 
 #define FITTING_ERROR_NO 0
 #define FITTING_ERROR_ZERO 1
@@ -2120,6 +2122,22 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    return ios;
 }
 
+extern template
+class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
+
+extern template
+class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>; 
+
+extern template
+class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
+
+extern template
+class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>; 
+
+#ifdef HASQUAD
+extern template
+class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>; 
+#endif
 
 } //namespace analysis
 } //namespace AO

@@ -4,6 +4,10 @@
 
 OBJS = mxError.o \
        ao/analysis/clGainOpt.o \
+       ao/analysis/aoAtmosphere.o \
+       ao/analysis/aoSystem.o \
+       ao/analysis/fourierTemporalPSD.o \
+       ao/analysis/aoPSDs.o \
        ioutils/fileUtils.o \
        ioutils/stringUtils.o \
        ioutils/fits/fitsUtils.o \
@@ -21,9 +25,11 @@ OBJS = mxError.o \
        math/func/bessel.o \
        math/func/factorial.o \
        math/func/gamma.o \
+       math/func/moffat.o \
        math/func/precision.o \
        math/func/sign.o \
        math/plot/gnuPlot.o \
+       sigproc/zernike.o \
        sys/environment.o \
        sys/timeUtils.o 
        

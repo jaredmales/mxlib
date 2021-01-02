@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <vector>
+#include <algorithm>
 
 
 #include <mx/mxlib.hpp>
@@ -1113,6 +1114,20 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    return ios;
 }
  
+extern template
+class aoAtmosphere<float>;
+
+extern template
+class aoAtmosphere<double>;
+
+extern template
+class aoAtmosphere<long double>;
+
+#ifdef HASQUAD
+extern template
+class aoAtmosphere<__float128>;
+#endif
+
 }//namespace analysis 
 }//namespace AO
 }//namespace mx

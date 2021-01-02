@@ -27,6 +27,8 @@
 #ifndef math_func_jinc_hpp
 #define math_func_jinc_hpp
 
+#include <limits>
+
 #include "bessel.hpp"
 #include "precision.hpp"
 

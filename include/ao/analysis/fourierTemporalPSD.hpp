@@ -53,6 +53,8 @@
 #include "../../mxError.hpp"
 #include "../../math/gslInterpolation.hpp"
 
+#include "aoSystem.hpp"
+#include "aoPSDs.hpp"
 #include "wfsNoisePSD.hpp"
 #include "clAOLinearPredictor.hpp"
 #include "clGainOpt.hpp"
@@ -60,7 +62,6 @@
 #include "speckleAmpPSD.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
 
 namespace mx
 {
@@ -1492,6 +1493,22 @@ realT Fm_projMod (realT kv, void * params)
 
    return P*QQ ;
 }
+
+/*
+extern template
+struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;
+*/
+extern template
+struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
+/*
+extern template
+struct fourierTemporalPSD<long double, aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>>;
+
+#ifdef HASQUAD
+extern template
+struct fourierTemporalPSD<__float128, aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>>;
+#endif
+*/
 
 } //namespace analysis
 } //namespace AO

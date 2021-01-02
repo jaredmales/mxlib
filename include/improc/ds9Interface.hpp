@@ -38,7 +38,7 @@
 
 
 #include "../ipc/sharedMemSegment.hpp"
-#include "fitsUtils.hpp"
+#include "../ioutils/fits/fitsUtils.hpp"
 
 #ifndef DS9INTERFACE_NO_EIGEN
 #include "eigenImage.hpp"
@@ -707,7 +707,7 @@ int ds9Interface::display( const dataT * im,
                            int frame
                           )
 {
-   return display(im, getFitsBITPIX<dataT>(), sizeof(dataT), dim1, dim2, dim3, frame);
+   return display(im, fits::getFitsBITPIX<dataT>(), sizeof(dataT), dim1, dim2, dim3, frame);
 }
 
 #ifndef DS9INTERFACE_NO_EIGEN

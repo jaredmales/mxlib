@@ -77,6 +77,14 @@ constexpr long double pi<long double>()
    return static_cast<long double>(MX_INTERNAL_PI_100);
 }
 
+#ifdef HASQUAD
+template<>
+constexpr __float128 pi<__float128>()
+{
+   return static_cast<__float128>(MX_INTERNAL_PI_100);
+}
+#endif
+
 /// Get the value of 2pi
 /** Specializations provided for float, double, and long double.
   *
@@ -111,6 +119,13 @@ constexpr long double two_pi<long double>()
    return static_cast<long double>(2*MX_INTERNAL_PI_100);
 }
 
+#ifdef HASQUAD
+template<>
+constexpr __float128 two_pi<__float128>()
+{
+   return static_cast<__float128>(2*MX_INTERNAL_PI_100);
+}
+#endif
 
 /// Get the value of pi/2
 /** Wrapper for boost constant. Specializations provided for float, double, and long double.

@@ -8,7 +8,9 @@
 
 #include "../../../include/sigproc/zernike.hpp"
 
-/** Verify calculation of Noll nm values from j.
+/** Scenario: testing noll_nm
+  * 
+  * Verify calculation of Noll nm values from j.
   * Goes through each of the cases in Table 1 of \cite noll_1976
   * 
   * \anchor tests_sigproc_zernike_noll_nm
@@ -261,7 +263,8 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
    }
 }
 
-/** Verify compilation and execution of zernikeQNorm.
+/** Scenario: testing zernikeQNorm
+  * Verify compilation and execution of zernikeQNorm.
   * This does not validate the output. 
   * \anchor tests_sigproc_zernike_zernikeQNorm
   */
