@@ -363,6 +363,7 @@ std::string ISO8601DateTimeStr(int timeZone = 0)
   *
   * \ingroup timeutils
   */
+inline
 std::string ISO8601DateTimeStrMJD( const double &timeIn, ///< [in] the input time
                                    int timeZone = 0      ///< [in] specifies whether to include a timezone designation.  0=> none, 1=> letter, 2=>offset.
                                  )
@@ -401,6 +402,7 @@ std::string ISO8601DateTimeStrMJD( const double &timeIn, ///< [in] the input tim
   * 
   * \ingroup timeutils
   */ 
+inline
 int timeStamp( std::string & tstamp, ///< [out] the string to hold the formatted time 
                timespec & ts         ///< [in] the timespec from which to produce the timestamp string
              )
@@ -478,6 +480,7 @@ int timespecUTC2TAIMJD( double & djm, double & djmf, const timespec & tsp, tm * 
    return 0;
 }
 
+inline
 timespec meanTimespec( timespec ts1, timespec ts2)
 {
    double means = (ts1.tv_sec + ts2.tv_sec)/2.0;
@@ -514,6 +517,7 @@ namespace tscomp
   * 
   * \ingroup timeutils_tscomp
   */  
+inline
 bool operator<( timespec const& tsL, ///< [in] the left hand side of the comparison
                 timespec const& tsR  ///< [in] the right hand side of the comparison 
               )
@@ -531,6 +535,7 @@ bool operator<( timespec const& tsL, ///< [in] the left hand side of the compari
   * 
   * \ingroup timeutils_tscomp
   */
+inline
 bool operator>( timespec const& tsL, ///< [in] the left hand side of the comparison
                 timespec const& tsR  ///< [in] the right hand side of the comparison 
               )
@@ -548,6 +553,7 @@ bool operator>( timespec const& tsL, ///< [in] the left hand side of the compari
   * 
   * \ingroup timeutils_tscomp
   */
+inline
 bool operator==( timespec const& tsL, ///< [in] the left hand side of the comparison
                  timespec const& tsR  ///< [in] the right hand side of the comparison 
                )
@@ -565,6 +571,7 @@ bool operator==( timespec const& tsL, ///< [in] the left hand side of the compar
   * 
   * \ingroup timeutils_tscomp
   */
+inline
 bool operator<=( timespec const& tsL, ///< [in] the left hand side of the comparison
                  timespec const& tsR  ///< [in] the right hand side of the comparison 
                )
@@ -582,6 +589,7 @@ bool operator<=( timespec const& tsL, ///< [in] the left hand side of the compar
   * 
   * \ingroup timeutils_tscomp
   */
+inline
 bool operator>=( timespec const& tsL, ///< [in] the left hand side of the comparison
                  timespec const& tsR  ///< [in] the right hand side of the comparison 
                )
