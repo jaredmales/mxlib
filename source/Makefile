@@ -2,17 +2,31 @@
 -include ../mk/Common.mk
 
 
-OBJS = mxError.o \
+OBJS = mxlib.o \
+       mxError.o \
        ao/analysis/clGainOpt.o \
        ao/analysis/aoAtmosphere.o \
        ao/analysis/aoSystem.o \
        ao/analysis/fourierTemporalPSD.o \
        ao/analysis/aoPSDs.o \
+       app/application.o \
+       app/appConfigurator.o \
+       app/clOptions.o \
+       app/ini.o \
+       app/optionparser.o \
        ioutils/fileUtils.o \
        ioutils/stringUtils.o \
        ioutils/fits/fitsUtils.o \
        ioutils/fits/fitsHeaderCard.o \
        ioutils/fits/fitsHeader.o \
+       ioutils/textTable.o \
+       improc/ds9Interface.o \
+       improc/ADIDerotator.o \
+       improc/ADIobservation.o \
+       improc/HCIobservation.o \
+       improc/KLIPreduction.o \
+       ipc/processInterface.o \
+       ipc/sharedMemSegment.o \
        math/cuda/templateCublas.o \
        math/cuda/templateCufft.o \
        math/cuda/templateCurand.o \
@@ -25,6 +39,7 @@ OBJS = mxError.o \
        math/func/bessel.o \
        math/func/factorial.o \
        math/func/gamma.o \
+       math/func/jinc.o \
        math/func/moffat.o \
        math/func/precision.o \
        math/func/sign.o \

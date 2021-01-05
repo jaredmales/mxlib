@@ -36,6 +36,7 @@
 #include <limits>
 #include <algorithm>
 
+#include "../mxlib.hpp"
 
 namespace mx
 {
@@ -153,6 +154,17 @@ typeT convertFromString( const std::string & str /**< [in] is the string to conv
 template<> 
 char convertFromString<char>(const std::string & str /* [in] is the string to convert*/ );
 
+template<> 
+char16_t convertFromString<char16_t>(const std::string & str /* [in] is the string to convert*/ );
+
+template<> 
+char32_t convertFromString<char32_t>(const std::string & str /* [in] is the string to convert*/ );
+
+template<> 
+wchar_t convertFromString<wchar_t>(const std::string & str /* [in] is the string to convert*/ );
+
+template<>
+signed char convertFromString<signed char>(const std::string & str /* [in] is the string to convert*/ );
 
 template<>
 unsigned char convertFromString<unsigned char>(const std::string & str /* [in] is the string to convert*/ );

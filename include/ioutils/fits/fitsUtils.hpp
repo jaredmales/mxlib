@@ -194,6 +194,9 @@ template<>
 int getFitsBITPIX<long>();
 
 template<> 
+int getFitsBITPIX<unsigned long>();
+
+template<> 
 int getFitsBITPIX<float>();
 
 template<> 

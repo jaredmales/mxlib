@@ -28,6 +28,8 @@
 
 #include <iostream>
 
+#include "../mxlib.hpp"
+
 namespace mx
 {
 namespace ioutils

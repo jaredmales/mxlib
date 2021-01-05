@@ -82,6 +82,9 @@ struct ADIDerotator
 
 ///@}
 
+extern template struct ADIDerotator<float>;
+extern template struct ADIDerotator<double>;
+
 } //namespace improc
 } //namespace mx
 

@@ -1,4 +1,4 @@
-/** \file processInterface.hpp
+/** \file processInterface.cpp
   * \author Jared R. Males (jaredmales@gmail.com)
   * \brief Process interface facilities
   * \ingroup IPC
@@ -6,7 +6,7 @@
 */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2021 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,34 +24,41 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef ipc_processInterface_hpp
-#define ipc_processInterface_hpp
-
-#include <string.h>
-#include <stdio.h>
-
-#include "../mxlib.hpp"
-#include "ipc.hpp"
+#include "ipc/processInterface.hpp"
 
 namespace mx
 {
 namespace ipc 
 {
    
-///Run a process and copy the output to a string
-/** Uses popen, so the attendant precautions about privileges apply.
-  *
-  * \param cmd is the command to run
-  * \param resp is the string to copy the response to.
-  * \param respsz is the available size of the string.
-  *
-  * \retval 0 on success 
-  * \retval -1 on error
-  * 
-  */
-int command_response(const char * cmd, char * resp, size_t respsz);
+int command_response( const char * cmd, 
+                      char * resp, 
+                      size_t respsz
+                    )
+{
+   FILE *cmd_ptr;
+
+   if ( (cmd_ptr = popen(cmd, "r")) != NULL) 
+   {
+      size_t written = 0;
+         
+      char buf[MX_IPC_PI_BUFSZ];
+      
+      while (fgets(buf, MX_IPC_PI_BUFSZ, cmd_ptr) != NULL && written+1 < respsz)
+      {
+         strcat(resp, buf);
+         written = strlen(resp);                  
+      }
+      pclose(cmd_ptr);
+   }
+   else
+   {
+      return -1;
+   }
+
+   return 0;
+}
 
 }//namespace ipc
 } //namespace mx
 
-#endif //ipc_processInterface_hpp

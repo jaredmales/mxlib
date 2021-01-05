@@ -20,7 +20,6 @@ namespace mx
 {
 namespace improc
 {
-   
 namespace HCI
 {
    /// Fake injection PSF file specification methods
@@ -34,23 +33,14 @@ namespace HCI
    /**
      * \returns the string name corresponding to the fake injection method
      */ 
-   std::string fakeMethodsStr( int method /**< [in] the fake injection method */)
-   {
-      if(method == single) return "single";
-      else if(method == list) return "list";
-      else return "unknown";
-   }
+   std::string fakeMethodsStr( int method /**< [in] the fake injection method */);
    
    /// Get the fake injection method from its string name
    /**
      * \returns the corresponding member of the fakeMethods enum
      */ 
-   int fakeMethodFmStr( const std::string & method  /**< [in] the fake injection method name*/)
-   {
-      if(method == "single") return single;
-      else if(method == "list") return list;
-      else return -1;
-   }
+   int fakeMethodFmStr( const std::string & method  /**< [in] the fake injection method name*/);
+
 }
 
 ///Process an angular differential imaging (ADI) observation
@@ -676,7 +666,10 @@ void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( fits::fitsHeader * h
    }
 }
 
+template<typename realT> class ADIDerotator;
 
+extern template class ADIobservation<float, ADIDerotator<float>>;
+extern template class ADIobservation<double, ADIDerotator<double>>;
 
 } //namespace improc
 } //namespace mx

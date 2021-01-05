@@ -28,19 +28,18 @@
 #define math_func_jinc_hpp
 
 #include <limits>
+#include <cmath>
 
 #include "bessel.hpp"
 #include "precision.hpp"
 
 namespace mx
 {
-   
 namespace math
 {
-
 namespace func 
 {
-   
+
 ///Returns the the Jinc function
 /** The Jinc function is defined here as
   * \f[ 
@@ -67,7 +66,7 @@ T jinc( const T & x /**< [in] the argument */)
    T const taylor_0_bound = std::numeric_limits<T>::epsilon();
    T const taylor_2_bound = root_epsilon<T>();
    
-   if( fabs(x) > taylor_2_bound)
+   if( std::fabs(x) > taylor_2_bound)
    {
       return bessel_j<int, T>(1,x)/(x);
    }
@@ -75,7 +74,7 @@ T jinc( const T & x /**< [in] the argument */)
    {
       // approximation by taylor series in x at 0
       T  result = static_cast<T>(0.5);
-      if (abs(x) >= taylor_0_bound)
+      if (std::fabs(x) >= taylor_0_bound)
       {
          T x2 = x*x;
 
@@ -87,6 +86,20 @@ T jinc( const T & x /**< [in] the argument */)
    }
             
 }
+
+extern template
+float jinc<float>(const float & x);
+
+extern template
+double jinc<double>(const double & x);
+
+extern template
+long double jinc<long double>(const long double & x);
+
+#ifdef HASQUAD
+extern template
+__float128 jinc<__float128>(const __float128 & x);
+#endif
 
 ///Returns the Jinc2 function
 /** The Jinc2 function is defined here as
@@ -106,7 +119,7 @@ T jinc2(const T & x /**< [in] the argument */)
 {
    T const taylor_2_bound = root_epsilon<T>();
       
-   if( fabs(x) > taylor_2_bound )
+   if( std::fabs(x) > taylor_2_bound )
    {
       return bessel_j<int, T>(2,x)/(x);
    }
@@ -115,6 +128,20 @@ T jinc2(const T & x /**< [in] the argument */)
       return static_cast<T>(0);
    }
 }
+
+extern template
+float jinc2<float>(const float & x);
+
+extern template
+double jinc2<double>(const double & x);
+
+extern template
+long double jinc2<long double>(const long double & x);
+
+#ifdef HASQUAD
+extern template
+__float128 jinc2<__float128>(const __float128 & x);
+#endif
 
 } //namespace func 
 } //namespace math

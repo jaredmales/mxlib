@@ -40,6 +40,10 @@ all: lib
 mxlib_uncomp_version:
 	@bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
 
+.PHONY: mxlib_comp_version
+mxlib_comp_version:
+	@bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
+	
 .PHONY: setup
 setup:
 	@for file in ./local/*.example.mk; do \
@@ -56,7 +60,7 @@ setup:
 	@grep  "?=" mk/MxApp.mk || true
 	@echo "***"
 
-lib:
+lib: mxlib_uncomp_version mxlib_comp_version
 	cd source; ${MAKE} libmxlib.so
 	
 install: all mxlib_uncomp_version
@@ -65,11 +69,8 @@ install: all mxlib_uncomp_version
 	install gengithead.sh $(BIN_PATH)/
 	cp -r include/* $(INCLUDE_PATH)/mx/
 
-#	for file in ${INC_TO_INSTALL}; do \
-#	  (cp -r include/$$file $(INCLUDE_PATH)/mx) || break; \
-#	done
-
 clean:
 	rm -f *.o *~
 	rm -f include/mxlib_uncomp_version.h
+	rm -f include/mxlib_comp_version.h
 	cd source; ${MAKE} clean

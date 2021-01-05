@@ -30,6 +30,7 @@
 #include <cstdio>
 #include <string>
 
+#include "../mxlib.hpp"
 #include "../mxError.hpp"
 
 namespace mx

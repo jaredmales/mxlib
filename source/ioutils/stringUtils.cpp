@@ -51,6 +51,33 @@ char convertFromString<char>(const std::string & str )
    return (char) atoi(str.c_str());
 }
 
+// Template specialization of convertFromString for char16_t
+template<>  
+char16_t convertFromString<char16_t>(const std::string & str )
+{
+   return (char16_t) atoi(str.c_str());
+}
+
+// Template specialization of convertFromString for char32_t
+template<>  
+char32_t convertFromString<char32_t>(const std::string & str )
+{
+   return (char32_t) atoi(str.c_str());
+}
+
+// Template specialization of convertFromString for char32_t
+template<>  
+wchar_t convertFromString<wchar_t>(const std::string & str )
+{
+   return (wchar_t) atoi(str.c_str());
+}
+
+// Template specialization of convertFromString for unsigned char
+template<>
+signed char convertFromString<signed char>(const std::string & str )
+{
+   return (signed char) atoi(str.c_str());
+}
 
 // Template specialization of convertFromString for unsigned char
 template<>

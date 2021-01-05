@@ -184,6 +184,12 @@ int getFitsBITPIX<long>()
 }
 
 template<> 
+int getFitsBITPIX<unsigned long>()
+{
+   return ULONGLONG_IMG; //Yes, this is right, this returns 64
+}
+
+template<> 
 int getFitsBITPIX<float>()
 {
    return FLOAT_IMG;

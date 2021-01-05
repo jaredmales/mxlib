@@ -4,7 +4,7 @@
 #include "rawBinary.hpp"
 #include "readColumns.hpp"
 #include "stringUtils.hpp"
-//#include "textTable.hpp"
+#include "textTable.hpp"
 
 #include "fits/fitsFile.hpp"
 #include "fits/fitsHeaderCard.hpp"

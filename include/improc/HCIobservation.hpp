@@ -60,27 +60,14 @@ namespace HCI
    /**
      * \returns a string with the name of the combineMethod 
      */ 
-   std::string combineMethodStr( int method /**< [in] one of the combineMethods enum members */)
-   {
-      if(method == noCombine) return "noCombine";
-      else if (method == medianCombine) return "medianCombine";
-      else if (method == meanCombine) return "meanCombine";
-      else if (method == sigmaMeanCombine) return "sigmaMeanCombine";
-      else return "UNKNOWN";
-   }
-   
+   std::string combineMethodStr( int method /**< [in] one of the combineMethods enum members */);
+ 
    /// Get the combineMethod from the corresponding string name
    /**
      * \returns the combineMethods enum member corresponding to the string name.
      */ 
-   int combineMethodFmStr( const std::string & method /**< [in] the string name of the combineMethod */)
-   {
-      if(method == "noCombine") return noCombine;
-      else if (method == "medianCombine") return medianCombine;
-      else if (method == "meanCombine") return meanCombine;
-      else if (method == "sigmaMeanCombine") return sigmaMeanCombine;
-      else return -1;
-   }
+   int combineMethodFmStr( const std::string & method /**< [in] the string name of the combineMethod */);
+   
 }
 
 /// The basic high contrast imaging data type
@@ -728,24 +715,24 @@ HCIobservation<_realT>::HCIobservation( const std::string & fileListFile,
 }
 
 template<typename _realT>
-inline void HCIobservation<_realT>::load_fileList( const std::string & dir, 
-                                                   const std::string & prefix, 
-                                                   const std::string & ext
-                                                 )
+void HCIobservation<_realT>::load_fileList( const std::string & dir, 
+                                            const std::string & prefix, 
+                                            const std::string & ext
+                                          )
 {
    m_fileList = ioutils::getFileNames(dir, prefix, "", ext);
    m_filesDeleted = false;
 }
 
 template<typename _realT>
-inline void HCIobservation<_realT>::load_fileList(const std::string & fileListFile)
+void HCIobservation<_realT>::load_fileList(const std::string & fileListFile)
 {
    ioutils::readColumns(fileListFile, m_fileList);
    m_filesDeleted = false;
 }
 
 template<typename _realT>
-inline void HCIobservation<_realT>::load_RDIfileList( const std::string & dir, 
+void HCIobservation<_realT>::load_RDIfileList( const std::string & dir, 
                                                       const std::string & prefix, 
                                                       const std::string & ext
                                                     )
@@ -755,7 +742,7 @@ inline void HCIobservation<_realT>::load_RDIfileList( const std::string & dir,
 }
 
 template<typename _realT>
-inline void HCIobservation<_realT>::load_RDIfileList( const std::string & fileListFile )
+void HCIobservation<_realT>::load_RDIfileList( const std::string & fileListFile )
 {
    ioutils::readColumns(fileListFile, m_RDIfileList);
    m_RDIfilesDeleted = false;
@@ -1446,7 +1433,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       {
          eigenImageT fim, im;
          im = ims.image(i);
-         filterImage(fim, im, gaussKernel<eigenImage<float>,2>(m_preProcess_gaussUSM_fwhm), 0.5*(ims.cols()-1) - m_preProcess_gaussUSM_fwhm*4);
+         filterImage(fim, im, gaussKernel<eigenImage<_realT>,2>(m_preProcess_gaussUSM_fwhm), 0.5*(ims.cols()-1) - m_preProcess_gaussUSM_fwhm*4);
          im = (im-fim);
          ims.image(i) = im;
       }
@@ -1474,7 +1461,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       {
          eigenImageT fim, im;
          im = ims.image(i);
-         filterImage(fim, im, azBoxKernel<eigenImage<float>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW), 0.5*(ims.cols()-1) - m_preProcess_azUSM_radW);
+         filterImage(fim, im, azBoxKernel<eigenImage<realT>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW), 0.5*(ims.cols()-1) - m_preProcess_azUSM_radW);
          im = (im-fim);
          ims.image(i) = im;
       }
@@ -1983,7 +1970,12 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
    for(size_t n =0; n<nReductions; ++n)
    {
       char nstr[5];
-      snprintf(nstr, sizeof(nstr), "%03zu", n);
+      int nwr = snprintf(nstr, sizeof(nstr), "%03zu", n);
+      if(nwr < 0 || n >= sizeof(nstr))
+      {
+         std::cerr << "possibly bad formatting in filename\n";
+      }
+         
       
       std::string nprefix = prefix + "_" + nstr + "_";
       load_fileList(dir, nprefix, ext);
@@ -2109,22 +2101,10 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ///@}
+
+extern template class  HCIobservation<float>;
+extern template class  HCIobservation<double>;
 
 } //namespace improc
 } //namespace mx

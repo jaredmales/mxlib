@@ -30,10 +30,13 @@
 
 #include "mxlib_uncomp_version.h"
 
-
 namespace mx
 {
    
+const char * mxlib_comp_current_sha1();
+
+const bool mxlib_comp_repo_modified();
+
 ///Dump the current git status of the library to a stream
 /** Prints the current SHA1 hash and whether or not the library
   * has been modified since that commit.
@@ -48,10 +51,14 @@ iosT & dumpGitStatus( iosT & ios /**< [in] a std::ostream-like stream. */)
    char c[] = {comment, '\0'};
       
    ios << c << "--------------------------------------------\n";
+   ios << c << "              mxlib git status              \n";
+   ios << c << "headers:              \n";
    ios << c << "mxlib git SHA1: " << MXLIB_UNCOMP_CURRENT_SHA1 << "\n";
    ios << c << "mxlib git modified flag: " << std::boolalpha << (bool) MXLIB_UNCOMP_REPO_MODIFIED << "\n";
+   ios << c << "compiled:              \n";
+   ios << c << "mxlib git SHA1: " << mxlib_comp_current_sha1() << "\n";
+   ios << c << "mxlib git modified flag: " << std::boolalpha << (bool) mxlib_comp_repo_modified() << "\n";
    ios << c << "--------------------------------------------\n";
-   
 }
 
 }//namespace mx

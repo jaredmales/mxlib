@@ -28,6 +28,13 @@ long double tgamma<long double>( long double x )
    return boost::math::tgamma<long double>(x);
 }
 
+#ifdef HASQUAD
+template<>
+__float128 tgamma<__float128>( __float128 x )
+{
+   return boost::math::tgamma<__float128>(x);
+}
+#endif
 
 } //namespace mx
 } //namespace math
