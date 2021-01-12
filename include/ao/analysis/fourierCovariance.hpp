@@ -9,14 +9,10 @@
 #define fourierCovariance_hpp
 
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
-
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
-
+#include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../sigproc/fourierModes.hpp"
 #include "../../improc/fitsFile.hpp"
@@ -98,11 +94,11 @@ realT phiInt_basic (realT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = math::func::jinc(pi<realT>()*D*kmn_p);
-   Ji_mn_m = math::func::jinc(pi<realT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(math::pi<realT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(math::pi<realT>()*D*kmn_m);
 
 
-   realT N = 1./sqrt(0.5 + p*math::func::jinc(2*pi<realT>()*sqrt(m*m+n*n)));
+   realT N = 1./sqrt(0.5 + p*math::func::jinc(math::two_pi<realT>()*sqrt(m*m+n*n)));
 
    Q_mn = N*(Ji_mn_p + p*Ji_mn_m);
 
@@ -115,10 +111,10 @@ realT phiInt_basic (realT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
 
-   Ji_mpnp_p = math::func::jinc(pi<realT>()*D*kmpnp_p);
-   Ji_mpnp_m = math::func::jinc(pi<realT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(math::pi<realT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(math::pi<realT>()*D*kmpnp_m);
 
-   realT Np = 1./sqrt(0.5 + pp*math::func::jinc(2*pi<realT>()*sqrt(mp*mp+np*np)));
+   realT Np = 1./sqrt(0.5 + pp*math::func::jinc(math::two_pi<realT>()*sqrt(mp*mp+np*np)));
 
    Q_mpnp = Np*(Ji_mpnp_p + pp*Ji_mpnp_m);
 
@@ -166,8 +162,8 @@ realT phiInt_mod (realT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = math::func::jinc(pi<realT>()*D*kmn_p);
-   Ji_mn_m = math::func::jinc(pi<realT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(math::pi<realT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(math::pi<realT>()*D*kmn_m);
 
 
    /*** primed ***/
@@ -178,8 +174,8 @@ realT phiInt_mod (realT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
 
-   Ji_mpnp_p = math::func::jinc(pi<realT>()*D*kmpnp_p);
-   Ji_mpnp_m = math::func::jinc(pi<realT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(math::pi<realT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(math::pi<realT>()*D*kmpnp_m);
 
    realT QQ;
 
@@ -198,7 +194,7 @@ realT phiInt_mod (realT phi, void * params)
    {
       if( k*D <= mnCon )
       {
-         P *= pow(two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS()+Pp->aosys->deltaTau()),2);
+         P *= pow(math::two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS()+Pp->aosys->deltaTau()),2);
       }
    }
 
@@ -239,7 +235,7 @@ realT kInt (realT k, void * params)
    Pp->k = k;
 
    //Tolerances of 1e-4 seem to be all we can ask for
-   gsl_integration_qag(&func, 0., 2*pi<double>(), 1e-10, 1e-4, WSZ, GSL_INTEG_GAUSS21, Pp->phi_w, &result, &error);
+   gsl_integration_qag(&func, 0., math::two_pi<double>(), 1e-10, 1e-4, WSZ, GSL_INTEG_GAUSS21, Pp->phi_w, &result, &error);
 
 
    return result;
@@ -403,7 +399,7 @@ int fourierVarVec( const std::string & fname,
       {
          if( k*D < mnCon )
          {
-            P *= pow(two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+            P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
          }
       }
 
@@ -453,7 +449,7 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
          {
             if( k*D < mnCon )
             {
-               P *= pow(two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+               P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
             }
          }
 

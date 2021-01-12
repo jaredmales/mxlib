@@ -10,7 +10,7 @@
 #define __ADIobservation_hpp__
 
 #include "HCIobservation.hpp"
-#include "fitsHeader.hpp"
+#include "../ioutils/fits/fitsHeader.hpp"
 
 #include "imagePads.hpp"
 
@@ -20,7 +20,6 @@ namespace mx
 {
 namespace improc
 {
-   
 namespace HCI
 {
    /// Fake injection PSF file specification methods
@@ -34,23 +33,14 @@ namespace HCI
    /**
      * \returns the string name corresponding to the fake injection method
      */ 
-   std::string fakeMethodsStr( int method /**< [in] the fake injection method */)
-   {
-      if(method == single) return "single";
-      else if(method == list) return "list";
-      else return "unknown";
-   }
+   std::string fakeMethodsStr( int method /**< [in] the fake injection method */);
    
    /// Get the fake injection method from its string name
    /**
      * \returns the corresponding member of the fakeMethods enum
      */ 
-   int fakeMethodFmStr( const std::string & method  /**< [in] the fake injection method name*/)
-   {
-      if(method == "single") return single;
-      else if(method == "list") return list;
-      else return -1;
-   }
+   int fakeMethodFmStr( const std::string & method  /**< [in] the fake injection method name*/);
+
 }
 
 ///Process an angular differential imaging (ADI) observation
@@ -103,7 +93,7 @@ struct ADIobservation : public HCIobservation<_realT>
 {
    typedef _realT realT;
    typedef _derotFunctObj derotFunctObj;
-   typedef Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
+   typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
    
    derotFunctObj m_derotF;
 
@@ -210,7 +200,7 @@ struct ADIobservation : public HCIobservation<_realT>
 
    /// @}
    
-   void stdFitsHeader(fitsHeader * head);
+   void stdFitsHeader(fits::fitsHeader * head);
    
    virtual void makeMaskCube();
    
@@ -361,9 +351,9 @@ int ADIobservation<_realT, _derotFunctObj>::readPSFSub( const std::string & dir,
    //Load first file to condigure based on its header.
    std::vector<std::string> flist = ioutils::getFileNames(dir, prefix, "000", ext);
    
-   improc::fitsHeader fh;
+   fits::fitsHeader fh;
    eigenImage<realT> im;
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    ff.read(im, fh, flist[0]);
    
@@ -451,13 +441,13 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
                                                         realT RDISepScale
                                                       )
 {
-   t_fake_begin = get_curr_time();
+   t_fake_begin = sys::get_curr_time();
    
    //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imT;
    eigenImageT fakePSF;
    std::vector<std::string> fakeFiles; //used if m_fakeMethod == HCI::list
    
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    std::ifstream scaleFin; //for reading the scale file.
       
 
@@ -472,7 +462,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
       if( ioutils::readColumns(m_fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
-      for(size_t i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i])] = imS[i];
+      for(size_t i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i].c_str())] = imS[i];
       
       for(size_t i=0; i<fileList.size(); ++i)
       {
@@ -513,7 +503,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
    }
    
    
-   t_fake_end = get_curr_time();
+   t_fake_end = sys::get_curr_time();
    
    return 0;
 }
@@ -598,14 +588,14 @@ void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
       }
    }
    
-   fitsFile<realT> ff; 
+   fits::fitsFile<realT> ff; 
    ff.write("maskCube.fits", this->m_maskCube);
 }
 
 template<typename _realT, class _derotFunctObj>
 void ADIobservation<_realT, _derotFunctObj>::derotate()
 {
-   t_derotate_begin = get_curr_time();
+   t_derotate_begin = sys::get_curr_time();
    
    for(size_t n=0; n<this->m_psfsub.size(); ++n)
    {
@@ -627,20 +617,20 @@ void ADIobservation<_realT, _derotFunctObj>::derotate()
       }
    }
    
-   t_derotate_end = get_curr_time();
+   t_derotate_end = sys::get_curr_time();
 }
 
 
 //If fakeFileName == "" or skipPreProcess == true then use the structure of propagated values
 
 template<typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( mx::improc::fitsHeader * head)
+void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( fits::fitsHeader * head)
 {
    if(head == 0) return;
    
-   head->append("", fitsCommentType(), "----------------------------------------");
-   head->append("", fitsCommentType(), "mx::ADIobservation parameters:");
-   head->append("", fitsCommentType(), "----------------------------------------");
+   head->append("", fits::fitsCommentType(), "----------------------------------------");
+   head->append("", fits::fitsCommentType(), "mx::ADIobservation parameters:");
+   head->append("", fits::fitsCommentType(), "----------------------------------------");
 
    head->append("POSTMEDS", m_postMedSub, "median subtraction after processing");
    
@@ -676,7 +666,10 @@ void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( mx::improc::fitsHead
    }
 }
 
+template<typename realT> class ADIDerotator;
 
+extern template class ADIobservation<float, ADIDerotator<float>>;
+extern template class ADIobservation<double, ADIDerotator<double>>;
 
 } //namespace improc
 } //namespace mx

@@ -23,11 +23,9 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef application_hpp__
-#define application_hpp__
+#ifndef app_application_hpp
+#define app_application_hpp
 
-
-#include "../mxlib.hpp"
 
 #include "appConfigurator.hpp"
 #include "../ioutils/textTable.hpp"
@@ -36,6 +34,7 @@ namespace mx
 {
 namespace app 
 {
+   
    
 /// A class for managing application configuration and execution
 /** Derived classes should implement at a minimum
@@ -212,8 +211,62 @@ protected:
      */
    virtual void setDefaults( int argc, ///< [in] standard command line result specifying number of argumetns in argv
                              char ** argv ///< [in] standard command line result containing the arguments.
-                           );
-
+                           )
+   {
+      static_cast<void>(argc);
+      static_cast<void>(argv);
+      
+      std::string tmp;
+   
+      char * tmpstr;
+      
+      #ifdef MX_APP_DEFAULT_configPathGlobal
+         configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
+      #endif
+      #ifdef MX_APP_DEFAULT_configPathGlobal_env
+         tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
+         if(tmpstr != 0) configPathGlobal = tmpstr;
+      #endif
+   
+   
+      #ifdef MX_APP_DEFAULT_configPathUser
+         m_configPathUser = MX_APP_DEFAULT_configPathUser;
+      #endif
+      #ifdef MX_APP_DEFAULT_configPathUser_env
+         tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
+         if(tmpstr != 0) m_configPathUser = tmpstr;
+      #endif
+   
+      if(m_configPathUser != "")
+      {
+         //If it's a relative path, add it to the HOME directory
+         if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
+         {
+            tmp = getenv("HOME");
+            tmp += "/" + m_configPathUser;
+            m_configPathUser = tmp;
+         }
+      }
+   
+      #ifdef MX_APP_DEFAULT_configPathLocal
+         configPathLocal = MX_APP_DEFAULT_configPathLocal;
+      #endif
+      #ifdef MX_APP_DEFAULT_configPathLocal_env
+         tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
+         if(tmpstr != 0) configPathLocal = tmpstr;
+      #endif
+   
+      #ifdef MX_APP_DEFAULT_configPathCLBase_env 
+         tmpstr = getenv(MX_APP_DEFAULT_configPathCLBase_env);
+         if(tmpstr != 0) m_configPathCLBase = tmpstr;
+         if(m_configPathCLBase.size()>0)
+            if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
+               m_configPathCLBase += '/';
+      #endif
+         
+      return;
+   
+   }
 
    ///Set up the command-line config option in a standard way.
    /** This adds "-c --config" as command line options.
@@ -271,334 +324,9 @@ protected:
 
 
 
-inline
-application::~application()
-{
-   return;
-}
 
-inline
-int application::main( int argc,
-                       char **argv
-                     )
-{
-   m_argc = argc;
-   m_argv = argv;
-   
-   setup(argc, argv);
-
-   if(doHelp)
-   {
-      help();
-      return 1;
-   }
-
-   if(!m_preserveConfig)
-   {
-      config.clear();
-   }
-   
-   return execute();
-}
-
-inline
-void application::setConfigPathGlobal(const std::string & s)
-{
-   configPathGlobal = s;
-}
-
-inline
-void application::setConfigPathUser(const std::string & s)
-{
-   m_configPathUser = s;
-}
-
-inline
-void application::setConfigPathLocal( const std::string & s )
-{
-   configPathLocal = s;
-}
-
-inline
-void application::setupConfig() //virtual
-{
-   return;
-}
-
-inline
-void application::loadConfig() //virtual
-{
-   return;
-}
-
-inline
-int application::execute() //virtual
-{
-   return 0;
-}
-
-
-
-inline
-void application::setup( int argc,
-                         char ** argv
-                       )
-{
-   invokedName = argv[0];
-
-   setupStandardConfig();
-   setupStandardHelp();
-
-   setupBasicConfig();
-   setupConfig();
-
-   setDefaults(argc, argv);
-
-   config.readConfig(configPathGlobal);
-   config.readConfig(m_configPathUser);
-   config.readConfig(configPathLocal, m_requireConfigPathLocal);
-
-   //Parse CL just to get the CL config.
-   config.parseCommandLine(argc, argv, "config");
-
-   //And now get the value of it and parse it.
-   loadStandardConfig();
-   config.readConfig(m_configPathCL);
-
-   //Now parse the command line for real.
-   config.parseCommandLine(argc, argv);
-
-   loadStandardHelp();
-
-   loadBasicConfig();
-   loadConfig();
-   
-   checkConfig();
-}
-
-inline
-int application::reReadConfig()
-{
-   config.readConfig(configPathGlobal);
-   config.readConfig(m_configPathUser);
-   config.readConfig(configPathLocal);
-
-   config.readConfig(m_configPathCL);
-
-   //Now parse the command line for real.
-   config.parseCommandLine(m_argc, m_argv);
-   
-   return 0;
-}
-
-inline
-void application::setDefaults( int argc,
-                               char ** argv
-                             ) //virtual
-{
-   static_cast<void>(argc);
-   static_cast<void>(argv);
-   
-   std::string tmp;
-
-   char * tmpstr;
-   
-   #ifdef MX_APP_DEFAULT_configPathGlobal
-      configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
-   #endif
-   #ifdef MX_APP_DEFAULT_configPathGlobal_env
-      tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
-      if(tmpstr != 0) configPathGlobal = tmpstr;
-   #endif
-
-
-   #ifdef MX_APP_DEFAULT_configPathUser
-      m_configPathUser = MX_APP_DEFAULT_configPathUser;
-   #endif
-   #ifdef MX_APP_DEFAULT_configPathUser_env
-      tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
-      if(tmpstr != 0) m_configPathUser = tmpstr;
-   #endif
-
-   if(m_configPathUser != "")
-   {
-      //If it's a relative path, add it to the HOME directory
-      if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
-      {
-         tmp = getenv("HOME");
-         tmp += "/" + m_configPathUser;
-         m_configPathUser = tmp;
-      }
-   }
-
-   #ifdef MX_APP_DEFAULT_configPathLocal
-      configPathLocal = MX_APP_DEFAULT_configPathLocal;
-   #endif
-   #ifdef MX_APP_DEFAULT_configPathLocal_env
-      tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
-      if(tmpstr != 0) configPathLocal = tmpstr;
-   #endif
-
-   #ifdef MX_APP_DEFAULT_configPathCLBase_env 
-      tmpstr = getenv(MX_APP_DEFAULT_configPathCLBase_env);
-      if(tmpstr != 0) m_configPathCLBase = tmpstr;
-      if(m_configPathCLBase.size()>0)
-         if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
-            m_configPathCLBase += '/';
-   #endif
-      
-   return;
-
-}
-
-inline
-void application::setupStandardConfig() //virtual
-{
-   config.add("config","c", "config",argType::Required, "", "config", false, "string", "A local config file");
-}
-
-inline
-void application::setupStandardHelp() //virtual
-{
-   config.add("help", "h", "help", argType::True,  "", "", false, "none", "Print this message and exit");
-}
-
-inline
-void application::loadStandardConfig() //virtual
-{
-   config(m_configPathCL, "config");
-   m_configPathCL = m_configPathCLBase + m_configPathCL; 
-}
-
-inline
-void application::loadStandardHelp() //virtual
-{
-   config(doHelp, "help");
-}
-
-inline
-void application::setupBasicConfig() //virtual
-{
-   return;
-}
-
-inline
-void application::loadBasicConfig() //virtual
-{
-   return;
-}
-
-inline
-void application::checkConfig() //virtual
-{
-   return;
-}
-
-inline
-void application::optionHelp( configTarget & tgt,
-                              ioutils::textTable & tt
-                            ) //virtual
-{
-   std::string tmp;
-   int row = tgt.orderAdded;
-
-   if(tgt.shortOpt != "")
-   {
-      tmp = "-" + tgt.shortOpt;
-      tt.addCell(row, 0, tmp);
-   }
-
-   if(tgt.longOpt != "")
-   {
-      tmp =  "--" + tgt.longOpt;
-      tt.addCell(row, 1, tmp);
-   }
-
-   tmp = "";
-   if(tgt.section != "")
-   {
-      tmp = tgt.section + ".";
-   }
-
-   if(tgt.keyword !="")
-   {
-      tmp += tgt.keyword;
-      tt.addCell(row, 2, tmp);
-   }
-
-   if(tgt.helpType != "")
-   {
-      tmp = "<" + tgt.helpType + "> ";
-      tt.addCell(row, 3, tmp);
-   }
-
-   tt.addCell(row, 4, tgt.helpExplanation);
-
-
-}
-
-inline
-void application::help() //virtual
-{
-   appConfigurator::targetIterator targIt;
-   appConfigurator::clOnlyTargetIterator clOnlyTargIt;
-
-   ioutils::textTable tt;
-
-   int otherColWidth = m_helpSOColWidth + m_helpLOColWidth + m_helpCFColWidth + m_helpTypeColWidth;
-
-   tt.m_colWidths = {m_helpSOColWidth,m_helpLOColWidth,m_helpCFColWidth, m_helpTypeColWidth, m_helpWidth-otherColWidth-4-4};
-   tt.m_lineStart = "    ";
-   tt.m_colSep = " ";
-   tt.m_rowSep = "";
-
-   std::cerr << "usage: " << invokedName << " [options] \n";
-   std::cerr << "\n";
-   std::cerr << "  Required arguments:\n";
-
-   for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
-   {
-      if( clOnlyTargIt->isRequired == true)
-      {
-         optionHelp(*clOnlyTargIt, tt);
-      }
-   }
-
-   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
-   {
-      if( targIt->second.isRequired == true)
-      {
-         optionHelp(targIt->second, tt);
-      }
-   }
-
-   tt.outPut(std::cerr);
-   tt.m_rows.clear();
-
-   //row = 0;
-   std::cerr << "\n  Optional arguments:\n";
-
-   for( clOnlyTargIt = config.clOnlyTargets.begin(); clOnlyTargIt !=  config.clOnlyTargets.end(); ++clOnlyTargIt)
-   {
-      if( clOnlyTargIt->isRequired == false)
-      {
-         optionHelp(*clOnlyTargIt, tt);
-      }
-   }
-
-   for( targIt = config.m_targets.begin(); targIt !=  config.m_targets.end(); ++targIt)
-   {
-      if( targIt->second.isRequired == false)
-      {
-         optionHelp(targIt->second, tt);
-      }
-   }
-
-   tt.outPut(std::cerr);
-
-}
 
 } //namespace app
 } //namespace mx
 
-#endif // application_hpp__
+#endif // app_application_hpp

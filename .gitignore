@@ -5,7 +5,7 @@ doc/mxlib.tag.xml
 doc/citelist*
 doc/*.aux
 include/mxlib_uncomp_version.h
-include/mxlib_comp_version.h
+source/mxlib_comp_version.h
 old/*
 testing/*
 local/*
@@ -13,6 +13,9 @@ license.blurb
 !local/Common.example.mk
 !local/MxApp.example.mk
 !local/MxLib.example.mk
+
+tests/mxlibTest
+
 *.a
 *.so
 *.dylib

@@ -14,9 +14,7 @@
 #     *not* tracked in git, so your tweaks won't cause warnings about
 #     uncommitted changes.
 
-include mk/Common.mk
-include mk/MxLib.mk
-
+-include mk/Common.mk
 
 INC_TO_INSTALL = ao \
                  app \
@@ -28,26 +26,24 @@ INC_TO_INSTALL = ao \
                  math \
                  meta \
                  sigproc \
+                 sys \
                  wfp \
                  ioutils \
-                 eigenUtils.hpp \
-                 environment.hpp \
-                 gnuPlot.hpp \
-                 gslInterpolation.hpp \
-                 imagingArray.hpp \
                  mxException.hpp \
                  mxError.hpp \
                  mxlib.hpp\
-                 mxlib_uncomp_version.h\
-                 ompLoopWatcher.hpp \
-                 timeUtils.hpp 
-
-all: install
+                 mxlib_uncomp_version.h
+                
+all: lib
 
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
 	@bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
 
+.PHONY: mxlib_comp_version
+mxlib_comp_version:
+	@bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
+	
 .PHONY: setup
 setup:
 	@for file in ./local/*.example.mk; do \
@@ -64,14 +60,17 @@ setup:
 	@grep  "?=" mk/MxApp.mk || true
 	@echo "***"
 
-
-install: mxlib_uncomp_version
+lib: mxlib_uncomp_version mxlib_comp_version
+	cd source; ${MAKE} libmxlib.so
+	
+install: all mxlib_uncomp_version
+	cd source; ${MAKE} install
 	install -d $(INCLUDE_PATH)/mx
-	install gengithead.sh $(BIN_PATH)
-	for file in ${INC_TO_INSTALL}; do \
-	  (cp -r include/$$file $(INCLUDE_PATH)/mx) || break; \
-	done
+	install gengithead.sh $(BIN_PATH)/
+	cp -r include/* $(INCLUDE_PATH)/mx/
 
 clean:
 	rm -f *.o *~
 	rm -f include/mxlib_uncomp_version.h
+	rm -f include/mxlib_comp_version.h
+	cd source; ${MAKE} clean

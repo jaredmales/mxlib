@@ -29,16 +29,12 @@
 
 #include <vector>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
 
 #include "../mxError.hpp"
 
+#include "../math/constants.hpp"
 #include "../math/geo.hpp"
-using namespace mx::math;
-
-//#include <mx/eigenImage.hpp>
 
 namespace mx
 {
@@ -104,7 +100,7 @@ int makeFourierModeC( typeN im,                   ///<  [out] is an Eigen-like i
       {
          v = j-vc;
 
-         im(i,j) = cos(two_pi<realT>()/D*(m*u + n*v));
+         im(i,j) = cos(math::two_pi<realT>()/D*(m*u + n*v));
       }
    }
 
@@ -151,7 +147,7 @@ int makeFourierModeS(typeN  im, typename typeN::Scalar m, typename typeN::Scalar
       {
          v = j-vc;
 
-         im(i,j) = sin(two_pi<realT>()/D*(m*u + n*v));
+         im(i,j) = sin(math::two_pi<realT>()/D*(m*u + n*v));
       }
    }
 
@@ -248,7 +244,7 @@ int makeModifiedFourierMode( typeN im,
             y=y0;
          }
 
-         arg = two_pi<realT>()/D*(m*x + n*y);
+         arg = math::two_pi<realT>()/D*(m*x + n*y);
 
          im(i,j) = cos(arg) + p*sin(arg);
       }
@@ -420,10 +416,10 @@ bool comp_fourierModeDef (const fourierModeDef & spf1, const fourierModeDef & sp
    {
       //Now compare by angle
       double a1 = atan2(spf1.n, spf1.m);
-      if(a1 < 0) a1 += two_pi<double>();
+      if(a1 < 0) a1 += math::two_pi<double>();
 
       double a2 = atan2(spf2.n, spf2.m);
-      if(a2 < 0) a2 += two_pi<double>();
+      if(a2 < 0) a2 += math::two_pi<double>();
 
       if( a1 == a2 ) return (spf1.p < spf2.p);
 
@@ -450,7 +446,7 @@ int makeFourierModeFreqs_Circ( std::vector<fourierModeDef> & spf,
 
    krad = floor(0.5*N);
 
-   Nmodes = 0.25*pi<double>()*N*N*1.1;//The 1.1 is a buffer
+   Nmodes = 0.25*math::pi<double>()*N*N*1.1;//The 1.1 is a buffer
 
    spf.resize(Nmodes);
 

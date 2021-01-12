@@ -30,7 +30,6 @@
 
 #include <unordered_map>
 
-#include "../mxlib.hpp"
 
 #include "../ioutils/stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
@@ -78,7 +77,6 @@ struct configTarget
    /// Default c'tor
    configTarget()
    {
-      //orderAdded = 0;
    }
 
    /// Construct and set values
@@ -92,22 +90,8 @@ struct configTarget
                  const std::string & ht = "",  ///< [in] The type to display in the help message
                  const std::string & he = "",  ///< [in] The explanation to display in the help message
                  int oa = 0 ///< [in] [optional] ///< the order in which this was added.
-               )
+               ) : name(n), shortOpt(so), longOpt(lo), clType (clt), section(s), keyword(kw), isRequired(isReq), helpType(ht), helpExplanation(ht), orderAdded(oa)
    {
-      name = n;
-      shortOpt = so;
-      longOpt = lo;
-      clType = clt;
-      section = s;
-      keyword = kw;
-
-      isRequired = isReq;
-      helpType = ht;
-      helpExplanation = he;
-
-      orderAdded = oa;
-      
-      set = false;
    }
 };
 

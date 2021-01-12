@@ -17,7 +17,7 @@
 
 #include <omp.h>
 
-#include "../ompLoopWatcher.hpp"
+#include "../ipc/ompLoopWatcher.hpp"
 #include "../math/geo.hpp"
 #include "../math/eigenLapack.hpp"
 
@@ -49,25 +49,9 @@ namespace HCI
                         medianImage  ///< The median image of the data is subtracted from each image
                       };
    
-   std::string meansubMethodStr( int method )
-   {
-      if(method == imageMean) return "imageMean";
-      else if(method == imageMedian) return "imageMedian";
-      else if(method == imageMode) return "imageMode";
-      else if(method == meanImage) return "meanImage";
-      else if(method == medianImage) return "medianImage";
-      else return "UNKNOWN";
-   }
+   std::string meansubMethodStr( int method );
    
-   int meansubMethodFmStr( const std::string & method )
-   {
-      if(method == "imageMean") return imageMean;
-      else if(method == "imageMedian") return imageMedian;
-      else if(method == "imageMode") return imageMode;
-      else if(method == "meanImage") return meanImage;
-      else if(method == "medianImage") return medianImage;
-      else return -1;
-   }
+   int meansubMethodFmStr( const std::string & method );
    
    ///Image exclusion methods
    /** \ingroup hc_imaging_enums
@@ -78,23 +62,9 @@ namespace HCI
                         excludeImno ///< Exclude by number of images
                       };   
                       
-   std::string excludeMethodStr(int method)
-   {
-      if(method == excludeNone) return "excludeNone";
-      else if(method == excludePixel) return "excludePixel";
-      else if(method == excludeAngle) return "excludeAngle";
-      else if(method == excludeImno) return "excludeImno";
-      else return "UNKNOWN";
-   }
+   std::string excludeMethodStr(int method);
                       
-   int excludeMethodFmStr(const std::string & method)
-   {
-      if(method == "excludeNone") return excludeNone;
-      else if(method == "excludePixel") return excludePixel;
-      else if(method == "excludeAngle") return excludeAngle;
-      else if(method == "excludeImno") return excludeImno;
-      else return -1;
-   } 
+   int excludeMethodFmStr(const std::string & method);
    
    ///Image inclusion methods
    /** \ingroup hc_imaging_enums
@@ -106,25 +76,9 @@ namespace HCI
                         includeImno   ///< include images which are closest in imno to the target
                       };
                       
-   std::string includeMethodStr( int method )
-   {
-      if(method == includeAll) return "includeAll";
-      else if(method == includeCorr) return "includeCorr";
-      else if(method == includeTime) return "includeTime";
-      else if(method == includeAngle) return "includeAngle";
-      else if(method == includeImno) return "includeImno";
-      else return "UNKNOWN";
-   }
+   std::string includeMethodStr( int method );
                      
-   int includeMethodFmStr( const std::string & method )
-   {
-      if(method == "includeAll") return includeAll;
-      else if(method == "includeCorr") return includeCorr;
-      else if(method == "includeTime") return includeTime;
-      else if(method == "includeAngle") return includeAngle;
-      else if(method == "includeImno") return includeImno;
-      else return -1;
-   }
+   int includeMethodFmStr( const std::string & method );
 }
 
 /// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
@@ -141,7 +95,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
 {
    typedef _realT realT;
    
-   typedef Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
+   typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> eigenImageT;
    
    typedef _evCalcT evCalcT;
    
@@ -490,14 +444,13 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<re
 
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
 int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT> minr, 
                                                               std::vector<_realT> maxr, 
                                                               std::vector<_realT> minq, 
                                                               std::vector<_realT> maxq
                                                             )
 {   
-   this->t_begin = get_curr_time();
+   this->t_begin = sys::get_curr_time();
    
    m_minr = minr;
    m_maxr = maxr;
@@ -642,7 +595,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       
    }
    
-   fitsFile<int> ffii;
+   fits::fitsFile<int> ffii;
    ffii.write("imsIncluded.fits", m_imsIncluded);
    
 
@@ -651,7 +604,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
       std::cerr << "Error in final processing\n";
    }
    
-   this->t_end = get_curr_time();
+   this->t_end = sys::get_curr_time();
  
    dump_times();
    
@@ -832,7 +785,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
 {
    std::cerr << "beginning worker\n";
 
-   t_worker_begin = get_curr_time();
+   t_worker_begin = sys::get_curr_time();
    
    std::vector<realT> sds;
 
@@ -846,9 +799,9 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
  
    math::eigenSYRK(cv, rims.cube());
     
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    ff.write("cv.fits", cv);
-   ompLoopWatcher<> status( this->m_Nims, std::cerr);
+   ipc::ompLoopWatcher<> status( this->m_Nims, std::cerr);
    
    //Pre-calculate KL images once if we are exclude none OR IF RDI
    eigenImageT master_klims;
@@ -900,7 +853,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
          cfs.resize(1, klims.rows());
    
   
-         double t0 = get_curr_time();
+         double t0 = sys::get_curr_time();
          
          for(int j=0; j<cfs.size(); ++j)
          {
@@ -923,17 +876,16 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
          }
          
 
-         t_psf += (get_curr_time() - t0) ;/// omp_get_num_threads();
+         t_psf += (sys::get_curr_time() - t0) ;/// omp_get_num_threads();
          
          
       } //for imno
    }//openmp parrallel  
    
-   t_worker_end = get_curr_time();
+   t_worker_end = sys::get_curr_time();
 }
 
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
 int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
 {
    if(this->m_postMedSub)
@@ -975,13 +927,13 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
    {
       std::cerr << "writing\n";
       
-      fitsHeader head;
+      fits::fitsHeader head;
       
       this->ADIobservation<_realT, _derotFunctObj>::stdFitsHeader(&head);
       
-      head.append("", fitsCommentType(), "----------------------------------------");
-      head.append("", fitsCommentType(), "mx::KLIPreduction parameters:");
-      head.append("", fitsCommentType(), "----------------------------------------");
+      head.append("", fits::fitsCommentType(), "----------------------------------------");
+      head.append("", fits::fitsCommentType(), "mx::KLIPreduction parameters:");
+      head.append("", fits::fitsCommentType(), "----------------------------------------");
    
       
       head.append("MEANSUBM", HCI::meansubMethodStr(m_meanSubMethod), "PCA mean subtraction method");
@@ -1052,7 +1004,6 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
 }
    
 template<typename _realT, class _derotFunctObj, typename _evCalcT>
-inline
 int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::string & dir,
                                                                     const std::string & prefix,
                                                                     const std::string & ext
@@ -1064,9 +1015,9 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    //Load first file to condigure based on its header.
    std::vector<std::string> flist = ioutils::getFileNames(dir, prefix, "000", ext);
    
-   fitsHeader fh;
+   fits::fitsHeader fh;
    eigenImage<realT> im;
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    ff.read(im, fh, flist[0]);
    
@@ -1208,15 +1159,17 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
    
    finalProcess();
    
-   
-   
-
-   
-   
    return 0;
 }
 
 ///@}
+
+
+template<typename realT> class ADIDerotator;
+
+extern template struct KLIPreduction<float, ADIDerotator<float>, float>;
+extern template struct KLIPreduction<float, ADIDerotator<float>, double>;
+extern template struct KLIPreduction<double, ADIDerotator<double>, double>;
 
 } //namespace improc
 } //namespace mx

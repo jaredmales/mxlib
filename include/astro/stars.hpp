@@ -487,7 +487,8 @@ namespace maintenance
    
 
 /// Read in the main sequence table of Mamajek, and construct the vectors for input into the mainSequence class.
-/** The table should be copied to a text file, and all ... replaced with -99, then any remaining . replaced with space.
+/** This is used to create mamajek.inc.
+  * The table should be copied to a text file, and all `...` replaced with -99, then any remaining . replaced with space.
   */
 void makeMSTable( const std::string & fn )
 {

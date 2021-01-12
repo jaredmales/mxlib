@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2016-2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -27,20 +27,22 @@
 #ifndef clGainOpt_hpp
 #define clGainOpt_hpp
 
+#ifdef MX_INCLUDE_BOOST
 #include <boost/math/tools/minima.hpp>
-#include <boost/math/constants/constants.hpp>
+#endif
+
+#include <type_traits>
 
 #include <Eigen/Dense>
 
-#include <mx/timeUtils.hpp>
+#include "../../sys/timeUtils.hpp"
 
-using namespace boost::math::constants;
+#include "../../math/constants.hpp"
 
 namespace mx
 {
 namespace AO
 {
-
 namespace analysis
 {
 
@@ -97,7 +99,7 @@ public:
    realT _minFindMin; ///< The Minimum value for the minimum finding algorithm.
    realT _minFindMaxFact; ///< The maximum value, as a multiplicative factor of maximum gain
    int _minFindBits; ///< The bits of precision to use for minimum finding. Defaults to std::numeric_limits<realT>::digits.
-   boost::uintmax_t _minFindMaxIter; ///< The maximum iterations allowed for minimization.
+   uintmax_t _minFindMaxIter; ///< The maximum iterations allowed for minimization.
 
    ///@}
 
@@ -367,7 +369,7 @@ public:
                           std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
                           realT & gmax                   ///< [in] maximum gain to consider.  If 0, then _gmax is used.
                         );
-
+   
    ///Calculate the pseudo open-loop PSD given a closed loop PSD
    /**
      * \returns 0 on success
@@ -597,8 +599,8 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
 
          for(size_t j = 1; j<jmax; ++j)
          {
-            _cs(i,j) = cos(two_pi<realT>()*_f[i]*_Ti*realT(j));
-            _ss(i,j) = sin(two_pi<realT>()*_f[i]*_Ti*realT(j));
+            _cs(i,j) = cos(math::two_pi<realT>()*_f[i]*_Ti*realT(j));
+            _ss(i,j) = sin(math::two_pi<realT>()*_f[i]*_Ti*realT(j));
          }
       }
 
@@ -621,7 +623,7 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       {
          if(_f[i] <= 0 ) continue;
 
-         complexT s = complexT(0.0, two_pi<realT>()*_f[i]);
+         complexT s = complexT(0.0, math::two_pi<realT>()*_f[i]);
 
          complexT expsT = exp(-s*_Ti);
 
@@ -826,8 +828,10 @@ realT clGainOpt<realT>::clVariance( std::vector<realT> & PSDerr,
 
 
 template<typename realT>
-realT clGainOpt<realT>::maxStableGain( realT & ll, realT & UNUSED(ul))
+realT clGainOpt<realT>::maxStableGain( realT & ll, realT & ul)
 {
+   static_cast<void>(ul);
+   
    std::vector<realT> re, im;
 
    if(ll == 0) ll = _maxFindMin;
@@ -869,6 +873,88 @@ realT clGainOpt<realT>::maxStableGain()
    return maxStableGain(ll, ul);
 }
 
+//Implement the minimization, allowing pre-compiled specializations
+namespace impl 
+{
+   
+template<typename realT>
+realT optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
+                       realT & var,
+                       realT & gmax,
+                       realT & minFindMin,
+                       realT & minFindMaxFact,
+                       int minFindBits,
+                       uintmax_t minFindMaxIter
+                     )
+{
+   #ifdef MX_INCLUDE_BOOST
+   realT gopt;
+
+   try
+   {
+      std::pair<realT,realT> brack;
+      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, minFindMaxIter);
+      gopt = brack.first;
+      var = brack.second;
+   }
+   catch(...)
+   {
+      std::cerr << "optGainOpenLoop: No root found\n";
+      gopt = minFindMaxFact*gmax;
+      var = 0;
+   }
+   
+   return gopt;
+   #else
+   static_assert(std::is_fundamental<realT>::value || !std::is_fundamental<realT>::value, "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
+   return 0;
+   #endif
+}
+
+template<>
+float optGainOpenLoop<float>( clGainOptOptGain_OL<float> & olgo,
+                              float & var,
+                              float & gmax,
+                              float & minFindMin,
+                              float & minFindMaxFact,
+                              int minFindBits,
+                              uintmax_t minFindMaxIter
+                            );
+
+template<>
+double optGainOpenLoop<double>( clGainOptOptGain_OL<double> & olgo,
+                                double & var,
+                                double & gmax,
+                                double & minFindMin,
+                                double & minFindMaxFact,
+                                int minFindBits,
+                                uintmax_t minFindMaxIter
+                              );
+
+template<>
+long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> & olgo,
+                                          long double & var,
+                                          long double & gmax,
+                                          long double & minFindMin,
+                                          long double & minFindMaxFact,
+                                          int minFindBits,
+                                          uintmax_t minFindMaxIter
+                                        );
+
+#ifdef HASQUAD
+template<>
+__float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> & olgo,
+                                        __float128 & var,
+                                        __float128 & gmax,
+                                        __float128 & minFindMin,
+                                        __float128 & minFindMaxFact,
+                                        int minFindBits,
+                                        uintmax_t minFindMaxIter
+                                      );
+#endif
+
+} //namespace impl
+
 template<typename realT>
 realT clGainOpt<realT>::optGainOpenLoop( realT & var,
                                          std::vector<realT> & PSDerr,
@@ -891,23 +977,8 @@ realT clGainOpt<realT>::optGainOpenLoop( realT & var,
    olgo.PSDnoise = &PSDnoise;
 
    if(gmax <= 0) gmax = maxStableGain();
-   realT gopt;
-
-   try
-   {
-      std::pair<realT,realT> brack;
-      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, _minFindMin, _minFindMaxFact*gmax, _minFindBits, _minFindMaxIter);
-      gopt = brack.first;
-      var = brack.second;
-   }
-   catch(...)
-   {
-      std::cerr << "optGainOpenLoop: No root found\n";
-      gopt = _minFindMaxFact*gmax;
-      var = 0;
-   }
-
-   return gopt;
+   
+   return impl::optGainOpenLoop( olgo, var, gmax, _minFindMin, _minFindMaxFact, _minFindBits, _minFindMaxIter);
 }
 
 template<typename realT>
@@ -952,7 +1023,6 @@ template<typename realT>
 struct clGainOptOptGain_OL
 {
    clGainOpt<realT> * go;
-   //std::vector<realT> * freq;
    std::vector<realT> * PSDerr;
    std::vector<realT> * PSDnoise;
 
@@ -961,6 +1031,22 @@ struct clGainOptOptGain_OL
       return go->clVariance(*PSDerr, *PSDnoise, g);
    }
 };
+
+
+//Explicit Instantiation
+extern template
+class clGainOpt<float>;
+
+extern template
+class clGainOpt<double>;
+
+extern template
+class clGainOpt<long double>;
+
+#ifdef HASQUAD
+extern template
+class clGainOpt<__float128>;
+#endif
 
 } //namespace analysis
 } //namespace AO

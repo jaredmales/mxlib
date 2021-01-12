@@ -31,16 +31,14 @@
 
 #include <vector>
 
-#include <boost/math/special_functions/bessel.hpp>
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
+#include "../math/func/bessel.hpp"
+#include "../math/constants.hpp"
+#include "../math/gslInterpolation.hpp"
 
-#include <mx/gslInterpolation.hpp>
-#include <mx/sigproc/psdFilter.hpp>
+#include "psdFilter.hpp"
 
 namespace mx
 {
@@ -132,7 +130,7 @@ typename paramsT::realT psdVarMeanFunc( typename paramsT::realT k, ///< [in] the
    
    paramsT * pvar = (paramsT *) params;
    
-   realT J = boost::math::cyl_bessel_j(0.5, two_pi<realT>()*k);
+   realT J = math::func::bessel_j<realT, realT>(0.5, math::two_pi<realT>()*k);
    
    return J*J/k*pvar->psdVal(k);
    

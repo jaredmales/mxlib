@@ -14,13 +14,9 @@
 #include <Eigen/Dense>
 
 
-#include "../eigenUtils.hpp"
 #include "../math/vectorUtils.hpp"
 #include "eigenImage.hpp"
-
-
-
-using namespace Eigen;
+#include "imageUtils.hpp"
 
 namespace mx
 {
@@ -37,11 +33,11 @@ public:
    typedef bool is_eigenCube;
    typedef dataT Scalar;
 
-   typedef typename Array<dataT,Dynamic,Dynamic>::Index Index;
+   typedef typename Eigen::Array<dataT,Eigen::Dynamic,Eigen::Dynamic>::Index Index;
 
-   typedef Map<Array<dataT, Dynamic, Dynamic> > imageRef;
+   typedef Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > imageRef;
 
-   typedef Array<dataT,Dynamic,Dynamic> imageT;
+   typedef Eigen::Array<dataT,Eigen::Dynamic,Eigen::Dynamic> imageT;
 
 protected:
 
@@ -99,23 +95,23 @@ public:
 
    const Index planes() const;
 
-   /// Returns a 2D Eigen::Map pointed at the entire cube.
-   Map<Array<dataT, Dynamic, Dynamic> > cube();
+   /// Returns a 2D Eigen::Eigen::Map pointed at the entire cube.
+   Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > cube();
 
-   /// Returns a 2D Eigen::Map pointed at the specified image.
-   Map<Array<dataT, Dynamic, Dynamic> > image(Index n /**< [in] the image number */);
+   /// Returns a 2D Eigen::Eigen::Map pointed at the specified image.
+   Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > image(Index n /**< [in] the image number */);
 
-   /// Returns a 2D Eigen::Map pointed at the specified image.
-   const Map<Array<dataT, Dynamic, Dynamic> > image(Index n /**< [in] the image number */) const;
+   /// Returns a 2D Eigen::Eigen::Map pointed at the specified image.
+   const Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > image(Index n /**< [in] the image number */) const;
    
-   /// Returns an Eigen::Map-ed vector of the pixels at the given coordinate
-   Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic> > pixel(Index i, Index j);
+   /// Returns an Eigen::Eigen::Map-ed vector of the pixels at the given coordinate
+   Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic> > pixel(Index i, Index j);
 
-   ///Return an Eigen::Map of the cube where each image is a vector
-   Map<Array<dataT, Dynamic, Dynamic> > asVectors();
+   ///Return an Eigen::Eigen::Map of the cube where each image is a vector
+   Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > asVectors();
 
    ///Calculate the covariance matrix of the images in the cube
-   void Covar(Matrix<dataT, Dynamic, Dynamic> & cv);
+   void Covar(Eigen::Matrix<dataT, Eigen::Dynamic, Eigen::Dynamic> & cv);
 
    ///Calculate the sum image of the cube
    /**
@@ -216,6 +212,7 @@ public:
    
    
 };
+
 
 template<typename dataT>
 eigenCube<dataT>::eigenCube()
@@ -369,37 +366,37 @@ const typename eigenCube<dataT>::Index eigenCube<dataT>::planes() const
 }
 
 template<typename dataT>
-Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::cube()
+Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > eigenCube<dataT>::cube()
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(m_data, _rows*_cols, _planes);
+   return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> >(m_data, _rows*_cols, _planes);
 }
 
 template<typename dataT>
-Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n)
+Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > eigenCube<dataT>::image(Index n)
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
+   return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
 }
 
 template<typename dataT>
-const Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::image(Index n) const
+const Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > eigenCube<dataT>::image(Index n) const
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
+   return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> >(m_data + n*_rows*_cols, _rows, _cols);
 }
 
 template<typename dataT>
-Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic> > eigenCube<dataT>::pixel(Index i, Index j)
+Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic> > eigenCube<dataT>::pixel(Index i, Index j)
 {
-   return Map<Array<dataT, Dynamic, Dynamic>, Unaligned, Stride<Dynamic, Dynamic>  >(m_data + j*_rows + i, _planes, 1, Stride<Dynamic, Dynamic>(0,_rows*_cols));
+   return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>  >(m_data + j*_rows + i, _planes, 1, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>(0,_rows*_cols));
 }
 
 template<typename dataT>
-Map<Array<dataT, Dynamic, Dynamic> > eigenCube<dataT>::asVectors()
+Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> > eigenCube<dataT>::asVectors()
 {
-   return Map<Array<dataT, Dynamic, Dynamic> >(m_data,  _rows*_cols, _planes);
+   return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic> >(m_data,  _rows*_cols, _planes);
 }
 
 template<typename dataT>
-void eigenCube<dataT>::Covar(Matrix<dataT, Dynamic, Dynamic> & cv)
+void eigenCube<dataT>::Covar(Eigen::Matrix<dataT, Eigen::Dynamic, Eigen::Dynamic> & cv)
 {
    cv = asVectors().matrix().transpose()*asVectors().matrix();
 }
@@ -554,7 +551,7 @@ void eigenCube<dataT>::median(eigenT & mim)
    #pragma omp parallel for schedule(static, 10) num_threads(Eigen::nbThreads())
    for(Index i=0; i < _rows; ++i)
    {
-      //Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> work;
+      //Eigen::Eigen::Array<Scalar, Eigen::Eigen::Dynamic, Eigen::Eigen::Dynamic> work;
       std::vector<Scalar> work;
       for(Index j=0;j< _cols; ++j)
       {
@@ -700,12 +697,6 @@ void eigenCube<dataT>::sigmaMean( eigenT & mim,
       }
    }
 }
-
-
-
-
-
-
 
 } //namespace improc
 

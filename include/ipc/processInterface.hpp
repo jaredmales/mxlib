@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "../mxlib.hpp"
 #include "ipc.hpp"
 
 namespace mx
@@ -48,31 +49,7 @@ namespace ipc
   * \retval -1 on error
   * 
   */
-inline
-int command_response(const char * cmd, char * resp, size_t respsz)
-{
-   FILE *cmd_ptr;
-
-   if ( (cmd_ptr = popen(cmd, "r")) != NULL) 
-   {
-      size_t written = 0;
-         
-      char buf[MX_IPC_PI_BUFSZ];
-      
-      while (fgets(buf, MX_IPC_PI_BUFSZ, cmd_ptr) != NULL && written+1 < respsz)
-      {
-         strcat(resp, buf);
-         written = strlen(resp);                  
-      }
-      pclose(cmd_ptr);
-   }
-   else
-   {
-      return -1;
-   }
-
-   return 0;
-}
+int command_response(const char * cmd, char * resp, size_t respsz);
 
 }//namespace ipc
 } //namespace mx

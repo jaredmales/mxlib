@@ -29,12 +29,10 @@
 
 #include "array2FitGaussian2D.hpp"
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
 #include "../../mxError.hpp"
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
+#include "../constants.hpp"
 
 #include "../../improc/eigenImage.hpp"
 
@@ -135,8 +133,7 @@ public:
    {
       fitterT fitter;
       
-      levmarInterface<fitterT>::fit();
-      
+      return levmarInterface<fitterT>::fit();
    }
      
    ///Get the current value of G0, the constant.
@@ -698,7 +695,7 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
       }
    }
    
-   realT dAng = two_pi<realT>()/nAngs;
+   realT dAng = math::two_pi<realT>()/nAngs;
    //std::vector<realT> dist(nAngs);
    
    realT c, s;
@@ -736,10 +733,10 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
    }
    
    //Take minang and move it by 90 degrees
-   realT minang = fmod(minDidx * dAng - 0.5*pi<realT>(), pi<realT>());
-   if(minang < 0) minang = fmod(minang + two_pi<realT>(), pi<realT>());
+   realT minang = fmod(minDidx * dAng - 0.5*math::pi<realT>(), math::pi<realT>());
+   if(minang < 0) minang = fmod(minang + math::two_pi<realT>(), math::pi<realT>());
    
-   realT maxang = fmod(maxDidx * dAng, pi<realT>());
+   realT maxang = fmod(maxDidx * dAng, math::pi<realT>());
    
    //Now average
    angG = 0.5*(minang + maxang);

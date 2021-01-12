@@ -27,15 +27,13 @@
 #ifndef aoPSDs_hpp
 #define aoPSDs_hpp
 
+#include <string>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
-#include <mx/mxError.hpp>
-#include <mx/math/func/jinc.hpp>
+#include "../../mxError.hpp"
+#include "../../math/constants.hpp"
+#include "../../math/func/jinc.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
 
 #include "aoAtmosphere.hpp"
 
@@ -55,17 +53,9 @@ namespace PSDComponent
           dispAmplitude  ///< The amplitude component of dispersive anisoplanatism
         };
         
-   std::string compName( int cc )
-   {
-      if( cc == phase ) return "phase";
-      if( cc == amplitude ) return "amplitude";
-      if( cc == dispPhase ) return "dispPhase";
-      if( cc == dispAmplitude ) return "dispAmplitude";
-      
-      return "unknown";
-   }
+   std::string compName( int cc );
 }
-
+   
 ///Manage calculations using the von Karman spatial power spectrum.
 /** This very general PSD has the form
   * 
@@ -336,13 +326,13 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
       }
       if(m_subPiston)
       {
-         Ppiston = pow(2*math::func::jinc(pi<realT>()*k*m_D), 2);
+         Ppiston = pow(2*math::func::jinc(math::pi<realT>()*k*m_D), 2);
       }
       else Ppiston = 0;
 
       if(m_subTipTilt)
       {
-         Ptiptilt = pow(4*math::func::jinc2(pi<realT>()*k*m_D), 2);
+         Ptiptilt = pow(4*math::func::jinc2(math::pi<realT>()*k*m_D), 2);
       }
       else Ptiptilt = 0;
    }
@@ -402,13 +392,13 @@ template< typename realT>
 realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
 {
    realT k0;
-   if(atm.L_0() > 0)
+   if(atm.L_0(0) > 0)
    {
-      k0 = 1/ (atm.L_0()*atm.L_0());
+      k0 = 1/ (atm.L_0(0)*atm.L_0(0));
    }
    else k0 = 0;
 
-   return (pi<realT>() * six_fifths<realT>())* a_PSD<realT>()/ pow(atm.r_0(), five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, five_sixths<realT>()));
+   return (math::pi<realT>() * math::six_fifths<realT>())* constants::a_PSD<realT>()/ pow(atm.r_0(), math::five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, math::five_sixths<realT>()));
 }
 
 template< typename realT>
@@ -425,6 +415,20 @@ iosT & vonKarmanSpectrum<realT>::dumpPSD(iosT & ios)
    return ios;
 }
    
+extern template
+struct vonKarmanSpectrum<float>;
+
+extern template
+struct vonKarmanSpectrum<double>;
+
+extern template
+struct vonKarmanSpectrum<long double>;
+
+#ifdef HASQUAD
+extern template
+struct vonKarmanSpectrum<__float128>;
+#endif
+
 } //namespace analysis
 } //namespace AO
 } //namespace mx

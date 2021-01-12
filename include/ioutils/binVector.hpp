@@ -29,6 +29,7 @@
 
 #include <vector>
 
+#include "../mxlib.hpp"
 #include "../mxError.hpp"
 
 namespace mx

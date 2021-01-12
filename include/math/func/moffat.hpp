@@ -1,9 +1,9 @@
 /** \file moffat.hpp
- * \author Jared R. Males
- * \brief Declarations for utilities related to the Moffat function.
- * \ingroup gen_math_files
- *
- */
+  * \author Jared R. Males
+  * \brief Declarations for utilities related to the Moffat function.
+  * \ingroup gen_math_files
+  *
+  */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef moffat_hpp
-#define moffat_hpp
+#ifndef math_func_moffat_hpp
+#define math_func_moffat_hpp
 
 #include <cmath>
 
@@ -65,6 +65,8 @@ namespace func
   * 
   * \tparam realT is type to use for arithmetic
   * 
+  * \test Scenario: compiling 1D Moffat function \ref tests_math_func_moffat1D "[test doc]"
+  *
   * \ingroup gen_math_moffats
   */ 
 template<typename realT>
@@ -76,8 +78,22 @@ realT moffat( const realT x,     ///< [in] is the x-position at which to evaluat
               const realT beta   ///< [in] is the shape parameter of the Moffat function
             )
 { 
-   return I0 + I * pow( static_cast<realT>(1) + pow(x-x0,2)/pow(alpha,2), -beta);
+   return I0 + Ipk * pow( static_cast<realT>(1) + pow(x-x0,2)/pow(alpha,2), -beta);
 }
+
+extern template 
+float moffat<float>(const float x, const float I0, const float Ipk, const float x0, const float alpha, const float beta);
+
+extern template 
+double moffat<double>(const double x, const double I0, const double Ipk, const double x0, const double alpha, const double beta);
+
+extern template 
+long double moffat<long double>(const long double x, const long double I0, const long double Ipk, const long double x0, const long double alpha, const long double beta);
+
+#ifdef HASQUAD
+extern template 
+__float128 moffat<__float128>(const __float128 x, const __float128 I0, const __float128 Ipk, const __float128 x0, const __float128 alpha, const __float128 beta);
+#endif
 
 /// Find value at position (x,y) of the 2D arbitrarily-centered unnormalized symmetric Moffat function
 /** The Moffat distribution is due to \cite moffat_1969.  With \f$\beta=1\f$ it is the 
@@ -95,6 +111,8 @@ realT moffat( const realT x,     ///< [in] is the x-position at which to evaluat
   * 
   * \tparam realT is type to use for arithmetic
   * 
+  * \test Scenario: compiling 2D Moffat function \ref tests_math_func_moffat2D "[test doc]"
+  *
   * \ingroup gen_math_moffats
   */ 
 template<typename realT>
@@ -111,6 +129,20 @@ realT moffat2D( const realT x,     ///< [in] the x-position at which to evaluate
    return I0 + Ipk * pow( static_cast<realT>(1) + (pow(x-x0,2)+pow(y-y0,2))/pow(alpha,2), -beta);
 }
 
+extern template 
+float moffat2D<float>(const float x, const float y, const float I0, const float Ipk, const float x0, const float y0, const float alpha, const float beta);
+
+extern template 
+double moffat2D<double>(const double x, const double y, const double I0, const double Ipk, const double x0, const double y0, const double alpha, const double beta);
+
+extern template 
+long double moffat2D<long double>(const long double x, const long double y, const long double I0, const long double Ipk, const long double x0, const long double y0, const long double alpha, const long double beta);
+
+#ifdef HASQUAD
+extern template 
+__float128 moffat2D<__float128>(const __float128 x, const __float128 y, const __float128 I0, const __float128 Ipk, const __float128 x0, const __float128 y0, const __float128 alpha, const __float128 beta);
+#endif
+
 /// Compute the full-width at half-maximum of a Moffat profile
 /** This returns the value of
   * \f[
@@ -120,6 +152,8 @@ realT moffat2D( const realT x,     ///< [in] the x-position at which to evaluate
   * \returns the FWHM of the Moffat profile
   * 
   * \tparam realT is the type to use for arithmetic
+  * 
+  * \test Scenario: compiling Moffat FWHM \ref tests_math_func_moffatFWHM "[test doc]"
   * 
   * \ingroup gen_math_moffats
   */
@@ -131,11 +165,25 @@ realT moffatFWHM( realT alpha, ///< [in] the width parameter of the Moffat funct
    return 2*alpha*sqrt( pow(static_cast<realT>(2), static_cast<realT>(1)/beta) - 1);
 }
 
+extern template
+float moffatFWHM(float alpha, float beta);
+
+extern template
+double moffatFWHM(double alpha, double beta);
+
+extern template
+long double moffatFWHM(long double alpha, long double beta);
+
+#ifdef HASQUAD
+extern template
+__float128 moffatFWHM(__float128 alpha, __float128 beta);
+#endif
+
 } //namespace func 
 } //namespace math
 } //namespace mx
 
-#endif //moffat_hpp
+#endif //math_func_moffat_hpp
 
 
 

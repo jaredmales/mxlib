@@ -27,11 +27,13 @@
 #ifndef imagingUtils_hpp
 #define imagingUtils_hpp
 
-#include "../imagingArray.hpp"
+#include <cmath>
+
+#include "../math/constants.hpp"
 #include "../mxError.hpp"
 
-#include <cmath>
-#include <boost/math/constants/constants.hpp>
+#include "imagingArray.hpp"
+
 
 namespace mx
 {
@@ -250,7 +252,7 @@ void tiltWavefront( wavefrontT & complexWavefront,
    typedef typename wavefrontT::Scalar complexT;
    typedef typename wavefrontT::Scalar::value_type realT;
    
-   realT pi = boost::math::constants::pi<realT>();
+   realT pi = math::pi<realT>();
    
    int wfsSizeX = complexWavefront.cols();
    int wfsSizeY = complexWavefront.rows();

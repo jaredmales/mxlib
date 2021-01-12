@@ -37,7 +37,7 @@
 
 #include <iostream>
 
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
 
 
@@ -57,7 +57,7 @@ namespace sigproc
   *
   * \tparam realT the real floating point type
   * 
-  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
+  * \test Scenario: calculating variance from a 1D PSD \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
 realT psdVar1sided( realT df,          ///< [in] the frequency scale of the PSD
@@ -88,7 +88,7 @@ realT psdVar1sided( realT df,          ///< [in] the frequency scale of the PSD
   *
   * \tparam realT the real floating point type
   * 
-  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
+  * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
 realT psdVar2sided( realT df,          ///< [in] the frequency scale of the PSD
@@ -123,7 +123,7 @@ realT psdVar2sided( realT df,          ///< [in] the frequency scale of the PSD
   *
   * \tparam realT the real floating point type
   * 
-  * \test Verify calculations of psdVar1sided, psdVar2sided, and psdVar. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
+  * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
 realT psdVar( const std::vector<realT> & f,   ///< [in] the frequency scale of the PSD.  
@@ -361,6 +361,8 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
 /** A frequency range can be specified, otherwise f[0] to f[f.size()-1] is the range.
   *
   * \tparam floatT the floating point type of the PSD.
+  * 
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename floatT>
 int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will be altered.
@@ -666,19 +668,25 @@ void vonKarman_psd( eigenArrp  & psd,
   * In this case psdTwoSided[0] is set to 0, and the augmented psd
   * is shifted by 1.
   *
-  * Example:
-  *
+  * To illustrate, the bins are re-ordered as:
+  * \verbatim
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * \endverbatim
+  * 
+  * The output is scaled so that the total power remains the same.  The 0-freq and
+  * Nyquist freq are not scaled.
+  * 
   *
   * Entries in psdOneSided are cast to the value_type of psdTwoSided,
   * for instance to allow for conversion to complex type.
   *
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename vectorTout, typename vectorTin>
-void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
-                       vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
-                       bool addZeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
-                       typename vectorTin::value_type scale = 0.5  ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
+void augment1SidedPSD( vectorTout & psdTwoSided,                  ///< [out] on return contains the FFT storage order copy of psdOneSided.
+                       vectorTin  & psdOneSided,                  ///< [in] the one-sided PSD to augment
+                       bool addZeroFreq = false,                  ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
+                       typename vectorTin::value_type scale = 0.5 ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
                      )
 {
    typedef typename vectorTout::value_type outT;
@@ -716,11 +724,11 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
       psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero)] * scale);
       psdTwoSided[i + psdOneSided.size()+ needZero] = outT(psdOneSided[ psdOneSided.size() - 2 - i] * scale);
    }
-   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ] * scale);
+   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
 
 }
 
-///Augment a 1-sided frequency scale to standard FFT form.
+/// Augment a 1-sided frequency scale to standard FFT form.
 /** Allocates freqTwoSided to hold a flipped copy of freqOneSided.
   * If freqOneSided[0] is not 0, freqTwoSided[0] is set to 0, and the augmented
   * frequency scale is shifted by 1.
@@ -729,6 +737,7 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
   *
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
   *
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename T>
 void augment1SidedPSDFreq( std::vector<T> & freqTwoSided, ///< [out] on return contains the FFT storage order copy of freqOneSided.

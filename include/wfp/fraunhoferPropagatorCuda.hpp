@@ -9,6 +9,8 @@
 #ifndef wfp_fraunhoferPropagatorCuda_hpp
 #define wfp_fraunhoferPropagatorCuda_hpp
 
+#include "../math/constants.hpp"
+
 #include "fraunhoferPropagator.hpp"
 #include "../cuda/templateCuda.hpp"
 #include "../cuda/templateCudaPtr.hpp"
@@ -165,7 +167,7 @@ void fraunhoferPropagator<wavefrontT, 1>::propagateFocalToPupil( devicePtrT * co
 template<typename wavefrontT>
 void fraunhoferPropagator<wavefrontT, 1>::makeShiftPhase()
 {      
-   realT pi = boost::math::constants::pi<realT>();
+   constexpr realT pi = math::pi<realT>();
    
    //The normalization is included in the tilt.
    realT norm = 1./(wavefrontSizePixels*sqrt(2));

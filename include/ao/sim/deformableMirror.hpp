@@ -17,6 +17,8 @@
 
 #include "../../ioutils/readColumns.hpp"
 
+#include "../../math/constants.hpp"
+
 #include "../../cuda/templateCudaPtr.hpp"
 #include "../../cuda/templateCublas.hpp"
 
@@ -40,8 +42,6 @@ namespace AO
 
 namespace sim
 {
-
-using namespace boost::math::constants;
 
 struct deformableMirrorSpec
 {
@@ -446,7 +446,7 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
    t1 = get_curr_time();
    t_sum += t1-t0;
 
-   wf.phase += 2*amp*shape*m_pupil*two_pi<realT>()/lambda;
+   wf.phase += 2*amp*shape*m_pupil*math::two_pi<realT>()/lambda;
 
 }
 
@@ -716,7 +716,7 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
 
    BREAD_CRUMB;
 
-   wf.phase += 2*_shape*two_pi<realT>()/lambda;
+   wf.phase += 2*_shape*math::two_pi<realT>()/lambda;
    
    BREAD_CRUMB;
 

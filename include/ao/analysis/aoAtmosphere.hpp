@@ -15,15 +15,15 @@
 #include <cmath>
 #include <cstdlib>
 #include <vector>
+#include <algorithm>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
 #include <mx/mxlib.hpp>
 #include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
+
+#include "../../math/constants.hpp"
 
 namespace mx
 {
@@ -568,7 +568,7 @@ realT aoAtmosphere<realT>::r_0()
 template<typename realT>
 realT aoAtmosphere<realT>::r_0(const realT & lam)
 {
-   return m_r_0*pow(lam/m_lam_0, six_fifths<realT>());
+   return m_r_0*pow(lam/m_lam_0, math::six_fifths<realT>());
 }
 
 template<typename realT>
@@ -700,7 +700,7 @@ void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT 
    
    if(l0 > 0)
    {   
-      m_r_0 = 1.0 / pow(layer_norm * 5.520e13, three_fifths<realT>() );  
+      m_r_0 = 1.0 / pow(layer_norm * 5.520e13, math::three_fifths<realT>() );  
       m_lam_0 = l0;
    }
 
@@ -786,16 +786,16 @@ void aoAtmosphere<realT>::update_v_wind()
    
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
-      _v_wind += _layer_Cn2[i] * pow(_layer_v_wind[i], five_thirds<realT>() );
-      s += pow(_layer_v_wind[i], five_thirds<realT>())*sin(_layer_dir[i]) ;//pow( sin(_layer_dir[i]), five_thirds<realT>() );
-      c += pow(_layer_v_wind[i], five_thirds<realT>())*cos(_layer_dir[i]) ;//pow( cos(_layer_dir[i]), five_thirds<realT>() );
+      _v_wind += _layer_Cn2[i] * pow(_layer_v_wind[i], math::five_thirds<realT>() );
+      s += pow(_layer_v_wind[i], math::five_thirds<realT>())*sin(_layer_dir[i]) ;//pow( sin(_layer_dir[i]), math::five_thirds<realT>() );
+      c += pow(_layer_v_wind[i], math::five_thirds<realT>())*cos(_layer_dir[i]) ;//pow( cos(_layer_dir[i]), math::five_thirds<realT>() );
    }
       
-   _v_wind = pow(_v_wind, three_fifths<realT>());
+   _v_wind = pow(_v_wind, math::three_fifths<realT>());
    
-   //_dir_wind = atan(pow(s, three_fifths<realT>()) / pow(c, three_fifths<realT>()));
+   //_dir_wind = atan(pow(s, math::three_fifths<realT>()) / pow(c, math::three_fifths<realT>()));
    _dir_wind = atan( s / c);
-   if(_dir_wind < 0) _dir_wind += pi<realT>();
+   if(_dir_wind < 0) _dir_wind += math::pi<realT>();
    
    _v_wind_updated = true;
    
@@ -841,10 +841,10 @@ void aoAtmosphere<realT>::update_z_mean()
    
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
-      _z_mean += _layer_Cn2[i] * pow(m_layer_z[i], five_thirds<realT>() );
+      _z_mean += _layer_Cn2[i] * pow(m_layer_z[i], math::five_thirds<realT>() );
    }
       
-   _z_mean = pow(_z_mean, three_fifths<realT>());
+   _z_mean = pow(_z_mean, math::three_fifths<realT>());
    
    _z_mean_updated = true;
    
@@ -874,7 +874,7 @@ realT aoAtmosphere<realT>::alpha()
 {
    if(!m_nonKolmogorov)
    {
-      return eleven_thirds<realT>();
+      return math::eleven_thirds<realT>();
    }
    else
    {
@@ -895,7 +895,7 @@ realT aoAtmosphere<realT>::beta()
 {
    if(!m_nonKolmogorov)
    {
-      return constants::a_PSD<realT>()*pow(m_r_0, -five_thirds<realT>());
+      return constants::a_PSD<realT>()*pow(m_r_0, -math::five_thirds<realT>());
    }
    else
    {
@@ -920,7 +920,7 @@ realT aoAtmosphere<realT>::X( realT k,
     
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {
-      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
+      c += _layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    
    return c;
@@ -933,7 +933,7 @@ realT aoAtmosphere<realT>::dX(realT f, realT lam_sci, realT lam_wfs)
  
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]* pow((cos( pi<realT>()*f*f*lam_sci *m_layer_z[i]) - cos( pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
+      c += _layer_Cn2[i]* pow((cos( math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - cos( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -949,7 +949,7 @@ realT aoAtmosphere<realT>::Y( realT k,
  
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow(sin( pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
+      c += _layer_Cn2[i]*pow(sin( math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    return c;
 }
@@ -961,7 +961,7 @@ realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 
    for(size_t i=0;i<_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(pi<realT>()*f*f*lam_sci *m_layer_z[i]) - sin( pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
+      c += _layer_Cn2[i]*pow( (sin(math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - sin( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -987,7 +987,7 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    for(size_t i = 0; i < _layer_Cn2.size(); ++i)
    {
       x = x0*(1-exp((m_layer_z[i]+_h_obs)/_H));
-      c += _layer_Cn2[i] * pow( cos(pi<realT>()*k*k*lambda_i *m_layer_z[i]*secZ), 2) * pow( sin(pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
+      c += _layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lambda_i *m_layer_z[i]*secZ), 2) * pow( sin(math::pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
    }
    
    return 4*c;
@@ -1022,7 +1022,7 @@ realT aoAtmosphere<realT>::f_g(realT lam_sci)
 {
    realT r0 = r_0(m_lam_0);
    
-   return 0.428*pow(m_lam_0/lam_sci, six_fifths<realT>())*v_wind()/r0;
+   return 0.428*pow(m_lam_0/lam_sci, math::six_fifths<realT>())*v_wind()/r0;
 }
    
 template<typename realT>
@@ -1114,6 +1114,20 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    return ios;
 }
  
+extern template
+class aoAtmosphere<float>;
+
+extern template
+class aoAtmosphere<double>;
+
+extern template
+class aoAtmosphere<long double>;
+
+#ifdef HASQUAD
+extern template
+class aoAtmosphere<__float128>;
+#endif
+
 }//namespace analysis 
 }//namespace AO
 }//namespace mx

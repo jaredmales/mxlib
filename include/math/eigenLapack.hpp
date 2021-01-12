@@ -39,11 +39,11 @@
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 
-#include "../timeUtils.hpp"
+#include "../sys/timeUtils.hpp"
 
 //#include "vectorUtils.hpp"
 
-#include "../gnuPlot.hpp"
+#include "../math/plot/gnuPlot.hpp"
 
 
 namespace mx
@@ -295,14 +295,14 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
 
    if(n_modes <= 0 || n_modes > tNims) n_modes = tNims;
 
-   if( t_eigenv) *t_eigenv = get_curr_time();
+   if( t_eigenv) *t_eigenv = sys::get_curr_time();
    
    //Calculate eigenvectors and eigenvalues
    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
     */   
    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>(evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem);
    
-   if( t_eigenv) *t_eigenv = get_curr_time() - *t_eigenv;
+   if( t_eigenv) *t_eigenv = sys::get_curr_time() - *t_eigenv;
    
    if(info !=0 ) 
    {
@@ -321,7 +321,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
 
    klModes.resize(n_modes, tNpix);
 
-   if( t_klim) *t_klim = get_curr_time();
+   if( t_klim) *t_klim = sys::get_curr_time();
    
    //Now calculate KL images
    /*
@@ -331,7 +331,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
                               tNims, 1., evecs.data(), cv.rows(), Rims.data(), Rims.rows(),
                                  0., klModes.data(), klModes.rows());
 
-   if( t_klim) *t_klim = get_curr_time() - *t_klim;
+   if( t_klim) *t_klim = sys::get_curr_time() - *t_klim;
    
    std::cerr << "calcKLModes: " << __LINE__ << "\n";
    

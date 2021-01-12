@@ -253,8 +253,10 @@ private:
   * @brief Return true if two exponential distributions have the same
   *        parameters.
   */
-template<typename _RealType> inline bool operator==(const laplace_distribution<_RealType>& __d1,
-                                                    const laplace_distribution<_RealType>& __d2)
+template<typename _RealType> 
+bool operator== ( const laplace_distribution<_RealType>& __d1,
+                  const laplace_distribution<_RealType>& __d2
+                )
 { 
    return __d1.param() == __d2.param(); 
 }
@@ -263,8 +265,9 @@ template<typename _RealType> inline bool operator==(const laplace_distribution<_
   * @brief Return true if two exponential distributions have different
   *        parameters.
   */
-template<typename _RealType> inline bool operator!=(const laplace_distribution<_RealType>& __d1,
-                                                    const laplace_distribution<_RealType>& __d2)
+template<typename _RealType> bool operator!=( const laplace_distribution<_RealType>& __d1,
+                                              const laplace_distribution<_RealType>& __d2
+                                            )
 { 
    return !(__d1 == __d2); 
 }

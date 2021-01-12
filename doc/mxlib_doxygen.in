@@ -803,15 +803,29 @@ INPUT                  = ./groupdefs.dox \
                          ../include/fft \
                          ../include/improc \
                          ../include/math \
+                         ../include/math/cuda \
                          ../include/math/fit \
+                         ../include/math/fft \
                          ../include/math/func \
+                         ../include/math/plot \
                          ../include/meta \
                          ../include/sigproc \
+                         ../include/sys \
                          ./psds.dox \
                          ../include/wfp \
                          ../include/ioutils \
+                         ../include/ioutils/fits \
+                         ../tests/include/ao \
+                         ../tests/include/app \
+                         ../tests/include/astro \
+                         ../tests/include/ioutils \
+                         ../tests/include/math \
+                         ../tests/include/math/cuda \
+                         ../tests/include/math/func \
                          ../tests/include/sigproc \
-                         ../tests/include/math
+                         ../tests/include/sys
+                         
+                         
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

@@ -238,6 +238,46 @@ void combine2ImagesMasked( imageT & combo,        ///< [out] the combined image.
    }
 }
 
+template<typename eigenT, typename eigenTin>
+void removeRowsAndCols(eigenT & out, const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows() - w, in.cols() - w);
+   
+   out.topLeftCorner(st,st) = in.topLeftCorner(st,st);
+   
+   out.bottomLeftCorner(in.rows()-(st+w), st) = in.bottomLeftCorner(in.rows()-(st+w), st);
+   
+   out.topRightCorner(st, in.cols()-(st+w))  = in.topRightCorner(st, in.cols()-(st+w));
+   
+   out.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w)) = in.bottomRightCorner(in.rows()-(st+w),in.cols()-(st+w));
+}
+
+
+template<typename eigenT, typename eigenTin>
+void removeRows(eigenT & out,  const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows() - w, in.cols());
+   
+   out.topLeftCorner(st,in.cols()) = in.topLeftCorner(st,in.cols());
+   
+   out.bottomLeftCorner(in.rows()-(st+w), in.cols()) = in.bottomLeftCorner(in.rows()-(st+w), in.cols());
+   
+}
+
+template<typename eigenT, typename eigenTin>
+void removeCols(eigenT & out,  const eigenTin & in, int st, int w)
+{
+   
+   out.resize(in.rows(), in.cols() - w);
+   
+   out.topLeftCorner(in.rows(), st) = in.topLeftCorner(in.rows(), st);
+   
+   out.topRightCorner(in.rows(),in.cols()-(st+w)) = in.topRightCorner(in.rows(),in.cols()-(st+w));
+   
+}   
+
 ///@}
 
 } //namespace math

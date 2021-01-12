@@ -7,8 +7,8 @@
 #pragma GCC system_header
 #include <Eigen/Dense>
 
-#include "mx/imagingArray.hpp"
-#include "mx/wfp/imagingUtils.hpp"
+#include "../../wfp/imagingArray.hpp"
+#include "../../wfp/imagingUtils.hpp"
 
 
 namespace mx
@@ -31,7 +31,7 @@ struct wavefront
    typedef  Eigen::Array<_realT, Eigen::Dynamic, Eigen::Dynamic>  realImageT; 
 
    ///The wavefront data type
-   typedef mx::imagingArray<std::complex<realT>,fftwAllocator<std::complex<realT> >, 0> complexAmplitudeT;
+   typedef wfp::imagingArray<std::complex<realT>, wfp::fftwAllocator<std::complex<realT> >, 0> complexAmplitudeT;
    
    ///The wavefront amplitude
    realImageT amplitude;
@@ -51,7 +51,6 @@ struct wavefront
       amplitude.setZero();
       phase.setZero();
    }
-
 
    void setAmplitude(const realImageT & amp)
    {
