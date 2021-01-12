@@ -1,4 +1,4 @@
-# Definitions for building mxlib based applications
+# Makefile for building mxlib based applications
 #
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(SELF_DIR)/../local/MxApp.mk
@@ -9,31 +9,42 @@ include $(SELF_DIR)/../mk/Common.mk
 # or `t=` for short
 TARGET ?= $(t)
 
-#Check if we want a target specific git version header
+#allow passing of .o, .hpp, or any extension, or no extension
+BASENAME=$(basename $(TARGET))
+PATHNAME=$(dir $(TARGET))
+OBJNAME = $(PATHNAME)$(notdir $(BASENAME)).o
+TARGETNAME = $(PATHNAME)$(notdir $(BASENAME))
+
+#Check if we want a target-specific git version header
 ifeq ($(GIT_VERSION),yes)
    #change target name to uppercase
    GIT_VERSION_DEF = $(shell echo $(TARGET) | tr a-z A-Z)_GIT
    PRE_TARGETS += git_version
+   GIT_VERSION_FILE = $(TARGETNAME)_git_version.h
 endif
 
 
-all: $(PRE_TARGETS) $(TARGET) $(OTHER_OBJS) 
 
-$(TARGET):  $(TARGET).o  $(OTHER_OBJS)
-	$(LINK.o)  -o $(TARGET) $(TARGET).o $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+all: tshoot $(PRE_TARGETS) $(TARGETNAME) $(OTHER_OBJS)
 
-#endif
+$(TARGETNAME): $(OBJNAME) $(OTHER_OBJS)
+	$(LINK.o)  -o $(TARGETNAME) $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+
 
 install: all
 	install -d $(BIN_PATH)
 	install $(TARGET) $(BIN_PATH)
 
+.PHONY: tshoot
+tshoot:
+	@echo mxlib: compiling $(BASENAME)
+
 .PHONY: git_version
 git_version:
-	@bash gengithead.sh ./ ./$(TARGET)_git_version.h $(GIT_VERSION_DEF)
+	@bash gengithead.sh ./ $(TARGETNAME)_git_version.h $(GIT_VERSION_DEF)
 	
 .PHONY: clean
 clean:
-	rm -f $(TARGET) $(TARGET)_git_version.h
+	rm -f $(TARGETNAME) $(OBJNAME) $(GIT_VERSION_FILE)
 	rm -f *.o 
 	rm -f *~

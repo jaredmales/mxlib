@@ -47,6 +47,12 @@ namespace ioutils
 /// Create a directory or directories
 void createDirectories( const std::string & path /**< [in] the path of the directory(ies)to create */);
 
+/// Get the stem of the filename 
+/**
+  * \returns the stem for the filename
+  */ 
+std::string pathStem(const std::string & fname);
+
 /// Get the parent path from a filename
 /**
   * \returns the parent path of the file

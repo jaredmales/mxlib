@@ -26,6 +26,11 @@
 
 #include "math/fit/templateLevmar.hpp"
 
+extern "C"
+{
+#include "../../vendor/levmar-2.6/levmar.h"
+}
+
 namespace mx
 {
 namespace math

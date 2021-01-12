@@ -27,10 +27,7 @@
 #ifndef __templateLevmar_hpp__
 #define __templateLevmar_hpp__
 
-extern "C"
-{
-#include "levmar.h"
-}
+
 
 namespace mx
 {

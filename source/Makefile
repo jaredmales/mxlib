@@ -48,6 +48,7 @@ OBJS = mxlib.o \
        sys/environment.o \
        sys/timeUtils.o 
        
+VENDORLIBS = vendor/levmar-2.6/liblevmar.a
 
 all: libmxlib.so
 
@@ -81,7 +82,7 @@ all: libmxlib.so
 #mxlib_uncomp_version
 
 libmxlib.so: $(OBJS) 
-	$(CXX) -shared $(OBJS) -o $@
+	$(CXX) -shared  $(VENDORLIBS) $(OBJS) -o $@
 
 install: libmxlib.so
 	install -d $(LIB_PATH)

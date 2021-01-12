@@ -128,21 +128,24 @@ public:
    
    ///Propagate the wavefront from the pupil plane to the focal plane
    /** The pupil plane wavefront (complexPupil) is multiplied by a tilt to place the
-     * image in the geometric center of the focal plane.
-     *
+     * image in the geometric center of the focal plane.  This can be prevented by 
+     * setting doCenter to false.
+     * 
      */
    void propagatePupilToFocal( wavefrontT & complexFocal, ///< [out] the focal plane wavefront.  Must be pre-allocated to same size as complexPupil.
-                               wavefrontT & complexPupil  ///< [in] the pupil plane wavefront. Modified due to application of centering tilt.
+                               wavefrontT & complexPupil, ///< [in] the pupil plane wavefront. Modified due to application of centering tilt.
+                               bool doCenter = true       ///< [in] [optional] set to false to not apply the centering shift
                              );
 
    ///Propagate the wavefront from Focal plane to Pupil plane
-   /**
-     * After the fourier transform, the output pupil plane wavefront is de-tilted, restoring it
-     * to the state prior to calling \ref propagatePupilToFocal
+   /** After the fourier transform, the output pupil plane wavefront is de-tilted, restoring it
+     * to the state prior to calling \ref propagatePupilToFocal.  This can be prevented by 
+     * setting doCenter to false.
      *
      */
    void propagateFocalToPupil( wavefrontT & complexPupil, ///< [out] the pupil plane wavefront. Must be pre-allocated to same size as complexFocal.
-                               wavefrontT & complexFocal  ///< [in] the focal plane wavefront.
+                               wavefrontT & complexFocal, ///< [in] the focal plane wavefront.
+                               bool doCenter = true       ///< [in] [optional] set to false to not apply the centering shift
                              );
 
    ///Set the size of the wavefront, in pixels
@@ -210,21 +213,25 @@ void fraunhoferPropagator<wavefrontT>::unshiftPupil( wavefrontT & complexPupil )
 
 template<typename wavefrontT>
 void fraunhoferPropagator<wavefrontT>::propagatePupilToFocal( wavefrontT & complexFocal,
-                                                              wavefrontT & complexPupil
+                                                              wavefrontT & complexPupil,
+                                                              bool doCenter /*default = true*/
                                                             )
 {
    //First setup the tilt screens (does nothing if there's no change in size)
    setWavefrontSizePixels(complexPupil.rows());
 
    //Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
-   shiftPupil(complexPupil);
+   if(doCenter) shiftPupil(complexPupil);
    
    //fft_fwd.fft(complexPupil.data(), complexFocal.data() );
    m_fft_fwd( complexFocal.data(), complexPupil.data() );
 }
 
 template<typename wavefrontT>
-void fraunhoferPropagator<wavefrontT>::propagateFocalToPupil(wavefrontT & complexPupil, wavefrontT & complexFocal)
+void fraunhoferPropagator<wavefrontT>::propagateFocalToPupil( wavefrontT & complexPupil, 
+                                                              wavefrontT & complexFocal,
+                                                              bool doCenter /*default = true*/
+                                                            )
 {
    //First setup the tilt screens (does nothing if there's no change in size)
    setWavefrontSizePixels(complexPupil.rows());
@@ -233,7 +240,7 @@ void fraunhoferPropagator<wavefrontT>::propagateFocalToPupil(wavefrontT & comple
    m_fft_back( complexPupil.data(), complexFocal.data() );
 
    //Unshift the wavefront and normalize
-   unshiftPupil(complexPupil);
+   if(doCenter) unshiftPupil(complexPupil);
 }
 
 template<typename wavefrontT>

@@ -53,11 +53,18 @@ void createDirectories( const std::string & path )
    boost::filesystem::create_directories(path);
 }
 
+std::string pathStem(const std::string & fname)
+{
+   boost::filesystem::path p(fname);
+   return p.stem().string();
+}
+
 std::string parentPath(const std::string & fname)
 {
    boost::filesystem::path p(fname);
    return p.parent_path().string();
 }
+
 
 
 std::vector<std::string> getFileNames( const std::string & directory, 
