@@ -45,7 +45,18 @@ struct clAOLinearPredictor
 
    sigproc::linearPredictor<realT> lp;
    
+   realT m_min_var0 {0};
+   realT m_min_sc0 {10};
+   realT m_precision0 {10};
+   realT m_max_sc0 {100};
+   realT m_dPrecision {3};
    
+   realT m_gmax_lp {5}; ///< The maximum allowable gain for LP.
+   
+   //Stopping conditions:
+   realT m_minPrecision {0.001};
+   int m_maxIts {100};
+
    int extrap;
    
    clAOLinearPredictor()
@@ -87,6 +98,12 @@ struct clAOLinearPredictor
    ///Worker function for regularizing the PSD for coefficient calculation.
    /**
      * \tparam printout if true then the results are printed to stdout as they are calculated.
+     * 
+     * On first call (min_var = 0):
+     *     loop over scale factors from min_sc to max_sc (<=) in steps of precision.
+     * 
+     * On subsequent calls, when min_var and min_sc are passed back in
+     *     loop over scale factors from min_sc-precision to max_sc in steps of 
      */ 
    template< bool printout=false>
    int _regularizeCoefficients( realT & min_var,           ///< [in/out] the minimum variance found.  Set to 0 on initial call
@@ -107,19 +124,23 @@ struct clAOLinearPredictor
       
       realT last_var;
       
-      //min_var == 0 indicates first call.
+      
+      
+      //min_var == 0 indicates first call
       if( min_var == 0)
       {
-         sc0 = min_sc;
+         sc0 = min_sc;  
          min_var = std::numeric_limits<realT>::max();
          last_var = std::numeric_limits<realT>::max();
       }
       else
       {
-         sc0 = min_sc - precision;
+         sc0 = min_sc - precision*m_dPrecision;
+         //sc0 = min_sc;  
          last_var = min_var;
       }
 
+      //Test from sc0 to max_sc in steps of precision
       for(realT sc = sc0; sc <= max_sc; sc += precision)
       {
          if( calcCoefficients(PSDt, PSDn, PSDt[0]*pow(10, -sc/10), Nc) < 0) return -1;
@@ -131,6 +152,7 @@ struct clAOLinearPredictor
          
          realT ll = 0, ul = 0;
          gmax_lp = go_lp.maxStableGain(ll,ul);
+         if(gmax_lp> m_gmax_lp) gmax_lp = m_gmax_lp;
          gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
          //var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
@@ -171,16 +193,14 @@ struct clAOLinearPredictor
                              )
    {
 
-      realT min_var = 0;
-      realT min_sc = 10;
-      realT precision = 10;
-      realT max_sc=100;
+      realT min_var = m_min_var0;
+      realT min_sc = m_min_sc0;
+      realT precision = m_precision0;
+      realT max_sc = m_max_sc0;
    
-      realT _dPrecision = 3.0;
-      int _maxIts = 20;
       
       int its = 0;
-      while(precision > 0.01 && its < _maxIts)
+      while(precision > m_minPrecision && its < m_maxIts)
       {
          _regularizeCoefficients<printout>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc);
          
@@ -188,6 +208,7 @@ struct clAOLinearPredictor
          {
             if( its == 0 )
             {
+               min_sc -= precision;
                max_sc = 200;
             }
             else
@@ -200,7 +221,7 @@ struct clAOLinearPredictor
          else
          {
             max_sc = min_sc + precision;
-            precision /= _dPrecision;
+            precision /= m_dPrecision;
          }
          
          ++its;
@@ -217,6 +238,46 @@ struct clAOLinearPredictor
       realT ll = 0, ul = 0;
       gmax_lp = go_lp.maxStableGain(ll,ul);
       gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
+      
+      return 0;
+   }
+   
+   /// Regularize the PSD and calculate the associated LP coefficients.
+   /** The PSD is regularized by adding a constant to it.  This constant is found by minimizing the variance of the residual PSD.
+     * 
+     * \tparam printout if true then the results are printed to stdout as they are calculated.
+     */
+   template< bool printout=false>
+   int optimizeNc( realT & gmax_lp,           ///< [out] the maximum gain calculated for the regularized PSD
+                               realT & gopt_lp,           ///< [out] the optimum gain calculated for the regularized PSD
+                               int & Nc,
+                               realT & var_lp,            ///< [out] the variance at the optimum gain.
+                               clGainOpt<realT> & go_lp,  ///< [in] the gain optimization object
+                               std::vector<realT> & PSDt, ///< [in] the turbulence PSD
+                               std::vector<realT> & PSDn, ///< [in] the WFS noise PSD
+                               int minNc,                     ///< [in] the number of coefficients
+                               int maxNc
+                             )
+   {
+      realT minVar = std::numeric_limits<realT>::max();
+      
+      for(int n = minNc; n <= maxNc; ++n)
+      {
+         realT _gmax_lp;
+         realT _gopt_lp;
+         realT _var_lp;
+         regularizeCoefficients<printout>(_gmax_lp, _gopt_lp, _var_lp, go_lp, PSDt, PSDn, n);
+         
+         if(_var_lp < minVar)
+         {
+            gmax_lp = _gmax_lp;
+            gopt_lp = _gopt_lp;
+            var_lp = _var_lp;
+            Nc = n;
+            
+            minVar = var_lp;
+         }
+      }
       
       return 0;
    }

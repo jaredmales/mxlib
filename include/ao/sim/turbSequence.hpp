@@ -14,7 +14,7 @@
 #include <Eigen/Dense>
 
 #include "../../ioutils/fileUtils.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 
 #include "wavefront.hpp"
 
@@ -207,7 +207,7 @@ int turbSequence<realT>::turbFnames(std::string dir, int max)
 template<typename realT>
 void turbSequence<realT>::openPhaseFrame(int fn)
 {
-   improc::fitsFile<float> ff;
+   fits::fitsFile<float> ff;
 
    std::cout << _phaseFnames[fn] << "\n";
 

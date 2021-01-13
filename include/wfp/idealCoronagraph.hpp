@@ -32,10 +32,10 @@
 #include "fraunhoferPropagator.hpp"
 #include "imagingUtils.hpp"
 
-#include "../imagingArray.hpp"
+#include "../wfp/imagingArray.hpp"
 
-#include "../improc/fitsFile.hpp"
-#include "../improc/fitsUtils.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
+#include "../ioutils/fits/fitsUtils.hpp"
 #include "../improc/imagePads.hpp"
 
 namespace mx
@@ -193,7 +193,7 @@ int idealCoronagraph<realT>::loadPupil( const std::string & pupilFile)
 
    imageT pupil;
 
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
 
    ff.read(pupil, pupilFile);
 

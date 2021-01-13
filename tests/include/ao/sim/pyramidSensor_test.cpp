@@ -54,10 +54,10 @@ int main()
    
    timespec ts;
    double t0 = get_curr_time(ts);
-   for(int i=0;i<10; ++i) pwfs.doSenseWavefront(wf);
+   for(int i=0;i<100; ++i) pwfs.doSenseWavefront(wf);
    double t1 = get_curr_time(ts);
    
-   std::cerr << (t1-t0)/10. << "\n";
+   std::cerr << (t1-t0)/100. << "\n";
    fitsFile<realT> ff;
    ff.write("wfsImage.fits", pwfs.m_wfsImage.image);
 }

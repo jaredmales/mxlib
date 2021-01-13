@@ -10,7 +10,7 @@
 
 #include "../../math/randomT.hpp"
 
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../improc/ds9Interface.hpp"
 
@@ -64,7 +64,7 @@ public:
    typedef improc::eigenImage<realT> pupilT;
    
    ///The wavefront complex field type
-   typedef mx::imagingArray<std::complex<_realT>,fftwAllocator<std::complex<_realT> >, 0> complexFieldT;
+   typedef mx::wfp::imagingArray<std::complex<_realT>,mx::wfp::fftwAllocator<std::complex<_realT> >, 0> complexFieldT;
 
    typedef _detectorT detectorT;
 

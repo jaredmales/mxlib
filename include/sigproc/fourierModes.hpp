@@ -28,7 +28,7 @@
 #define fourierModes_hpp
 
 #include <vector>
-
+#include <algorithm>
 
 
 #include "../mxError.hpp"

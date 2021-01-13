@@ -29,12 +29,12 @@
 
 #include <iostream>
 
-#include "../imagingArray.hpp"
+#include "imagingArray.hpp"
 #include "imagingUtils.hpp"
 #include "fraunhoferPropagator.hpp"
 
-#include "../improc/fitsFile.hpp"
-#include "../improc/fitsUtils.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
+#include "../ioutils/fits/fitsUtils.hpp"
 
 #include "../improc/eigenImage.hpp"
 #include "../improc/eigenCube.hpp"
@@ -66,7 +66,7 @@ public:
    typedef std::complex<realT> complexT;
 
    ///The wavefront complex field type
-   typedef mx::imagingArray<std::complex<realT>, fftwAllocator<std::complex<realT> >, 0> complexFieldT;
+   typedef mx::wfp::imagingArray<std::complex<realT>, fftwAllocator<std::complex<realT> >, 0> complexFieldT;
    
    ///The focal plane mask type
    typedef Eigen::Array< std::complex<fpmaskFloatT>, Eigen::Dynamic, Eigen::Dynamic> fpMaskT;
@@ -273,7 +273,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::makeFocalMask(_realT rad,
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & apodName)
 {
-   improc::fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
    
    return ff.read(m_pupilApodizer, apodName);
    
@@ -282,7 +282,7 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string & ap
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & fpmName)
 {
-   improc::fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
    improc::eigenCube<fpmaskFloatT> fpm;
    
    if(ff.read(fpm, fpmName) < 0) return -1;
@@ -320,7 +320,7 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string & f
 template<typename _realT, typename _fpmaskFloatT>
 int lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string & lyotName)
 {
-   improc::fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
     
    return ff.read(m_lyotStop, lyotName);
    
@@ -503,11 +503,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    pupilPlane.resize(m_wfSz, m_wfSz);
    focalPlane.resize(m_wfSz, m_wfSz);
    
-   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
+   mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
    mx::wfp::circularPupil( mask, 0., fpmRadPix);   
   
    //Initialize pupilImage
-   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
+   mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
    pupilImage.setZero();
    
    int gpLLi = 0.5*(m_wfSz-1) - 0.5*(geomPupil.rows()-1);
@@ -607,11 +607,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    m_lyotStop = geomPupil;
    
    
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    
-   head.append("", improc::fitsCommentType(), "----------------------------------------");
-   head.append("", improc::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
-   head.append("", improc::fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
    head.append<int>("WFSZ", m_wfSz, "Size of wavefront used for FFTs (pixels)");
    head.append<realT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
    head.append<realT>("ABSTOL", absTol , "input absolute tolerance");
@@ -622,7 +622,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    head.append<realT>("FPMTRANS", trans, "transmission of FPM");
    
    
-   mx::improc::fitsFile<double> ff;
+   fits::fitsFile<double> ff;
 
    std::string fname = "coron/" + cname + "_apod.fits";
    
@@ -658,11 +658,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    pupilPlane.resize(m_wfSz, m_wfSz);
    focalPlane.resize(m_wfSz, m_wfSz);
    
-   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
+   mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
    mx::wfp::circularPupil( mask, 0., fpmRadPix);   
   
    //Initialize pupilImage
-   mx::imagingArray<realT,mx::fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
+   mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
    pupilImage.setZero();
    
    int gpLLi = 0.5*(m_wfSz-1) - 0.5*(geomPupil.rows()-1);
@@ -762,11 +762,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    m_lyotStop = geomPupil;
    
    
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    
-   head.append("", improc::fitsCommentType(), "----------------------------------------");
-   head.append("", improc::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
-   head.append("", improc::fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
+   head.append("", fits::fitsCommentType(), "lyotCoronagraph optimization Parameters:");
+   head.append("", fits::fitsCommentType(), "----------------------------------------");
    head.append<int>("WFSZ", m_wfSz, "Size of wavefront used for FFTs (pixels)");
    head.append<realT>("FPMRADPX", fpmRadPix, "input radius of focal plane mask (pixels)");
    head.append<realT>("ABSTOL", absTol , "input absolute tolerance");
@@ -777,7 +777,7 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    head.append<realT>("FPMTRANS", trans, "transmission of FPM");
    
    
-   mx::improc::fitsFile<double> ff;
+   fits::fitsFile<double> ff;
 
    std::string fname = "coron/" + cname + "_apod.fits";
    
