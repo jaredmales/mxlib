@@ -15,7 +15,7 @@ license.blurb
 !local/MxLib.example.mk
 
 tests/mxlibTest
-
+tests/include/ao/sim/pyramidSensor_test
 *.a
 *.so
 *.dylib

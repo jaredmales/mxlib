@@ -69,8 +69,13 @@ install: all mxlib_uncomp_version
 	install gengithead.sh $(BIN_PATH)/
 	cp -r include/* $(INCLUDE_PATH)/mx/
 
+.PHONY: clean
 clean:
 	rm -f *.o *~
 	rm -f include/mxlib_uncomp_version.h
 	rm -f include/mxlib_comp_version.h
-	cd source; ${MAKE} clean
+	$(MAKE) -C source clean
+
+.PHONY: realclean
+realclean: clean
+	$(MAKE) -C source realclean

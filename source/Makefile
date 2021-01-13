@@ -82,6 +82,7 @@ all: libmxlib.so
 #mxlib_uncomp_version
 
 libmxlib.so: $(OBJS) 
+	$(MAKE) -C vendor/levmar-2.6/
 	$(CXX) -shared  $(VENDORLIBS) $(OBJS) -o $@
 
 install: libmxlib.so
@@ -90,7 +91,11 @@ install: libmxlib.so
 
 .PHONY: clean
 clean:
+	rm -f $(OBJS)
+	$(MAKE) -C vendor/levmar-2.6/ clean
+	
+.PHONY: realclean
+realclean: clean
 	rm -f libmxlib.so
 	rm -f $(OBJS)
-	rm -f *~
-	
+	$(MAKE) -C vendor/levmar-2.6/ cleanall
