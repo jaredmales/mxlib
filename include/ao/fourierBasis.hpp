@@ -8,14 +8,14 @@
 #ifndef __fourierBasis_hpp__
 #define __fourierBasis_hpp__
 
-#include <mx/sigproc/fourierModes.hpp>
-#include <mx/improc/eigenCube.hpp>
-#include <mx/improc/fitsFile.hpp>
+#include "../sigproc/fourierModes.hpp"
+#include "../improc/eigenCube.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
 
+#include "aoPaths.hpp"
 
 namespace mx
 {
-   
 namespace AO
 {
    
@@ -38,14 +38,7 @@ void makeModfBasis( const std::string & basisName,
 
    mx::sigproc::makeFourierBasis_Rect( modes, dim, N, MX_FOURIER_MODIFIED, ang);
 
-//    realT p2v;
-//    for(int i=0; i<N; ++i)
-//    {
-//       p2v = modes.image(i).maxCoeff() - modes.image(i).minCoeff();
-//       modes.image(i) /= p2v;
-//    }
-
-   mx::improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::basis::modes(basisName, true);
       
@@ -53,8 +46,6 @@ void makeModfBasis( const std::string & basisName,
 }
 
 } //namespace AO
-
-   
 } //namespace mx
 
    

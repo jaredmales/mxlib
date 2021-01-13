@@ -223,8 +223,8 @@ int makeModifiedFourierMode( typeN im,
    realT c_ang, s_ang;
    if(ang != 0)
    {
-      c_ang = cos( dtor(ang));
-      s_ang = sin( dtor(ang));
+      c_ang = cos( math::dtor(ang));
+      s_ang = sin( math::dtor(ang));
    }
 
    for(int i=0;i<dim1; ++i)
