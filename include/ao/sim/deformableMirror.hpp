@@ -11,16 +11,15 @@
 #include <cmath>
 
 #include "../../wfp/imagingUtils.hpp"
-//#include <mx/fraunhoferImager.hpp>
-#include "../../timeUtils.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../sys/timeUtils.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 
 #include "../../ioutils/readColumns.hpp"
 
 #include "../../math/constants.hpp"
 
-#include "../../cuda/templateCudaPtr.hpp"
-#include "../../cuda/templateCublas.hpp"
+#include "../../math/cuda/cudaPtr.hpp"
+#include "../../math/cuda/templateCublas.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
@@ -237,7 +236,7 @@ void deformableMirror<_realT>::initialize( AOSysT & AOSys,
    _basisName = spec.basisName;
    m_pupilName = pupil;
 
-   improc::fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
 
    std::string pName;
    pName = mx::AO::path::pupil::pupilFile(m_pupilName);
@@ -415,9 +414,9 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
 
    Eigen::Array<_realT, -1, -1> c;
 
-   t0 = get_curr_time();
+   t0 = sys::get_curr_time();
    c = m_m2c.matrix() * commandV.matrix().transpose();
-   t1 = get_curr_time();
+   t1 = sys::get_curr_time();
    t_mm += t1-t0;
 
    imageT shape( m_nRows, m_nCols);
@@ -426,7 +425,7 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
    shape = c(0,0)*m_infF.image(0);
 
 
-   t0 = get_curr_time();
+   t0 = sys::get_curr_time();
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp;
@@ -443,7 +442,7 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
       shape += tmp;
    }
 
-   t1 = get_curr_time();
+   t1 = sys::get_curr_time();
    t_sum += t1-t0;
 
    wf.phase += 2*amp*shape*m_pupil*math::two_pi<realT>()/lambda;
@@ -517,7 +516,7 @@ void deformableMirror<_realT>::setShape(commandT & commandV)
    #ifdef MXAO_USE_GPU
    m_devModeCommands.upload(commandV.measurement.data(), commandV.measurement.size());
    realT alpha;
-   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, m_alpha, m_devM2c, m_devModeCommands, m_zero, m_devActCommands);
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, m_alpha(), m_devM2c(), m_devModeCommands(), m_zero(), m_devActCommands());
 
    if(stat != CUBLAS_STATUS_SUCCESS)
    {
@@ -631,7 +630,7 @@ void deformableMirror<_realT>::setShape(commandT & commandV)
    for(int i=0; i < m_nActs; ++i)
    {
       //realT alpha = c(i,0);
-      cuda::cublasTaxpy<realT>(*m_cublasHandle, m_idx.size(), m_devActCommands+i, m_devInfF + i*m_idx.size(), 1, m_devShape, 1);
+      cuda::cublasTaxpy<realT>(*m_cublasHandle, m_idx.size(), m_devActCommands()+i, m_devInfF() + i*m_idx.size(), 1, m_devShape(), 1);
    }
    
    m_devShape.download(tmp.data());

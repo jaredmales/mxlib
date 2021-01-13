@@ -23,7 +23,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "mx/sys/environment.hpp"
+#include "sys/environment.hpp"
 
 namespace mx
 {

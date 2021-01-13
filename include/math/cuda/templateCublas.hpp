@@ -169,6 +169,60 @@ cublasStatus_t cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuB
                             floatT *y                ///< [in/out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least (1+(n-1)*abs(incy)) elements otherwise. 
                           );
 
+template<>
+cublasStatus_t cublasTgemv<float>( cublasHandle_t handle,   
+                                   cublasOperation_t trans, 
+                                   int m,                   
+                                   int n,                   
+                                   const float *alpha,     
+                                   const float *A,          
+                                   int lda,                 
+                                   const float *x,         
+                                   int incx,                
+                                   const float *beta,      
+                                   float *y,                
+                                   int incy                 
+                                 );
+
+template<>
+cublasStatus_t cublasTgemv<double>( cublasHandle_t handle,   
+                                    cublasOperation_t trans, 
+                                    int m,                   
+                                    int n,                   
+                                    const double *alpha,     
+                                    const double *A,          
+                                    int lda,                 
+                                    const double *x,         
+                                    int incx,                
+                                    const double *beta,      
+                                    double *y,                
+                                    int incy                 
+                                  );
+
+template<>
+cublasStatus_t cublasTgemv<float>( cublasHandle_t handle,   
+                                   cublasOperation_t trans, 
+                                   int m,                   
+                                   int n,                   
+                                   const float *alpha,     
+                                   const float *A,          
+                                   const float *x,         
+                                   const float *beta,      
+                                   float *y                
+                                 );
+
+template<>
+cublasStatus_t cublasTgemv<double>( cublasHandle_t handle,   
+                                    cublasOperation_t trans, 
+                                    int m,                   
+                                    int n,                   
+                                    const double *alpha,     
+                                    const double *A,          
+                                    const double *x, 
+                                    const double *beta,      
+                                    double *y                
+                                  );
+
 }//namespace cuda 
 }//namespace mx
 #endif // math_templateCublas_hpp

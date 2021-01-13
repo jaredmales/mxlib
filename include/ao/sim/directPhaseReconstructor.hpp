@@ -4,11 +4,12 @@
 
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 using namespace mx::improc;
+using namespace mx::fits;
 
-#include "../../cuda/templateCudaPtr.hpp"
-#include "../../cuda/templateCublas.hpp"
+#include "../../math/cuda/cudaPtr.hpp"
+#include "../../math/cuda/templateCublas.hpp"
 
 #include "../../sigproc/signalWindows.hpp"
 
@@ -269,7 +270,7 @@ void directPhaseReconstructor<realT>::initialize( AOSysT & AOSys,
 template<typename realT> 
 realT directPhaseReconstructor<realT>::calAmp()
 {
-   return 0.5*800.0e-9/two_pi<realT>();
+   return 0.5*800.0e-9/math::two_pi<realT>();
 }
 
 template<typename realT> 
@@ -344,7 +345,7 @@ void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wf
    //realT alpha = 1.;
    //realT zero = 0;
    
-   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nModes, m_measurementSize, m_one, m_devRecon, m_devSlopes, m_zero, m_devAmps);
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nModes, m_measurementSize, m_one(), m_devRecon(), m_devSlopes(), m_zero(), m_devAmps());
    if(stat != CUBLAS_STATUS_SUCCESS)
    {
       std::cerr << "cublas error\n";

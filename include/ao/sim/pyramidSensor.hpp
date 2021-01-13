@@ -130,13 +130,13 @@ public:
    /**
      * \returns m_perStep;
      */ 
-   int perStep();
+   realT perStep();
    
    ///Set the minimum number of modulation steps
    /**
      * \param mSt is the new number of modulation steps
      */ 
-   void perStep(int prStp /**< The minimum number of lamba/D per step to take*/ );
+   void perStep(realT prStp /**< The minimum number of lamba/D per step to take*/ );
 
    ///Get the number of modulation steps
    /**
@@ -523,13 +523,13 @@ void pyramidSensor<realT, detectorT>::D(realT d)
 }
 
 template<typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::perStep()
+realT pyramidSensor<realT, detectorT>::perStep()
 {
    return m_perStep;
 }
 
 template<typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::perStep(int prStp)
+void pyramidSensor<realT, detectorT>::perStep(realT prStp)
 {
    m_perStep = prStp;
    
@@ -539,8 +539,11 @@ void pyramidSensor<realT, detectorT>::perStep(int prStp)
       return;
    }
    
-   m_modSteps = math::half_pi<realT>()*m_modRadius;
-   while( math::half_pi<realT>()*m_modRadius/m_modSteps > m_perStep ) ++m_modSteps;
+   realT radPerStep = m_perStep/m_modRadius;
+   
+   //Get the minimum number of steps to meet m_perStep while having symmetry for the quadrants
+   m_modSteps = 1;
+   while( math::half_pi<realT>()/m_modSteps > radPerStep ) ++m_modSteps;
    m_modSteps *= 4;
    
    m_tiltsMade = false;
@@ -628,9 +631,11 @@ int pyramidSensor<realT, detectorT>::optWPMod( realT & effRad,
       modRad = desRad * (1.1 - 0.2/nT*t);
       
       //Ensure we end up on the edges
-      int nSteps = math::half_pi<realT>()*modRad;
-      while( math::half_pi<realT>()/nSteps > radPerStep ) ++nSteps;
-      //if(nSteps % 2 == 1) nSteps += 1;
+      int nSteps = 1;
+      while( math::half_pi<realT>()/nSteps > radPerStep ) 
+      {
+         ++nSteps;
+      }
       nSteps *= 4;
       
       modShift_x.resize(nSteps);
