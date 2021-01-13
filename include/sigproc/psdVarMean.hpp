@@ -89,9 +89,12 @@ struct psdVarMeanParams
             exit(-1);
          }
          
-         
+         #ifdef MX_OLD_GSL
+         terp.setup(gsl_interp_linear, *freq, *psd);
+         #else 
          terp.setup(gsl_interp_steffen, *freq, *psd);
-         
+         #endif
+
          minf = (*freq)[0];
          maxf = (*freq)[freq->size()-1];
          
