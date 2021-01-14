@@ -8,19 +8,21 @@
 #ifndef __basis_hpp__
 #define __basis_hpp__
 
-#include <mx/sigproc/fourierModes.hpp>
-#include <mx/improc/fitsFile.hpp>
-#include <mx/sigproc/gramSchmidt.hpp>
-#include <mx/eigenUtils.hpp>
-#include <mx/improc/imageFilters.hpp>
-#include <mx/improc/imagePads.hpp>
+#include "../ioutils/fits/fitsFile.hpp"
+using namespace mx::fits;
+
+#include "../sigproc/fourierModes.hpp"
+#include "../sigproc/gramSchmidt.hpp"
+//#include "../improc/eigenUtils.hpp"
+#include "../improc/imageFilters.hpp"
+#include "../improc/imagePads.hpp"
 #include "../improc/eigenCube.hpp"
 
-#include <mx/sigproc/signalWindows.hpp>
+#include "../sigproc/signalWindows.hpp"
 using namespace mx::improc;
 using namespace mx::sigproc;
 
-#include <mx/math/eigenLapack.hpp>
+#include "../math/eigenLapack.hpp"
 using namespace mx::math;
 
 #include "aoPaths.hpp"
