@@ -73,7 +73,7 @@ struct array2FitGaussian2D
    int m_sigma_y_idx {5}; ///< Index of sigma_y in the parameters.  Re-used for b.
    int m_theta_idx {6};  ///< Index of theta in the parameters.  Re-used for c.
    
-   realT m_sigma_idx {4};  ///< Index of sigma in the symmetric case
+   int m_sigma_idx {4};  ///< Index of sigma in the symmetric case
    
    int m_nparams {7};
    int m_maxNparams {7};

@@ -122,6 +122,12 @@ public:
      */ 
    void nextEntry( storedT & newEnt /**< [in] the new entry to add to the buffer*/);
    
+   /// Returns the index of the next entry
+   /** This is particularly useful for accessing entries with the at() function
+     * over an unchanging sequence if asynchronous updates are possible.
+     */ 
+   indexT nextEntry();
+   
    /// Get the entry at a given index
    /** `idx=0` is the earliest entry in the buffer. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
@@ -130,6 +136,15 @@ public:
      */ 
    storedT & operator[](indexT idx /**< [in] the index of the entry to access*/);
    
+   /// Get the entry at a given index relative a fixed start entry 
+   /** `idx=0` is the entry at startEntry. `idx=1` is the one after that.
+     * I.e., this counts forward from the oldest data
+     * 
+     * \returns a reference to the indicated entry in the circular buffer.
+     */
+   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                 indexT idx       ///< [in] the index of the entry to access
+               );
 private:
    derivedT & derived()
    {
@@ -193,9 +208,23 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry(storedT & newEnt)
 }
 
 template<class derivedT, typename storedT, typename indexT>
+indexT circularBufferBase<derivedT, storedT, indexT>::nextEntry()
+{
+   return m_nextEntry;
+}
+
+template<class derivedT, typename storedT, typename indexT>
 typename circularBufferBase<derivedT, storedT, indexT>::storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx)
 {
-   return derived().at(idx);
+   return derived().at(m_nextEntry, idx);
+}
+
+template<class derivedT, typename storedT, typename indexT>
+storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
+                                                             indexT idx
+                                                           )
+{
+   return derived().at(refEntry, idx);
 }
 
 /// Circular buffer which wraps with an if statement (branching) [slower, less memory]
@@ -253,15 +282,17 @@ public:
    }
    
    /// Interface implementation for entry access
-   /** Accesses the idx-th element, using a branch (if-statement) to wrap
+   /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT idx /**< [in] the index of the entry to access*/)
+   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                 indexT idx       ///< [in] the index of the entry to access
+               )
    {
       //Option 1: branch
-      if(idx > this->m_wrapEntry) return this->m_buffer[this->m_nextEntry + idx - this->m_buffer.size()];
-      else return this->m_buffer[this->m_nextEntry + idx];
+      if(idx > this->m_wrapEntry) return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+      else return this->m_buffer[refEntry + idx];
    }
    
 
@@ -313,13 +344,15 @@ public:
    }
    
    /// Interface implementation for entry access
-   /** Accesses the idx-th element, using the mod operator to wrap
+   /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT idx /**< [in] the index of the entry to access*/)
+   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                 indexT idx       ///< [in] the index of the entry to access
+               )
    {
-      return this->m_buffer[(idx + this->m_nextEntry) % this->m_buffer.size()];
+      return this->m_buffer[(refEntry + idx) % this->m_buffer.size()];
    }
    
 
@@ -383,13 +416,15 @@ public:
    }
    
    /// Interface implementation for entry access
-   /** Accesses the idx-th element, using the pre-populated indices to wrap
+   /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT idx /**< [in] the index of the entry to access*/)
+   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                 indexT idx       ///< [in] the index of the entry to access
+               )
    {
-      return this->m_buffer[m_indices[this->m_nextEntry + idx]];
+      return this->m_buffer[m_indices[refEntry + idx]];
    }
    
 
