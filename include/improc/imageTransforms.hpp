@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include <iostream>
+#include <limits>
 
 
 namespace mx
@@ -576,7 +577,7 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
             transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
          }//for j
       }//for i
-   }//#pragam omp
+   }//#pragma omp
 
 }
 

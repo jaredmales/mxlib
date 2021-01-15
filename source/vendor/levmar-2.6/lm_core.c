@@ -114,7 +114,7 @@ LM_REAL tau, eps1, eps2, eps2_sq, eps3;
 LM_REAL init_p_eL2;
 int nu=2, nu2, stop=0, nfev, njev=0, nlss=0;
 const int nm=n*m;
-int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
+int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m);//=NULL;
 
   mu=jacTe_inf=0.0; /* -Wall */
 
@@ -494,7 +494,7 @@ LM_REAL tau, eps1, eps2, eps2_sq, eps3, delta;
 LM_REAL init_p_eL2;
 int nu, nu2, stop=0, nfev, njap=0, nlss=0, K=(m>=10)? m: 10, updjac, updp=1, newjac;
 const int nm=n*m;
-int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
+int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m);//=NULL;
 
   mu=jacTe_inf=p_L2=0.0; /* -Wall */
   updjac=newjac=0; /* -Wall */

@@ -433,7 +433,7 @@ LM_REAL tmin=LM_CNST(1e-12), tming=LM_CNST(1e-18); /* minimum step length for LS
 const LM_REAL tini=LM_CNST(1.0); /* initial step length for LS and PG steps */
 int nLMsteps=0, nLSsteps=0, nPGsteps=0, gprevtaken=0;
 int numactive;
-int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
+int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m);//=NULL;
 
   mu=jacTe_inf=t=0.0;  tmin=tmin; /* -Wall */
 

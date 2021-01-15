@@ -278,6 +278,54 @@ void removeCols(eigenT & out,  const eigenTin & in, int st, int w)
    
 }   
 
+/// Copy one image to another, with no transformation
+/** This is merely memcpy 
+  * 
+  * \returns dest
+  */ 
+void * imcpy( void * dest,   ///< [out] the address of the first pixel in the destination image
+              void * src,    ///< [in] the address of the first pixel in the source image
+              size_t width,  ///< [in] the width in pixels of size szof
+              size_t height, ///< [in] the height in pixels of size szof
+              size_t szof    ///< [in] the size in bytes of a one pixel
+            );
+
+/// Copy one image to another, flipping up-down
+/** This is a reversed row-by-row memcpy
+  * 
+  * \returns dest
+  */ 
+void * imcpy_flipUD( void * dest,   ///< [out] the address of the first pixel in the destination image
+                     void * src,    ///< [in] the address of the first pixel in the source image
+                     size_t width,  ///< [in] the width in pixels of size szof
+                     size_t height, ///< [in] the height in pixels of size szof
+                     size_t szof    ///< [in] the size in bytes of a one pixel
+                   );
+
+/// Copy one image to another, flipping left-right
+/** 
+  * 
+  * \returns dest
+  */ 
+void * imcpy_flipLR( void * dest,   ///< [out] the address of the first pixel in the destination image
+                     void * src,    ///< [in] the address of the first pixel in the source image
+                     size_t width,  ///< [in] the width in pixels of size szof
+                     size_t height, ///< [in] the height in pixels of size szof
+                     size_t szof    ///< [in] the size in bytes of a one pixel
+                   );
+
+/// Copy one image to another, flipping up-down and left-right
+/** 
+  * 
+  * \returns dest
+  */ 
+void * imcpy_flipUDLR( void * dest,   ///< [out] the address of the first pixel in the destination image
+                       void * src,    ///< [in] the address of the first pixel in the source image
+                       size_t width,  ///< [in] the width in pixels of size szof
+                       size_t height, ///< [in] the height in pixels of size szof
+                       size_t szof    ///< [in] the size in bytes of a one pixel
+                     );
+
 ///@}
 
 } //namespace math

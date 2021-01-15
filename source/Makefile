@@ -25,6 +25,7 @@ OBJS = mxlib.o \
        improc/ADIobservation.o \
        improc/HCIobservation.o \
        improc/KLIPreduction.o \
+       improc/imageUtils.o \
        ipc/processInterface.o \
        ipc/sharedMemSegment.o \
        math/cuda/templateCublas.o \
