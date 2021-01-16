@@ -146,7 +146,7 @@ void * imcpy_flipUDLR( void * dest,
          for(size_t cc=0; cc<width; ++cc)
          {
             {
-               d[rr*width + cc] =  s[(height-1-rr) + (width-1-cc)];
+               d[rr*width + cc] =  s[(height-1-rr)*width + (width-1-cc)];
             }
          }
       }
@@ -160,7 +160,7 @@ void * imcpy_flipUDLR( void * dest,
          for(size_t cc=0; cc<width; ++cc)
          {
             {
-               d[rr*width + cc] =  s[(height-1-rr) + (width-1-cc)];
+               d[rr*width + cc] =  s[(height-1-rr)*width + (width-1-cc)];
             }
          }
       }
@@ -174,7 +174,7 @@ void * imcpy_flipUDLR( void * dest,
          for(size_t cc=0; cc<width; ++cc)
          {
             {
-               d[rr*width + cc] =  s[(height-1-rr) + (width-1-cc)];
+               d[rr*width + cc] =  s[(height-1-rr)*width + (width-1-cc)];
             }
          }
       }
@@ -188,7 +188,7 @@ void * imcpy_flipUDLR( void * dest,
          for(size_t cc=0; cc<width; ++cc)
          {
             {
-               d[rr*width + cc] =  s[(height-1-rr) + (width-1-cc)];
+               d[rr*width + cc] =  s[(height-1-rr)*width + (width-1-cc)];
             }
          }
       }
