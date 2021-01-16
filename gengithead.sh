@@ -38,6 +38,7 @@ fi
 
 GIT_HEADER="$HEADPATH"
 
+GIT_BRANCH=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH rev-parse --abbrev-ref HEAD)
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
 set +e
@@ -50,6 +51,7 @@ REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
 echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
+echo "#define $PREFIX""_BRANCH \"$GIT_BRANCH\"" >> $GIT_HEADER
 echo "#define $PREFIX""_CURRENT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
 echo "#define $PREFIX""_REPO_MODIFIED  $GIT_MODIFIED"  >> $GIT_HEADER
 echo "" >> $GIT_HEADER
@@ -61,8 +63,6 @@ echo "    #pragma message (\"******************************************\")" >> $
 echo "    #pragma message (\"*                                        *\")" >> $GIT_HEADER
 centerName "WARNING: repository modified" >> $GIT_HEADER
 centerName "changes not committed for"  >> $GIT_HEADER
-#echo "    #pragma message (\"*      WARNING: repository modified      *\")" >> $GIT_HEADER
-#echo "    #pragma message (\"*       changes not committed for        *\")" >> $GIT_HEADER
 centerName $REPO_NAME >> $GIT_HEADER
 echo "    #pragma message (\"*                                        *\")" >> $GIT_HEADER
 echo "    #pragma message (\"******************************************\")" >> $GIT_HEADER
