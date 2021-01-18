@@ -1007,11 +1007,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
    BREAD_CRUMB;
 
    std::cout << "Timing: \n";
-   std::cout << "   Total Time:    " << dt_total << " sec  / " << dt_total/turbSeq.frames() << " fps\n";
-   std::cout << "      Turbulence: " << dt_turbulence << " sec  / " << dt_turbulence/turbSeq.frames() << " fps / " << dt_turbulence/dt_total << "%\n";
-   std::cout << "      WFS:        " << dt_wfs << " sec  / " << dt_wfs/turbSeq.frames() << " fps / " << dt_wfs/dt_total << "%\n";
-   std::cout << "      Recon:      " << dt_recon << " sec  / " << dt_recon/turbSeq.frames() << " fps / " << dt_recon/dt_total << "%\n";
-   std::cout << "      dmcomb:     " << dt_dmcomb << " sec  / " << dt_dmcomb/turbSeq.frames() << " fps / " << dt_dmcomb/dt_total << "%\n";
+   std::cout << "   Total Time:    " << dt_total << " sec  / " << turbSeq.frames()/dt_total << " fps\n";
+   std::cout << "      Turbulence: " << dt_turbulence << " sec  / " << turbSeq.frames()/dt_turbulence << " fps / " << dt_turbulence/dt_total << "%\n";
+   std::cout << "      WFS:        " << dt_wfs << " sec  / " << turbSeq.frames()/dt_wfs << " fps / " << dt_wfs/dt_total << "%\n";
+   std::cout << "      Recon:      " << dt_recon << " sec  / " << turbSeq.frames()/dt_recon << " fps / " << dt_recon/dt_total << "%\n";
+   std::cout << "      dmcomb:     " << dt_dmcomb << " sec  / " << turbSeq.frames()/dt_dmcomb << " fps / " << dt_dmcomb/dt_total << "%\n";
    
    
 }//void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::runTurbulence()
