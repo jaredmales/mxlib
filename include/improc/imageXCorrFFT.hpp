@@ -272,6 +272,7 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    
    m_fft_back(m_ccIm.data(), m_ftWork.data());
    
+#if 0
    int xLag0,yLag0;
    Scalar pk = m_ccIm.maxCoeff(&xLag0, &yLag0);
    Scalar mn = m_ccIm.minCoeff();
@@ -284,7 +285,16 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    
    xShift = m_fitter.x0() + (xLag0-maxLag) - (int)(0.5*m_rows);
    yShift = m_fitter.y0() + (yLag0-maxLag) - (int)(0.5*m_cols);
-   
+#endif
+
+   std::cerr << "magnifying\n";
+   realT xsc = 0.01;
+   realT ysc = 0.01;
+   imT imW;
+   imageMaxInterp(xShift, yShift, xsc, ysc, imW, m_ccIm);
+
+   xShift -= (int)(0.5*m_rows);
+   yShift -= (int)(0.5*m_cols);
    return 0;
    
 }

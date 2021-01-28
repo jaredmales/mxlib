@@ -28,6 +28,8 @@
 #ifndef astroDynamics_hpp
 #define astroDynamics_hpp
 
+#include <cmath>
+
 #include "sofa.hpp"
 
 #include "../math/constants.hpp"

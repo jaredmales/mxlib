@@ -20,7 +20,6 @@ OBJS = mxlib.o \
        ioutils/fits/fitsHeaderCard.o \
        ioutils/fits/fitsHeader.o \
        ioutils/textTable.o \
-       improc/ds9Interface.o \
        improc/ADIDerotator.o \
        improc/ADIobservation.o \
        improc/HCIobservation.o \
@@ -28,9 +27,6 @@ OBJS = mxlib.o \
        improc/imageUtils.o \
        ipc/processInterface.o \
        ipc/sharedMemSegment.o \
-       math/cuda/templateCublas.o \
-       math/cuda/templateCufft.o \
-       math/cuda/templateCurand.o \
        math/templateBLAS.o \
        math/templateLapack.o \
        math/fit/templateLevmar.o \
@@ -50,51 +46,46 @@ OBJS = mxlib.o \
        sys/environment.o \
        sys/timeUtils.o 
        
-VENDORLIBS = vendor/levmar-2.6/liblevmar.a
+ifeq ($(NEED_CUDA),yes)
+
+CUDA_OBJS = math/cuda/templateCublas.o \
+            math/cuda/templateCufft.o \
+            math/cuda/templateCurand.o 
+endif
+
+VENDOROBJS = vendor/levmar-2.6/lm.o \
+             vendor/levmar-2.6/Axb.o \
+             vendor/levmar-2.6/misc.o \
+             vendor/levmar-2.6/lmlec.o \
+             vendor/levmar-2.6/lmbc.o \
+             vendor/levmar-2.6/lmblec.o \
+             vendor/levmar-2.6/lmbleic.o
+             
+CURRENT_SOFA = vendor/sofa/20210125
 
 all: libmxlib.so
 
-#Dependencies:
-#mxError.o: ../include/mxError.hpp 
-#ao/analysis/clGainOpt.o:   ../include/ao/analysis/clGainOpt.hpp 
-#ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp 
-#ioutils/stringUtils.o: ../include/ioutils/stringUtils.hpp 
-#ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp      
-#ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp
-#ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp
-#math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
-#math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
-#math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
-#math/templateBLAS.o: ../include/math/templateBLAS.hpp
-#math/templateLapack.o: ../include/math/templateLapack.hpp
-#math/fit/templateLevmar.o: ../include/math/fit/templateLevmar.hpp
-#math/fft/fft.o: ../include/math/fft/fft.hpp
-#math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp
-#math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
-#math/func/bessel.o: ../include/math/func/bessel.hpp
-#math/func/factorial.o: ../include/math/func/factorial.hpp
-#math/func/gamma.o: ../include/math/func/gamma.hpp
-#math/func/precision.o: ../include/math/func/precision.hpp
-#math/func/sign.o: ../include/math/func/sign.hpp
-#math/plot/gnuPlot.o: ../include/math/plot/gnuPlot.hpp
-#sys/environment.o: ../include/sys/environment.hpp
-#sys/timeUtils.o: ../include/sys/timeUtils.hpp
+
 			
 
 #mxlib_uncomp_version
 
-libmxlib.so: $(OBJS) 
+libmxlib.so: sofa $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
-	$(CXX) -shared  $(VENDORLIBS) $(OBJS) -o $@
+	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
+sofa: 
+	sudo $(MAKE) -C $(CURRENT_SOFA)/c/src/ install
+	
 install: libmxlib.so
 	install -d $(LIB_PATH)
 	install libmxlib.so $(LIB_PATH)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ clean
+	$(MAKE) -C $(CURRENT_SOFA)/c/src/ clean
 	
 .PHONY: realclean
 realclean: clean
