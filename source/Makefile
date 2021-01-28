@@ -68,11 +68,11 @@ all: libmxlib.so
 
 #mxlib_uncomp_version
 
-libmxlib.so: $(OBJS) sofa
+libmxlib.so: sofa $((OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
 	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
-sofa: $(CURRENT_SOFA)/c/src/libsofa_c.a
+sofa: 
 	sudo $(MAKE) -C $(CURRENT_SOFA)/c/src/ install
 	
 install: libmxlib.so
