@@ -47,7 +47,7 @@
 #include "../../ioutils/stringUtils.hpp"
 #include "../../ioutils/readColumns.hpp"
 #include "../../ioutils/binVector.hpp"
-
+#include "../../ioutils/fileUtils.hpp"
 
 #include "../../ipc/ompLoopWatcher.hpp"
 #include "../../mxError.hpp"
@@ -839,7 +839,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          }
       }
    }
-
+   
+   
    ipc::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
 
    for(size_t s = 0; s < mags.size(); ++s)
@@ -899,6 +900,18 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          {
             ETFxn.resize(tfreq.size());
             NTFxn.resize(tfreq.size());
+    
+            std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
+            std::cerr << "Creating " << tfOutFile << "\n";
+            ioutils::createDirectories(tfOutFile);
+            
+            if(doLP)
+            {
+               tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
+               std::cerr << "Creating " << tfOutFile << "\n";
+               ioutils::createDirectories(tfOutFile);
+            }
+   
          }
          
          //**>
@@ -1054,6 +1067,21 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      }
                   }
                   
+                  
+                  std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
+                  
+                  std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                  ioutils::writeBinVector( etfOutFile, ETFxn);
+               
+                  std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                  ioutils::writeBinVector( ntfOutFile, NTFxn);
+                  
+                  if(i==0) //Write freq on the first one
+                  {
+                     std::string fOutFile = tfOutFile + "freq.binv";
+                     ioutils::writeBinVector(fOutFile, tfreq);
+                  }
+#if 0
                   speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
                   realT spvar = sigproc::psdVar(spfreq, sppsd);
                   
@@ -1064,7 +1092,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      
                   speckleLifetimes( mnMax + m, mnMax + n ) = tau;
                   speckleLifetimes( mnMax - m, mnMax - n ) = tau;
-                  
+#endif
                   
                   if(doLP)
                   {
@@ -1084,7 +1112,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                            NTFxn[i] = 0;
                         }
                      }   
+                     
+                     std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
+                     
+                     std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                     ioutils::writeBinVector( etfOutFile, ETFxn);
+                     
+                     std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                     ioutils::writeBinVector( ntfOutFile, NTFxn);
+                     
+                     if(i==0) //Write freq on the first one
+                     {
+                        std::string fOutFile = tfOutFile + "freq.binv";
+                        ioutils::writeBinVector(fOutFile, tfreq);
+                     }
                   
+#if 0
                      speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
                      realT spvar = sigproc::psdVar(spfreq, sppsd);
                   
@@ -1093,6 +1136,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   
                      speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
                      speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+#endif
                   }
                   
                }

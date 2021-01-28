@@ -11,11 +11,9 @@ SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 NEED_BLAS ?= yes
 NEED_FFTW ?= yes
 NEED_SOFA ?= yes
-NEED_LEVMAR ?= yes
 NEED_FITS ?= yes
 NEED_BOOST ?= yes
 NEED_GSL ?= yes
-NEED_XPA ?= yes
 NEED_CUDA ?= yes
 
 
@@ -87,12 +85,6 @@ else
    SOFA_LIB =
 endif
 
-ifeq ($(NEED_LEVMAR),yes)
-   LEVMAR_LIB = -llevmar 
-else
-   LEVMAR_LIB =
-endif
-
 ifeq ($(NEED_FITS),yes)
    FITS_LIB = -lcfitsio 
 else
@@ -111,14 +103,7 @@ else
    GSL_LIB = 
 endif
 
-ifeq ($(NEED_XPA),yes)
-   XPA_LIB = -lxpa
-else
-   XPA_LIB = 
-endif
-
-
-EXTRA_LDLIBS ?= $(SOFA_LIB) $(LEVMAR_LIB) $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(XPA_LIB)
+EXTRA_LDLIBS ?= $(SOFA_LIB) $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB)
 
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt

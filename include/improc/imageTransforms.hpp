@@ -537,37 +537,37 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
       arrOutT kern;
       kern.resize(width,width);
 
-//      #pragma omp for
-      for(int i=0;i<Nrows; ++i)
+      for(int j=0;j<Ncols; ++j)
       {
          // (i,j) is position in new image
          // (x0,y0) is true position in old image
          // (i0,j0) is integer position in old image
          // (x, y) is fractional residual of (x0-i0, y0-j0)
+        
+         y0 = ycen0 + (j-ycen)*y_scale;
+         j0 = y0;
 
-         x0 = xcen0 + (i-xcen)*x_scale;
-         i0 = x0; //just converting to int
-
-         if(i0 < lbuff || i0 >= xulim)
+         if(j0 < lbuff || j0 >= yulim)
          {
-            for(int j=0;j<Ncols; ++j)
+            for(int i=0;i<Nrows; ++i)
             {
                transim(i,j) = 0;
             }
             continue;
          }
 
-         for(int j=0;j<Ncols; ++j)
+//       #pragma omp for
+         for(int i=0;i<Nrows; ++i)
          {
-
-            y0 = ycen0 + (j-ycen)*y_scale;
-            j0 = y0;
-
-            if(j0 < lbuff || j0 >= yulim)
+            x0 = xcen0 + (i-xcen)*x_scale;
+            i0 = x0; //just converting to int
+        
+            if(i0 < lbuff || i0 >= xulim)
             {
                transim(i,j) = 0;
                continue;
             }
+
 
             //Get the residual
             x = x0-i0;
