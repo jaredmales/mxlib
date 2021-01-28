@@ -15,12 +15,12 @@
 #include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../sigproc/fourierModes.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib_uncomp_version.h"
-#include "../../ompLoopWatcher.hpp"
-#include "../../timeUtils.hpp"
+#include "../../ipc/ompLoopWatcher.hpp"
+#include "../../sys/timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"
 
 #include "../../math/func/airyPattern.hpp"
@@ -30,7 +30,6 @@
 #include "aoAtmosphere.hpp"
 #include "aoPSDs.hpp"
 #include "aoSystem.hpp"
-#include "mxaoa_version.h"
 #include "varmapToImage.hpp"
 
 
@@ -348,7 +347,7 @@ int fourierVarVec( const std::string & fname,
 
    std::vector<realT> var(N,0);
 
-   mx::ompLoopWatcher<> watcher(N, std::cerr);
+   ipc::ompLoopWatcher<> watcher(N, std::cerr);
 
    realT mnCon = 0;
    if( aosys.d_min() > 0)
@@ -508,7 +507,7 @@ int fourierCovarMap( const std::string & fname,
 
    //int ncalc = 0.5*( psz*psz - psz);
 
-   mx::ompLoopWatcher<> watcher(psz, std::cout);
+   ipc::ompLoopWatcher<> watcher(psz, std::cout);
 
    std::cerr << "Starting . . .\n";
    #pragma omp parallel
@@ -543,9 +542,9 @@ int fourierCovarMap( const std::string & fname,
       }
    }
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
-   head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
+   head.append("L0", aosys.atm.L_0(0), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
    head.append("SUBTILT", aosys.psd.subTipTilt(), "Tip/Tilt subtractioon true/false flag");
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
@@ -554,7 +553,7 @@ int fourierCovarMap( const std::string & fname,
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    
 
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    ff.write(fname + ".fits", covar, head);
 
    return 0;
@@ -586,7 +585,7 @@ int fourierCovarMapSeparated( const std::string & fname,
       mnCon = floor( aosys.D()/aosys.d_min()/2.0);
    }
 
-   mx::ompLoopWatcher<> watcher((psz+1)*0.125*(psz+1)*2, std::cout);
+   ipc::ompLoopWatcher<> watcher((psz+1)*0.125*(psz+1)*2, std::cout);
 
    #pragma omp parallel
    {
@@ -632,7 +631,7 @@ int fourierCovarMapSeparated( const std::string & fname,
       }
    }
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
@@ -643,7 +642,7 @@ int fourierCovarMapSeparated( const std::string & fname,
    
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    ff.write(fname + "_pp.fits", covar_pp, head);
    ff.write(fname + "_ppp.fits", covar_ppp, head);
 
@@ -654,7 +653,7 @@ template<typename realT>
 void calcKLCoeffs( const std::string & outFile,
                    const std::string & cvFile )
 {
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
 
    Eigen::Array<realT,-1,-1> cvT, cv, evecs, evals;
 
@@ -666,11 +665,11 @@ void calcKLCoeffs( const std::string & outFile,
    std::cerr << "1\n";
    math::syevrMem<double> mem;
 
-   double t0 = get_curr_time<double>();
+   double t0 = sys::get_curr_time();
 
    int info = math::eigenSYEVR<double,double>(evecs, evals, cv, 0, -1, 'U', &mem);
 
-   double t1 = get_curr_time<double>();
+   double t1 = sys::get_curr_time();
 
    std::cerr << "2\n";
 
@@ -718,7 +717,7 @@ void makeFKL( const std::string & outFile,
               int N,
               int pupSize )
 {
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    Eigen::Array<realT, -1, -1> evecs;
 
    ff.read(evecs, coeffs);
