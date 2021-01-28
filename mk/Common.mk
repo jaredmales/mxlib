@@ -8,12 +8,6 @@ SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 # Set these to no in local/Common.mk if you never need them
 # or in your local Makefile
-NEED_BLAS ?= yes
-NEED_FFTW ?= yes
-NEED_SOFA ?= yes
-NEED_FITS ?= yes
-NEED_BOOST ?= yes
-NEED_GSL ?= yes
 NEED_CUDA ?= yes
 
 
@@ -55,6 +49,7 @@ ifeq ($(USE_BLAS_FROM),mkl)
     BLAS_LDFLAGS ?= -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
     BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
+
 ifeq ($(USE_BLAS_FROM),ATLAS)
     #These are probably what you want for self-compiled atlas
     BLAS_INCLUDES ?= -I/usr/local/atlas/include
@@ -79,31 +74,15 @@ ifeq ($(USE_FFT_FROM),fftw)
     FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q 
 endif
 
-ifeq ($(NEED_SOFA),yes)
-   SOFA_LIB = -lsofa_c
-else
-   SOFA_LIB =
-endif
+FITS_LIB = -lcfitsio 
 
-ifeq ($(NEED_FITS),yes)
-   FITS_LIB = -lcfitsio 
-else
-   FITS_LIB =
-endif
+BOOST_LIB = -lboost_system -lboost_filesystem
 
-ifeq ($(NEED_BOOST),yes)
-   BOOST_LIB = -lboost_system -lboost_filesystem
-else
-   BOOST_LIB =
-endif
+GSL_LIB = -lgsl 
 
-ifeq ($(NEED_GSL),yes)
-   GSL_LIB = -lgsl 
-else
-   GSL_LIB = 
-endif
+SOFA_LIB = -lsofa_c
 
-EXTRA_LDLIBS ?= $(SOFA_LIB) $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB)
+EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(SOFA_LIB)
 
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
@@ -111,16 +90,14 @@ endif
 
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
-ifeq ($(NEED_BLAS),yes)
-    INCLUDES += $(BLAS_INCLUDES)
-    EXTRA_LDLIBS += $(BLAS_LDLIBS)
-    EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
-endif
+#BLAS:
+INCLUDES += $(BLAS_INCLUDES)
+EXTRA_LDLIBS += $(BLAS_LDLIBS)
+EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
 
-ifeq ($(NEED_FFTW),yes)
-   EXTRA_LDLIBS += $(FFT_LDLIBS)
-   EXTRA_LDFLAGS += $(FFT_LDFLAGS)
-endif
+#FFTW:
+EXTRA_LDLIBS += $(FFT_LDLIBS)
+EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
 
 LDLIBS += $(EXTRA_LDLIBS) 
