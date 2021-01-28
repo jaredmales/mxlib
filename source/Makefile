@@ -68,7 +68,7 @@ all: libmxlib.so
 
 #mxlib_uncomp_version
 
-libmxlib.so: sofa $((OBJS)
+libmxlib.so: sofa $(OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
 	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
