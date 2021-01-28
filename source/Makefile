@@ -27,9 +27,6 @@ OBJS = mxlib.o \
        improc/imageUtils.o \
        ipc/processInterface.o \
        ipc/sharedMemSegment.o \
-       math/cuda/templateCublas.o \
-       math/cuda/templateCufft.o \
-       math/cuda/templateCurand.o \
        math/templateBLAS.o \
        math/templateLapack.o \
        math/fit/templateLevmar.o \
@@ -49,7 +46,12 @@ OBJS = mxlib.o \
        sys/environment.o \
        sys/timeUtils.o 
        
-#VENDORLIBS = vendor/levmar-2.6/liblevmar.a
+ifeq ($(NEED_CUDA),yes)
+
+CUDA_OBJS = math/cuda/templateCublas.o \
+            math/cuda/templateCufft.o \
+            math/cuda/templateCurand.o 
+endif
 
 VENDOROBJS = vendor/levmar-2.6/lm.o \
              vendor/levmar-2.6/Axb.o \
@@ -68,9 +70,9 @@ all: libmxlib.so
 
 #mxlib_uncomp_version
 
-libmxlib.so: sofa $(OBJS)
+libmxlib.so: sofa $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
-	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
 sofa: 
 	sudo $(MAKE) -C $(CURRENT_SOFA)/c/src/ install
@@ -81,7 +83,7 @@ install: libmxlib.so
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ clean
 	$(MAKE) -C $(CURRENT_SOFA)/c/src/ clean
 	
