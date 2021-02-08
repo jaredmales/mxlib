@@ -11,9 +11,9 @@
 #include <cmath>
 
 
-#include "../environment.hpp"
+#include "../sys/environment.hpp"
 #include "../ioutils/readColumns.hpp"
-#include "../gslInterpolation.hpp"
+#include "../math/gslInterpolation.hpp"
 
 
 namespace mx
