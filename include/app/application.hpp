@@ -101,13 +101,18 @@ protected:
 
    std::string invokedName; ///< The name used to invoke this application.
 
-   std::string configPathGlobal; ///< The path to the gobal configuration file.
-   std::string m_configPathUser; ///< The path to the user's configuration file.  If the first character is not '/' or '~', this is added to HOME.
-   std::string configPathLocal; ///< The path to a local configuration file.
-   bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a configuration file should be reported.
+   std::string m_configPathGlobal;     ///< The path to the gobal configuration file.  Set in constructor to use.
+   std::string m_configPathGlobal_env; ///< Environment variable to check for the global config path.  Set in constructor to use.
+   std::string m_configPathUser;       ///< The path to the user's configuration file.  If the first character is not '/' or '~', this is added to HOME. Set in constructor to use.
+   std::string m_configPathUser_env;   ///< Environment variable to check fo the user config path.  Set in constructor to use.
+   std::string m_configPathLocal;      ///< The path to a local configuration file. Set in constructor to use.
+   std::string m_configPathLocal_env;  ///< Environment variable to check for the local config path.  Set in constructor to use.
    
-   std::string m_configPathCL; ///< The path to a configuration file specified on the command line.
-   std::string m_configPathCLBase; ///< A base path to add to the CL path.  Can be set by environment variable defined in MX_APP_DEFAULT_configPathCLBase_env.
+   bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a local  configuration file should be reported.
+   
+   std::string m_configPathCL;         ///< The path to a configuration file specified on the command line. 
+   std::string m_configPathCLBase;     ///< A base path to add to the CL path.  Set in constructor to use.
+   std::string m_configPathCLBase_env; ///< Environment variable to check for the CL base path.  Set in constructor to use.
    
    appConfigurator config; ///< The structure used for parsing and storing the configuration.
 
@@ -209,64 +214,10 @@ protected:
      * case derived classes need access when overriding.
      *
      */
-   virtual void setDefaults( int argc, ///< [in] standard command line result specifying number of argumetns in argv
+   virtual void setDefaults( int argc, ///< [in] standard command line result specifying number of arguments in argv
                              char ** argv ///< [in] standard command line result containing the arguments.
-                           )
-   {
-      static_cast<void>(argc);
-      static_cast<void>(argv);
-      
-      std::string tmp;
+                           );
    
-      char * tmpstr;
-      
-      #ifdef MX_APP_DEFAULT_configPathGlobal
-         configPathGlobal = MX_APP_DEFAULT_configPathGlobal;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathGlobal_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathGlobal_env);
-         if(tmpstr != 0) configPathGlobal = tmpstr;
-      #endif
-   
-   
-      #ifdef MX_APP_DEFAULT_configPathUser
-         m_configPathUser = MX_APP_DEFAULT_configPathUser;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathUser_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathUser_env);
-         if(tmpstr != 0) m_configPathUser = tmpstr;
-      #endif
-   
-      if(m_configPathUser != "")
-      {
-         //If it's a relative path, add it to the HOME directory
-         if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
-         {
-            tmp = getenv("HOME");
-            tmp += "/" + m_configPathUser;
-            m_configPathUser = tmp;
-         }
-      }
-   
-      #ifdef MX_APP_DEFAULT_configPathLocal
-         configPathLocal = MX_APP_DEFAULT_configPathLocal;
-      #endif
-      #ifdef MX_APP_DEFAULT_configPathLocal_env
-         tmpstr = getenv(MX_APP_DEFAULT_configPathLocal_env);
-         if(tmpstr != 0) configPathLocal = tmpstr;
-      #endif
-   
-      #ifdef MX_APP_DEFAULT_configPathCLBase_env 
-         tmpstr = getenv(MX_APP_DEFAULT_configPathCLBase_env);
-         if(tmpstr != 0) m_configPathCLBase = tmpstr;
-         if(m_configPathCLBase.size()>0)
-            if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
-               m_configPathCLBase += '/';
-      #endif
-         
-      return;
-   
-   }
 
    ///Set up the command-line config option in a standard way.
    /** This adds "-c --config" as command line options.
@@ -330,3 +281,34 @@ protected:
 } //namespace mx
 
 #endif // app_application_hpp
+
+//Deprecations:
+// Produce errors if older code is compiled which attempts to define-config the config:
+
+#ifdef MX_APP_DEFAULT_configPathGlobal
+   #error MX_APP_DEFAULT_configPathGlobal no longer works.  Set m_configPathGlobal in constructor.
+#endif
+
+#ifdef MX_APP_DEFAULT_configPathGlobal_env
+   #error MX_APP_DEFAULT_configPathGlobal_env no longer works.  Set m_configPathGlobal_env in constructor.
+#endif
+      
+#ifdef MX_APP_DEFAULT_configPathUser
+   #error MX_APP_DEFAULT_configPathUser no longer works.  Set m_configPathUser in constructor.
+#endif
+
+#ifdef MX_APP_DEFAULT_configPathUser_env
+   #error MX_APP_DEFAULT_configPathUser_env no longer works.  Set m_configPathUser_env in constructor.
+#endif
+
+#ifdef MX_APP_DEFAULT_configPathLocal
+   #error MX_APP_DEFAULT_configPathLocal no longer works.  Set m_configPathLocal in constructor.
+#endif
+
+#ifdef MX_APP_DEFAULT_configPathLocal_env
+   #error MX_APP_DEFAULT_configPathLocal_env no longer works.  Set m_configPathLocal_env in constructor.
+#endif
+
+ #ifdef MX_APP_DEFAULT_configPathCLBase_env 
+   #error MX_APP_DEFAULT_configPathCLBase_env no longer works.  Set m_configPathCLBase_env in constructor.
+#endif

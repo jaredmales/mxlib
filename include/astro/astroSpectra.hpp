@@ -117,6 +117,23 @@ struct astroFilter
 
 /// A square-wave filter spectrum
 /** Parameters specify the central wavelength, width, and sampling (all in microns) of a square-wave type filter.
+  * 
+  * To create this filter:
+  * \code
+  * typedef double realT;
+  * 
+  * realT lam0 = 0.5; //Central wavelength in microns
+  * realT fw = 0.05; //Full-width, in microns.
+  * realT dlam = 0.001; //Delta-lambda for specifying the defining points.  See note.
+  * 
+  * astroSpectrum<sqWaveFilter<units::si<realT>>> filt({ lam0, fw, dlam});
+  * 
+  * filt.setSpectrum(grid_meters); // grid_meters is a vector<realT> specifying the wavelength grid in meters
+  * 
+  * \endcode
+  * 
+  * Note that dlam specifies how sharp the filter edges are when interpolated.  Larger values will make the filter more trapezoidal.
+  * 
   * \ingroup astrophot_spectra
   */
 template<typename _units, bool _rsr=true>
