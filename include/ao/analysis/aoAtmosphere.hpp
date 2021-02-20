@@ -18,7 +18,7 @@
 #include <algorithm>
 
 
-#include <mx/mxlib.hpp>
+#include "../../mxlib.hpp"
 #include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
