@@ -11,9 +11,9 @@
 #include <cmath>
 
 
-#include "../environment.hpp"
+#include "../sys/environment.hpp"
 #include "../ioutils/readColumns.hpp"
-#include "../gslInterpolation.hpp"
+#include "../math/gslInterpolation.hpp"
 
 
 namespace mx
@@ -189,6 +189,27 @@ struct baseSpectrum
      * \todo check on integration method, should it be trap?
      *
      */
+   template<class filterT>
+   void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
+                  realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
+                  std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
+                  filterT & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
+                )
+   {
+      charFlux(flambda0, fnu0, fphot0, lambda, trans._spectrum);
+   }
+   
+   /// Characterize the flux densities of the spectrum w.r.t. a filter transmission curve
+   /** To obtain the flux (e.g. W/m^2) multiply these quantities by the effective width calculated using
+     * \ref charTrans.
+     * 
+     * \warning this only produces correct fphot0 for a spectrum in W/m^3.  DO NOT USE FOR ANYTHING ELSE.
+     *
+     * \todo use unit conversions to make it work for everything.
+     * \todo check on integration method, should it be trap?
+     *
+     */
    void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
                   realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
                   realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
@@ -292,7 +313,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
       return 0;
    }
 
-   ///Set the parameters of the spectrum, using the underlying spectrums parameter type.
+   ///Set the parameters of the spectrum, using the underlying spectrum's parameter type.
    /** This version also sets the data directory, instead of using the enivronment variable.
      *
      * \overload

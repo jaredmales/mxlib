@@ -24,6 +24,7 @@
 //***********************************************************************//
 
 #include "app/application.hpp"
+#include "sys/environment.hpp"
 
 namespace mx
 {
@@ -60,7 +61,7 @@ int application::main( int argc,
 
 void application::setConfigPathGlobal(const std::string & s)
 {
-   configPathGlobal = s;
+   m_configPathGlobal = s;
 }
 
 void application::setConfigPathUser(const std::string & s)
@@ -70,7 +71,7 @@ void application::setConfigPathUser(const std::string & s)
 
 void application::setConfigPathLocal( const std::string & s )
 {
-   configPathLocal = s;
+   m_configPathLocal = s;
 }
 
 void application::setupConfig() //virtual
@@ -102,9 +103,9 @@ void application::setup( int argc,
 
    setDefaults(argc, argv);
 
-   config.readConfig(configPathGlobal);
+   config.readConfig(m_configPathGlobal);
    config.readConfig(m_configPathUser);
-   config.readConfig(configPathLocal, m_requireConfigPathLocal);
+   config.readConfig(m_configPathLocal, m_requireConfigPathLocal);
 
    //Parse CL just to get the CL config.
    config.parseCommandLine(argc, argv, "config");
@@ -124,12 +125,11 @@ void application::setup( int argc,
    checkConfig();
 }
 
-inline
 int application::reReadConfig()
 {
-   config.readConfig(configPathGlobal);
+   config.readConfig(m_configPathGlobal);
    config.readConfig(m_configPathUser);
-   config.readConfig(configPathLocal);
+   config.readConfig(m_configPathLocal);
 
    config.readConfig(m_configPathCL);
 
@@ -139,6 +139,54 @@ int application::reReadConfig()
    return 0;
 }
 
+void application::setDefaults( int argc, 
+                               char ** argv 
+                             )
+{
+   static_cast<void>(argc);
+   static_cast<void>(argv);
+   
+   std::string tmp;
+
+   if(m_configPathGlobal_env != "")
+   {
+      m_configPathGlobal = sys::getEnv(m_configPathGlobal_env);
+   }
+
+   if( m_configPathUser_env != "")
+   {
+      m_configPathUser = sys::getEnv(m_configPathUser_env);
+   }
+      
+   if(m_configPathUser != "")
+   {
+      //If it's a relative path, add it to the HOME directory
+      if(m_configPathUser[0] != '/' && m_configPathUser[0] != '~')
+      {
+         tmp = sys::getEnv("HOME");
+         tmp += "/" + m_configPathUser;
+         m_configPathUser = tmp;
+      }
+   }
+
+   if(m_configPathLocal_env != "")
+   {
+      m_configPathLocal = sys::getEnv(m_configPathLocal_env.c_str());
+   }
+   
+   if(m_configPathCLBase_env != "")
+   {
+      m_configPathCLBase = sys::getEnv(m_configPathCLBase_env.c_str());
+      
+      if(m_configPathCLBase.size()>0)
+         if(m_configPathCLBase[m_configPathCLBase.size()-1] != '/')
+            m_configPathCLBase += '/';
+   }
+   
+   return;
+
+}
+ 
 void application::setupStandardConfig() //virtual
 {
    config.add("config","c", "config",argType::Required, "", "config", false, "string", "A local config file");

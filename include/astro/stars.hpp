@@ -5,7 +5,7 @@
   * 
   */
 
-#include "../gslInterpolation.hpp"
+#include "../math/gslInterpolation.hpp"
 
 #include "units.hpp"
 
