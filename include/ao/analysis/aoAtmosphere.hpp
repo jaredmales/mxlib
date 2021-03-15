@@ -267,7 +267,7 @@ public:
      */ 
    size_t n_layers();
    
-   ///Get the weighted mean wind speed
+   ///Get the 5/3 moment weighted mean wind speed
    /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
      * 
      \f[
@@ -281,6 +281,24 @@ public:
      * \returns the current value of _v_wind.
      */ 
    realT v_wind();
+   
+   /// Get the mean wind speed
+   /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
+     * 
+     \f[
+      \bar{v} = \sum_i C_N^2(z_i) v_i 
+     \f]
+     * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
+     * 
+     * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
+     * returns the value of _v_wind.
+     * 
+     * \returns the current value of _v_wind.
+     */ 
+   realT v_wind_mean();
+   
+   /// Get the mean-squared wind speed
+   realT v_wind_mean2();
    
    realT v_max()
    {

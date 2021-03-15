@@ -15,6 +15,8 @@ OBJS = testsMain.o \
        include/sigproc/psdUtils_test.o \
        include/sigproc/psdFilter_test.o \
        include/sigproc/zernike_test.o \
+       include/improc/imageUtils_test.o \
+       include/improc/imageXCorrDiscrete_test.o \
        include/sys/timeUtils_test.o 
        
        

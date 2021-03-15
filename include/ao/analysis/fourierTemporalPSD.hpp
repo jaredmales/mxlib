@@ -949,7 +949,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                realT k = sqrt(m*m + n*n)/m_aosys->D();
                
                //Get the WFS noise PSD (which is already resized to match tfreq)
-               wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs(), m_aosys->Fbg(), m_aosys->ron_wfs());
+               wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
                
                //**< Get the open-loop turb. PSD
                getGridPSD( tPSDp, psdDir, m, n );
