@@ -39,6 +39,8 @@
 
 #include "../../math/constants.hpp"
 
+//#define ALLOW_F_ZERO
+
 namespace mx
 {
 namespace AO
@@ -576,8 +578,14 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi)
 template<typename realT>
 std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT & H_del, complexT & H_con)
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0)
    {
+   #else
+   if(_f[fi] < 0)
+   {
+   #endif
+
       H_dm = 0;
       H_del = 0;
       H_con = 0;
@@ -621,14 +629,25 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
       //#pragma omp parallel for
       for(size_t i=0; i<_f.size(); ++i)
       {
-         if(_f[i] <= 0 ) continue;
+         #ifndef ALLOW_F_ZERO
+         if(_f[i] <= 0) continue;
+         #else
+         if(_f[i] < 0) continue;
+         #endif
 
          complexT s = complexT(0.0, math::two_pi<realT>()*_f[i]);
 
          complexT expsT = exp(-s*_Ti);
 
-         _H_dm[i] = (realT(1) - expsT)/(s*_Ti);
-
+         if(_f[i] == 0)
+         {
+            _H_dm[i] = std::complex<realT>(1,0);
+         }
+         else
+         {
+            _H_dm[i] = (realT(1) - expsT)/(s*_Ti);
+         }
+         
          _H_wfs[i] = _H_dm[i];
 
          _H_ma[i] = 1;  //realT(1./_N)*(realT(1) - pow(expsT,_N))/(realT(1) - expsT);
@@ -678,11 +697,11 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
 
          _H_con[i] = FIR/( realT(1.0) - IIR);
 
-         /*if(_f[i] == 0)
+         /*if( i == 0 || i == 1)
          {
-            std::cerr << s << " " << expsT << " " << _H_wfs[i] << " " << _H_dm[i] << " " << _H_con[i] << " " << _H_del[i] << "\n";
-            exit(0);
-         }*/
+            std::cerr << i << " " << _f[fi] << " " << s << " " << expsT << " " << _H_wfs[i] << " " << _H_dm[i] << " " << _H_con[i] << " " << _H_del[i] << "\n";
+            //exit(0);
+         }/**/
 
       }
 
@@ -700,7 +719,11 @@ std::complex<realT> clGainOpt<realT>::olXfer(int fi, complexT & H_dm, complexT &
 template<typename realT>
 std::complex<realT> clGainOpt<realT>::clETF(int fi, realT g)
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0) return 0;
+   #else
+   if(_f[fi] < 0) return 0;
+   #endif
 
    return (realT(1)/( realT(1) + g*olXfer(fi)));
 }
@@ -708,7 +731,11 @@ std::complex<realT> clGainOpt<realT>::clETF(int fi, realT g)
 template<typename realT>
 realT clGainOpt<realT>::clETFPhase(int fi, realT g)
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0) return 0;
+   #else
+   if(_f[fi] < 0) return 0;
+   #endif
 
    return std::arg((realT(1)/( realT(1) + g*olXfer(fi))));
 }
@@ -716,7 +743,11 @@ realT clGainOpt<realT>::clETFPhase(int fi, realT g)
 template<typename realT>
 realT clGainOpt<realT>::clETF2(int fi, realT g)
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0) return 0;
+   #else
+   if(_f[fi] < 0) return 0;
+   #endif
 
    return norm(realT(1)/( realT(1) + g*olXfer(fi)));
 }
@@ -726,7 +757,11 @@ std::complex<realT> clGainOpt<realT>::clNTF( int fi,
                                              realT g
                                            )
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0) return 0;
+   #else
+   if(_f[fi] < 0) return 0;
+   #endif
 
    complexT H_dm, H_del, H_con;
 
@@ -741,7 +776,11 @@ realT clGainOpt<realT>::clNTF2( int fi,
                                 realT g
                               )
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0) return 0;
+   #else
+   if(_f[fi] < 0) return 0;
+   #endif
 
    complexT H_dm, H_del, H_con;
 
@@ -759,7 +798,11 @@ void clGainOpt<realT>::clTF2( realT & ETF,
                               realT g
                             )
 {
+   #ifndef ALLOW_F_ZERO
    if(_f[fi] <= 0)
+   #else
+   if(_f[fi] < 0)
+   #endif
    {
       ETF = 0;
       NTF = 0;
@@ -770,9 +813,17 @@ void clGainOpt<realT>::clTF2( realT & ETF,
 
    complexT olX =  olXfer(fi, H_dm, H_del, H_con); //H_dm*H_wfs*H_ma*H_del*H_con;
 
+   if(_f[fi] == 0)
+   {
+   }
+   
    ETF = norm(realT(1)/( realT(1) + g*olX));
    NTF = norm(-(H_dm*H_del*g*H_con) /( realT(1) + g*olX) );
 
+   /*if(_f[fi] == 0)
+   {
+      std::cerr << "ETF: " << ETF << " NTF: " << NTF << "\n";
+   }*/
 }
 
 template<typename realT>
