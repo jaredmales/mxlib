@@ -283,7 +283,7 @@ public:
                 typename std::enable_if<crank==1>::type* = 0
               );
    
-   ///Set the sqaure-root of the PSD to be a pointer to an array containing the square root of the properly normalized PSD.
+   ///Set the square-root of the PSD to be a pointer to an array containing the square root of the properly normalized PSD.
    /** This does not allocate _npsdSqrt, it merely points to the specified array, which remains your responsibility for deallocation, etc.
      *
      * See the discussion of PSD normalization above.

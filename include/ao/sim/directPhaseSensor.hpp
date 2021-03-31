@@ -12,7 +12,6 @@
 
 #include "../../ioutils/fits/fitsFile.hpp"
 #include "../../improc/eigenCube.hpp"
-#include "../../improc/ds9Interface.hpp"
 
 //#include <mx/fraunhoferImager.hpp>
 #include "../../sigproc/psdFilter.hpp"
@@ -111,11 +110,6 @@ protected:
 
    ///The image formed by the WFS
    wfsImageT<realT> m_wfsImage;
-
-
-   
-   improc::ds9Interface m_ds9;
-   improc::ds9Interface m_ds9f;
 
 public:
    bool m_poissonNoise {true};
@@ -347,12 +341,6 @@ directPhaseSensor<_realT, _detectorT>::directPhaseSensor()
 {
    iTime(1);
 
-
-
-   m_ds9.title("DPWFS");
-   m_ds9f.title("DPWFS_Filtered");
-
-
    m_normVar.seed();
    m_poissonVar.seed();
 }
@@ -558,8 +546,6 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefront(wavefrontT & pupilPla
 
          m_detectorImage.iterNo = m_wfsImage.iterNo;
 
-         //ds9_interface_display_raw( &ds9i, 1, m_detectorImage.data(), m_detectorImage.rows(), m_detectorImage.cols(),1, mx::getFitsBITPIX<realT>());
-
          m_roTime_counter = 0;
          m_reading=0;
          rv = true;
@@ -658,13 +644,9 @@ bool directPhaseSensor<_realT, _detectorT>::senseWavefrontCal(wavefrontT & pupil
 
    m_detectorImage.image = m_wfsImage.image.block( 0.5*(m_wfsImage.image.rows()-1) - 0.5*(m_detectorImage.image.rows()-1), 0.5*(m_wfsImage.image.cols()-1) - 0.5*(m_detectorImage.image.cols()-1), m_detectorImage.image.rows(), m_detectorImage.image.cols());
 
-   //ds9(m_detectorImage.image);
-
    if(m_applyFilter)
    {
       m_filter.filter(m_detectorImage.image);
-
-      //ds9f(m_detectorImage.image);
    }
 
 

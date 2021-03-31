@@ -46,9 +46,37 @@ double lamch<double>(char CMACH)
    return  dlamch_ (&CMACH);
 }
 
+template<>
+MXLAPACK_INT potrf<float> ( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
+{
+   spotrf_(&UPLO, &N, A, &LDA, &INFO);
+   
+   return INFO;
+}
 
+template<>
+MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
+{
+   dpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   
+   return INFO;
+}
 
+template<>
+MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::complex<float> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
+{
+   cpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   
+   return INFO;
+}
 
+template<>
+MXLAPACK_INT potrf<std::complex<double>> ( char UPLO, MXLAPACK_INT N, std::complex<double> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
+{
+   zpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   
+   return INFO;
+}
 
 template<>
 MXLAPACK_INT sytrd<float>( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float *D, float *E, float *TAU, float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)

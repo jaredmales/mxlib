@@ -187,7 +187,7 @@ realT phiInt_mod (realT phi, void * params)
       QQ = 2.0*( Ji_mn_p*Ji_mpnp_m + Ji_mn_m*Ji_mpnp_p);
    }
 
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
+   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 1.0); //psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
 
    if(mnCon > 0 )
    {
@@ -240,7 +240,7 @@ realT kInt (realT k, void * params)
    return result;
 }
 
-///Structure to manage the Fourier mode covariance calculation
+/// Structure to manage the Fourier mode covariance calculation, passed to integration functions
 /**
   * \tparam realT a floating point type used for all calculations.  As of Nov 2016 must be double due to gsl_integration.
   * \tparam aosysT the type of the AO system structure
@@ -252,7 +252,7 @@ struct fourierCovariance
    aosysT * aosys {nullptr};
 
    ///Flag controlling use of basic or modified Fourier modes.  If true, the basic sin/cos modes are used.  If false (default), the modified modes are u sed.
-   bool useBasic;
+   bool useBasic {false};
 
    ///p-index of the unprimed mode.  +/-1 for modified modes.  If basic, then +1==>cosine, -1==>sine.
    int p;
@@ -276,13 +276,13 @@ struct fourierCovariance
    realT k;
 
    ///The maximum controlled value of spatial frequency (k*D).  If < 0 then not controlled.
-   realT mnCon;
+   realT mnCon {0};
 
    ///Absolute tolerance for the radial integral.  Default is 1e-7.
-   realT absTol;
+   realT absTol {1e-7};
 
    ///Relative tolerance for the radial integral. Default is 1e-7.
-   realT relTol;
+   realT relTol {1e-7};
 
    ///Working memory for the azimuthal integral.
    gsl_integration_workspace * phi_w;
@@ -290,17 +290,9 @@ struct fourierCovariance
    ///Working memory for the radial integral.
    gsl_integration_workspace * k_w;
 
-
    ///Constructor
    fourierCovariance()
    {
-      useBasic = false;
-
-      mnCon = 0;
-
-      absTol = 1e-7;
-      relTol = 1e-7;
-
       phi_w = gsl_integration_workspace_alloc (WSZ);
       k_w = gsl_integration_workspace_alloc (WSZ);
    }
@@ -474,15 +466,16 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
 }
 
 template<typename realT>
-int fourierCovarMap( const std::string & fname,
-                     int N,
+int fourierCovarMap( const std::string & fname, ///< [out] the path where the output FITS file will be written
+                     int N, ///< [in] the linear number of Fourier modes across the aperture.  The Nyquist frequency is set by N/2.
                      realT D,
                      realT L_0,
                      bool subPist,
                      bool subTilt,
                      realT absTol,
                      realT relTol,
-                     bool modified=true)
+                     bool modified=true
+                   )
 {
    std::vector<mx::sigproc::fourierModeDef> ml;
    mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
@@ -544,6 +537,7 @@ int fourierCovarMap( const std::string & fname,
 
    fits::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
+   head.append("NSUBAP", N, "Linear number of s.f. sampled");
    head.append("L0", aosys.atm.L_0(0), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
    head.append("SUBTILT", aosys.psd.subTipTilt(), "Tip/Tilt subtractioon true/false flag");
