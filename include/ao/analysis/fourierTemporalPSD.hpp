@@ -1542,7 +1542,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD( const std::string & subDir,
          }
          
          //Get the WFS noise PSD (which is already resized to match tfreq)
-         wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(mags[s]), tauWFS, m_aosys->npix_wfs(), m_aosys->Fbg(), m_aosys->ron_wfs());
+         wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(mags[s]), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
          sigproc::augment1SidedPSD(psd2sided, tPSDn, !(tfreq[0] == 0)); //Convert to FFT storage order
          
          //Pre-calculate the variance of the noise for later use
