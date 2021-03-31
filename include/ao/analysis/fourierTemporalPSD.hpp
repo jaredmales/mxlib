@@ -310,18 +310,21 @@ public:
                                               /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
                    );
 
-   ///Analyze a PSD grid under closed-loop control.
-   /** This always analyzes the simple integrator, and can also analyze the linear preditor controller.
+   /// Analyze a PSD grid under closed-loop control.
+   /** This always analyzes the simple integrator, and can also analyze the linear predictor controller. Outputs maps of optimum gains,
+     * predictor coefficients, variances, and contrasts for a range of guide star magnitudes.  Optionally calculates speckle lifetimes.  Optionally
+     * writes the closed-loop PSDs and transfer functions. 
      */
-   int analyzePSDGrid( const std::string & subDir,         ///< [out] the sub-directory of psdDir where to write the results.
+   int analyzePSDGrid( const std::string & subDir,         ///< [out] the sub-directory of psdDir where to write the results.  Is created.
                        const std::string & psdDir,         ///< [in]  the directory containing the grid of PSDs.
                        int mnMax,                          ///< [in]  the maximum value of m and n in the grid.
                        int mnCon,                          ///< [in]  the maximum value of m and n which can be controlled.
                        int lpNc,                           ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
                        std::vector<realT> & mags,          ///< [in]  the guide star magnitudes to analyze for.
                        int lifetimeTrials = 0,             ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
-                       bool uncontrolledLifetimes = false, ///< [in] [optional] flag controlling whether lifetimes are calculate for uncontrolled modes.
-                       bool writePSDs = false              ///< [in]  [optional] flag controlling if resultant PSDs are saved
+                       bool uncontrolledLifetimes = false, ///< [in]  [optional] flag controlling whether lifetimes are calculated for uncontrolled modes.
+                       bool writePSDs = false,             ///< [in]  [optional] flag controlling if resultant PSDs are saved
+                       bool writeXfer = false              ///< [in]  [optional] flag controlling if resultant Xfer functions are saved
                      );
 
 
@@ -752,7 +755,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        std::vector<realT> & mags,
                                                        int lifetimeTrials,
                                                        bool uncontrolledLifetimes,
-                                                       bool writePSDs
+                                                       bool writePSDs,
+                                                       bool writeXfer
                                                      )
 {
 
@@ -778,6 +782,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
    fout << "#    lifetimeTrials = " << lifetimeTrials << '\n';
    fout << "#    uncontrolledLifetimes = " << uncontrolledLifetimes << '\n';
    fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
+   fout << "#    writeXfer = " << std::boolalpha << writeXfer << '\n';
+
    //fout << "#    intTimes = ";
    //for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
    //fout << intTimes[intTimes.size()-1] << '\n';
@@ -874,7 +880,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          //**>
          
          std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
-         tPSDn.resize(tfreq.size()); 
+         tPSDn.   resize(tfreq.size()); 
 
          //**< Setup the controllers
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
@@ -901,15 +907,19 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
             ETFxn.resize(tfreq.size());
             NTFxn.resize(tfreq.size());
     
-            std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
-            std::cerr << "Creating " << tfOutFile << "\n";
-            ioutils::createDirectories(tfOutFile);
-            
+            if(writeXfer)
+            {
+               std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
+               ioutils::createDirectories(tfOutFile);
+            }
+
             if(doLP)
             {
-               tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
-               std::cerr << "Creating " << tfOutFile << "\n";
-               ioutils::createDirectories(tfOutFile);
+               if(writeXfer)
+               {
+                  std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
+                  ioutils::createDirectories(tfOutFile);
+               }
             }
    
          }
@@ -1046,7 +1056,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                //**>
                 
                //**< Calulcate Speckle Lifetimes
-               if(lifetimeTrials > 0 && ( uncontrolledLifetimes || inside ))
+               if( (lifetimeTrials > 0 || writeXfer) && ( uncontrolledLifetimes || inside ))
                {
                   std::vector<realT> spfreq, sppsd;
                                     
@@ -1067,32 +1077,36 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                      }
                   }
                   
-                  
-                  std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
-                  
-                  std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
-                  ioutils::writeBinVector( etfOutFile, ETFxn);
-               
-                  std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
-                  ioutils::writeBinVector( ntfOutFile, NTFxn);
-                  
-                  if(i==0) //Write freq on the first one
+                  if(writeXfer)
                   {
-                     std::string fOutFile = tfOutFile + "freq.binv";
-                     ioutils::writeBinVector(fOutFile, tfreq);
-                  }
-#if 0
-                  speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
-                  realT spvar = sigproc::psdVar(spfreq, sppsd);
+                     std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_si/";
                   
-                  realT splifeT = 100.0;
-                  realT error;
-                  //realT tau = sppsd[0]/(2*spvar);// bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
-                  realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
+                     std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                     ioutils::writeBinVector( etfOutFile, ETFxn);
+               
+                     std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                     ioutils::writeBinVector( ntfOutFile, NTFxn);
+                  
+                     if(i==0) //Write freq on the first one
+                     {
+                        std::string fOutFile = tfOutFile + "freq.binv";
+                        ioutils::writeBinVector(fOutFile, tfreq);
+                     }
+                  }
+
+                  if(lifetimeTrials > 0)
+                  {
+                     speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
+                     realT spvar = sigproc::psdVar(spfreq, sppsd);
+                  
+                     realT splifeT = 100.0;
+                     realT error;
+
+                     realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
                      
-                  speckleLifetimes( mnMax + m, mnMax + n ) = tau;
-                  speckleLifetimes( mnMax - m, mnMax - n ) = tau;
-#endif
+                     speckleLifetimes( mnMax + m, mnMax + n ) = tau;
+                     speckleLifetimes( mnMax - m, mnMax - n ) = tau;
+                  }
                   
                   if(doLP)
                   {
@@ -1113,33 +1127,40 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                         }
                      }   
                      
-                     std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
-                     
-                     std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
-                     ioutils::writeBinVector( etfOutFile, ETFxn);
-                     
-                     std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
-                     ioutils::writeBinVector( ntfOutFile, NTFxn);
-                     
-                     if(i==0) //Write freq on the first one
+                     if(writeXfer)
                      {
-                        std::string fOutFile = tfOutFile + "freq.binv";
-                        ioutils::writeBinVector(fOutFile, tfreq);
+                        std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString(mags[s]) + "_lp/";
+                     
+                        std::string etfOutFile = tfOutFile +  "etf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                        ioutils::writeBinVector( etfOutFile, ETFxn);
+                     
+                        std::string ntfOutFile = tfOutFile +  "ntf_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+                        ioutils::writeBinVector( ntfOutFile, NTFxn);
+                     
+                        if(i==0) //Write freq on the first one
+                        {
+                           std::string fOutFile = tfOutFile + "freq.binv";
+                           ioutils::writeBinVector(fOutFile, tfreq);
+                        }
                      }
                   
-#if 0
-                     speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
-                     realT spvar = sigproc::psdVar(spfreq, sppsd);
+                     if(lifetimeTrials > 0)
+                     {
+                        speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials);
+                        realT spvar = sigproc::psdVar(spfreq, sppsd);
                   
-                     //realT tau = sppsd[0]/(2*spvar);// bins[1]/(2.*tfreq.back())*vars[1]/vars[0];
-                     realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
+                        realT splifeT = 100.0;
+                        realT error;
+
+                        realT tau = pvm(error, spfreq, sppsd, splifeT) * (splifeT)/spvar;
                   
-                     speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
-                     speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
-#endif
+                        speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
+                        speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+                     }
                   }
                   
                }
+               
                
                //**>
                

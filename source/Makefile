@@ -66,7 +66,8 @@ CURRENT_SOFA = vendor/sofa/20210125
 all: libmxlib.so
 
 
-			
+ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp			
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp		
 
 #mxlib_uncomp_version
 

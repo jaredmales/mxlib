@@ -94,6 +94,8 @@ protected:
    
    bool m_bin_npix {true}; ///< Flag controlling whether or not to bin WFS pixels according to the actuator spacing.
       
+   int m_bin_opt {0}; ///< The optimum binning factor.  If WFS modes are used, this is the index.  Otherwise it is the bining factor (>=1).
+
    realT m_tauWFS {0}; ///< Actual WFS exposure time [sec]
    
    realT m_deltaTau {0}; ///< Loop latency [sec]
@@ -543,7 +545,8 @@ public:
      * \returns the S/N squared
      */
    realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
-                        realT d          ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                        realT d,         ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                        int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
                       );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
@@ -553,7 +556,8 @@ public:
      */ 
    realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
                            realT n, ///< [in] specifies the v component of the spatial frequency
-                           realT d  ///< [in] the actuator spacing in meters
+                           realT d, ///< [in] the actuator spacing in meters
+                           int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
                          );
    
    ///Calculate the measurement noise at a spatial frequency using the optimum actuator spacing
@@ -587,7 +591,8 @@ public:
      */ 
    realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
                          realT n, ///< [in] specifies the v component of the spatial frequency
-                         realT d  ///< [in] the actuator spacing, in meters
+                         realT d, ///< [in] the actuator spacing, in meters
+                         int b
                        );
    
    ///Calculate the time delay at a spatial frequency at the optimum exposure time at the optimum actuator spacing.
@@ -685,7 +690,8 @@ public:
      */
    realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
                         realT n,  ///< [in] is the spatial frequency index in v
-                        realT d
+                        realT d,
+                        int b
                       );
    
    ///Calculate the optimum exposure time for a given spatial frequency at the optimum actuator spacing.
@@ -1643,29 +1649,21 @@ realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
-                                                         realT d
+                                                         realT d,
+                                                         int b
                                                        )
 {      
    realT F = Fg();
                
    double binfact = 1.0;
-   int binidx = 0; //index into WFS configurations
+   int binidx = 0;
    if( m_bin_npix )
    {
-      if(m_npix_wfs.size() > 1)
+      if(m_npix_wfs.size() == 1 && b > 0) //Only if "true binning", otherwise the WFS mode vectors handle it.
       {
-         binidx = d/m_d_min-1; //d_opt should be >= d_min.  This will switch WFS binnings when possible due to number of DOF.
-         
-         if(binidx < 0) binidx = 0;
-         if(binidx >= m_npix_wfs.size()) binidx = m_npix_wfs.size()-1;
-         
+         binfact = 1./pow((realT) b,2);
       }
-      else
-      {
-         int intbin = d/m_d_min;
-
-         binfact = 1./pow((realT) intbin,2);
-      }
+      else binidx = b;
    }
 
    return pow(F*tau_wfs,2)/((F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx])*tau_wfs + m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
@@ -1675,27 +1673,29 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                             realT n )
 {
-   return measurementError(m, n, d_opt());
+   d_opt();
+   return measurementError(m, n, m_d_opt, m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                             realT n,
-                                                            realT d
+                                                            realT d,
+                                                            int b
                                                           )
 {
    if(m ==0 and n == 0) return 0;
    
    realT tau_wfs;
    
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
    
    if (m_wfsBeta == 0) wfsBetaUnalloc();
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
-   realT snr2 = signal2Noise2( tau_wfs, d );
+   realT snr2 = signal2Noise2( tau_wfs, d, b );
    
    return pow(beta_p,2)/snr2*pow(m_lam_wfs/m_lam_sci, 2);
 }
@@ -1727,7 +1727,8 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError()
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                           realT n,
-                                                          realT d
+                                                          realT d,
+                                                          int b
                                                         )
 {
    if(m ==0 and n == 0) return 0;
@@ -1735,8 +1736,8 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    realT k = sqrt(m*m + n*n)/m_D;
    
    realT tau_wfs;
-   
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
+
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
    
    realT tau = tau_wfs + m_deltaTau;
@@ -1748,7 +1749,8 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                           realT n )
 {
-   return timeDelayError(m,n,d_opt());
+   d_opt();
+   return timeDelayError(m,n,m_d_opt, m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1947,7 +1949,8 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
                                                          realT n,
-                                                         realT dact //here called dact due to parameter collision with root-finding
+                                                         realT dact, //here called dact due to parameter collision with root-finding
+                                                         int bbin
                                                        )
 {
    if(m_D == 0)
@@ -1966,15 +1969,13 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    int binidx = 0; //index into WFS configurations
    if( m_bin_npix )
    {
-      if(m_npix_wfs.size() > 1)
+      if(m_npix_wfs.size() > 1 || bbin == 0)
       {
-         binidx = m_d_opt/m_d_min - 1; //d_opt should be >= d_min.  This will switch WFS binnings when possible due to number of DOF.
-         if(binidx < 0) binidx = 0;
+         binidx = bbin;
       }
       else
       {
-         int intbin = m_d_opt/m_d_min;
-         binfact = 1./pow((realT) intbin,2);
+         binfact = 1.0/pow((realT) bbin,2);
       }
    }
    
@@ -2022,7 +2023,8 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
                                                          realT n )
 {
-   return optimumTauWFS(m, n, d_opt());
+   d_opt(); //also gets m_bin_opt;
+   return optimumTauWFS(m, n, m_d_opt, m_bin_opt);
 }
 
 
@@ -2034,6 +2036,7 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    if( m_d_min == 0 )
    {
       m_d_opt = 1e-50;
+      m_bin_opt = 0;
       m_dminChanged = false;
       return m_d_opt;
    }
@@ -2041,21 +2044,76 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    if(!m_optd) 
    {
       m_d_opt = m_d_min;
+      m_bin_opt = 0;
       m_dminChanged = false;
       
       return m_d_opt;
    }
    
    realT d = m_d_min;
-      
+   realT best_d = d;
    int m = m_D/(2*d);
    int n = 0;
 
-   while( measurementError(m,n, d) + timeDelayError(m,n,d) > fittingError(m, n) && d < m_D/2 ) 
+   if(m_bin_npix)
    {
-      d += m_d_min/m_optd_delta;
-      m = m_D/(2*d);
-      n = 0;
+      if(m_npix_wfs.size() > 1) //Optimize over the binning modes
+      {
+         int best_idx = 0;
+         realT best_d = m_d_min;
+
+         realT best_aoerr = measurementError(m,n,m_d_min, 0) + timeDelayError(m,n,m_d_min, 0);
+         realT ferr = fittingError(m, n);
+         if(ferr < best_aoerr) best_aoerr = ferr;
+
+         for(int b=0; b < m_npix_wfs.size(); ++b)
+         {
+            d = m_d_min;
+
+            while( measurementError(m,n,d, b) + timeDelayError(m,n,d, b) >= fittingError(m, n) && d < m_D/2 ) 
+            {
+               d += m_d_min/m_optd_delta;
+               m = m_D/(2*d);
+               n = 0;
+            }
+            realT aoerr = measurementError(m,n,d,b) + timeDelayError(m,n,d,b);
+            ferr = fittingError(m,n);
+            if(ferr < aoerr) aoerr = ferr;
+
+            if(aoerr < best_aoerr)
+            {
+               best_aoerr = aoerr;
+               best_idx = b;
+               best_d = d;
+            }
+         }
+
+         m_bin_opt = best_idx;
+      }
+      else
+      {
+         m_bin_opt = d/m_d_min;
+         
+         while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+         {
+            d += m_d_min/m_optd_delta;
+            m_bin_opt = d/m_d_min;
+            m = m_D/(2*d);
+            n = 0;
+         }
+         best_d = d;
+      }
+   }
+   else
+   {
+      m_bin_opt = 0;
+      while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+      {
+         d += m_d_min/m_optd_delta;
+         m = m_D/(2*d);
+         n = 0;
+      }
+      best_d = d;
    }
    
    m_d_opt = d;
