@@ -38,6 +38,7 @@ OBJS = mxlib.o \
        math/func/factorial.o \
        math/func/gamma.o \
        math/func/jinc.o \
+       math/func/legendre.o \
        math/func/moffat.o \
        math/func/precision.o \
        math/func/sign.o \
@@ -68,6 +69,8 @@ all: libmxlib.so
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp			
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp		
+math/func/bessel.o: ../include/math/func/bessel.hpp
+math/func/legendre.o: ../include/math/func/legendre.hpp
 
 #mxlib_uncomp_version
 
