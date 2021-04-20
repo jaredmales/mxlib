@@ -68,7 +68,10 @@ all: libmxlib.so
 
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp			
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp		
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp	
+math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
+math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
+math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
 

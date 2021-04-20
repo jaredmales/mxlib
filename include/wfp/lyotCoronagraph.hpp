@@ -505,7 +505,11 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    
    mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> mask(m_wfSz, m_wfSz);
    mx::wfp::circularPupil( mask, 0., fpmRadPix);   
-  
+   /*for(int c=0; c< mask.cols()*0.5; ++c)
+   {
+      for(int r=0; r < mask.rows(); ++r) mask(r,c) = 0;
+   }*/
+
    //Initialize pupilImage
    mx::wfp::imagingArray<realT,fftwAllocator<realT>, 0> pupilImage(m_wfSz, m_wfSz);
    pupilImage.setZero();
@@ -602,6 +606,15 @@ void lyotCoronagraph<_realT, _fpmaskFloatT>::optimizeAPLCMC( imageT & geomPupil,
    extractBlock(m_pupilApodizer, 0, pupSize, 0, pupSize, pupilImage, 0.5*( (pupilImage.rows()-1) - (pupSize-1)), 0.5*( (pupilImage.rows()-1) - (pupSize-1))); 
 
    makeFocalMask(fpmRadPix, trans, pupSize);
+
+   /*for(int c=0; c< m_focalMask.cols()*0.5; ++c)
+   {
+      for(int r=0; r < m_focalMask.rows(); ++r) 
+      {
+         if(m_focalMask(r,c).real()==1) m_focalMask(r,c) = 0;
+      }
+   }*/
+
    m_maskSource = 2;
    
    m_lyotStop = geomPupil;

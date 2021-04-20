@@ -414,7 +414,7 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dx.download(hx.data());
          
          REQUIRE(hx[0] == std::complex<float>(0,0));
-         REQUIRE(hx[1] == std::complex<float>(-2,2));
+         REQUIRE(hx[1] == std::complex<float>(-2,2)); //(1,1) * (0,2) = (0 + 2i + 0i -2) = (-2,2)
          REQUIRE(hx[2] == std::complex<float>(-8,8));
          REQUIRE(hx[3] == std::complex<float>(-18,18));
          REQUIRE(hx[4] == std::complex<float>(-32,32));
@@ -505,13 +505,13 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         mx::cuda::elementwiseXxY<cuDoubleComplex,cuDoubleComplex>(dx(), dy(), dx.size());
                   
          dx.download(hx.data());
          
          
-         REQUIRE(hx[0] == std::complex<double>(0,0));
-         REQUIRE(hx[1] == std::complex<double>(-1,3));
+         REQUIRE(hx[0] == std::complex<double>(0,0));   //(0,0) * (0,0) = (0,0)
+         REQUIRE(hx[1] == std::complex<double>(-1,3));  //(1,1) * (1,2) = (1 + 2i + i -2) = (-1,3)
          REQUIRE(hx[2] == std::complex<double>(-6,10));
          REQUIRE(hx[3] == std::complex<double>(-15,21));
          REQUIRE(hx[4] == std::complex<double>(-28,36));

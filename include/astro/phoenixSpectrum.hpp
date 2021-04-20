@@ -51,7 +51,7 @@ struct phoenixSpectrum
    {
       if( ioutils::readColumns(path, rawSpectrum) < 0) return -1;
       
-      if( ioutils::readColumns(ioutils::parentPath() + "/wavelength.dat", rawLambda)) return -1;
+      if( ioutils::readColumns(ioutils::parentPath(path) + "/wavelength.dat", rawLambda) < 0) return -1;
       
       return 0;
    }

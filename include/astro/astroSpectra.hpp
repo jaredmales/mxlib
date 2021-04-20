@@ -99,7 +99,7 @@ struct astroFilter
 
       for(int i=0;i<rawLambda.size(); ++i)
       {
-         if(_rsr) rawSpectrum[i] = rawSpectrum[i]*rawLambda[i];
+         //if(_rsr) rawSpectrum[i] = rawSpectrum[i]*rawLambda[i];
          if(rawSpectrum[i] > max) max = rawSpectrum[i];
       }
 

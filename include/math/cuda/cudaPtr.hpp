@@ -186,12 +186,12 @@ int cudaPtr<T>::resize( size_t sz )
    
    m_size = sz;
    
-   int rv = cudaMalloc((void **)&m_devicePtr, sz*sizeof(devicePtrT));
+   cudaError_t rv = cudaMalloc((void **)&m_devicePtr, sz*sizeof(devicePtrT));
    
    if(rv != cudaSuccess)
    {
-      std::cerr << "Cuda Malloc Error \n";
-      return rv;
+      std::cerr << "Error from cudaMalloc: ";
+      printf("[%s] %s\n", cudaGetErrorName(rv), cudaGetErrorString(rv));
    }
    
    return 0;
