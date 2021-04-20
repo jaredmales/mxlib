@@ -182,22 +182,6 @@ cuComplex elementMul<cuComplex, float>( cuComplex & a,
     
 }
 
-// complex-double by complex-double multiplication
-// \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
-// template<>
-// __device__
-// cuDoubleComplex elementMul<cuDoubleComplex>( cuDoubleComplex & a, 
-//                                              cuDoubleComplex & b
-//                                            )
-// {
-//     cuDoubleComplex c;
-//     
-//     ((double*) &c)[0] = ((double*) &a)[0] * ((double*) &b)[0] - ((double*) &a)[1] * ((double*) &b)[1];
-//     ((double*) &c)[1] = ((double*) &a)[0] * ((double*) &b)[1] + ((double*) &a)[1] * ((double*) &b)[0];
-//     return c;
-// 
-//     
-// }
 
 // complex-double by complex-double multiplication
 // \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
