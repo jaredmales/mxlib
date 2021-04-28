@@ -29,12 +29,10 @@
 
 #include "array2FitGaussian2D.hpp"
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
 #include "../../mxError.hpp"
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
+#include "../constants.hpp"
 
 #include "../../improc/eigenImage.hpp"
 
@@ -57,6 +55,33 @@ namespace fit
 //forward
 template<typename _realT>
 struct gaussian1D_fitter;
+
+///\ref levmarInterface fitter structure for the symmetric Gaussian.
+/** \ingroup gaussian_peak_fit
+  *
+  */
+template<typename _realT>
+struct gaussian1D_fitter
+{
+   typedef _realT realT;
+   
+   static const int nparams = 4;
+   
+   static void func(realT *p, realT *hx, int m, int n, void *adata)
+   {
+      array2Fit<realT> * arr = (array2Fit<realT> *) adata;
+   
+      for(size_t i=0;i<arr->nx; i++)
+      {
+         hx[i] = func::gaussian<realT>(i,p[0],p[1], p[2], p[3]) - arr->data[i];
+      }
+      
+   }
+   
+};
+
+extern template struct gaussian1D_fitter<float>;
+extern template struct gaussian1D_fitter<double>;
 
 
 ///Class to manage fitting a 1D Gaussian to data via the \ref levmarInterface
@@ -135,8 +160,7 @@ public:
    {
       fitterT fitter;
       
-      levmarInterface<fitterT>::fit();
-      
+      return levmarInterface<fitterT>::fit();
    }
      
    ///Get the current value of G0, the constant.
@@ -172,30 +196,9 @@ public:
       
 };
 
+extern template class fitGaussian1D<float>;
+extern template class fitGaussian1D<double>;
 
-///\ref levmarInterface fitter structure for the symmetric Gaussian.
-/** \ingroup gaussian_peak_fit
-  *
-  */
-template<typename _realT>
-struct gaussian1D_fitter
-{
-   typedef _realT realT;
-   
-   static const int nparams = 4;
-   
-   static void func(realT *p, realT *hx, int m, int n, void *adata)
-   {
-      array2Fit<realT> * arr = (array2Fit<realT> *) adata;
-   
-      for(size_t i=0;i<arr->nx; i++)
-      {
-         hx[i] = func::gaussian<realT>(i,p[0],p[1], p[2], p[3]) - arr->data[i];
-      }
-      
-   }
-   
-};
 
 ///Alias for the fitGaussian1D type fitting the gaussian.
 /** \ingroup gaussian_peak_fit
@@ -503,7 +506,10 @@ struct gaussian2D_sym_fitter
    }
    
    ///Does nothing in this case.
-   void paramNormalizer(realT * p, int dir)
+   void paramNormalizer( array2FitGaussian2D<realT> * arr, 
+                         realT * p, 
+                         int dir
+                       )
    {
       return;
    }
@@ -647,19 +653,22 @@ struct gaussian2D_gen_fitter
    }
 };
 
-
+extern template class fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<float>>;
+extern template class fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<double>>;
+extern template class fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<float>>;
+extern template class fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<double>>;
 
 ///Alias for the fitGaussian2D type fitting the symmetric gaussian.
 /** \ingroup gaussian_peak_fit
   */
 template<typename realT>
-using fitGaussian2Dsym = mx::math::fit::fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<realT>>;
+using fitGaussian2Dsym = fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<realT>>;
 
 ///Alias for the fitGaussian2D type fitting the general elliptical gaussian.
 /** \ingroup gaussian_peak_fit
   */
 template<typename realT>
-using fitGaussian2Dgen = mx::math::fit::fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<realT>>;
+using fitGaussian2Dgen = fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<realT>>;
 
 
 ///Form an estimate of the parameters of an elliptical Gaussian from a 2D image.
@@ -698,7 +707,7 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
       }
    }
    
-   realT dAng = two_pi<realT>()/nAngs;
+   realT dAng = math::two_pi<realT>()/nAngs;
    //std::vector<realT> dist(nAngs);
    
    realT c, s;
@@ -736,10 +745,10 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
    }
    
    //Take minang and move it by 90 degrees
-   realT minang = fmod(minDidx * dAng - 0.5*pi<realT>(), pi<realT>());
-   if(minang < 0) minang = fmod(minang + two_pi<realT>(), pi<realT>());
+   realT minang = fmod(minDidx * dAng - 0.5*math::pi<realT>(), math::pi<realT>());
+   if(minang < 0) minang = fmod(minang + math::two_pi<realT>(), math::pi<realT>());
    
-   realT maxang = fmod(maxDidx * dAng, pi<realT>());
+   realT maxang = fmod(maxDidx * dAng, math::pi<realT>());
    
    //Now average
    angG = 0.5*(minang + maxang);
@@ -750,6 +759,35 @@ int guessGauss2D_ang( realT & Ag, ///< [out] estimate of the peak
    return 0; ///\returns 0 if successful
 }
 
+extern template
+int guessGauss2D_ang<float>( float & Ag, 
+                             float & xg,        
+                             float & yg, 
+                             float & xFWHM,
+                             float & yFWHM,
+                             float & angG,  
+                             mx::improc::eigenImage<float> & im,  
+                             float maxWidth,  
+                             float widthWidth,
+                             float nAngs, 
+                             float xg0,  
+                             float yg0  
+                           );
+
+extern template
+int guessGauss2D_ang<double>( double & Ag, 
+                              double & xg,        
+                              double & yg, 
+                              double & xFWHM,
+                              double & yFWHM,
+                              double & angG,  
+                              mx::improc::eigenImage<double> & im,  
+                              double maxWidth,  
+                              double widthWidth,
+                              double nAngs, 
+                              double xg0,  
+                              double yg0  
+                            );
 
 } //namespace fit
 } //namespace math

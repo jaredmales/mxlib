@@ -8,9 +8,9 @@
 #ifndef __aoPaths_hpp__
 #define __aoPaths_hpp__
 
-#include <mx/environment.hpp>
+#include "../sys/environment.hpp"
 
-#include <boost/filesystem.hpp>
+#include "../ioutils/fileUtils.hpp"
 
 namespace mx
 {
@@ -46,13 +46,13 @@ namespace basis
    std::string root(const std::string & basisName, bool create = false)
    {
       
-      std::string path = getEnv("MX_AO_DATADIR");
+      std::string path = mx::sys::getEnv("MX_AO_DATADIR");
 
       path += "/basis/" + basisName;
 
       if(create)
       {
-         boost::filesystem::create_directories(path);
+         ioutils::createDirectories(path);
       }
       return path;
    }
@@ -87,13 +87,13 @@ namespace dm
      */
    std::string root(const std::string & dmName, bool create = false)
    {
-      std::string path = getEnv("MX_AO_DATADIR");
+      std::string path = mx::sys::getEnv("MX_AO_DATADIR");
 
       path += "/dm/" + dmName;
 
       if(create)
       {
-         boost::filesystem::create_directories(path);
+         ioutils::createDirectories(path);
       }
 
       return path;
@@ -183,7 +183,7 @@ std::string basisRoot(const std::string & dmName, const std::string & basisName,
    
    if(create)
    {
-      boost::filesystem::create_directories(path);
+      ioutils::createDirectories(path);
    }
    
    return path;
@@ -203,7 +203,7 @@ std::string M2c(const std::string & dmName, const std::string & basisName, bool 
       
    if(create)
    {
-      boost::filesystem::create_directories(path);
+      ioutils::createDirectories(path);
    }
    
    path += "/M2c.fits";
@@ -228,7 +228,7 @@ std::string M2c(const std::string & dmName, const std::string & basisName, bool 
 //    
 //    if(create)
 //    {
-//       boost::filesystem::create_directories(path);
+//       ioutils::createDirectories(path);
 //    }
 //    
 //    path += "/Mortho2c.fits";
@@ -253,7 +253,7 @@ std::string projectedModes(const std::string & dmName, const std::string & basis
    
    if(create)
    {
-      boost::filesystem::create_directories(path);
+      ioutils::createDirectories(path);
    }
    
    path += "/projectedModes.fits";
@@ -280,7 +280,7 @@ std::string projectedModes(const std::string & dmName, const std::string & basis
 //    
 //    if(create)
 //    {
-//       boost::filesystem::create_directories(path);
+//       ioutils::createDirectories(path);
 //    }
 //    
 //    path += "/projectedOrthoModes.fits";
@@ -304,13 +304,13 @@ namespace pupil
 std::string root(const std::string & pupilName, bool create = false)
 {
    
-   std::string path = getEnv("MX_AO_DATADIR");
+   std::string path = mx::sys::getEnv("MX_AO_DATADIR");
 
    path += "/pupil/" + pupilName;
 
    if(create)
    {
-      boost::filesystem::create_directories(path);
+      ioutils::createDirectories(path);
    }
 
    
@@ -348,13 +348,13 @@ namespace sys
      */
    std::string root(const std::string & sysName, bool create = false)
    {
-      std::string path = getEnv("MX_AO_DATADIR");
+      std::string path = mx::sys::getEnv("MX_AO_DATADIR");
 
       path += "/system/" + sysName;
 
       if(create)
       {
-         boost::filesystem::create_directories(path);
+         ioutils::createDirectories(path);
       }
 
       return path;
@@ -379,7 +379,7 @@ namespace sys
 
          if(create)
          {
-            boost::filesystem::create_directories(path);
+            ioutils::createDirectories(path);
          }
    
          return path;
@@ -399,7 +399,7 @@ namespace sys
    
          if(create)
          {
-            boost::filesystem::create_directories(path);
+            ioutils::createDirectories(path);
          }
 
          return path;
@@ -550,7 +550,7 @@ namespace sys
 
          if(create)
          {
-            boost::filesystem::create_directories(path);
+            ioutils::createDirectories(path);
          }
 
          path += "/optg_" + std::to_string(mag) + "mag.fits";
@@ -573,7 +573,7 @@ namespace sys
 
          if(create)
          {
-            boost::filesystem::create_directories(path);
+            ioutils::createDirectories(path);
          }
 
          path += "/optg_" + std::to_string(mag) + "mag_lpNc_" + std::to_string(lpNc) + ".fits";
@@ -596,7 +596,7 @@ namespace sys
 
          if(create)
          {
-            boost::filesystem::create_directories(path);
+            ioutils::createDirectories(path);
          }
 
          path += "/lpc_" + std::to_string(mag) + "mag_lpNc_" + std::to_string(lpNc) + ".fits";

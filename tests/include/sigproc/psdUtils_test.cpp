@@ -1,6 +1,5 @@
 /** \file psdUtils_test.cpp
  */
-#define CATCH_CONFIG_MAIN
 #include "../../catch2/catch.hpp"
 
 #include <vector>
@@ -14,7 +13,9 @@
 #include "../../../include/math/randomT.hpp"
 #include "../../../include/math/vectorUtils.hpp"
 
-/** Verify calculations of psdVar1sided, psdVar2sided, and psdVar.
+/** Scenario: calculating variance from a 1D PSD
+  * 
+  * Verify calculations of psdVar1sided, psdVar2sided, and psdVar.
   * 
   * \anchor tests_sigproc_psdUtils_psdVar_1D
   */
@@ -108,6 +109,7 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
          
          mx::sigproc::normPSD(psd, f, 1.0);
          //Now have a 1/f^2 PSD with total 1-sided variance of 1.0.
+         REQUIRE(fabs(mx::sigproc::psdVar(f, psd, 1.0)-1.0) < 1e-10); //handles epsilon
          
          //proceed to augment:
          std::vector<double> f2s, psd2s;
@@ -126,6 +128,7 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
          REQUIRE(f2s[6]==-2);
          REQUIRE(f2s[7]==-1);
          
+         //Should now have 1.0 in bin 0, 0.5 in all other bins.
          REQUIRE(psd2s[0] == psd[0]);
          REQUIRE(psd2s[1] == 0.5*psd[1]);
          REQUIRE(psd2s[2] == 0.5*psd[2]);
@@ -136,7 +139,6 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
          REQUIRE(psd2s[7] == 0.5*psd[1]);
          
          //handle machine precision
-         REQUIRE(fabs(mx::sigproc::psdVar(f, psd, 1.0)-1.0) < 1e-10);
          REQUIRE(fabs(mx::sigproc::psdVar(f2s, psd2s, 1.0)-1.0) < 1e-10);
       }
    }

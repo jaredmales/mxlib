@@ -22,8 +22,9 @@ struct wfMeasurement
 
    realT iterNo;
 
-   typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> commandT;
-
+   //typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> commandT;
+   typedef std::vector<realT> commandT;
+   
    commandT measurement;
 };
 
@@ -569,11 +570,14 @@ int generalIntegrator<realT>::gains(const std::string & ogainf)
 template<class realT>
 int generalIntegrator<realT>::initMeasurements(commandT & filtAmps, commandT & rawAmps)
 {
-   filtAmps.measurement.resize(1, m_nModes);
-   filtAmps.measurement.setZero();
+   filtAmps.measurement.resize(m_nModes);
+   for(size_t n=0; n<m_nModes; ++n) filtAmps.measurement[n] = 0;
+   //filtAmps.measurement.setZero();
 
-   rawAmps.measurement.resize(1, m_nModes);
-   rawAmps.measurement.setZero();
+   rawAmps.measurement.resize(m_nModes);
+   for(size_t n=0; n<m_nModes; ++n) rawAmps.measurement[n] = 0;
+   //rawAmps.measurement.resize(1, m_nModes);
+   //rawAmps.measurement.setZero();
 
    return 0;
 }
@@ -587,7 +591,8 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
    if(m_openLoop || iterNo < m_openLoopDelay)
    {
-      filtAmps.measurement.setZero();
+      for(size_t n=0; n<m_nModes; ++n) filtAmps.measurement[n] = 0;
+      //filtAmps.measurement.setZero();
       return 0;
    }
 
@@ -600,10 +605,11 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
       for(int i=0; i< m_nModes; ++i)
       {
-         if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
+         //if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
+         if( std::isnan( rawAmps.measurement[i] ) || !std::isfinite(rawAmps.measurement[i])) rawAmps.measurement[i] = 0.0;
 
-
-         m_commandsIn(i, m_currB) = rawAmps.measurement(0,i);
+         //m_commandsIn(i, m_currB) = rawAmps.measurement(0,i);
+         m_commandsIn(i, m_currB) = rawAmps.measurement[i];
 
          aTot = m_commandsOut(i, m_currA);
          //std::cerr << m_currA << " " << aTot << "\n";
@@ -618,17 +624,18 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
          if( iterNo - m_openLoopDelay < m_closingRamp) gf = ((realT) iterNo - m_openLoopDelay)/m_closingRamp;
 
 
-         m_commandsOut(i, cA) = aTot + gf*m_closingGains(i) * rawAmps.measurement(0,i);
+         //m_commandsOut(i, cA) = aTot + gf*m_closingGains(i) * rawAmps.measurement(0,i);
+         m_commandsOut(i, cA) = aTot + gf*m_closingGains(i) * rawAmps.measurement[i];
 
          //std::cerr << cA << " " << m_commandsOut(i, cA) << "\n";
 
          if( i <= m_lowOrders || m_lowOrders <= 0)
          {
-            filtAmps.measurement(0,i) = m_commandsOut(i, cA);
+            filtAmps.measurement[i] = m_commandsOut(i, cA);
          }
          else
          {
-            filtAmps.measurement(0,i) = 0;
+            filtAmps.measurement[i] = 0;
          }
       }
 
@@ -649,12 +656,14 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
    {
       if(m_gains(i) == 0)
       {
-         filtAmps.measurement(0,i) = 0;
+         //filtAmps.measurement(0,i) = 0;
+         filtAmps.measurement[i] = 0;
          continue;
       }
 
 
-      if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
+      //if( std::isnan( rawAmps.measurement(0,i) ) || !std::isfinite(rawAmps.measurement(0,i))) rawAmps.measurement(0,i) = 0.0;
+      if( std::isnan( rawAmps.measurement[i] ) || !std::isfinite(rawAmps.measurement[i])) rawAmps.measurement[i] = 0.0;
 
       aTot = 0;
       for(int j = 0; j < m_a.cols(); ++j)
@@ -664,7 +673,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
          aTot += m_a(i,j) * m_commandsOut(i,k);
       }
 
-      m_commandsIn(i, m_currB) = rawAmps.measurement(0,i);
+      m_commandsIn(i, m_currB) = rawAmps.measurement[i];
 
       bTot = 0;
       for(int j = 0; j < m_b.cols(); ++j)
@@ -681,7 +690,7 @@ int generalIntegrator<realT>::filterCommands( commandT & filtAmps,
 
       m_commandsOut(i, cA) = aTot + m_gains(i) * bTot;
 
-      filtAmps.measurement(0,i) = m_commandsOut(i, cA);
+      filtAmps.measurement[i] = m_commandsOut(i, cA);
    }
 
    ++m_currB;

@@ -14,6 +14,7 @@
 #include "mx/timeUtils.hpp"
 #include "mx/fitsFile.hpp"
 //#include "mx/ds9_interface.h"
+#include "../../math/constants.hpp"
 
 #include "wavefront.hpp"
 
@@ -444,7 +445,7 @@ void pyramidSensor<_floatT, _detectorT>::quadSz(int sz)
 template<typename _floatT,  typename _detectorT>
 void pyramidSensor<_floatT, _detectorT>::makeTilts()
 {
-   _floatT pi = boost::math::constants::pi<_floatT>();
+   constexpr _floatT pi = math::pi<_floatT>();
    
    _floatT dang = 2*pi/_modSteps;
    _floatT dx, dy;
@@ -613,7 +614,7 @@ bool pyramidSensor<_floatT, _detectorT>::senseWavefrontCal(wavefrontT & pupilPla
 template<typename _floatT,  typename _detectorT>
 void pyramidSensor<_floatT, _detectorT>::doSenseWavefront()
 {
-   _floatT pi = boost::math::constants::pi<_floatT>();
+   constexpr _floatT pi = math::pi<_floatT>();
  
    if(tiltsMade == false) makeTilts();
 
@@ -761,7 +762,7 @@ void pyramidSensor<_floatT, _detectorT>::doSenseWavefront()
 template<typename _floatT,  typename _detectorT>
 void pyramidSensor<_floatT, _detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPlane)
 {
-   _floatT pi = boost::math::constants::pi<_floatT>();
+   constexpr _floatT pi = math::pi<_floatT>();
  
 
    BREAD_CRUMB;

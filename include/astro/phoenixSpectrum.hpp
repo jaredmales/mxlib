@@ -49,11 +49,9 @@ struct phoenixSpectrum
                             const paramsT & params ///< [in] the parameters are passed in case needed to construct the spectrum
                           )
    {
-      boost::filesystem::path p(path);
-      
       if( ioutils::readColumns(path, rawSpectrum) < 0) return -1;
       
-      if( ioutils::readColumns(p.parent_path().string() + "/wavelength.dat", rawLambda)) return -1;
+      if( ioutils::readColumns(ioutils::parentPath(path) + "/wavelength.dat", rawLambda) < 0) return -1;
       
       return 0;
    }
@@ -194,10 +192,7 @@ void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complet
 
    if(sepWavelength == 1)
    {
-      boost::filesystem::path p(filename);
-      
-      
-      fname = p.parent_path().string() + "/wavelength.dat";
+      fname = ioutils::parentPath(filename) + "/wavelength.dat";
          
       fout.open(fname);
       fout.precision(10);

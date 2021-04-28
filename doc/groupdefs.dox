@@ -1,11 +1,40 @@
+//-------- the top level groups
 /** \defgroup installation Installation
   * \brief Installation of mxlib
   */
 
+  
 /** \defgroup error_handling Error Handling
   * \brief How mxlib handles errors
   */
 
+/** \defgroup gen_math General Mathematics
+  * \brief General mathematical utilities.
+  */
+  
+/** \defgroup signal_processing Signal Processing
+  * \brief Tools for processing signals
+  */
+
+/** \defgroup image_processing Image Processing
+  * \brief Tools for processing images
+  */
+  
+/** \defgroup imaging Wavefront Propagation
+  * \brief Tools for modeling wavefront propagation
+  */
+  
+/** \defgroup genastro Astronomy
+  * \brief Tools for working with the heavens.
+  */
+
+/** \defgroup utils General Utilities
+  * \brief Various miscellaneous utilities
+  */
+
+  
+//------------------ error_handling -----------------------
+  
 /** \defgroup error_macros Error Handling Macros
   * \brief Macros controlling how mxlib reports errors
   * \ingroup error_handling
@@ -15,9 +44,15 @@
 
 //------------------ gen_math -----------------------
 
-/** \defgroup gen_math General Mathematics
-  * \brief General mathematical utilities.
-  */
+  
+/** \defgroup constants Constants and units
+  * \brief Pre-defined constants and unit conversions
+  * \ingroup gen_math
+*/
+//* \ingroup genastro
+//  * \ingroup signal_processing
+//  * \ingroup image_processing
+//  */
 
 /** \defgroup geo Geometry and Geodesy
   * \brief Functions for basic geometry and working with earth coordinate systems
@@ -45,7 +80,7 @@
   */
 
 /** \defgroup template_blaslap Templatized BLAS and Lapack
-  * \brief Templatized interfaces to the BLAS and the Lapack library
+  * \brief Templatized interfaces to BLAS and the Lapack librarries
   * \ingroup gen_math
   */
 
@@ -61,15 +96,13 @@
 
 /** \defgroup eigen_lapack Eigen Lapack interfaces
   * \brief Interfaces to Lapack and BLAS for Eigen-like arrays.
-  * \ingroup gen_math
+  * \ingroup template_blaslap
   */
 
 /** \defgroup interpolation Interpolation
   * \brief Various tools for interpolating data and discrete functions.
   * \ingroup gen_math
   */
-
-//------------------
 
 /** \defgroup fitting Data Fitting
   * \brief Tools for fitting functions to data
@@ -81,10 +114,7 @@
   * \ingroup fitting
   */
 
-/** \defgroup fitting_files Fitting Files
-  * \brief Source files for data fitting.
-  * \ingroup fitting
-  */
+
 
 //------------------
 /** \defgroup plotting Plotting Data
@@ -107,18 +137,9 @@
   * \brief Utilities for working with std::vector.
   */
 
-//see gen_math_files
-
-
-
-//----------------------- signal_processing --------------------
-/** \defgroup signal_processing Signal Processing
-  * \brief Tools for processing signals
-  */
-
 /** \defgroup fft Fast Fourier Transforms
   * \brief Tools for using the FFT
-  * \ingroup signal_processing
+  * \ingroup gen_math
   */
 
 /** \defgroup fftw_templates Template FFTW
@@ -130,9 +151,24 @@
   * \ingroup fft
   */
 
-/** \defgroup fft_files FFT Files
-  * \ingroup fft
+/** \defgroup cuda NVIDIA Cuda Interface
+  * \brief A templatized interface to the cuda libraries.
+  * \ingroup gen_math
   */
+  
+/** \defgroup cublas NVIDIA Cuda cublas Interface
+  * \brief A templatized interface to the cublas library
+  * \ingroup cuda 
+  * \ingroup template_blaslap
+  */  
+
+  
+//see gen_math_files
+
+
+
+//----------------------- signal_processing --------------------
+
 
 /** \defgroup psds Power Spectra
   * \brief Tools for generating and manipulating power spectra
@@ -170,9 +206,7 @@
 
 
 //----------------------- image_processing --------------------
-/** \defgroup image_processing Image Processing
-  * \brief Tools for processing images
-  */
+
 
 /** \defgroup image_utils Image Utilities
   * \brief Useful functions for working with images
@@ -226,20 +260,6 @@
   * \ingroup image_processing
   */
 
-/** \defgroup fits_processing FITS Files
-  * \brief Tools for working with FITS files.
-  * \ingroup image_processing
-  */
-
-/** \defgroup fits_processing_typedefs fitsFile typedefs
-  * \brief Typedefs of \ref mx::improc::fitsFile for standard types
-  * \ingroup fits_processing
-  */
-
-/** \defgroup fits_utils FITS Utilities
-  * \brief FITS file utilities and wrappers.
-  * \ingroup fits_processing
-  */
 
 // see fits_processing_files
 
@@ -265,16 +285,12 @@
 // see image_processing_files
 
 
-//----------------------- wavefront propagation --------------------
-/** \defgroup imaging Wavefront Propagation
-  * \brief Tools for modeling wavefront propagation
-  */
+//----------------------- imaging --------------------
 
 /** \defgroup psfs Point Spread Functions
   * \brief Functions describing PSFs.
   * \ingroup imaging
   */
-
 
 /** \defgroup coronagraphs Coronagraphs
   * \brief Modeling and optimizing coronagraphs
@@ -292,8 +308,9 @@
   */
 
 /** \defgroup aoConstants AO Constants
-  * \brief A collection of constants useful for AO analysis.
+  * \brief A collection of constants useful for adaptive optics analysis.
   * \ingroup mxAOAnalytic
+  * \ingroup astroconstants
   */
 
 /** \defgroup mxAOSim Simulation of Adaptive Optics
@@ -322,27 +339,16 @@
 
 
 
-//--------------------- astronomy ------------------
-/** \defgroup genastro Astronomy
-  * \brief Tools for working with the heavens.
-  */
+//--------------------- genastro ------------------
 
-/** \defgroup phyconstants Physical Constants
-  * \brief Various physical constants
-  * \ingroup genastro
-  * \ingroup gen_math
-  * \ingroup signal_processing
-  * \ingroup image_processing
-  */
-
-/** \defgroup genphyconstants General Constants
-  * \ingroup phyconstants
+/** \defgroup genconstants General Constants
+  * \ingroup constants
   * \brief Constants of general applicability
   */
 
-/** \defgroup astroconstants Astronomical Constants
-  * \ingroup phyconstants
-  * \brief Constants for astronomy
+/** \defgroup astroconstants Physical and Astronomical Constants
+  * \ingroup constants
+  * \brief Constants for physics and astronomy
   */
 
 /** \defgroup sofa_constants SOFA Constants
@@ -390,12 +396,9 @@
 // see astrofiles
 
 
-//---------------------
+//----------------- utils ---------------------------
 
 
-/** \defgroup utils General Utilities
-  * \brief Various miscellaneous utilities
-  */
 
 
 /** \defgroup ioutils Input/Output Utilities
@@ -417,6 +420,23 @@
   * \ingroup ioutils
   * \brief ASCII input/output
   */
+  
+/** \defgroup fits_processing FITS Files
+  * \brief Tools for working with FITS files.
+  * \ingroup ioutils
+  * \ingroup image_processing
+  */
+
+/** \defgroup fits_processing_typedefs fitsFile typedefs
+  * \brief Typedefs of \ref mx::improc::fitsFile for standard types
+  * \ingroup fits_processing
+  */
+
+/** \defgroup fits_utils FITS Utilities
+  * \brief FITS file utilities and wrappers.
+  * \ingroup fits_processing
+  */
+
   
 /** \defgroup timeutils Working with time
   * \ingroup utils
@@ -471,7 +491,7 @@
 
 // see utils_files
 
-
+//-----------------------------------------------------------------------
 
 
 //Files sections are last (except for aux info below)/
@@ -485,7 +505,21 @@
   * \brief Source files for General Mathematics
   * \ingroup gen_math
   */
+  
+/** \defgroup fitting_files Fitting Files
+  * \brief Source files for data fitting.
+  * \ingroup gen_math_files
+  */
 
+/** \defgroup fft_files FFT Files
+  * \ingroup gen_math_files
+  */
+
+/** \defgroup cuda_files Cuda Files
+  * \brief Source files for interacing with cuda.
+  * \ingroup gen_math_files
+  */
+  
 /** \defgroup signal_processing_files Signal Processing Files
   * \brief Source files for processing signals
   * \ingroup signal_processing

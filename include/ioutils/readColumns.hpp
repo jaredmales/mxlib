@@ -31,8 +31,10 @@
 #include <cstring>
 #include <iostream>
 
-#include "stringUtils.hpp"
+#include "../mxlib.hpp"
 #include "../mxError.hpp"
+
+#include "stringUtils.hpp"
 
 #define MX_READCOL_MISSINGVALSTR "-99"
 

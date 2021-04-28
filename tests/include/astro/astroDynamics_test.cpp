@@ -1,10 +1,18 @@
-#define CATCH_CONFIG_MAIN
+/** \file astroDynamics_test.cpp
+ */
+
 #include "../../catch2/catch.hpp"
 
 
 #include "../../../include/astro/astroDynamics.hpp"
 
-SCENARIO( "testing parallactic angle calcs", "[astroDynamics]" ) 
+/** Scenario: calculating parallactic angles
+  *
+  * Compares par. ang. calc vs. an actual observation.
+  * 
+  * \anchor tests_astrodynamics_parang
+  */
+SCENARIO( "calculating parallactic angles", "[astroDynamics::parang]" ) 
 {
    GIVEN("a typical target")
    {

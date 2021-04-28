@@ -12,8 +12,6 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
 #include "units.hpp"
 

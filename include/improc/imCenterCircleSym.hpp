@@ -99,7 +99,7 @@ struct imCenterCircleSym
       minRad = minR;
       maxRad = maxR;
       dRad = dR;
-      
+      return 0;
    }
 
    ///Peform the grid search and fit.

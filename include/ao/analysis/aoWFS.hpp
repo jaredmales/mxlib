@@ -8,6 +8,8 @@
 #ifndef aoWFS_hpp
 #define aoWFS_hpp
 
+#include "../../math/constants.hpp"
+
 namespace mx
 {
 
@@ -52,21 +54,22 @@ struct wfs
    ///Get the sensitivity at a spatial frequency.
    /** The sensitivity of the ideal WFS is 1 at all k \cite guyon_2005.
      * 
-     * \param m ///< [in] the spatial frequency index for u
-     * \param n ///< [in] the spatial frequency index for v
-     * \param D ///< [in] the telescope diameter
-     * \param d ///< [in] the sub-ap spacing
-     * \param r0 ///< [in] Fried's parameter, used by some derived WFS.
-     * 
      * \returns the sensitivity to photon noise parameter
      */ 
-   virtual realT beta_p( int UNUSED(m), 
-                         int UNUSED(n),  
-                         realT UNUSED(D), 
-                         realT UNUSED(d),
-                         realT UNUSED(r0)  
+   virtual realT beta_p( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)
                        )
    {
+      //Stuff a sock in the compiler's mouth:
+      static_cast<void>(m);
+      static_cast<void>(n);
+      static_cast<void>(D);
+      static_cast<void>(d);
+      static_cast<void>(r0);
+      
       return static_cast<realT>(1);
    }
    
@@ -86,12 +89,6 @@ struct wfs
 /** Provides the \f$ \beta_p \f$ parameter of Guyon, 2005 \cite guyon_2005
   * for the unmodulated PyWFS.
   * 
-  * \param m ///< [in] the spatial frequency index for u
-  * \param n ///< [in] the spatial frequency index for v
-  * \param D ///< [in] the telescope diameter
-  * \param d ///< [in] the sub-ap spacing
-  * \param r0 ///< [in] Fried's parameter, used by some derived WFS.
-  * 
   * \tparam realT is the floating point type used for calculations
   * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
   * 
@@ -108,23 +105,23 @@ struct pywfsUnmod : public wfs<realT, iosT>
    ///Get the sensitivity at a spatial frequency.
    /** The sensitivity of the unmodulated PyWFS is \f$ \sqrt{2} \f$ at all k.
      * 
-     * \param m ///< [in] the spatial frequency index for u
-     * \param n ///< [in] the spatial frequency index for v
-     * \param D ///< [in] the telescope diameter
-     * \param d ///< [in] the sub-ap spacing
-     * \param r0 ///< [in] Fried's parameter, used by some derived WFS.
-     * 
      * \returns the sensitivity to photon noise parameter
      */ 
-   virtual realT beta_p( int UNUSED(m), 
-                         int UNUSED(n),  
-                         realT UNUSED(D), 
-                         realT UNUSED(d),
-                         realT UNUSED(r0)  
+   virtual realT beta_p( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)  
                        )
    {
-      using namespace boost::math::constants;
-      return root_two<realT>();
+      //Stuff a sock in the compiler's mouth:
+      static_cast<void>(m);
+      static_cast<void>(n);
+      static_cast<void>(D);
+      static_cast<void>(d);
+      static_cast<void>(r0);
+      
+      return math::root_two<realT>();
    }
    
 };
@@ -150,24 +147,23 @@ struct pywfsModAsymptotic : public wfs<realT, iosT>
    ///Get the sensitivity at a spatial frequency.
    /** The sensitivity of the asymptotic modulated PyWFS is \f$ 2 \sqrt{2} \f$ at all k.
      * 
-     * \param m ///< [in] the spatial frequency index for u
-     * \param n ///< [in] the spatial frequency index for v
-     * \param D ///< [in] the telescope diameter
-     * \param d ///< [in] the sub-ap spacing
-     * \param r0 ///< [in] Fried's parameter, used by some derived WFS.
-     * 
-     * 
      * \returns the sensitivity to photon noise parameter
      */ 
-   virtual realT beta_p( int UNUSED(m), 
-                         int UNUSED(n),  
-                         realT UNUSED(D), 
-                         realT UNUSED(d),
-                         realT UNUSED(r0)  
+   virtual realT beta_p( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)
                        )
    {
-      using namespace boost::math::constants;      
-      return static_cast<realT>(2) * root_two<realT>();
+      //Stuff a sock in the compiler's mouth:
+      static_cast<void>(m);
+      static_cast<void>(n);
+      static_cast<void>(D);
+      static_cast<void>(d);
+      static_cast<void>(r0);
+      
+      return static_cast<realT>(2) * math::root_two<realT>();
    }
    
 };
@@ -194,15 +190,13 @@ struct shwfs : public wfs<realT, iosT>
      * 
      * \returns the sensitivity to photon noise parameter
      */ 
-   realT beta_p( int m, ///< [in] the spatial frequency index for u
-                 int n,  ///< [in] the spatial frequency index for v
-                 realT D, ///< [in] the telescope diameter
-                 realT d, ///< [in] the sub-ap spacing
-                 realT r0 ///< [in] Fried's parameter
+   virtual realT beta_p( int m,   ///< [in] the spatial frequency index for u
+                         int n,   ///< [in] the spatial frequency index for v
+                         realT D, ///< [in] the telescope diameter
+                         realT d, ///< [in] the sub-ap spacing
+                         realT r0 ///< [in] Fried's parameter
                )
    {
-      using namespace boost::math::constants;
-      
       realT k = sqrt(m*m + n*n)/D;
       
       return 1.48/(k*d)*sqrt(1 + pow(d/r0,2));

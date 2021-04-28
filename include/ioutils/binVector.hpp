@@ -29,6 +29,7 @@
 
 #include <vector>
 
+#include "../mxlib.hpp"
 #include "../mxError.hpp"
 
 namespace mx
@@ -85,7 +86,10 @@ enum : binVTypeT { Bool = 0,
                    LLUInt = 14,
                    Float = 15,
                    Double = 16,
-                   LDouble = 17
+                   LDouble = 17,
+                   Quad = 18,
+                   CFloat = 19,
+                   CDouble = 20,
                  };
 
 } //namespace binVTyes
@@ -210,6 +214,17 @@ binVTypeT binVectorTypeCode<long double>()
    return binVTypes::LDouble;
 }
 
+template<>
+binVTypeT binVectorTypeCode<std::complex<float>>()
+{
+   return binVTypes::CFloat;
+}
+
+template<>
+binVTypeT binVectorTypeCode<std::complex<double>>()
+{
+   return binVTypes::CDouble;
+}
 
 /// Read a BinVector file from disk.
 /**

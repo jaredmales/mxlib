@@ -12,6 +12,7 @@
 
 #include <Eigen/Dense>
 
+#include "../../math/constants.hpp"
 #include "../../math/randomT.hpp"
 #include "../../math/vectorUtils.hpp"
 
@@ -111,8 +112,8 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                        ///< [out
       nfilt.psd(npsd2,freq[1]-freq[0]);
       
       //FFTs for going to Fourier domain and back to time domain.
-      fftT<realT, std::complex<realT>, 1, 0> fft(psd2.size());
-      fftT<std::complex<realT>, realT, 1, 0> fftB(psd2.size(), MXFFT_BACKWARD);
+      math::fft::fftT<realT, std::complex<realT>, 1, 0> fft(psd2.size());
+      math::fft::fftT<std::complex<realT>, realT, 1, 0> fftB(psd2.size(), MXFFT_BACKWARD);
 
       //Fourier transform working memmory
       std::vector<std::complex<realT>> tform1(psd2.size());
@@ -157,8 +158,8 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                        ///< [out
          
          //Filter and normalize the fourier mode time series
          filt(fm_n);
-         vectorMeanSub(fm_n);
-         realT actvar = vectorVariance(fm_n);
+         math::vectorMeanSub(fm_n);
+         realT actvar = math::vectorVariance(fm_n);
          realT norm = sqrt(fmVar/actvar);
          for(size_t q=0; q<fm_n.size(); ++q) fm_n[q] *= norm;
          
@@ -170,7 +171,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                        ///< [out
          nfilt.filter(N_n);
          nfilt.filter(N_nm);
 
-         realT Nactvar = 0.5*(vectorVariance(N_n) + vectorVariance(N_nm));
+         realT Nactvar = 0.5*(math::vectorVariance(N_n) + math::vectorVariance(N_nm));
          norm = sqrt(nVar/Nactvar);
          for(size_t q=0; q<fm_n.size(); ++q) N_n[q] *= norm;
          for(size_t q=0; q<fm_n.size(); ++q) N_nm[q] *= norm;
@@ -185,13 +186,13 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                        ///< [out
          for(size_t m=0;m<tform1.size();++m)
          {
             // Apply the phase shift to form the 2nd time series
-            tform2[m] = tform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
+            tform2[m] = tform1[m]*exp( std::complex<realT>(0, math::half_pi<realT>() ));
             
             //Apply the augmented ETF to two time-series
             tform1[m] *= xfer2[m]/scale;
             tform2[m] *= xfer2[m]/scale;
             
-            //Ntform2[m] = Ntform1[m]*exp( std::complex<realT>(0, half_pi<realT>() ));
+            //Ntform2[m] = Ntform1[m]*exp( std::complex<realT>(0, math::half_pi<realT>() ));
             
             Ntform1[m] *= nxfer2[m]/scale; 
             Ntform2[m] *= nxfer2[m]/scale;
@@ -252,7 +253,7 @@ int speckleAmpPSD( std::vector<realT> & spFreq,                        ///< [out
       vars->resize(bins->size());
       for(size_t i=0; i< bins->size(); ++i)
       {
-         (*vars)[i] = mx::math::vectorVariance(means[i]) ;
+         (*vars)[i] = math::vectorVariance(means[i]) ;
       }
    }
 

@@ -4,8 +4,12 @@
 
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 using namespace mx::improc;
+using namespace mx::fits;
+
+#include "../../math/cuda/cudaPtr.hpp"
+#include "../../math/cuda/templateCublas.hpp"
 
 #include "../../sigproc/signalWindows.hpp"
 
@@ -31,16 +35,13 @@ struct directPhaseReconstructorSpec
    std::string rMatId;
 };
 
-///A Pyramid Wavefront Sensor slope reconstructor.
-/** Calculates slopes, normalized by total flux in the image.
+/// Direct Phase Reconstructor
+/** Calculates modal amplitudes by direct projection of modes onto the phase screen.
   */ 
 template<typename realT> 
 class directPhaseReconstructor
 {
 public:
-   
-   ///The type of the measurement (i.e. the slope vector)
-   //typedef Eigen::Array<realT,-1,-1> measurementT;
    
    ///The type of the WFS image
    typedef Eigen::Array<realT, -1, -1> imageT;
@@ -48,104 +49,91 @@ public:
    ///The type of the response matrix
    typedef Eigen::Array<realT, -1, -1> rmatT;
  
+   ///The specificaion type.
    typedef directPhaseReconstructorSpec specT;
       
 protected:
-    Eigen::Array<realT,-1,-1> _recon; ///< The reconstructor matrix.
-    
-   int _nModes; ///<The number of modes to be reconstructed
    
-   int _detRows; ///<The size of the WFS image, in rows
-   int _detCols;///<The size of the WFS image, in columns
+   /** \name The Pupil
+     * @{
+     */
+   imageT * m_pupil {nullptr};
+   int m_nPix {0};
+   ///@}
    
-   int _measurementSize; ///<The number of values in the measurement
+   /** \name The Basis
+     * @{
+     */
+   improc::eigenCube<realT> *m_modes {nullptr}; ///< The mirror modes, managed by the DM
+
+   int m_nModes {0}; ///<The number of modes to be reconstructed
+   
+   int m_detRows {0}; ///<The size of the WFS image, in rows
+   int m_detCols {0};///<The size of the WFS image, in columns
+   ///@}   
+   
+   /** \name The Reconstructor
+     * @{
+     */
+   
+   #ifdef MXAO_USE_GPU
+   cublasHandle_t *m_cublasHandle;
+   
+   cuda::cudaPtr<realT> m_one;
+   cuda::cudaPtr<realT> m_zero;
+   
+   cuda::cudaPtr<realT> m_devRecon;
+   cuda::cudaPtr<realT> m_devSlopes;
+   cuda::cudaPtr<realT> m_devAmps;
+   
+   #else
+   Eigen::Array<realT,-1,-1> m_recon; ///< The reconstructor matrix.
+   #endif
+
+   int m_measurementSize {0}; ///<The number of values in the measurement
+   std::vector<size_t> * m_idx {nullptr}; /// The offset coordinates of non-zero pixels in the pupil.  Set by the DM.
+   ///@}
+   
+   realT m_calAmp {1e-6}; ///<The calibration amplitude used for response matrix acquisition
+   
+   imageT m_rMat; ///<The response matrix
       
-   realT _calAmp; ///<The calibration amplitude used for response matrix acquisition
+   eigenCube<realT> m_rImages;
    
-   imageT _rMat; ///<The response matrix
-      
-   eigenCube<realT> _rImages;
-   
-   //The mirror modes
-   improc::eigenCube<realT> *_modes;
-   
-   imageT * _pupil;
-
-
-   
-   realT norm;
-   
-public:
-   imageT _mask;
-
-   imageT * _apod {0};
-   
-   improc::eigenImage<double> _spectrum;
-   
-   imageT * _gains; 
-   
-   int _npix;
    
 public:   
    ///Default c'tor
    directPhaseReconstructor();
 
    template<typename AOSysT>
-   void initialize(AOSysT & AOSys, specT & spec)
-   {
-      static_cast<void>(spec);
-      
-      _modes = &AOSys.dm._infF;
+   void initialize( AOSysT & AOSys, 
+                    specT & spec
+                  );
    
-      _nModes = _modes->planes();
-      _detRows = _modes->rows();
-      _detCols = _modes->cols();
    
-      _measurementSize = _detRows*_detCols;
-   
-      _pupil = &AOSys._pupil;
-   
-      _mask.resize(_pupil->rows(), _pupil->cols());
-   
-      _mask = *_pupil;
-      
-      
-/*      std::string recMatrix = mx::AO::path::sys::cal::iMat( AOSys._sysName, 
-                                                            spec.dmName, 
-                                                            AOSys._wfsName, 
-                                                            AOSys._pupilName, 
-                                                            spec.basisName, 
-                                                            spec.rMatId)  ;*/
-//      loadRecon(recMatrix);
-   
-   }
-   
-   template<typename AOSysT>
-   void linkSystem(AOSysT & AOSys);
-   
-   ///Get the calibration amplitude used in response matrix acquisition (_calAmp)
+   ///Get the calibration amplitude used in response matrix acquisition (m_calAmp)
    realT calAmp();
    
    
-   ///Set the calibration amplitude used in response matrix acquisition (_calAmp)
+   ///Set the calibration amplitude used in response matrix acquisition (m_calAmp)
    /**
      * \param ca [in] the new calibration amplitude
      */ 
    void calAmp(realT ca);
    
-   ///Get the number of modes (_nModes)
+   ///Get the number of modes (m_nModes)
    int nModes();
    
-   ///Get the number of detector rows (_detRows)
+   ///Get the number of detector rows (m_detRows)
    int detRows();
    
-   ///Set the number of detector rows (_detRows)
+   ///Set the number of detector rows (m_detRows)
    void detRows(int dr);
 
-   ///Get the number of detector columns (_detCols)   
+   ///Get the number of detector columns (m_detCols)   
    int detCols();
    
-   ///Set the number of detector columns (_detCols)
+   ///Set the number of detector columns (m_detCols)
    void detCols(int dc);
    
    ///Load the reconstrutor from the specified FITS file 
@@ -160,7 +148,7 @@ public:
    
    ///Calculate the slope measurement
    /**
-     * \param slopes [out] a (_measurementSize X 2)  array of slopes
+     * \param slopes [out] a (m_measurementSize X 2)  array of slopes
      * \param wfsImage [in] the WFS image from which to measure the slopes
      */   
    template<typename measurementT, typename wfsImageT>
@@ -191,9 +179,6 @@ public:
    template<typename measurementT, typename wfsImageT>
    void accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage);
    
-      
-   
-   
    ///Write the accumulated response matrix to disk
    /**
      * \param fname the name, including path, of the response matrix
@@ -207,37 +192,85 @@ public:
 template<typename realT> 
 directPhaseReconstructor<realT>::directPhaseReconstructor()
 {
-   _nModes = 0;
-   
-   norm = 0;
-   
-   _gains =0;
-   
-   _npix = 0;
 }
 
 template<typename realT> 
 template<typename AOSysT>
-void directPhaseReconstructor<realT>::linkSystem(AOSysT & AOSys)
+void directPhaseReconstructor<realT>::initialize( AOSysT & AOSys, 
+                                                  specT & spec
+                                                )
 {
-   _modes = &AOSys.dm._modes;
+   static_cast<void>(spec);
+
+
+   m_pupil = &AOSys._pupil;
+
+   m_nPix = m_pupil->sum();
    
-   _nModes = _modes->planes();
-   _detRows = _modes->rows();
-   _detCols = _modes->cols();
+   m_modes = &AOSys.dm.m_infF;
+
+   m_nModes = m_modes->planes();
+   m_detRows = m_modes->rows();
+   m_detCols = m_modes->cols();
+
+   m_idx = &AOSys.dm.m_idx;
+         
+   m_measurementSize = m_idx->size();
    
-   _measurementSize = _detRows*_detCols;
+   #ifdef MXAO_USE_GPU
    
-   _pupil = &AOSys._pupil;
+   m_cublasHandle = &AOSys.m_cublasHandle;
+   //m_cublasHandle = new cublasHandle_t; //&AOSys.m_cublasHandle;
+   //cublasCreate(m_cublasHandle);
+   //cublasSetPointerMode(*m_cublasHandle, CUBLAS_POINTER_MODE_DEVICE);
    
-   _mask = *_pupil;
+   
+   m_one.resize(1);
+   realT one = 1.0;
+   m_one.upload(&one, 1);
+      
+   m_zero.resize(1);
+   m_zero.initialize();
+      
+   imageT recon;
+   recon.resize(m_nModes, m_measurementSize);
+   for(int pp=0; pp<m_nModes; ++pp)
+   {
+      for(int nn=0; nn < m_idx->size(); ++nn)
+      {
+         recon(pp,nn) = *(m_modes->image(pp).data() + (*m_idx)[nn])/m_nPix;
+      }
+   }
+   
+   m_devRecon.upload(recon.data(), recon.rows()*recon.cols());
+   
+   m_devSlopes.resize(m_measurementSize);
+
+   m_devAmps.resize(m_nModes);
+
+   #else
+
+   m_recon.resize(m_measurementSize, m_nModes);
+
+   for(int pp=0; pp<m_nModes; ++pp)
+   {
+      for(int nn=0; nn < m_idx->size(); ++nn)
+      {
+         m_recon(nn,pp) = *(m_modes->image(pp).data() + (*m_idx)[nn])/m_nPix;
+      }
+   }
+   
+   #endif
+
    
 }
+ 
+
 
 template<typename realT> 
 realT directPhaseReconstructor<realT>::calAmp()
 {
-   return 0.5*800.0e-9/two_pi<realT>();
+   return 0.5*800.0e-9/math::two_pi<realT>();
 }
 
 template<typename realT> 
@@ -249,19 +282,19 @@ void directPhaseReconstructor<realT>::calAmp(realT ca)
 template<typename realT> 
 int directPhaseReconstructor<realT>::nModes()
 {
-   return _nModes;
+   return m_nModes;
 }
 
 template<typename realT> 
 int directPhaseReconstructor<realT>::detRows()
 {
-   return _detRows;
+   return m_detRows;
 }
 
 template<typename realT> 
 int directPhaseReconstructor<realT>::detCols()
 {
-   return _detCols;
+   return m_detCols;
 }
 
 template<typename realT> 
@@ -271,7 +304,7 @@ void directPhaseReconstructor<realT>::loadRecon(const std::string & fname)
    fitsFile<realT> ff;
    fitsHeader head;
    
-   ff.read(_recon, head, fname);
+   ff.read(m_recon, head, fname);
 #endif
 
 }
@@ -279,25 +312,21 @@ void directPhaseReconstructor<realT>::loadRecon(const std::string & fname)
 template<typename realT> 
 int directPhaseReconstructor<realT>::measurementSize()
 {
-   return _measurementSize;
+   return m_measurementSize;
 }
 
 template<typename realT>
 template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::calcMeasurement(measurementT & slopes, wfsImageT & wfsImage)
 {
-   wfsImage.image *= _mask;
-
-   slopes.measurement.resize( 1, _measurementSize);
-   int k = 0;
-   for(int i=0; i< wfsImage.image.rows(); ++i)
+   slopes.measurement.resize(m_measurementSize);
+   
+   realT * imp = wfsImage.image.data();
+   for(int nn=0; nn < m_idx->size(); ++nn)
    {
-      for(int j=0; j<wfsImage.image.cols(); ++j)
-      {
-         slopes.measurement(0,k) = wfsImage.image(i,j);
-         ++k;
-      }
+      slopes.measurement[nn] = *(imp + (*m_idx)[nn]);
    }
+   
 }
      
 template<typename realT> 
@@ -305,97 +334,80 @@ template<typename measurementT, typename wfsImageT>
 void directPhaseReconstructor<realT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
 {
    
-#if 0
-   measurementT slopes;
+   #ifdef MXAO_USE_GPU
+   
+   static measurementT slopes; //static to prevent re-alloc
    
    calcMeasurement(slopes, wfsImage);
    
-   //std::cerr << slopes.measurement.rows() << " " << slopes.measurement.cols() << " " << _recon.rows() << " " << _recon.cols() << "\n";
+   m_devSlopes.upload(slopes.measurement.data(), slopes.measurement.size());
    
+   //realT alpha = 1.;
+   //realT zero = 0;
    
-   commandVect.measurement = slopes.measurement.matrix()*_recon.matrix();
-   
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nModes, m_measurementSize, m_one(), m_devRecon(), m_devSlopes(), m_zero(), m_devAmps());
+   if(stat != CUBLAS_STATUS_SUCCESS)
+   {
+      std::cerr << "cublas error\n";
+   }
+        
+   commandVect.measurement.resize(m_nModes);
+   m_devAmps.download(commandVect.measurement.data());
+         
    commandVect.iterNo = wfsImage.iterNo;
    
-#endif
-#if 1
-   BREAD_CRUMB;
-   
-   if(_npix == 0)
-   {
-      _npix = _pupil->sum();
-      
-   }
+   #else
    
    BREAD_CRUMB;   
-
-   wfsImage.image *= _mask;
    
-   BREAD_CRUMB;
-   
-   commandVect.measurement.setZero();
-   
-   
-   //Setup for apodization
-   realT rms0, rms1;
-   if(_apod)
-   {
-      rms0 = (wfsImage.image.square().sum()/_npix);
-      wfsImage.image *= *_apod;
-   }
+   /* Only needed if using "slopes" below (keep for debugging):
+   static measurementT slopes;
+   calcMeasurement(slopes, wfsImage);
+   */
    
    #pragma omp parallel for
-   for(int j=0; j< _nModes; ++j)
+   for(int j=0; j< m_nModes; ++j)
    {
-      realT amp;
-      
-      if(_gains)
+      //The brutest forcest way, slower:
+      //commandVect.measurement[j] = (wfsImage.image*m_modes->image(j)).sum()/ m_nPix;
+            
+      //The fastest non-GPU way:
+      realT amp = 0;
+      for(size_t k=0; k < m_idx->size(); ++k)
       {
-         if( (*_gains)(0,j) == 0)
-         {
-            commandVect.measurement(0,j) = 0;
-            continue;            
-         }
+         amp += *(wfsImage.image.data() + (*m_idx)[k])  *m_recon(k,j);
       }
+      commandVect.measurement[j] = amp;
       
-      amp = (wfsImage.image*_modes->image(j)).sum()/ _npix;
-      
-      commandVect.measurement(0,j) = amp;
-   }
-   
-   if(_apod)
-   {
-      rms1 = 0;
-      for(int j=0; j< _nModes; ++j)
+      /* Slightly slower, using the slopes calc (keep for debugging slopes calc):
+      realT amp = 0;
+      for(size_t k=0; k < slopes.measurement.size(); ++k)
       {
-         rms1 += pow(commandVect.measurement(0,j),2);
+         amp += slopes.measurement[k]*m_recon(k,j);
       }
-      //rms1 = sqrt(rms1);///_nModes);
-      
-      for(int j=0; j< _nModes; ++j)
-      {
-         commandVect.measurement(0,j) *= sqrt(rms0/rms1);
-      }
+      commandVect.measurement[j] = amp;
+      */
+
       
    }
    
    commandVect.iterNo = wfsImage.iterNo;
    
-#endif
+   #endif
 }
 
 template<typename realT> 
 void directPhaseReconstructor<realT>::initializeRMat(int nModes, realT calamp, int detRows, int detCols)
 {
-   _nModes = nModes;
+   m_nModes = nModes;
    
-   _detRows = detRows;
-   _detCols = detCols;
+   m_detRows = detRows;
+   m_detCols = detCols;
    
-   _rMat.resize(measurementSize(), nModes);
-   _rMat.setZero();
+   m_rMat.resize(measurementSize(), nModes);
+   m_rMat.setZero();
    
-   _rImages.resize(_detRows, _detCols, _nModes);
+   m_rImages.resize(m_detRows, m_detCols, m_nModes);
 }
 
 template<typename realT> 
@@ -407,12 +419,12 @@ void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measur
    {
       for(int k=0; k<measureVec.measurement.cols(); ++k)
       {
-         _rMat(l, i) = measureVec.measurement(j,k);
+         m_rMat(l, i) = measureVec.measurement(j,k);
          ++l;
       }
    }
    
-  //_rMat.col(i) = measureVec.measurement.row(0);
+  //m_rMat.col(i) = measureVec.measurement.row(0);
 }
   
 template<typename realT>   
@@ -420,7 +432,7 @@ template<typename measurementT,typename wfsImageT>
 void directPhaseReconstructor<realT>::accumulateRMat(int i, measurementT &measureVec, wfsImageT & wfsImage)
 {
    accumulateRMat(i, measureVec);
-   _rImages.image(i) = wfsImage.image;   
+   m_rImages.image(i) = wfsImage.image;   
 }
 
 template<typename realT> 
@@ -429,12 +441,12 @@ void directPhaseReconstructor<realT>::saveRMat(std::string fname)
    fitsFile<realT> ff;
    fitsHeader head;
    
-   head.append("DETROWS", _detRows, "WFS detector rows");
-   head.append("DETCOLS", _detCols, "WFS detector cols");
-   head.append("CALAMP", _calAmp, "DM Calibration amplitude");
-   head.append("NMODES", _nModes, "Number of modes included in the response matrix.");
+   head.append("DETROWS", m_detRows, "WFS detector rows");
+   head.append("DETCOLS", m_detCols, "WFS detector cols");
+   head.append("CALAMP", m_calAmp, "DM Calibration amplitude");
+   head.append("NMODES", m_nModes, "Number of modes included in the response matrix.");
    
-   ff.write(fname, _rMat, head);
+   ff.write(fname, m_rMat, head);
 }
 
 template<typename realT> 
@@ -444,13 +456,13 @@ void directPhaseReconstructor<realT>::saveRImages(std::string fname)
    fitsHeader head;
    
    
-   head.append("DETROWS", _detRows, "WFS detector rows");
-   head.append("DETCOLS", _detCols, "WFS detector cols");
-   head.append("CALAMP", _calAmp, "DM Calibration amplitude");
-   head.append("NMODES", _nModes, "Number of modes included in the response matrix.");
+   head.append("DETROWS", m_detRows, "WFS detector rows");
+   head.append("DETCOLS", m_detCols, "WFS detector cols");
+   head.append("CALAMP", m_calAmp, "DM Calibration amplitude");
+   head.append("NMODES", m_nModes, "Number of modes included in the response matrix.");
    
-   //ff.write(fname, _rImages.data(), _rImages.rows(), _rImages.cols(), _rImages.planes(), &head);
-   ff.write(fname, _rImages, head);
+   //ff.write(fname, m_rImages.data(), m_rImages.rows(), m_rImages.cols(), m_rImages.planes(), &head);
+   ff.write(fname, m_rImages, head);
 }
 
 } //namespace sim
@@ -460,52 +472,4 @@ void directPhaseReconstructor<realT>::saveRImages(std::string fname)
 #endif //directPhaseReconstructor_hpp
 
 
-//--- Code for mean and tip/tilt subtraction in reconstruct:
-//    realT mean = (wfsImage.image * *_pupil).sum()/npix;
-//    
-//    wfsImage.image -= mean;
-//    wfsImage.image *= *_pupil;
-
-#if 0 
-   
-   BREAD_CRUMB;
-   if(norm == 0)
-   {
-      for(int i = 0; i < wfsImage.rows(); ++i)
-      {
-         for(int j=0; j < wfsImage.cols(); ++j)
-         {
-            norm += pow((i - 0.5*(wfsImage.rows()-1.0))*(*_pupil)(i,j),2);
-         }
-      }
-    BREAD_CRUMB;  
-      norm = sqrt(norm);
-      
-      //std::cout << "NORM: === " << norm << "\n";
-   }
-   BREAD_CRUMB;
-
-   //std::cout << "NORM: === " << norm << "\n";
-   
-   //Remove tip/tilt:
-   realT ampx = 0, ampy = 0;
-   BREAD_CRUMB;   
-   for(int i = 0; i < wfsImage.rows(); ++i)
-   {
-      for(int j=0; j < wfsImage.cols(); ++j)
-      {
-         ampx += wfsImage(i,j) * (i - 0.5*(wfsImage.rows()-1.0))/norm;
-         ampy += wfsImage(i,j) * (j - 0.5*(wfsImage.cols()-1.0))/norm;
-      }
-   }
-   BREAD_CRUMB;
-   for(int i = 0; i < wfsImage.rows(); ++i)
-   {
-      for(int j=0; j < wfsImage.cols(); ++j)
-      {
-         wfsImage(i,j) -= ampx * (i - 0.5*(wfsImage.rows()-1.0))/norm * (*_pupil)(i,j);
-         wfsImage(i,j) -= ampy * (j - 0.5*(wfsImage.cols()-1.0))/norm * (*_pupil)(i,j);
-      }
-   }
-#endif
 

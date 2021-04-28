@@ -27,13 +27,14 @@
 #ifndef math_func_airyPattern_hpp
 #define math_func_airyPattern_hpp
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
+#include "../constants.hpp"
+#include "bessel.hpp"
 #include "jinc.hpp"
+
 
 namespace mx
 {
@@ -137,10 +138,10 @@ realT airyPatternEnclosed( realT x /**< [in] the radius */)
 {
    realT x1 = x*pi<realT>();
    
-   realT b0 = boost::math::cyl_bessel_j<realT>(0,x1);
+   realT b0 = bessel_j<realT>(0,x1);
    b0=b0*b0;
    
-   realT b1 = boost::math::cyl_bessel_j<realT>(1,x1);
+   realT b1 = bessel_j<realT>(1,x1);
    b1=b1*b1;
    
    realT encp = static_cast<realT>(1) - b0 - b1;
@@ -155,7 +156,7 @@ realT apeInt( realT x,
 {
    realT eps = *static_cast<realT*>(params);
    
-   return boost::math::cyl_bessel_j<realT>(1,x)*boost::math::cyl_bessel_j<realT>(1,eps*x)/x;
+   return bessel_j<realT>(1,x)*bessel_j<realT>(1,eps*x)/x;
 }
 
 /// Calculate the fraction of enclosed power at a given radius for the centrally obscured Airy Pattern 
@@ -187,14 +188,14 @@ realT airyPatternEnclosed( realT x,  ///< [in] the radius
    gsl_set_error_handler_off();
    gsl_integration_qng( &func, 0, x1, 1e-7, 1e-7, &jint,&abserr, &neval);
    
-   realT b0 = boost::math::cyl_bessel_j<realT>(0,x1);
+   realT b0 = bessel_j<realT>(0,x1);
    b0=b0*b0;
-   realT b1 = boost::math::cyl_bessel_j<realT>(1,x1);
+   realT b1 = bessel_j<realT>(1,x1);
    b1=b1*b1;
    
-   realT b0e = boost::math::cyl_bessel_j<realT>(0,eps*x1);
+   realT b0e = bessel_j<realT>(0,eps*x1);
    b0e=b0e*b0e;
-   realT b1e = boost::math::cyl_bessel_j<realT>(1,eps*x1);
+   realT b1e = bessel_j<realT>(1,eps*x1);
    b1e=b1e*b1e;
    
    realT eps2 = pow(eps,2);

@@ -253,8 +253,10 @@ private:
   * @brief Return true if two exponential distributions have the same
   *        parameters.
   */
-template<typename _RealType> inline bool operator==(const laplace_distribution<_RealType>& __d1,
-                                                    const laplace_distribution<_RealType>& __d2)
+template<typename _RealType> 
+bool operator== ( const laplace_distribution<_RealType>& __d1,
+                  const laplace_distribution<_RealType>& __d2
+                )
 { 
    return __d1.param() == __d2.param(); 
 }
@@ -263,8 +265,9 @@ template<typename _RealType> inline bool operator==(const laplace_distribution<_
   * @brief Return true if two exponential distributions have different
   *        parameters.
   */
-template<typename _RealType> inline bool operator!=(const laplace_distribution<_RealType>& __d1,
-                                                    const laplace_distribution<_RealType>& __d2)
+template<typename _RealType> bool operator!=( const laplace_distribution<_RealType>& __d1,
+                                              const laplace_distribution<_RealType>& __d2
+                                            )
 { 
    return !(__d1 == __d2); 
 }
@@ -323,6 +326,9 @@ using lapDistT = randomT<realT, std::mt19937_64, laplace_distribution<realT>>;
 template<typename intT>
 using poissonDistT = randomT<intT, std::mt19937_64, std::poisson_distribution<intT>>;
 
+///Alias for a log normal variate
+template<typename realT>
+using lognormDistT = randomT<realT, std::mt19937_64, std::lognormal_distribution<realT>>;
 
 /// @}
 

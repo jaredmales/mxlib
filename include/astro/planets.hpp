@@ -9,9 +9,10 @@
 #ifndef __mx_astro_planets_hpp__
 #define __mx_astro_planets_hpp__
 
+#include "../math/constants.hpp"
+
 #include "units.hpp"
 
-#include <boost/math/constants/constants.hpp>
 
 namespace mx
 {
@@ -61,7 +62,7 @@ typename units::realT planetMass2Radius( typename units::realT mass /**< The mas
 
    if( mass <  4.1*massEarth<units>())
    {
-      return pow( mass/massEarth<units>(), boost::math::constants::third<realT>())*radEarth<units>();
+      return pow( mass/massEarth<units>(), math::third<realT>())*radEarth<units>();
    }
    else if( mass < static_cast<realT>(15.84)*massEarth<units>() )
    {
@@ -114,7 +115,7 @@ typename units::realT planetMass2RadiusWThorngren( typename units::realT mass /*
 
    if( mass <  4.1*massEarth<units>())
    {
-      return pow( mass/massEarth<units>(), boost::math::constants::third<realT>())*radEarth<units>();
+      return pow( mass/massEarth<units>(), math::third<realT>())*radEarth<units>();
    }
    else if( mass < static_cast<realT>(15.00)*massEarth<units>() )
    {
@@ -180,7 +181,7 @@ typename units::realT planetMass2RadiusFab2014( typename units::realT mass /**< 
       
    if( mass <  massEarth<units>())
    {
-      return pow( mass/massEarth<units>(), boost::math::constants::third<realT>())*radEarth<units>();
+      return pow( mass/massEarth<units>(), math::third<realT>())*radEarth<units>();
    }
    else 
    {

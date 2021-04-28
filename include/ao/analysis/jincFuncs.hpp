@@ -8,8 +8,8 @@
 #ifndef jincFuncs_hpp
 #define jincFuncs_hpp
 
-
-#include <mx/math/func/jinc.hpp>
+#include "../../math/constants.hpp"
+#include "../../math/func/jinc.hpp"
 
 namespace mx
 {
@@ -37,9 +37,9 @@ int jincFuncs( realT & Jp, ///< [out]
    realT kp = sqrt( pow(ku + mmode,2) + pow(kv + nmode,2) );
    realT km = sqrt( pow(ku - mmode,2) + pow(kv - nmode,2) );
 
-   Jp = math::func::jinc(pi<realT>()*kp);
+   Jp = math::func::jinc(math::pi<realT>()*kp);
 
-   Jm = math::func::jinc(pi<realT>()*km);
+   Jm = math::func::jinc(math::pi<realT>()*km);
    
    return 0;
 }

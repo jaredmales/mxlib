@@ -9,7 +9,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -27,21 +27,19 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef zernike_hpp
-#define zernike_hpp
+#ifndef math_zernike_hpp
+#define math_zernike_hpp
 
 #include <cmath>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
+#include <vector>
 
-#include <boost/math/special_functions/bessel.hpp>
-
-#include <boost/math/special_functions/sign.hpp>
-#include <boost/math/special_functions/factorials.hpp>
-
-
+#include "../math/func/bessel.hpp"
+#include "../math/func/factorial.hpp"
+#include "../math/func/sign.hpp"
+#include "../math/constants.hpp"
 #include "../mxError.hpp"
+
 
 namespace mx
 {
@@ -64,42 +62,25 @@ namespace sigproc
   * \retval 0 on success
   * \retval -1 on error (j < 1)
   * 
-  * \test Verify calculation of Noll nm values from j \ref tests_sigproc_zernike_noll_nm "[test doc]"
+  * \test Scenario: testing noll_nm \ref tests_sigproc_zernike_noll_nm "[test doc]"
   */
-inline
 int noll_nm( int & n, ///< [out] n the radial index of the Zernike polynomial
              int & m, ///< [out] m the azimuthal index of the Zernnike polynomial.  m < 0 if j odd.
              int j    ///< [in]  j the Noll index, j > 0.
-           )
-{
-   if( j < 1)
-   {
-      mxError("noll_nm", MXE_INVALIDARG, "The Noll index j cannot be less than 1 in the Zernike polynomials");
-      return -1;
-   }
-   
-   
-   n = ceil(-1.5 + sqrt(0.25 + 2*j) - 1e-10); // 1e-10 is to avoid wrong rounding due to numerical precision
-
-   int  jrem = j - (n * (n+1)/2+1);
-   m = (jrem + (jrem % 2) * abs( (n % 2)-1) + fabs( (jrem % 2)-1) * (n %  2)) * (-boost::math::sign( (j % 2)-0.5));
-   
-   return 0;
-}
+           );
 
 /// Calculate the coefficients of a Zernike radial polynomial
 /** 
-  * \param[out] c is allocated to length \f$ 0.5(n-m)+1\f$ and filled with the coefficients.
-  * \param[in] n is the radial index of the Zernike polynomial.
-  * \param[in] m is the azimuthal index of the Zernike polynomial.
-  * 
   * \retval 0 on success
   * \retval -1 on error
   * 
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-int zernikeRCoeffs( std::vector<realT> & c, int n, int m)
+int zernikeRCoeffs( std::vector<realT> & c, ///< [out] allocated to length \f$ 0.5(n-m)+1\f$ and filled with the coefficients.
+                    int n,                  ///< [in] the radial index of the Zernike polynomial.
+                    int m                   ///< [in] the azimuthal index of the Zernike polynomial.
+                  )
 {
    m = abs(m);
    
@@ -122,18 +103,29 @@ int zernikeRCoeffs( std::vector<realT> & c, int n, int m)
    
    for(int k=0; k < ul; ++k)
    {
-      c[k] = pow(-1.0, k) * boost::math::factorial<realT>(n - k) / ( boost::math::factorial<realT>(k) * boost::math::factorial<realT>(0.5*(n+m)  - k)* boost::math::factorial<realT>(0.5*(n-m)  - k));
+      c[k] = pow(-1.0, k) * math::func::factorial<realT>(n - k) / ( math::func::factorial<realT>(k) * math::func::factorial<realT>(0.5*(n+m)  - k)* math::func::factorial<realT>(0.5*(n-m)  - k));
    }
    
    return 0;
 }
 
+//Explicit instantiations:
+extern template
+int zernikeRCoeffs<float>( std::vector<float> & c, int n, int m);
+
+extern template
+int zernikeRCoeffs<double>( std::vector<double> & c, int n, int m);
+
+extern template
+int zernikeRCoeffs<long double>( std::vector<long double> & c, int n, int m);
+
+#ifdef HASQUAD
+extern template
+int zernikeRCoeffs<__float128>( std::vector<__float128> & c, int n, int m);
+#endif
+
 /// Calculate the value of a Zernike radial polynomial at a given separation.
 /** 
-  * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
-  * \param[in] n is the radial index of the Zernike polynomial.
-  * \param[in] m is the azimuthal index of the Zernike polynomial.
-  * \param[in] c is contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
   * 
   * \retval -9999 indicates a possible error
   * \retval R the value of the Zernike radial polynomial otherwise
@@ -141,7 +133,11 @@ int zernikeRCoeffs( std::vector<realT> & c, int n, int m)
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-realT zernikeR( realT rho, int n, int m, std::vector<realT> & c )
+realT zernikeR( realT rho,             ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
+                int n,                 ///< [in] the radial index of the Zernike polynomial.
+                int m,                 ///< [in] the azimuthal index of the Zernike polynomial.
+                std::vector<realT> & c ///< [in] contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
+              )
 {
    m = abs(m);
    
@@ -168,19 +164,32 @@ realT zernikeR( realT rho, int n, int m, std::vector<realT> & c )
    
 }
 
+extern template
+float zernikeR(float rho, int n, int m, std::vector<float> & c);
+
+extern template
+double zernikeR(double rho, int n, int m, std::vector<double> & c);
+
+extern template
+long double zernikeR(long double rho, int n, int m, std::vector<long double> & c);
+
+#ifdef HASQUAD
+extern template
+__float128 zernikeR(__float128 rho, int n, int m, std::vector<__float128> & c);
+#endif
+
 /// Calculate the value of a Zernike radial polynomial at a given separation.
 /** 
-  * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
-  * \param[in] n is the radial index of the Zernike polynomial.
-  * \param[in] m is the azimuthal index of the Zernike polynomial.
-  * 
   * \retval -9999 indicates a possible error
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-realT zernikeR( realT rho, int n, int m)
+realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
+                int n,     ///< [in] the radial index of the Zernike polynomial.
+                int m      ///< [in] the azimuthal index of the Zernike polynomial.
+              )
 {
    m = abs(m);
    
@@ -198,6 +207,20 @@ realT zernikeR( realT rho, int n, int m)
    
 }
 
+extern template
+float zernikeR( float rho, int n, int m);
+
+extern template
+double zernikeR( double rho, int n, int m);
+
+extern template
+long double zernikeR( long double rho, int n, int m);
+
+#ifdef HASQUAD
+extern template
+__float128 zernikeR( __float128 rho, int n, int m);
+#endif
+
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
 /** 
   * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
@@ -212,7 +235,12 @@ realT zernikeR( realT rho, int n, int m)
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-realT zernike(realT rho, realT phi, int n, int m, std::vector<realT> & c)
+realT zernike( realT rho, 
+               realT phi, 
+               int n, 
+               int m, 
+               std::vector<realT> & c
+             )
 {
    realT azt;
    
@@ -223,11 +251,11 @@ realT zernike(realT rho, realT phi, int n, int m, std::vector<realT> & c)
    
    if( m < 0 )
    {
-      azt = root_two<realT>()*sin(-m*phi);
+      azt = math::root_two<realT>()*sin(-m*phi);
    }
    else if (m > 0)
    {
-      azt = root_two<realT>()*cos(m*phi);
+      azt = math::root_two<realT>()*cos(m*phi);
    }
    else
    {
@@ -238,12 +266,22 @@ realT zernike(realT rho, realT phi, int n, int m, std::vector<realT> & c)
    
 }           
 
+extern template
+float zernike(float rho, float phi, int n, int m, std::vector<float> & c);
+
+extern template
+double zernike(double rho, double phi, int n, int m, std::vector<double> & c);
+
+extern template
+long double zernike(long double rho, long double phi, int n, int m, std::vector<long double> & c);
+
+#ifdef HASQUAD
+extern template
+__float128 zernike(__float128 rho, __float128 phi, int n, int m, std::vector<__float128> & c);
+#endif
+
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
 /** 
-  * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
-  * \param[in] phi is the azimuthal angle (in radians)
-  * \param[in] n is the radial index of the Zernike polynomial.
-  * \param[in] m is the azimuthal index of the Zernike polynomial.
   * 
   * \retval -9999 indicates a possible error
   * \retval R the value of the Zernike radial polynomial otherwise
@@ -251,7 +289,11 @@ realT zernike(realT rho, realT phi, int n, int m, std::vector<realT> & c)
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-realT zernike(realT rho, realT phi, int n, int m)
+realT zernike( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
+               realT phi, ///< [in] the azimuthal angle (in radians)
+               int n,     ///< [in] the radial index of the Zernike polynomial.
+               int m      ///< [in] the azimuthal index of the Zernike polynomial.
+             )
 {
    
    std::vector<realT> c;
@@ -261,19 +303,32 @@ realT zernike(realT rho, realT phi, int n, int m)
    return  zernike(rho, phi, n, m, c);
 }
 
+extern template
+float zernike( float rho, float phi, int n, int m);
+
+extern template
+double zernike( double rho, double phi, int n, int m);
+
+extern template
+long double zernike( long double rho, long double phi, int n, int m);
+
+#ifdef HASQUAD
+extern template
+__float128 zernike( __float128 rho, __float128 phi, int n, int m);
+#endif
+
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
 /** 
-  * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
-  * \param[in] phi is the azimuthal angle (in radians)
-  * \param[in] j is the Noll index of the Zernike polynomial.
-  * 
   * \retval -9999 indicates a possible error
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
   */ 
 template<typename realT>
-realT zernike(realT rho, realT phi, int j)
+realT zernike( realT rho,  ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
+               realT phi,  ///< [in] the azimuthal angle (in radians)
+               int j       ///< [in] the Noll index of the Zernike polynomial.
+             )
 {
    int n, m;
    
@@ -282,6 +337,20 @@ realT zernike(realT rho, realT phi, int j)
    
    return zernike(rho, phi, n, m);
 }
+
+extern template
+float zernike(float rho, float phi, int j);
+
+extern template
+double zernike(double rho, double phi, int j);
+
+extern template
+long double zernike(long double rho, long double phi, int j);
+
+#ifdef HASQUAD
+extern template
+__float128 zernike(__float128 rho, __float128 phi, int j);
+#endif
 
 ///Fill in an Eigen-like array with a Zernike polynomial
 /** Sets any pixel which is at rad \<= r \< rad+0.5 pixels to rho = 1, to be consistent with mx::circularPupil
@@ -442,7 +511,7 @@ int zernikeBasis( cubeT & cube,                    ///< [in/out] the pre-allocat
   * 
   * \todo need a more robust jinc_n function for n > 1
   * 
-  * \test Verify compilation and execution of zernikeQNorm. This does not validate the output. \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
+  * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
   * 
   * \returns the value of |Q(k,phi)|^2
   * 
@@ -466,7 +535,7 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
    }
    else
    {
-      B = boost::math::cyl_bessel_j(n+1, 2*pi<realT>()*k) / (pi<realT>()*k);
+      B = math::func::bessel_j(n+1, math::two_pi<realT>()*k) / (math::pi<realT>()*k);
    }
 
    realT Q2 = (n+1) * (B * B);
@@ -482,6 +551,21 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
   
    return Q2;
 }
+
+extern template
+float zernikeQNorm<float>(float k, float phi, int n, int m);
+
+extern template
+double zernikeQNorm<double>(double k, double phi, int n, int m);
+
+extern template
+long double zernikeQNorm<long double>(long double k, long double phi, int n, int m);
+
+#ifdef HASQUAD
+extern template
+__float128 zernikeQNorm<__float128>(__float128 k, __float128 phi, int n, int m);
+#endif
+
 
 ///Calculate the square-normed Fourier transform of a Zernike polynomial at position (k,phi)
 /** Implements Equation (8) of Noll (1976) \cite noll_1976.
@@ -504,10 +588,10 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
    return zernikeQNorm(k, phi, n, m);
 }
 
-///Fill in an Eigen-like array with the square-normed Fourier transform of a Zernike polynomial
+/// Fill in an Eigen-like array with the square-normed Fourier transform of a Zernike polynomial
 /** The array is filled in with the values of |Q(k,phi)|^2 according to Equation (8) of Noll (1976) \cite noll_1976.
   * 
-  * \test Verify compilation and execution of zernikeQNorm. \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
+  * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
   *  
   * \returns 0 on success
   * \returns -1 on error
@@ -551,5 +635,5 @@ int zernikeQNorm( arrayT & arr, ///< [out] the allocated array. The rows() and c
 } //namespace sigproc 
 } //namespace mx
 
-#endif //zernike_hpp
+#endif //math_zernike_hpp
 

@@ -196,8 +196,8 @@ struct cahoyGrid : public baseSpectrum<typename _units::realT>
       }
       
       //Normalize phase
-      phase = fmod(_params.phase, pi<realT>());
-      if(phase < 0) phase += pi<realT>();
+      phase = fmod(_params.phase, math::pi<realT>());
+      if(phase < 0) phase += math::pi<realT>();
       
       sep = _params.sep;
       

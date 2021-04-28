@@ -32,10 +32,10 @@
 #include "fraunhoferPropagator.hpp"
 #include "imagingUtils.hpp"
 
-#include "../imagingArray.hpp"
+#include "../wfp/imagingArray.hpp"
 
-#include "../improc/fitsFile.hpp"
-#include "../improc/fitsUtils.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
+#include "../ioutils/fits/fitsUtils.hpp"
 #include "../improc/imagePads.hpp"
 
 namespace mx
@@ -143,6 +143,9 @@ struct idealCoronagraph
    int propagateNC( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
                     complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is un-modified.
                   );
+   
+   bool apodize {false};
+   imageT apodizer;
 
 };
 
@@ -190,7 +193,7 @@ int idealCoronagraph<realT>::loadPupil( const std::string & pupilFile)
 
    imageT pupil;
 
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
 
    ff.read(pupil, pupilFile);
 
@@ -227,7 +230,12 @@ int idealCoronagraph<realT>::propagate( complexFieldT & pupilPlane )
    Eigen::Map<Eigen::Array<complexT,-1,-1> > eigWf(pupilPlane.data(), pupilPlane.cols(), pupilPlane.rows());
    Eigen::Map<Eigen::Array<realT,-1,-1> > eigPup(_realPupil.data(), _realPupil.cols(), _realPupil.rows());
 
-   eigWf = eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum())*eigPup;
+   eigWf = (eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum()))*eigPup;
+   
+   if(apodize)
+   {
+      eigWf *= apodizer;
+   }
 
    return 0;
 }

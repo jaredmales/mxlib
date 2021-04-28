@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include <iostream>
+#include <limits>
 
 
 namespace mx
@@ -274,24 +275,24 @@ void imageRotate( arrT & transim,  ///< [out] The rotated image.  Must be pre-al
   * output images worth of pixels are actually shifted.  This is useful, for instance, when propagating large turbulence phase screens
   * where one only needs a small section at a time.
   *
-  * \param [out] out contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
-  * \param [in] in is the image to be shifted.
-  * \param [in] dx is the amount to shift in the x direction
-  * \param [in] dy is the amount to shift in the y direction
-  *
   * \tparam outputArrT is the eigen array type of the output [will be resolved by compiler]
   * \tparam inputArrT is the eigen array type of the input [will be resolved by compiler]
   *
   */
 template<typename outputArrT, typename inputArrT>
-void imageShiftWP( outputArrT & out,
-                   inputArrT & in,
-                   int dx,
-                   int dy )
+void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
+                   inputArrT & in,    ///< [in] the image to be shifted.
+                   int dx,            ///< [in] the amount to shift in the x direction
+                   int dy             ///< [in] the amount to shift in the y direction
+                 )
 {
    dx %= in.rows();
    dy %= in.cols();
 
+   int outr = out.rows();
+   int outc = out.cols();
+   int inr = in.rows();
+   int inc = in.cols();
    #ifdef MXLIB_USE_OMP
    #pragma omp parallel
    #endif
@@ -301,22 +302,81 @@ void imageShiftWP( outputArrT & out,
       #ifdef MXLIB_USE_OMP
       #pragma omp for
       #endif
-      for(int i=0;i<out.rows(); ++i)
+      for(int cc=0;cc<outc; ++cc)
       {
-         x = i - dx;
+         y = cc - dy;
 
-         if(x < 0) x += in.rows();
-         else if (x >= in.rows()) x -= in.rows();
-
-         for(int j=0; j<out.cols(); ++j)
+         if (y < 0) y += inc;
+         else if (y >= inc) y -= inc;
+         
+         for(int rr=0; rr<outr; ++rr)
          {
-            y = j - dy;
-            if (y < 0) y += in.cols();
-            else if (y >= in.cols()) y -= in.cols();
+            x = rr - dx;
+            
+            if(x < 0) x += inr;
+            else if (x >= inr) x -= inr;
 
-            out(i, j) = in(x,y);
+            out(rr, cc) = in(x,y);
          }
       }
+      
+   }
+}
+
+/// Shift an image by whole pixels, wrapping around, with a scaling image applied to the shifted image.
+/** The output image can be smaller than the input image, in which case the wrapping still occurs for the input image, but only
+  * output images worth of pixels are actually shifted.  This is useful, for instance, when propagating large turbulence phase screens
+  * where one only needs a small section at a time.
+  *
+  * The scaling is applied to the output image.  The scale image must be the same size as the output image.
+  * 
+  * \tparam outputArrT is the eigen array type of the output [will be resolved by compiler]
+  * \tparam inputArrT is the eigen array type of the input [will be resolved by compiler]
+  * \tparam scaleArrT is the eigen array type of the scale image [will be resolved by compiler]
+  *
+  */
+template<typename outputArrT, typename inputArrT, typename scaleArrT>
+void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
+                   inputArrT & in,    ///< [in] the image to be shifted.
+                   scaleArrT & scale, ///< [in] image of scale values applied per-pixel to the output (shifted) image, same size as out
+                   int dx,            ///< [in] the amount to shift in the x direction
+                   int dy             ///< [in] the amount to shift in the y direction
+                 )
+{
+   dx %= in.rows();
+   dy %= in.cols();
+
+   int outr = out.rows();
+   int outc = out.cols();
+   int inr = in.rows();
+   int inc = in.cols();
+   #ifdef MXLIB_USE_OMP
+   //#pragma omp parallel
+   #endif
+   {
+      int x, y;
+
+      #ifdef MXLIB_USE_OMP
+      //#pragma omp for
+      #endif
+      for(int cc=0;cc<outc; ++cc)
+      {
+         y = cc - dy;
+
+         if (y < 0) y += inc;
+         else if (y >= inc) y -= inc;
+         
+         for(int rr=0; rr<outr; ++rr)
+         {
+            x = rr - dx;
+            
+            if(x < 0) x += inr;
+            else if (x >= inr) x -= inr;
+
+            out(rr, cc) = in(x,y)*scale(rr,cc);
+         }
+      }
+      
    }
 }
 
@@ -477,37 +537,37 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
       arrOutT kern;
       kern.resize(width,width);
 
-//      #pragma omp for
-      for(int i=0;i<Nrows; ++i)
+      for(int j=0;j<Ncols; ++j)
       {
          // (i,j) is position in new image
          // (x0,y0) is true position in old image
          // (i0,j0) is integer position in old image
          // (x, y) is fractional residual of (x0-i0, y0-j0)
+        
+         y0 = ycen0 + (j-ycen)*y_scale;
+         j0 = y0;
 
-         x0 = xcen0 + (i-xcen)*x_scale;
-         i0 = x0; //just converting to int
-
-         if(i0 < lbuff || i0 >= xulim)
+         if(j0 < lbuff || j0 >= yulim)
          {
-            for(int j=0;j<Ncols; ++j)
+            for(int i=0;i<Nrows; ++i)
             {
                transim(i,j) = 0;
             }
             continue;
          }
 
-         for(int j=0;j<Ncols; ++j)
+//       #pragma omp for
+         for(int i=0;i<Nrows; ++i)
          {
-
-            y0 = ycen0 + (j-ycen)*y_scale;
-            j0 = y0;
-
-            if(j0 < lbuff || j0 >= yulim)
+            x0 = xcen0 + (i-xcen)*x_scale;
+            i0 = x0; //just converting to int
+        
+            if(i0 < lbuff || i0 >= xulim)
             {
                transim(i,j) = 0;
                continue;
             }
+
 
             //Get the residual
             x = x0-i0;
@@ -517,7 +577,7 @@ void imageMagnify( arrOutT & transim, ///< [out] contains the magnified image.  
             transim(i,j) = (im.block(i0-lbuff,j0-lbuff, width, width) * kern).sum();
          }//for j
       }//for i
-   }//#pragam omp
+   }//#pragma omp
 
 }
 

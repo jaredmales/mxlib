@@ -1,5 +1,5 @@
 /** \file stringUtils.hpp
-  * \brief utilities for working with strings
+  * \brief Utilities for working with strings
   *
   * \author Jared R. Males (jaredmales@gmail.com)
   *
@@ -26,8 +26,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef stringUtils_hpp
-#define stringUtils_hpp
+#ifndef ioutils_stringUtils_hpp
+#define ioutils_stringUtils_hpp
 
 
 #include <string>
@@ -35,7 +35,6 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
-
 
 #include "../mxlib.hpp"
 
@@ -81,7 +80,7 @@ namespace ioutils
   */
 template< typename typeT, unsigned width=0, char pad=' '>
 std::string convertToString( const typeT & value, ///< [in] the value of type typeT to be converted
-                             int precision = 0   ///< [in] [optional] the precision (see http://www.cplusplus.com/reference/ios/ios_base/precision/) to use for floating point types.
+                             int precision = 0    ///< [in] [optional] the precision (see http://www.cplusplus.com/reference/ios/ios_base/precision/) to use for floating point types.
                            )
 {
 
@@ -123,19 +122,15 @@ std::string convertToString( const typeT & value, ///< [in] the value of type ty
 
 }
 
-/// Specialization of convertToString to avoid converting a string to a string
-template<> inline
+// Specialization of convertToString to avoid converting a string to a string
+template<> 
 std::string convertToString<std::string>( const std::string & value,
-                                          int UNUSED(precision)
-                                        )
-{
-   return value;
-}
-
+                                          int precision
+                                        );
 
 
 /// Convert a string to a numerical value.
-/** The default version attempts to do the conversion with a simple c style cast.  The various template specializations
+/** The default version attempts to do the conversion with a simple c style cast.  Template specializations
   * handle conversions to the basic types.
   *
   * Example:
@@ -147,8 +142,6 @@ std::string convertToString<std::string>( const std::string & value,
   *
   * \tparam typeT is the type of the numerical value desired
   *
-  *
-  *
   * \returns the converted numerical value.
   */
 template<typename typeT>
@@ -158,207 +151,75 @@ typeT convertFromString( const std::string & str /**< [in] is the string to conv
    return (typeT) str;
 }
 
+template<> 
+char convertFromString<char>(const std::string & str /* [in] is the string to convert*/ );
 
+template<> 
+char16_t convertFromString<char16_t>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for char
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<>  inline
-char convertFromString<char>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return (char) atoi(str.c_str());
-}
+template<> 
+char32_t convertFromString<char32_t>(const std::string & str /* [in] is the string to convert*/ );
 
+template<> 
+wchar_t convertFromString<wchar_t>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for unsigned char
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-unsigned char convertFromString<unsigned char>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return (unsigned char) atoi(str.c_str());
-}
+template<>
+signed char convertFromString<signed char>(const std::string & str /* [in] is the string to convert*/ );
 
+template<>
+unsigned char convertFromString<unsigned char>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for short
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<>  inline
-short convertFromString<short>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return (short) atoi(str.c_str());
-}
+template<> 
+short convertFromString<short>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for unsigned short
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-unsigned short convertFromString<unsigned short>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return (unsigned short) atoi(str.c_str());
-}
+template<> 
+unsigned short convertFromString<unsigned short>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for int
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-int convertFromString<int>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return atoi(str.c_str());
-}
+template<>
+int convertFromString<int>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for unsigned int
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-unsigned int convertFromString<unsigned int>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return (unsigned int) strtoul(str.c_str(),0,0);
-}
+template<>
+unsigned int convertFromString<unsigned int>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for long
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-long convertFromString<long>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtol(str.c_str(), 0, 0);
-}
+template<>
+long convertFromString<long>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for unsigned long
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<>  inline
-unsigned long convertFromString<unsigned long>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtoul(str.c_str(), 0, 0);
-}
+template<>
+unsigned long convertFromString<unsigned long>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for long long
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-long long convertFromString<long long>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtoll(str.c_str(), 0, 0);
-}
+template<>
+long long convertFromString<long long>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for unsigned long long
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-unsigned long long convertFromString<unsigned long long>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtoull(str.c_str(), 0, 0);
-}
+template<>
+unsigned long long convertFromString<unsigned long long>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for float
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-float convertFromString<float>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtof(str.c_str(), 0);
-}
+template<>
+float convertFromString<float>(const std::string & str /* [in] is the string to convert*/ );
 
+template<>
+double convertFromString<double>(const std::string & str /* [in] is the string to convert*/ );
 
-/// Template specialization of convertFromString for double
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-double convertFromString<double>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtod(str.c_str(), 0);
-}
-
-/// Template specialization of convertFromString for long double
-/**
-  *
-  *
-  * \returns the converted numerical value.
-  */
-template<> inline
-long double convertFromString<long double>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   return strtold(str.c_str(), 0);
-}
+template<>
+long double convertFromString<long double>(const std::string & str /* [in] is the string to convert*/ );
 
 
 /// Template specialization of convertFromString for bool
-/** First looks for 0/1,f/t, or F/T in the first non-space character of str.
-  * otherwise uses convertFromString\<int\>.
+/** First looks for 0/1, f/t, or F/T in the first non-space character of str.
+  * Otherwise, we use convertFromString\<int\>.
   *
   * \returns the converted numerical value.
   */
-template<> inline
-bool convertFromString<bool>(const std::string & str /**< [in] is the string to convert*/ )
-{
-   char c = str[0];
-   size_t i=0;
-   while(isspace(c) && i < str.length()) c = str[i++];
-
-   if(c == '0' || c == 'f' || c == 'F') return false;
-   if(c == '1' || c == 't' || c == 'T') return true;
-
-   return (bool) convertFromString<int>(str);
-}
-
-
+template<>
+bool convertFromString<bool>(const std::string & str /**< [in] is the string to convert*/ );
 
 
 /// Convert a string to all lower case.
 /** Calls the c tolower function for each character in instr.
   *
   */
-inline
 void toLower( std::string &outstr, ///< [out]  will be resized and populated with the lower case characters
               const std::string & instr ///< [in] is the string to convert
-            )
-{
-   outstr.resize(instr.size());
-
-   for(size_t i=0; i < instr.size(); ++i) outstr[i] = tolower(instr[i]);
-
-}
-
-
-
+            );
 
 /// Convert a string to all lower case.
 /** Calls the c tolower function for each character in instr.
@@ -366,33 +227,15 @@ void toLower( std::string &outstr, ///< [out]  will be resized and populated wit
   *
   * \return the all lower case string
   */
-inline
-std::string toLower(const std::string & instr /**< [in] is the string to convert*/ )
-{
-   std::string outstr;
-
-   toLower(outstr, instr);
-
-   return outstr;
-}
+std::string toLower(const std::string & instr /**< [in] is the string to convert*/ );
 
 /// Convert a string to all upper case.
 /** Calls the c toupper function for each character in instr.
   *
   */
-inline
 void toUpper( std::string &outstr, ///< [out]  will be resized and populated with the lower case characters
               const std::string & instr ///< [in] is the string to convert
-            )
-{
-   outstr.resize(instr.size());
-
-   for(size_t i=0; i < instr.size(); ++i) outstr[i] = toupper(instr[i]);
-
-}
-
-
-
+            );
 
 /// Convert a string to all upper case.
 /** Calls the c toupper function for each character in instr.
@@ -400,29 +243,15 @@ void toUpper( std::string &outstr, ///< [out]  will be resized and populated wit
   *
   * \return the all lower case string
   */
-inline
-std::string toUpper(const std::string & instr /**< [in] is the string to convert*/ )
-{
-   std::string outstr;
-
-   toUpper(outstr, instr);
-
-   return outstr;
-}
+std::string toUpper(const std::string & instr /**< [in] is the string to convert*/ );
 
 ///Remove all white space from a string.
 /**
   * Uses std::remove_if.
   */
-inline
 void removeWhiteSpace( std::string & outstr, ///< [out] will contain the new string with no whitespace.
                        const std::string & instr ///< [in] is the string to remove whitespace from
-                     )
-{
-   outstr = instr;
-
-   outstr.erase(std::remove_if(outstr.begin(), outstr.end(), ::isspace), outstr.end());
-}
+                     );
 
 ///Remove all white space from a string.
 /**
@@ -430,68 +259,15 @@ void removeWhiteSpace( std::string & outstr, ///< [out] will contain the new str
   *
   * \returns the modified string.
   */
-inline
-std::string removeWhiteSpace( const std::string & instr /**< [in] is the string to remove whitespace from*/ )
-{
-   std::string outstr;
-
-   removeWhiteSpace(outstr, instr);
-
-   return outstr;
-}
-
+std::string removeWhiteSpace( const std::string & instr /**< [in] is the string to remove whitespace from*/ );
 
 /// Wrap a string by breaking it into smaller sized portions of a desired width
 /** Whenever possible breaks at spaces.  A single space is discarded at the break.
   */
-inline
 int stringWrap( std::vector<std::string> & lines, ///< [out] each new entry contains a wrapped portion of the string.  Not cleared, so can accumulate.
                 const std::string & str, ///< [in] the string to wrap
                 int width ///< [in] the maximum width of the output strings
-              )
-{
-   int L = str.length();
-
-   if(L == 0) return 0;
-   int startPos, tmpPos, endPos;
-
-   bool done = false;
-
-   startPos = 0;
-
-   while( !done )
-   {
-      if(startPos == L) --startPos; //Just to make sure
-
-      endPos = startPos + width;
-
-      if(endPos >= L)
-      {
-         lines.push_back( str.substr( startPos, L-startPos ));
-         done = true;
-      }
-      else
-      {
-         //Backup to nearest space
-         tmpPos = endPos;
-         while( !isspace(str[tmpPos]) && tmpPos >= startPos ) --tmpPos;
-
-         //If we aren't at the beginning (i.e. splitting consecutive characters) we use new end position
-         if(tmpPos > startPos) endPos = tmpPos;
-
-
-         lines.push_back( str.substr( startPos, endPos-startPos) );
-
-
-         startPos = endPos;
-
-         //Clear 1 space
-         if( str[startPos] == ' ') ++startPos;
-      }
-   }
-
-   return 0;
-}
+              );
 
 /// Parses a string into a vector of tokens delimited by a character
 /** E.g., the string 
@@ -546,9 +322,9 @@ void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding th
   * \tparam typeT the type to convert the tokens too.
   */
 template<typename typeT>
-void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding the parsed and converted tokens.  Is cleared.
-                        const std::string & s,  ///< [in] the string to parse
-                        const std::string & delims  ///< [in] the delimiters. 
+void parseStringVector( std::vector<typeT> & v,    ///< [out] the vector holding the parsed and converted tokens.  Is cleared.
+                        const std::string & s,     ///< [in] the string to parse
+                        const std::string & delims ///< [in] the delimiters. 
                       )
 {
    size_t st;
@@ -573,4 +349,4 @@ void parseStringVector( std::vector<typeT> & v, ///< [out] the vector holding th
 } //namespace ioutils
 } //namespace mx
 
-#endif //stringUtils_hpp
+#endif //ioutils_stringUtils_hpp

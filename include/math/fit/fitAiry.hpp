@@ -167,7 +167,7 @@ public:
    
    int fit()
    {
-      levmarInterface<fitterT>::fit();      
+      return levmarInterface<fitterT>::fit();      
    }
       
    realT A0()

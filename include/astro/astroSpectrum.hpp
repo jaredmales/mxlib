@@ -10,12 +10,12 @@
 
 #include <cmath>
 
-#include <boost/units/systems/si/codata/universal_constants.hpp>
 
-#include "../environment.hpp"
+#include "../sys/environment.hpp"
 #include "../ioutils/readColumns.hpp"
-#include "../gslInterpolation.hpp"
-
+#include "../math/gslInterpolation.hpp"
+#include "constants.hpp"
+#include "units.hpp"
 
 namespace mx
 {
@@ -116,16 +116,16 @@ struct baseSpectrum
 
 
    /// Characterize the spectrum as a filter transmission curve.
-   /** For a transmission curve given by \f$ T(\lambda ) \f$  The central wavelength is defined as
+   /** For a photonic transmission curve given by \f$ S(\lambda ) \f$  The mean photon wavelength is defined as
      * \f[ 
-       \lambda_0 = \frac{1}{w_{eff}}\int \frac{T(\lambda )}{T_{max}} \lambda d\lambda 
+       \lambda_0 = \frac{1}{\Delta\lambda_{0}}\int \frac{S(\lambda )}{S_{max}} \lambda d\lambda 
        \f]
      * where the effective width is defined by
        \f[ 
-        w_{eff} = \int \frac{T(\lambda )} { T_{max}} d\lambda 
+        \Delta\lambda_{o} = \int \frac{S(\lambda )} { S_{max}} d\lambda 
         \f]
      *
-     * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ T(\lambda) \f$.
+     * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ S(\lambda) \f$.
      *
      */
    void charTrans( realT & lambda0, ///< [out] the central wavelength of the filter
@@ -190,6 +190,27 @@ struct baseSpectrum
      * \todo check on integration method, should it be trap?
      *
      */
+   template<class filterT>
+   void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
+                  realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
+                  std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
+                  filterT & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
+                )
+   {
+      charFlux(flambda0, fnu0, fphot0, lambda, trans._spectrum);
+   }
+   
+   /// Characterize the flux densities of the spectrum w.r.t. a filter transmission curve
+   /** To obtain the flux (e.g. W/m^2) multiply these quantities by the effective width calculated using
+     * \ref charTrans.
+     * 
+     * \warning this only produces correct fphot0 for a spectrum in W/m^3.  DO NOT USE FOR ANYTHING ELSE.
+     *
+     * \todo use unit conversions to make it work for everything.
+     * \todo check on integration method, should it be trap?
+     *
+     */
    void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
                   realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
                   realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
@@ -225,8 +246,8 @@ struct baseSpectrum
       
       //fphot0
 
-      static realT h = boost::units::si::constants::codata::h / boost::units::si::joule/boost::units::si::seconds;
-      static realT c = boost::units::si::constants::codata::c / boost::units::si::meter*boost::units::si::seconds;
+      constexpr realT h = constants::h<units::si<realT>>();
+      constexpr realT c = constants::c<units::si<realT>>();
 
       fphot0 = half*_spectrum[0] * lambda[0]*trans[0];
 
@@ -287,13 +308,13 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 
       if(spectrumT::dataDirEnvVar)
       {
-         _dataDir = getEnv(spectrumT::dataDirEnvVar);
+         _dataDir = sys::getEnv(spectrumT::dataDirEnvVar);
       }
 
       return 0;
    }
 
-   ///Set the parameters of the spectrum, using the underlying spectrums parameter type.
+   ///Set the parameters of the spectrum, using the underlying spectrum's parameter type.
    /** This version also sets the data directory, instead of using the enivronment variable.
      *
      * \overload
@@ -315,9 +336,26 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
       std::vector<realT> rawLambda;
       std::vector<realT> rawSpectrum;
 
-      if(_dataDir == "") _dataDir = ".";
+      std::string fileName = spectrumT::fileName(_params);
 
-      std::string path = _dataDir + "/" + spectrumT::fileName(_params);
+      std::string path;
+
+      if(fileName.size() < 1)
+      {
+         std::cerr << "File name empty\n";
+         return -1;
+      }
+
+      if(_dataDir == "" && fileName[0] == '/')
+      {
+         path = fileName;
+      }
+      else
+      { 
+         if(_dataDir == "") _dataDir = ".";
+
+         path = _dataDir + "/" + fileName;
+      }
 
       if( spectrumT::readSpectrum(rawLambda, rawSpectrum, path, _params) < 0)
       {

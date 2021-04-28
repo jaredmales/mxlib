@@ -219,7 +219,7 @@ void turbLayer<realT>::shift( realT dt )
       _last_wdx[i] = wdx;
       _last_wdy[i] = wdy;
    }
-   shiftPhase /= sqrt(_nCombo);
+   if(_nCombo>1) shiftPhase /= sqrt(_nCombo);
 }
 
 template<typename realT>

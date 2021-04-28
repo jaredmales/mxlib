@@ -28,11 +28,11 @@
 #ifndef astroDynamics_hpp
 #define astroDynamics_hpp
 
+#include <cmath>
+
 #include "sofa.hpp"
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
+#include "../math/constants.hpp"
 #include "../math/geo.hpp"
 
 namespace mx
@@ -117,7 +117,7 @@ int getGMST( realT & GMST, ///< [out] GMST in hours
       return -1;
    }
    
-   GMST = sofa::iauGmst06(ut10, ut11, tt0, tt1)/(two_pi<realT>())*static_cast<realT>(24);
+   GMST = sofa::iauGmst06(ut10, ut11, tt0, tt1)/(math::two_pi<realT>())*static_cast<realT>(24);
    
    return 0;
 }
@@ -218,16 +218,16 @@ int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
 {
    realT ha_rad, dec_rad, lat_rad, az_rad, el_rad;
    
-   ha_rad = ha*static_cast<realT>(15)*pi<realT>()/static_cast<realT>(180);
-   dec_rad = dec*pi<realT>()/static_cast<realT>(180);
-   lat_rad = lat*pi<realT>()/static_cast<realT>(180);
+   ha_rad = ha*static_cast<realT>(15)*math::pi<realT>()/static_cast<realT>(180);
+   dec_rad = dec*math::pi<realT>()/static_cast<realT>(180);
+   lat_rad = lat*math::pi<realT>()/static_cast<realT>(180);
    
    az_rad = atan2(sin(ha_rad), cos(ha_rad)*sin(lat_rad)-tan(dec_rad)*cos(lat_rad));
    
    el_rad = asin(sin(lat_rad)*sin(dec_rad) + cos(lat_rad)*cos(dec_rad)*cos(ha_rad));
    
-   az = az_rad*static_cast<realT>(180)/pi<realT>() + static_cast<realT>(180);
-   el = el_rad*static_cast<realT>(180)/pi<realT>();
+   az = az_rad*static_cast<realT>(180)/math::pi<realT>() + static_cast<realT>(180);
+   el = el_rad*static_cast<realT>(180)/math::pi<realT>();
    
    return 0 ;
 }
@@ -235,6 +235,8 @@ int calcAzEl( realT & az, ///< [out] the calculated azimuth [degrees]
 ///Calculate the Parallactic Angle from the pre-calculated trig functions.  Result in radians.
 /** 
   * \returns the  parallactic angle in radians.
+  * 
+  * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
   * 
   * \ingroup posastro
   */
@@ -253,6 +255,8 @@ realT parAngRad( realT sinHA,  ///< [in] the sine of the target hour angle
 /** 
   * \returns the  parallactic angle in degrees.
   * 
+  * 
+  * 
   * \ingroup posastro
   */
 template<typename realT>
@@ -270,6 +274,8 @@ realT parAngDeg( realT sinHA,  ///< [in] the sine of the target hour angle
 /**
   * \return the parallactic angle in radians. 
   * 
+  * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
+  * 
   * \ingroup posastro
   */
 template<typename realT>
@@ -284,6 +290,8 @@ realT parAngRad( realT ha,  ///< [in] the hour angle, in radians, negative to th
 /// Calculate the Parallactic Angle, with angles in degrees
 /**
   * \return the parallactic angle in degrees. 
+  * 
+  * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
   * 
   * \ingroup posastro
   * 

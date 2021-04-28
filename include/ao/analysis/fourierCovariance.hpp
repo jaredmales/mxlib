@@ -9,22 +9,18 @@
 #define fourierCovariance_hpp
 
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
-
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
 
-
+#include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../sigproc/fourierModes.hpp"
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib_uncomp_version.h"
-#include "../../ompLoopWatcher.hpp"
-#include "../../timeUtils.hpp"
+#include "../../ipc/ompLoopWatcher.hpp"
+#include "../../sys/timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"
 
 #include "../../math/func/airyPattern.hpp"
@@ -34,7 +30,6 @@ using namespace boost::math::constants;
 #include "aoAtmosphere.hpp"
 #include "aoPSDs.hpp"
 #include "aoSystem.hpp"
-#include "mxaoa_version.h"
 #include "varmapToImage.hpp"
 
 
@@ -98,11 +93,11 @@ realT phiInt_basic (realT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = math::func::jinc(pi<realT>()*D*kmn_p);
-   Ji_mn_m = math::func::jinc(pi<realT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(math::pi<realT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(math::pi<realT>()*D*kmn_m);
 
 
-   realT N = 1./sqrt(0.5 + p*math::func::jinc(2*pi<realT>()*sqrt(m*m+n*n)));
+   realT N = 1./sqrt(0.5 + p*math::func::jinc(math::two_pi<realT>()*sqrt(m*m+n*n)));
 
    Q_mn = N*(Ji_mn_p + p*Ji_mn_m);
 
@@ -115,10 +110,10 @@ realT phiInt_basic (realT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
 
-   Ji_mpnp_p = math::func::jinc(pi<realT>()*D*kmpnp_p);
-   Ji_mpnp_m = math::func::jinc(pi<realT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(math::pi<realT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(math::pi<realT>()*D*kmpnp_m);
 
-   realT Np = 1./sqrt(0.5 + pp*math::func::jinc(2*pi<realT>()*sqrt(mp*mp+np*np)));
+   realT Np = 1./sqrt(0.5 + pp*math::func::jinc(math::two_pi<realT>()*sqrt(mp*mp+np*np)));
 
    Q_mpnp = Np*(Ji_mpnp_p + pp*Ji_mpnp_m);
 
@@ -166,8 +161,8 @@ realT phiInt_mod (realT phi, void * params)
    kmn_p = sqrt( pow(k*cosp + m/D, 2) + pow(k*sinp + n/D, 2));
    kmn_m = sqrt( pow(k*cosp - m/D, 2) + pow(k*sinp - n/D, 2));
 
-   Ji_mn_p = math::func::jinc(pi<realT>()*D*kmn_p);
-   Ji_mn_m = math::func::jinc(pi<realT>()*D*kmn_m);
+   Ji_mn_p = math::func::jinc(math::pi<realT>()*D*kmn_p);
+   Ji_mn_m = math::func::jinc(math::pi<realT>()*D*kmn_m);
 
 
    /*** primed ***/
@@ -178,8 +173,8 @@ realT phiInt_mod (realT phi, void * params)
    kmpnp_m = sqrt( pow(k*cosp - mp/D, 2) + pow(k*sinp - np/D, 2));
 
 
-   Ji_mpnp_p = math::func::jinc(pi<realT>()*D*kmpnp_p);
-   Ji_mpnp_m = math::func::jinc(pi<realT>()*D*kmpnp_m);
+   Ji_mpnp_p = math::func::jinc(math::pi<realT>()*D*kmpnp_p);
+   Ji_mpnp_m = math::func::jinc(math::pi<realT>()*D*kmpnp_m);
 
    realT QQ;
 
@@ -192,13 +187,13 @@ realT phiInt_mod (realT phi, void * params)
       QQ = 2.0*( Ji_mn_p*Ji_mpnp_m + Ji_mn_m*Ji_mpnp_p);
    }
 
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
+   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 1.0); //psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
 
    if(mnCon > 0 )
    {
       if( k*D <= mnCon )
       {
-         P *= pow(two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS()+Pp->aosys->deltaTau()),2);
+         P *= pow(math::two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS()+Pp->aosys->deltaTau()),2);
       }
    }
 
@@ -239,13 +234,13 @@ realT kInt (realT k, void * params)
    Pp->k = k;
 
    //Tolerances of 1e-4 seem to be all we can ask for
-   gsl_integration_qag(&func, 0., 2*pi<double>(), 1e-10, 1e-4, WSZ, GSL_INTEG_GAUSS21, Pp->phi_w, &result, &error);
+   gsl_integration_qag(&func, 0., math::two_pi<double>(), 1e-10, 1e-4, WSZ, GSL_INTEG_GAUSS21, Pp->phi_w, &result, &error);
 
 
    return result;
 }
 
-///Structure to manage the Fourier mode covariance calculation
+/// Structure to manage the Fourier mode covariance calculation, passed to integration functions
 /**
   * \tparam realT a floating point type used for all calculations.  As of Nov 2016 must be double due to gsl_integration.
   * \tparam aosysT the type of the AO system structure
@@ -257,7 +252,7 @@ struct fourierCovariance
    aosysT * aosys {nullptr};
 
    ///Flag controlling use of basic or modified Fourier modes.  If true, the basic sin/cos modes are used.  If false (default), the modified modes are u sed.
-   bool useBasic;
+   bool useBasic {false};
 
    ///p-index of the unprimed mode.  +/-1 for modified modes.  If basic, then +1==>cosine, -1==>sine.
    int p;
@@ -281,13 +276,13 @@ struct fourierCovariance
    realT k;
 
    ///The maximum controlled value of spatial frequency (k*D).  If < 0 then not controlled.
-   realT mnCon;
+   realT mnCon {0};
 
    ///Absolute tolerance for the radial integral.  Default is 1e-7.
-   realT absTol;
+   realT absTol {1e-7};
 
    ///Relative tolerance for the radial integral. Default is 1e-7.
-   realT relTol;
+   realT relTol {1e-7};
 
    ///Working memory for the azimuthal integral.
    gsl_integration_workspace * phi_w;
@@ -295,17 +290,9 @@ struct fourierCovariance
    ///Working memory for the radial integral.
    gsl_integration_workspace * k_w;
 
-
    ///Constructor
    fourierCovariance()
    {
-      useBasic = false;
-
-      mnCon = 0;
-
-      absTol = 1e-7;
-      relTol = 1e-7;
-
       phi_w = gsl_integration_workspace_alloc (WSZ);
       k_w = gsl_integration_workspace_alloc (WSZ);
    }
@@ -352,7 +339,7 @@ int fourierVarVec( const std::string & fname,
 
    std::vector<realT> var(N,0);
 
-   mx::ompLoopWatcher<> watcher(N, std::cerr);
+   ipc::ompLoopWatcher<> watcher(N, std::cerr);
 
    realT mnCon = 0;
    if( aosys.d_min() > 0)
@@ -403,7 +390,7 @@ int fourierVarVec( const std::string & fname,
       {
          if( k*D < mnCon )
          {
-            P *= pow(two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+            P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
          }
       }
 
@@ -453,7 +440,7 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
          {
             if( k*D < mnCon )
             {
-               P *= pow(two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+               P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
             }
          }
 
@@ -479,15 +466,16 @@ int fourierPSDMap( improc::eigenImage<realT> & var, ///< [out] The variance esti
 }
 
 template<typename realT>
-int fourierCovarMap( const std::string & fname,
-                     int N,
+int fourierCovarMap( const std::string & fname, ///< [out] the path where the output FITS file will be written
+                     int N, ///< [in] the linear number of Fourier modes across the aperture.  The Nyquist frequency is set by N/2.
                      realT D,
                      realT L_0,
                      bool subPist,
                      bool subTilt,
                      realT absTol,
                      realT relTol,
-                     bool modified=true)
+                     bool modified=true
+                   )
 {
    std::vector<mx::sigproc::fourierModeDef> ml;
    mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
@@ -512,7 +500,7 @@ int fourierCovarMap( const std::string & fname,
 
    //int ncalc = 0.5*( psz*psz - psz);
 
-   mx::ompLoopWatcher<> watcher(psz, std::cout);
+   ipc::ompLoopWatcher<> watcher(psz, std::cout);
 
    std::cerr << "Starting . . .\n";
    #pragma omp parallel
@@ -547,9 +535,10 @@ int fourierCovarMap( const std::string & fname,
       }
    }
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
-   head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
+   head.append("NSUBAP", N, "Linear number of s.f. sampled");
+   head.append("L0", aosys.atm.L_0(0), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
    head.append("SUBTILT", aosys.psd.subTipTilt(), "Tip/Tilt subtractioon true/false flag");
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
@@ -558,7 +547,7 @@ int fourierCovarMap( const std::string & fname,
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    
 
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    ff.write(fname + ".fits", covar, head);
 
    return 0;
@@ -590,7 +579,7 @@ int fourierCovarMapSeparated( const std::string & fname,
       mnCon = floor( aosys.D()/aosys.d_min()/2.0);
    }
 
-   mx::ompLoopWatcher<> watcher((psz+1)*0.125*(psz+1)*2, std::cout);
+   ipc::ompLoopWatcher<> watcher((psz+1)*0.125*(psz+1)*2, std::cout);
 
    #pragma omp parallel
    {
@@ -636,7 +625,7 @@ int fourierCovarMapSeparated( const std::string & fname,
       }
    }
 
-   improc::fitsHeader head;
+   fits::fitsHeader head;
    head.append("DIAMETER", aosys.D(), "Diameter in meters");
    head.append("L0", aosys.atm.L_0(), "Outer scale (L_0) in meters");
    head.append("SUBPIST", aosys.psd.subPiston(), "Piston subtractioon true/false flag");
@@ -647,7 +636,7 @@ int fourierCovarMapSeparated( const std::string & fname,
    
    fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
    
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    ff.write(fname + "_pp.fits", covar_pp, head);
    ff.write(fname + "_ppp.fits", covar_ppp, head);
 
@@ -658,7 +647,7 @@ template<typename realT>
 void calcKLCoeffs( const std::string & outFile,
                    const std::string & cvFile )
 {
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
 
    Eigen::Array<realT,-1,-1> cvT, cv, evecs, evals;
 
@@ -670,11 +659,11 @@ void calcKLCoeffs( const std::string & outFile,
    std::cerr << "1\n";
    math::syevrMem<double> mem;
 
-   double t0 = get_curr_time<double>();
+   double t0 = sys::get_curr_time();
 
    int info = math::eigenSYEVR<double,double>(evecs, evals, cv, 0, -1, 'U', &mem);
 
-   double t1 = get_curr_time<double>();
+   double t1 = sys::get_curr_time();
 
    std::cerr << "2\n";
 
@@ -722,7 +711,7 @@ void makeFKL( const std::string & outFile,
               int N,
               int pupSize )
 {
-   improc::fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    Eigen::Array<realT, -1, -1> evecs;
 
    ff.read(evecs, coeffs);

@@ -5,7 +5,7 @@
   *
   */
 
-#include "fitsHeader.hpp"
+#include "../ioutils/fits/fitsHeader.hpp"
 
 #ifndef ADIDerotator_hpp
 #define ADIDerotator_hpp
@@ -62,9 +62,9 @@ struct ADIDerotator
    }
          
    ///Method called by ADIobservation to get keyword-values
-   void extractKeywords(std::vector<fitsHeader> & heads /**< [in] The headers from the images being reduced.*/)
+   void extractKeywords(std::vector<fits::fitsHeader> & heads /**< [in] The headers from the images being reduced.*/)
    {
-      m_angles = headersToValues<realT>(heads, m_angleKeyword);
+      m_angles = fits::headersToValues<realT>(heads, m_angleKeyword);
    }
    
    ///Calculate the derotation angle for a given image number
@@ -81,6 +81,9 @@ struct ADIDerotator
 
 
 ///@}
+
+extern template struct ADIDerotator<float>;
+extern template struct ADIDerotator<double>;
 
 } //namespace improc
 } //namespace mx

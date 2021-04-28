@@ -11,12 +11,15 @@
 #include <cmath>
 
 #include "../../wfp/imagingUtils.hpp"
-//#include <mx/fraunhoferImager.hpp>
-#include "../../timeUtils.hpp"
-#include "../../improc/fitsFile.hpp"
-#include "../../improc/ds9Interface.hpp"
+#include "../../sys/timeUtils.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 
 #include "../../ioutils/readColumns.hpp"
+
+#include "../../math/constants.hpp"
+
+#include "../../math/cuda/cudaPtr.hpp"
+#include "../../math/cuda/templateCublas.hpp"
 
 #include "../aoPaths.hpp"
 #include "wavefront.hpp"
@@ -38,8 +41,6 @@ namespace AO
 
 namespace sim
 {
-
-using namespace boost::math::constants;
 
 struct deformableMirrorSpec
 {
@@ -64,13 +65,13 @@ public:
 
    typedef deformableMirrorSpec specT;
 
-protected:
+public: //<-give these accesors and make protected
 
    std::string _name;
 
    std::string _basisName;
 
-   std::string _pupilName;
+   std::string m_pupilName;
 
    ///Time to move from old shape to new shape, in loop time steps
    int _settleTime;
@@ -82,19 +83,37 @@ protected:
    ///The amplitude used when measuring the response matrix of the current basis set.
    float _calAmp;
 
-   ///The system pupil, possibly apodized, etc.
-   imageT _pupil;
-   realT m_pupilSum;
+
+   imageT m_pupil;    ///The system pupil, possibly apodized, etc.
+   realT m_pupilSum; ///The sum of the pupil mask, nominally the number of pixels.
+   std::vector<size_t> m_idx; /// The offset coordinates of non-zero pixels in the pupil
+   
 
 public:
-   improc::ds9Interface ds9i_shape, ds9i_phase, ds9i_acts;
 
    //The modes-2-command matrix for the basis
-   Eigen::Array<realT, -1, -1> _m2c;
+   Eigen::Array<realT, -1, -1> m_m2c;
 
    //The mirror influence functions
-   improc::eigenCube<realT> _infF;
-
+   improc::eigenCube<realT> m_infF;
+   
+   #ifdef MXAO_USE_GPU
+   cublasHandle_t *m_cublasHandle;
+   cuda::cudaPtr<realT> m_one;
+   cuda::cudaPtr<realT> m_alpha;
+   cuda::cudaPtr<realT> m_zero;
+   
+   cuda::cudaPtr<realT> m_devM2c;
+   cuda::cudaPtr<realT> m_devInfF;
+   
+   cuda::cudaPtr<realT> m_devModeCommands;
+   cuda::cudaPtr<realT> m_devActCommands;
+   cuda::cudaPtr<realT> m_devShape;
+   #endif
+   
+   size_t m_nActs;
+   size_t m_nRows;
+   size_t m_nCols;
 
 protected:
    //The current shape of the mirror
@@ -120,8 +139,11 @@ public:
       }
    }
 
-   int initialize( specT & spec,
-                   const std::string & pupil);
+   template<typename AOSysT>
+   void initialize( AOSysT & AOSys, 
+                    specT & spec,
+                    const std::string & pupil
+                  );
 
    std::string name()
    {
@@ -158,9 +180,11 @@ public:
    realT _settledIter;
 
    template<typename commandT>
-   void setShape(commandT commandV);
+   void setShape(commandT & commandV);
 
-   void applyShape(wavefrontT & wf,  realT lambda);
+   void applyShape( wavefrontT & wf,  
+                    realT lambda
+                  );
 
    double t0, t1, t_mm, t_sum;
 
@@ -168,14 +192,6 @@ public:
    bool _commandFileOpen;
    std::string _commandFile;
    std::ofstream _commandFout;
-
-   int display_phase;
-   int display_phase_counter;
-   int display_shape;
-   int display_shape_counter;
-
-   int display_acts;
-   int display_acts_counter;
 
    realT _commandLimit;
 
@@ -196,24 +212,12 @@ deformableMirror<_realT>::deformableMirror()
    _settling = 0;
    _settleTime_counter = 0;
    _calAmp = 1e-6;
-
-   ds9i_shape.title("DM_Shape");
-   ds9i_phase.title("DM_Phase");
-   ds9i_acts.title("DM_Actuators");
-
+   
    t_mm = 0;
    t_sum = 0;
 
    _writeCommands = false;
    _commandFileOpen = false;
-
-   display_phase = 0;
-   display_phase_counter = 0;
-   display_shape = 0;
-   display_shape_counter = 0;
-
-   display_acts = 0;
-   display_acts_counter = 0;
 
    _commandLimit = 0;
 
@@ -222,38 +226,97 @@ deformableMirror<_realT>::deformableMirror()
    //std::cerr << "sigma.size() = " << sigma.size() << "\n";
 }
 
-
 template<typename _realT>
-int deformableMirror<_realT>::initialize( specT & spec,
+template<typename AOSysT>
+void deformableMirror<_realT>::initialize( AOSysT & AOSys, 
+                                           specT & spec,
                                            const std::string & pupil )
 {
    _name = spec.name;
    _basisName = spec.basisName;
-   _pupilName = pupil;
+   m_pupilName = pupil;
 
-   improc::fitsFile<_realT> ff;
+   fits::fitsFile<_realT> ff;
 
    std::string pName;
-   pName = mx::AO::path::pupil::pupilFile(_pupilName);
-   ff.read(_pupil, pName);
-   m_pupilSum = _pupil.sum();
+   pName = mx::AO::path::pupil::pupilFile(m_pupilName);
+   ff.read(m_pupil, pName);
+   m_pupilSum = m_pupil.sum();
 
+   m_idx.clear();
+   int kk = 0;
+   for(int rr=0;rr<m_pupil.rows();++rr)
+   {
+      for(int cc=0;cc<m_pupil.cols();++cc)
+      {
+         if(m_pupil(rr,cc) == 1)
+         {
+            m_idx.push_back(kk);
+         }
+         ++kk;
+      }
+   }
+   
    if(_name == "modalDM")
    {
       std::cerr << "modalDM\n";
 
       std::string ifName;
       ifName = mx::AO::path::basis::modes(_basisName);
-      ff.read(_infF, ifName);
+      
+      ff.read(m_infF, ifName);
 
-      _m2c.resize( _infF.planes(), _infF.planes());
-      _m2c.setZero();
+      m_nActs = m_infF.planes();
+      m_nRows = m_infF.rows();
+      m_nCols = m_infF.cols();
 
-      for(int i=0;i<_m2c.rows();++i) _m2c(i,i) = 1.0;
+      m_m2c.resize( m_nActs, m_nActs);
+      m_m2c.setZero();
 
+      for(int i=0;i<m_m2c.rows();++i) m_m2c(i,i) = 1.0;
+      
+      #ifdef MXAO_USE_GPU
+      
+      m_cublasHandle = &AOSys.m_cublasHandle;
+      
+      m_one.resize(1);
+      realT one = 1.0;
+      m_one.upload(&one, 1);
+      
+      m_alpha.resize(1);
+      realT alpha = -1*_calAmp;
+      m_alpha.upload(&alpha, 1);
+      
+      m_zero.resize(1);
+      m_zero.initialize();
+      
+      mx::improc::eigenImage<realT> modft;
+      
+      modft.resize( m_idx.size(),m_nActs);
+   
+      for(int pp=0;pp<m_nActs;++pp)
+      {
+         for(int nn=0; nn < m_idx.size(); ++nn)
+         {
+            *(modft.data() + pp*m_idx.size() + nn) = *(m_infF.image(pp).data() + m_idx[nn]);
+         }
+      }
+   
+      m_devInfF.upload(modft.data(), modft.rows()*modft.cols());
+      
+      m_devM2c.upload(m_m2c.data(), m_m2c.rows()*m_m2c.cols());
+      
+      m_devModeCommands.resize(m_nActs);
+      m_devActCommands.resize(m_nActs);
+      
+      #endif
+      
    }
    else
    {
+      std::cerr << "Non-modal DM is currently not implemented\n";
+      exit(-1);
+#if 0
       std::string ifName;
       ifName = mx::AO::path::dm::influenceFunctions(_name);
 
@@ -262,35 +325,36 @@ int deformableMirror<_realT>::initialize( specT & spec,
       ff.read(infFLoad, ifName);
 
       realT c = 0.5*(infFLoad.rows()-1);
-      realT w = 0.5*(_pupil.rows()-1);
+      realT w = 0.5*(m_pupil.rows()-1);
 
-      _infF.resize( _pupil.rows(), _pupil.cols(), infFLoad.planes());
+      m_infF.resize( m_pupil.rows(), m_pupil.cols(), infFLoad.planes());
 
       for(int i=0;i<infFLoad.planes(); ++i)
       {
-         _infF.image(i) = infFLoad.image(i).block( c-w, c-w, _pupil.rows(), _pupil.rows());
+         m_infF.image(i) = infFLoad.image(i).block( c-w, c-w, m_pupil.rows(), m_pupil.rows());
       }
 
       std::string m2cName;
 
       m2cName = mx::AO::path::dm::M2c( _name, _basisName );
 
-      ff.read(_m2c, m2cName);
+      ff.read(m_m2c, m2cName);
 
 
       std::string posName =  mx::AO::path::dm::actuatorPositions(_name, true);
 
       ff.read(_pos, posName);
+#endif
 
    }
 
-   _shape.resize(_infF.rows(), _infF.cols());
+   _shape.resize(m_nRows, m_nCols);
 
    _shape.setZero();
    _nextShape = _shape;
    _oldShape = _shape;
 
-   return 0;
+   return;
 }
 
 
@@ -323,13 +387,19 @@ template<typename _realT>
 void deformableMirror<_realT>::calAmp(realT ca)
 {
    _calAmp = ca;
+   
+    #ifdef MXAO_USE_GPU
+   realT alpha = -1*_calAmp;
+   m_alpha.upload(&alpha, 1);
+   #endif
+      
 }
 
 
 template<typename _realT>
 int deformableMirror<_realT>::nModes()
 {
-   return _m2c.cols();
+   return m_m2c.cols();
 }
 
 
@@ -344,50 +414,38 @@ void deformableMirror<_realT>::applyMode(wavefrontT & wf, int modeNo, realT amp,
 
    Eigen::Array<_realT, -1, -1> c;
 
-   t0 = get_curr_time();
-   c = _m2c.matrix() * commandV.matrix().transpose();
-   t1 = get_curr_time();
+   t0 = sys::get_curr_time();
+   c = m_m2c.matrix() * commandV.matrix().transpose();
+   t1 = sys::get_curr_time();
    t_mm += t1-t0;
 
-   imageT shape( _infF.rows(), _infF.cols());
+   imageT shape( m_nRows, m_nCols);
 
 
-   shape = c(0,0)*_infF.image(0);
+   shape = c(0,0)*m_infF.image(0);
 
 
-   t0 = get_curr_time();
+   t0 = sys::get_curr_time();
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp;
-      //tmp.resize(_infF.rows(), _infF.cols());
+      //tmp.resize(m_nRows, m_nCols);
       //tmp.setZero();
-      tmp.setZero(_infF.rows(), _infF.cols());
+      tmp.setZero(m_nRows, m_nCols);
 
       #pragma omp for schedule(static)
-      for(int i=1;i < _infF.planes(); ++i)
+      for(int i=1;i < m_nActs; ++i)
       {
-         tmp +=  c(i,0) * _infF.image(i);
+         tmp +=  c(i,0) * m_infF.image(i);
       }
       #pragma omp critical
       shape += tmp;
    }
 
-   t1 = get_curr_time();
+   t1 = sys::get_curr_time();
    t_sum += t1-t0;
-  // ds9_interface_display_raw( &ds9i, 1, shape.data(), shape.rows(), shape.cols(),1, mx::getFitsBITPIX<realT>());
 
-   wf.phase += 2*amp*shape*_pupil*two_pi<realT>()/lambda;
-
-   if( display_shape > 0)
-   {
-      ++display_shape_counter;
-
-      if(display_shape_counter >= display_shape)
-      {
-         ds9i_shape(wf.phase);
-         display_shape_counter = 0;
-      }
-   }
+   wf.phase += 2*amp*shape*m_pupil*math::two_pi<realT>()/lambda;
 
 }
 
@@ -443,7 +501,7 @@ void makeMap( Eigen::Array<realT, -1, -1> & map,  Eigen::Array<realT, -1, -1> & 
 
 template<typename _realT>
 template<typename commandT>
-void deformableMirror<_realT>::setShape(commandT commandV)
+void deformableMirror<_realT>::setShape(commandT & commandV)
 {
 
    if(_settling)
@@ -453,15 +511,35 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    }
 
 
-   Eigen::Array<_realT, -1, -1> c;
+   static Eigen::Array<_realT, -1, -1> c; //static to avoid re-alloc, todo: make class member
 
-   //c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
-   c = -1*_calAmp*_m2c.matrix() * commandV.measurement.matrix().transpose();
+   #ifdef MXAO_USE_GPU
+   m_devModeCommands.upload(commandV.measurement.data(), commandV.measurement.size());
+   realT alpha;
+   cublasStatus_t stat = cuda::cublasTgemv<realT>(*m_cublasHandle, CUBLAS_OP_N,  m_nActs, m_nActs, m_alpha(), m_devM2c(), m_devModeCommands(), m_zero(), m_devActCommands());
 
+   if(stat != CUBLAS_STATUS_SUCCESS)
+   {
+      std::cerr << "cublas error\n";
+   }
+   
+
+   //c.resize(m_nActs,1);
+   //m_devActCommands.download(c.data());
+   
+   
+   #else
+   Eigen::Map<Eigen::Array<realT,-1,-1>> commandV_measurement(commandV.measurement.data(), 1, commandV.measurement.size());
+   c = -1*_calAmp*m_m2c.matrix() * commandV_measurement.matrix().transpose();
+   
+   #endif
+
+#if 0
+   
    if(_commandLimit > 0)
    {
-      realT r1 = sqrt( pow(_pos(0,1) - _pos(0,0),2) + pow(_pos(1,1) - _pos(1,0),2));
 
+      realT r1 = sqrt( pow(_pos(0,1) - _pos(0,0),2) + pow(_pos(1,1) - _pos(1,0),2));
 
       realT r;
 
@@ -489,24 +567,6 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       if(nLimited > 0) std::cerr << nLimited << " strokes limited\n";
 
    }
-
-
-
-
-   if( display_acts > 0)
-   {
-      ++display_acts_counter;
-
-      if(display_acts_counter >= display_acts)
-      {
-         makeMap( _map, _pos, c);
-
-         ds9i_acts(_map);
-//          ds9_interface_display_raw( &ds9i_acts, 1, _map.data(), _map.rows(), _map.cols(),1, mx::getFitsBITPIX<realT>());
-         display_acts_counter = 0;
-      }
-   }
-
 
 #if 0
    if(_commandLimit > 0 )
@@ -542,7 +602,7 @@ void deformableMirror<_realT>::setShape(commandT commandV)
    bool skipFrame = 0;
 
    ///\todo Should check for command limits here.
-   for(int i=0; i< _infF.planes(); ++i)
+   for(int i=0; i< m_nActs; ++i)
    {
       if( std::isnan( c(i,0) ) || !std::isfinite(c(i,0)))
       {
@@ -557,29 +617,61 @@ void deformableMirror<_realT>::setShape(commandT commandV)
       return;
    }
 
-   //_nextShape.setZero();
-   _nextShape = c(0,0)*_infF.image(0);//*sigma[0];
+#endif
+
+   #ifdef MXAO_USE_GPU
+   
+   static std::vector<realT> tmp;
+   tmp.resize(m_idx.size());
+   
+   m_devShape.resize(m_idx.size()); //no-op except first time.
+   m_devShape.initialize();
+   
+   for(int i=0; i < m_nActs; ++i)
+   {
+      //realT alpha = c(i,0);
+      cuda::cublasTaxpy<realT>(*m_cublasHandle, m_idx.size(), m_devActCommands()+i, m_devInfF() + i*m_idx.size(), 1, m_devShape(), 1);
+   }
+   
+   m_devShape.download(tmp.data());
+   
+   _nextShape.setZero();
+   
+   realT * imP = _nextShape.data();
+   
+   for(size_t n=0; n<m_idx.size(); ++n)  imP[m_idx[n]] = tmp[n];
+         
+   #else
+   
+   _nextShape = c(0,0)*m_infF.image(0);//*sigma[0];
+   
    #pragma omp parallel
    {
       Eigen::Array<_realT, -1, -1> tmp ;
-      tmp.resize(_infF.rows(), _infF.cols());
+      tmp.resize(m_nRows, m_nCols);
       tmp.setZero();
 
+      realT * tmpP = tmp.data();
       #pragma omp for
-      for(int i=1;i < _infF.planes(); ++i)
+      for(int i=1;i < m_nActs; ++i)
       {
-         tmp +=  c(i,0) * _infF.image(i);//*sigma[i];
+         realT * imP = m_infF.image(i).data();
+         for(size_t n=0; n<m_idx.size(); ++n) *(tmpP + m_idx[n]) += c(i,0) * *(imP + m_idx[n]);
       }
       #pragma omp critical
-      _nextShape += tmp;
+      {
+         realT * imP = _nextShape.data();
+         for(size_t n=0; n<m_idx.size(); ++n)  *(imP + m_idx[n]) += *(tmpP + m_idx[n]);
+      }
    }
+   #endif
 
     //================ filter here!!
     
 
    if(m_applyFilter)
    {
-      std::cerr << "filtering\n";
+      std::cerr << "DM filtering\n";
       m_filter.filter(_nextShape);
    }
       
@@ -607,8 +699,8 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
       BREAD_CRUMB;
        _shape = _oldShape + (_nextShape-_oldShape)*( (realT) _settleTime_counter+1.0)/( (realT) _settleTime);
 
-       realT mn = (_shape*_pupil).sum()/m_pupilSum;
-       _shape = (_shape - mn)*_pupil;
+       realT mn = (_shape*m_pupil).sum()/m_pupilSum;
+       _shape = (_shape - mn)*m_pupil;
        
        ++_settleTime_counter;
 
@@ -621,42 +713,14 @@ void deformableMirror<_realT>::applyShape(wavefrontT & wf,  realT lambda)
 #endif
 
 
-   if( display_shape > 0)
-   {
-      ++display_shape_counter;
-
-      if(display_shape_counter >= display_shape)
-      {
-         ds9i_shape(_shape);
-//          ds9_interface_display_raw( &ds9i_shape, 1, _shape.data(), _shape.rows(), _shape.cols(),1, mx::getFitsBITPIX<realT>());
-         display_shape_counter = 0;
-      }
-   }
-
    BREAD_CRUMB;
 
-   //wf.phase += 2*_shape*_pupil*two_pi<realT>()/lambda;
-
-   wf.phase += 2*_shape*two_pi<realT>()/lambda;
+   wf.phase += 2*_shape*math::two_pi<realT>()/lambda;
    
-   if( display_phase > 0)
-   {
-      ++display_phase_counter;
-
-      if(display_phase_counter >= display_phase)
-      {
-         ds9i_phase(wf.phase);
-//          ds9_interface_display_raw( &ds9i_phase, 1, wf.phase.data(), wf.phase.rows(), wf.phase.cols(),1, mx::getFitsBITPIX<realT>());
-
-         display_phase_counter = 0;
-      }
-   }
-
-
    BREAD_CRUMB;
 
    #ifdef MXAO_DIAG_LOOPCOUNTS
-   std::cerr << "DM " << _infF.planes() << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
+   std::cerr << "DM " << m_nActs << " Shape applied: " << wf.iterNo << " " << _settledIter << "\n";
    #endif
 }
 

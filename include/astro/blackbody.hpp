@@ -3,11 +3,9 @@
 
 #include <vector>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
 #include "units.hpp"
 #include "constants.hpp"
+#include "../math/constants.hpp"
 
 namespace mx
 {
@@ -23,7 +21,7 @@ typename units::realT equilibriumTemp( typename units::realT L, ///< [in] Stella
 {
    typedef typename units::realT realT;
    
-   return pow( (L * (1-Ab)/f) /( static_cast<realT>(16.0)*constants::sigma<units>()*pi<realT>()*r*r), static_cast<realT>(0.25));
+   return pow( (L * (1-Ab)/f) /( static_cast<realT>(16.0)*constants::sigma<units>()*math::pi<realT>()*r*r), static_cast<realT>(0.25));
 }
 
 ///The blackbody spectral energy distribution in the mx::astro::astroSpectrum form.
@@ -82,7 +80,7 @@ struct blackbody
 
       if( _radius != 0 and _distance != 0)
       {
-         solidang = pi<realT>()*pow(_radius/_distance,2);
+         solidang = math::pi<realT>()*pow(_radius/_distance,2);
       }
 
 

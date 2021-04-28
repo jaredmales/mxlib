@@ -29,11 +29,15 @@
 #ifndef psdUtils_hpp
 #define psdUtils_hpp
 
+#ifndef EIGEN_NO_CUDA
+#define EIGEN_NO_CUDA
+#endif
+
 #include <Eigen/Dense>
 
 #include <iostream>
 
-#include "../fft/fft.hpp"
+#include "../math/fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
 
 
@@ -46,19 +50,21 @@ namespace sigproc
   * @{
   */
 
-/// Calculate the variance of a PSD
+/// Calculate the variance of a 1-D, 1-sided PSD
 /** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
   *
   * \returns the variance of a PSD (the integral).
   *
   * \tparam realT the real floating point type
+  * 
+  * \test Scenario: calculating variance from a 1D PSD \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar( realT df,      ///< [in] the frequency scale of the PSD
-              realT * PSD,   ///< [in] the PSD to integrate.
-              size_t sz,     ///< [in] the size of the PSD vector
-              realT half=0.5 ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
-            )
+realT psdVar1sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+                  )
 {
    realT var = 0;
 
@@ -73,22 +79,60 @@ realT psdVar( realT df,      ///< [in] the frequency scale of the PSD
    return var;
 }
 
-/// Calculate the variance of a PSD
+/// Calculate the variance of a 1-D, 2-sided PSD
 /** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  *
+  * Assumes the 2-sided PSD is in standard FFT storage order, and that sz is even.
   * 
   * \returns the variance of a PSD (the integral).
   *
   * \tparam realT the real floating point type
   * 
-  * \overload
+  * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
   */
 template<typename realT>
-realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
-              std::vector<realT> & PSD, ///< [in] the PSD to integrate.
-              realT half=0.5            ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do no use other values.
+realT psdVar2sided( realT df,          ///< [in] the frequency scale of the PSD
+                    const realT * PSD, ///< [in] the PSD to integrate.
+                    size_t sz,         ///< [in] the size of the PSD vector
+                    realT half=0.5     ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
+                  )
+{
+   realT var = 0;
+
+   var = PSD[0];
+   
+   size_t i=1;
+   for(; i< sz/2; ++i) 
+   {
+      var += PSD[i];
+      var += PSD[sz-i];
+   }
+   var += half*PSD[i]; //The mid-point is double.  It is also the endpoint of integration from each side, so it would enter twice, hence once here.
+   
+   var *= df;
+
+   return var;
+}
+
+/// Calculate the variance of a 1-D PSD
+/** By default uses trapezoid rule integration.  This can be changed to mid-point integration.
+  * 
+  * If f.back() < 0, then a 2-sided PSD in FFT storage order is assumed.  Otherwise, PSD is treated as 1-sided.
+  * 
+  * \returns the variance of a PSD (the integral).
+  *
+  * \tparam realT the real floating point type
+  * 
+  * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]" 
+  */
+template<typename realT>
+realT psdVar( const std::vector<realT> & f,   ///< [in] the frequency scale of the PSD.  
+              const std::vector<realT> & PSD, ///< [in] the PSD to integrate.
+              realT half=0.5                  ///< [in] [optional] controls if trapezoid (0.5) or mid-point (1.0) integration is used.  Do not use other values.
             )
 {
-   return psdVar(df, PSD.data(), PSD.size(), half);
+   if(f.back() < 0) return psdVar2sided(f[1]-f[0], PSD.data(), PSD.size(), half);
+   else return psdVar1sided(f[1]-f[0], PSD.data(), PSD.size(), half);
 }
 
 ///Calculate the variance of a PSD
@@ -101,9 +145,9 @@ realT psdVar( realT df,                 ///< [in] the frequency scale of the PSD
   * \tparam realT the real floating point type
   */
 template<typename eigenArrT>
-typename eigenArrT::Scalar psdVar( eigenArrT & freq, ///< [in] the frequency scale of the PSD
-                                   eigenArrT & PSD,  ///< [in] the PSD to integrate.
-                                   bool trap=true    ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
+typename eigenArrT::Scalar psdVarDisabled( eigenArrT & freq, ///< [in] the frequency scale of the PSD
+                                   eigenArrT & PSD,          ///< [in] the PSD to integrate.
+                                   bool trap=true            ///< [in] [optional] controls if trapezoid (true) or mid-point (false) integration is used.
                                  )
 {
    typename eigenArrT::Scalar half = 0.5;
@@ -317,6 +361,8 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
 /** A frequency range can be specified, otherwise f[0] to f[f.size()-1] is the range.
   *
   * \tparam floatT the floating point type of the PSD.
+  * 
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename floatT>
 int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will be altered.
@@ -622,19 +668,25 @@ void vonKarman_psd( eigenArrp  & psd,
   * In this case psdTwoSided[0] is set to 0, and the augmented psd
   * is shifted by 1.
   *
-  * Example:
-  *
+  * To illustrate, the bins are re-ordered as:
+  * \verbatim
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
+  * \endverbatim
+  * 
+  * The output is scaled so that the total power remains the same.  The 0-freq and
+  * Nyquist freq are not scaled.
+  * 
   *
   * Entries in psdOneSided are cast to the value_type of psdTwoSided,
   * for instance to allow for conversion to complex type.
   *
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename vectorTout, typename vectorTin>
-void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains the FFT storage order copy of psdOneSided.
-                       vectorTin  & psdOneSided, ///< [in] the one-sided PSD to augment
-                       bool addZeroFreq = false,       ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
-                       typename vectorTin::value_type scale = 0.5  ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
+void augment1SidedPSD( vectorTout & psdTwoSided,                  ///< [out] on return contains the FFT storage order copy of psdOneSided.
+                       vectorTin  & psdOneSided,                  ///< [in] the one-sided PSD to augment
+                       bool addZeroFreq = false,                  ///< [in] [optional] set to true if psdOneSided does not contain a zero frequency component.
+                       typename vectorTin::value_type scale = 0.5 ///< [in] [optional] value to scale the input by when copying to the output.  The default 0.5 re-normalizes for a 2-sided PSD.
                      )
 {
    typedef typename vectorTout::value_type outT;
@@ -672,11 +724,11 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
       psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero)] * scale);
       psdTwoSided[i + psdOneSided.size()+ needZero] = outT(psdOneSided[ psdOneSided.size() - 2 - i] * scale);
    }
-   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ] * scale);
+   psdTwoSided[i + 1] = outT(psdOneSided[i + (1-needZero) ]);
 
 }
 
-///Augment a 1-sided frequency scale to standard FFT form.
+/// Augment a 1-sided frequency scale to standard FFT form.
 /** Allocates freqTwoSided to hold a flipped copy of freqOneSided.
   * If freqOneSided[0] is not 0, freqTwoSided[0] is set to 0, and the augmented
   * frequency scale is shifted by 1.
@@ -685,6 +737,7 @@ void augment1SidedPSD( vectorTout & psdTwoSided, ///< [out] on return contains t
   *
   * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
   *
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename T>
 void augment1SidedPSDFreq( std::vector<T> & freqTwoSided, ///< [out] on return contains the FFT storage order copy of freqOneSided.

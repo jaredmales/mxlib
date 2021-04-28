@@ -28,17 +28,18 @@
 #define aoSystem_hpp
 
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
-
-#include <mx/math/roots.hpp>
-#include <mx/mxError.hpp>
+#include "../../math/constants.hpp"
+#include "../../math/roots.hpp"
+#include "../../mxError.hpp"
+#include "../../mxException.hpp"
 
 #include "aoConstants.hpp"
-using namespace mx::AO::constants;
+
 
 #include "aoAtmosphere.hpp"
+#include "aoPSDs.hpp"
 #include "aoWFS.hpp"
+
 
 #define FITTING_ERROR_NO 0
 #define FITTING_ERROR_ZERO 1
@@ -84,16 +85,21 @@ protected:
    wfs<realT, iosT> * m_wfsBeta {nullptr}; ///< The WFS beta_p class.
    
    realT m_lam_wfs {0}; ///< WFS wavelength [m]
-   realT m_npix_wfs {0}; ///< Number of WFS pixels
-   realT m_ron_wfs {0}; ///< WFS readout noise [electrons/pix]
-   realT m_Fbg {0}; ///< Background flux, [photons/sec/pixel]
+
+   //WFS detector parameters, which may be a function of binning
+   std::vector<realT> m_npix_wfs;  ///< Number of WFS pixels
+   std::vector<realT> m_ron_wfs;   ///< WFS readout noise [electrons/pix]
+   std::vector<realT> m_Fbg;       ///< Background flux, [photons/sec/pixel]
+   std::vector<realT> m_minTauWFS; ///< Minimum WFS exposure time [sec]
    
-   bool m_bin_npix {true};
-   
-   
-   realT m_minTauWFS {0}; ///< Minimum WFS exposure time [sec]
+   bool m_bin_npix {true}; ///< Flag controlling whether or not to bin WFS pixels according to the actuator spacing.
+      
+   int m_bin_opt {0}; ///< The optimum binning factor.  If WFS modes are used, this is the index.  Otherwise it is the bining factor (>=1).
+
    realT m_tauWFS {0}; ///< Actual WFS exposure time [sec]
+   
    realT m_deltaTau {0}; ///< Loop latency [sec]
+   
    bool m_optTau {true}; ///< Flag controlling whether optimum integration time is calculated (true) enforcing m_minTauWFS, or if m_tauWFS is used (false). Default: true.
 
    realT m_lam_sci {0}; ///< Science wavelength [m]
@@ -279,38 +285,121 @@ public:
    realT lam_wfs();
    
    /// Set the number of pixels in the WFS
-   /**
+   /** This sets the vector to length 1 with a single value
      */
-   void npix_wfs( realT npix /**< [in] is the new value of m_npix_wfs */);
+   void npix_wfs( realT npix /**< [in] is the new single value of m_npix_wfs */);
    
-   /// Get the number of pixels in the WFS
+   /// Set the number of pixels in the WFS for each binning mode
+   /** This sets the vector.
+     */
+   void npix_wfs( const std::vector<realT> & npix /**< [in] is the new values of m_npix_wfs */);
+
+   /// Set the number of pixels in the WFS for a given binning mode
+   /** This sets the entry in the vector, if it has the proper length.
+     */
+   void npix_wfs( int idx,   ///< [in] the index of the binning mode
+                  realT npix ///< [in] is the new value of m_npix_wfs[idx] 
+                );
+
+   /// Get the number of pixels in the WFS for a given binning mode
+   /**
+     * \returns the current value of m_npix_wfs[idx]
+     */ 
+   realT npix_wfs(size_t idx /**< [in] the index of the binning mode.*/);
+   
+   /// Get the number of pixels in the WFS for all binning modes
    /**
      * \returns the current value of m_npix_wfs
      */ 
-   realT npix_wfs();
-   
+   std::vector<realT> npix_wfs();
+
    /// Set the value of the WFS readout noise
-   /**
+   /** This sets the vector to length 1 with a single value
      */
-   void ron_wfs( realT nron /**< [in] is the new value of m_ron_wfs */);
+   void ron_wfs( realT nron /**< [in] is the new single value of m_ron_wfs */);
    
-   /// Get the value of the WFS readout noise
+   /// Set the value of the WFS readout noise for each binning mode
+   /** This sets the vector.
+     */
+   void ron_wfs( const std::vector<realT> & nron /**< [in] is the new value of m_ron_wfs */);
+
+   /// Set the value of the WFS readout noise for a given bining mode
+   /** This sets the entry in the vector if the vector has the proper length
+     */
+   void ron_wfs( int idx,   ///< [in] the index of the binning mode
+                 realT nron ///< [in] is the new value of m_ron_wfs [idx]
+               );
+
+   /// Get the value of the WFS readout noise for a given binning mode
+   /**
+     * \returns the current value of m_ron_wfs[idx]
+     */ 
+   realT ron_wfs( size_t idx /**< [in] the index of the binning mode.*/);
+   
+   /// Get the value of the WFS readout noise for all binning modes
    /**
      * \returns the current value of m_ron_wfs
      */ 
-   realT ron_wfs();
-   
-   /// Set the value of the background flux.
-   /**
+   std::vector<realT> ron_wfs();
+
+   /// Set a single value of the background flux
+   /** This sets the vector to length 1 with a single value
      */
    void Fbg(realT fbg /**< [in] is the new value of m_Fbg */);
    
-   /// Get the value of the background flux.
+   /// Set the value of the background fluxes.
+   /** This sets the value of the background flux for each binning mode
+     */
+   void Fbg(const std::vector<realT> & fbg /**< [in] is the new value of m_Fbg */);
+
+   /// Set a single value of the background flux for a given binning mode
+   /** This sets the entry in the vector if the vector has the proper length
+     */
+   void Fbg( int idx,  ///< [in] the index of the binning mode
+             realT fbg ///< [in] is the new value of m_Fbg[idx]
+            );
+
+   /// Get the value of the background flux for a given binning mode
    /**
-     * \returns
+     * \returns m_Fbg[idx]
      */ 
-   realT Fbg();
+   realT Fbg( size_t idx /**< [in] the index of the binning mode.*/);
    
+   /// Get the value of the background flux for all binning modes
+   /**
+     * \returns the current value of m_Fbg
+     */ 
+   std::vector<realT> Fbg();
+   
+   /// Set a single value of the minimum WFS exposure time.
+   /** This sets the vector to length 1 with a single value
+     */
+   void minTauWFS(realT ntau /**< [in] is the new value of m_minTauWFS */);
+   
+   /// Set the value of the minimum WFS exposure times.
+   /** This sets the vector of the minimum WFS exposure times
+     */
+   void minTauWFS(const std::vector<realT> &  ntau /**< [in] is the new value of m_minTauWFS */);
+
+   /// Set a single value of the minimum WFS exposure time for a given binning mode.
+   /** This sets the entry in the vector if the vector has sufficient length.
+     */
+   void minTauWFS(size_t idx, ///< [in] the index of the binning mode
+                  realT ntau  ///< [in] is the new value of m_minTauWFS
+                 );
+
+   /// Get the value of the minimum WFS exposure time for a given binning.
+   /**
+     * \returns the current value of m_minTauWFS[idx].
+     */ 
+   realT minTauWFS(size_t idx /**< [in] the index of the binning mode.*/);
+   
+   /// Get the values of the minimum WFS exposure time.
+   /**
+     * \returns the current value of m_minTauWFS.
+     */ 
+   std::vector<realT> minTauWFS();
+
    /// Set the value of the pixel binning flag
    /**
      */
@@ -322,16 +411,7 @@ public:
      */ 
    bool bin_npix();
    
-   /// Set the value of the minimum WFS exposure time.
-   /**
-     */
-   void minTauWFS(realT ntau /**< [in] is the new value of m_minTauWFS */);
    
-   /// Get the value of the minimum WFS exposure time.
-   /**
-     * \returns the current value of m_minTauWFS.
-     */ 
-   realT minTauWFS();
    
    /// Set the value of the WFS exposure time.
    /**
@@ -465,7 +545,8 @@ public:
      * \returns the S/N squared
      */
    realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
-                        realT d          ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                        realT d,         ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                        int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
                       );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
@@ -475,7 +556,8 @@ public:
      */ 
    realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
                            realT n, ///< [in] specifies the v component of the spatial frequency
-                           realT d  ///< [in] the actuator spacing in meters
+                           realT d, ///< [in] the actuator spacing in meters
+                           int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
                          );
    
    ///Calculate the measurement noise at a spatial frequency using the optimum actuator spacing
@@ -509,7 +591,8 @@ public:
      */ 
    realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
                          realT n, ///< [in] specifies the v component of the spatial frequency
-                         realT d  ///< [in] the actuator spacing, in meters
+                         realT d, ///< [in] the actuator spacing, in meters
+                         int b
                        );
    
    ///Calculate the time delay at a spatial frequency at the optimum exposure time at the optimum actuator spacing.
@@ -607,7 +690,8 @@ public:
      */
    realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
                         realT n,  ///< [in] is the spatial frequency index in v
-                        realT d
+                        realT d,
+                        int b
                       );
    
    ///Calculate the optimum exposure time for a given spatial frequency at the optimum actuator spacing.
@@ -998,7 +1082,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
 {
    atm.loadGuyon2005();
    
-   F0(1.75e9*0.25*pi<realT>()*64.); //Converting to photons/sec
+   F0(1.75e9*0.25*math::pi<realT>()*64.); //Converting to photons/sec
    lam_wfs(0.55e-6);
    lam_sci(1.6e-6);
    D(8.);
@@ -1012,13 +1096,12 @@ template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
 {   
    atm.loadLCO();   
-   
    F0(7.6e10);
    lam_wfs(0.851e-6);
    lam_sci(0.656e-6);
    
    d_min( 6.5/48.0 );
-   minTauWFS( 1./3622. );
+   minTauWFS( (realT) (1./3622.) );
    tauWFS(1./3622.);
    
    D(6.5);
@@ -1035,7 +1118,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadGMagAOX()
    loadMagAOX();
    
    
-   F0(7.6e10 * 368.0 / (0.25*pi<realT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
+   F0(7.6e10 * 368.0 / (0.25*math::pi<realT>()*6.5*6.5*(1.-0.29*0.29))); //Scaled up.
    
    D(25.4);
    
@@ -1177,13 +1260,55 @@ realT aoSystem<realT, inputSpectT, iosT>::lam_wfs()
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::npix_wfs(realT npix)
 {
-   m_npix_wfs = npix;
+   m_npix_wfs.resize(1);
+   m_npix_wfs[0] = npix;
+
    m_specsChanged = true;
    m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::npix_wfs()
+void aoSystem<realT, inputSpectT, iosT>::npix_wfs(const std::vector<realT> & npix)
+{
+   m_npix_wfs.resize(npix.size());
+   for(size_t n=0; n < npix.size(); ++n)
+   {
+      m_npix_wfs[n] = npix[n];
+   }
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::npix_wfs( int idx,
+                                                   realT npix
+                                                 )
+{
+   if(m_npix_wfs.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+   }
+
+   m_npix_wfs[idx] = npix;
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::npix_wfs(size_t idx)
+{
+   if(m_npix_wfs.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+   }
+
+   return m_npix_wfs[idx];
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+std::vector<realT> aoSystem<realT, inputSpectT, iosT>::npix_wfs()
 {
    return m_npix_wfs;
 }
@@ -1191,13 +1316,56 @@ realT aoSystem<realT, inputSpectT, iosT>::npix_wfs()
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::ron_wfs(realT nron)
 {
-   m_ron_wfs = nron;
+   m_ron_wfs.resize(1);
+   m_ron_wfs[0] = nron;
+
    m_specsChanged = true;
    m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::ron_wfs()
+void aoSystem<realT, inputSpectT, iosT>::ron_wfs(const std::vector<realT> & nron)
+{
+   m_ron_wfs.resize(nron.size());
+   for(size_t n=0; n < nron.size(); ++n)
+   {
+      m_ron_wfs[n] = nron[n];
+   }
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::ron_wfs( int idx,
+                                                  realT nron
+                                                )
+{
+   if(m_ron_wfs.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+   }
+
+   m_ron_wfs[idx] = nron;
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::ron_wfs(size_t idx)
+{
+   if(m_ron_wfs.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+   }
+
+   return m_ron_wfs[idx];
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+std::vector<realT> aoSystem<realT, inputSpectT, iosT>::ron_wfs()
 {
    return m_ron_wfs;
 }
@@ -1205,23 +1373,124 @@ realT aoSystem<realT, inputSpectT, iosT>::ron_wfs()
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::Fbg(realT fbg)
 {
-   m_Fbg = fbg;
+   m_Fbg.resize(1);
+   m_Fbg[0] = fbg;
+
    m_specsChanged = true;
    m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::Fbg()
+void aoSystem<realT, inputSpectT, iosT>::Fbg(const std::vector<realT> & fbg)
+{
+   m_Fbg.resize(fbg.size());
+   for(size_t n=0; n < fbg.size(); ++n)
+   {
+      m_Fbg[n] = fbg[n];
+   }
+   
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::Fbg( int idx,
+                                              realT fbg
+                                             )
+{
+   if(m_Fbg.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+   }
+
+   m_Fbg[idx] = fbg;
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fbg(size_t idx)
+{
+   if(m_Fbg.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+   }
+
+   return m_Fbg[idx];
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+std::vector<realT> aoSystem<realT, inputSpectT, iosT>::Fbg()
 {
    return m_Fbg;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::bin_npix(bool bnp)
+void aoSystem<realT, inputSpectT, iosT>::minTauWFS(realT ntau)
 {
-   m_bin_npix = bnp;
+   m_minTauWFS.resize(1);
+   m_minTauWFS[0] = ntau;
+ 
    m_specsChanged = true;
    m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::minTauWFS(const std::vector<realT> & ntau)
+{
+   m_minTauWFS.resize(ntau.size());
+   for(size_t n=0; n < ntau.size(); ++n)
+   {
+      m_minTauWFS[n] = ntau[n];
+   }
+   
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::minTauWFS( size_t idx,
+                                                    realT ntau
+                                                  )
+{
+   if(m_minTauWFS.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+   }
+
+   m_minTauWFS[idx] = ntau;
+ 
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::minTauWFS(size_t idx)
+{
+   if(m_minTauWFS.size() < idx+1)
+   {
+      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+   }
+
+   return m_minTauWFS[idx];
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+std::vector<realT> aoSystem<realT, inputSpectT, iosT>::minTauWFS()
+{
+   return m_minTauWFS;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::bin_npix(bool bnp)
+{
+   if(bnp != m_bin_npix)
+   {
+      m_bin_npix = bnp;
+      m_specsChanged = true;
+      m_dminChanged = true;
+   }
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1230,19 +1499,6 @@ bool aoSystem<realT, inputSpectT, iosT>::bin_npix()
    return m_bin_npix;
 }
 
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::minTauWFS(realT ntau)
-{
-   m_minTauWFS = ntau;
-   m_specsChanged = true;
-   m_dminChanged = true;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::minTauWFS()
-{
-   return m_minTauWFS;
-}
 
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::tauWFS(realT ntau)
@@ -1393,45 +1649,53 @@ realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
-                                                         realT d
+                                                         realT d,
+                                                         int b
                                                        )
 {      
    realT F = Fg();
                
    double binfact = 1.0;
+   int binidx = 0;
    if( m_bin_npix )
    {
-      binfact = pow(m_d_min/ d,2);
+      if(m_npix_wfs.size() == 1 && b > 0) //Only if "true binning", otherwise the WFS mode vectors handle it.
+      {
+         binfact = 1./pow((realT) b,2);
+      }
+      else binidx = b;
    }
-   
-   return pow(F*tau_wfs,2)/((F+m_npix_wfs*binfact*m_Fbg)*tau_wfs + m_npix_wfs*binfact*m_ron_wfs*m_ron_wfs);
+
+   return pow(F*tau_wfs,2)/((F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx])*tau_wfs + m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                             realT n )
 {
-   return measurementError(m, n, d_opt());
+   d_opt();
+   return measurementError(m, n, m_d_opt, m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                             realT n,
-                                                            realT d
+                                                            realT d,
+                                                            int b
                                                           )
 {
    if(m ==0 and n == 0) return 0;
    
    realT tau_wfs;
    
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
    
    if (m_wfsBeta == 0) wfsBetaUnalloc();
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
-   realT snr2 = signal2Noise2( tau_wfs, d );
+   realT snr2 = signal2Noise2( tau_wfs, d, b );
    
    return pow(beta_p,2)/snr2*pow(m_lam_wfs/m_lam_sci, 2);
 }
@@ -1463,7 +1727,8 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError()
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                           realT n,
-                                                          realT d
+                                                          realT d,
+                                                          int b
                                                         )
 {
    if(m ==0 and n == 0) return 0;
@@ -1471,20 +1736,21 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    realT k = sqrt(m*m + n*n)/m_D;
    
    realT tau_wfs;
-   
-   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d);
+
+   if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
    
    realT tau = tau_wfs + m_deltaTau;
          
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                           realT n )
 {
-   return timeDelayError(m,n,d_opt());
+   d_opt();
+   return timeDelayError(m,n,m_d_opt, m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1683,7 +1949,8 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
                                                          realT n,
-                                                         realT dact //here called dact due to parameter collision with root-finding
+                                                         realT dact, //here called dact due to parameter collision with root-finding
+                                                         int bbin
                                                        )
 {
    if(m_D == 0)
@@ -1699,9 +1966,17 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    }
 
    double binfact = 1.0;
+   int binidx = 0; //index into WFS configurations
    if( m_bin_npix )
    {
-      binfact = pow(m_d_min/m_d_opt,2);
+      if(m_npix_wfs.size() > 1 || bbin == 0)
+      {
+         binidx = bbin;
+      }
+      else
+      {
+         binfact = 1.0/pow((realT) bbin,2);
+      }
    }
    
    realT k = sqrt(m*m + n*n)/m_D;
@@ -1715,14 +1990,14 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(2*pi<realT>()*atm.v_wind()*k,2);
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(math::two_pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(m_lam_wfs*beta_p/F,2);
    
    a = Atmp;
    b = Atmp *m_deltaTau;
    c = 0;
-   d = -Dtmp * (F+m_npix_wfs*binfact*m_Fbg);
-   e = -Dtmp * 2*(m_npix_wfs*binfact*pow(m_ron_wfs,2));
+   d = -Dtmp * (F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx]);
+   e = -Dtmp * 2*(m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
    
    std::vector<std::complex<realT> > x;
    
@@ -1737,7 +2012,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
       if( real(x[i]) > 0 && imag(x[i]) == 0 && real(x[i]) > tauopt) tauopt = real(x[i]);
    }
    
-   if(tauopt < m_minTauWFS) tauopt = m_minTauWFS;
+   if(tauopt < m_minTauWFS[binidx]) tauopt = m_minTauWFS[binidx];
    
    return tauopt;
    
@@ -1748,7 +2023,8 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m, 
                                                          realT n )
 {
-   return optimumTauWFS(m, n, d_opt());
+   d_opt(); //also gets m_bin_opt;
+   return optimumTauWFS(m, n, m_d_opt, m_bin_opt);
 }
 
 
@@ -1760,6 +2036,7 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    if( m_d_min == 0 )
    {
       m_d_opt = 1e-50;
+      m_bin_opt = 0;
       m_dminChanged = false;
       return m_d_opt;
    }
@@ -1767,21 +2044,76 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    if(!m_optd) 
    {
       m_d_opt = m_d_min;
+      m_bin_opt = 0;
       m_dminChanged = false;
       
       return m_d_opt;
    }
    
    realT d = m_d_min;
-      
+   realT best_d = d;
    int m = m_D/(2*d);
    int n = 0;
 
-   while( measurementError(m,n, d) + timeDelayError(m,n,d) > fittingError(m, n) && d < m_D/2 ) 
+   if(m_bin_npix)
    {
-      d += m_d_min/m_optd_delta;
-      m = m_D/(2*d);
-      n = 0;
+      if(m_npix_wfs.size() > 1) //Optimize over the binning modes
+      {
+         int best_idx = 0;
+         realT best_d = m_d_min;
+
+         realT best_aoerr = measurementError(m,n,m_d_min, 0) + timeDelayError(m,n,m_d_min, 0);
+         realT ferr = fittingError(m, n);
+         if(ferr < best_aoerr) best_aoerr = ferr;
+
+         for(int b=0; b < m_npix_wfs.size(); ++b)
+         {
+            d = m_d_min;
+
+            while( measurementError(m,n,d, b) + timeDelayError(m,n,d, b) >= fittingError(m, n) && d < m_D/2 ) 
+            {
+               d += m_d_min/m_optd_delta;
+               m = m_D/(2*d);
+               n = 0;
+            }
+            realT aoerr = measurementError(m,n,d,b) + timeDelayError(m,n,d,b);
+            ferr = fittingError(m,n);
+            if(ferr < aoerr) aoerr = ferr;
+
+            if(aoerr < best_aoerr)
+            {
+               best_aoerr = aoerr;
+               best_idx = b;
+               best_d = d;
+            }
+         }
+
+         m_bin_opt = best_idx;
+      }
+      else
+      {
+         m_bin_opt = d/m_d_min;
+         
+         while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+         {
+            d += m_d_min/m_optd_delta;
+            m_bin_opt = d/m_d_min;
+            m = m_D/(2*d);
+            n = 0;
+         }
+         best_d = d;
+      }
+   }
+   else
+   {
+      m_bin_opt = 0;
+      while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+      {
+         d += m_d_min/m_optd_delta;
+         m = m_D/(2*d);
+         n = 0;
+      }
+      best_d = d;
    }
    
    m_d_opt = d;
@@ -1799,13 +2131,13 @@ realT aoSystem<realT, inputSpectT, iosT>::ncpError( int m,
    
    realT k = sqrt(m*m + n*n)/m_D;
    
-   return (m_ncp_alpha - 2)/(two_pi<realT>()) * pow(m_D, -m_ncp_alpha) * ncpError() * pow(k, -m_ncp_alpha);
+   return (m_ncp_alpha - 2)/(math::two_pi<realT>()) * pow(m_D, -m_ncp_alpha) * ncpError() * pow(k, -m_ncp_alpha);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::ncpError()
 {
-   return pow(m_ncp_wfe,2)*pow(2.0*pi<realT>()/m_lam_sci,2);
+   return pow(m_ncp_wfe,2)*pow(math::two_pi<realT>()/m_lam_sci,2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2095,11 +2427,11 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
-   ios << "#    npix_wfs = " << npix_wfs() << '\n';
+/*   ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
-   ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
    ios << "#    minTauWFS = " << minTauWFS() << '\n';
+   */ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
    ios << "#    tauWFS = " << tauWFS() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
    ios << "#    deltaTau = " << deltaTau() << '\n';
@@ -2122,6 +2454,22 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    return ios;
 }
 
+extern template
+class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
+
+extern template
+class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>; 
+
+extern template
+class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
+
+extern template
+class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>; 
+
+#ifdef HASQUAD
+extern template
+class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>; 
+#endif
 
 } //namespace analysis
 } //namespace AO

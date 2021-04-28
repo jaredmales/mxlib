@@ -1,6 +1,5 @@
 /** \file psdFilter_test.cpp
  */
-#define CATCH_CONFIG_MAIN
 #include "../../catch2/catch.hpp"
 
 #include <vector>
@@ -14,7 +13,9 @@
 #include "../../../include/math/randomT.hpp"
 #include "../../../include/math/vectorUtils.hpp"
 
-/** Verify compilation and initilization of the 3 ranks for psdFilter.
+/** Scenario: compiling psdFilter
+  * 
+  * Verify compilation and initilization of the 3 ranks for psdFilter.
   * 
   * \anchor tests_sigproc_psdFilter_compile
   */
@@ -318,7 +319,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          k.resize(64, 64);
          psd.resize(64, 64);
          
-         mx::sigproc::frequency_grid(k, 1./128., 1.0);
+         mx::sigproc::frequency_grid(k, 1./128.);
          for(int cc=0; cc< psd.cols(); ++cc)
          {
             for(int rr=0; rr<psd.rows(); ++rr)
@@ -374,7 +375,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          k.resize(64, 64);
          psd.resize(64, 64);
          
-         mx::sigproc::frequency_grid(k, 1./302., 1.0);
+         mx::sigproc::frequency_grid(k, 1./302.);
          for(int cc=0; cc< psd.cols(); ++cc)
          {
             for(int rr=0; rr<psd.rows(); ++rr)
@@ -438,7 +439,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          f.resize(33);
          
          
-         mx::sigproc::frequency_grid(k, 1./64., 1.0);
+         mx::sigproc::frequency_grid(k, 1./64.);
          psdk.resize(k.rows(), k.cols());
          for(int cc=0; cc< psdk.cols(); ++cc)
          {
@@ -528,7 +529,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          f.resize(33);
          
          
-         mx::sigproc::frequency_grid(k, 1./640., 1.0);
+         mx::sigproc::frequency_grid(k, 1./640.);
          psdk.resize(k.rows(), k.cols());
          for(int cc=0; cc< psdk.cols(); ++cc)
          {

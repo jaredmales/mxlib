@@ -67,7 +67,7 @@ public:
    typedef typename _ccImT::Scalar Scalar; ///< the scalar type of the image type
    
 protected:
-   
+public:
    /** \name Working Memory
      * @{
      */ 
@@ -317,9 +317,8 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar & xShift,
       return -1;
    }
                                                   // 16/4    15/4   16/3   15/3
-   int maxLag_r = 0.5*(im.rows()-m_refIm.rows()); // 6       5       6      6
-   int maxLag_c = 0.5*(im.cols()-m_refIm.cols());
-   
+   int maxLag_r = (im.rows()-m_refIm.rows()); // 6       5       6      6
+   int maxLag_c = (im.cols()-m_refIm.cols());
    
    
    if(maxLag_r > m_maxLag && m_maxLag != 0) maxLag_r = m_maxLag;

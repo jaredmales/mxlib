@@ -32,9 +32,8 @@
 #include <vector>
 #include <complex>
 
+#include "../math/constants.hpp"
 #include "../math/eigenLapack.hpp"
-
-#include "../timeUtils.hpp"
 
 #include "levinsonRecursion.hpp"
 
@@ -94,12 +93,9 @@ struct linearPredictor
       realT tmpCond = condition;
       
       _setCondition = condition;
-      double t0 = mx::get_curr_time();
-      
       math::eigenPseudoInverse(PInv, tmpCond, _nRejected,  Rmat, condition);
       
       
-      std::cerr << mx::get_curr_time() - t0 << "\n";
       _actCondition = tmpCond;
       
       _c = Rvec.matrix()*PInv.matrix();
@@ -178,7 +174,7 @@ struct linearPredictor
       std::complex<realT> He = 0;
       for(int j=0; j < n; ++j)
       {
-         realT s = (j+1.0)* two_pi<realT>();
+         realT s = (j+1.0)* math::two_pi<realT>();
          He += _c(0,j) * exp(s*std::complex<realT>(0,-1.0)*f/fs);
       }
 

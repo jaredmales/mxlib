@@ -13,16 +13,15 @@
 #include <vector>
 #include <iostream>
 
-#include <boost/math/constants/constants.hpp>
-using namespace boost::math::constants;
 
 #include "../../sigproc/psdFilter.hpp"
 #include "../../sigproc/psdUtils.hpp"
+#include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 
-#include "../../improc/fitsFile.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 #include "../../ioutils/stringUtils.hpp"
-#include "../../timeUtils.hpp"
+#include "../../sys/timeUtils.hpp"
 
 #include "turbLayer.hpp"
 #include "wavefront.hpp"
@@ -256,7 +255,7 @@ int turbAtmosphere<realT>::genLayers()
       fbase += "/";
       fbase += "layer_";
 
-      improc::fitsFile<realT> ff;
+      fits::fitsFile<realT> ff;
       std::string fname;
       for(size_t i=0; i< _layers.size(); ++i)
       {
@@ -301,12 +300,12 @@ int turbAtmosphere<realT>::genLayers()
             realT Ptiptilt = 0;
             if(_subPiston)
             {
-               Ppiston = pow(2*math::func::jinc(pi<realT>() * freq(ii,jj) * _pupD), 2);
+               Ppiston = pow(2*math::func::jinc(math::pi<realT>() * freq(ii,jj) * _pupD), 2);
             }
 
             if(_subTipTilt)
             {
-               Ptiptilt = pow(4*math::func::jinc2(pi<realT>() * freq(ii,jj) * _pupD), 2);
+               Ptiptilt = pow(4*math::func::jinc2(math::pi<realT>() * freq(ii,jj) * _pupD), 2);
             }
 
             psub(ii,jj) = (1 - Ppiston - Ptiptilt);
@@ -334,7 +333,7 @@ int turbAtmosphere<realT>::genLayers()
          freq.resize(scrnSz, scrnSz);
          sigproc::frequency_grid<arrayT>(freq, _pupD/_wfSz);
 
-         t0 = get_curr_time();
+         t0 = sys::get_curr_time();
 
          //beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
          beta = 0.0218/pow( r0, 5./3.) * pow(_lambda0/_lambda, 2);
@@ -362,13 +361,13 @@ int turbAtmosphere<realT>::genLayers()
             }
          }
 
-         t1 = get_curr_time();
+         t1 = sys::get_curr_time();
          
          filt.psdSqrt(psd, freq(1,0)-freq(0,0),freq(0,1)-freq(0,0) );
 
          filt(_layers[i].phase);
          
-         t2 = get_curr_time();
+         t2 = sys::get_curr_time();
          
          dt += t1-t0;
          dt1 += t2-t1;
@@ -387,7 +386,7 @@ int turbAtmosphere<realT>::genLayers()
       fbase += "/";
       fbase += "layer_";
 
-      improc::fitsFile<realT> ff;
+      fits::fitsFile<realT> ff;
       std::string fname;
       for(size_t i=0; i< _layers.size(); ++i)
       {

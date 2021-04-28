@@ -11,24 +11,26 @@
 #include <iostream>
 #include <fstream>
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+
 #include "../../improc/imagePads.hpp"
 #include "../../wfp/imagingUtils.hpp"
 #include "../../wfp/fraunhoferPropagator.hpp"
-#include "../../improc/ds9Interface.hpp"
 
-#include "../../improc/fitsFile.hpp"
-#include "../../improc/fitsUtils.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
+#include "../../ioutils/fits/fitsUtils.hpp"
 
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 
-#include "../../timeUtils.hpp"
+#include "../../sys/timeUtils.hpp"
 #include "../../sigproc/signalWindows.hpp"
 
 #include "wavefront.hpp"
 #include "../aoPaths.hpp"
 
-#include <mx/improc/ds9Interface.hpp>
 
 #ifdef DEBUG
 #define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
@@ -42,24 +44,6 @@ namespace AO
 {
 namespace sim
 {
-
-#if 0
-template<typename complexWavefrontT, typename realPupilT>
-void idealCoronagraph(complexWavefrontT & wf, realPupilT & pupil)
-{
-   typedef typename complexWavefrontT::Scalar complexT;
-   typedef typename realPupilT::Scalar        realT;
-
-   Eigen::Map<Eigen::Array<complexT,-1,-1> > eigWf(wf.data(), wf.cols(), wf.rows());
-   Eigen::Map<Eigen::Array<realT,-1,-1> > eigPup(pupil.data(), pupil.cols(), pupil.rows());
-
-
-   eigWf = eigWf - ((eigWf*eigPup).sum()/(eigPup*eigPup).sum())*eigPup;
-
-
-}
-#endif
-
 
 
 
@@ -81,15 +65,13 @@ class simulatedAOSystem
 {
 public:
 
-   bool ds9off;
-
    typedef _realT realT; ///< The floating point type used for all calculations
 
    typedef mx::AO::sim::wavefront<realT> wavefrontT; ///< The wavefront type
 
    typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT; ///<The real image type
 
-   typedef mx::imagingArray<std::complex<realT>, mx::fftwAllocator<std::complex<realT> >, 0> complexImageT; ///<The complex image type
+   typedef wfp::imagingArray<std::complex<realT>, wfp::fftwAllocator<std::complex<realT> >, 0> complexImageT; ///<The complex image type
 
    typedef _wfsT wfsT;
    typedef _reconT reconT;
@@ -98,6 +80,10 @@ public:
    typedef _turbSeqT turbSeqT;
    typedef _coronT coronT;
 
+   //cuda admin
+   cublasHandle_t m_cublasHandle;
+
+   
    std::string _sysName; ///< The system name for use in mx::AO::path
    std::string _wfsName; ///< The WFS name for use in the mx::AO::path
    std::string _pupilName; ///< The pupil name for use in the mx::AO::path
@@ -134,7 +120,7 @@ public:
    bool _rmsUnwrap;
 
    std::string _ampFile;
-   std::ofstream _ampOut;
+   //std::ofstream m_ampOut;
 
    //Members which have implemented accessors are moved here as I go:
 protected:
@@ -147,7 +133,7 @@ protected:
     int m_wfSz;
    
     
-   
+   mx::improc::eigenImage<realT> m_ampOut;
     
 public:
    /** Wavefront Outputs
@@ -203,14 +189,6 @@ public:
    std::vector<typename filterT::commandT> _delayedCommands;
    int _commandDelay;
    std::vector<int> _goodCommands;
-
-   improc::ds9Interface ds9i_coron;
-   int display_coron {0};
-   int display_coron_counter {0};
-
-   improc::ds9Interface ds9i_coron_avg;
-   int display_coron_avg {0};
-   int display_coron_avg_counter {0};
 
    /** @}
      */
@@ -305,6 +283,12 @@ public:
       
    ///@}
 
+public:
+   double dt_turbulence {0};
+   double dt_wfs {0};
+   double dt_recon {0};
+   double dt_dmcomb {0};
+   double dt_total {0};
 
 };
 
@@ -324,25 +308,30 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simulate
    _currImage = 0;
    _currFile = 0;
 
-   m_coronagraph.m_fileDir = getEnv("MX_AO_DATADIR") + "/" + "coron/";
+   m_coronagraph.m_fileDir = sys::getEnv("MX_AO_DATADIR") + "/" + "coron/";
 
    _npix = 0;
 
-   ds9i_coron.title("Coronagraph");
-   ds9i_coron_avg.title("Coron_Avg");
+   
+   cublasCreate(&m_cublasHandle);
+   cublasSetPointerMode(m_cublasHandle, CUBLAS_POINTER_MODE_DEVICE);//CUBLAS_POINTER_MODE_HOST
 }
 
 template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
 simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::~simulatedAOSystem()
 {
-   if(_ampOut.is_open()) _ampOut.close();
+   if(m_ampOut.rows() > 0 && _ampFile != "")
+   {
+      mx::fits::fitsFile<realT> ff;
+      ff.write(_ampFile+".fits", m_ampOut);
+   }
 
    if(_rmsOut.is_open()) _rmsOut.close();
 #if 1
    //Write out the psf and coron cubes one last time
    if(_psfFileBase !="" && _currImage > 0 && _writeIndFrames)
    {
-      mx::improc::fitsFile<realT> ff;
+      mx::fits::fitsFile<realT> ff;
 
       std::string fn = _psfFileBase + "_psf_" + ioutils::convertToString(_currFile) + ".fits";
 
@@ -374,8 +363,8 @@ int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::init
    _wfsName = wfsName;
    _pupilName = pupilName;
 
-   improc::fitsFile<realT> ff;
-   improc::fitsHeader head;
+   fits::fitsFile<realT> ff;
+   fits::fitsHeader head;
 
    //Initialize the pupil.
 
@@ -395,7 +384,7 @@ int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::init
    turbSeq.wfPS(m_wfPS);
 
    //DM Initialization.
-   dm.initialize( dmSpec, _pupilName);
+   dm.initialize( *this, dmSpec, _pupilName);
 
    wfs.linkSystem(*this);
 
@@ -413,8 +402,8 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::ini
                                                                                     )
 {
 
-   improc::fitsFile<realT> ff;
-   improc::fitsHeader head;
+   fits::fitsFile<realT> ff;
+   fits::fitsHeader head;
 
    m_simStep = simStep;
    wfs.simStep(m_simStep);
@@ -509,9 +498,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
 
    std::cerr << dm.nModes() << "\n";
 
-   tO = get_curr_time();
-
-   improc::ds9Interface ds9;
+   tO = sys::get_curr_time();
 
    for(int i=0;i< dm.nModes(); ++i)
    {
@@ -527,44 +514,41 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
       }
       else
       {
-         t0 = get_curr_time();
+         t0 = sys::get_curr_time();
          dm.applyMode(currWF, i, s_amp, 0.8e-6);
-         t1 = get_curr_time();
+         t1 = sys::get_curr_time();
          t_applyMode += t1-t0;
 
          BREAD_CRUMB;
 
-         t0 = get_curr_time();
+         t0 = sys::get_curr_time();
          wfs.senseWavefrontCal(currWF);
-         t1 = get_curr_time();
+         t1 = sys::get_curr_time();
 
          t_senseWF += t1-t0;
       }
 
       BREAD_CRUMB;
 
-      t0 = get_curr_time();
+      t0 = sys::get_curr_time();
 
       recon.calcMeasurement(measureVec, wfs.detectorImage);
 
-      //ds9(wfs.detectorImage.image);
-
-      t1 = get_curr_time();
+      t1 = sys::get_curr_time();
 
       t_calcMeas += t1-t0;
 
       BREAD_CRUMB;
 
-      t0 = get_curr_time();
+      t0 = sys::get_curr_time();
       recon.accumulateRMat(i, measureVec, wfs.detectorImage);
-      t1 = get_curr_time();
+      t1 = sys::get_curr_time();
       t_accum += t1-t0;
 
       BREAD_CRUMB;
 
-      //ds9_display(1, wfs.detectorImage.data(), wfs.detectorImage.cols(), wfs.detectorImage.rows(),1, mx::getFitsBITPIX<realT>());
    }
-   tF = get_curr_time();
+   tF = sys::get_curr_time();
    std::cout << ( (realT) dm.nModes())/(tF - tO) << " Hz\n";
 
    std::cout << t_applyMode/dm.nModes() << " " << t_senseWF/dm.nModes() << " " << t_calcMeas/dm.nModes() << " " << t_accum/dm.nModes();
@@ -616,6 +600,8 @@ template<typename realT, typename wfsT, typename reconT, typename filterT, typen
 void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nextWF(wavefrontT & wf)
 {
 
+   realT rms_ol, rms_cl;
+   
    BREAD_CRUMB;
 
    if(_npix == 0)
@@ -625,39 +611,33 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
    BREAD_CRUMB;
 
+   double t0 = sys::get_curr_time();
    turbSeq.nextWF(wf);
+   dt_turbulence +=  sys::get_curr_time() - t0;
+   
    wf.iterNo = _frameCounter;
-
-   //std::cout << "Input Photons: " << wf.amplitude.square().sum() << "\n";
 
    BREAD_CRUMB;
 
    //Mean subtraction on the system pupil.
    realT mn = (wf.phase * _pupil).sum()/_npix;
 
-
    //Apply the pupil mask just once.
    wf.phase = (wf.phase-mn)*_pupil;
 
-
-   BREAD_CRUMB;
-
-  /*
-   if(_openLoopAmps)
+   if(_pupilMask.rows() == _pupil.rows() && _pupilMask.cols() == _pupil.cols())
    {
-      calcOpenLoopAmps(wf);
-   }*/
-
+      wf.phase *= _pupilMask;
+   }
+   
 
    BREAD_CRUMB;
 
-   realT rms_ol = sqrt(  wf.phase.square().sum()/ _npix );
+   if(_frameCounter % 10 == 0) rms_ol = sqrt(  wf.phase.square().sum()/ _npix );
 
    BREAD_CRUMB;
 
    typename filterT::commandT measuredAmps, commandAmps;
-
-   BREAD_CRUMB;
 
    filter.initMeasurements(measuredAmps, commandAmps);
 
@@ -669,45 +649,57 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       }
    }
 
-
-   BREAD_CRUMB;
-
-//   _wfsLambda = 0.78e-6;;
-
-   BREAD_CRUMB;
-   if(_loopClosed) dm.applyShape(wf, _wfsLambda);
-
    BREAD_CRUMB;
    if(_loopClosed)
    {
+      dm.applyShape(wf, _wfsLambda);
+      
       bool newCV;
 
       BREAD_CRUMB;
 
+      t0 = sys::get_curr_time();
       newCV = wfs.senseWavefront(wf);
-
+      dt_wfs += sys::get_curr_time() - t0;
+      
       if(newCV)
       {
          BREAD_CRUMB;
-
+         
+         t0 = sys::get_curr_time();
          recon.reconstruct(measuredAmps, wfs.m_detectorImage);
-
+         dt_recon += sys::get_curr_time() - t0;
+         
          BREAD_CRUMB;
 
+         //Record amps if we're saving
          if(_ampFile != "")
          {
-            if(!_ampOut.is_open())
+            //Check if initialized
+            if(m_ampOut.cols() != turbSeq.frames() || m_ampOut.rows() != measuredAmps.measurement.size()+1)
             {
-               _ampOut.open(_ampFile);
-               _ampOut << std::scientific;
+               if(m_ampOut.cols() != 0)
+               {
+                  std::cerr << "m_ampOut already allocated but cols not frames\n";
+                  exit(0);
+               }
+               
+               if(m_ampOut.rows() != 0)
+               {
+                  std::cerr << "m_ampOut already allocated but rows not measurements\n";
+                  exit(0);
+               }
+               
+               m_ampOut.resize(measuredAmps.measurement.size()+1, turbSeq.frames());
+               m_ampOut.setZero();
             }
-
-            _ampOut << measuredAmps.iterNo << "> ";
-            for(int i=0;i<measuredAmps.measurement.cols(); ++i)
+            
+            int n = floor(measuredAmps.iterNo);
+            m_ampOut(0,n) = measuredAmps.iterNo;
+            for(int i=1;i<measuredAmps.measurement.size()+1; ++i)
             {
-               _ampOut << measuredAmps.measurement(0,i) << " ";
+               m_ampOut(i,n) = measuredAmps.measurement[i-1];
             }
-            _ampOut << std::endl;
          }
 
          BREAD_CRUMB;
@@ -718,23 +710,17 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
          _delayedCommands[nAmps].iterNo = measuredAmps.iterNo;
 
          _goodCommands[nAmps] = 1;
-
-
-         //std::cerr << "nAmps: " << nAmps <<  " " << 1 << "\n";
       }
       else
       {
          int nAmps = ( _frameCounter % _delayedCommands.size() );
          _goodCommands[nAmps] = 0;
-         //std::cerr << "nAmps: " << nAmps <<  " " << 0 << "\n";
       }
 
 
       int _currCommand = ( _frameCounter % _delayedCommands.size() ) - _commandDelay;
       if(_currCommand < 0) _currCommand += _delayedCommands.size();
 
-
-      //std::cerr << "\t\t Current Command: " << ( _frameCounter % _delayedCommands.size() ) << " " << _currCommand << " " << _goodCommands[_currCommand] << "\n";
       if(_goodCommands[_currCommand])
       {
          BREAD_CRUMB;
@@ -743,7 +729,9 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
          BREAD_CRUMB;
 
+         t0=sys::get_curr_time();
          dm.setShape(commandAmps);
+         dt_dmcomb += sys::get_curr_time() - t0;
       }
 
 
@@ -752,7 +740,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    {
       int nAmps = ( _frameCounter % _delayedCommands.size() );
       _goodCommands[nAmps] = 0;
-      //std::cerr << "nAmps: " << nAmps <<  " " << 0 << "\n";
    }
 
 
@@ -763,18 +750,14 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
    }
 
 
-    //Mean subtraction on the system pupil.
-//    mn = (wf.phase * _pupil).sum()/_npix;
-//    wf.phase = (wf.phase-mn)*_pupil;
-
    //**** Calculate RMS phase ****//
-   realT rms_cl;
-   mn = (wf.phase * _pupil).sum()/_npix;
-   std::cerr << "mean at rms_cl: " << mn << "\n";
-   rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
-
-   std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
-
+   if(_frameCounter % 10 == 0)
+   {
+      mn = (wf.phase * _pupil).sum()/_npix;
+      rms_cl = sqrt( (wf.phase-mn).square().sum()/ _postMask.sum() );
+      std::cout << _frameCounter << " WFE: " << rms_ol << " " << rms_cl << " [rad rms phase]\n";
+   }
+   
    if(m_sfImagePlane)
    {
       wfs.filter().filter(wf.phase);
@@ -814,7 +797,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
       {
          std::cerr << "Write to WF file here . . . \n";
 
-         mx::improc::fitsFile<realT> ff;
+         mx::fits::fitsFile<realT> ff;
 
          std::string fn = m_wfFileBase + "_phase_" + ioutils::convertToString<int,5,'0'>(m_currWFFile) + ".fits";
          ff.write(fn, m_wfPhase);
@@ -879,46 +862,14 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
       BREAD_CRUMB;
 
-      if( m_doCoron && display_coron > 0)
-      {
-         ++display_coron_counter;
 
-         if(display_coron_counter >= display_coron)
-         {
-            realT mxpk = _realFocal.maxCoeff();
-            _realFocalCoron /= mxpk;
-
-            ds9i_coron(_realFocalCoron);
-            display_coron_counter = 0;
-         }
-      }
-
-      BREAD_CRUMB;
-
-      if( m_doCoron && display_coron_avg > 0)
-      {
-         ++display_coron_avg_counter;
-
-         if(display_coron_avg_counter >= display_coron_avg)
-         {
-            realT mxpk = _psfOut.maxCoeff();
-            _realFocal = _coronOut / mxpk;
-
-            ds9i_coron_avg(_realFocal);
-            display_coron_avg_counter = 0;
-
-            _psfOut.setZero();
-            _coronOut.setZero();
-         }
-      }
-      BREAD_CRUMB;
 
 
       ++_currImage;
 #if 1
       if(_currImage >= _nPerFile && _writeIndFrames)
       {
-         mx::improc::fitsFile<realT> ff;
+         mx::fits::fitsFile<realT> ff;
 
          std::string fn = _psfFileBase + "_psf_" + ioutils::convertToString(_currFile) + ".fits";
 
@@ -962,6 +913,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 
    _wfsLambda = wfs.lambda();
 
+   double t0 = sys::get_curr_time();
    for(size_t i=0;i<turbSeq.frames();++i)
    {
       //std::cout << i << "/" << turbSeq.frames() << "\n" ;
@@ -985,9 +937,11 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 
    }
 
+   double dt_total = sys::get_curr_time() - t0;
+   
    if(_psfFileBase != "")
    {
-      improc::fitsFile<realT> ff;
+      fits::fitsFile<realT> ff;
       std::string fn = _psfFileBase + "_psf.fits";
       BREAD_CRUMB;
       ff.write(fn, _psfOut);
@@ -1002,6 +956,14 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::run
 
    BREAD_CRUMB;
 
+   std::cout << "Timing: \n";
+   std::cout << "   Total Time:    " << dt_total << " sec  / " << turbSeq.frames()/dt_total << " fps\n";
+   std::cout << "      Turbulence: " << dt_turbulence << " sec  / " << turbSeq.frames()/dt_turbulence << " fps / " << dt_turbulence/dt_total << "%\n";
+   std::cout << "      WFS:        " << dt_wfs << " sec  / " << turbSeq.frames()/dt_wfs << " fps / " << dt_wfs/dt_total << "%\n";
+   std::cout << "      Recon:      " << dt_recon << " sec  / " << turbSeq.frames()/dt_recon << " fps / " << dt_recon/dt_total << "%\n";
+   std::cout << "      dmcomb:     " << dt_dmcomb << " sec  / " << turbSeq.frames()/dt_dmcomb << " fps / " << dt_dmcomb/dt_total << "%\n";
+   
+   
 }//void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::runTurbulence()
 
 template<typename realT, typename wfsT, typename reconT, typename filterT, typename dmT, typename turbSeqT, typename coronT>
