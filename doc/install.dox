@@ -3,13 +3,12 @@
 
 \section install_intro Introduction
 
-These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems (running CentOS or Ubuntu), and Joseph Long has successfully installed it on Darwin (Mac O/S).
+These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems (running CentOS or Ubuntu). Installation on Mac O/S seems to be broken based on recent reports, but please let me know if you have success.
 
 \section install_depends Basic Dependencies
-This is the list of the other libraries and code-bases mxlib depends on.  
+This is the list of the other libraries and code-bases mxlib depends on.  I usually install these from scratch to ensure maximum optimization (though I have little to no quantitative evidence that it matters), but you can probably manage most of these from the O/S package manager.  You will need to make sure to install the `dev` packages.
 
 -# You need a c++14 compatible compiler with OpenMP support.
- - macOS users: Apple does not ship OpenMP support in `clang++`, their official C++ compiler. To build mxlib apps, you will need to install gcc/g++. (We recommend <a href="https://brew.sh">Homebrew for macOS</a>.)
  - CentOS 7: you will need to install the devtoolset package (see https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/):
   \code
    $ sudo yum install centos-release-scl
@@ -21,36 +20,25 @@ This is the list of the other libraries and code-bases mxlib depends on.
    \endcode
 
 -# You need the  <a href="https://www.gnu.org/software/gsl/">GNU Scientific Library (GSL)</a> (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
+
 -# You need the boost c++ library (this is probably obtainable from the linux distro package manager, fine to install with apt or yum)
+
 -# You need the <a href="http://heasarc.gsfc.nasa.gov/fitsio/"> cfitsio </a> FITS library. 
+
 -# You need a BLAS and LAPACK.  
-  - MKL: the intel Math Kernel Library (MKL) is probably the highest performance option for Intel CPUs.  It is free (as-in-beer) and straightforward to install. See my notes on \ref mkl "installing MKL".
-  - ATLAS: Another option is ATLAS, see my notes on \ref atlas "installing ATLAS". (use MKL if you can) 
-  - macOS (Darwin): the Accelerate framework will be used by default, so you don't have to do anything here.
+  - MKL: the intel Math Kernel Library (MKL) is probably the highest performance option for Intel CPUs.  It is free (as-in-beer) and straightforward to install. See my notes on \ref mkl "installing MKL".  
+  - ATLAS: Another option is ATLAS, see my notes on \ref atlas "installing ATLAS". ATLAS has been successfully used on a recent AMD machine by Jacob Trzaska at UA. 
   
--# You will need the \ref levmar "levmar least squares library" to use the data fitting tools.
 -# You need \ref fftw "the FFTW library, with at least version 3.3.5". 
   \note In principle the MKL fftw interface could be used, but this does not yet (Aug 2017) have the "make_planner_thread_safe" routines and only works in float and double.  
--# For displaying images and arrays, you need ds9 (http://ds9.si.edu/site/Home.html) and the XPA library (http://hea-www.harvard.edu/RD/xpa/).  Note that pre-packaged versions of XPA often don't install the header file, so you may need to install from source.
--# You need the \ref astro_sofa "IAU sofa libary".  
+  
 -# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
-  - I normally unpack the Eigen directory in $HOME/include, but this is optional.
-  - You must create a symbolic link , such as `$HOME/include/Eigen --> /path/to/eigen-eigen-xxyyzz/Eigen`.  The command for this would be
-    \verbatim $ ln -s /path/to/eigen-eigen-xxyyzz/Eigen $HOME/include/Eigen \endverbatim
-    This symbolic link could be placed in any location known to your compiler, say `/usr/local/include`
+  - I normally unpack the Eigen directory in `/usr/local/include`, but you could also use `$HOME/include` or anywhere else.
+  - You must create a symbolic link , such as `/usr/include/Eigen --> /path/to/eigen-eigen-xxyyzz/Eigen`.  The command for this would be
+    \verbatim $ ln -s /path/to/eigen-eigen-xxyyzz/Eigen /usr/local/include/Eigen \endverbatim
+    This symbolic link should be placed in any location known to your compiler.
 
 The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.
-
-
-\section install_environment Build Environment 
-
--# Build mxlib by running `make`. If your install prefix is different from `$HOME`, you will want to invoke `make` with `make PREFIX=/path/to/libraries` (where `/path/to/libraries` is the path to the folder containing `lib` and `include` folders for things like levmar and Eigen.) Alternatively, set that variable permanently following the steps below.
--# If you need to customize the build (e.g. switch the BLAS or FFT library used or modify paths), run `make setup`. This will create three Makefiles in `local/` for you to customize.
-  - If you want to change the install path from `$HOME` to something else, set `PREFIX`.
-  - `USE_BLAS_FROM` can be set to `mkl`, `ATLAS`, or `Accelerate` (macOS only). You may also need to override `BLAS_INCLUDES`, `BLAS_LDFLAGS`, and/or `BLAS_LDLIBS` to set paths and flags. (See `mk/MxApp.mk` for examples.)
-  - The Makefiles in `local/` are included at the beginning of the corresponding files in `mk/`. Any variable set with `?=` in the original Makefile can be overridden in the corresponding `local/` one.
-  - The files in `local/` are not tracked in git.
--# Install mxlib with `make install`.
 
 \section git_tracking Git Version Tracking
 
@@ -58,9 +46,25 @@ Mxlib includes a systems to track its git version, using the SHA1 hash.  This, i
 
 \warning To avoid getting this warning due to makefile modifications, the only files you should edit during installation are the local/Common.mk, local/MxLib.mk, and local/mxApp.mk.  Do not edit these in the mk folder.
 
-\section install_environment Build Environment
+\section building Configuring and Building mxlib
+-# If your install prefix is different from `$HOME`, you will want to invoke `make` with `make PREFIX=/path/to/libraries` (where `/path/to/libraries` is the path to the folder containing `lib` and `include` folders for things like levmar and Eigen.) Alternatively, set that variable permanently following the steps below.
 
-Once mxlib is built, set the `$MXMAKEFILE` variable in your shell (and/or shell profile files):
+-# If you need to customize the build (e.g. switch the BLAS or FFT library used or modify paths), run `make setup`. This will create three Makefiles in `local/` for you to customize.
+
+-# To configure mxlib edit the files in the `local/` directory only.  Some options are:
+  - Any variable set with `?=` in the files in `mk/` can be overridden in the corresponding `local/` one. The files in `local/` are not tracked in git and editing them will not cause compile warnings.
+  - If you want to change the install path from `$HOME` to something else, set `PREFIX=` in `local/Common.mk`.
+  - `USE_BLAS_FROM` can be set to `mkl`, `ATLAS`, or `Accelerate` (macOS only). You may also need to override `BLAS_INCLUDES`, `BLAS_LDFLAGS`, and/or `BLAS_LDLIBS` to set paths and flags. (See `mk/MxApp.mk` for examples.)
+
+-# Build `mxlib` by running `make` at the top level.  This will require `sudo` privileges to install `libsofa`.  
+
+-# Install `mxlib` with `make install`.  `sudo` may be required depending on the `PREFIX`.
+
+
+
+\section build_environment Build Environment
+
+Once mxlib is built and installed, set the `$MXMAKEFILE` variable in your shell (and/or shell profile files):
 
 \code
 export MXMAKEFILE=/path/to/mxlib/mk/MxApp.mk
@@ -71,7 +75,6 @@ You can then build a single .cpp program, let's say "myProgram.cpp", with the fo
 make -B -f $MXMAKEFILE t=myProgram 
 \endcode
 
-
 To install it, you need to give `make` a hint about what is to be installed. The command is
 \code
 make -f $MXMAKEFILE TARGET=myProgram install
@@ -79,13 +82,6 @@ make -f $MXMAKEFILE TARGET=myProgram install
 
 This installs the `myProgram` binary to `$PREFIX/bin` (which is `$HOME/bin` unless you have set `PREFIX` in one of the `local/` Makefiles).
 
-\section github I've Moved
-
-On 2017-07-08 I moved from bitbucket to github.  To follow along, issue these commands:
-\verbatim
-  git remote set-url origin https://github.com/jaredmales/mxlib.git
-  git remote set-url --push origin https://github.com/jaredmales/mxlib.git
-\endverbatim
-  
+For more complicated applications, you can create a local `Makefile` which specifies additional objects with `OTHER_OBJS`, and finally includes `MxApp.mk`.    
 @}
 */
