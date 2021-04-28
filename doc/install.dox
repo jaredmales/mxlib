@@ -47,6 +47,8 @@ Mxlib includes a systems to track its git version, using the SHA1 hash.  This, i
 \warning To avoid getting this warning due to makefile modifications, the only files you should edit during installation are the local/Common.mk, local/MxLib.mk, and local/mxApp.mk.  Do not edit these in the mk folder.
 
 \section building Configuring and Building mxlib
+-# clone mxlib from https://github.com/jaredmales/mxlib
+
 -# If your install prefix is different from `$HOME`, you will want to invoke `make` with `make PREFIX=/path/to/libraries` (where `/path/to/libraries` is the path to the folder containing `lib` and `include` folders for things like levmar and Eigen.) Alternatively, set that variable permanently following the steps below.
 
 -# If you need to customize the build (e.g. switch the BLAS or FFT library used or modify paths), run `make setup`. This will create three Makefiles in `local/` for you to customize.
