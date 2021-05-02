@@ -74,6 +74,11 @@ math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
+app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
+app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
+app/clOptions.o: ../include/app/clOptions.hpp
+app/ini.o: ../include/app/ini.hpp
+app/optionparser.o: ../include/app/optionparser/optionparser.h
 
 #mxlib_uncomp_version
 
