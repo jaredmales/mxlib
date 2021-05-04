@@ -21,7 +21,7 @@ PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
 LIB_PATH ?= $(PREFIX)/lib
 INCLUDE_PATH ?= $(PREFIX)/include
-LIB_SOFA ?= $(LIB_PATH)/libsofa_c.a
+LIB_SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/20210125/c/src/)
 ARFLAGS ?= rvs
 
 INCLUDES += -I$(INCLUDE_PATH) $(shell pkg-config eigen3 --cflags)
@@ -93,6 +93,9 @@ ifneq ($(UNAME),Darwin)
 endif
 
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
+
+# SOFA
+EXTRA_LDFLAGS += -L$(LIB_SOFA_PATH)
 
 #BLAS:
 INCLUDES += $(BLAS_INCLUDES)
