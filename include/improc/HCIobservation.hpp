@@ -16,7 +16,6 @@
 
 #include <sys/stat.h>
 
-
 #include "../mxlib.hpp"
 
 #include "../mxException.hpp"
@@ -880,7 +879,7 @@ int HCIobservation<_realT>::readFiles()
       {
          for(size_t i=0;i<m_imageMJD.size();++i)
          {
-            m_imageMJD[i] = m_heads[i][m_MJDKeyword].Value<realT>()*m_MJDUnits;
+            m_imageMJD[i] = m_heads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
          }
       }
    }
@@ -1071,7 +1070,7 @@ int HCIobservation<_realT>::readRDIFiles()
       {
          for(size_t i=0;i<m_RDIimageMJD.size();++i)
          {
-            m_RDIimageMJD[i] = m_RDIheads[i][m_MJDKeyword].Value<realT>()*m_MJDUnits;
+            m_RDIimageMJD[i] = m_RDIheads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
          }
       }
    }
@@ -2068,7 +2067,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          {
             for(size_t i=0;i<m_imageMJD.size();++i)
             {
-               m_imageMJD[i] =  m_heads[i][m_MJDKeyword].Value<realT>()*m_MJDUnits;
+               m_imageMJD[i] = m_heads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
             }
          }
       }
