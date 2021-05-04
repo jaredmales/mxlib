@@ -59,6 +59,12 @@ std::string pathStem(const std::string & fname)
    return p.stem().string();
 }
 
+std::string pathFilename( const std::string & fname)
+{
+   boost::filesystem::path p(fname);
+   return p.filename().string();
+}
+
 std::string parentPath(const std::string & fname)
 {
    boost::filesystem::path p(fname);

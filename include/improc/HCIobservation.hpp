@@ -1151,7 +1151,7 @@ int HCIobservation<_realT>::threshold( std::vector<std::string> & fileList,
    ioutils::readColumns(qualityFile, qfileNames, imQ);
 
    std::map<std::string, realT> quality;
-   for(size_t i=0;i<qfileNames.size();++i) quality[basename(qfileNames[i].c_str())] = imQ[i];
+   for(size_t i=0;i<qfileNames.size();++i) quality[ioutils::pathFilename(qfileNames[i].c_str())] = imQ[i];
 
    realT q;
 
@@ -1159,7 +1159,7 @@ int HCIobservation<_realT>::threshold( std::vector<std::string> & fileList,
    {
       try
       {
-         q = quality.at(basename(fileList[i].c_str()));
+         q = quality.at(ioutils::pathFilename(fileList[i].c_str()));
       }
       catch(...)
       {
@@ -1510,7 +1510,7 @@ int HCIobservation<_realT>::readWeights()
    }
 
    std::map<std::string, realT> weights;
-   for(size_t i=0;i<wfileNames.size();++i) weights[basename(wfileNames[i].c_str())] = imW[i];
+   for(size_t i=0;i<wfileNames.size();++i) weights[ioutils::pathFilename(wfileNames[i].c_str())] = imW[i];
 
    m_comboWeights.resize(m_fileList.size());
 
@@ -1520,7 +1520,7 @@ int HCIobservation<_realT>::readWeights()
    {
       try
       {
-         wi = weights.at(basename(m_fileList[i].c_str()));
+         wi = weights.at(ioutils::pathFilename(m_fileList[i].c_str()));
       }
       catch(...)
       {
@@ -1661,7 +1661,7 @@ void HCIobservation<_realT>::outputPreProcessed()
    for(int i=0; i< m_Nims; ++i)
    {
       bname = m_fileList[i];
-      fname = m_preProcess_outputPrefix + basename(bname.c_str()) + ".fits";
+      fname = m_preProcess_outputPrefix + ioutils::pathFilename(bname.c_str()) + ".fits";
       ff.write(fname, m_tgtIms.image(i).data(), m_Ncols, m_Nrows, 1, m_heads[i]);
    }
 } //void HCIobservation<_realT>::outputPreProcessed()
@@ -1677,7 +1677,7 @@ void HCIobservation<_realT>::stdFitsHeader(fits::fitsHeader & head)
    head.append<int>("FDELBACK", m_deleteBack, "images deleted from back of file list");
 
 
-   head.append("QFILE", basename(m_qualityFile.c_str()), "quality file for thresholding");
+   head.append("QFILE", ioutils::pathFilename(m_qualityFile.c_str()), "quality file for thresholding");
    head.append<realT>("QTHRESH", m_qualityThreshold, "quality threshold");
    head.append<int>("NUMIMS", m_Nims, "number of images processed");
 

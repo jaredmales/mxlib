@@ -69,6 +69,8 @@ all: libmxlib.so
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp			
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp	
+improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
+ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
