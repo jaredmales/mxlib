@@ -89,10 +89,11 @@ libmxlib.so: sofa $(OBJS) $(CUDA_OBJS)
 	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
 sofa:
-	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
+	$(MAKE) -C $(CURRENT_SOFA)/c/src/ 
 	
 install: libmxlib.so
 	install -d $(LIB_PATH)
+	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
 	install libmxlib.so $(LIB_PATH)
 
 .PHONY: clean
