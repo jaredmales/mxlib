@@ -88,8 +88,8 @@ libmxlib.so: sofa $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
 	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 
-sofa: 
-	sudo $(MAKE) -C $(CURRENT_SOFA)/c/src/ install
+sofa:
+	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
 	
 install: libmxlib.so
 	install -d $(LIB_PATH)
@@ -106,3 +106,7 @@ realclean: clean
 	rm -f libmxlib.so
 	rm -f $(OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ cleanall
+
+# .PHONY: printvars
+# printvars:
+#     @$(foreach V,$(sort $(.VARIABLES)),$(if $(filter-out environment% default automatic,$(origin $V)),$(warning $V=$($V) ($(value $V)))))

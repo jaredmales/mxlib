@@ -4,17 +4,15 @@
 #
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(SELF_DIR)/../local/Common.mk
+UNAME ?= $(shell uname)
 
-
-# Set these to no in local/Common.mk if you never need them
-# or in your local Makefile
+# Set to no in local/Common.mk or in your local Makefile if you never need CUDA
 NEED_CUDA ?= yes
 
-
-UNAME ?= $(shell uname)
 ifeq ($(UNAME),Darwin)
 	CFLAGS += -D_BSD_SOURCE
 	CXXFLAGS += -D_BSD_SOURCE
+    NEED_CUDA = no  # effectively unsupported on macOS, so don't bother
 else
 	CFLAGS += -D_XOPEN_SOURCE=700
 	CXXFLAGS += -D_XOPEN_SOURCE=700
@@ -26,19 +24,19 @@ INCLUDE_PATH ?= $(PREFIX)/include
 LIB_SOFA ?= $(LIB_PATH)/libsofa_c.a
 ARFLAGS ?= rvs
 
-INCLUDES += -I$(INCLUDE_PATH)
+INCLUDES += -I$(INCLUDE_PATH) $(shell pkg-config eigen3 --cflags)
 
-OPTIMIZE ?= -O3 -fopenmp -ffast-math
+DEFAULT_OPTIMIZATIONS = -O3 -ffast-math
+ifeq ($(UNAME),Linux)
+    DEFAULT_OPTIMIZATIONS += -fopenmp
+endif
+OPTIMIZE ?= $(DEFAULT_OPTIMIZATIONS)
 
 CFLAGS += -std=c99 -fPIC
 CXXFLAGS += -std=c++14 -fPIC
 
 # Provide default build options in case they weren't defined in local/MxApp.mk
-ifeq ($UNAME,Darwin)  # macOS
-    USE_BLAS_FROM ?= Accelerate
-else
-    USE_BLAS_FROM ?= mkl
-endif
+USE_BLAS_FROM ?= mkl
 
 #default FFT is fftw
 USE_FFT_FROM ?= fftw
@@ -46,8 +44,14 @@ USE_FFT_FROM ?= fftw
 # Configure includes and libraries based on build options
 ifeq ($(USE_BLAS_FROM),mkl)
     BLAS_INCLUDES ?= -DMXLIB_MKL -m64 -I${MKLROOT}/include
-    BLAS_LDFLAGS ?= -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
-    BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+    ifeq ($(UNAME),Darwin)
+        BLAS_LDFLAGS ?= -L${MKLROOT}/lib -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib
+        BLAS_LDLIBS ?= -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+    endif
+    ifeq ($(UNAME),Linux)
+        BLAS_LDFLAGS ?= -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
+        BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+    endif
 endif
 
 ifeq ($(USE_BLAS_FROM),ATLAS)
@@ -55,30 +59,30 @@ ifeq ($(USE_BLAS_FROM),ATLAS)
     BLAS_INCLUDES ?= -I/usr/local/atlas/include
     BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
     BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas -lgfortran
-    
+
     #2018-08-13: These work for apt installed atlas on Ubuntu 18.04
     #BLAS_INCLUDES ?= -I/usr/include/x86_64-linux-gnu/
     #BLAS_LDFLAGS ?= -L/usr/lib/x86_64-linux-gnu/
     #BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas
 
 endif
-ifeq ($(USE_BLAS_FROM),Accelerate)
-    BLAS_LDFLAGS ?= -framework Accelerate
-endif
 
 ifeq ($(USE_FFT_FROM),fftw)
     #Order matters, _threads first.
-    #FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l 
-    
+    ifeq ($(UNAME),Darwin)
+        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l
+    endif
     #with new combined-threads:
-    FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q 
+    ifeq ($(UNAME),Linux)
+        FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q
+    endif
 endif
 
-FITS_LIB = -lcfitsio 
+FITS_LIB = -lcfitsio
 
 BOOST_LIB = -lboost_system -lboost_filesystem
 
-GSL_LIB = -lgsl 
+GSL_LIB = -lgsl
 
 SOFA_LIB = -lsofa_c
 
@@ -100,7 +104,7 @@ EXTRA_LDLIBS += $(FFT_LDLIBS)
 EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
 
-LDLIBS += $(EXTRA_LDLIBS) 
+LDLIBS += $(EXTRA_LDLIBS)
 LDFLAGS += $(EXTRA_LDFLAGS)
 
 CFLAGS += $(INCLUDES) $(OPTIMIZE)
@@ -110,9 +114,8 @@ CXXFLAGS += $(INCLUDES) $(OPTIMIZE)
 LINK.o = $(LINK.cc)
 
 ifeq ($(NEED_CUDA),yes)
-
    CXXFLAGS += -DEIGEN_NO_CUDA
-   
+
    HOST_ARCH   := $(shell uname -m)
    CUDA_TARGET_ARCH = $(HOST_ARCH)
    ifneq (,$(filter $(CUDA_TARGET_ARCH),x86_64 aarch64 ppc64le armv7l))
@@ -128,68 +131,49 @@ ifeq ($(NEED_CUDA),yes)
    else
        $(error ERROR - unsupported value $(CUDA_TARGET_ARCH) for TARGET_ARCH!)
    endif
-   
+
    # operating system
    HOST_OS   := $(shell uname -s 2>/dev/null | tr "[:upper:]" "[:lower:]")
    TARGET_OS ?= $(HOST_OS)
    ifeq (,$(filter $(TARGET_OS),linux darwin qnx android))
        $(error ERROR - unsupported value $(TARGET_OS) for TARGET_OS!)
    endif
-   
-   # host compiler
-   ifeq ($(TARGET_OS),darwin)
-       ifeq ($(shell expr `xcodebuild -version | grep -i xcode | awk '{print $$2}' | cut -d'.' -f1` \>= 5),1)
-           HOST_COMPILER ?= clang++
-       endif
-   endif
 
    HOST_COMPILER ?= g++
    NVCC          := nvcc -ccbin $(HOST_COMPILER)
-   
+
    # internal flags
    NVCCFLAGS   := -m${TARGET_SIZE}
    NVCCFLAGS   +=  -DEIGEN_NO_CUDA -DMXLIB_MKL
-   
-   # build flags
-   ifeq ($(TARGET_OS),darwin)
-       LDFLAGS += -rpath $(CUDA_PATH)/lib
-       CXXFLAGS += -arch $(HOST_ARCH)
-   endif
-   
-   
+
    # Debug build flags
    ifeq ($(dbg),1)
-         NVCCFLAGS += -g 
+         NVCCFLAGS += -g
          BUILD_TYPE := debug
    else
          BUILD_TYPE := release
    endif
-   
+
    ALL_CCFLAGS :=
    ALL_CCFLAGS += $(NVCCFLAGS)
    ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
    ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CXXFLAGS))
    ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
    ALL_CCFLAGS +=
-   
+
    ALL_LDFLAGS :=
    ALL_LDFLAGS += $(ALL_CCFLAGS)
    ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
    ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDLIBS))
-   
+
 
    #build any cu and cpp files through NVCC as needed
    %.o : %.cu
 	$(EXEC) $(NVCC) $(ALL_CCFLAGS) $< -c -o $@
 
-#   %.o : %.cpp
-#	$(EXEC) $(NVCC) $(ALL_CCFLAGS) $< -c -o $@
-
-
    #Finally we define the cuda libs for linking
    CUDA_LIBS ?= -L/usr/local/cuda/lib64/ -lcudart -lcublas -lcufft -lcurand
-   
-   
+
 else
-   CUDA_LIBS ?= 
+   CUDA_LIBS ?=
 endif
