@@ -5,6 +5,10 @@
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(SELF_DIR)/../local/Common.mk
 UNAME ?= $(shell uname)
+# environments setting -Wl,-dead_strip_dylibs by default break MKL link options
+# so we remove it by replacing it with zero if it's there; later parts of the
+# Makefile then add to this adjusted LDFLAGS value
+LDFLAGS := $(LDFLAGS:-Wl,-dead_strip_dylibs=)
 
 # Set to no in local/Common.mk or in your local Makefile if you never need CUDA
 NEED_CUDA ?= yes
@@ -13,9 +17,11 @@ ifeq ($(UNAME),Darwin)
 	CFLAGS += -D_BSD_SOURCE
 	CXXFLAGS += -D_BSD_SOURCE
     NEED_CUDA = no  # effectively unsupported on macOS, so don't bother
+    LIB_SUFFIX = dylib
 else
 	CFLAGS += -D_XOPEN_SOURCE=700
 	CXXFLAGS += -D_XOPEN_SOURCE=700
+    LIB_SUFFIX = so
 endif
 PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
@@ -35,17 +41,15 @@ OPTIMIZE ?= $(DEFAULT_OPTIMIZATIONS)
 CFLAGS += -std=c99 -fPIC
 CXXFLAGS += -std=c++14 -fPIC
 
-# Provide default build options in case they weren't defined in local/MxApp.mk
-USE_BLAS_FROM ?= mkl
-
-#default FFT is fftw
 USE_FFT_FROM ?= fftw
+USE_BLAS_FROM ?= mkl
 
 # Configure includes and libraries based on build options
 ifeq ($(USE_BLAS_FROM),mkl)
+    $(if ${MKLROOT},,$(error No value set for environment variable $$MKLROOT))
     BLAS_INCLUDES ?= -DMXLIB_MKL -m64 -I${MKLROOT}/include
     ifeq ($(UNAME),Darwin)
-        BLAS_LDFLAGS ?= -L${MKLROOT}/lib -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib
+        BLAS_LDFLAGS ?= -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib
         BLAS_LDLIBS ?= -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
     endif
     ifeq ($(UNAME),Linux)
@@ -54,7 +58,12 @@ ifeq ($(USE_BLAS_FROM),mkl)
     endif
 endif
 
-ifeq ($(USE_BLAS_FROM),ATLAS)
+ifeq ($(USE_BLAS_FROM),openblas)
+    BLAS_LDFLAGS ?=
+    BLAS_LDLIBS ?= -lblas -llapack
+endif
+
+ifeq ($(USE_BLAS_FROM),atlas)
     #These are probably what you want for self-compiled atlas
     BLAS_INCLUDES ?= -I/usr/local/atlas/include
     BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
