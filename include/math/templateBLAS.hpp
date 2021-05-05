@@ -34,7 +34,7 @@ extern "C"
 
 #else
 
-   #include <cblas.h>
+   #include <gsl/gsl_cblas.h>
 
 #endif
 }
