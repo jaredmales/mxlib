@@ -8,7 +8,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - name: Who am I?
-        run: echo ${{ matrix.os }}
+        run: echo "Triggered by ${{ github.event_name }}, branch ${{ github.ref }}, running on ${{ runner.os }}"
       - name: Check out repository code
         uses: actions/checkout@v2
       - name: Cache miniconda packages
