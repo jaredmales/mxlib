@@ -61,11 +61,12 @@ setup:
 	@echo "***"
 
 lib: mxlib_uncomp_version mxlib_comp_version
-	cd source; ${MAKE} libmxlib.so
+	cd source; ${MAKE}
 	
 install: all mxlib_uncomp_version
 	cd source; ${MAKE} install
 	install -d $(INCLUDE_PATH)/mx
+	install -d $(BIN_PATH)
 	install gengithead.sh $(BIN_PATH)/
 	cp -r include/* $(INCLUDE_PATH)/mx/
 
