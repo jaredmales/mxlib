@@ -4,6 +4,7 @@
 #
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 -include $(SELF_DIR)/../local/Common.mk
+
 UNAME ?= $(shell uname)
 # environments setting -Wl,-dead_strip_dylibs by default break MKL link options
 # so we remove it by replacing it with zero if it's there; later parts of the
@@ -46,7 +47,7 @@ USE_BLAS_FROM ?= mkl
 
 # Configure includes and libraries based on build options
 ifeq ($(USE_BLAS_FROM),mkl)
-    $(if ${MKLROOT},,$(error No value set for environment variable $$MKLROOT))
+    $(if ${MKLROOT},,$(warning No value set for environment variable $$MKLROOT))
     BLAS_INCLUDES ?= -DMXLIB_MKL -m64 -I${MKLROOT}/include
     ifeq ($(UNAME),Darwin)
         BLAS_LDFLAGS ?= -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib
@@ -59,8 +60,8 @@ ifeq ($(USE_BLAS_FROM),mkl)
 endif
 
 ifeq ($(USE_BLAS_FROM),openblas)
-    BLAS_LDFLAGS ?=
-    BLAS_LDLIBS ?= -lblas -llapack
+    BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-L openblas)
+    BLAS_LDLIBS ?= $(shell pkg-config --libs-only-l openblas)
 endif
 
 ifeq ($(USE_BLAS_FROM),atlas)
@@ -78,13 +79,7 @@ endif
 
 ifeq ($(USE_FFT_FROM),fftw)
     #Order matters, _threads first.
-    ifeq ($(UNAME),Darwin)
-        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l
-    endif
-    #with new combined-threads:
-    ifeq ($(UNAME),Linux)
-        FFT_LDLIBS ?= -lfftw3 -lfftw3f -lfftw3l -lfftw3q
-    endif
+    FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l
 endif
 
 FITS_LIB = -lcfitsio

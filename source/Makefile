@@ -95,10 +95,9 @@ else
 endif
 
 sofa:
-	$(MAKE) -C $(CURRENT_SOFA)/c/src/ 
+	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
 
 install: libmxlib.$(LIB_SUFFIX)
-	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
 	install -d $(LIB_PATH)
 	install libmxlib.$(LIB_SUFFIX) $(LIB_PATH)
 
