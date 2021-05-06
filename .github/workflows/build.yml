@@ -23,14 +23,14 @@ jobs:
       - name: Disable existing conda (if any)
         run: conda config --set auto_activate_base false || true # try to avoid upstream's conda interfering
       - name: Install miniconda (Linux)
-        if: matrix.os == 'Linux'
+        if: runner.os == 'Linux'
         run: |
           if [[ ! -e ~/miniconda3 ]]; then
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
             bash Miniconda3-latest-Linux-x86_64.sh -b
           fi
       - name: Install miniconda (macOS)
-        if: matrix.os == 'macOS'
+        if: runner.os == 'macOS'
         run: |
           if [[ ! -e ~/miniconda3 ]]; then
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
