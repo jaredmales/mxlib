@@ -1,8 +1,11 @@
-name: Build with dependencies from conda
+name: Build (Linux, macOS)
 on: [push]
 jobs:
-  build-with-conda:
-    runs-on: ubuntu-latest
+  build-all:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -15,12 +18,21 @@ jobs:
           key: ${{ runner.os }}-${{ env.cache-name }}-v1-${{ hashFiles('setup/conda_env_setup.bash', 'setup/conda_env_setup_${{ runner.os }}.bash') }}
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-
-      - name: Install miniconda
+      - name: Disable existing conda (if any)
+        run: conda config --set auto_activate_base false || true # try to avoid upstream's conda interfering
+      - name: Install miniconda (Linux)
+        if: matrix.os == 'Linux'
         run: |
-          conda config --set auto_activate_base false  # try to avoid upstream's conda interfering
           if [[ ! -e ~/miniconda3 ]]; then
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
             bash Miniconda3-latest-Linux-x86_64.sh -b
+          fi
+      - name: Install miniconda (macOS)
+        if: matrix.os == 'macOS'
+        run: |
+          if [[ ! -e ~/miniconda3 ]]; then
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+            bash Miniconda3-latest-MacOSX-x86_64.sh -b
           fi
       - name: (re-)Create build environment
         run: |
@@ -34,10 +46,6 @@ jobs:
           source ~/miniconda3/etc/profile.d/conda.sh
           conda activate build
           bash -x setup/conda_env_setup_${{ runner.os }}.bash
-      # - name: Examine pkg-config
-      #   run: |
-      #     source ~/miniconda3/etc/profile.d/conda.sh
-      #     conda activate build
       - name: Build and install
         run: |
           source ~/miniconda3/etc/profile.d/conda.sh
