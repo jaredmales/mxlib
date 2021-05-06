@@ -7,6 +7,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
+      - name: Who am I?
+        run: echo ${{ matrix.os }}
       - name: Check out repository code
         uses: actions/checkout@v2
       - name: Cache miniconda packages
