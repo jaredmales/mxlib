@@ -98,7 +98,8 @@ EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 # SOFA
 # subfolder of source/vendor/sofa:
 CURRENT_SOFA ?= 20210125
-SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/$(CURRENT_SOFA)/c/src/) # path to libsofa_c.a, sofa.h
+# path to libsofa_c.a, sofa.h:
+SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/$(CURRENT_SOFA)/c/src/)
 SOFA_LIB = -lsofa_c
 EXTRA_LDFLAGS += -L$(SOFA_PATH)
 INCLUDES += -I$(SOFA_PATH)
@@ -113,6 +114,7 @@ EXTRA_LDLIBS += $(FFT_LDLIBS)
 EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
 # Eigen
+# -I/path/to/folder containing "Eigen" directory
 EIGEN_CFLAGS ?= $(shell pkg-config eigen3 --cflags)
 INCLUDES += $(EIGEN_CFLAGS)
 
