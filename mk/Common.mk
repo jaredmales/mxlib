@@ -29,9 +29,8 @@ PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
 LIB_PATH ?= $(PREFIX)/lib
 INCLUDE_PATH ?= $(PREFIX)/include
+INCLUDES += -I$(INCLUDE_PATH)
 ARFLAGS ?= rvs
-
-INCLUDES += -I$(INCLUDE_PATH) $(shell pkg-config eigen3 --cflags)
 
 DEFAULT_OPTIMIZATIONS = -O3 -ffast-math
 ifeq ($(UNAME),Linux)
@@ -113,6 +112,9 @@ EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
 EXTRA_LDLIBS += $(FFT_LDLIBS)
 EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
+# Eigen
+EIGEN_CFLAGS ?= $(shell pkg-config eigen3 --cflags)
+INCLUDES += $(EIGEN_CFLAGS)
 
 LDLIBS += $(EXTRA_LDLIBS)
 LDFLAGS += $(EXTRA_LDFLAGS)
