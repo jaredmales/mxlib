@@ -65,8 +65,6 @@ VENDOROBJS = \
 	vendor/levmar-2.6/lmblec.o \
 	vendor/levmar-2.6/lmbleic.o
 
-CURRENT_SOFA = vendor/sofa/20210125
-
 all: libmxlib.$(LIB_SUFFIX)
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
@@ -95,7 +93,7 @@ else
 endif
 
 sofa:
-	$(MAKE) -C $(CURRENT_SOFA)/c/src/ install
+	$(MAKE) -C $(SOFA_PATH) install
 
 install: libmxlib.$(LIB_SUFFIX)
 	install -d $(LIB_PATH)
@@ -105,7 +103,7 @@ install: libmxlib.$(LIB_SUFFIX)
 clean:
 	rm -f $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ clean
-	$(MAKE) -C $(CURRENT_SOFA)/c/src/ clean
+	$(MAKE) -C $(SOFA_PATH) clean
 
 .PHONY: realclean
 realclean: clean
