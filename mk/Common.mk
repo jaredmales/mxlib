@@ -17,7 +17,8 @@ NEED_CUDA ?= yes
 ifeq ($(UNAME),Darwin)
 	CFLAGS += -D_BSD_SOURCE
 	CXXFLAGS += -D_BSD_SOURCE
-    NEED_CUDA = no  # effectively unsupported on macOS, so don't bother
+    # CUDA's effectively unsupported on macOS, so don't bother:
+    NEED_CUDA = no
     LIB_SUFFIX = dylib
 else
 	CFLAGS += -D_XOPEN_SOURCE=700
@@ -28,10 +29,8 @@ PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
 LIB_PATH ?= $(PREFIX)/lib
 INCLUDE_PATH ?= $(PREFIX)/include
-LIB_SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/20210125/c/src/)
+INCLUDES += -I$(INCLUDE_PATH)
 ARFLAGS ?= rvs
-
-INCLUDES += -I$(INCLUDE_PATH) $(shell pkg-config eigen3 --cflags)
 
 DEFAULT_OPTIMIZATIONS = -O3 -ffast-math
 ifeq ($(UNAME),Linux)
@@ -88,8 +87,6 @@ BOOST_LIB = -lboost_system -lboost_filesystem
 
 GSL_LIB = -lgsl
 
-SOFA_LIB = -lsofa_c
-
 EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(SOFA_LIB)
 
 ifneq ($(UNAME),Darwin)
@@ -99,7 +96,13 @@ endif
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
 # SOFA
-EXTRA_LDFLAGS += -L$(LIB_SOFA_PATH)
+# subfolder of source/vendor/sofa:
+CURRENT_SOFA ?= 20210125
+# path to libsofa_c.a, sofa.h:
+SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/$(CURRENT_SOFA)/c/src/)
+SOFA_LIB = -lsofa_c
+EXTRA_LDFLAGS += -L$(SOFA_PATH)
+INCLUDES += -I$(SOFA_PATH)
 
 #BLAS:
 INCLUDES += $(BLAS_INCLUDES)
@@ -110,6 +113,10 @@ EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
 EXTRA_LDLIBS += $(FFT_LDLIBS)
 EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
+# Eigen
+# -I/path/to/folder containing "Eigen" directory
+EIGEN_CFLAGS ?= $(shell pkg-config eigen3 --cflags)
+INCLUDES += $(EIGEN_CFLAGS)
 
 LDLIBS += $(EXTRA_LDLIBS)
 LDFLAGS += $(EXTRA_LDFLAGS)
