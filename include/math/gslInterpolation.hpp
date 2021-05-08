@@ -34,7 +34,9 @@
 
 namespace mx
 {
-
+namespace math
+{
+   
 template<typename _realT>
 struct gslInterpolator
 {
@@ -149,7 +151,7 @@ int gsl_interpolate( const gsl_interp_type * interpT,
 
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis (vector version)
 /**
-  * \param interpT of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
+  * \param interpT of the <a href="https://www.gnu.org/software/gsl/doc/html/interp.html#d-interpolation-types">gsl interpolation types</a>.
   * \param [in] xin the input x-axis
   * \param [in] yin the input y-values
   * \param [in] xout the desired x-axis
@@ -170,6 +172,7 @@ int gsl_interpolate( const gsl_interp_type * interpT,
    return gsl_interpolate(interpT, xin.data(), yin.data(), xin.size(), xout.data(), yout.data(), xout.size());
 }
 
+} //namespace math
 } //namespace mx
 
 #endif //gslInterpolation_hpp
