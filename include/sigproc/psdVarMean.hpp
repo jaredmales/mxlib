@@ -66,7 +66,7 @@ struct psdVarMeanParams
    
    bool initialized {false}; ///< Flag controlling whether the interpolator is initialized
    
-   mx::gslInterpolator<realT> terp; ///< Interpolator for the PSD
+   math::gslInterpolator<realT> terp; ///< Interpolator for the PSD
    
    /// Get the value of the PSD at k using interpolation
    /** Extrapolates outside the range of frequencies in freq.

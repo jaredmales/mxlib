@@ -778,7 +778,7 @@ void radprofim( radprofT & radprofIm,   ///< [out] the radial profile image.  Th
    /* And finally, interpolate onto the radius image */
    radprofIm.resize(im.rows(), im.cols() );
    
-   gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
+   math::gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
    
    for(int c=0;c<im.cols();++c)
    {
@@ -911,7 +911,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
       
    /* And finally, interpolate onto the radius image */
    stdIm.resize(dim1, dim2);
-   mx::gslInterpolator<double> interp(gsl_interp_linear, std_r, std_v);
+   math::gslInterpolator<double> interp(gsl_interp_linear, std_r, std_v);
    
    for(int i=0;i<dim1;++i)
    {

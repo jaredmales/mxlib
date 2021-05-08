@@ -68,8 +68,9 @@ VENDOROBJS = \
 all: libmxlib.$(LIB_SUFFIX)
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp
 improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
+improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
