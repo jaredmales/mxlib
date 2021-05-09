@@ -42,7 +42,6 @@ jobs:
           conda env remove -n build || true
           conda create -y -n build
           conda config --add channels conda-forge
-          conda config --set channel_priority strict
       - name: Run conda env setup
         run: |
           source ~/miniconda3/etc/profile.d/conda.sh
