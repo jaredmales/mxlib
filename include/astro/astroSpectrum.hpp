@@ -369,7 +369,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
          rawSpectrum[i] /= spectrumT::fluxUnits/(units::energy/(units::time * units::length * units::length * units::length));
       }
 
-      mx::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, this->_spectrum);
+      math::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, this->_spectrum);
 
       for(int i=0; i < lambda.size(); ++i)
       {
