@@ -33,6 +33,8 @@
 namespace mx
 {
    
+const char * mxlib_comp_current_branch();
+
 const char * mxlib_comp_current_sha1();
 
 const bool mxlib_comp_repo_modified();
