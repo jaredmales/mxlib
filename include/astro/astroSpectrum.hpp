@@ -342,7 +342,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 
       if(fileName.size() < 1)
       {
-         std::cerr << "File name empty\n";
+         mxError("astroSpectrum", MXE_PARAMNOTSET, "fileName is empty");
          return -1;
       }
 

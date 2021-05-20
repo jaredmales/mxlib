@@ -162,7 +162,7 @@ struct sqWaveFilter
 
    static std::string fileName( const paramsT & params )
    {
-      return "";
+      return " "; //must not be empty to avoid error
    }
 
    static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.
