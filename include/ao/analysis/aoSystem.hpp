@@ -1082,11 +1082,19 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
 {
    atm.loadGuyon2005();
    
-   F0(1.75e9*0.25*math::pi<realT>()*64.); //Converting to photons/sec
+   F0(1.75e9*0.25*math::pi<realT>()*64.*0.18); //Converting to photons/sec
    lam_wfs(0.55e-6);
    lam_sci(1.6e-6);
    D(8.);
    starMag(5);
+   
+   npix_wfs((realT) 12868);
+   ron_wfs((realT) 0.3);
+   Fbg((realT) 0.22);
+   
+   d_min( 8.0/48.0 );
+   minTauWFS( (realT) (1./3622.) );
+   tauWFS(1./3622.);
    
    m_specsChanged = true;
    m_dminChanged = true;
@@ -1099,6 +1107,10 @@ void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
    F0(7.6e10);
    lam_wfs(0.851e-6);
    lam_sci(0.656e-6);
+   
+   npix_wfs((realT) 12868);
+   ron_wfs((realT) 0.3);
+   Fbg((realT) 0.22);
    
    d_min( 6.5/48.0 );
    minTauWFS( (realT) (1./3622.) );
