@@ -144,13 +144,13 @@ std::vector<std::string> getFileNames( const std::string & directory,
       }
       else
       {
-         std::cerr << "is not a directory\n";
+         std::cerr << directory << " is not a directory\n";
       }
 
    }
    else
    {
-      std::cerr << "directory does not exist\n";
+      std::cerr << "directory " << directory << " does not exist\n";
    }
 
    return vect;
