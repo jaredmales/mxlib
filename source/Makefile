@@ -69,19 +69,20 @@ all: libmxlib.$(LIB_SUFFIX)
 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp
-improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
-improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
-ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
-math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
-math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
-math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
-math/func/bessel.o: ../include/math/func/bessel.hpp
-math/func/legendre.o: ../include/math/func/legendre.hpp
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
+improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
+improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
+ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
+ipc/processInterface.o: ../include/ipc/processInterface.hpp
+math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
+math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
+math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
+math/func/bessel.o: ../include/math/func/bessel.hpp
+math/func/legendre.o: ../include/math/func/legendre.hpp
 
 #mxlib_uncomp_version
 
