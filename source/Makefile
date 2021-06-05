@@ -46,6 +46,7 @@ OBJS = \
 	math/plot/gnuPlot.o \
 	sigproc/zernike.o \
 	sys/environment.o \
+	sys/gitRepo.o \
 	sys/timeUtils.o
 
 ifeq ($(NEED_CUDA),yes)
@@ -83,6 +84,9 @@ math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
+sys/environment.o: ../include/sys/environment.hpp
+sys/gitRepo.o: ../include/sys/gitRepo.hpp
+sys/timeUtils.o: ../include/sys/timeUtils.hpp
 
 #mxlib_uncomp_version
 

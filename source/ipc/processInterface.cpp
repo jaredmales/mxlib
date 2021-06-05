@@ -67,7 +67,8 @@ int command_response( const char * cmd,
    return 0;
 }
 
-int runCommand( std::vector<std::string> & commandOutput,    // [out] the output, line by line.  If an error, first entry contains the message.
+int runCommand( int & retVal,                                // [out] the return value of the process. Only meaningful if this returns 0.
+                std::vector<std::string> & commandOutput,    // [out] the output, line by line.  If an error, first entry contains the message.
                 std::vector<std::string> & commandStderr,    // [out] the output of stderr.
                 const std::vector<std::string> & commandList // [in] command to be run, with one entry per command line word
               )
@@ -79,19 +80,19 @@ int runCommand( std::vector<std::string> & commandOutput,    // [out] the output
    
    if (pipe(link)==-1) 
    {
-      commandOutput.push_back(std::string("Pipe error stdout: ") + strerror(errno));
+      commandStderr.push_back(std::string("Pipe error stdout: ") + strerror(errno));
       return -1;
    }
 
    if (pipe(errlink)==-1) 
    {
-      commandOutput.push_back(std::string("Pipe error stderr: ") + strerror(errno));
+      commandStderr.push_back(std::string("Pipe error stderr: ") + strerror(errno));
       return -1;
    }
    
    if ((pid = fork()) == -1) 
    {
-      commandOutput.push_back(std::string("Fork error: ") + strerror(errno));
+      commandStderr.push_back(std::string("Fork error: ") + strerror(errno));
       return -1;
    }
 
@@ -111,22 +112,23 @@ int runCommand( std::vector<std::string> & commandOutput,    // [out] the output
          charCommandList[index]=commandList[index].c_str();
       }
       execvp( charCommandList[0], const_cast<char**>(charCommandList.data()));
-      commandOutput.push_back(std::string("execvp returned: ") + strerror(errno));
+      commandStderr.push_back(std::string("execvp returned: ") + strerror(errno));
       return -1;
    }
    else 
    {
       char commandOutput_c[4096];
       
-      wait(NULL);
-      
+      int status;
+      waitpid(pid, &status, 0);
+
       close(link[1]);
       close(errlink[1]);
       
       int rd;
       if ( (rd = read(link[0], commandOutput_c, sizeof(commandOutput_c))) < 0) 
       {
-         commandOutput.push_back(std::string("Read error: ") + strerror(errno));  
+         commandStderr.push_back(std::string("Read error: ") + strerror(errno));  
          close(link[0]);
          return -1;
       }
@@ -163,9 +165,19 @@ int runCommand( std::vector<std::string> & commandOutput,    // [out] the output
          commandStderr.push_back(line);
       }
       
-      wait(NULL);
-      return 0;
+      waitpid(pid, &status, 0);
+      
+      if(WIFEXITED(status))
+      {
+         retVal =  WEXITSTATUS(status);
+      }
+      else
+      {
+         return -1;
+      }
    }
+   
+   return -1;
 }
 
 }//namespace ipc
