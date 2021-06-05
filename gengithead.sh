@@ -1,10 +1,41 @@
-#!/bin/bash
+#!/bin/sh
+
+##############################################################################
+# gengithead.sh: a script producing a .h file with git repo information
+#
+# Copyright (C) 2014-2021 Jared R. Males
+#
+# This script is licensed under the terms of the MIT license.
+# https://opensource.org/licenses/MIT
+#
+# Author: Jared Males (jaredmales@pm.me)
+# 
+# Contributors: Joseph Long
+#
+# Description: This script produces a C/C++ header (.h) with information
+#              about the state of a git repository. This allows recording
+#              of the state of a git repo at compilation, including whether
+#              or not the repo was modified.
+#            
+#              This also prints a message at compile time to warn if the repo
+#              was modified.
+#
+#              The goal is allow for reproducibility.  For instance, I write
+#              the git hash to FITS image headers processed by my code.
+#
+# Usage: gengithead.sh directory output_path prefix
+#
+#        directory = directory of git repo, optional default is './'
+#        output_path = optional ouput path, default './git_version.h'
+#        prefix = optional prefix for #define variable names, default is GIT
+#
+#        note: the arguments are positional, so to change output_path you must 
+#              define directory first.
+##############################################################################
+
 set -euo pipefail
-#$1 = directory of git repo
-#$2 = optional ouput path, default ./git_version.h
-#$3 = optional prefix, default is GIT
 
-
+#center text in a the pragma message argument to be pretty
 centerName(){
   textsize=${#1}
   width=42
@@ -14,27 +45,10 @@ centerName(){
   printf "    #pragma message (\"*%${span}s%${espan}s\")\n" "$1" "*"
 }
 
-
-if [ "$1" != "" ]; then
-    GITPATH=$1
-else
-    GITPATH='./'
-fi
-
-if [ "$2" != "" ]; then
-    HEADPATH=$2
-else
-    HEADPATH='./git_version.h'
-fi
-
-if [ "$3" != "" ]; then
-    PREFIX=$3
-else
-    PREFIX='GIT'
-fi
-
-
-#echo "Generating header for git hash"
+#defaults for args
+GITPATH=${1:-'./'}
+HEADPATH=${2:-'./git_version.h'}
+PREFIX=${3:-'GIT'}
 
 GIT_HEADER="$HEADPATH"
 
