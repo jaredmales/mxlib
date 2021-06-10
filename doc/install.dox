@@ -48,7 +48,7 @@ The conda package manager contains packages for all of mxlib's external dependen
 
 Once you have installed conda (either <a href="https://docs.conda.io/en/latest/miniconda.html">miniconda</a> or <a href="https://www.anaconda.com/products/individual">Anaconda</a> is fine), you will create and activate an environment to use mxlib with.
 \code
-$ conda create conda create -y -n mxlib_env
+$ conda create -y -n mxlib_env
 \endcode
 The install process is tested with conda-forge packages, which you may not be using by default. (Installing them in the mxlib_env environment won't cause conflicts with any other environments you may have.)
 \code
