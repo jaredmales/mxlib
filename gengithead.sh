@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ##############################################################################
 # gengithead.sh: a script producing a .h file with git repo information
