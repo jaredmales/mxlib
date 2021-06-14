@@ -24,6 +24,10 @@ else
 	CFLAGS += -D_XOPEN_SOURCE=700
 	CXXFLAGS += -D_XOPEN_SOURCE=700
     LIB_SUFFIX = so
+    # Special case for conda build :\...
+    ifneq ($(origin CONDA_PREFIX),undefined)
+        LDFLAGS += -Wl,-rpath=$(CONDA_PREFIX)/lib
+    endif
 endif
 PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
