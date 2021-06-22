@@ -24,6 +24,7 @@ else
 	CFLAGS += -D_XOPEN_SOURCE=700
 	CXXFLAGS += -D_XOPEN_SOURCE=700
     LIB_SUFFIX = so
+    LDFLAGS += -Wl,-rpath=$(PREFIX)/lib
 endif
 PREFIX ?= $(HOME)
 BIN_PATH ?= $(PREFIX)/bin
