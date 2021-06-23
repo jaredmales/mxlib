@@ -67,7 +67,9 @@ VENDOROBJS = \
 
 all: libmxlib.$(LIB_SUFFIX)
 
+mxlib.o: .FORCE
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
+ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp
 improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
 improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
@@ -111,6 +113,9 @@ realclean: clean
 	rm -f libmxlib.$(LIB_SUFFIX)
 	rm -f $(OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ cleanall
+
+#for forcing the rebuild of mxlib.o everytime, needed for git tracking
+.FORCE:
 
 # .PHONY: printvars
 # printvars:
