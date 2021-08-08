@@ -186,6 +186,7 @@ realT freq_sampling( size_t dim,
    return (f_max/(0.5*dim));
 }
 
+#if 0
 ///Create a 1-D frequency grid
 /**
   * \param [out] vec the pre-allocated Eigen-type 1xN or Nx1 array, on return contains the frequency grid
@@ -229,15 +230,58 @@ void frequency_grid1D( eigenArr & vec,
       }
    }
 }
+#endif
 
-///Create a frequency grid
-template<typename eigenArr>
-void frequency_grid( eigenArr & arr,
-                     typename eigenArr::Scalar dt,
+
+///Create a 1-D frequency grid
+/**
+  * \todo need to handle non-fft odd/even sizes
+  *  
+  * \tparam realT a real floating point type
+  * \tparam realParamT a real floating point type, convenience to avoid double-float cofusion.
+  */
+template<typename realT, typename realParamT>
+void frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated vector, on return contains the frequency grid
+                     realParamT dtT,           ///< [in] dt the temporal sampling of the time series
+                     bool fftOrder = true      ///< [in] fftOrder [optional] if true the frequency grid is in FFT order
+                   ) 
+{
+   realT dt = dtT;
+
+   if( fftOrder )
+   {
+      realT df = (1.0/dt)/((realT) vec.size());
+      
+      for(ssize_t ii=0; ii < ceil(0.5*(vec.size()-1) + 1); ++ii)
+      {
+         vec[ii] = ii*df;
+      }
+
+      for(ssize_t ii=ceil(0.5*(vec.size()-1)+1); ii < vec.size(); ++ii)
+      {
+         vec[ii] = (ii-(ssize_t)vec.size())*df;
+      }
+   }
+   else
+   {
+      realT df = (0.5/dt)/((realT) vec.size());
+      for(int ii=0; ii < vec.size(); ++ii)
+      {
+         vec[ii] = df * ii;
+      }
+   }
+}
+
+///Create a 2-D frequency grid
+template<typename eigenArr, typename realParamT>
+void frequencyGrid( eigenArr & arr,
+                     realParamT drT,
                      eigenArr * k_x,
                      eigenArr * k_y
                    )
 {
+   typename eigenArr::Scalar dr = drT;
+
    typename eigenArr::Index dim_1, dim_2;
    typename eigenArr::Scalar k_1, k_2, df;
 
@@ -247,7 +291,7 @@ void frequency_grid( eigenArr & arr,
    if(k_x) k_x->resize(dim_1, dim_2);
    if(k_y) k_y->resize(dim_1, dim_2);
    
-   df = freq_sampling(std::max(dim_1, dim_2), 0.5/dt);
+   df = freq_sampling(std::max(dim_1, dim_2), 0.5/dr);
 
    for(int ii=0; ii < 0.5*(dim_1-1) + 1; ++ii)
    {
@@ -300,23 +344,23 @@ void frequency_grid( eigenArr & arr,
 
 ///Create a frequency grid
 template<typename eigenArr>
-void frequency_grid( eigenArr & arr,
+void frequencyGrid( eigenArr & arr,
                      typename eigenArr::Scalar dt
                    )
 {
-   frequency_grid(arr, dt, (eigenArr *) 0, (eigenArr *) 0);
+   frequencyGrid(arr, dt, (eigenArr *) 0, (eigenArr *) 0);
 }
 
 
 ///Create a frequency grid
 template<typename eigenArr>
-void frequency_grid( eigenArr & arr,
+void frequencyGrid( eigenArr & arr,
                      typename eigenArr::Scalar dt,
                      eigenArr & k_x,
                      eigenArr & k_y
                    )
 {
-   frequency_grid(arr, dt, &k_x, &k_y);
+   frequencyGrid(arr, dt, &k_x, &k_y);
 }
 
 
@@ -357,79 +401,106 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
    return 1/integ;
 }
 
-/// Normalize a PSD to have a given variance
-/** A frequency range can be specified, otherwise f[0] to f[f.size()-1] is the range.
+/// Normalize a 1-D PSD to have a given variance
+/** A frequency range can be specified to calculate the norm, otherwise f[0] to f[f.size()-1] is the range.  The entire PSD is normalized regardless.
   *
   * \tparam floatT the floating point type of the PSD.
+  * \tparam floatParamT a floating point type, convenience to avoid double-float cofusion.
   * 
   * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
-template<typename floatT>
-int normPSD( std::vector<floatT> & psd, ///< [in/out] the PSD to normalize, will be altered.
-             std::vector<floatT> & f,   ///< [in] the frequency points for the PSD
-             floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
-             floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
-             floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.
+template<typename floatT, typename floatParamT>
+int normPSD( std::vector<floatT> & psd,                        ///< [in/out] the PSD to normalize, will be altered.
+             std::vector<floatT> & f,                          ///< [in] the frequency points for the PSD
+             floatParamT normT,                                ///< [in] the desired total variance (or integral) of the PSD.
+             floatT fmin = std::numeric_limits<floatT>::min(), ///< [in] [optiona] the minimum frequency of the range over which to normalize.
+             floatT fmax = std::numeric_limits<floatT>::max()  ///< [in] [optiona] the maximum frequency of the range over which to normalize.
            )
 {
-   floatT df = f[1] - f[0];
+   floatT norm = normT;
 
-   if(fmax <= 0) fmax = f[f.size()-1];
+   floatT s = 0; //accumulate
 
-   floatT s =0;
-
-   for(size_t i = 0; i < psd.size(); ++i)
+   //Check if inside-the-loop branch is needed
+   if(fmin != std::numeric_limits<floatT>::min() || fmax != std::numeric_limits<floatT>::max())
    {
-      if(f[i] < fmin || f[i] > fmax) continue;
-
-      s += psd[i];
+      for(size_t i = 0; i < psd.size(); ++i)
+      {
+         if(fabs(f[i]) < fmin || fabs(f[i]) > fmax) continue;
+         s += psd[i];
+      }
    }
+   else
+   {
+      for(size_t i = 0; i < psd.size(); ++i)
+      {
+         s += psd[i];
+      }
+   } 
 
-   s *= df;
+   s *= (f[1] - f[0]);
 
    for(size_t i = 0; i < psd.size(); ++i) psd[i] *= norm/s;
 
    return 0;
 }
 
-
-
-
-template<typename floatT>
+/// Normalize a 2-D PSD to have a given variance
+/** A frequency range can be specified for calculating the norm, otherwise the entire PSD is used.  The entire PSD is normalized regardless.
+  *
+  * \tparam floatT the floating point type of the PSD.
+  * \tparam floatParamT a floating point type, convenience to avoid double-float cofusion.
+  * 
+  * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
+  */
+template<typename floatT, typename floatParamT>
 floatT normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
-                Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & f, ///< [in] the frequency grid for psd.
-                floatT norm,               ///< [in] the desired total variance (or integral) of the PSD.
-                floatT fmin = 0,           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
-                floatT fmax = 0            ///< [in] [optiona] the maximum frequency of the range over which to normalize.
+                Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & k,   ///< [in] the frequency grid for psd.
+                floatParamT normT,                                          ///< [in] the desired total variance (or integral) of the PSD.
+                floatT kmin = std::numeric_limits<floatT>::min(),           ///< [in] [optiona] the minimum frequency of the range over which to normalize.
+                floatT kmax = std::numeric_limits<floatT>::max()            ///< [in] [optiona] the maximum frequency of the range over which to normalize.
               )
 {
-   floatT df1, df2;
+   floatT norm = normT;
 
-   if(f.rows() > 1) df1 = f(1,0) - f(0,0);
-   else df1 = 1;
+   floatT dk1, dk2;
 
-   if(f.cols() > 1) df2 = f(0,1) - f(0,0);
-   else df2 = 1;
+   if(k.rows() > 1) dk1 = k(1,0) - k(0,0);
+   else dk1 = 1;
 
-   if(fmax <= 0) fmax = f.abs().maxCoeff();
+   if(k.cols() > 1) dk2 = k(0,1) - k(0,0);
+   else dk2 = 1;
 
-   floatT s =0;
+   floatT s = 0;
 
-   for(int r = 0; r < psd.rows(); ++r)
+   //Check if inside-the-loop branch is needed
+   if(kmin != std::numeric_limits<floatT>::min() || kmax != std::numeric_limits<floatT>::max())
    {
       for(int c = 0; c < psd.cols(); ++c)
       {
-         if(fabs(f(r,c)) < fmin || fabs(f(r,c)) > fmax) continue;
-
-         s += psd(r,c);
+         for(int r = 0; r < psd.rows(); ++r)      
+         {
+            if(fabs(k(r,c)) < kmin || fabs(k(r,c)) > kmax) continue;
+            s += psd(r,c);
+         }
+      }
+   }
+   else
+   {
+      for(int c = 0; c < psd.cols(); ++c)
+      {
+         for(int r = 0; r < psd.rows(); ++r)      
+         {
+            s += psd(r,c);
+         }
       }
    }
 
-   s *= df1*df2;
+   s *= dk1*dk2;
 
-   for(int r = 0; r < psd.rows(); ++r)
+   for(int c = 0; c < psd.cols(); ++c)
    {
-      for(int c = 0; c < psd.cols(); ++c)
+      for(int r = 0; r < psd.rows(); ++r)   
       {
          psd(r,c) *= norm/s;
       }
