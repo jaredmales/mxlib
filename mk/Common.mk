@@ -159,6 +159,7 @@ ifeq ($(NEED_CUDA),yes)
    # internal flags
    NVCCFLAGS   := -m${TARGET_SIZE}
    NVCCFLAGS   +=  -DEIGEN_NO_CUDA -DMXLIB_MKL
+   NVCCFLAGS   +=  ${NVCCARCH}
 
    # Debug build flags
    ifeq ($(dbg),1)
