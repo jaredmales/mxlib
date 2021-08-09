@@ -59,6 +59,12 @@ std::string pathStem(const std::string & fname)
    return p.stem().string();
 }
 
+std::string pathFilename( const std::string & fname)
+{
+   boost::filesystem::path p(fname);
+   return p.filename().string();
+}
+
 std::string parentPath(const std::string & fname)
 {
    boost::filesystem::path p(fname);
@@ -138,13 +144,13 @@ std::vector<std::string> getFileNames( const std::string & directory,
       }
       else
       {
-         std::cerr << "is not a directory\n";
+         std::cerr << directory << " is not a directory\n";
       }
 
    }
    else
    {
-      std::cerr << "directory does not exist\n";
+      std::cerr << "directory " << directory << " does not exist\n";
    }
 
    return vect;

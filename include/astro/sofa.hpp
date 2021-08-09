@@ -12,7 +12,11 @@
 
 namespace sofa
 {
+#ifndef MX_GLOBAL_SOFA
+   #include "sofa/sofa.h"
+#else
    #include <sofa.h>
+#endif
 }
 
 //Have to undefine DC to avoid symbol conflict with Eigen.

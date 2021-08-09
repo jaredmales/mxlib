@@ -8,6 +8,7 @@
 
 #ifndef __ADIobservation_hpp__
 #define __ADIobservation_hpp__
+#include "../ioutils/fileUtils.hpp"
 
 #include "HCIobservation.hpp"
 #include "../ioutils/fits/fitsHeader.hpp"
@@ -462,18 +463,18 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
       if( ioutils::readColumns(m_fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
       std::map<std::string, realT> scales;     
-      for(size_t i=0;i<sfileNames.size();++i) scales[basename(sfileNames[i].c_str())] = imS[i];
+      for(size_t i=0;i<sfileNames.size();++i) scales[ioutils::pathFilename(sfileNames[i].c_str())] = imS[i];
       
       for(size_t i=0; i<fileList.size(); ++i)
       {
-         if(scales.count(basename(fileList[i].c_str())) > 0)
+         if(scales.count(ioutils::pathFilename(fileList[i].c_str())) > 0)
          {
-            fakeScale[i] = scales[basename(fileList[i].c_str())];
+            fakeScale[i] = scales[ioutils::pathFilename(fileList[i].c_str())];
          }
          else
          {
             std::cerr << "File name not found in fakeScaleFile:\n";
-            std::cerr << basename(fileList[i].c_str()) << "\n";
+            std::cerr << ioutils::pathFilename(fileList[i].c_str()) << "\n";
             exit(-1);
          }
       }

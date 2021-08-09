@@ -99,7 +99,7 @@ struct astroFilter
 
       for(int i=0;i<rawLambda.size(); ++i)
       {
-         if(_rsr) rawSpectrum[i] = rawSpectrum[i]*rawLambda[i];
+         //if(_rsr) rawSpectrum[i] = rawSpectrum[i]*rawLambda[i];
          if(rawSpectrum[i] > max) max = rawSpectrum[i];
       }
 
@@ -162,7 +162,7 @@ struct sqWaveFilter
 
    static std::string fileName( const paramsT & params )
    {
-      return "";
+      return " "; //must not be empty to avoid error
    }
 
    static int readSpectrum( std::vector<realT> & rawLambda, ///< [out] the raw wavelength vector.  This should be an empty vector on input.

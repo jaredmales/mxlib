@@ -1,5 +1,6 @@
 #--# For mxlib we add the below includes
 #--# and edit INSTALL_PATH, SOFA_LIB_DIR, SOFA_INC_DIR, and ensure -fPIC is in CFLAGF and CFLAGX
+#--# and additionally copy sofa.h and sofam.h to include/astro/sofa
 
 -include ../../../../../../mk/MxLib.mk
 -include ../../../../../../mk/Common.mk

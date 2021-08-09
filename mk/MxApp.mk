@@ -21,6 +21,7 @@ ifeq ($(GIT_VERSION),yes)
    GIT_VERSION_DEF = $(shell echo $(TARGET) | tr a-z A-Z)_GIT
    PRE_TARGETS += git_version
    GIT_VERSION_FILE = $(TARGETNAME)_git_version.h
+   GIT_PATH ?= ./
 endif
 
 
@@ -28,7 +29,7 @@ endif
 all: tshoot $(PRE_TARGETS) $(TARGETNAME) $(OTHER_OBJS)
 
 $(TARGETNAME): $(OBJNAME) $(OTHER_OBJS)
-	$(LINK.o)  -o $(TARGETNAME) $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+	$(LINK.o)  -o $(TARGETNAME) $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) $(OTHER_LIBS)
 
 
 install: all
@@ -41,7 +42,7 @@ tshoot:
 
 .PHONY: git_version
 git_version:
-	@bash gengithead.sh ./ $(TARGETNAME)_git_version.h $(GIT_VERSION_DEF)
+	@bash gengithead.sh $(GIT_PATH) $(TARGETNAME)_git_version.h $(GIT_VERSION_DEF)
 	
 .PHONY: clean
 clean:

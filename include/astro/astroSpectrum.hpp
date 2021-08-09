@@ -14,7 +14,8 @@
 #include "../sys/environment.hpp"
 #include "../ioutils/readColumns.hpp"
 #include "../math/gslInterpolation.hpp"
-
+#include "constants.hpp"
+#include "units.hpp"
 
 namespace mx
 {
@@ -115,16 +116,16 @@ struct baseSpectrum
 
 
    /// Characterize the spectrum as a filter transmission curve.
-   /** For a transmission curve given by \f$ T(\lambda ) \f$  The central wavelength is defined as
+   /** For a photonic transmission curve given by \f$ S(\lambda ) \f$  The mean photon wavelength is defined as
      * \f[ 
-       \lambda_0 = \frac{1}{w_{eff}}\int \frac{T(\lambda )}{T_{max}} \lambda d\lambda 
+       \lambda_0 = \frac{1}{\Delta\lambda_{0}}\int \frac{S(\lambda )}{S_{max}} \lambda d\lambda 
        \f]
      * where the effective width is defined by
        \f[ 
-        w_{eff} = \int \frac{T(\lambda )} { T_{max}} d\lambda 
+        \Delta\lambda_{o} = \int \frac{S(\lambda )} { S_{max}} d\lambda 
         \f]
      *
-     * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ T(\lambda) \f$.
+     * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ S(\lambda) \f$.
      *
      */
    void charTrans( realT & lambda0, ///< [out] the central wavelength of the filter
@@ -335,9 +336,26 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
       std::vector<realT> rawLambda;
       std::vector<realT> rawSpectrum;
 
-      if(_dataDir == "") _dataDir = ".";
+      std::string fileName = spectrumT::fileName(_params);
 
-      std::string path = _dataDir + "/" + spectrumT::fileName(_params);
+      std::string path;
+
+      if(fileName.size() < 1)
+      {
+         mxError("astroSpectrum", MXE_PARAMNOTSET, "fileName is empty");
+         return -1;
+      }
+
+      if(_dataDir == "" && fileName[0] == '/')
+      {
+         path = fileName;
+      }
+      else
+      { 
+         if(_dataDir == "") _dataDir = ".";
+
+         path = _dataDir + "/" + fileName;
+      }
 
       if( spectrumT::readSpectrum(rawLambda, rawSpectrum, path, _params) < 0)
       {
@@ -351,7 +369,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
          rawSpectrum[i] /= spectrumT::fluxUnits/(units::energy/(units::time * units::length * units::length * units::length));
       }
 
-      mx::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, this->_spectrum);
+      math::gsl_interpolate(gsl_interp_linear, rawLambda, rawSpectrum, lambda, this->_spectrum);
 
       for(int i=0; i < lambda.size(); ++i)
       {

@@ -52,6 +52,7 @@ template<typename realT>
 struct arrayT<realT, 1>
 {
    typedef std::vector<realT> realArrayT;
+   typedef std::vector<realT>* realArrayMapT;
    typedef std::vector<std::complex<realT>> complexArrayT;
    
    static void clear( realArrayT & arr)
@@ -70,6 +71,8 @@ template<typename realT>
 struct arrayT<realT, 2>
 {
    typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> realArrayT;
+   typedef Eigen::Map<Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic>> realArrayMapT;
+
    typedef Eigen::Array<std::complex<realT>,Eigen::Dynamic, Eigen::Dynamic> complexArrayT;
    
    static void clear( realArrayT & arr)
@@ -87,6 +90,7 @@ template<typename realT>
 struct arrayT<realT, 3>
 {
    typedef improc::eigenCube<realT> realArrayT;
+   typedef improc::eigenCube<realT>* realArrayMapT;
    typedef improc::eigenCube<std::complex<realT>> complexArrayT;
    
    static void clear( realArrayT & arr)
@@ -141,6 +145,7 @@ public:
    static const size_t rank = _rank;
 
    typedef typename psdFilterTypes::arrayT<realT,rank>::realArrayT realArrayT; ///< std::vector for rank==1, Eigen::Array for rank==2, eigenCube for rank==3.
+   typedef typename psdFilterTypes::arrayT<realT,rank>::realArrayMapT realArrayMapT; ///< std::vector for rank==1, Eigen::Map for rank==2, eigenCube for rank==3.
    typedef typename psdFilterTypes::arrayT<realT,rank>::complexArrayT complexArrayT; ///< std::vector for rank==1, Eigen::Array for rank==2, eigenCube for rank==3.
    
    
@@ -283,7 +288,7 @@ public:
                 typename std::enable_if<crank==1>::type* = 0
               );
    
-   ///Set the sqaure-root of the PSD to be a pointer to an array containing the square root of the properly normalized PSD.
+   ///Set the square-root of the PSD to be a pointer to an array containing the square root of the properly normalized PSD.
    /** This does not allocate _npsdSqrt, it merely points to the specified array, which remains your responsibility for deallocation, etc.
      *
      * See the discussion of PSD normalization above.
@@ -476,6 +481,20 @@ public:
              
    ///Apply the filter.
    /**
+     * This version compiles when rank==2
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     * 
+     */ 
+   template<size_t crank=rank>
+   int filter( realArrayMapT  noise,             ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+               realArrayT * noiseIm = nullptr, ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
+               typename std::enable_if<crank==2>::type* = 0
+             ) const;
+
+   ///Apply the filter.
+   /**
      * This version compiles when rank==3
      * 
      * \returns 0 on success
@@ -498,6 +517,17 @@ public:
      */ 
    int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
    
+   ///Apply the filter.
+   /** 
+     * \overload
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     * 
+     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
+     */ 
+   int operator()( realArrayMapT noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
+
    ///Apply the filter.
    /**
      * \returns 0 on success
@@ -916,6 +946,43 @@ int psdFilter<realT,rank>::filter( realArrayT & noise,
 
 template<typename realT, size_t rank>
 template<size_t crank>
+int psdFilter<realT,rank>::filter( realArrayMapT  noise, 
+                                   realArrayT * noiseIm,
+                                   typename std::enable_if<crank==2>::type*
+                                 ) const
+{
+   //Make noise a complex number
+   for(int ii=0;ii<noise.rows();++ii)
+   {
+      for(int jj=0; jj<noise.cols(); ++jj)
+      {
+         m_ftWork(ii,jj) = complexT(noise(ii,jj),0);
+      }
+   }
+   
+   //Transform complex noise to Fourier domain.
+   m_fft_fwd(m_ftWork.data(), m_ftWork.data() );
+   
+   //Apply the filter.
+   m_ftWork *= *m_psdSqrt;
+        
+   m_fft_back(m_ftWork.data(), m_ftWork.data());
+   
+   realT norm = sqrt(noise.rows()*noise.cols()/(m_dFreq1*m_dFreq2));
+   
+   //Now take the real part, and normalize.
+   noise = m_ftWork.real()/norm;
+   
+   if(noiseIm != nullptr)
+   {
+      *noiseIm = m_ftWork.imag()/norm;
+   }
+   
+   return 0;
+}
+
+template<typename realT, size_t rank>
+template<size_t crank>
 int psdFilter<realT,rank>::filter( realArrayT & noise, 
                                    realArrayT * noiseIm,
                                    typename std::enable_if<crank==3>::type*
@@ -956,6 +1023,12 @@ int psdFilter<realT,rank>::filter( realArrayT & noise,
 
 template<typename realT, size_t rank>
 int psdFilter<realT,rank>::operator()( realArrayT & noise ) const
+{
+   return filter(noise);
+}
+
+template<typename realT, size_t rank>
+int psdFilter<realT,rank>::operator()( realArrayMapT noise ) const
 {
    return filter(noise);
 }

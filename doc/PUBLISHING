@@ -1,0 +1,11 @@
+The published mxlib documentation is located at: https://jaredmales.github.io/mxlib-doc/index.html
+
+Steps to update (assuming you have access to the mxlib-doc repo):
+1) clone the mxlib-doc repo (doesn't matter where)
+2) delete all files in the mxlib-doc folder
+3) in this directory, type make (requires doxygen)
+4) copy contents of ./html to that repo (but not in a directory named html, rather at mxlib-doc/)
+5) in mxlib-doc do `git add *`
+6) in mxlib-doc do `git commit -a -m "updated docs"` 
+7) in mxlib-doc do `git push`
+8) now you can delete your local mxlib-doc copy

@@ -1,0 +1,54 @@
+name: Build (Linux, macOS)
+on: [push]
+jobs:
+  build-all:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Who am I?
+        run: echo "Triggered by ${{ github.event_name }}, branch ${{ github.ref }}, running on ${{ runner.os }}"
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Cache miniconda packages
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-miniconda
+        with:
+          path: ~/miniconda3
+          key: ${{ runner.os }}-${{ env.cache-name }}-v1-${{ hashFiles('setup/conda_env_setup.bash', 'setup/conda_env_setup_${{ runner.os }}.bash') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-
+      - name: Disable existing conda (if any)
+        run: conda config --set auto_activate_base false || true # try to avoid upstream's conda interfering
+      - name: Install miniconda (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          if [[ ! -e ~/miniconda3 ]]; then
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash Miniconda3-latest-Linux-x86_64.sh -b
+          fi
+      - name: Install miniconda (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          if [[ ! -e ~/miniconda3 ]]; then
+            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+            bash Miniconda3-latest-MacOSX-x86_64.sh -b
+          fi
+      - name: (re-)Create build environment
+        run: |
+          source ~/miniconda3/etc/profile.d/conda.sh
+          conda env remove -n build || true
+          conda create -y -n build
+          conda config --add channels conda-forge
+      - name: Run conda env setup
+        run: |
+          source ~/miniconda3/etc/profile.d/conda.sh
+          conda activate build
+          bash -x setup/conda_env_setup_${{ runner.os }}.bash
+      - name: Build and install
+        run: |
+          source ~/miniconda3/etc/profile.d/conda.sh
+          conda activate build
+          make install PREFIX=$CONDA_PREFIX NEED_CUDA=no

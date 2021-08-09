@@ -30,6 +30,7 @@
 #define ompLoopWatcher_hpp
 
 #include <iostream>
+#include "../sys/timeUtils.hpp"
 
 namespace mx
 {
@@ -51,7 +52,7 @@ namespace ipc
     \endcode
   * This will result in the following output
    \verbatim
-   1 / 1000 (0.1%)
+   1 / 1000 (0.1%) 
    2 / 1000 (0.2%)
    3 / 1000 (0.3%)
    \endverbatim
@@ -66,11 +67,11 @@ namespace ipc
   * \tparam _printPretty flag to control whether the output is nicely formatted, if false then just the numbers are sent to the output with no spaces or delimiters (default is true).
   * \tparam _printLoops flag to control whether the number of loops is sent to the output each time (default is true).
   * \tparam _printPercent flag to control whether the percentage complete is calculated (default is true). 
-  * \tparam _printNLine flag to control whether the newline '\\n' is sent ot output (default is true).
-  * 
+  * \tparam _printNLine flag to control whether the newline '\\n' is sent ot output (default is false).  If false, '\\r' is written at end of output.
+  * \tparam _time flag to control whether time is tracked.  Default is true.
   * \ingroup mtutils
   */
-template<class _outputT=std::ostream, bool _printPretty=true, bool _printLoops=true, bool _printPercent=true, bool _printNLine=true>
+template<class _outputT=std::ostream, bool _printPretty=true, bool _printLoops=true, bool _printPercent=true, bool _printNLine=false, bool _time = true>
 class ompLoopWatcher
 {
 public:
@@ -80,6 +81,8 @@ protected:
    size_t _nLoops; ///< The total number of loops
    size_t _counter; ///< The current counter
 
+   double t0;
+   double t1;
    
    outputT * _output; ///< Pointer to the instance of type outputT
 
@@ -87,6 +90,7 @@ protected:
    void _increment()
    {
       ++_counter;
+      if(_time) t1 = sys::get_curr_time();
    }
 
    ///Perform the output
@@ -97,13 +101,23 @@ protected:
          (*_output) << _counter;
          if(_printLoops) (*_output) << " / " << _nLoops;
          if(_printPercent) (*_output) << " (" << 100.0*((float) _counter) / _nLoops << "%)";
+         if(_time)
+         {
+            (*_output) << " " << (t1-t0)/_counter << " s/loop ";
+            (*_output) << " ~" << (_nLoops - _counter)*(t1-t0)/_counter << " s left";
+         }
+         
          if(_printNLine) (*_output) << '\n';
+         if(!_printNLine)   (*_output) << "           \r";
+         
+         (*_output) << std::flush;
       }
       else
       {
          (*_output) << _counter;
          if(_printLoops) (*_output) << _nLoops;
          if(_printPercent) (*_output) << 100.0*((float) _counter) / _nLoops;
+         if(_time) (*_output) << " " << t0 << " " << t1;
          if(_printNLine) (*_output) << '\n';
       }
    }
@@ -129,6 +143,8 @@ public:
       _output = &output;
       _nLoops = nLoops;
       _counter = 0;
+      
+      if(_time) t0 = sys::get_curr_time();
    }
 
    ///Increment the counter.

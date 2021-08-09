@@ -49,9 +49,15 @@ void createDirectories( const std::string & path /**< [in] the path of the direc
 
 /// Get the stem of the filename 
 /**
-  * \returns the stem for the filename
+  * \returns the stem for the filename, that is without the path or extension
   */ 
 std::string pathStem(const std::string & fname);
+
+/// Get the base filename 
+/**
+  * \returns the filename, including the extension but without the path 
+  */
+std::string pathFilename( const std::string & fname);
 
 /// Get the parent path from a filename
 /**

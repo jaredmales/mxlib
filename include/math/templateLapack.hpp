@@ -24,25 +24,28 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#ifndef math_templateLapack_hpp
+#define math_templateLapack_hpp
+
+#include <complex>
+
 extern "C"
 {
 #ifdef MXLIB_MKL
 
+   #define MKL_Complex8 std::complex<float>
+   #define MKL_Complex16 std::complex<double>
+        
+
    #include <mkl.h>
-
-#elif defined(__APPLE__)
-
-   #include <vecLib/cblas.h>
 
 #else
 
-   #include <cblas.h>
+   #include <lapack.h>
 
 #endif
 }
 
-#ifndef math_templateLapack_hpp
-#define math_templateLapack_hpp
 
 //MKL can use 64-bit integer types, standard BLAS and LAPACK use int
 //MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
@@ -107,6 +110,33 @@ float lamch<float>(char CMACH);
 // Double specialization of lamch, a wrapper for Lapack DLAMCH
 template<>
 double lamch<double>(char CMACH);
+
+/// Compute the Cholesky factorization of a real symmetric positive definite matrix A.
+/**
+  * The factorization has the form
+  *  A = U**T * U,  if UPLO = 'U', or
+  *  A = L  * L**T,  if UPLO = 'L',
+  * where U is an upper triangular matrix and L is lower triangular.
+  */ 
+template<typename dataT>
+MXLAPACK_INT potrf( char UPLO,          ///< [in] 'U' if upper triangle of A is stored, 'L' if lower triangle of A is stored.
+                    MXLAPACK_INT N,     ///< [in] The order of the matrix A,  \>= 0.
+                    dataT * A,          ///< [in/out] Symmetric matrix of dimension (LDA,N), stored as specified in UPLO.  Note that the opposite half is not referenced.
+                    MXLAPACK_INT LDA,   ///< [in] The leading dimension of A.
+                    MXLAPACK_INT & INFO ///< [out] 0 on success, \< 0 -INFO means the i-th argument had an illegal value, \>0 the leading minor of order INFO is not positive definite, and the factorization could not be completed.
+                  );
+
+template<>
+MXLAPACK_INT potrf<float> ( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+
+template<>
+MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+
+template<>
+MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::complex<float> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+
+template<>
+MXLAPACK_INT potrf<std::complex<double>> ( char UPLO, MXLAPACK_INT N, std::complex<double> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
 
 /// Reduce a real symmetric matrix to real symmetric tridiagonal form by an orthogonal similarity transformation
 /** xSYTRD reduces a real symmetric matrix A to real symmetric

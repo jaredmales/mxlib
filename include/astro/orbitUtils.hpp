@@ -167,9 +167,9 @@ realT orbitLambertPhase( realT cos_alf /**< [in] the cosine of the phase angle*/
   * \ingroup orbits 
   */
 template<typename units>
-typename units::realT orbitRV( typename units::realT m1,  ///< [in] the mass of the body for which the RV is computer
+typename units::realT orbitRV( typename units::realT m1,  ///< [in] the mass of the body for which the RV is computed
                                typename units::realT m2,  ///< [in] the mass of the other body in the orbiting pair
-                               typename units::realT inc, ///< [in] the inclination of thte orbit of m2.
+                               typename units::realT inc, ///< [in] the inclination of the orbit of m2.
                                typename units::realT a,   ///< [in] the semi-major axis of the orbit
                                typename units::realT e,   ///< [in] the eccentricity of the orbit
                                typename units::realT w,   ///< [in] the argument of pericenter

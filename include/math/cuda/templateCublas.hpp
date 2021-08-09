@@ -100,15 +100,15 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
   * - complex-double, double
   * - complex-double, complex-double
   * 
-  * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+  * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
   * 
   * \ingroup cublas
   */
 template<typename dataT1, typename dataT2>
-void elementwiseXxY( dataT1 * x, ///< [in/out] device pointer for the 1st vector.  Is replaced with the product of the two vectors
-                     dataT2 * y, ///< [in] device pointer for the 2nd vector.
-                     int size    ///< [in] the number of elements in the vectors.
-                   );
+cudaError_t elementwiseXxY( dataT1 * x, ///< [in/out] device pointer for the 1st vector.  Is replaced with the product of the two vectors
+                            dataT2 * y, ///< [in] device pointer for the 2nd vector.
+                            int size    ///< [in] the number of elements in the vectors.
+                          );
 
 //----------------------------------------------------
 // Tgemv

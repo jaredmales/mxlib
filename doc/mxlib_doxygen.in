@@ -811,6 +811,7 @@ INPUT                  = ./groupdefs.dox \
                          ../include/meta \
                          ../include/sigproc \
                          ../include/sys \
+                         ../include/ipc \
                          ./psds.dox \
                          ../include/wfp \
                          ../include/ioutils \

@@ -75,7 +75,7 @@ struct cudaPtr
      * 
      * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
      * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
    int resize( size_t sz /**< [in] the new size */);
    
@@ -123,7 +123,7 @@ struct cudaPtr
      * \returns 0 on success.
      * \returns a cuda error code otherwise.
      * 
-     * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */ 
    int upload( const hostPtrT * src /**< [in] The host location */);
    
@@ -136,7 +136,7 @@ struct cudaPtr
      * 
      * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
      * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
    int upload( const hostPtrT * src, ///< [in] The host location
                size_t sz ///< [in] The size of the array
@@ -147,14 +147,14 @@ struct cudaPtr
      *
      * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
      * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */ 
    int download( hostPtrT * dest /**< [in] The host location, allocated.*/ );
    
    ///Conversion operator, accesses the device pointer for use in Cuda functions.
    /**
      * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */ 
    typename cpp2cudaType<devicePtrT>::cudaType* operator()()
    {
@@ -186,12 +186,12 @@ int cudaPtr<T>::resize( size_t sz )
    
    m_size = sz;
    
-   int rv = cudaMalloc((void **)&m_devicePtr, sz*sizeof(devicePtrT));
+   cudaError_t rv = cudaMalloc((void **)&m_devicePtr, sz*sizeof(devicePtrT));
    
    if(rv != cudaSuccess)
    {
-      std::cerr << "Cuda Malloc Error \n";
-      return rv;
+      std::cerr << "Error from cudaMalloc: ";
+      printf("[%s] %s\n", cudaGetErrorName(rv), cudaGetErrorString(rv));
    }
    
    return 0;

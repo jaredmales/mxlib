@@ -30,6 +30,11 @@
 namespace mx
 {
 
+const char * mxlib_comp_current_branch()
+{
+   return MXLIB_COMP_BRANCH;
+}
+
 const char * mxlib_comp_current_sha1()
 {
    return MXLIB_COMP_CURRENT_SHA1;

@@ -121,44 +121,44 @@ struct mainSequence
    std::vector<double> m_J_Hs; ///< The J-H colors from the sequence
    std::vector<double> m_H_Kss; ///< The H-Ks colors from the sequence
    
-   gslInterpolator<double> interpT; ///< The interpolator for effective Temperature
+   math::gslInterpolator<double> interpT; ///< The interpolator for effective Temperature
    double m_minT; ///< The minimum numeric spectral type for effective Temperature
    double m_maxT; ///< The maximum numeric spectral type for effective Temperature
    
-   gslInterpolator<double> interpRad; ///< The interpolator for effective Temperature
+   math::gslInterpolator<double> interpRad; ///< The interpolator for effective Temperature
    double m_minRad; ///< The minimum numeric spectral type for effective Temperature
    double m_maxRad; ///< The maximum numeric spectral type for effective Temperature
    
-   gslInterpolator<double> interpL; ///< The interpolator for log luminosity
+   math::gslInterpolator<double> interpL; ///< The interpolator for log luminosity
    double m_minL; ///< The minimum numeric spectral type for log luminosity
    double m_maxL; ///< The maximum numeric spectral type for log luminosity
    
-   gslInterpolator<double> interpMv; ///< The interpolator for absolute V magnitude
+   math::gslInterpolator<double> interpMv; ///< The interpolator for absolute V magnitude
    double m_minMv; ///< The minimum numeric spectral type for absolute V magnitude
    double m_maxMv; ///< The maximum numeric spectral type for absolute V magnitude
    
-   gslInterpolator<double> interpVRc; ///< The interpolator for V-Rc color
+   math::gslInterpolator<double> interpVRc; ///< The interpolator for V-Rc color
    double m_minVRc; ///< The minimum numeric spectral type for V-Rc color
    double m_maxVRc; ///< The maximum numeric spectral type for V-Rc color
    
-   gslInterpolator<double> interpVIc; ///< The interpolator for V-Ic color
+   math::gslInterpolator<double> interpVIc; ///< The interpolator for V-Ic color
    double m_minVIc; ///< The minimum numeric spectral type for V-Ic color
    double m_maxVIc; ///< The maximum numeric spectral type for V-Ic color
    
-   gslInterpolator<double> interpVKs; ///< The interpolator for V-Ks color
+   math::gslInterpolator<double> interpVKs; ///< The interpolator for V-Ks color
    double m_minVKs; ///< The minimum numeric spectral type for V-Ks color
    double m_maxVKs; ///< The maximum numeric spectral type for V-Ks color
    
-   gslInterpolator<double> interpJH; ///< The interpolator for J-H color
+   math::gslInterpolator<double> interpJH; ///< The interpolator for J-H color
    double m_minJH; ///< The minimum numeric spectral type for J-H color
    double m_maxJH; ///< The maximum numeric spectral type for J-H color
    
-   gslInterpolator<double> interpHKs; ///< The interpolator for H-Ks color
+   math::gslInterpolator<double> interpHKs; ///< The interpolator for H-Ks color
    double m_minHKs; ///< The minimum numeric spectral type for H-Ks color
    double m_maxHKs; ///< The maximum numeric spectral type for H-Ks color
    
    
-   gslInterpolator<double> interpSpTfmT; ///< The interpolator for effective Temperature
+   math::gslInterpolator<double> interpSpTfmT; ///< The interpolator for effective Temperature
    double m_minSpTfmT; ///< The minimum numeric spectral type for effective Temperature
    double m_maxSpTfmT; ///< The maximum numeric spectral type for effective Temperature
    

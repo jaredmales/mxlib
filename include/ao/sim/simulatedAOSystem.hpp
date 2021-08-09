@@ -18,7 +18,6 @@
 #include "../../improc/imagePads.hpp"
 #include "../../wfp/imagingUtils.hpp"
 #include "../../wfp/fraunhoferPropagator.hpp"
-#include "../../improc/ds9Interface.hpp"
 
 #include "../../ioutils/fits/fitsFile.hpp"
 #include "../../ioutils/fits/fitsUtils.hpp"
@@ -65,8 +64,6 @@ template<typename _realT, typename _wfsT, typename _reconT, typename _filterT, t
 class simulatedAOSystem
 {
 public:
-
-   bool ds9off;
 
    typedef _realT realT; ///< The floating point type used for all calculations
 
@@ -193,14 +190,6 @@ public:
    int _commandDelay;
    std::vector<int> _goodCommands;
 
-   improc::ds9Interface ds9i_coron;
-   int display_coron {0};
-   int display_coron_counter {0};
-
-   improc::ds9Interface ds9i_coron_avg;
-   int display_coron_avg {0};
-   int display_coron_avg_counter {0};
-
    /** @}
      */
 
@@ -323,8 +312,6 @@ simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::simulate
 
    _npix = 0;
 
-   ds9i_coron.title("Coronagraph");
-   ds9i_coron_avg.title("Coron_Avg");
    
    cublasCreate(&m_cublasHandle);
    cublasSetPointerMode(m_cublasHandle, CUBLAS_POINTER_MODE_DEVICE);//CUBLAS_POINTER_MODE_HOST
@@ -513,8 +500,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
 
    tO = sys::get_curr_time();
 
-   improc::ds9Interface ds9;
-
    for(int i=0;i< dm.nModes(); ++i)
    {
       BREAD_CRUMB;
@@ -549,8 +534,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
 
       recon.calcMeasurement(measureVec, wfs.detectorImage);
 
-      //ds9(wfs.detectorImage.image);
-
       t1 = sys::get_curr_time();
 
       t_calcMeas += t1-t0;
@@ -564,7 +547,6 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::tak
 
       BREAD_CRUMB;
 
-      //ds9_display(1, wfs.detectorImage.data(), wfs.detectorImage.cols(), wfs.detectorImage.rows(),1, mx::getFitsBITPIX<realT>());
    }
    tF = sys::get_curr_time();
    std::cout << ( (realT) dm.nModes())/(tF - tO) << " Hz\n";
@@ -880,39 +862,7 @@ void simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::nex
 
       BREAD_CRUMB;
 
-      if( m_doCoron && display_coron > 0)
-      {
-         ++display_coron_counter;
 
-         if(display_coron_counter >= display_coron)
-         {
-            realT mxpk = _realFocal.maxCoeff();
-            _realFocalCoron /= mxpk;
-
-            ds9i_coron(_realFocalCoron);
-            display_coron_counter = 0;
-         }
-      }
-
-      BREAD_CRUMB;
-
-      if( m_doCoron && display_coron_avg > 0)
-      {
-         ++display_coron_avg_counter;
-
-         if(display_coron_avg_counter >= display_coron_avg)
-         {
-            realT mxpk = _psfOut.maxCoeff();
-            _realFocal = _coronOut / mxpk;
-
-            ds9i_coron_avg(_realFocal);
-            display_coron_avg_counter = 0;
-
-            _psfOut.setZero();
-            _coronOut.setZero();
-         }
-      }
-      BREAD_CRUMB;
 
 
       ++_currImage;
