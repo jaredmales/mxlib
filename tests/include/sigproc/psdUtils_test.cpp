@@ -144,3 +144,78 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
    }
 }
 
+/** Verify creation of a 1D frequency grid
+  * 
+  * \anchor tests_sigproc_psdUtils_frequencyGrid_1D
+  */
+SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" ) 
+{
+   GIVEN("2 sided FFT-order frequency grid")
+   {
+      WHEN("dt = 1")
+      {
+         std::vector<double> f(10);
+
+         REQUIRE(mx::sigproc::frequencyGrid(f, 1.0) == 0);
+
+         REQUIRE(fabs(f[0] - 0) < 1e-10);
+         REQUIRE(fabs(f[1] - 0.1) < 1e-10);
+         REQUIRE(fabs(f[2] - 0.2) < 1e-10);
+         REQUIRE(fabs(f[3] - 0.3) < 1e-10);
+         REQUIRE(fabs(f[4] - 0.4) < 1e-10);
+         REQUIRE(fabs(f[5] - 0.5) < 1e-10);
+         REQUIRE(fabs(f[6] - -0.4) < 1e-10);
+         REQUIRE(fabs(f[7] - -0.3) < 1e-10);
+         REQUIRE(fabs(f[8] - -0.2) < 1e-10);
+         REQUIRE(fabs(f[9] - -0.1) < 1e-10);
+      }
+
+      WHEN("dt = 2")
+      {
+         std::vector<double> f(10);
+
+         REQUIRE(mx::sigproc::frequencyGrid(f, 2.5) == 0);
+
+         REQUIRE(fabs(f[0] - 0) < 1e-10);
+         REQUIRE(fabs(f[1] - 0.04) < 1e-10);
+         REQUIRE(fabs(f[2] - 0.08) < 1e-10);
+         REQUIRE(fabs(f[3] - 0.12) < 1e-10);
+         REQUIRE(fabs(f[4] - 0.16) < 1e-10);
+         REQUIRE(fabs(f[5] - 0.2) < 1e-10);
+         REQUIRE(fabs(f[6] - -0.16) < 1e-10);
+         REQUIRE(fabs(f[7] - -0.12) < 1e-10);
+         REQUIRE(fabs(f[8] - -0.08) < 1e-10);
+         REQUIRE(fabs(f[9] - -0.04) < 1e-10);
+      }
+   }
+
+   GIVEN("1 sided frequency grid")
+   {
+      WHEN("dt = 1, odd size")
+      {
+         std::vector<double> f(5);
+
+         REQUIRE(mx::sigproc::frequencyGrid(f, 1.0, false) == 0);
+
+         REQUIRE(fabs(f[0] - 0.1) < 1e-10);
+         REQUIRE(fabs(f[1] - 0.2) < 1e-10);
+         REQUIRE(fabs(f[2] - 0.3) < 1e-10);
+         REQUIRE(fabs(f[3] - 0.4) < 1e-10);
+         REQUIRE(fabs(f[4] - 0.5) < 1e-10);
+      }
+
+      WHEN("dt = 1, even size")
+      {
+         std::vector<double> f(6);
+
+         REQUIRE(mx::sigproc::frequencyGrid(f, 1.0, false) == 0);
+
+         REQUIRE(fabs(f[0] - 0.0) < 1e-10);
+         REQUIRE(fabs(f[1] - 0.1) < 1e-10);
+         REQUIRE(fabs(f[2] - 0.2) < 1e-10);
+         REQUIRE(fabs(f[3] - 0.3) < 1e-10);
+         REQUIRE(fabs(f[4] - 0.4) < 1e-10);
+         REQUIRE(fabs(f[5] - 0.5) < 1e-10);
+      }
+   }
+}

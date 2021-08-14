@@ -68,7 +68,8 @@ VENDOROBJS = \
 
 all: libmxlib.$(LIB_SUFFIX)
 
-ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
+ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
+ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp

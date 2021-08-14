@@ -8,7 +8,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2021 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -235,21 +235,28 @@ void frequency_grid1D( eigenArr & vec,
 
 ///Create a 1-D frequency grid
 /**
-  * \todo need to handle non-fft odd/even sizes
   *  
   * \tparam realT a real floating point type
-  * \tparam realParamT a real floating point type, convenience to avoid double-float cofusion.
+  * \tparam realParamT a real floating point type, convenience to avoid double-float confusion.
+  * 
+  * \test Verify creation of a 1D frequency grid \ref tests_sigproc_psdUtils_frequencyGrid_1D "[test doc]"
   */
 template<typename realT, typename realParamT>
-void frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated vector, on return contains the frequency grid
-                     realParamT dtT,           ///< [in] dt the temporal sampling of the time series
-                     bool fftOrder = true      ///< [in] fftOrder [optional] if true the frequency grid is in FFT order
-                   ) 
+int frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated vector, on return contains the frequency grid
+                   realParamT dtT,           ///< [in] dt the temporal sampling of the time series
+                   bool fftOrder = true      ///< [in] fftOrder [optional] if true the frequency grid is in FFT order
+                 ) 
 {
    realT dt = dtT;
 
    if( fftOrder )
    {
+      if(vec.size() % 2 == 1)
+      {
+         mxError("frequencyGrid", MXE_INVALIDARG, "Frequency scale can't be odd-sized for FFT order");
+         return -1;
+      }
+
       realT df = (1.0/dt)/((realT) vec.size());
       
       for(ssize_t ii=0; ii < ceil(0.5*(vec.size()-1) + 1); ++ii)
@@ -261,13 +268,30 @@ void frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated v
       {
          vec[ii] = (ii-(ssize_t)vec.size())*df;
       }
+
+      return 0;
    }
    else
    {
-      realT df = (0.5/dt)/((realT) vec.size());
-      for(int ii=0; ii < vec.size(); ++ii)
+      if(vec.size() % 2 == 0)
       {
-         vec[ii] = df * ii;
+         realT df = (0.5/dt)/((realT) vec.size() - 1);
+         for(int ii=0; ii < vec.size(); ++ii)
+         {
+            vec[ii] = df * ii;
+         }
+
+         return 0;
+      }
+      else
+      {
+         realT df = (0.5/dt)/((realT) vec.size());
+         for(int ii=0; ii < vec.size(); ++ii)
+         {
+            vec[ii] = df * (ii+1);
+         }
+
+         return 0;
       }
    }
 }
