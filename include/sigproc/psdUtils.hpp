@@ -37,6 +37,8 @@
 
 #include <iostream>
 
+#include "../mxError.hpp"
+
 #include "../math/fft/fft.hpp"
 #include "../math/vectorUtils.hpp"
 
