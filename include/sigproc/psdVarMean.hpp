@@ -123,6 +123,8 @@ struct psdVarMeanParams
   * \tparam paramsT the type of the parameter structure. See psdVarMean.
   * 
   * \returns the value of the integrand at k
+  * 
+  *
   */ 
 template<typename paramsT>
 typename paramsT::realT psdVarMeanFunc( typename paramsT::realT k, ///< [in] the scaled frequency coordinate
@@ -145,6 +147,8 @@ typename paramsT::realT psdVarMeanFunc( typename paramsT::realT k, ///< [in] the
   * \todo document the paramsT interface
   * 
   * \tparam paramsT is a parameter structure with the correct interface.
+  * 
+  *  \ingroup psds
   */
 template<typename paramsT>
 struct psdVarMean

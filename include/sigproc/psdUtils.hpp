@@ -245,11 +245,11 @@ void frequency_grid1D( eigenArr & vec,
   */
 template<typename realT, typename realParamT>
 int frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated vector, on return contains the frequency grid
-                   realParamT dtT,           ///< [in] dt the temporal sampling of the time series
+                   realParamT dt,           ///< [in] dt the temporal sampling of the time series
                    bool fftOrder = true      ///< [in] fftOrder [optional] if true the frequency grid is in FFT order
                  ) 
 {
-   realT dt = dtT;
+   realT dtTT = dt;
 
    if( fftOrder )
    {
@@ -259,7 +259,7 @@ int frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated ve
          return -1;
       }
 
-      realT df = (1.0/dt)/((realT) vec.size());
+      realT df = (1.0/dtTT)/((realT) vec.size());
       
       for(ssize_t ii=0; ii < ceil(0.5*(vec.size()-1) + 1); ++ii)
       {
@@ -277,7 +277,7 @@ int frequencyGrid( std::vector<realT> & vec, ///< [out] vec the pre-allocated ve
    {
       if(vec.size() % 2 == 0)
       {
-         realT df = (0.5/dt)/((realT) vec.size() - 1);
+         realT df = (0.5/dtTT)/((realT) vec.size() - 1);
          for(int ii=0; ii < vec.size(); ++ii)
          {
             vec[ii] = df * ii;
