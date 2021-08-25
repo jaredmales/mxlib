@@ -215,54 +215,54 @@ void fftw_free<complexQT>( complexQT * p)
 template<>
 void fftw_make_planner_thread_safe<float>()
 {
-   ::fftwf_make_planner_thread_safe();
+   //::fftwf_make_planner_thread_safe();
 }
 
 
 template<>
 void fftw_make_planner_thread_safe<double>()
 {
-   ::fftw_make_planner_thread_safe();
+   //::fftw_make_planner_thread_safe();
 }
 
 
 template<>
 void fftw_make_planner_thread_safe<long double>()
 {
-   ::fftwl_make_planner_thread_safe();
+   //::fftwl_make_planner_thread_safe();
 }
 
 #ifdef HASQUAD
 template<>
 void fftw_make_planner_thread_safe<__float128>()
 {
-   ::fftwl_make_planner_thread_safe();
+   //::fftwl_make_planner_thread_safe();
 }
 #endif
 
 template<>
 void fftw_plan_with_nthreads<float>(int nthreads)
 {
-   ::fftwf_plan_with_nthreads(nthreads);
+   //::fftwf_plan_with_nthreads(nthreads);
 }
 
 template<>
 void fftw_plan_with_nthreads<double>(int nthreads)
 {
-   ::fftw_plan_with_nthreads(nthreads);
+   //::fftw_plan_with_nthreads(nthreads);
 }
 
 template<>
 void fftw_plan_with_nthreads<long double>(int nthreads)
 {
-   ::fftwl_plan_with_nthreads(nthreads);
+   //::fftwl_plan_with_nthreads(nthreads);
 }
 
 #ifdef HASQUAD
 template<>
 void fftw_plan_with_nthreads<__float128>(int nthreads)
 {
-   ::fftwq_plan_with_nthreads(nthreads);
+   //::fftwq_plan_with_nthreads(nthreads);
 }
 #endif
 
@@ -437,26 +437,26 @@ void fftw_cleanup<__float128>()
 template<>
 void fftw_cleanup_threads<float>()
 {
-   ::fftwf_cleanup_threads();
+   //::fftwf_cleanup_threads();
 }
 
 template<>
 void fftw_cleanup_threads<double>()
 {
-   ::fftw_cleanup_threads();
+   //::fftw_cleanup_threads();
 }
 
 template<>
 void fftw_cleanup_threads<long double>()
 {
-   ::fftwl_cleanup_threads();
+   //::fftwl_cleanup_threads();
 }
 
 #ifdef HASQUAD
 template<>
 void fftw_cleanup_threads<__float128>()
 {
-   ::fftwq_cleanup_threads();
+   //::fftwq_cleanup_threads();
 }
 #endif
 
