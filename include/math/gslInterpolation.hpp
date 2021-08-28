@@ -31,12 +31,17 @@
 
 #include <vector>
 #include <gsl/gsl_interp.h>
+#include <gsl/gsl_errno.h>
 
 namespace mx
 {
 namespace math
 {
    
+///\todo document gslInterpolator
+
+///\todo add error checking
+
 template<typename _realT>
 struct gslInterpolator
 {
@@ -116,7 +121,10 @@ struct gslInterpolator
   * \param [out] yout the output interpolated y-values, pre-allocated
   * \param [in]  Nout the size of the output x-y axis
   * 
-  * \retval
+  * \returns 0 on success
+  * \returns -1 on a gsl error.
+  * 
+  * \todo report errors iaw mxlib standard in gsl_interpolate
   * 
   * \ingroup interpolation
   */
@@ -131,21 +139,48 @@ int gsl_interpolate( const gsl_interp_type * interpT,
 {
    static_assert( std::is_same<double, typename std::remove_cv<realT>::type>::value, "GSL Interpolation only works with double");
    
-   gsl_interp * interp =  gsl_interp_alloc(interpT, Nin);
-   gsl_interp_accel * acc = gsl_interp_accel_alloc ();
+   gsl_set_error_handler_off();
 
-   gsl_interp_init(interp, xin, yin, Nin);
+   gsl_interp * interp =  gsl_interp_alloc(interpT, Nin);
+   if(interp == nullptr)
+   {
+      std::cerr << "gsl_interpolate: gsl_interp_alloc failed\n";
+      return -1;
+   }
+
+   gsl_interp_accel * acc = gsl_interp_accel_alloc ();
+   if(acc == nullptr)
+   {
+      std::cerr << "gsl_interpolate: gsl_interp_accel_alloc failed\n";
+      return -1;
+
+   }
+   int gsl_errno = gsl_interp_init(interp, xin, yin, Nin);
+
+   if(gsl_errno != 0)
+   {
+      std::cerr << "gsl_interpolate: error from gsl_interp_init [" << gsl_strerror(gsl_errno) << "]\n";
+      gsl_interp_free(interp);
+      gsl_interp_accel_free (acc);
+      return -1;
+   }
    
-   gsl_interp_accel_reset(acc);
-   
+   gsl_errno = 0;
    for(size_t i=0;i<Nout; ++i)
    {
-      gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
+      //Don't error check, let it set NAN
+      gsl_errno += gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
    }
    
    gsl_interp_free(interp);
    gsl_interp_accel_free (acc);
    
+   if(gsl_errno)
+   {
+      std::cerr << "gsl_interpolate: error(s) reported by gsl_interp_eval_e\n";
+      return -1;
+   }
+
    return 0;
 }
 
