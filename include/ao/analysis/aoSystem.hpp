@@ -2439,21 +2439,34 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
-   ios << "#    npix_wfs = " << npix_wfs((size_t) 0);
-   for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
-   ios << '\n';
+   
+   if(npix_wfs().size() > 0)
+   {
+      ios << "#    npix_wfs = " << npix_wfs((size_t) 0);
+      for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
+      ios << '\n';
+   }
+   
+   if(ron_wfs().size() > 0)
+   {
+      ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
+      for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
+      ios << '\n';
+   }
 
-   ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
-   for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
-   ios << '\n';
+   if(Fbg().size() > 0)
+   {
+      ios << "#    Fbg = " << Fbg((size_t) 0);
+      for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
+      ios << '\n';
+   }
 
-   ios << "#    Fbg = " << Fbg((size_t) 0);
-   for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
-   ios << '\n';
-
-   ios << "#    minTauWFS = " << minTauWFS((size_t) 0);
-   for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
-   ios << '\n';
+   if(minTauWFS().size() > 0)
+   {
+      ios << "#    minTauWFS = " << minTauWFS((size_t) 0);
+      for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
+      ios << '\n';
+   }
 
 /*   ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
