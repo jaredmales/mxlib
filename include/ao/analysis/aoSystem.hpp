@@ -2237,7 +2237,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
          return fe / S;
       }
    }
-   
+   //get if not doing fitting error or if inside control region:
+
    realT var = (this->*varFunc)(m, n);
    
    return var/S;
@@ -2379,7 +2380,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m,
    realT ni = atm.n_air(m_lam_sci);
    realT nw = atm.n_air(m_lam_wfs);
    
-   return C0var(m, n) * pow( (ni-nw)/ni, 2);   
+   return C0var(m, n) * pow( (ni-nw)/(ni-1), 2);  //Fixes error in Eqn 29 
 }
 
 
