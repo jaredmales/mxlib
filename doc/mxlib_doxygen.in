@@ -811,10 +811,21 @@ INPUT                  = ./groupdefs.dox \
                          ../include/meta \
                          ../include/sigproc \
                          ../include/sys \
+                         ../include/ipc \
                          ./psds.dox \
                          ../include/wfp \
                          ../include/ioutils \
                          ../include/ioutils/fits \
+                         ../source \
+                         ../source/ao \
+                         ../source/app \
+                         ../source/improc \
+                         ../source/ioutils \
+                         ../source/ioutils/fits \
+                         ../source/ipc \
+                         ../source/math \
+                         ../source/sigproc \
+                         ../source/sys \
                          ../tests/include/ao \
                          ../tests/include/app \
                          ../tests/include/astro \
@@ -865,7 +876,7 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                =
+EXCLUDE                = ../source/vendor
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

@@ -15,6 +15,8 @@ license.blurb
 !local/MxLib.example.mk
 .vscode
 
+.vscode/*
+
 tests/mxlibTest
 tests/include/ao/sim/pyramidSensor_test
 *.a

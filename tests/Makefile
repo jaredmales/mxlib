@@ -16,13 +16,15 @@ OBJS = testsMain.o \
        include/sigproc/psdFilter_test.o \
        include/sigproc/zernike_test.o \
        include/improc/imageUtils_test.o \
-       include/improc/imageXCorrDiscrete_test.o \
-       include/sys/timeUtils_test.o 
+       include/sys/timeUtils_test.o
+       #include/improc/imageXCorrDiscrete_test.o \
+        
        
        
-       
-
 all: mxlibTest
+
+#include/math/cuda/templateCublas_test.o: ../include/math/cuda/templateCublas.hpp ../source/math/cuda/templateCublas.cu
+
 
 			
 

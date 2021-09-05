@@ -316,12 +316,12 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
    }
 }
 
-/** Scenario: multiplying two vector element by element
+/** Scenario: multiplying two vectors element by element
   * Tests mx::cuda::elementwiseXxY, as well as basic cudaPtr operations.
   * 
   * \anchor test_math_templateCublas_elementwiseXxY
   */ 
-SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCublas]" ) 
+SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCublas]" ) 
 {
    GIVEN("a vector")
    {
@@ -343,8 +343,9 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
-                  
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
+
          dx.download(hx.data());
          
          REQUIRE(hx[0] == 0);
@@ -376,7 +377,8 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
                   
          dx.download(hx.data());
          
@@ -409,7 +411,8 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
                   
          dx.download(hx.data());
          
@@ -439,8 +442,9 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
-                  
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
+
          dx.download(hx.data());
          
          REQUIRE(hx[0] == 0);
@@ -472,7 +476,8 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
                   
          dx.download(hx.data());
          
@@ -505,7 +510,8 @@ SCENARIO( "multiplying two vector element by element", "[math::cuda::templateCub
          dy.upload(hy.data());
          REQUIRE(dy.size() == hy.size());
          
-         mx::cuda::elementwiseXxY<cuDoubleComplex,cuDoubleComplex>(dx(), dy(), dx.size());
+         cudaError_t rv = mx::cuda::elementwiseXxY(dx(), dy(), dx.size());
+         REQUIRE(rv == cudaSuccess);
                   
          dx.download(hx.data());
          

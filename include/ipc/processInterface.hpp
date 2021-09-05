@@ -27,8 +27,8 @@
 #ifndef ipc_processInterface_hpp
 #define ipc_processInterface_hpp
 
-#include <string.h>
-#include <stdio.h>
+#include <vector>
+#include <string>
 
 #include "../mxlib.hpp"
 #include "ipc.hpp"
@@ -47,9 +47,30 @@ namespace ipc
   *
   * \retval 0 on success 
   * \retval -1 on error
-  * 
+  *
+  * \ingroup IPC 
   */
 int command_response(const char * cmd, char * resp, size_t respsz);
+
+/// Runs a command (with parameters) passed in using fork/exec
+/** A new process is fork()-ed, and the child runs execvp with command provided.  The output of the process
+  * is captured in \p commandOutput, and error messages in \p commandStderr.
+  * 
+  * The process return value in \p retVal is only meaningful if this function returns 0.
+  * 
+  * If this function returns -1, the last entry in \p commandStderr will contain a message,
+  * and errno may be useful.
+  * 
+  * \returns 0 on success
+  * \returns -1 on error
+  * 
+  * \ingroup IPC
+  */
+int runCommand( int & retVal,                                ///< [out] the return value of the process. Only meaningful if this returns 0.
+                std::vector<std::string> & commandOutput,    ///< [out] the output, line by line.  If an error, first entry contains the message.
+                std::vector<std::string> & commandStderr,    ///< [out] the output of stderr.
+                const std::vector<std::string> & commandList ///< [in] command to be run, with one entry per command line word
+              );
 
 }//namespace ipc
 } //namespace mx

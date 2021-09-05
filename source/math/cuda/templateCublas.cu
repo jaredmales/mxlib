@@ -225,15 +225,15 @@ void elwiseMul(dataT1 *a, dataT2 *b, int size)
 {   
    #ifdef __CUDACC__
 
-    const int numThreads = blockDim.x * gridDim.x;
-    const int threadID = blockIdx.x * blockDim.x + threadIdx.x;
+   const int numThreads = blockDim.x * gridDim.x;
+   const int threadID = blockIdx.x * blockDim.x + threadIdx.x;
 
-    for (int i = threadID; i < size; i += numThreads)
-    {
-        a[i] = elementMul<dataT1, dataT2>( a[i],  b[i]);
-    }
+   for (int i = threadID; i < size; i += numThreads)
+   {
+       a[i] = elementMul<dataT1, dataT2>( a[i],  b[i]);
+   }
     
-    #endif //__CUDACC__
+   #endif //__CUDACC__
 }
 
 // Calculates the element-wise product of two vectors, storing the result in the first.
@@ -241,66 +241,73 @@ void elwiseMul(dataT1 *a, dataT2 *b, int size)
  * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
  */
 template<typename dataT1, typename dataT2>
-void elementwiseXxY_impl( dataT1 * x,
-                          dataT2 * y,
-                          int size
-                        )
+cudaError_t elementwiseXxY_impl( dataT1 * x,
+                                 dataT2 * y,
+                                 int size
+                               )
 {
+
+   cudaError_t rv = cudaSuccess;
+
    #ifdef __CUDACC__
+   rv = cudaGetLastError();
    elwiseMul<dataT1,dataT2><<<(size+255)/256, 256>>>( x, y, size);
+   rv = cudaGetLastError();
    #endif
+
+   return rv;
 }
 
 template<>
-void elementwiseXxY<float,float>( float * x,
-                                  float * y,
-                                  int size
-                                )
+cudaError_t elementwiseXxY<float,float>( float * x,
+                                         float * y,
+                                         int size
+                                       )
 {
    return elementwiseXxY_impl<float,float>(x,y,size);
 }
 
 template<>
-void elementwiseXxY<double,double>( double * x,
-                                    double * y,
-                                    int size
-                                  )
+cudaError_t elementwiseXxY<double,double>( double * x,
+                                           double * y,
+                                           int size
+                                         )
 {
    return elementwiseXxY_impl<double,double>(x,y,size);
 }
 
 template<>
-void elementwiseXxY<cuComplex,float>( cuComplex * x,
-                                      float * y,
-                                      int size
-                                    )
+cudaError_t elementwiseXxY<cuComplex,float>( cuComplex * x,
+                                             float * y,
+                                             int size
+                                           )
 {
    return elementwiseXxY_impl<cuComplex,float>(x,y,size);
 }
 
 template<>
-void elementwiseXxY<cuComplex,cuComplex>( cuComplex * x,
-                                          cuComplex * y,
-                                          int size
-                                        )
+cudaError_t elementwiseXxY<cuComplex,cuComplex>( cuComplex * x,
+                                                 cuComplex * y,
+                                                 int size
+                                               )
 {
    return elementwiseXxY_impl<cuComplex,cuComplex>(x,y,size);
 }
 
 template<>
-void elementwiseXxY<cuDoubleComplex,double>( cuDoubleComplex * x,
-                                             double * y,
-                                             int size
-                                           )
+cudaError_t elementwiseXxY<cuDoubleComplex,double>( cuDoubleComplex * x,
+                                                    double * y,
+                                                    int size
+                                                  )
 {
    return elementwiseXxY_impl<cuDoubleComplex,double>(x,y,size);
 }
 
 template<>
-void elementwiseXxY<cuDoubleComplex,cuDoubleComplex>( cuDoubleComplex * x,
-                                                      cuDoubleComplex * y,
-                                                      int size
-                                                    )
+cudaError_t elementwiseXxY<cuDoubleComplex,cuDoubleComplex>( cuDoubleComplex * x,
+                                                             cuDoubleComplex * y,
+                                                             int size
+                                                           )
 {
    return elementwiseXxY_impl<cuDoubleComplex,cuDoubleComplex>(x,y,size);
 }

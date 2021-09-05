@@ -77,8 +77,14 @@ ifeq ($(USE_BLAS_FROM),atlas)
 endif
 
 ifeq ($(USE_FFT_FROM),fftw)
-    #Order matters, _threads first.
-    FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l
+    
+    ifeq ($(UNAME),Darwin)
+        #Order matters, _threads first.
+        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f -lfftw3l    
+    endif
+    ifeq ($(UNAME),Linux)
+        FFT_LDLIBS ?= -lfftw3 -lfftw3f  -lfftw3l
+    endif
 endif
 
 FITS_LIB = -lcfitsio
@@ -159,6 +165,7 @@ ifeq ($(NEED_CUDA),yes)
    # internal flags
    NVCCFLAGS   := -m${TARGET_SIZE}
    NVCCFLAGS   +=  -DEIGEN_NO_CUDA -DMXLIB_MKL
+   NVCCFLAGS   +=  ${NVCCARCH}
 
    # Debug build flags
    ifeq ($(dbg),1)

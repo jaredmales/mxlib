@@ -35,7 +35,6 @@ namespace analysis
 ///A class to specify atmosphere parameters and perform related calculations.
 /** 
   * \todo Add layer outer scales.
-  * \todo Add calculation of f_G and tau_0.
   * 
   * \tparam realT is the real floating type in which all calculations are performed.
   * 
@@ -54,7 +53,7 @@ public:
 protected:
    realT m_r_0; ///< Fried's parameter, in m
    
-   realT m_lam_0; ///<Wavelength of Fried's paraemter, in m
+   realT m_lam_0; ///<Wavelength of Fried's parameter, in m
 
    std::vector<realT> m_L_0; ///< The outer scale, in m
    
@@ -62,27 +61,26 @@ protected:
    
    std::vector<realT> m_layer_z; ///< Vector of layer heights, in m, above the observatory.
    
-   realT _h_obs; ///< Height of the observatory above sea level, in m.  
+   realT m_h_obs; ///< Height of the observatory above sea level, in m.  
    
-   realT _H; ///< The atmospheric scale height, in m.
+   realT m_H; ///< The atmospheric scale height, in m.
    
-   std::vector<realT> _layer_Cn2; ///< Vector of layer strengths. 
+   std::vector<realT> m_layer_Cn2; ///< Vector of layer strengths. 
    
-   std::vector<realT> _layer_v_wind; ///< Vector of layer wind speeds, in m/s.
+   std::vector<realT> m_layer_v_wind; ///< Vector of layer wind speeds, in m/s.
    
-   std::vector<realT> _layer_dir; ///<Vector of layer wind directions, in radians.
+   std::vector<realT> m_layer_dir; ///<Vector of layer wind directions, in radians.
 
-   bool _v_wind_updated; ///< whether or not _v_wind has been updated after changes
+   bool m_v_wind_updated; ///< whether or not m_v_wind has been updated after changes
    
-   realT _v_wind; ///< \f$ C_n^2 \f$ averaged windspeed
+   realT m_v_wind; ///< \f$ C_n^2 \f$ averaged windspeed
    
-   realT _dir_wind; ///< \f$ C_n^2 \f$ averaged direction
+   realT m_dir_wind; ///< \f$ C_n^2 \f$ averaged direction
    
-   bool _z_mean_updated; ///< whether or not _z_mean has been update after changes
+   bool m_z_mean_updated; ///< whether or not m_z_mean has been update after changes
    
-   realT _z_mean; ///< \f$ C_n^2 \f$ averaged layer height
+   realT m_z_mean; ///< \f$ C_n^2 \f$ averaged layer height
    
-    
    bool m_nonKolmogorov {false};
    
    realT m_alpha{2};
@@ -99,8 +97,8 @@ protected:
 public:
    
    ///Get the value of Fried's parameter r_0 at the reference wavelength lam_0.
-   /**
-     * \returns the curret value of m_r_0.
+   /** 
+     * \returns the curret value of m_r_0, in m.
      */ 
    realT r_0();
    
@@ -108,79 +106,79 @@ public:
    /**
      * \note This does not set the value of r_0.
      * 
-     * \returns the current value of m_r_0 * pow(lam, 6/5).
+     * \returns the current value of m_r_0 * pow(lam, 6/5), in m.
      */
-   realT r_0( const realT & lam /**< [in] the wavelength at which to calculate r_0*/ );
+   realT r_0( const realT & lam /**< [in] the wavelength, in m, at which to calculate r_0*/ );
    
    ///Set the value of Fried's parameter and the reference wavelength.
    /** If the provided reference wavelength is \<=0, then 0.5 microns is used.
      * 
      */ 
-   void r_0( const realT & r0, ///< [in] is the new value of r_0  
-             const realT & l0 ///< [in] is the new value of lam_0, if 0 then 0.5 microns is the default.
+   void r_0( const realT & r0, ///< [in] is the new value of r_0, m  
+             const realT & l0 ///< [in] is the new value of lam_0 (in m), if 0 then 0.5e-6 is the default.
            ); 
    
    ///Get the current value of the reference wavelength.
    /** This is the wavelength at which r_0 is specified.
      *
-     * \returns the current value of m_lam_0. 
+     * \returns the current value of m_lam_0, in m. 
      */
    realT lam_0();
    
    ///Get the value of the outer scale for a single layer.
    /**
-     * \returns the current value of m_L_0[n].
+     * \returns the current value of m_L_0[n], in m.
      */ 
    realT L_0( const size_t & n );
    
    ///Set the vector of layer outer scales.
    /**
      */ 
-   void L_0( const std::vector<realT> & L0 /**< [in] is the new vector of outer scales  */);
+   void L_0( const std::vector<realT> & L0 /**< [in] is the new vector of outer scales, in m  */);
 
    /// Get the vector of outer scales.
    /**
-     * \returns a copy of the vector of layer outer scales 
+     * \returns a copy of the vector of layer outer scales, in m
      */
    std::vector<realT> L_0();
    
    ///Get the value of the inner scale for a single layer.
    /**
-     * \returns the current value of m_l_0[n].
+     * \returns the current value of m_l_0[n], in m.
      */ 
    realT l_0( const size_t & n );
    
    ///Set the vector of layer inner scales.
    /**
      */ 
-   void l_0( const std::vector<realT> & l0 /**< [in] is the new vector of inner scales  */);
+   void l_0( const std::vector<realT> & l0 /**< [in] is the new vector of inner scales, in m*/);
 
    /// Get the vector of inner scales.
    /**
-     * \returns a copy of the vector of layer inner scales 
+     * \returns a copy of the vector of layer inner scales, in m
      */
    std::vector<realT> l_0();
    
    ///Get the height of a single layer.
    /**
-     * \returns the value ofm_layer_z[n].
+     * \returns the height of layer n, in m.
      */
    realT layer_z( const size_t n /**< [in] specifies the layer. */);
    
    ///Get the vector layer heights.
    /** 
-     * \returns a copy of the vector of layer heights:m_layer_z.
+     * \returns a copy of the vector of layer heights:m_layer_z, in m.
      */ 
    std::vector<realT> layer_z();
    
    ///Set the vector of layer heights.
    /**
      */
-   void layer_z(const std::vector<realT> & layz /**< [in] new vector of layer heights, m_layer_z. */ );
+   void layer_z(const std::vector<realT> & layz /**< [in] new vector of layer heights, in m. */ );
    
    /// Get the height of the observatory.
    /** 
-     * \return the current value of _h_obs.
+     * \return the current value of m_h_obs, in m.
      */ 
    realT h_obs();
    
@@ -191,24 +189,24 @@ public:
    
    /// Get the atmospheric scale height.
    /** 
-     * \returns the current value of _H.
+     * \returns the current value of m_H, in m.
      */ 
    realT H();
    
    /// Set the atmospheric scale height.
    /**
      */
-   void H( realT nH /**< [in] the new value of _H [m] */);
+   void H( realT nH /**< [in] the new value of m_H [m] */);
    
    ///Get the strength of a single layer.
    /**
-     * \returns the value of _layer_Cn2[n].
+     * \returns the value of m_layer_Cn2[n].
      */
    realT layer_Cn2(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer strengths.
    /** 
-     * \returns a copy of the vector of layer strengths: _layer_Cn2.
+     * \returns a copy of the vector of layer strengths: m_layer_Cn2.
      */ 
    std::vector<realT> layer_Cn2();
    
@@ -227,13 +225,13 @@ public:
    
    ///Get the wind speed of a single layer.
    /**
-     * \returns the value of _layer_v_wind[n].
+     * \returns the value of m_layer_v_wind[n].
      */
    realT layer_v_wind(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer windspeeds
    /** 
-     * \returns a copy of the vector of layer windspeeds: _layer_v_wind.
+     * \returns a copy of the vector of layer windspeeds: m_layer_v_wind.
      */ 
    std::vector<realT>  layer_v_wind();
    
@@ -241,17 +239,17 @@ public:
    /**
      * \param 
      */
-   void layer_v_wind(const std::vector<realT> & spd /**< [in] the new vector, which is copied to _layer_v_wind. */);
+   void layer_v_wind(const std::vector<realT> & spd /**< [in] the new vector, which is copied to m_layer_v_wind. */);
    
    ///Get the wind direction of a single layer.
    /**
-     * \returns the value of _layer_dir[n].
+     * \returns the value of m_layer_dir[n], which is the wind direction in that layer in radians.
      */
    realT layer_dir(const int n /**< [in] specifies the layer. */);
    
    ///Get the vector of layer wind directions
    /** 
-     * \returns a copy of the vector of layer wind directions: _layer_dir.
+     * \returns a copy of the vector of layer wind directions: m_layer_dir.
      */
    std::vector<realT> layer_dir();
    
@@ -259,11 +257,11 @@ public:
    /**
      * \param 
      */
-   void layer_dir(const std::vector<realT> & d /**< [in] the new vector, which is copied to _layer_dir. */);
+   void layer_dir(const std::vector<realT> & d /**< [in] the new vector of wind directions in radians, which is copied to m_layer_dir. */);
    
    ///Get the number of layers
    /**
-     * \returns the size of the _layer_Cn2 vector.
+     * \returns the size of the m_layer_Cn2 vector.
      */ 
    size_t n_layers();
    
@@ -275,10 +273,10 @@ public:
      \f]
      * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
-     * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
-     * returns the value of _v_wind.
+     * This is only re-calculated if either m_layer_Cn2 or m_layer_v_wind is changed, otherwise this just
+     * returns the value of m_v_wind.
      * 
-     * \returns the current value of _v_wind.
+     * \returns the current value of m_v_wind.
      */ 
    realT v_wind();
    
@@ -290,10 +288,10 @@ public:
      \f]
      * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
-     * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
-     * returns the value of _v_wind.
+     * This is only re-calculated if either m_layer_Cn2 or m_layer_v_wind is changed, otherwise this just
+     * returns the value of m_v_wind.
      * 
-     * \returns the current value of _v_wind.
+     * \returns the current value of m_v_wind.
      */ 
    realT v_wind_mean();
    
@@ -302,7 +300,7 @@ public:
    
    realT v_max()
    {
-      auto max = std::max_element(std::begin(_layer_v_wind), std::end(_layer_v_wind));
+      auto max = std::max_element(std::begin(m_layer_v_wind), std::end(m_layer_v_wind));
       
       return *max;
    }
@@ -315,28 +313,28 @@ public:
      \f]
      * See Hardy (1998) Section 3.3.6. \cite hardy_1998.
      * 
-     * This is only re-calculated if either _layer_Cn2 or _layer_v_wind is changed, otherwise this just
-     * returns the value of _dir_wind.
+     * This is only re-calculated if either m_layer_Cn2 or m_layer_v_wind is changed, otherwise this just
+     * returns the value of m_dir_wind.
      * 
-     * \returns the current value of _dir_wind.
+     * \returns the current value of m_dir_wind.
      */ 
    realT dir_wind();
    
 protected:
-   ///Recalculate _v_wind
-   /** Called by v_wind() whenever _v_wind_updated is true.
+   ///Recalculate m_v_wind
+   /** Called by v_wind() whenever m_v_wind_updated is true.
      *
      * \todo handle dir_wind averaging across 0/2pi  
      */
    void update_v_wind();
   
 public:   
-   ///Set the weighted mean _v_wind and renormalize the layer wind speeds
-   /** Calling this function changes the values of _layer_v_wind so that the 
+   ///Set the weighted mean m_v_wind and renormalize the layer wind speeds
+   /** Calling this function changes the values of m_layer_v_wind so that the 
      * Layer averaged 5/3 \f$C_n^2\f$ moment of wind speed is the new value specified by vw.
      * 
      */
-   void v_wind(const realT & vw /**< [in] the new value of _v_wind. */);
+   void v_wind(const realT & vw /**< [in] the new value of m_v_wind. */);
    
    
    ///Get the weighted mean layer height
@@ -346,26 +344,26 @@ public:
      \f]
      * See Hardy (1998) Section 3.3.6 and 3.7.2. \cite hardy_1998.
      * 
-     * This is only re-calculated if either _layer_Cn2 orm_layer_z is changed, otherwise this just
-     * returns the value of _z_mean.
+     * This is only re-calculated if either m_layer_Cn2 orm_layer_z is changed, otherwise this just
+     * returns the value of m_z_mean.
      * 
-     * \returns the current value of _z_mean.
+     * \returns the current value of m_z_mean.
      */ 
    realT z_mean();
    
 protected:
-   ///Recalculate _z_mean
-   /** Called by z_mean() whenever _z_mean_updated is true.
+   ///Recalculate m_z_mean
+   /** Called by z_mean() whenever m_z_mean_updated is true.
      */
    void update_z_mean();
   
 public:   
-   ///Set the weighted mean _z_mean and renormalize the layer heights
+   ///Set the weighted mean m_z_mean and renormalize the layer heights
    /** Calling this function changes the values ofm_layer_z so that the 
      * Layer averaged 5/3 \f$C_n^2\f$ moment of the height is the new value specified.
      * 
      */
-   void z_mean(const realT & zm /**< [in] is the new value of _v_wind. */);
+   void z_mean(const realT & zm /**< [in] is the new value of m_v_wind. */);
    
    ///Return the PSD index for Kolmogorov turbulence.
    /** Satifies the requirements of psdParamsT.
@@ -447,7 +445,7 @@ public:
    
    realT n_air( realT lam /**< [in]The wavelength*/);
    
-   realT X_Z( realT k, ///< [in] the spatial frequency, in inverse metes 
+   realT X_Z( realT k, ///< [in] the spatial frequency, in inverse meters 
               realT lambda_sci, ///< [in] is the science observation wavelength.
               realT lambda_wfs, ///< [in] is the wavefront sensor wavelength.
               realT secZ ///< [in] is the secant of the zenith distance.
@@ -478,18 +476,37 @@ public:
      */ 
    realT fwhm(realT lam_sci /**< [in] the wavelength of the science observation. */ );
    
-   ///Get the greenwood frequency
+   ///Get the greenwood frequency at the reference wavelength
    /**
      * \todo derive full value of the constant 
      */
+   realT f_g();
+
+   ///Get the greenwood frequency at a specified wavelength
+   /**
+     * 
+     */
    realT f_g(realT lam_sci /**< [in] the wavelength of the science observation. */);
    
-   //Get tau_0
+   ///Get tau_0 at the reference wavelength
    /**
      * \todo derive full value of the constant
      */ 
+   realT tau_0();
+
+   ///Get tau_0 at a specified wavelength.
+   /**
+     * 
+     */ 
    realT tau_0(realT lam_sci /**< [in] the wavelength of the science observation. */);
    
+   /// Scale v_wind so that tau_0 has the specified value at the specified wavelength.
+   /** Does not modify r_0.
+     */
+   void tau_0( realT tau_0,  ///< [in] the desired tau_0
+               realT lam_sci ///< [in] the wavelength of the science observation.
+             );
+
    ///Load the default atmosphere model from Guyon (2005).
    /** Sets the parameters from Table 4 of Guyon (2005) \cite guyon_2005.
      */
@@ -531,11 +548,11 @@ aoAtmosphere<realT>::aoAtmosphere()
    m_lam_0 = 0.5e-6;
    
    
-   _h_obs = 0;
-   _H = 8000;
+   m_h_obs = 0;
+   m_H = 8000;
    
-   _v_wind_updated = false;
-   _z_mean_updated = false;
+   m_v_wind_updated = false;
+   m_z_mean_updated = false;
 }
 
 template<typename realT>
@@ -555,19 +572,19 @@ int aoAtmosphere<realT>::checkLayers()
       return -1;
    }
    
-   if( _layer_Cn2.size() != n)
+   if( m_layer_Cn2.size() != n)
    {
       mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_Cn2  vs. outer scale)");
       return -1;
    }
    
-   if( _layer_dir.size() != n)
+   if( m_layer_dir.size() != n)
    {
       mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_dir  vs. outer scale)");
       return -1;
    }
    
-   if( _layer_v_wind.size() != n)
+   if( m_layer_v_wind.size() != n)
    {
       mxError("aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_v_wind vs. outer scale)");
       return -1;
@@ -661,60 +678,60 @@ std::vector<realT> aoAtmosphere<realT>::layer_z()
 template<typename realT>
 realT aoAtmosphere<realT>::h_obs()
 {
-   return _h_obs;
+   return m_h_obs;
 }
    
 template<typename realT>
 void aoAtmosphere<realT>::h_obs( realT nh )
 {
-   _h_obs = nh;
+   m_h_obs = nh;
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::H()
 {
-   return _H;
+   return m_H;
 }
    
 template<typename realT>
 void aoAtmosphere<realT>::H( realT nH )
 {
-   _H = nH;
+   m_H = nH;
 }
    
 template<typename realT>
 void aoAtmosphere<realT>::layer_z(const std::vector<realT> & z)
 {
   m_layer_z = z;
-   _z_mean_updated = false;
+   m_z_mean_updated = false;
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::layer_Cn2(const int n)
 {
-   return _layer_Cn2[n];
+   return m_layer_Cn2[n];
 }
 
 template<typename realT>
 std::vector<realT>  aoAtmosphere<realT>::layer_Cn2()
 {
-   return _layer_Cn2;
+   return m_layer_Cn2;
 }
    
 template<typename realT>
 void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT l0)
 {
-   _layer_Cn2 = cn2; 
+   m_layer_Cn2 = cn2; 
    
    
    realT layer_norm = 0;
    
-   for(size_t i=0;i < _layer_Cn2.size();++i) 
+   for(size_t i=0;i < m_layer_Cn2.size();++i) 
    {
       layer_norm += cn2[i];
    }
       
-   for(size_t i=0;i< _layer_Cn2.size();++i) _layer_Cn2[i] = _layer_Cn2[i]/layer_norm;
+   for(size_t i=0;i< m_layer_Cn2.size();++i) m_layer_Cn2[i] = m_layer_Cn2[i]/layer_norm;
    
    if(l0 > 0)
    {   
@@ -722,118 +739,118 @@ void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT 
       m_lam_0 = l0;
    }
 
-   _v_wind_updated = false;
-   _z_mean_updated = false;
+   m_v_wind_updated = false;
+   m_z_mean_updated = false;
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::layer_v_wind(const int n)
 {
-   return _layer_v_wind[n];
+   return m_layer_v_wind[n];
 }
 
 
 template<typename realT>
 std::vector<realT> aoAtmosphere<realT>::layer_v_wind()
 {
-   return _layer_v_wind;
+   return m_layer_v_wind;
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::layer_v_wind(const std::vector<realT> & v)
 {
-   _layer_v_wind = v;
-   _v_wind_updated = false;
+   m_layer_v_wind = v;
+   m_v_wind_updated = false;
 }
 
 template<typename realT>
 realT  aoAtmosphere<realT>::layer_dir(const int n)
 {
-   return _layer_dir[n];
+   return m_layer_dir[n];
 }
 
 template<typename realT>
 std::vector<realT>  aoAtmosphere<realT>::layer_dir()
 {
-   return _layer_dir;
+   return m_layer_dir;
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::layer_dir(const std::vector<realT> & dir)
 {
-   _layer_dir = dir;
-   _v_wind_updated = false;
+   m_layer_dir = dir;
+   m_v_wind_updated = false;
 }
 
 template<typename realT>
 size_t aoAtmosphere<realT>::n_layers()
 {
-   return _layer_Cn2.size();
+   return m_layer_Cn2.size();
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::v_wind()
 {
-   if(_v_wind_updated == false) update_v_wind();
-   return _v_wind;
+   if(m_v_wind_updated == false) update_v_wind();
+   return m_v_wind;
 }
 
 template<typename realT>
 realT aoAtmosphere<realT>::dir_wind()
 {
-   if(_v_wind_updated == false) update_v_wind();
-   return _dir_wind;
+   if(m_v_wind_updated == false) update_v_wind();
+   return m_dir_wind;
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::update_v_wind()
 {
 
-   if( _layer_v_wind.size() == 0 || _layer_Cn2.size() == 0)
+   if( m_layer_v_wind.size() == 0 || m_layer_Cn2.size() == 0)
    {
-      _v_wind = 0;
-      _dir_wind = 0;
-      _v_wind_updated = true;
+      m_v_wind = 0;
+      m_dir_wind = 0;
+      m_v_wind_updated = true;
       return;
    }
    
-   _v_wind = 0;
+   m_v_wind = 0;
    
    realT s = 0;
    realT c = 0;
    
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {
-      _v_wind += _layer_Cn2[i] * pow(_layer_v_wind[i], math::five_thirds<realT>() );
-      s += pow(_layer_v_wind[i], math::five_thirds<realT>())*sin(_layer_dir[i]) ;//pow( sin(_layer_dir[i]), math::five_thirds<realT>() );
-      c += pow(_layer_v_wind[i], math::five_thirds<realT>())*cos(_layer_dir[i]) ;//pow( cos(_layer_dir[i]), math::five_thirds<realT>() );
+      m_v_wind += m_layer_Cn2[i] * pow(m_layer_v_wind[i], math::five_thirds<realT>() );
+      s += pow(m_layer_v_wind[i], math::five_thirds<realT>())*sin(m_layer_dir[i]) ;//pow( sin(m_layer_dir[i]), math::five_thirds<realT>() );
+      c += pow(m_layer_v_wind[i], math::five_thirds<realT>())*cos(m_layer_dir[i]) ;//pow( cos(m_layer_dir[i]), math::five_thirds<realT>() );
    }
       
-   _v_wind = pow(_v_wind, math::three_fifths<realT>());
+   m_v_wind = pow(m_v_wind, math::three_fifths<realT>());
    
-   //_dir_wind = atan(pow(s, math::three_fifths<realT>()) / pow(c, math::three_fifths<realT>()));
-   _dir_wind = atan( s / c);
-   if(_dir_wind < 0) _dir_wind += math::pi<realT>();
+   //m_dir_wind = atan(pow(s, math::three_fifths<realT>()) / pow(c, math::three_fifths<realT>()));
+   m_dir_wind = atan( s / c);
+   if(m_dir_wind < 0) m_dir_wind += math::pi<realT>();
    
-   _v_wind_updated = true;
+   m_v_wind_updated = true;
    
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::v_wind(const realT & vw)
 {
-   if(_v_wind_updated == false) update_v_wind();
+   if(m_v_wind_updated == false) update_v_wind();
    
-   realT vw_old = _v_wind;
+   realT vw_old = m_v_wind;
    
-   _v_wind = vw;
+   m_v_wind = vw;
    
    //Now update the layers if needed
-   if( _layer_v_wind.size() > 0)
+   if( m_layer_v_wind.size() > 0)
    {
-      for(size_t i=0; i< _layer_v_wind.size(); ++i)
+      for(size_t i=0; i< m_layer_v_wind.size(); ++i)
       {
-         _layer_v_wind[i] = _layer_v_wind[i]*(vw/vw_old);
+         m_layer_v_wind[i] = m_layer_v_wind[i]*(vw/vw_old);
       }
    }
 }
@@ -841,41 +858,41 @@ void aoAtmosphere<realT>::v_wind(const realT & vw)
 template<typename realT>
 realT aoAtmosphere<realT>::z_mean()
 {
-   if(_z_mean_updated == false) update_z_mean();
-   return _z_mean;
+   if(m_z_mean_updated == false) update_z_mean();
+   return m_z_mean;
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::update_z_mean()
 {
-   if(m_layer_z.size() == 0 || _layer_Cn2.size() == 0)
+   if(m_layer_z.size() == 0 || m_layer_Cn2.size() == 0)
    {
-      _z_mean = 0;
-      _z_mean_updated = true;
+      m_z_mean = 0;
+      m_z_mean_updated = true;
       return;
    }
    
-   _z_mean = 0;
+   m_z_mean = 0;
    
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {
-      _z_mean += _layer_Cn2[i] * pow(m_layer_z[i], math::five_thirds<realT>() );
+      m_z_mean += m_layer_Cn2[i] * pow(m_layer_z[i], math::five_thirds<realT>() );
    }
       
-   _z_mean = pow(_z_mean, math::three_fifths<realT>());
+   m_z_mean = pow(m_z_mean, math::three_fifths<realT>());
    
-   _z_mean_updated = true;
+   m_z_mean_updated = true;
    
 }
 
 template<typename realT>
 void aoAtmosphere<realT>::z_mean(const realT & zm)
 {
-   if(_z_mean_updated == false) update_z_mean();
+   if(m_z_mean_updated == false) update_z_mean();
    
-   realT zh_old = _z_mean;
+   realT zh_old = m_z_mean;
    
-   _z_mean = zm;
+   m_z_mean = zm;
    
    //Now update the layers if needed
    if(m_layer_z.size() > 0)
@@ -936,9 +953,9 @@ realT aoAtmosphere<realT>::X( realT k,
 {
    realT c = 0;
     
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {
-      c += _layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
+      c += m_layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    
    return c;
@@ -949,9 +966,9 @@ realT aoAtmosphere<realT>::dX(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
  
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]* pow((cos( math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - cos( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
+      c += m_layer_Cn2[i]* pow((cos( math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - cos( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -965,9 +982,9 @@ realT aoAtmosphere<realT>::Y( realT k,
 {
    realT c = 0;
  
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow(sin( math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
+      c += m_layer_Cn2[i]*pow(sin( math::pi<realT>()*k*k*lam_sci *m_layer_z[i] * secZ), 2);
    }
    return c;
 }
@@ -977,9 +994,9 @@ realT aoAtmosphere<realT>::dY(realT f, realT lam_sci, realT lam_wfs)
 {
    realT c = 0;
 
-   for(size_t i=0;i<_layer_Cn2.size(); ++i)
+   for(size_t i=0;i<m_layer_Cn2.size(); ++i)
    {   
-      c += _layer_Cn2[i]*pow( (sin(math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - sin( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
+      c += m_layer_Cn2[i]*pow( (sin(math::pi<realT>()*f*f*lam_sci *m_layer_z[i]) - sin( math::pi<realT>()*f*f*lam_wfs *m_layer_z[i])), 2);
    }
    
    return c;
@@ -999,13 +1016,13 @@ realT aoAtmosphere<realT>::X_Z(realT k, realT lambda_i, realT lambda_wfs, realT 
    realT c = 0;
    realT sinZ = sqrt(1.0 - pow(1.0/secZ,2));
    realT tanZ = sinZ*secZ;
-   realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * _H*tanZ*secZ; 
+   realT x0 = (n_air(lambda_wfs) - n_air(lambda_i)) * m_H*tanZ*secZ; 
    realT x;
    
-   for(size_t i = 0; i < _layer_Cn2.size(); ++i)
+   for(size_t i = 0; i < m_layer_Cn2.size(); ++i)
    {
-      x = x0*(1-exp((m_layer_z[i]+_h_obs)/_H));
-      c += _layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lambda_i *m_layer_z[i]*secZ), 2) * pow( sin(math::pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
+      x = x0*(1-exp((m_layer_z[i]+m_h_obs)/m_H));
+      c += m_layer_Cn2[i] * pow( cos(math::pi<realT>()*k*k*lambda_i *m_layer_z[i]*secZ), 2) * pow( sin(math::pi<realT>()*x*k*cos(0.*3.14/180.)), 2);
    }
    
    return 4*c;
@@ -1036,19 +1053,38 @@ realT aoAtmosphere<realT>::fwhm(realT lam_sci)
 }
 
 template<typename realT>
+realT aoAtmosphere<realT>::f_g()
+{
+   return 0.428*v_wind()/m_r_0;
+}
+
+template<typename realT>
 realT aoAtmosphere<realT>::f_g(realT lam_sci)
 {
-   realT r0 = r_0(m_lam_0);
-   
-   return 0.428*pow(m_lam_0/lam_sci, math::six_fifths<realT>())*v_wind()/r0;
+   return 0.428*pow(m_lam_0/lam_sci, math::six_fifths<realT>())*v_wind()/m_r_0;
 }
-   
+
+template<typename realT>
+realT aoAtmosphere<realT>::tau_0()
+{
+   return 0.134/f_g();
+}
+
 template<typename realT>
 realT aoAtmosphere<realT>::tau_0(realT lam_sci)
 {
    return 0.134/f_g(lam_sci);
 }
-   
+
+template<typename realT>
+void aoAtmosphere<realT>::tau_0( realT tau_0,  
+                                 realT lam_sci 
+                               )
+{
+   realT vw = (0.134/tau_0) / 0.428 * m_r_0* pow(lam_sci/m_lam_0, math::six_fifths<realT>());
+   v_wind(vw);
+}
+
 template<typename realT>
 void aoAtmosphere<realT>::loadGuyon2005()
 {

@@ -28,6 +28,7 @@
 
 
 #include <vector>
+#include <complex>
 
 #include "../mxlib.hpp"
 #include "../mxError.hpp"

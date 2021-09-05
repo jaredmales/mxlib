@@ -19,6 +19,7 @@ SCENARIO( "getting the current time in seconds", "[timeutils]")
          timespec ts;
          double t0 = mx::sys::get_curr_time(ts);
          REQUIRE(t0 > 0);
+         std::cout << std::endl; //Do something to make sure some time passes.
          double t1 = mx::sys::get_curr_time(ts);
          
          REQUIRE(t1 > t0);
@@ -29,6 +30,7 @@ SCENARIO( "getting the current time in seconds", "[timeutils]")
       {
          double t0 = mx::sys::get_curr_time();
          REQUIRE(t0 > 0);
+         std::cout << std::endl; //Do something to make sure some time passes.
          double t1 = mx::sys::get_curr_time();
          
          REQUIRE(t1 > t0);

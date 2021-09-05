@@ -319,7 +319,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          k.resize(64, 64);
          psd.resize(64, 64);
          
-         mx::sigproc::frequency_grid(k, 1./128.);
+         mx::sigproc::frequencyGrid(k, 1./128.);
          for(int cc=0; cc< psd.cols(); ++cc)
          {
             for(int rr=0; rr<psd.rows(); ++rr)
@@ -375,7 +375,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          k.resize(64, 64);
          psd.resize(64, 64);
          
-         mx::sigproc::frequency_grid(k, 1./302.);
+         mx::sigproc::frequencyGrid(k, 1./302.);
          for(int cc=0; cc< psd.cols(); ++cc)
          {
             for(int rr=0; rr<psd.rows(); ++rr)
@@ -439,7 +439,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          f.resize(33);
          
          
-         mx::sigproc::frequency_grid(k, 1./64.);
+         mx::sigproc::frequencyGrid(k, 1./64.);
          psdk.resize(k.rows(), k.cols());
          for(int cc=0; cc< psdk.cols(); ++cc)
          {
@@ -529,7 +529,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
          f.resize(33);
          
          
-         mx::sigproc::frequency_grid(k, 1./640.);
+         mx::sigproc::frequencyGrid(k, 1./640.);
          psdk.resize(k.rows(), k.cols());
          for(int cc=0; cc< psdk.cols(); ++cc)
          {

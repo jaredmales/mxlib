@@ -288,7 +288,7 @@ int turbAtmosphere<realT>::genLayers()
       
 
       freq.resize(scrnSz, scrnSz);
-      sigproc::frequency_grid(freq, _pupD/_wfSz);
+      sigproc::frequencyGrid(freq, _pupD/_wfSz);
       
       psub.resize(scrnSz, scrnSz);
       
@@ -331,7 +331,7 @@ int turbAtmosphere<realT>::genLayers()
          psd.resize(scrnSz, scrnSz);
 
          freq.resize(scrnSz, scrnSz);
-         sigproc::frequency_grid<arrayT>(freq, _pupD/_wfSz);
+         sigproc::frequencyGrid<arrayT>(freq, _pupD/_wfSz);
 
          t0 = sys::get_curr_time();
 

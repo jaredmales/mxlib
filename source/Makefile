@@ -46,6 +46,7 @@ OBJS = \
 	math/plot/gnuPlot.o \
 	sigproc/zernike.o \
 	sys/environment.o \
+	sys/gitRepo.o \
 	sys/timeUtils.o
 
 ifeq ($(NEED_CUDA),yes)
@@ -68,22 +69,26 @@ VENDOROBJS = \
 all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
-ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp
-ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp
-improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
-improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
-ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
-math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
-math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
-math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
-math/func/bessel.o: ../include/math/func/bessel.hpp
-math/func/legendre.o: ../include/math/func/legendre.hpp
+ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
+ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ../include/ao/analysis/aoAtmosphere.hpp
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ../include/ao/analysis/aoSystem.hpp
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
+improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
+improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
+ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
+ipc/processInterface.o: ../include/ipc/processInterface.hpp
+math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
+math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
+math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
+math/func/bessel.o: ../include/math/func/bessel.hpp
+math/func/legendre.o: ../include/math/func/legendre.hpp
+sys/environment.o: ../include/sys/environment.hpp
+sys/gitRepo.o: ../include/sys/gitRepo.hpp
+sys/timeUtils.o: ../include/sys/timeUtils.hpp
 
 #mxlib_uncomp_version
 
