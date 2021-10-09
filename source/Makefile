@@ -86,6 +86,7 @@ math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
+sigproc/zernike.o: ../include/sigproc/zernike.hpp
 sys/environment.o: ../include/sys/environment.hpp
 sys/gitRepo.o: ../include/sys/gitRepo.hpp
 sys/timeUtils.o: ../include/sys/timeUtils.hpp
