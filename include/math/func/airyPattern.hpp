@@ -107,6 +107,41 @@ realT airyPattern( realT x,  ///< [in] is the x-coordinate in units of pixels
    return A0 + A*airyPattern(r, eps);
 }
 
+/// Fill in an array with the 2D arbitrarily-centered classical Airy pattern
+/**
+  * At each pixel (x,y) of the array this computes:
+  * 
+  * \f$ f(x,y) = A_0 + A\times Airy(\sqrt(x^2+y^2) \f$
+  * 
+  * \tparam realT is the type to use for arithmetic
+  * 
+  * \ingroup gen_math_gaussians
+  */ 
+template<typename realT>
+void airyPattern2D( realT * arr,    ///< [out] is the allocated array to fill in
+                    size_t nx,      ///< [in] is the size of the x dimension of the array (rows)
+                    size_t ny,      ///< [in] is the size of the y dimension of the array (columns)
+                    const realT A0, ///< [in] is the constant to add to the Gaussian
+                    const realT A,  ///< [in] is the scaling factor (peak height = A-A0)
+                    const realT x0, ///< [in] is the x-coordinate of the center
+                    const realT y0, ///< [in] is the y-coordinate of the center
+                    realT ps        ///< [in] the platescale in \f$ (\lambda/D)/pixel  \f$
+                  )
+{
+   size_t idx;
+   
+   for(size_t j=0;j<ny; ++j)
+   {
+      for(size_t i=0;i<nx; ++i)
+      {
+         idx = i + j*nx;
+         
+         realT rad = sqrt( pow(i-x0,2) + pow(j-y0,2) ) * ps;
+
+         arr[idx] = A0 + A* airyPattern(rad);
+      }
+   }
+}
 
 ///Seeing Halo Profile
 /** A Moffat profile due to Roddier (1981)\cite roddier_1981, see also Racine et al (1999)\cite racine_1999, which
