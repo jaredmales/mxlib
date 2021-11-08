@@ -84,6 +84,8 @@ ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
+math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp ../include/math/fft/fftwTemplates.hpp
+math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
 sigproc/zernike.o: ../include/sigproc/zernike.hpp

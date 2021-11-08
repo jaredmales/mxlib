@@ -110,14 +110,15 @@ SOFA_LIB = -lsofa_c
 EXTRA_LDFLAGS += -L$(SOFA_PATH)
 INCLUDES += -I$(SOFA_PATH)
 
+#FFTW before BLAS so MKL doesn't hijack certain functions
+#FFTW:
+EXTRA_LDLIBS += $(FFT_LDLIBS)
+EXTRA_LDFLAGS += $(FFT_LDFLAGS)
+
 #BLAS:
 INCLUDES += $(BLAS_INCLUDES)
 EXTRA_LDLIBS += $(BLAS_LDLIBS)
 EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
-
-#FFTW:
-EXTRA_LDLIBS += $(FFT_LDLIBS)
-EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
 # Eigen
 # -I/path/to/folder containing "Eigen" directory
