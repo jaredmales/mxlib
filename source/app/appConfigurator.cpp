@@ -221,6 +221,9 @@ bool appConfigurator::isSet( const std::string & name,
                            )
 {
    if(targets.count(name) == 0) return false;
+   
+   targets[name].used = true;
+   
    return targets[name].set;
 }
 
@@ -233,6 +236,7 @@ int appConfigurator::count( const std::string & name,
                             std::unordered_map<std::string, configTarget> & targets
                           )
 {
+   targets[name].used = true;
    return targets[name].values.size();
 }
 
@@ -245,6 +249,7 @@ int appConfigurator::verbosity( const std::string & name,
                                 std::unordered_map<std::string, configTarget> & targets
                               )
 {
+   targets[name].used = true;
    return targets[name].verbosity;
 }
 

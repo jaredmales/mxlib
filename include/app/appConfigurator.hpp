@@ -46,7 +46,7 @@ namespace app
 
 /// Class to manage a set of configurable values, and read their values from config/ini files and the command line.
 /** 
-  * The configuration files are ini-style, with sections.  That is
+  * The configuration files are TOML/ini-style, with sections.  That is
   \verbatim
   key1=value1
   key2=value2
@@ -73,6 +73,7 @@ namespace app
   *   component of the vector.
   *
   * \todo add handling of += in subsequent files.
+  * \todo should just swith to strict TOML
   *
   * The command line parser handles both short-opt ("-h -vArg -n Arg") and long-opt ("--help --value=Arg --number=Arg") styles.
   * 
@@ -96,14 +97,12 @@ struct appConfigurator
    /// Config file entries present in the file(s), but not corresponding to a target when parsed.   Set aside for possible analysis.
    std::unordered_map<std::string, configTarget> m_unusedConfigs;
 
-   
    ///Targets which are only for the command line are stored separately in a list.
    std::list<configTarget> clOnlyTargets;
 
    /// Non-option arguments from the command line.
    std::vector<std::string> nonOptions;
 
-   
    /// Running count of options added, used to track order.
    int nAdded {0};
 
@@ -128,7 +127,7 @@ struct appConfigurator
              int clt,                     ///< [in] The command-line option type, argType::false, argType::true, argType::optional, argType::required
              const std::string & s,       ///< [in] The config file section name, can be empty ""
              const std::string & kw,      ///< [in] The config file keyword, read in a "keyword=value" pair
-             bool isReq = false,          ///< [in] Whether or not this is option is required to be set
+             bool isReq = false,          ///< [in] Whether or not this option is required to be set
              const std::string & ht = "", ///< [in] The type to display in the help message
              const std::string & he = ""  ///< [in] The explanation to display in the help message
            );
