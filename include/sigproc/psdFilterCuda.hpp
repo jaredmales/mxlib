@@ -61,7 +61,7 @@ namespace sigproc
   * for a 2-dimensional PSD. Remember that these are applied before taking the square root.
   *
   * 
-  * \ingroup psds
+  * \ingroup psd_filter
   *
   * \todo once fftT has a plan interface with pointers for working memory, use it.
   */

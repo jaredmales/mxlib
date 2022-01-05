@@ -776,24 +776,24 @@ public:
      */
    
    ///Worker function for raw contrast fuctions
-   /** Most of the logic in this calculation is the same, except for the calculation of variance.
-     * The varFunc function pointer is used to calculate the variance.  This handles the other details such
+   /** The logic in this calculation is the same regardless of component, except for the calculation of variance.
+     * The varFunc function pointer is used to calculate the variance, otherwise  This handles the other details such
      * as Strehl normalization, fitting error (if appropriate), and bounds checking.
      *
-     * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
+     * \note this gives the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \tparam varFuncT  is a function-pointer-to-member (of this class) with signature realT(*f)(realT, realT)
      */
    template<typename varFuncT>
-   realT C_( realT m, ///< [in] is the spatial frequency index in u/
-             realT n, ///< [in] is the spatial frequency index in v.
-             bool normStrehl, ///< [in] flag controls whether the contrast is normalized by Strehl ratio/
-             varFuncT varFunc, ///< [in] the variance function to use.
+   realT C_( realT m,           //< [in] is the spatial frequency index in u/
+             realT n,           ///< [in] is the spatial frequency index in v.
+             bool normStrehl,   ///< [in] flag controls whether the contrast is normalized by Strehl ratio/
+             varFuncT varFunc,  ///< [in] the variance function to use.
              int doFittingError ///< [in] flag to describe how fitting error should be considered for this term: FITTING_ERROR_NO, FITTING_ERROR_ZERO, FITTING_ERROR_X, or FITTING_ERROR_Y.
            );
 
    ///Worker function for the contrast-map functions.
-   /** The map calculation is the same for all terms, except for the calculation of contrast at each pixel.
+   /** The map calculation is the same for all terms, except for the calculation of variance at each pixel.
      * The Cfunc function pointer is used to actually get the contrast.
      * 
      * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
@@ -812,19 +812,19 @@ public:
      * \returns variance at (m,n).
      */
    realT C0var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to uncorrected phase, C0.
    /** Contrast C0 is the uncorrected phase, with the effects of scintillation included.  See Guyon (2005) \cite guyon_2005, and the updated
-     * derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      * 
      * \returns C0.
      */
-   realT C0( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in] is the spatial frequency index in v
+   realT C0( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in] is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio
            );
    
@@ -841,17 +841,17 @@ public:
      * \returns variance at (m,n).
      */
    realT C1var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to uncorrected amplitude, C1.
    /** Contrast C1 is the uncorrected amplitude due to scintillation.  See Guyon (2005) \cite guyon_2005, and the updated
-     * derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C0.
      */
-   realT C1( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in] is the spatial frequency index in v
+   realT C1( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in] is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio
            );
    
@@ -872,18 +872,18 @@ public:
      * \returns variance at (m,n).
      */
    realT C2var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to measurement and time delay errors in phase/OPD at a spatial frequency.
    /** Contrast C2 is just the total variance due to time delay and measurement errors, 
      * divided by the Strehl ratio.   See Guyon (2005) \cite guyon_2005, and the updated
-     * derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C2.
      */
-   realT C2( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in]  is the spatial frequency index in v
+   realT C2( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in]  is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
            );
 
@@ -903,18 +903,18 @@ public:
      * \returns variance at (m,n).
      */
    realT C3var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to measurement and time delay errors in amplitude at a spatial frequency.
    /** Contrast C3 is just the total variance due to time delay and measurement errors, 
      * divided by the Strehl ratio.    See Guyon (2005) \cite guyon_2005, and the updated
-     * derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C3.
      */
-   realT C3( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in]  is the spatial frequency index in v
+   realT C3( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in]  is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
            );
    
@@ -935,17 +935,17 @@ public:
      * \returns variance at (m,n).
      */
    realT C4var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to scintilation-OPD chromaticity.
    /** Contrast C4 is due to the chromaticity of scintillation, causing the ODP measurement to be slightly incorrect at the science wavelength.
-     * See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C4.
      */
-   realT C4( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in]  is the spatial frequency index in v
+   realT C4( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in]  is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
            );
    
@@ -968,17 +968,17 @@ public:
      * \returns variance at (m,n).
      */
    realT C5var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to scintilation-amplitude chromaticity.
    /** Contrast C5 is due to the chromaticity of scintillation, causing the amplitude measurement to be slightly incorrect at
-     * the science wavelength. See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * the science wavelength. See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C4.
      */
-   realT C5( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in]  is the spatial frequency index in v
+   realT C5( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in]  is the spatial frequency index in v
              bool normStrehl = true ///< [in] flag controls whether the contrast is normalized by Strehl ratio.
            );
    
@@ -999,17 +999,17 @@ public:
      * \returns variance at (m,n).
      */
    realT C6var( realT m,  ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n   ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to chromaticity of the index of refraction of air.
    /** Contrast C6 is due to the index of refraction of air being wavelength dependent,  causing the ODP measurement to be slightly incorrect
-     * at the science wavelength.   See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2017) \cite males_guyon_2017. 
+     * at the science wavelength.   See Guyon (2005) \cite guyon_2005, and the updated derivation in Males \& Guyon (2018) \cite males_guyon_2018. 
      * 
      * \returns C6.
      */
-   realT C6( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in] is the spatial frequency index in v
+   realT C6( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in] is the spatial frequency index in v
              bool normStrehl = true ///< flag controls whether the contrast is normalized by Strehl ratio.
             );
    
@@ -1030,7 +1030,7 @@ public:
      * \returns variance at (m,n).
      */
    realT C7var( realT m, ///< [in] is the spatial frequency index in u
-                realT n ///< [in] is the spatial frequency index in v
+                realT n  ///< [in] is the spatial frequency index in v
               );
    
    ///Calculate the contrast due to dispersive anisoplanatism.
@@ -1039,8 +1039,8 @@ public:
      * 
      * \returns C7.
      */
-   realT C7( realT m,  ///< [in] is the spatial frequency index in u
-             realT n,   ///< [in] is the spatial frequency index in v
+   realT C7( realT m,               ///< [in] is the spatial frequency index in u
+             realT n,               ///< [in] is the spatial frequency index in v
              bool normStrehl = true ///< flag controls whether the contrast is normalized by Strehl ratio.
             );
    
@@ -1088,13 +1088,14 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
    D(8.);
    starMag(5);
    
+   //The rest of Guyon 05 is very ideal
    npix_wfs((realT) 12868);
-   ron_wfs((realT) 0.3);
-   Fbg((realT) 0.22);
+   ron_wfs((realT) 0.0);
+   Fbg((realT) 0.0);
    
-   d_min( 8.0/48.0 );
-   minTauWFS( (realT) (1./3622.) );
-   tauWFS(1./3622.);
+   d_min( 8.0/1e3); //Allow super fine sampling
+   minTauWFS( (realT) (1./1e9) ); // Just be super fast.
+   tauWFS(1./1e9); //Just be super fast
    
    m_specsChanged = true;
    m_dminChanged = true;
@@ -2237,7 +2238,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
          return fe / S;
       }
    }
-   
+   //get if not doing fitting error or if inside control region:
+
    realT var = (this->*varFunc)(m, n);
    
    return var/S;
@@ -2345,12 +2347,37 @@ void aoSystem<realT, inputSpectT, iosT>::C2Map( imageT & im )
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C3var( realT m, 
+                                                 realT n
+                                               )
+{
+   return 0;//measurementError(m, n) + timeDelayError(m,n);
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C3( realT m, 
+                                              realT n,
+                                              bool normStrehl
+                                            )
+{
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C3var, FITTING_ERROR_ZERO);//FITTING_ERROR_Y);
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+template<typename imageT>
+void aoSystem<realT, inputSpectT, iosT>::C3Map( imageT & im )
+{
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C3);   
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m, 
                                            realT n
                                          )
 {
    realT k = sqrt(m*m + n*n)/m_D;
    
+   //This does not need to be divided by X b/c we haven't multiplied by it, this is is C0/X.
    return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dX(k, m_lam_sci, m_lam_wfs);
 }
 
@@ -2372,6 +2399,34 @@ void aoSystem<realT, inputSpectT, iosT>::C4Map( imageT & im )
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C5var( realT m, 
+                                           realT n
+                                         )
+{
+   realT k = sqrt(m*m + n*n)/m_D;
+
+   //This does not need to be divided by Y b/c we haven't multiplied by it, this is is C1/Y.
+   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dY(k, m_lam_sci, m_lam_wfs);
+}
+
+                                                  
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::C5( realT m, 
+                                              realT n,
+                                              bool normStrehl
+                                            )
+{
+   return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C5var, FITTING_ERROR_ZERO);
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+template<typename imageT>
+void aoSystem<realT, inputSpectT, iosT>::C5Map( imageT & im )
+{
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C5);   
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m, 
                                            realT n
                                          )
@@ -2379,7 +2434,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m,
    realT ni = atm.n_air(m_lam_sci);
    realT nw = atm.n_air(m_lam_wfs);
    
-   return C0var(m, n) * pow( (ni-nw)/ni, 2);   
+   return C0var(m, n) * pow( (ni-nw)/(ni-1), 2);  //Fixes error in Eqn 29 
 }
 
 
@@ -2439,27 +2494,41 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
-   ios << "#    npix_wfs = " << npix_wfs((size_t) 0);
-   for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
-   ios << '\n';
+   
+   if(npix_wfs().size() > 0)
+   {
+      ios << "#    npix_wfs = " << npix_wfs((size_t) 0);
+      for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
+      ios << '\n';
+   }
+   
+   if(ron_wfs().size() > 0)
+   {
+      ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
+      for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
+      ios << '\n';
+   }
 
-   ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
-   for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
-   ios << '\n';
+   if(Fbg().size() > 0)
+   {
+      ios << "#    Fbg = " << Fbg((size_t) 0);
+      for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
+      ios << '\n';
+   }
 
-   ios << "#    Fbg = " << Fbg((size_t) 0);
-   for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
-   ios << '\n';
-
-   ios << "#    minTauWFS = " << minTauWFS((size_t) 0);
-   for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
-   ios << '\n';
+   if(minTauWFS().size() > 0)
+   {
+      ios << "#    minTauWFS = " << minTauWFS((size_t) 0);
+      for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
+      ios << '\n';
+   }
 
 /*   ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
    ios << "#    minTauWFS = " << minTauWFS() << '\n';
-   */ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
+   */
+   ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
    ios << "#    tauWFS = " << tauWFS() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
    ios << "#    deltaTau = " << deltaTau() << '\n';
@@ -2475,10 +2544,17 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
    
-   ios << "#    Software version: " << '\n';
-   ios << "#       mxlib sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1 << '\n';
-   ios << "#       mxlib modified = " << MXLIB_UNCOMP_REPO_MODIFIED << '\n';
+   ios << "# Software version: " << '\n';
+   ios << "#    mxlib header branch = " << MXLIB_UNCOMP_BRANCH << '\n'; 
+   ios << "#    mxlib header sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1;
+   if(MXLIB_UNCOMP_REPO_MODIFIED) ios << " (modified)";
+   ios << '\n';
       
+   ios << "#    mxlib lib branch = " << mxlib_comp_current_branch() << '\n'; 
+   ios << "#    mxlib lib sha1 = " << mxlib_comp_current_sha1();
+   if(mxlib_comp_repo_modified()) ios << " (modified)";
+   ios << '\n';
+
    return ios;
 }
 

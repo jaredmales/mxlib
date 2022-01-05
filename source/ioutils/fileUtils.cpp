@@ -48,9 +48,17 @@ namespace mx
 namespace ioutils
 {
 
-void createDirectories( const std::string & path )
+int createDirectories( const std::string & path )
 {
-   boost::filesystem::create_directories(path);
+   //Use the non throwing version and silently ignore EEXIST errors 
+   boost::system::error_code ec;
+   boost::filesystem::create_directories(path, ec);
+   if(ec.value() != boost::system::errc::success && ec.value() != boost::system::errc::file_exists)
+   {
+      return -1;
+   }
+
+   return 0;
 }
 
 std::string pathStem(const std::string & fname)

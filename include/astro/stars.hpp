@@ -13,7 +13,7 @@
 #define mx_astro_stars_hpp
 
 #include "../ioutils/stringUtils.hpp"
-
+#include "../ioutils/readColumns.hpp"
 
 namespace mx
 {

@@ -71,75 +71,75 @@ int zernikeRCoeffs<__float128>( std::vector<__float128> & c, int n, int m);
 #endif
 
 template
-float zernikeR(float rho, int n, int m, std::vector<float> & c);
+float zernikeR<float, double>(float rho, int n, int m, std::vector<double> & c);
 
 template
-double zernikeR(double rho, int n, int m, std::vector<double> & c);
+double zernikeR<double, double>(double rho, int n, int m, std::vector<double> & c);
 
 template
-long double zernikeR(long double rho, int n, int m, std::vector<long double> & c);
+long double zernikeR<long double, long double>(long double rho, int n, int m, std::vector<long double> & c);
 
 #ifdef HASQUAD
 template
-__float128 zernikeR(__float128 rho, int n, int m, std::vector<__float128> & c);
+__float128 zernikeR<__float128,__float128>(__float128 rho, int n, int m, std::vector<__float128> & c);
 #endif
 
 
 template
-float zernikeR( float rho, int n, int m);
+float zernikeR<float, double>( float rho, int n, int m);
 
 template
-double zernikeR( double rho, int n, int m);
+double zernikeR<double,double>( double rho, int n, int m);
 
 template
-long double zernikeR( long double rho, int n, int m);
+long double zernikeR<long double, long double>( long double rho, int n, int m);
 
 #ifdef HASQUAD
 template
-__float128 zernikeR( __float128 rho, int n, int m);
+__float128 zernikeR<__float128, __float128>( __float128 rho, int n, int m);
 #endif
 
 template
-float zernike(float rho, float phi, int n, int m, std::vector<float> & c);
+float zernike<float,double>(float rho, float phi, int n, int m, std::vector<double> & c);
 
 template
-double zernike(double rho, double phi, int n, int m, std::vector<double> & c);
+double zernike<double,double>(double rho, double phi, int n, int m, std::vector<double> & c);
 
 template
-long double zernike(long double rho, long double phi, int n, int m, std::vector<long double> & c);
+long double zernike<long double, long double>(long double rho, long double phi, int n, int m, std::vector<long double> & c);
 
 #ifdef HASQUAD
 template
-__float128 zernike(__float128 rho, __float128 phi, int n, int m, std::vector<__float128> & c);
+__float128 zernike<__float128,__float128>(__float128 rho, __float128 phi, int n, int m, std::vector<__float128> & c);
 #endif
 
 template
-float zernike( float rho, float phi, int n, int m);
+float zernike<float,double>( float rho, float phi, int n, int m);
 
 template
-double zernike( double rho, double phi, int n, int m);
+double zernike<double,double>( double rho, double phi, int n, int m);
 
 template
-long double zernike( long double rho, long double phi, int n, int m);
+long double zernike<long double, long double>( long double rho, long double phi, int n, int m);
 
 #ifdef HASQUAD
 template
-__float128 zernike( __float128 rho, __float128 phi, int n, int m);
+__float128 zernike<__float128,__float128>( __float128 rho, __float128 phi, int n, int m);
 #endif
 
 
 template
-float zernike(float rho, float phi, int j);
+float zernike<float, double>(float rho, float phi, int j);
 
 template
-double zernike(double rho, double phi, int j);
+double zernike<double, double>(double rho, double phi, int j);
 
 template
-long double zernike(long double rho, long double phi, int j);
+long double zernike<long double, long double>(long double rho, long double phi, int j);
 
 #ifdef HASQUAD
 template
-__float128 zernike(__float128 rho, __float128 phi, int j);
+__float128 zernike<__float128, __float128>(__float128 rho, __float128 phi, int j);
 #endif
 
 template

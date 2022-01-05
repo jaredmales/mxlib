@@ -13,6 +13,7 @@ license.blurb
 !local/Common.example.mk
 !local/MxApp.example.mk
 !local/MxLib.example.mk
+.vscode
 
 .vscode/*
 

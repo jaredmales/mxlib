@@ -45,7 +45,12 @@ namespace ioutils
   */
 
 /// Create a directory or directories
-void createDirectories( const std::string & path /**< [in] the path of the directory(ies)to create */);
+/** This will create any directories in path that don't exist.  It silently ignores already existing directories.
+  *
+  * \returns 0 on success, indicating the directories were created or already existed.
+  * \returns -1 on error 
+  */
+int createDirectories( const std::string & path /**< [in] the path of the directory(ies)to create */);
 
 /// Get the stem of the filename 
 /**

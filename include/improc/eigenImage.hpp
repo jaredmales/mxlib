@@ -56,7 +56,6 @@ using eigenImage = Eigen::Array<scalarT, -1, -1>;
   * 
   * \ingroup eigen_image_processing
   */
-
 template <typename T>
 struct is_eigenCube 
 {
@@ -72,12 +71,12 @@ struct is_eigenCube
    static no& test(...);
  
    // If the "sizeof" of the result of calling test<T>(0) would be equal to sizeof(yes),
-   // the first overload worked and T has a nested type named "is_mmatrix".
+   // the first overload worked and T has a nested type named "is_eigenCube".
    static const bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
 
 
-///Function object to retun the number of planes for any Eigen like object, whether 2D or a 3D cube.
+///Function object to return the number of planes for any Eigen like object, whether 2D or a 3D cube.
 /** Uses SFINAE to check for 3D eigenCube.
   *
   * \ingroup eigen_image_processing 
@@ -115,9 +114,9 @@ struct eigenArrPlanes<arrT, false>
   * 
   */ 
 template<typename imageT, typename maskT=imageT>
-typename imageT::Scalar imageMedian( const imageT & mat,  ///< [in] the image to take the median of
-                                     const maskT * mask,  ///< [in] if non-0, a 1/0 mask where 0 pixels are ignored.
-                                     std::vector<typename imageT::Scalar> * work =0 ///< [in] [optional] working memory can be retained and re-passed.
+typename imageT::Scalar imageMedian( const imageT & mat,                            ///< [in] the image to take the median of
+                                     const maskT * mask,                            ///< [in] if non-0, a 1/0 mask where 0 pixels are ignored.
+                                     std::vector<typename imageT::Scalar> * work =0 ///< [in] [optional] working memory can be retained and re-passed.  Is resized.
                                    )
 {
    typename imageT::Scalar med;
@@ -173,7 +172,7 @@ typename imageT::Scalar imageMedian( const imageT & mat,  ///< [in] the image to
   * 
   */ 
 template<typename imageT>
-typename imageT::Scalar imageMedian( const imageT & mat, ///< [in] the image to take the median of
+typename imageT::Scalar imageMedian( const imageT & mat,                            ///< [in] the image to take the median of
                                      std::vector<typename imageT::Scalar> * work =0 ///< [in] [optional] working memory can be retained and re-passed.
                                    )
 {

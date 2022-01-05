@@ -23,6 +23,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#include "mxError.hpp"
 #include "sys/gitRepo.hpp"
 
 #include "ipc/processInterface.hpp"
@@ -70,10 +71,16 @@ int gitRepo::getGitName()
    int retVal;
    std::vector<std::string> stdOut, stdErr;
    
-   ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "rev-parse", "--show-toplevel"});
+   if( ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "rev-parse", "--show-toplevel"}) < 0)
+   {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command");
+      return -1;
+   }
    
    if(stdErr.size() > 0)
    {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git");
+
       for(size_t n=0; n< stdErr.size(); ++n)
       {
          std::cerr << "err: " << stdErr[n] << "\n";
@@ -84,13 +91,13 @@ int gitRepo::getGitName()
 
    if(stdOut.size() < 1)
    {
-      std::cerr << "nothing returned\n";
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git");
       return -1;
    }
    
    if(stdOut.size() > 1)
    {
-      std::cerr << "too much returned\n";
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "too much returned by git");
       return -1;
    }
    
@@ -104,11 +111,16 @@ int gitRepo::getGitHash()
    int retVal;
    std::vector<std::string> stdOut, stdErr;
    
-   
-   ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "log", "-1", "--format=%H"});
-   
+   if(ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "log", "-1", "--format=%H"}) < 0)
+   {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command");
+      return -1;
+   }
+
    if(stdErr.size() > 0)
    {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git");
+
       for(size_t n=0; n< stdErr.size(); ++n)
       {
          std::cerr << "err: " << stdErr[n] << "\n";
@@ -119,13 +131,13 @@ int gitRepo::getGitHash()
 
    if(stdOut.size() < 1)
    {
-      std::cerr << "nothing returned\n";
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git");
       return -1;
    }
    
    if(stdOut.size() > 1)
    {
-      std::cerr << "too much returned\n";
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "too much returned by git");
       return -1;
    }
    
@@ -139,10 +151,15 @@ int gitRepo::getGitModified()
    int retVal;
    std::vector<std::string> stdOut, stdErr;
    
-   int rv = ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "diff-index", "HEAD", "--"});
+   if(ipc::runCommand( retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "diff-index", "HEAD", "--"}) < 0)
+   {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command");
+      return -1;
+   }
    
    if(stdErr.size() > 0)
    {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git");
       for(size_t n=0; n< stdErr.size(); ++n)
       {
          std::cerr << "err: " << stdErr[n] << "\n";
@@ -161,10 +178,16 @@ int gitRepo::getGitFileState()
    int retVal;
    std::vector<std::string> stdOut, stdErr;
    
-   ipc::runCommand(retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "status"});
-   
+   if(ipc::runCommand(retVal, stdOut, stdErr, {"git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "status"}) < 0)
+   {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command");
+      return -1;
+   }
+
    if(stdErr.size() > 0)
    {
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git");
+
       for(size_t n=0; n< stdErr.size(); ++n)
       {
          std::cerr << "err: " << stdErr[n] << "\n";
@@ -175,7 +198,7 @@ int gitRepo::getGitFileState()
    
    if(stdOut.size() < 1)
    {
-      std::cerr << "nothing returned\n";
+      mxError("mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git");
       return -1;
    }
    

@@ -131,6 +131,8 @@ void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
   * \tparam eol is the end of line character.  by default this is \n
   * \tparam arrTs a variadic list of array types. this is not specified by the user.
   *
+  * \todo lineSize should be configurable
+  * 
   * \ingroup asciiutils
   */
 template<char delim=' ', char comment='#', char eol='\n', typename... arrTs>
@@ -156,7 +158,7 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
       return -1;
    }
 
-   int lineSize = 1024;
+   int lineSize = 4096;
    char * line = new char[lineSize];
 
    while(fin.good())

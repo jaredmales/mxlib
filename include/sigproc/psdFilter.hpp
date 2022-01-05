@@ -110,12 +110,18 @@ struct arrayT<realT, 3>
 template<typename _realT, size_t rank, int cuda = 0>
 class psdFilter;
 
+/** \defgroup psd_filter PSD Filter
+  * \brief Filtering with a PSD to generate correlated noise. 
+  * 
+  * \ingroup psds
+  */
+ 
 /// A class for filtering noise with PSDs
 /** The square-root of the PSD is maintained by this class, either as a pointer to an external array or using internally allocated memory (which will be
   * de-allocated on destruction). 
   * 
   * PSD Requirements: 
-  * - the PSD must be in FFT storage order form.  That means including negative frequencies reversed from the end of the end of the array.
+  * - the PSD must be in FFT storage order form.  That means including negative frequencies reversed from the end of the array.
   * - the PSD used for this needs to be normalized properly, \ref psds "according to the mxlib standard", to produce filtered noise with the correct statistics.  
   * 
   *
@@ -128,7 +134,7 @@ class psdFilter;
   * \tparam _realT real floating type
   * \tparam _rank the rank, or dimension, of the PSD
   *
-  * \ingroup psds
+  * \ingroup psd_filter
   *
   * \todo once fftT has a plan interface with pointers for working memory, use it.
   *

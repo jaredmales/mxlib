@@ -389,7 +389,7 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
          //Following mxlib convention of including half pixels
          if(r > rad + 0.5)
          {
-            filt[ii*dim + jj] = 0.0;
+            filt[jj*dim + ii] = 0.0;
          }
          else if(rad + r > (N-1)*(1-0.5*alpha) && alpha > 0.)
          {
@@ -397,11 +397,11 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
             realT dr = rad+r;
             if(dr > N-1) dr = N-1;
             
-            filt[ii*dim + jj] = 0.5*(1.0 + cos(pi * ( 2.*(dr)/(alpha*(N-1)) - 2./alpha + 1.0) ));
+            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi * ( 2.*(dr)/(alpha*(N-1)) - 2./alpha + 1.0) ));
          }
          else
          {
-            filt[ii*dim + jj] = 1.0;
+            filt[jj*dim + ii] = 1.0;
          }
       }
    }
@@ -454,21 +454,21 @@ void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT
          //Following mxlib convention of including half pixels
          if(r > rad + 0.5 || r < eps*rad)
          {
-            filt[ii*dim + jj] = 0.0;
+            filt[jj*dim + ii] = 0.0;
          }
          else if(z <= 0.5*alpha*(Z-1) && alpha > 0)
          {
-            filt[ii*dim + jj] = 0.5*(1.0 + cos(pi*(2.*z/(alpha*(Z-1)) -1.0) ));
+            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi*(2.*z/(alpha*(Z-1)) -1.0) ));
          }
          else if(z > (Z-1)*(1.-0.5*alpha) && alpha > 0)
          {
             z = z*((Z-0.5)/Z); //Stretch a little to help with the half pixel
             if(z > Z) z = Z-1;
-            filt[ii*dim + jj] = 0.5*(1.0 + cos(pi* ( 2.*(z)/(alpha*(Z-1)) - 2./alpha + 1.0) ));
+            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi* ( 2.*(z)/(alpha*(Z-1)) - 2./alpha + 1.0) ));
          }
          else
          {
-            filt[ii*dim + jj] = 1.0;
+            filt[jj*dim + ii] = 1.0;
          }
       }
    }

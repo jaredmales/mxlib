@@ -25,6 +25,7 @@
 //***********************************************************************//
 
 #include "ipc/processInterface.hpp"
+#include "mxError.hpp"
 
 #include <cstring>
 #include <sstream>
@@ -80,39 +81,70 @@ int runCommand( int & retVal,                                // [out] the return
    
    if (pipe(link)==-1) 
    {
-      commandStderr.push_back(std::string("Pipe error stdout: ") + strerror(errno));
+      mxPError("mx::ipc::runCommand",errno, "piping stdout");
       return -1;
    }
 
    if (pipe(errlink)==-1) 
    {
-      commandStderr.push_back(std::string("Pipe error stderr: ") + strerror(errno));
+      mxPError("mx::ipc::runCommand",errno, "piping stderr");
       return -1;
    }
    
    if ((pid = fork()) == -1) 
    {
-      commandStderr.push_back(std::string("Fork error: ") + strerror(errno));
+      mxPError("mx::ipc::runCommand",errno, "forking");
       return -1;
    }
 
    if(pid == 0) 
    {
-      dup2 (link[1], STDOUT_FILENO);
-      close(link[0]);
-      close(link[1]);
+      if(dup2 (link[1], STDOUT_FILENO) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "dup2");
+         return -1;
+      }
+
+      if(close(link[0]) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "close");
+         return -1;
+      }
+
+      if(close(link[1]) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "close");
+         return -1;
+      }
       
-      dup2 (errlink[1], STDERR_FILENO);
-      close(errlink[0]);
-      close(errlink[1]);
+      if(dup2(errlink[1], STDERR_FILENO) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "dup2");
+         return -1;
+      }
+
+      if(close(errlink[0]) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "close");
+         return -1;
+      }
+
+      if(close(errlink[1]) < 0)
+      {
+         mxPError("mx::ipc::runCommand",errno, "close");
+         return -1;
+      }
       
-      std::vector<const char *>charCommandList( commandList.size()+1, NULL);
+      std::vector<const char *> charCommandList( commandList.size()+1, NULL);
+
       for(int index = 0; index < (int) commandList.size(); ++index)
       {
          charCommandList[index]=commandList[index].c_str();
       }
       execvp( charCommandList[0], const_cast<char**>(charCommandList.data()));
-      commandStderr.push_back(std::string("execvp returned: ") + strerror(errno));
+
+      mxPError("mx::ipc::runCommand", errno, "execvp returned");
+      
       return -1;
    }
    else 
@@ -120,19 +152,54 @@ int runCommand( int & retVal,                                // [out] the return
       char commandOutput_c[4096];
       
       int status;
-      waitpid(pid, &status, 0);
-
-      close(link[1]);
-      close(errlink[1]);
       
+      pid_t rvid = waitpid(pid, &status, 0);
+
+      if(rvid < 0)
+      {
+         mxPError("mx::ipc::runCommand", errno, "waitpid");
+         return -1;
+      }
+
+      if(WIFEXITED(status))
+      {
+         retVal =  WEXITSTATUS(status);
+      }
+      else
+      {
+         mxError("mx::ipc::runCommand", MXE_PROCERR, "child did not exit");
+         return -1;
+      }
+
+      if( close(link[1]) < 0 )
+      {
+         mxPError("mx::ipc::runCommand", errno, "close");  
+         return -1;
+      }
+
+      if( close(errlink[1]) < 0 )
+      {
+         mxPError("mx::ipc::runCommand", errno, "close");
+         return -1;
+      }
+
       int rd;
       if ( (rd = read(link[0], commandOutput_c, sizeof(commandOutput_c))) < 0) 
       {
-         commandStderr.push_back(std::string("Read error: ") + strerror(errno));  
-         close(link[0]);
+         mxPError("mx::ipc::runCommand", errno, "read");
+         
+         if(close(errlink[0])< 0) mxPError("mx::ipc::runCommand", errno, "close");
+         if(close(link[0]) < 0) mxPError("mx::ipc::runCommand", errno, "close");
+
          return -1;
       }
-      close(link[0]);
+
+      if( close(link[0]) < 0)
+      {
+         mxPError("mx::ipc::runCommand", errno, "close");
+         if(close(errlink[0])< 0) mxPError("mx::ipc::runCommand", errno, "close");
+         return -1;
+      }
       
       std::string line;
       
@@ -150,11 +217,16 @@ int runCommand( int & retVal,                                // [out] the return
       if ( (rd = read(errlink[0], commandOutput_c, sizeof(commandOutput_c))) < 0) 
       {
          commandStderr.push_back(std::string("Read error on stderr: ") + strerror(errno));  
-         close(errlink[0]);
+         if(close(errlink[0])< 0) mxPError("mx::ipc::runCommand", errno, "close");
          return -1;
       }
-      close(errlink[0]);
       
+      if(close(errlink[0]) < 0)
+      {
+         mxPError("mx::ipc::runCommand", errno, "close"); 
+         return -1;
+      }
+
       commandOutput_c[rd] = '\0';
       commandOutputString = commandOutput_c;
       
@@ -165,19 +237,8 @@ int runCommand( int & retVal,                                // [out] the return
          commandStderr.push_back(line);
       }
       
-      waitpid(pid, &status, 0);
-      
-      if(WIFEXITED(status))
-      {
-         retVal =  WEXITSTATUS(status);
-      }
-      else
-      {
-         return -1;
-      }
+      return 0;
    }
-   
-   return -1;
 }
 
 }//namespace ipc

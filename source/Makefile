@@ -68,6 +68,7 @@ VENDOROBJS = \
 
 all: libmxlib.$(LIB_SUFFIX)
 
+mxlib.o: .FORCE
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ../include/ao/analysis/aoSystem.hpp
@@ -83,8 +84,11 @@ ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
+math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp ../include/math/fft/fftwTemplates.hpp
+math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
+sigproc/zernike.o: ../include/sigproc/zernike.hpp
 sys/environment.o: ../include/sys/environment.hpp
 sys/gitRepo.o: ../include/sys/gitRepo.hpp
 sys/timeUtils.o: ../include/sys/timeUtils.hpp
@@ -117,6 +121,9 @@ realclean: clean
 	rm -f libmxlib.$(LIB_SUFFIX)
 	rm -f $(OBJS)
 	$(MAKE) -C vendor/levmar-2.6/ cleanall
+
+#for forcing the rebuild of mxlib.o everytime, needed for git tracking
+.FORCE:
 
 # .PHONY: printvars
 # printvars:

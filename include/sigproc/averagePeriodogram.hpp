@@ -58,7 +58,7 @@ namespace sigproc
    
    realT dt = 0.1; //The sampling of ts is 0.1 seconds.
    
-   averagePeriodogram<realt> avgPgram(2.0/dt, dt); //This sets the averaging length to 2 seconds (20 samples), with a 1 second overlap (set automatically)
+   averagePeriodogram<realT> avgPgram(2.0/dt, dt); //This sets the averaging length to 2 seconds (20 samples), with a 1 second overlap (set automatically)
    
    avgPgram.win(window::hann); //Set the Hann window
    
