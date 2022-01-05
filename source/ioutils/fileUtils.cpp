@@ -34,6 +34,7 @@
 #include <sstream>
 #include <libgen.h>
 #include <cmath>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -98,7 +99,7 @@ std::vector<std::string> getFileNames( const std::string & directory,
 
          copy(directory_iterator(directory), directory_iterator(), back_inserter(v));
 
-         sort(v.begin(), v.end());             // sort, since directory iteration
+         std::sort(v.begin(), v.end());             // sort, since directory iteration
                                               // is not ordered on some file systems
 
          auto it = v.begin();
