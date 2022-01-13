@@ -99,6 +99,11 @@
   * \ingroup template_blaslap
   */
 
+/** \defgroup integration Integration 
+  * \brief Various tools for integration of functions 
+  * \ingroup gen_math 
+  */
+  
 /** \defgroup interpolation Interpolation
   * \brief Various tools for interpolating data and discrete functions.
   * \ingroup gen_math

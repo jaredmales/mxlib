@@ -114,6 +114,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_INVALIDARG 25
+#define MXE_INVALIDARG_NAME "MXE_INVALIDARG"
 #define MXE_INVALIDARG_MSG "An argument was invalid."
 
 /** \def MXE_NOTIMPL
@@ -121,6 +122,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_NOTIMPL 30
+#define MXE_NOTIMPL_NAME "MXE_NOTIMPL"
 #define MXE_NOTIMPL_MSG "A component or technique is not implemented."
 
 /** \def MXE_PARAMNOTSET
@@ -128,6 +130,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_PARAMNOTSET 35
+#define MXE_PARAMNOTSET_NAME "MXE_PARAMNOTSET"
 #define MXE_PARAMNOTSET_MSG "A parameter was not set."
 
 /** \def MXE_ENVNOTSET
@@ -135,6 +138,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_ENVNOTSET 36
+#define MXE_ENVNOTSET_NAME "MXE_ENVNOTSET"
 #define MXE_ENVNOTSET_MSG "An environment variable is not set."
 
 /** \def MXE_NOTFOUND
@@ -142,21 +146,23 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_NOTFOUND 40
+#define MXE_NOTFOUND_NAME "MXE_NOTFOUND"
 #define MXE_NOTFOUND_MSG "An item was not found."
 
-
 /** \def MXE_SIZEERR
-  * \brief A size was calculated incorrectly
+  * \brief A size was invalid or calculated incorrectly
   * \ingroup mxe_errors
   */   
 #define MXE_SIZEERR 55
-#define MXE_SIZEERR_MSG "A size was calculated incorrectly."
+#define MXE_SIZEERR_NAME "MXE_SIZEERR"
+#define MXE_SIZEERR_MSG "A size was invalid or calculated incorrectly."
 
 /** \def MXE_ALLOCERR
   * \brief An error occurred during memory allocation.
   * \ingroup mxe_errors
   */   
 #define MXE_ALLOCERR 60
+#define MXE_ALLOCERR_NAME "MXE_ALLOCERR"
 #define MXE_ALLOCERR_MSG "An error occurred during memory allocation."
 
 /** \def MXE_FREEERR
@@ -164,6 +170,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FREEERR 65
+#define MXE_FREEERR_NAME "MXE_FREEERR"
 #define MXE_FREEERR_MSG "An error occurred during memory de-allocation."
 
 
@@ -172,6 +179,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_PARSEERR 75
+#define MXE_PARSEERR_NAME "MXE_PARSEERR"
 #define MXE_PARSEERR_MSG "A parsing error occurred."
 
 
@@ -180,6 +188,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FILEOERR 1034
+#define MXE_FILEOERR_NAME "MXE_FILEOERR"
 #define MXE_FILEOERR_MSG "An error occurred while opening a file."
 
 /** \def MXE_FILEWERR
@@ -187,6 +196,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FILEWERR 1044
+#define MXE_FILEWERR_NAME "MXE_FILEWERR"
 #define MXE_FILEWERR_MSG "An error occurred while writing to a file."
 
 /** \def MXE_FILERERR
@@ -194,6 +204,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FILERERR 1049
+#define MXE_FILERERR_NAME "MXE_FILERERR"
 #define MXE_FILERERR_MSG "An error occurred while reading from a file."
 
 /** \def MXE_FILECERR
@@ -201,6 +212,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FILECERR 1054
+#define MXE_FILECERR_NAME "MXE_FILECERR"
 #define MXE_FILECERR_MSG "An error occurred while closing a file."
 
 /** \def MXE_FILENOTFOUND
@@ -208,6 +220,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_FILENOTFOUND 1059
+#define MXE_FILENOTFOUND_NAME "MXE_FILENOTFOUND"
 #define MXE_FILENOTFOUND_MSG "The file was not found."
 
 /** \def MXE_PROCERR
@@ -215,6 +228,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_PROCERR 2001
+#define MXE_PROCERR_NAME "MXE_PROCERR"
 #define MXE_PROCERR_MSG "An error occured while starting a process."
 
 /** \def MXE_TIMEOUT
@@ -222,6 +236,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_TIMEOUT 2322
+#define MXE_TIMEOUT_NAME "MXE_TIMEOUT"
 #define MXE_TIMEOUT_MSG "A timeout occurred."
 
 
@@ -230,6 +245,7 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_GNUPLOTERR 4567
+#define MXE_GNUPLOTERR_NAME "MXE_GNUPLOTERR"
 #define MXE_GNUPLOTERR_MSG "An error was returned by gnuplot."
 
 /** \def MXE_LAPACKERR
@@ -237,20 +253,27 @@ namespace mx
   * \ingroup mxe_errors
   */   
 #define MXE_LAPACKERR 6890
+#define MXE_LAPACKERR_NAME "MXE_LAPACKERR"
 #define MXE_LAPACKERR_MSG "An error was returned by Lapack."
 
 
-///Return the macro name and a message for an mxlib error code
+///Return the name for an mxlib error code
 /**
   * 
   * \returns the name of the macro corresponding to the error code.
   * 
   * \ingroup error_handling
   */
-std::string MXE_CodeToName( int ec,               ///< [in] the error code
-                            std::string & message ///<  [out] the human friendly message
-                          );
+std::string MXE_CodeToName( int ec /**< [in] the error code */ );
 
+///Return the description for an mxlib error code
+/**
+  * 
+  * \returns the description for and error code.
+  * 
+  * \ingroup error_handling
+  */
+std::string MXE_CodeToDescription( int ec /**< [in] the error code */ );
 
 ///Return the macro name and a message for a standard errno code
 /**
@@ -259,9 +282,7 @@ std::string MXE_CodeToName( int ec,               ///< [in] the error code
   * 
   * \ingroup error_handling
   */
-std::string errno_CodeToName( int ec,               ///< [in] the error code
-                              std::string & message ///< [out] the human friendly message retrieved using std::strerror
-                            );
+std::string errno_CodeToName( int ec /**< [in] the error code */ );
 
 ///Construct a rich error report given an mxlib error code
 /**

@@ -30,7 +30,10 @@
 #include <exception>
 #include <sstream>
 
-   
+#include "mxError.hpp"
+
+#define mxThrowExceptionMXE( src, code, expl ) throw mxException(src, code, MXE_CodeToName(code), __FILE__, __LINE__, expl);
+
 /// The mxlib exception class
 /** Provides a rich error report via the standard what().
   * \ingroup error_handling
@@ -40,73 +43,61 @@ class mxException : public std::exception
 
 protected:
    ///Contains the what() string
-   char whatstr[4096];
+   char m_whatstr[4096];
    
 public:
 
-   ///The source of the exception, such as stdlib or cfitisio
-   std::string except_code_source {""};
+   ///The source of the exception, such as stdlib or cfitisio or the function name
+   std::string m_source {""};
    
    ///The source specific error code
-   int  except_code {0};
+   int  m_code {0};
    
    ///The mnemonic associated with the error code
-   std::string except_code_mnem {""};
+   std::string m_codeName {""};
    
    ///The source file where the exception originated
-   std::string except_file {""};
+   std::string m_file {""};
    
    ///The line number of the file where the exception originated
-   int  except_line {0};
+   int  m_line {0};
    
    ///The long explanation of the error
-   std::string except_explanation {""};
+   std::string m_explanation {""};
 
    ///Default constructor
    mxException () noexcept
-   {
-      //except_code = 0;
-      //except_line = 0;
-      
+   {      
       build_what();
    }
 
    ///Copy constructor
-   mxException (const mxException & e) noexcept : except_code_source(e.except_code_source), except_code(e.except_code), except_code_mnem(e.except_code_mnem), except_file(e.except_file), except_line(e.except_line), except_explanation(e.except_explanation)
+   mxException (const mxException & e) noexcept : m_source(e.m_source), m_code(e.m_code), m_codeName(e.m_codeName), m_file(e.m_file), m_line(e.m_line), m_explanation(e.m_explanation)
    {
-//       except_code_source = e.except_code_source;
-//       except_code = e.except_code;
-//       except_code_mnem = e.except_code_mnem;
-//       except_file = e.except_file;
-//       except_line = e.except_line;
-//       except_explanation = e.except_explanation;
-      
       build_what();
    }
 
    ///Construct and fill in each of the values.
-   mxException(const std::string & esrc, const int & ec, const std::string & emnem, 
-               const std::string & efile, const int & line, const std::string & expl) : except_code_source(esrc), except_code(ec), except_code_mnem(emnem), except_file(efile), except_line(line), except_explanation(expl)
+   mxException( const std::string & esrc, 
+                const int & ec, 
+                const std::string & emnem, 
+                const std::string & efile, 
+                const int & line, 
+                const std::string & expl
+              ) : m_source(esrc), m_code(ec), m_codeName(emnem), m_file(efile), m_line(line), m_explanation(expl)
    {
-// //       except_code_source = esrc;
-// //       except_code = ec;
-// //       except_code_mnem = emnem;
-// //       except_file = efile;
-// //       except_line = line;
-// //       except_explanation = expl;
-      
       build_what();
    }
 
    ///Assignment operator
    mxException & operator=(const mxException & e) noexcept
    {
-      except_code_source = e.except_code_source;
-      except_code = e.except_code;
-      except_code_mnem = e.except_code_mnem;
-      except_file = e.except_file;
-      except_line = e.except_line;
-      except_explanation = e.except_explanation;
+      m_source = e.m_source;
+      m_code = e.m_code;
+      m_codeName = e.m_codeName;
+      m_file = e.m_file;
+      m_line = e.m_line;
+      m_explanation = e.m_explanation;
       
       build_what();
       
@@ -127,20 +118,21 @@ public:
       s.str("");
       
       s << "An exception has been thrown in an mxlib component.\n";
-      s << "      source: " << except_code_source << "\n";
-      s << "        code: " << except_code << "\n";
-      s << "   code mnem: " << except_code_mnem << "\n";
-      s << "     in file: " << except_file << "\n";
-      s << "     at line: " << except_line << "\n";
-      s << " explanation: " << except_explanation << "\n";
+      s << "      source: " << m_source << "\n";
+      s << "        code: " << m_code;
+      if(m_codeName != "") s << " ("<< m_codeName << ")";
+      s << "\n";
+      s << "     in file: " << m_file << "\n";
+      s << "     at line: " << m_line << "\n";
+      if(m_explanation != "") s << " explanation: " << m_explanation << "\n";
       
-      snprintf(whatstr, 4096, "%s", s.str().c_str());
+      snprintf(m_whatstr, 4096, "%s", s.str().c_str());
    }
    
    ///Return the details of the exception as a single string.
    virtual const char * what() const noexcept
    {   
-      return whatstr;//s.str().c_str();
+      return m_whatstr;
    }
    
 };

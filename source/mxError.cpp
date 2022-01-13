@@ -29,79 +29,100 @@
 namespace mx
 {
 
-   std::string MXE_CodeToName( int ec, 
-                               std::string & message
-                             )
+std::string MXE_CodeToName( int ec )
 {
    
    switch(ec)
    {
       case MXE_INVALIDARG:
-         message = MXE_INVALIDARG_MSG;
-         return "MXE_INVALIDARG";
+         return MXE_INVALIDARG_NAME;
       case MXE_NOTIMPL:
-         message = MXE_NOTIMPL;
-         return "MXE_NOTIMPL";
+         return MXE_NOTIMPL_NAME;
       case MXE_PARAMNOTSET:
-         message = MXE_PARAMNOTSET_MSG;
-         return "MXE_PARAMNOTSET";
+         return MXE_PARAMNOTSET_NAME;
       case MXE_ENVNOTSET:
-         message = MXE_ENVNOTSET_MSG;
-         return "MXE_ENVNOTSET";
+         return MXE_ENVNOTSET_NAME;
       case MXE_NOTFOUND:
-         message = MXE_NOTFOUND_MSG;
-         return "MXE_NOTFOUND";
+         return MXE_NOTFOUND_NAME;
       case MXE_SIZEERR:
-         message = MXE_SIZEERR_MSG;
-         return "MXE_SIZEERR";
+         return MXE_SIZEERR_NAME;
       case MXE_ALLOCERR:
-         message = MXE_ALLOCERR_MSG;
-         return "MXE_ALLOCERR";
+         return MXE_ALLOCERR_NAME;
       case MXE_FREEERR:
-         message = MXE_FREEERR_MSG;
-         return "MXE_FREEERR";
+         return MXE_FREEERR_NAME;
       case MXE_PARSEERR:
-         message = MXE_PARSEERR_MSG;
-         return "MXE_PARSEERR";
+         return MXE_PARSEERR_NAME;
       case MXE_FILEOERR:
-         message = MXE_FILEOERR_MSG;
-         return "MXE_FILEOERR";
+         return MXE_FILEOERR_NAME;
       case MXE_FILEWERR:
-         message = MXE_FILEWERR_MSG;
-         return "MXE_FILEWERR";
+         return MXE_FILEWERR_NAME;
       case MXE_FILERERR:
-         message = MXE_FILERERR_MSG;
-         return "MXE_FILERERR";
+         return MXE_FILERERR_NAME;
       case MXE_FILECERR:
-         message = MXE_FILECERR_MSG;
-         return "MXE_FILECERR";
+         return MXE_FILECERR_NAME;
       case MXE_FILENOTFOUND:
-         message = MXE_FILENOTFOUND_MSG;
-         return "MXE_FILENOTFOUND";
+         return MXE_FILENOTFOUND_NAME;
       case MXE_PROCERR:
-         message = MXE_PROCERR_MSG;
-         return "MXE_PROCERR";
+         return MXE_PROCERR_NAME;
       case MXE_TIMEOUT:
-         message = MXE_TIMEOUT_MSG;
-         return "MXE_TIMEOUT";
+         return MXE_TIMEOUT_NAME;
       case MXE_GNUPLOTERR:
-         message = MXE_GNUPLOTERR_MSG;
-         return "MXE_GNUPLOTERR";
+         return MXE_GNUPLOTERR_NAME;
       case MXE_LAPACKERR:
-         message = MXE_LAPACKERR_MSG;
-         return "MXE_LAPACKERR";   
+         return MXE_LAPACKERR_NAME;   
       default:
-         message = "Unknown mxlib error code.";
          return "?";
    }
 }
 
-std::string errno_CodeToName( int ec, 
-                              std::string & message
-                            )
+std::string MXE_CodeToDescription( int ec )
 {
-   message = std::strerror(ec);
    
+   switch(ec)
+   {
+      case MXE_INVALIDARG:
+         return MXE_INVALIDARG_MSG;
+      case MXE_NOTIMPL:
+         return MXE_NOTIMPL_MSG;
+      case MXE_PARAMNOTSET:
+         return MXE_PARAMNOTSET_MSG;
+      case MXE_ENVNOTSET:
+         return MXE_ENVNOTSET_MSG;
+      case MXE_NOTFOUND:
+         return MXE_NOTFOUND_MSG;
+      case MXE_SIZEERR:
+         return MXE_SIZEERR_MSG;
+      case MXE_ALLOCERR:
+         return MXE_ALLOCERR_MSG;
+      case MXE_FREEERR:
+         return MXE_FREEERR_MSG;
+      case MXE_PARSEERR:
+         return MXE_PARSEERR_MSG;
+      case MXE_FILEOERR:
+         return MXE_FILEOERR_MSG;
+      case MXE_FILEWERR:
+         return MXE_FILEWERR_MSG;
+      case MXE_FILERERR:
+         return MXE_FILERERR_MSG;
+      case MXE_FILECERR:
+         return MXE_FILECERR_MSG;
+      case MXE_FILENOTFOUND:
+         return MXE_FILENOTFOUND_MSG;
+      case MXE_PROCERR:
+         return MXE_PROCERR_MSG;
+      case MXE_TIMEOUT:
+         return MXE_TIMEOUT_MSG;
+      case MXE_GNUPLOTERR:
+         return MXE_GNUPLOTERR_MSG;
+      case MXE_LAPACKERR:
+         return MXE_LAPACKERR_MSG;   
+      default:
+         return "Unknown mxlib error code.";
+   }
+}
+
+std::string errno_CodeToName( int ec )
+{
    switch(ec)
    {
       #ifdef E2BIG
@@ -420,10 +441,7 @@ std::string errno_CodeToName( int ec,
       case EXDEV:
           return "EXDEV";
       #endif 
-
-
       default:
-         message = "Unknown errno code.";
          return "?";
    }
 }
@@ -439,7 +457,8 @@ std::string error_report( const std::string & source,
    
    std::string codeName, codeMessage;
    
-   codeName = MXE_CodeToName(code, codeMessage);
+   codeName = MXE_CodeToName(code);
+   codeMessage = MXE_CodeToDescription(code);
    
    std::ostringstream s;
    s.str("");
@@ -465,8 +484,9 @@ std::string errno_report( const std::string & source,
 {
    std::string codeName, codeMessage;
    
-   codeName = errno_CodeToName(ec, codeMessage);
-   
+   codeName = errno_CodeToName(ec);
+   codeMessage = strerror(ec);
+
    std::ostringstream s;
    s.str("");
    
