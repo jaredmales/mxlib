@@ -227,17 +227,17 @@ struct mainSequence
          
       findMinMax(m_numTypesR, m_minSpTfmT, m_maxSpTfmT, m_TeffsR);
       
-      interpT.setup( gsl_interp_linear, m_numTypes, m_Teffs );
-      interpRad.setup( gsl_interp_linear, m_numTypes, m_rads);
-      interpL.setup( gsl_interp_linear, m_numTypes, m_logLs );
-      interpMv.setup( gsl_interp_linear, m_numTypes, m_Mvs );
-      interpVRc.setup( gsl_interp_linear, m_numTypes, m_V_Rcs );
-      interpVIc.setup( gsl_interp_linear, m_numTypes, m_V_Ics );
-      interpVKs.setup( gsl_interp_linear, m_numTypes, m_V_Kss );
-      interpJH.setup( gsl_interp_linear, m_numTypes, m_J_Hs );
-      interpHKs.setup( gsl_interp_linear, m_numTypes, m_H_Kss );
+      interpT.setup( ::gsl_interp_linear, m_numTypes, m_Teffs );
+      interpRad.setup( ::gsl_interp_linear, m_numTypes, m_rads);
+      interpL.setup( ::gsl_interp_linear, m_numTypes, m_logLs );
+      interpMv.setup( ::gsl_interp_linear, m_numTypes, m_Mvs );
+      interpVRc.setup( ::gsl_interp_linear, m_numTypes, m_V_Rcs );
+      interpVIc.setup( ::gsl_interp_linear, m_numTypes, m_V_Ics );
+      interpVKs.setup( ::gsl_interp_linear, m_numTypes, m_V_Kss );
+      interpJH.setup( ::gsl_interp_linear, m_numTypes, m_J_Hs );
+      interpHKs.setup( ::gsl_interp_linear, m_numTypes, m_H_Kss );
       
-      interpSpTfmT.setup( gsl_interp_linear, m_TeffsR, m_numTypesR);
+      interpSpTfmT.setup( ::gsl_interp_linear, m_TeffsR, m_numTypesR);
    }
    
    /// Get the interpolated effective temperature
