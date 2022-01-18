@@ -26,6 +26,7 @@
 #ifndef radprofIntegral_hpp
 #define radprofIntegral_hpp
 
+#include <cmath>
 #include <vector>
 #include <type_traits>
 
@@ -69,27 +70,30 @@ typename vectorT::value_type radprofIntegral( vectorScT r, /// [in] the r
    
    if(r.size() != p.size())
    {
-      mxThrowExceptionMXE("radprofIntegral", MXE_SIZEERR, "vectors must have same size");
+      mxThrowException(err::sizeerr, "radprofIntegral", "vectors must have same size");
    }
 
    if(r.size() < 2)
    {
-      mxThrowExceptionMXE("radprofIntegral", MXE_INVALIDARG, "must be at least 2 elements in radial profile");
+      mxThrowException(err::sizeerr, "radprofIntegral", "must be at least 2 elements in radial profile");
    }
 
    floatT s = 0;
    
    if(inczero) s = p[0]*pow(r[0],2);
 
-   s += p[0]*r[0] * ( r[1] - r[0] );
+   size_t n = 0;
+   s += 0.5*p[n]*(pow(r[n+1],2) - pow(r[n],2));//r[0] * ( r[1] - r[0] );
 
-   for(size_t n=1; n < r.size()-1; ++n)
+   for(n=1; n < r.size()-1; ++n)
    {
-      s += 2*p[n]*r[n] * ( r[n] - r[n-1]);
+      s += p[n]*(pow(r[n],2) - pow(r[n-1],2));//r[n] * ( r[n] - r[n-1]);
    }
 
-   size_t n = r.size()-1;
-   s += p[n]*r[n] * ( r[n] - r[n-1] );
+   s += 0.5*p[n]*(pow(r[n],2) - pow(r[n-1],2));
+
+   //size_t n = r.size()-1;
+   //s += 2*p[n]*r[n] * ( r[n] - r[n-1] );
 
    return s*pi<floatT>();
 }

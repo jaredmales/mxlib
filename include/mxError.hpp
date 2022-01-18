@@ -239,6 +239,14 @@ namespace mx
 #define MXE_TIMEOUT_NAME "MXE_TIMEOUT"
 #define MXE_TIMEOUT_MSG "A timeout occurred."
 
+/** \def MXE_LIBERR
+  * \brief An error was returned by a library.
+  * \ingroup mxe_errors
+  */   
+#define MXE_LIBERR 4000
+#define MXE_LIBERR_NAME "MXE_LIBERR"
+#define MXE_LIBERR_MSG "An error was returned by a library."
+
 
 /** \def MXE_GNUPLOTERR
   * \brief An error was returned by gnuplot.

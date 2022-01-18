@@ -33,6 +33,8 @@
 #define EIGEN_NO_CUDA
 #endif
 
+#include <type_traits>
+
 #include <Eigen/Dense>
 
 #include <iostream>
@@ -611,19 +613,23 @@ void oneoverf_psd( eigenArrp  & psd,
   *
   * If you set \f$ T_0 \le 0 \f$ and \f$ t_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e.
   * it treats this as infinite outer scale and inner scale).
+  * 
   *
   * \tparam floatT a floating point
   */
-template<typename floatT>
+template<typename floatT, typename floatfT, typename alphaT, typename T0T, typename t0T, typename betaT>
 int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be resized.
-                  std::vector<floatT> & f,   ///< [in] the frequency vector
-                  floatT beta,               ///< [in] the scaling constant
-                  floatT T0,                 ///< [in] the outer scale
-                  floatT t0,                 ///< [in] the inner scale
-                  floatT alpha               ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
+                  std::vector<floatfT> & f,  ///< [in] the frequency vector
+                  alphaT alpha,              ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
+                  T0T T0 = 0,                ///< [in] the outer scale, default is 0 (not used).
+                  t0T t0 = 0,                ///< [in] the inner scale, default is 0 (not used).
+                  betaT beta = 1             ///< [in] the scaling constant, default is 1
                 )
 {
 
+#ifndef MX_VKPSD_REFACT
+static_assert( 0*std::is_floating_point<floatT>::value, "the 1D vonKarmanPSD has been refactored.  After modifying your code to match, you must define MX_VKPSD_REFACT before including psdUtils.hpp to avoid this error.");
+#endif
 
    floatT T02;
    if(T0 > 0) T02 = 1.0/(T0*T0);
@@ -631,12 +637,16 @@ int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be 
 
    floatT sqrt_alpha = 0.5*alpha;
 
+   floatT _beta;
+   if(beta <= 0) _beta = 1;
+   else _beta = beta;
+
    psd.resize(f.size());
 
    for(size_t i=0; i< f.size(); ++i)
    {
-      floatT p = beta / pow( pow(f[i],2) + T02, sqrt_alpha);
-      if(t0 > 0 ) p *= exp(-1*pow( f[i]*t0, 2));
+      floatT p = _beta / pow( pow(f[i],2) + T02, sqrt_alpha);
+      if(t0 > 0 ) p *= exp(-1*pow( f[i]*static_cast<floatT>(t0), 2));
       psd[i] = p;
    }
 
@@ -701,13 +711,13 @@ int kneePSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be resiz
   * \tparam eigenArrp is the Eigen array type of the psd
   * \tparam eigenArrf is the Eigen array type of the frequency grid
   */
-template<typename eigenArrp, typename eigenArrf>
-void vonKarman_psd( eigenArrp  & psd,
+template<typename eigenArrp, typename eigenArrf, typename alphaT, typename L0T, typename l0T, typename betaT>
+void vonKarmanPSD( eigenArrp  & psd,
                    eigenArrf & freq,
-                   typename eigenArrp::Scalar alpha,
-                   typename eigenArrp::Scalar L0 = 0,
-                   typename eigenArrp::Scalar l0 = 0,
-                   typename eigenArrp::Scalar beta = -1 )
+                   alphaT alpha,
+                   L0T L0 = 0,
+                   l0T l0 = 0,
+                   betaT beta = -1 )
 {
    typedef typename eigenArrp::Scalar Scalar;
 
@@ -717,7 +727,7 @@ void vonKarman_psd( eigenArrp  & psd,
    dim_1 = psd.rows();
    dim_2 = psd.cols();
 
-
+   Scalar _beta;
 
    if(beta==-1)
    {
@@ -729,8 +739,9 @@ void vonKarman_psd( eigenArrp  & psd,
       //Find minimum non-zero Coeff.
       fmin = (freq.abs()>0).select(freq.abs(), freq.abs()+fmax).minCoeff();
 
-      beta = oneoverf_norm(fmin, fmax, alpha);
+      _beta = beta = oneoverf_norm(fmin, fmax, static_cast<Scalar>(alpha));
    }
+   else _beta = static_cast<Scalar>(beta);
 
 
    Scalar L02;
@@ -749,8 +760,8 @@ void vonKarman_psd( eigenArrp  & psd,
          }
          else
          {
-            p = beta / pow( pow(freq(ii,jj),2) + L02, sqrt_alpha);
-            if(l0 > 0 ) p *= exp(-1*pow( freq(ii,jj)*l0, 2));
+            p = _beta / pow( pow(freq(ii,jj),2) + L02, sqrt_alpha);
+            if(l0 > 0 ) p *= exp(-1*pow( freq(ii,jj)*static_cast<Scalar>(l0), 2));
          }
          psd(ii,jj) = p;
       }

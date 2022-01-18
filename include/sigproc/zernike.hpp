@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "../math/func/bessel.hpp"
+#include "../math/func/jinc.hpp"
 #include "../math/func/factorial.hpp"
 #include "../math/func/sign.hpp"
 #include "../math/constants.hpp"
@@ -653,6 +654,48 @@ int zernikeQNorm( arrayT & arr, ///< [out] the allocated array. The rows() and c
       }
    }
    return 0;
+}
+
+/// Calculate the spatial power spectrum of Piston 
+template<typename realT>
+realT zernikePPiston( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 4*pow(math::func::jinc(math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Tip \& Tilt
+template<typename realT>
+realT zernikePTipTilt( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 16*pow(math::func::jincN(2,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Defocus
+template<typename realT>
+realT zernikePDefocus( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 12*pow(math::func::jincN(3,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Astigmatism
+template<typename realT>
+realT zernikePAstig( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 24*pow(math::func::jincN(3,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Coma
+template<typename realT>
+realT zernikePComa( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 32*pow(math::func::jincN(4,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Trefoil
+template<typename realT>
+realT zernikePTrefoil( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 32*pow(math::func::jincN(4,math::pi<realT>()*kD),2);
 }
 
 ///@} signal_processing

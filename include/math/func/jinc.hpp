@@ -101,46 +101,81 @@ extern template
 __float128 jinc<__float128>(const __float128 & x);
 #endif
 
-///Returns the Jinc2 function
-/** The Jinc2 function is defined here as
+///Returns the JincN function
+/** The JincN function is defined here as
   * \f[ 
-  *     Ji_2(x) = \frac{J_2(x)}{x} 
+  *     Ji_N(x) = \frac{J_N(x)}{x} 
   * \f]
-  * where \f$ J_2 \f$ is the cylindrical bessel function of the first kind of order 2.
+  * where \f$ J_N \f$ is the cylindrical bessel function of the first kind of order N, \f$ N \ge 1 \f$.
   * 
-  * If x is smaller than \f$ \sqrt{\epsilon} \f$, returns 0.
+  * If \f$ N == 1 \f$ this returns \ref mx::math::func::jinc() "jinc(x)".
   * 
-  * \returns the value of Ji2(x)
+  * Otherwise, if x is smaller than \f$ \sqrt{\epsilon} \f$, returns 0.
+  * 
+  * \returns the value of JiN(x)
   * 
   * \ingroup functions
   */
-template<typename T> 
-T jinc2(const T & x /**< [in] the argument */)
+template<typename T1, typename T2> 
+T2 jincN( const T1 & v, ///< [in] the Bessel function order
+          const T2 & x  ///< [in] the argument 
+        )
 {
-   T const taylor_2_bound = root_epsilon<T>();
+   if(v == 1) return jinc(x);
+
+   T2 const taylor_2_bound = root_epsilon<T2>();
       
    if( std::fabs(x) > taylor_2_bound )
    {
-      return bessel_j<int, T>(2,x)/(x);
+      return bessel_j<T1, T2>(v,x)/(x);
    }
    else
    {
-      return static_cast<T>(0);
+      return static_cast<T2>(0);
    }
 }
 
 extern template
-float jinc2<float>(const float & x);
+float jincN<float, float>( const float & v,
+                           const float & x
+                         );
 
 extern template
-double jinc2<double>(const double & x);
+float jincN<int, float>( const int & v,
+                         const float & x
+                       );
 
 extern template
-long double jinc2<long double>(const long double & x);
+double jincN<double, double>( const double & v,
+                              const double & x
+                            );
+
+extern template
+double jincN<int, double>( const int & v,
+                           const double & x
+                         );
+
+
+extern template
+long double jincN<long double, long double>( const long double & v,
+                                             const long double & x
+                                           );
+
+extern template
+long double jincN<int, long double>( const int & v,
+                                     const long double & x
+                                   );
 
 #ifdef HASQUAD
 extern template
-__float128 jinc2<__float128>(const __float128 & x);
+
+__float128 jincN<__float128, __float128>( const __float128 & v,
+                                          const __float128 & x
+                                        );
+
+__float128 jincN<int, __float128>( const int & v,
+                                   const __float128 & x
+                                 );
 #endif
 
 } //namespace func 

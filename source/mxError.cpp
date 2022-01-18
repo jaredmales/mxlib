@@ -66,6 +66,8 @@ std::string MXE_CodeToName( int ec )
          return MXE_PROCERR_NAME;
       case MXE_TIMEOUT:
          return MXE_TIMEOUT_NAME;
+      case MXE_LIBERR:
+         return MXE_LIBERR_NAME;
       case MXE_GNUPLOTERR:
          return MXE_GNUPLOTERR_NAME;
       case MXE_LAPACKERR:
@@ -112,6 +114,8 @@ std::string MXE_CodeToDescription( int ec )
          return MXE_PROCERR_MSG;
       case MXE_TIMEOUT:
          return MXE_TIMEOUT_MSG;
+      case MXE_LIBERR:
+         return MXE_LIBERR_MSG;
       case MXE_GNUPLOTERR:
          return MXE_GNUPLOTERR_MSG;
       case MXE_LAPACKERR:

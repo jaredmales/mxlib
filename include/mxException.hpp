@@ -32,7 +32,11 @@
 
 #include "mxError.hpp"
 
-#define mxThrowExceptionMXE( src, code, expl ) throw mxException(src, code, MXE_CodeToName(code), __FILE__, __LINE__, expl);
+
+namespace mx
+{
+namespace err
+{
 
 /// The mxlib exception class
 /** Provides a rich error report via the standard what().
@@ -44,8 +48,6 @@ class mxException : public std::exception
 protected:
    ///Contains the what() string
    char m_whatstr[4096];
-   
-public:
 
    ///The source of the exception, such as stdlib or cfitisio or the function name
    std::string m_source {""};
@@ -64,6 +66,8 @@ public:
    
    ///The long explanation of the error
    std::string m_explanation {""};
+
+public:
 
    ///Default constructor
    mxException () noexcept
@@ -137,4 +141,46 @@ public:
    
 };
 
-#endif //__mxException__
+class sizeerr : public mxException 
+{
+public:
+   sizeerr( const std::string & esrc, 
+            const std::string & efile, 
+            const int & line, 
+            const std::string & expl
+          ) : mxException(esrc, MXE_SIZEERR,MXE_SIZEERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+class allocerr : public mxException 
+{
+public:
+   allocerr( const std::string & esrc, 
+             const std::string & efile, 
+             const int & line, 
+             const std::string & expl
+           ) : mxException(esrc, MXE_ALLOCERR,MXE_ALLOCERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+class liberr : public mxException 
+{
+public:
+   liberr( const std::string & esrc, 
+           const std::string & efile, 
+           const int & line, 
+           const std::string & expl
+         ) : mxException(esrc, MXE_LIBERR,MXE_LIBERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+
+#define mxThrowException( extype, src, expl ) throw extype(src,  __FILE__, __LINE__, expl);
+
+} //err
+} //namespace mx
+
+#endif //mxException_hpp

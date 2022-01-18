@@ -1300,7 +1300,7 @@ void aoSystem<realT, inputSpectT, iosT>::npix_wfs( int idx,
 {
    if(m_npix_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::npix_wfs", "idx larger than m_npix_wfs");
    }
 
    m_npix_wfs[idx] = npix;
@@ -1314,7 +1314,7 @@ realT aoSystem<realT, inputSpectT, iosT>::npix_wfs(size_t idx)
 {
    if(m_npix_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::npix_wfs", "idx larger than m_npix_wfs");
    }
 
    return m_npix_wfs[idx];
@@ -1356,7 +1356,7 @@ void aoSystem<realT, inputSpectT, iosT>::ron_wfs( int idx,
 {
    if(m_ron_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::ron_wfs", "idx larger than m_ron_wfs");
    }
 
    m_ron_wfs[idx] = nron;
@@ -1371,7 +1371,7 @@ realT aoSystem<realT, inputSpectT, iosT>::ron_wfs(size_t idx)
 {
    if(m_ron_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::ron_wfs", "idx larger than m_ron_wfs");
    }
 
    return m_ron_wfs[idx];
@@ -1413,7 +1413,7 @@ void aoSystem<realT, inputSpectT, iosT>::Fbg( int idx,
 {
    if(m_Fbg.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+      mxThrowException(err::sizeerr, "aoSyste,::Fbg", "idx larger than m_Fbg");
    }
 
    m_Fbg[idx] = fbg;
@@ -1427,7 +1427,7 @@ realT aoSystem<realT, inputSpectT, iosT>::Fbg(size_t idx)
 {
    if(m_Fbg.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+      mxThrowException(err::sizeerr, "aoSyste,::Fbg", "idx larger than m_Fbg");
    }
 
    return m_Fbg[idx];
@@ -1469,7 +1469,7 @@ void aoSystem<realT, inputSpectT, iosT>::minTauWFS( size_t idx,
 {
    if(m_minTauWFS.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::minTauWFS", "idx larger than m_ntau_wfs");
    }
 
    m_minTauWFS[idx] = ntau;
@@ -1483,7 +1483,7 @@ realT aoSystem<realT, inputSpectT, iosT>::minTauWFS(size_t idx)
 {
    if(m_minTauWFS.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::minTauWFS", "idx larger than m_ntau_wfs");
    }
 
    return m_minTauWFS[idx];
