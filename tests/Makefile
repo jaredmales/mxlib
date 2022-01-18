@@ -5,6 +5,7 @@
 INCLUDES += -I../include
 
 OBJS = testsMain.o \
+       include/ao/analysis/aoAtmosphere_test.o \
        include/astro/astroDynamics_test.o \
        include/ioutils/fileUtils_test.o \
        include/math/cuda/templateCublas_test.o \

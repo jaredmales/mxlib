@@ -141,6 +141,18 @@ public:
    
 };
 
+class paramnotset : public mxException 
+{
+public:
+   paramnotset( const std::string & esrc, 
+                const std::string & efile, 
+                const int & line, 
+                const std::string & expl
+              ) : mxException(esrc, MXE_PARAMNOTSET,MXE_PARAMNOTSET_NAME, efile, line, expl)
+   {
+   }
+};
+
 class sizeerr : public mxException 
 {
 public:
