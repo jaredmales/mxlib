@@ -149,15 +149,14 @@ public:
       if(m_errno != 0)
       {
          s << "       errno: " << m_errno << " (" << errno_CodeToName(m_errno) << ")\n";
-         if(strerror_r(m_errno, m_whatstr, sizeof(m_whatstr)) == 0) //just using m_whatstr as a temp buffer here
-         {
-            s << "              " << m_whatstr << "\n";
-         }
       }
       s << "     in file: " << m_file << "\n";
       s << "     at line: " << m_line << "\n";
       if(m_explanation != "") s << " explanation: " << m_explanation << "\n";
-      
+      if(m_errno != 0)
+      {
+         s << "              " << strerror(m_errno) << "\n";
+      }
       snprintf(m_whatstr, sizeof(m_whatstr), "%s", s.str().c_str());
    }
    
