@@ -1230,7 +1230,7 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator & config )
    config.add("atm.layer_dir"    ,"", "atm.layer_dir"    , argType::Required, "atm", "layer_dir",     false, "vector<real>", "Layer wind directions [rad]");
    config.add("atm.v_wind"       ,"", "atm.v_wind"       , argType::Required, "atm", "v_wind",        false, "real"        , "Mean windspeed (5/3 momement), rescales layers [m/s]");
    config.add("atm.z_mean"       ,"", "atm.z_mean"       , argType::Required, "atm", "z_mean",        false, "real"        , "Mean layer height (5/3 momemnt), rescales layers [m/s]");   
-   config.add("atm.nonKolmogorov","", "atm.nonKolmogorov", argType::Required, "atm", "nonKolmogorov", false, "bool"        , "Set to use a non-Kolmogorov PSD.  See alpha and beta.");   
+   config.add("atm.nonKolmogorov","", "atm.nonKolmogorov", argType::Required, "atm", "nonKolmogorov", false, "bool"        , "Set to use a non-Kolmogorov PSD. See alpha and beta.");   
    config.add("atm.alpha"        ,"", "atm.alpha"        , argType::Required, "atm", "alpha"        , false, "real"        , "Non-kolmogorov PSD exponent.");   
    config.add("atm.beta"         ,"", "atm.beta"         , argType::Required, "atm", "beta"         , false, "real"        , "Non-kolmogorov PSD normalization constant.");   
 }
@@ -1240,9 +1240,23 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
 {
    //Here "has side effecs" means that the set function does more than simply copy the value.
    
-   config(m_r_0, "atm.r_0");
+   //The order of lam_0, Cn2, and r_0 is so that r_0 overrides the value set with Cn2 if lam_0 != 0.
+   //lam_0 comes first because it calibrates r0 and Cn2
+
+   //lam_0
    config(m_lam_0, "atm.lam_0");
+
+   //layer_Cn2
+   std::vector<realT> lcn2 = m_layer_Cn2;
+   config(lcn2, "atm.layer_Cn2"); 
+   if(config.isSet("atm.layer_Cn2")) layer_Cn2(lcn2); 
+
+   realT r0 = r_0();
+   config(r0, "atm.r_0");
+   if(config.isSet("atm.r_0")) r_0(r0, m_lam_0);
+
    config(m_L_0, "atm.L_0");
+   
    config(m_l_0, "atm.l_0");
    
    //Has side effects:
@@ -1252,11 +1266,6 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
 
    config(m_h_obs, "atm.h_obs");
    config(m_H, "atm.H");
-
-   //Has side effects:
-   std::vector<realT> lcn2 = m_layer_Cn2;
-   config(lcn2, "atm.layer_Cn2"); //Do this no matter what to record source
-   if(config.isSet("atm.layer_Cn2")) layer_Cn2(lcn2); //but only call this if changed
 
    //Has side effects:
    std::vector<realT> lvw = m_layer_v_wind;

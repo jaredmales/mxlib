@@ -117,6 +117,14 @@ namespace mx
 #define MXE_INVALIDARG_NAME "MXE_INVALIDARG"
 #define MXE_INVALIDARG_MSG "An argument was invalid."
 
+/** \def MXE_INVALIDCONFIG
+  * \brief A config setting was invalid.
+  * \ingroup mxe_errors
+  */   
+#define MXE_INVALIDCONFIG 27
+#define MXE_INVALIDCONFIG_NAME "MXE_INVALIDCONFIG"
+#define MXE_INVALIDCONFIG_MSG "A config setting was invalid."
+
 /** \def MXE_NOTIMPL
   * \brief A component or technique is not implemented.
   * \ingroup mxe_errors

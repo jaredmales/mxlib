@@ -827,6 +827,7 @@ INPUT                  = ./groupdefs.dox \
                          ../source/sigproc \
                          ../source/sys \
                          ../tests/include/ao \
+                         ../tests/include/ao/analysis \
                          ../tests/include/app \
                          ../tests/include/astro \
                          ../tests/include/ioutils \

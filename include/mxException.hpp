@@ -184,6 +184,22 @@ public:
    }
 };
 
+/// mxException for invalid config settings
+/** 
+  * \ingroup exceptions
+  */ 
+class invalidconfig : public mxException 
+{
+public:
+   invalidconfig( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+                  const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                  const int & line,          ///< [in] the line number where the exception was thrown
+                  const std::string & expl   ///< [in] the explanation for why the exception was thrown
+                ) : mxException(esrc, MXE_INVALIDARG,MXE_INVALIDARG_NAME, efile, line, expl)
+   {
+   }
+};
+
 /// mxException for not implemented features
 /** 
   * \ingroup exceptions

@@ -36,6 +36,8 @@ std::string MXE_CodeToName( int ec )
    {
       case MXE_INVALIDARG:
          return MXE_INVALIDARG_NAME;
+      case MXE_INVALIDCONFIG:
+         return MXE_INVALIDCONFIG_NAME;
       case MXE_NOTIMPL:
          return MXE_NOTIMPL_NAME;
       case MXE_PARAMNOTSET:
@@ -84,6 +86,8 @@ std::string MXE_CodeToDescription( int ec )
    {
       case MXE_INVALIDARG:
          return MXE_INVALIDARG_MSG;
+      case MXE_INVALIDCONFIG:
+         return MXE_INVALIDCONFIG_MSG;
       case MXE_NOTIMPL:
          return MXE_NOTIMPL_MSG;
       case MXE_PARAMNOTSET:

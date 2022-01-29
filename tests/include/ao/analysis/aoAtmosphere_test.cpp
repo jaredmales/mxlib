@@ -1,4 +1,4 @@
-/** \file fileUtils_test.cpp
+/** \file fileAtmosphere_test.cpp
  */
 #include "../../../catch2/catch.hpp"
 
@@ -12,8 +12,10 @@ typedef double realT;
 using namespace mx::app;
 using namespace mx::AO::analysis;
 
-/** Verify parsing of config 
-  * 
+/** Scenario: Loading aoAtmosphere config settings
+  *   
+  * Verify parsing of config
+  *
   * \anchor tests_ao_analysis_aoAtmosphere_config
   */
 SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]" ) 
