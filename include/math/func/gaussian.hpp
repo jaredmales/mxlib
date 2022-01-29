@@ -93,6 +93,8 @@ floatT sigma2fwhm(floatT sig /**< [in] the Gaussian width parameter */)
   * \tparam realT is type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
+  * 
+  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]"
   */ 
 template<typename realT>
 realT gaussian( const realT x,    ///< [in] is the x-position at which to evaluate the Gaussian
