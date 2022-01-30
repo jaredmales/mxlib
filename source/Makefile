@@ -80,6 +80,9 @@ app/optionparser.o: ../include/app/optionparser/optionparser.h
 improc/HCIobservation.o: ../include/improc/HCIobservation.hpp
 improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
+ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
+ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp
+ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp 
 ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp

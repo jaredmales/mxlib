@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -31,6 +31,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <complex>
 
 #include <fitsio.h>
 
@@ -41,16 +42,15 @@ namespace mx
 namespace fits
 {
 
-
 ///The standard width of the value entry in a header card
 #define stdValWidth (20)
 
-#define fitsTUNKNOWN (-5000)
+//#define fitsTUNKNOWN (-5000)
 struct fitsUnknownType
 {
 };
 
-#define fitsTCOMMENT (-5001)
+//#define fitsTCOMMENT (-5001)
 struct fitsCommentType
 {
    fitsCommentType()
@@ -68,7 +68,7 @@ struct fitsCommentType
    }
 };
 
-#define fitsTHISTORY (-5002)
+//#define fitsTHISTORY (-5002)
 
 struct fitsHistoryType
 {
@@ -104,61 +104,125 @@ struct fitsHistoryType
   * \ingroup fits_utils
   */
 template<typename scalarT> 
-int getFitsType()
+constexpr int fitsType()
 {
-   return -1;
+   return -5000; //This is the same as unknownType
 }
 
 template<> 
-int getFitsType<char *>();
+constexpr int fitsType<char *>()
+{
+   return TSTRING;
+}
 
 template<> 
-int getFitsType<std::string>();
+constexpr int fitsType<std::string>()
+{
+   return TSTRING;
+}
 
 template<> 
-int getFitsType<unsigned char>();
+constexpr int fitsType<char>()
+{
+   return TSBYTE;
+}
 
 template<> 
-int getFitsType<signed char>();
+constexpr int fitsType<unsigned char>()
+{
+   return TBYTE;
+}
 
 template<> 
-int getFitsType<char>();
+constexpr int fitsType<short>()
+{
+   return TSHORT;
+}
 
 template<> 
-int getFitsType<short>();
+constexpr int fitsType<unsigned short>()
+{
+   return TUSHORT;
+}
 
 template<> 
-int getFitsType<unsigned short>();
+constexpr int fitsType<int>()
+{
+   return TINT;
+}
 
 template<> 
-int getFitsType<int>();
+constexpr int fitsType<unsigned int>()
+{
+   return TUINT;
+}
 
 template<> 
-int getFitsType<unsigned int>();
+constexpr int fitsType<long>()
+{
+   return TLONG;
+}
 
 template<> 
-int getFitsType<long>();
+constexpr int fitsType<unsigned long>()
+{
+   return TULONG;
+}
 
 template<> 
-int getFitsType<long long>();
+constexpr int fitsType<long long>()
+{
+   return TLONGLONG;
+}
 
 template<> 
-int getFitsType<unsigned long>();
+constexpr int fitsType<unsigned long long>()
+{
+   return TULONGLONG;
+}
 
 template<> 
-int getFitsType<float>();
+constexpr int fitsType<float>()
+{
+   return TFLOAT;
+}
 
 template<> 
-int getFitsType<double>();
+constexpr int fitsType<std::complex<float>>()
+{
+   return TCOMPLEX;
+}
 
 template<> 
-int getFitsType<fitsUnknownType>();
+constexpr int fitsType<double>()
+{
+   return TDOUBLE;
+}
 
 template<> 
-int getFitsType<fitsCommentType>();
+constexpr int fitsType<std::complex<double>>()
+{
+   return TDBLCOMPLEX;
+}
 
 template<> 
-int getFitsType<fitsHistoryType>();
+constexpr int fitsType<fitsUnknownType>()
+{
+   return -5000;
+}
+
+template<> 
+constexpr int fitsType<fitsCommentType>()
+{
+   return -5001;
+}
+
+template<> 
+constexpr int fitsType<fitsHistoryType>()
+{
+   return -5002;
+}
+
 
 /** Return the cfitsio BITPIX value for a given data type.
   *
@@ -167,40 +231,86 @@ int getFitsType<fitsHistoryType>();
   * \retval -1 if not a defined type in cfitsio
   */
 template<typename scalarT> 
-int getFitsBITPIX();
+constexpr int fitsBITPIX();
 
 template<> 
-int getFitsBITPIX<char>();
+constexpr int fitsBITPIX<char>()
+{
+   return SBYTE_IMG;
+}
 
 template<> 
-int getFitsBITPIX<signed char>();
+constexpr int fitsBITPIX<signed char>()
+{
+   return SBYTE_IMG;
+}
 
 template<> 
-int getFitsBITPIX<unsigned char>();
+constexpr int fitsBITPIX<unsigned char>()
+{
+   return BYTE_IMG;
+}
 
 template<> 
-int getFitsBITPIX<short>();
+constexpr int fitsBITPIX<short>()
+{
+   return SHORT_IMG;
+}
 
 template<> 
-int getFitsBITPIX<unsigned short>();
+constexpr int fitsBITPIX<unsigned short>()
+{
+   return USHORT_IMG;
+}
 
 template<> 
-int getFitsBITPIX<int>();
+constexpr int fitsBITPIX<int>()
+{
+   return LONG_IMG; //Yes, this is right.  This returns 32
+}
 
 template<> 
-int getFitsBITPIX<unsigned int>();
+constexpr int fitsBITPIX<unsigned int>()
+{
+   return ULONG_IMG; //Yes, this is right, this returns 40
+}
 
 template<> 
-int getFitsBITPIX<long>();
+constexpr int fitsBITPIX<long>()
+{
+   return LONGLONG_IMG; //Yes, this is right, this returns 64
+}
 
 template<> 
-int getFitsBITPIX<unsigned long>();
+constexpr int fitsBITPIX<unsigned long>()
+{
+   return ULONGLONG_IMG; //Yes, this is right, this returns 64
+}
 
 template<> 
-int getFitsBITPIX<float>();
+constexpr int fitsBITPIX<long long>()
+{
+   return LONGLONG_IMG; //Yes, this is right, this returns 64
+}
 
 template<> 
-int getFitsBITPIX<double>();
+constexpr int fitsBITPIX<unsigned long long>()
+{
+   return ULONGLONG_IMG; //Yes, this is right, this returns 64
+}
+
+template<> 
+constexpr int fitsBITPIX<float>()
+{
+   return FLOAT_IMG;
+}
+
+template<> 
+constexpr int fitsBITPIX<double>()
+{
+   return DOUBLE_IMG;
+}
+
 
 /// Strip the apostrophes from a FITS value string
 /** The argument is modified if the first and/or last non-whitespace character is '
@@ -243,7 +353,7 @@ int fits_write_key( fitsfile * fptr,
 {
    int fstatus = 0;
    
-   fits_write_key(fptr, getFitsType<typeT>(), keyword, value, comment,  &fstatus);
+   fits_write_key(fptr, fitsType<typeT>(), keyword, value, comment,  &fstatus);
    
    return fstatus;
 }

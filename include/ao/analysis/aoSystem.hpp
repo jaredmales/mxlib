@@ -1087,9 +1087,9 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
    starMag(5);
    
    //The rest of Guyon 05 is very ideal
-   npix_wfs((realT) 12868);
-   ron_wfs((realT) 0.0);
-   Fbg((realT) 0.0);
+   npix_wfs(std::vector<realT>({12868}));
+   ron_wfs(std::vector<realT>({0.0}));
+   Fbg(std::vector<realT>({0.0}));
    
    d_min( 8.0/1e3); //Allow super fine sampling
    minTauWFS( (realT) (1./1e9) ); // Just be super fast.
@@ -1107,9 +1107,9 @@ void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
    lam_wfs(0.851e-6);
    lam_sci(0.656e-6);
    
-   npix_wfs((realT) 12868);
-   ron_wfs((realT) 0.3);
-   Fbg((realT) 0.22);
+   npix_wfs(std::vector<realT>({12868}));
+   ron_wfs(std::vector<realT>({0.3}));
+   Fbg(std::vector<realT>({0.22}));
    
    d_min( 6.5/48.0 );
    minTauWFS( (realT) (1./3622.) );
