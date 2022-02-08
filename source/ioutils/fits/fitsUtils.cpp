@@ -125,6 +125,17 @@ int fits_write_key<std::string>(fitsfile * fptr, char * keyword, void * value, c
    return fits_write_key<char *>(fptr, keyword, value, comment);
 }
 
+template<>
+int fits_write_key<bool>(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   unsigned char bc = *((bool *)value);
+
+   int fstatus = 0;
+   
+   fits_write_key(fptr, fitsType<unsigned char>(), keyword, &bc, comment,  &fstatus);
+   
+   return fstatus;
+}
 
 template<> 
 int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)

@@ -122,6 +122,12 @@ constexpr int fitsType<std::string>()
 }
 
 template<> 
+constexpr int fitsType<bool>() //mxlib extension, treated as uchar.
+{
+   return -14002;
+}
+
+template<> 
 constexpr int fitsType<char>()
 {
    return TSBYTE;
@@ -371,6 +377,16 @@ int fits_write_key<std::string>( fitsfile * fptr,
                                  void * value, 
                                  char * comment
                                );
+
+/// Specialization to handle the case bool
+/** This gets converted to unsigned char.
+  */
+template<>
+int fits_write_key<bool>( fitsfile * fptr, 
+                          char * keyword, 
+                          void * value, 
+                          char * comment
+                        );
 
 template<> 
 int fits_write_key<fitsUnknownType>( fitsfile * fptr, 

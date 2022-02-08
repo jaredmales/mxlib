@@ -38,6 +38,9 @@ namespace improc
 {
    
 /// Find stars in an image by SNR thresholding
+/**
+  * \ingroup image_utils
+  */ 
 template<typename _realT>
 class sourceFinder
 {

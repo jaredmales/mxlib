@@ -272,7 +272,6 @@ void fitsHeader::append( const std::string &k,
                          const std::string &c
                        )
 {
-  std::cout << __FILE__ << " " << __LINE__ << "\n";
    append(fitsHeaderCard(k,v,c));
 }
 
@@ -282,7 +281,6 @@ void fitsHeader::append( const std::string &k,
                          const typeT &v
                        )
 {
-  std::cout << __FILE__ << " " << __LINE__ << "\n";
    append(fitsHeaderCard(k,v));
 }
 

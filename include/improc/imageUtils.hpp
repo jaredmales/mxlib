@@ -221,6 +221,9 @@ int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum,
    return imageMaxInterp(x,y,scale_x,scale_y, magIm, im, cubicConvolTransform<typename imageT::Scalar>());
 }
 
+
+
+
 /// Combine two images, each with their own mask defining good pixels.
 /** The combined image is made up of the pixels in im1 where mask1 is 1, and the pixels of im2 where mask2 is 1.
   * If a pixel in both mask1 and mask2 has a value of 1, that pixel in the combo is the average of im1 and im2.
