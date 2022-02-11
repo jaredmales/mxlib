@@ -120,10 +120,12 @@ struct baseSpectrum
      * \f[ 
        \lambda_0 = \frac{1}{\Delta\lambda_{0}}\int \frac{S(\lambda )}{S_{max}} \lambda d\lambda 
        \f]
+     * which Equation A14 of Bessel 2012.
+     *
      * where the effective width is defined by
        \f[ 
         \Delta\lambda_{o} = \int \frac{S(\lambda )} { S_{max}} d\lambda 
-        \f]
+       \f]
      *
      * The full-width at half-maximum, FWHM, is the distance between the points at 50% of maximum \f$ S(\lambda) \f$.
      *
@@ -138,7 +140,6 @@ struct baseSpectrum
       size_t N = lambda.size();
       realT dl = lambda[1] - lambda[0];
       realT half = static_cast<realT>(0.5);
-      
       
       max = 0;
       for(int i=0; i< N; ++i)
@@ -184,6 +185,8 @@ struct baseSpectrum
    /** To obtain the flux (e.g. W/m^2) multiply these quantities by the effective width calculated using
      * \ref charTrans.
      * 
+     * This implements Equations A11, A12, and A13 of Bessel 2012.
+     * 
      * \warning this only produces correct fphot0 for a spectrum in W/m^3.  DO NOT USE FOR ANYTHING ELSE.
      *
      * \todo use unit conversions to make it work for everything.
@@ -192,18 +195,21 @@ struct baseSpectrum
      */
    template<class filterT>
    void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
-                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in W/m^2/Hz
                   realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
-                  std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
-                  filterT & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
+                  const realT & lambda_0, ///< [in] the mean photon wavelength lambda_0 (from charTrans).
+                  const std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
+                  const filterT & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
                 )
    {
-      charFlux(flambda0, fnu0, fphot0, lambda, trans._spectrum);
+      charFlux(flambda0, fnu0, fphot0, lambda_0, lambda, trans._spectrum);
    }
    
    /// Characterize the flux densities of the spectrum w.r.t. a filter transmission curve
    /** To obtain the flux (e.g. W/m^2) multiply these quantities by the effective width calculated using
      * \ref charTrans.
+     * 
+     * This implements Equations A11, A12, and A13 of Bessel 2012.
      * 
      * \warning this only produces correct fphot0 for a spectrum in W/m^3.  DO NOT USE FOR ANYTHING ELSE.
      *
@@ -212,49 +218,46 @@ struct baseSpectrum
      *
      */
    void charFlux( realT & flambda0, ///< [out] the flux of the star at \f$ \lambda_0 \f$ in W/m^3
-                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in Jy 
+                  realT & fnu0,     ///< [out] the flux of the star at \f$ \lambda_0 \f$  in W/m^2/Hz
                   realT & fphot0,   ///< [out] the flux of the star at \f$ \lambda_0 \f$  in photons/sec/m^3
-                  std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
-                  std::vector<realT> & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
+                  const realT & lambda_0, ///< [in] the mean photon wavelength lambda_0 (from charTrans).
+                  const std::vector<realT> & lambda, ///< [in] the wavelength scale of this spectrum.
+                  const std::vector<realT> & trans  ///< [in] the filter transmission curve over which to characterize, on the same wavelength grid.
                 )
    {
+      constexpr realT h = constants::h<units::si<realT>>();
+      constexpr realT c = constants::c<units::si<realT>>();
+      
       size_t N = lambda.size();
       realT dl = lambda[1] - lambda[0];
       realT half = static_cast<realT>(0.5);
+
+      // flambda0 -- Eqn A11
+
+      realT denom = half*trans[0]*lambda[0];
+      for(int i=1; i< N-1; ++i) denom += trans[i]*lambda[i];
+      denom += half*trans[N-1]*lambda[N-1];
+      denom *= dl;
       
-      realT tottrans = half*trans[0];
-      for(int i=1; i< N-1; ++i) tottrans += trans[i];
-      tottrans += half*trans[N-1];
+      realT num = half*_spectrum[0]*trans[0]*lambda[0];
+      for(int i=1; i< N-1; ++i) num += _spectrum[i]*trans[i]*lambda[i];
+      num += half*_spectrum[N-1]*trans[N-1]*lambda[N-1];
+      num *= dl;
+
+      flambda0  = num / denom;
+
+      // fnu0 -- Eqn A12
+
+      denom = half*trans[0]/lambda[0];
+      for(int i=1; i< N-1; ++i) denom += trans[i]/lambda[i];
+      denom += half*trans[N-1]/lambda[N-1];
+      denom *= dl*c;
       
-      tottrans *= dl;
+      fnu0 = num / denom;
       
-      // flambda0
+      //fphot0 -- Eqn A13
 
-      flambda0 = half*_spectrum[0]*trans[0];
-      for(int i=1; i< N-1; ++i) flambda0 += _spectrum[i]*trans[i];
-      flambda0 += half*_spectrum[N-1]*trans[N-1];
-      flambda0  *= dl/tottrans;
-
-
-      // fnu0
-
-      fnu0 = half*_spectrum[0]*pow(lambda[0],2)*trans[0];
-      for(int i=1; i< N-1; ++i) fnu0 += _spectrum[i]*pow(lambda[i],2)*trans[i];
-      fnu0 += half*_spectrum[N-1]*pow(lambda[N-1],2)*trans[N-1];
-      
-      fnu0 *= 3.33564095E+17 * dl / tottrans;
-      
-      //fphot0
-
-      constexpr realT h = constants::h<units::si<realT>>();
-      constexpr realT c = constants::c<units::si<realT>>();
-
-      fphot0 = half*_spectrum[0] * lambda[0]*trans[0];
-
-      for(int i=1; i< N-1; ++i) fphot0 += _spectrum[i] * lambda[i] *trans[i];
-      fphot0 += half*_spectrum[N-1] * lambda[N-1]*trans[N-1];
-
-      fphot0 *= dl / (h*c*tottrans);
+      fphot0 = flambda0 * lambda_0/(h*c);  
 
    }
 };
