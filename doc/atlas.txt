@@ -1,0 +1,52 @@
+0 0
+1 1
+2 2
+3 3
+4 4
+5 5
+6 6
+7 7
+8 0
+
+//
+
+
+
+
+
+
+1) Disable intel_pstate
+
+- Open /etc/default/grub in an editor
+- Find line with: GRUB_CMDLINE_LINUX_DEFAULT
+- Append intel_pstate=disable to GRUB_CMDLINE_LINUX_DEFAULT
+- save the file
+- Run update-grub
+- Reboot
+
+2) Configure the userspace governor
+
+for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n userspace > $CPUFREQ; done
+for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq; do [ -f $CPUFREQ ] || continue; echo -n 4800000 > $CPUFREQ; done
+for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq; do [ -f $CPUFREQ ] || continue; echo -n 4800000 > $CPUFREQ; done
+
+
+3) Run set latency
+
+
+grep -E '^model name|^cpu MHz' /proc/cpuinfo
+All values should be within ~0.001 of the constant speed of your CPUs.  ATLAS seems to object to even 0.01.
+
+
+//> This fails to build the pt shared libraries
+../configure --with-netlib-lapack-tarfile=../../lapack-3.10.0.tar.gz -b 64 "--force-tids='0 1 2 3 4 5 6 7'" -D c -DPentiumCPS=4000 -Fa alg -fPIC --shared
+
+//> This works:
+../configure --with-netlib-lapack-tarfile=../../lapack-3.10.0.tar.gz -b 64 -D c -DPentiumCPS=4200 --shared
+
+
+#Disable hyperthreading on cores 8-15 
+for cpu in {8..15}
+do
+   /bin/echo 0 > /sys/devices/system/cpu/cpu$cpu/online 
+done

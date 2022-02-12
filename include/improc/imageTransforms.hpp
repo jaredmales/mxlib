@@ -81,6 +81,8 @@ typedef bilinearTransform<double> bilinearTransd;
   *
   * \tparam _arithT is the type in which to do all calculations.  Should be a floating point type.
   *
+  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]"
+  * 
   * \ingroup image_transforms
   */
 template<typename _arithT>
@@ -270,20 +272,22 @@ void imageRotate( arrT & transim,  ///< [out] The rotated image.  Must be pre-al
 
 }//void imageRotate(arrT & transim, const arrT2  &im, floatT dq, transformT trans)
 
-/// Shift an image by whole pixels, wrapping around..
-/** The output image can be smaller than the input image, in which case the wrapping still occurs for the input image, but only
+/// Shift an image by whole pixels with (optional) wrapping.
+/** The output image can be smaller than the input image, in which case the wrapping (if enabled) still occurs for the input image, but only
   * output images worth of pixels are actually shifted.  This is useful, for instance, when propagating large turbulence phase screens
   * where one only needs a small section at a time.
   *
   * \tparam outputArrT is the eigen array type of the output [will be resolved by compiler]
   * \tparam inputArrT is the eigen array type of the input [will be resolved by compiler]
   *
+  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]"
   */
 template<typename outputArrT, typename inputArrT>
 void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
                    inputArrT & in,    ///< [in] the image to be shifted.
                    int dx,            ///< [in] the amount to shift in the x direction
-                   int dy             ///< [in] the amount to shift in the y direction
+                   int dy,            ///< [in] the amount to shift in the y direction
+                   bool wrap = true   ///< [in] flag controlling whether or not to wrap around
                  )
 {
    dx %= in.rows();
@@ -293,33 +297,69 @@ void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Mu
    int outc = out.cols();
    int inr = in.rows();
    int inc = in.cols();
+
    #ifdef MXLIB_USE_OMP
    #pragma omp parallel
    #endif
    {
       int x, y;
 
-      #ifdef MXLIB_USE_OMP
-      #pragma omp for
-      #endif
-      for(int cc=0;cc<outc; ++cc)
+      if(wrap)
       {
-         y = cc - dy;
-
-         if (y < 0) y += inc;
-         else if (y >= inc) y -= inc;
-         
-         for(int rr=0; rr<outr; ++rr)
+         #ifdef MXLIB_USE_OMP
+         #pragma omp for
+         #endif
+         for(int cc=0;cc<outc; ++cc)
          {
-            x = rr - dx;
-            
-            if(x < 0) x += inr;
-            else if (x >= inr) x -= inr;
+            y = cc - dy;
 
-            out(rr, cc) = in(x,y);
+            if (y < 0) y += inc;
+            else if (y >= inc) y -= inc;
+         
+            for(int rr=0; rr<outr; ++rr)
+            {
+               x = rr - dx;
+            
+               if(x < 0) x += inr;
+               else if (x >= inr) x -= inr;
+
+               out(rr, cc) = in(x,y);
+            }
          }
       }
-      
+      else
+      {
+         #ifdef MXLIB_USE_OMP
+         #pragma omp for
+         #endif
+         for(int cc=0;cc<outc; ++cc)
+         {
+            y = cc - dy;
+
+            if (y < 0 || y >= inc)
+            {
+               for(int rr=0; rr<outr; ++rr)
+               {
+                  out(rr,cc) = 0;
+               }
+
+               continue;
+            }
+                  
+                     for(int rr=0; rr<outr; ++rr)
+            {
+               x = rr - dx;
+         
+               if(x < 0 || x >= inr)
+               {
+                  out(rr,cc) = 0;
+                  continue;
+               }
+
+               out(rr, cc) = in(x,y);
+            }
+         }
+      }// if(wrap)-else
    }
 }
 
@@ -336,12 +376,12 @@ void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Mu
   *
   */
 template<typename outputArrT, typename inputArrT, typename scaleArrT>
-void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
-                   inputArrT & in,    ///< [in] the image to be shifted.
-                   scaleArrT & scale, ///< [in] image of scale values applied per-pixel to the output (shifted) image, same size as out
-                   int dx,            ///< [in] the amount to shift in the x direction
-                   int dy             ///< [in] the amount to shift in the y direction
-                 )
+void imageShiftWPScale( outputArrT & out,  ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
+                        inputArrT & in,    ///< [in] the image to be shifted.
+                        scaleArrT & scale, ///< [in] image of scale values applied per-pixel to the output (shifted) image, same size as out
+                        int dx,            ///< [in] the amount to shift in the x direction
+                        int dy            ///< [in] the amount to shift in the y direction
+                      )
 {
    dx %= in.rows();
    dy %= in.cols();
@@ -381,7 +421,10 @@ void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Mu
 }
 
 /// Shift an image.
-/** Uses the given transformation type to shift an image.  
+/** Uses the given transformation type to shift an image such that objects move by (\p dx,\p dy) pixels.  
+  * The shift is such that an object located at the coordinate
+  * (\p -dx, \p -dy) from the center of the image will be moved to the center of the image.  So to move an object
+  * located 2 pixels right (dx) and 2 pixels up (dy) from the center to be at the center, use \p dx = -2, \p dy = -2.
   * 
   * Note that this does not treat the edges
   * of the image, determined by the buffer width (lbuff) of the kernel and the size of shift.  If you wish to 
@@ -394,6 +437,7 @@ void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Mu
   * \tparam floatT2 is a floating point type [will be resolved by compiler]
   * \tparam transformT specifies the transformation to use [will be resolved by compiler]
   *
+  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]" 
   */
 template<typename arrOutT, typename arrInT, typename floatT1, typename floatT2, typename transformT>
 void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  Will be allocated.
@@ -409,6 +453,9 @@ void imageShift( arrOutT & transim, ///< [out] Will contain the shifted image.  
 
    const int lbuff = transformT::lbuff;
    const int width = transformT::width;
+
+   //If this is a whole pixel, just do that.
+   if(dx == floor(dx) && dy == floor(dy)) return imageShiftWP(transim, im, dx, dy, false);
 
    Nrows = im.rows();
    Ncols = im.cols();

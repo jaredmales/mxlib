@@ -305,7 +305,7 @@ int turbAtmosphere<realT>::genLayers()
 
             if(_subTipTilt)
             {
-               Ptiptilt = pow(4*math::func::jinc2(math::pi<realT>() * freq(ii,jj) * _pupD), 2);
+               Ptiptilt = pow(4*math::func::jincN(2,math::pi<realT>() * freq(ii,jj) * _pupD), 2);
             }
 
             psub(ii,jj) = (1 - Ppiston - Ptiptilt);

@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015-2021 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -33,7 +33,6 @@
 #include "../../improc/eigenImage.hpp"
 
 #include "fitsUtils.hpp"
-
 #include "fitsHeader.hpp"
 
 namespace mx
@@ -753,9 +752,9 @@ int fitsFile<dataT>::read(dataT * data)
       }
    }
 
-   //fits_read_pix(m_fptr, getFitsType<dataT>(), fpix, nelements, (void *) &m_nulval,
+   //fits_read_pix(m_fptr, fitsType<dataT>(), fpix, nelements, (void *) &m_nulval,
                                      //(void *) data, &m_anynul, &fstatus);
-   fits_read_subset(m_fptr, getFitsType<dataT>(), fpix, lpix, inc, (void *) &m_nulval,
+   fits_read_subset(m_fptr, fitsType<dataT>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) data, &m_anynul, &fstatus);
 
    if (fstatus && fstatus != 107)
@@ -946,7 +945,7 @@ int fitsFile<dataT>::read(arrT & im)
       }
    }
 
-   if( fits_read_subset(m_fptr, getFitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
+   if( fits_read_subset(m_fptr, fitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) im.data(), &m_anynul, &fstatus) < 0 ) return -1;
 
    if (fstatus && fstatus != 107)
@@ -1055,7 +1054,7 @@ int fitsFile<dataT>::read( cubeT & cube,
 
 
    //Now read first image.
-   fits_read_subset(m_fptr, getFitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
+   fits_read_subset(m_fptr, fitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) cube.image(0).data(), &m_anynul, &fstatus);
 
 
@@ -1086,7 +1085,7 @@ int fitsFile<dataT>::read( cubeT & cube,
       fileName(flist[i], 1);
 
       //Now read image.
-      fits_read_subset(m_fptr, getFitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
+      fits_read_subset(m_fptr, fitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) cube.image(i).data(), &m_anynul, &fstatus);
 
       if (fstatus && fstatus != 107)
@@ -1213,8 +1212,8 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
          }
          else
          {
-            //Otherwise we append it as an unknown type, using void *
-            head.append(keyword, (void *) value, comment);
+            //Otherwise we append it as an unknown type
+            head.append(keyword, value, comment);
          }
       }
       else
@@ -1222,10 +1221,10 @@ int fitsFile<dataT>::readHeader(fitsHeader & head)
          head_keys_it = head_keys.begin();
          while(head_keys_it != head_keys.end())
          {
-            if( (*(*head_keys_it)).keyword == keyword)
+            if( (*(*head_keys_it)).keyword() == keyword)
             {
-               head[keyword].value = value;
-               if(comment) head[keyword].comment = comment;
+               head[keyword].value(value);
+               if(comment) head[keyword].comment(comment);
 
                head_keys.erase(head_keys_it);
 
@@ -1309,7 +1308,7 @@ int fitsFile<dataT>::write( const dataT * im,
    }
    m_isOpen = true;
 
-   fits_create_img( m_fptr, getFitsBITPIX<dataT>(), m_naxis, m_naxes, &fstatus);
+   fits_create_img( m_fptr, fitsBITPIX<dataT>(), m_naxis, m_naxes, &fstatus);
    if (fstatus)
    {
       std::string explan = "Error creating image";
@@ -1328,7 +1327,7 @@ int fitsFile<dataT>::write( const dataT * im,
 
    for(int i=0;i<m_naxis;++i) nelements *= m_naxes[i];
 
-   fits_write_pix( m_fptr,  getFitsType<dataT>(), fpixel, nelements, (void *) im, &fstatus);
+   fits_write_pix( m_fptr,  fitsType<dataT>(), fpixel, nelements, (void *) im, &fstatus);
    if (fstatus)
    {
       std::string explan = "Error writing data";

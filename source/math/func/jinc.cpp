@@ -50,17 +50,45 @@ __float128 jinc<__float128>(const __float128 & x);
 
 
 template
-float jinc2<float>(const float & x);
+float jincN<float, float>( const float & v,
+                           const float & x
+                         );
 
 template
-double jinc2<double>(const double & x);
+float jincN<int, float>( const int & v,
+                         const float & x
+                       );
 
 template
-long double jinc2<long double>(const long double & x);
+double jincN<double, double>( const double & v,
+                              const double & x
+                            );
+
+template
+double jincN<int, double>( const int & v,
+                           const double & x
+                         );
+
+template
+long double jincN<long double, long double>( const long double & v,
+                                             const long double & x
+                                           );
+
+template
+long double jincN<int, long double>( const int & v,
+                                     const long double & x
+                                   );
 
 #ifdef HASQUAD
 template
-__float128 jinc2<__float128>(const __float128 & x);
+__float128 jincN<__float128, __float128>( const __float128 & v,
+                                          const __float128 & x
+                                        );
+
+template
+__float128 jincN<int, __float128>( const int & v,
+                                   const __float128 & x
+                                 );
 #endif
 
 } //namespace func 

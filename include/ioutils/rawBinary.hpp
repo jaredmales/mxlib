@@ -31,12 +31,61 @@
 #include <string>
 
 #include "../mxlib.hpp"
-#include "../mxError.hpp"
+#include "../mxException.hpp"
 
 namespace mx
 {
 namespace ioutils
 {
+
+/// Read an array of data from a file as raw binary.
+/** Here raw binary means no formatting or metadata.
+  *
+  * \ingroup ioutils
+  *
+  * \returns 0 on success
+  * \returns -1 on error
+  */
+template<typename T>
+int readRawBinary( T * data,                    ///< [out] the data pointer
+                   size_t szData,               ///< [in] number of elements of sizeof(T) to read
+                   const std::string & fileName ///< [in] the file to read from
+                 )
+{
+   FILE * fout;
+
+   fout = fopen(fileName.c_str(), "rb");
+   if(fout == 0)
+   {
+      mxThrowExceptionErrno(mx::err::fileoerr, errno, "readRawBinary", "Error from fopen [" + fileName + "]");
+   }
+
+   int nrd = fread( data, sizeof(T), szData, fout);
+
+   if(nrd != szData)
+   {
+      int en = errno; //get this before fclose
+      fclose(fout);
+      //Have to handle case where EOF reached but no error.
+      if(en != 0)
+      {
+         mxThrowExceptionErrno(mx::err::filererr, en, "readRawBinary", "Error from file [" + fileName + "]");
+      }
+      else
+      {
+         mxThrowException(mx::err::filererr,"readRawBinary", "Error reading from file, did not read all elements. [" + fileName+ "]");
+      }
+   }
+
+   int res = fclose(fout);
+
+   if(res != 0)
+   {
+      mxThrowExceptionErrno(mx::err::filecerr, errno, "readRawBinary", "Error closing file [" + fileName+ "]");
+   }
+
+   return 0;
+}
 
 /// Write an array of data to file as raw binary.
 /** Here raw binary means no formatting or metadata,
@@ -58,8 +107,7 @@ int writeRawBinary( const std::string & fileName, ///< [in] the file to write to
    fout = fopen(fileName.c_str(), "wb");
    if(fout == 0)
    {
-      mxPError("writeRawBinary", errno, "Error from fopen [" + fileName + "]");
-      return -1;
+      mxThrowExceptionErrno(mx::err::fileoerr, errno, "writeRawBinary", "Error from fopen [" + fileName + "]");
    }
 
 
@@ -67,25 +115,26 @@ int writeRawBinary( const std::string & fileName, ///< [in] the file to write to
 
    if(nwr != szData)
    {
+      int en = errno; //save before close call
+      fclose(fout);
+      
       //Have to handle case where EOF reached but no error.
-      if(errno != 0)
+      if(en != 0)
       {
-         mxPError("writeRawBinary", errno, "Error writing to file [" + fileName + "]");
+         mxThrowExceptionErrno(mx::err::filewerr, en, "writeRawBinary", "Error writing to file [" + fileName + "]");
       }
       else
       {
-         mxError("writeRawBinary", MXE_FILERERR, "Error writing to file, did not write all elements. [" + fileName+ "]");
+         mxThrowException(mx::err::filewerr, "writeRawBinary", "Error writing to file, did not write all elements. [" + fileName+ "]");
       }
-      fclose(fout);
-      return -1;
+      
    }
 
    int res = fclose(fout);
 
    if(res != 0)
    {
-      mxPError("writeRawBinary", errno, "Error closing file [" + fileName + "]");
-      return -1;
+      mxThrowExceptionErrno(mx::err::filecerr, errno, "writeRawBinary", "Error closing file [" + fileName+ "]");
    }
 
    return 0;

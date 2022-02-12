@@ -827,8 +827,10 @@ INPUT                  = ./groupdefs.dox \
                          ../source/sigproc \
                          ../source/sys \
                          ../tests/include/ao \
+                         ../tests/include/ao/analysis \
                          ../tests/include/app \
                          ../tests/include/astro \
+                         ../tests/include/improc \
                          ../tests/include/ioutils \
                          ../tests/include/math \
                          ../tests/include/math/cuda \

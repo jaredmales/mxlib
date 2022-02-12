@@ -879,7 +879,7 @@ int HCIobservation<_realT>::readFiles()
       {
          for(size_t i=0;i<m_imageMJD.size();++i)
          {
-            m_imageMJD[i] = m_heads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
+            m_imageMJD[i] = m_heads[i][m_MJDKeyword].template value<realT>()*m_MJDUnits;
          }
       }
    }
@@ -1070,7 +1070,7 @@ int HCIobservation<_realT>::readRDIFiles()
       {
          for(size_t i=0;i<m_RDIimageMJD.size();++i)
          {
-            m_RDIimageMJD[i] = m_RDIheads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
+            m_RDIimageMJD[i] = m_RDIheads[i][m_MJDKeyword].template value<realT>()*m_MJDUnits;
          }
       }
    }
@@ -1235,7 +1235,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
 
       for(size_t i=0;i< coaddKeywords.size(); ++i)
       {
-         initVals[i] = heads[im0][coaddKeywords[i]].Value<double>();
+         initVals[i] = heads[im0][coaddKeywords[i]].value<double>();
       }
 
       //Now increment imF, then test whether each variable is now outside the range
@@ -1277,7 +1277,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
          
          for(size_t i=0;i<coaddKeywords.size(); ++i)
          {
-            initVals[i] += heads[imno][coaddKeywords[i]].Value<double>();
+            initVals[i] += heads[imno][coaddKeywords[i]].value<double>();
          }
       }
 
@@ -1332,7 +1332,7 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
       imageMJD[i] = avgMJD[i];
       for(size_t j=0;j<coaddKeywords.size(); ++j)
       {
-         heads[i][coaddKeywords[j]].setValue(avgVals[i][j]);
+         heads[i][coaddKeywords[j]].value(avgVals[i][j]);
       }
    }
    
@@ -1850,7 +1850,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "FDELFRNT not found in FITS header.");
       return -1;
    }
-   m_deleteFront = fh["FDELFRNT"].Value<int>();
+   m_deleteFront = fh["FDELFRNT"].value<int>();
    std::cerr << "deleteFront: " << m_deleteFront << "\n";
    
    if(fh.count("FDELBACK") == 0)
@@ -1858,7 +1858,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "FDELBACK not found in FITS header.");
       return -1;
    }
-   m_deleteBack = fh["FDELBACK"].Value<int>();
+   m_deleteBack = fh["FDELBACK"].value<int>();
    std::cerr << "deleteBack: " << m_deleteBack << "\n";
    
    if(fh.count("QFILE") == 0)
@@ -1874,7 +1874,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "QTHRESH not found in FITS header.");
       return -1;
    }
-   m_qualityThreshold = fh["QTHRESH"].Value<realT>();
+   m_qualityThreshold = fh["QTHRESH"].value<realT>();
    std::cerr << "qualityThreshold: " << m_qualityThreshold << "\n";
    
    if(fh.count("COADMTHD") == 0)
@@ -1887,13 +1887,13 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
    
    if(fh.count("COADIMNO") != 0)
    {
-      m_coaddMaxImno = fh["COADIMNO"].Value<int>();
+      m_coaddMaxImno = fh["COADIMNO"].value<int>();
       std::cerr << "coaddMaxImno: " << m_coaddMaxImno << "\n";
    }
    
    if(fh.count("COADTIME") != 0)
    {
-      m_coaddMaxImno = fh["COADTIME"].Value<realT>();
+      m_coaddMaxImno = fh["COADTIME"].value<realT>();
       std::cerr << "coaddMaxtime: " << m_coaddMaxTime << "\n";
    }
    
@@ -1913,7 +1913,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPBEFORE not found in FITS header.");
       return -1;
    }
-   m_preProcess_beforeCoadd = fh["PPBEFORE"].Value<bool>();
+   m_preProcess_beforeCoadd = fh["PPBEFORE"].value<int>();
    std::cerr << "preProcess_beforeCoadd: " << m_preProcess_beforeCoadd << "\n";
    
    if(fh.count("PPMASK") == 0)
@@ -1921,7 +1921,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPMASK not found in FITS header.");
       return -1;
    }
-   m_preProcess_mask = fh["PPMASK"].Value<bool>();
+   m_preProcess_mask = fh["PPMASK"].value<int>();
    std::cerr << "preProcess_mask: " << m_preProcess_mask << "\n";
    
    if(fh.count("PPSUBRAD") == 0)
@@ -1929,7 +1929,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPSUBRAD not found in FITS header.");
       return -1;
    }
-   m_preProcess_subradprof = fh["PPSUBRAD"].Value<bool>();
+   m_preProcess_subradprof = fh["PPSUBRAD"].value<int>();
    std::cerr << "preProcess_subradprof: " << m_preProcess_subradprof << "\n";
    
    if(fh.count("PPAUSMAW") == 0)
@@ -1937,7 +1937,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPAUSMAW not found in FITS header.");
       return -1;
    }
-   m_preProcess_azUSM_azW = fh["PPAUSMAW"].Value<realT>();
+   m_preProcess_azUSM_azW = fh["PPAUSMAW"].value<realT>();
    std::cerr << "preProcess_azUSM_azW: " << m_preProcess_azUSM_azW << "\n";
    
    if(fh.count("PPAUSMRW") == 0)
@@ -1945,7 +1945,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPAUSMRW not found in FITS header.");
       return -1;
    }
-   m_preProcess_azUSM_radW = fh["PPAUSMRW"].Value<realT>();
+   m_preProcess_azUSM_radW = fh["PPAUSMRW"].value<realT>();
    std::cerr << "preProcess_azUSM_radW: " << m_preProcess_azUSM_radW << "\n";
    
    if(fh.count("PPGUSMFW") == 0)
@@ -1953,7 +1953,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
       mxError("KLIPReduction", MXE_PARAMNOTSET, "PPGUSMFW not found in FITS header.");
       return -1;
    }
-   m_preProcess_gaussUSM_fwhm = fh["PPGUSMFW"].Value<realT>();
+   m_preProcess_gaussUSM_fwhm = fh["PPGUSMFW"].value<realT>();
    std::cerr << "preProcess_gaussUSM_fwhm: " << m_preProcess_gaussUSM_fwhm << "\n";
    
 
@@ -2067,7 +2067,7 @@ int HCIobservation<_realT>::readPSFSub( const std::string & dir,
          {
             for(size_t i=0;i<m_imageMJD.size();++i)
             {
-               m_imageMJD[i] = m_heads[i][m_MJDKeyword].template Value<realT>()*m_MJDUnits;
+               m_imageMJD[i] = m_heads[i][m_MJDKeyword].template value<realT>()*m_MJDUnits;
             }
          }
       }

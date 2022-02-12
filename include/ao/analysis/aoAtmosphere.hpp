@@ -25,6 +25,8 @@
 
 #include "../../math/constants.hpp"
 
+#include "../../app/appConfigurator.hpp"
+
 namespace mx
 {
 namespace AO
@@ -365,6 +367,18 @@ public:
      */
    void z_mean(const realT & zm /**< [in] is the new value of m_v_wind. */);
    
+   /// Set the value of m_nonKolmogorov 
+   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
+     */
+   void nonKolmogorov( const bool & nk /**< [in] the value of m_nonKolmogorov*/);
+
+   /// Return the value of m_nonKolmogorov 
+   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
+     * 
+     * \returns the current value of m_nonKolmogorov 
+     */
+   bool nonKolmogorov();
+
    ///Return the PSD index for Kolmogorov turbulence.
    /** Satifies the requirements of psdParamsT.
      *
@@ -540,6 +554,25 @@ public:
      */ 
    template<typename iosT>
    iosT & dumpAtmosphere( iosT & ios /**< [in] a std::ostream-like stream. */);
+
+   /// \name mx::application support
+   /** @{
+     */
+   
+   /// Setup the configurator to configure this class
+   /**
+     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]" 
+     */
+   void setupConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+
+   /// Load the configuration of this class from a configurator
+   /**
+     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+     */
+   void loadConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+
+
+   /// @}
 };
 
 template<typename realT>
@@ -670,6 +703,13 @@ realT aoAtmosphere<realT>::layer_z(const size_t n)
 }
 
 template<typename realT>
+void aoAtmosphere<realT>::layer_z(const std::vector<realT> & z)
+{
+  m_layer_z = z;
+  m_z_mean_updated = false;
+}
+
+template<typename realT>
 std::vector<realT> aoAtmosphere<realT>::layer_z()
 {
    return m_layer_z;
@@ -699,12 +739,6 @@ void aoAtmosphere<realT>::H( realT nH )
    m_H = nH;
 }
    
-template<typename realT>
-void aoAtmosphere<realT>::layer_z(const std::vector<realT> & z)
-{
-  m_layer_z = z;
-   m_z_mean_updated = false;
-}
 
 template<typename realT>
 realT aoAtmosphere<realT>::layer_Cn2(const int n)
@@ -722,7 +756,6 @@ template<typename realT>
 void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT l0)
 {
    m_layer_Cn2 = cn2; 
-   
    
    realT layer_norm = 0;
    
@@ -902,6 +935,18 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
         m_layer_z[i] =m_layer_z[i]*(zm/zh_old);
       }
    }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::nonKolmogorov( const bool & nk )
+{
+   m_nonKolmogorov = nk;
+}
+
+template<typename realT>
+bool aoAtmosphere<realT>::nonKolmogorov()
+{
+   return m_nonKolmogorov;
 }
 
 template<typename realT>
@@ -1168,6 +1213,91 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    return ios;
 }
  
+template<typename realT>
+void aoAtmosphere<realT>::setupConfig( app::appConfigurator & config )
+{
+   using namespace mx::app;
+
+   config.add("atm.r_0"          ,"", "atm.r_0"          , argType::Required, "atm", "r_0",           false, "real"        , "Fried's parameter [m]");
+   config.add("atm.lam_0"        ,"", "atm.lam_0"        , argType::Required, "atm", "lam_0",         false, "real"        , "The reference wavlength for r_0 [m]");
+   config.add("atm.L_0"          ,"", "atm.L_0"          , argType::Required, "atm", "L_0",           false, "vector<real>", "Layer outer scales [m]");
+   config.add("atm.l_0"          ,"", "atm.l_0"          , argType::Required, "atm", "l_0",           false, "vector<real>", "Layer inner scales [m]");
+   config.add("atm.layer_z"      ,"", "atm.layer_z"      , argType::Required, "atm", "layer_z",       false, "vector<real>", "layer heights [m]");
+   config.add("atm.h_obs"        ,"", "atm.h_obs"        , argType::Required, "atm", "h_obs",         false, "real"        , "height of observatory [m]");
+   config.add("atm.H"            ,"", "atm.H"            , argType::Required, "atm", "H",             false, "real"        , "atmospheric scale heights [m]");
+   config.add("atm.layer_Cn2"    ,"", "atm.layer_Cn2"    , argType::Required, "atm", "layer_Cn2",     false, "vector<real>", "Layer Cn^2.  Note that this does not set r_0.");  
+   config.add("atm.layer_v_wind" ,"", "atm.layer_v_wind" , argType::Required, "atm", "layer_v_wind",  false, "vector<real>", "Layer wind speeds [m/s]");
+   config.add("atm.layer_dir"    ,"", "atm.layer_dir"    , argType::Required, "atm", "layer_dir",     false, "vector<real>", "Layer wind directions [rad]");
+   config.add("atm.v_wind"       ,"", "atm.v_wind"       , argType::Required, "atm", "v_wind",        false, "real"        , "Mean windspeed (5/3 momement), rescales layers [m/s]");
+   config.add("atm.z_mean"       ,"", "atm.z_mean"       , argType::Required, "atm", "z_mean",        false, "real"        , "Mean layer height (5/3 momemnt), rescales layers [m/s]");   
+   config.add("atm.nonKolmogorov","", "atm.nonKolmogorov", argType::Required, "atm", "nonKolmogorov", false, "bool"        , "Set to use a non-Kolmogorov PSD. See alpha and beta.");   
+   config.add("atm.alpha"        ,"", "atm.alpha"        , argType::Required, "atm", "alpha"        , false, "real"        , "Non-kolmogorov PSD exponent.");   
+   config.add("atm.beta"         ,"", "atm.beta"         , argType::Required, "atm", "beta"         , false, "real"        , "Non-kolmogorov PSD normalization constant.");   
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
+{
+   //Here "has side effecs" means that the set function does more than simply copy the value.
+   
+   //The order of lam_0, Cn2, and r_0 is so that r_0 overrides the value set with Cn2 if lam_0 != 0.
+   //lam_0 comes first because it calibrates r0 and Cn2
+
+   //lam_0
+   config(m_lam_0, "atm.lam_0");
+
+   //layer_Cn2
+   std::vector<realT> lcn2 = m_layer_Cn2;
+   config(lcn2, "atm.layer_Cn2"); 
+   if(config.isSet("atm.layer_Cn2")) layer_Cn2(lcn2); 
+
+   realT r0 = r_0();
+   config(r0, "atm.r_0");
+   if(config.isSet("atm.r_0")) r_0(r0, m_lam_0);
+
+   config(m_L_0, "atm.L_0");
+   
+   config(m_l_0, "atm.l_0");
+   
+   //Has side effects:
+   std::vector<realT> layz = m_layer_z;
+   config(layz, "atm.layer_z"); //Do this no matter what to record source
+   if(config.isSet("atm.layer_z")) layer_z(layz); //but only call this if changed
+
+   config(m_h_obs, "atm.h_obs");
+   config(m_H, "atm.H");
+
+   //Has side effects:
+   std::vector<realT> lvw = m_layer_v_wind;
+   config(lvw, "atm.layer_v_wind"); //Do this no matter what to record source
+   if(config.isSet("atm.layer_v_wind")) layer_v_wind(lvw); //but only call this if changed
+
+   //Has side effects:
+   std::vector<realT> ld = m_layer_dir;
+   config(ld, "atm.layer_dir"); //Do this no matter what to record source
+   if(config.isSet("atm.layer_dir")) layer_dir(ld); //but only call this if changed
+
+   realT vw = m_v_wind;
+   config(vw,"atm.v_wind"); //Do this no matter what to record source
+   if(config.isSet("atm.v_wind")) v_wind(vw); //but only call this if changed
+
+   realT zm = m_z_mean;
+   config(zm,"atm.z_mean"); //Do this no matter what to record source
+   if(config.isSet("atm.z_mean")) z_mean(zm); //but only call this if changed
+   
+   config(m_nonKolmogorov, "atm.nonKolmogorov");
+
+   realT a = m_alpha;
+   config(a, "atm.alpha");
+   if(config.isSet("atm.alpha")) alpha(a); //this sets m_nonKolmogorov
+
+   realT b = m_beta;
+   config(b, "atm.beta");
+   if(config.isSet("atm.beta")) alpha(b); //this sets m_nonKolmogorov
+
+}
+
+
 extern template
 class aoAtmosphere<float>;
 

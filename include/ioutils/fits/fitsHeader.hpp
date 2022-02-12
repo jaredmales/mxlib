@@ -6,7 +6,7 @@
   */
   
 //***********************************************************************//
-// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -341,7 +341,7 @@ void fitsHeader::insert_after( headerIterator it,
   */
 template<typename dataT>
 void headersToValues( std::vector<dataT> & v, 
-                      const std::vector<fitsHeader> & heads, 
+                      std::vector<fitsHeader> & heads, 
                       const std::string &keyw
                     )
 {
@@ -349,7 +349,7 @@ void headersToValues( std::vector<dataT> & v,
    
    for(size_t i=0;i<heads.size(); ++i)
    {
-      v[i] = heads[i][keyw].Value<dataT>();//convertFromString<dataT>(heads[i][keyw].value);
+      v[i] = heads[i][keyw].value<dataT>();//convertFromString<dataT>(heads[i][keyw].value);
    }
 
 }
@@ -365,7 +365,7 @@ void headersToValues( std::vector<dataT> & v,
   * \retval std::vector<dataT> containing the converted values
   */
 template<typename dataT>
-std::vector<dataT> headersToValues( const std::vector<fitsHeader> & heads, 
+std::vector<dataT> headersToValues( std::vector<fitsHeader> & heads, 
                                     const std::string &keyw
                                   )
 {
