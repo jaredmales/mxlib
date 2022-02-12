@@ -54,6 +54,7 @@ struct gsl_interp_linear
    }
 };
 
+#ifndef MX_OLD_GSL
 /// GSL Steffen Interpolation
 /** \ingroup interpolation
   */
@@ -67,7 +68,7 @@ struct gsl_interp_steffen
       return ::gsl_interp_steffen;
    }
 };
-
+#endif
 
 /// Class to manage interpolation using the GSL interpolation library.
 /**
