@@ -1344,7 +1344,14 @@ int fitsFile<dataT>::write( const dataT * im,
 
       for(it = head->begin(); it != head->end(); ++it)
       {
-         it->write(m_fptr);
+         int wrv = it->write(m_fptr);
+         if(wrv != 0)
+         {
+            std::string explan = "Error writing keyword";
+            fitsErrText(explan, m_fileName, wrv);
+            mxError("fitsFile", MXE_FILEWERR, explan);
+         }
+
       }
    }
 
