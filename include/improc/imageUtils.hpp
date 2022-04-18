@@ -143,7 +143,7 @@ typename imageT::Scalar imageVariance( imageT & im,                 ///< [in] th
 template<typename imageT>
 int imageCenterOfLight( typename imageT::Scalar & x,
                         typename imageT::Scalar & y,
-                        imageT & im
+                        const imageT & im
                       )
 {
    x =0;
