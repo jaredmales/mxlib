@@ -332,7 +332,7 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
 
       if(m_subTipTilt)
       {
-         Ptiptilt = pow(4*math::func::jinc2(math::pi<realT>()*k*m_D), 2);
+         Ptiptilt = pow(4*math::func::jincN(2, math::pi<realT>()*k*m_D), 2);
       }
       else Ptiptilt = 0;
    }

@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -31,176 +31,6 @@ namespace mx
 namespace fits 
 {
    
-template<> 
-int getFitsType<char *>()
-{
-   return TSTRING;
-}
-
-template<> 
-int getFitsType<std::string>()
-{
-   return TSTRING;
-}
-
-
-template<> 
-int getFitsType<unsigned char>()
-{
-   return TBYTE;
-}
-
-template<> 
-int getFitsType<signed char>()
-{
-   return TSBYTE;
-}
-
-template<> 
-int getFitsType<char>()
-{
-   return TSBYTE;
-}
-
-template<> 
-int getFitsType<short>()
-{
-   return TSHORT;
-}
-
-template<> 
-int getFitsType<unsigned short>()
-{
-   return TUSHORT;
-}
-
-template<> 
-int getFitsType<int>()
-{
-   return TINT;
-}
-
-template<> 
-int getFitsType<unsigned int>()
-{
-   return TUINT;
-}
-
-template<> 
-int getFitsType<long>()
-{
-   return TLONG;
-}
-
-template<> 
-int getFitsType<long long>()
-{
-   return TLONGLONG;
-}
-
-template<> 
-int getFitsType<unsigned long>()
-{
-   return TULONG;
-}
-
-template<> 
-int getFitsType<float>()
-{
-   return TFLOAT;
-}
-
-template<> 
-int getFitsType<double>()
-{
-   return TDOUBLE;
-}
-
-
-template<> 
-int getFitsType<fitsUnknownType>()
-{
-   return fitsTUNKNOWN;
-}
-
-template<> 
-int getFitsType<fitsCommentType>()
-{
-   return fitsTCOMMENT;
-}
-
-template<> 
-int getFitsType<fitsHistoryType>()
-{
-   return fitsTHISTORY;
-}
-
-template<> 
-int getFitsBITPIX<char>()
-{
-   return SBYTE_IMG;
-}
-
-template<> 
-int getFitsBITPIX<signed char>()
-{
-   return SBYTE_IMG;
-}
-
-template<> 
-int getFitsBITPIX<unsigned char>()
-{
-   return BYTE_IMG;
-}
-
-template<> 
-int getFitsBITPIX<short>()
-{
-   return SHORT_IMG;
-}
-
-template<> 
-int getFitsBITPIX<unsigned short>()
-{
-   return USHORT_IMG;
-}
-
-template<> 
-int getFitsBITPIX<int>()
-{
-   return LONG_IMG; //Yes, this is right.  This returns 32
-}
-
-template<> 
-int getFitsBITPIX<unsigned int>()
-{
-   return ULONG_IMG; //Yes, this is right, this returns 40
-}
-
-template<> 
-int getFitsBITPIX<long>()
-{
-   return LONGLONG_IMG; //Yes, this is right, this returns 64
-}
-
-template<> 
-int getFitsBITPIX<unsigned long>()
-{
-   return ULONGLONG_IMG; //Yes, this is right, this returns 64
-}
-
-template<> 
-int getFitsBITPIX<float>()
-{
-   return FLOAT_IMG;
-}
-
-template<> 
-int getFitsBITPIX<double>()
-{
-   return DOUBLE_IMG;
-}
-
 int fitsStripApost(std::string & s)
 {  
    int stripped = 0;
@@ -241,23 +71,27 @@ void fitsPopulateCard( char headStr[81],
    
    int rpos = 0;
    
-   snprintf(headStr, 9, "%-8s", keyword);
-   headStr[8] = '=';
-   rpos = 10;
-   
+   if(strlen(keyword) > 8)
+   {
+      rpos += snprintf(headStr, 81, "HIERARCH ");
+      
+      rpos += snprintf(headStr + rpos, 81-rpos, "%s =", keyword);
+   }
+   else
+   {
+      rpos += snprintf(headStr, 81, "%-8s=", keyword);
+   }
+
    if(strlen(value) < stdValWidth)
    {
       char fstr[10];
       snprintf(fstr, 10, "%%+%ds", stdValWidth);
-      snprintf(headStr + rpos, 81-rpos, fstr, value);
-      
+      rpos += snprintf(headStr + rpos, 81-rpos, fstr, value);
    }
    else
    {
-      snprintf(headStr + rpos, 81-rpos, "%s", value);
+      rpos += snprintf(headStr + rpos, 81-rpos, "%s", value);
    }
-   
-   rpos = strlen(headStr);
    
    headStr[rpos] = ' ';
    ++rpos;
@@ -291,11 +125,21 @@ int fits_write_key<std::string>(fitsfile * fptr, char * keyword, void * value, c
    return fits_write_key<char *>(fptr, keyword, value, comment);
 }
 
+template<>
+int fits_write_key<bool>(fitsfile * fptr, char * keyword, void * value, char * comment)
+{
+   unsigned char bc = *((bool *)value);
+
+   int fstatus = 0;
+   
+   fits_write_key(fptr, fitsType<unsigned char>(), keyword, &bc, comment,  &fstatus);
+   
+   return fstatus;
+}
 
 template<> 
 int fits_write_key<fitsUnknownType>(fitsfile * fptr, char * keyword, void * value, char * comment)
 {
-   
    
    int fstatus = 0;
 

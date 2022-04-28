@@ -1112,7 +1112,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
       mxError("KLIPReduction", MXE_PARAMNOTSET, "MINDPX not found in FITS header.");
       return -1;
    }
-   m_minDPx = fh["MINDPX"].Value<realT>();
+   m_minDPx = fh["MINDPX"].value<realT>();
    std::cerr << "minDPx: " << m_minDPx << "\n";
    
    if(fh.count("EXMTHDMX") == 0)
@@ -1128,7 +1128,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
       mxError("KLIPReduction", MXE_PARAMNOTSET, "MAXDPX not found in FITS header.");
       return -1;
    }
-   m_maxDPx = fh["MAXDPX"].Value<realT>();
+   m_maxDPx = fh["MAXDPX"].value<realT>();
    std::cerr << "maxDPx: " << m_maxDPx << "\n";
 
    if(fh.count("INMTHDMX") == 0)
@@ -1144,7 +1144,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
       mxError("KLIPReduction", MXE_PARAMNOTSET, "INCLREFN not found in FITS header.");
       return -1;
    }
-   m_includeRefNum = fh["INCLREFN"].Value<int>();
+   m_includeRefNum = fh["INCLREFN"].value<int>();
    std::cerr << "includedRefNum: " << m_includeRefNum << "\n";
 
 

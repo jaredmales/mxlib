@@ -528,7 +528,7 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
    if( (fakePSF.rows() < ims.rows() && fakePSF.cols() >= ims.cols()) || 
                         (fakePSF.rows() >= ims.rows() && fakePSF.cols() < ims.cols()))
    {
-      throw mxException("mxlib:high contrast imaging", -1, "image wrong size",  __FILE__, __LINE__, "fake PSF has different dimensions and can't be sized properly");
+      mxThrowException(err::sizeerr, "ADIobservation::injectFake", "fake PSF has different dimensions and can't be sized properly");
    }
    
    //Check if fake needs to be padded out

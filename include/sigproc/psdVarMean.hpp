@@ -36,7 +36,7 @@
 
 #include "../math/func/bessel.hpp"
 #include "../math/constants.hpp"
-#include "../math/gslInterpolation.hpp"
+#include "../math/gslInterpolator.hpp"
 
 #include "psdFilter.hpp"
 
@@ -66,7 +66,11 @@ struct psdVarMeanParams
    
    bool initialized {false}; ///< Flag controlling whether the interpolator is initialized
    
-   math::gslInterpolator<realT> terp; ///< Interpolator for the PSD
+   #ifdef MX_OLD_GSL
+   math::gslInterpolator<math::gsl_interp_linear<realT>> terp; ///< Interpolator for the PSD
+   #else 
+   math::gslInterpolator<math::gsl_interp_steffen<realT>> terp; ///< Interpolator for the PSD
+   #endif
    
    /// Get the value of the PSD at k using interpolation
    /** Extrapolates outside the range of frequencies in freq.
@@ -89,11 +93,12 @@ struct psdVarMeanParams
             exit(-1);
          }
          
-         #ifdef MX_OLD_GSL
-         terp.setup(gsl_interp_linear, *freq, *psd);
-         #else 
-         terp.setup(gsl_interp_steffen, *freq, *psd);
-         #endif
+         terp.setup(*freq, *psd);
+         //#ifdef MX_OLD_GSL
+         //terp.setup(gsl_interp_linear, *freq, *psd);
+         //#else 
+         //terp.setup(gsl_interp_steffen, *freq, *psd);
+         //#endif
 
          minf = (*freq)[0];
          maxf = (*freq)[freq->size()-1];
@@ -123,6 +128,8 @@ struct psdVarMeanParams
   * \tparam paramsT the type of the parameter structure. See psdVarMean.
   * 
   * \returns the value of the integrand at k
+  * 
+  *
   */ 
 template<typename paramsT>
 typename paramsT::realT psdVarMeanFunc( typename paramsT::realT k, ///< [in] the scaled frequency coordinate
@@ -145,6 +152,8 @@ typename paramsT::realT psdVarMeanFunc( typename paramsT::realT k, ///< [in] the
   * \todo document the paramsT interface
   * 
   * \tparam paramsT is a parameter structure with the correct interface.
+  * 
+  *  \ingroup psds
   */
 template<typename paramsT>
 struct psdVarMean

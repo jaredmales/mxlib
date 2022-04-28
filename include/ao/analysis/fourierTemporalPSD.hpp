@@ -51,7 +51,6 @@
 
 #include "../../ipc/ompLoopWatcher.hpp"
 #include "../../mxError.hpp"
-#include "../../math/gslInterpolation.hpp"
 
 #include "aoSystem.hpp"
 #include "aoPSDs.hpp"

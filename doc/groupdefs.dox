@@ -40,6 +40,11 @@
   * \ingroup error_handling
   */
 
+/** \defgroup exceptions Exceptions
+  * \brief Exceptions with detailed information
+  * \ingroup error_handling
+  */
+
 //See error_handling_files
 
 //------------------ gen_math -----------------------
@@ -99,6 +104,11 @@
   * \ingroup template_blaslap
   */
 
+/** \defgroup integration Integration 
+  * \brief Various tools for integration of functions 
+  * \ingroup gen_math 
+  */
+  
 /** \defgroup interpolation Interpolation
   * \brief Various tools for interpolating data and discrete functions.
   * \ingroup gen_math

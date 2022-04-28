@@ -356,7 +356,7 @@ struct venusAlbedo
    ///The name of the datafile is a constant.
    static std::string fileName( const std::string & name )
    {
-      if(name == "Venus") return "venus_albedo_normalized.dat";
+      if(name == "Venus") return "venus_combined_albedo.dat";
 
       mxError("earthAlbeo::fileName", MXE_INVALIDARG, "name not recognized.");
 

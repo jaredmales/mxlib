@@ -11,7 +11,9 @@
 #include <vector>
 
 #include "../../math/geo.hpp"
+
 #include "../../sigproc/psdUtils.hpp"
+
 #include "../../sigproc/autocorrelation.hpp"
 #include "../../sigproc/linearPredictor.hpp"
 

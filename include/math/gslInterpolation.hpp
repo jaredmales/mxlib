@@ -3,12 +3,12 @@
   * 
   * \author Jared R. Males (jaredmales@gmail.com)
   * 
-  * \ingroup interpolation
+  * \ingroup gen_math_files
   *
   */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -31,81 +31,15 @@
 
 #include <vector>
 #include <gsl/gsl_interp.h>
+#include <gsl/gsl_errno.h>
+
+#include "../mxException.hpp"
 
 namespace mx
 {
 namespace math
 {
    
-template<typename _realT>
-struct gslInterpolator
-{
-   typedef _realT realT;
-   
-   static_assert( std::is_same<double, typename std::remove_cv<realT>::type>::value, "GSL Interpolation only works with double");
-   
-   gsl_interp * interp {0};
-   gsl_interp_accel * acc {0};
-   
-   realT *_xin;
-   realT *_yin;
-   
-   void setup(const gsl_interp_type * interpT, realT *xin, realT *yin, size_t Nin)
-   {
-      if(interp) gsl_interp_free(interp);
-      if(acc) gsl_interp_accel_free(acc);
-      
-      interp =  gsl_interp_alloc(interpT, Nin);
-      acc = gsl_interp_accel_alloc ();
-
-      gsl_interp_init(interp, xin, yin, Nin);
-   
-      gsl_interp_accel_reset(acc);
-      
-      _xin = xin;
-      _yin = yin;
-   }
-   
-   void setup(const gsl_interp_type * interpT, std::vector<realT> & xin, std::vector<realT> & yin)
-   {
-      setup(interpT, xin.data(), yin.data(), xin.size());
-   }
-   
-   gslInterpolator()
-   {
-      
-   }
-   
-   gslInterpolator(const gsl_interp_type * interpT, realT *xin, realT *yin, size_t Nin)
-   {
-      setup(interpT, xin,yin,Nin);
-   }
-   
-   gslInterpolator(const gsl_interp_type * interpT, std::vector<realT> & xin, std::vector<realT> & yin)
-   {
-      setup(interpT, xin.data(), yin.data(), xin.size());
-   }
-   
-   ~gslInterpolator()
-   {
-      if(interp) gsl_interp_free(interp);
-      if(acc) gsl_interp_accel_free (acc);
-   }
-   
-   realT interpolate(const realT & x)
-   {
-      realT y;
-      gsl_interp_eval_e (interp, _xin, _yin, x, acc, &y);
-      return y;
-   }
-   
-   realT operator()(const realT & x)
-   {
-      return interpolate(x);
-   }
-   
-};
-
 ///Interpolate a 1-D data X vs Y discrete function onto a new X axis
 /**
   * \param interpT one of the <a href="https://www.gnu.org/software/gsl/manual/html_node/Interpolation-Types.html#Interpolation-Types">gsl interpolation types</a>.
@@ -116,7 +50,10 @@ struct gslInterpolator
   * \param [out] yout the output interpolated y-values, pre-allocated
   * \param [in]  Nout the size of the output x-y axis
   * 
-  * \retval
+  * \returns 0 on success
+  * \returns -1 on a gsl error.
+  * 
+  * \todo report errors iaw mxlib standard in gsl_interpolate
   * 
   * \ingroup interpolation
   */
@@ -131,21 +68,48 @@ int gsl_interpolate( const gsl_interp_type * interpT,
 {
    static_assert( std::is_same<double, typename std::remove_cv<realT>::type>::value, "GSL Interpolation only works with double");
    
-   gsl_interp * interp =  gsl_interp_alloc(interpT, Nin);
-   gsl_interp_accel * acc = gsl_interp_accel_alloc ();
+   gsl_set_error_handler_off();
 
-   gsl_interp_init(interp, xin, yin, Nin);
+   gsl_interp * interp =  gsl_interp_alloc(interpT, Nin);
+   if(interp == nullptr)
+   {
+      std::cerr << "gsl_interpolate: gsl_interp_alloc failed\n";
+      return -1;
+   }
+
+   gsl_interp_accel * acc = gsl_interp_accel_alloc ();
+   if(acc == nullptr)
+   {
+      std::cerr << "gsl_interpolate: gsl_interp_accel_alloc failed\n";
+      return -1;
+
+   }
+   int gsl_errno = gsl_interp_init(interp, xin, yin, Nin);
+
+   if(gsl_errno != 0)
+   {
+      std::cerr << "gsl_interpolate: error from gsl_interp_init [" << gsl_strerror(gsl_errno) << "]\n";
+      gsl_interp_free(interp);
+      gsl_interp_accel_free (acc);
+      return -1;
+   }
    
-   gsl_interp_accel_reset(acc);
-   
+   gsl_errno = 0;
    for(size_t i=0;i<Nout; ++i)
    {
-      gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
+      //Don't error check, let it set NAN
+      gsl_errno += gsl_interp_eval_e (interp, xin, yin, xout[i], acc, &yout[i]);
    }
    
    gsl_interp_free(interp);
    gsl_interp_accel_free (acc);
    
+   if(gsl_errno)
+   {
+      std::cerr << "gsl_interpolate: error(s) reported by gsl_interp_eval_e\n";
+      return -1;
+   }
+
    return 0;
 }
 

@@ -78,8 +78,14 @@ ifeq ($(USE_BLAS_FROM),atlas)
 endif
 
 ifeq ($(USE_FFT_FROM),fftw)
-    #Order matters, _threads first.
-    FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f  -lfftw3l
+    
+    ifeq ($(UNAME),Darwin)
+        #Order matters, _threads first.
+        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f -lfftw3l    
+    endif
+    ifeq ($(UNAME),Linux)
+        FFT_LDLIBS ?= -lfftw3 -lfftw3f  -lfftw3l
+    endif
 endif
 
 FITS_LIB = -lcfitsio
@@ -105,14 +111,15 @@ SOFA_LIB = -lsofa_c
 EXTRA_LDFLAGS += -L$(SOFA_PATH)
 INCLUDES += -I$(SOFA_PATH)
 
+#FFTW before BLAS so MKL doesn't hijack certain functions
+#FFTW:
+EXTRA_LDLIBS += $(FFT_LDLIBS)
+EXTRA_LDFLAGS += $(FFT_LDFLAGS)
+
 #BLAS:
 INCLUDES += $(BLAS_INCLUDES)
 EXTRA_LDLIBS += $(BLAS_LDLIBS)
 EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
-
-#FFTW:
-EXTRA_LDLIBS += $(FFT_LDLIBS)
-EXTRA_LDFLAGS += $(FFT_LDFLAGS)
 
 # Eigen
 # -I/path/to/folder containing "Eigen" directory
@@ -160,6 +167,7 @@ ifeq ($(NEED_CUDA),yes)
    # internal flags
    NVCCFLAGS   := -m${TARGET_SIZE}
    NVCCFLAGS   +=  -DEIGEN_NO_CUDA -DMXLIB_MKL
+   NVCCFLAGS   +=  ${NVCCARCH}
 
    # Debug build flags
    ifeq ($(dbg),1)

@@ -39,6 +39,24 @@ namespace improc
   *@{
   */
 
+/// Reflect pixel coordinates across the given center pixel.
+/**
+  */ 
+template<typename realT>
+int reflectImageCoords( int & x1, ///< [out] the reflected x coordinate
+                        int & y1, ///< [out] the reflected y coordinate
+                        int x0,   ///< [in] the input x coordinate
+                        int y0,   ///< [in] the input y coordinate
+                        realT xc, ///< [in] the center pixel x coordinate
+                        realT yc  ///< [in] the center pixel y coordinate
+                      )
+{
+   x1 =  xc - (x0 - xc);
+   y1 =  yc - (y0 - yc);
+
+   return 0;
+}
+
 /// Zero any NaNs in an image
 template<class imageT>
 void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels set to zero */)
@@ -125,7 +143,7 @@ typename imageT::Scalar imageVariance( imageT & im,                 ///< [in] th
 template<typename imageT>
 int imageCenterOfLight( typename imageT::Scalar & x,
                         typename imageT::Scalar & y,
-                        imageT & im
+                        const imageT & im
                       )
 {
    x =0;
@@ -148,7 +166,7 @@ int imageCenterOfLight( typename imageT::Scalar & x,
    return 0;
 }
 
-/// Fine the maximum in an image at sub-pixel resolution by interpolation
+/// Find the maximum in an image at sub-pixel resolution by interpolation
 /** Uses imageMagnify() to expand the image to the desired scale.  Because of the
   * scaling used in imageMagnify, the desired scale may not be exact.  As a result
   * the actual scale is returned in scale_x and scale_y.
@@ -185,7 +203,7 @@ int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum,
    return 0;
 }
 
-/// Fine the maximum in an image at sub-pixel resolution by cubic convolution interpolation
+/// Find the maximum in an image at sub-pixel resolution by cubic convolution interpolation
 /** Uses imageMagnify() to expand the image to the desired scale.  Because of the
   * scaling used in imageMagnify, the desired scale may not be exact.  As a result
   * the actual scale is returned in scale_x and scale_y.
@@ -202,6 +220,9 @@ int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum,
 {
    return imageMaxInterp(x,y,scale_x,scale_y, magIm, im, cubicConvolTransform<typename imageT::Scalar>());
 }
+
+
+
 
 /// Combine two images, each with their own mask defining good pixels.
 /** The combined image is made up of the pixels in im1 where mask1 is 1, and the pixels of im2 where mask2 is 1.

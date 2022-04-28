@@ -10,7 +10,7 @@
 
 #include <cstdlib>
 
-#include "../math/gslInterpolation.hpp"
+#include "../math/gslInterpolator.hpp"
 #include "../math/vectorUtils.hpp"
 
 #include "imageMasks.hpp"
@@ -778,7 +778,7 @@ void radprofim( radprofT & radprofIm,   ///< [out] the radial profile image.  Th
    /* And finally, interpolate onto the radius image */
    radprofIm.resize(im.rows(), im.cols() );
    
-   math::gslInterpolator<double> interp(gsl_interp_linear, med_r, med_v);
+   math::gslInterpolator<math::gsl_interp_linear<double>> interp(med_r, med_v);
    
    for(int c=0;c<im.cols();++c)
    {
@@ -793,7 +793,7 @@ void radprofim( radprofT & radprofIm,   ///< [out] the radial profile image.  Th
             }
          }
          
-         radprofIm(r,c) = interp.interpolate( ((double) rad(r,c)) );
+         radprofIm(r,c) = interp( ((double) rad(r,c)) );
          if(subtract) im(r,c) -= radprofIm(r,c);
       }
    }
@@ -911,7 +911,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
       
    /* And finally, interpolate onto the radius image */
    stdIm.resize(dim1, dim2);
-   math::gslInterpolator<double> interp(gsl_interp_linear, std_r, std_v);
+   math::gslInterpolator<math::gsl_interp_linear<double>> interp(std_r, std_v);
    
    for(int i=0;i<dim1;++i)
    {
@@ -923,7 +923,7 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
          }
          else
          {
-            stdIm(i,j) = interp.interpolate( ((double) rad(i,j)) );
+            stdIm(i,j) = interp( ((double) rad(i,j)) );
             if(divide) stdIm(i,j) = im(i,j) / stdIm(i,j);
          }
       }

@@ -5,7 +5,7 @@
   * 
   */
 
-#include "../math/gslInterpolation.hpp"
+#include "../math/gslInterpolator.hpp"
 
 #include "units.hpp"
 
@@ -13,7 +13,7 @@
 #define mx_astro_stars_hpp
 
 #include "../ioutils/stringUtils.hpp"
-
+#include "../ioutils/readColumns.hpp"
 
 namespace mx
 {
@@ -121,44 +121,44 @@ struct mainSequence
    std::vector<double> m_J_Hs; ///< The J-H colors from the sequence
    std::vector<double> m_H_Kss; ///< The H-Ks colors from the sequence
    
-   math::gslInterpolator<double> interpT; ///< The interpolator for effective Temperature
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpT; ///< The interpolator for effective Temperature
    double m_minT; ///< The minimum numeric spectral type for effective Temperature
    double m_maxT; ///< The maximum numeric spectral type for effective Temperature
    
-   math::gslInterpolator<double> interpRad; ///< The interpolator for effective Temperature
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpRad; ///< The interpolator for effective Temperature
    double m_minRad; ///< The minimum numeric spectral type for effective Temperature
    double m_maxRad; ///< The maximum numeric spectral type for effective Temperature
    
-   math::gslInterpolator<double> interpL; ///< The interpolator for log luminosity
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpL; ///< The interpolator for log luminosity
    double m_minL; ///< The minimum numeric spectral type for log luminosity
    double m_maxL; ///< The maximum numeric spectral type for log luminosity
    
-   math::gslInterpolator<double> interpMv; ///< The interpolator for absolute V magnitude
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpMv; ///< The interpolator for absolute V magnitude
    double m_minMv; ///< The minimum numeric spectral type for absolute V magnitude
    double m_maxMv; ///< The maximum numeric spectral type for absolute V magnitude
    
-   math::gslInterpolator<double> interpVRc; ///< The interpolator for V-Rc color
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpVRc; ///< The interpolator for V-Rc color
    double m_minVRc; ///< The minimum numeric spectral type for V-Rc color
    double m_maxVRc; ///< The maximum numeric spectral type for V-Rc color
    
-   math::gslInterpolator<double> interpVIc; ///< The interpolator for V-Ic color
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpVIc; ///< The interpolator for V-Ic color
    double m_minVIc; ///< The minimum numeric spectral type for V-Ic color
    double m_maxVIc; ///< The maximum numeric spectral type for V-Ic color
    
-   math::gslInterpolator<double> interpVKs; ///< The interpolator for V-Ks color
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpVKs; ///< The interpolator for V-Ks color
    double m_minVKs; ///< The minimum numeric spectral type for V-Ks color
    double m_maxVKs; ///< The maximum numeric spectral type for V-Ks color
    
-   math::gslInterpolator<double> interpJH; ///< The interpolator for J-H color
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpJH; ///< The interpolator for J-H color
    double m_minJH; ///< The minimum numeric spectral type for J-H color
    double m_maxJH; ///< The maximum numeric spectral type for J-H color
    
-   math::gslInterpolator<double> interpHKs; ///< The interpolator for H-Ks color
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpHKs; ///< The interpolator for H-Ks color
    double m_minHKs; ///< The minimum numeric spectral type for H-Ks color
    double m_maxHKs; ///< The maximum numeric spectral type for H-Ks color
    
    
-   math::gslInterpolator<double> interpSpTfmT; ///< The interpolator for effective Temperature
+   math::gslInterpolator<math::gsl_interp_linear<double>> interpSpTfmT; ///< The interpolator for effective Temperature
    double m_minSpTfmT; ///< The minimum numeric spectral type for effective Temperature
    double m_maxSpTfmT; ///< The maximum numeric spectral type for effective Temperature
    
@@ -227,17 +227,17 @@ struct mainSequence
          
       findMinMax(m_numTypesR, m_minSpTfmT, m_maxSpTfmT, m_TeffsR);
       
-      interpT.setup( gsl_interp_linear, m_numTypes, m_Teffs );
-      interpRad.setup( gsl_interp_linear, m_numTypes, m_rads);
-      interpL.setup( gsl_interp_linear, m_numTypes, m_logLs );
-      interpMv.setup( gsl_interp_linear, m_numTypes, m_Mvs );
-      interpVRc.setup( gsl_interp_linear, m_numTypes, m_V_Rcs );
-      interpVIc.setup( gsl_interp_linear, m_numTypes, m_V_Ics );
-      interpVKs.setup( gsl_interp_linear, m_numTypes, m_V_Kss );
-      interpJH.setup( gsl_interp_linear, m_numTypes, m_J_Hs );
-      interpHKs.setup( gsl_interp_linear, m_numTypes, m_H_Kss );
+      interpT.setup(  m_numTypes, m_Teffs );
+      interpRad.setup( m_numTypes, m_rads);
+      interpL.setup( m_numTypes, m_logLs );
+      interpMv.setup( m_numTypes, m_Mvs );
+      interpVRc.setup( m_numTypes, m_V_Rcs );
+      interpVIc.setup( m_numTypes, m_V_Ics );
+      interpVKs.setup( m_numTypes, m_V_Kss );
+      interpJH.setup( m_numTypes, m_J_Hs );
+      interpHKs.setup( m_numTypes, m_H_Kss );
       
-      interpSpTfmT.setup( gsl_interp_linear, m_TeffsR, m_numTypesR);
+      interpSpTfmT.setup( m_TeffsR, m_numTypesR);
    }
    
    /// Get the interpolated effective temperature
@@ -252,7 +252,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpT.interpolate(numType);
+      return interpT(numType);
    }
    
    /// Get the interpolated effective temperature
@@ -277,7 +277,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpRad.interpolate(numType);
+      return interpRad(numType);
    }
    
    /// Get the interpolated radius
@@ -302,7 +302,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpL.interpolate(numType);
+      return interpL(numType);
    }
    
    /// Get the interpolated log of luminosity
@@ -327,7 +327,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpMv.interpolate(numType);
+      return interpMv(numType);
    }
    
    /// Get the interpolated absolute V magnitude
@@ -352,7 +352,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpVRc.interpolate(numType);
+      return interpVRc(numType);
    }
    
    /// Get the interpolated absolute V-Rc color
@@ -377,7 +377,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpVIc.interpolate(numType);
+      return interpVIc(numType);
    }
    
    /// Get the interpolated absolute V-Ic color
@@ -402,7 +402,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpVKs.interpolate(numType);
+      return interpVKs(numType);
    }
    
    /// Get the interpolated absolute V-Ks color
@@ -427,7 +427,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpJH.interpolate(numType);
+      return interpJH(numType);
    }
    
    /// Get the interpolated absolute J-H color
@@ -452,7 +452,7 @@ struct mainSequence
          return -999;
       }
       
-      return interpHKs.interpolate(numType);
+      return interpHKs(numType);
    }
    
    /// Get the interpolated absolute H-Ks color

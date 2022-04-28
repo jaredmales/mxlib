@@ -433,11 +433,11 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
 
  The SVD is written
 
-      \f$ A = U * \Sigma * V^T \f$
+\f[ A = U \Sigma V^T \f]
 
  where \f$ \Sigma \f$ is an M-by-N matrix which is zero except for its
- min(m,n) diagonal elements, U is an M-by-M orthogonal matrix, and
- V is an N-by-N orthogonal matrix.  The diagonal elements of \f$ \Sigma \f$
+ min(m,n) diagonal elements, \f$ U \f$ is an M-by-M orthogonal matrix, and
+ \f$ V  is an N-by-N orthogonal matrix.  The diagonal elements of \f$ \Sigma \f$
  are the singular values of A; they are real and non-negative, and
  are returned in descending order.  The first min(m,n) columns of
  U and V are the left and right singular vectors of A.
@@ -564,7 +564,8 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
           > 0:  SBDSDC did not converge, updating process failed.
  \endparblock
  
-   * \ingroup template_lapack
+\ingroup template_lapack
+
 */
 template<typename dataT>
 MXLAPACK_INT gesdd(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, dataT *A, MXLAPACK_INT LDA, dataT *S, dataT * U, MXLAPACK_INT LDU, dataT * VT, MXLAPACK_INT LDVT, dataT *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)

@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "../math/func/bessel.hpp"
+#include "../math/func/jinc.hpp"
 #include "../math/func/factorial.hpp"
 #include "../math/func/sign.hpp"
 #include "../math/constants.hpp"
@@ -131,12 +132,13 @@ int zernikeRCoeffs<__float128>( std::vector<__float128> & c, int n, int m);
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calcs, should be at least double.
   */ 
-template<typename realT>
+template<typename realT, typename calcRealT>
 realT zernikeR( realT rho,             ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                 int n,                 ///< [in] the radial index of the Zernike polynomial.
                 int m,                 ///< [in] the azimuthal index of the Zernike polynomial.
-                std::vector<realT> & c ///< [in] contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
+                std::vector<calcRealT> & c ///< [in] contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
               )
 {
    m = abs(m);
@@ -165,17 +167,17 @@ realT zernikeR( realT rho,             ///< [in] the radial coordinate, \f$ 0 \l
 }
 
 extern template
-float zernikeR(float rho, int n, int m, std::vector<float> & c);
+float zernikeR<float,double>(float rho, int n, int m, std::vector<double> & c);
 
 extern template
-double zernikeR(double rho, int n, int m, std::vector<double> & c);
+double zernikeR<double,double>(double rho, int n, int m, std::vector<double> & c);
 
 extern template
-long double zernikeR(long double rho, int n, int m, std::vector<long double> & c);
+long double zernikeR<long double, long double>(long double rho, int n, int m, std::vector<long double> & c);
 
 #ifdef HASQUAD
 extern template
-__float128 zernikeR(__float128 rho, int n, int m, std::vector<__float128> & c);
+__float128 zernikeR<__float128,__float128>(__float128 rho, int n, int m, std::vector<__float128> & c);
 #endif
 
 /// Calculate the value of a Zernike radial polynomial at a given separation.
@@ -184,8 +186,9 @@ __float128 zernikeR(__float128 rho, int n, int m, std::vector<__float128> & c);
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */ 
-template<typename realT>
+template<typename realT, typename calcRealT>
 realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
                 int n,     ///< [in] the radial index of the Zernike polynomial.
                 int m      ///< [in] the azimuthal index of the Zernike polynomial.
@@ -199,26 +202,26 @@ realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1
       return 0.0;
    }
    
-   std::vector<realT> c;
+   std::vector<calcRealT> c;
    
    if(zernikeRCoeffs(c, n, m) < 0) return -9999;
    
-   return zernikeR(rho, n, m, c);
+   return zernikeR<realT, calcRealT>(rho, n, m, c);
    
 }
 
 extern template
-float zernikeR( float rho, int n, int m);
+float zernikeR<float, double>( float rho, int n, int m);
 
 extern template
-double zernikeR( double rho, int n, int m);
+double zernikeR<double, double>( double rho, int n, int m);
 
 extern template
-long double zernikeR( long double rho, int n, int m);
+long double zernikeR<long double, long double>( long double rho, int n, int m);
 
 #ifdef HASQUAD
 extern template
-__float128 zernikeR( __float128 rho, int n, int m);
+__float128 zernikeR<__float128,__float128>( __float128 rho, int n, int m);
 #endif
 
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
@@ -233,13 +236,14 @@ __float128 zernikeR( __float128 rho, int n, int m);
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */ 
-template<typename realT>
+template<typename realT, typename calcRealT>
 realT zernike( realT rho, 
                realT phi, 
                int n, 
                int m, 
-               std::vector<realT> & c
+               std::vector<calcRealT> & c
              )
 {
    realT azt;
@@ -262,22 +266,22 @@ realT zernike( realT rho,
       azt = 1.0;
    }
    
-   return sqrt((realT) n+1) * zernikeR(rho, n, m, c) * azt;
+   return sqrt((realT) n+1) * zernikeR<realT, calcRealT>(rho, n, m, c) * azt;
    
 }           
 
 extern template
-float zernike(float rho, float phi, int n, int m, std::vector<float> & c);
+float zernike<float, double>(float rho, float phi, int n, int m, std::vector<double> & c);
 
 extern template
-double zernike(double rho, double phi, int n, int m, std::vector<double> & c);
+double zernike<double, double>(double rho, double phi, int n, int m, std::vector<double> & c);
 
 extern template
-long double zernike(long double rho, long double phi, int n, int m, std::vector<long double> & c);
+long double zernike<long double, long double>(long double rho, long double phi, int n, int m, std::vector<long double> & c);
 
 #ifdef HASQUAD
 extern template
-__float128 zernike(__float128 rho, __float128 phi, int n, int m, std::vector<__float128> & c);
+__float128 zernike<__float128,__float128>(__float128 rho, __float128 phi, int n, int m, std::vector<__float128> & c);
 #endif
 
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
@@ -287,8 +291,9 @@ __float128 zernike(__float128 rho, __float128 phi, int n, int m, std::vector<__f
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */ 
-template<typename realT>
+template<typename realT, typename calcRealT>
 realT zernike( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                realT phi, ///< [in] the azimuthal angle (in radians)
                int n,     ///< [in] the radial index of the Zernike polynomial.
@@ -296,25 +301,25 @@ realT zernike( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 
              )
 {
    
-   std::vector<realT> c;
+   std::vector<calcRealT> c;
 
-   if( zernikeRCoeffs<realT>(c, n, m) < 0) return -9999;
+   if( zernikeRCoeffs<calcRealT>(c, n, m) < 0) return -9999;
    
-   return  zernike(rho, phi, n, m, c);
+   return  zernike<realT,calcRealT>(rho, phi, n, m, c);
 }
 
 extern template
-float zernike( float rho, float phi, int n, int m);
+float zernike<float,double>( float rho, float phi, int n, int m);
 
 extern template
-double zernike( double rho, double phi, int n, int m);
+double zernike<double,double>( double rho, double phi, int n, int m);
 
 extern template
-long double zernike( long double rho, long double phi, int n, int m);
+long double zernike<long double, long double>( long double rho, long double phi, int n, int m);
 
 #ifdef HASQUAD
 extern template
-__float128 zernike( __float128 rho, __float128 phi, int n, int m);
+__float128 zernike<__float128,__float128>( __float128 rho, __float128 phi, int n, int m);
 #endif
 
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
@@ -323,8 +328,9 @@ __float128 zernike( __float128 rho, __float128 phi, int n, int m);
   * \retval R the value of the Zernike radial polynomial otherwise
   * 
   * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */ 
-template<typename realT>
+template<typename realT, typename calcRealT>
 realT zernike( realT rho,  ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$. 
                realT phi,  ///< [in] the azimuthal angle (in radians)
                int j       ///< [in] the Noll index of the Zernike polynomial.
@@ -335,21 +341,21 @@ realT zernike( realT rho,  ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1
    //Get n and m from j
    if(noll_nm(n, m, j) < 0) return -9999;
    
-   return zernike(rho, phi, n, m);
+   return zernike<realT, calcRealT>(rho, phi, n, m);
 }
 
 extern template
-float zernike(float rho, float phi, int j);
+float zernike<float, double>(float rho, float phi, int j);
 
 extern template
-double zernike(double rho, double phi, int j);
+double zernike<double, double>(double rho, double phi, int j);
 
 extern template
-long double zernike(long double rho, long double phi, int j);
+long double zernike<long double, long double>(long double rho, long double phi, int j);
 
 #ifdef HASQUAD
 extern template
-__float128 zernike(__float128 rho, __float128 phi, int j);
+__float128 zernike<__float128, __float128>(__float128 rho, __float128 phi, int j);
 #endif
 
 ///Fill in an Eigen-like array with a Zernike polynomial
@@ -361,8 +367,11 @@ __float128 zernike(__float128 rho, __float128 phi, int j);
   * \param[in] xcen is the x coordinate of the desired center of the polynomial, in pixels
   * \param[in] ycen is the y coordinate of the desired center of the polynomial, in pixels
   * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
+  * 
+  * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */
-template<typename arrayT, int overscan=2>
+template<typename arrayT, typename calcRealT, int overscan=2>
 int zernike( arrayT & arr, 
              int n, 
              int m, 
@@ -370,12 +379,13 @@ int zernike( arrayT & arr,
              typename arrayT::Scalar ycen,
              typename arrayT::Scalar rad = -1 )
 {
-   typename arrayT::Scalar x;
-   typename arrayT::Scalar y;
-   typename arrayT::Scalar r, rho;
-   typename arrayT::Scalar phi;
+   typedef typename arrayT::Scalar realT; 
+   realT x;
+   realT y;
+   realT r, rho;
+   realT phi;
    
-   std::vector<typename arrayT::Scalar> c;
+   std::vector<calcRealT> c;
    
    if(zernikeRCoeffs(c, n, m) < 0) return -1;
    
@@ -421,19 +431,24 @@ int zernike( arrayT & arr,
   * \param[in] xcen is the x coordinate of the desired center of the polynomial, in pixels
   * \param[in] ycen is the y coordinate of the desired center of the polynomial, in pixels
   * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
+  * 
+  * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */
-template<typename arrayT>
+template<typename arrayT, typename calcRealT>
 int zernike( arrayT & arr, 
              int j, 
              typename arrayT::Scalar xcen, 
              typename arrayT::Scalar ycen,
              typename arrayT::Scalar rad = -1 )
 {
+   typedef typename arrayT::Scalar realT;
+
    int n, m;
    
    if(noll_nm(n, m, j) < 0) return -1;
    
-   return zernike(arr, n, m, xcen, ycen, rad);
+   return zernike<arrayT, calcRealT>(arr, n, m, xcen, ycen, rad);
 }
 
 ///Fill in an Eigen-like array with a Zernike polynomial
@@ -443,8 +458,11 @@ int zernike( arrayT & arr,
   * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size the polynomial.
   * \param[in] j is the Noll index of the polynomial
   * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
+  * 
+  * \tparam realT is a real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */
-template<typename arrayT>
+template<typename arrayT, typename calcRealT>
 int zernike( arrayT & arr, 
              int n, 
              int m, 
@@ -453,7 +471,7 @@ int zernike( arrayT & arr,
    typename arrayT::Scalar xcen = 0.5*(arr.rows()-1.0);
    typename arrayT::Scalar ycen = 0.5*(arr.cols()-1.0);
    
-   return zernike(m, n, m, xcen, ycen, rad);
+   return zernike<arrayT, calcRealT>(arr, n, m, xcen, ycen, rad);
 }
 
 ///Fill in an Eigen-like array with a Zernike polynomial
@@ -463,8 +481,11 @@ int zernike( arrayT & arr,
   * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size the polynomial.
   * \param[in] j is the Noll index of the polynomial
   * \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used.
+  * 
+  * \tparam arrayT is an Eigen-like array of real floating type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */
-template<typename arrayT>
+template<typename arrayT, typename calcRealT>
 int zernike( arrayT & arr, 
              int j,
              typename arrayT::Scalar rad = -1 )
@@ -472,7 +493,7 @@ int zernike( arrayT & arr,
    typename arrayT::Scalar xcen = 0.5*( arr.rows()-1.0);
    typename arrayT::Scalar ycen = 0.5*( arr.cols()-1.0);
    
-   return zernike(arr, j, xcen, ycen, rad);
+   return zernike<arrayT, calcRealT>(arr, j, xcen, ycen, rad);
 }
 
 ///Fill in an Eigencube-like array with Zernike polynomials in Noll order
@@ -480,13 +501,18 @@ int zernike( arrayT & arr,
   *
   * \returns 0 on success
   * \returns -1 on error
+  * 
+  * \tparam cubeT is an Eigencube-like array with real floating point type
+  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */  
-template<typename cubeT>
+template<typename cubeT, typename calcRealT>
 int zernikeBasis( cubeT & cube,                    ///< [in/out] the pre-allocated cube which will be filled with the Zernike basis
                   typename cubeT::Scalar rad = -1, ///< [in] [optional] the radius of the aperture.  If -1 then the full image size is used.
                   int minj = 2                     ///< [in] [optional] the minimum j value to include.  The default is j=2, which skips piston (j=1). 
                 )          
 {
+   typedef typename cubeT::imageT arrayT;
+
    typename cubeT::imageT im;
    
    im.resize(cube.rows(), cube.cols());
@@ -494,7 +520,7 @@ int zernikeBasis( cubeT & cube,                    ///< [in/out] the pre-allocat
    int rv;
    for(int i=0; i < cube.planes(); ++i)
    {
-      rv = zernike( im, minj+i, rad);
+      rv = zernike<arrayT,calcRealT>( im, minj+i, rad);
    
       if(rv < 0) 
       {
@@ -628,6 +654,48 @@ int zernikeQNorm( arrayT & arr, ///< [out] the allocated array. The rows() and c
       }
    }
    return 0;
+}
+
+/// Calculate the spatial power spectrum of Piston 
+template<typename realT>
+realT zernikePPiston( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 4*pow(math::func::jinc(math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Tip \& Tilt
+template<typename realT>
+realT zernikePTipTilt( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 16*pow(math::func::jincN(2,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Defocus
+template<typename realT>
+realT zernikePDefocus( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 12*pow(math::func::jincN(3,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Astigmatism
+template<typename realT>
+realT zernikePAstig( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 24*pow(math::func::jincN(3,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Coma
+template<typename realT>
+realT zernikePComa( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 32*pow(math::func::jincN(4,math::pi<realT>()*kD),2);
+}
+
+/// Calculate the spatial power spectrum of Trefoil
+template<typename realT>
+realT zernikePTrefoil( const realT & kD /**< [in] Spatial frequency in diameter units, i.e. cycles per aperture.*/)
+{
+   return 32*pow(math::func::jincN(4,math::pi<realT>()*kD),2);
 }
 
 ///@} signal_processing

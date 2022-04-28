@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -55,7 +55,7 @@ fitsHeader & fitsHeader::operator=(const fitsHeader & head)
    cardMap.clear();
    while(it != cards.end())
    {
-      cardMap.insert(std::pair<std::string, headerIterator>(it->keyword, it));         
+      cardMap.insert(std::pair<std::string, headerIterator>(it->keyword(), it));         
       ++it;
    }
    
@@ -113,11 +113,11 @@ void fitsHeader::erase(const std::string & keyword)
 
 void fitsHeader::erase(headerIterator it)
 {
-   mapIterator mit = cardMap.find(it->keyword);
+   mapIterator mit = cardMap.find(it->keyword());
               
-   if(it->keyword == "COMMENT" || it->keyword == "HISTORY")
+   if(it->keyword() == "COMMENT" || it->keyword() == "HISTORY")
    {
-      while(mit->second->keyword == it->keyword && it->comment != mit->second->comment) ++mit;
+      while(mit->second->keyword() == it->keyword() && it->comment() != mit->second->comment()) ++mit;
    }
    cardMap.erase(mit);
    cards.erase(it);
@@ -133,17 +133,17 @@ void fitsHeader::eraseStandardTop()
    {
       nit = it;
       ++nit;
-      if(it->keyword == "SIMPLE" || it->keyword == "BITPIX" || it->keyword == "NAXIS" 
-           || it->keyword == "NAXIS1" || it->keyword == "NAXIS2" || it->keyword == "NAXIS3" || it->keyword == "EXTEND"
-              || it->keyword == "BZERO" || it->keyword == "BSCALE")
+      if(it->keyword() == "SIMPLE" || it->keyword() == "BITPIX" || it->keyword() == "NAXIS" 
+           || it->keyword() == "NAXIS1" || it->keyword() == "NAXIS2" || it->keyword() == "NAXIS3" || it->keyword() == "EXTEND"
+              || it->keyword() == "BZERO" || it->keyword() == "BSCALE")
       {
          erase(it);
       }
          
-      if(it->keyword == "COMMENT")
+      if(it->keyword() == "COMMENT")
       {
-         if(it->comment.find("FITS (Flexible Image") != std::string::npos) erase(it);
-         else if(it->comment.find("and Astrophysics'") != std::string::npos) erase(it);
+         if(it->comment().find("FITS (Flexible Image") != std::string::npos) erase(it);
+         else if(it->comment().find("and Astrophysics'") != std::string::npos) erase(it);
       }
       
       if(nit == end()) break;
@@ -156,11 +156,11 @@ void fitsHeader::eraseStandardTop()
 void fitsHeader::append(fitsHeaderCard card)
 {
    //First check if duplicate key
-   if(cardMap.count(card.keyword) > 0)
+   if(cardMap.count(card.keyword()) > 0)
    {
-      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
+      if(card.type() !=  fitsType<fitsCommentType>() && card.type() != fitsType<fitsHistoryType>())
       {
-         std::cerr << "attempt to duplicate keyword: " << card.keyword << "\n";
+         std::cerr << "attempt to duplicate keyword: " << card.keyword() << "\n";
          return;
       }
    }
@@ -171,7 +171,7 @@ void fitsHeader::append(fitsHeaderCard card)
    //Then add to the Map.
    headerIterator insertedIt = cards.end();
    --insertedIt;
-   cardMap.insert( std::pair<std::string, headerIterator>(card.keyword, insertedIt) );
+   cardMap.insert( std::pair<std::string, headerIterator>(card.keyword(), insertedIt) );
    
 }
 
@@ -195,11 +195,11 @@ void fitsHeader::insert_before( headerIterator it,
                               )
 {
    //First check if duplicate key
-   if(cardMap.count(card.keyword) > 0)
+   if(cardMap.count(card.keyword()) > 0)
    {
-      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
+      if(card.type() !=  fitsType<fitsCommentType>() && card.type() != fitsType<fitsHistoryType>())
       {
-         std::cerr << "attempt to duplicate keyword: " << card.keyword << "\n";
+         std::cerr << "attempt to duplicate keyword: " << card.keyword() << "\n";
          return;
       }
    }
@@ -208,7 +208,7 @@ void fitsHeader::insert_before( headerIterator it,
    headerIterator insertedIt = cards.insert(it, card);
    
    //Then add to the Map.
-   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword(), insertedIt));
       
 }
 
@@ -217,11 +217,11 @@ void fitsHeader::insert_after( headerIterator it,
                              )
 {
    //First check if duplicate key
-   if(cardMap.count(card.keyword) > 0)
+   if(cardMap.count(card.keyword()) > 0)
    {
-      if(card.type !=  fitsTCOMMENT && card.type != fitsTHISTORY)
+      if(card.type() !=  fitsType<fitsCommentType>() && card.type() != fitsType<fitsHistoryType>())
       {
-         std::cerr << "attempt to duplicate keyword:" << card.keyword << "\n";
+         std::cerr << "attempt to duplicate keyword:" << card.keyword() << "\n";
          return;
       }
    }
@@ -230,7 +230,7 @@ void fitsHeader::insert_after( headerIterator it,
    headerIterator insertedIt = cards.insert(++it, card);
    
    //Then add to the Map.
-   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword, insertedIt));
+   cardMap.insert(std::pair<std::string, headerIterator>(card.keyword(), insertedIt));
    
    
 }

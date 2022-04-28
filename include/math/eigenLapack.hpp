@@ -261,13 +261,13 @@ MXLAPACK_INT eigenSYEVR( Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &ei
   * \ingroup eigen_lapack
   */
 template<typename _evCalcT = double, typename eigenT, typename eigenT1>
-MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L modes (or P.C.s)
-                          eigenT & cv, ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
-                          const eigenT1 & Rims, ///< [in] The reference data.  cv.rows() == Rims.cols().
-                          int n_modes = 0, ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
+MXLAPACK_INT calcKLModes( eigenT & klModes,             ///< [out] on exit contains the K-L modes (or P.C.s)
+                          eigenT & cv,                  ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
+                          const eigenT1 & Rims,         ///< [in] The reference data.  cv.rows() == Rims.cols().
+                          int n_modes = 0,              ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes are solved for.
                           syevrMem<_evCalcT> * mem = 0, ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
-                          double * t_eigenv = nullptr, ///< [out] [optional] if not null, will be filled in with the time taken to calculate eigenvalues.
-                          double * t_klim = nullptr ///< [out] [optional] if not null, will be filled in with the time taken to calculate eigenvalues.
+                          double * t_eigenv = nullptr,  ///< [out] [optional] if not null, will be filled in with the time taken to calculate eigenvalues.
+                          double * t_klim = nullptr     ///< [out] [optional] if not null, will be filled in with the time taken to calculate the KL modes.
                         )
 {
    typedef _evCalcT evCalcT;
@@ -285,7 +285,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
 
    if(cv.rows() != Rims.cols())
    {
-      std::cerr << "Covariance matrix - reference image size mismatch in klip_klModes\n";
+      std::cerr << "Covariance matrix - reference image size mismatch in calcKLModes\n";
       return -1;
    }
 
@@ -306,8 +306,8 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
    
    if(info !=0 ) 
    {
-      std::cerr << "info =" << info << "\n";
-      exit(0);
+      std::cerr << "calckKLModes: eigenSYEVR returned an error (info = " << info << ")\n";
+      return -1;
    }
    
    evecs = evecsd.template cast<realT>();
@@ -332,9 +332,7 @@ MXLAPACK_INT calcKLModes( eigenT & klModes, ///< [out] on exit contains the K-L 
                                  0., klModes.data(), klModes.rows());
 
    if( t_klim) *t_klim = sys::get_curr_time() - *t_klim;
-   
-   std::cerr << "calcKLModes: " << __LINE__ << "\n";
-   
+      
    return 0;
    
 } //calcKLModes        
@@ -399,33 +397,34 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1
 ///Calculate the pseudo-inverse of a patrix using the SVD
 /** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
   * 
-  * \param[out] PInv the pseudo-inverse of A
-  * \param[out] condition The final condition number.
-  * \param[out] nRejected the number of eigenvectors rejected
-  * \param[out] U
-  * \param[out] S
-  * \param[out] VT
-  * \param[in] A the matrix to invert
-  * \param[in] maxCondition he maximum condition number desired, which is used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
-  * \param[in] interact [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the singular values.  If (interact & MX_PINV_ASK) is true
-  *                                 then the minimum singular value threshold is requested from the user using stdin. 
+  * The parameter \p interact is intepreted as a bitmask.  The values can be
+  * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values 
+  * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
+  * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using stdin.  Overrides MX_PINV_ASK.
+  * If \p interact is 0 then no interaction is used and \p maxCondition controls the inversion.
+  * 
   * \tparam dataT is either float or double.
   * 
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
-                       dataT & condition,
-                       int & nRejected, 
-                       Eigen::Array<dataT, -1, -1> & U,
-                       Eigen::Array<dataT, -1, -1> & S,
-                       Eigen::Array<dataT, -1, -1> & VT,
-                       Eigen::Array<dataT, -1, -1> & A, 
-                       dataT & maxCondition,
-                       int interact = MX_PINV_NO_INTERACT   )
+int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseudo-inverse of A
+                        dataT & condition,                  ///< [out] The final condition number.
+                        int & nRejected,                    ///< [out] The number of eigenvectors rejected
+                        Eigen::Array<dataT, -1, -1> & U,    ///< [out]
+                        Eigen::Array<dataT, -1, -1> & S,    ///< [out]
+                        Eigen::Array<dataT, -1, -1> & VT,   ///< [out]
+                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert
+                        dataT & maxCondition,               /**< [in]  If \> 0, the maximum condition number desired.  If \<0 the number of modes to keep.
+                                                              *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
+                                                              *        Ignored if interactive.
+                                                              */
+                        int interact = MX_PINV_NO_INTERACT  ///< [in] [optional] a bitmask controlling interaction.  See above. 
+                      )
 {
-   //Eigen::Array<dataT,-1,-1> S, U, VT;
-   
+
+   int minMN = std::min(A.rows(), A.cols());
+
    MXLAPACK_INT info;
    info = eigenGESDD(U,S,VT,A);
    
@@ -434,7 +433,17 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
    
    dataT Smax=S.maxCoeff();
    
-   
+   if(maxCondition < 0) //Rejecting mode numbers
+   {
+      int mxc = -maxCondition;
+
+      if(mxc-1 < S.rows())
+      {
+         maxCondition = Smax/S(mxc-1,0);
+      }
+      else maxCondition = 0;
+   }
+
    if(interact & MX_PINV_PLOT)
    {
       gnuPlot gp;
@@ -442,7 +451,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       gp.logy();
       gp.plot( S.data(), S.rows(), " w lp", "singular values");
    }
-   
+
    if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
    {
       dataT mine;
@@ -457,8 +466,7 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       }
       else maxCondition = 0;
    }
-
-   if( interact & MX_PINV_ASK_NMODES)
+   else if( interact & MX_PINV_ASK_NMODES)
    {
       unsigned mine;
       std::cout << "Maximum singular value: " << Smax << "\n";
@@ -472,7 +480,6 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       }
       else maxCondition = 0;
    }
-   
    
    dataT threshold = 0;
    if(maxCondition > 0)
@@ -507,39 +514,40 @@ int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
       std::cout << "Condition Number: " << condition << "\n";
    }
    
-   Eigen::Array<dataT, -1,-1> PInvTmp;
-
-   PInvTmp = sigma.matrix() * VT.matrix();
-   
-   PInv = U.block(0,0, U.rows(), PInvTmp.cols()).matrix()*PInvTmp.matrix();
+   PInv = (VT.matrix().transpose()*sigma.matrix().transpose() ) * U.block(0,0, U.rows(),minMN).matrix().transpose(); 
 
    return 0;
 }
 
 
 
-///Calculate the pseudo-inverse of a patrix using the SVD
+///Calculate the pseudo-inverse of a matrix using the SVD
 /** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is calculated as \f$ A^+ = V S^+ U^T\f$.
-  * This MXLAPACK_INTerface does not provide access to U, S and VT.
+  * This interface does not provide access to U, S and VT.
   * 
-  * \param PInv [out] the pseudo-inverse of A
-  * \param condition [out] The final condition number.
-  * \param nRejected [out] the number of eigenvectors rejected
-  * \param A [in] the matrix to invert
-  * \param maxCondition [in] the maximum condition number desired, whichis used to threshold the singular values.  Set to 0 use include all eigenvalues/vectors.  This is ignored if interactive.
-  * \param interact [in] [optional] a bitmask controlling interaction.  If (interact & MX_PINV_PLOT) is true, then gnuPlot is used to display the eigenvalues.  If (interact & MX_PINV_ASK) is true
-  *                                 then the minimum eigenvaue threshold is requested from the user using stdin. 
+  * The parameter \p interact is intepreted as a bitmask.  The values can be
+  * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values 
+  * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
+  * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using stdin.  Overrides MX_PINV_ASK.
+  * If \p interact is 0 then no interaction is used and maxCondition controls the inversion.
+  *   *  
   * \tparam dataT is either float or double.
+  * 
+  * \overload
   * 
   * \ingroup eigen_lapack
   */
 template<typename dataT>
-int eigenPseudoInverse(Eigen::Array<dataT, -1, -1> & PInv,
-                       dataT & condition,
-                       int & nRejected, 
-                       Eigen::Array<dataT, -1, -1> & A, 
-                       dataT & maxCondition,
-                       int interact = MX_PINV_NO_INTERACT   )
+int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseudo-inverse of A
+                        dataT & condition,                  ///< [out] The final condition number.
+                        int & nRejected,                    ///< [out] The number of eigenvectors rejected
+                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert
+                        dataT & maxCondition,               /**< [in]  If \> 0, the maximum condition number desired.  If \<0 the number of modes to keep.
+                                                              *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
+                                                              *        Ignored if interactive.
+                                                              */
+                        int interact = MX_PINV_NO_INTERACT  ///< [in] [optional] a bitmask controlling interaction.  See above. 
+                      )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    

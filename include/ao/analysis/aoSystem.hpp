@@ -74,7 +74,6 @@ public:
 
 protected:
    
-   realT m_F0 {0}; ///< 0 mag flux from star at WFS [photons/sec]
    realT m_D {0}; ///< Telescope diameter [m]
 
    realT m_d_min {0}; ///< Minimum AO system actuator pitch [m]
@@ -83,14 +82,15 @@ protected:
    realT m_optd_delta {1.0}; ///< The fractional change from d_min used in optimization.  Set to 1 for integer binnings, > 1 for finer sampling.
    
    wfs<realT, iosT> * m_wfsBeta {nullptr}; ///< The WFS beta_p class.
+   bool m_ownWfsBeta {false}; ///< Flag indicating if the WFS beta_p pointer is owned by this instance.
    
    realT m_lam_wfs {0}; ///< WFS wavelength [m]
 
    //WFS detector parameters, which may be a function of binning
-   std::vector<realT> m_npix_wfs;  ///< Number of WFS pixels
-   std::vector<realT> m_ron_wfs;   ///< WFS readout noise [electrons/pix]
-   std::vector<realT> m_Fbg;       ///< Background flux, [photons/sec/pixel]
-   std::vector<realT> m_minTauWFS; ///< Minimum WFS exposure time [sec]
+   std::vector<realT> m_npix_wfs {0};  ///< Number of WFS pixels
+   std::vector<realT> m_ron_wfs {0};   ///< WFS readout noise [electrons/pix]
+   std::vector<realT> m_Fbg {0};       ///< Background flux, [photons/sec/pixel]
+   std::vector<realT> m_minTauWFS {0}; ///< Minimum WFS exposure time [sec]
    
    bool m_bin_npix {true}; ///< Flag controlling whether or not to bin WFS pixels according to the actuator spacing.
       
@@ -108,20 +108,22 @@ protected:
    realT m_secZeta {1}; ///< Secant of the Zenith angle (calculated)
    
    int m_fit_mn_max {100}; ///< Maximum spatial frequency index to use for fitting error calculation.
-   
+
+   bool m_circularLimit {false}; ///< Flag to indicate that the spatial frequency limit is circular, not square.
+
    realT m_spatialFilter_ku {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in u, [m^-1]
    realT m_spatialFilter_kv {std::numeric_limits<realT>::max()}; ///< The spatial filter cutoff in v, [m^-1]
    
    realT m_ncp_wfe {0}; ///<Static WFE [m rms]
    realT m_ncp_alpha {2}; ///< Power-law exponent for the NCP aberations.  Default is 2.
-   
+
+   realT m_F0 {0}; ///< 0 mag flux from star at WFS [photons/sec]
+      
    realT m_starMag {0}; ///< The magnitude of the star.
    
    bool m_specsChanged {true};///< Flag to indicate that a specification has changed.
    bool m_dminChanged {true};///< Flag to indicate that d_min has changed.
-   
-   bool m_circularLimit {false}; ///< Flag to indicate that the spatial frequency limit is circular, not square.
-   
+
    realT m_wfeMeasurement {0}; ///< Total WFE due to measurement a error [rad^2 at m_lam_sci]
    realT m_wfeTimeDelay {0}; ///< Total WFE due to time delay [rad^2 at m_lam_sci]
    realT m_wfeFitting {0}; ///< Total WFE due to fitting error [rad^2 at m_lam_sci]
@@ -132,7 +134,7 @@ protected:
    realT m_wfeNCP  {0}; ///< Total WFE due to NCP errors [rad^2 at m_lam_sci]
    
    realT m_wfeVar {0}; ///< The WFE variance, in meters^2.  Never use this directly, instead use wfeVar().
-   realT m_strehl {0}; ///<Strehl ratio, a calculated quantity.  Never use this directdy, instead use strehl().
+   realT m_strehl {0}; ///< Strehl ratio, a calculated quantity.  Never use this directdy, instead use strehl().
    
    
 public:
@@ -144,10 +146,7 @@ public:
 
    ///Destructor
    ~aoSystem();
-   
 
-public:
-      
    ///Load the default parameters from Guyon, 2005 \cite guyon_2005.
    /**  
      *
@@ -159,47 +158,6 @@ public:
    
    ///Load parameters corresponding to the G-MagAO-X system.
    void loadGMagAOX();
-   
-
-   /// Set the value of the 0 magnitude photon rate
-   /** This is the photon rate at the WFS, photons/sec.
-     * 
-     */
-   void F0(realT nF0 /**< [in] is the new value of m_F0.*/);
-   
-   /// Get the value of the 0 magnitude photon rate
-   /**
-     * \returns the current value of m_F0.
-     */ 
-   realT F0();
-   
-   /// Set the value of the Star's magnitude
-   /**
-     */
-   void starMag(realT nmag /**< [in] is the new value of m_starMag.*/);
-   
-   /// Get the value of the Star's magnitude
-   /**
-     * \returns the current value of m_starMag
-     */ 
-   realT starMag();
-   
-   int circularLimit( bool cl );
-   
-   bool circularLimit();
-   
-   ///The photon flux at a given star magnitude.
-   /**
-     * \returns the photon flux of the star in the bandpass assumed by F0.
-     */ 
-   realT Fg( realT mag /**< [in] is the magnitude of the star. */);
-   
-   /// Get the photon rate at the current Star magnitude.
-   /** Calculates \f$ F_\gamma = F_0 10^{-0.4 m} \f$ where \f$ F_0 \f$ is m_F0 and \f$ m \f$ is m_starMag.
-     * 
-     * \returns the current value of the current photon rate.
-     */ 
-   realT Fg();
    
    /// Set the value of the primary mirror diameter.
    /** 
@@ -244,35 +202,38 @@ public:
      * \returns the value of m_optd_delta.
      */ 
    realT optd_delta();
-   
-   template<typename wfsT>
-   void wfsBeta( const wfsT & w)
-   {
-      m_wfsBeta = (wfs<realT,iosT> *) &w;
-   }
-   
-   template<typename wfsT>
-   void wfsBeta( const wfsT * w)
-   {
-      m_wfsBeta = (wfs<realT,iosT> *) w;
-   }
-   
-   realT beta_p( realT m, realT n)
-   {
-      if( m_wfsBeta == 0) wfsBetaUnalloc();
       
-      return m_wfsBeta->beta_p(m, n, m_D, d_opt(), atm.r_0(m_lam_sci) );
-   }
-   
-   ///Check for unassigned wfs pointer
-   /** Prints error and exit()s.
+   /// Set the WFS Beta pointer
+   /** The WFS beta parameter determines the photon noise sensitivity.
+     *
+     * \tparam wfsT is a type derived from ao::analysis::wfs
      */
-   int wfsBetaUnalloc()
-   {
-      mxError("aoSystem", MXE_PARAMNOTSET, "The WFS is not assigned.");
-      exit(-1);
-   }
+   template<typename wfsT>
+   void wfsBeta( const wfsT & w /**< [in] an object derived from ao::analysis::wfs base class*/);
+   
+   /// Set the WFS Beta pointer
+   /** The WFS beta parameter determines the photon noise sensitivity.
+     *
+     * \tparam wfsT is a type derived from ao::analysis::wfs
+     */
+   template<typename wfsT>
+   void wfsBeta( const wfsT * w /**< [in] pointer to an object derived from ao::analysis::wfs base class. If nullptr then a new object is allocated and managed.*/);
+   
+   /// Get the WFS Beta pointer
+   /**
+     * \returns a pointer to the current m_wfsBeta 
+     */ 
+   wfs<realT, iosT> * wfsBeta();
 
+   /// Get the value of beta_p for a spatial frequency
+   /** beta_p is the photon noise sensitivity of the WFS.
+     *
+     * \returns beta_p as calculated by the WFS.
+     */
+   realT beta_p( realT m, ///< [in] the spatial frequency index 
+                 realT n  ///< [in] the spatial frequency index
+               );
+   
    /// Set the value of the WFS wavelength.
    /**
      */
@@ -283,11 +244,6 @@ public:
      * \returns the current value of m_lam_wfs.
      */ 
    realT lam_wfs();
-   
-   /// Set the number of pixels in the WFS
-   /** This sets the vector to length 1 with a single value
-     */
-   void npix_wfs( realT npix /**< [in] is the new single value of m_npix_wfs */);
    
    /// Set the number of pixels in the WFS for each binning mode
    /** This sets the vector.
@@ -313,11 +269,6 @@ public:
      */ 
    std::vector<realT> npix_wfs();
 
-   /// Set the value of the WFS readout noise
-   /** This sets the vector to length 1 with a single value
-     */
-   void ron_wfs( realT nron /**< [in] is the new single value of m_ron_wfs */);
-   
    /// Set the value of the WFS readout noise for each binning mode
    /** This sets the vector.
      */
@@ -341,11 +292,6 @@ public:
      * \returns the current value of m_ron_wfs
      */ 
    std::vector<realT> ron_wfs();
-
-   /// Set a single value of the background flux
-   /** This sets the vector to length 1 with a single value
-     */
-   void Fbg(realT fbg /**< [in] is the new value of m_Fbg */);
    
    /// Set the value of the background fluxes.
    /** This sets the value of the background flux for each binning mode
@@ -370,11 +316,6 @@ public:
      * \returns the current value of m_Fbg
      */ 
    std::vector<realT> Fbg();
-   
-   /// Set a single value of the minimum WFS exposure time.
-   /** This sets the vector to length 1 with a single value
-     */
-   void minTauWFS(realT ntau /**< [in] is the new value of m_minTauWFS */);
    
    /// Set the value of the minimum WFS exposure times.
    /** This sets the vector of the minimum WFS exposure times
@@ -410,8 +351,6 @@ public:
      * \returns
      */ 
    bool bin_npix();
-   
-   
    
    /// Set the value of the WFS exposure time.
    /**
@@ -485,6 +424,18 @@ public:
      */
    int fit_mn_max();
    
+   /// Set the value of the circularLimit flag
+   /** If this is true, then the spatial frequency limits are treated as a circle
+     * rather than a square.  This will create a circular dark hole.
+     */
+   void circularLimit( bool cl /**< [in] the new value of the circularLimit flag*/);
+   
+   /// Get the value of the circularLimit flag
+   /** 
+     * \returns the current value of m_circularLimit
+     */
+   bool circularLimit();
+
    /// Set the value of spatialFilter_ku
    /**
      */
@@ -516,8 +467,6 @@ public:
      */ 
    realT ncp_wfe();
    
-
-   
    /// Set the value of the non-common path WFE PSD index.
    /**
      */
@@ -529,7 +478,42 @@ public:
      */ 
    realT ncp_alpha();
    
+   /// Set the value of the 0 magnitude photon rate
+   /** This is the photon rate at the WFS, photons/sec.
+     * 
+     */
+   void F0(realT nF0 /**< [in] is the new value of m_F0.*/);
    
+   /// Get the value of the 0 magnitude photon rate
+   /**
+     * \returns the current value of m_F0.
+     */ 
+   realT F0();
+   
+   /// Set the value of the Star's magnitude
+   /**
+     */
+   void starMag(realT nmag /**< [in] is the new value of m_starMag.*/);
+   
+   /// Get the value of the Star's magnitude
+   /**
+     * \returns the current value of m_starMag
+     */ 
+   realT starMag();
+   
+   ///The photon flux at a given star magnitude.
+   /**
+     * \returns the photon flux of the star in the bandpass assumed by F0.
+     */ 
+   realT Fg( realT mag /**< [in] is the magnitude of the star. */);
+   
+   /// Get the photon rate at the current Star magnitude.
+   /** Calculates \f$ F_\gamma = F_0 10^{-0.4 m} \f$ where \f$ F_0 \f$ is m_F0 and \f$ m \f$ is m_starMag.
+     * 
+     * \returns the current value of the current photon rate.
+     */ 
+   realT Fg();
+
    /** \name Measurement Error
      * Calculating the WFE due to WFS measurement noise.
      * @{
@@ -714,9 +698,6 @@ public:
    realT d_opt();
    
    /// @}
-
-
-   
 
    /// Calculate the NCP variance at a spatial frequency.
    /** Finds the NCP variance at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
@@ -1063,6 +1044,18 @@ public:
      */ 
    iosT & dumpAOSystem( iosT & ios /**< [in] a std::ostream-like stream. */);
    
+
+    /// Setup the configurator to configure this class
+   /**
+     * todo: "\test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]" 
+     */
+   void setupConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+
+   /// Load the configuration of this class from a configurator
+   /**
+     * \todo: "\test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]""
+     */
+   void loadConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
 };
 
 
@@ -1070,11 +1063,16 @@ public:
 template<typename realT, class inputSpectT, typename iosT>
 aoSystem<realT, inputSpectT, iosT>::aoSystem()
 {
+   wfsBeta<wfs<realT,iosT>>(nullptr); //allocate a default ideal WFS.
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 aoSystem<realT, inputSpectT, iosT>::~aoSystem()
 {
+   if(m_wfsBeta && m_ownWfsBeta)
+   {
+      delete m_wfsBeta;
+   }
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1089,9 +1087,9 @@ void aoSystem<realT, inputSpectT, iosT>::loadGuyon2005()
    starMag(5);
    
    //The rest of Guyon 05 is very ideal
-   npix_wfs((realT) 12868);
-   ron_wfs((realT) 0.0);
-   Fbg((realT) 0.0);
+   npix_wfs(std::vector<realT>({12868}));
+   ron_wfs(std::vector<realT>({0.0}));
+   Fbg(std::vector<realT>({0.0}));
    
    d_min( 8.0/1e3); //Allow super fine sampling
    minTauWFS( (realT) (1./1e9) ); // Just be super fast.
@@ -1109,9 +1107,9 @@ void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
    lam_wfs(0.851e-6);
    lam_sci(0.656e-6);
    
-   npix_wfs((realT) 12868);
-   ron_wfs((realT) 0.3);
-   Fbg((realT) 0.22);
+   npix_wfs(std::vector<realT>({12868}));
+   ron_wfs(std::vector<realT>({0.3}));
+   Fbg(std::vector<realT>({0.22}));
    
    d_min( 6.5/48.0 );
    minTauWFS( (realT) (1./3622.) );
@@ -1138,64 +1136,6 @@ void aoSystem<realT, inputSpectT, iosT>::loadGMagAOX()
    m_specsChanged = true;
    m_dminChanged = true;
 }
-
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::F0(realT nF0)
-{
-   m_F0 = nF0;
-   m_specsChanged = true;
-   m_dminChanged = true;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::F0()
-{
-   return m_F0;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::starMag(realT nmag)
-{
-   m_starMag = nmag;
-   m_specsChanged = true;
-   m_dminChanged = true;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::starMag()
-{
-   return m_starMag;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-int aoSystem<realT, inputSpectT, iosT>::circularLimit(bool cl)
-{
-   m_circularLimit = cl;
-   m_specsChanged = true;
-   m_dminChanged = true;
-   
-   return 0;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-bool aoSystem<realT, inputSpectT, iosT>::circularLimit()
-{
-   return m_circularLimit;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::Fg(realT mag)
-{
-   return m_F0*pow(10.0, -0.4*mag);
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::Fg()
-{
-   return Fg(m_starMag);
-}
-
 
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::D(realT nD)
@@ -1257,6 +1197,56 @@ realT aoSystem<realT, inputSpectT, iosT>::optd_delta()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+template<typename wfsT>
+void aoSystem<realT, inputSpectT, iosT>::wfsBeta( const wfsT & w )
+{
+   if(m_wfsBeta && m_ownWfsBeta)
+   {
+      delete m_wfsBeta;
+      m_wfsBeta = nullptr;
+   }
+
+   m_wfsBeta = (wfs<realT,iosT> *) &w;
+   m_ownWfsBeta = false;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+template<typename wfsT>
+void aoSystem<realT, inputSpectT, iosT>::wfsBeta( const wfsT * w )
+{
+   if(m_wfsBeta && m_ownWfsBeta)
+   {
+      delete m_wfsBeta;
+      m_wfsBeta = nullptr;
+   }
+
+   if(w)
+   {
+      m_wfsBeta = (wfs<realT,iosT> *) w;
+      m_ownWfsBeta = false;
+   }
+   else
+   {
+      m_wfsBeta = new wfsT;
+      m_ownWfsBeta = true;
+   }
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+wfs<realT, iosT> * aoSystem<realT, inputSpectT, iosT>::wfsBeta()
+{
+   return m_wfsBeta;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::beta_p( realT m, realT n)
+{
+   if( m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
+   
+   return m_wfsBeta->beta_p(m, n, m_D, d_opt(), atm.r_0(m_lam_sci) );
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::lam_wfs(realT nlam)
 {
    m_lam_wfs = nlam;
@@ -1268,16 +1258,6 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::lam_wfs()
 {
    return m_lam_wfs;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::npix_wfs(realT npix)
-{
-   m_npix_wfs.resize(1);
-   m_npix_wfs[0] = npix;
-
-   m_specsChanged = true;
-   m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1300,7 +1280,7 @@ void aoSystem<realT, inputSpectT, iosT>::npix_wfs( int idx,
 {
    if(m_npix_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::npix_wfs", "idx larger than m_npix_wfs");
    }
 
    m_npix_wfs[idx] = npix;
@@ -1314,7 +1294,7 @@ realT aoSystem<realT, inputSpectT, iosT>::npix_wfs(size_t idx)
 {
    if(m_npix_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_npix_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::npix_wfs", "idx larger than m_npix_wfs");
    }
 
    return m_npix_wfs[idx];
@@ -1324,16 +1304,6 @@ template<typename realT, class inputSpectT, typename iosT>
 std::vector<realT> aoSystem<realT, inputSpectT, iosT>::npix_wfs()
 {
    return m_npix_wfs;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::ron_wfs(realT nron)
-{
-   m_ron_wfs.resize(1);
-   m_ron_wfs[0] = nron;
-
-   m_specsChanged = true;
-   m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1356,7 +1326,7 @@ void aoSystem<realT, inputSpectT, iosT>::ron_wfs( int idx,
 {
    if(m_ron_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::ron_wfs", "idx larger than m_ron_wfs");
    }
 
    m_ron_wfs[idx] = nron;
@@ -1371,7 +1341,7 @@ realT aoSystem<realT, inputSpectT, iosT>::ron_wfs(size_t idx)
 {
    if(m_ron_wfs.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ron_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::ron_wfs", "idx larger than m_ron_wfs");
    }
 
    return m_ron_wfs[idx];
@@ -1381,16 +1351,6 @@ template<typename realT, class inputSpectT, typename iosT>
 std::vector<realT> aoSystem<realT, inputSpectT, iosT>::ron_wfs()
 {
    return m_ron_wfs;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::Fbg(realT fbg)
-{
-   m_Fbg.resize(1);
-   m_Fbg[0] = fbg;
-
-   m_specsChanged = true;
-   m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1413,7 +1373,7 @@ void aoSystem<realT, inputSpectT, iosT>::Fbg( int idx,
 {
    if(m_Fbg.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+      mxThrowException(err::sizeerr, "aoSyste,::Fbg", "idx larger than m_Fbg");
    }
 
    m_Fbg[idx] = fbg;
@@ -1427,7 +1387,7 @@ realT aoSystem<realT, inputSpectT, iosT>::Fbg(size_t idx)
 {
    if(m_Fbg.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_Fbg"));
+      mxThrowException(err::sizeerr, "aoSyste,::Fbg", "idx larger than m_Fbg");
    }
 
    return m_Fbg[idx];
@@ -1437,16 +1397,6 @@ template<typename realT, class inputSpectT, typename iosT>
 std::vector<realT> aoSystem<realT, inputSpectT, iosT>::Fbg()
 {
    return m_Fbg;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::minTauWFS(realT ntau)
-{
-   m_minTauWFS.resize(1);
-   m_minTauWFS[0] = ntau;
- 
-   m_specsChanged = true;
-   m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1469,7 +1419,7 @@ void aoSystem<realT, inputSpectT, iosT>::minTauWFS( size_t idx,
 {
    if(m_minTauWFS.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::minTauWFS", "idx larger than m_ntau_wfs");
    }
 
    m_minTauWFS[idx] = ntau;
@@ -1483,7 +1433,7 @@ realT aoSystem<realT, inputSpectT, iosT>::minTauWFS(size_t idx)
 {
    if(m_minTauWFS.size() < idx+1)
    {
-      throw(mxException("mxlib", MXE_SIZEERR, "A size was calculated incorrectly.", __FILE__, __LINE__, "idx larger than m_ntau_wfs"));
+      mxThrowException(err::sizeerr, "aoSystem::minTauWFS", "idx larger than m_ntau_wfs");
    }
 
    return m_minTauWFS[idx];
@@ -1605,6 +1555,20 @@ int aoSystem<realT, inputSpectT, iosT>::fit_mn_max()
 }
  
 template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::circularLimit(bool cl)
+{
+   m_circularLimit = cl;
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+bool aoSystem<realT, inputSpectT, iosT>::circularLimit()
+{
+   return m_circularLimit;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::spatialFilter_ku( realT kx )
 {
    m_spatialFilter_ku = fabs(kx);
@@ -1661,6 +1625,46 @@ realT aoSystem<realT, inputSpectT, iosT>::ncp_alpha()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::F0(realT nF0)
+{
+   m_F0 = nF0;
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::F0()
+{
+   return m_F0;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::starMag(realT nmag)
+{
+   m_starMag = nmag;
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::starMag()
+{
+   return m_starMag;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fg(realT mag)
+{
+   return m_F0*pow(10.0, -0.4*mag);
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::Fg()
+{
+   return Fg(m_starMag);
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
                                                          realT d,
                                                          int b
@@ -1704,7 +1708,7 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
    
-   if (m_wfsBeta == 0) wfsBetaUnalloc();
+   if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
             
@@ -1996,7 +2000,7 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    
    realT F = Fg();
 
-   if (m_wfsBeta == 0) wfsBetaUnalloc();
+   if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
       
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_wfs));
 
@@ -2238,7 +2242,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
          return fe / S;
       }
    }
-   
+   //get if not doing fitting error or if inside control region:
+
    realT var = (this->*varFunc)(m, n);
    
    return var/S;
@@ -2433,7 +2438,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m,
    realT ni = atm.n_air(m_lam_sci);
    realT nw = atm.n_air(m_lam_wfs);
    
-   return C0var(m, n) * pow( (ni-nw)/ni, 2);   
+   return C0var(m, n) * pow( (ni-nw)/(ni-1), 2);  //Fixes error in Eqn 29 
 }
 
 
@@ -2493,6 +2498,35 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    lam_sci = " << lam_sci() << '\n';
    ios << "#    zeta    = " << zeta() << '\n';   
    ios << "#    lam_wfs = " << lam_wfs() << '\n';
+   
+   if(npix_wfs().size() > 0)
+   {
+      ios << "#    npix_wfs = " << npix_wfs((size_t) 0);
+      for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
+      ios << '\n';
+   }
+   
+   if(ron_wfs().size() > 0)
+   {
+      ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
+      for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
+      ios << '\n';
+   }
+
+   if(Fbg().size() > 0)
+   {
+      ios << "#    Fbg = " << Fbg((size_t) 0);
+      for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
+      ios << '\n';
+   }
+
+   if(minTauWFS().size() > 0)
+   {
+      ios << "#    minTauWFS = " << minTauWFS((size_t) 0);
+      for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
+      ios << '\n';
+   }
+
 /*   ios << "#    npix_wfs = " << npix_wfs() << '\n';
    ios << "#    ron_wfs = " << ron_wfs() << '\n';
    ios << "#    Fbg = " << Fbg() << '\n';
@@ -2509,7 +2543,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    ios << "#    ncp_alpha = " << m_ncp_alpha << '\n';
    
    
-   if (m_wfsBeta == 0) wfsBetaUnalloc();
+   if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
    m_wfsBeta->dumpWFS(ios);
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
@@ -2528,6 +2562,192 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    return ios;
 }
 
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator & config )
+{
+   using namespace mx::app;
+
+   //AO System configuration
+   config.add("aosys.wfs"               ,"", "aosys.wfs"             , argType::Required, "aosys", "wfs",              false, "string", "The WFS type: idealWFS, unmodPyWFS, asympModPyWFS");
+   config.add("aosys.D"                 ,"", "aosys.D"               , argType::Required, "aosys", "D",                false, "real", "The telescope diameter [m]");
+   config.add("aosys.d_min"             ,"", "aosys.d_min"           , argType::Required, "aosys", "d_min",            false, "real", "The minimum actuator spacing [m]");
+   config.add("aosys.optd"              ,"", "aosys.optd"            , argType::Optional, "aosys", "optd",             false, "bool", "Whether or not the actuator spacing is optimized");
+   config.add("aosys.optd_delta"        ,"", "aosys.optd_delta"      , argType::Required, "aosys", "optd_delta",       false, "bool", "The fractional change from d_min used in optimization.  Set to 1 (default) for integer binnings, > 1 for finer sampling.");
+   config.add("aosys.F0"                ,"", "aosys.F0"              , argType::Required, "aosys", "F0",               false, "real", "Zero-mag photon flux, [photons/sec]");     
+   config.add("aosys.lam_wfs"           ,"", "aosys.lam_wfs"         , argType::Required, "aosys", "lam_wfs",          false, "real", "WFS wavelength [m]" );
+   config.add("aosys.npix_wfs"          ,"", "aosys.npix_wfs"        , argType::Required, "aosys", "npix_wfs",         false, "real", "The number of pixels in the WFS");
+   config.add("aosys.ron_wfs"           ,"", "aosys.ron_wfs"         , argType::Required, "aosys", "ron_wfs",          false, "real", "WFS readout noise [photons/read]");
+   config.add("aosys.bin_npix"          ,"", "aosys.bin_npix"        , argType::Required, "aosys", "bin_npix",         false, "bool", "Whether or not WFS pixels are re-binned along with actuator spacing optimization");
+   config.add("aosys.Fbg"               ,"", "aosys.Fbg"             , argType::Required, "aosys", "Fbg",              false, "real", "Background counts, [counts/pix/sec]");\
+   config.add("aosys.tauWFS"            ,"", "aosys.tauWFS"          , argType::Required, "aosys", "tauWFS",           false, "real", "WFS integration time [s]");
+   config.add("aosys.minTauWFS"         ,"", "aosys.minTauWFS"       , argType::Required, "aosys", "minTauWFS",        false, "real", "Minimum WFS integration time [s]");
+   config.add("aosys.deltaTau"          ,"", "aosys.deltaTau"        , argType::Required, "aosys", "deltaTau",         false, "real", "Loop delay [s]");
+   config.add("aosys.optTau"            ,"", "aosys.optTau"          , argType::Optional, "aosys", "optTau",           false, "bool", "Whether or not the integration time is optimized");
+   config.add("aosys.lam_sci"           ,"", "aosys.lam_sci"         , argType::Required, "aosys", "lam_sci",          false, "real", "Science wavelength [m]");
+   config.add("aosys.zeta"              ,"", "aosys.zeta"            , argType::Required, "aosys", "zeta",             false, "real", "Zenith distance [rad]");
+   config.add("aosys.fit_mn_max"        ,"", "aosys.fit_mn_max"      , argType::Required, "aosys", "fit_mn_max",       false, "real", "Maximum spatial frequency index to use for analysis");
+   config.add("aosys.circularLimit"     ,"", "aosys.circularLimit"   , argType::Optional, "aosys", "circularLimit",    false, "bool", " Flag to indicate that the spatial frequency limit is circular, not square.");
+   config.add("aosys.spatialFilter_ku", "", "aosys.spatialFilter_ku", argType::Required, "aosys", "spatialFilter_ku", false, "real", "Spatial filter cutoff frequency in u [m^-1]");
+   config.add("aosys.spatialFilter_kv", "", "aosys.spatialFilter_kv", argType::Required, "aosys", "spatialFilter_kv", false, "real", "Spatial filter cutoff frequency in v [m^-1]");
+   config.add("aosys.ncp_wfe"           ,"", "aosys.ncp_wfe"         , argType::Required, "aosys", "ncp_wfe",          false, "real", "NCP WFE between 1 lambda/D and fit_mn_max [rad^2]");
+   config.add("aosys.ncp_alpha"         ,"", "aosys.ncp_alpha"       , argType::Required, "aosys", "ncp_alpha",        false, "real", "PSD index for NCP WFE");
+   config.add("aosys.starMag"           ,"", "aosys.starMag"         , argType::Required, "aosys", "starMag",          false, "real", "Star magnitude");
+   config.add("aosys.starMags"          ,"", "aosys.starMags"        , argType::Required, "aosys", "starMags",         false, "real vector", "A vector of star magnitudes");
+   
+   atm.setupConfig(config);
+   
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & config )
+{
+   //WFS 
+   if(config.isSet("aosys.wfs"))
+   {
+      std::string wfsStr;
+      config(wfsStr, "aosys.wfs");
+      
+      if(wfsStr == "ideal")
+      {
+         wfsBeta<wfs<realT>>(nullptr);
+      }
+      else if(wfsStr == "unmodPyWFS")
+      {
+         wfsBeta<pywfsUnmod<realT>>(nullptr);
+      }
+      else if(wfsStr == "asympModPyWFS")
+      {
+         wfsBeta<pywfsModAsymptotic<realT>>(nullptr);
+      }
+      else if(wfsStr == "SHWFS")
+      {
+         wfsBeta<shwfs<realT>>(nullptr);
+      }
+      else
+      {
+         mxThrowException(err::invalidconfig, "aoSystem::loadConfig", "unknown WFS " + wfsStr + " specified");  
+      }
+   }
+
+   //We load the default value, get the config value (which will be the default if not set), and
+   //then if it was set, call the setter function so any side effects are captured.
+
+   //diameter
+   realT nD = D();
+   config(nD, "aosys.D");
+   if(config.isSet("aosys.D") ) D(nD);
+   
+   //d_min
+   realT nd_min = d_min();
+   config(nd_min, "aosys.d_min");
+   if(config.isSet("aosys.d_min") )d_min(nd_min);
+
+   bool noptd = optd();
+   config(noptd, "aosys.optd");
+   if(config.isSet("aosys.optd")) optd(noptd);
+   
+   realT noptd_delta =optd_delta();
+   config(noptd_delta, "aosys.optd_delta");
+   if(config.isSet("aosys.optd_delta")) optd_delta(noptd_delta);
+
+   realT nlam_wfs = lam_wfs();
+   config(nlam_wfs, "aosys.lam_wfs");
+   if(config.isSet("aosys.lam_wfs") ) lam_wfs(nlam_wfs);
+
+   //npix_wfs   
+   std::vector<realT> nnpix_wfs = npix_wfs();
+   config(nnpix_wfs, "aosys.npix_wfs");   
+   if(config.isSet("aosys.npix_wfs")) npix_wfs(nnpix_wfs);
+
+   //ron_wfs   
+   std::vector<realT> nron_wfs = ron_wfs();
+   config(nron_wfs, "aosys.ron_wfs");   
+   if(config.isSet("aosys.ron_wfs")) ron_wfs(nron_wfs);
+
+   //Fbg   
+   std::vector<realT> nFbg = Fbg();
+   config(nFbg, "aosys.Fbg");   
+   if(config.isSet("aosys.Fbg")) Fbg(nFbg);
+
+   //minTauWFS   
+   std::vector<realT> nminTauWFS = minTauWFS();
+   config(nminTauWFS, "aosys.minTauWFS");   
+   if(config.isSet("aosys.minTauWFS")) minTauWFS(nminTauWFS);
+
+   //bin_npix
+   bool nbin_npix = bin_npix();
+   config(nbin_npix, "aosys.bin_npix");
+   if(config.isSet("aosys.bin_npix")) bin_npix(nbin_npix);
+
+   //tauWFS
+   realT ntauWFS = tauWFS();
+   config( ntauWFS, "aosys.tauWFS");
+   if(config.isSet("aosys.tauWFS")) tauWFS(ntauWFS);
+   
+   //deltaTau
+   realT ndeltaTau = deltaTau();
+   config( ndeltaTau, "aosys.deltaTau");
+   if(config.isSet("aosys.deltaTau")) deltaTau(ndeltaTau);
+
+   //optTau   
+   bool noptTau = optTau();
+   config(noptTau, "aosys.optTau");
+   if(config.isSet("aosys.optTau")) optTau(noptTau);
+
+   //lam_sci
+   realT nlam_sci = lam_sci();
+   config( nlam_sci, "aosys.lam_sci");
+   if(config.isSet("aosys.lam_sci") ) lam_sci( nlam_sci );
+ 
+   //zeta
+   realT nzeta = zeta();
+   config(nzeta , "aosys.zeta");
+   if(config.isSet("aosys.zeta") ) zeta(nzeta);
+
+   //fit_mn_max
+   realT fmnm = fit_mn_max();
+   config( fmnm, "aosys.fit_mn_max");
+   if(config.isSet("aosys.fit_mn_max") ) fit_mn_max(fmnm);
+   
+   //circularLimit
+   bool cl = circularLimit();
+   config(cl, "aosys.circularLimit");
+   if(config.isSet("aosys.circularLimit") ) circularLimit(cl);
+
+   //spatialFilter_ku
+   realT ku = spatialFilter_ku();
+   config( ku, "aosys.spatialFilter_ku");
+   if(config.isSet("aosys.spatialFilter_ku") ) spatialFilter_ku(ku);
+     
+   //spatialFilter_kv
+   realT kv = spatialFilter_kv();
+   config( kv, "aosys.spatialFilter_kv");
+   if(config.isSet("aosys.spatialFilter_kv") ) spatialFilter_kv(kv);
+
+   //ncp_wfe
+   realT nwfe = ncp_wfe();
+   config( nwfe, "aosys.ncp_wfe");
+   if(config.isSet("aosys.ncp_wfe") ) ncp_wfe(nwfe);
+    
+   //ncp_alpha
+   realT na = ncp_alpha();
+   config( na, "aosys.ncp_alpha");
+   if(config.isSet("aosys.ncp_alpha") ) ncp_alpha( na );
+
+   //F0
+   realT nF0 = F0();
+   config(nF0, "aosys.F0");
+   if(config.isSet("aosys.F0") ) F0(nF0);
+
+   //star_mag
+   realT smag = starMag();
+   config( smag, "aosys.starMag");
+   if(config.isSet("aosys.starMag") ) starMag( smag );
+
+   atm.loadConfig(config);
+
+}
+
 extern template
 class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
 
@@ -2544,6 +2764,8 @@ class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>;
 extern template
 class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>; 
 #endif
+
+
 
 } //namespace analysis
 } //namespace AO

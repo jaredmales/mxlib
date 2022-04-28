@@ -249,6 +249,34 @@ std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of th
    return idx;
 }
 
+/// Reflect vector indices across the given center pixel.
+/** This assumes column major order.
+  * \returns the vector of reflected indices
+  */
+template<typename realT>
+std::vector<size_t> reflectImageIndices( const std::vector<size_t> & idxi, ///< [in] the vector indices to reflect
+                                         int w, ///< [in] the image width
+                                         int h, ///< [in] the image height
+                                         realT xc, ///< [in] the image center x coordinate
+                                         realT yc  ///< [in] the image center y coordinate
+                                       )
+{
+   std::vector<size_t> idxr;
+   idxr.reserve(idxi.size());
+
+   int x0, y0, x1, y1;
+   for(size_t n =0; n < idxi.size(); ++n)
+   {
+      int y0 = idxi[n] / w;
+      int x0 = idxi[n] - y0*w;
+
+      reflectImageCoords(x1, y1, x0, y0, xc, yc);
+
+      if(x1 < w && y1 < h) idxr.push_back( y1*w + x1 );
+   }
+
+   return idxr;
+}
 
 template<typename sizeT>
 void rectangleIndices( std::vector<sizeT> & idx, 

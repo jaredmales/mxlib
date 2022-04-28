@@ -527,23 +527,22 @@ void vectorMedianSub( vecT &vec /**<  [in/out] the vector, each element will hav
 
 ///Smooth a vector using the mean in a window specified by its full-width
 template<typename realT>
-int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
-                      std::vector<realT> & vec, ///< [in] the input vector, unaltered.
-                      int win                   ///< [in] the full-width of the smoothing window
+int vectorSmoothMean( realT * smVec,  ///< [out] the smoothed version of the vector.  At least as large as \p vec.
+                      realT * vec,    ///< [in] the input vector, unaltered.
+                      size_t vecSize, ///< [in] the size of \p vec
+                      int win         ///< [in] the full-width of the smoothing window.  Should be even.  0 results in a slow memcpy.
                     )
 {
-   smVec = vec;
-
    realT sum;
    int n;
-   for(int i=0; i < vec.size(); ++i)
+   for(int i=0; i < vecSize; ++i)
    {
       int j = i - 0.5*win;
       if(j < 0) j = 0;
 
       sum = 0;
       n = 0;
-      while( j <= i+0.5*win && j < vec.size())
+      while( j <= i+0.5*win && j < vecSize)
       {
          sum += vec[j];
          ++n;
@@ -551,10 +550,22 @@ int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version
       }
 
       smVec[i] = sum/n;
-
    }
 
    return 0;
+}
+
+///Smooth a vector using the mean in a window specified by its full-width
+/** \overload
+  */
+template<typename realT>
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector.  Will be resize()-ed.
+                      std::vector<realT> & vec,  ///< [in] the input vector, unaltered.
+                      int win                    ///< [in] the full-width of the smoothing window.  Should be even.  0 results in a slow memcpy.
+                    )
+{
+   smVec.resize(vec.size());
+   return vectorSmoothMean(smVec.data(), vec.data(), vec.size(), win);
 }
 
 /// Smooth a vector using the mean in windows specified by their full-widths
@@ -708,6 +719,34 @@ int vectorRebin( vectorT & binv,           ///< [out] the re-binned vector.  wil
    return 0;
 }
 
+/// Calculate and accumulate the means of a timeseries in bins of various sizes.
+/** Useful mainly to calculate the variance of the mean as a function of sample size.
+  * The output is a vector of vectors, where each element is a vector which contains the means in the 
+  * unique bins of size corresponding to the same index in the in put binSzs vector.
+  * 
+  * \returns 0 on success.
+  */ 
+template<typename vectorT, typename binVectorT>
+int vectorBinMeans( std::vector<vectorT> & means, ///< [out] the means in each distinct bin.  Not cleared, but Will be resized with new means appended.
+                    binVectorT & binSzs,          ///< [in] the bin sizes in which to calculate the means
+                    const vectorT & v             ///< [in] the input vector to bin .
+                  )
+{
+   vectorT binv;
+
+   means.resize(binSzs.size());
+   
+   for(size_t i=0; i< binSzs.size(); ++i)
+   {
+      vectorRebin(binv, v, binSzs[i], true);
+
+      means[i].resize(means[i].size() + binv.size());
+      for(size_t j=0; j< binv.size(); ++j)  means[i][ means[i].size() - binv.size() + j] = binv[j];
+   }
+   
+   return 0;
+}
+
 /// Convolve (smooth) a vector with a Gaussian.
 /**
   * \returns 0 on success.
@@ -753,33 +792,7 @@ int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoot
 }
 
 
-/// Calculate and accumulate the means of a timeseries in bins of various sizes.
-/** Useful mainly to calculate the variance of the mean as a function of sample size.
-  * The output is a vector of vectors, where each element is a vector which contains the means in the 
-  * unique bins of size corresponding to the same index in the in put binSzs vector.
-  * 
-  * \returns 0 on success.
-  */ 
-template<typename vectorT, typename binVectorT>
-int vectorBinMeans( std::vector<vectorT> & means, ///< [out] the means in each distinct bin.  Not cleared, but Will be resized with new means appended.
-                    binVectorT & binSzs,          ///< [in] the bin sizes in which to calculate the means
-                    const vectorT & v             ///< [in] the input vector to bin .
-                  )
-{
-   vectorT binv;
 
-   means.resize(binSzs.size());
-   
-   for(size_t i=0; i< binSzs.size(); ++i)
-   {
-      vectorRebin(binv, v, binSzs[i], true);
-
-      means[i].resize(means[i].size() + binv.size());
-      for(size_t j=0; j< binv.size(); ++j)  means[i][ means[i].size() - binv.size() + j] = binv[j];
-   }
-   
-   return 0;
-}
 
 /// Calculate a cumulative histogram of a vector.
 /** Sorts the vector and sums.

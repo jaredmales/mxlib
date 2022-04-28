@@ -29,7 +29,7 @@ endif
 all: tshoot $(PRE_TARGETS) $(TARGETNAME) $(OTHER_OBJS)
 
 $(TARGETNAME): $(OBJNAME) $(OTHER_OBJS)
-	$(LINK.o)  -o $(TARGETNAME) $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+	$(LINK.o)  -o $(TARGETNAME) $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) $(OTHER_LIBS)
 
 
 install: all

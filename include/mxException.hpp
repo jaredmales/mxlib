@@ -30,83 +30,95 @@
 #include <exception>
 #include <sstream>
 
-   
+#include "mxError.hpp"
+
+
+namespace mx
+{
+namespace err
+{
+
 /// The mxlib exception class
 /** Provides a rich error report via the standard what().
-  * \ingroup error_handling
+  * \ingroup exceptions
   */
 class mxException : public std::exception
 {
 
 protected:
    ///Contains the what() string
-   char whatstr[4096];
-   
-public:
+   char m_whatstr[4096];
 
-   ///The source of the exception, such as stdlib or cfitisio
-   std::string except_code_source {""};
+   ///The source of the exception, such as stdlib or cfitisio or the function name
+   std::string m_source {""};
    
-   ///The source specific error code
-   int  except_code {0};
+   ///The mxlib error code
+   int  m_code {0};
    
-   ///The mnemonic associated with the error code
-   std::string except_code_mnem {""};
+   ///The name of the error code
+   std::string m_codeName {""};
    
+   ///The errno error code (only used if non-zero)
+   int m_errno {0};
+
    ///The source file where the exception originated
-   std::string except_file {""};
+   std::string m_file {""};
    
    ///The line number of the file where the exception originated
-   int  except_line {0};
+   int  m_line {0};
    
    ///The long explanation of the error
-   std::string except_explanation {""};
+   std::string m_explanation {""};
+
+public:
 
    ///Default constructor
    mxException () noexcept
-   {
-      //except_code = 0;
-      //except_line = 0;
-      
+   {      
       build_what();
    }
 
    ///Copy constructor
-   mxException (const mxException & e) noexcept : except_code_source(e.except_code_source), except_code(e.except_code), except_code_mnem(e.except_code_mnem), except_file(e.except_file), except_line(e.except_line), except_explanation(e.except_explanation)
+   mxException (const mxException & e) noexcept : m_source(e.m_source), m_code(e.m_code), m_codeName(e.m_codeName), m_file(e.m_file), m_line(e.m_line), m_explanation(e.m_explanation)
    {
-//       except_code_source = e.except_code_source;
-//       except_code = e.except_code;
-//       except_code_mnem = e.except_code_mnem;
-//       except_file = e.except_file;
-//       except_line = e.except_line;
-//       except_explanation = e.except_explanation;
-      
       build_what();
    }
 
-   ///Construct and fill in each of the values.
-   mxException(const std::string & esrc, const int & ec, const std::string & emnem, 
-               const std::string & efile, const int & line, const std::string & expl) : except_code_source(esrc), except_code(ec), except_code_mnem(emnem), except_file(efile), except_line(line), except_explanation(expl)
+   ///Construct and fill in each of the values, except errno
+   mxException( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+                const int & ec,            ///< [in] the error code
+                const std::string & emnem, ///< [in] the name of the error code
+                const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                const int & line,          ///< [in] the line number where the exception was thrown
+                const std::string & expl   ///< [in] the explanation for why the exception was thrown
+              ) : m_source(esrc), m_code(ec), m_codeName(emnem), m_errno(0), m_file(efile), m_line(line), m_explanation(expl)
    {
-// //       except_code_source = esrc;
-// //       except_code = ec;
-// //       except_code_mnem = emnem;
-// //       except_file = efile;
-// //       except_line = line;
-// //       except_explanation = expl;
-      
+      build_what();
+   }
+
+   ///Construct and fill in each of the values, including errno
+   mxException( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+                const int & ec,            ///< [in] the error code
+                const std::string & emnem, ///< [in] the name of the error code
+                const int & en,            ///< [in] the value of errno
+                const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                const int & line,          ///< [in] the line number where the exception was thrown
+                const std::string & expl   ///< [in] the explanation for why the exception was thrown
+              ) : m_source(esrc), m_code(ec), m_codeName(emnem), m_errno(en), m_file(efile), m_line(line), m_explanation(expl)
+   {
       build_what();
    }
 
    ///Assignment operator
    mxException & operator=(const mxException & e) noexcept
    {
-      except_code_source = e.except_code_source;
-      except_code = e.except_code;
-      except_code_mnem = e.except_code_mnem;
-      except_file = e.except_file;
-      except_line = e.except_line;
-      except_explanation = e.except_explanation;
+      m_source = e.m_source;
+      m_code = e.m_code;
+      m_codeName = e.m_codeName;
+      m_errno = e.m_errno;
+      m_file = e.m_file;
+      m_line = e.m_line;
+      m_explanation = e.m_explanation;
       
       build_what();
       
@@ -127,22 +139,251 @@ public:
       s.str("");
       
       s << "An exception has been thrown in an mxlib component.\n";
-      s << "      source: " << except_code_source << "\n";
-      s << "        code: " << except_code << "\n";
-      s << "   code mnem: " << except_code_mnem << "\n";
-      s << "     in file: " << except_file << "\n";
-      s << "     at line: " << except_line << "\n";
-      s << " explanation: " << except_explanation << "\n";
-      
-      snprintf(whatstr, 4096, "%s", s.str().c_str());
+      s << "      source: " << m_source << "\n";
+      if(m_code != 0)
+      {
+         s << "        code: " << m_code;
+         if(m_codeName != "") s << " ("<< m_codeName << ")";
+         s << "\n";
+      }
+      if(m_errno != 0)
+      {
+         s << "       errno: " << m_errno << " (" << errno_CodeToName(m_errno) << ")\n";
+      }
+      s << "     in file: " << m_file << "\n";
+      s << "     at line: " << m_line << "\n";
+      if(m_explanation != "") s << " explanation: " << m_explanation << "\n";
+      if(m_errno != 0)
+      {
+         s << "              " << strerror(m_errno) << "\n";
+      }
+      snprintf(m_whatstr, sizeof(m_whatstr), "%s", s.str().c_str());
    }
    
    ///Return the details of the exception as a single string.
    virtual const char * what() const noexcept
    {   
-      return whatstr;//s.str().c_str();
+      return m_whatstr;
    }
    
 };
 
-#endif //__mxException__
+/// mxException for invalid arguments
+/** 
+  * \ingroup exceptions
+  */ 
+class invalidarg : public mxException 
+{
+public:
+   invalidarg( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+               const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+               const int & line,          ///< [in] the line number where the exception was thrown
+               const std::string & expl   ///< [in] the explanation for why the exception was thrown
+             ) : mxException(esrc, MXE_INVALIDARG,MXE_INVALIDARG_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for invalid config settings
+/** 
+  * \ingroup exceptions
+  */ 
+class invalidconfig : public mxException 
+{
+public:
+   invalidconfig( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+                  const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                  const int & line,          ///< [in] the line number where the exception was thrown
+                  const std::string & expl   ///< [in] the explanation for why the exception was thrown
+                ) : mxException(esrc, MXE_INVALIDARG,MXE_INVALIDARG_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for not implemented features
+/** 
+  * \ingroup exceptions
+  */
+class notimpl : public mxException 
+{
+public:
+   notimpl( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+            const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+            const int & line,          ///< [in] the line number where the exception was thrown 
+            const std::string & expl   ///< [in] the explanation for why the exception was thrown
+          ) : mxException(esrc, MXE_NOTIMPL,MXE_NOTIMPL_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for parameters which aren't set
+/** 
+  * \ingroup exceptions
+  */
+class paramnotset : public mxException 
+{
+public:
+   paramnotset( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+                const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                const int & line,          ///< [in] the line number where the exception was thrown 
+                const std::string & expl   ///< [in] the explanation for why the exception was thrown
+              ) : mxException(esrc, MXE_PARAMNOTSET,MXE_PARAMNOTSET_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for a size error
+/** 
+  * \ingroup exceptions
+  */
+class sizeerr : public mxException 
+{
+public:
+   sizeerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+            const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+            const int & line,          ///< [in] the line number where the exception was thrown 
+            const std::string & expl   ///< [in] the explanation for why the exception was thrown
+          ) : mxException(esrc, MXE_SIZEERR,MXE_SIZEERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for an allocation error
+/** 
+  * \ingroup exceptions
+  */
+class allocerr : public mxException 
+{
+public:
+   allocerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown 
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_ALLOCERR,MXE_ALLOCERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for errors on opening a file
+/** 
+  * \ingroup exceptions
+  */
+class fileoerr : public mxException 
+{
+public:
+   fileoerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILEOERR,MXE_FILEOERR_NAME, efile, line, expl)
+   {
+   }
+   fileoerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const int & en,            ///< [in] the value of errno
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILEOERR,MXE_FILEOERR_NAME, en, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for errors reading from a file
+/** 
+  * \ingroup exceptions
+  */
+class filererr : public mxException 
+{
+public:
+   filererr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILERERR,MXE_FILERERR_NAME, efile, line, expl)
+   {
+   }
+   filererr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const int & en,            ///< [in] the value of errno
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILERERR,MXE_FILERERR_NAME, en, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for errors writing to a file
+/** 
+  * \ingroup exceptions
+  */
+class filewerr : public mxException 
+{
+public:
+   filewerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILEWERR,MXE_FILEWERR_NAME, efile, line, expl)
+   {
+   }
+   filewerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const int & en,            ///< [in] the value of errno
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILEWERR,MXE_FILEWERR_NAME, en, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for errors closing a file
+/** 
+  * \ingroup exceptions
+  */
+class filecerr : public mxException 
+{
+public:
+   filecerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILECERR,MXE_FILECERR_NAME, efile, line, expl)
+   {
+   }
+   filecerr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+             const int & en,            ///< [in] the value of errno
+             const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+             const int & line,          ///< [in] the line number where the exception was thrown
+             const std::string & expl   ///< [in] the explanation for why the exception was thrown
+           ) : mxException(esrc, MXE_FILECERR,MXE_FILECERR_NAME, en, efile, line, expl)
+   {
+   }
+};
+
+/// mxException for errors returned by a library call
+/** 
+  * \ingroup exceptions
+  */
+class liberr : public mxException 
+{
+public:
+   liberr( const std::string & esrc,  ///< [in] the source of the exception, typically the class and function
+           const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+           const int & line,          ///< [in] the line number where the exception was thrown
+           const std::string & expl   ///< [in] the explanation for why the exception was thrown
+         ) : mxException(esrc, MXE_LIBERR,MXE_LIBERR_NAME, efile, line, expl)
+   {
+   }
+};
+
+/// Throw an exception.  This macro takes care of the file and line.
+/** \ingroup exceptions
+  */
+#define mxThrowException( extype, src, expl ) throw extype(src,  __FILE__, __LINE__, expl);
+
+#define mxThrowExceptionErrno( extype, en, src, expl ) throw extype(src,  en, __FILE__, __LINE__, expl);
+
+} //err
+} //namespace mx
+
+#endif //mxException_hpp
