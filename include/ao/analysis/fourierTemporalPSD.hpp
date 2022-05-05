@@ -545,7 +545,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
 
          break;
       default:
-         mxError("fourierTemporalPSD::singleLayerPSD", MXE_INVALIDARG, "value of _useBasis isn not valid.");
+         mxError("fourierTemporalPSD::singleLayerPSD", MXE_INVALIDARG, "value of _useBasis is not valid.");
          return -1;
    }
 
@@ -2259,15 +2259,13 @@ realT Fm_projMod (realT kv, void * params)
    return P*QQ ;
 }
 
-/*
-extern template
-struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;
-*/
 
-/*-----
+/*extern template
+struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/
+
+
 extern template
 struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
-*/
 
 /*
 extern template

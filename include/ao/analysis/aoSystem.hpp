@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2015-2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -76,7 +76,8 @@ protected:
    
    realT m_D {0}; ///< Telescope diameter [m]
 
-   realT m_d_min {0}; ///< Minimum AO system actuator pitch [m]
+   std::vector<realT> m_d_min {0}; ///< Minimum AO system actuator pitch [m].  One per WFS mode.
+
    realT m_d_opt {0}; ///< Current optimum AO system actuator pitch [m]
    bool m_optd {false}; ///< Flag controlling whether actuator pitch is optimized (true) or just uses m_d_min (false).  Default: true.
    realT m_optd_delta {1.0}; ///< The fractional change from d_min used in optimization.  Set to 1 for integer binnings, > 1 for finer sampling.
@@ -87,15 +88,15 @@ protected:
    realT m_lam_wfs {0}; ///< WFS wavelength [m]
 
    //WFS detector parameters, which may be a function of binning
-   std::vector<realT> m_npix_wfs {0};  ///< Number of WFS pixels
-   std::vector<realT> m_ron_wfs {0};   ///< WFS readout noise [electrons/pix]
-   std::vector<realT> m_Fbg {0};       ///< Background flux, [photons/sec/pixel]
-   std::vector<realT> m_minTauWFS {0}; ///< Minimum WFS exposure time [sec]
+   std::vector<realT> m_npix_wfs {0};  ///< Number of WFS pixels.  One per WFS mode.
+   std::vector<realT> m_ron_wfs {0};   ///< WFS readout noise [electrons/pix].  One per WFS mode.
+   std::vector<realT> m_Fbg {0};       ///< Background flux, [photons/sec/pixel].  One per WFS mode.
+   std::vector<realT> m_minTauWFS {0}; ///< Minimum WFS exposure time [sec].  One per WFS mode.
    
    bool m_bin_npix {true}; ///< Flag controlling whether or not to bin WFS pixels according to the actuator spacing.
       
-   int m_bin_opt {0}; ///< The optimum binning factor.  If WFS modes are used, this is the index.  Otherwise it is the bining factor (>=1).
-
+   int m_bin_opt {0}; ///< The optimum binning factor.  If WFS modes are used, this is the mode index (0 to N-1).  If not, it is 1 minus the pixel binning factor. It is always 1 minus the actuator binning factor.
+   
    realT m_tauWFS {0}; ///< Actual WFS exposure time [sec]
    
    realT m_deltaTau {0}; ///< Loop latency [sec]
@@ -170,16 +171,29 @@ public:
      */ 
    realT D();
    
-   /// Set the value of the minimum subaperture sampling.
-   /**
+   /// Set the minimum subaperture sampling for each WFS mode.
+   /** This sets the vector
      */
-   void d_min( realT nd /**< [in] is the new value of m_d_min */);
+   void d_min( const std::vector<realT> & nd /**< [in] is the new values of m_d_min */);
    
-   /// Get the value of the minimum subaperture sampling.
+   /// Set the minimum subaperture sampling for a given WFS mode
+   /** This sets the entry in the vector, if it has the proper length.
+     */
+   void d_min( int idx, ///< [in] the index of the WFS mode
+               realT nd ///< [in] is the new value of m_d_min[idx] 
+             );
+
+   /// Get the minimum subaperture sampling for a given WFS mode
    /**
-     * \returns the new value of m_d_min.
+     * \returns the current value of m_d_min[idx]
      */ 
-   realT d_min();
+   realT d_min( size_t idx /**< [in] the index of the WFS mode.*/);
+
+   /// Get the minimum subaperture sampling for all WFS modes.
+   /**
+     * \returns the current value of m_d_min.
+     */ 
+   std::vector<realT> d_min();
    
    /// Set whether or not the value of d is optimized or just set to m_d_min.
    /**
@@ -245,31 +259,31 @@ public:
      */ 
    realT lam_wfs();
    
-   /// Set the number of pixels in the WFS for each binning mode
+   /// Set the number of pixels in the WFS for each WFS mode
    /** This sets the vector.
      */
    void npix_wfs( const std::vector<realT> & npix /**< [in] is the new values of m_npix_wfs */);
 
-   /// Set the number of pixels in the WFS for a given binning mode
+   /// Set the number of pixels in the WFS for a given WFS mode
    /** This sets the entry in the vector, if it has the proper length.
      */
-   void npix_wfs( int idx,   ///< [in] the index of the binning mode
+   void npix_wfs( int idx,   ///< [in] the index of the WFS mode
                   realT npix ///< [in] is the new value of m_npix_wfs[idx] 
                 );
 
-   /// Get the number of pixels in the WFS for a given binning mode
+   /// Get the number of pixels in the WFS for a given WFS mode
    /**
      * \returns the current value of m_npix_wfs[idx]
      */ 
-   realT npix_wfs(size_t idx /**< [in] the index of the binning mode.*/);
+   realT npix_wfs(size_t idx /**< [in] the index of the WFS mode.*/);
    
-   /// Get the number of pixels in the WFS for all binning modes
+   /// Get the number of pixels in the WFS for all WFS modes
    /**
      * \returns the current value of m_npix_wfs
      */ 
    std::vector<realT> npix_wfs();
 
-   /// Set the value of the WFS readout noise for each binning mode
+   /// Set the value of the WFS readout noise for each WFS mode
    /** This sets the vector.
      */
    void ron_wfs( const std::vector<realT> & nron /**< [in] is the new value of m_ron_wfs */);
@@ -277,41 +291,41 @@ public:
    /// Set the value of the WFS readout noise for a given bining mode
    /** This sets the entry in the vector if the vector has the proper length
      */
-   void ron_wfs( int idx,   ///< [in] the index of the binning mode
+   void ron_wfs( int idx,   ///< [in] the index of the WFS mode
                  realT nron ///< [in] is the new value of m_ron_wfs [idx]
                );
 
-   /// Get the value of the WFS readout noise for a given binning mode
+   /// Get the value of the WFS readout noise for a given WFS mode
    /**
      * \returns the current value of m_ron_wfs[idx]
      */ 
-   realT ron_wfs( size_t idx /**< [in] the index of the binning mode.*/);
+   realT ron_wfs( size_t idx /**< [in] the index of the WFS mode.*/);
    
-   /// Get the value of the WFS readout noise for all binning modes
+   /// Get the value of the WFS readout noise for all WFS modes
    /**
      * \returns the current value of m_ron_wfs
      */ 
    std::vector<realT> ron_wfs();
    
    /// Set the value of the background fluxes.
-   /** This sets the value of the background flux for each binning mode
+   /** This sets the value of the background flux for each WFS mode
      */
    void Fbg(const std::vector<realT> & fbg /**< [in] is the new value of m_Fbg */);
 
-   /// Set a single value of the background flux for a given binning mode
+   /// Set a single value of the background flux for a given WFS mode
    /** This sets the entry in the vector if the vector has the proper length
      */
-   void Fbg( int idx,  ///< [in] the index of the binning mode
+   void Fbg( int idx,  ///< [in] the index of the WFS mode
              realT fbg ///< [in] is the new value of m_Fbg[idx]
             );
 
-   /// Get the value of the background flux for a given binning mode
+   /// Get the value of the background flux for a given WFS mode
    /**
      * \returns m_Fbg[idx]
      */ 
-   realT Fbg( size_t idx /**< [in] the index of the binning mode.*/);
+   realT Fbg( size_t idx /**< [in] the index of the WFS mode.*/);
    
-   /// Get the value of the background flux for all binning modes
+   /// Get the value of the background flux for all WFS modes
    /**
      * \returns the current value of m_Fbg
      */ 
@@ -322,10 +336,10 @@ public:
      */
    void minTauWFS(const std::vector<realT> &  ntau /**< [in] is the new value of m_minTauWFS */);
 
-   /// Set a single value of the minimum WFS exposure time for a given binning mode.
+   /// Set a single value of the minimum WFS exposure time for a given WFS mode.
    /** This sets the entry in the vector if the vector has sufficient length.
      */
-   void minTauWFS(size_t idx, ///< [in] the index of the binning mode
+   void minTauWFS(size_t idx, ///< [in] the index of the WFS mode
                   realT ntau  ///< [in] is the new value of m_minTauWFS
                  );
 
@@ -333,7 +347,7 @@ public:
    /**
      * \returns the current value of m_minTauWFS[idx].
      */ 
-   realT minTauWFS(size_t idx /**< [in] the index of the binning mode.*/);
+   realT minTauWFS(size_t idx /**< [in] the index of the WFS mode.*/);
    
    /// Get the values of the minimum WFS exposure time.
    /**
@@ -352,6 +366,15 @@ public:
      */ 
    bool bin_npix();
    
+   /// Get the value of the optimum binning factor/index.
+   /** If WFS modes are used, this is the mode index (0 to N-1).  If not, it is 1 minus the pixel binning factor.
+     * It is always 1 minus the actuator binning factor.
+     * This calls opt_d() to perform the optimization if needed.
+     * 
+     * \returns the current value of m_bin_opt.
+     */ 
+   int bin_opt();
+
    /// Set the value of the WFS exposure time.
    /**
      */
@@ -530,7 +553,7 @@ public:
      */
    realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
                         realT d,         ///< [in] the actuator spacing in meters, used if binning WFS pixels
-                        int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
+                        int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                       );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
@@ -541,25 +564,26 @@ public:
    realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
                            realT n, ///< [in] specifies the v component of the spatial frequency
                            realT d, ///< [in] the actuator spacing in meters
-                           int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor.
+                           int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                          );
    
-   ///Calculate the measurement noise at a spatial frequency using the optimum actuator spacing
-   /** 
-     * Calculates the wavefront phase variance due measurement noise at \f$ k = (m/D)\hat{u} + (n/D)\hat{v} \f$.
-     * If optd == false this uses the minimum actuator spacing.
-     * 
-     * \returns the measurement noise in rad^2 rms at the science wavelength
-     */ 
-   realT measurementError( realT m, ///< [in] specifies the u component of the spatial frequency  
-                            realT n  ///< [in] specifies the v component of the spatial frequency
-                          );
-
    ///Calculate the total measurement error over all corrected spatial frequencies
-   /**
+   /** This totals the measurement WFE for the given actuator spacing and binning.
+     * 
      * \returns the total WFE due to measurement error.
      */ 
-   realT measurementError();
+   realT measurementErrorTotal( realT d, ///< [in] the actuator spacing in meters
+                                int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
+                              );
+
+   ///Calculate the total measurement error over all corrected spatial frequencies
+   /** This totals the measurement WFE at the optimum actuator spacing and binning.
+     *
+     * \overload
+     *  
+     * \returns the total WFE due to measurement error.
+     */ 
+   realT measurementErrorTotal();
    
    ///@}
    
@@ -576,25 +600,26 @@ public:
    realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
                          realT n, ///< [in] specifies the v component of the spatial frequency
                          realT d, ///< [in] the actuator spacing, in meters
-                         int b
+                         int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                        );
    
-   ///Calculate the time delay at a spatial frequency at the optimum exposure time at the optimum actuator spacing.
-   /** Calculates the wavefront phase variance due to time delay at \f$ f = (m/D)\hat{u} + (n/D)\hat{v} \f$.
-     * If optd == false this uses the minimum actuator spacing.
-     * 
-     * \returns the measurement noise in rad^2 rms at the science wavelength
-     */ 
-   realT timeDelayError( realT m, ///< [in] specifies the u component of the spatial frequency
-                          realT n  ///< [in] specifies the v component of the spatial frequency
-                       );
-
    /// Calculate the time delay error over all corrected spatial frequencies
-   /**
+   /** This totals the time delay WFE for the given actuator spacing and binning.
      * 
      * \returns the total WFE due to time delay.
      */ 
-   realT timeDelayError();
+   realT timeDelayErrorTotal( realT d, ///< [in] the actuator spacing, in meters
+                              int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
+                           );
+
+   /// Calculate the time delay error over all corrected spatial frequencies
+   /** This totals the time delay WFE at the optimum actuator spacing and binning.
+     * 
+     * \overload
+     * 
+     * \returns the total WFE due to time delay.
+     */ 
+   realT timeDelayErrorTotal();
 
    ///@}
 
@@ -607,16 +632,25 @@ public:
    /**
      * \returns the fitting error in rad^2 rms at the science wavelength at (m,n).
      */ 
-   realT fittingError( realT m,  ///< [in] specifies the u component of the spatial frequency
-                        realT n   ///< [in] specifies the v component of the spatial frequency
-                      );
+   realT fittingError( realT m, ///< [in] specifies the u component of the spatial frequency
+                       realT n  ///< [in] specifies the v component of the spatial frequency
+                     );
 
    /// Calculate the total fitting error over all uncorrected spatial frequencies.
-   /**
+   /** This totals the fitting WFE for the given actuator spacing and binning.
      *
      * \returns the total fitting error.
      */ 
-   realT fittingError();
+   realT fittingErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
+
+   /// Calculate the total fitting error over all uncorrected spatial frequencies.
+   /** This totals the fitting WFE for the optimum actuator spacing and binning.
+     *
+     * \overload
+     * 
+     * \returns the total fitting error.
+     */ 
+   realT fittingErrorTotal();
 
    ///@}
    
@@ -626,29 +660,60 @@ public:
      * @{
      */
    
-   /// Calculate the wavefront error due to scintillation chromaticity in the OPD at a specific spatial frequency.   
-   /**
+   /// Calculate the wavefront error due to scintillation chromaticity in the OPD over all spatial frequencies.   
+   /** This totals the WFE from scintillation chromaticity in the OPD for the given actuator spacing.
+     * 
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
      */    
-   realT chromScintOPDError();
+   realT chromScintOPDErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
 
-   /// Calculate the wavefront error due to scintillation chromaticity in amplitude at a specific spatial frequency.   
+   /// Calculate the wavefront error due to scintillation chromaticity in the OPD over all spatial frequencies.   
+   /** This totals the WFE from scintillation chromaticity in the OPD for the optimum actuator spacing.
+     *
+     * \overload
+     *  
+     * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
+     */    
+   realT chromScintOPDErrorTotal();
+
+   /// Calculate the wavefront error due to scintillation chromaticity in amplitude over all spatial frequencies.   
    /**
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
      */       
    realT chromScintAmpError();
    
-   /// Calculate the wavefront error due to chromaticity in the index of refraction at a specific spatial frequency.   
-   /**
+   /// Calculate the wavefront error due to chromaticity in the index of refraction over all spatial frequencies.   
+   /** This totals the WFE from chromaticity in the index of refraction for the given actuator spacing.
+     *
+     * \overload
+     *  
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
      */       
-   realT chromIndexError();
+   realT chromIndexErrorTotal(realT d /**< [in] the actuator spacing, in meters */);
 
-   /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD at a specific spatial frequency.   
-   /**
+   /// Calculate the wavefront error due to chromaticity in the index of refraction at a specific spatial frequency.   
+   /** This totals the WFE from chromaticity in the index of refraction for the optimum actuator spacing.
+     * 
+     * \overload
+     * 
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
      */       
-   realT dispAnisoOPDError();
+   realT chromIndexErrorTotal();
+
+   /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD over all spatial frequencies.   
+   /** This totals the WFE from dispersive anisoplanatism in the OPD for the given actuator spacing.
+     * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
+     */       
+   realT dispAnisoOPDErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
+
+   /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD over all specific spatial frequencies.   
+   /** This totals the WFE from dispersive anisoplanatism in the OPD for the optimum actuator spacing.
+     *
+     * \overload
+     *  
+     * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
+     */       
+   realT dispAnisoOPDErrorTotal();
 
    /// Calculate the wavefront error due to dispersive anisoplanatism in the amplitude at a specific spatial frequency.   
    /**
@@ -673,9 +738,9 @@ public:
      * \returns the optimum expsoure time.
      */
    realT optimumTauWFS( realT m, ///< [in] is the spatial frequency index in u
-                        realT n,  ///< [in] is the spatial frequency index in v
-                        realT d,
-                        int b
+                        realT n, ///< [in] is the spatial frequency index in v
+                        realT d, ///< [in] the actuator spacing, in meters
+                        int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                       );
    
    ///Calculate the optimum exposure time for a given spatial frequency at the optimum actuator spacing.
@@ -734,6 +799,21 @@ public:
      */
    realT wfeVar();
    
+   ///Get the Strehl ratio for a given actuator pitch and WFS WFS mode.
+   /** 
+     * Strehl is calculated using the extended Marechal approximation:
+     * 
+     \f[
+      S = e^{-\sigma_{wfe}^2}
+      \f]
+     * where \f$ \sigma_{wfe}^2 \f$ is the WFE for the spacing and binning
+     *
+     * \returns the strehl for these values
+     */
+   realT strehl( realT d, ///< [in] the actuator spacing, in meters
+                 int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
+               );
+
    ///Get the current Strehl ratio.
    /** If no changes, merely returns m_strehl.  Calls calcStrehl if there are changes.
      * Strehl is calculated using the extended Marechal approximation:
@@ -1103,16 +1183,16 @@ template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::loadMagAOX()
 {   
    atm.loadLCO();   
-   F0(7.6e10);
-   lam_wfs(0.851e-6);
+   F0(4.2e10);
+   lam_wfs(0.791e-6);
    lam_sci(0.656e-6);
    
-   npix_wfs(std::vector<realT>({12868}));
-   ron_wfs(std::vector<realT>({0.3}));
+   npix_wfs(std::vector<realT>({9024}));
+   ron_wfs(std::vector<realT>({0.57}));
    Fbg(std::vector<realT>({0.22}));
    
-   d_min( 6.5/48.0 );
-   minTauWFS( (realT) (1./3622.) );
+   d_min(std::vector<realT>({6.5/48.0}));
+   minTauWFS(std::vector<realT>({1./3622.}));
    tauWFS(1./3622.);
    
    D(6.5);
@@ -1153,17 +1233,43 @@ realT aoSystem<realT, inputSpectT, iosT>::D()
    return m_D;
 }
 
-
 template<typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::d_min(realT nd)
+void aoSystem<realT, inputSpectT, iosT>::d_min(const std::vector<realT> & nd)
 {
-   m_d_min = nd;
+   m_d_min.assign(nd.begin(), nd.end());
    m_specsChanged = true;
    m_dminChanged = true;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::d_min()
+void aoSystem<realT, inputSpectT, iosT>::d_min( int idx,
+                                                realT nd
+                                              )
+{
+   if(m_d_min.size() < idx+1)
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_min", "idx larger than m_d_min");
+   }
+
+   m_d_min[idx] = nd;
+
+   m_specsChanged = true;
+   m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::d_min(size_t idx)
+{
+   if(m_d_min.size() < idx+1)
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_min", "idx larger than m_d_min");
+   }
+
+   return m_d_min[idx];
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+std::vector<realT> aoSystem<realT, inputSpectT, iosT>::d_min()
 {
    return m_d_min;
 }
@@ -1462,6 +1568,13 @@ bool aoSystem<realT, inputSpectT, iosT>::bin_npix()
    return m_bin_npix;
 }
 
+template<typename realT, class inputSpectT, typename iosT>
+int aoSystem<realT, inputSpectT, iosT>::bin_opt()
+{
+   d_opt();
+   return m_bin_opt;
+}
+
 
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::tauWFS(realT ntau)
@@ -1676,9 +1789,9 @@ realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
    int binidx = 0;
    if( m_bin_npix )
    {
-      if(m_npix_wfs.size() == 1 && b > 0) //Only if "true binning", otherwise the WFS mode vectors handle it.
+      if(m_npix_wfs.size() == 1) //Only if "true binning", otherwise the WFS mode vectors handle it.
       {
-         binfact = 1./pow((realT) b,2);
+         binfact = 1./pow((realT) b+1,2);
       }
       else binidx = b;
    }
@@ -1686,13 +1799,13 @@ realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
    return pow(F*tau_wfs,2)/((F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx])*tau_wfs + m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
 }
 
-template<typename realT, class inputSpectT, typename iosT>
+/*template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
                                                             realT n )
 {
    d_opt();
    return measurementError(m, n, m_d_opt, m_bin_opt);
-}
+}*/
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
@@ -1718,9 +1831,10 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::measurementError()
+realT aoSystem<realT, inputSpectT, iosT>::measurementErrorTotal( realT d,
+                                                                 int b )
 {   
-   int mn_max = floor(0.5*m_D/d_opt());
+   int mn_max = floor(0.5*m_D/d);
    realT sum = 0;
 
    for(int m=-mn_max; m <= mn_max; ++m)
@@ -1734,11 +1848,18 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError()
             if( m*m + n*n > mn_max*mn_max ) continue;
          }
          
-         sum += measurementError(m,n);
+         sum += measurementError(m,n, d, b);
       }
    }
 
    return sum;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::measurementErrorTotal()
+{   
+   d_opt(); //have to run this to get m_bin_opt set.
+   return measurementErrorTotal(d_opt(), m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1762,18 +1883,20 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
-template<typename realT, class inputSpectT, typename iosT>
+/*template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
                                                           realT n )
 {
    d_opt();
    return timeDelayError(m,n,m_d_opt, m_bin_opt);
-}
+}*/
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::timeDelayError()
+realT aoSystem<realT, inputSpectT, iosT>::timeDelayErrorTotal( realT d,
+                                                               int b
+                                                            )
 {   
-   int mn_max = floor(0.5*m_D/d_opt());
+   int mn_max = floor(0.5*m_D/d);
    
    realT sum = 0;
 
@@ -1788,13 +1911,19 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError()
             if( m*m + n*n > mn_max*mn_max ) continue;
          }
          
-         sum += timeDelayError(m,n);
+         sum += timeDelayError(m,n,d, b);
       }
    }
 
    return sum;
 }
 
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::timeDelayErrorTotal()
+{
+   d_opt(); //sets m_bin_opt
+   return timeDelayErrorTotal(d_opt(), m_bin_opt);   
+}
 
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1807,9 +1936,9 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m,
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::fittingError()
+realT aoSystem<realT, inputSpectT, iosT>::fittingErrorTotal(realT d)
 {   
-   int mn_max = m_D/(2.0*d_opt());
+   int mn_max = m_D/(2.0*d);
 
    realT sum = 0;
    
@@ -1834,9 +1963,15 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDError()
+realT aoSystem<realT, inputSpectT, iosT>::fittingErrorTotal()
+{   
+   return fittingErrorTotal(d_opt());
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDErrorTotal( realT d )
 {
-   int mn_max = floor(0.5*m_D/d_opt());
+   int mn_max = floor(0.5*m_D/d);
    
    realT sum = 0;
 
@@ -1855,8 +1990,13 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDError()
       }
    }
 
-   return sum;
-   
+   return sum;   
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDErrorTotal()
+{
+   return chromScintOPDErrorTotal(d_opt());
 }
 
 template<typename realT, class inputSpectT, typename iosT>   
@@ -1883,9 +2023,9 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::chromIndexError()
+realT aoSystem<realT, inputSpectT, iosT>::chromIndexErrorTotal(realT d)
 {
-   int mn_max = floor(0.5*m_D/d_opt());
+   int mn_max = floor(0.5*m_D/d);
    
    realT sum = 0;
 
@@ -1904,14 +2044,19 @@ realT aoSystem<realT, inputSpectT, iosT>::chromIndexError()
       }
    }
 
-   return sum;
-   
+   return sum;   
 }  
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDError()
+realT aoSystem<realT, inputSpectT, iosT>::chromIndexErrorTotal()
 {
-   int mn_max = floor(0.5*m_D/d_opt());
+   return chromIndexErrorTotal(d_opt());
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDErrorTotal( realT d )
+{
+   int mn_max = floor(0.5*m_D/d);
    
    realT sum = 0;
 
@@ -1932,6 +2077,12 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDError()
 
    return sum;
    
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDErrorTotal()
+{
+   return dispAnisoOPDErrorTotal(d_opt());   
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1986,13 +2137,13 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    int binidx = 0; //index into WFS configurations
    if( m_bin_npix )
    {
-      if(m_npix_wfs.size() > 1 || bbin == 0)
+      if(m_npix_wfs.size() > 1)
       {
          binidx = bbin;
       }
       else
       {
-         binfact = 1.0/pow((realT) bbin,2);
+         binfact = 1.0/pow((realT) (bbin+1),2);
       }
    }
    
@@ -2050,7 +2201,35 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
 {
    if(!m_dminChanged) return m_d_opt;
    
-   if( m_d_min == 0 )
+   //Validate the modes
+   ///\todo this should be in a separate valideModes function
+   if(m_npix_wfs.size() < 1)
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_opt", "npix_wfs must have at least one entry");
+   }
+
+   if(m_d_min.size() != m_npix_wfs.size())
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_opt", "d_min must be the same size as npix_wfs");
+   }
+
+   if(m_ron_wfs.size() != m_npix_wfs.size())
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_opt", "ron_wfs must be the same size as npix_wfs");
+   }
+
+   if(m_Fbg.size() != m_npix_wfs.size())
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_opt", "F_bg must be the same size as npix_wfs");
+   }
+
+   if(m_minTauWFS.size() != m_npix_wfs.size())
+   {
+      mxThrowException(err::sizeerr, "aoSystem::d_opt", "minTauWFS must be the same size as npix_wfs");
+   }
+
+   ///\todo investigate why we tolerate m_d_min = 0 here.  Is this just a config error?
+   if( m_d_min.size() == 1 && m_d_min[0] == 0 )
    {
       m_d_opt = 1e-50;
       m_bin_opt = 0;
@@ -2060,48 +2239,52 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
    
    if(!m_optd) 
    {
-      m_d_opt = m_d_min;
+      m_d_opt = m_d_min[0];
       m_bin_opt = 0;
       m_dminChanged = false;
       
       return m_d_opt;
    }
    
-   realT d = m_d_min;
-   realT best_d = d;
-   int m = m_D/(2*d);
-   int n = 0;
+   
+   realT best_d = 0;
 
    if(m_bin_npix)
    {
-      if(m_npix_wfs.size() > 1) //Optimize over the binning modes
+      if(m_npix_wfs.size() > 1) //Optimize over the WFS modes
       {
          int best_idx = 0;
-         realT best_d = m_d_min;
+         best_d = m_d_min[0];
 
-         realT best_aoerr = measurementError(m,n,m_d_min, 0) + timeDelayError(m,n,m_d_min, 0);
-         realT ferr = fittingError(m, n);
-         if(ferr < best_aoerr) best_aoerr = ferr;
-
+         realT bestStrehlOverall = 0;
+         
          for(int b=0; b < m_npix_wfs.size(); ++b)
          {
-            d = m_d_min;
+            realT d = m_d_min[b];
+            realT s = strehl(d,b); 
+            realT bestStrehl = s;
 
-            while( measurementError(m,n,d, b) + timeDelayError(m,n,d, b) >= fittingError(m, n) && d < m_D/2 ) 
+            //Find the actuator pitch at which AO error is less than fitting error at Nyquist
+            while( d < m_D/2 ) 
             {
-               d += m_d_min/m_optd_delta;
-               m = m_D/(2*d);
-               n = 0;
+               d += m_d_min[b]/m_optd_delta;
+               s = strehl(d,b);
+             
+               if(s < bestStrehl) //Strehl got worse.  Can't be <= otherwise small m_optd_deltas will immediately out
+               {
+                  d -= m_d_min[b]/m_optd_delta; //go back to previous d
+                  break;
+               }
+               else bestStrehl = s;
             }
-            realT aoerr = measurementError(m,n,d,b) + timeDelayError(m,n,d,b);
-            ferr = fittingError(m,n);
-            if(ferr < aoerr) aoerr = ferr;
 
-            if(aoerr < best_aoerr)
+            //Check if this is optimum so far
+            if(bestStrehl >= bestStrehlOverall) // >= to favor fewer actuators
             {
-               best_aoerr = aoerr;
+               bestStrehlOverall = bestStrehl;
                best_idx = b;
                best_d = d;
+
             }
          }
 
@@ -2109,31 +2292,57 @@ realT aoSystem<realT, inputSpectT, iosT>::d_opt()
       }
       else
       {
-         m_bin_opt = d/m_d_min;
-         
-         while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+         realT d = m_d_min[0];
+         m_bin_opt = 0; 
+
+         realT s = strehl(d,m_bin_opt); 
+         realT bestStrehl = s;
+
+         while( d < m_D/2 ) 
          {
-            d += m_d_min/m_optd_delta;
-            m_bin_opt = d/m_d_min;
-            m = m_D/(2*d);
-            n = 0;
+            d += m_d_min[0]/m_optd_delta;
+            m_bin_opt = d/m_d_min[0] - 1;
+            if(m_bin_opt < 0) m_bin_opt = 0;
+
+            s = strehl(d,m_bin_opt);
+
+            if(s < bestStrehl) //Strehl got worse.  Can't be <= otherwise small m_optd_deltas will immediately out
+            {
+               d -= m_d_min[0]/m_optd_delta; //go back to previous d
+               m_bin_opt = d/m_d_min[0] - 1;
+               if(m_bin_opt < 0) m_bin_opt = 0;
+               break;
+            }
+            else bestStrehl = s;
          }
          best_d = d;
       }
    }
    else
    {
+      realT d = m_d_min[0];
       m_bin_opt = 0;
-      while( measurementError(m,n,d, m_bin_opt) + timeDelayError(m,n,d, m_bin_opt) >= fittingError(m, n) && d < m_D/2 ) 
+
+      realT s = strehl(d,m_bin_opt); 
+      realT bestStrehl = s;
+
+      //Find the actuator pitch which minimizes total error (AO error is less than fitting error at Nyquist)
+      while( d < m_D/2 ) 
       {
-         d += m_d_min/m_optd_delta;
-         m = m_D/(2*d);
-         n = 0;
+         d += m_d_min[0]/m_optd_delta;
+         
+         s = strehl(d,m_bin_opt);
+         if(s < bestStrehl) //Strehl got worse.  Can't be <= otherwise small m_optd_deltas will immediately out
+         {
+            d -= m_d_min[0]/m_optd_delta; //go back to previous d
+            break;
+         }
+         else bestStrehl = s;
       }
       best_d = d;
    }
    
-   m_d_opt = d;
+   m_d_opt = best_d;
    m_dminChanged = false;
    
    return m_d_opt;
@@ -2158,15 +2367,36 @@ realT aoSystem<realT, inputSpectT, iosT>::ncpError()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::strehl( realT d,
+                                                  int b
+                                                )
+{  
+   realT wfeMeasurement = measurementErrorTotal(d, b);
+   realT wfeTimeDelay = timeDelayErrorTotal(d, b);
+   realT wfeFitting = fittingErrorTotal(d);
+   
+   realT wfeChromScintOPD = chromScintOPDErrorTotal(d);
+   realT wfeChromIndex = chromIndexErrorTotal(d);
+   realT wfeAnisoOPD = dispAnisoOPDErrorTotal(d);
+   
+   realT wfeNCP = ncpError();
+   
+   realT wfeVar = wfeMeasurement + wfeTimeDelay + wfeFitting  + wfeChromScintOPD + wfeChromIndex + wfeAnisoOPD + wfeNCP;
+   
+   return exp(-1 * wfeVar);
+   
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
 {  
-   m_wfeMeasurement = measurementError();
-   m_wfeTimeDelay = timeDelayError();
-   m_wfeFitting = fittingError();
+   m_wfeMeasurement = measurementErrorTotal();
+   m_wfeTimeDelay = timeDelayErrorTotal();
+   m_wfeFitting = fittingErrorTotal();
    
-   m_wfeChromScintOPD = chromScintOPDError();
-   m_wfeChromIndex = chromIndexError();
-   m_wfeAnisoOPD = dispAnisoOPDError();
+   m_wfeChromScintOPD = chromScintOPDErrorTotal();
+   m_wfeChromIndex = chromIndexErrorTotal();
+   m_wfeAnisoOPD = dispAnisoOPDErrorTotal();
    
    m_wfeNCP = ncpError();
    
@@ -2331,7 +2561,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C2var(  realT m,
                                                   realT n
                                                )
 {
-   return measurementError(m, n) + timeDelayError(m,n);
+   d_opt();
+   return measurementError(m, n, d_opt(), m_bin_opt) + timeDelayError(m,n, d_opt(), m_bin_opt);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2489,7 +2720,14 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
 {
    ios << "# AO Params:\n";
    ios << "#    D = " << D() << '\n';
-   ios << "#    d_min = " << d_min() << '\n';
+   
+   if(m_d_min.size() > 0)
+   {
+      ios << "#    d_min = " << d_min((size_t) 0) << '\n';
+      for(size_t n=1; n < m_d_min.size(); ++n) ios << ',' << d_min(n);
+      ios << '\n';
+   }
+   
    ios << "#    optd = " << std::boolalpha << m_optd << '\n';
    ios << "#    d_opt_delta = " << optd_delta() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
@@ -2575,12 +2813,12 @@ void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator & con
    config.add("aosys.optd_delta"        ,"", "aosys.optd_delta"      , argType::Required, "aosys", "optd_delta",       false, "bool", "The fractional change from d_min used in optimization.  Set to 1 (default) for integer binnings, > 1 for finer sampling.");
    config.add("aosys.F0"                ,"", "aosys.F0"              , argType::Required, "aosys", "F0",               false, "real", "Zero-mag photon flux, [photons/sec]");     
    config.add("aosys.lam_wfs"           ,"", "aosys.lam_wfs"         , argType::Required, "aosys", "lam_wfs",          false, "real", "WFS wavelength [m]" );
-   config.add("aosys.npix_wfs"          ,"", "aosys.npix_wfs"        , argType::Required, "aosys", "npix_wfs",         false, "real", "The number of pixels in the WFS");
-   config.add("aosys.ron_wfs"           ,"", "aosys.ron_wfs"         , argType::Required, "aosys", "ron_wfs",          false, "real", "WFS readout noise [photons/read]");
+   config.add("aosys.npix_wfs"          ,"", "aosys.npix_wfs"        , argType::Required, "aosys", "npix_wfs",         false, "vector<real>", "The number of pixels in the WFS");
+   config.add("aosys.ron_wfs"           ,"", "aosys.ron_wfs"         , argType::Required, "aosys", "ron_wfs",          false, "vector<real>", "WFS readout noise [photons/read]");
    config.add("aosys.bin_npix"          ,"", "aosys.bin_npix"        , argType::Required, "aosys", "bin_npix",         false, "bool", "Whether or not WFS pixels are re-binned along with actuator spacing optimization");
-   config.add("aosys.Fbg"               ,"", "aosys.Fbg"             , argType::Required, "aosys", "Fbg",              false, "real", "Background counts, [counts/pix/sec]");\
+   config.add("aosys.Fbg"               ,"", "aosys.Fbg"             , argType::Required, "aosys", "Fbg",              false, "vector<real>", "Background counts, [counts/pix/sec]");\
    config.add("aosys.tauWFS"            ,"", "aosys.tauWFS"          , argType::Required, "aosys", "tauWFS",           false, "real", "WFS integration time [s]");
-   config.add("aosys.minTauWFS"         ,"", "aosys.minTauWFS"       , argType::Required, "aosys", "minTauWFS",        false, "real", "Minimum WFS integration time [s]");
+   config.add("aosys.minTauWFS"         ,"", "aosys.minTauWFS"       , argType::Required, "aosys", "minTauWFS",        false, "vector<real>", "Minimum WFS integration time [s]");
    config.add("aosys.deltaTau"          ,"", "aosys.deltaTau"        , argType::Required, "aosys", "deltaTau",         false, "real", "Loop delay [s]");
    config.add("aosys.optTau"            ,"", "aosys.optTau"          , argType::Optional, "aosys", "optTau",           false, "bool", "Whether or not the integration time is optimized");
    config.add("aosys.lam_sci"           ,"", "aosys.lam_sci"         , argType::Required, "aosys", "lam_sci",          false, "real", "Science wavelength [m]");
@@ -2638,9 +2876,9 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & conf
    if(config.isSet("aosys.D") ) D(nD);
    
    //d_min
-   realT nd_min = d_min();
+   std::vector<realT> nd_min = d_min();
    config(nd_min, "aosys.d_min");
-   if(config.isSet("aosys.d_min") )d_min(nd_min);
+   if(config.isSet("aosys.d_min")) d_min(nd_min);
 
    bool noptd = optd();
    config(noptd, "aosys.optd");
@@ -2753,9 +2991,6 @@ class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>;
 
 extern template
 class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>; 
-
-extern template
-class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
 
 extern template
 class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>; 

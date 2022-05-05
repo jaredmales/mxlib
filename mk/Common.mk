@@ -102,15 +102,6 @@ endif
 
 EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
 
-# SOFA
-# subfolder of source/vendor/sofa:
-CURRENT_SOFA ?= 20210125
-# path to libsofa_c.a, sofa.h:
-SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/$(CURRENT_SOFA)/c/src/)
-SOFA_LIB = -lsofa_c
-EXTRA_LDFLAGS += -L$(SOFA_PATH)
-INCLUDES += -I$(SOFA_PATH)
-
 #FFTW before BLAS so MKL doesn't hijack certain functions
 #FFTW:
 EXTRA_LDLIBS += $(FFT_LDLIBS)
