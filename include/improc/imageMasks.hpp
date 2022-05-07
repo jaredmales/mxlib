@@ -29,6 +29,7 @@
 
 #include "../math/constants.hpp"
 
+#include "eigenImage.hpp"
 #include "imageTransforms.hpp"
 
 namespace mx
