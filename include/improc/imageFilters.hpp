@@ -12,6 +12,7 @@
 
 #include "../math/gslInterpolator.hpp"
 #include "../math/vectorUtils.hpp"
+#include "../math/geo.hpp"
 
 #include "imageMasks.hpp"
 
@@ -80,97 +81,131 @@ struct gaussKernel
    
 };
 
-/// Azimuthally variable boxcare smoothing kernel.
+/// Azimuthally variable boxcare kernel.
 /** Averages the image in a boxcare defined by a radial and azimuthal extent.
   * 
   * \ingroup image_filters_kernels
   */
-template<typename _arrayT, size_t _kernW=4>
+template<typename _arrayT, size_t _kernW=2>
 struct azBoxKernel
 {
    typedef _arrayT arrayT;
    typedef typename _arrayT::Scalar arithT;
 
-
    static const int kernW = _kernW;
    
-   arithT _radWidth;
-   arithT _azWidth;
-   int _maxWidth;
+   arithT m_radWidth {0}; ///< the half-width of the averaging box, in the radial direction, in pixels.
+   arithT m_azWidth {0};  ///< the half-width of the averaging box, in the azimuthal direction, in pixels.
+   arithT m_maxAz {0};    ///< the maximum half-width of the averging box in the azimuthal direction, in degrees. \>= 0. If 0 or \>= 180, then no maximum is enforced.
+
+   int m_maxWidth;
    
    azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
                 arithT azWidth   ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
-              )
-   {
-      _radWidth = radWidth;
-      _azWidth = azWidth;
-      
-      _maxWidth = std::max(radWidth, azWidth);
+              ) : m_radWidth(fabs(radWidth)), m_azWidth(fabs(azWidth))
+   {      
+      m_maxWidth = 0.5*kernW*std::max(radWidth, azWidth);
    }
-   
+
+   azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
+                arithT azWidth,  ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
+                arithT maxAz     ///< [in] the maximum half-width of the averging box in the azimuthal direction, in degrees. \>= 0. If 0 or \>= 180, then no maximum is enforced.
+              ) : m_radWidth(fabs(radWidth)), m_azWidth(fabs(azWidth))
+   {      
+      m_maxWidth = 0.5*kernW*std::max(radWidth, azWidth);
+      
+      maxAz = fabs(maxAz);
+      if(maxAz >= 180) maxAz = 0; //Larger than 180 means no limit.
+
+      m_maxAz = math::dtor( maxAz );
+      
+   }
+
    int maxWidth()
    {
-      return _maxWidth;
+      return m_maxWidth;
    }
    
    void setKernel(arithT x, arithT y, arrayT & kernel)
    {
-      arithT rad = sqrt((arithT) (x*x + y*y));
+      arithT rad0 = sqrt((arithT) (x*x + y*y));
       
-      arithT sinq = y/rad;
-      arithT cosq = x/rad;
+      arithT sinq = y/rad0;
+      arithT cosq = x/rad0;
       
-      
-      int w = 2*( (int) std::max( fabs(_azWidth*sinq), fabs(_radWidth*cosq) ) + 1 );
-      int h = 2*( (int) std::max( fabs(_azWidth*cosq), fabs(_radWidth*sinq) ) + 1);
-      
-      
+      //Only calc q if we're going to use it.
+      arithT q = 0;
+      if(m_maxAz > 0) q = atan2(sinq, cosq);
+
+      int w = kernW*( (int) ( fabs(m_azWidth*sinq) + fabs(m_radWidth*cosq) ) + 1 );
+      int h = kernW*( (int) ( fabs(m_azWidth*cosq) + fabs(m_radWidth*sinq) ) + 1 );
+
       kernel.resize(w, h);
       
       arithT xcen = 0.5*(w-1.0);
       arithT ycen = 0.5*(h-1.0);
       
-      arithT sinq2, cosq2, sindq;
-      for(int i=0; i < w; ++i)
+      arithT xP, yP;
+      arithT rad, radP;
+      arithT sinq2, cosq2, sindq, q2, dq;
+      for(int j=0; j < h; ++j)
       {
-         arithT xP = i -0.5;
-         for(int j=0; j < h; ++j)
+         yP = j;
+         for(int i=0; i < w; ++i)
          {
-            arithT yP = j-0.5;
-            arithT radP = sqrt( pow(x+xP-xcen,2) + pow(y+yP-ycen,2) );
-            if( fabs(rad-radP) > _radWidth) 
+            xP = i;
+            rad = sqrt( pow(xP-xcen,2) + pow(yP-ycen,2) );
+            radP = sqrt( pow(x+xP-xcen,2) + pow(y+yP-ycen,2) );
+ 
+            if( fabs(radP-rad0) > m_radWidth) 
             {
                kernel(i,j) = 0;
                continue;
             }
-            
-            sinq2 = (yP-ycen)/radP;
-            cosq2 = (xP-xcen)/radP;
-            sindq = sinq2*cosq - cosq2*sinq;
-            if( fabs(radP*sindq) <= _azWidth) kernel(i,j) = 1;
+
+            sinq2 = (yP-ycen)/rad;
+            cosq2 = (xP-xcen)/rad;
+
+            sindq = sinq2*cosq - cosq2*sinq;            
+            if( fabs(rad*sindq) <= m_azWidth) 
+            {
+               if(m_maxAz > 0) //Only check this if needed.
+               {
+                  q2 = atan2(y+yP-ycen, x+xP-xcen);
+                  dq = math::angleDiff(q,q2);
+                  if(fabs(dq) > m_maxAz)
+                  {
+                     kernel(i,j) = 0;
+                     continue;
+                  }
+               }
+               kernel(i,j) = 1;
+            }
             else kernel(i,j) = 0;
          }
       }
-      if(kernel.sum() == 0)
+
+      arithT ksum = kernel.sum();
+      if(ksum == 0)
       {
          std::cerr << "Kernel sum 0: " << x << " " << y << "\n";
-         //exit(-1);
+         mxThrowException(err::invalidconfig, "azBoxKernel::setKernel", "kernel sum 0 at " + std::to_string(x) + "," + std::to_string(y));
       }
-      kernel /= kernel.sum();
+      kernel /= ksum;
    }
    
 };
 
 
 
-///Filter an image with a kernel.
-/** Applies the kernel to each pixel in the image, storing the filtered result in the output image.
+///Filter an image with a mean kernel.
+/** Applies the kernel to each pixel in the image and sums, storing the filtered result in the output image.
   * The kernel-type (kernelT) must have the following interface:
   * \code
-  * template<typename _arrayT, size_t kernW=4>
+  * template<typename _arrayT, size_t kernW>
   * struct filterKernel
   * {
-  *     typedef _arrayT arrayT;
+  *     typedef _arrayT arrayT; // arrayT must have an eigen-like interface
   *     typedef typename _arrayT::Scalar arithT;
   *   
   *     filterKernel()
@@ -178,6 +213,13 @@ struct azBoxKernel
   *        //constructor
   *     }
   *   
+  *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
+  *     //Called once
+  *     int maxWidth()
+  *     {
+  *        //returns the maximum half-width given the configuration
+  *     }
+  * 
   *     //The setKernel function is called for each pixel.
   *     void setKernel(arithT x, arithT y, arrayT & kernel)
   *     {
