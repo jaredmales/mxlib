@@ -547,6 +547,60 @@ int medianSmooth( imageTout & imOut,                 ///< [out] the smoothed ima
    return medianSmooth(imOut, xMax, yMax, pMax, imIn, medianFullWidth);
 }
 
+template<typename eigenImT>
+void rowEdgeMedSubtract( eigenImT & im, ///< The image to filter
+                         int ncols      ///< The number of columns on each side of the image to use as the reference
+                       )
+{
+   typedef typename eigenImT::Scalar realT;
+
+   std::vector<realT> edge(2*ncols);
+   for(int rr=0; rr<im.rows(); ++rr)
+   {
+      for(int cc=0; cc< ncols; ++cc)
+      {
+         edge[cc] = im(rr,cc);
+      }
+      
+      for(int cc=0; cc< ncols; ++cc)
+      {
+         edge[ncols+cc] = im(rr,im.cols()-ncols + cc);
+      }
+
+      realT med = math::vectorMedian(edge);
+      im.row(rr) -= med;
+   }
+
+   return;
+}
+
+template<typename eigenImT>
+void colEdgeMedSubtract( eigenImT & im, ///< The image to filter
+                         int nrows      ///< The number of rows on each side of the image to use as the reference
+                       )
+{
+   typedef typename eigenImT::Scalar realT;
+
+   std::vector<realT> edge(2*nrows);
+   for(int cc=0; cc<im.cols(); ++cc)
+   {
+      for(int rr=0; rr< nrows; ++rr)
+      {
+         edge[rr] = im(rr,cc);
+      }
+      
+      for(int rr=0; rr< nrows; ++rr)
+      {
+         edge[nrows+rr] = im(im.rows()-nrows + rr, cc);
+      }
+
+      realT med = math::vectorMedian(edge);
+      im.col(cc) -= med;
+   }
+
+   return;
+}
+
 //------------ Radial Profile --------------------//
 
 template<typename floatT>
