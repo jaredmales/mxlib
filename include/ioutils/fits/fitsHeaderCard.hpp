@@ -170,6 +170,7 @@ namespace mx
 
          //@}
 
+         /// Assignment
          fitsHeaderCard &operator=(const fitsHeaderCard &card);
 
       protected:

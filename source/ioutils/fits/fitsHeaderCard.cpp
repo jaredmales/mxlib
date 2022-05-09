@@ -124,7 +124,7 @@ void fitsHeaderCard::convertToString()
 {
    if(!m_valueGood)
    {
-      mxThrowException(err::paramnotset, "fitsHeaderCard::convertToString()", "no value to convert");
+      mxThrowException(err::paramnotset, "fitsHeaderCard::convertToString()", "no value to convert for " + m_keyword);
       return;
    }
 
