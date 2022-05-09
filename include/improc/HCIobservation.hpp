@@ -21,9 +21,11 @@
 #include "../mxException.hpp"
 
 #include "../math/templateBLAS.hpp"
-#include "../ioutils/fileUtils.hpp"
 #include "../sys/timeUtils.hpp"
+#include "../ioutils/fileUtils.hpp"
 #include "../ioutils/readColumns.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
+#include "../ipc/ompLoopWatcher.hpp"
 
 #include "eigenImage.hpp"
 #include "eigenCube.hpp"
@@ -31,7 +33,6 @@
 #include "imageMasks.hpp"
 #include "imageTransforms.hpp"
 #include "imageUtils.hpp"
-#include "../ioutils/fits/fitsFile.hpp"
 
 namespace mx
 {
@@ -482,16 +483,20 @@ public:
 
    bool m_preProcess_subradprof {false}; ///<If true, a radial profile is subtracted from each image.
 
-   ///Azimuthal boxcar width for azimuthal unsharp mask
+   /// Azimuthal boxcar width for azimuthal unsharp mask [pixels]
    /** If this is 0 then azimuthal-USM is not performed.
      */
    realT m_preProcess_azUSM_azW {0};
 
-   ///Radial boxcar width for azimuthal unsharp mask
+   /// Mazimum azimuthal boxcar width for azimuthal unsharp mask [degrees]
+   /** Limits width close to center, preventing wrap-around.  Default is 45 degrees.  Set to 0 for no maximum.
+     */
+   realT m_preProcess_azUSM_maxAz {45};
+
+   /// Radial boxcar width for azimuthal unsharp mask [pixels]
    /** If this is 0 then azimuthal-USM is not performed.
      */
    realT m_preProcess_azUSM_radW {0};
-
 
    ///Kernel FWHM for symmetric unsharp mask (USM)
    /** USM is not performed if this is 0.
@@ -1394,7 +1399,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       {
          ims.image(i) *= m_mask;
       }
-      std::cerr << "Done\n";
+      std::cerr << "done\n";
    }
 
    if( m_preProcess_subradprof )
@@ -1418,7 +1423,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
          {
             ims.image(i) *= m_mask;
          }
-         std::cerr << "Done\n";
+         std::cerr << "done\n";
       }
    }
 
@@ -1448,11 +1453,13 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
 
       }
       t_gaussusm_end = sys::get_curr_time();
-      std::cerr << "Done\n";
+      std::cerr << "done\n";
    }
 
    if( m_preProcess_azUSM_azW && m_preProcess_azUSM_radW )
    {
+      ipc::ompLoopWatcher<> status( ims.planes(), std::cerr);
+
       std::cerr << "Applying azimuthal USM . . .\n";
       t_azusm_begin = sys::get_curr_time();
       #pragma omp parallel for
@@ -1460,9 +1467,10 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       {
          eigenImageT fim, im;
          im = ims.image(i);
-         filterImage(fim, im, azBoxKernel<eigenImage<realT>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW), 0.5*(ims.cols()-1) - m_preProcess_azUSM_radW);
+         filterImage(fim, im, azBoxKernel<eigenImage<realT>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW, m_preProcess_azUSM_maxAz));
          im = (im-fim);
          ims.image(i) = im;
+         status.incrementAndOutputStatus();
       }
 
       if( m_maskFile != "" && m_preProcess_mask)
@@ -1473,11 +1481,10 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
          {
             ims.image(i) *= m_mask;
          }
-
       }
 
       t_azusm_end = sys::get_curr_time();
-      std::cerr  << "Done\n";
+      std::cerr  << "done (" << t_azusm_end - t_azusm_begin << " sec)                                \n";
    }
 
    t_preproc_end = sys::get_curr_time();
@@ -1696,13 +1703,14 @@ void HCIobservation<_realT>::stdFitsHeader(fits::fitsHeader & head)
    
    head.append("MASKFILE", m_maskFile, "mask file");
 
-   head.append<int>("PPBEFORE", m_preProcess_beforeCoadd, "pre-process before coadd flag");
-   head.append<int>("PPMASK", m_preProcess_mask, "pre-process mask flag");
-   head.append<int>("PPSUBRAD", m_preProcess_subradprof, "pre-process subtract radial profile flag");
-   head.append<realT>("PPAUSMAW", m_preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width");
-   head.append<realT>("PPAUSMRW", m_preProcess_azUSM_radW, "pre-process azimuthal USM radial width");
+   head.append<int>("PREPROC BEFORE", m_preProcess_beforeCoadd, "pre-process before coadd flag");
+   head.append<int>("PREPROC MASK", m_preProcess_mask, "pre-process mask flag");
+   head.append<int>("PREPROC SUBRADPROF", m_preProcess_subradprof, "pre-process subtract radial profile flag");
+   head.append<realT>("PREPROC AZUSM AZWIDTH", m_preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width [pixels]");
+   head.append<realT>("PREPROC AZUSM MAXAZ", m_preProcess_azUSM_maxAz, "pre-process azimuthal USM maximum azimuthal width [degrees]");
+   head.append<realT>("PREPROC AZUSM RADWIDTH", m_preProcess_azUSM_radW, "pre-process azimuthal USM radial width [pixels]");
 
-   head.append<realT>("PPGUSMFW", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm");
+   head.append<realT>("PREPROC GAUSSUSM FWHM", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm [pixels]");
 
 }
 
