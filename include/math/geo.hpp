@@ -155,8 +155,8 @@ struct degradT<radians,realT>
   */
 template<typename degrad = radians, typename realT>
 realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
-                                   realT q2 ///< [in] angle to subtract q1 from, in degrees.
-                                 )
+                 realT q2 ///< [in] angle to subtract q1 from, in degrees.
+               )
 { 
    //typedef typename degradT::realT realT;
    
