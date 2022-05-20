@@ -59,7 +59,20 @@ int reflectImageCoords( int & x1, ///< [out] the reflected x coordinate
 
 /// Zero any NaNs in an image
 template<class imageT>
-void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels set to zero */)
+void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels set to zero */ )
+{
+   typename imageT::Scalar zero  = 0;
+   zeroNaNs(im, zero);
+}
+
+/// Zero any NaNs in an image
+/**
+  * \overload
+  */ 
+template<class imageT, typename valueT>
+void zeroNaNs( imageT & im,  ///< [in/out] image which will have any NaN pixels set to zero
+               valueT val    ///< [in] [optional] The value to set NaN pixels too.  Default is 0.
+             )
 {
    for(int c=0; c< im.cols(); ++c)
    {
@@ -67,7 +80,7 @@ void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels se
       {
          if( !std::isnormal( im(r,c) ) )
          {
-            im(r,c) = 0;
+            im(r,c) = val;
          }
       }
    }
