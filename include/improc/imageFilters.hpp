@@ -104,7 +104,7 @@ struct azBoxKernel
                 arithT azWidth   ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
               ) : m_radWidth(fabs(radWidth)), m_azWidth(fabs(azWidth))
    {      
-      m_maxWidth = 0.5*kernW*std::max(radWidth, azWidth);
+      setMaxWidth();
    }
 
    azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
@@ -112,13 +112,27 @@ struct azBoxKernel
                 arithT maxAz     ///< [in] the maximum half-width of the averging box in the azimuthal direction, in degrees. \>= 0. If 0 or \>= 180, then no maximum is enforced.
               ) : m_radWidth(fabs(radWidth)), m_azWidth(fabs(azWidth))
    {      
-      m_maxWidth = 0.5*kernW*std::max(radWidth, azWidth);
-      
+      setMaxWidth();
+
       maxAz = fabs(maxAz);
       if(maxAz >= 180) maxAz = 0; //Larger than 180 means no limit.
 
       m_maxAz = math::dtor( maxAz );
       
+   }
+
+   /// Sets the max width based on the configured az and rad widths.
+   void setMaxWidth()
+   {
+      // atan is where derivative of width/height is 0.
+
+      arithT qmax = atan(m_azWidth/m_radWidth);
+      arithT mx1 = kernW*( (int) ( fabs(m_azWidth*sin(qmax)) + fabs(m_radWidth*cos(qmax)) ) + 1 );
+      
+      qmax = atan(m_radWidth/m_azWidth);
+      arithT mx2 = kernW*( (int) ( fabs(m_azWidth*cos(qmax)) + fabs(m_radWidth*sin(qmax)) ) + 1 );
+
+      m_maxWidth = 0.5*std::max(mx1, mx2);
    }
 
    int maxWidth()
@@ -139,6 +153,22 @@ struct azBoxKernel
 
       int w = kernW*( (int) ( fabs(m_azWidth*sinq) + fabs(m_radWidth*cosq) ) + 1 );
       int h = kernW*( (int) ( fabs(m_azWidth*cosq) + fabs(m_radWidth*sinq) ) + 1 );
+
+      if(w > m_maxWidth*2)
+      {
+         std::stringstream errs;
+         errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y << "|" << rad0 << "|" << sinq << "|" << cosq;
+         errs << "|" << w << "|" << h << "|";  
+         mxThrowException(err::sizeerr, "azBoxKernel::setKernel", "width bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str());
+      }
+
+      if(h > m_maxWidth*2)
+      {
+         std::stringstream errs;
+         errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y << "|" << rad0 << "|" << sinq << "|" << cosq;
+         errs << "|" << w << "|" << h << "|";  
+         mxThrowException(err::sizeerr, "azBoxKernel::setKernel", "height bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str());
+      }
 
       kernel.resize(w, h);
       
@@ -188,7 +218,6 @@ struct azBoxKernel
       arithT ksum = kernel.sum();
       if(ksum == 0)
       {
-         std::cerr << "Kernel sum 0: " << x << " " << y << "\n";
          mxThrowException(err::invalidconfig, "azBoxKernel::setKernel", "kernel sum 0 at " + std::to_string(x) + "," + std::to_string(y));
       }
       kernel /= ksum;
@@ -259,6 +288,7 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    int minj = 0.5*im.cols() - maxr;
    int maxj = 0.5*im.cols() + maxr;
    
+
    typename kernelT::arrayT kernelArray;
    
    #pragma omp parallel private(kernelArray)
@@ -312,7 +342,6 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
                norm = kernelArray.block(kern_i, kern_j, kern_p, kern_q ).sum();
         
                fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernelArray.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
-
                if( !std::isfinite(fim(i,j))) fim(i,j) = 0.0;
             }
          }
