@@ -349,6 +349,108 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
    }// pragma omp parallel
 }   
    
+template<typename imageOutT, typename imageInT, typename kernelT>
+void medianFilterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
+{
+   fim.resize(im.rows(), im.cols());
+  
+   float xcen = 0.5*(im.rows()-1);
+   float ycen = 0.5*(im.cols()-1);
+   
+   if(maxr == 0) maxr = 0.5*im.rows() - kernel.maxWidth();
+   
+   int mini = 0.5*im.rows() - maxr;
+   int maxi = 0.5*im.rows() + maxr;
+   int minj = 0.5*im.cols() - maxr;
+   int maxj = 0.5*im.cols() + maxr;
+   
+
+   typename kernelT::arrayT kernelArray;
+   
+   #pragma omp parallel private(kernelArray)
+   {
+      int im_i, im_j, im_p,im_q;
+      int kern_i, kern_j, kern_p,kern_q;  
+      typename imageOutT::Scalar norm;
+   
+      std::vector<typename imageOutT::Scalar> pixels;
+
+      #pragma omp for
+      for(int i=0; i< im.rows(); ++i)
+      {
+         for(int j=0; j<im.cols(); ++j)
+         {
+            if((i >= mini && i< maxi) && (j>= minj && j<maxj))
+            {
+               kernel.setKernel(i-xcen, j-ycen, kernelArray);
+
+               pixels.clear();
+               for(int cc=0; cc<kernelArray.cols(); ++cc)
+               {
+                  for(int rr=0; rr<kernelArray.rows(); ++rr)
+                  {
+                     if(kernelArray(rr,cc) != 0) pixels.push_back(im.block(i-0.5*(kernelArray.rows()-1), j-0.5*(kernelArray.cols()-1), kernelArray.rows(), kernelArray.cols())(rr,cc));
+                  }
+               }
+
+               fim(i,j) = math::vectorMedianInPlace(pixels);
+            }
+            else
+            {
+               kernel.setKernel(i-xcen, j-ycen, kernelArray);
+         
+               im_i = i - 0.5*(kernelArray.rows()-1);
+               if(im_i < 0) im_i = 0;
+         
+               im_j = j - 0.5*(kernelArray.cols()-1);
+               if(im_j < 0) im_j = 0;
+
+               im_p = im.rows() - im_i;
+               if(im_p > kernelArray.rows()) im_p = kernelArray.rows();
+          
+               im_q = im.cols() - im_j;
+               if(im_q > kernelArray.cols()) im_q = kernelArray.cols();
+         
+               kern_i = 0.5*(kernelArray.rows()-1) - i;
+               if(kern_i < 0) kern_i = 0;
+         
+               kern_j = 0.5*(kernelArray.cols()-1) - j;
+               if(kern_j < 0) kern_j = 0;
+      
+               kern_p = kernelArray.rows() - kern_i;
+               if(kern_p > kernelArray.rows()) kern_p = kernelArray.rows();
+         
+               kern_q = kernelArray.cols() - kern_j;
+               if(kern_q > kernelArray.cols()) kern_q = kernelArray.cols();
+       
+               //Pick only the smallest widths
+               if(im_p < kern_p) kern_p = im_p;
+               if(im_q < kern_q) kern_q = im_q;
+   
+               norm = kernelArray.block(kern_i, kern_j, kern_p, kern_q ).sum();
+        
+               pixels.clear();
+               for(int cc=0; cc<kern_q; ++cc)
+               {
+                  for(int rr=0; rr<kern_p; ++rr)
+                  {
+                     if( kernelArray.block(kern_i, kern_j, kern_p, kern_q )(rr,cc) != 0) 
+                     {
+                        pixels.push_back( im.block(im_i, im_j, kern_p, kern_q)(rr,cc));
+                     }
+                  }
+               }
+
+               fim(i,j) = math::vectorMedianInPlace(pixels);
+               
+               //fim(i,j) = ( im.block(im_i, im_j, kern_p, kern_q) * kernelArray.block(kern_i, kern_j, kern_p, kern_q )).sum()/norm;
+               
+            }
+         }
+      }
+   }// pragma omp parallel
+}   
+
 ///@}
 
    
