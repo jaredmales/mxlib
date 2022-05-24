@@ -351,18 +351,17 @@ int imageXCorrFFT<ccImT>::refIm( const ccImT & im )
    //Setup the FFTW space
    resize(im0.rows(), im0.cols());
 
-   //Shift so center pixel is 0,0
-   m_refIm.resize(m_rows, m_cols);
-   imageShiftWP( m_refIm, im0, 0.5*m_rows + 1, 0.5*m_cols + 1 );
-   //m_refIm = im0;
-
    //Now normalize
-   realT m = imageMean(m_refIm);
-   realT v = imageVariance(m_refIm, m);
-   m_refIm = (m_refIm - m)/sqrt(v);
-   
+   realT m = imageMean(im0);
+   realT v = imageVariance(im0, m);
+   m_refIm = (im0 - m)/sqrt(v);
+   //We save refIm as the un-shifted version
+
+   //Now shift so center pixel is 0,0
+   imageShiftWP( im0, m_refIm, 0.5*m_rows + 1, 0.5*m_cols + 1 );
+
    //Then FT
-   m_fft_fwd(m_ftIm0.data(), m_refIm.data());
+   m_fft_fwd(m_ftIm0.data(), im0.data());
    
    //Conjugate and normalize for FFTW scaling.
    for(int c =0; c < m_ftIm0.cols(); ++c)
@@ -432,10 +431,20 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    //if(maxLag_r > m_maxLag && m_maxLag != 0) maxLag_r = m_maxLag;
    //if(maxLag_c > m_maxLag && m_maxLag != 0) maxLag_c = m_maxLag;
 
-   realT m = imageMean(im);
-   realT v = imageVariance(im, m);
-   m_ccIm = (im - m)/sqrt(v);
-   m_fft_fwd(m_ftWork.data(), m_ccIm.data());
+   //Mask if needed
+   if(m_haveMask)
+   {
+      m_normIm = im*m_maskIm;
+   }
+   else
+   {
+      m_normIm = im;
+   }
+
+   realT m = imageMean(m_normIm);
+   realT v = imageVariance(m_normIm, m);
+   m_normIm = (m_normIm - m)/sqrt(v);
+   m_fft_fwd(m_ftWork.data(), m_normIm.data());
 
    //m_ftIm0 is the conjugated, fftw-normalized, reference image in the Fourier domain
    //So this is the FT of the cross-correlation:
