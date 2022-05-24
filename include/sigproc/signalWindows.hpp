@@ -415,60 +415,56 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
   * 
   * See https://en.wikipedia.org/wiki/Window_function
   *
-  * \param filt is a pre-allocated array of size dim x dim.
-  * \param dim is the size of the array.
-  * \param N is the outer diameter of the window, nominally N=dim, but this is not required.
-  * \param eps is the ratio of inner diameter to the outer diameter
-  * \param alpha controls the window width.
-  * \param xc is the desired x center of the window.
-  * \param yc is the desired y center of the window.
-  *
   * \tparam realT is a floating point type 
   * 
   *  \ingroup signal_windows2D
   */
 template<typename realT>
-void tukey2dAnnulus(realT *filt, int dim, realT N, realT eps, realT alpha, realT xc, realT yc)
+void tukey2dAnnulus( realT *filt, ///< [out] a pre-allocated array of size rows x cols (column major)
+                     int rows,    ///< [in] the number of rows in filt
+                     int cols,    ///< [in] the number of cols in filt
+                     realT D,     ///< [in] the outer diameter of the window
+                     realT eps,   ///< [in] the ratio of inner diameter to the outer diameter
+                     realT alpha, ///< [in] controls the window width.
+                     realT xc,    ///< [in] the desired x center of the window.
+                     realT yc     ///< [in] the desired y center of the window.
+                   )
 {
-
-   int ii, jj;
-   realT x, y, r, z, Z;
-
-   realT rad = 0.5*(N-1.0);
+   realT rad = 0.5*(D-1.0);
    
-   Z = (1-eps)*rad+1.0; //floor((1.0-eps)*(rad)) + 1.0;
+   int Z = (1-eps)*rad+1.0; //floor((1.0-eps)*(rad)) + 1.0;
    
    realT pi = math::pi<realT>();
       
-   for(ii=0; ii<dim; ++ii)
+   for(int cc=0; cc<cols; ++cc)
    {
-      x = ( (realT) ii) - xc;
-      for(jj=0; jj<dim; ++jj)
+      int y = ( (realT) cc) - yc;
+      for(int rr=0; rr<rows; ++rr)
       {
-         y = ( (realT) jj) - yc;
+         int x = ( (realT) rr) - xc;
 
-         r = sqrt(x*x + y*y);
+         int r = sqrt(x*x + y*y);
 
-         z = (r - eps*(rad));
+         int z = (r - eps*(rad));
          
          //Following mxlib convention of including half pixels
          if(r > rad + 0.5 || r < eps*rad)
          {
-            filt[jj*dim + ii] = 0.0;
+            filt[cc*rows + rr] = 0.0;
          }
          else if(z <= 0.5*alpha*(Z-1) && alpha > 0)
          {
-            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi*(2.*z/(alpha*(Z-1)) -1.0) ));
+            filt[cc*rows + rr] = 0.5*(1.0 + cos(pi*(2.*z/(alpha*(Z-1)) -1.0) ));
          }
          else if(z > (Z-1)*(1.-0.5*alpha) && alpha > 0)
          {
             z = z*((Z-0.5)/Z); //Stretch a little to help with the half pixel
             if(z > Z) z = Z-1;
-            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi* ( 2.*(z)/(alpha*(Z-1)) - 2./alpha + 1.0) ));
+            filt[cc*rows + rr] = 0.5*(1.0 + cos(pi* ( 2.*(z)/(alpha*(Z-1)) - 2./alpha + 1.0) ));
          }
          else
          {
-            filt[jj*dim + ii] = 1.0;
+            filt[cc*rows + rr] = 1.0;
          }
       }
    }
