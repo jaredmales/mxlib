@@ -28,11 +28,13 @@
 #define imageXCorrFFT_hpp
 
 #include "../mxError.hpp"
+#include "../mxException.hpp"
 #include "../math/fft/fft.hpp"
 #include "../math/fit/fitGaussian.hpp"
 
 #include "imageUtils.hpp"
 #include "imageTransforms.hpp"
+#include "imageXCorr.hpp"
 
 namespace mx
 {
@@ -52,6 +54,28 @@ namespace improc
   * 
   * \ingroup image_reg
   */ 
+
+/// Find the optimum shift to align two images using the FFT cross correlation.
+/** The reference image must be the same size as the target image.  Both the reference image and the section of
+  * target image being analyzed are mean subtracted and variance normalized.  An optional mask can be supplied,
+  * which limits the pixels used for the mean and variance calculation.
+  * 
+  * Typical usage will be to set the mask, then the reference, then repeatedly call operator() to 
+  * determine the shifts for a sequence of imaages.  No new heap allocations take place on these calls
+  * to operator(), and the reference image is not re-normalized on each call.
+  * 
+  * The shift is reported in pixels such that if the mxlib imageShift function is used
+  * to shift the input image by the negative of the shifts, it will align with the 
+  * reference at the center of the array.
+  *
+  * Three peak finding methods are provided.  xcorrPeakMethod::centroid uses center of light, 
+  * xcorrPeakMethod::centroid uses Gaussian centroiding, and xcorrPeakMethod::interp uses interpolation
+  * to find the peak to a given tolerance.
+  * 
+  * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
+  * 
+  * \ingroup image_reg
+  */
 template<class _ccImT>
 class imageXCorrFFT
 {
@@ -77,8 +101,19 @@ protected:
    /** \name Working Memory
      * @{
      */ 
-   ccImT m_ccIm;     ///< The cross-correlation image
    
+   ccImT m_refIm;  ///< The normalized reference image.
+   
+   ccImT m_maskIm; ///< Mask image to use, may be needed for proper normalization even if refIm has 0 mask applied.
+   
+   bool m_haveMask {false}; ///< Flag indicating that a mask has been provided.
+
+   ccImT m_normIm; ///< The normalized image.
+   
+   ccImT m_ccIm;   ///< The cross-correlation image
+   
+   ccImT m_magIm; ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interp
+
    complexArrayT m_ftIm0;  ///< Working memory for the FT of the reference image.
    
    complexArrayT m_ftWork; ///< Working memory for the FFT.
@@ -93,7 +128,13 @@ protected:
    
    int m_maxLag {0}; ///< The maximum lag to consider in the initial cross-correlation.  
    
+   Scalar m_tol {0.1}; ///< The tolerance of the interpolated-magnified image, in pixels.
    
+   Scalar m_magSize {0}; ///< Magnified size of the ccIm when using interp.  Set as function of m_tol and m_maxLag.
+
+public:
+   xcorrPeakMethod m_peakMethod {xcorrPeakMethod::centerOfLight};
+
 public:
    
    /// Default c'tor
@@ -101,15 +142,6 @@ public:
    
    /// Constructor setting maxLag.
    explicit imageXCorrFFT(int maxLag);
-   
-   /// Get the current maximum lag 
-   /**
-     * \returns the current value of m_maxLag 
-     */
-   int maxLag();
-   
-   /// Set the maximum lag
-   void maxLag( int ml /**< [in] the new maximum lag */);
    
    /// Set the size of the cross-correlation images.
    /** This resizes all working memory and conducts fftw planning.
@@ -120,20 +152,72 @@ public:
    int resize( int nrows, ///< [in] the number of rows in the images to register
                int ncols  ///< [in] the number of columns in the images to register
              );
+
+   /// Get the current maximum lag 
+   /**
+     * \returns the current value of m_maxLag 
+     */
+   int maxLag(); 
+   
+   /// Set the maximum lag
+   void maxLag( int ml /**< [in] the new maximum lag */);
+   
+   /// Get the tolerance of the interpolated-magnified image, in pixels.
+   /**
+     * \returns the current value of m_tol.
+     */ 
+   Scalar tol();
+   
+   /// Set the tolerance of the interpolated-magnified image, in pixels.
+   void tol( Scalar nt /**< [in] The new value of the interpolation tolerance. */ );
+
+   
+   
+   /// Set the mask image
+   /** 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+   int maskIm( const ccImT & mask /**< [in] the new mask image */ );
+   
+   /// Get a reference to the mask image.
+   /**
+     * \returns a const referance to the mask image.
+     */ 
+   const ccImT & maskIm();
    
    /// Set the reference image
-   /** Normalizes, fourier transforms, and conjugates the reference image
+   /** Normalizes the reference image by mean subtraction and variance division.  Applies
+     * the mask first if supplied. Then Fourier transform and conjugates the result.
      * 
      * \returns 0 on success
      * \returns -1 on error
      */
-   int setReference( const ccImT & im0 );
-   
-protected:
-
-
+   int refIm( const ccImT & im0 );
       
-public:
+   /// Get a reference to the reference image.
+   /**
+     * \returns a const referent to m_refIm.
+     */  
+   const ccImT& refIm();
+   
+   /// Get a reference to the normalized image.
+   /**
+     * \returns a const referent to m_normIm.
+     */
+   const ccImT & normIm();
+   
+   /// Get a reference to the cross correlation image.
+   /**
+     * \returns a const referent to m_ccIm.
+     */
+   const ccImT & ccIm();
+
+   /// Get a reference to the magnified image.
+   /**
+     * \returns a const referent to m_magIm.
+     */
+   const ccImT & magIm();
    
    /// Conduct the cross correlation to a specified tolerance
    /** 
@@ -148,13 +232,15 @@ public:
    
    /// Conduct the cross correlation to a specified tolerance
    /** 
+     * \overload
+     *  
      * \returns 0 on success
      * \returns -1 on error
      */ 
    template<class im0T, class imT>
    int operator()( Scalar & xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                    Scalar & yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
-                   im0T & im0,      ///< [in] the reference image
+                   im0T & im0,      ///< [in] a new reference image
                    imT & im         ///< [in] the image to cross-correlate with the reference
                  );
 };
@@ -165,21 +251,9 @@ imageXCorrFFT<ccImT>::imageXCorrFFT()
 }
 
 template< class ccImT>
-imageXCorrFFT<ccImT>::imageXCorrFFT(int maxLag)
+imageXCorrFFT<ccImT>::imageXCorrFFT(int mL)
 {
-   m_maxLag = maxLag;
-}
-
-template< class ccImT>
-int imageXCorrFFT<ccImT>::maxLag()
-{
-   return m_maxLag;
-}
-
-template< class ccImT>
-void imageXCorrFFT<ccImT>::maxLag( int ml )
-{
-   m_maxLag = ml;
+   maxLag(mL);
 }
 
 template< class ccImT>
@@ -196,7 +270,7 @@ int imageXCorrFFT<ccImT>::resize( int nrows,
    
    m_cols = ncols;
    
-   m_ccIm.resize(m_rows, m_cols);
+   m_ccIm.resize(m_rows, m_cols); //This is actually the full possible size.  Need to respect maxLag.
    
    m_ftIm0.resize( (int) (0.5*m_rows) + 1, m_cols);
    
@@ -211,18 +285,86 @@ int imageXCorrFFT<ccImT>::resize( int nrows,
 }
 
 template< class ccImT>
-int imageXCorrFFT<ccImT>::setReference( const ccImT & im0 )
+int imageXCorrFFT<ccImT>::maxLag()
 {
+   return m_maxLag;
+}
+
+template< class ccImT>
+void imageXCorrFFT<ccImT>::maxLag( int ml )
+{
+   m_maxLag = ml;
+   tol(m_tol);
+}
+
+template< class ccImT>
+typename ccImT::Scalar imageXCorrFFT<ccImT>::tol()
+{
+   return m_tol;
+}
+
+template< class ccImT>
+void imageXCorrFFT<ccImT>::tol( Scalar nt )
+{
+   m_magSize = ceil(((2.*m_maxLag + 1) - 1.0)/ nt)+1;
+   
+   Scalar mag = (m_magSize-1.0)/((2.*m_maxLag + 1) - 1.0);
+   
+   m_tol = 1.0/mag;
+}
+
+template< class ccImT>
+int imageXCorrFFT<ccImT>::maskIm( const ccImT & mask )
+{
+   m_maskIm = mask;
+   m_haveMask = true;
+   
+   return 0;
+}
+
+template< class ccImT>
+const ccImT & imageXCorrFFT<ccImT>::maskIm()
+{ 
+   return m_maskIm; 
+}
+
+template< class ccImT>
+int imageXCorrFFT<ccImT>::refIm( const ccImT & im )
+{
+   ccImT im0;
+   
+   //Mask if needed
+   if(m_haveMask)
+   {
+      if(im.rows()!=m_maskIm.rows() && im.cols() != m_maskIm.cols())
+      {
+         mxError("imageXCorFit::setReference", MXE_SIZEERR, "reference and mask are not the same size");
+         return -1;
+      }
+      im0 = im*m_maskIm;
+   }
+   else
+   {
+      im0 = im;
+   }
+
+   //Setup the FFTW space
    resize(im0.rows(), im0.cols());
+
+   //Shift so center pixel is 0,0
+   m_refIm.resize(m_rows, m_cols);
+   imageShiftWP( m_refIm, im0, 0.5*m_rows + 1, 0.5*m_cols + 1 );
+   //m_refIm = im0;
+
+   //Now normalize
+   realT m = imageMean(m_refIm);
+   realT v = imageVariance(m_refIm, m);
+   m_refIm = (m_refIm - m)/sqrt(v);
    
-   imageShiftWP( m_ccIm, im0, 0.5*m_rows, 0.5*m_cols );
-   realT m = imageMean(m_ccIm);
-   realT v = imageVariance(m_ccIm, m);
-   m_ccIm = (m_ccIm - m)/sqrt(v);
+   //Then FT
+   m_fft_fwd(m_ftIm0.data(), m_refIm.data());
    
-   m_fft_fwd(m_ftIm0.data(), m_ccIm.data());
-   
-   //Conjugate and normalize.
+   //Conjugate and normalize for FFTW scaling.
    for(int c =0; c < m_ftIm0.cols(); ++c)
    {
       for(int r=0; r < m_ftIm0.rows(); ++r)
@@ -237,6 +379,30 @@ int imageXCorrFFT<ccImT>::setReference( const ccImT & im0 )
 }
 
 template< class ccImT>
+const ccImT & imageXCorrFFT<ccImT>::refIm()
+{ 
+   return m_refIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrFFT<ccImT>::normIm()
+{ 
+   return m_normIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrFFT<ccImT>::ccIm()
+{ 
+   return m_ccIm; 
+}
+
+template< class ccImT>
+const ccImT & imageXCorrFFT<ccImT>::magIm()
+{ 
+   return m_magIm; 
+}
+
+template< class ccImT>
 template< class imT>
 int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
                                       Scalar & yShift,
@@ -245,14 +411,12 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
 {
    if( im.rows() != m_rows )
    {
-      mxError("imageXCorrFFT", MXE_SIZEERR, "image must be same size as reference (rows)");
-      return -1;
+      mxThrowException( mx::err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)");
    }
    
    if( im.cols() != m_cols )
    {
-      mxError("imageXCorrFFT", MXE_SIZEERR, "image must be same size as reference (cols)");
-      return -1;
+      mxThrowException( mx::err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)");
    }
    
    int maxLag = m_maxLag;
@@ -261,6 +425,13 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
       maxLag = 0.25*m_rows-1;
    }
    
+   int maxLag_r = 0.5*(1.0*m_rows-1.0);
+   int maxLag_c = 0.5*(1.0*m_cols-1.0);
+   
+   //Once ccIm is resized for maxLag appropriately:
+   //if(maxLag_r > m_maxLag && m_maxLag != 0) maxLag_r = m_maxLag;
+   //if(maxLag_c > m_maxLag && m_maxLag != 0) maxLag_c = m_maxLag;
+
    realT m = imageMean(im);
    realT v = imageVariance(im, m);
    m_ccIm = (im - m)/sqrt(v);
@@ -270,33 +441,45 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    //So this is the FT of the cross-correlation:
    m_ftWork *= m_ftIm0;
    
+   //Need to cut out block of desired size here if maxLag is not max
    m_fft_back(m_ccIm.data(), m_ftWork.data());
    
-#if 1
-   int xLag0,yLag0;
-   Scalar pk = m_ccIm.maxCoeff(&xLag0, &yLag0);
-   Scalar mn = m_ccIm.minCoeff();
- 
-   ccImT subim = m_ccIm.block(xLag0-maxLag, yLag0-maxLag, 2*maxLag+1, 2*maxLag+1);
+   if(m_peakMethod == xcorrPeakMethod::gaussFit)
+   {
+      int xLag0,yLag0;
+      Scalar pk = m_ccIm.maxCoeff(&xLag0, &yLag0);
+      Scalar mn = m_ccIm.minCoeff();
+      m_fitter.setArray(m_ccIm.data(), m_ccIm.rows(), m_ccIm.cols());
+      m_fitter.setGuess(mn, pk, xLag0, yLag0, 0.2*m_ccIm.rows(), 0.2*m_ccIm.cols(), 0); 
+      m_fitter.fit();
    
-   m_fitter.setArray(subim.data(), subim.rows(), subim.cols());
-   m_fitter.setGuess(mn, pk, maxLag, maxLag, 0.2*subim.rows(), 0.2*subim.cols(), 0); 
-   m_fitter.fit();
-   
-   xShift = m_fitter.x0() + (xLag0-maxLag) - (int)(0.5*m_rows);
-   yShift = m_fitter.y0() + (yLag0-maxLag) - (int)(0.5*m_cols);
-#else
+      xShift = m_fitter.x0() - maxLag_r;
+      yShift = m_fitter.y0() - maxLag_c;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::interpPeak)
+   {
+      m_magIm.resize(m_magSize, m_magSize);
+      imageMagnify(m_magIm, m_ccIm, cubicConvolTransform<Scalar>());
+      int x, y;
+      m_magIm.maxCoeff(&x,&y);
+      xShift = x*m_tol - maxLag_r;
+      yShift = y*m_tol - maxLag_c;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::centerOfLight)
+   {
+      Scalar x,y;
+      m_ccIm -= m_ccIm.minCoeff(); //Must sum to > 0.
 
-   std::cerr << "magnifying\n";
-   realT xsc = 0.01;
-   realT ysc = 0.01;
-   imT imW;
-   imageMaxInterp(xShift, yShift, xsc, ysc, imW, m_ccIm);
+      imageCenterOfLight(x,y,m_ccIm);
 
-   xShift -= (int)(0.5*m_rows);
-   yShift -= (int)(0.5*m_cols);
+      xShift = x - maxLag_r;
+      yShift = y - maxLag_c;
+   }
+   else
+   {
+      mxThrowException(mx::err::invalidconfig, "imageXCorrFFT<ccImT>::operator()", "unknown peak finding method");
+   }
 
-#endif
    return 0;
    
 }

@@ -19,7 +19,8 @@ OBJS = testsMain.o \
        include/sigproc/zernike_test.o \
 		 include/improc/imageTransforms_test.o \
        include/improc/imageUtils_test.o \
-       include/sys/timeUtils_test.o
+       include/sys/timeUtils_test.o \
+       include/improc/imageXCorrFFT_test.o \
        #include/improc/imageXCorrDiscrete_test.o \
 
 ifeq ($(NEED_CUDA),yes)        
