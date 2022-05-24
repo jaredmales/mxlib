@@ -668,7 +668,7 @@ void collapseCovar( eigenT & cutCV,
 {   
    std::vector<cvEntry> allidx(Nims);
    
-   std::cerr << "dangs: " << dang << " " << dangMax << "\n";
+   //std::cerr << "dangs: " << dang << " " << dangMax << "\n";
    
    
    //Initialize the vector of cvEntries
@@ -762,7 +762,7 @@ void collapseCovar( eigenT & cutCV,
       if(allidx[j].included) keepidx.push_back(j);
    }
    
-   std::cerr << "  Keeping " << keepidx.size() << " reference images out of " << Nims << " (" << Nims-keepidx.size() << " rejected)\n";
+   //std::cerr << "  Keeping " << keepidx.size() << " reference images out of " << Nims << " (" << Nims-keepidx.size() << " rejected)\n";
    
    if(keepidx.size() == 0)
    {

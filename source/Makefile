@@ -79,7 +79,8 @@ app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
 improc/HCIobservation.o: ../include/improc/HCIobservation.hpp ../include/improc/imageFilters.hpp
-improc/ADIObservation.o: ../include/improc/HCIobservation.hpp ../include/improc/ADIobservation.hpp ../include/improc/imageFilters.hpp ../include/math/gslInterpolation.hpp
+improc/ADIObservation.o: ../include/improc/ADIobservation.hpp  improc/HCIobservation.o ../include/math/gslInterpolation.hpp
+improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/ADIObservation.o
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp

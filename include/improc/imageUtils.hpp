@@ -153,10 +153,14 @@ typename imageT::Scalar imageVariance( imageT & im,                 ///< [in] th
    return v;
 }
 
+/// Calculate the center of light of an image
+/** Note that the sum of the image should be > 0.
+  * 
+  */  
 template<typename imageT>
-int imageCenterOfLight( typename imageT::Scalar & x,
-                        typename imageT::Scalar & y,
-                        const imageT & im
+int imageCenterOfLight( typename imageT::Scalar & x, ///< [out] the x coordinate of the center of light [pixels]
+                        typename imageT::Scalar & y, ///< [out] the y coordinate of hte center of light [pixels]
+                        const imageT & im            ///< [in] the image to centroid
                       )
 {
    x =0;
@@ -164,9 +168,16 @@ int imageCenterOfLight( typename imageT::Scalar & x,
    
    typename imageT::Scalar sum = im.sum();
    
-   for(int i=0; i< im.rows(); ++i)
+   if(sum == 0)
    {
-      for(int j=0; j < im.cols(); ++j)
+      x = 0.5*(im.rows()-1.0);
+      y = 0.5*(im.cols()-1.0);
+      return 0;
+   }
+
+   for(int j=0; j < im.cols(); ++j)
+   {
+      for(int i=0; i< im.rows(); ++i)   
       {
          x += (i+1)*im(i,j);
          y += (j+1)*im(i,j);

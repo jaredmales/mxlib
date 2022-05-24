@@ -1467,7 +1467,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       {
          eigenImageT fim, im;
          im = ims.image(i);
-         filterImage(fim, im, azBoxKernel<eigenImage<realT>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW, m_preProcess_azUSM_maxAz));
+         medianFilterImage(fim, im, azBoxKernel<eigenImage<realT>>(m_preProcess_azUSM_radW, m_preProcess_azUSM_azW, m_preProcess_azUSM_maxAz));
          im = (im-fim);
          ims.image(i) = im;
          status.incrementAndOutputStatus();
