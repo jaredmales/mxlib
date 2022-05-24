@@ -26,7 +26,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
       {
          
          REQUIRE(aosys.D() == 0.0);
-         REQUIRE(aosys.d_min() == 0.0);
+         REQUIRE(aosys.d_min(0) == 0.0);
          REQUIRE(aosys.d_opt() == 1e-50);
          REQUIRE(aosys.optd() == false);
          REQUIRE(aosys.optd_delta() == 1.0);
@@ -149,7 +149,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
          aosys.loadConfig(config);
 
          REQUIRE(aosys.D() == Approx(7.6));
-         REQUIRE(aosys.d_min() == Approx(0.122));
+         REQUIRE(aosys.d_min(0) == Approx(0.122));
          REQUIRE(aosys.optd() == true);
          REQUIRE(aosys.optd_delta() == Approx(0.0037));
          REQUIRE(aosys.lam_wfs() == Approx(800e-9));
