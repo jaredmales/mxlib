@@ -350,7 +350,11 @@ void filterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
 }   
    
 template<typename imageOutT, typename imageInT, typename kernelT>
-void medianFilterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 0)
+void medianFilterImage( imageOutT & fim, 
+                        imageInT im, 
+                        kernelT kernel, 
+                        int maxr = 0,
+                        int maxrproc = 1)
 {
    fim.resize(im.rows(), im.cols());
   
@@ -397,6 +401,11 @@ void medianFilterImage(imageOutT & fim, imageInT im, kernelT kernel,  int maxr= 
             }
             else
             {
+               if(maxrproc == 2) 
+               {
+                  fim(i,j) = 0;
+                  continue;
+               }
                kernel.setKernel(i-xcen, j-ycen, kernelArray);
          
                im_i = i - 0.5*(kernelArray.rows()-1);
