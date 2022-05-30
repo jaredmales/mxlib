@@ -353,65 +353,89 @@ void blackmanNuttal( std::vector<realT> & filt /**< [out] The pre-allocated vect
   * 
   * Function to create a 2-D Tukey window.  
   * 
-  * The width of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
+  * The shape of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
   * 
   * See https://en.wikipedia.org/wiki/Window_function
   *
-  * \param filt is a pre-allocated array of size dim x dim
-  * \param dim is the size of the array
-  * \param N is the diameter of the window, nominally N=dim, but this is not required
-  * \param alpha controls the window width.
-  * \param xc is the desired x center of the window
-  * \param yc is the desired y center of the window
-  * 
   *  \ingroup signal_windows2D
   */
 template<typename realT>
-void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
+void tukey2d( realT *filt, ///< [out] a pre-allocated array of size \p rows x \p cols (column major)
+              int rows,    ///< [in] the number of rows in filt
+              int cols,    ///< [in] the number of cols in filt
+              realT D,     ///< [in] the diameter of the window
+              realT alpha, ///< [in] controls the window shape.  1.0 gives a Hann window, 0.0 gives a cylinder (a.k.a. no window)
+              realT xc,    ///< [in] the desired x center of the window.
+              realT yc     ///< [in] the desired y center of the window.
+            )
 {
    
    int ii, jj;
-   realT x, y, r;
 
-   realT rad = 0.5*(N-1.0);
+   realT rad = 0.5*(D-1.0);
 
    realT pi = math::pi<realT>();
    
-   for(ii=0; ii<dim; ++ii)
+   for(int cc=0; cc<cols; ++cc)
    {
-      x = ( (realT) ii) - xc;
-      for(jj=0; jj<dim; ++jj)
+      realT y = ( (realT) cc) - yc;
+      for(int rr=0; rr<rows; ++rr)
       {
-         y = ( (realT) jj) - yc;
+         realT x = ( (realT) rr) - xc;
 
-         r = sqrt(x*x + y*y);
+         realT r = sqrt(x*x + y*y);
 
          //Following mxlib convention of including half pixels
          if(r > rad + 0.5)
          {
-            filt[jj*dim + ii] = 0.0;
+            filt[cc*rows + rr] = 0.0;
          }
-         else if(rad + r > (N-1)*(1-0.5*alpha) && alpha > 0.)
+         else if(rad + r > (D-1)*(1-0.5*alpha) && alpha > 0.)
          {
             //Have to prevent going greater than N-1 due to half pixel inclusion.
             realT dr = rad+r;
-            if(dr > N-1) dr = N-1;
+            if(dr > D-1) dr = D-1;
             
-            filt[jj*dim + ii] = 0.5*(1.0 + cos(pi * ( 2.*(dr)/(alpha*(N-1)) - 2./alpha + 1.0) ));
+            filt[cc*rows + rr] = 0.5*(1.0 + cos(pi * ( 2.*(dr)/(alpha*(D-1)) - 2./alpha + 1.0) ));
          }
          else
          {
-            filt[jj*dim + ii] = 1.0;
+            filt[cc*rows + rr] = 1.0;
          }
       }
    }
+}
+
+/** \brief Create a 2-D Tukey window
+  * 
+  * Function to create a 2-D Tukey window.  
+  * 
+  * The shape of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \tparam arrT an Eigen-like array type
+  * 
+  * \overload
+  * 
+  * \ingroup signal_windows2D
+  */
+template<typename arrT>
+void tukey2d( arrT & filt,                 ///< [in.out] a pre-allocated array
+              typename arrT::Scalar D,     ///< [in] the diameter of the window
+              typename arrT::Scalar alpha, ///< [in] controls the window shape.  1.0 gives a Hann window, 0.0 gives a cylinder (a.k.a. no window)
+              typename arrT::Scalar xc,    ///< [in] the desired x center of the window.
+              typename arrT::Scalar yc     ///< [in] the desired y center of the window.
+            )
+{
+   tukey2d(filt.data(), filt.rows(), filt.cols(), D, alpha, xc, yc);
 }
 
 /** \brief Create a 2-D Tukey window on an annulus
   * 
   * Function to create a 2-D Tukey window on an annulus.  
   * 
-  * The width of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
+  * The shape of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
   * 
   * See https://en.wikipedia.org/wiki/Window_function
   *
@@ -420,12 +444,12 @@ void tukey2d(realT *filt, int dim, realT N, realT alpha, realT xc, realT yc)
   *  \ingroup signal_windows2D
   */
 template<typename realT>
-void tukey2dAnnulus( realT *filt, ///< [out] a pre-allocated array of size rows x cols (column major)
+void tukey2dAnnulus( realT *filt, ///< [out] a pre-allocated array of size \p rows x \p cols (column major)
                      int rows,    ///< [in] the number of rows in filt
                      int cols,    ///< [in] the number of cols in filt
                      realT D,     ///< [in] the outer diameter of the window
                      realT eps,   ///< [in] the ratio of inner diameter to the outer diameter
-                     realT alpha, ///< [in] controls the window width.
+                     realT alpha, ///< [in] controls the window shape.  1.0 gives a Hann window, 0.0 gives a cylinder (a.k.a. no window)
                      realT xc,    ///< [in] the desired x center of the window.
                      realT yc     ///< [in] the desired y center of the window.
                    )
@@ -438,14 +462,14 @@ void tukey2dAnnulus( realT *filt, ///< [out] a pre-allocated array of size rows 
       
    for(int cc=0; cc<cols; ++cc)
    {
-      int y = ( (realT) cc) - yc;
+      realT y = ( (realT) cc) - yc;
       for(int rr=0; rr<rows; ++rr)
       {
-         int x = ( (realT) rr) - xc;
+         realT x = ( (realT) rr) - xc;
 
-         int r = sqrt(x*x + y*y);
+         realT r = sqrt(x*x + y*y);
 
-         int z = (r - eps*(rad));
+         realT z = (r - eps*(rad));
          
          //Following mxlib convention of including half pixels
          if(r > rad + 0.5 || r < eps*rad)
@@ -468,6 +492,32 @@ void tukey2dAnnulus( realT *filt, ///< [out] a pre-allocated array of size rows 
          }
       }
    }
+}
+
+/** \brief Create a 2-D Tukey window on an annulus
+  * 
+  * Function to create a 2-D Tukey window on an annulus.  
+  * 
+  * The shape of the window is controlled by alpha.  alpha = 0 is a cylinder, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  *
+  * \overload
+  * 
+  * \tparam realT is a floating point type 
+  * 
+  * \ingroup signal_windows2D
+  */
+template<typename arrT>
+void tukey2dAnnulus( arrT & filt,                 ///< [in,out] a pre-allocated array
+                     typename arrT::Scalar D,     ///< [in] the outer diameter of the window
+                     typename arrT::Scalar eps,   ///< [in] the ratio of inner diameter to the outer diameter
+                     typename arrT::Scalar alpha, ///< [in] controls the window shape.  1.0 gives a Hann window, 0.0 gives a cylinder (a.k.a. no window)
+                     typename arrT::Scalar xc,    ///< [in] the desired x center of the window.
+                     typename arrT::Scalar yc     ///< [in] the desired y center of the window.
+                   )
+{
+   return tukey2dAnnulus(filt, filt.rows(), filt.cols(), D, eps, alpha, xc, yc);
 }
 
 } //namespace window

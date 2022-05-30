@@ -121,7 +121,7 @@ double lamch<double>(char CMACH);
 template<typename dataT>
 MXLAPACK_INT potrf( char UPLO,          ///< [in] 'U' if upper triangle of A is stored, 'L' if lower triangle of A is stored.
                     MXLAPACK_INT N,     ///< [in] The order of the matrix A,  \>= 0.
-                    dataT * A,          ///< [in/out] Symmetric matrix of dimension (LDA,N), stored as specified in UPLO.  Note that the opposite half is not referenced.
+                    dataT * A,          ///< [in.out] Symmetric matrix of dimension (LDA,N), stored as specified in UPLO.  Note that the opposite half is not referenced.
                     MXLAPACK_INT LDA,   ///< [in] The leading dimension of A.
                     MXLAPACK_INT & INFO ///< [out] 0 on success, \< 0 -INFO means the i-th argument had an illegal value, \>0 the leading minor of order INFO is not positive definite, and the factorization could not be completed.
                   );

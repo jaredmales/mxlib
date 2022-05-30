@@ -180,7 +180,7 @@ struct ADIobservation : public HCIobservation<_realT>
 
    
    ///Inect the fake plants
-   int injectFake( eigenCube<realT> & ims,              ///< [in/out] the image cube in which to inject the fakes.
+   int injectFake( eigenCube<realT> & ims,              ///< [in.out] the image cube in which to inject the fakes.
                    std::vector<std::string> & fileList, ///< [in] a list of file paths used for per-image fake PSFs.  If empty, then m_fakeFileName is used.
                    derotFunctObj & derotF,
                    realT RDIfluxScale,                  ///< [in] the flux scaling for RDI.  In SDI, this is from the planet spectrum.

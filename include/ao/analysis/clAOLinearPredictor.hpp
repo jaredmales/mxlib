@@ -108,8 +108,8 @@ struct clAOLinearPredictor
      *     loop over scale factors from min_sc-precision to max_sc in steps of 
      */ 
    template< bool printout=false>
-   int _regularizeCoefficients( realT & min_var,           ///< [in/out] the minimum variance found.  Set to 0 on initial call
-                                realT & min_sc,            ///< [in/out] the scale factor at the minimum variance.
+   int _regularizeCoefficients( realT & min_var,           ///< [in.out] the minimum variance found.  Set to 0 on initial call
+                                realT & min_sc,            ///< [in.out] the scale factor at the minimum variance.
                                 realT precision,           ///< [in] the step-size for the scale factor
                                 realT max_sc,              ///< [in] the maximum scale factor to test
                                 clGainOpt<realT> & go_lp,  ///< [in] the gain optimization object

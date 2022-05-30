@@ -69,7 +69,7 @@ realT fftPlateScale( size_t pixels, ///< [in] the linear dimension of the FFT (i
   * \ingroup imaging
   */  
 template<class arrayT> 
-int circularPupil( arrayT & m,  ///< [in/out] is the allocated Array.  Dimensions are used to create the pupil.
+int circularPupil( arrayT & m,  ///< [in.out] is the allocated Array.  Dimensions are used to create the pupil.
                    typename arrayT::Scalar eps=0, ///< [in] [optional] is the central obscuration.  0-1, default is 0. 
                    typename arrayT::Scalar rad=0, ///< [in] [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of m is used. Default is 0.
                    typename arrayT::Scalar overscan = 0  ///< [in] [optional] overscan in fractional pixels, to include partial pixels on the edge. Default is 0.
@@ -117,7 +117,7 @@ int circularPupil( arrayT & m,  ///< [in/out] is the allocated Array.  Dimension
   * \tparam arrayT is an Eigen-like array with public typedef Scalar
   */ 
 template<class arrayT> 
-void drawLine( arrayT & im,  ///< [in/out] The input image, modified.
+void drawLine( arrayT & im,  ///< [in.out] The input image, modified.
                typename arrayT::Scalar x0, ///< [in] the x value, relative to image center, of the starting point
                typename arrayT::Scalar y0, ///< [in] the y value, relative to image center, of the starting point
                typename arrayT::Scalar x1,  ///< [in] the x value, relative to image center, of the end point
@@ -238,7 +238,7 @@ void makeComplexPupil( arrayOutT & complexWavefront,
 
 ///Apply a tilt to a wavefront 
 /**
-  * \param complexWavefront [in/out] the complex wavefront to tilt, will be modified on output
+  * \param complexWavefront [in.out] the complex wavefront to tilt, will be modified on output
   * \param xTilt [input] the amount of tilt in the x direction, in pixels 
   * \param yTilt [input] the amount of tilt in the y direction, in pixels 
   * 

@@ -48,7 +48,7 @@ namespace sigproc
   * \ingroup signal_processing
   */ 
 template<typename realT>
-int basisMask( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+int basisMask( improc::eigenCube<realT> & modes, ///< [in.out] the basis to normalize.
                improc::eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the basis
              )
 {
@@ -71,7 +71,7 @@ int basisMask( improc::eigenCube<realT> & modes, ///< [in/out] the basis to norm
   * \ingroup signal_processing
   */
 template<typename realT>
-int basisMeanSub( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+int basisMeanSub( improc::eigenCube<realT> & modes, ///< [in.out] the basis to normalize.
                   improc::eigenImage<realT> & mask, ///< [in] 1/0 mask defining the domain of the basis
                   bool postMult = true      ///< [in] [optional] if true, then each image is multiplied by the mask after subtraction.
                 )
@@ -100,7 +100,7 @@ int basisMeanSub( improc::eigenCube<realT> & modes, ///< [in/out] the basis to n
   * \ingroup signal_processing
   */
 template<typename realT>
-int basisNormalize( improc::eigenCube<realT> & modes, ///< [in/out] the basis to normalize.
+int basisNormalize( improc::eigenCube<realT> & modes, ///< [in.out] the basis to normalize.
                     improc::eigenImage<realT> & mask  ///< [in] 1/0 mask defining the domain of the normalization
                   )
 {
@@ -127,7 +127,7 @@ int basisNormalize( improc::eigenCube<realT> & modes, ///< [in/out] the basis to
   */ 
 template<typename realT>
 int basisAmplitudes( std::vector<realT> & amps,        ///< [out] the amplitudes of each mode fit to the image (will be resized).
-                     improc::eigenImage<realT> & im,   ///< [in/out] the image to fit.  Is subtracted in place if desired.
+                     improc::eigenImage<realT> & im,   ///< [in.out] the image to fit.  Is subtracted in place if desired.
                      improc::eigenCube<realT> & modes, ///< [in] the modes to fit.
                      improc::eigenImage<realT> & mask, ///< [in] the 1/0 mask which defines the domain of the fit.
                      bool subtract = false,            ///< [in] [optional] if true then the modes are subtracted as they are fit to the image

@@ -177,20 +177,20 @@ public:
    void applyLyotStop( complexFieldT &lyotPlane );
    
    ///Propagate the given pupil-plane wavefront through the coronagraph.
-   int propagate( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   int propagate( complexFieldT & pupilPlane /**< [in.out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
 
    int propagate( imageT & fpIntensity,       ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
-                   complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph.
+                   complexFieldT & pupilPlane ///< [in.out] The wavefront at the input pupil plane.  It is modified by the coronagraph.
                 );
    
    /// Propagate the given pupil-plane wavefront without the coronagraph. 
    /** For a Lyot coronagraph, this applies the pupil apodization and Lyot stop, but not the FPM, to the given pupil-plane wavefront such 
      * that the result will produce the non-coronagraphic (off-axis) PSF.
      */
-   int propagateNC( complexFieldT & pupilPlane /**< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
+   int propagateNC( complexFieldT & pupilPlane /**< [in.out] The wavefront at the input pupil plane.  It is modified by the coronagraph. */);
    
    int propagateNC( imageT & fpIntensity,      ///< [out] The intensity image in the focal plane.  This should be pre-allocated.
-                    complexFieldT & pupilPlane ///< [in/out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
+                    complexFieldT & pupilPlane ///< [in.out] The wavefront at the input pupil plane.  It is modified by the coronagraph. 
                   );
    
    ///Optimize the pupil amplitude apodization and focal-plane mask complex transmission.

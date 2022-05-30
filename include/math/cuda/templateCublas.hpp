@@ -53,7 +53,7 @@ template<typename floatT>
 cublasStatus_t cublasTscal( cublasHandle_t handle, ///< [in] The cublas context handle
                             int n,                 ///< [in] Number of elements in the vector
                             const floatT *alpha,   ///< [in] The scalar
-                            floatT *x,             ///< [in/out] The vector of length n
+                            floatT *x,             ///< [in.out] The vector of length n
                             int incx               ///< [in] The stride of the vector
                           );
 
@@ -77,7 +77,7 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
                             const floatT *alpha,   ///< [in] number of elements in the vector x and y
                             const floatT *x,       ///< [in] vector with n elements. 
                             int incx,              ///< [in] stride between consecutive elements of x
-                            floatT *y,             ///< [in/out] vector with n elements. 
+                            floatT *y,             ///< [in.out] vector with n elements. 
                             int incy               ///< [in] stride between consecutive elements of y
                           );
 
@@ -105,7 +105,7 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
   * \ingroup cublas
   */
 template<typename dataT1, typename dataT2>
-cudaError_t elementwiseXxY( dataT1 * x, ///< [in/out] device pointer for the 1st vector.  Is replaced with the product of the two vectors
+cudaError_t elementwiseXxY( dataT1 * x, ///< [in.out] device pointer for the 1st vector.  Is replaced with the product of the two vectors
                             dataT2 * y, ///< [in] device pointer for the 2nd vector.
                             int size    ///< [in] the number of elements in the vectors.
                           );
@@ -138,7 +138,7 @@ cublasStatus_t cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuB
                             const floatT *x,         ///< [in] vector of at least (1+(n-1)*abs(incx)) elements if transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx)) elements otherwise. 
                             int incx,                ///< [in] stride of x. 
                             const floatT *beta,      ///< [in] scalar used for multiplication of y, if beta==0 then y does not need to be initialized. 
-                            floatT *y,               ///< [in/out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least (1+(n-1)*abs(incy)) elements otherwise. 
+                            floatT *y,               ///< [in.out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least (1+(n-1)*abs(incy)) elements otherwise. 
                             int incy                 ///< [in] stride of y
                           );
 
@@ -166,7 +166,7 @@ cublasStatus_t cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuB
                             const floatT *A,         ///< [in] array of dimension m x n.  Unchanged. 
                             const floatT *x,         ///< [in] vector of at least (1+(n-1)*abs(incx)) elements if transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx)) elements otherwise. 
                             const floatT *beta,      ///< [in] scalar used for multiplication of y, if beta==0 then y does not need to be initialized. 
-                            floatT *y                ///< [in/out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least (1+(n-1)*abs(incy)) elements otherwise. 
+                            floatT *y                ///< [in.out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least (1+(n-1)*abs(incy)) elements otherwise. 
                           );
 
 template<>

@@ -229,8 +229,8 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
    /// Subtract the basis mean from each of the images
    /** The mean is subtracted according to m_meanSubMethod.
     */
-   void meanSubtract( eigenCube<realT> & rims, ///< [in/out] The reference images.  These are mean subtracted on output.
-                      eigenCube<realT> & tims, ///< [in/out] The target images, which can be the same cube as rims (tested by pointer comparison), in which case they will be ignored.  Mean subtractedon output.
+   void meanSubtract( eigenCube<realT> & rims, ///< [in.out] The reference images.  These are mean subtracted on output.
+                      eigenCube<realT> & tims, ///< [in.out] The target images, which can be the same cube as rims (tested by pointer comparison), in which case they will be ignored.  Mean subtractedon output.
                       std::vector<realT> & sds ///< [out] The standard deviation of the mean subtracted refernce images.
                     );
 

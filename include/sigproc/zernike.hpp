@@ -506,7 +506,7 @@ int zernike( arrayT & arr,
   * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
   */  
 template<typename cubeT, typename calcRealT>
-int zernikeBasis( cubeT & cube,                    ///< [in/out] the pre-allocated cube which will be filled with the Zernike basis
+int zernikeBasis( cubeT & cube,                    ///< [in.out] the pre-allocated cube which will be filled with the Zernike basis
                   typename cubeT::Scalar rad = -1, ///< [in] [optional] the radius of the aperture.  If -1 then the full image size is used.
                   int minj = 2                     ///< [in] [optional] the minimum j value to include.  The default is j=2, which skips piston (j=1). 
                 )          

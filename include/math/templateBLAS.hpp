@@ -99,7 +99,7 @@ void scal<std::complex<double> >( const int N,
   * \param alpha [in] scalar to multiply each element by
   * \param Y [in] vector to perform element-wise multiplication with
   * \param incY [in] in-memory increment or stride for Y
-  * \param X [in/out] vector which is multiplied by alpha and element-wise multiplied by Y
+  * \param X [in.out] vector which is multiplied by alpha and element-wise multiplied by Y
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
@@ -128,7 +128,7 @@ void hadp_impl( const int N,
   * \param alpha [in] scalar to multiply each element by
   * \param Y [in] vector to perform element-wise multiplication with
   * \param incY [in] in-memory increment or stride for Y
-  * \param X [in/out] vector which is multiplied by alpha and element-wise multiplied by Y
+  * \param X [in.out] vector which is multiplied by alpha and element-wise multiplied by Y
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
@@ -150,7 +150,7 @@ void hadp( const int N,
   * \param alpha [in] scalar to multiply each element by
   * \param Y [in] vector to perform element-wise division with
   * \param incY [in] in-memory increment or stride for Y
-  * \param X [in/out] vector which is multiplied by alpha and element-wise divided by Y
+  * \param X [in.out] vector which is multiplied by alpha and element-wise divided by Y
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y
@@ -179,7 +179,7 @@ void hadd_impl( const int N,
   * \param alpha [in] scalar to multiply each element by
   * \param Y [in] vector to perform element-wise division with
   * \param incY [in] in-memory increment or stride for Y
-  * \param X [in/out] vector which is multiplied by alpha and element-wise divided by Y
+  * \param X [in.out] vector which is multiplied by alpha and element-wise divided by Y
   * \param incX [in] in-memeory increment or stride for X
   * 
   * \tparam dataT the data type of the alpha, X, and Y

@@ -388,7 +388,7 @@ struct HCIobservation
      *
      * \returns 0 on success, -1 on  error.
      */
-   int threshold( std::vector<std::string> & fileList, ///< [in/out] the fileList to threshold
+   int threshold( std::vector<std::string> & fileList, ///< [in.out] the fileList to threshold
                   const std::string & qualityFile,     ///< [in] the path to the file containing qualities, one per file.
                   realT qualityThreshold               ///< [in] the quality threshold to apply
                 );
@@ -601,7 +601,7 @@ public:
    /// Fill in the HCIobservation standard FITS header 
    /**
      */
-   void stdFitsHeader(fits::fitsHeader & head /**< [in/out] the fistHeader structure which will have cards appended to it. */);
+   void stdFitsHeader(fits::fitsHeader & head /**< [in.out] the fistHeader structure which will have cards appended to it. */);
    
    ///Write the final combined image to disk
    /**

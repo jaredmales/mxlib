@@ -138,7 +138,7 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */)
   * 
   * \ingroup timeutils
   */
-void timespecAddNsec( timespec & ts, ///< [in/out] the time to add to
+void timespecAddNsec( timespec & ts, ///< [in.out] the time to add to
                       unsigned nsec  ///< [in] the number of nanoseconds to add to ts.
                     );
 

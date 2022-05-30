@@ -438,7 +438,7 @@ realT oneoverk_norm(realT kmin, realT kmax, realT alpha)
   * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename floatT, typename floatParamT>
-int normPSD( std::vector<floatT> & psd,                        ///< [in/out] the PSD to normalize, will be altered.
+int normPSD( std::vector<floatT> & psd,                        ///< [in.out] the PSD to normalize, will be altered.
              std::vector<floatT> & f,                          ///< [in] the frequency points for the PSD
              floatParamT normT,                                ///< [in] the desired total variance (or integral) of the PSD.
              floatT fmin = std::numeric_limits<floatT>::min(), ///< [in] [optiona] the minimum frequency of the range over which to normalize.
@@ -482,7 +482,7 @@ int normPSD( std::vector<floatT> & psd,                        ///< [in/out] the
   * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
   */
 template<typename floatT, typename floatParamT>
-floatT normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in/out] the PSD to normalize, will be altered.
+floatT normPSD( Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & psd, ///< [in.out] the PSD to normalize, will be altered.
                 Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> & k,   ///< [in] the frequency grid for psd.
                 floatParamT normT,                                          ///< [in] the desired total variance (or integral) of the PSD.
                 floatT kmin = std::numeric_limits<floatT>::min(),           ///< [in] [optiona] the minimum frequency of the range over which to normalize.

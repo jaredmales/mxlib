@@ -93,7 +93,7 @@ struct phoenixSpectrum
   * \ingroup astrophot_spectra
   */
 template<typename floatT>
-void rewritePhoenixSpectrum( const std::string & filename, ///< [in/out] complete name of the file to rewrite
+void rewritePhoenixSpectrum( const std::string & filename, ///< [in.out] complete name of the file to rewrite
                              floatT lmin,  ///< [in]  minimum wavelength to rewrite [microns]
                              floatT lmax,  ///< [in] maximum wavelemngth to rewrite [microns]
                              int sepWavelength = 0,  ///< [in] [optional] controls how wavelength is handled.  0=> wavelength is included in file as first column.  1=> wavelength is written to a separate 'wavelength.dat' file. -1=> means don't write wavelength.

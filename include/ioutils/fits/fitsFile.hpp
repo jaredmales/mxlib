@@ -218,7 +218,7 @@ public:
 
    ///Read data from a vector of files into an image cube with individual headers
    int read( dataT * im, ///< [out] An allocated array large enough to hold all the images
-             std::vector<fitsHeader> &heads, ///< [in/out] The vector of fits headers, allocated to contain one per image.
+             std::vector<fitsHeader> &heads, ///< [in.out] The vector of fits headers, allocated to contain one per image.
              const std::vector<std::string> & flist  ///< [in] The list of files to read.
            );
 

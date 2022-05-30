@@ -277,8 +277,8 @@ int continueAngles( std::vector<realT> & angles, ///< [in] the vector of angles
   *  \ingroup geo
   */ 
 template<typename realT>
-void rotatePoint( realT & x0,  ///< [in/out] the x-coordinate of the point to rotate.  On exit contains the rotated value.
-                  realT & y0,  ///< [in/out] the y-coordinate of the point to rotate.  On exit contains the rotated value.
+void rotatePoint( realT & x0,  ///< [in.out] the x-coordinate of the point to rotate.  On exit contains the rotated value.
+                  realT & y0,  ///< [in.out] the y-coordinate of the point to rotate.  On exit contains the rotated value.
                   realT angle  ///< [in] the angle by which to rotate [radians]
                 )
 {

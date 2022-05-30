@@ -465,7 +465,7 @@ public:
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
    template<size_t crank=rank>
-   int filter( realArrayT & noise,             ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int filter( realArrayT & noise,             ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                realArrayT * noiseIm = nullptr, ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                typename std::enable_if<crank==1>::type* = 0
              ) const;
@@ -480,7 +480,7 @@ public:
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
    template<size_t crank=rank>
-   int filter( realArrayT & noise,             ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int filter( realArrayT & noise,             ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                realArrayT * noiseIm = nullptr, ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                typename std::enable_if<crank==2>::type* = 0
              ) const;
@@ -494,7 +494,7 @@ public:
      * 
      */ 
    template<size_t crank=rank>
-   int filter( realArrayMapT  noise,             ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int filter( realArrayMapT  noise,             ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                realArrayT * noiseIm = nullptr, ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                typename std::enable_if<crank==2>::type* = 0
              ) const;
@@ -509,7 +509,7 @@ public:
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
    template<size_t crank=rank>
-   int filter( realArrayT & noise,             ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int filter( realArrayT & noise,             ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                realArrayT * noiseIm = nullptr, ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                typename std::enable_if<crank==3>::type* = 0
              ) const;
@@ -521,7 +521,7 @@ public:
      * 
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
-   int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
+   int operator()( realArrayT & noise /**< [in.out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
    
    ///Apply the filter.
    /** 
@@ -532,7 +532,7 @@ public:
      * 
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
-   int operator()( realArrayMapT noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
+   int operator()( realArrayMapT noise /**< [in.out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
 
    ///Apply the filter.
    /**
@@ -541,7 +541,7 @@ public:
      * 
      * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]" 
      */ 
-   int operator()( realArrayT & noise,  ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int operator()( realArrayT & noise,  ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                    realArrayT & noiseIm ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                  ) const; 
 };

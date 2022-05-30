@@ -119,12 +119,12 @@ public:
    ///Apply the shift to a pupil wavefront which will center the resultant focal plane image, and apply the normalization.
    /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or setWavefrontSizePixels.
      */
-   void shiftPupil( wavefrontT & complexPupil /**< [in/out] the complex pupil plane wavefront to shift*/);
+   void shiftPupil( wavefrontT & complexPupil /**< [in.out] the complex pupil plane wavefront to shift*/);
 
    ///Apply the shift to a pupil wavefront which will restore it to a centered pupil image, with correct flux.
    /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or setWavefrontSizePixels.
      */
-   void unshiftPupil( wavefrontT & complexPupil /**< [in/out] the complex pupil plane wavefront to shift*/);
+   void unshiftPupil( wavefrontT & complexPupil /**< [in.out] the complex pupil plane wavefront to shift*/);
    
    ///Propagate the wavefront from the pupil plane to the focal plane
    /** The pupil plane wavefront (complexPupil) is multiplied by a tilt to place the

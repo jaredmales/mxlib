@@ -349,7 +349,7 @@ void applyMask( eigenT & maskedIm,  ///< [out] the image to mask (will be modifi
   * \ingroup image_masks
   */
 template<class arrayT> 
-void maskCircle( arrayT & m,                          ///< [in/out] the image to be masked, is modified.
+void maskCircle( arrayT & m,                          ///< [in.out] the image to be masked, is modified.
                  typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
                  typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
                  typename arrayT::Scalar rad,         ///< [in] the radius of the circle
@@ -383,7 +383,7 @@ void maskCircle( arrayT & m,                          ///< [in/out] the image to
   * \ingroup image_masks
   */
 template<class arrayT> 
-void maskCircle( arrayT & m,                          ///< [in/out] the image to be masked, is modified.
+void maskCircle( arrayT & m,                          ///< [in.out] the image to be masked, is modified.
                  typename arrayT::Scalar rad,         ///< [in] the radius of the circle
                  typename arrayT::Scalar val,         ///< [in] the mask value.
                  typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
@@ -401,7 +401,7 @@ void maskCircle( arrayT & m,                          ///< [in/out] the image to
   * \ingroup image_masks
   */
 template<class arrayT> 
-void maskEllipse( arrayT & m,                         ///< [in/out] the image to be masked, is modified.
+void maskEllipse( arrayT & m,                         ///< [in.out] the image to be masked, is modified.
                  typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
                  typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
                  typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
@@ -449,7 +449,7 @@ void maskEllipse( arrayT & m,                         ///< [in/out] the image to
   * \ingroup image_masks
   */  
 template<typename realT>
-int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+int drawLine( eigenImage<realT> & mask, ///< [in.out] [pre-allocated] The array in which to draw the line.
               realT x0,                 ///< [in] The x coordinate of the first point
               realT y0,                 ///< [in] The y coordinate of the first point
               realT x1,                 ///< [in] The x coordinate of the second point
@@ -543,7 +543,7 @@ int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array 
   * \ingroup image_masks
   */  
 template<typename realT>
-int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
+int drawLine( eigenImage<realT> & mask, ///< [in.out] [pre-allocated] The array in which to draw the line.
               realT x0,                 ///< [in] The x coordinate of the first point
               realT y0,                 ///< [in] The y coordinate of the first point
               realT x1,                 ///< [in] The x coordinate of the second point

@@ -59,7 +59,7 @@ int reflectImageCoords( int & x1, ///< [out] the reflected x coordinate
 
 /// Zero any NaNs in an image
 template<class imageT>
-void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels set to zero */ )
+void zeroNaNs( imageT & im /**< [in.out] image which will have any NaN pixels set to zero */ )
 {
    typename imageT::Scalar zero  = 0;
    zeroNaNs(im, zero);
@@ -70,7 +70,7 @@ void zeroNaNs( imageT & im /**< [in/out] image which will have any NaN pixels se
   * \overload
   */ 
 template<class imageT, typename valueT>
-void zeroNaNs( imageT & im,  ///< [in/out] image which will have any NaN pixels set to zero
+void zeroNaNs( imageT & im,  ///< [in.out] image which will have any NaN pixels set to zero
                valueT val    ///< [in] [optional] The value to set NaN pixels too.  Default is 0.
              )
 {
@@ -88,7 +88,7 @@ void zeroNaNs( imageT & im,  ///< [in/out] image which will have any NaN pixels 
 
 /// Zero any NaNs in an image cube
 template<class cubeT>
-void zeroNaNCube( cubeT & imc /**< [in/out] cube which will have any NaN pixels set to zero */)
+void zeroNaNCube( cubeT & imc /**< [in.out] cube which will have any NaN pixels set to zero */)
 {
    for(int p=0; p< imc.planes(); ++p) 
    {
@@ -199,8 +199,8 @@ int imageCenterOfLight( typename imageT::Scalar & x, ///< [out] the x coordinate
 template<typename floatT, typename imageT, typename magImageT, typename transformT>
 int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum, in pixels of the input image
                     floatT & y,        ///< [out] the y-position of the maximum, in pixels of the input image
-                    floatT & scale_x,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
-                    floatT & scale_y,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
+                    floatT & scale_x,  ///< [in.out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
+                    floatT & scale_y,  ///< [in.out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
                     magImageT & magIm, ///< [in] the magnified image.  This is used as working memory, will be resized.
                     const imageT & im, ///< [in] the image to find the maximum of
                     transformT trans   ///< [in] the transform to use for interpolation
@@ -236,8 +236,8 @@ int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum,
 template<typename floatT, typename imageT, typename magImageT>
 int imageMaxInterp( floatT & x,        ///< [out] the x-position of the maximum, in pixels of the input image
                     floatT & y,        ///< [out] the y-position of the maximum, in pixels of the input image
-                    floatT & scale_x,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
-                    floatT & scale_y,  ///< [in/out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
+                    floatT & scale_x,  ///< [in.out] the desired scale or resolution, in pixels < 1, in the x direction.  On output contains the actual scale calculated.
+                    floatT & scale_y,  ///< [in.out] the desired scale or resolution, in pixels < 1, in the y direction.  On output contains the actual scale calculated.
                     magImageT & magIm, ///< [in] the magnified image.  This is used as working memory, will be resized.
                     const imageT & im  ///< [in] the image to find the maximum of
                   )

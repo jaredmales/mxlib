@@ -551,7 +551,7 @@ public:
      * 
      * \returns the S/N squared
      */
-   realT signal2Noise2( realT & tau_wfs, ///< [in/out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
+   realT signal2Noise2( realT & tau_wfs, ///< [in.out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
                         realT d,         ///< [in] the actuator spacing in meters, used if binning WFS pixels
                         int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                       );

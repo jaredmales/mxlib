@@ -324,8 +324,8 @@ public:
      *
      * \returns the maximum stable gain for the loop parameters
      */
-   realT maxStableGain( realT & ll, ///< [in/out] the lower limit used for the search
-                        realT & ul ///< [in/out] the upper limit used for hte search
+   realT maxStableGain( realT & ll, ///< [in.out] the lower limit used for the search
+                        realT & ul ///< [in.out] the upper limit used for hte search
                       );
 
    /// Find the maximum stable gain for the loop parameters
@@ -376,7 +376,7 @@ public:
    /**
      * \returns 0 on success
      */
-   int pseudoOpenLoop( std::vector<realT> & PSD, ///< [in/out] input closed loop PSD, on output contains the pseudo open loop error PSD ,
+   int pseudoOpenLoop( std::vector<realT> & PSD, ///< [in.out] input closed loop PSD, on output contains the pseudo open loop error PSD ,
                        realT g                   ///< [in] the loop gain when PSD was measured.
                      );
 

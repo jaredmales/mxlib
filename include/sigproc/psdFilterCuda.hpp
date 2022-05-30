@@ -147,7 +147,7 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int filter( deviceComplexPtrT * noise           ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int filter( deviceComplexPtrT * noise           ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
              );
    
    ///Apply the filter.
@@ -155,14 +155,14 @@ public:
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int operator()( realArrayT & noise /**< [in/out] the noise field of size rows() X cols(), which is filtered in-place. */ );
+   int operator()( realArrayT & noise /**< [in.out] the noise field of size rows() X cols(), which is filtered in-place. */ );
    
    ///Apply the filter.
    /**
      * \returns 0 on success
      * \returns -1 on error
      */ 
-   int operator()( realArrayT & noise,  ///< [in/out] the noise field of size rows() X cols(), which is filtered in-place. 
+   int operator()( realArrayT & noise,  ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place. 
                    realArrayT & noiseIm ///< [out] [optional] an array to fill with the imaginary output of the filter, allowing 2-for-1 calculation.
                  ); 
 };
