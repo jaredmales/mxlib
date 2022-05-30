@@ -90,11 +90,11 @@ floatT sigma2fwhm(floatT sig /**< [in] the Gaussian width parameter */)
   * 
   * \returns the value of the 1D arbitrarily-centered symmetric Gaussian at (x)
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   * 
-  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]"
+  * 
   */ 
 template<typename realT>
 realT gaussian( const realT x,    ///< [in] is the x-position at which to evaluate the Gaussian
@@ -116,9 +116,12 @@ realT gaussian( const realT x,    ///< [in] is the x-position at which to evalua
   * 
   * \returns the value of the 2D arbitrarily-centered symmetric Gaussian at (x,y)
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
+  * 
+  * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift "[test doc]"
+  * 
   */ 
 template<typename realT>
 realT gaussian2D( const realT x,    ///< [in] the x-position at which to evaluate the Gaussian
@@ -192,7 +195,7 @@ void gaussian2D( realT * arr,      ///< [out] is the allocated array to fill in
   * 
   * \returns the value of the 2D elliptical Gaussian at (x,y)
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */ 
@@ -234,7 +237,7 @@ realT gaussian2D( const realT x,  ///< [in] the x-position at which to evaluate 
   * the convention that the long axis of the ellipse is \f$\sigma_x\f$, and \f$\theta\f$ is chosen 
   * appropriately.  Note that \f$-\frac{\pi}{2} < \theta < \frac{\pi}{2}\f$.
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */
@@ -317,7 +320,7 @@ void gaussian2D_gen2rot( realT & sigma_x, ///< [out] the width parameter in the 
   * 
   * This function calculates (a,b,c) from inputs (\f$\sigma_x\f$,\f$\sigma_y\f$,\f$\theta\f$).
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */
@@ -365,7 +368,7 @@ void gaussian2D_rot2gen( realT & a,             ///< [out] the first rotation an
   * 
   * \returns the value of the 2D elliptical Gaussian at (x,y)
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */ 
@@ -462,7 +465,7 @@ void gaussian2D( realT * arr,    ///< [out] the native array to populate with th
   * (a,b,c) to  (\f$\sigma_x\f$,\f$\sigma_y\f$,\f$\theta\f$) and back.  
   * 
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */ 
@@ -491,6 +494,7 @@ void gaussian2D_ang( realT * arr,         ///< [out] the native array to populat
 
 ///Calculate the Jacobian at position (x,y) for the 2D general elliptical Gaussian
 /** \note this has not been verified and may be incorrect.
+  * 
   * Given:
   * 
   * \f$ f(x,y) = G_0 + G\exp [-0.5( a(x-x_0)^2 + b(x-x_0)(y-y_0) + c(y-y_0)^2 ]\f$
@@ -523,7 +527,7 @@ void gaussian2D_ang( realT * arr,         ///< [out] the native array to populat
   * \param c is the third rotation and scaling factor
   * 
   * 
-  * \tparam realT is type to use for arithmetic
+  * \tparam realT is the type to use for arithmetic
   * 
   * \ingroup gen_math_gaussians
   */ 

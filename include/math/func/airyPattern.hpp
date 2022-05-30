@@ -115,7 +115,7 @@ realT airyPattern( realT x,  ///< [in] is the x-coordinate in units of pixels
   * 
   * \tparam realT is the type to use for arithmetic
   * 
-  * \ingroup gen_math_gaussians
+  * \ingroup gen_math_airy_pattern
   */ 
 template<typename realT>
 void airyPattern2D( realT * arr,    ///< [out] is the allocated array to fill in
