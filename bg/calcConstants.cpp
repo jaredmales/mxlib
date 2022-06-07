@@ -14,7 +14,7 @@ int main()
 {
    typedef cpp_dec_float_100 floatT;
    //typedef double floatT;
-   std::cout.precision(50);
+   std::cout.precision(100);
    
    floatT tan_arcsec;
          
@@ -23,13 +23,15 @@ int main()
    
    floatT twosqrt2log2 = static_cast<floatT>(2.0) * sqrt(static_cast<floatT>(2.0)*log(static_cast<floatT>(2.0))); 
    
-   for(int i=0;i<5;++i)
+   std::cout << "              "; //label buffer
+   for(int i=0;i<10;++i) //print digit scale
    {
       std::cout << i;
       for(int j=0;j<9;++j) std::cout << ' ';
    }
-   std::cout << "5\n";
+   std::cout << "1\n";
    
-   std::cout << tan_arcsec << "\n";
-   std::cout << twosqrt2log2 << "\n";
+   std::cout << "tan_arcsec:   " << tan_arcsec << "\n";
+   std::cout << "twosqrt2log2: " <<twosqrt2log2 << "\n";
+   std::cout << "ln_two:       " << ln_two<floatT>() << "\n";
 }

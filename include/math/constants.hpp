@@ -38,9 +38,13 @@ namespace mx
 {
 namespace math
 {
-   
+//                             0         1         2         3         4         5         6         7         8         9         1
+#define MX_INTERNAL_PI_100    (3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679)
+#define MX_INTERNAL_ROOT2_100 (1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727)
+#define MX_INTERNAL_LN2_100   (0.6931471805599453094172321214581765680755001343602552541206800094933936219696947156058633269964186875)
+
 /// Get the value of pi
-/** Wrapper for boost constant.  Specializations provided for float, double, and long double.
+/** Specializations provided for float, double, long double, and quad if supported. Can default to boost for other types if MX_INCLUDE_BOOST is defined.
   *
   * \ingroup genconstants 
   */ 
@@ -55,9 +59,6 @@ constexpr T pi()
 #endif
 }
 
-#define MX_INTERNAL_PI_100 (3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679)
-#define MX_INTERNAL_ROOT2_100 (1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727)
-
 template<>
 constexpr float pi<float>()
 {
@@ -69,7 +70,6 @@ constexpr double pi<double>()
 {
    return static_cast<double>(MX_INTERNAL_PI_100);
 }
-
 
 template<>
 constexpr long double pi<long double>()
@@ -86,7 +86,7 @@ constexpr __float128 pi<__float128>()
 #endif
 
 /// Get the value of 2pi
-/** Specializations provided for float, double, and long double.
+/** Specializations provided for float, double, long double, and quad (if supported). Can default to boost for other types if MX_INCLUDE_BOOST is defined.
   *
   * \ingroup genconstants 
   */ 
@@ -128,7 +128,7 @@ constexpr __float128 two_pi<__float128>()
 #endif
 
 /// Get the value of pi/2
-/** Wrapper for boost constant. Specializations provided for float, double, and long double.
+/** Specializations provided for float, double, long double, and quad (if supported).  Can default to boost for other types if MX_INCLUDE_BOOST is defined.
   *
   * \ingroup genconstants 
   */ 
@@ -161,8 +161,16 @@ constexpr long double half_pi<long double>()
    return static_cast<long double>(MX_INTERNAL_PI_100)/static_cast<long double>(2);
 }
 
+#ifdef HASQUAD
+template<>
+constexpr __float128 half_pi<__float128>()
+{
+   return static_cast<__float128>(MX_INTERNAL_PI_100)/static_cast<__float128>(2);;
+}
+#endif
+
 /// Get the value of 180/pi
-/** Wrapper for boost constant.  Specializations provided for float, double, and long double.
+/** Specializations provided for float, double, long double, and quad (if supported). Can default to boost for other types if MX_INCLUDE_BOOST is defined.
   *
   * \ingroup genconstants 
   */ 
@@ -195,8 +203,16 @@ constexpr long double rad2deg<long double>()
    return static_cast<long double>(180)/static_cast<long double>(MX_INTERNAL_PI_100);
 }
 
+#ifdef HASQUAD
+template<>
+constexpr __float128 rad2deg<__float128>()
+{
+   return static_cast<__float128>(180)/static_cast<__float128>(MX_INTERNAL_PI_100);
+}
+#endif
+
 /// Get the value of sqrt(2)
-/** Wrapper for boost constant. Specializations provided for float, double, and long double.
+/** Specializations provided for float, double, long double, and quad (if supported).  Can default to boost for other types if MX_INCLUDE_BOOST is defined.
   *
   * \ingroup genconstants 
   */ 
@@ -210,8 +226,6 @@ constexpr T root_two()
    return 0;
 #endif
 }
-
-#define MX_INTERNAL_ROOT2_100 (1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727)
 
 template<>
 constexpr float root_two<float>()
@@ -230,6 +244,58 @@ constexpr long double root_two<long double>()
 {
    return static_cast<long double>(MX_INTERNAL_ROOT2_100);
 }
+
+#ifdef HASQUAD
+template<>
+constexpr __float128 root_two<__float128>()
+{
+   return static_cast<__float128>(MX_INTERNAL_ROOT2_100);
+}
+#endif
+
+
+/// Get the value of ln(2)
+/** Specializations provided for float, double, long double, and quad (if supported).  Can default to boost for other types if MX_INCLUDE_BOOST is defined.
+  *
+  * \ingroup genconstants 
+  */ 
+template<typename T>
+constexpr T ln_two() 
+{
+#ifdef MX_INCLUDE_BOOST
+   return boost::math::constants::ln_two<T>();
+#else
+   static_assert(std::is_fundamental<T>::value || !std::is_fundamental<T>::value, "ln_two<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
+   return 0;
+#endif
+}
+
+template<>
+constexpr float ln_two<float>()
+{
+   return static_cast<float>(MX_INTERNAL_LN2_100);
+}
+
+template<>
+constexpr double ln_two<double>()
+{
+   return static_cast<double>(MX_INTERNAL_LN2_100);
+}
+
+template<>
+constexpr long double ln_two<long double>()
+{
+   return static_cast<long double>(MX_INTERNAL_LN2_100);
+}
+
+#ifdef HASQUAD
+template<>
+constexpr __float128 ln_two<__float128>()
+{
+   return static_cast<__float128>(MX_INTERNAL_LN2_100);
+}
+#endif
+
 
 /// Get the value of 1/3
 /** Wrapper for boost constant.  Specializations provided for float, double, and long double.
