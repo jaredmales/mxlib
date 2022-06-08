@@ -61,6 +61,8 @@ iosT & dumpGitStatus( iosT & ios /**< [in] a std::ostream-like stream. */)
    ios << c << "mxlib git SHA1: " << mxlib_comp_current_sha1() << "\n";
    ios << c << "mxlib git modified flag: " << std::boolalpha << (bool) mxlib_comp_repo_modified() << "\n";
    ios << c << "--------------------------------------------\n";
+
+   return ios;
 }
 
 }//namespace mx
