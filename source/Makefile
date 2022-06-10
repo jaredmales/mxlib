@@ -79,8 +79,8 @@ app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
 improc/HCIobservation.o: ../include/improc/HCIobservation.hpp ../include/improc/imageFilters.hpp
-improc/ADIObservation.o: ../include/improc/ADIobservation.hpp  improc/HCIobservation.o ../include/math/gslInterpolation.hpp
-improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/ADIObservation.o
+improc/ADIobservation.o: ../include/improc/ADIobservation.hpp  improc/HCIobservation.o ../include/math/gslInterpolation.hpp
+improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/ADIobservation.o
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp
@@ -89,6 +89,7 @@ ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
+math/fit/fitGaussian.o: ../include/math/fit/fitGaussian.hpp ../include/math/fit/array2FitGaussian1D.hpp
 math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp ../include/math/fft/fftwTemplates.hpp
 math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
