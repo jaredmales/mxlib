@@ -2723,11 +2723,12 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    
    if(m_d_min.size() > 0)
    {
-      ios << "#    d_min = " << d_min((size_t) 0) << '\n';
+      ios << "#    d_min = " << d_min((size_t) 0);
       for(size_t n=1; n < m_d_min.size(); ++n) ios << ',' << d_min(n);
       ios << '\n';
    }
-   
+   else ios << "#    d_min = null\n";
+
    ios << "#    optd = " << std::boolalpha << m_optd << '\n';
    ios << "#    d_opt_delta = " << optd_delta() << '\n';
    ios << "#    lam_sci = " << lam_sci() << '\n';
@@ -2743,13 +2744,15 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
       for(size_t n=1; n < npix_wfs().size(); ++n) ios << ',' << npix_wfs(n);
       ios << '\n';
    }
-   
+   else ios << "#    npix_wfs = null\n";
+
    if(ron_wfs().size() > 0)
    {
       ios << "#    ron_wfs = " << ron_wfs((size_t) 0);
       for(size_t n=1; n < ron_wfs().size(); ++n) ios << ',' << ron_wfs(n);
       ios << '\n';
    }
+   else ios << "#    ron_wfs = null\n";
 
    if(Fbg().size() > 0)
    {
@@ -2757,6 +2760,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
       for(size_t n=1; n < Fbg().size(); ++n) ios << ',' << Fbg(n);
       ios << '\n';
    }
+   else ios << "#    Fbg = null\n";
 
    if(minTauWFS().size() > 0)
    {
@@ -2764,12 +2768,8 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
       for(size_t n=1; n < minTauWFS().size(); ++n) ios << ',' << minTauWFS(n);
       ios << '\n';
    }
+   else ios << "#    minTauWFS = null\n";
 
-/*   ios << "#    npix_wfs = " << npix_wfs() << '\n';
-   ios << "#    ron_wfs = " << ron_wfs() << '\n';
-   ios << "#    Fbg = " << Fbg() << '\n';
-   ios << "#    minTauWFS = " << minTauWFS() << '\n';
-   */
    ios << "#    bin_npix = " << std::boolalpha << m_bin_npix << '\n';
    ios << "#    tauWFS = " << tauWFS() << '\n';
    ios << "#    optTau = " << std::boolalpha << m_optTau << '\n';
@@ -2786,16 +2786,7 @@ iosT & aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT & ios)
    psd.dumpPSD(ios);
    atm.dumpAtmosphere(ios);
    
-   ios << "# Software version: " << '\n';
-   ios << "#    mxlib header branch = " << MXLIB_UNCOMP_BRANCH << '\n'; 
-   ios << "#    mxlib header sha1 = " << MXLIB_UNCOMP_CURRENT_SHA1;
-   if(MXLIB_UNCOMP_REPO_MODIFIED) ios << " (modified)";
-   ios << '\n';
-      
-   ios << "#    mxlib lib branch = " << mxlib_comp_current_branch() << '\n'; 
-   ios << "#    mxlib lib sha1 = " << mxlib_comp_current_sha1();
-   if(mxlib_comp_repo_modified()) ios << " (modified)";
-   ios << '\n';
+   dumpGitStatus(ios);
 
    return ios;
 }

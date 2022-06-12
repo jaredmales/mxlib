@@ -217,9 +217,9 @@ vonKarmanSpectrum<realT>::vonKarmanSpectrum()
 
 template< typename realT>
 vonKarmanSpectrum<realT>::vonKarmanSpectrum( bool subP, // [in] is the value of m_subPiston.
-                   bool subT, // [in] is the value of m_subTipTilt.
-                   realT D // [in] is the value of m_D.
-                 )
+                                             bool subT, // [in] is the value of m_subTipTilt.
+                                             realT D    // [in] is the diameter
+                                           )
 {
    m_subPiston = subP;
    m_subTipTilt = subT;
