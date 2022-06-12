@@ -39,6 +39,199 @@ namespace math
 namespace fit
 {
 
+///Wrapper for a native array to pass to \ref levmarInterface, with Moffat details.
+/** \ingroup moffat_peak_fit
+  */
+template<typename realT>
+struct array2FitMoffat1D
+{
+   realT * data {nullptr}; ///< Pointer to the array of y values
+   realT * coords {nullptr}; ///< Pointer to the array of x values (optional)
+   size_t nx {0}; ///< X dimension of the array
+   
+   realT m_I0 {0};
+   realT m_I {0};
+   realT m_x0 {0};
+   realT m_alpha {0};
+   realT m_beta {0};
+   
+   int m_I0_idx {0};
+   int m_I_idx {1};
+   int m_x0_idx {2};
+   int m_alpha_idx {4};
+   int m_beta_idx {5};
+   
+   int m_nparams = 5;
+   
+   /// Set whether each parameter is fixed.
+   /** Sets the parameter indices appropriately.
+     */
+   void setFixed( bool I0, 
+                  bool I, 
+                  bool x0, 
+                  bool alpha, 
+                  bool beta 
+                )
+   {
+      int idx = 0;
+      
+      if(I0) m_I0_idx = -1;
+      else m_I0_idx = idx++;
+      
+      if(I) m_I_idx = -1;
+      else m_I_idx = idx++;
+   
+      if(x0) m_x0_idx = -1;
+      else m_x0_idx = idx++;
+      
+      if(alpha) m_alpha_idx = -1;
+      else m_alpha_idx = idx++;
+      
+      if(beta) m_beta_idx = -1;
+      else m_beta_idx = idx++;
+      
+      m_nparams = idx;
+   }
+   
+   realT I0( realT * p )
+   {
+      if( m_I0_idx < 0 )
+      {
+         return m_I0;
+      }
+      else
+      {
+         return p[m_I0_idx];
+      }
+   }
+   
+   void I0( realT * p,
+            realT nI0
+           )
+   {
+      if( m_I0_idx < 0 )
+      {
+         m_I0 = nI0;
+      }
+      else
+      {
+         p[m_I0_idx]=nI0;
+      }
+   }
+   
+   realT I( realT * p )
+   {
+      if( m_I_idx < 0 )
+      {
+         return m_I;
+      }
+      else
+      {
+         return p[m_I_idx];
+      }
+   }
+   
+   void I( realT * p,
+           realT nI
+         )
+   {
+      if( m_I_idx < 0 )
+      {
+         m_I = nI;
+      }
+      else
+      {
+         p[m_I_idx] = nI;
+      }
+   }
+   
+   realT x0( realT * p )
+   {
+      if( m_x0_idx < 0 )
+      {
+         return m_x0;
+      }
+      else
+      {
+         return p[m_x0_idx];
+      }
+   }
+   
+   void x0( realT * p,
+            realT nx0
+          )
+   {
+      if( m_x0_idx < 0 )
+      {
+         m_x0 = nx0;
+      }
+      else
+      {
+         p[m_x0_idx] = nx0;
+      }
+   }
+   
+   realT alpha( realT * p )
+   {
+      if( m_alpha_idx < 0 )
+      {
+         return m_alpha;
+      }
+      else
+      {
+         return p[m_alpha_idx];
+      }
+   }
+   
+   void alpha( realT * p,
+               realT nalpha
+             )
+   {
+      if( m_alpha_idx < 0 )
+      {
+         m_alpha = nalpha;
+      }
+      else
+      {
+         p[m_alpha_idx] = nalpha;
+      }
+   }
+   
+   
+   realT beta( realT * p )
+   {
+      if( m_beta_idx < 0 )
+      {
+         return m_beta;
+      }
+      else
+      {
+         return p[m_beta_idx];
+      }
+   }
+   
+   void beta( realT * p,
+              realT nbeta
+            )
+   {
+      if( m_beta_idx < 0 )
+      {
+         m_beta = nbeta;
+      }
+      else
+      {
+         p[m_beta_idx] = nbeta;
+      }
+   }
+   
+   int nparams()
+   {
+      return m_nparams;
+   }
+   
+   
+};
+
 /** \defgroup moffat_peak_fit Moffat Functions
   * \brief Fitting Moffat functions to data.
   * 
@@ -54,6 +247,199 @@ namespace fit
   *
   * \ingroup peak_fit 
   */
+
+///\ref levmarInterface fitter structure for the 1D Moffat.
+/** \ingroup moffat_peak_fit
+  *
+  */
+template<typename _realT>
+struct moffat1D_fitter
+{
+   typedef _realT realT;
+   
+   static const int nparams = 6;
+   
+   static void func(realT *p, realT *hx, int m, int n, void *adata)
+   {
+      array2FitMoffat1D<realT> * arr = (array2FitMoffat1D<realT> *) adata;
+   
+      size_t idx_mat, idx_dat;
+
+      idx_dat = 0;
+   
+      realT I0 = arr->I0(p);
+      realT I = arr->I(p);
+      realT x0 = arr->x0(p);
+      realT alpha = arr->alpha(p);
+      realT beta = arr->beta(p);
+      
+      if(arr->coords)
+      {
+         for(int i=0; i<arr->nx; ++i)
+         {   
+            hx[i] = func::moffat<realT>(arr->coords[i],I0,I, x0, alpha, beta) - arr->data[i];
+         }
+      }
+      else
+      {
+         for(int i=0; i<arr->nx; ++i)
+         {   
+            hx[i] = func::moffat<realT>(i,I0,I, x0, alpha, beta) - arr->data[i];
+         }
+      }
+   }   
+};
+
+///Class to manage fitting a 1D Moffat to data via the \ref levmarInterface
+/** Fits \ref gen_math_moffats to a 1-dimensional array of data.
+  *
+  * This class allows for treating any of the parameters as fixed.
+  * 
+  * \tparam fitterT a type meeting the requirements specified in \ref levmarInterface.
+  *
+  * \ingroup moffat_peak_fit
+  *
+  */
+template<typename _realT>
+class fitMoffat1D : public levmarInterface<moffat1D_fitter<_realT>>
+{
+   
+public:
+   
+   typedef _realT realT;
+   typedef moffat1D_fitter<realT> fitterT;
+
+protected:
+   
+   array2FitMoffat1D<realT> arr;
+   
+   void initialize()
+   {
+      this->allocate_params(arr.nparams());
+      this->adata = &arr;      
+   }
+
+public:
+   
+   fitMoffat1D()
+   {
+      initialize();
+   }
+      
+   ~fitMoffat1D()
+   {
+   }
+   
+   /// Set whether each parameter is fixed.
+   /** Sets the parameter indices appropriately.
+     */
+   void setFixed( bool I0,    ///< [in] if true, then I0 will be not be part of the fit
+                  bool I,     ///< [in] if true, then I will be not be part of the fit
+                  bool x0,    ///< [in] if true, then x0 will be not be part of the fit
+                  bool alpha, ///< [in] if true, then alpha will be not be part of the fit
+                  bool beta   ///< [in] if true, then beta will be not be part of the fit
+                )
+   {
+      arr.setFixed(I0, I, x0, alpha, beta);
+      this->allocate_params(arr.nparams());
+   }
+   
+   ///Set the initial guess for a symmetric Moffat.
+   void setGuess( realT I0,    ///< [in] the constant background level
+                  realT I,     ///< [in] the peak scaling
+                  realT x0,    ///< [in] the center x-coordinate
+                  realT alpha, ///< [in] the width parameter
+                  realT beta   ///< [in] the shape parameter
+                )
+   {
+      arr.I0(this->p,I0);
+      arr.I(this->p,I);
+      arr.x0(this->p,x0);
+      arr.alpha(this->p,alpha);
+      arr.beta(this->p,beta);
+   }
+   
+   ///Set the data aray.
+   void setArray( realT *data, ///< [in] pointer to an nx sized array of the y-values to be fit
+                  int nx       ///< [in] the number of pixels in the x direction of the data array
+                )
+   {
+      arr.data = data;
+      arr.nx = nx;
+      
+      this->n = nx;
+      
+   }
+   
+   ///Set the data aray and the coordinates.
+   void setArray( realT *data,    ///< [in] pointer to an nx sized array of the y-values to be fit
+                  realT * coords, ///< [in] point to an nx sized array of the x-values of the data
+                  int nx          ///< [in] the number of pixels in the x direction of the data array
+                )
+   {
+      arr.data = data;
+      arr.coords = coords;
+      arr.nx = nx;
+      
+      this->n = nx;
+      
+   }
+
+   ///Get the current value of I0, the constant.
+   /**
+     * \returns the current value of I0
+     */ 
+   realT I0()
+   {
+      return arr.I0( this->p );
+   }
+
+   ///Get the current value of I, the peak scaling.
+   /**
+     * \returns the current value of I
+     */
+   realT I()
+   {
+      return arr.I( this->p );
+   }
+
+   ///Get the center x-
+   /**
+     * \returns the current value of x0
+     */ 
+   realT x0()
+   {
+      return arr.x0( this->p );
+   }
+   
+   ///Return the width parameter
+   /**
+     * \returns the current value of alpha
+     */ 
+   realT alpha()
+   {
+      return arr.alpha( this->p );
+   }
+   
+   /// Return the shape parameter
+   /**
+     * \returns the current value of beta
+     */ 
+   realT beta()
+   {
+      return arr.beta( this->p );
+   }
+   
+   ///Return the full-width at half maximum
+   /**
+     * \returns the FWHM calculated from alpha and beta
+     */ 
+   realT fwhm()
+   {
+      return func::moffatFWHM(alpha(), beta());
+   }   
+};
+
 
 //forward
 template<typename realT>

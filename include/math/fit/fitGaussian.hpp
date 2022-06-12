@@ -27,6 +27,7 @@
 #ifndef fitGaussian_hpp
 #define fitGaussian_hpp
 
+#include "array2FitGaussian1D.hpp"
 #include "array2FitGaussian2D.hpp"
 
 #include "../../mxError.hpp"
@@ -69,13 +70,49 @@ struct gaussian1D_fitter
    
    static void func(realT *p, realT *hx, int m, int n, void *adata)
    {
-      array2Fit<realT> * arr = (array2Fit<realT> *) adata;
+      array2FitGaussian1D<realT> * arr = (array2FitGaussian1D<realT> *) adata;
    
-      for(size_t i=0;i<arr->nx; i++)
-      {
-         hx[i] = func::gaussian<realT>(i,p[0],p[1], p[2], p[3]) - arr->data[i];
-      }
+      realT G0 = arr->G0(p);
+      realT G = arr->G(p);
+      realT x0 = arr->x0(p);
+      realT sigma = arr->sigma(p);
       
+      if(arr->m_mask)
+      {
+         if(arr->m_coords)
+         {
+            for(int i=0; i<arr->m_nx; ++i)
+            {   
+               if(arr->m_mask[i] == 0) continue;
+               hx[i] = func::gaussian<realT>(arr->m_coords[i], G0, G, x0, sigma) - arr->m_data[i];
+            }
+         }
+         else
+         {
+            for(int i=0; i<arr->m_nx; ++i)
+            {   
+               if(arr->m_mask[i] == 0) continue;
+               hx[i] = func::gaussian<realT>(i, G0, G, x0, sigma) - arr->m_data[i];
+            }
+         }  
+      }
+      else
+      {
+         if(arr->m_coords)
+         {
+            for(int i=0; i<arr->m_nx; ++i)
+            {   
+               hx[i] = func::gaussian<realT>(arr->m_coords[i], G0, G, x0, sigma) - arr->m_data[i];
+            }
+         }
+         else
+         {
+            for(int i=0; i<arr->m_nx; ++i)
+            {   
+               hx[i] = func::gaussian<realT>(i, G0, G, x0, sigma) - arr->m_data[i];
+            }
+         }  
+      }    
    }
    
 };
@@ -85,10 +122,15 @@ extern template struct gaussian1D_fitter<double>;
 
 
 ///Class to manage fitting a 1D Gaussian to data via the \ref levmarInterface
-/** In addition to the requirements on fitterT specified by \ref levmarInterface
-  * this class also requires the following in fitterT
+/** Fits the following function to the data:
+  * \f$ G(x) = G_0 + G\exp[-(0.5/\sigma^2)((x-x_0)^2)]\f$
+  * 
+  * Can use a vector of x-coordinates, or use the array index as the position corresponding to each y-value.
+  * A mask can be provided, where any 0 entries cause that position to be ignored.
+  * 
+  * Any of the parameters can be fixed, and not included in the fit.
+  * 
   * \code
-  * static const int nparams = 4; 
   * 
   * \endcode
   * 
@@ -104,43 +146,58 @@ class fitGaussian1D : public levmarInterface<gaussian1D_fitter<_realT>> //fitter
 {
    
 public:
-   
-   typedef gaussian1D_fitter<_realT> fitterT;
-   
-   typedef typename fitterT::realT realT;
 
-   static const int nparams = fitterT::nparams;
-
-   array2Fit<realT> arr;
+   typedef _realT realT;
+   typedef gaussian1D_fitter<realT> fitterT;
    
+
+protected:
+
+   array2FitGaussian1D<realT> arr;
+
    void initialize()
    {
-      this->allocate_params(nparams);
+      this->allocate_params(arr.nparams());
       this->adata = &arr;      
    }
+
+public:
    
    fitGaussian1D()
    {
-      initialize();
+      this->initialize();
    }
       
    ~fitGaussian1D()
    {
    }
    
+   /// Set whether each parameter is fixed.
+   /** Sets the parameter indices appropriately.
+     */
+   void setFixed( bool G0,    ///< [in] if true, then G0 will be not be part of the fit
+                  bool G,     ///< [in] if true, then G will be not be part of the fit
+                  bool x0,    ///< [in] if true, then x0 will be not be part of the fit
+                  bool sigma  ///< [in] if true, then sigma will be not be part of the fit
+                )
+   {
+      arr.setFixed(G0, G, x0, sigma);
+      this->allocate_params(arr.nparams());
+   }
+
    ///Set the initial guess for a symmetric Gaussian.
    /** Also works for the general case, setting the same width in both directions.
      */
    void setGuess( realT G0,    ///< [in] the constant background level
-                  realT A,     ///< [in] the peak scaling
+                  realT G,     ///< [in] the peak scaling
                   realT x0,     ///< [in] the center x-coordinate
                   realT sigma   ///< [in] the width parameter
                 )
    {
-      this->p[0] = G0;
-      this->p[1] = A;
-      this->p[2] = x0;
-      this->p[3] = sigma;
+      arr.G0(this->p,G0);
+      arr.G(this->p,G);
+      arr.x0(this->p,x0);
+      arr.sigma(this->p,sigma);
    }
    
    ///Set the data aray.
@@ -148,13 +205,25 @@ public:
                   int nx
                 )
    {
-      arr.data = data;
-      arr.nx = nx;
-      arr.ny = 1;
+      arr.m_data = data;
+      arr.m_nx = nx;
       
       this->n = nx;
    }
    
+   ///Set the data aray.
+   void setArray( realT *data, 
+                  realT *coords,
+                  int nx
+                )
+   {
+      arr.m_data = data;
+      arr.m_coords = coords;
+      arr.m_nx = nx;
+      
+      this->n = nx;
+   }
+
    ///Do the fit.
    int fit()
    {
@@ -169,29 +238,27 @@ public:
      */ 
    realT G0()
    {
-      return this->p[0];
+      return arr.G0( this->p );
    }
 
    ///Get the peak scaling.
-   realT A()
+   realT G()
    {
-      return this->p[1];
+      return arr.G( this->p );
    }
 
    ///Get the center x-coordinate
    realT x0()
    {
-      return this->p[2];
+      return arr.x0( this->p );
    }
       
-   ///Return the width parameter
-   /** As described for the symmetric Gaussian.
-     *
-     * For the general Gaussian, this returns \f$ \sigma = \sqrt{ \sigma_x^2 + \sigma_y^2} \f$.
+   ///Return sigma
+   /**
      */ 
    realT sigma()
    {
-      return this->p[3];
+      return arr.sigma( this->p );
    }
       
 };
