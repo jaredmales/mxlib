@@ -165,7 +165,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
          config.readConfig("aoAtmosphere.conf");
          atm.loadConfig(config);
 
-         REQUIRE(atm.alpha() == Approx(0.026));
+         REQUIRE(atm.beta() == Approx(0.026));
          REQUIRE(atm.nonKolmogorov() == true);
       }
 

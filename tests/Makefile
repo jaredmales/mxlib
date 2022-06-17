@@ -7,6 +7,7 @@ INCLUDES += -I../include
 OBJS = testsMain.o \
        include/ao/analysis/aoAtmosphere_test.o \
 		 include/ao/analysis/aoSystem_test.o \
+       include/ao/analysis/aoPSDs_test.o \
        include/astro/astroDynamics_test.o \
        include/ioutils/fileUtils_test.o \
 		 include/ioutils/fits/fitsHeaderCard_test.o \

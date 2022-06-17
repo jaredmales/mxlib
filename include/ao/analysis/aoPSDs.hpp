@@ -54,6 +54,8 @@ namespace PSDComponent
         };
         
    std::string compName( int cc );
+
+   int compNum( const std::string & name);
 }
    
 ///Manage calculations using the von Karman spatial power spectrum.
@@ -158,18 +160,7 @@ public:
    /**
      */
    void D(realT nd /**< [in] the new diameter in m */);
-   
-   ///Get the value of the PSD index alpha.
-   /**
-     * \returns the current value of m_alpha, the PSD index.
-     */
-  // realT alpha();
-   
-   ///Set the PSD index alpha
-   /**
-     */
-   void alpha(realT na /**< [in] the new PSD index*/ );
-   
+      
    ///Get the value of the PSD at spatial frequency k and a zenith distance.
    /**
      * \returns the von Karman PSD at the specified spatial frequency.
@@ -207,6 +198,18 @@ public:
 
    template<typename iosT>
    iosT & dumpPSD(iosT & ios);
+
+   /// Setup the configurator to configure this class
+   /**
+     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]" 
+     */
+   void setupConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+
+   /// Load the configuration of this class from a configurator
+   /**
+     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+     */
+   void loadConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
 
 };
 
@@ -415,6 +418,34 @@ iosT & vonKarmanSpectrum<realT>::dumpPSD(iosT & ios)
    return ios;
 }
    
+template<typename realT>
+void vonKarmanSpectrum<realT>::setupConfig( app::appConfigurator & config )
+{
+   using namespace mx::app;
+
+   config.add("psd.D"            , "", "psd.D"            , argType::Required, "psd", "D",             false, "real"        , "Aperture diameter.  Used for piston and tip/tilt subtraction.");
+   config.add("psd.subPiston"    , "", "psd.subPiston"    , argType::Required, "psd", "subPiston",     false, "real"        , "");
+   config.add("psd.subTipTilt"   , "", "psd.subTipTilt"   , argType::Required, "psd", "subTipTilt",    false, "real"        , "");
+   config.add("psd.scintillation", "", "psd.scintillation", argType::Required, "psd", "scintillation", false, "real"        , "");
+   config.add("psd.component"    , "", "psd.component"    , argType::Required, "psd", "component",     false, "real"        , "");
+}
+
+template<typename realT>
+void vonKarmanSpectrum<realT>::loadConfig( app::appConfigurator & config )
+{
+   //Here "has side effecs" means that the set function does more than simply copy the value.
+   
+   config(m_D, "psd.D");
+   config(m_subPiston, "psd.subPiston");
+   config(m_subTipTilt, "psd.subTipTilt");
+   config(m_scintillation, "psd.scintillation");
+   
+   std::string cn = PSDComponent::compName(m_component);
+   config(cn, "psd.component");
+   component(PSDComponent::compNum(cn));
+}
+
+
 extern template
 struct vonKarmanSpectrum<float>;
 

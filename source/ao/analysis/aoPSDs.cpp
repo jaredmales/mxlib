@@ -46,6 +46,16 @@ std::string compName( int cc )
    return "unknown";
 }
 
+int compNum( const std::string & name )
+{
+  if( name == "phase") return phase;
+  else if( name == "amplitude" ) return amplitude;
+  else if( name == "dispPhase" ) return dispPhase;
+  else if( name == "dispAmplitude" ) return dispAmplitude;
+
+  return -1;
+}
+
 }
 
 template

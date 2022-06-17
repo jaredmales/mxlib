@@ -1293,7 +1293,7 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
 
    realT b = m_beta;
    config(b, "atm.beta");
-   if(config.isSet("atm.beta")) alpha(b); //this sets m_nonKolmogorov
+   if(config.isSet("atm.beta")) beta(b); //this sets m_nonKolmogorov
 
 }
 
