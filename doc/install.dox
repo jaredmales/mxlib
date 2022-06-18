@@ -3,7 +3,9 @@
 
 \section install_intro Introduction
 
-These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems (running CentOS or Ubuntu). Installation on Mac O/S seems to be broken based on recent reports, but please let me know if you have success.
+These are instructions for installing the "mxlib" c/c++ library.  This is my personal library which I have built up over many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different linux systems (running CentOS or Ubuntu). Installation on Mac O/S is also possible using Conda.
+
+The below instructions were updated in June 2022 after a fresh install on Ubuntu 22.04.
 
 \section install_depends Basic Dependencies
 This is the list of the other libraries and code-bases mxlib depends on.  I usually install these from scratch to ensure maximum optimization (though I have little to no quantitative evidence that it matters), but you can probably manage most of these from the O/S package manager.  You will need to make sure to install the `dev` packages.
@@ -23,7 +25,8 @@ Alternatively, see the next section for quickstart instructions using the conda 
 
 -# You need the  <a href="https://www.gnu.org/software/gsl/">GNU Scientific Library (GSL)</a> (this is probably obtainable from the linux distro package manager, but I recommend building yourself)
 
--# You need the boost c++ library (this is probably obtainable from the linux distro package manager, fine to install with apt or yum)
+-# You need the boost c++ library (this is probably obtainable from the linux distro package manager, fine to install with apt or yum).
+  - On Ubuntu you can install `libboost-all-dev`.
 
 -# You need the <a href="http://heasarc.gsfc.nasa.gov/fitsio/"> cfitsio </a> FITS library. 
 
@@ -31,14 +34,10 @@ Alternatively, see the next section for quickstart instructions using the conda 
   - MKL: the intel Math Kernel Library (MKL) is probably the highest performance option for Intel CPUs.  It is free (as-in-beer) and straightforward to install. See my notes on \ref mkl "installing MKL".  
   - ATLAS: Another option is ATLAS, see my notes on \ref atlas "installing ATLAS". ATLAS has been successfully used on a recent AMD machine by Jacob Trzaska at UA. 
   
--# You need \ref fftw "the FFTW library, with at least version 3.3.5". 
-  \note In principle the MKL fftw interface could be used, but this does not yet (Aug 2017) have the "make_planner_thread_safe" routines and only works in float and double.  
+-# You need \ref fftw "the FFTW library, with at least version 3.3.5".  (In principle the MKL fftw interface could be used, but this does not yet (Aug 2017) have the "make_planner_thread_safe" routines and only works in float and double.)  
   
--# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.3.4.
-  - I normally unpack the Eigen directory in `/usr/local/include`, but you could also use `$HOME/include` or anywhere else.
-  - You must create a symbolic link , such as `/usr/include/Eigen --> /path/to/eigen-eigen-xxyyzz/Eigen`.  The command for this would be
-    \verbatim $ ln -s /path/to/eigen-eigen-xxyyzz/Eigen /usr/local/include/Eigen \endverbatim
-    This symbolic link should be placed in any location known to your compiler.
+-# You need the Eigen matrix library (http://eigen.tuxfamily.org/index.php). I am currently on 3.4.0 for mxxlib::dev.
+  - It is best to use cmake to configure Eigen and install it. This will ensure that the package config is updated.
 
 The relevant header files for each library need to be accessible to the compiler, either in a standard location or in one you specify when compiling your programs.
 
@@ -83,9 +82,9 @@ Mxlib includes a systems to track its git version, using the SHA1 hash.  This, i
   - If you want to change the install path from `$HOME` to something else, set `PREFIX=` in `local/Common.mk`.
   - `USE_BLAS_FROM` can be set to `mkl`, `ATLAS`, or `Accelerate` (macOS only). You may also need to override `BLAS_INCLUDES`, `BLAS_LDFLAGS`, and/or `BLAS_LDLIBS` to set paths and flags. (See `mk/MxApp.mk` for examples.)
 
--# Build `mxlib` by running `make` at the top level.  This will require `sudo` privileges to install `libsofa`.  
+-# Build `mxlib` by running `make` at the top level.  
 
--# Install `mxlib` with `make install`.  `sudo` may be required depending on the `PREFIX`.
+-# Install `mxlib` with `make install`.  `sudo` may be required depending on the `PREFIX`.  Possibly `sudo -E`.
 
 
 

@@ -1,5 +1,5 @@
-/**
-  * \addtogroup fftw
+/** \addtogroup fftw
+  * @{
 
 The FFTW library is probably available from your software/package manager, however I recommend building it yourself to ensure it is fullly optimized for your system, and that you have all of the precisions available.
 
@@ -42,13 +42,16 @@ Folow these steps to build the FFTW library.
 
 \section fftw_env_setup FFTW Environment
 
-mxlib will manage the FFTW environment for you, which really means importing and exporting wisdom and cleaning up memory.  This can be done in a simple way using \ref fftwEnvironment.  To make the best use of this, create a directory to store FFTW wisdom.  I typically use
-\verbatim $(HOME)/.fftw \endverbatim
+mxlib will manage the FFTW environment for you, which really means importing and exporting wisdom and cleaning up memory.  This can be done in a simple way using \ref mx::math::fft::fftwEnvironment.  To make the best use of this, create a directory to store FFTW wisdom.  I typically use
+\verbatim $(HOME)/.fftw 
+\endverbatim
 
 Then add the environment variable to you bash profile (i.e. in .bash_profile or .bash_aliases) as so
 \verbatim
 export MXFFTW_WISDOM=/path/to/.fftw
 \endverbatim
 
-Using this facility requires only that you create an object of type \ref mx::fftwEnvironment at the beginning of the program for the real floating point type you are using.  See the documentation for \ref mx::fftwEnvironment for details.
+Using this facility requires only that you create an object of type \ref mx::math::fft::fftwEnvironment at the beginning of the program for the real floating point type you are using.  See the documentation for \ref mx::math::fft::fftwEnvironment for details.
+
+@}
  */

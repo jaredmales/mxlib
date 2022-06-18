@@ -1,47 +1,47 @@
 //-------- the top level groups
 /** \defgroup installation Installation
-  * \brief Installation of mxlib
+  *
   */
 
   
 /** \defgroup error_handling Error Handling
-  * \brief How mxlib handles errors
+  * How mxlib handles errors
   */
 
 /** \defgroup gen_math General Mathematics
-  * \brief General mathematical utilities.
+  * General mathematical utilities.
   */
   
 /** \defgroup signal_processing Signal Processing
-  * \brief Tools for processing signals
+  * Tools for processing signals
   */
 
 /** \defgroup image_processing Image Processing
-  * \brief Tools for processing images
+  * Tools for processing images
   */
   
 /** \defgroup imaging Wavefront Propagation
-  * \brief Tools for modeling wavefront propagation
+  * Tools for modeling wavefront propagation
   */
   
 /** \defgroup genastro Astronomy
-  * \brief Tools for working with the heavens.
+  * Tools for working with the heavens.
   */
 
 /** \defgroup utils General Utilities
-  * \brief Various miscellaneous utilities
+  * Various miscellaneous utilities
   */
 
   
 //------------------ error_handling -----------------------
   
 /** \defgroup error_macros Error Handling Macros
-  * \brief Macros controlling how mxlib reports errors
+  * Macros controlling how mxlib reports errors
   * \ingroup error_handling
   */
 
 /** \defgroup exceptions Exceptions
-  * \brief Exceptions with detailed information
+  * Exceptions with detailed information
   * \ingroup error_handling
   */
 
@@ -51,7 +51,7 @@
 
   
 /** \defgroup constants Constants and units
-  * \brief Pre-defined constants and unit conversions
+  * Pre-defined constants and unit conversions
   * \ingroup gen_math
 */
 //* \ingroup genastro
@@ -60,67 +60,67 @@
 //  */
 
 /** \defgroup geo Geometry and Geodesy
-  * \brief Functions for basic geometry and working with earth coordinate systems
+  * Functions for basic geometry and working with earth coordinate systems
   * \ingroup gen_math
   */
 
 /** \defgroup functions Special Functions
-  * \brief Various special functions.
+  * Various special functions.
   * \ingroup gen_math
   */
 
 /** \defgroup gen_math_gaussians The Gaussian Function
-  * \brief Utilities for working with the Gaussian function
+  * Utilities for working with the Gaussian function
   * \ingroup functions
   */
 
 /** \defgroup gen_math_moffats The Moffat Function
-  * \brief Utilities for working with the Moffat function
+  * Utilities for working with the Moffat function
   * \ingroup functions
   */
   
 /** \defgroup gen_math_airy_pattern The Airy Pattern
-  * \brief Utilities for working with the Airy Pattern.
+  * Utilities for working with the Airy Pattern.
   * \ingroup functions
   */
 
 /** \defgroup template_blaslap Templatized BLAS and Lapack
-  * \brief Templatized interfaces to BLAS and the Lapack librarries
+  * Templatized interfaces to BLAS and the Lapack librarries
   * \ingroup gen_math
   */
 
 /** \defgroup template_blas Templatized BLAS interface
-  * \brief Templatized interface to the BLAS
+  * Templatized interface to the BLAS
   * \ingroup template_blaslap
   */
 
 /** \defgroup template_lapack Templatized Lapack interface
-  * \brief Templatized interface to the Lapack library
+  * Templatized interface to the Lapack library
   * \ingroup template_blaslap
   */
 
 /** \defgroup eigen_lapack Eigen Lapack interfaces
-  * \brief Interfaces to Lapack and BLAS for Eigen-like arrays.
+  * Interfaces to Lapack and BLAS for Eigen-like arrays.
   * \ingroup template_blaslap
   */
 
 /** \defgroup integration Integration 
-  * \brief Various tools for integration of functions 
+  * Various tools for integration of functions 
   * \ingroup gen_math 
   */
   
 /** \defgroup interpolation Interpolation
-  * \brief Various tools for interpolating data and discrete functions.
+  * Various tools for interpolating data and discrete functions.
   * \ingroup gen_math
   */
 
 /** \defgroup fitting Data Fitting
-  * \brief Tools for fitting functions to data
+  * Tools for fitting functions to data
   * \ingroup gen_math
   */
 
 /** \defgroup peak_fit Peak Fitting
-  * \brief Tools for fitting peaks to data
+  * Tools for fitting peaks to data
   * \ingroup fitting
   */
 
@@ -128,27 +128,27 @@
 
 //------------------
 /** \defgroup plotting Plotting Data
-  * \brief Tools for plotting and displaying data
+  * Tools for plotting and displaying data
   * \ingroup gen_math
   */
 
 /** \defgroup plotting_files Files
-  * \brief Source files for plotting data.
+  * Source files for plotting data.
   * \ingroup plotting
   */
 
 /** \defgroup random Random Numbers
-  * \brief Random number generation.
+  * Random number generation.
   * \ingroup gen_math
   */
 
 /** \defgroup vectorutils Vector Utilities
   * \ingroup gen_math
-  * \brief Utilities for working with std::vector.
+  * Utilities for working with std::vector.
   */
 
 /** \defgroup fft Fast Fourier Transforms
-  * \brief Tools for using the FFT
+  * Tools for using the FFT
   * \ingroup gen_math
   */
 
@@ -157,17 +157,17 @@
   */
 
 /** \defgroup fftw Getting FFTW
-  * \brief Instructions for building and installing the FFTW library
+  * Instructions for building and installing the FFTW library
   * \ingroup fft
   */
 
 /** \defgroup cuda NVIDIA Cuda Interface
-  * \brief A templatized interface to the cuda libraries.
+  * A templatized interface to the cuda libraries.
   * \ingroup gen_math
   */
   
 /** \defgroup cublas NVIDIA Cuda cublas Interface
-  * \brief A templatized interface to the cublas library
+  * A templatized interface to the cublas library
   * \ingroup cuda 
   * \ingroup template_blaslap
   */  
@@ -181,7 +181,7 @@
 
 
 /** \defgroup psds Power Spectra
-  * \brief Tools for generating and manipulating power spectra
+  * Tools for generating and manipulating power spectra
   * \ingroup signal_processing
   */
 
@@ -194,7 +194,7 @@
   */
 
 /** \defgroup signal_windows Window Functions
-  * \brief Various window functions for spectral analysis
+  * Various window functions for spectral analysis
   * 
   * Windows are provided in both 1 dimensional and 2 dimensional forms.
   *
@@ -202,12 +202,12 @@
   */
   
 /** \defgroup signal_windows1D 1-D Window Functions
-  * \brief 1-D window functions for spectral analysis
+  * 1-D window functions for spectral analysis
   * \ingroup signal_windows
   */
   
 /** \defgroup signal_windows2D 2-D Window Functions
-  * \brief 2-D window functions for spectral analysis
+  * 2-D window functions for spectral analysis
   * \ingroup signal_windows
   */
   
@@ -219,54 +219,54 @@
 
 
 /** \defgroup image_utils Image Utilities
-  * \brief Useful functions for working with images
+  * Useful functions for working with images
   * \ingroup image_processing
   */
   
 /** \defgroup image_padding Image Padding
-  * \brief Functions for padding images.
+  * Functions for padding images.
   * \ingroup image_processing
   */
 
 /** \defgroup image_masks Image Masks
-  * \brief Functions for masking images.
+  * Functions for masking images.
   * \ingroup image_processing
   */
 
 /** \defgroup image_transforms Image Transforms
-  * \brief Functions for transforming images by rotating, translating, and magnifying.
+  * Functions for transforming images by rotating, translating, and magnifying.
   * \ingroup image_processing
   * \ingroup interpolation
   */
 
 /** \defgroup image_filters Image Filters
-  * \brief Functions for filtering images
+  * Functions for filtering images
   * \ingroup image_processing
   * \ingroup signal_processing
   */
 
 /** \defgroup image_filters_kernels Filter With Kernels
-  * \brief Image filtering with a kernel.
+  * Image filtering with a kernel.
   * \ingroup image_filters
   */
 
 /** \defgroup image_filters_average Filter With Averaging 
-  * \brief Image filtering with averaging, mean or median
+  * Image filtering with averaging, mean or median
   * \ingroup image_filters
   */
 
 /** \defgroup rad_prof Radial Profiles
-  * \brief Radial profiles of images
+  * Radial profiles of images
   * \ingroup image_filters 
   */
   
 /** \defgroup std_prof Noise Profiles
-  * \brief Noise profiles of images
+  * Noise profiles of images
   * \ingroup image_filters 
   */
   
 /** \defgroup image_reg Image Registration
-  * \brief Tools for registering images.
+  * Tools for registering images.
   * \ingroup image_processing
   */
 
@@ -275,18 +275,18 @@
 
 
 /** \defgroup eigen_image_processing Image Processing with Eigen
-  * \brief Using the Eigen matrix library for image processing
+  * Using the Eigen matrix library for image processing
   * \ingroup image_processing
   */
 
 /** \defgroup hc_imaging High Contrast Imaging
-  * \brief Tools for astronomical high contrast image processing.
+  * Tools for astronomical high contrast image processing.
   * \ingroup genastro
   * \ingroup image_processing
   */
 
 /** \defgroup hc_imaging_enums HCI Enums
-  * \brief Enums for high contrast imaging.
+  * Enums for high contrast imaging.
   * \ingroup hc_imaging
   */
 
@@ -298,33 +298,33 @@
 //----------------------- imaging --------------------
 
 /** \defgroup psfs Point Spread Functions
-  * \brief Functions describing PSFs.
+  * Functions describing PSFs.
   * \ingroup imaging
   */
 
 /** \defgroup coronagraphs Coronagraphs
-  * \brief Modeling and optimizing coronagraphs
+  * Modeling and optimizing coronagraphs
   * \ingroup imaging
   /
 
 /** \defgroup mxAO Adaptive Optics
-  * \brief All sorts of things related to astronomical adaptive optics
+  * All sorts of things related to astronomical adaptive optics
   * \ingroup imaging
   */
 
 /** \defgroup mxAOAnalytic Analysis of Adaptive Optics
-  * \brief Tools for analytic evaluaiton of AO systems
+  * Tools for analytic evaluaiton of AO systems
   * \ingroup mxAO
   */
 
 /** \defgroup aoConstants AO Constants
-  * \brief A collection of constants useful for adaptive optics analysis.
+  * A collection of constants useful for adaptive optics analysis.
   * \ingroup mxAOAnalytic
   * \ingroup astroconstants
   */
 
 /** \defgroup mxAOSim Simulation of Adaptive Optics
-  * \brief Tools for simulation of AO systems.
+  * Tools for simulation of AO systems.
   * \ingroup mxAO
   */
 
@@ -333,13 +333,13 @@
   */
 
 /** \defgroup mxAO_paths Adaptive Optics Path Management
-  * \brief Definitions and managemetn of AO related file paths.
+  * Definitions and managemetn of AO related file paths.
   * \ingroup mxAOSim
   */
 
 
 /** \defgroup mxAO_files Adaptive Optics Files
-  * \brief Files related to astronomical adaptive optics
+  * Files related to astronomical adaptive optics
   * \ingroup mxAO
   */
 
@@ -353,38 +353,38 @@
 
 /** \defgroup genconstants General Constants
   * \ingroup constants
-  * \brief Constants of general applicability
+  * Constants of general applicability
   */
 
 /** \defgroup astroconstants Physical and Astronomical Constants
   * \ingroup constants
-  * \brief Constants for physics and astronomy
+  * Constants for physics and astronomy
   */
 
 /** \defgroup sofa_constants SOFA Constants
-  * \brief Constants and macros available from \ref astro_sofa.
+  * Constants and macros available from \ref astro_sofa.
   * \ingroup astroconstants
   */
 
 
 /** \defgroup astrodynamics Astrodynamics
-  * \brief Algorithms for astrodynamic calculations.
+  * Algorithms for astrodynamic calculations.
   * \ingroup genastro
   */
 
 /** \defgroup orbits Orbital Mechanics
-  * \brief Calculations of orbits and related quantities.
+  * Calculations of orbits and related quantities.
   * \ingroup astrodynamics
   */
 
 /** \defgroup kepler The Kepler Problem
   * \ingroup orbits
-  * \brief Utilities for solving the Kepler problem.
+  * Utilities for solving the Kepler problem.
   */
 
 /** \defgroup posastro Positional Astronomy
   * \ingroup astrodynamics
-  * \brief Utilities for calculating sky positions
+  * Utilities for calculating sky positions
   */
   
 /** \defgroup astrophot Astronomical Photometry
@@ -413,89 +413,89 @@
 
 /** \defgroup ioutils Input/Output Utilities
   * \ingroup utils
-  * \brief Various input/output utilities
+  * Various input/output utilities
   */
 
 /** \defgroup stringutils Working with strings
   * \ingroup ioutils
-  * \brief Various tools for working with strings
+  * Various tools for working with strings
   */
 
 /** \defgroup fileutils File System Utilities
   * \ingroup ioutils
-  * \brief Various file system utilities
+  * Various file system utilities
   */
 
 /** \defgroup asciiutils ASCII I/O Utilities
   * \ingroup ioutils
-  * \brief ASCII input/output
+  * ASCII input/output
   */
   
 /** \defgroup fits_processing FITS Files
-  * \brief Tools for working with FITS files.
+  * Tools for working with FITS files.
   * \ingroup ioutils
   * \ingroup image_processing
   */
 
 /** \defgroup fits_processing_typedefs fitsFile typedefs
-  * \brief Typedefs of \ref mx::improc::fitsFile for standard types
+  * Typedefs of \ref mx::improc::fitsFile for standard types
   * \ingroup fits_processing
   */
 
 /** \defgroup fits_utils FITS Utilities
-  * \brief FITS file utilities and wrappers.
+  * FITS file utilities and wrappers.
   * \ingroup fits_processing
   */
 
   
 /** \defgroup timeutils Working with time
   * \ingroup utils
-  * \brief Various tools for working with time
+  * Various tools for working with time
   */
 
 /** \defgroup timeutils_sleep Putting a thread to sleep
   * \ingroup timeutils
-  * \brief Wrappers for std::this_thread::sleep_for
+  * Wrappers for std::this_thread::sleep_for
   */
   
 /** \defgroup timeutils_tscomp Timespec comparisons
   * \ingroup timeutils
-  * \brief Comparison of timespec structures
+  * Comparison of timespec structures
   */
   
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
-  * \brief Various template-meta-programming utilities.
+  * Various template-meta-programming utilities.
   */
 
 /** \defgroup mtutils Multi-threading Utilities
   * \ingroup utils
-  * \brief Tools for multi-threaded programming
+  * Tools for multi-threaded programming
   /
 
 /** \defgroup system System Programming
   * \ingroup utils
-  * \brief Tools for system programming
+  * Tools for system programming
   */
 
 /** \defgroup IPC Interprocess Communication
   * \ingroup system
-  * \brief Tools for managing interprocess communication (IPC)
+  * Tools for managing interprocess communication (IPC)
   */
 
 /** \defgroup IPC_msgq Message Queues
   * \ingroup IPC
-  * \brief Tools for managing message queues
+  * Tools for managing message queues
   */
 
 /** \defgroup IPC_sharedmem Shared Memory
   * \ingroup IPC
-  * \brief Tools for managing shared memory
+  * Tools for managing shared memory
   */
 
 /** \defgroup mxApp Application Framework
   * \ingroup utils
-  * \brief A command-line application framework.
+  * A command-line application framework.
   */
 
 
@@ -507,17 +507,17 @@
 //Files sections are last (except for aux info below)/
 
 /** \defgroup error_handling_files Error Handling Files
-  * \brief Source files for error handling.
+  * Source files for error handling.
   * \ingroup error_handling
   */
 
 /** \defgroup gen_math_files Gen. Math Files
-  * \brief Source files for General Mathematics
+  * Source files for General Mathematics
   * \ingroup gen_math
   */
   
 /** \defgroup fitting_files Fitting Files
-  * \brief Source files for data fitting.
+  * Source files for data fitting.
   * \ingroup gen_math_files
   */
 
@@ -526,48 +526,48 @@
   */
 
 /** \defgroup cuda_files Cuda Files
-  * \brief Source files for interacing with cuda.
+  * Source files for interacing with cuda.
   * \ingroup gen_math_files
   */
   
 /** \defgroup signal_processing_files Signal Processing Files
-  * \brief Source files for processing signals
+  * Source files for processing signals
   * \ingroup signal_processing
   */
 
 /** \defgroup image_processing_files Image Processing Files
-  * \brief Files declaring and defining the image processing tools.
+  * Files declaring and defining the image processing tools.
   * \ingroup image_processing
   */
 
 /** \defgroup fits_processing_files FITS Files Files
-  * \brief Source of tools for working with FITS files.
+  * Source of tools for working with FITS files.
   * \ingroup fits_processing
   * \ingroup image_processing_files
   */
 
 /** \defgroup hc_imaging_files High Contrast Imaging Files
-  * \brief Source files for High Contrast Imaging.
+  * Source files for High Contrast Imaging.
   * \ingroup hc_imaging
   */
 
 /** \defgroup imaging_files Wavefront Propagation Files
-  * \brief Source files for wavefront propagation
+  * Source files for wavefront propagation
   * \ingroup imaging
   */
 
 /** \defgroup astrofiles Astronomy Files
-  * \brief Source files for Astronomy
+  * Source files for Astronomy
   * \ingroup genastro
   */
 
 /** \defgroup utils_files Utility Files
-  * \brief Header files for General Utilities.
+  * Header files for General Utilities.
   * \ingroup utils
   */
 
 /** \defgroup mxApp_files Application Files
-  * \brief Files for application programming.
+  * Files for application programming.
   * \ingroup mxApp
   * \ingroup utils_files
   */
@@ -577,22 +577,22 @@
 
 /** \defgroup astro_sofa The SOFA Library
   * \ingroup genastro
-  * \brief The IAU's Standards of Fundamental Astronomy library
+  * The IAU's Standards of Fundamental Astronomy library
   */
 
 /** \defgroup levmar The levmar library
   * \ingroup fitting
-  * \brief A c language Levenberg-Marquardt facility
+  * A c language Levenberg-Marquardt facility
   */
   
   
 //The very end is for the coding standards
 
 /** \defgroup coding mxlib Coding Standards
-  * \brief how to write mxlib code 
+  * how to write mxlib code 
   */
   
 /** \defgroup documenting mxlib Documentation Standards
   * \ingroup coding
-  * \brief how to document mxlib code
+  * how to document mxlib code
   */

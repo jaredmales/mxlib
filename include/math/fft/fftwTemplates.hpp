@@ -322,7 +322,7 @@ struct fftwTypeSpec<complexQT,__float128>
 /** \defgroup fftw_template_wisdom Wisdom 
   * \brief Wrappers for working with fftw wisdom.
   *
-  * \ingroup fftw_templates.
+  * \ingroup fftw_templates
   * 
   * @{
   */ 
@@ -418,7 +418,7 @@ int fftw_export_wisdom_to_filename<__float128>(const char *filename);
   *
   * \note Here the call to sizeof() is implicit, so you only specify the number of elements, not the number of bytes.
   * 
-  * \ingroup fftw_templates.
+  * \ingroup fftw_templates
   * 
   * @{
   */ 
@@ -500,7 +500,7 @@ void fftw_free<complexQT>( complexQT * p);
 /** \defgroup fftw_template_plans Planning 
   * \brief Wrappers for working with fftw plans.
   *
-  * \ingroup fftw_templates.
+  * \ingroup fftw_templates
   * 
   * @{
   */ 
@@ -717,7 +717,7 @@ void fftw_cleanup_threads<__float128>();
 /** \defgroup fftw_template_exec Execution 
   * \brief Wrappers for executing with fftw plans.
   *
-  * \ingroup fftw_templates.
+  * \ingroup fftw_templates
   * 
   * @{
   */ 

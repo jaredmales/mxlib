@@ -116,13 +116,13 @@ div.navtab {
 /* @group Link Styling */
 
 a {
-	color: #1B1817;
+	color: #36cce7;
 	font-weight: bold;
 	text-decoration: underline;
 }
 
 .contents a:visited {
-	color: #262321;
+	color: #36cce7;
 }
 
 a:hover {
@@ -483,7 +483,7 @@ table.memberdecls {
 }
 
 .memTemplParams {
-	color: #262321;
+	color: #547885;
         white-space: nowrap;
 	font-size: 80%;
 }
@@ -496,7 +496,7 @@ table.memberdecls {
 
 .memtemplate {
 	font-size: 80%;
-	color: #262321;
+	color: #547885;
 	font-weight: normal;
 	margin-left: 9px;
 }

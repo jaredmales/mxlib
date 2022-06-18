@@ -57,7 +57,7 @@ std::vector<int> fftwDimVec( int szX, int szY, int szZ);
 /** The fftwTemplates type resolution system is used to allow the compiler
   * to access the right plan and types for the transforms based on inputT and outputT.
   * 
-  * Calls the FFTW plan functions are protected by '#pragma omp critical' directives
+  * Calls the FFTW plan functions are protected by '\#pragma omp critical' directives
   * unless MX_FFTW_NOOMP is define prior to the first inclusion of this file.
   * 
   * \todo add execute interface with fftw like signature
@@ -94,6 +94,7 @@ protected:
    
 public:
    
+   /// Default c'tor
    fftT();
 
    ///Constructor for rank 1 FFT.

@@ -120,6 +120,7 @@ std::string fftw_wisdom_filename()
 template< typename realT, bool threads=false>
 struct fftwEnvironment
 {
+   /// Constructor
    explicit fftwEnvironment(unsigned nThreads = 0 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
    {
       static_cast<void>(nThreads);
@@ -128,6 +129,7 @@ struct fftwEnvironment
       
    }
    
+   /// Destructor
    ~fftwEnvironment()
    {
       errno = 0;
@@ -143,7 +145,8 @@ struct fftwEnvironment
 template< typename realT>
 struct fftwEnvironment<realT, true>
 {
-   explicit fftwEnvironment(unsigned nThreads = 1)
+   /// Constructor
+   explicit fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
    {
       fftw_make_planner_thread_safe<realT>();
       
@@ -153,6 +156,7 @@ struct fftwEnvironment<realT, true>
       fftw_import_wisdom_from_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 
    }
    
+   /// Destructor
    ~fftwEnvironment()
    {
       fftw_export_wisdom_to_filename<realT>(fftw_wisdom_filename<realT>().c_str()); 

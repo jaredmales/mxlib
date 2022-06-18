@@ -37,7 +37,7 @@ SOFTWARE.
 
     /* page base colors */
     --page-background-color: white;
-    --page-foreground-color: #2c3e50;
+    --page-foreground-color: #d4dfea;
     --page-secondary-foreground-color: #67727e;
 
     /* color for all separators on the website: hr, borders, ... */
@@ -227,6 +227,8 @@ p, div, table, dl {
 a, a.el:visited, a.el:hover, a.el:focus, a.el:active {
     color: var(--primary-dark-color);
 }
+
+.contents a:visited { color: var(--primary-dark-color)}
 
 /*
  Title and top navigation

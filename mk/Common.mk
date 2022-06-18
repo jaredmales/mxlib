@@ -40,7 +40,11 @@ endif
 OPTIMIZE ?= $(DEFAULT_OPTIMIZATIONS)
 
 CFLAGS += -std=c99 -fPIC
-CXXFLAGS += -std=c++14 -fPIC
+
+#Set to -std=c++14 if 17 not supported
+CXXVERSION ?= -std=c++17
+
+CXXFLAGS += $(CXXVERSION) -fPIC
 
 USE_FFT_FROM ?= fftw
 USE_BLAS_FROM ?= mkl

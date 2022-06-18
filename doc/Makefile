@@ -4,4 +4,6 @@ all:
 	
 clean:
 	rm -f *~
+	rm *.aux
+	rm citelist*
 	

@@ -1,23 +1,19 @@
 /** \defgroup mkl Getting MKL
-  * \brief Instructions for installing the Intel Math Kernel Library (MKL)
   * \ingroup template_blaslap
 
-To install the MKL:  
+Instructions for installing the Intel Math Kernel Library (MKL)
+
+-# To install the MKL:  follow the instructions to install the `intel-basekit` package on the Intel MKL site.
   
--# Download the library from Intel.  This requires registration and following some links in emails, etc.  Unpack it.
+-# Next add MKLROOT to your environment, adding it to  `~/.bashrc` or `~/.bash_profile` or `~/.bash_aliases` file (whichever you use for this).  It should point at the directory that contains `include/mkl.h` which you may have to search for after installation.  Note that there will probably be a symlinked `latest` directory in `/opt/intel/oneapi/mkl` so adding
+\code
+export MKLROOT=/opt/intel/oneapi/mkl/latest
+\endcode
+will be robust against upgrades.
 
--# Install the MKL library by running the install.sh script.  The default paths, etc, should be fine.  Be sure to do this with root privileges if you can.
+-# Add `MKLROOT/lib` to `/etc/ld.so.conf.d/mkl.conf` as follows:
+\verbatim
+/opt/intel/oneapi/mkl/latest/lib/intel64/
+\endverbatim
 
--# Then add the following line to your profile:
-   \verbatim source /opt/intel/mkl/bin/mklvars.sh intel64\endverbatim
-
-   This can be done in your ~/.bashrc or ~/.bash_profile or ~/.bash_aliases file (whichever you use for this). Or to set it for all users add it to /etc/profile.d/mkl.sh (create the file).
-
--# You will also need to update ld.  The system wide way to do this is to create a file called `/etc/ld.so.conf.d/mkl.conf` with the contents
-   \verbatim /opt/intel/compilers_and_libraries_2018.3.222/linux/mkl/lib/intel64_lin/ \endverbatim
-   edited as appropriate for your version.
-   
-   Then run 
-   \verbatim $ sudo ldconfig \endverbatim
-*/
- 
+*/ 
