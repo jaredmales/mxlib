@@ -2832,6 +2832,7 @@ void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator & con
    config.add("aosys.starMags"          ,"", "aosys.starMags"        , argType::Required, "aosys", "starMags",         false, "real vector", "A vector of star magnitudes");
    
    atm.setupConfig(config);
+   psd.setupConfig(config);
    
 }
 
@@ -2982,7 +2983,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & conf
    if(config.isSet("aosys.starMag") ) starMag( smag );
 
    atm.loadConfig(config);
-
+   psd.loadConfig(config);
 }
 
 extern template
