@@ -144,7 +144,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
          config.readConfig("aoAtmosphere.conf");
          atm.loadConfig(config);
 
-         REQUIRE(atm.alpha() == Approx(4.7));
+         REQUIRE(atm.alpha(0) == Approx(4.7));
          REQUIRE(atm.nonKolmogorov() == true);
       }
 
@@ -165,7 +165,28 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
          config.readConfig("aoAtmosphere.conf");
          atm.loadConfig(config);
 
-         REQUIRE(atm.beta() == Approx(0.026));
+         REQUIRE(atm.beta(0) == Approx(0.026));
+         REQUIRE(atm.nonKolmogorov() == true);
+      }
+
+      WHEN("setting nonKolmogorov beta_0")
+      {
+         atm.nonKolmogorov(false);
+         REQUIRE(atm.nonKolmogorov() == false);
+
+         appConfigurator config;
+    
+         writeConfigFile( "aoAtmosphere.conf",
+                          {"atm"},
+                          {"beta_0"},
+                          {"1e-7"}
+                         );   
+
+         atm.setupConfig(config);
+         config.readConfig("aoAtmosphere.conf");
+         atm.loadConfig(config);
+
+         REQUIRE(atm.beta_0(0) == Approx(1e-7));
          REQUIRE(atm.nonKolmogorov() == true);
       }
 

@@ -1880,7 +1880,8 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    
    realT tau = tau_wfs + m_deltaTau;
          
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
+   ///\todo handle multiple layers
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
 /*template<typename realT, class inputSpectT, typename iosT>
@@ -1932,7 +1933,8 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m,
 {
    realT k = sqrt(m*m+n*n)/m_D;
       
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2);
+   ///\todo handle multiple layers
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2158,7 +2160,8 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    //Set up for root finding:
    realT a, b, c, d, e;
    
-   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(math::two_pi<realT>()*atm.v_wind()*k,2);
+   ///\todo handle multiple layers
+   realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, 0, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(math::two_pi<realT>()*atm.v_wind()*k,2);
    realT Dtmp = pow(m_lam_wfs*beta_p/F,2);
    
    a = Atmp;
@@ -2510,7 +2513,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C0var( realT m,
                                          )
 {
    realT k = sqrt(m*m + n*n)/m_D;
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.X(k, m_lam_sci, m_secZeta));
+   ///\todo handle multiple layers
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.X(k, m_lam_sci, m_secZeta));
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2537,7 +2541,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m,
 {
    realT k = sqrt(m*m + n*n)/m_D;
             
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.Y(k, m_lam_sci, m_secZeta));
+   ///\todo handle multiple layers
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * (atm.Y(k, m_lam_sci, m_secZeta));
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2612,8 +2617,9 @@ realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m,
 {
    realT k = sqrt(m*m + n*n)/m_D;
    
+   ///\todo handle multiple layers
    //This does not need to be divided by X b/c we haven't multiplied by it, this is is C0/X.
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dX(k, m_lam_sci, m_lam_wfs);
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dX(k, m_lam_sci, m_lam_wfs);
 }
 
                                                   
@@ -2640,8 +2646,9 @@ realT aoSystem<realT, inputSpectT, iosT>::C5var( realT m,
 {
    realT k = sqrt(m*m + n*n)/m_D;
 
+   ///\todo handle multiple layers
    //This does not need to be divided by Y b/c we haven't multiplied by it, this is is C1/Y.
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dY(k, m_lam_sci, m_lam_wfs);
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.dY(k, m_lam_sci, m_lam_wfs);
 }
 
                                                   
@@ -2696,7 +2703,8 @@ realT aoSystem<realT, inputSpectT, iosT>::C7var( realT m,
 {
    realT k = sqrt(m*m + n*n)/m_D;
      
-   return psd(atm, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.X_Z(k, m_lam_wfs, m_lam_sci, m_secZeta);
+   ///\todo this needs to handle multiple layers -- do we violate an assumption of L_0 isn't constant?
+   return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * atm.X_Z(k, m_lam_wfs, m_lam_sci, m_secZeta);
 }
 
 template<typename realT, class inputSpectT, typename iosT>

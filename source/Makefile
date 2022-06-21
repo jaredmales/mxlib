@@ -71,9 +71,9 @@ all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
-ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ../include/ao/analysis/aoSystem.hpp
+ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ao/analysis/aoSystem.o
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/clOptions.o: ../include/app/clOptions.hpp

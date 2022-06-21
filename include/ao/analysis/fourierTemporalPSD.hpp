@@ -578,10 +578,10 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    if(j == freq.size()) return 0;
    
    //First average result for last 50.
-   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], m_aosys->atm.alpha()+2);//seventeen_thirds<realT>());
+   PSD[j] = PSD[i-50] * pow( freq[i-50]/freq[j], m_aosys->atm.alpha(layer_i)+2);//seventeen_thirds<realT>());
    for(size_t k=49; k> 0; --k)
    {
-      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], m_aosys->atm.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] +=  PSD[i-k] * pow( freq[i-k]/freq[j], m_aosys->atm.alpha(layer_i)+2); //seventeen_thirds<realT>());
    }
    PSD[j] /= 50.0;
    ++j;
@@ -589,7 +589,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    if(j == freq.size()) return 0;
    while(j < freq.size())
    {
-      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], m_aosys->atm.alpha()+2); //seventeen_thirds<realT>());
+      PSD[j] = PSD[i-1] * pow( freq[i-1]/freq[j], m_aosys->atm.alpha(layer_i)+2); //seventeen_thirds<realT>());
       ++j;
    }
 
@@ -2114,7 +2114,7 @@ realT F_basic (realT kv, void * params)
 
    realT Q = (Q1 + p*Q2);
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)),  Fp->m_aosys->secZeta());
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)),  Fp->m_aosys->secZeta());
 
    return P*Q*Q ;
 }
@@ -2157,7 +2157,7 @@ realT F_mod (realT kv, void * params)
 
    realT QQ = 2*(Jp*Jp + Jm*Jm);
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
    return P*QQ ;
 }
@@ -2254,7 +2254,7 @@ realT Fm_projMod (realT kv, void * params)
    //realT QQ = 2*(Jp*Jp + Jm*Jm);
 
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
    return P*QQ ;
 }

@@ -53,41 +53,48 @@ public:
    aoAtmosphere();
 
 protected:
+
    realT m_r_0; ///< Fried's parameter, in m
    
-   realT m_lam_0; ///<Wavelength of Fried's parameter, in m
+   realT m_lam_0 {0.5e-6}; ///<Wavelength of Fried's parameter, in m
+
+   std::vector<realT> m_layer_Cn2; ///< Vector of layer strengths. 
 
    std::vector<realT> m_L_0; ///< The outer scale, in m
    
    std::vector<realT> m_l_0; ///< The inner scale of each layer, in m
    
+   bool m_nonKolmogorov {false}; ///< Flag indicating if non-Kolmogorov PSD parameters are used.
+   
+   std::vector<realT> m_beta {1}; ///< The PSD normalization when in non-Kolmogorov mode.
+
+   std::vector<realT> m_alpha {0}; ///< The PSD exponent when in non-Kolmogorov mode.
+   
+   std::vector<realT> m_beta_0 {0}; ///< The PSD constant when in non-Kolmogorov mode.
+
    std::vector<realT> m_layer_z; ///< Vector of layer heights, in m, above the observatory.
    
-   realT m_h_obs; ///< Height of the observatory above sea level, in m.  
+   realT m_h_obs {0}; ///< Height of the observatory above sea level, in m.  
    
-   realT m_H; ///< The atmospheric scale height, in m.
+   realT m_H {8000}; ///< The atmospheric scale height, in m.
    
-   std::vector<realT> m_layer_Cn2; ///< Vector of layer strengths. 
    
    std::vector<realT> m_layer_v_wind; ///< Vector of layer wind speeds, in m/s.
    
    std::vector<realT> m_layer_dir; ///<Vector of layer wind directions, in radians.
 
-   bool m_v_wind_updated; ///< whether or not m_v_wind has been updated after changes
+   bool m_v_wind_updated {false}; ///< whether or not m_v_wind has been updated after changes
    
    realT m_v_wind; ///< \f$ C_n^2 \f$ averaged windspeed
    
    realT m_dir_wind; ///< \f$ C_n^2 \f$ averaged direction
    
-   bool m_z_mean_updated; ///< whether or not m_z_mean has been update after changes
+   bool m_z_mean_updated {false}; ///< whether or not m_z_mean has been update after changes
    
    realT m_z_mean; ///< \f$ C_n^2 \f$ averaged layer height
    
-   bool m_nonKolmogorov {false};
    
-   realT m_alpha{2};
    
-   realT m_beta{1};
    
    /// Checks if layer vectors have consistent length.
    /**
@@ -98,6 +105,10 @@ protected:
    
 public:
    
+   /** \name PSD Parameters
+     * @{
+     */
+
    ///Get the value of Fried's parameter r_0 at the reference wavelength lam_0.
    /** 
      * \returns the curret value of m_r_0, in m.
@@ -127,6 +138,31 @@ public:
      */
    realT lam_0();
    
+   ///Get the strength of a single layer.
+   /**
+     * \returns the value of m_layer_Cn2[n].
+     */
+   realT layer_Cn2(const int n /**< [in] specifies the layer. */);
+   
+   ///Get the vector of layer strengths.
+   /** 
+     * \returns a copy of the vector of layer strengths: m_layer_Cn2.
+     */ 
+   std::vector<realT> layer_Cn2();
+   
+   ///Set the vector layer strengths, possibly calculating r_0.
+   /**   
+     * If a reference wavelength is specified (l0 > 0), then r_0 is set from the layer strengths
+     * according to
+     * 
+     * Regardless of what units the strengths are specified in, they are stored normalized so that
+     * \f$ \sum_n C_n^2 = 1 \f$.
+     * 
+     */  
+   void layer_Cn2( const std::vector<realT> & cn2, ///<  [in] is a vector containing the layer strengths 
+                   const realT l0 = 0  ///< [in] [optional] if l0 > 0, then r_0 is set from the layer strengths.
+                 );
+
    ///Get the value of the outer scale for a single layer.
    /**
      * \returns the current value of m_L_0[n], in m.
@@ -161,6 +197,104 @@ public:
      */
    std::vector<realT> l_0();
    
+   /// Set the value of m_nonKolmogorov 
+   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
+     */
+   void nonKolmogorov( const bool & nk /**< [in] the value of m_nonKolmogorov*/);
+
+   /// Return the value of m_nonKolmogorov 
+   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
+     * 
+     * \returns the current value of m_nonKolmogorov 
+     */
+   bool nonKolmogorov();
+
+   ///Return the PSD index for a single layer.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * If m_nonKolmogorov is false, this returns
+     * \[
+       \alpha = \frac{11}{3}
+       \]
+     * Otherwise it returns the current value of m_alpha[n].
+     *
+     * \returns the PSD index.
+     */ 
+   realT alpha( const size_t & n );
+   
+   ///Set the vector of layer PSD indices.
+   /**
+     */ 
+   void alpha( const std::vector<realT> & alph /**< [in] is the new vector of PSD indices*/);
+
+   /// Get the vector of PSD indices.
+   /**
+     * \returns a copy of the vector of PSD indices
+     */
+   std::vector<realT> alpha();
+
+   ///Return the PSD normalization for a single layer.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * If m_nonKolmogorov is false, this returns
+     * \[
+       \beta = \frac{0.0218}{r_0^{5/3}}
+       \]
+     * Otherwise it returns the current value of m_beta[n].
+     *
+     * \returns the PSD normalization.
+     */ 
+   realT beta( const size_t & n );
+   
+   ///Set the vector of layer PSD normalizations.
+   /**
+     */ 
+   void beta( const std::vector<realT> & bet /**< [in] is the new vector of PSD normalizations*/);
+
+   /// Get the vector of PSD normalizations.
+   /**
+     * \returns a copy of the vector of PSD normalizations
+     */
+   std::vector<realT> beta();
+
+   ///Return the PSD constant for a single layer.
+   /** Satifies the requirements of psdParamsT.
+     *
+     * If m_nonKolmogorov is false, this returns
+     * \[
+       \beta_0 = 0
+       \]
+     * Otherwise it returns the current value of m_beta_0[n].
+     *
+     * \returns the PSD constant.
+     */ 
+   realT beta_0( const size_t & n );
+   
+   ///Set the vector of layer PSD constants.
+   /**
+     */ 
+   void beta_0( const std::vector<realT> & bet /**< [in] is the new vector of PSD constants*/);
+
+   /// Get the vector of PSD constants.
+   /**
+     * \returns a copy of the vector of PSD constants
+     */
+   std::vector<realT> beta_0();
+
+   ///Get the number of layers
+   /**
+     * \returns the size of the m_layer_Cn2 vector if m_nonKolmogrov==false
+     * \returns the size of the m_alpha vector if m_nonKolmogrov==true
+     */ 
+   size_t n_layers();
+
+   size_t currentLayer();
+
+   void currentLayer( size_t cl );
+
+   /// @}
+
+
    ///Get the height of a single layer.
    /**
      * \returns the height of layer n, in m.
@@ -200,30 +334,7 @@ public:
      */
    void H( realT nH /**< [in] the new value of m_H [m] */);
    
-   ///Get the strength of a single layer.
-   /**
-     * \returns the value of m_layer_Cn2[n].
-     */
-   realT layer_Cn2(const int n /**< [in] specifies the layer. */);
    
-   ///Get the vector of layer strengths.
-   /** 
-     * \returns a copy of the vector of layer strengths: m_layer_Cn2.
-     */ 
-   std::vector<realT> layer_Cn2();
-   
-   ///Set the vector layer strengths, possibly calculating r_0.
-   /**   
-     * If a reference wavelength is specified (l0 > 0), then r_0 is set from the layer strengths
-     * according to
-     * 
-     * Regardless of what units the strengths are specified in, they are stored normalized so that
-     * \f$ \sum_n C_n^2 = 1 \f$.
-     * 
-     */  
-   void layer_Cn2( const std::vector<realT> & cn2, ///<  [in] is a vector containing the layer strengths 
-                   const realT l0 = 0  ///< [in] [optional] if l0 > 0, then r_0 is set from the layer strengths.
-                 );
    
    ///Get the wind speed of a single layer.
    /**
@@ -261,11 +372,6 @@ public:
      */
    void layer_dir(const std::vector<realT> & d /**< [in] the new vector of wind directions in radians, which is copied to m_layer_dir. */);
    
-   ///Get the number of layers
-   /**
-     * \returns the size of the m_layer_Cn2 vector.
-     */ 
-   size_t n_layers();
    
    ///Get the 5/3 moment weighted mean wind speed
    /** Returns the weighted mean wind speed according to the 5/3's turbulence moment.  This is defined as
@@ -367,55 +473,8 @@ public:
      */
    void z_mean(const realT & zm /**< [in] is the new value of m_v_wind. */);
    
-   /// Set the value of m_nonKolmogorov 
-   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
-     */
-   void nonKolmogorov( const bool & nk /**< [in] the value of m_nonKolmogorov*/);
+   
 
-   /// Return the value of m_nonKolmogorov 
-   /** This flag indicates if non-Kolmogorov turbulence is being modeled.
-     * 
-     * \returns the current value of m_nonKolmogorov 
-     */
-   bool nonKolmogorov();
-
-   ///Return the PSD index for Kolmogorov turbulence.
-   /** Satifies the requirements of psdParamsT.
-     *
-     * If m_nonKolmogorov is false, this returns
-     * \[
-       \alpha = \frac{11}{3}
-       \]
-     * Otherwise it returns the current value of m_alpha.
-     *
-     * \returns the PSD index.
-     */
-   realT alpha();
-   
-   ///Set the PSD index alpha.
-   /** Setting alpha with this function also sets m_nonKolmogorov to true.
-     */
-   void alpha( realT a /**< [in] the new value of alpha */);
-   
-   ///Return the PSD normalization constant for Kolmogorov turbulence.
-   /** Satifies the requirements of psdParamsT.
-     *
-     * If m_nonKolmogorov is false, this returns
-     * \[
-       \beta = \frac{0.0218}{r_0^{5/3}}
-       \]
-     *
-     * Otherwise it returns the current value of m_beta.
-     *
-     * \returns the PSD normalization constant.
-     */
-   realT beta();
-   
-   ///Set the PSD normalization alpha.
-   /** Setting beta with this function also sets m_nonKolmogorov to true.
-     */
-   void beta( realT b /**< [in] the new beta */);
-   
    ///The fraction of the turbulence PSD in phase after Fresnel propagation.
    /** See Equation (14) of Guyon (2005) \cite guyon_2005. 
      *
@@ -578,14 +637,6 @@ public:
 template<typename realT>
 aoAtmosphere<realT>::aoAtmosphere()
 {
-   m_lam_0 = 0.5e-6;
-   
-   
-   m_h_obs = 0;
-   m_H = 8000;
-   
-   m_v_wind_updated = false;
-   m_z_mean_updated = false;
 }
 
 template<typename realT>
@@ -661,6 +712,42 @@ realT aoAtmosphere<realT>::lam_0()
 }
 
 template<typename realT>
+realT aoAtmosphere<realT>::layer_Cn2(const int n)
+{
+   return m_layer_Cn2[n];
+}
+
+template<typename realT>
+std::vector<realT>  aoAtmosphere<realT>::layer_Cn2()
+{
+   return m_layer_Cn2;
+}
+   
+template<typename realT>
+void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT l0)
+{
+   m_layer_Cn2 = cn2; 
+   
+   realT layer_norm = 0;
+   
+   for(size_t i=0;i < m_layer_Cn2.size();++i) 
+   {
+      layer_norm += cn2[i];
+   }
+      
+   for(size_t i=0;i< m_layer_Cn2.size();++i) m_layer_Cn2[i] = m_layer_Cn2[i]/layer_norm;
+   
+   if(l0 > 0)
+   {   
+      m_r_0 = 1.0 / pow(layer_norm * 5.520e13, math::three_fifths<realT>() );  
+      m_lam_0 = l0;
+   }
+
+   m_v_wind_updated = false;
+   m_z_mean_updated = false;
+}
+
+template<typename realT>
 realT aoAtmosphere<realT>::L_0(const size_t & n)
 {
    return m_L_0[n];
@@ -694,6 +781,103 @@ template<typename realT>
 std::vector<realT> aoAtmosphere<realT>::l_0()
 {
    return m_l_0;
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::nonKolmogorov( const bool & nk )
+{
+   m_nonKolmogorov = nk;
+}
+
+template<typename realT>
+bool aoAtmosphere<realT>::nonKolmogorov()
+{
+   return m_nonKolmogorov;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::alpha(const size_t & n)
+{
+   if(!m_nonKolmogorov)
+   {
+      return math::eleven_thirds<realT>();
+   }
+   else
+   {
+      return m_alpha[n];
+   }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::alpha(const std::vector<realT> & alph)
+{
+   m_nonKolmogorov = true;
+   m_alpha = alph;
+}
+
+template<typename realT>
+std::vector<realT> aoAtmosphere<realT>::alpha()
+{
+   return m_alpha;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::beta(const size_t & n)
+{
+   if(!m_nonKolmogorov)
+   {
+      return constants::a_PSD<realT>()*pow(m_r_0, -math::five_thirds<realT>());;
+   }
+   else
+   {
+      return m_beta[n];
+   }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::beta(const std::vector<realT> & bet)
+{
+   m_nonKolmogorov = true;
+   m_beta = bet;
+}
+
+template<typename realT>
+std::vector<realT> aoAtmosphere<realT>::beta()
+{
+   return m_beta;
+}
+
+template<typename realT>
+realT aoAtmosphere<realT>::beta_0(const size_t & n)
+{
+   if(!m_nonKolmogorov)
+   {
+      return 0;
+   }
+   else
+   {
+      return m_beta_0[n];
+   }
+}
+
+template<typename realT>
+void aoAtmosphere<realT>::beta_0(const std::vector<realT> & bet)
+{
+   m_nonKolmogorov = true;
+   m_beta_0 = bet;
+}
+
+template<typename realT>
+std::vector<realT> aoAtmosphere<realT>::beta_0()
+{
+   return m_beta_0;
+}
+
+template<typename realT>
+size_t aoAtmosphere<realT>::n_layers()
+{
+   if(m_nonKolmogorov) return m_alpha.size();
+   else return m_layer_Cn2.size();
 }
 
 template<typename realT>
@@ -738,50 +922,12 @@ void aoAtmosphere<realT>::H( realT nH )
 {
    m_H = nH;
 }
-   
-
-template<typename realT>
-realT aoAtmosphere<realT>::layer_Cn2(const int n)
-{
-   return m_layer_Cn2[n];
-}
-
-template<typename realT>
-std::vector<realT>  aoAtmosphere<realT>::layer_Cn2()
-{
-   return m_layer_Cn2;
-}
-   
-template<typename realT>
-void aoAtmosphere<realT>::layer_Cn2(const std::vector<realT> & cn2, const realT l0)
-{
-   m_layer_Cn2 = cn2; 
-   
-   realT layer_norm = 0;
-   
-   for(size_t i=0;i < m_layer_Cn2.size();++i) 
-   {
-      layer_norm += cn2[i];
-   }
-      
-   for(size_t i=0;i< m_layer_Cn2.size();++i) m_layer_Cn2[i] = m_layer_Cn2[i]/layer_norm;
-   
-   if(l0 > 0)
-   {   
-      m_r_0 = 1.0 / pow(layer_norm * 5.520e13, math::three_fifths<realT>() );  
-      m_lam_0 = l0;
-   }
-
-   m_v_wind_updated = false;
-   m_z_mean_updated = false;
-}
 
 template<typename realT>
 realT aoAtmosphere<realT>::layer_v_wind(const int n)
 {
    return m_layer_v_wind[n];
 }
-
 
 template<typename realT>
 std::vector<realT> aoAtmosphere<realT>::layer_v_wind()
@@ -815,11 +961,6 @@ void aoAtmosphere<realT>::layer_dir(const std::vector<realT> & dir)
    m_v_wind_updated = false;
 }
 
-template<typename realT>
-size_t aoAtmosphere<realT>::n_layers()
-{
-   return m_layer_Cn2.size();
-}
 
 template<typename realT>
 realT aoAtmosphere<realT>::v_wind()
@@ -937,59 +1078,10 @@ void aoAtmosphere<realT>::z_mean(const realT & zm)
    }
 }
 
-template<typename realT>
-void aoAtmosphere<realT>::nonKolmogorov( const bool & nk )
-{
-   m_nonKolmogorov = nk;
-}
 
-template<typename realT>
-bool aoAtmosphere<realT>::nonKolmogorov()
-{
-   return m_nonKolmogorov;
-}
 
-template<typename realT>
-realT aoAtmosphere<realT>::alpha()
-{
-   if(!m_nonKolmogorov)
-   {
-      return math::eleven_thirds<realT>();
-   }
-   else
-   {
-      return m_alpha;
-   }
-}
 
-template<typename realT>
-void aoAtmosphere<realT>::alpha(realT a)
-{
-   m_nonKolmogorov = true;
    
-   m_alpha = a;
-}
-
-template<typename realT>
-realT aoAtmosphere<realT>::beta()
-{
-   if(!m_nonKolmogorov)
-   {
-      return constants::a_PSD<realT>()*pow(m_r_0, -math::five_thirds<realT>());
-   }
-   else
-   {
-      return m_beta;
-   }
-}
-   
-template<typename realT>
-void aoAtmosphere<realT>::beta(realT b)
-{
-   m_nonKolmogorov = true;
-   
-   m_beta = b;
-}
 
 template<typename realT>
 realT aoAtmosphere<realT>::X( realT k, 
@@ -1183,22 +1275,39 @@ template<typename iosT>
 iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
 {
    ios << "# Atmosphere Parameters:\n";
-   ios << "#    r_0 = " << r_0() << '\n';
-   ios << "#    lam_0 = " << lam_0() << '\n';
-   ios << "#    tau_0 = " << tau_0(lam_0()) << '\n';
+   ios << "#    nonKolmogorov = " << std::boolalpha << nonKolmogorov() << '\n';
+   ios << "#    n_layers = " << n_layers() << '\n';
+
+   if(!m_nonKolmogorov)
+   {
+      ios << "#    r_0 = " << r_0() << '\n';
+      ios << "#    lam_0 = " << lam_0() << '\n';
+      ios << "#    tau_0 = " << tau_0(lam_0()) << '\n';
+      ios << "#    FWHM = " << fwhm(lam_0()) << '\n';
+      ios << "#    layer_Cn2 = ";
+      for(size_t i=0;i< n_layers()-1;++i) ios << layer_Cn2()[i] << ", ";
+      ios << layer_Cn2()[n_layers()-1] << '\n';
+   }
+   if(m_nonKolmogorov)
+   {
+      ios << "#    alpha = ";
+      for(size_t i=0;i < n_layers()-1;++i) ios << alpha()[i] << ", ";
+      ios <<  alpha()[n_layers()-1] << '\n';
+      ios << "#    beta = ";
+      for(size_t i=0;i < n_layers()-1;++i) ios << beta()[i] << ", ";
+      ios <<  beta()[n_layers()-1] << '\n';   
+      ios << "#    beta_0 = ";
+      for(size_t i=0;i < n_layers()-1;++i) ios << beta_0()[i] << ", ";
+      ios <<  beta_0()[n_layers()-1] << '\n';   
+   }
+
    ios << "#    L_0 = ";
    for(size_t i=0;i < n_layers()-1;++i) ios << L_0()[i] << ", ";
    ios <<  L_0()[n_layers()-1] << '\n';
-   ios << "#    FWHM = " << fwhm(lam_0()) << '\n';
-   ios << "#    n_layers = " << n_layers() << '\n';
-   ios << "#    layer_z = ";
-   for(size_t i=0;i < n_layers()-1;++i) ios << layer_z()[i] << ", ";
-   ios <<  layer_z()[ n_layers()-1] << '\n';
-   ios << "#    h_obs = " << h_obs() << '\n';
-   ios << "#    H = " << H() << '\n';
-   ios << "#    layer_Cn2 = ";
-   for(size_t i=0;i< n_layers()-1;++i) ios << layer_Cn2()[i] << ", ";
-   ios << layer_Cn2()[n_layers()-1] << '\n';
+   ios << "#    l_0 = ";
+   for(size_t i=0;i < n_layers()-1;++i) ios << l_0()[i] << ", ";
+   ios <<  l_0()[n_layers()-1] << '\n';
+
    ios << "#    layer_v_wind = ";
    for(size_t i=0;i< n_layers()-1;++i) ios << layer_v_wind()[i] << ", ";
    ios << layer_v_wind()[ n_layers()-1] << '\n';
@@ -1207,8 +1316,16 @@ iosT & aoAtmosphere<realT>::dumpAtmosphere( iosT & ios)
    ios << layer_dir()[ n_layers()-1] << '\n';
    ios << "#    mean v_wind = " << v_wind() << '\n';
    ios << "#    mean dir_wind = " << dir_wind() << '\n';
-   ios << "#    mean z = " << z_mean() << '\n';
-   
+
+   if(!m_nonKolmogorov)
+   {
+      ios << "#    layer_z = ";
+      for(size_t i=0;i < n_layers()-1;++i) ios << layer_z()[i] << ", ";
+      ios <<  layer_z()[ n_layers()-1] << '\n';
+      ios << "#    mean z = " << z_mean() << '\n';
+      ios << "#    h_obs = " << h_obs() << '\n';
+      ios << "#    H = " << H() << '\n';
+   }
    
    return ios;
 }
@@ -1231,8 +1348,9 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator & config )
    config.add("atm.v_wind"       ,"", "atm.v_wind"       , argType::Required, "atm", "v_wind",        false, "real"        , "Mean windspeed (5/3 momement), rescales layers [m/s]");
    config.add("atm.z_mean"       ,"", "atm.z_mean"       , argType::Required, "atm", "z_mean",        false, "real"        , "Mean layer height (5/3 momemnt), rescales layers [m/s]");   
    config.add("atm.nonKolmogorov","", "atm.nonKolmogorov", argType::Required, "atm", "nonKolmogorov", false, "bool"        , "Set to use a non-Kolmogorov PSD. See alpha and beta.");   
-   config.add("atm.alpha"        ,"", "atm.alpha"        , argType::Required, "atm", "alpha"        , false, "real"        , "Non-kolmogorov PSD exponent.");   
-   config.add("atm.beta"         ,"", "atm.beta"         , argType::Required, "atm", "beta"         , false, "real"        , "Non-kolmogorov PSD normalization constant.");   
+   config.add("atm.alpha"        ,"", "atm.alpha"        , argType::Required, "atm", "alpha"        , false, "vector<real>", "Non-kolmogorov PSD exponent.");   
+   config.add("atm.beta"         ,"", "atm.beta"         , argType::Required, "atm", "beta"         , false, "vector<real>", "Non-kolmogorov PSD normalization.");
+   config.add("atm.beta_0"       ,"", "atm.beta_0"       , argType::Required, "atm", "beta_0"       , false, "vector<real>", "Non-kolmogorov PSD constant.");   
 }
 
 template<typename realT>
@@ -1287,13 +1405,17 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
    
    config(m_nonKolmogorov, "atm.nonKolmogorov");
 
-   realT a = m_alpha;
+   std::vector<realT> a = m_alpha;
    config(a, "atm.alpha");
    if(config.isSet("atm.alpha")) alpha(a); //this sets m_nonKolmogorov
 
-   realT b = m_beta;
+   std::vector<realT> b = m_beta;
    config(b, "atm.beta");
    if(config.isSet("atm.beta")) beta(b); //this sets m_nonKolmogorov
+
+   std::vector<realT> b0 = m_beta_0;
+   config(b0, "atm.beta_0");
+   if(config.isSet("atm.beta_0")) beta_0(b0); //this sets m_nonKolmogorov
 
 }
 

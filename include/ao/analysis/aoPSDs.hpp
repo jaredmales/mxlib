@@ -169,6 +169,7 @@ public:
      */ 
    template< class psdParamsT >
    realT operator()( psdParamsT & par, ///< [in] gives the PSD parameters.
+                     size_t layer_i,
                      realT k,          ///< [in] is the spatial frequency in m^-1.
                      realT sec_zeta    ///< [in] is the secant of the zenith distance.
                    );
@@ -180,7 +181,8 @@ public:
      * \returns -1 if an error occurs.
      */    
    template< class psdParamsT >
-   realT operator()( psdParamsT & atm, ///< [in] gives the PSD parameters.
+   realT operator()( psdParamsT & par, ///< [in] gives the PSD parameters.
+                     size_t layer_i,
                      realT k,          ///< [in] is the spatial frequency in m^-1.
                      realT lambda,     ///< [in] is the observation wavelength in m
                      realT lambda_wfs, ///< [in] is the wavefront measurement wavelength in m
@@ -194,7 +196,7 @@ public:
      * \param atm gives the atmosphere parameters r_0 and L_0
      * \param d is the actuator spacing in m
      */    
-   realT fittingError(aoAtmosphere<realT> &atm, realT d);
+   //realT fittingError(aoAtmosphere<realT> &atm, realT d);
 
    template<typename iosT>
    iosT & dumpPSD(iosT & ios);
@@ -299,7 +301,8 @@ void vonKarmanSpectrum<realT>::D(realT nd /**< [in] the new diameter in m */)
 
 template< typename realT>
 template< class psdParamsT >
-realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the PSD parameters.
+realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, //< [in] gives the PSD parameters.
+                                            size_t layer_i,
                                             realT k, // [in] is the spatial frequency in m^-1.
                                             realT sec_zeta // [in] is the secant of the zenith distance.
                                           )
@@ -307,9 +310,9 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
    realT k02;
    
    ///\todo this needs to handle layers with different L_0
-   if(par.L_0(0) > 0)
+   if(par.L_0(layer_i) > 0)
    {
-      k02 = (1)/(par.L_0(0)*par.L_0(0));
+      k02 = (1)/(par.L_0(layer_i)*par.L_0(layer_i));
    }
    else k02 = 0;
 
@@ -345,19 +348,22 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
       Ptiptilt = 0;
    }
    
-   return par.beta()*pow(k*k+k02, -1*par.alpha()/2) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
+   return (par.beta(layer_i)*pow(k*k+k02, -1*par.alpha(layer_i)/2) + par.beta_0(layer_i) ) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
 }
 
 template< typename realT>
 template< class psdParamsT >
 realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the PSD parameters.
+                                            size_t layer_i,
                                             realT k, // [in] is the spatial frequency in m^-1.
-                                            realT lambda, // [in] is the observation wavelength in m
-                                            realT lambda_wfs, // [in] is the wavefront measurement wavelength in m
-                                            realT secZeta // [in] is the secant of the zenith distance
+                                            realT lambda, // [in] is the observation wavelength in m.  Not used if par.nonKolmogorov==true
+                                            realT lambda_wfs, // [in] is the wavefront measurement wavelength in m. Only used if m_scintillation==true.
+                                            realT secZeta // [in] is the secant of the zenith distance.
                                           )
 {
-   realT psd = operator()(par, k, secZeta)* pow( par.lam_0()/lambda, 2);
+   realT psd = operator()(par, layer_i, k, secZeta);
+   
+   if( par.nonKolmogorov() == false ) psd *= pow( par.lam_0()/lambda, 2);
    
    if(psd < 0) return -1;
    
@@ -391,7 +397,7 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
    
 }
 
-template< typename realT>
+/*template< typename realT>
 realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
 {
    realT k0;
@@ -402,7 +408,7 @@ realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
    else k0 = 0;
 
    return (math::pi<realT>() * math::six_fifths<realT>())* constants::a_PSD<realT>()/ pow(atm.r_0(), math::five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, math::five_sixths<realT>()));
-}
+}*/
 
 template< typename realT>
 template<typename iosT>
