@@ -321,6 +321,7 @@ public:
                        const std::string & psdDir,         ///< [in]  the directory containing the grid of PSDs.
                        int mnMax,                          ///< [in]  the maximum value of m and n in the grid.
                        int mnCon,                          ///< [in]  the maximum value of m and n which can be controlled.
+                       realT gfixed,                       ///< [in]  if \> 0 then this fixed gain is used in the SI.
                        int lpNc,                           ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
                        std::vector<realT> & mags,          ///< [in]  the guide star magnitudes to analyze for.
                        int lifetimeTrials = 0,             ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
@@ -774,6 +775,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        const std::string & psdDir,
                                                        int mnMax,
                                                        int mnCon,
+                                                       realT gfixed,
                                                        int lpNc,
                                                        std::vector<realT> & mags,
                                                        int lifetimeTrials,
@@ -886,7 +888,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
 
          std::vector<realT> tfreq; //The frequency scale of the PSDs
          std::vector<realT> tPSDp; //The open-loop turbulence PSD for a Fourier mode
-         
+
+         std::vector<realT> tfreqHF; //The above-Nyquist frequencies, saved if outputing the PSDS.
+         std::vector<realT> tPSDpHF; //The above-Nyquist component of the open-loop PSD, saved if outputing the PSDs.
+
          //**< Get the frequency grid, and nyquist limit it to f_s/2
          getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); //To get the freq grid
 
@@ -899,11 +904,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
          
          if(imax < tfreq.size()-1 && tfreq[imax] <= 0.5*fs*(1.0 + 1e-7)) ++imax;
          
+         if(writePSDs) tfreqHF.assign(tfreq.begin(), tfreq.end());
+
          tfreq.erase(tfreq.begin() + imax, tfreq.end());
          //**>
          
          std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
-         tPSDn.   resize(tfreq.size()); 
+         tPSDn.resize(tfreq.size()); 
 
          //**< Setup the controllers
          mx::AO::analysis::clAOLinearPredictor<realT> tflp;
@@ -990,6 +997,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                //Get integral of entire open-loop PSD
                var0 = sigproc::psdVar( tfreq, tPSDp);
                
+               if(writePSDs) tPSDpHF.assign(tPSDp.begin() + imax, tPSDp.end());
+
                //erase points above Nyquist limit
                tPSDp.erase(tPSDp.begin() + imax, tPSDp.end());
                
@@ -1015,8 +1024,16 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                if(inside)
                {
                   gmax = 0;
-                  gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
-               
+                  if(gfixed > 0)
+                  {
+                     gopt = gfixed;
+                     var = go_si.clVariance(tPSDp, tPSDn, gopt);
+                  }
+                  else 
+                  {
+                     gopt = go_si.optGainOpenLoop(var, tPSDp, tPSDn, gmax);
+                  }
+
                   var += limVar;
                   
                   if(doLP)
@@ -1189,7 +1206,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   std::string psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/";
                   psdOutFile +=  "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
                
-                  std::vector<realT> psdOut(tPSDp.size());
+                  std::vector<realT> psdOut(tPSDp.size()+tPSDpHF.size());
                
                   //Calculate the output PSD if gains are applied
                   if(gopt > 0)
@@ -1201,10 +1218,24 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                         go_si.clTF2( ETF, NTF, i,gopt);
                         psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
                      }
+
+                     for(size_t i=0; i< tPSDpHF.size(); ++i)
+                     {
+                        psdOut[tfreq.size() + i] = tPSDpHF[i];
+                     }
+
                   }
                   else //otherwise just copy
                   {
-                     psdOut = tPSDp;
+                     for(size_t i=0; i< tfreq.size(); ++i)
+                     {
+                        psdOut[i] = tPSDp[i];
+                     }
+
+                     for(size_t i=0; i< tPSDpHF.size(); ++i)
+                     {
+                        psdOut[tfreq.size() + i] = tPSDpHF[i];
+                     }
                   }
                
                   ioutils::writeBinVector( psdOutFile, psdOut);
@@ -1212,7 +1243,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                   if(i==0) //Write freq on the first one
                   {
                      psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_si/freq.binv";
-                     ioutils::writeBinVector(psdOutFile, tfreq);
+                     ioutils::writeBinVector(psdOutFile, tfreqHF);
                   }
                   
                   
@@ -1232,10 +1263,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                            go_lp.clTF2( ETF, NTF, i, gopt_lp);
                            psdOut[i] = tPSDp[i]*ETF + tPSDn[i]*NTF;
                         }
+                        for(size_t i=0; i< tPSDpHF.size(); ++i)
+                        {
+                           psdOut[tfreq.size() + i] = tPSDpHF[i];
+                        }
                      }
                      else //otherwise just copy
                      {
-                        psdOut = tPSDp;
+                        for(size_t i=0; i< tfreq.size(); ++i)
+                        {
+                           psdOut[i] = tPSDp[i];
+                        }
+
+                        for(size_t i=0; i< tPSDpHF.size(); ++i)
+                        {
+                           psdOut[tfreq.size() + i] = tPSDpHF[i];
+                        }
                      }
                
                      ioutils::writeBinVector( psdOutFile, psdOut);
@@ -1438,7 +1481,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD( const std::string & subDir,
    std::vector<realT> tPSDp; //The open-loop OPD PSD
    std::vector<realT> tPSDn; //The open-loop WFS noise PSD         
    std::vector<complexT> tETF;
-   std::vector<complexT> tNTF;
+   std::vector<complexT> tNTF;   
    
    if(getGridFreq( tfreq, psdDir) < 0)  return -1;
    
