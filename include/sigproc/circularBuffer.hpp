@@ -114,13 +114,13 @@ public:
      * be the same as maxEntries() until at least maxEntries
      * have been added.
      */ 
-   indexT size();
+   indexT size() const;
    
    /// Add the next entry to the circular buffer
    /** Adds the entry (will incur a deep copy) and updates
      * the wrapping system.
      */ 
-   void nextEntry( storedT & newEnt /**< [in] the new entry to add to the buffer*/);
+   void nextEntry( const storedT & newEnt /**< [in] the new entry to add to the buffer*/);
    
    /// Returns the index of the next entry
    /** This is particularly useful for accessing entries with the at() function
@@ -136,6 +136,8 @@ public:
      */ 
    storedT & operator[](indexT idx /**< [in] the index of the entry to access*/);
    
+   const storedT & operator[](indexT idx /**< [in] the index of the entry to access*/) const;
+
    /// Get the entry at a given index relative a fixed start entry 
    /** `idx=0` is the entry at startEntry. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
@@ -145,11 +147,30 @@ public:
    storedT & at( indexT refEntry, ///< [in] the entry to start counting from
                  indexT idx       ///< [in] the index of the entry to access
                );
+
+   /// Get the entry at a given index relative a fixed start entry, const version
+   /** `idx=0` is the entry at startEntry. `idx=1` is the one after that.
+     * I.e., this counts forward from the oldest data
+     * 
+     * \overload
+     * 
+     * \returns a const reference to the indicated entry in the circular buffer.
+     */
+   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                        indexT idx       ///< [in] the index of the entry to access
+                      ) const;
+
 private:
    derivedT & derived()
    {
       return *static_cast<derivedT *>(this);
    }
+
+   const derivedT & derived() const
+   {
+      return *static_cast<const derivedT *>(this);
+   }
+
 };
 
 template<class derivedT, typename storedT, typename indexT>
@@ -184,13 +205,13 @@ typename circularBufferBase<derivedT, storedT, indexT>::indexT circularBufferBas
 }
 
 template<class derivedT, typename storedT, typename indexT>
-typename circularBufferBase<derivedT, storedT, indexT>::indexT circularBufferBase<derivedT, storedT, indexT>::size()
+typename circularBufferBase<derivedT, storedT, indexT>::indexT circularBufferBase<derivedT, storedT, indexT>::size() const
 {
    return m_buffer.size();
 }
 
 template<class derivedT, typename storedT, typename indexT>
-void circularBufferBase<derivedT, storedT, indexT>::nextEntry(storedT & newEnt)
+void circularBufferBase<derivedT, storedT, indexT>::nextEntry(const storedT & newEnt)
 {
    if( m_buffer.size() < m_maxEntries )
    {
@@ -214,7 +235,13 @@ indexT circularBufferBase<derivedT, storedT, indexT>::nextEntry()
 }
 
 template<class derivedT, typename storedT, typename indexT>
-typename circularBufferBase<derivedT, storedT, indexT>::storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx)
+storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx)
+{
+   return derived().at(m_nextEntry, idx);
+}
+
+template<class derivedT, typename storedT, typename indexT>
+const storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx) const
 {
    return derived().at(m_nextEntry, idx);
 }
@@ -227,7 +254,15 @@ storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
    return derived().at(refEntry, idx);
 }
 
-/// Circular buffer which wraps with an if statement (branching) [slower, less memory]
+template<class derivedT, typename storedT, typename indexT>
+const storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
+                                                                   indexT idx
+                                                                 ) const
+{
+   return derived().at(refEntry, idx);
+}
+
+/// Circular buffer which wraps with an if statement (branching) [faster than mod, less memory than index]
 /**
   * \ingroup circular_buffer
   */
@@ -290,11 +325,24 @@ public:
                  indexT idx       ///< [in] the index of the entry to access
                )
    {
-      //Option 1: branch
       if(idx > this->m_wrapEntry) return this->m_buffer[refEntry + idx - this->m_buffer.size()];
       else return this->m_buffer[refEntry + idx];
    }
    
+   /// Interface implementation for entry access, const version
+   /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
+     * 
+     * \overload
+     * 
+     * \returns a const reference to the idx-th element
+     */
+   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                       indexT idx       ///< [in] the index of the entry to access
+                     ) const
+   {
+      if(idx > this->m_wrapEntry) return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+      else return this->m_buffer[refEntry + idx];
+   }
 
 };
 
@@ -355,6 +403,19 @@ public:
       return this->m_buffer[(refEntry + idx) % this->m_buffer.size()];
    }
    
+   /// Interface implementation for entry access, const version
+   /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
+     *
+     * \overload
+     * 
+     * \returns a const reference to the idx-th element
+     */
+   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                       indexT idx       ///< [in] the index of the entry to access
+                     ) const
+   {
+      return this->m_buffer[(refEntry + idx) % this->m_buffer.size()];
+   }
 
 };
 
@@ -427,6 +488,19 @@ public:
       return this->m_buffer[m_indices[refEntry + idx]];
    }
    
+   /// Interface implementation for entry access, const version
+   /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
+     *
+     * \overload
+     * 
+     * \returns a const reference to the idx-th element
+     */
+   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+                       indexT idx       ///< [in] the index of the entry to access
+                     ) const
+   {
+      return this->m_buffer[m_indices[refEntry + idx]];
+   }
 
 };
 
