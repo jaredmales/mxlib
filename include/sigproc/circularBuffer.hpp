@@ -67,7 +67,7 @@ namespace sigproc
   * 
   * \ingroup circular_buffer
   */ 
-template<typename _derivedT, typename _storedT, typename _indexT>
+template<typename _derivedT, typename _storedT, typename _indexT, bool _stats>
 class circularBufferBase
 {
 public:
@@ -77,6 +77,8 @@ public:
    typedef _storedT storedT; ///< The type stored in the circular buffer
    typedef _indexT indexT; ///< The index type, also used for sizes
    
+   constexpr static bool m_stats = _stats;
+
 protected:
       
    std::vector<storedT> m_buffer;  ///< The circular buffer storage
@@ -173,19 +175,19 @@ private:
 
 };
 
-template<class derivedT, typename storedT, typename indexT>
-circularBufferBase<derivedT, storedT, indexT>::circularBufferBase()
+template<class derivedT, typename storedT, typename indexT, bool stats>
+circularBufferBase<derivedT, storedT, indexT, stats>::circularBufferBase()
 {
 }
 
-template<class derivedT, typename storedT, typename indexT>
-circularBufferBase<derivedT, storedT, indexT>::circularBufferBase(indexT maxEnt)
+template<class derivedT, typename storedT, typename indexT, bool stats>
+circularBufferBase<derivedT, storedT, indexT, stats>::circularBufferBase(indexT maxEnt)
 {
    maxEntries(maxEnt);
 }
 
-template<class derivedT, typename storedT, typename indexT>
-void circularBufferBase<derivedT, storedT, indexT>::maxEntries(indexT maxEnt)
+template<class derivedT, typename storedT, typename indexT, bool stats>
+void circularBufferBase<derivedT, storedT, indexT, stats>::maxEntries(indexT maxEnt)
 {
    m_buffer.clear();
    m_nextEntry = 0;
@@ -198,20 +200,20 @@ void circularBufferBase<derivedT, storedT, indexT>::maxEntries(indexT maxEnt)
    
 }
 
-template<class derivedT, typename storedT, typename indexT>
-typename circularBufferBase<derivedT, storedT, indexT>::indexT circularBufferBase<derivedT, storedT, indexT>::maxEntries()
+template<class derivedT, typename storedT, typename indexT, bool stats>
+indexT circularBufferBase<derivedT, storedT, indexT, stats>::maxEntries()
 {
    return m_maxEntries;
 }
 
-template<class derivedT, typename storedT, typename indexT>
-typename circularBufferBase<derivedT, storedT, indexT>::indexT circularBufferBase<derivedT, storedT, indexT>::size() const
+template<class derivedT, typename storedT, typename indexT, bool stats>
+indexT circularBufferBase<derivedT, storedT, indexT, stats>::size() const
 {
    return m_buffer.size();
 }
 
-template<class derivedT, typename storedT, typename indexT>
-void circularBufferBase<derivedT, storedT, indexT>::nextEntry(const storedT & newEnt)
+template<class derivedT, typename storedT, typename indexT, bool stats>
+void circularBufferBase<derivedT, storedT, indexT, stats>::nextEntry(const storedT & newEnt)
 {
    if( m_buffer.size() < m_maxEntries )
    {
@@ -228,34 +230,34 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry(const storedT & ne
    }
 }
 
-template<class derivedT, typename storedT, typename indexT>
-indexT circularBufferBase<derivedT, storedT, indexT>::nextEntry()
+template<class derivedT, typename storedT, typename indexT, bool stats>
+indexT circularBufferBase<derivedT, storedT, indexT, stats>::nextEntry()
 {
    return m_nextEntry;
 }
 
-template<class derivedT, typename storedT, typename indexT>
-storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx)
+template<class derivedT, typename storedT, typename indexT, bool stats>
+storedT & circularBufferBase<derivedT, storedT, indexT, stats>::operator[](indexT idx)
 {
    return derived().at(m_nextEntry, idx);
 }
 
-template<class derivedT, typename storedT, typename indexT>
-const storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx) const
+template<class derivedT, typename storedT, typename indexT, bool stats>
+const storedT & circularBufferBase<derivedT, storedT, indexT, stats>::operator[](indexT idx) const
 {
    return derived().at(m_nextEntry, idx);
 }
 
-template<class derivedT, typename storedT, typename indexT>
-storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
+template<class derivedT, typename storedT, typename indexT, bool stats>
+storedT & circularBufferBase<derivedT, storedT, indexT, stats>::at( indexT refEntry,
                                                              indexT idx
                                                            )
 {
    return derived().at(refEntry, idx);
 }
 
-template<class derivedT, typename storedT, typename indexT>
-const storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
+template<class derivedT, typename storedT, typename indexT, bool stats>
+const storedT & circularBufferBase<derivedT, storedT, indexT, stats>::at( indexT refEntry,
                                                                    indexT idx
                                                                  ) const
 {
@@ -267,7 +269,7 @@ const storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEnt
   * \ingroup circular_buffer
   */
 template<typename _storedT, typename _indexT>
-class circularBufferBranch : public circularBufferBase<circularBufferBranch<_storedT,_indexT>, _storedT, _indexT>
+class circularBufferBranch : public circularBufferBase<circularBufferBranch<_storedT,_indexT>, _storedT, _indexT, false>
 {
 public:
    
@@ -280,7 +282,7 @@ protected:
 public:
    
    /// Default c'tor
-   circularBufferBranch() : circularBufferBase<circularBufferBranch,storedT,indexT>()
+   circularBufferBranch() : circularBufferBase<circularBufferBranch,storedT,indexT,false>()
    {
    }
    
@@ -288,7 +290,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferBranch(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferBranch,storedT,indexT>(maxEnt)
+   explicit circularBufferBranch(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferBranch,storedT,indexT,false>(maxEnt)
    {
    }
    
@@ -351,14 +353,14 @@ public:
   * \ingroup circular_buffer
   */
 template<typename _storedT, typename _indexT>
-class circularBufferMod : public circularBufferBase<circularBufferMod<_storedT,_indexT>, _storedT, _indexT>
+class circularBufferMod : public circularBufferBase<circularBufferMod<_storedT,_indexT>, _storedT, _indexT, false>
 {
 public:
    typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
    typedef _indexT indexT; ///< The index type, also used for sizes
    
    /// Default c'tor
-   circularBufferMod() : circularBufferBase<circularBufferMod,storedT,indexT>()
+   circularBufferMod() : circularBufferBase<circularBufferMod,storedT,indexT,false>()
    {
    }
    
@@ -366,7 +368,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferMod(indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferMod,storedT,indexT>(maxEnt)
+   explicit circularBufferMod(indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferMod,storedT,indexT,false>(maxEnt)
    {
    }
    
@@ -424,7 +426,7 @@ public:
   * \ingroup circular_buffer
   */
 template<typename _storedT, typename _indexT>
-class circularBufferIndex : public circularBufferBase<circularBufferIndex<_storedT,_indexT>, _storedT, _indexT>
+class circularBufferIndex : public circularBufferBase<circularBufferIndex<_storedT,_indexT>, _storedT, _indexT, false>
 {
 public:
    typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
@@ -437,7 +439,7 @@ protected:
 public:
    
    /// Default c'tor
-   circularBufferIndex() : circularBufferBase<circularBufferIndex,storedT,indexT>()
+   circularBufferIndex() : circularBufferBase<circularBufferIndex,storedT,indexT,false>()
    {
    }
    
@@ -445,7 +447,7 @@ public:
    /** Sets the maximum size of the buffer.  Note that this will not be the size until 
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferIndex(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferIndex,storedT,indexT>(maxEnt)
+   explicit circularBufferIndex(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferIndex,storedT,indexT,false>(maxEnt)
    {
    }
    

@@ -461,13 +461,13 @@ template<typename realT>
 void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
 {
 
-   static int Npix = _pupil->sum();
+   //static int Npix = _pupil->sum();
 
    shift( wf.phase, _nWf * _timeStep);
    ++_nWf;
 
    //wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
-
+   wf.phase *= *_pupil;
    wf.amplitude = _pixVal*(*_pupil);
 }
 

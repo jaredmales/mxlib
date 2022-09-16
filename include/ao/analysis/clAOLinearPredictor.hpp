@@ -142,21 +142,21 @@ struct clAOLinearPredictor
          last_var = min_var;
       }
 
+      //auto it = std::max_element(std::begin(PSDt), std::end(PSDt));
+      realT psdReg = PSDt[0];//*it/10;
+
       //Test from sc0 to max_sc in steps of precision
       for(realT sc = sc0; sc <= max_sc; sc += precision)
       {
-         if( calcCoefficients(PSDt, PSDn, PSDt[0]*pow(10, -sc/10), Nc) < 0) return -1;
+         if( calcCoefficients(PSDt, PSDn, psdReg*pow(10, -sc/10), Nc) < 0) return -1;
    
          go_lp.a(lp._c);
-         //go_lp.a(std::vector<realT>({1}));
          go_lp.b(lp._c);
-         //go_lp.b(std::vector<realT>({lp._c(0,0)}));
          
          realT ll = 0, ul = 0;
          gmax_lp = go_lp.maxStableGain(ll,ul);
          if(gmax_lp> m_gmax_lp) gmax_lp = m_gmax_lp;
          gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
-         //var_lp = go_lp.clVariance(PSDt, PSDn, gopt_lp);
       
          if(printout)
          {

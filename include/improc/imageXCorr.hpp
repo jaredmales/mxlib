@@ -33,7 +33,7 @@ namespace mx
 namespace improc
 {
    
-enum class xcorrPeakMethod{ centerOfLight, gaussFit, interpPeak };
+enum class xcorrPeakMethod{ centerOfLight, gaussFit, interpPeak, none };
 
    
 } //improc

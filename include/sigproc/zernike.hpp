@@ -544,7 +544,7 @@ int zernikeBasis( cubeT & cube,                    ///< [in.out] the pre-allocat
   * \tparam realT is the floating point type used for arithmetic
   */
 template<typename realT>
-realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency
+realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency. This is in the \cite noll_1976 convention of cycles-per-radius.
                     realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                     int n,     ///< [in] the Zernike polynomial n
                     int m      ///< [in] the Zernike polynomial m
@@ -602,7 +602,7 @@ __float128 zernikeQNorm<__float128>(__float128 k, __float128 phi, int n, int m);
   * 
   */
 template<typename realT>
-realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency
+realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency. This is in the \cite noll_1976 convention of cycles-per-radius.
                     realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                     int j      ///< [in] the Zernike polynomial index j (Noll convention)
                   )
@@ -626,7 +626,7 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
   */
 template<typename arrayT>
 int zernikeQNorm( arrayT & arr, ///< [out] the allocated array. The rows() and cols() members are used to size the transform.
-                  arrayT & k,   ///< [in] the normalized spatial frequency magnitude at each pixel
+                  arrayT & k,   ///< [in] the normalized spatial frequency magnitude at each pixel.  This is in the \cite noll_1976 convention of cycles-per-radius.
                   arrayT & phi, ///< [in] the spatial frequency angle at each pixel
                   int j         ///< [in] the polynomial index in the Noll convention \cite noll_1976
                 )

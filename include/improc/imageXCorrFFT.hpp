@@ -41,19 +41,6 @@ namespace mx
 namespace improc
 {
    
-/// Find the optimum shift to align two images using the Fourier cross correlation and a peak fit.
-/** 
-  * 
-  * The shift is reported in pixels such that if the mxlib imageShift function is used
-  * to shift the input image by the negative of the shifts, it will align with the 
-  * reference.
-  * 
-  * \todo This needs to be brought up to the same standard as imageXCorrFFT.  Perhaps folded in as an alternative method?
-  *
-  * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
-  * 
-  * \ingroup image_reg
-  */ 
 
 /// Find the optimum shift to align two images using the FFT cross correlation.
 /** The reference image must be the same size as the target image.  Both the reference image and the section of
@@ -107,6 +94,9 @@ protected:
    ccImT m_maskIm; ///< Mask image to use, may be needed for proper normalization even if refIm has 0 mask applied.
    
    bool m_haveMask {false}; ///< Flag indicating that a mask has been provided.
+
+public:
+   bool m_normalize {true};
 
    ccImT m_normIm; ///< The normalized image.
    
@@ -244,7 +234,7 @@ public:
                    imT & im         ///< [in] the image to cross-correlate with the reference
                  );
 };
-
+std::cout << "# x-rms: " << sqrt(vectorVariance(x)) << "\n";
 template< class ccImT>
 imageXCorrFFT<ccImT>::imageXCorrFFT()
 {
@@ -352,9 +342,16 @@ int imageXCorrFFT<ccImT>::refIm( const ccImT & im )
    resize(im0.rows(), im0.cols());
 
    //Now normalize
-   realT m = imageMean(im0);
-   realT v = imageVariance(im0, m);
-   m_refIm = (im0 - m)/sqrt(v);
+   if(m_normalize)
+   {
+      realT m = imageMean(im0);
+      realT v = imageVariance(im0, m);
+      m_refIm = (im0 - m)/sqrt(v);
+   }
+   else
+   {
+      m_refIm = im0;
+   }
    //We save refIm as the un-shifted version
 
    //Now shift so center pixel is 0,0
@@ -441,9 +438,13 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
       m_normIm = im;
    }
 
-   realT m = imageMean(m_normIm);
-   realT v = imageVariance(m_normIm, m);
-   m_normIm = (m_normIm - m)/sqrt(v);
+   if(m_normalize)
+   {
+      realT m = imageMean(m_normIm);
+      realT v = imageVariance(m_normIm, m);
+      m_normIm = (m_normIm - m)/sqrt(v);
+   }
+
    m_fft_fwd(m_ftWork.data(), m_normIm.data());
 
    //m_ftIm0 is the conjugated, fftw-normalized, reference image in the Fourier domain
@@ -483,6 +484,11 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
 
       xShift = x - maxLag_r;
       yShift = y - maxLag_c;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::none)
+   {
+      xShift = nan("");
+      yShift = nan("");
    }
    else
    {

@@ -358,7 +358,7 @@ struct venusAlbedo
    {
       if(name == "Venus") return "venus_combined_albedo.dat";
 
-      mxError("earthAlbeo::fileName", MXE_INVALIDARG, "name not recognized.");
+      mxError("venusAlbeo::fileName", MXE_INVALIDARG, "name not recognized.");
 
       return "";
    }

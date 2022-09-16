@@ -73,6 +73,7 @@ public:
    /// Convert the inputs to their log10 values, and construct the interpolator.
    /**
      * \throws mx::err::sizeerr if vectors are not the same size.
+     * \throws mx::err::invalidarg if any of the values are \<= 0
      */ 
    void setup( const std::vector<realT> & x, /// [in] the input x-axis
                const std::vector<realT> & y  /// [in] the input y-axis
@@ -88,8 +89,20 @@ public:
 
       for(size_t n = 0; n < x.size(); ++n)
       {
+         if(x[n] <= 0)
+         {
+            mxThrowException(err::invalidarg, "radprofIntegral", "x values must > 0");
+         }
+
+         if(y[n] <= 0)
+         {
+            mxThrowException(err::invalidarg, "radprofIntegral", "y values must > 0");
+         }
+
+         
          m_logx[n] = log10(x[n]);
          m_logy[n] = log10(y[n]);
+         
       }
 
       m_interp.setup(m_logx, m_logy);

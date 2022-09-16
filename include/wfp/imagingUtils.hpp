@@ -230,7 +230,7 @@ void makeComplexPupil( arrayOutT & complexWavefront,
    {
       for(int j=0; j < realAmplitude.rows(); ++j)
       {
-         complexWavefront(bl+i, bl+j) = realAmplitude(i,j)*exp(  (typename arrayOutT::Scalar(0,1)) * realPhase(i,j)); 
+         complexWavefront(bl+j, bl+i) = realAmplitude(j,i)*exp(  (typename arrayOutT::Scalar(0,1)) * realPhase(j,i)); 
       }
    }
 }

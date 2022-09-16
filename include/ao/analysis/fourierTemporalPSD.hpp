@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2016-2022 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -700,7 +700,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
    sigproc::makeFourierModeFreqs_Rect(spf, 2*mnMax);
 
    //Calculate number of samples, and make sure we get to at least maxFreq
-   int N = (int) maxFreq/dFreq;
+   int N = (int) (maxFreq/dFreq);
    if( N * dFreq < maxFreq) N += 1;
 
 

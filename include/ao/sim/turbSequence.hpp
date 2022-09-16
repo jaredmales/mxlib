@@ -15,6 +15,7 @@
 
 #include "../../ioutils/fileUtils.hpp"
 #include "../../ioutils/fits/fitsFile.hpp"
+#include "../../improc/eigenCube.hpp"
 
 #include "wavefront.hpp"
 
