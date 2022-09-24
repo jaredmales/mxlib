@@ -134,11 +134,10 @@ public:
      */
    long naxes( int dim /**< [in] the dimension */);
 
-
-
-   ///Open the file
-   /** File name needs to already have been set.
-     *
+   /// Open the file and gets its dimensions.
+   /** File name needs to already have been set.  
+     * If the file has already been opened, this returns immediately with no re-open.
+     * 
      * \returns 0 on success
      * \returns -1 on error
      */
@@ -587,6 +586,11 @@ long fitsFile<dataT>::naxes( int dim)
 template<typename dataT>
 int fitsFile<dataT>::open()
 {
+   if(m_isOpen) //no-op
+   {
+      return 0;
+   }
+
    int fstatus = 0;
 
    fits_open_file(&m_fptr, m_fileName.c_str(), READONLY, &fstatus);
@@ -639,15 +643,12 @@ int fitsFile<dataT>::open(const std::string & fname)
 template<typename dataT>
 int fitsFile<dataT>::close()
 {
-   //int stat;
-   int fstatus = 0;
-
    if(!m_isOpen)
    {
       return 0; //No error.
    }
 
-   //stat =
+   int fstatus = 0;
    fits_close_file(m_fptr, &fstatus);
 
    if (fstatus)
