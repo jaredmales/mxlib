@@ -81,7 +81,7 @@ MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT
 template<>
 MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::complex<float> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   cpotrf_(&UPLO, &N, A, &LDA, &INFO
+   cpotrf_(&UPLO, &N, (float _Complex*)A, &LDA, &INFO
    #ifdef LAPACK_FORTRAN_STRLEN_END
    , 1
    #endif
@@ -93,7 +93,7 @@ MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::comple
 template<>
 MXLAPACK_INT potrf<std::complex<double>> ( char UPLO, MXLAPACK_INT N, std::complex<double> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   zpotrf_(&UPLO, &N, A, &LDA, &INFO
+   zpotrf_(&UPLO, &N, (double _Complex*)A, &LDA, &INFO
    #ifdef LAPACK_FORTRAN_STRLEN_END
    , 1
    #endif
