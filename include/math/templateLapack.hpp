@@ -33,6 +33,9 @@ extern "C"
 {
 #ifdef MXLIB_MKL
 
+   #define MKL_Complex8 float _Complex
+   #define MKL_Complex16 double _Complex
+
    #include <mkl.h>
 
 #else
