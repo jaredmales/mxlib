@@ -36,20 +36,32 @@ namespace math
 template<>
 float lamch<float>(char CMACH)
 { 
-   return  slamch_ (&CMACH);
+   return  slamch_ (&CMACH
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
 }
 
 // Double specialization of lamch, a wrapper for Lapack DLAMCH
 template<>
 double lamch<double>(char CMACH)
 { 
-   return  dlamch_ (&CMACH);
+   return  dlamch_ (&CMACH
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
 }
 
 template<>
 MXLAPACK_INT potrf<float> ( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   spotrf_(&UPLO, &N, A, &LDA, &INFO);
+   spotrf_(&UPLO, &N, A, &LDA, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -57,7 +69,11 @@ MXLAPACK_INT potrf<float> ( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT L
 template<>
 MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   dpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   dpotrf_(&UPLO, &N, A, &LDA, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -65,7 +81,13 @@ MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT
 template<>
 MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::complex<float> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   cpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   cpotrf_(&UPLO, &N,
+   (float _Complex*)A,
+   &LDA, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -73,7 +95,13 @@ MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::comple
 template<>
 MXLAPACK_INT potrf<std::complex<double>> ( char UPLO, MXLAPACK_INT N, std::complex<double> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO )
 {
-   zpotrf_(&UPLO, &N, A, &LDA, &INFO);
+   zpotrf_(&UPLO, &N,
+   (double _Complex*)A,
+   &LDA, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -82,7 +110,11 @@ template<>
 MXLAPACK_INT sytrd<float>( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float *D, float *E, float *TAU, float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
 {
   
-   ssytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
+   ssytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -91,7 +123,11 @@ template<>
 MXLAPACK_INT sytrd<double>( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, double *D, double *E, double *TAU, double *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO)
 {
   
-   dsytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO);
+   dsytrd_(&UPLO, &N, A, &LDA, D, E, TAU, WORK, &LWORK, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -107,7 +143,11 @@ MXLAPACK_INT syevr<float> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, fl
    
    ssyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
            &IL, &IU, &ABSTOL, M, W, Z, &LDZ, ISUPPZ,
-           WORK, &LWORK, IWORK, &LIWORK, &INFO);
+           WORK, &LWORK, IWORK, &LIWORK, &INFO
+           #ifdef LAPACK_FORTRAN_STRLEN_END
+           , 1, 1, 1
+           #endif
+           );
 
    return  INFO;
 }
@@ -123,7 +163,11 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
    
    dsyevr_ (&JOBZ, &RANGE, &UPLO, &N, A, &LDA, &VL, &VU,
            &IL, &IU, &ABSTOL, M, W, Z, &LDZ, ISUPPZ,
-           WORK, &LWORK, IWORK, &LIWORK, &INFO);
+           WORK, &LWORK, IWORK, &LIWORK, &INFO
+           #ifdef LAPACK_FORTRAN_STRLEN_END
+           , 1, 1, 1
+           #endif
+   );
 
    return  INFO;
 }
@@ -135,7 +179,11 @@ MXLAPACK_INT gesvd<float>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N
 {
    MXLAPACK_INT INFO;
    
-   sgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO);
+   sgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1, 1
+   #endif
+   );
    
    return INFO;
 }
@@ -147,7 +195,11 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
 {
    MXLAPACK_INT INFO;
    
-   dgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO);
+   dgesvd_(&JOBU, &JOBVT, &M, &N, A, &LDA, S, U, &LDU,VT, &LDVT, WORK, &LWORK, &INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1, 1
+   #endif
+   );
    
    return INFO;
 }
@@ -156,7 +208,11 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
 template<>
 MXLAPACK_INT gesdd<float>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, float *S, float * U, MXLAPACK_INT LDU, float * VT, MXLAPACK_INT LDVT, float *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
 {
-   sgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
+   sgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
@@ -165,7 +221,11 @@ MXLAPACK_INT gesdd<float>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, float *A, M
 template<>
 MXLAPACK_INT gesdd<double>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, double *S, double * U, MXLAPACK_INT LDU, double * VT, MXLAPACK_INT LDVT, double *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
 {
-   dgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO);
+   dgesdd_(&JOBZ,&M,&N,A,&LDA,S,U,&LDU,VT,&LDVT,WORK,&LWORK,IWORK,&INFO
+   #ifdef LAPACK_FORTRAN_STRLEN_END
+   , 1
+   #endif
+   );
    
    return INFO;
 }
