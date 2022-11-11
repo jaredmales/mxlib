@@ -462,6 +462,11 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenCube<realT> & ims,
       //Read the scale file and load it into a map
       if( ioutils::readColumns(m_fakeScaleFileName, sfileNames, imS) < 0) return -1;
       
+      if(sfileNames.size() != imS.size())
+      {
+         std::cerr << "fake scale file must be two columns of: fileName scale\n";
+         exit(-1);
+      }
       std::map<std::string, realT> scales;     
       for(size_t i=0;i<sfileNames.size();++i) scales[ioutils::pathFilename(sfileNames[i].c_str())] = imS[i];
       
@@ -523,7 +528,6 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
                                                         realT RDISepScale
                                                       )
 {
-
    //Check for correct sizing
    if( (fakePSF.rows() < ims.rows() && fakePSF.cols() >= ims.cols()) || 
                         (fakePSF.rows() >= ims.rows() && fakePSF.cols() < ims.cols()))
@@ -547,9 +551,15 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
       fakePSF = cfake;
    }
 
+   if(fakePSF.rows() != ims.rows() || fakePSF.cols() != ims.cols())
+   {
+      mxThrowException(err::sizeerr, "ADIobservation::injectFake", "fake PSF has different dimensions and can't be sized properly (is it even in rows and cols?)");
+   }
+   
    /*** Now shift to the separation and PA, scale, apply contrast, and inject ***/
    //allocate shifted fake psf
    eigenImageT shiftFake(fakePSF.rows(), fakePSF.cols());
+   
    
    realT ang, dx, dy;
 
@@ -557,7 +567,8 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT & fakePSF,
       
    dx = sep * RDISepScale * sin(ang);
    dy = sep * RDISepScale * cos(ang);
-               
+
+   
    imageShift(shiftFake, fakePSF, dx, dy, cubicConvolTransform<realT>());
    
    ims.image(image_i) = ims.image(image_i) + shiftFake*scale*RDIFluxScale*contrast;

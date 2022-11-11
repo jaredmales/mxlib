@@ -510,7 +510,20 @@ std::string fitsHeaderCard::value<std::string>()
       convertToString();
    }
 
-   return m_valueStr.str();
+   //Strip ' from beginning and end if present
+   std::string str = m_valueStr.str();
+
+   if(str[0] == '\'')
+   {
+      str.erase(0,1);
+   }
+   
+   if(str[str.size()-1] == '\'')
+   {
+      str.erase(str.size()-1,1);
+   }
+
+   return str;
 }
 
 template<>
@@ -814,7 +827,21 @@ std::complex<double> fitsHeaderCard::complexDouble()
 
 void fitsHeaderCard::value(const char * v)
 {
-   m_valueStr.str(v);
+   //Strip ' from beginning and end if present
+   std::string str = v;
+
+   if(str[0] == '\'')
+   {
+      str.erase(0,1);
+   }
+   
+   if(str[str.size()-1] == '\'')
+   {
+      str.erase(str.size()-1,1);
+   }
+
+   m_valueStr.str(str);
+
    m_valueGood = false;
    m_valueStrGood = true;
    m_type = fitsType<char *>();
@@ -822,6 +849,19 @@ void fitsHeaderCard::value(const char * v)
 
 void fitsHeaderCard::value(const std::string & v)
 {
+   //Strip ' from beginning and end if present
+   std::string str = v;
+
+   if(str[0] == '\'')
+   {
+      str.erase(0,1);
+   }
+   
+   if(str[str.size()-1] == '\'')
+   {
+      str.erase(str.size()-1,1);
+   }
+
    m_valueStr.str(v);
    m_valueGood = false;
    m_valueStrGood = true;
