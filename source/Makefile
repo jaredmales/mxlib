@@ -105,9 +105,9 @@ sys/timeUtils.o: ../include/sys/timeUtils.hpp
 libmxlib.$(LIB_SUFFIX): sofa $(OBJS) $(CUDA_OBJS)
 	$(MAKE) -C vendor/levmar-2.6/
 ifeq ($(UNAME),Darwin)
-	$(LINK.o) -dynamiclib -install_name @rpath/libmxlib.dylib -rpath @loader_path $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o libmxlib.dylib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+	$(LINK.o) -dynamiclib -install_name @rpath/libmxlib.dylib -rpath @loader_path $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) $(SOFA_PATH)/*.o -o libmxlib.dylib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) $(SOFA_PATH)/libsofa_c.a
 else
-	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
+	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) $(SOFA_PATH)/*.o -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) 
 endif
 
 sofa:
