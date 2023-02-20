@@ -137,7 +137,7 @@ public:
      * \param nLoops is the total number of loops.
      * \param output is the instance of type outputT to which the output will be sent.
      */ 
-   ompLoopWatcher( int nLoops, 
+   ompLoopWatcher( size_t nLoops, 
                    outputT & output )
    {
       _output = &output;
