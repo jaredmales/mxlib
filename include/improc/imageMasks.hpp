@@ -28,6 +28,7 @@
 #define improc_imageMasks_hpp
 
 #include "../math/constants.hpp"
+#include "../math/geo.hpp"
 
 #include "eigenImage.hpp"
 #include "imageTransforms.hpp"
@@ -94,36 +95,29 @@ void radiusImage( eigenT & m,                     ///< [out] the allocated radiu
    radiusImage(m, xc, yc, scale);
 }
 
-
-
-
 /// Fills in the cells of an Eigen-like 2D Array with their angle relative to the center
 /** \ingroup image_masks
   *
+  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all arithmetic.
   * \tparam eigenT is an Eigen-like 2D array type
   */  
-template<class eigenT> 
-void angleImage( eigenT & m,                                                             ///< [out]  the allocated angle array.  Will be filled in with angle values.
-                 typename eigenT::Scalar xc,                                             ///< [in] the x center
-                 typename eigenT::Scalar yc,                                             ///< [in] the y center
-                 typename eigenT::Scalar scale=math::rad2deg<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
+template<class angleT, class eigenT> 
+void angleImage( eigenT & m,                ///< [out]  the allocated angle array.  Will be filled in with angle values.
+                 typename angleT::realT xc, ///< [in] the x center
+                 typename angleT::realT yc  ///< [in] the y center
                )
 {
-   typedef typename eigenT::Scalar arithT;
-   arithT f_x, f_y;
-
-   size_t dim1 = m.rows();
-   size_t dim2 = m.cols();
+   typedef typename angleT::realT realT;
    
-   for(size_t i=0; i < dim1; i++)
+   for(size_t j=0; j < m.cols(); j++)
    {
-      f_x = (i-xc);
-      
-      for(size_t j=0; j < dim2; j++)
-      {
-         f_y = (j-yc);
+      realT f_y = ( static_cast<realT>(j)-yc);
          
-         m(i,j) = fmod(atan2(f_y, f_x) + math::two_pi<typename eigenT::Scalar>(), math::two_pi<typename eigenT::Scalar>())  *scale;
+      for(size_t i=0; i < m.rows(); i++)
+      {
+         realT f_x = ( static_cast<realT>(i)-xc);
+      
+         m(i,j) = fmod(atan2(f_y, f_x) + math::two_pi<realT>(), math::two_pi<realT>()) * angleT::scale;
       }
    }
    
@@ -134,55 +128,51 @@ void angleImage( eigenT & m,                                                    
   *
   * The center is @f$ (x_c, y_c) = (0.5*(dim_1-1), 0.5*(dim_2 -1)) @f$.
   *
+  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all arithmetic.
   * \tparam eigenT is an Eigen-like 2D array type
   */  
-template<class eigenT> 
-void angleImage( eigenT & m, ///< [out] the allocated angle array.  Will be filled in with angle values.
-                 typename eigenT::Scalar scale = math::rad2deg<typename eigenT::Scalar>() ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
-               )
+template<class angleT, class eigenT> 
+void angleImage( eigenT & m /** < [out] the allocated angle array.  Will be filled in with angle values. */)
 {
-   typedef typename eigenT::Scalar arithT;
+   typedef typename angleT::realT realT;
+      
+   realT xc = 0.5*(m.rows()-1);
+   realT yc = 0.5*(m.cols()-1);
    
-   arithT xc, yc;
-   
-   xc = 0.5*(m.rows()-1);
-   yc = 0.5*(m.cols()-1);
-   
-   angleImage(m, xc, yc, scale);
-  
+   angleImage<realT>(m, xc, yc);
 }
 
 
 /// Fills in the cells of Eigen-like arrays with their radius amd angle relative to the center
 /** \ingroup image_masks
   *
-  * \tparam eigenT is an Eigen-like 2D array type
+  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all arithmetic.
+  * \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler.
+  * \tparam eigenT2 is an Eigen-like 2D array type.  Should be resolved by compiler.
+  * 
   */  
-template<class eigenT> 
-void radAngImage( eigenT & rIm, ///< [out] the allocated radius array, will be filled in with radius values.
-                  eigenT & qIm, ///< [out] the allocated angle array, same size as rIm.  Will be filled in with angle values.
-                  typename eigenT::Scalar xc, ///< [in] the x center
-                  typename eigenT::Scalar yc, ///< [in] the y center
-                  typename eigenT::Scalar rscale = 1, ///< [in] [optional] a scaling to apply to each radius value. Default is 1.0.
-                  typename eigenT::Scalar qscale= math::rad2deg<typename eigenT::Scalar>()  ///< [in] [optional] a scaling to apply to each angle value. Default converts to degrees, set to 1 for radians.
+template<class angleT, class eigenT1, class eigenT2> 
+void radAngImage( eigenT1 & rIm,                    ///< [out] the allocated radius array, will be filled in with radius values.
+                  eigenT2 & qIm,                    ///< [out] the angle array, will be re-sized to match rIm.  Will be filled in with angle values.
+                  typename angleT::realT xc,        ///< [in] the x center
+                  typename angleT::realT yc,        ///< [in] the y center
+                  typename angleT::realT rscale = 1 ///< [in] [optional] a scaling to apply to each radius value. Default is 1.0.
                 )
 {
-   typedef typename eigenT::Scalar arithT;
+   typedef typename angleT::realT realT;
    
-   arithT f_x, f_y;
+   qIm.resize(rIm.rows(), rIm.cols());
 
-   size_t dim1 = rIm.rows();
-   size_t dim2 = rIm.cols();
-   
-   for(size_t i=0; i < dim1; ++i)
+   for(int cc=0; cc < rIm.cols(); ++cc)
    {
-      f_x = ( ((arithT)i)-xc);
+      realT f_y = ( (static_cast<realT>(cc))-yc);
       
-      for(size_t j=0; j < dim2; ++j)
+      for(int rr=0; rr < rIm.rows(); ++rr)
       {
-         f_y = (((arithT)j)-yc);
-         rIm(i,j) = std::sqrt( f_x*f_x + f_y*f_y)*rscale;
-         qIm(i,j) = fmod(atan2(f_y, f_x) + math::two_pi<arithT>(), math::two_pi<arithT>()) *qscale;
+         realT f_x = ((static_cast<realT>(rr))-xc);
+
+         rIm(rr,cc) = std::sqrt( f_x*f_x + f_y*f_y)*rscale;
+         qIm(rr,cc) = fmod(atan2(f_y, f_x) + math::two_pi<realT>(), math::two_pi<realT>()) * angleT::scale;
       }
    }
 }
@@ -193,59 +183,75 @@ void radAngImage( eigenT & rIm, ///< [out] the allocated radius array, will be f
 /**
   * \ingroup image_masks
   * 
-  * \tparam eigenT is an Eigen-like 2D array type
+  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all arithmetic.
+  * \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler.
+  * \tparam eigenT2 is an Eigen-like 2D array type.  Should be resolved by compiler.
+  * \tparam eigenT3 is an Eigen-like 2D array type.  Should be resolved by compiler.
   * 
   * \returns a vector containing the 1D indices of the region defined by the input parameters
   */
-template<typename eigenT>
-std::vector<size_t> annulusIndices( eigenT &rIm,  ///< [in] a radius image of the type produced by \ref radiusImage
-                                    eigenT &qIm,  ///< [in] an angle image of the type produce by \ref angleImage
-                                    typename eigenT::Scalar xcen,  ///< [in] the x center of the image
-                                    typename eigenT::Scalar ycen,  ///< [in] the y center of the image
-                                    typename eigenT::Scalar min_r, ///< [in] the minimum radius of the region
-                                    typename eigenT::Scalar max_r, ///< [in] the maximum radius of the region
-                                    typename eigenT::Scalar min_q, ///< [in] the minimum angle of the region
-                                    typename eigenT::Scalar max_q, ///< [in] the maximum angle of the region
-                                    eigenT * mask = 0 ///< [in] [optional] pointer to a mask image, only pixels of value 1 are included in the indices.
+template<typename angleT, typename eigenT1, typename eigenT2, typename eigenT3=eigenT1>
+std::vector<size_t> annulusIndices( const eigenT1 & rIm,  ///< [in] a radius image of the type produced by \ref radiusImage
+                                    const eigenT2 & qIm,  ///< [in] an angle image of the type produce by \ref angleImage
+                                    typename angleT::realT xcen,  ///< [in] the x center of the image
+                                    typename angleT::realT ycen,  ///< [in] the y center of the image
+                                    typename angleT::realT min_r, ///< [in] the minimum radius of the region
+                                    typename angleT::realT max_r, ///< [in] the maximum radius of the region
+                                    typename angleT::realT min_q, ///< [in] the minimum angle of the region. 
+                                    typename angleT::realT max_q, ///< [in] the maximum angle of the region. 
+                                    eigenT3 * mask = 0 ///< [in] [optional] pointer to a mask image, only pixels of value 1 are included in the indices.
                                   )
 {
 
    std::vector<size_t> idx;
    
-   int min_x = -max_r, max_x = max_r, min_y = -max_r, max_y = max_r;
-
-   if(max_q == 0) max_q = 360.;
-   
-   size_t msize = ((math::pi<double>()*(max_r*max_r - min_r*min_r)) * (max_q-min_q)/360.) *1.01 + 1;
-   
-   //This was tested, this is slightly faster than resize with an erase.
-   idx.reserve(msize);
+   int min_x = -max_r;
+   int max_x = max_r; 
+   int min_y = -max_r;
+   int max_y = max_r;
    
    int x0 = xcen+min_x;
    if(x0 < 0) x0 = 0;
+
    int x1 = xcen+max_x+1;
    if(x1 > rIm.rows()) x1 = rIm.rows();
+
    int y0 = ycen+min_y;
    if(y0 < 0) y0 = 0;
+
    int y1 = ycen+max_y+1;
    if(y1 > rIm.cols()) y1 = rIm.cols();
    
-   for(int i = x0; i< x1; ++i)
+   
+   //Normalize the angles by mod
+   min_q = math::angleMod<angleT>(min_q);
+   //If max_q is exactly 360/2pi (to within a tol of 100*eps) we don't mod, other mod.
+   if( fabs(max_q - angleT::full) > 100*std::numeric_limits<typename angleT::realT>::epsilon()) max_q = math::angleMod<angleT>(max_q);
+
+   //Find the mid-point to enable sectors wider than 180.
+   typename angleT::realT mid_q;
+   if(min_q <= max_q) mid_q = 0.5*(min_q + max_q);
+   else mid_q = 0.5*((min_q - angleT::full) + max_q);
+   
+   std::cerr << min_q << " " << mid_q << " " << max_q << "\n";
+   for(int j = y0; j < y1; ++j)
    {
-      for(int j = y0; j< y1; ++j)
+      for(int i = x0; i < x1; ++i)
       { 
-         if(rIm(i,j) >= min_r && rIm(i,j) < max_r && qIm(i,j) >= min_q && qIm(i,j) < max_q) 
+         if(rIm(i,j) < min_r) continue;
+         if(rIm(i,j) >= max_r) continue;
+
+         if( !( (math::angleDiff<angleT>(min_q,qIm(i,j)) >= 0 && math::angleDiff<angleT>(qIm(i,j),mid_q) > 0) ||
+              (math::angleDiff<angleT>(mid_q,qIm(i,j)) >= 0 && math::angleDiff<angleT>(qIm(i,j),max_q) > 0)) ) continue;
+
+         if( mask )
          {
-            if( mask )
-            {
-               if( (*mask)(i,j) == 0) continue;
-            }
-            
-            idx.push_back(j*rIm.cols() + i);
+            if( (*mask)(i,j) == 0) continue;
          }
+            
+         idx.push_back(j*rIm.rows() + i);
       }
    }
-   
    
    return idx;
 }

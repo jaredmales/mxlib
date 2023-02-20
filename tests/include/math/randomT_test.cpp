@@ -15,7 +15,7 @@
   * 
   * \anchor tests_math_randomT_basic
   */
-SCENARIO( "testing randomT basics with std", "[math::randomT]" ) 
+SCENARIO( "Verify compilation and basic operation of randomT with std::distributions", "[math::randomT]" ) 
 {
    GIVEN("a uniform distribution is desired")
    {
@@ -103,9 +103,9 @@ SCENARIO( "testing randomT basics with std", "[math::randomT]" )
   * 
   * \anchor tests_math_randomT_basic_laplace
   */
-SCENARIO( "testing randomT with lapace basics", "[math::laplace_distribution]" ) 
+SCENARIO( "Verify compilation and basic operation of randomT with the Lapace distribution", "[math::laplace_distribution]" ) 
 {
-   GIVEN("a uniform distribution is desired")
+   GIVEN("a laplace distribution is desired")
    {
       WHEN("two double random numbers from same generator requested")
       {

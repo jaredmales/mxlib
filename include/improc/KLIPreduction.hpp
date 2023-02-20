@@ -500,7 +500,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    eigenImageT rIm(this->m_Nrows,this->m_Ncols);
    eigenImageT qIm(this->m_Nrows,this->m_Ncols);
    
-   radAngImage(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1));
+   radAngImage<math::degreesT<realT>>(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1));
 
    m_imsIncluded.resize(this->m_Nims,this->m_Nims);
    m_imsIncluded.setConstant(1);
@@ -511,9 +511,10 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( std::vector<_realT
    for(size_t regno = 0; regno < minr.size(); ++regno)
    {
       eigenImageT * maskPtr = 0;
+      
       if( this->m_mask.rows() == this->m_Nrows && this->m_mask.cols() == this->m_Ncols) maskPtr = &this->m_mask;
       
-      std::vector<size_t> idx = annulusIndices(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1), 
+      std::vector<size_t> idx = annulusIndices<math::degreesT<realT>>(rIm, qIm, .5*(this->m_Nrows-1), .5*(this->m_Ncols-1), 
                                                     minr[regno], maxr[regno], minq[regno], maxq[regno], maskPtr);
    
       //Create storage for the R-ims and psf-subbed Ims
@@ -692,7 +693,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radiansT<realT>>( derotF.derotAngle(j), derotF.derotAngle(imno))) <= dang ) allidx[j].included = false;
       }
    }
    else if(excludeMethod == HCI::excludeImno)
@@ -707,7 +708,7 @@ void collapseCovar( eigenT & cutCV,
    {
       for(size_t j=0; j < Nims; ++j)
       {
-         if( fabs(math::angleDiff<math::radians>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
+         if( fabs(math::angleDiff<math::radiansT<realT>>( derotF.derotAngle(j), derotF.derotAngle(imno))) > dangMax ) allidx[j].included = false;
       }
    }
    else if(excludeMethodMax == HCI::excludeImno)

@@ -74,7 +74,7 @@ struct ADIDerotator
    realT derotAngle(size_t imno /**< [in] the image number */) const
    {
       realT derot = m_angleScale*m_angles[imno] + m_angleConstant;
-      derot = math::angleMod(derot);
+      derot = math::angleMod<math::degreesT<realT>>(derot);
       return math::dtor(derot );
    }
 };

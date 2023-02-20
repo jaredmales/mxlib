@@ -202,7 +202,7 @@ struct azBoxKernel
                if(m_maxAz > 0) //Only check this if needed.
                {
                   q2 = atan2(y+yP-ycen, x+xP-xcen);
-                  dq = math::angleDiff(q,q2);
+                  dq = math::angleDiff<math::radiansT<arithT>>(q,q2);
                   if(fabs(dq) > m_maxAz)
                   {
                      kernel(i,j) = 0;
@@ -1145,6 +1145,8 @@ void stddevImage( eigenImT & stdIm,                 ///< [out] the standard devi
       r1 += dr;
    }
       
+   std::cerr << std_r.size() << " " << std_v.size() << "\n";
+   
    /* And finally, interpolate onto the radius image */
    stdIm.resize(dim1, dim2);
    math::gslInterpolator<math::gsl_interp_linear<double>> interp(std_r, std_v);

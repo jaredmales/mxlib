@@ -64,6 +64,58 @@ namespace math
   */
 #define eccent(a, p) (a == 0.0 ? 1e34 : (p >= 1e9 ? 0.0 : (p>0 ? (-p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) : (p/(2*a)+0.5*std::sqrt(p*p/(a*a) + 4)) ) ))
 
+/// Type specifying angles in radians
+/**
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
+  */
+struct radians;
+
+/// Type specifying angles in degrees
+/**
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
+  */
+struct degrees;
+
+/// Type holding constants related to angle calculations in degrees
+template<typename degrad, typename realT>
+struct degradT;
+
+/// Type holding constants related to angle calculations in degrees
+/**
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
+  */
+template<typename _realT>
+struct degradT<degrees, _realT>
+{
+   typedef _realT realT;
+   static constexpr realT scale = static_cast<realT>(180)/pi<realT>(); //Scale factor to convert from radians to this unit.
+   static constexpr realT degrees = 1;
+   static constexpr realT radians = pi<realT>()/static_cast<realT>(180);
+   static constexpr realT full = static_cast<realT>(360.0);
+   static constexpr realT half = static_cast<realT>(180.0);
+};
+
+template<typename realT>
+using degreesT = degradT<degrees,realT>;
+
+/// Type holding constants related to angle calculations in radians
+/**
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
+  */
+template<typename _realT>
+struct degradT<radians, _realT>
+{
+   typedef _realT realT;
+   static constexpr realT scale = 1; //Scale factor to convert from radians to this unit.
+   static constexpr realT degrees = static_cast<realT>(180)/pi<realT>();
+   static constexpr realT radians = 1;
+   static constexpr realT full = two_pi<realT>();
+   static constexpr realT half = pi<realT>();
+};
+
+template<typename realT>
+using radiansT = degradT<radians,realT>;
+
 
 ///Convert from degrees to radians
 /**
@@ -72,12 +124,14 @@ namespace math
   * 
   * \return the angle q converted to radians
   * 
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
+  * 
   * \ingroup geo
   */
 template<typename realT>
 realT dtor(realT q)
 {
-   return q * pi<realT>()/static_cast<realT>(180);
+   return q * degradT<degrees,realT>::radians;
 }
 
 ///Convert from radians to degrees
@@ -92,7 +146,7 @@ realT dtor(realT q)
 template<typename realT>
 realT rtod(realT q)
 {
-   return q * static_cast<realT>(180)/pi<realT>();
+   return q * degradT<radians,realT>::degrees; 
 }
 
 ///Calculate the angle modulo full-circle, normalizing to a positive value.
@@ -105,41 +159,19 @@ realT rtod(realT q)
   * 
   * \ingroup geo
   */
-template<int degrad = 0, typename realT>
-realT angleMod(realT q /**< [in] the angle */)
+template<class angleT>
+typename angleT::realT angleMod(typename angleT::realT q /**< [in] the angle */)
 { 
-   static_assert(std::is_floating_point<realT>::value, "angleMod: realT must be floating point");
+   static_assert(std::is_floating_point<typename angleT::realT>::value, "angleMod: angleT::realT must be floating point");
+      
+   q = fmod(q, angleT::full);
    
-   realT full;
-   
-   if(degrad) full = two_pi<realT>();
-   else full = static_cast<realT>(360);
-   
-   q = fmod(q,full);
-   
-   if(q < 0) q += full;
+   if(q < 0) q += angleT::full;
    
    return q;
 }
 
-struct radians;
 
-struct degrees;
-
-template<typename degrad, typename realT>
-struct degradT;
-
-template<typename realT>
-struct degradT<degrees,realT>
-{
-   static constexpr realT half = static_cast<realT>(180.0);
-};
-
-template<typename realT>
-struct degradT<radians,realT>
-{
-   static constexpr realT half = pi<realT>();
-};
 
 ///Calculate the difference between two angles, correctly across 0/360.
 /** Calculates \f$ dq = q2- q1 \f$, but accounts for crossing 0/360.  This implies
@@ -151,30 +183,30 @@ struct degradT<radians,realT>
   * \tparam degrad controls whether this is in degrees (0, default) or radians (1)
   * \tparam realT is the type in which to do arithmetic
   * 
-  *  \ingroup geo
+  * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]" 
+  * 
+  * \ingroup geo
   */
-template<typename degrad = radians, typename realT>
-realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
-                 realT q2 ///< [in] angle to subtract q1 from, in degrees.
-               )
+template<class angleT>
+typename angleT::realT angleDiff( typename angleT::realT q1, ///< [in] angle to subtract from q2, in degrees.
+                                  typename angleT::realT q2 ///< [in] angle to subtract q1 from, in degrees.
+                                )
 { 
    //typedef typename degradT::realT realT;
    
-   static_assert(std::is_floating_point<realT>::value, "angleDiff: realT must be floating point");
+   static_assert(std::is_floating_point<typename angleT::realT>::value, "angleDiff: realT must be floating point");
    
-   realT dq = q2-q1;
-
-   realT half = degradT<degrad,realT>::half;//   degradT::half;
+   typename angleT::realT dq = q2-q1;
   
-   if(std::abs(dq) > half)
+   if(std::abs(dq) > angleT::half)
    {
       if(dq < 0)
       {
-         dq = dq + static_cast<realT>(2)*half;
+         dq = dq + static_cast<typename angleT::realT>(2)*angleT::half;
       }
       else
       {
-         dq = dq - static_cast<realT>(2)*half;
+         dq = dq - static_cast<typename angleT::realT>(2)*angleT::half;
       }
    }
    
@@ -192,31 +224,26 @@ realT angleDiff( realT q1, ///< [in] angle to subtract from q2, in degrees.
   * \tparam degrad controls whether angles are degrees (false) or radians (true)
   * \tparam realT is the type in which to do arithmetic
   * 
-  *  \ingroup geo
+  * \ingroup geo
   */
-template<int degrad = 0, typename realT>
-realT angleMean(std::vector<realT> & q)
+template<class angleT>
+typename angleT::realT angleMean(std::vector<typename angleT::realT> & q)
 { 
-   static_assert(std::is_floating_point<realT>::value, "angleMean: realT must be floating point");
+   static_assert(std::is_floating_point<typename angleT::realT>::value, "angleMean: realT must be floating point");
    
-   realT s = 0;
-   realT c = 0;
-
-   realT d2r;
-   
-   if( degrad ) d2r = 1;
-   else d2r  = pi<realT>()/static_cast<realT>(180);
+   typename angleT::realT s = 0;
+   typename angleT::realT c = 0;
 
    for(int i=0; i< q.size(); ++i)
    {
-      s += sin( q[i]*d2r );
-      c += cos( q[i]*d2r );
+      s += sin( q[i]/angleT::scale);
+      c += cos( q[i]/angleT::scale );
    }
    
    s /= q.size();
    c /= q.size();
    
-   return atan(s/c)/d2r ;
+   return atan(s/c)*angleT::scale ;
 
 }
 
