@@ -248,6 +248,15 @@ public:
                  realT n  ///< [in] the spatial frequency index
                );
    
+   /// Get the value of beta_r for a spatial frequency
+   /** beta_r is the read noise sensitivity of the WFS.
+     *
+     * \returns beta_r as calculated by the WFS.
+     */
+   realT beta_r( realT m, ///< [in] the spatial frequency index 
+                 realT n  ///< [in] the spatial frequency index
+               );
+
    /// Set the value of the WFS wavelength.
    /**
      */
@@ -542,7 +551,7 @@ public:
      * @{
      */
       
-   ///Calculate the signal to noise ratio squared (S/N)^2 for the WFS measurement
+   /// Calculate the terms of the signal to noise ratio squared (S/N)^2 for the WFS measurement
    /** The S/N squared is 
       \f[
       (S/N)^2 = \frac{ F_\gamma^2 \tau_{wfs}^2 }{ F_\gamma \tau_{wfs} + n_{pix} F_{bg} \tau_{wfs} + n_{pix} \sigma_{ron}^2 }
@@ -551,9 +560,10 @@ public:
      * 
      * \returns the S/N squared
      */
-   realT signal2Noise2( realT & tau_wfs, ///< [in.out] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
-                        realT d,         ///< [in] the actuator spacing in meters, used if binning WFS pixels
-                        int b            ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
+   realT signal2Noise2( realT & Nph,   ///< [out] the number of photons   
+                        realT tau_wfs, ///< [in] specifies the WFS exposure time.  If 0, then optimumTauWFS is used
+                        realT d,       ///< [in] the actuator spacing in meters, used if binning WFS pixels
+                        int b          ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                       );
    
    ///Calculate the measurement noise at a spatial frequency and specified actuator spacing
@@ -1353,6 +1363,15 @@ realT aoSystem<realT, inputSpectT, iosT>::beta_p( realT m, realT n)
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::beta_r( realT m, realT n)
+{
+   if( m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_r", "The WFS is not assigned."); 
+   
+   return m_wfsBeta->beta_r(m, n, m_D, d_opt(), atm.r_0(m_lam_sci) );
+}
+
+
+template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::lam_wfs(realT nlam)
 {
    m_lam_wfs = nlam;
@@ -1778,13 +1797,14 @@ realT aoSystem<realT, inputSpectT, iosT>::Fg()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
+realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & Nph,
+                                                         realT tau_wfs,
                                                          realT d,
                                                          int b
                                                        )
 {      
-   realT F = Fg();
-               
+   Nph = Fg()*tau_wfs;
+   
    double binfact = 1.0;
    int binidx = 0;
    if( m_bin_npix )
@@ -1796,16 +1816,8 @@ realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & tau_wfs,
       else binidx = b;
    }
 
-   return pow(F*tau_wfs,2)/((F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx])*tau_wfs + m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
+   return pow(Nph,2)/(  m_npix_wfs[binidx]*binfact * ( m_Fbg[binidx]*tau_wfs + pow(m_ron_wfs[binidx],2)));
 }
-
-/*template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
-                                                            realT n )
-{
-   d_opt();
-   return measurementError(m, n, m_d_opt, m_bin_opt);
-}*/
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m, 
@@ -1820,14 +1832,15 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
    
    if(m_optTau) tau_wfs = optimumTauWFS(m, n, d, b);
    else tau_wfs = m_tauWFS;
-   
-   if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
+
+   if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::measurementError", "The WFS is not assigned."); 
    
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
-            
-   realT snr2 = signal2Noise2( tau_wfs, d, b );
+   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, d, atm.r_0(m_lam_wfs));
+   realT Nph = 0;
+   realT snr2 = signal2Noise2( Nph, tau_wfs, d, b );
    
-   return pow(beta_p,2)/snr2*pow(m_lam_wfs/m_lam_sci, 2);
+   return (pow(beta_r,2)/snr2  + pow(beta_p,2)/Nph)  *pow(m_lam_wfs/m_lam_sci, 2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1847,7 +1860,6 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementErrorTotal( realT d,
          {
             if( m*m + n*n > mn_max*mn_max ) continue;
          }
-         
          sum += measurementError(m,n, d, b);
       }
    }
@@ -2156,19 +2168,19 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
    if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
       
    realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_wfs));
+   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, dact, atm.r_0(m_lam_wfs));
 
    //Set up for root finding:
    realT a, b, c, d, e;
    
    ///\todo handle multiple layers
    realT Atmp = 2*pow(atm.lam_0(),2)*psd(atm, 0, k,  m_secZeta)/pow(m_D,2)*(atm.X(k, m_lam_wfs, m_secZeta))*pow(math::two_pi<realT>()*atm.v_wind()*k,2);
-   realT Dtmp = pow(m_lam_wfs*beta_p/F,2);
    
    a = Atmp;
    b = Atmp *m_deltaTau;
    c = 0;
-   d = -Dtmp * (F+m_npix_wfs[binidx]*binfact*m_Fbg[binidx]);
-   e = -Dtmp * 2*(m_npix_wfs[binidx]*binfact*pow(m_ron_wfs[binidx],2));
+   d = -1*(pow(m_lam_wfs,2) / F) * ( (m_npix_wfs[binidx]*binfact*m_Fbg[binidx] / F)*pow(beta_r,2) + pow(beta_p,2)); 
+   e = -2*pow(m_lam_wfs,2) * (m_npix_wfs[binidx]*binfact)*pow(m_ron_wfs[binidx],2) * pow(beta_r,2) / pow(F,2);
    
    std::vector<std::complex<realT> > x;
    
@@ -2440,7 +2452,6 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
    realT S = 1;
    
    if(normStrehl) S = strehl();
-
 
    if( doFittingError != FITTING_ERROR_NO)
    {
@@ -2805,7 +2816,10 @@ void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator & con
    using namespace mx::app;
 
    //AO System configuration
-   config.add("aosys.wfs"               ,"", "aosys.wfs"             , argType::Required, "aosys", "wfs",              false, "string", "The WFS type: idealWFS, unmodPyWFS, asympModPyWFS");
+   config.add("aosys.wfs"               ,"", "aosys.wfs"             , argType::Required, "aosys", "wfs",              false, "string", "The WFS type: idealWFS, unmodPyWFS, asympModPyWFS, shwfs, calculatedWFS");
+   config.add("aosys.wfs_beta_p"        ,"", "aosys.wfs_beta_p"      , argType::Required, "aosys", "wfs_beta_p",       false, "string", "The beta_p file path for calcualtedWFS");
+   config.add("aosys.wfs_beta_r"        ,"", "aosys.wfs_beta_r"      , argType::Required, "aosys", "wfs_beta_r",       false, "string", "The beta_r file path for calcualtedWFS");
+   config.add("aosys.wfs_sensitivity"   ,"", "aosys.wfs_sensitivity" , argType::Required,     "aosys", "wfs_sensitivity",  false, "bool", "Flag indicating that beta_p/beta_r are sensitivities (inverse) [default false]");
    config.add("aosys.D"                 ,"", "aosys.D"               , argType::Required, "aosys", "D",                false, "real", "The telescope diameter [m]");
    config.add("aosys.d_min"             ,"", "aosys.d_min"           , argType::Required, "aosys", "d_min",            false, "real", "The minimum actuator spacing [m]");
    config.add("aosys.optd"              ,"", "aosys.optd"            , argType::Optional, "aosys", "optd",             false, "bool", "Whether or not the actuator spacing is optimized");
@@ -2860,6 +2874,20 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & conf
       else if(wfsStr == "SHWFS")
       {
          wfsBeta<shwfs<realT>>(nullptr);
+      }
+      else if(wfsStr == "calculatedWFS")
+      {
+         wfsBeta<calculatedWFS<realT>>(nullptr);
+
+         calculatedWFS<realT> * cwfs = static_cast<calculatedWFS<realT> *>(m_wfsBeta);
+         config(cwfs->m_beta_p_file, "aosys.wfs_beta_p");
+         config(cwfs->m_beta_r_file, "aosys.wfs_beta_r");
+         bool sens = cwfs->m_sensitivity;
+         config(sens, "aosys.wfs_sensitivity");
+         if(config.isSet("aosys.wfs_sensitivity")) 
+         {
+            cwfs->m_sensitivity = sens;
+         }
       }
       else
       {

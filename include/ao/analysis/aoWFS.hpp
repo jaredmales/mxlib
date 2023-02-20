@@ -9,6 +9,10 @@
 #define aoWFS_hpp
 
 #include "../../math/constants.hpp"
+#include "../../mxError.hpp"
+#include "../../mxException.hpp"
+#include "../../improc/eigenImage.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
 
 namespace mx
 {
@@ -51,7 +55,7 @@ struct wfs
       return;
    }
    
-   ///Get the sensitivity at a spatial frequency.
+   ///Get the photon noise sensitivity at a spatial frequency.
    /** The sensitivity of the ideal WFS is 1 at all k \cite guyon_2005.
      * 
      * \returns the sensitivity to photon noise parameter
@@ -73,6 +77,21 @@ struct wfs
       return static_cast<realT>(1);
    }
    
+   ///Get the read noise sensitivity at a spatial frequency.
+   /** Here we assume beta_r is the same as beta_p.
+     * 
+     * \returns the sensitivity to read noise parameter
+     */ 
+   virtual realT beta_r( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)
+                       )
+   {
+      return beta_p(m,n,D,d,r0);
+   }
+
    ///Dump the details of the WFS to an io stream.
    /** Is virtual so that derived types can add parameters.
      */
@@ -102,7 +121,7 @@ struct pywfsUnmod : public wfs<realT, iosT>
       this->_id = "Unmodulated Pyramid";
    }
    
-   ///Get the sensitivity at a spatial frequency.
+   ///Get the photon noise sensitivity at a spatial frequency.
    /** The sensitivity of the unmodulated PyWFS is \f$ \sqrt{2} \f$ at all k.
      * 
      * \returns the sensitivity to photon noise parameter
@@ -124,6 +143,21 @@ struct pywfsUnmod : public wfs<realT, iosT>
       return math::root_two<realT>();
    }
    
+   ///Get the read noise sensitivity at a spatial frequency.
+   /** Here we assume that beta_r is the same as beta_p.
+     * 
+     * \returns the sensitivity to read noise parameter
+     */ 
+   virtual realT beta_r( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)  
+                       )
+   {
+      return beta_p(m,n,D,d,r0);
+   }
+
 };
 
 
@@ -144,8 +178,8 @@ struct pywfsModAsymptotic : public wfs<realT, iosT>
       this->_id = "Asymptotic Modulated Pyramid";
    }
    
-   ///Get the sensitivity at a spatial frequency.
-   /** The sensitivity of the asymptotic modulated PyWFS is \f$ 2 \sqrt{2} \f$ at all k.
+   ///Get the photon sensitivity at a spatial frequency.
+   /** The photon noise sensitivity of the asymptotic modulated PyWFS is \f$ 2 \sqrt{2} \f$ at all k.
      * 
      * \returns the sensitivity to photon noise parameter
      */ 
@@ -166,6 +200,21 @@ struct pywfsModAsymptotic : public wfs<realT, iosT>
       return static_cast<realT>(2) * math::root_two<realT>();
    }
    
+   ///Get the read noise sensitivity at a spatial frequency.
+   /** Here we assume beta_r is the same as beta_p
+     * 
+     * \returns the sensitivity to read noise parameter
+     */ 
+   virtual realT beta_r( int m,   ///< [in] the spatial frequency index for u (not used by this WFS)
+                         int n,   ///< [in] the spatial frequency index for v (not used by this WFS)
+                         realT D, ///< [in] the telescope diameter (not used by this WFS)
+                         realT d, ///< [in] the sub-ap spacing (not used by this WFS)
+                         realT r0 ///< [in] Fried's parameter (not used by this WFS)
+                       )
+   {
+      return beta_p(m,m,D,d,r0);
+   }
+
 };
 
 ///The shack hartmann wavefront sensor sensitivity function.
@@ -185,8 +234,8 @@ struct shwfs : public wfs<realT, iosT>
       this->_id = "Shack Hartmann";
    }
    
-   ///Get the sensitivity at a spatial frequency.
-   /** The sensitivity of the shack hartmann WFS
+   ///Get the photon noise sensitivity at a spatial frequency.
+   /** The photon noise sensitivity of the shack hartmann WFS
      * 
      * \returns the sensitivity to photon noise parameter
      */ 
@@ -203,8 +252,135 @@ struct shwfs : public wfs<realT, iosT>
       
    }
    
+   ///Get the read noise sensitivity at a spatial frequency.
+   /** Here we assume beta_r = beta_p
+     * 
+     * \returns the sensitivity to read noise parameter
+     */ 
+   virtual realT beta_r( int m,   ///< [in] the spatial frequency index for u
+                         int n,   ///< [in] the spatial frequency index for v
+                         realT D, ///< [in] the telescope diameter
+                         realT d, ///< [in] the sub-ap spacing
+                         realT r0 ///< [in] Fried's parameter
+               )
+   {
+      return beta_p(m,n,D,d,r0);
+   }
+
 };
 
+///The calculated WFS uses sensitivities provided by FITS files
+/** Provides the \f$ \beta_p \f$ and \f$ \beta_r \f$ parameters
+  * from FITS files.
+  * 
+  * \tparam realT is the floating point type used for calculations
+  * \tparam iosT is an output stream type with operator \<\< defined (default is std::ostream)
+  * 
+  * \ingroup mxAOAnalytic
+  */ 
+template<typename realT, typename iosT = std::ostream>
+struct calculatedWFS : public wfs<realT, iosT>
+{
+   std::string m_beta_p_file;
+   std::string m_beta_r_file;
+   bool m_sensitivity {false};
+
+   improc::eigenImage<realT> m_beta_p;
+   improc::eigenImage<realT> m_beta_r;
+
+   calculatedWFS()
+   {
+      this->_id = "Calculated WFS";
+   }
+   
+   ///Get the photon noise sensitivity at a spatial frequency.
+   /** The photon noise sensitivity from the FITS file is returned.
+     * 
+     * \returns the sensitivity to photon noise parameter
+     */ 
+   virtual realT beta_p( int m,   ///< [in] the spatial frequency index for u
+                         int n,   ///< [in] the spatial frequency index for v
+                         realT D, ///< [in] the telescope diameter
+                         realT d, ///< [in] the sub-ap spacing
+                         realT r0 ///< [in] Fried's parameter
+               )
+   {
+      if(m_beta_p.rows() == 0)
+      {
+         fits::fitsFile<realT> ff;
+         ff.read(m_beta_p, m_beta_p_file);
+
+         if(m_sensitivity) m_beta_p = 1.0/m_beta_p;
+      }
+
+      int midx = 0.5*(m_beta_p.rows()-1.0) + m;
+      int nidx = 0.5*(m_beta_p.cols()-1.0) + n;
+
+      if(midx > m_beta_p.rows()-1 || midx < 0)
+      {
+         mxThrowException(err::sizeerr, "calculatedWFS::beta_p", "m index out of range"); 
+      }
+
+      if(nidx > m_beta_p.cols()-1 || nidx < 0)
+      {
+         mxThrowException(err::sizeerr, "calculatedWFS::beta_p", "n index out of range");
+      }
+
+      return m_beta_p(midx,nidx);
+      
+   }
+   
+   ///Get the read noise sensitivity at a spatial frequency.
+   /** The read noise sensitivity from the FITS file is returned.
+     * 
+     * \returns the sensitivity to read noise parameter
+     */ 
+   virtual realT beta_r( int m,   ///< [in] the spatial frequency index for u
+                         int n,   ///< [in] the spatial frequency index for v
+                         realT D, ///< [in] the telescope diameter
+                         realT d, ///< [in] the sub-ap spacing
+                         realT r0 ///< [in] Fried's parameter
+               )
+   {
+      if(m_beta_r.rows() == 0)
+      {
+         fits::fitsFile<realT> ff;
+         ff.read(m_beta_r, m_beta_r_file);
+
+         if(m_sensitivity) m_beta_r = 1.0/m_beta_r;
+      }
+
+      int midx = 0.5*(m_beta_r.rows()-1.0) + m;
+      int nidx = 0.5*(m_beta_r.cols()-1.0) + n;
+
+      if(midx > m_beta_r.rows()-1 || midx < 0)
+      {
+         mxThrowException(err::sizeerr, "calculatedWFS::beta_r", "m index out of range");
+      }
+
+      if(nidx > m_beta_r.cols()-1 || nidx < 0)
+      {
+         mxThrowException(err::sizeerr, "calculatedWFS::beta_r", "n index out of range");
+      }
+
+      return m_beta_r(midx,nidx);
+      
+   }
+
+   ///Dump the details of the WFS to an io stream.
+   /** Is virtual so that derived types can add parameters.
+     */
+   virtual iosT & dumpWFS(iosT & ios)
+   {
+      wfs<realT, iosT>::dumpWFS(ios);
+
+      ios << "#    beta_p = " << m_beta_p_file << '\n';
+      ios << "#    beta_r = " << m_beta_r_file << '\n';
+      ios << "#    sensitivity = " << std::boolalpha << m_sensitivity << "\n";
+
+      return ios;
+   }
+};
 } //namespace analysis
 } //namespace AO
 } //namespace mx
