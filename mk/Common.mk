@@ -125,13 +125,15 @@ LDLIBS += $(EXTRA_LDLIBS)
 LDFLAGS += $(EXTRA_LDFLAGS)
 
 CFLAGS += $(INCLUDES) $(OPTIMIZE)
-CXXFLAGS += $(INCLUDES) $(OPTIMIZE)
+CXXFLAGS += $(INCLUDES) $(OPTIMIZE) 
 
 #This is needed to force use of g++ for linking
 LINK.o = $(LINK.cc)
 
 ifeq ($(NEED_CUDA),yes)
-   CXXFLAGS += -DEIGEN_NO_CUDA
+	CUDA_INCLUDES ?= -I/usr/local/cuda/include/
+
+   CXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES)
 
    HOST_ARCH   := $(shell uname -m)
    CUDA_TARGET_ARCH = $(HOST_ARCH)

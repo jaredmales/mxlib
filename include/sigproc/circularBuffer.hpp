@@ -83,7 +83,10 @@ protected:
    
    indexT m_maxEntries {0}; ///< The maximum number of entries to allow in the buffer before wrapping
    indexT m_nextEntry {0}; ///< Index into m_buffer of the next entry.  This is the oldest entry in the buffer.
-   
+   indexT m_latest {0}; ///< Index into m_buff of the latest entry.  This is the newest entry in the buffer.
+
+   uint64_t m_mono{0}; ///< A monotonic counter, which is incremented for each new entry, and reset on call to maxEntries.
+
 public:
    
    /// Default c'tor
@@ -122,12 +125,19 @@ public:
      */ 
    void nextEntry( const storedT & newEnt /**< [in] the new entry to add to the buffer*/);
    
-   /// Returns the index of the next entry
+   /// Returns the index of the earliest entry
    /** This is particularly useful for accessing entries with the at() function
      * over an unchanging sequence if asynchronous updates are possible.
      */ 
-   indexT nextEntry();
+   indexT earliest();
+
+   /// Returns the index of the latest entry
+   /** 
+     */ 
+   indexT latest();
    
+   uint64_t mono();
+
    /// Get the entry at a given index
    /** `idx=0` is the earliest entry in the buffer. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
@@ -138,8 +148,8 @@ public:
    
    const storedT & operator[](indexT idx /**< [in] the index of the entry to access*/) const;
 
-   /// Get the entry at a given index relative a fixed start entry 
-   /** `idx=0` is the entry at startEntry. `idx=1` is the one after that.
+   /// Get the entry at a given index relative a fixed reference entry 
+   /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
      * 
      * \returns a reference to the indicated entry in the circular buffer.
@@ -149,7 +159,7 @@ public:
                );
 
    /// Get the entry at a given index relative a fixed start entry, const version
-   /** `idx=0` is the entry at startEntry. `idx=1` is the one after that.
+   /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
      * 
      * \overload
@@ -157,8 +167,8 @@ public:
      * \returns a const reference to the indicated entry in the circular buffer.
      */
    const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
-                        indexT idx       ///< [in] the index of the entry to access
-                      ) const;
+                       indexT idx       ///< [in] the index of the entry to access
+                     ) const;
 
 private:
    derivedT & derived()
@@ -189,12 +199,14 @@ void circularBufferBase<derivedT, storedT, indexT>::maxEntries(indexT maxEnt)
 {
    m_buffer.clear();
    m_nextEntry = 0;
-   
+   m_latest = 0;
+
    m_maxEntries = maxEnt;
    m_buffer.reserve(m_maxEntries);
    
    derived().setMaxEntries(maxEnt);
    
+   m_mono = 0;
    
 }
 
@@ -216,22 +228,39 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry(const storedT & ne
    if( m_buffer.size() < m_maxEntries )
    {
       m_buffer.push_back(newEnt);
+      m_latest = m_buffer.size()-1;
       m_nextEntry = 0;
       derived().setWrapStartup();
    }
    else
    {
       m_buffer[m_nextEntry] = newEnt;
+      m_latest = m_nextEntry;
       ++m_nextEntry;
       if(m_nextEntry >= m_buffer.size()) m_nextEntry = 0;
       derived().setWrap();
    }
+
+   ++m_mono;
+
 }
 
 template<class derivedT, typename storedT, typename indexT>
-indexT circularBufferBase<derivedT, storedT, indexT>::nextEntry()
+indexT circularBufferBase<derivedT, storedT, indexT>::earliest()
 {
    return m_nextEntry;
+}
+
+template<class derivedT, typename storedT, typename indexT>
+indexT circularBufferBase<derivedT, storedT, indexT>::latest()
+{
+   return m_latest;
+}
+
+template<class derivedT, typename storedT, typename indexT>
+uint64_t circularBufferBase<derivedT, storedT, indexT>::mono()
+{
+   return m_mono;
 }
 
 template<class derivedT, typename storedT, typename indexT>

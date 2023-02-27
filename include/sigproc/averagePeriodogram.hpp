@@ -90,7 +90,7 @@ protected:
    
    realT m_dt {1}; ///< The time sampling.  Only used for normalization and calculation of the frequency scale.
 
-   std::vector<realT> m_win; ///< The window function.  By default this is empty, which is equivalent to setting it to the rectanbular window.
+   std::vector<realT> m_win; ///< The window function.  By default this is empty, which is equivalent to setting it to the rectangular window.
       
    ///@}
    
