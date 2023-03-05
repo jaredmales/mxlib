@@ -131,7 +131,12 @@ CXXFLAGS += $(INCLUDES) $(OPTIMIZE)
 LINK.o = $(LINK.cc)
 
 ifeq ($(NEED_CUDA),yes)
-   CXXFLAGS += -DEIGEN_NO_CUDA
+
+   CUDA_INCLUDES ?= -I/usr/local/cuda/include/
+
+   CXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES)
+
+   #CXXFLAGS += -DEIGEN_NO_CUDA
 
    HOST_ARCH   := $(shell uname -m)
    CUDA_TARGET_ARCH = $(HOST_ARCH)
