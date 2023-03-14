@@ -316,7 +316,35 @@ MXLAPACK_INT calcKLModes( eigenT & klModes,             ///< [out] on exit conta
    //Normalize the eigenvectors
    for(MXLAPACK_INT i=0;i< n_modes; ++i)
    {
-      evecs.col(i) = evecs.col(i)/sqrt(evals(i));
+      if(evals(i) == 0)
+      {
+         std::cerr << "got 0 eigenvalue (# " << i << ")\n";
+         evecs.cols(i) *= 0;
+      }
+      else if(evals(i) < 0)
+      {
+         std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
+         evecs.cols(i) *= 0;
+      }
+      else if( !std::isnormal(evals(i)) )
+      {
+         std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
+         evecs.cols(i) *= 0;
+      }
+      else
+      {
+         evecs.col(i) = evecs.col(i)/sqrt(evals(i));
+      }
+
+      for(int r=0; r < evecs.rows(); ++r)
+      {
+         if( !std::isnormal(evecs.col(i)(r)))
+         {
+            std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
+            evecs.col(i) *= 0;
+            continue;
+         }
+      }
    }
 
    klModes.resize(n_modes, tNpix);
