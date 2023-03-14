@@ -319,17 +319,17 @@ MXLAPACK_INT calcKLModes( eigenT & klModes,             ///< [out] on exit conta
       if(evals(i) == 0)
       {
          std::cerr << "got 0 eigenvalue (# " << i << ")\n";
-         evecs.cols(i) *= 0;
+         evecs.col(i) *= 0;
       }
       else if(evals(i) < 0)
       {
          std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
-         evecs.cols(i) *= 0;
+         evecs.col(i) *= 0;
       }
       else if( !std::isnormal(evals(i)) )
       {
          std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
-         evecs.cols(i) *= 0;
+         evecs.col(i) *= 0;
       }
       else
       {
