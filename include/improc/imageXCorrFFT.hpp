@@ -234,7 +234,7 @@ public:
                    imT & im         ///< [in] the image to cross-correlate with the reference
                  );
 };
-std::cout << "# x-rms: " << sqrt(vectorVariance(x)) << "\n";
+
 template< class ccImT>
 imageXCorrFFT<ccImT>::imageXCorrFFT()
 {
