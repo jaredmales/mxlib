@@ -6,12 +6,12 @@ INCLUDES += -I../include
 
 OBJS = testsMain.o \
        include/ao/analysis/aoAtmosphere_test.o \
-		 include/ao/analysis/aoSystem_test.o \
+       include/ao/analysis/aoSystem_test.o \
        include/ao/analysis/aoPSDs_test.o \
        include/astro/astroDynamics_test.o \
        include/ioutils/fileUtils_test.o \
-		 include/ioutils/fits/fitsHeaderCard_test.o \
-		 include/math/geo_test.o \
+       include/ioutils/fits/fitsHeaderCard_test.o \
+       include/math/geo_test.o \
        include/math/func/moffat_test.o \
        include/math/templateBLAS_test.o \
        include/math/templateLapack_test.o \
@@ -19,7 +19,7 @@ OBJS = testsMain.o \
        include/sigproc/psdUtils_test.o \
        include/sigproc/psdFilter_test.o \
        include/sigproc/zernike_test.o \
-		 include/improc/imageTransforms_test.o \
+       include/improc/imageTransforms_test.o \
        include/improc/imageUtils_test.o \
        include/sys/timeUtils_test.o \
        include/improc/imageXCorrFFT_test.o \

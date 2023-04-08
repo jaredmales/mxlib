@@ -55,9 +55,10 @@ namespace improc
   * to shift the input image by the negative of the shifts, it will align with the 
   * reference at the center of the array.
   *
-  * Three peak finding methods are provided.  xcorrPeakMethod::centroid uses center of light, 
-  * xcorrPeakMethod::centroid uses Gaussian centroiding, and xcorrPeakMethod::interp uses interpolation
-  * to find the peak to a given tolerance.
+  * Three peak finding methods are provided.  xcorrPeakMethod::centerOfLight uses center of light,
+  * xcorrPeakMethod::gaussFit uses Gaussian centroiding, and xcorrPeakMethod::interpPeak uses interpolation
+  * to find the peak to a given tolerance.  For well behaved images gaussFit is most accurate.  interpPeak
+  * should be robust against weird shapes and other problems, but accuracy is somewhat worse.
   * 
   * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
   * 
@@ -91,11 +92,14 @@ protected:
    
    ccImT m_refIm;  ///< The normalized reference image.
    
+   realT m_refX0 {0}; ///< The shift of the reference image to itself, used as coordinate origint
+
+   realT m_refY0 {0}; ///< The shift of the reference image to itself, used as coordinate origint
+
    ccImT m_maskIm; ///< Mask image to use, may be needed for proper normalization even if refIm has 0 mask applied.
    
    bool m_haveMask {false}; ///< Flag indicating that a mask has been provided.
 
-public:
    bool m_normalize {true};
 
    ccImT m_normIm; ///< The normalized image.
@@ -116,13 +120,12 @@ public:
    
    math::fit::fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<Scalar>> m_fitter;
    
-   int m_maxLag {0}; ///< The maximum lag to consider in the initial cross-correlation.  
+   int m_maxLag {5}; ///< The maximum lag to consider in the initial cross-correlation.  Default is 5.
    
    Scalar m_tol {0.1}; ///< The tolerance of the interpolated-magnified image, in pixels.
    
    Scalar m_magSize {0}; ///< Magnified size of the ccIm when using interp.  Set as function of m_tol and m_maxLag.
 
-public:
    xcorrPeakMethod m_peakMethod {xcorrPeakMethod::centerOfLight};
 
 public:
@@ -161,8 +164,10 @@ public:
    /// Set the tolerance of the interpolated-magnified image, in pixels.
    void tol( Scalar nt /**< [in] The new value of the interpolation tolerance. */ );
 
-   
-   
+   xcorrPeakMethod peakMethod();
+
+   void peakMethod( xcorrPeakMethod xpm );
+
    /// Set the mask image
    /** 
      * \returns 0 on success
@@ -208,7 +213,15 @@ public:
      * \returns a const referent to m_magIm.
      */
    const ccImT & magIm();
-   
+
+protected:
+
+   void findPeak( Scalar & xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
+                  Scalar & yShift  ///< [out] the y shift of im w.r.t. im0, in pixels
+                );
+
+public:
+
    /// Conduct the cross correlation to a specified tolerance
    /** 
      * \returns 0 on success
@@ -238,6 +251,7 @@ public:
 template< class ccImT>
 imageXCorrFFT<ccImT>::imageXCorrFFT()
 {
+   maxLag(m_maxLag); //this sets up m_magSize.
 }
 
 template< class ccImT>
@@ -260,8 +274,8 @@ int imageXCorrFFT<ccImT>::resize( int nrows,
    
    m_cols = ncols;
    
-   m_ccIm.resize(m_rows, m_cols); //This is actually the full possible size.  Need to respect maxLag.
-   
+   m_ccIm.resize(m_rows, m_cols);
+
    m_ftIm0.resize( (int) (0.5*m_rows) + 1, m_cols);
    
    m_ftWork.resize( (int) (0.5*m_rows) + 1, m_cols);
@@ -301,6 +315,33 @@ void imageXCorrFFT<ccImT>::tol( Scalar nt )
    Scalar mag = (m_magSize-1.0)/((2.*m_maxLag + 1) - 1.0);
    
    m_tol = 1.0/mag;
+
+   if(m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0) return;
+
+   //Find the reference shift
+   m_refX0 = 0;
+   m_refY0 = 0;
+   operator()(m_refX0, m_refY0, m_refIm);
+}
+
+template< class ccImT>
+xcorrPeakMethod imageXCorrFFT<ccImT>::peakMethod()
+{
+   return m_peakMethod;
+}
+
+template< class ccImT>
+void imageXCorrFFT<ccImT>::peakMethod( xcorrPeakMethod xpm )
+{
+   m_peakMethod = xpm;
+
+   if(m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0) return;
+
+   //Find the reference shift
+   m_refX0 = 0;
+   m_refY0 = 0;
+   operator()(m_refX0, m_refY0, m_refIm);
+
 }
 
 template< class ccImT>
@@ -371,6 +412,12 @@ int imageXCorrFFT<ccImT>::refIm( const ccImT & im )
       }
    }
    
+   //And finally find the reference shift
+   m_refX0 = 0;
+   m_refY0 = 0;
+
+   operator()(m_refX0, m_refY0, m_refIm);
+
    return 0;
 }
 
@@ -399,6 +446,73 @@ const ccImT & imageXCorrFFT<ccImT>::magIm()
 }
 
 template< class ccImT>
+void imageXCorrFFT<ccImT>::findPeak( Scalar & xShift,
+                                     Scalar & yShift
+                                   )
+{
+   int xLag0,yLag0;
+   Scalar pk = m_ccIm.maxCoeff(&xLag0, &yLag0);
+   Scalar mn = m_ccIm.minCoeff();
+
+   if(xLag0 - m_maxLag < 0) m_maxLag = xLag0;
+   if(xLag0 + 2*m_maxLag + 1 >= m_ccIm.rows()) m_maxLag = (m_ccIm.rows() - 1 - xLag0)/2;
+   if(yLag0 - m_maxLag < 0) m_maxLag = yLag0;
+   if(yLag0 + 2*m_maxLag + 1 >= m_ccIm.cols()) m_maxLag = (m_ccIm.cols() - 1 - yLag0)/2;
+
+   realT x0 = xLag0-m_maxLag;
+   realT y0 = yLag0-m_maxLag;
+
+   if(m_peakMethod == xcorrPeakMethod::gaussFit)
+   {
+      m_magIm = m_ccIm.block( x0, y0, 2*m_maxLag+1, 2*m_maxLag+1);
+
+      m_fitter.setArray(m_magIm.data(), m_magIm.rows(), m_magIm.cols());
+      m_magIm.maxCoeff(&xLag0, &yLag0);
+
+      m_fitter.setGuess(mn, pk-mn, m_maxLag, m_maxLag, 3, 3, 0);
+      m_fitter.fit();
+
+      xShift = (m_fitter.x0() + x0) - m_refX0;
+      yShift = (m_fitter.y0() + y0) - m_refY0;;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::interpPeak)
+   {
+      int x, y;
+      m_magIm.resize(m_magSize, m_magSize);
+
+      imageMagnify(m_magIm, m_ccIm.block(x0, y0, 2*m_maxLag+1, 2*m_maxLag+1), cubicConvolTransform<Scalar>());
+
+      m_magIm.maxCoeff(&x,&y);
+      xShift = (x*m_tol + x0) - m_refX0;
+      yShift = (y*m_tol + y0) - m_refY0;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::centerOfLight)
+   {
+      Scalar x,y;
+
+      m_magIm = m_ccIm.block( x0, y0, 2*m_maxLag+1, 2*m_maxLag+1);
+      m_magIm -= m_magIm.minCoeff(); //Must sum to > 0.
+
+      imageCenterOfLight(x,y,m_magIm);
+
+      xShift = (x + x0) - m_refX0;
+      yShift = (y + y0) - m_refY0;
+   }
+   else if(m_peakMethod == xcorrPeakMethod::none)
+   {
+      int x,y;
+      m_ccIm.maxCoeff(&x, &y);
+      xShift = x;
+      yShift = y;
+   }
+   else
+   {
+      mxThrowException(mx::err::invalidconfig, "imageXCorrFFT<ccImT>::operator()", "unknown peak finding method");
+   }
+
+}
+
+template< class ccImT>
 template< class imT>
 int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
                                       Scalar & yShift,
@@ -421,8 +535,8 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
       maxLag = 0.25*m_rows-1;
    }
    
-   int maxLag_r = 0.5*(1.0*m_rows-1.0);
-   int maxLag_c = 0.5*(1.0*m_cols-1.0);
+   float maxLag_r = 0.5*(1.0*m_rows-1.0);
+   float maxLag_c = 0.5*(1.0*m_cols-1.0);
    
    //Once ccIm is resized for maxLag appropriately:
    //if(maxLag_r > m_maxLag && m_maxLag != 0) maxLag_r = m_maxLag;
@@ -450,30 +564,49 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    //m_ftIm0 is the conjugated, fftw-normalized, reference image in the Fourier domain
    //So this is the FT of the cross-correlation:
    m_ftWork *= m_ftIm0;
-   
-   //Need to cut out block of desired size here if maxLag is not max
+
+
    m_fft_back(m_ccIm.data(), m_ftWork.data());
    
+   findPeak(xShift, yShift);
+
+   /*
    if(m_peakMethod == xcorrPeakMethod::gaussFit)
    {
       int xLag0,yLag0;
       Scalar pk = m_ccIm.maxCoeff(&xLag0, &yLag0);
       Scalar mn = m_ccIm.minCoeff();
-      m_fitter.setArray(m_ccIm.data(), m_ccIm.rows(), m_ccIm.cols());
-      m_fitter.setGuess(mn, pk, xLag0, yLag0, 0.2*m_ccIm.rows(), 0.2*m_ccIm.cols(), 0); 
+
+      if(xLag0 - m_maxLag < 0) m_maxLag = xLag0;
+      if(xLag0 + 2*m_maxLag + 1 >= m_ccIm.rows()) m_maxLag = (m_ccIm.rows() - 1 - xLag0)/2;
+      if(yLag0 - m_maxLag < 0) m_maxLag = yLag0;
+      if(yLag0 + 2*m_maxLag + 1 >= m_ccIm.cols()) m_maxLag = (m_ccIm.cols() - 1 - yLag0)/2;
+
+      realT x0 = xLag0-m_maxLag;
+      realT y0 = yLag0-m_maxLag;
+
+      m_magIm = m_ccIm.block( x0, y0, 2*m_maxLag+1, 2*m_maxLag+1);
+
+      m_fitter.setArray(m_magIm.data(), m_magIm.rows(), m_magIm.cols());
+      m_magIm.maxCoeff(&xLag0, &yLag0);
+
+      m_fitter.setGuess(mn, pk-mn, m_maxLag, m_maxLag, 3, 3, 0);
       m_fitter.fit();
    
-      xShift = m_fitter.x0() - maxLag_r;
-      yShift = m_fitter.y0() - maxLag_c;
+      xShift = (m_fitter.x0() + x0) - m_refX0;
+      yShift = (m_fitter.y0() + y0) - m_refY0;;
    }
    else if(m_peakMethod == xcorrPeakMethod::interpPeak)
    {
-      m_magIm.resize(m_magSize, m_magSize);
-      imageMagnify(m_magIm, m_ccIm, cubicConvolTransform<Scalar>());
       int x, y;
+      m_magIm.resize(m_magSize, m_magSize);
+      m_ccIm.maxCoeff(&x, &y);
+
+      imageMagnify(m_magIm, m_ccIm.block(x-m_maxLag,y-m_maxLag, 2*m_maxLag+1, 2*m_maxLag+1), cubicConvolTransform<Scalar>());
+
       m_magIm.maxCoeff(&x,&y);
-      xShift = x*m_tol - maxLag_r;
-      yShift = y*m_tol - maxLag_c;
+      xShift = x*m_tol - m_maxLag;
+      yShift = y*m_tol - m_maxLag;
    }
    else if(m_peakMethod == xcorrPeakMethod::centerOfLight)
    {
@@ -493,7 +626,7 @@ int imageXCorrFFT<ccImT>::operator()( Scalar & xShift,
    else
    {
       mxThrowException(mx::err::invalidconfig, "imageXCorrFFT<ccImT>::operator()", "unknown peak finding method");
-   }
+   }*/
 
    return 0;
    
