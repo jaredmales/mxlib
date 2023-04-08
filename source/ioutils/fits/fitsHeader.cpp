@@ -129,13 +129,13 @@ void fitsHeader::eraseStandardTop()
    headerIterator it = begin(), nit;
   
    int n =0;
-   while(it != end() && n < 25)
+   while(it != end())
    {
       nit = it;
       ++nit;
       if(it->keyword() == "SIMPLE" || it->keyword() == "BITPIX" || it->keyword() == "NAXIS" 
            || it->keyword() == "NAXIS1" || it->keyword() == "NAXIS2" || it->keyword() == "NAXIS3" || it->keyword() == "EXTEND"
-              || it->keyword() == "BZERO" || it->keyword() == "BSCALE")
+              || it->keyword() == "BZERO" || it->keyword() == "BSCALE" || it->keyword() == "LONGSTRN")
       {
          erase(it);
       }
