@@ -468,6 +468,7 @@ public:
      * -# mask applied (enabled by m_preProcess_mask
      * -# radial profile subtraction (enabled by m_preProcess_subradprof)
      * -# mask applied (enabled by m_preProcess_mask
+     * -# symmetric median unsharp mask (m_preProcess_gaussUSM_fwhm)
      * -# symmetric Gaussian unsharp mask (m_preProcess_gaussUSM_fwhm)
      * -# mask applied (enabled by m_preProcess_mask
      * -# azimuthal unsharp mask (m_preProcess_azUSM_azW, and m_preProcess_azUSM_radW)
@@ -498,7 +499,12 @@ public:
      */
    realT m_preProcess_azUSM_radW {0};
 
-   ///Kernel FWHM for symmetric unsharp mask (USM)
+   ///Kernel FWHM for symmetric box median unsharp mask (USM)
+   /** USM is not performed if this is 0.
+    */
+   int m_preProcess_medianUSM_fwhm {0};
+
+   ///Kernel FWHM for symmetric Gaussian unsharp mask (USM)
    /** USM is not performed if this is 0.
     */
    realT m_preProcess_gaussUSM_fwhm {0};
@@ -1405,12 +1411,17 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
    if( m_preProcess_subradprof )
    {
       std::cerr << "subtracting radial profile . . .\n";
-      eigenImageT rp;
 
-      for(int i=0;i<ims.planes(); ++i)
+      #pragma omp parallel
       {
-         Eigen::Map<Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> > imRef(ims.image(i));
-         radprofim(rp, imRef, true);
+         eigenImageT rp;
+
+         #pragma omp for
+         for(int i=0;i<ims.planes(); ++i)
+         {
+            Eigen::Map<Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> > imRef(ims.image(i));
+            radprofim(rp, imRef, true);
+         }
       }
 
       std::cerr << "done\n";
@@ -1427,9 +1438,53 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
       }
    }
 
-   if( m_preProcess_gaussUSM_fwhm > 0 && m_preProcess_mask)
+   if( m_preProcess_medianUSM_fwhm > 0 )
    {
-      std::cerr << "Applying Gauss USM . . .\n";
+      std::cerr << "applying median USM . . .\n";
+
+      eigenImageT medmask;
+      medmask.resize(ims.rows(), ims.cols());
+      medmask.setConstant(1);
+
+      for(int z = 0; z < (int)(0.5*m_preProcess_medianUSM_fwhm); ++z)
+      {
+         medmask.row(z) = 0;
+         medmask.row(medmask.rows()-1-z) = 0;
+         medmask.col(z) = 0;
+         medmask.col(medmask.cols()-1-z) = 0;
+      }
+
+      #pragma omp parallel
+      {
+         eigenImageT fim, im;
+         fim.resize(ims.rows(), ims.cols());
+         im.resize(ims.rows(),  ims.cols());
+
+         #pragma omp for
+         for(int i=0;i<ims.planes(); ++i)
+         {
+            im = ims.image(i);
+            medianSmooth(fim, im, m_preProcess_medianUSM_fwhm);
+            ims.image(i) = (im-fim)*medmask;
+         }
+      }
+
+      if( m_maskFile != "" && m_preProcess_mask)
+      {
+         std::cerr << "Masking . . .\n";
+         #pragma omp parallel for
+         for(int i=0;i<ims.planes(); ++i)
+         {
+            ims.image(i) *= m_mask;
+         }
+
+      }
+      std::cerr << "done\n";
+   }
+
+   if( m_preProcess_gaussUSM_fwhm > 0 )
+   {
+      std::cerr << "applying Gauss USM . . .\n";
       t_gaussusm_begin = sys::get_curr_time();
 
       #pragma omp parallel for
@@ -1442,7 +1497,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
          ims.image(i) = im;
       }
 
-      if( m_maskFile != "")
+      if( m_maskFile != "" && m_preProcess_mask)
       {
          std::cerr << "Masking . . .\n";
          #pragma omp parallel for
@@ -1460,7 +1515,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> & ims )
    {
       ipc::ompLoopWatcher<> status( ims.planes(), std::cerr);
 
-      std::cerr << "Applying azimuthal USM . . .\n";
+      std::cerr << "applying azimuthal USM . . .\n";
       t_azusm_begin = sys::get_curr_time();
       #pragma omp parallel for
       for(int i=0;i<ims.planes(); ++i)
@@ -1709,7 +1764,7 @@ void HCIobservation<_realT>::stdFitsHeader(fits::fitsHeader & head)
    head.append<realT>("PREPROC AZUSM AZWIDTH", m_preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width [pixels]");
    head.append<realT>("PREPROC AZUSM MAXAZ", m_preProcess_azUSM_maxAz, "pre-process azimuthal USM maximum azimuthal width [degrees]");
    head.append<realT>("PREPROC AZUSM RADWIDTH", m_preProcess_azUSM_radW, "pre-process azimuthal USM radial width [pixels]");
-
+   head.append<realT>("PREPROC MEDIANUSM FWHM", m_preProcess_medianUSM_fwhm, "pre-process median USM fwhm [pixels]");
    head.append<realT>("PREPROC GAUSSUSM FWHM", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm [pixels]");
 
 }
