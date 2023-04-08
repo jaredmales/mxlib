@@ -758,9 +758,9 @@ int imageRebinMeanReject( imageOutT & imout,    ///< [out] the re-binned image. 
    {
       for(int j=0; j<imout.cols(); ++j)
       {
-         register typename imageOutT::Scalar sum = 0;
-         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
-         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         typename imageOutT::Scalar sum = 0;
+         typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
          for(int k=0;k<rebin;++k)
          {
             for(int l=0;l<rebin;++l)
@@ -804,9 +804,9 @@ int imageRebinMeanReject( imageOutT & imout,                 ///< [out] the re-b
    {
       for(int j=0; j<imout.cols(); ++j)
       {
-         register typename imageOutT::Scalar sum = 0;
-         register typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
-         register typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
+         typename imageOutT::Scalar sum = 0;
+         typename imageOutT::Scalar max = imin(i*rebin, j*rebin);
+         typename imageOutT::Scalar min = imin(i*rebin, j*rebin);
          for(int k=0;k<rebin;++k)
          {
             for(int l=0;l<rebin;++l)
