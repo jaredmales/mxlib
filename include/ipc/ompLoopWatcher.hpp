@@ -93,6 +93,13 @@ protected:
       if(_time) t1 = sys::get_curr_time();
    }
 
+   ///Advance the counter by a number of steps
+   void _advance( size_t diff_count)
+   {
+      _counter += diff_count;
+      if(_time) t1 = sys::get_curr_time();
+   }
+
    ///Perform the output
    void _outputStatus()
    {
@@ -156,6 +163,15 @@ public:
       _increment();
    }
 
+   ///Advance the counter by a number of steps.
+   /** Call this once per loop.  It contains an omp critical directive.
+     */
+   void advance(size_t diff_count)
+   {
+      #pragma omp critical
+      _advance(diff_count);
+   }
+
    ///Output current status.
    /** Call this whenever you want a status update.  It contains an omp critical directive.
      */
@@ -173,6 +189,18 @@ public:
       #pragma omp critical
       {
          _increment();
+         _outputStatus();
+      }
+   }
+
+   ///Advance and output status.
+   /** Call this to advance and then give a status update.  Has only one omp critical directive for the two steps.
+     */
+   void advanceAndOutputStatus(size_t diff_count)
+   {
+      #pragma omp critical
+      {
+         _advance(diff_count);
          _outputStatus();
       }
    }
