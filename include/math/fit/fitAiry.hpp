@@ -228,8 +228,8 @@ struct array2FitAiry
    size_t nx {0}; ///< X dimension of the array
    size_t ny {0}; ///< Y dimension of the array
    
-   realT cenObs {0}; ///< the platescale in \f$ (\lambda/D)/pixel  \f$
-   realT ps {0}; ///< is the ratio of the circular central obscuration diameter to the diameter.
+   realT cenObs {0}; ///< is the ratio of the circular central obscuration diameter to the diameter.
+   realT ps {0}; ///< the platescale in \f$ (\lambda/D)/pixel  \f$
 };
 
 ///\ref levmarInterface fitter structure for the centrally obscured Airy pattern.

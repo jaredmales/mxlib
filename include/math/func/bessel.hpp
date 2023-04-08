@@ -41,8 +41,9 @@ namespace func
 {
    
 /// Bessel Functions of the First Kind.
-/**
-  * \ingroup functions
+/** This is a wrapper for boost.
+  *
+  * \ingroup gen_math_bessel
   */ 
 template<typename T1, typename T2>
 T2 bessel_j( T1 v, ///< [in] 

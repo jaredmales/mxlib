@@ -40,7 +40,7 @@ namespace math
 namespace func 
 {
 
-///Returns the the Jinc function
+/// The Jinc function
 /** The Jinc function is defined here as
   * \f[ 
   *     Ji(x) = \frac{J_1(x)}{x} 
@@ -58,7 +58,7 @@ namespace func
   * 
   * \tparam T is an floating point type 
   * 
-  * \ingroup functions
+  * \ingroup gen_math_bessel
   */
 template<typename T> 
 T jinc( const T & x /**< [in] the argument */)
@@ -101,7 +101,7 @@ extern template
 __float128 jinc<__float128>(const __float128 & x);
 #endif
 
-///Returns the JincN function
+/// The JincN function
 /** The JincN function is defined here as
   * \f[ 
   *     Ji_N(x) = \frac{J_N(x)}{x} 
@@ -114,7 +114,7 @@ __float128 jinc<__float128>(const __float128 & x);
   * 
   * \returns the value of JiN(x)
   * 
-  * \ingroup functions
+  * \ingroup gen_math_bessel
   */
 template<typename T1, typename T2> 
 T2 jincN( const T1 & v, ///< [in] the Bessel function order

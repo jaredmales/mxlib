@@ -562,7 +562,7 @@ void gaussian2D_jacobian( realT *j,
 }
 
 } //namespace func 
-}//namespace math
+} //namespace math
 } //namespace mx
 
 #endif //gaussian_hpp

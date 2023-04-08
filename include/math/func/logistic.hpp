@@ -48,17 +48,17 @@ namespace func
   * The parameter \f$ a \f$ controls how fast the function rises.  Here it is specified by the
   * value \f$ f(t_{1/2}) = x\f$, where \f$ 0 < x < 1 \f$.
   * 
-  * \param x [input] the value at which the rist time is specified.
-  * \param thalf [input] half the rise time, or the time after 0 when f(t) = x.
   * 
   * \returns the value of a
   * 
   * \tparam floatT is the floating point type of the arguments and the returned value.
   * 
-  * \ingroup functions
+  * \ingroup gen_math_logistic
   */
 template<typename floatT>
-floatT logistic_param(floatT x, floatT thalf)
+floatT logistic_param( floatT x,    ///< [in] the value at which the rise time is specified.
+                       floatT thalf ///< [in]  half the rise time, or the time after 0 when f(t) = x.
+                     )
 {
    return -log( 1.0/x - 1)/thalf;
 }
@@ -77,7 +77,7 @@ floatT logistic_param(floatT x, floatT thalf)
   * 
   * \tparam floatT is the floating point type of the arguments and the returned value.
   * 
-  * \ingroup functions
+  * \ingroup gen_math_logistic
   */
 template<typename floatT>
 floatT logistic(floatT t, floatT t0 = 0, floatT a = 1)

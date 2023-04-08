@@ -21,6 +21,8 @@ namespace func
 /** Wrapper for boost function
   *
   * \todo this isn't, but should be constexpr -- need constr sqrt.
+  *
+  * \ingroup gen_math_precision
   */ 
 template<typename T>
 T root_epsilon() 

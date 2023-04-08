@@ -41,8 +41,13 @@ namespace func
 {
    
 /// The Gamma Function
-/**
-  * \ingroup functions
+/** This is a wrapper for boost.
+  *
+  * \tparam T a real floating point type
+  *
+  * \returns the value of the Gamma Function.
+  *
+  * \ingroup gen_math_gamma
   */ 
 template<typename T>
 T tgamma( T x /**< [in] the argument of the gamma function*/ )

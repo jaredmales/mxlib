@@ -27,18 +27,25 @@
 #ifndef weibull_hpp
 #define weibull_hpp
 
+namespace mx
+{
+namespace math
+{
+namespace func
+{
+
 ///The MLE of the Weibull distribution lambda parameter.
 /**
   * \tparam realT a real floating point type 
   * 
   * \returns the MLE of lambda given the data.
   * 
-  * \ingroup functions
+  * \ingroup gen_math_weibull
   */
 template<typename realT>
 realT weibull_lambda( std::vector<realT> & x, ///<[in] the data points
-                      realT k, ///< [in] the shape parameter
-                      realT x0 = 0 ///< [in] [optional] the location parameter
+                      realT k,                ///< [in] the shape parameter
+                      realT x0 = 0            ///< [in] [optional] the location parameter
                     )
 {
    int n = x.size();
@@ -68,12 +75,12 @@ realT weibull_lambda( std::vector<realT> & x, ///<[in] the data points
   *
   * \returns the value of the Weibull distribution at x.
   * 
-  * \ingroup functions
+  * \ingroup gen_math_weibull
   */  
 template<typename realT>
-realT weibull( realT x, ///< [in] the location at which to calculate the distribution
-               realT x0,  ///< [in] the location parameter
-               realT k,  ///< [in] the shape parameter
+realT weibull( realT x,      ///< [in] the location at which to calculate the distribution
+               realT x0,     ///< [in] the location parameter
+               realT k,      ///< [in] the shape parameter
                realT lambda  ///< [in] the scale parameter
              )
 {
@@ -103,16 +110,19 @@ realT weibull( realT x, ///< [in] the location at which to calculate the distrib
   * 
   * \overload 
   * 
-  * \ingroup functions
+  * \ingroup gen_math_weibull
   */  
 template<typename realT>
-realT weibull( realT x, ///< [in] the location at which to calculate the distribution
-               realT k,  ///< [in] the shape parameter
-               realT lambda  ///< [in] the scale parameter
+realT weibull( realT x,     ///< [in] the location at which to calculate the distribution
+               realT k,     ///< [in] the shape parameter
+               realT lambda ///< [in] the scale parameter
              )
 {
    return weibull(x, static_cast<realT>(0), k, lambda);
 }
 
-   
+} //namespace func
+} //namespace math
+} //namespace mx
+
 #endif //weibull_hpp

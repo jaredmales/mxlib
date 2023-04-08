@@ -44,11 +44,20 @@ class histogramUniform
 {
 public:
 
-   realT _min; ///<The mininum bin location
-   realT _max; ///<The maximum bin location
-   realT _width; ///<The bin width
+   realT m_min; ///<The mininum bin location
+   realT m_max; ///<The maximum bin location
+   realT m_width; ///<The bin width
 
    std::vector<realT> _freqs; ///<The frequencies, one for each bin.
+
+   ///Setup the histogram, performing allocations.
+   histogramUniform( realT mn, ///< [in] the new minimum bin location
+                     realT mx, ///< [in] the new maximum bin location
+                     realT w   ///< [in] the bin width
+                   ) : m_min(mn), m_max(mx), m_width(w)
+   {
+      reset();
+   }
 
    ///Setup the histogram, performing allocations.
    void setup( realT mn, ///< [in] the new minimum bin location
@@ -56,23 +65,23 @@ public:
                realT w   ///< [in] the bin width
              )
    {
-      _min = mn;
-      _max = mx;
-      _width = w;
+      m_min = mn;
+      m_max = mx;
+      m_width = w;
       
       reset();
    }
    
-   ///Resize and 0 the frequency vector.  Assumes _min, _max, and _width are set.
+   ///Resize and 0 the frequency vector.  Assumes m_min, m_max, and m_width are set.
    void reset()
    {
-      _freqs.resize( (_max - _min)/_width + 1, 0);
+      _freqs.resize( (m_max - m_min)/m_width + 1, 0);
    }
    
    ///Accumulate a value in the appropriate bin.
    void accum( const realT & val /**< [in] The value to accumulate */)
    {
-      int i = (val - _min) / _width;
+      int i = (val - m_min) / m_width;
       if( i < 0) i = 0;
       if( i >= _freqs.size()) i = _freqs.size()-1;
       
@@ -101,19 +110,19 @@ public:
    ///Get the value of the left-edge of the i-th bin.
    realT binLeft(int i /**< [in] the bin number */)
    {
-      return _min + i*_width; ///\returns the value of the left-edge of the i-th bin.
+      return m_min + i*m_width; ///\returns the value of the left-edge of the i-th bin.
    }
    
    ///Get the value of the middle of the i-th bin.
    realT binMid(int i /**< [in] the bin number */)
    {
-      return _min + i*_width + 0.5*_width; ///\returns the value of the middle of the i-th bin.
+      return m_min + i*m_width + 0.5*m_width; ///\returns the value of the middle of the i-th bin.
    }
    
    ///Get the value of the right edge of the i-th bin.
    realT binRight(int i /**< [in] the bin number */)
    {
-      return _min + i*_width + 1.0*_width; ///\returns the value of the right edge of the i-th bin. 
+      return m_min + i*m_width + 1.0*m_width; ///\returns the value of the right edge of the i-th bin.
    }
    
    ///Normalize the current frequencies so that the integral over all bins is 1.
@@ -131,7 +140,7 @@ public:
       
       for(int i=0; i< _freqs.size(); ++i)
       {
-         _freqs[i] /= (sum*_width);
+         _freqs[i] /= (sum*m_width);
       }
    }
    

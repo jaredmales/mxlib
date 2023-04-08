@@ -69,20 +69,57 @@
   * \ingroup gen_math
   */
 
-/** \defgroup gen_math_gaussians The Gaussian Function
-  * Utilities for working with the Gaussian function
-  * \ingroup functions
-  */
+   /** \defgroup gen_math_airy_pattern The Airy Pattern
+     * Utilities for working with the Airy Pattern.
+     * \ingroup functions
+     */
 
-/** \defgroup gen_math_moffats The Moffat Function
-  * Utilities for working with the Moffat function
-  * \ingroup functions
-  */
-  
-/** \defgroup gen_math_airy_pattern The Airy Pattern
-  * Utilities for working with the Airy Pattern.
-  * \ingroup functions
-  */
+   /** \defgroup gen_math_bessel Bessel Functions
+     * Functions involving Bessel Functions.
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_expModGaussian The Exponentially Modified Gaussian Distribution
+     * Utilities for working with the Exponentially Modified Gaussian Distribution
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_gamma The Gamma Function
+     * Utilities for working with the Gamma Function.
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_gammaDist The Gamma Distribution
+     * Utilities for working with the Gamma Distribution.
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_gaussians The Gaussian Function
+     * Utilities for working with the Gaussian function
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_logistic The Logistic Function
+     * Utilities for working with the Logistic Function.
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_precision Machine Precision
+     * Utilities for determining machine precision
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_moffats The Moffat Function
+     * Utilities for working with the Moffat function
+     * \ingroup functions
+     */
+
+   /** \defgroup gen_math_weibull The Weibull Distribution
+     * Utilities for working with the Weibull Distribution.
+     * \ingroup functions
+     */
+
+
 
 /** \defgroup template_blaslap Templatized BLAS and Lapack
   * Templatized interfaces to BLAS and the Lapack librarries
