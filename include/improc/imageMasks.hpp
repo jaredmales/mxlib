@@ -398,9 +398,9 @@ void maskCircle( arrayT & m,                          ///< [in.out] the image to
    return maskCircle(m, 0.5*(m.rows()-1.0), 0.5*(m.cols()-1.0), rad, val, pixbuf);
 }   
 
-///Mask an ellipse in an image.
+/// Mask an ellipse in an image.
 /** The ellipse is describe by its center coordinates and x and y direction radii (the semi-major and -minor axes, in either order). Any value can be set for the mask,
-  * with 0 being the default.  The ellipse axes must be horizontal and vertical, i.e. there is no rotation provided.
+  * with 0 being the default.
   * 
   * \tparam arrayT is an Eigen-like type.
   * 
@@ -408,24 +408,31 @@ void maskCircle( arrayT & m,                          ///< [in.out] the image to
   */
 template<class arrayT> 
 void maskEllipse( arrayT & m,                         ///< [in.out] the image to be masked, is modified.
-                 typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
-                 typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
-                 typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
-                 typename arrayT::Scalar yrad,        ///< [in] the y radius of the ellipse
-                 typename arrayT::Scalar val = 0,     ///< [in] [optional] the mask value.  Default is 0.
-                 typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
-               )
+                  typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
+                  typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
+                  typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
+                  typename arrayT::Scalar yrad,        ///< [in] the y radius of the ellipse
+                  typename arrayT::Scalar ang,         ///< [in] the c.c.w. angle to rotate the ellipse by
+                  typename arrayT::Scalar val = 0,     ///< [in] [optional] the mask value.  Default is 0.
+                  typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+                )
 {
+   typedef typename arrayT::Scalar realT;
+
    size_t l0 = m.rows();
    size_t l1 = m.cols();
    
-   typename arrayT::Scalar r;
-   typename arrayT::Scalar x;
-   typename arrayT::Scalar y;
-   typename arrayT::Scalar xe, ye;
-   typename arrayT::Scalar rad;
+   realT r;
+   realT x;
+   realT y;
+   realT xe, ye;
+   realT rad;
    
-   
+   realT cq = cos(ang);
+   realT sq = sin(ang);
+
+   realT xr,yr;
+
    for(size_t i=0; i < l0; i++)
    {
       x = i-xcen;
@@ -433,12 +440,16 @@ void maskEllipse( arrayT & m,                         ///< [in.out] the image to
       {
          y = j-ycen;
          
-         xe = (pow(xrad*yrad,2)/ (pow(yrad,2) + pow(xrad*y/x,2)));
+         xr = x*cq - y*sq;
+         yr = x*sq + y*cq;
+
+         //Coordinate on the ellipse where the line to the point intersects
+         xe = (pow(xrad*yrad,2)/ (pow(yrad,2) + pow(xrad*yr/xr,2)));
          ye = (pow(yrad,2) - xe*pow(yrad/xrad,2));
          
          rad = sqrt(xe + ye); 
          
-         r = sqrt( pow(i-xcen, 2) + pow(j-ycen, 2) );
+         r = sqrt( pow(xr, 2) + pow(yr, 2) );
          
          if(r <= rad+pixbuf) m(i,j) = val;
       }
