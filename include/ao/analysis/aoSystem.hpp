@@ -125,6 +125,8 @@ protected:
    bool m_specsChanged {true};///< Flag to indicate that a specification has changed.
    bool m_dminChanged {true};///< Flag to indicate that d_min has changed.
 
+   Eigen::Array<bool,-1,-1> m_controlledModes; ///< Map of which modes are under control.  Set by calcStrehl.
+
    realT m_wfeMeasurement {0}; ///< Total WFE due to measurement a error [rad^2 at m_lam_sci]
    realT m_wfeTimeDelay {0}; ///< Total WFE due to time delay [rad^2 at m_lam_sci]
    realT m_wfeFitting {0}; ///< Total WFE due to fitting error [rad^2 at m_lam_sci]
@@ -578,15 +580,6 @@ public:
                          );
    
    ///Calculate the total measurement error over all corrected spatial frequencies
-   /** This totals the measurement WFE for the given actuator spacing and binning.
-     * 
-     * \returns the total WFE due to measurement error.
-     */ 
-   realT measurementErrorTotal( realT d, ///< [in] the actuator spacing in meters
-                                int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
-                              );
-
-   ///Calculate the total measurement error over all corrected spatial frequencies
    /** This totals the measurement WFE at the optimum actuator spacing and binning.
      *
      * \overload
@@ -612,15 +605,6 @@ public:
                          realT d, ///< [in] the actuator spacing, in meters
                          int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
                        );
-   
-   /// Calculate the time delay error over all corrected spatial frequencies
-   /** This totals the time delay WFE for the given actuator spacing and binning.
-     * 
-     * \returns the total WFE due to time delay.
-     */ 
-   realT timeDelayErrorTotal( realT d, ///< [in] the actuator spacing, in meters
-                              int b    ///< [in] the binning parameter.  Either the WFS mode index, or the binning factor minus 1.
-                           );
 
    /// Calculate the time delay error over all corrected spatial frequencies
    /** This totals the time delay WFE at the optimum actuator spacing and binning.
@@ -647,13 +631,6 @@ public:
                      );
 
    /// Calculate the total fitting error over all uncorrected spatial frequencies.
-   /** This totals the fitting WFE for the given actuator spacing and binning.
-     *
-     * \returns the total fitting error.
-     */ 
-   realT fittingErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
-
-   /// Calculate the total fitting error over all uncorrected spatial frequencies.
    /** This totals the fitting WFE for the optimum actuator spacing and binning.
      *
      * \overload
@@ -670,12 +647,14 @@ public:
      * @{
      */
    
-   /// Calculate the wavefront error due to scintillation chromaticity in the OPD over all spatial frequencies.   
-   /** This totals the WFE from scintillation chromaticity in the OPD for the given actuator spacing.
-     * 
+   /// Calculate the wavefront error due to scintillation chromaticity in the OPD at a spatial frequency.
+   /** This totals the WFE from scintillation chromaticity in the OPD.
+     *
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
-     */    
-   realT chromScintOPDErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
+     */
+   realT chromScintOPDError( int m, ///< [in] specifies the u component of the spatial frequency
+                             int n  ///< [in] specifies the v component of the spatial frequency
+                           );
 
    /// Calculate the wavefront error due to scintillation chromaticity in the OPD over all spatial frequencies.   
    /** This totals the WFE from scintillation chromaticity in the OPD for the optimum actuator spacing.
@@ -686,22 +665,32 @@ public:
      */    
    realT chromScintOPDErrorTotal();
 
+   /// Calculate the wavefront error due to scintillation chromaticity in amplitude for a given spatial frequency.
+   /**
+     * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
+     */
+   realT chromScintAmpError( int m, ///< [in] specifies the u component of the spatial frequency
+                             int n  ///< [in] specifies the v component of the spatial frequency
+                           );
+
    /// Calculate the wavefront error due to scintillation chromaticity in amplitude over all spatial frequencies.   
    /**
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
      */       
    realT chromScintAmpError();
-   
-   /// Calculate the wavefront error due to chromaticity in the index of refraction over all spatial frequencies.   
-   /** This totals the WFE from chromaticity in the index of refraction for the given actuator spacing.
+
+   /// Calculate the wavefront error due to chromaticity in the index of refraction at a given spatial frequency.
+   /** This totals the WFE from chromaticity in the index of refraction.
      *
      * \overload
-     *  
+     *
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
-     */       
-   realT chromIndexErrorTotal(realT d /**< [in] the actuator spacing, in meters */);
+     */
+   realT chromIndexError( int m, ///< [in] specifies the u component of the spatial frequency
+                          int n  ///< [in] specifies the v component of the spatial frequency
+                        );
 
-   /// Calculate the wavefront error due to chromaticity in the index of refraction at a specific spatial frequency.   
+   /// Calculate the wavefront error due to chromaticity in the index of refraction at a specific spatial frequency.
    /** This totals the WFE from chromaticity in the index of refraction for the optimum actuator spacing.
      * 
      * \overload
@@ -710,11 +699,14 @@ public:
      */       
    realT chromIndexErrorTotal();
 
-   /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD over all spatial frequencies.   
-   /** This totals the WFE from dispersive anisoplanatism in the OPD for the given actuator spacing.
+   /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD at a given spatial frequency
+   /** This calculates the WFE from dispersive anisoplanatism in the OPD.
+     *
      * \returns the WFE in rad^2 rms at the science wavelength at (m,n).
-     */       
-   realT dispAnisoOPDErrorTotal( realT d /**< [in] the actuator spacing, in meters */);
+     */
+   realT dispAnisoOPDError( int m, ///< [in] specifies the u component of the spatial frequency
+                            int n  ///< [in] specifies the v component of the spatial frequency
+                          );
 
    /// Calculate the wavefront error due to dispersive anisoplanatism in the OPD over all specific spatial frequencies.   
    /** This totals the WFE from dispersive anisoplanatism in the OPD for the optimum actuator spacing.
@@ -846,7 +838,7 @@ public:
      * @{
      */
    
-   ///Worker function for raw contrast fuctions
+   /// Worker function for raw contrast fuctions
    /** The logic in this calculation is the same regardless of component, except for the calculation of variance.
      * The varFunc function pointer is used to calculate the variance, otherwise  This handles the other details such
      * as Strehl normalization, fitting error (if appropriate), and bounds checking.
@@ -856,8 +848,8 @@ public:
      * \tparam varFuncT  is a function-pointer-to-member (of this class) with signature realT(*f)(realT, realT)
      */
    template<typename varFuncT>
-   realT C_( realT m,           //< [in] is the spatial frequency index in u/
-             realT n,           ///< [in] is the spatial frequency index in v.
+   realT C_( int m,             ///< [in] is the spatial frequency index in u/
+             int n,             ///< [in] is the spatial frequency index in v.
              bool normStrehl,   ///< [in] flag controls whether the contrast is normalized by Strehl ratio/
              varFuncT varFunc,  ///< [in] the variance function to use.
              int doFittingError ///< [in] flag to describe how fitting error should be considered for this term: FITTING_ERROR_NO, FITTING_ERROR_ZERO, FITTING_ERROR_X, or FITTING_ERROR_Y.
@@ -1844,34 +1836,10 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::measurementErrorTotal( realT d,
-                                                                 int b )
-{   
-   int mn_max = floor(0.5*m_D/d);
-   realT sum = 0;
-
-   for(int m=-mn_max; m <= mn_max; ++m)
-   {
-      for(int n=-mn_max; n<mn_max; ++n)
-      {
-         if(n == 0 && m == 0) continue;
-         
-         if( m_circularLimit )
-         {
-            if( m*m + n*n > mn_max*mn_max ) continue;
-         }
-         sum += measurementError(m,n, d, b);
-      }
-   }
-
-   return sum;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::measurementErrorTotal()
 {   
-   d_opt(); //have to run this to get m_bin_opt set.
-   return measurementErrorTotal(d_opt(), m_bin_opt);
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeMeasurement;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -1896,46 +1864,11 @@ realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m,
    return psd(atm, 0, k, m_secZeta)/pow(m_D,2) * pow(atm.lam_0()/m_lam_sci, 2) * sqrt(atm.X(k, m_lam_sci, m_secZeta)) * pow(math::two_pi<realT>()*atm.v_wind()*k,2) * pow(tau,2);      
 }
 
-/*template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::timeDelayError( realT m, 
-                                                          realT n )
-{
-   d_opt();
-   return timeDelayError(m,n,m_d_opt, m_bin_opt);
-}*/
-
-template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::timeDelayErrorTotal( realT d,
-                                                               int b
-                                                            )
-{   
-   int mn_max = floor(0.5*m_D/d);
-   
-   realT sum = 0;
-
-   for(int m = -mn_max; m <= mn_max; ++m)
-   {
-      for(int n = -mn_max; n <= mn_max; ++n)
-      {
-         if(n == 0 && m == 0) continue;
-         
-         if( m_circularLimit )
-         {
-            if( m*m + n*n > mn_max*mn_max ) continue;
-         }
-         
-         sum += timeDelayError(m,n,d, b);
-      }
-   }
-
-   return sum;
-}
-
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::timeDelayErrorTotal()
 {
-   d_opt(); //sets m_bin_opt
-   return timeDelayErrorTotal(d_opt(), m_bin_opt);   
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeTimeDelay;
 }
 
 
@@ -1950,73 +1883,34 @@ realT aoSystem<realT, inputSpectT, iosT>::fittingError( realT m,
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::fittingErrorTotal(realT d)
-{   
-   int mn_max = m_D/(2.0*d);
-
-   realT sum = 0;
-   
-   for(int m = -m_fit_mn_max; m <= m_fit_mn_max; ++m)
-   {
-      for(int n = -m_fit_mn_max; n <= m_fit_mn_max; ++n)
-      {
-         if(m_circularLimit)
-         {
-            if( m*m + n*n <= mn_max*mn_max) continue;
-         }
-         else 
-         {
-            if( abs(m) <= mn_max && abs(n) <= mn_max) continue;
-         }
-         
-         sum += fittingError(m,n);
-      }
-   }
-            
-   return sum;
-}
-
-template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::fittingErrorTotal()
 {   
-   return fittingErrorTotal(d_opt());
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeFitting;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDErrorTotal( realT d )
+realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDError( int m,
+                                                              int n
+                                                            )
 {
-   int mn_max = floor(0.5*m_D/d);
-   
-   realT sum = 0;
-
-   for(int m = -mn_max; m <= mn_max; ++m)
-   {
-      for(int n = -mn_max; n <= mn_max; ++n)
-      {
-         if(n == 0 && m == 0) continue;
-         
-         if( m_circularLimit )
-         {
-            if( m*m + n*n > mn_max*mn_max ) continue;
-         }
-         
-         sum += C4var(m,n);
-      }
-   }
-
-   return sum;   
+   return C4var(m,n);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::chromScintOPDErrorTotal()
 {
-   return chromScintOPDErrorTotal(d_opt());
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeChromScintOPD;
 }
 
 template<typename realT, class inputSpectT, typename iosT>   
-realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError()
+realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError( int m,
+                                                              int n
+                                                            )
 {
-   return 0;
+   return C5var(m,n);
+
 #if 0
    int mn_max = floor(0.5*m_D/d_opt());
    
@@ -2037,66 +1931,33 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::chromIndexErrorTotal(realT d)
+realT aoSystem<realT, inputSpectT, iosT>::chromIndexError( int m,
+                                                           int n
+                                                         )
 {
-   int mn_max = floor(0.5*m_D/d);
-   
-   realT sum = 0;
-
-   for(int m = -mn_max; m <= mn_max; ++m)
-   {
-      for(int n = -mn_max; n <= mn_max; ++n)
-      {
-         if(n == 0 && m == 0) continue;
-         
-         if( m_circularLimit )
-         {
-            if( m*m + n*n > mn_max*mn_max ) continue;
-         }
-         
-         sum += C6var(m,n);
-      }
-   }
-
-   return sum;   
-}  
+   return C6var(m,n);
+}
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::chromIndexErrorTotal()
 {
-   return chromIndexErrorTotal(d_opt());
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeChromIndex;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDErrorTotal( realT d )
+realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDError( int m,
+                                                             int n
+                                                           )
 {
-   int mn_max = floor(0.5*m_D/d);
-   
-   realT sum = 0;
-
-   for(int m = -mn_max; m <= mn_max; ++m)
-   {
-      for(int n = -mn_max; n <= mn_max; ++n)
-      {
-         if(n == 0 && m == 0) continue;
-         
-         if( m_circularLimit )
-         {
-            if( m*m + n*n > mn_max*mn_max ) continue;
-         }
-         
-         sum += C7var(m,n);
-      }
-   }
-
-   return sum;
-   
+   return C7var(m,n);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::dispAnisoOPDErrorTotal()
 {
-   return dispAnisoOPDErrorTotal(d_opt());   
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+   return m_wfeAnisoOPD;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2386,18 +2247,55 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl( realT d,
                                                   int b
                                                 )
 {  
-   realT wfeMeasurement = measurementErrorTotal(d, b);
-   realT wfeTimeDelay = timeDelayErrorTotal(d, b);
-   realT wfeFitting = fittingErrorTotal(d);
-   
-   realT wfeChromScintOPD = chromScintOPDErrorTotal(d);
-   realT wfeChromIndex = chromIndexErrorTotal(d);
-   realT wfeAnisoOPD = dispAnisoOPDErrorTotal(d);
-   
-   realT wfeNCP = ncpError();
-   
-   realT wfeVar = wfeMeasurement + wfeTimeDelay + wfeFitting  + wfeChromScintOPD + wfeChromIndex + wfeAnisoOPD + wfeNCP;
-   
+
+   int mn_max = floor(0.5*m_D/d);
+
+   realT wfeVar = 0;
+
+   bool controlled;
+   for(int m = -m_fit_mn_max; m <= m_fit_mn_max; ++m)
+   {
+      for(int n = -m_fit_mn_max; n <= m_fit_mn_max; ++n)
+      {
+         controlled = false;
+         if(m_circularLimit)
+         {
+            if( m*m + n*n <= mn_max*mn_max) controlled = true;
+         }
+         else
+         {
+            if( abs(m) <= mn_max && abs(n) <= mn_max) controlled = true;
+         }
+
+         if(controlled)
+         {
+            realT wfeMeasurement = measurementError(m,n, d, b);
+            realT wfeTimeDelay = timeDelayError(m,n,d, b);
+            realT wfeChromScintOPD = chromScintOPDError(m,n);
+            realT wfeChromIndex = chromIndexError(m,n);
+            realT wfeAnisoOPD = dispAnisoOPDError(m,n);
+
+            realT wfeFitting = fittingError(m,n);
+
+            if(wfeFitting < wfeMeasurement + wfeTimeDelay + wfeChromScintOPD + wfeChromIndex + wfeAnisoOPD)
+            {
+               wfeVar += wfeFitting;
+            }
+            else
+            {
+               wfeVar +=  wfeMeasurement + wfeTimeDelay + wfeChromScintOPD + wfeChromIndex + wfeAnisoOPD;
+            }
+         }
+         else
+         {
+            wfeVar += fittingError(m,n);
+         }
+
+         realT wfeNCP = ncpError(m, n);
+         wfeVar += wfeNCP;
+      }
+   }
+
    return exp(-1 * wfeVar);
    
 }
@@ -2405,15 +2303,72 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl( realT d,
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
 {  
-   m_wfeMeasurement = measurementErrorTotal();
-   m_wfeTimeDelay = timeDelayErrorTotal();
-   m_wfeFitting = fittingErrorTotal();
-   
-   m_wfeChromScintOPD = chromScintOPDErrorTotal();
-   m_wfeChromIndex = chromIndexErrorTotal();
-   m_wfeAnisoOPD = dispAnisoOPDErrorTotal();
-   
-   m_wfeNCP = ncpError();
+   realT d = d_opt(); //have to run this to get m_bin_opt set.
+   int b = m_bin_opt;
+
+   int mn_max = floor(0.5*m_D/d);
+
+   m_wfeMeasurement = 0;
+   m_wfeTimeDelay = 0;
+   m_wfeChromScintOPD = 0;
+   m_wfeChromIndex = 0;
+   m_wfeAnisoOPD = 0;
+
+   m_wfeFitting = 0;
+
+   m_wfeNCP = 0;
+
+
+   m_controlledModes.resize(2*m_fit_mn_max+1, 2*m_fit_mn_max+1);
+   m_controlledModes.setZero();
+
+   bool controlled;
+   for(int m = -m_fit_mn_max; m <= m_fit_mn_max; ++m)
+   {
+      for(int n = -m_fit_mn_max; n <= m_fit_mn_max; ++n)
+      {
+         controlled = false;
+         if(m_circularLimit)
+         {
+            if( m*m + n*n <= mn_max*mn_max) controlled = true;
+         }
+         else
+         {
+            if( abs(m) <= mn_max && abs(n) <= mn_max) controlled = true;
+         }
+
+         if(controlled)
+         {
+            realT wfeMeasurement = measurementError(m,n, d, b);
+            realT wfeTimeDelay = timeDelayError(m,n,d, b);
+            realT wfeChromScintOPD = chromScintOPDError(m,n);
+            realT wfeChromIndex = chromIndexError(m,n);
+            realT wfeAnisoOPD = dispAnisoOPDError(m,n);
+
+            realT wfeFitting = fittingError(m,n);
+
+            if(wfeFitting < wfeMeasurement + wfeTimeDelay + wfeChromScintOPD + wfeChromIndex + wfeAnisoOPD)
+            {
+               m_wfeFitting += wfeFitting;
+            }
+            else //it's worth controlling this mode.
+            {
+               m_wfeMeasurement += wfeMeasurement;
+               m_wfeTimeDelay += wfeTimeDelay;
+               m_wfeChromScintOPD += wfeChromScintOPD;
+               m_wfeChromIndex += wfeChromIndex;
+               m_wfeAnisoOPD += wfeAnisoOPD;
+               m_controlledModes(m_fit_mn_max+m, m_fit_mn_max+n) = 1;
+            }
+         }
+         else
+         {
+            m_wfeFitting += fittingError(m,n);
+         }
+
+         m_wfeNCP += ncpError(m, n);
+      }
+   }
    
    m_wfeVar = m_wfeMeasurement + m_wfeTimeDelay  + m_wfeFitting  + m_wfeChromScintOPD +m_wfeChromIndex + m_wfeAnisoOPD + m_wfeNCP;
    
@@ -2440,11 +2395,11 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl()
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename varFuncT>
-realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m, 
-                                               realT n,
-                                               bool normStrehl,
-                                               varFuncT varFunc,
-                                               int doFittingError
+realT aoSystem<realT, inputSpectT, iosT>::C_( int m,
+                                              int n,
+                                              bool normStrehl,
+                                              varFuncT varFunc,
+                                              int doFittingError
                                             )
 {
    if(m ==0 && n == 0) return 0;
@@ -2457,7 +2412,7 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
    {
       int mn_max = m_D/(2.*d_opt());
    
-      bool outside = false;
+      /*bool outside = false;
       if(m_circularLimit)
       {
          if(m*m + n*n > mn_max*mn_max) outside = true;
@@ -2465,9 +2420,9 @@ realT aoSystem<realT, inputSpectT, iosT>::C_(  realT m,
       else
       {
          if(abs(m) > mn_max || abs(n) > mn_max) outside = true;
-      }
-      
-      if(mn_max > 0 && outside )
+      }*/
+//      bool outside =;
+      if(  m_controlledModes(m_fit_mn_max+m, m_fit_mn_max+n)  == false) //  mn_max > 0 && outside )
       {
          if(doFittingError == FITTING_ERROR_ZERO) return 0;
          
