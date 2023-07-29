@@ -29,9 +29,33 @@
 
 #include <complex>
 
+
+//MKL can use 64-bit integer types, standard BLAS and LAPACK use int
+//MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
+#ifdef MXLIB_MKL
+   typedef MKL_INT MXLAPACK_INT;
+   #define MKL_CONST_PTR const
+#else
+   #ifndef MXLAPACK_INT
+      typedef int MXLAPACK_INT;
+   #endif
+
+   #define MKL_CONST_PTR
+#endif
+
+//lapack.h probably has a typedef for lapack_int that we need to synchronize
+#ifndef MXNODEF_LAPACK_INT
+   #ifndef lapack_int
+      #define lapack_int MXLAPACK_INT
+   #endif
+#endif
+
+
+
+
 extern "C"
 {
-#ifdef MXLIB_MKL
+#if defined(MXLIB_MKL)
 
    #define MKL_Complex8 float _Complex
    #define MKL_Complex16 double _Complex
@@ -46,17 +70,6 @@ extern "C"
 }
 
 
-//MKL can use 64-bit integer types, standard BLAS and LAPACK use int
-//MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
-#ifdef MXLIB_MKL
-   typedef MKL_INT MXLAPACK_INT;
-   #define MKL_CONST_PTR const
-#else
-   typedef int MXLAPACK_INT;
-   #define MKL_CONST_PTR
-#endif
-
-//typedef int MXLAPACK_INT;
 
 namespace mx
 {
