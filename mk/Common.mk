@@ -73,39 +73,74 @@ ifeq ($(USE_BLAS_FROM),mkl)
 endif
 
 # Open BLAS
-# On Ubuntu 22.04 installing openblas with a command like:
+# Provides several ways to compile against openblas.  For a system-wide blas install (i.e. the one
+# chosen with update-alternatives) USE_BLAS_FROM can just be `openblas` or `openblas64`.
+#
+# A specific openblas version can be chosen on Ubuntu with the choices openblas64-serial/openmp/pthread
+# or openblas-serial/openmp/pthread.  The defaults here are specified for Ubuntu 22.04.  Will probably
+# work on any Ubuntu.  This can be fully customized with OPENBLAS_PKG_CONFIG_NAME, OPENBLAS_PKG_CONFIG_PATH,
+# and MXLAPACK_INT.
+
+# OpenBLAS provides lapack. On Ubuntu, the packages do not provlide lapack.h, so you need to install lapacke or lapacke64
+# but still link only against openblas.
+#
+# On Ubuntu 22.04 installing openblas64 with a command like:
 #
 # $ sudo apt install libopenblas64-dev libopenblas64-serial-dev libopenblas64-openmp-dev
 #
-# installs the version of openblas in threading-specific directories
+# installs the version(s) of openblas in threading-specific directories
 # and we must set the pkg config path based on the choice.
 #
-# On systems with just `openblas`, this will be ignored.
+# On systems with just openblas`, this will be ignored.
 #
 ifeq ($(findstring openblas, $(USE_BLAS_FROM)),openblas)
 
     ifeq ($(USE_BLAS_FROM),openblas64-serial)
-       BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=int64_t $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig pkg-config --cflags openblas)
-       BLAS_LDFLAGS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig pkg-config --libs-only-L openblas)
-       BLAS_LDLIBS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig pkg-config --libs-only-l openblas) $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig pkg-config --libs-only-l lapack-openblas)
-
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig
+       MXLAPACK_INT ?= long
     else ifeq ($(USE_BLAS_FROM),openblas64-openmp)
-       BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=int64_t  $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig pkg-config --cflags openblas)
-       BLAS_LDFLAGS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig pkg-config --libs-only-L openblas)
-       BLAS_LDLIBS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig pkg-config --libs-only-l openblas) $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig pkg-config --libs-only-l lapack-openblas)
-
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig
+       MXLAPACK_INT ?= long
     else ifeq ($(USE_BLAS_FROM),openblas64-pthread)
-       BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=int64_t $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig pkg-config --cflags openblas)
-       BLAS_LDFLAGS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig pkg-config --libs-only-L openblas)
-       BLAS_LDLIBS ?= $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig pkg-config --libs-only-l openblas) $(shell PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig pkg-config --libs-only-l lapack-openblas)
-
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig
+       MXLAPACK_INT ?= long
+    else ifeq ($(USE_BLAS_FROM),openblas-serial)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-serial/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas-openmp)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-openmp/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas-pthread)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-pthread/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas64)
+       #use pkg-config defaults
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas64
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack64
+       MXLAPACK_INT ?= long
     else
-       #Default to a single installed openblas with .pc on the pkg-cnnfig path
-       BLAS_INCLUDES ?= -DMXLIB_OPENBLAS $(shell pkg-config --cflags openblas)
-       BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-L openblas)
-       BLAS_LDLIBS ?= $(shell pkg-config --libs-only-l openblas) $(shell pkg-config --libs-only-l lapack-openblas)
-
+       #use pkg-config defaults
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       MXLAPACK_INT ?= int
     endif
+
+    BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=$(MXLAPACK_INT) $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --cflags "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)") $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --cflags "$(OPENBLAS_LAPACK_PKG_CONFIG_NAME)")
+    BLAS_LDFLAGS ?= $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --libs-only-L "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)")
+    BLAS_LDLIBS ?= $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --libs-only-l "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)")
+
 
     ifeq ($(strip $(BLAS_LDFLAGS)),)
        $(error OpenBLAS ($(USE_BLAS_FROM)) not found by pkg-config)
