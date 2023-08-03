@@ -155,7 +155,7 @@ ifeq ($(USE_BLAS_FROM),atlas)
 
     BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=$(MXLAPACK_INT) $(shell pkg-config --cflags "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --cflags "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
     BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-L "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --libs-only-L "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
-    BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-l "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --libs-only-l "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
+    BLAS_LDLIBS ?= $(shell pkg-config --libs-only-l "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --libs-only-l "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
 
     ifeq ($(strip $(BLAS_LDFLAGS)),)
        $(error ATLAS ($(USE_BLAS_FROM)) not found by pkg-config)
