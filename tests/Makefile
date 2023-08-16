@@ -11,6 +11,7 @@ OBJS = testsMain.o \
        include/astro/astroDynamics_test.o \
        include/ioutils/fileUtils_test.o \
        include/ioutils/fits/fitsHeaderCard_test.o \
+       include/ioutils/fits/fitsFile_test.o \
        include/math/geo_test.o \
        include/math/func/moffat_test.o \
        include/math/templateBLAS_test.o \
