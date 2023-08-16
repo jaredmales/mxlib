@@ -49,8 +49,11 @@ namespace fits
   *
   * \ingroup fits_processing
   */
-template<typename dataT> class fitsFile
+template<typename dataT> 
+class fitsFile
 {
+
+   friend class fitsFile_test;
 
 protected:
 
@@ -67,29 +70,35 @@ protected:
    long * m_naxes {nullptr};
 
    ///Flag indicating whether the file is open or not
-   bool m_isOpen;
+   bool m_isOpen {false};
 
    ///The value to replace null values with
-   dataT m_nulval;
+   dataT m_nulval {0};
 
    ///Records whether any null values were replaced
-   int m_anynul;
+   int m_anynul {0};
 
    ///Flag to control whether the comment string is read.
-   int m_noComment;
+   int m_noComment {0};
 
 
    ///The starting x-pixel to read from
-   long m_x0;
+   long m_x0 {-1};
 
    ///The starting y-pixel to read from
-   long m_y0;
+   long m_y0 {-1};
 
    ///The number of x-pixels to read
-   long m_xpix;
+   long m_xpix {-1};
 
    ///The number of y-pixels to read
-   long m_ypix;
+   long m_ypix {-1};
+
+   ///The starting frame to read from a cube
+   long m_z0 {-1};
+
+   ///The number of frames to read from a cube
+   long m_zframes {-1};
 
    ///One time initialization common to all constructors
    void construct();
@@ -125,12 +134,16 @@ public:
    ///Get the current value of m_naxis
    /**
      * \returns the current value of m_naxis
+     * 
+     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
    int naxis();
 
    ///Get the current value of m_naxes for the specified dimension
    /**
-     * \returns the current value of m_naxes for the specified dimension
+     * \returns the current value of m_naxes for the specified dimension. -1 if no such dimension
+     * 
+     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
    long naxes( int dim /**< [in] the dimension */);
 
@@ -166,10 +179,25 @@ public:
    ///Get the size of a specific dimension
    long getSize(size_t axis);
 
+
    /** \name Reading Basic Arrays
      * These methods read FITS data into basic or raw arrays specified by a pointer.
      * @{
      */
+
+protected:
+
+   /// Fill in the read-size arrays for reading a subset (always used)
+   /** \note this allocates with new.  You are responsible for calling delete.
+     * 
+     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
+     */
+   void pixarrs( long ** fpix, ///< Populated with the lower left pixel to read.  Is allocated.
+                 long ** lpix, ///< Populated with the upper right pixel to read. Is allocated.
+                 long ** inc   ///< The increment.  Is allocated.
+               );
+
+public:
 
    ///Read the contents of the FITS file into an array.
    /** The array pointed to by data must have been allocated.
@@ -497,12 +525,28 @@ public:
 
    ///Set to read only a subset of the pixels in the file
    /**
+     * 
+     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
    void setReadSize( long x0,   ///< is the starting x-pixel to read
                      long y0,   ///< is the starting y-pixel to read
                      long xpix, ///< is the number of x-pixels to read
                      long ypix  ///< is the number of y-pixels to read
                    );
+
+   ///Set to read all frames from a cube.
+   /** 
+     */
+   void setCubeReadSize();
+
+   ///Set the number of frames to read from a cube.
+   /** 
+     *
+     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]" 
+     */
+   void setCubeReadSize( long z0, ///< is the starting frame to read
+                         long zframes ///< is the number of frames to read
+                       );
 
    ///@}
 
@@ -512,15 +556,6 @@ public:
 template<typename dataT>
 void fitsFile<dataT>::construct()
 {   
-   m_isOpen = 0;
-
-   m_nulval = 0;
-   m_anynul = 0;
-
-   m_noComment = 0;
-
-   setReadSize();
-
 }
 
 template<typename dataT>
@@ -580,6 +615,8 @@ long fitsFile<dataT>::naxes( int dim)
 {
    if(m_naxes == nullptr) return -1;
    
+   if(dim >= m_naxis) return -1;
+
    return m_naxes[dim];
 }
 
@@ -713,6 +750,76 @@ long fitsFile<dataT>::getSize(size_t axis)
    }
 }
 
+template<typename dataT>
+void fitsFile<dataT>::pixarrs( long ** fpix,
+                               long ** lpix,
+                               long ** inc
+                             )
+{
+   *fpix = new long[m_naxis];
+   *lpix = new long[m_naxis];
+   *inc = new long[m_naxis];
+
+   if(m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2)
+   {
+      (*fpix)[0] = m_x0+1;
+      (*lpix)[0] = (*fpix)[0] + m_xpix-1;
+      (*fpix)[1] = m_y0+1;
+      (*lpix)[1] = (*fpix)[1] + m_ypix-1;
+
+      (*inc)[0] = 1;
+      (*inc)[1] = 1;
+   }
+   else
+   {
+      if(m_x0 < 0 && m_y0 < 0 && m_xpix < 0 && m_ypix < 0 && m_z0 < 0 && m_zframes < 0)
+      {
+         for(int i=0;i<m_naxis; i++)
+         {
+            (*fpix)[i] = 1;
+            (*lpix)[i] = m_naxes[i];
+            (*inc)[i] = 1;
+         }
+      }
+      else
+      {
+         if(m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1)
+         {
+            (*fpix)[0] = m_x0+1;
+            (*lpix)[0] = (*fpix)[0] + m_xpix-1;
+            (*fpix)[1] = m_y0+1;
+            (*lpix)[1] = (*fpix)[1] + m_ypix-1;
+
+            (*inc)[0] = 1;
+            (*inc)[1] = 1;
+         }
+         else
+         {
+            (*fpix)[0] = 1;
+            (*lpix)[0] = m_naxes[0];
+            (*fpix)[1] = 1;
+            (*lpix)[1] = m_naxes[1];
+
+            (*inc)[0] = 1;
+            (*inc)[1] = 1;
+         }
+   
+         if(m_z0 > -1 && m_zframes > -1)
+         {
+            (*fpix)[2] = m_z0 + 1;
+            (*lpix)[2] = (*fpix)[2] + m_zframes-1;
+            (*inc)[2] = 1;            
+         }
+         else
+         {
+            (*fpix)[2] = 1;
+            (*lpix)[2] = m_naxes[2];
+            (*inc)[2] = 1;
+         }
+      }
+   }
+}
+
 /************************************************************/
 /***                      Basic Arrays                    ***/
 /************************************************************/
@@ -727,53 +834,27 @@ int fitsFile<dataT>::read(dataT * data)
       if( open() < 0) return -1;
    }
 
-//   long long nelements = 1;
-   long *fpix = new long[m_naxis];
-   long *lpix = new long[m_naxis];
-   long *inc = new long[m_naxis];
+   long *fpix, *lpix, *inc;
+   pixarrs(&fpix, &lpix, &inc);
 
-   if(m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2)
-   {
-      fpix[0] = m_x0+1;
-      lpix[0] = fpix[0] + m_xpix-1;
-      fpix[1] = m_y0+1;
-      lpix[1] = fpix[1] + m_ypix-1;
-
-      inc[0] = 1;
-      inc[1] = 1;
-   }
-   else
-   {
-      for(int i=0;i<m_naxis; i++)
-      {
-         fpix[i] = 1;
-         lpix[i] = m_naxes[i];
-         inc[i] = 1;
-         //nelements *= m_naxes[i];
-      }
-   }
+   ///\todo test if there is a speed difference for full reads for fits_read_pix/subset
 
    //fits_read_pix(m_fptr, fitsType<dataT>(), fpix, nelements, (void *) &m_nulval,
                                      //(void *) data, &m_anynul, &fstatus);
    fits_read_subset(m_fptr, fitsType<dataT>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) data, &m_anynul, &fstatus);
 
+   delete[] fpix;
+   delete[] lpix;
+   delete[] inc;
+
    if (fstatus && fstatus != 107)
    {
       std::string explan = "Error reading data from file";
       fitsErrText(explan, m_fileName, fstatus);
       mxError("fitsFile", MXE_FILERERR, explan);
-
-      delete[] fpix;
-      delete[] lpix;
-      delete[] inc;
-
       return -1;
    }
-
-   delete[] fpix;
-   delete[] lpix;
-   delete[] inc;
 
    return 0;
 }
@@ -796,6 +877,7 @@ int fitsFile<dataT>::read( dataT * data,
 {
    if( fileName(fname) < 0 ) return -1;
    if( read(data) < 0 ) return -1;
+   return 0;
 }
 
 template<typename dataT>
@@ -807,6 +889,7 @@ int fitsFile<dataT>::read( dataT * data,
    if( fileName(fname) < 0 ) return -1;
    if( read(data) < 0 ) return -1;
    if( readHeader(head) < 0 ) return -1;
+   return 0;
 }
 
 template<typename dataT>
@@ -896,6 +979,7 @@ template<typename dataT>
 template<typename arrT>
 int fitsFile<dataT>::read(arrT & im)
 {
+   ///\todo this can probably be made part of one read function (or call read(data *)) with a call to resize with SFINAE
    int fstatus = 0;
 
    if(!m_isOpen)
@@ -903,67 +987,37 @@ int fitsFile<dataT>::read(arrT & im)
       if( open() < 0 ) return -1;
    }
 
-   //long long nelements = 1;
-   long *fpix = new long[m_naxis];
-   long *lpix = new long[m_naxis];
-   long *inc = new long[m_naxis];
+   long *fpix, *lpix, *inc;
+   pixarrs(&fpix, &lpix, &inc);
+
    eigenArrResize<arrT> arrresz;
-
-   if(m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2)
+   if(m_naxis > 2)
    {
-      fpix[0] = m_x0+1;
-      lpix[0] = fpix[0] + m_xpix-1;
-
-      fpix[1] = m_y0+1;
-      lpix[1] = fpix[1] + m_ypix-1;
-      //nelements = m_xpix*m_ypix;
-
-      inc[0] = 1;
-      inc[1] = 1;
-      arrresz.resize(im, m_xpix, m_ypix,1);
+      arrresz.resize(im, lpix[0]-fpix[0]+1, lpix[1]-fpix[1]+1, lpix[2]-fpix[2]+1);
+   }
+   else if(m_naxis > 1)
+   {
+      arrresz.resize(im, lpix[0]-fpix[0]+1, lpix[0]-fpix[0]+1,1);
    }
    else
    {
-      for(int i=0;i<m_naxis; i++)
-      {
-         fpix[i] = 1;
-         lpix[i] = m_naxes[i];
-         inc[i] = 1;
-         //nelements *= m_naxes[i];
-      }
-
-      if(m_naxis > 2)
-      {
-         arrresz.resize(im, m_naxes[0], m_naxes[1], m_naxes[2]);
-      }
-      else if(m_naxis > 1)
-      {
-         arrresz.resize(im, m_naxes[0], m_naxes[1],1);
-      }
-      else
-      {
-         arrresz.resize(im, m_naxes[0], 1,1);
-      }
+      arrresz.resize(im, lpix[0]-fpix[0]+1, 1,1);
    }
-
+   
    if( fits_read_subset(m_fptr, fitsType<typename arrT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) im.data(), &m_anynul, &fstatus) < 0 ) return -1;
+
+   delete[] fpix;
+   delete[] lpix;
+   delete[] inc;
 
    if (fstatus && fstatus != 107)
    {
       std::string explan = "Error reading data from file";
       fitsErrText(explan, m_fileName, fstatus);
       mxError("fitsFile", MXE_FILERERR, explan);
-
-      delete[] fpix;
-      delete[] lpix;
-      delete[] inc;
-
       return -1;
    }
-   delete[] fpix;
-   delete[] lpix;
-   delete[] inc;
 
    return 0;
 
@@ -1023,36 +1077,10 @@ int fitsFile<dataT>::read( cubeT & cube,
    //Open the first file to get the dimensions.
    if( fileName(flist[0], 1) < 0) return -1;
 
-   long *fpix = new long[m_naxis];
-   long *lpix = new long[m_naxis];
-   long *inc = new long[m_naxis];
+   long *fpix, *lpix, *inc;
+   pixarrs(&fpix, &lpix, &inc);
 
-   //Check if we're reading subsets
-   if(m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2)
-   {
-      fpix[0] = m_x0+1;
-      lpix[0] = fpix[0] + m_xpix-1;
-
-      fpix[1] = m_y0+1;
-      lpix[1] = fpix[1] + m_ypix-1;
-      //nelements = m_xpix*m_ypix;
-
-      inc[0] = 1;
-      inc[1] = 1;
-      cube.resize(m_xpix, m_ypix, flist.size());
-   }
-   else
-   {
-      for(int i=0;i<m_naxis; i++)
-      {
-         fpix[i] = 1;
-         lpix[i] = m_naxes[i];
-         inc[i] = 1;
-      }
-
-      cube.resize( m_naxes[0], m_naxes[1], flist.size());
-   }
-
+   cube.resize(lpix[0]-fpix[0]+1, lpix[1]-fpix[1]+1, lpix[2]-fpix[2]+1);
 
    //Now read first image.
    fits_read_subset(m_fptr, fitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
@@ -1442,7 +1470,11 @@ void fitsFile<dataT>::setReadSize()
 }
 
 template<typename dataT>
-void fitsFile<dataT>::setReadSize(long x0, long y0, long xpix, long ypix)
+void fitsFile<dataT>::setReadSize(long x0, 
+                                  long y0, 
+                                  long xpix, 
+                                  long ypix
+                                 )
 {
    m_x0 = x0;
    m_y0 = y0;
@@ -1450,6 +1482,21 @@ void fitsFile<dataT>::setReadSize(long x0, long y0, long xpix, long ypix)
    m_ypix = ypix;
 }
 
+template<typename dataT>
+void fitsFile<dataT>::setCubeReadSize()
+{
+   m_z0 = -1;
+   m_zframes = -1;
+}
+
+template<typename dataT>
+void fitsFile<dataT>::setCubeReadSize(long z0, 
+                                      long zframes
+                                     )
+{
+   m_z0 = z0;
+   m_zframes = zframes;
+}
 
 /** \ingroup fits_processing_typedefs
   * @{
