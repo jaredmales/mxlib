@@ -47,7 +47,7 @@ CXXVERSION ?= -std=c++17
 CXXFLAGS += $(CXXVERSION) -fPIC
 
 USE_FFT_FROM ?= fftw
-USE_BLAS_FROM ?= mkl
+USE_BLAS_FROM ?= openblas
 
 #***************************************************************#
 # Configure includes and libraries based on build options
