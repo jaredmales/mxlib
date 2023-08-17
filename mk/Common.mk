@@ -186,7 +186,7 @@ ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif
 
-EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
+EXTRA_LDFLAGS += -L$(PREFIX)/lib
 
 #FFTW before BLAS so MKL doesn't hijack certain functions
 #FFTW:
