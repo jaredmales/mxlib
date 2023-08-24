@@ -132,6 +132,7 @@ ifeq ($(findstring openblas, $(USE_BLAS_FROM)),openblas)
        MXLAPACK_INT ?= long
     else
        #use pkg-config defaults
+       OPENBLAS_PKG_CONFIG_PATH ?= $(PKG_CONFIG_PATH)
        OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
        OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
        MXLAPACK_INT ?= int

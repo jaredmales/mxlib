@@ -69,7 +69,7 @@ extern "C"
 {
 #ifndef MXLIB_MKL
 
-   #include <lapack.h>
+   #include <lapacke.h>
 
 #endif
 }
