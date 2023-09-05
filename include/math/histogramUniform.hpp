@@ -44,11 +44,15 @@ class histogramUniform
 {
 public:
 
-   realT m_min; ///<The mininum bin location
-   realT m_max; ///<The maximum bin location
-   realT m_width; ///<The bin width
+   realT m_min {0}; ///<The mininum bin location
+   realT m_max {0}; ///<The maximum bin location
+   realT m_width {0}; ///<The bin width
 
    std::vector<realT> _freqs; ///<The frequencies, one for each bin.
+
+   /// Default c'tor, does not allocate.
+   /** Must call setup before use */
+   histogramUniform(){}
 
    ///Setup the histogram, performing allocations.
    histogramUniform( realT mn, ///< [in] the new minimum bin location

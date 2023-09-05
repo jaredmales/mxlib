@@ -548,6 +548,13 @@ public:
      */ 
    realT Fg();
 
+   /// Access the array of controlledModes
+   /** This array indicates which modes are controlled after optimizeStrehl chooses them.
+     *
+     * \returns a const reference to m_controlledModes.
+     */
+   const Eigen::Array<bool, -1, -1> & controlledModes();
+
    /** \name Measurement Error
      * Calculating the WFE due to WFS measurement noise.
      * @{
@@ -865,8 +872,9 @@ public:
      * \tparam CfuncT is a function-pointer-to-member (of this class) with signature realT (*f)(realT, realT, bool)
      */ 
    template<typename imageT, typename CfuncT>
-   void C_Map( imageT & im, ///< [out] the map image to be filled in.
-               CfuncT Cfunc ///< [in] the raw contrast function to use for filling in the map. 
+   void C_Map( imageT & im,    ///< [out] the map image to be filled in.
+               CfuncT Cfunc,   ///< [in] the raw contrast function to use for filling in the map.
+               bool normStrehl ///< [in] flag controlling whether or not the map is normalized by Strehl
              );
    
    ///Calculate the residual variance due to uncorrected phase at a spatial frequency.
@@ -896,7 +904,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C0Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C0Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
    
    ///Calculate the residual variance due to uncorrected amplitude at a spatial frequency.
    /** Used to calculate contrast \ref C1().
@@ -926,7 +936,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C1Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C1Map( imageT & map, ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
    
    
    ///Calculate the residual variance due to measurement and time delay errors in phase/OPD at a spatial frequency.
@@ -958,7 +970,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C2Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C2Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
    
    ///Calculate the residual variance due to measurement and time delay errors in amplitude at a spatial frequency.
    /** Used to calculate contrast \ref C3().
@@ -989,7 +1003,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C3Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C3Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
 
    
    ///Calculate the residual variance due to scintilation-OPD chromaticity.
@@ -1020,7 +1036,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C4Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C4Map( imageT & map, ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
 
 
    ///Calculate the residual variance due to to scintilation-amplitude chromaticity.
@@ -1053,7 +1071,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C5Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C5Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
 
    
    ///Calculate the residual variance due to chromaticity of the index of refraction of air.
@@ -1084,7 +1104,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C6Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C6Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
    
    
    ///Calculate the residual variance due to dispersive anisoplanatism.
@@ -1115,7 +1137,9 @@ public:
      * \tparam imageT is an Eigen-like image type.
      */ 
    template<typename imageT>
-   void C7Map( imageT & map /**< [in] the map image to be filled in with contrast */ );
+   void C7Map( imageT & map,   ///< [in] the map image to be filled in with contrast
+               bool normStrehl
+             );
 
    
    ///@}
@@ -1789,6 +1813,12 @@ realT aoSystem<realT, inputSpectT, iosT>::Fg()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
+const Eigen::Array<bool, -1, -1> & aoSystem<realT, inputSpectT, iosT>::controlledModes()
+{
+   return m_controlledModes;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::signal2Noise2( realT & Nph,
                                                          realT tau_wfs,
                                                          realT d,
@@ -2404,25 +2434,17 @@ realT aoSystem<realT, inputSpectT, iosT>::C_( int m,
 {
    if(m ==0 && n == 0) return 0;
    
-   realT S = 1;
+   //we run this to optimize regardless of whether we use it
+   // if already optimized then this is a minor hit
+   realT S = strehl();
    
-   if(normStrehl) S = strehl();
+   if(!normStrehl) S = 1;
 
    if( doFittingError != FITTING_ERROR_NO)
    {
       int mn_max = m_D/(2.*d_opt());
    
-      /*bool outside = false;
-      if(m_circularLimit)
-      {
-         if(m*m + n*n > mn_max*mn_max) outside = true;
-      }
-      else
-      {
-         if(abs(m) > mn_max || abs(n) > mn_max) outside = true;
-      }*/
-//      bool outside =;
-      if(  m_controlledModes(m_fit_mn_max+m, m_fit_mn_max+n)  == false) //  mn_max > 0 && outside )
+      if(  m_controlledModes(m_fit_mn_max+m, m_fit_mn_max+n)  == false)
       {
          if(doFittingError == FITTING_ERROR_ZERO) return 0;
          
@@ -2451,8 +2473,9 @@ realT aoSystem<realT, inputSpectT, iosT>::C_( int m,
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT, typename CfuncT>
 void aoSystem<realT, inputSpectT, iosT>::C_Map( imageT & im,
-                                          CfuncT Cfunc
-                                        )
+                                                CfuncT Cfunc,
+                                                bool normStrehl
+                                              )
 {
    int dim1=im.rows();
    int dim2=im.cols();
@@ -2468,7 +2491,7 @@ void aoSystem<realT, inputSpectT, iosT>::C_Map( imageT & im,
       {
          int n = j - nc;
                   
-         im(i,j) = (this->*Cfunc)(m, n, true);
+         im(i,j) = (this->*Cfunc)(m, n, normStrehl);
       }
    }
 }
@@ -2495,15 +2518,17 @@ realT aoSystem<realT, inputSpectT, iosT>::C0( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C0Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C0Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C0);
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C0, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m, 
-                                                     realT n
-                                                   )
+                                                 realT n
+                                               )
 {
    realT k = sqrt(m*m + n*n)/m_D;
             
@@ -2513,18 +2538,20 @@ realT aoSystem<realT, inputSpectT, iosT>::C1var( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C1( realT m, 
-                                                  realT n,
-                                                  bool normStrehl
-                                                )
+                                              realT n,
+                                              bool normStrehl
+                                            )
 {
    return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C1var, FITTING_ERROR_NO);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C1Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C1Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C1);
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C1, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2547,9 +2574,11 @@ realT aoSystem<realT, inputSpectT, iosT>::C2(  realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C2Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C2Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C2);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C2, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2571,15 +2600,17 @@ realT aoSystem<realT, inputSpectT, iosT>::C3( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C3Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C3Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C3);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C3, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m, 
-                                           realT n
-                                         )
+                                                 realT n
+                                               )
 {
    realT k = sqrt(m*m + n*n)/m_D;
    
@@ -2591,18 +2622,20 @@ realT aoSystem<realT, inputSpectT, iosT>::C4var( realT m,
                                                   
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C4( realT m, 
-                                                  realT n,
-                                                  bool normStrehl
-                                                )
+                                              realT n,
+                                              bool normStrehl
+                                            )
 {
    return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C4var, FITTING_ERROR_ZERO);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C4Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C4Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C4);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C4, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2629,15 +2662,17 @@ realT aoSystem<realT, inputSpectT, iosT>::C5( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C5Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C5Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C5);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C5, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m, 
-                                           realT n
-                                         )
+                                                 realT n
+                                               )
 {
    realT ni = atm.n_air(m_lam_sci);
    realT nw = atm.n_air(m_lam_wfs);
@@ -2648,24 +2683,26 @@ realT aoSystem<realT, inputSpectT, iosT>::C6var( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C6( realT m, 
-                                        realT n,
-                                        bool normStrehl
-                                      )
+                                              realT n,
+                                              bool normStrehl
+                                            )
 {
    return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C6var, FITTING_ERROR_ZERO);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C6Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C6Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C6);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C6, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C7var( realT m, 
-                                                     realT n
-                                                   )
+                                                 realT n
+                                               )
 {
    realT k = sqrt(m*m + n*n)/m_D;
      
@@ -2675,18 +2712,20 @@ realT aoSystem<realT, inputSpectT, iosT>::C7var( realT m,
 
 template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::C7( realT m, 
-                                                  realT n,
-                                                  bool normStrehl
-                                                )
+                                              realT n,
+                                              bool normStrehl
+                                            )
 {
    return C_(m,n,normStrehl,&aoSystem<realT, inputSpectT, iosT>::C7var, FITTING_ERROR_ZERO);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
 template<typename imageT>
-void aoSystem<realT, inputSpectT, iosT>::C7Map( imageT & im )
+void aoSystem<realT, inputSpectT, iosT>::C7Map( imageT & im,
+                                                bool normStrehl
+                                              )
 {
-   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C7);   
+   C_Map(im, &aoSystem<realT, inputSpectT, iosT>::C7, normStrehl);
 }
 
 template<typename realT, class inputSpectT, typename iosT>

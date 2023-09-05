@@ -11,12 +11,12 @@
 
 #include "../improc/eigenCube.hpp"
 #include "../math/func/gaussian.hpp"
-#include "../improc/fitsFile.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
 
-#include <mx/eigenUtils.hpp>
-#include <mx/gnuPlot.hpp>
-#include <mx/pout.hpp>
-#include <mx/randomT.hpp>
+#include <mx/math/eigenLapack.hpp>
+//#include <mx/gnuPlot.hpp>
+#include <mx/ioutils/pout.hpp>
+#include <mx/math/randomT.hpp>
 
 #include <vector>
 
@@ -112,22 +112,22 @@ struct influenceFunctionGaussianSpec
 
       std::cout << "Number of actuators: " << q << " " << xcoords.size() << "\n";
    
-      gnuPlot gp;
+      /*gnuPlot gp;
       gp.command("set size square");
       gp.plot(xcoords, ycoords, "w p ps 0.75");
       gp.point(xcen, ycen);
       gp.circle(xcen, ycen, 0.5*(pupilSz-1), "w l", "Pupil");
-   
+   */
       realT fwhm = act_space * 2.*sqrt(log2(2))/sqrt(-log2(coupling));
 
-      mx::eigenCube<realT>  act_inf(pupilSz, pupilSz, xcoords.size());
+      mx::improc::eigenCube<realT>  act_inf(pupilSz, pupilSz, xcoords.size());
 
       for(int i=0; i < xcoords.size(); ++i)
       {
          xc = xcoords[i];
          yc = ycoords[i];
 
-         mx::gaussian2D( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, fwhm2sigma(fwhm)); 
+         mx::math::func::gaussian2D( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, fwhm2sigma(fwhm));
       }
 
       if(badActi.size() == badActj.size() && badActi.size() == badActType.size())
@@ -162,7 +162,7 @@ struct influenceFunctionGaussianSpec
             
                std::cerr << xc << " " << yc << "\n";
             
-               mx::gaussian2D( im.data() ,pupilSz, pupilSz, 0.0, -150.0, xc, yc, fwhm2sigma(fwhm));
+               mx::math::func::gaussian2D( im.data() ,pupilSz, pupilSz, 0.0, -150.0, xc, yc, fwhm2sigma(fwhm));
             
                for(int i=0; i< xcoords.size(); ++i)
                {
@@ -185,8 +185,8 @@ struct influenceFunctionGaussianSpec
       
       
       
-      mx::fitsFile<realT> ff;
-      mx::fitsHeader head;
+      mx::fits::fitsFile<realT> ff;
+      mx::fits::fitsHeader head;
 
       head.append("LINNACT", linNAct, "Linear number of actuators");
       head.append("DIAMACT", diameter, "Diameter of DM in actuators");
@@ -258,7 +258,7 @@ void influenceFunctionsGaussian( const std::string & dmName,
    
    realT xoff = 0.0;
    
-   mx::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
+   mx::math::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
    
    if(couplingRange > 0)
    {
@@ -291,15 +291,16 @@ void influenceFunctionsGaussian( const std::string & dmName,
 
    std::cout << "Number of actuators: " << xcoords.size() << "\n";
    
-   gnuPlot gp;
+   /*gnuPlot gp;
    gp.command("set size square");
    gp.plot(xcoords, ycoords, "w p ps 0.75");
    gp.point(xcen, ycen);
    gp.circle(xcen, ycen, 0.5*(pupilSz-1), "w l", "Pupil");
-   
+   */
+
    realT fwhm = act_space * 2.*sqrt(log2(2))/sqrt(-log2(coupling));
 
-   mx::eigenCube<realT>  act_inf(pupilSz, pupilSz, xcoords.size());
+   mx::improc::eigenCube<realT>  act_inf(pupilSz, pupilSz, xcoords.size());
 
    realT fw;
    
@@ -317,12 +318,12 @@ void influenceFunctionsGaussian( const std::string & dmName,
          fw = fwhm;
       }
       
-      mx::gaussian2D( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, fwhm2sigma(fw)); 
+      mx::math::func::gaussian2D<realT>( act_inf.image(i).data(),pupilSz, pupilSz, 0.0, 1.0, xc, yc, math::func::fwhm2sigma(fw));
 
    }
 
-   mx::fitsFile<realT> ff;
-   mx::fitsHeader head;
+   mx::fits::fitsFile<realT> ff;
+   mx::fits::fitsHeader head;
 
    head.append("LINNACT", linNAct, "Linear number of actuators");
    head.append("DIAMACT", diameter, "Diameter of DM in actuators");
@@ -377,9 +378,9 @@ void ifPInv( const std::string & dmName,
    
    
    
-   mx::eigenCube<realT>  actInf;
+   mx::improc::eigenCube<realT>  actInf;
          
-   mx::fitsFile<realT> ff;
+   mx::fits::fitsFile<realT> ff;
    ff.read(ifName, actInf);
    
    int nrows = actInf.rows();
@@ -400,9 +401,9 @@ void ifPInv( const std::string & dmName,
    int interact = MX_PINV_PLOT | MX_PINV_ASK;
    if(maxCondition >= 0) interact = MX_PINV_NO_INTERACT;
    
-   mx::eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, rowInf, maxCondition, interact );
+   mx::math::eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, rowInf, maxCondition, interact );
       
-   mx::fitsHeader head;
+   mx::fits::fitsHeader head;
    head.append("MAXCONDN", maxCondition, "Max. condition no. in pseudo inverse");
    head.append("CONDN", condition, "Actual condition number of pseudo inverse");
    head.append("NREJECT", nRejected, "Number of s.v.s rejected");
@@ -413,7 +414,7 @@ void ifPInv( const std::string & dmName,
    
    
    //This maps to a cube, but does not copy or take ownership.
-   mx::eigenCube<realT> mmodes( U.data(), nrows, ncols, nplanes);
+   mx::improc::eigenCube<realT> mmodes( U.data(), nrows, ncols, nplanes);
    
    
    ff.write(mmodesName, mmodes, head);
@@ -459,7 +460,7 @@ void ifPInv( const std::string & dmName,
 template<typename realT>
 void m2cMatrix( Eigen::Array<realT, -1, -1> & M2c,
                 Eigen::Array<realT, -1, -1> & Ap,
-                mx::eigenCube<realT> & M )
+                mx::improc::eigenCube<realT> & M )
 {
    M2c = Ap.matrix().transpose() * M.asVectors().matrix();
 }
@@ -480,13 +481,13 @@ void m2cMatrix( const std::string & dmName,
                 const std::string & basisName )
 {
    std::string M2cFName;
-   mx::fitsFile<realT> ff;
+   mx::fits::fitsFile<realT> ff;
    
    Eigen::Array<realT, -1,-1> Ap; //The pseudo-inverse
    std::string pinvFName = mx::AO::path::dm::pseudoInverse(dmName);   
    ff.read(pinvFName, Ap);//read from the file
    
-   mx::eigenCube<realT>  M; //The modal basis, an image cube of shapes
+   mx::improc::eigenCube<realT>  M; //The modal basis, an image cube of shapes
    std::string basisFName;
 
    basisFName = mx::AO::path::basis::modes(basisName);
@@ -512,10 +513,10 @@ void m2cMatrix( const std::string & dmName,
 template<typename realT>
 void modalDMM2cMatrix( const std::string & basisName )
 {
-   mx::fitsFile<realT> ff;
+   mx::fits::fitsFile<realT> ff;
    
    
-   mx::eigenCube<realT>  M; //The modal basis, an image cube of shapes
+   mx::improc::eigenCube<realT>  M; //The modal basis, an image cube of shapes
 
    std::string basisFName;
    
@@ -561,7 +562,7 @@ void modesOnDM( const std::string & dmName,
 
    m2cName = mx::AO::path::dm::M2c(dmName, basisName );
    
-   mx::fitsFile<realT> ff;
+   mx::fits::fitsFile<realT> ff;
    ff.read(m2cName, m2c);
    
    std::cout << m2c.rows() << "\n";
@@ -573,7 +574,7 @@ void modesOnDM( const std::string & dmName,
 //   m.resize(nmodes,1);
    
    
-   mx::eigenCube<realT> act_inf, projModes;
+   mx::improc::eigenCube<realT> act_inf, projModes;
    
    std::string fName =  mx::AO::path::dm::influenceFunctions(dmName, true);
    ff.read(fName, act_inf);
