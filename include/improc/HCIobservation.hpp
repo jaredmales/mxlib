@@ -865,7 +865,10 @@ int HCIobservation<_realT>::readFiles()
    f.setReadSize( floor(0.5*(im.rows()-1) - 0.5*(m_imSize-1) +0.1), floor(0.5*(im.cols()-1.0) - 0.5*(m_imSize-1.0)+0.1), m_imSize, m_imSize);
    im.resize(m_imSize, m_imSize);
    
+   /**** Right here is we got to coadd.
+    */
    
+   //But if not we just do it
    m_tgtIms.resize(im.rows(), im.cols(), m_fileList.size());
 
    t_load_begin = sys::get_curr_time();

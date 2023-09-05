@@ -839,8 +839,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
       #pragma omp for 
       for(int imno = 0; imno < this->m_Nims; ++imno)
       {
-         status.incrementAndOutputStatus();
-         
+
          if( m_excludeMethod != HCI::excludeNone || m_excludeMethodMax != HCI::excludeNone || m_includeRefNum != 0 )
          {         
             collapseCovar<realT>( cv_cut,  cv, sds, rims_cut, rims.asVectors(), imno, dang, dangMax, this->m_Nims, this->m_excludeMethod, this->m_excludeMethodMax, this->m_includeRefNum, this->m_derotF, m_imsIncluded);
@@ -879,7 +878,8 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
 
          t_psf += (sys::get_curr_time() - t0) ;/// omp_get_num_threads();
          
-         
+         status.incrementAndOutputStatus();
+
       } //for imno
    }//openmp parrallel  
    
