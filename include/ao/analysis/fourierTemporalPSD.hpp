@@ -118,13 +118,15 @@ struct fourierTemporalPSD
    ///Pointer to an AO system structure.
    aosysT * m_aosys {nullptr};
 
-   realT m_f {0}; ///< the current temporal frequency0
+   realT m_f {0}; ///< the current temporal frequency
    realT m_m {0}; ///< the spatial frequency m index
    realT m_n {0}; ///< the spatial frequency n index
    realT m_cq {0}; ///< The cosine of the wind direction
    realT m_sq {0}; ///< The sine of the wind direction
    realT m_spatialFilter  {false}; ///< Flag indicating if a spatial filter is applied
    
+   realT m_f0 {0}; ///< the Berdja boilig parameter
+
    int m_p {1}; ///< The parity of the mode, +/- 1.  If _useBasis==MXAO_FTPSD_BASIS_BASIC then +1 indicates cosine, -1 indicates sine.
    int _layer_i; ///< The index of the current layer.
 
@@ -2162,6 +2164,24 @@ realT F_basic (realT kv, void * params)
    return P*Q*Q ;
 }
 
+template<typename realT>
+void turbBoilCubic( realT & a,
+                    realT & b,
+                    realT & c,
+                    realT & d,
+                    const realT & kv,
+                    const realT & f,
+                    const realT & Vu,
+                    const realT & f0,
+                    int pm
+                  )
+{
+   a = Vu*Vu*Vu;
+   b = -(3*Vu*Vu*f + pm*f0*f0*f0);
+   c = 3*f*f*Vu;
+   d = -(f*f*f + pm*f0*f0*f0*kv*kv);
+}
+
 ///Worker function for GSL Integration for the modified Fourier modes.
 /** \ingroup mxAOAnalytic
   */
@@ -2174,35 +2194,111 @@ realT F_mod (realT kv, void * params)
    realT f = Fp->m_f;
    realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
 
-   realT ku = f/v_wind;
-
-   if(Fp->m_spatialFilter)
-   {
-      //de-rotate the spatial frequency vector back to pupil coordinates
-      realT dku = ku*Fp->m_cq - kv*Fp->m_sq;
-      realT dkv = ku*Fp->m_sq + kv*Fp->m_cq;
-      //Return if spatially filtered
-      if(fabs(dku) >= Fp->m_aosys->spatialFilter_ku()) return 0;
-   
-      if(fabs(dkv) >= Fp->m_aosys->spatialFilter_kv()) return 0;
-   }
-   
    realT D = Fp->m_aosys->D();
    realT m = Fp->m_m;
    realT n = Fp->m_n;
+
+   realT f0 = Fp->m_f0;
+
+   realT ku;
+   if(f0 == 0)
+   {
+      ku = f/v_wind;
+
+      if(Fp->m_spatialFilter)
+      {
+         //de-rotate the spatial frequency vector back to pupil coordinates
+         realT dku = ku*Fp->m_cq - kv*Fp->m_sq;
+         realT dkv = ku*Fp->m_sq + kv*Fp->m_cq;
+         //Return if spatially filtered
+         if(fabs(dku) >= Fp->m_aosys->spatialFilter_ku()) return 0;
    
-   realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
-   realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
+         if(fabs(dkv) >= Fp->m_aosys->spatialFilter_kv()) return 0;
+      }
+   
+      realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
+      realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
 
-   realT Jp = math::func::jinc(math::pi<realT>()*D*kp);
+      realT Jp = math::func::jinc(math::pi<realT>()*D*kp);
 
-   realT Jm = math::func::jinc(math::pi<realT>()*D*kpp);
+      realT Jm = math::func::jinc(math::pi<realT>()*D*kpp);
 
-   realT QQ = 2*(Jp*Jp + Jm*Jm);
+      realT QQ = 2*(Jp*Jp + Jm*Jm);
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+      realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
-   return P*QQ ;
+      return P*QQ ;
+   }
+   else
+   {
+      realT a,b,c,d, p, q;
+
+      turbBoilCubic(a,b,c,d,kv,f, v_wind, f0, 1);
+      mx::math::cubicDepressed(p,q, a, b, c, d);
+      realT t = mx::math::cubicRealRoot(p,q);
+
+      ku = t - b/(3*a);
+
+      if(Fp->m_spatialFilter)
+      {
+         //de-rotate the spatial frequency vector back to pupil coordinates
+         realT dku = ku*Fp->m_cq - kv*Fp->m_sq;
+         realT dkv = ku*Fp->m_sq + kv*Fp->m_cq;
+         //Return if spatially filtered
+         if(fabs(dku) >= Fp->m_aosys->spatialFilter_ku()) return 0;
+
+         if(fabs(dkv) >= Fp->m_aosys->spatialFilter_kv()) return 0;
+      }
+
+      realT kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
+      realT kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
+
+      realT Jp = math::func::jinc(math::pi<realT>()*D*kp);
+
+      realT Jm = math::func::jinc(math::pi<realT>()*D*kpp);
+
+      realT QQ = 2*(Jp*Jp + Jm*Jm);
+
+      realT P1 =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+
+      P1 *= QQ ;
+
+
+
+      turbBoilCubic(a,b,c,d,kv,f, v_wind, f0, -1);
+      mx::math::cubicDepressed(p,q, a, b, c, d);
+      t = mx::math::cubicRealRoot(p,q);
+
+      ku = t - b/(3*a);
+
+      if(Fp->m_spatialFilter)
+      {
+         //de-rotate the spatial frequency vector back to pupil coordinates
+         realT dku = ku*Fp->m_cq - kv*Fp->m_sq;
+         realT dkv = ku*Fp->m_sq + kv*Fp->m_cq;
+         //Return if spatially filtered
+         if(fabs(dku) >= Fp->m_aosys->spatialFilter_ku()) return 0;
+
+         if(fabs(dkv) >= Fp->m_aosys->spatialFilter_kv()) return 0;
+      }
+
+      kp = sqrt( pow(ku + m/D,2) + pow(kv + n/D,2) );
+      kpp = sqrt( pow(ku - m/D,2) + pow(kv - n/D,2) );
+
+      Jp = math::func::jinc(math::pi<realT>()*D*kp);
+
+      Jm = math::func::jinc(math::pi<realT>()*D*kpp);
+
+      QQ = 2*(Jp*Jp + Jm*Jm);
+
+      realT P2 =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, sqrt( pow(ku,2) + pow(kv,2)), Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+
+      P2 *= QQ;
+
+      return P1+P2;
+
+   }
+
 }
 
 

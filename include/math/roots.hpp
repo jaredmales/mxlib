@@ -36,6 +36,84 @@ namespace mx
 namespace math 
 {
 
+   /// Calculate the descriminant for the general cubic
+/**
+  * \returns the descriminant
+  */
+template<typename realT>
+realT cubicDescriminant( const realT & a, ///< [in] the 3rd order coefficient of the general cubic
+                         const realT & b, ///< [in] the 2nd order coefficient of the general cubic
+                         const realT & c, ///< [in] the 1st order coefficient of the general cubic
+                         const realT & d  ///< [in] the 0th order coefficient of the general cubic
+                       )
+{
+   return 18*a*b*c*d
+             - 4*b*b*b*d
+                  + b*b*c*c
+                       - 4*a*c*c*c
+                           - 27*a*a*d*d;
+}
+
+/// Calculate the descriminant for the depressed cubic
+/**
+  * \returns the descriminant
+  */
+template<typename realT>
+realT cubicDescriminant( const realT & p, ///< [in] the 0th order coefficient of the depressed cubic
+                         const realT & q  ///< [in] the 0th order coefficient of the depressed cubic
+                       )
+{
+   return -1*(4*p*p*p + 27*q*q);
+}
+
+/// Convert a general cubic equation to depressed form
+/** The general cubic is
+  * \f[
+  * ax^3 + bx^2 + cx + d = 0
+  * \f]
+  * which can be converted to compressed form
+  * \f[
+  * t^3 + pt + q = 0
+  * \f]
+  *
+  */
+template<typename realT>
+void cubicDepressed( realT & p,       ///< [out] the 1st order coefficient of the depressed cubic
+                     realT & q,       ///< [out] the 0th order coefficient of the depressed cubic
+                     const realT & a, ///< [in] the 3rd order coefficient of the general cubic
+                     const realT & b, ///< [in] the 2nd order coefficient of the general cubic
+                     const realT & c, ///< [in] the 1st order coefficient of the general cubic
+                     const realT & d  ///< [in] the 0th order coefficient of the general cubic
+                   )
+{
+   p = (3*a*c-b*b)/(3*a*a);
+   q = (2*b*b*b-9*a*b*c+27*a*a*d)/(27*a*a*a);
+}
+
+/// Calculate the real root for a depressed cubic with negative descriminant
+/**
+  * \returns the real root for a depressed cubic defined by \p p and \p q
+  *
+  * \throws std::runtime_error if there are 3 real roots
+  *
+  */
+template<typename realT>
+realT cubicRealRoot( const realT & p, ///< [in] the 1st order coefficient of the depressed cubic
+                     const realT & q  ///< [in] the 0th order coefficient of the depressed cubic
+                   )
+{
+   realT D = q*q/4 + p*p*p/27;
+
+   if(D < 0) throw std::runtime_error("cannot apply Cardano's formula, find roots using....");
+
+   D = sqrt(D);
+
+   realT u1 = -q/2 + D;
+   realT u2 = -q/2 - D;
+
+   return std::cbrt(u1) + std::cbrt(u2);
+}
+
 /// Find the roots of the general quartic equation
 /** Finds the roots of
   * \f[

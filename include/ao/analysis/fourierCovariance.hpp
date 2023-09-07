@@ -117,7 +117,7 @@ realT phiInt_basic (realT phi, void * params)
 
    Q_mpnp = Np*(Ji_mpnp_p + pp*Ji_mpnp_m);
 
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 1.0); //vonKarmanPSD(k, D, L0, Pp->subPiston, Pp->subTipTilt);
+   realT P = Pp->aosys->psd(Pp->aosys->atm, 0, k, 1.0); //vonKarmanPSD(k, D, L0, Pp->subPiston, Pp->subTipTilt);
 
    return P*k*(Q_mn*Q_mpnp);
 }
@@ -187,15 +187,15 @@ realT phiInt_mod (realT phi, void * params)
       QQ = 2.0*( Ji_mn_p*Ji_mpnp_m + Ji_mn_m*Ji_mpnp_p);
    }
 
-   realT P = Pp->aosys->psd(Pp->aosys->atm, k, 1.0); //psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
+   realT P = Pp->aosys->psd(Pp->aosys->atm, 0, k, 1.0); //psd(Pp->aosys->atm, k, Pp->aosys->lam_sci(), Pp->aosys->lam_wfs(), 1.0);
 
-   if(mnCon > 0 )
+   /*if(mnCon > 0 )
    {
       if( k*D <= mnCon )
       {
-         P *= pow(math::two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS()+Pp->aosys->deltaTau()),2);
+         P *= pow(math::two_pi<realT>()*Pp->aosys->atm.v_wind()* k * (Pp->aosys->minTauWFS(0)+Pp->aosys->deltaTau()),2);
       }
-   }
+   }*/
 
 
    return P*k*QQ;
@@ -342,9 +342,9 @@ int fourierVarVec( const std::string & fname,
    ipc::ompLoopWatcher<> watcher(N, std::cerr);
 
    realT mnCon = 0;
-   if( aosys.d_min() > 0)
+   if( aosys.d_min(0) > 0)
    {
-      mnCon = floor( aosys.D()/aosys.d_min()/2.0);
+      mnCon = floor( aosys.D()/aosys.d_min(0)/2.0);
    }
 
    #pragma omp parallel
@@ -380,22 +380,29 @@ int fourierVarVec( const std::string & fname,
    std::ofstream fout;
    fout.open(fname);
 
+   realT D = aosys.D();
+   realT r_0 = aosys.atm.r_0();
+   realT tot = 1.0299*pow(D/r_0, 5./3.);
+
+   realT sum = 0;
+
+   std::cout << 0 << " " << 0 << " " << 0 << " " <<  tot << "\n";
    for(int i=0; i<N; ++i)
    {
-      realT D = aosys.D();
       realT k = (i+1)/D;
-      realT P = aosys.psd(aosys.atm, k, aosys.lam_sci(), 0, aosys.lam_wfs(), 1.0);
+
+      realT P = aosys.psd(aosys.atm, 0, k, 1.0);// aosys.lam_sci(), 0, aosys.lam_wfs(), 1.0);
 
       if(mnCon > 0 )
       {
          if( k*D < mnCon )
          {
-            P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS()+aosys.deltaTau()),2);
+            P *= pow(math::two_pi<realT>()*aosys.atm.v_wind()* k * (aosys.minTauWFS(0)+aosys.deltaTau()),2);
          }
       }
 
-
-      fout << i+1 << " " << var[i] << " " << P/pow(D,2) << "\n";
+      sum += var[i];
+      fout << i+1 << " " << var[i] << " " << P/pow(D,2) << " " << tot-sum << "\n";
    }
 
    fout.close();

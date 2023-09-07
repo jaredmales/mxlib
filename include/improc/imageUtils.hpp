@@ -57,13 +57,7 @@ int reflectImageCoords( int & x1, ///< [out] the reflected x coordinate
    return 0;
 }
 
-/// Zero any NaNs in an image
-template<class imageT>
-void zeroNaNs( imageT & im /**< [in.out] image which will have any NaN pixels set to zero */ )
-{
-   typename imageT::Scalar zero  = 0;
-   zeroNaNs<imageT, typename imageT::Scalar> (im, zero);
-}
+
 
 /// Zero any NaNs in an image
 /**
@@ -84,6 +78,14 @@ void zeroNaNs( imageT & im,  ///< [in.out] image which will have any NaN pixels 
          }
       }
    }
+}
+
+/// Zero any NaNs in an image
+template<class imageT>
+void zeroNaNs( imageT & im /**< [in.out] image which will have any NaN pixels set to zero */ )
+{
+   typename imageT::Scalar zero  = 0;
+   zeroNaNs<imageT, typename imageT::Scalar> (im, zero);
 }
 
 /// Zero any NaNs in an image cube

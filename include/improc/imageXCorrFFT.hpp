@@ -146,6 +146,18 @@ public:
                int ncols  ///< [in] the number of columns in the images to register
              );
 
+   /// Get the current value of the normalize flag
+   /**
+     * \returns the current value of m_normalize
+     */
+   bool normalize();
+
+   /// Set the normalize flag
+   /**
+     * \todo check if this has side effects that should be triggered
+     */
+   void normalize( bool no /**< [in] the new normalize flag value */);
+
    /// Get the current maximum lag 
    /**
      * \returns the current value of m_maxLag 
@@ -286,6 +298,18 @@ int imageXCorrFFT<ccImT>::resize( int nrows,
    m_fft_back.plan(m_cols, m_rows, MXFFT_BACKWARD, false);   
    
    return 0;
+}
+
+template< class ccImT>
+bool imageXCorrFFT<ccImT>::normalize()
+{
+   return m_normalize;
+}
+
+template< class ccImT>
+void imageXCorrFFT<ccImT>::normalize( bool no )
+{
+   m_normalize = no;
 }
 
 template< class ccImT>
