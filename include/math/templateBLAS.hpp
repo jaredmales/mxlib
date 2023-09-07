@@ -28,9 +28,13 @@
 
 extern "C"
 {
-#ifdef MXLIB_MKL
+#if defined(MXLIB_MKL)
 
    #include <mkl.h>
+
+#elif defined(MXLIB_OPENBLAS)
+
+   #include <cblas.h>
 
 #else
 

@@ -8,7 +8,7 @@
 #ifndef pupil_hpp
 #define pupil_hpp
 
-#include <mx/improc/fitsFile.hpp>
+#include <mx/ioutils/fits/fitsFile.hpp>
 #include <mx/improc/eigenImage.hpp>
 
 #include <mx/wfp/imagingUtils.hpp>
@@ -43,13 +43,13 @@ void circularPupil( const std::string & pupilName,
    
    wfp::circularPupil( pup, centralObs,0,overscan);
    
-   fitsHeader phead;
+   fits::fitsHeader phead;
    phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
    phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
    phead.append("CENTOBS", centralObs, "Central obscuration ratio");
    phead.append("OVERSCAN", overscan, "Fractional pixel overscan");
    
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
 
@@ -93,14 +93,14 @@ void circularApodizedPupil( const std::string & pupilName,
    
    
    
-   fitsHeader phead;
+   fits::fitsHeader phead;
    phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
    phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
    phead.append("CENTOBS", centralObs, "Central obscuration ratio");
    phead.append("TUKALPHA", tukeyAlpha, "Tukey window alpha parameter");
    phead.append("OVERSCAN", overScan, "Apodization overscan");
     
-   fitsFile<realT> ff;
+   fits::fitsFile<realT> ff;
    
    std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
 

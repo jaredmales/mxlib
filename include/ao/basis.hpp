@@ -440,7 +440,7 @@ int subtractBasis( const std::string & basisName,
    std::string basisFName2 = mx::AO::path::basis::modes(basisName2);//, pupilName); 
    eigenCube<realT> modes2;
    ff.read(basisFName2, modes2, head);
-   realT fwhm = head["FWHM"].Value<realT>();
+   realT fwhm = head["FWHM"].value<realT>();
    
    eigenCube<realT> modes;
    modes.resize( modes1.rows(), modes1.cols(), modes1.planes() + modes2.planes());

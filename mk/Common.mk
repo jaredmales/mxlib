@@ -47,9 +47,18 @@ CXXVERSION ?= -std=c++17
 CXXFLAGS += $(CXXVERSION) -fPIC
 
 USE_FFT_FROM ?= fftw
-USE_BLAS_FROM ?= mkl
+USE_BLAS_FROM ?= openblas
 
+#***************************************************************#
 # Configure includes and libraries based on build options
+#***************************************************************#
+
+
+################################################
+## BLAS and Lapack
+###############################################
+
+# MKL
 ifeq ($(USE_BLAS_FROM),mkl)
     $(if ${MKLROOT},,$(warning No value set for environment variable $$MKLROOT))
     BLAS_INCLUDES ?= -DMXLIB_MKL -m64 -I${MKLROOT}/include
@@ -63,21 +72,95 @@ ifeq ($(USE_BLAS_FROM),mkl)
     endif
 endif
 
-ifeq ($(USE_BLAS_FROM),openblas)
-    BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-L openblas)
-    BLAS_LDLIBS ?= $(shell pkg-config --libs-only-l openblas)
+# Open BLAS
+# Provides several ways to compile against openblas.  For a system-wide blas install (i.e. the one
+# chosen with update-alternatives) USE_BLAS_FROM can just be `openblas` or `openblas64`.
+#
+# A specific openblas version can be chosen on Ubuntu with the choices openblas64-serial/openmp/pthread
+# or openblas-serial/openmp/pthread.  The defaults here are specified for Ubuntu 22.04.  Will probably
+# work on any Ubuntu.  This can be fully customized with OPENBLAS_PKG_CONFIG_NAME, OPENBLAS_PKG_CONFIG_PATH,
+# and MXLAPACK_INT.
+
+# OpenBLAS provides lapack. On Ubuntu, the packages do not provlide lapack.h, so you need to install lapacke or lapacke64
+# but still link only against openblas.
+#
+# On Ubuntu 22.04 installing openblas64 with a command like:
+#
+# $ sudo apt install libopenblas64-dev libopenblas64-serial-dev libopenblas64-openmp-dev
+#
+# installs the version(s) of openblas in threading-specific directories
+# and we must set the pkg config path based on the choice.
+#
+# On systems with just openblas`, this will be ignored.
+#
+ifeq ($(findstring openblas, $(USE_BLAS_FROM)),openblas)
+
+    ifeq ($(USE_BLAS_FROM),openblas64-serial)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-serial/pkgconfig
+       MXLAPACK_INT ?= long
+    else ifeq ($(USE_BLAS_FROM),openblas64-openmp)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-openmp/pkgconfig
+       MXLAPACK_INT ?= long
+    else ifeq ($(USE_BLAS_FROM),openblas64-pthread)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas64-pthread/pkgconfig
+       MXLAPACK_INT ?= long
+    else ifeq ($(USE_BLAS_FROM),openblas-serial)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-serial/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas-openmp)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-openmp/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas-pthread)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       OPENBLAS_PKG_CONFIG_PATH ?= /usr/lib/x86_64-linux-gnu/openblas-pthread/pkgconfig
+       MXLAPACK_INT ?= int
+    else ifeq ($(USE_BLAS_FROM),openblas64)
+       #use pkg-config defaults
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas64
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack64
+       MXLAPACK_INT ?= long
+    else
+       #use pkg-config defaults
+       OPENBLAS_PKG_CONFIG_PATH ?= $(PKG_CONFIG_PATH)
+       OPENBLAS_BLAS_PKG_CONFIG_NAME ?= openblas
+       OPENBLAS_LAPACK_PKG_CONFIG_NAME ?= lapack
+       MXLAPACK_INT ?= int
+    endif
+
+    BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=$(MXLAPACK_INT) $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --cflags "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)") $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --cflags "$(OPENBLAS_LAPACK_PKG_CONFIG_NAME)")
+    BLAS_LDFLAGS ?= $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --libs-only-L "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)")
+    BLAS_LDLIBS ?= $(shell PKG_CONFIG_PATH="$(OPENBLAS_PKG_CONFIG_PATH)" pkg-config --libs-only-l "$(OPENBLAS_BLAS_PKG_CONFIG_NAME)")
+
+
+    ifeq ($(strip $(BLAS_LDFLAGS)),)
+       $(error OpenBLAS ($(USE_BLAS_FROM)) not found by pkg-config)
+    endif
+
 endif
 
 ifeq ($(USE_BLAS_FROM),atlas)
-    #These are probably what you want for self-compiled atlas
-    BLAS_INCLUDES ?= -I/usr/local/atlas/include
-    BLAS_LDFLAGS ?= -L/usr/local/atlas/lib
-    BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas -lgfortran
+    ATLAS_BLAS_PKG_CONFIG_NAME ?= blas-atlas
+    ATLAS_LAPACK_PKG_CONFIG_NAME ?= lapack-atlas
+    MXLAPACK_INT ?= int
 
-    #2018-08-13: These work for apt installed atlas on Ubuntu 18.04
-    #BLAS_INCLUDES ?= -I/usr/include/x86_64-linux-gnu/
-    #BLAS_LDFLAGS ?= -L/usr/lib/x86_64-linux-gnu/
-    #BLAS_LDLIBS ?= -llapack -lf77blas -lcblas -latlas
+    BLAS_INCLUDES ?= -DMXLIB_OPENBLAS -DMXLAPACK_INT=$(MXLAPACK_INT) $(shell pkg-config --cflags "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --cflags "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
+    BLAS_LDFLAGS ?= $(shell pkg-config --libs-only-L "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --libs-only-L "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
+    BLAS_LDLIBS ?= $(shell pkg-config --libs-only-l "$(ATLAS_BLAS_PKG_CONFIG_NAME)") $(shell pkg-config --libs-only-l "$(ATLAS_LAPACK_PKG_CONFIG_NAME)")
+
+    ifeq ($(strip $(BLAS_LDFLAGS)),)
+       $(error ATLAS ($(USE_BLAS_FROM)) not found by pkg-config)
+    endif
 
 endif
 
@@ -104,7 +187,7 @@ ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
 endif
 
-EXTRA_LDFLAGS ?= -L$(PREFIX)/lib
+EXTRA_LDFLAGS += -L$(PREFIX)/lib
 
 #FFTW before BLAS so MKL doesn't hijack certain functions
 #FFTW:
