@@ -89,7 +89,7 @@ protected:
    
    realT m_dir_wind; ///< \f$ C_n^2 \f$ averaged direction
    
-   bool m_z_mean_updated {false}; ///< whether or not m_z_mean has been update after changes
+   bool m_z_mean_updated {false}; ///< whether or not m_z_mean has been updated after changes
    
    realT m_z_mean; ///< \f$ C_n^2 \f$ averaged layer height
    

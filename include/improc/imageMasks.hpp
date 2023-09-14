@@ -139,7 +139,7 @@ void angleImage( eigenT & m /** < [out] the allocated angle array.  Will be fill
    realT xc = 0.5*(m.rows()-1);
    realT yc = 0.5*(m.cols()-1);
    
-   angleImage<realT>(m, xc, yc);
+   angleImage<angleT>(m, xc, yc);
 }
 
 
