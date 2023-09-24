@@ -6,7 +6,7 @@
   */
 
 //***********************************************************************//
-// Copyright 2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2020-2023 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -57,7 +57,10 @@
 #include "eigenLapack.hpp"
 #include "geo.hpp"
 #include "gslInterpolation.hpp"
+#include "gslInterpolator.hpp"
 #include "histogramUniform.hpp"
+#include "logInterpolator.hpp"
+#include "radprofIntegral.hpp"
 #include "randomSeed.hpp"
 #include "randomT.hpp"
 #include "roots.hpp"

@@ -466,6 +466,17 @@ public:
                int npoints =  10                   ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is usually sufficient.
              );
    
+       void clearPlotted()
+    {
+        _plotted = false;
+    }
+
+    void reset()
+    {
+        _plotted = false;
+        command("reset");
+    }
+
 protected:
    
    /// Implementation of 1-D binary plotting.
