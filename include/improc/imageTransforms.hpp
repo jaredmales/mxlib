@@ -88,70 +88,80 @@ typedef bilinearTransform<double> bilinearTransd;
 template<typename _arithT>
 struct cubicConvolTransform
 {
-   typedef _arithT arithT; ///< The type in which all calculations are performed.
-
-   static const size_t width = 4;
-   static const size_t lbuff = 1;
-
-   arithT cubic {-0.5}; ///< The kernel parameter.  The default value -0.5 gives the bicubic spline interpolator.
-
-   explicit cubicConvolTransform(arithT c)
-   {
-      cubic = c;
-   }
-
-   cubicConvolTransform() {}
-
-   cubicConvolTransform(const cubicConvolTransform & t)
-   {
-      cubic = t.cubic;
-   }
-
-   arithT cubicConvolKernel(arithT d)
-   {
-      if(d <= 1) return (cubic+2.)*d*d*d - (cubic+3.)*d*d + 1.;
-
-      if(d < 2) return cubic*d*d*d -5.*cubic*d*d + 8.*cubic*d - 4.*cubic;
-
-      return 0;
-   }
-
-   template<typename arrT, typename arithT>
-   void operator()(arrT & kern, arithT x, arithT y)
-   {
-      arithT km2x,km1x,kp1x,kp2x;
-      arithT km2y,km1y,kp1y,kp2y;
-
-      km2x = cubicConvolKernel((1.+x));
-      km1x = cubicConvolKernel(x);
-      kp1x = cubicConvolKernel(1.-x);
-      kp2x = cubicConvolKernel(2.-x);
-
-      km2y = cubicConvolKernel((1.+y));
-      km1y = cubicConvolKernel(y);
-      kp1y = cubicConvolKernel(1.-y);
-      kp2y = cubicConvolKernel(2.-y);
-
-      kern(0,0) = km2x*km2y;
-      kern(0,1) = km2x*km1y;
-      kern(0,2) = km2x*kp1y;
-      kern(0,3) = km2x*kp2y;
-
-      kern(1,0) = km1x*km2y;
-      kern(1,1) = km1x*km1y;
-      kern(1,2) = km1x*kp1y;
-      kern(1,3) = km1x*kp2y;
-
-      kern(2,0) = kp1x*km2y;
-      kern(2,1) = kp1x*km1y;
-      kern(2,2) = kp1x*kp1y;
-      kern(2,3) = kp1x*kp2y;
-
-      kern(3,0) = kp2x*km2y;
-      kern(3,1) = kp2x*km1y;
-      kern(3,2) = kp2x*kp1y;
-      kern(3,3) = kp2x*kp2y;
-   }
+    typedef _arithT arithT; ///< The type in which all calculations are performed.
+ 
+    static const size_t width = 4;
+    static const size_t lbuff = 1;
+ 
+    arithT cubic {-0.5}; ///< The kernel parameter.  The default value -0.5 gives the bicubic spline interpolator.
+ 
+    /// Default c'tor.
+    /**
+      * This will provide the bicubic spline interpolator
+      */ 
+    cubicConvolTransform() {}
+ 
+    /// Construct setting the kernel parameter.
+    explicit cubicConvolTransform( arithT c /**< [in] [optiona] The kernel parameter.  The default value -0.5 gives the bicubic spline interpolator. */)
+    {
+        cubic = c;
+    }
+ 
+    /// Copy c'tor
+    cubicConvolTransform(const cubicConvolTransform & t)
+    {
+        cubic = t.cubic;
+    }
+ 
+    /// Calculate the kernel value for a given residual.
+    arithT cubicConvolKernel(arithT d)
+    {
+       if(d <= 1) return (cubic+2.)*d*d*d - (cubic+3.)*d*d + 1.;
+ 
+       if(d < 2) return cubic*d*d*d -5.*cubic*d*d + 8.*cubic*d - 4.*cubic;
+ 
+       return 0;
+    }
+ 
+    template<typename arrT, typename arithT>
+    void operator()( arrT & kern, 
+                     arithT x, 
+                     arithT y
+                   )
+    {
+       arithT km2x,km1x,kp1x,kp2x;
+       arithT km2y,km1y,kp1y,kp2y;
+ 
+       km2x = cubicConvolKernel((1.+x));
+       km1x = cubicConvolKernel(x);
+       kp1x = cubicConvolKernel(1.-x);
+       kp2x = cubicConvolKernel(2.-x);
+ 
+       km2y = cubicConvolKernel((1.+y));
+       km1y = cubicConvolKernel(y);
+       kp1y = cubicConvolKernel(1.-y);
+       kp2y = cubicConvolKernel(2.-y);
+ 
+       kern(0,0) = km2x*km2y;
+       kern(0,1) = km2x*km1y;
+       kern(0,2) = km2x*kp1y;
+       kern(0,3) = km2x*kp2y;
+ 
+       kern(1,0) = km1x*km2y;
+       kern(1,1) = km1x*km1y;
+       kern(1,2) = km1x*kp1y;
+       kern(1,3) = km1x*kp2y;
+ 
+       kern(2,0) = kp1x*km2y;
+       kern(2,1) = kp1x*km1y;
+       kern(2,2) = kp1x*kp1y;
+       kern(2,3) = kp1x*kp2y;
+ 
+       kern(3,0) = kp2x*km2y;
+       kern(3,1) = kp2x*km1y;
+       kern(3,2) = kp2x*kp1y;
+       kern(3,3) = kp2x*kp2y;
+    }
 };
 
 

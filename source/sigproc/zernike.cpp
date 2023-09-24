@@ -55,6 +55,35 @@ int noll_nm( int & n,
    return 0;
 }
 
+int noll_j( unsigned int n,
+            int m
+          )
+{
+    if( ((n-m) % 2) ) return -1; //Check if odd
+
+    int mn = n % 4;
+
+    int dm = 0;
+    if( m >= 0 && (mn == 2 || mn == 3)) dm = 1;
+    else if( m <= 0 && (mn == 0 || mn == 1)) dm = 1;
+
+    int j = (n*(n+1)) / 2 + abs(m) + dm;
+
+    return j;
+}
+
+int nZernRadOrd(unsigned int n)
+{
+    if(n % 2) //odd
+    {
+        return noll_j(n, -n);
+    }
+    else
+    {
+        return noll_j(n, n);
+    }
+}
+
 //Explicit instantiations:
 template
 int zernikeRCoeffs<float>( std::vector<float> & c, int n, int m);

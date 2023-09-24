@@ -70,6 +70,28 @@ int noll_nm( int & n, ///< [out] n the radial index of the Zernike polynomial
              int j    ///< [in]  j the Noll index, j > 0.
            );
 
+/// Get the Noll index j corresponding to Zernike coefficients n,m
+/** Calculates the value j for(n,m) following Noll (1976) \cite noll_1976
+  * See also: http://en.wikipedia.org/wiki/Zernike_polynomials
+  * 
+  * \retval >= 0 on success
+  * \retval -1 on error (n-m odd)
+  * 
+  */
+int noll_j( unsigned n, ///< [in] n the radial index of the Zernike polynomial
+            int m       ///< [in] m the azimuthal index of the Zernnike polynomial.  
+          );
+
+/// Get the number of Zernikes up to and including a radial order.
+/** Calculates the total number of Zernike polynomials through radial order \p n.  See Noll (1976) \cite noll_1976
+  * See also: http://en.wikipedia.org/wiki/Zernike_polynomials
+  * 
+  * \retval the number of
+  * \retval -1 on error (n-m odd)
+  * 
+  */
+int nZernRadOrd( unsigned n /**< [n] the radial order */ );
+
 /// Calculate the coefficients of a Zernike radial polynomial
 /** 
   * \retval 0 on success
