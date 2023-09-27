@@ -14,6 +14,9 @@ LDFLAGS := $(LDFLAGS:-Wl,-dead_strip_dylibs=)
 # Set to no in local/Common.mk or in your local Makefile if you never need CUDA
 NEED_CUDA ?= yes
 
+# Set to yes in local/Common.mk or in your local Makefile if you need MILK functions
+NEED_MILK ?= no
+
 ifeq ($(UNAME),Darwin)
 	CFLAGS += -D_BSD_SOURCE
 	CXXFLAGS += -D_BSD_SOURCE
@@ -181,7 +184,19 @@ BOOST_LIB = -lboost_system -lboost_filesystem
 
 GSL_LIB = -lgsl
 
-EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(SOFA_LIB)
+ifeq ($(NEED_MILK),yes)
+
+	MILK_INCLUDES ?= -I/usr/local/milk/include
+	MILK_LIB ?= -L/usr/local/milk/lib -lImageStreamIO
+
+	INCLUDES += $(MILK_INCLUDES)
+
+	CFLAGS += -DMXLIB_MILK
+	CXXFLAGS += -DMXLIB_MILK
+endif
+
+
+EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(SOFA_LIB) $(MILK_LIB)
 
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
@@ -217,7 +232,7 @@ ifeq ($(NEED_CUDA),yes)
 
    CUDA_INCLUDES ?= -I/usr/local/cuda/include/
 
-   CXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES)
+   CXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES) -DMXLIB_CUDA
 
 
    HOST_ARCH   := $(shell uname -m)
