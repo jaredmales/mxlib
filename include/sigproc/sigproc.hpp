@@ -1,7 +1,7 @@
-/** \file ioutils.hpp
+/** \file sigproc.hpp
   * \author Jared R. Males
-  * \brief Library nclude for the ioutils module
-  * \ingroup image_processing_files
+  * \brief Library include for the sigproc module
+  * \ingroup signal_processing_files
   *
   */
 
@@ -24,20 +24,21 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef ioutils_hpp
-#define ioutils_hpp
+#ifndef sigproc_hpp
+#define sigproc_hpp
 
-#include "binVector.hpp"
-#include "fileUtils.hpp"
-#include "pout.hpp"
-#include "rawBinary.hpp"
-#include "readColumns.hpp"
-#include "stringUtils.hpp"
-#include "textTable.hpp"
-
-#include "fits/fitsFile.hpp"
-#include "fits/fitsHeaderCard.hpp"
-#include "fits/fitsHeader.hpp"
-#include "fits/fitsUtils.hpp"
-
-#endif //ioutils_hpp
+#include "autocorrelation.hpp"
+#include "averagePeriodogram.hpp"
+#include "basisUtils2D.hpp"
+#include "circularBuffer.hpp"
+#include "fourierModes.hpp"
+#include "gramSchmidt.hpp"
+#include "levinsonRecursion.hpp"
+#include "linearPredictor.hpp"
+#include "psdFilter.hpp"
+#include "psdUtils.hpp"
+#include "psdVarMean.hpp"
+#include "signalWindows.hpp"
+#include "zernike.hpp"
+                    
+#endif //sigproc_hpp

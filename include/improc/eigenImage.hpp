@@ -43,11 +43,11 @@ namespace improc
 template<typename scalarT>
 using eigenImage = Eigen::Array<scalarT, -1, -1>;
 
-///Definition of the eigenImageMap type, which is an alias for Eigen::Map<Array>.
+///Definition of the eigenMap type, which is an alias for Eigen::Map<Array>.
 /** \ingroup eigen_image_processing
   */
 template<typename scalarT>
-using eigenImageMap = Eigen::Map<Eigen::Array<scalarT, -1, -1>>;
+using eigenMap = Eigen::Map<Eigen::Array<scalarT, -1, -1>>;
 
 ///Test whether a type is an eigenCube by testing whether it has a typedef of "is_eigenCube"
 /** Used for compile-time determination of type

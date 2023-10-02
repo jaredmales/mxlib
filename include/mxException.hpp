@@ -32,7 +32,6 @@
 
 #include "mxError.hpp"
 
-
 namespace mx
 {
 namespace err
@@ -138,24 +137,24 @@ public:
       std::ostringstream s;
       s.str("");
       
-      s << "An exception has been thrown in an mxlib component.\n";
-      s << "      source: " << m_source << "\n";
+      s << "mxlib exception:";
+      if(m_explanation != "") s << " " << m_explanation;
+      if(m_source != "") s << "\n      source: " << m_source;
       if(m_code != 0)
       {
-         s << "        code: " << m_code;
+         s << "\n        code: " << m_code;
          if(m_codeName != "") s << " ("<< m_codeName << ")";
-         s << "\n";
       }
       if(m_errno != 0)
       {
-         s << "       errno: " << m_errno << " (" << errno_CodeToName(m_errno) << ")\n";
+         s << "\n       errno: " << m_errno << " (" << errno_CodeToName(m_errno) << ")";
       }
-      s << "     in file: " << m_file << "\n";
-      s << "     at line: " << m_line << "\n";
-      if(m_explanation != "") s << " explanation: " << m_explanation << "\n";
+      if(m_file != "") s << "\n     in file: " << m_file;
+      if(m_line != 0) s << "\n     at line: " << m_line;
+      
       if(m_errno != 0)
       {
-         s << "              " << strerror(m_errno) << "\n";
+         s << "\n              " << strerror(m_errno);
       }
       snprintf(m_whatstr, sizeof(m_whatstr), "%s", s.str().c_str());
    }

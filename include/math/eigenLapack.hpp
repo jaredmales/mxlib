@@ -439,10 +439,10 @@ template<typename dataT>
 int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseudo-inverse of A
                         dataT & condition,                  ///< [out] The final condition number.
                         int & nRejected,                    ///< [out] The number of eigenvectors rejected
-                        Eigen::Array<dataT, -1, -1> & U,    ///< [out]
-                        Eigen::Array<dataT, -1, -1> & S,    ///< [out]
-                        Eigen::Array<dataT, -1, -1> & VT,   ///< [out]
-                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert
+                        Eigen::Array<dataT, -1, -1> & U,    ///< [out] the A.rows() x A.rows() left matrix
+                        Eigen::Array<dataT, -1, -1> & S,    ///< [out] the A.cols() x 1 matrix of singular values
+                        Eigen::Array<dataT, -1, -1> & VT,   ///< [out] the A.cols() x A.cols() right matrix, note this is the transpose.
+                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert.  This will be modified!
                         dataT & maxCondition,               /**< [in]  If \> 0, the maximum condition number desired.  If \<0 the number of modes to keep.
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.
@@ -569,7 +569,7 @@ template<typename dataT>
 int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseudo-inverse of A
                         dataT & condition,                  ///< [out] The final condition number.
                         int & nRejected,                    ///< [out] The number of eigenvectors rejected
-                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert
+                        Eigen::Array<dataT, -1, -1> & A,    ///< [in]  The matrix to invert, will be altered!
                         dataT & maxCondition,               /**< [in]  If \> 0, the maximum condition number desired.  If \<0 the number of modes to keep.
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.

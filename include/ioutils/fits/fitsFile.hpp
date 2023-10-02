@@ -997,7 +997,7 @@ int fitsFile<dataT>::read(arrT & im)
    }
    else if(m_naxis > 1)
    {
-      arrresz.resize(im, lpix[0]-fpix[0]+1, lpix[0]-fpix[0]+1,1);
+      arrresz.resize(im, lpix[0]-fpix[0]+1, lpix[1]-fpix[1]+1,1);
    }
    else
    {

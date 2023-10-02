@@ -276,6 +276,39 @@ int gnuPlot::replot()
    return command("replot");
 }
 
+int gnuPlot::xrange( double x0,
+                     double x1
+                   )
+{
+    std::ostringstream s;
+    s << "set xrange [";
+    s << x0 << ":" << x1 << "]";
+
+    return command(s.str());
+}
+
+int gnuPlot::xrange()
+{
+    return command("unset xrange");
+}
+
+int gnuPlot::yrange( double y0,
+                     double y1
+                   )
+{
+    std::ostringstream s;
+    s << "set yrange [";
+    s << y0 << ":" << y1 << "]";
+
+    return command(s.str());
+}
+
+int gnuPlot::yrange()
+{
+    return command("unset yrange");
+}
+
+
 int gnuPlot::logy()
 {
    return command("set logscale y");

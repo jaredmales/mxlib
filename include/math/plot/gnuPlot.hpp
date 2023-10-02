@@ -265,6 +265,54 @@ public:
      */
    int replot();
    
+   /// Set the x-axis range 
+   /** Sends the command:
+     * \verbatim
+     * set xrange [x0:x1]
+     * \endverbatim
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+    int xrange( double x0,
+                double x1
+              ); 
+
+   /// Unset the x-axis range 
+   /** Sends the command:
+     * \verbatim
+     * unset xrange
+     * \endverbatim
+     * 
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+    int xrange(); 
+
+    /// Set the y-axis range 
+    /** Sends the command:
+      * \verbatim
+      * set yrange [y0:y1]
+      * \endverbatim
+      * 
+      * \returns 0 on success
+      * \returns -1 on error
+      */
+    int yrange( double y0,
+                double y1
+              ); 
+
+    /// Unset the y-axis range 
+    /** Sends the command:
+      * \verbatim
+      * unset yrange
+      * \endverbatim
+      * 
+      * \returns 0 on success
+      * \returns -1 on error
+      */
+    int yrange();
+
    /// Set the y axis to log scale
    /** Sends the command:
      * \verbatim
@@ -466,7 +514,7 @@ public:
                int npoints =  10                   ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is usually sufficient.
              );
    
-       void clearPlotted()
+    void clear()
     {
         _plotted = false;
     }

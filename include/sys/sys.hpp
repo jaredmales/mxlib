@@ -1,7 +1,7 @@
-/** \file ioutils.hpp
+/** \file sys.hpp
   * \author Jared R. Males
-  * \brief Library nclude for the ioutils module
-  * \ingroup image_processing_files
+  * \brief Library include for the sys module
+  * \ingroup utils_files
   *
   */
 
@@ -24,20 +24,11 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef ioutils_hpp
-#define ioutils_hpp
+#ifndef sys_hpp
+#define sys_hpp
 
-#include "binVector.hpp"
-#include "fileUtils.hpp"
-#include "pout.hpp"
-#include "rawBinary.hpp"
-#include "readColumns.hpp"
-#include "stringUtils.hpp"
-#include "textTable.hpp"
+#include "timeUtils.hpp"
+#include "environment.hpp"
+#include "gitRepo.hpp"
 
-#include "fits/fitsFile.hpp"
-#include "fits/fitsHeaderCard.hpp"
-#include "fits/fitsHeader.hpp"
-#include "fits/fitsUtils.hpp"
-
-#endif //ioutils_hpp
+#endif //sys_hpp

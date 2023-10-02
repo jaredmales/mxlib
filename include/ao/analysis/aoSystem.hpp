@@ -2855,11 +2855,11 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & conf
       
       if(wfsStr == "ideal")
       {
-         wfsBeta<wfs<realT>>(nullptr);
+         wfsBeta<wfs<realT,iosT>>(nullptr);
       }
       else if(wfsStr == "unmodPyWFS")
       {
-         wfsBeta<pywfsUnmod<realT>>(nullptr);
+         wfsBeta<pywfsUnmod<realT,iosT>>(nullptr);
       }
       else if(wfsStr == "asympModPyWFS")
       {
@@ -2867,13 +2867,13 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator & conf
       }
       else if(wfsStr == "SHWFS")
       {
-         wfsBeta<shwfs<realT>>(nullptr);
+         wfsBeta<shwfs<realT,iosT>>(nullptr);
       }
       else if(wfsStr == "calculatedWFS")
       {
-         wfsBeta<calculatedWFS<realT>>(nullptr);
+         wfsBeta<calculatedWFS<realT,iosT>>(nullptr);
 
-         calculatedWFS<realT> * cwfs = static_cast<calculatedWFS<realT> *>(m_wfsBeta);
+         calculatedWFS<realT,iosT> * cwfs = static_cast<calculatedWFS<realT,iosT> *>(m_wfsBeta);
          config(cwfs->m_beta_p_file, "aosys.wfs_beta_p");
          config(cwfs->m_beta_r_file, "aosys.wfs_beta_r");
          bool sens = cwfs->m_sensitivity;

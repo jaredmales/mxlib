@@ -70,6 +70,7 @@ VENDOROBJS = \
 all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
+mxError.o: ../include/mxError.hpp ../include/mxException.hpp
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o
@@ -95,6 +96,7 @@ math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp ../include/m
 math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
+math/plot/gnuPlot.o: ../include/math/plot/gnuPlot.hpp ../include/math/constants.hpp ../include/mxError.hpp ../include/mxException.hpp ../include/sys/timeUtils.hpp
 sigproc/zernike.o: ../include/sigproc/zernike.hpp
 sys/environment.o: ../include/sys/environment.hpp
 sys/gitRepo.o: ../include/sys/gitRepo.hpp

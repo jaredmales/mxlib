@@ -1,5 +1,5 @@
 /** \file milkImage.hpp
-  * \brief Tools for using the eigen library for image processing
+  * \brief Interface to MILK::ImageStreamIO shared memory streams
   * \ingroup image_processing_files
   * \author Jared R. Males (jaredmales@gmail.com)
   *
@@ -35,6 +35,7 @@
 
 #include <ImageStreamIO/ImageStreamIO.h>
 
+#include "../mxException.hpp"
 #include "eigenImage.hpp"
 
 namespace mx
@@ -121,40 +122,101 @@ struct ImageStructTypeCode<std::complex<double>>
     constexpr static int TypeCode = _DATATYPE_COMPLEX_DOUBLE;
 };
 
-
+/// Class to interface with an ImageStreamIO image in shared memory
+/**
+  *
+  * Use with Eigen::Map (aliased as mx::improc::eigenMap)
+  * \code
+  * using namespace mx::improc;
+  * milkImage<float> mim("image"); //connects to image.im.shm
+  * eigenMap<float> im(mim); //the conversion operator passes a reference to the internal map
+  * im.setRandom(); // im is now a map pointed at the image data.  Eigen functions are now available.
+  * im(64,64) *= 2000;
+  * im /= 0.2;
+  * \endcode
+  * Once you have changed something via the Eigen::Map you want to notify others connected to the stream 
+  * via
+  * \code
+  * mim.post();
+  * \endcode
+  * 
+  * \ingroup eigen_image_processing
+  */  
 template<typename _dataT>
 class milkImage
 {
 public:
 
-    typedef _dataT dataT;
+    typedef _dataT dataT; ///< The data type 
 
 protected:
 
-    std::string m_name; ///< The image name, from name.im.shm (the .im.shm is silent). 
+    std::string m_name; ///< The image name, from name.im.shm (the .im.shm should not be given). 
 
-    IMAGE * m_image {nullptr};
+    IMAGE * m_image {nullptr}; ///< Pointer to the ImageStreamIO IMAGE structure.
 
-    eigenImageMap<dataT> * m_map {nullptr};
+    dataT * m_raw {nullptr}; //The raw pointer address is stored here for checks
+
+    uint64_t m_size_0 {0}; ///< The size[0] of the image when last opened.
+
+    uint64_t m_size_1 {0}; ///< The size[1] of the image when last opened.
 
 public:
 
+    /// Default c'tor
     milkImage();
 
-    milkImage( const std::string & imname );
+    /// Constructor which opens the specified image
+    milkImage( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
 
-    void open( const std::string & imname );
+    /// Open and connect to an image, allocating the eigenMap.
+    /**
+      * \throws std::invalid_argument if the image type_code does not match dataT.
+      */  
+    void open( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/);
 
+    /// Checks if the image is still the same as when connected.
+    /** Checks on pointer value, size[], and data_type.
+      *
+      * \returns true if no changes
+      * \returns false if something changed.  all maps are now invalid. 
+      */
+    bool unchanged();
+
+    /// Reopens the image. 
+    /** Same as
+      * \code
+      * close();
+      * open(m_name);
+      * \endcode
+      */ 
     void reopen();
 
+    // Close the image
     void close();
 
-    eigenImageMap<dataT> & map(); 
+    /// Conversion operator returns an eigenMap
+    /** Use this like
+      * \code
+      * milkImage<float> mim("imname");
+      * eigenMap<float> im(mim); //you now have an Eigen interface to the image
+      * \endcode
+      * but with caution:
+      * - there is no way to know if the image has changed
+      * 
+      * Note: we assume this does a move
+      * 
+      * \returns an Eigen::Map<Array,-1,-1> object
+      * 
+      * \throws mx::err::mxException if the image is not opened
+      * 
+      */
+    operator eigenMap<dataT>();
 
-    eigenImageMap<dataT> * operator->();
-
-    operator eigenImageMap<dataT>&();
-
+    /// Update the metadata and post all semaphores
+    /**
+      * \throws mx::err::mxException if the image is not opened
+      */ 
     void post();
 
 };
@@ -182,8 +244,15 @@ void milkImage<dataT>::open( const std::string & imname )
     
     m_image = new IMAGE;
     
-    ImageStreamIO_openIm(m_image, imname.c_str());
-     
+    errno_t rv = ImageStreamIO_openIm(m_image, imname.c_str());
+
+    if(rv != IMAGESTREAMIO_SUCCESS) 
+    {
+        delete m_image;
+        m_image = nullptr;
+        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_openIm returned an error");     
+    }
+
     if(ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype)
     {
         delete m_image;
@@ -192,39 +261,79 @@ void milkImage<dataT>::open( const std::string & imname )
     }
 
     m_name = imname;
+    m_raw = (dataT*) m_image->array.raw;
+    m_size_0 = m_image->md->size[0];
+    m_size_1 = m_image->md->size[1];
+}
 
-    if(m_map)
+template<typename dataT>
+milkImage<dataT>::operator eigenMap<dataT>()
+{
+    if(m_image == nullptr)
     {
-        delete m_map;
-        m_map = nullptr;
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
     }
 
-    m_map = new eigenImageMap<dataT>((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
+    if(!unchanged())
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image has changed");
+    }
+
+    return eigenMap<dataT>((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
 }
 
 template<typename dataT>
-eigenImageMap<dataT> & milkImage<dataT>::map() 
+void milkImage<dataT>::reopen()
 {
-    return *m_map;
+    close();
+    open(m_name);
 }
 
 template<typename dataT>
-eigenImageMap<dataT> * milkImage<dataT>::operator->() 
+void milkImage<dataT>::close()
 {
-    return m_map;
+    if(m_image == nullptr) 
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+    }
+
+    errno_t rv = ImageStreamIO_closeIm(m_image);
+    delete m_image;
+    m_image = nullptr;
+
+    if(rv != IMAGESTREAMIO_SUCCESS) throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error");
 }
 
 template<typename dataT>
-milkImage<dataT>::operator eigenImageMap<dataT>&()
+bool milkImage<dataT>::unchanged()
 {
-    return *m_map;
+    if(m_image == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+    }
+
+    if( m_raw != (dataT*) m_image->array.raw || 
+            m_size_0 != m_image->md->size[0] ||
+                m_size_1 != m_image->md->size[1] ||
+                    ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
+    {
+        return false;
+    }
+
+    return true;
 }
 
 template<typename dataT>
 void milkImage<dataT>::post()
 {
-    if(!m_image) return;
-    ImageStreamIO_UpdateIm(m_image);
+    if(m_image == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+    }
+
+    errno_t rv = ImageStreamIO_UpdateIm(m_image);
+
+    if(rv != IMAGESTREAMIO_SUCCESS) throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error");
 }
 
 }

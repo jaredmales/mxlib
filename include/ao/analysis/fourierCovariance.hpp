@@ -488,7 +488,7 @@ int fourierCovarMap( const std::string & fname, ///< [out] the path where the ou
    mx::sigproc::makeFourierModeFreqs_Rect(ml, N);
 
 
-   aoSystem<realT, vonKarmanSpectrum<realT>, pywfsUnmod<realT> > aosys;
+   aoSystem<realT, vonKarmanSpectrum<realT>> aosys;
 
    aosys.loadMagAOX();
 
@@ -512,7 +512,7 @@ int fourierCovarMap( const std::string & fname, ///< [out] the path where the ou
    std::cerr << "Starting . . .\n";
    #pragma omp parallel
    {
-      fourierCovariance<realT, aoSystem<realT, vonKarmanSpectrum<realT>, pywfsUnmod<realT> > > Pp;
+      fourierCovariance<realT, aoSystem<realT, vonKarmanSpectrum<realT> > > Pp;
       Pp.absTol = absTol;
       Pp.relTol = relTol;
       Pp.aosys = &aosys;
