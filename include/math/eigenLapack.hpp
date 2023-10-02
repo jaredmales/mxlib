@@ -447,30 +447,51 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.
                                                               */
+                        dataT & alpha = 0,                  /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
+                                                              *                  If alpha < 0, then it is treated as a (positive) floor (as a fraction of highest
+                                                              *                  singular value) for the singular values,
+                                                              *                  which is not the same as Tikhonov (alpha > 0).
+                                                              */ 
                         int interact = MX_PINV_NO_INTERACT  ///< [in] [optional] a bitmask controlling interaction.  See above. 
                       )
 {
 
-   int minMN = std::min(A.rows(), A.cols());
+    int minMN = std::min(A.rows(), A.cols());
 
-   MXLAPACK_INT info;
-   info = eigenGESDD(U,S,VT,A);
+    MXLAPACK_INT info;
+    info = eigenGESDD(U,S,VT,A);
    
-   if(info != 0) return info;
+    if(info != 0) return info;
    
+    dataT Smax=S.maxCoeff();
    
-   dataT Smax=S.maxCoeff();
-   
-   if(maxCondition < 0) //Rejecting mode numbers
-   {
-      int mxc = -maxCondition;
+    if(alpha > 0)
+    {
+        for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+        {
+            S(i) = (pow(S(i),2) + pow(alpha*Smax,2)) / S(i);
+        }
+    }
 
-      if(mxc-1 < S.rows())
-      {
-         maxCondition = Smax/S(mxc-1,0);
-      }
-      else maxCondition = 0;
-   }
+    if(alpha < 0)
+    {
+        for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+        {
+            S(i) = S(i) + -alpha*Smax;
+        }
+    }
+
+    int modesToReject = S.rows();
+    if(maxCondition < 0) //Rejecting mode numbers
+    {
+        modesToReject = -maxCondition;
+
+        if(modesToReject-1 < S.rows())
+        {
+            maxCondition = Smax/S(modesToReject-1,0);
+        }
+        else maxCondition = 0;
+    }
 
    if(interact & MX_PINV_PLOT)
    {
@@ -501,10 +522,10 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
       std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
       std::cout << "Enter number of modes to keep: ";
       std::cin >> mine;
-   
-      if(mine > 0)
+      modesToReject = mine;
+      if(modesToReject > 0 && modesToReject < S.rows()-1)
       {
-         maxCondition = Smax/S(mine-1,0);
+         maxCondition = Smax/S(modesToReject-1,0);
       }
       else maxCondition = 0;
    }
@@ -521,19 +542,20 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
    
    condition = 1;
    nRejected = 0;
-   for(MXLAPACK_INT i=0; i< S.rows(); ++i)
-   {
-      if( S(i) >= threshold )
-      {
-         sigma(i,i) = 1./S(i);
-         if(Smax/S(i) > condition) condition = Smax/S(i);
-      }
-      else
-      {
-         sigma(i,i) = 0;
-         ++nRejected;
-      }
-   }
+    for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+    {
+        
+        if( S(i) >= threshold && i < modesToReject )
+        {
+            sigma(i,i) = 1./S(i);
+            if(Smax/S(i) > condition) condition = Smax/S(i);
+        }
+        else
+        {
+            sigma(i,i) = 0;
+            ++nRejected;
+        }
+    }
 
    if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
    {
@@ -574,12 +596,17 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.
                                                               */
+                        dataT & alpha = 0,                  /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
+                                                              *                  If alpha < 0, then it is treated as a (positive) floor (as a fraction of highest
+                                                              *                  singular value) for the singular values,
+                                                              *                  which is not the same as Tikhonov (alpha > 0).
+                                                              */ 
                         int interact = MX_PINV_NO_INTERACT  ///< [in] [optional] a bitmask controlling interaction.  See above. 
                       )
 {
    Eigen::Array<dataT,-1,-1> S, U, VT;
    
-   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, interact);
+   return eigenPseudoInverse(PInv, condition, nRejected, U, S, VT, A, maxCondition, alpha, interact);
 }
 
 
