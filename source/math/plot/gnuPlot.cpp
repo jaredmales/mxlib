@@ -6,7 +6,7 @@
 */
 
 //***********************************************************************//
-// Copyright 2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2020-2023 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -45,6 +45,8 @@ void gnuPlot::init()
 
 gnuPlot::~gnuPlot()
 {
+   command("exit",true);
+   
    if(_pipeH)
    {
       pclose(_pipeH);
@@ -273,7 +275,7 @@ std::string gnuPlot::getResponse( const std::string & com,
    
 int gnuPlot::replot()
 {
-   return command("replot");
+   return doPlotCommand();
 }
 
 int gnuPlot::xrange( double x0,
@@ -348,30 +350,57 @@ int gnuPlot::ulogxy()
 }
 
 int gnuPlot::plot( const std::string & fname, 
+                   const std::string & modifiers,
+                   const std::string & title,
+                   const std::string & name
+                 )
+{
+    std::string nname;
+    if(name == "") 
+    {
+        nname = "curve" + std::to_string(m_curveMap.size());
+    }
+    else
+    {
+        nname = name;
+    }
+
+    if(m_curveMap.count(nname) > 0)
+    {
+        m_curveMap[nname].m_file = fname;
+        m_curveMap[nname].m_modifiers = modifiers;
+        m_curveMap[nname].m_title = title;
+        m_curveMap[nname].m_binary = "";
+    }
+    else
+    {
+        gpCurve gpc(fname, "", modifiers);
+        m_curveMap.insert({nname, gpc});
+    }
+
+    return doPlotCommand();
+}
+
+int gnuPlot::plot( const std::string & fname, 
+                   const std::string & modifiers,
+                   const std::string & name
+                 )
+{
+    return plot(fname, modifiers, "", name);
+}
+
+int gnuPlot::plot( const std::string & fname, 
                    const std::string & modifiers
                  )
 {
-   std::string com;
-   
-   if(!_plotted)
-   {
-      com = "plot ";
-   }
-   else
-   {
-      com = "replot ";
-   }
-   
-   com += "\"" + fname;
-   
-   com += "\" ";
-   
-   com += modifiers;
- 
-   _plotted = true;
-   
-   return command(com, true);
+    return plot(fname, modifiers, "", "");
 }
+
+int gnuPlot::plot( const std::string & fname )
+{
+    return plot(fname, "", "", "");
+}
+
 
 int gnuPlot::circle( double xcen, 
                      double ycen, 
@@ -411,20 +440,76 @@ int gnuPlot::circle( double radius,
    return circle(0.0, 0.0, radius, modifiers, title, npoints);
 }
 
+void gnuPlot::clear()
+{
+    m_curveMap.clear();
+}
+void gnuPlot::reset()
+{
+    m_curveMap.clear();
+    command("reset");
+}
+void gnuPlot::listCurves()
+{
+    for(auto it = m_curveMap.begin(); it != m_curveMap.end(); ++it)
+    {
+        std::cout << it->first << ": " << it->second.m_file << " " << it->second.m_modifiers << " " << it->second.m_title << "\n";
+    }
+}
+void gnuPlot::modifiers( const std::string & name,
+                         const std::string & modifiers
+                       )
+{
+    if(m_curveMap.count(name) == 0) return;
+    m_curveMap[name].m_modifiers = modifiers;
+}
+void gnuPlot::title( const std::string & name,
+                     const std::string & title
+                   )
+{
+    if(m_curveMap.count(name) == 0) return;
+    m_curveMap[name].m_title = title;
+}
+
 int gnuPlot::plotImpl( const void * y, 
                        size_t Nbytes,
                        const std::string & binary,
                        const std::string & modifiers, 
-                       const std::string & title
+                       const std::string & title,
+                       const std::string & name
                      )
 {
    FILE * fout;
    char temp[MX_GP_TEMP_SZ];
-   
-   fout = openTempFile(temp);
-   
-   if(fout == 0) return -1;
-   
+
+   std::string fname;
+
+   std::string nname;
+   if(m_curveMap.count(name) > 0)
+   {
+      nname = name;
+
+      fname = m_curveMap[name].m_file;
+      m_curveMap[name].m_title = title;
+      m_curveMap[name].m_modifiers = modifiers;
+
+      fout = fopen(fname.c_str(), "wb");
+      if(fout == 0) return -1;
+   }
+   else
+   {
+      fout = openTempFile(temp);
+      if(fout == 0) return -1;
+
+      fname = temp;
+
+      if(name == "") nname = "curve" + std::to_string(m_curveMap.size());
+      else nname = name;
+
+      gpCurve gpc(fname, title, modifiers);
+      m_curveMap.insert({nname, gpc});
+   }
+
    int rv = fwrite(y, 1, Nbytes, fout);
    if(rv != Nbytes)
    {
@@ -435,24 +520,11 @@ int gnuPlot::plotImpl( const void * y,
    fflush(fout);
    fclose(fout);
    
-   std::string com;
+   m_curveMap[nname].m_binary = "binary format=\"";
+   m_curveMap[nname].m_binary +=  binary + "\" u 1 ";
    
-   if(!_plotted)
-   {
-      com = "plot ";
-   }
-   else
-   {
-      com = "replot ";
-   }
-   com += "\"";
-   com += temp;
-   com += "\" binary format=\"";
-   com +=  binary + "\" u 1 t \"" + title + "\" " + modifiers;
-   
-   _plotted = true;
-   
-   return command(com, true);
+   return doPlotCommand();
+
 }
 
 int gnuPlot::plotImpl( const void * x, 
@@ -463,16 +535,40 @@ int gnuPlot::plotImpl( const void * x,
                        const std::string & binaryx,
                        const std::string & binaryy,
                        const std::string & modifiers, 
-                       const std::string & title
+                       const std::string & title,
+                       const std::string & name
                      )
 {
    FILE * fout;
    char temp[MX_GP_TEMP_SZ];
 
-   fout = openTempFile(temp);
-   
-   if(fout == 0) return -1;
+   std::string fname;
 
+   std::string nname;
+
+   if(m_curveMap.count(name) > 0)
+   {
+      nname = name;
+      fname = m_curveMap[name].m_file;
+      m_curveMap[name].m_title = title;
+      m_curveMap[name].m_modifiers = modifiers;
+
+      fout = fopen(fname.c_str(), "wb");
+      if(fout == 0) return -1;
+   }
+   else
+   {
+      fout = openTempFile(temp);
+      if(fout == 0) return -1;
+
+      fname = temp;
+
+      if(name == "") nname = "curve" + std::to_string(m_curveMap.size());
+      else nname = name;
+
+      gpCurve gpc(fname, title, modifiers);
+      m_curveMap.insert({nname, gpc});
+   }
    
    for(int i=0; i< Npts; ++i)
    {
@@ -491,21 +587,28 @@ int gnuPlot::plotImpl( const void * x,
    
    std::string com;
    
-   if(!_plotted)
-   {
-      com = "plot ";
-   }
-   else
-   {
-      com = "replot ";
-   }
-   com += "\"";
-   com += temp;
-   com += "\" binary format=\"";
-   com +=  binaryx + binaryy + "\" u 1:2 t \"" + title + "\" " + modifiers;
+   m_curveMap[nname].m_binary = "binary format=\"";
+   m_curveMap[nname].m_binary +=  binaryx + binaryy + "\" u 1:2 ";
          
-   _plotted = true;
-   return command(com, true);
+   return doPlotCommand();
+}
+
+int gnuPlot::doPlotCommand()
+{
+    std::string com = "plot ";
+
+    int n = 0;
+    for(auto it=m_curveMap.begin(); it != m_curveMap.end(); ++it)
+    {
+        com += "'" + it->second.m_file + "'";
+        com += " " + it->second.m_binary;
+        com += " " + it->second.m_modifiers;
+        com += " t '" + it->second.m_title + "'";
+        if(n < m_curveMap.size()-1) com += ",";
+        ++n;
+    }
+
+    return command(com, true);
 }
 
 FILE * gnuPlot::openTempFile(char * temp)
