@@ -447,7 +447,7 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.
                                                               */
-                        dataT & alpha = 0,                  /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
+                        dataT   alpha = 0,                  /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
                                                               *                  If alpha < 0, then it is treated as a (positive) floor (as a fraction of highest
                                                               *                  singular value) for the singular values,
                                                               *                  which is not the same as Tikhonov (alpha > 0).
@@ -596,7 +596,7 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
                                                               *        Used to threshold the singular values.  Set to 0 to include all eigenvalues/vectors.  
                                                               *        Ignored if interactive.
                                                               */
-                        dataT & alpha = 0,                  /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
+                        dataT alpha = 0,                     /**< [in] [optional] the Tikhonov regularization value, as a fraction of the highest singular value.
                                                               *                  If alpha < 0, then it is treated as a (positive) floor (as a fraction of highest
                                                               *                  singular value) for the singular values,
                                                               *                  which is not the same as Tikhonov (alpha > 0).
