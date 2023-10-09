@@ -137,7 +137,6 @@ public:
       std::ostringstream s;
       s.str("");
       
-      s << "mxlib exception:";
       if(m_explanation != "") s << " " << m_explanation;
       if(m_source != "") s << "\n      source: " << m_source;
       if(m_code != 0)

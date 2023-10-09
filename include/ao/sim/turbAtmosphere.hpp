@@ -47,7 +47,7 @@ template<typename _realT>
 struct turbAtmosphere
 {
    typedef _realT realT;
-   typedef Eigen::Array<realT, -1, -1> arrayT;
+   typedef Eigen::Array<realT, -1, -1> imageT;
 
    realT _pupD {0}; ///<Size of the wavefront in meters. <--This is really wavefront diameter
    size_t _wfSz {0}; ///<Size of the wavefront in pixels.
@@ -69,7 +69,7 @@ struct turbAtmosphere
 
    realT _pixVal {0}; ///< Nominal amplitude value for one pixel, has units of photons/pixel.
 
-   arrayT * _pupil {0}; ///< A pointer to the pupil mask.
+   imageT * _pupil {0}; ///< A pointer to the pupil mask.
 
    realT _timeStep {0}; ///< Length of each iteration, in seconds.
    int _nWf {0}; ///< Number of iterations which have occurred.
@@ -115,7 +115,7 @@ struct turbAtmosphere
 
    int genLayers();
 
-   int shift( arrayT & phase,
+   int shift( imageT & phase,
               realT dt );
 
    int frames(int f);
@@ -268,9 +268,9 @@ int turbAtmosphere<realT>::genLayers()
 
    //#pragma omp parallel num_threads(2)
    {
-      arrayT freq;
-      arrayT psub;
-      arrayT psd;
+      imageT freq;
+      imageT psub;
+      imageT psd;
             
       sigproc::psdFilter<realT,2> filt;
 
@@ -331,7 +331,7 @@ int turbAtmosphere<realT>::genLayers()
          psd.resize(scrnSz, scrnSz);
 
          freq.resize(scrnSz, scrnSz);
-         sigproc::frequencyGrid<arrayT>(freq, _pupD/_wfSz);
+         sigproc::frequencyGrid<imageT>(freq, _pupD/_wfSz);
 
          t0 = sys::get_curr_time();
 
@@ -399,7 +399,7 @@ int turbAtmosphere<realT>::genLayers()
 }
 
 template<typename realT>
-int turbAtmosphere<realT>::shift( arrayT & phase,
+int turbAtmosphere<realT>::shift( imageT & phase,
                                   realT dt )
 {
    phase.resize(_wfSz, _wfSz);
@@ -461,6 +461,10 @@ template<typename realT>
 void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
 {
 
+   if(!_pupil)
+   {
+      mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere<realT>::nextWF", "the _pupil pointer is not set"); 
+   }
    //static int Npix = _pupil->sum();
 
    shift( wf.phase, _nWf * _timeStep);

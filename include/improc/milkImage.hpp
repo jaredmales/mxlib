@@ -175,13 +175,22 @@ public:
       */  
     void open( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/);
 
-    /// Checks if the image is still the same as when connected.
+    /// Create and connect to an image, allocating the eigenMap.
+    /**
+      * \throws std::invalid_argument if the image type_code does not match dataT.
+      */  
+    void create( const std::string & imname, ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
+                 uint32_t sz0,               ///< [in] the x size of the image
+                 uint32_t sz1                ///< [in] the y size of the image
+               );
+
+    /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
       *
-      * \returns true if no changes
-      * \returns false if something changed.  all maps are now invalid. 
+      * \returns true if connected and no changes
+      * \returns false if not connected or something changed.  All maps are now invalid. 
       */
-    bool unchanged();
+    bool valid();
 
     /// Reopens the image. 
     /** Same as
@@ -267,6 +276,50 @@ void milkImage<dataT>::open( const std::string & imname )
 }
 
 template<typename dataT>
+void milkImage<dataT>::create( const std::string & imname,
+                               uint32_t sz0, 
+                               uint32_t sz1  
+                             )
+{
+    if(m_image)
+    {
+        ImageStreamIO_closeIm(m_image);
+        delete m_image;
+        m_image = nullptr;
+    }
+    
+    m_image = new IMAGE;
+    
+    uint32_t imsize[3];
+    imsize[0] = sz0; 
+    imsize[1] = sz1;
+    imsize[2] = 1;
+
+    errno_t rv =  ImageStreamIO_createIm_gpu(m_image, imname.c_str(), 3, imsize, ImageStructTypeCode<dataT>::TypeCode, 
+                                                   -1, 1, IMAGE_NB_SEMAPHORE, 0, CIRCULAR_BUFFER | ZAXIS_TEMPORAL, 0);
+
+    if(rv != IMAGESTREAMIO_SUCCESS) 
+    {
+        delete m_image;
+        m_image = nullptr;
+        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_createIm_gpu returned an error");     
+    }
+
+    if(ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype)
+    {
+        delete m_image;
+        m_image = nullptr;
+        throw std::invalid_argument("shmim datatype does not match template type");
+    }
+
+    m_name = imname;
+    m_raw = (dataT*) m_image->array.raw;
+    m_size_0 = m_image->md->size[0];
+    m_size_1 = m_image->md->size[1];                
+
+}
+
+template<typename dataT>
 milkImage<dataT>::operator eigenMap<dataT>()
 {
     if(m_image == nullptr)
@@ -274,9 +327,9 @@ milkImage<dataT>::operator eigenMap<dataT>()
         throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
     }
 
-    if(!unchanged())
+    if(!valid())
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image has changed");
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not valid");
     }
 
     return eigenMap<dataT>((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
@@ -305,11 +358,11 @@ void milkImage<dataT>::close()
 }
 
 template<typename dataT>
-bool milkImage<dataT>::unchanged()
+bool milkImage<dataT>::valid()
 {
     if(m_image == nullptr)
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+        return false;
     }
 
     if( m_raw != (dataT*) m_image->array.raw || 

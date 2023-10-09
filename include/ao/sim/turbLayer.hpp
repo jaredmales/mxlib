@@ -249,15 +249,15 @@ void turbLayer<realT>::shiftRandom( bool nofract )
       ddy=0;
    }
    
-   improc::imageShiftWP(shiftPhaseWP, phase, wdx, wdy);
+   improc::imageShiftWP(shiftPhaseWP[0], phase, wdx, wdy);
    
    if(ddx !=0 || ddy != 0)
    {
-      improc::imageShift( shiftPhase, shiftPhaseWP, ddx, ddy, improc::cubicConvolTransform<realT>(-0.5));
+      improc::imageShift( shiftPhase, shiftPhaseWP[0], ddx, ddy, improc::cubicConvolTransform<realT>(-0.5));
    }
    else
    {
-      shiftPhase = shiftPhaseWP;
+      shiftPhase = shiftPhaseWP[0];
    }
 }
 
