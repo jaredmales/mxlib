@@ -191,15 +191,16 @@ void radAngImage( eigenT1 & rIm,                    ///< [out] the allocated rad
   * \returns a vector containing the 1D indices of the region defined by the input parameters
   */
 template<typename angleT, typename eigenT1, typename eigenT2, typename eigenT3=eigenT1>
-std::vector<size_t> annulusIndices( const eigenT1 & rIm,  ///< [in] a radius image of the type produced by \ref radiusImage
-                                    const eigenT2 & qIm,  ///< [in] an angle image of the type produce by \ref angleImage
+std::vector<size_t> annulusIndices( const eigenT1 & rIm,          ///< [in] a radius image of the type produced by \ref radiusImage
+                                    const eigenT2 & qIm,          ///< [in] an angle image of the type produce by \ref angleImage
                                     typename angleT::realT xcen,  ///< [in] the x center of the image
                                     typename angleT::realT ycen,  ///< [in] the y center of the image
                                     typename angleT::realT min_r, ///< [in] the minimum radius of the region
                                     typename angleT::realT max_r, ///< [in] the maximum radius of the region
                                     typename angleT::realT min_q, ///< [in] the minimum angle of the region. 
                                     typename angleT::realT max_q, ///< [in] the maximum angle of the region. 
-                                    eigenT3 * mask = 0 ///< [in] [optional] pointer to a mask image, only pixels of value 1 are included in the indices.
+                                    eigenT3 * mask = 0            /**< [in] [optional] pointer to a mask image, only pixels of value 1 
+                                                                                       are included in the indices.*/
                                   )
 {
 
@@ -254,6 +255,53 @@ std::vector<size_t> annulusIndices( const eigenT1 & rIm,  ///< [in] a radius ima
    }
    
    return idx;
+}
+
+///Get the coordinates of the bounding rectangle of an annulus.
+/**
+  * \ingroup image_masks
+  * 
+  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all arithmetic.
+  * 
+  */
+template<typename angleT>
+void annulusBoundingRect( int & x0,                     ///< [out] The lower left x-coordinate of the bounding rect.
+                          int & y0,                     ///< [out] The lower left y-coordinate of the bounding rect.
+                          int & x1,                     ///< [out] The upper right x-coordinate of the bounding rect.
+                          int & y1,                     ///< [out] The upper right y-coordinate of the bounding rect.
+                          typename angleT::realT xcen,  ///< [in] the x center of the image
+                          typename angleT::realT ycen,  ///< [in] the y center of the image
+                          typename angleT::realT min_r, ///< [in] the minimum radius of the region
+                          typename angleT::realT max_r, ///< [in] the maximum radius of the region
+                          typename angleT::realT min_q, ///< [in] the minimum angle of the region. 
+                          typename angleT::realT max_q  ///< [in] the maximum angle of the region. 
+                        )
+{
+    typedef typename angleT::realT realT;
+
+    //Get the corners
+    realT x00 = xcen + min_r*cos(min_q*angleT::radians);
+    realT y00 = ycen + min_r*sin(min_q*angleT::radians);
+    realT x01 = xcen + max_r*cos(min_q*angleT::radians);
+    realT y01 = ycen + max_r*sin(min_q*angleT::radians);
+
+    realT x10 = xcen + min_r*cos(max_q*angleT::radians);
+    realT y10 = ycen + min_r*sin(max_q*angleT::radians);
+    realT x11 = xcen + max_r*cos(max_q*angleT::radians);
+    realT y11 = ycen + max_r*sin(max_q*angleT::radians);
+
+    //vertex of min_r is probably not necessary, but might as well
+    realT x20 = xcen + min_r*cos(angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT y20 = ycen + min_r*sin(angleMean<angleT>({min_q, max_q})*angleT::radians);
+
+    //vertex of max_r
+    realT x21 = xcen + max_r*cos(angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT y21 = ycen + max_r*sin(angleMean<angleT>({min_q, max_q})*angleT::radians);
+
+    x0 = std::ceil(std::min({x00,x01,x10,x11,x20,x21}));
+    y0 = std::ceil(std::min({y00,y01,y10,y11,y20,y21}));
+    x1 = std::ceil(std::max({x00,x01,x10,x11,x20,x21}));
+    y1 = std::ceil(std::max({y00,y01,y10,y11,y20,y21}));
 }
 
 /// Reflect vector indices across the given center pixel.

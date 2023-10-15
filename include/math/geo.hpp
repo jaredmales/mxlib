@@ -217,17 +217,14 @@ typename angleT::realT angleDiff( typename angleT::realT q1, ///< [in] angle to 
 ///Calculate the mean of a set of angles, correctly across 0/360.
 /** Calculates the mean by decomposing into vectors and averaging the components. This accounts for crossing 0/360.  
   * 
-  * \param q vector of angles to average.
-  *
   * \returns the mean angle
   *
-  * \tparam degrad controls whether angles are degrees (false) or radians (true)
-  * \tparam realT is the type in which to do arithmetic
+  * \tparam angleT is the angle type, either radians<realT> or degrees<realT>.  angleT::realT is the type in which to do arithmetic.
   * 
   * \ingroup geo
   */
 template<class angleT>
-typename angleT::realT angleMean(std::vector<typename angleT::realT> & q)
+typename angleT::realT angleMean( const std::vector<typename angleT::realT> & q /**< [in] vector of angles to average.*/)
 { 
    static_assert(std::is_floating_point<typename angleT::realT>::value, "angleMean: realT must be floating point");
    
@@ -243,7 +240,7 @@ typename angleT::realT angleMean(std::vector<typename angleT::realT> & q)
    s /= q.size();
    c /= q.size();
    
-   return atan(s/c)*angleT::scale ;
+   return atan2(s,c)*angleT::scale ;
 
 }
 
