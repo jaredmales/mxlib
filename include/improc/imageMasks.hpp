@@ -291,12 +291,12 @@ void annulusBoundingRect( int & x0,                     ///< [out] The lower lef
     realT y11 = ycen + max_r*sin(max_q*angleT::radians);
 
     //vertex of min_r is probably not necessary, but might as well
-    realT x20 = xcen + min_r*cos(angleMean<angleT>({min_q, max_q})*angleT::radians);
-    realT y20 = ycen + min_r*sin(angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT x20 = xcen + min_r*cos(math::angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT y20 = ycen + min_r*sin(math::angleMean<angleT>({min_q, max_q})*angleT::radians);
 
     //vertex of max_r
-    realT x21 = xcen + max_r*cos(angleMean<angleT>({min_q, max_q})*angleT::radians);
-    realT y21 = ycen + max_r*sin(angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT x21 = xcen + max_r*cos(math::angleMean<angleT>({min_q, max_q})*angleT::radians);
+    realT y21 = ycen + max_r*sin(math::angleMean<angleT>({min_q, max_q})*angleT::radians);
 
     x0 = std::ceil(std::min({x00,x01,x10,x11,x20,x21}));
     y0 = std::ceil(std::min({y00,y01,y10,y11,y20,y21}));
@@ -310,10 +310,10 @@ void annulusBoundingRect( int & x0,                     ///< [out] The lower lef
   */
 template<typename realT>
 std::vector<size_t> reflectImageIndices( const std::vector<size_t> & idxi, ///< [in] the vector indices to reflect
-                                         int w, ///< [in] the image width
-                                         int h, ///< [in] the image height
-                                         realT xc, ///< [in] the image center x coordinate
-                                         realT yc  ///< [in] the image center y coordinate
+                                         int w,                            ///< [in] the image width
+                                         int h,                            ///< [in] the image height
+                                         realT xc,                         ///< [in] the image center x coordinate
+                                         realT yc                          ///< [in] the image center y coordinate
                                        )
 {
    std::vector<size_t> idxr;
