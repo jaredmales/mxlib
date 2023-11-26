@@ -7,23 +7,48 @@
   *
   */
 
-#ifndef turbAtmosphere_hpp
-#define turbAtmosphere_hpp
+//***********************************************************************//
+// Copyright 2023 Jared R. Males (jaredmales@gmail.com)
+//
+// This file is part of mxlib.
+//
+// mxlib is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// mxlib is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
+//***********************************************************************//
+
+#ifndef mx_AO_sim_turbAtmosphere_hpp
+#define mx_AO_sim_turbAtmosphere_hpp
 
 #include <vector>
 #include <iostream>
 
-
 #include "../../sigproc/psdFilter.hpp"
 #include "../../sigproc/psdUtils.hpp"
+
+#include "../../base/changeable.hpp"
+
+#include "../../improc/milkImage.hpp"
+
 #include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
+#include "../../math/randomT.hpp"
 
 #include "../../ioutils/fits/fitsFile.hpp"
 #include "../../ioutils/stringUtils.hpp"
 #include "../../sys/timeUtils.hpp"
 
 #include "turbLayer.hpp"
+#include "turbSubHarmonic.hpp"
 #include "wavefront.hpp"
 
 #ifdef DEBUG
@@ -32,6 +57,7 @@
 #define BREAD_CRUMB
 #endif
 
+
 namespace mx
 {
 namespace AO
@@ -39,443 +65,656 @@ namespace AO
 namespace sim
 {
 
-///A turbulent atmosphere simulator
-/** \todo document this
+/// A turbulent atmosphere simulator
+/** Generate multi-layer phase screens using PSD filtering with the FFT. Manages
+  * the shifting and combination of the phase screens (without propagation).
+  * 
+  * The \ref turbSubHarmonic class provides low-frequency sub-harmonics if desired
+  * 
+  * The \ref turbLayer class manages the actual interpolation.
+  * 
   * \todo add facility for switching interpolators
+  * \todo need to include wrap detection when using subharmonics (e.g. frames needs to be right)
+  * 
+  * \ingroup mxAOSim
   */
-template<typename _realT>
-struct turbAtmosphere
+template<typename _aoSystemT>
+struct turbAtmosphere : public base::changeable
 {
-   typedef _realT realT;
-   typedef Eigen::Array<realT, -1, -1> imageT;
 
-   realT _pupD {0}; ///<Size of the wavefront in meters. <--This is really wavefront diameter
-   size_t _wfSz {0}; ///<Size of the wavefront in pixels.
-   size_t _buffSz {0}; ///<Buffer to apply around wavefront for interpolation
+public:
 
-   realT _lambda0 {0.5e-6}; ///< Wavelength at which r_0 was measured.
-   realT _lambda {0}; ///< Desired wavelength of the turbulence.
+    typedef _aoSystemT aoSystemT;
+    typedef typename aoSystemT::realT realT;
+    //typedef typename aoSystemT::atmosphereT atmosphereT;
+    typedef Eigen::Array<realT, -1, -1> imageT;
 
-   bool _subPiston {true}; ///< Whether or not to subtract piston from the PSD
-   bool _subTipTilt {false}; ///< Whether or not to subtract tip/tilt from the PSD.
+protected:
 
-   std::vector<turbLayer<realT>> _layers; ///< Vector of turbulent layers.
+    /** \name Configuration Data
+      * @{ 
+      */
+    uint32_t m_wfSz {0}; ///< Size of the wavefront in pixels.
 
-   size_t _frames {0}; ///< Length of the turbulence sequence.
+    uint32_t m_buffSz {0}; ///< Buffer to apply around wavefront for interpolation. 
 
-   realT _F0Photons {0}; ///< Photons per square meter from a 0 magnitude star at _lambda.
+    aoSystemT * m_aosys {nullptr}; ///< The AO system object containing all system parameters.  See \ref aoSystem.
 
-   realT _starMag {0}; ///< Magnitude of the star being observed.
+    uint32_t m_shLevel {0}; /**< Number of subharmonic levels.  0 means no subharmonics.  Generally only 
+                              *  1 level is needed to obtain good Tip/Tilt results.  See \ref turbSubHarmonic.
+                              */
 
-   realT _pixVal {0}; ///< Nominal amplitude value for one pixel, has units of photons/pixel.
+    bool m_shPreCalc {true}; /**< Whether or not to pre-calculate the subharmonic modes.  This is a
+                               *  trade of speed vs. memory use. See \ref turbSubHarmonic.
+                               */
 
-   imageT * _pupil {0}; ///< A pointer to the pupil mask.
+    bool m_retain {false}; /**< Whether or not to retain working memory after screen generation.  One 
+                             *  would set to true if many screens will be calculated in monte carlo fashion.
+                             *  For a standard case of one set of screens being shifted by wind velocity, 
+                             *  this should be false to minimize memory use.
+                             */
 
-   realT _timeStep {0}; ///< Length of each iteration, in seconds.
-   int _nWf {0}; ///< Number of iterations which have occurred.
+    bool m_forceGen {true}; /**< Force generation of new screens if true.  Note that this class does not presently
+                              *  do any checks of saved screens to verify they match the current configuration.
+                              *  Set to true with caution.
+                              * 
+                              * \todo need check for changes in parameters to decide if saved frames are valid per layer
+                              */
+    
+    std::string m_dataDir; /**< Specifies a path where phase screens are stored.  Leaving this unset or "" is equivalent to
+                             *  \ref m_forceGen` == true`.
+                             */
 
-   std::string _dataDir; ///Specifies a path where phase screens are stored.
+    imageT * m_pupil {0}; ///< A pointer to the pupil mask.
 
-   bool _forceGen {false}; ///Force generation of new screens if true.
+    realT m_timeStep {0}; ///< Length of each iteration, in seconds.
+    
+    ///@}
 
-   ///Default c'tor
-   //turbAtmosphere();
+    /** \name Internal State
+      * @{ 
+      */
+    std::vector<turbLayer<aoSystemT>> m_layers; ///< Vector of turbulent layers.
 
-   ///Setup the overall atmosphere.
-   /**
-     */
-   int setup( realT pupD,    ///< [in] New value of _pupD, the size of the wavefront in meters.
-              size_t wfSz,   ///< [in] New value of _wfSz, the size of the wavefront in pixels.
-              size_t buffSz, ///< [in] New value of _buffSz, the size of the interpolation buffer to use.
-              realT lam0,    ///< [in] New value of _lambda0, the wavelength at which r_0 is measured.
-              realT lam,     ///< [in] New value of _lambda, the wavelength at which the phase is specified.
-              bool subPist,  ///< [in] New value of _subPiston, whether or not piston is subtracted from the wavefront phase.
-              bool subTip    ///< [in] New value of _subTipTilt, whether or not tip/tilt is subtracted from wavefront phase.
-            );
+    std::vector<turbSubHarmonic<turbAtmosphere>> m_subHarms; ///< Sub-harmonic layers
 
-   int setLayers( const std::vector<size_t> & scrnSz,
-                  const std::vector<realT> & r0,
-                  const std::vector<realT> & L0,
-                  const std::vector<realT> & l0,
-                  const std::vector<realT> & Cn2,
-                  const std::vector<realT> & z,
-                  const std::vector<realT> & windV,
-                  const std::vector<realT> & windD,
-                  int nCombo  );
+    size_t m_frames {0}; ///< Length of the turbulence sequence.
 
-   int setLayers( const size_t scrnSz,
-                  const realT r0,
-                  const realT L0,
-                  const realT l0,
-                  const std::vector<realT> & Cn2,
-                  const std::vector<realT> & z,
-                  const std::vector<realT> & windV,
-                  const std::vector<realT> & windD,
-                  int nCombo );
+    int m_nWf {0}; ///< Number of iterations which have occurred.
 
-   int genLayers();
+    math::normDistT<realT> m_normVar; ///< Normal random deviate generator.  This seeded in the constructor.
 
-   int shift( imageT & phase,
-              realT dt );
+    improc::eigenImage<realT> m_phaseWork;
 
-   int frames(int f);
-   size_t frames();
+public:
 
-   int wfPS(realT ps); ///< dummy function for simulatedAOSystem.  Does nothing.
+    /** \name Construction and Configuration
+      * @{
+      */
 
-   int F0Photons(realT f0);
-   int starMag(realT mag);
+    ///Default c'tor
+    turbAtmosphere();
 
-   bool _loopClosed;
+    ///Setup the overall atmosphere.
+    /**
+      */
+    void setup( uint32_t wfSz,     ///< [in] The size of the wavefront in pixels.
+                uint32_t buffSz,   ///< [in] The size of the interpolation buffer to use.
+                aoSystemT * aosys, ///< [in] Pointer to an AO System.  See \ref m_aosys.
+                uint32_t shLevel   ///< [in] number of subharmonic levels to use.  0 turns off subharmonics.  See \ref m_shLevel.
+              );
 
-   void nextWF(wavefront<realT> & wf);
+    /// Set the wavefront size
+    /**
+      * see \ref m_wfSz
+      */
+    void wfSz( uint32_t ws /**< [in] the new wavefront size */);
+
+    /// Get the wavefront size
+    /**
+      * \returns the current value of \ref m_wfSz
+      */
+    uint32_t wfSz();
+
+    /// Set the interpolation buffer size
+    /**
+      * see \ref m_buffSz
+      */
+    void buffSz( uint32_t bs /**< [in] the new buffer size*/);
+
+    /// Get the interpolation buffer size
+    /**
+      * \returns the current value of \ref m_buffSz
+      */
+    uint32_t buffSz();
+
+    /// Set the pointer to an AO system object
+    /**
+      * see \ref m_aosys
+      */
+    void aosys( aoSystemT * aos /**< [in] the new pointer to an AO system object*/);
+
+    /// Get the pointer to an AO system object
+    /**
+      * \returns the current value of \ref m_aosys
+      */
+    aoSystemT * aosys();
+
+    /// Set the subharmonic level
+    /**
+      * see \ref m_shLevel
+      */
+    void shLevel( uint32_t shl /**< [in] the new subharmonic level*/);
+
+    /// Get the subharmonic level
+    /**
+      * \returns the current value of \ref m_shLevel
+      */
+    uint32_t shLevel();
+
+    /// Set whether subharmonic modes are pre-calculated
+    /**
+      * see \ref m_shPreCalc
+      */
+    void shPreCalc( bool shp /**< [in] the new value of flag controlling subharmonic mode precalculation */);
+
+    /// Get whether subharmonic modes are pre-calculated 
+    /**
+      * \returns the current value of \ref m_shPreCalc
+      */
+    bool shPreCalc();
+
+    /// Set whether memory for screen generation is retained
+    /**
+      * see \ref m_retain
+      */
+    void retain( bool rtn /**< [in] the new value of the flag controlling whether memory is retained*/);
+
+    /// Get whether memory for screen generation is retained
+    /**
+      * \returns the current value of \ref m_retain
+      */
+    bool retain();
+
+    /// Set whether new screen generation is forced
+    /**
+      * see \ref m_forceGen
+      */
+    void forceGen( bool fg /**< [in] the new value of the flag controlling whether screen generation is forced*/);
+
+    /// Get whether new screen generation is forced
+    /**
+      * \returns the current value of m_forceGen
+      */
+    bool forceGen();
+
+    /// Set the data directory for saving phase screens
+    /**
+      * see \ref m_dataDir
+      */
+    void dataDir( const std::string & dd /**< [in] the new data directory for phase screen saving*/);
+
+    /// Get the data directory for saving phase screens
+    /**
+      * \returns the current value of m_dataDir
+      */
+    std::string dataDir();
+
+    /// Setup the layers and prepare them for phase screen generation.
+    /** The number of entries in \p scrnSz must mach the number of layers in the atmosphere
+      * of \ref m_aosys. 
+      */
+    void setLayers( const std::vector<size_t> & scrnSz /**< [in] the screen sizes for each layer.*/);
+
+    /// Setup the layers and prepare them for phase screen generation.
+    /** This sets all layer phase screens to be the same size.
+      * 
+      */
+    void setLayers( const size_t scrnSz /**< [in] the screen sizes for all layers.*/);
+
+    /// Get the number of layers
+    /**
+      * \returns the size of the layers vector \ref m_layers 
+      */
+    uint32_t nLayers();
+
+    /// Get a layer
+    /**
+      * \returns a reference to on entry in \ref m_layers 
+      */
+    turbLayer<aoSystemT> & layer(uint32_t n);
+
+    /// Get the random number generator
+    /**
+      * \returns a reference to \ref m_normVar 
+      */
+    math::normDistT<realT> & normVar();
+
+    ///@} - Construction and Configuration
+
+    /** \name Screen Generation
+      * @{
+      */
+
+    /// Generate all phase screens
+    /** Loads them from disk if possible and \ref m_forceGen == false.
+      * 
+      * Deallocates working memory when done, unless \ref m_retain == true.
+      */ 
+    void genLayers();
+
+    /// @}
+
+    int shift( improc::milkImage<realT> & phase,
+               realT dt );
+
+    int frames(int f);
+    size_t frames();
+
+    int wfPS(realT ps); ///< dummy function for simulatedAOSystem.  Does nothing.
+
+    bool _loopClosed;
+
+    void nextWF(wavefront<realT> & wf);
 };
 
-// template<typename realT>
-// turbAtmosphere<realT>::turbAtmosphere()
-// {
-//    //_subPiston = true;
-// }
-
-template<typename realT>
-int turbAtmosphere<realT>::setup( realT pupD,
-                                  size_t wfSz,
-                                  size_t buffSz,
-                                  realT lam0,
-                                  realT lam,
-                                  bool subPist,
-                                  bool subTip )
+template<typename aoSystemT>
+turbAtmosphere<aoSystemT>::turbAtmosphere()
 {
-   _pupD = pupD;
-   _wfSz = wfSz;
-   _buffSz = buffSz;
-
-   _lambda0 = lam0;
-   _lambda = lam;
-
-   _subPiston = subPist;
-   _subTipTilt = subTip;
-
-   _forceGen = false;
-   return 0;
+    m_normVar.seed();
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::setLayers( const std::vector<size_t> & scrnSz,
-               const std::vector<realT> & r0,
-               const std::vector<realT> & L0,
-               const std::vector<realT> & l0,
-               const std::vector<realT> & Cn2,
-               const std::vector<realT> & z,
-               const std::vector<realT> & windV,
-               const std::vector<realT> & windD,
-               int nCombo)
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::setup( uint32_t ws,
+                                       uint32_t bs,
+                                       aoSystemT * aos,
+                                       uint32_t shl
+                                     ) 
 {
-
-   size_t nLayers = scrnSz.size();
-
-   if( r0.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of r0 does not match.");
-      return -1;
-   }
-
-   if( L0.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of L0 does not match.");
-      return -1;
-   }
-
-   if( l0.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of l0 does not match.");
-      return -1;
-   }
-
-   if( Cn2.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of Cn2 does not match.");
-      return -1;
-   }
-
-   if( z.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of z does not match.");
-      return -1;
-   }
-
-   if( windV.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of windV does not match.");
-      return -1;
-   }
-
-   if( windD.size() != nLayers)
-   {
-      mxError("turbAtmosphere::setLayers", MXE_INVALIDARG, "Size of windD does not match.");
-      return -1;
-   }
-
-   _layers.clear();
-
-   _layers.resize(nLayers);
-
-   for(size_t i=0; i< nLayers; ++i)
-   {
-      _layers[i]._nCombo = nCombo;
-      _layers[i].setLayer( _wfSz, _buffSz, scrnSz[i], r0[i], L0[i], l0[i], _pupD, Cn2[i], z[i], windV[i], windD[i]);
-   }
-
-   return 0;
+    wfSz(ws);
+    buffSz(bs);
+    aosys(aos);
+    shLevel(shl);
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::setLayers( const size_t scrnSz,
-               const realT r0,
-               const realT L0,
-               const realT l0,
-               const std::vector<realT> & Cn2,
-               const std::vector<realT> & z,
-               const std::vector<realT> & windV,
-               const std::vector<realT> & windD,
-               int nCombo )
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::wfSz( uint32_t ws )
 {
-   size_t n = Cn2.size();
+    if(ws != m_wfSz) 
+    {
+        changed();
+    }
 
-   return setLayers( std::vector<size_t>(n, scrnSz), std::vector<realT>(n, r0), std::vector<realT>(n,L0), std::vector<realT>(n,l0),Cn2,z,windV,windD, nCombo);
+    m_wfSz = ws;
+    m_phaseWork.resize(m_wfSz, m_wfSz);
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::genLayers()
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::wfSz()
 {
-   if(_dataDir != "" && !_forceGen)
-   {
+    return m_wfSz;
+}
 
-      std::string fbase = _dataDir;
-      fbase += "/";
-      fbase += "layer_";
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::buffSz( uint32_t bs )
+{
+    if(bs != m_buffSz)
+    {
+        changed();
+    }
 
-      fits::fitsFile<realT> ff;
-      std::string fname;
-      for(size_t i=0; i< _layers.size(); ++i)
-      {
-         fname = fbase + ioutils::convertToString<int>(i) + ".fits";
-         ff.read(_layers[i].phase, fname);
-      }
+    m_buffSz = bs;
+}
 
-      return 0;
-   }
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::buffSz()
+{
+    return m_buffSz;
+}
 
-   //#pragma omp parallel num_threads(2)
-   {
-      imageT freq;
-      imageT psub;
-      imageT psd;
-            
-      sigproc::psdFilter<realT,2> filt;
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::aosys( aoSystemT * aos)
+{
+    if(aos != m_aosys)
+    {
+        m_aosys = aos;
+        changed();
+    }
+}
 
-      mx::math::normDistT<realT> normVar;
-      normVar.seed();
+template<typename aoSystemT>
+aoSystemT * turbAtmosphere<aoSystemT>::aosys()
+{
+    return m_aosys;
+}
 
-      size_t scrnSz;
-      realT beta, L02, r0, L0, l0;
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::shLevel( uint32_t shl )
+{
+    if(shl != m_shLevel)
+    {
+        m_shLevel = shl;
+        changed();
+    }
+}
 
-      realT sqrt_alpha = 0.5*11./3.;
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::shLevel()
+{
+    return m_shLevel;
+}
 
-      realT p;
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::shPreCalc( bool shp )
+{
+    if(shp != m_shPreCalc)
+    {
+        m_shPreCalc = shp;
+        changed();
+    }
+}
 
-      scrnSz = _layers[0]._scrnSz;
-      
+template<typename aoSystemT>
+bool turbAtmosphere<aoSystemT>::shPreCalc()
+{
+    return m_shPreCalc;
+}
 
-      freq.resize(scrnSz, scrnSz);
-      sigproc::frequencyGrid(freq, _pupD/_wfSz);
-      
-      psub.resize(scrnSz, scrnSz);
-      
-      for(size_t ii =0; ii < scrnSz; ++ii)
-      {
-         for(size_t jj=0; jj < scrnSz; ++jj)
-         {
-            realT Ppiston = 0;
-            realT Ptiptilt = 0;
-            if(_subPiston)
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::retain( bool rtn )
+{
+    if(rtn != m_retain)
+    {
+        m_retain = rtn;
+        changed();
+    }
+}
+
+template<typename aoSystemT>
+bool turbAtmosphere<aoSystemT>::retain()
+{
+    return m_retain;
+}
+
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::forceGen( bool fg )
+{
+    if(fg != m_forceGen)
+    {
+        changed();
+    }
+
+    m_forceGen = fg;
+}
+
+template<typename aoSystemT>
+bool turbAtmosphere<aoSystemT>::forceGen()
+{
+    return m_forceGen;
+}
+
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::dataDir( const std::string & dd )
+{
+    if(dd != m_dataDir)
+    {
+        changed();
+    }
+
+    m_dataDir = dd;
+}
+
+template<typename aoSystemT>
+std::string turbAtmosphere<aoSystemT>::dataDir()
+{
+    return m_dataDir;
+}
+
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> & scrnSz)
+{
+    if(m_aosys == nullptr)
+    {
+        mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere::setLayers", "ao system is not set (m_aosys is nullptr)"); 
+    }
+
+    size_t nLayers = scrnSz.size();
+    
+    if(nLayers != m_aosys->atm.n_layers())
+    {
+        mxThrowException(err::invalidarg, "mx::AO::sim::turbAtmosphere::setLayers", "Size of scrnSz vector does not match atmosphere.");
+    }
+
+    if(nLayers != m_layers.size())
+    {
+        changed();
+    }
+
+    m_layers.resize(nLayers);
+
+    for(size_t i=0; i< nLayers; ++i)
+    {
+        m_layers[i].setLayer(this, i, scrnSz[i]);
+    }
+
+    if(m_shLevel > 0)
+    {
+        if(nLayers != m_subHarms.size())
+        {
+            changed();
+        }
+
+        m_subHarms.resize(nLayers);
+
+        for(size_t i=0; i< nLayers; ++i)
+        {
+            m_subHarms[i].turbAtmo(this);
+            m_subHarms[i].preCalc(m_shPreCalc);
+            m_subHarms[i].level(m_shLevel);
+            m_subHarms[i].initGrid(i);
+        }
+    }
+}
+
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::setLayers( const size_t scrnSz )
+{
+    if(m_aosys == nullptr)
+    {
+        mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere::setLayers", "atmosphere is not set (m_atm is nullptr)"); 
+    }
+
+    size_t n = m_aosys->atm.n_layers();
+
+    setLayers( std::vector<size_t>(n, scrnSz));
+}
+
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::nLayers()
+{
+    return m_layers.size();
+}
+
+template<typename aoSystemT>
+turbLayer<aoSystemT> & turbAtmosphere<aoSystemT>::layer(uint32_t n)
+{
+    if(n >= m_layers.size())
+    {
+        mxThrowException(err::invalidarg, "mx::AO::sim::turbAtmosphere::layer", "n too large for number of layers.");
+    }
+
+    return m_layers[n];
+}
+
+template<typename aoSystemT>
+math::normDistT<typename aoSystemT::realT> & turbAtmosphere<aoSystemT>::normVar()
+{
+    return m_normVar;
+}
+
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::genLayers()
+{
+    if(m_dataDir != "" && !m_forceGen)
+    {
+        std::string fbase = m_dataDir;
+        fbase += "/";
+        fbase += "layer_";
+
+        fits::fitsFile<realT> ff;
+        std::string fname;
+        for(size_t i=0; i< m_layers.size(); ++i)
+        {
+            fname = fbase + ioutils::convertToString<int>(i) + ".fits";
+            ff.read(m_layers[i].m_phase, fname);
+        }
+
+        return;
+    }
+
+    sigproc::psdFilter<realT,2> filt;
+
+    for(size_t i=0; i< m_layers.size(); ++i)
+    {
+        if(m_layers[i].m_phase.rows() != m_layers[i].scrnSz() || m_layers[i].m_phase.cols() != m_layers[i].scrnSz())
+        {
+            mxThrowException(err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer phase not allocated.");
+        }
+
+        if(m_layers[i].m_freq.rows() != m_layers[i].scrnSz() || m_layers[i].m_freq.cols() != m_layers[i].scrnSz())
+        {
+            mxThrowException(err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer freq not allocated.");
+        }
+
+        if(m_layers[i].m_psd.rows() != m_layers[i].scrnSz() || m_layers[i].m_psd.cols() != m_layers[i].scrnSz())
+        {
+            mxThrowException(err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer psd not allocated.");
+        }
+
+        for(size_t jj = 0; jj < m_layers[i].m_scrnSz; ++jj)
+        {
+            for(size_t ii = 0; ii < m_layers[i].m_scrnSz; ++ii)
             {
-               Ppiston = pow(2*math::func::jinc(math::pi<realT>() * freq(ii,jj) * _pupD), 2);
+                m_layers[i].m_phase(ii,jj) = m_normVar;
             }
+        }
 
-            if(_subTipTilt)
-            {
-               Ptiptilt = pow(4*math::func::jincN(2,math::pi<realT>() * freq(ii,jj) * _pupD), 2);
-            }
+        realT dkx = m_layers[i].m_freq(1,0)-m_layers[i].m_freq(0,0);
+        realT dky = m_layers[i].m_freq(0,1)-m_layers[i].m_freq(0,0);
+        filt.psdSqrt(m_layers[i].m_psd, dkx, dky);
 
-            psub(ii,jj) = (1 - Ppiston - Ptiptilt);
-         }
-      }
-
-      psd.resize(scrnSz, scrnSz);
-
-      //filt.psd(psd);
-            
-     // #pragma omp for
-      double t0, t1, t2, dt = 0, dt1=0;
-      for(size_t i=0; i< _layers.size(); ++i)
-      {
-         
-         std::cerr << "Generating layer " << i << " ";
-
-         r0 = _layers[i]._r0;
-         L0 = _layers[i]._L0;
-         l0 = _layers[i]._l0;
-
-         std::cerr << scrnSz << " " << r0 << " " << L0 << " " << l0 << "\n";
-         psd.resize(scrnSz, scrnSz);
-
-         freq.resize(scrnSz, scrnSz);
-         sigproc::frequencyGrid<imageT>(freq, _pupD/_wfSz);
-
-         t0 = sys::get_curr_time();
-
-         //beta = 0.0218/pow( r0, 5./3.)/pow( _pupD/_wfSz,2) * pow(_lambda0/_lambda, 2);
-         beta = 0.0218/pow( r0, 5./3.) * pow(_lambda0/_lambda, 2);
-
-         if(L0 > 0) L02 = 1.0/(L0*L0);
-         else L02 = 0;
-
-         #pragma omp parallel for
-         for(size_t ii =0; ii < scrnSz; ++ii)
-         {
-            for(size_t jj=0; jj < scrnSz; ++jj)
-            {
-               if(freq(ii,jj) == 0 && L02 == 0)
-               {
-                  p = 0;
-               }
-               else
-               {
-                  p = beta / pow( pow(freq(ii,jj),2) + L02, sqrt_alpha);
-                  if(l0 > 0 ) p *= exp(-1*pow( freq(ii,jj)*l0, 2));
-               }
-               psd(ii,jj) = sqrt(p*psub(ii,jj));
-
-               _layers[i].phase(ii,jj) = normVar;
-            }
-         }
-
-         t1 = sys::get_curr_time();
-         
-         filt.psdSqrt(psd, freq(1,0)-freq(0,0),freq(0,1)-freq(0,0) );
-
-         filt(_layers[i].phase);
-         
-         t2 = sys::get_curr_time();
-         
-         dt += t1-t0;
-         dt1 += t2-t1;
-      }
-      
-      std::cerr << dt/7.0 << " " << dt1/7.0 << "\n";
-
-   }//#pragma omp parallel
-
-
+        filt(m_layers[i].m_phase);
+    
+        if(m_shLevel > 0)
+        {
+            m_subHarms[i].screen(m_layers[i].m_phase);
+        }
+    }
    
-   if(_dataDir != "")
-   {
+    if(!m_retain)
+    {
+        for(size_t i=0; i< m_layers.size(); ++i)
+        {
+            m_layers[i].genDealloc();
+        }
 
-      std::string fbase = _dataDir;
-      fbase += "/";
-      fbase += "layer_";
+        for(size_t i=0; i< m_subHarms.size(); ++i)
+        {
+            m_subHarms[i].deinit();
+        }
+    }
 
-      fits::fitsFile<realT> ff;
-      std::string fname;
-      for(size_t i=0; i< _layers.size(); ++i)
-      {
-         fname = fbase + ioutils::convertToString<int>(i) + ".fits";
-         ff.write(fname, _layers[i].phase);
-      }
-   }
+    if(m_dataDir != "")
+    {
+        std::string fbase = m_dataDir;
+        fbase += "/";
+        fbase += "layer_";
 
-   return 0;
+        fits::fitsFile<realT> ff;
+        std::string fname;
+        for(size_t i=0; i< m_layers.size(); ++i)
+        {
+            fname = fbase + ioutils::convertToString<int>(i) + ".fits";
+            ff.write(fname, m_layers[i].m_phase);
+        }
+    }
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::shift( imageT & phase,
-                                  realT dt )
+template<typename aoSystemT>
+int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> & milkPhase,
+                                      realT dt 
+                                    )
 {
-   phase.resize(_wfSz, _wfSz);
-   phase.setZero();
+    improc::eigenMap<realT> phase(milkPhase);
 
-   #pragma omp parallel for
-   for(size_t j=0; j< _layers.size(); ++j)
-   {
-      _layers[j].shift( dt );
+    if(phase.rows() != m_wfSz || phase.cols() != m_wfSz)
+    {
+    }
 
-      //This is faster than a separate loop by 5-10%
-      #pragma omp critical
-      phase += sqrt( _layers[j]._Cn2 ) * _layers[j].shiftPhase.block(_buffSz, _buffSz, _wfSz, _wfSz);
-   }
+    m_phaseWork.setZero();
 
-   return 0;
+    #pragma omp parallel for
+    for(size_t j=0; j< m_layers.size(); ++j)
+    {
+        m_layers[j].shift( dt );
+
+        //This is faster than a separate loop by 5-10%
+        #pragma omp critical
+        m_phaseWork += sqrt( m_aosys->atm.layer_Cn2(j)) * m_layers[j].m_shiftPhase.block(m_buffSz, m_buffSz, m_wfSz, m_wfSz);
+    }
+
+    phase = m_phaseWork;
+    milkPhase.post();
+
+    return 0;
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::frames(int f)
+template<typename aoSystemT>
+int turbAtmosphere<aoSystemT>::frames(int f)
 {
-   _frames = f;
+   m_frames = f;
    
    return 0;
 }
 
-template<typename realT>
-size_t turbAtmosphere<realT>::frames()
+template<typename aoSystemT>
+size_t turbAtmosphere<aoSystemT>::frames()
 {
-   return _frames;
+   return m_frames;
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::wfPS(realT ps)
+template<typename aoSystemT>
+int turbAtmosphere<aoSystemT>::wfPS(realT ps)
 {
    static_cast<void>(ps);
    return 0;
 }
 
-template<typename realT>
-int turbAtmosphere<realT>::F0Photons(realT f0)
+template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::nextWF(wavefront<realT> & wf)
 {
-   _F0Photons = f0;
-   _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
-   
-   return 0;
-}
+    if(!m_aosys)
+    {    
+        mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere<aoSystemT>::nextWF", "the AO system pointer is not set"); 
+    }
 
-template<typename realT>
-int turbAtmosphere<realT>::starMag(realT mag)
-{
-   _starMag = mag;
-   _pixVal = sqrt(_F0Photons)*pow(10., -0.2*_starMag)*(_pupD/_wfSz);
-   
-   return 0;
-}
+    if(!m_pupil)
+    {    
+        mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere<aoSystemT>::nextWF", "the m_pupil pointer is not set"); 
+    }
 
-template<typename realT>
-void turbAtmosphere<realT>::nextWF(wavefront<realT> & wf)
-{
+    shift( wf.phase, m_nWf * m_timeStep);
+    ++m_nWf;
 
-   if(!_pupil)
-   {
-      mxThrowException(err::paramnotset, "mx::AO::sim::turbAtmosphere<realT>::nextWF", "the _pupil pointer is not set"); 
-   }
-   //static int Npix = _pupil->sum();
+    wf.phase *= *m_pupil;
 
-   shift( wf.phase, _nWf * _timeStep);
-   ++_nWf;
+    realT pixVal = sqrt(m_aosys->Fg())*(m_aosys->D()/m_wfSz);
 
-   //wf.phase = (wf.phase - (wf.phase* (*_pupil)).sum()/Npix)* (*_pupil);
-   wf.phase *= *_pupil;
-   wf.amplitude = _pixVal*(*_pupil);
+    wf.amplitude = pixVal*(*m_pupil);
 }
 
 } //namespace sim
 } //namespace AO
 } //namespace mx
-#endif //turbAtmosphere_hpp
+
+#endif //mx_AO_sim_turbAtmosphere_hpp

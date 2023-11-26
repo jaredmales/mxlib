@@ -63,14 +63,18 @@ namespace analysis
   * 
   * \ingroup mxAOAnalytic
   */
-template<typename realT, class inputSpectT, typename iosT = std::ostream>
+template<typename _realT, class _inputSpectT, typename iosT = std::ostream>
 class aoSystem
 {
 
 public:
-      
-   aoAtmosphere<realT> atm;
-   inputSpectT psd;
+
+    typedef _realT realT;      
+    typedef _inputSpectT inputSpectT;
+    typedef aoAtmosphere<realT> aoAtmosphereT;
+
+    aoAtmosphereT atm;
+    inputSpectT psd;
 
 protected:
    

@@ -114,16 +114,11 @@ protected:
    
    realT m_modRadius {3.0}; ///<Radius of the modulation in pixels
    
-   bool m_wpMod {false}; ///< If true, then the whole pixel modulation path is used, with shifts instead of F.T.s
-   
    realT m_effRad, m_rmsRad, m_bestRad, m_bestAng;
    
    std::vector<realT> m_modShift_x; ///< the x-coords of the continuous modulation path
    std::vector<realT> m_modShift_y; ///< the y-coords of the continuous modulation path
-   
-   std::vector<int> m_modShiftWP_x; ///< the x-coords of the whole-pixel modulation path
-   std::vector<int> m_modShiftWP_y; ///< the y-coords of the whole-pixel modulation path
-   
+      
 public:   
    
    ///Get the minimum number of modulation steps
@@ -156,41 +151,12 @@ public:
      */    
    void modRadius(realT mR /**< [in] the new value of modulation radius */ );
    
-   bool wholePixelModulation();
-   
-   void wholePixelModulation( bool wpMod /**< [in] set whether whole pixel modulation is used (true) or not (false)*/);
-   
-   void wholePixelModulation( bool wpMod,   ///< [in] set whether whole pixel modulation is used (true) or not (false)
-                              realT mR,     ///< [in] the new value of modulation radius
-                              realT perStep ///< [in] The minimum number of lamba/D per step to take
-                            );
-   
-   /// Find the optimum whole-pixel modulation path
-   /** Finds optimum whole-pixel modulation path with the minimum
-     * least-squares difference from the continous path. 
-     * 
-     * \returns 0 on success
-     */ 
-   static int optWPMod( realT & effRad,                  ///< [out] the average or effective radius after pixelation
-                        realT & rmsRad,                  ///< [out] the rms error from the desired radius (in lambda/D)
-                        realT & bestRad,                 ///< [out] the modulation radius which gives the best results
-                        realT & bestAng,                 ///< [out] the best fit angle to rotate the modulation steps by (radians)
-                        std::vector<realT> & modShift_x, ///< [out] x-coords of the continuous modulation path 
-                        std::vector<realT> & modShift_y, ///< [out] y-coords of the continuous modulation path
-                        std::vector<int> & modShiftWP_x, ///< [out] x-coords of the pixelated modulation path
-                        std::vector<int> & modShiftWP_y, ///< [out] y-coords of the pixelated modulation path
-                        realT desRad,                    ///< [in] the desired modulation radius, in lam/D units
-                        realT lD,                        ///< [in] pixels per lam/D
-                        realT perStep                    ///< [in] the minimum lam/D separation per modulation step
-                      );
-   
-   
    ///@}
    
    int m_quadSz; ///<The size of the PyWFS quadrant
    
    
-   wfp::fraunhoferPropagator<complexFieldT> fi;
+   wfp::fraunhoferPropagator<complexFieldT> m_frProp;
    
    bool m_opdMaskMade {false};
    complexFieldT m_opdMask;
@@ -205,10 +171,10 @@ public:
    
    std::vector<complexFieldT> m_th_tiltedPlane; ///< Thread-local modulated wavefront
    
-   complexFieldT m_focalPlane; ///< Global tip wavefront, used for whole-pixel shifting
-   
    std::vector<complexFieldT> m_th_focalPlane; ///< Thread-local tip wavefront, used for FFT tilting
    
+   std::vector<typename wfsImageT<realT>::imageT> m_th_focalImage; ///< Thread-local tip image
+
    std::vector<complexFieldT> m_th_sensorPlane; ///< Thread-local sensor-pupil-plane wavefront 
    
    std::vector<typename wfsImageT<realT>::imageT> m_th_sensorImage; ///< Thread-local sensor-pupil-plane intensity image  
@@ -417,6 +383,9 @@ pyramidSensor<realT, detectorT>::pyramidSensor()
    firstRun = true;
    
    ref = 1;
+
+   m_frProp.wholePixel(0);
+
 }
 
 template<typename realT, typename detectorT>
@@ -432,7 +401,7 @@ void pyramidSensor<realT, detectorT>::wfSz(int sz)
    
    m_wfSz = sz;
                
-   fi.setWavefrontSizePixels(m_wfSz);
+   m_frProp.setWavefrontSizePixels(m_wfSz);
 
    m_tiltsMade = false;
    m_opdMaskMade = false;
@@ -569,153 +538,7 @@ void pyramidSensor<realT, detectorT>::modRadius(realT mR)
    
    m_tiltsMade = false;
 }
-
-template<typename realT,  typename detectorT>
-void pyramidSensor<realT, detectorT>::wholePixelModulation( bool wpMod )
-{
-   m_wpMod = wpMod;
    
-   if(m_wpMod == false)
-   {
-      m_modShift_x.clear();
-      m_modShift_y.clear();
-      m_modShiftWP_x.clear();
-      m_modShiftWP_y.clear();
-      return;
-   }
-   
-   m_tiltsMade = false;
-   
-   
-   
-   
-}
-
-template<typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::wholePixelModulation( bool wpMod,
-                                                            realT mRad,
-                                                            realT prStp
-                                                          )
-{
-   modRadius(mRad);
-   perStep(prStp);
-   
-   wholePixelModulation(wpMod);
-}
-   
-template<typename realT,  typename detectorT>
-int pyramidSensor<realT, detectorT>::optWPMod( realT & effRad,                  
-                                               realT & rmsRad,                  
-                                               realT & bestRad,                 
-                                               realT & bestAng,                 
-                                               std::vector<realT> & modShift_x, 
-                                               std::vector<realT> & modShift_y, 
-                                               std::vector<int> & modShiftWP_x, 
-                                               std::vector<int> & modShiftWP_y, 
-                                               realT desRad,                    
-                                               realT lD,                        
-                                               realT perStep                    
-                                             )
-{
-   int bestSteps;
-   
-   realT modRad = desRad;
-   
-   realT radPerStep = perStep/desRad;
-   
-   realT minerr = 1e9;
-   
-   int nT = 200;
-   for(int t = 0; t < nT+1; ++t)
-   {
-      modRad = desRad * (1.1 - 0.2/nT*t);
-      
-      //Ensure we end up on the edges
-      int nSteps = 1;
-      while( math::half_pi<realT>()/nSteps > radPerStep ) 
-      {
-         ++nSteps;
-      }
-      nSteps *= 4;
-      
-      modShift_x.resize(nSteps);
-      modShift_y.resize(nSteps);
-      modShiftWP_x.resize(nSteps);
-      modShiftWP_y.resize(nSteps);
-   
-      for(int a = 0; a < 100; ++a)
-      {
-         realT dang = math::half_pi<realT>() * a/100.0;
-         
-         realT avErr = 0;
-         for(int n=0;n<nSteps; ++n)
-         {
-      
-            realT ang = math::two_pi<realT>()/nSteps * n+dang;
-            modShift_x[n] = modRad*lD*cos(ang);
-            modShift_y[n] = modRad*lD*sin(ang);
-      
-            modShiftWP_x[n] = std::round(modShift_x[n]);
-            modShiftWP_y[n] = std::round(modShift_y[n]);
-         
-            modShift_x[n] = desRad*lD*cos(ang);
-            modShift_y[n] = desRad*lD*sin(ang);
-         
-            avErr += ( pow(modShiftWP_x[n] - modShift_x[n],2) + pow(modShiftWP_y[n]-modShift_y[n],2));
-         }
-      
-         avErr /= nSteps;
-      
-         if(avErr <= minerr)
-         {
-            minerr = avErr;
-            bestRad = modRad;
-            bestAng = dang;
-            bestSteps = nSteps;
-         }
-         
-      }
-   }
-   
-   //Now do it at best value:
-   
-   modRad = bestRad;
-      
-   int nSteps = bestSteps;
-   
-   modShift_x.resize(nSteps);
-   modShift_y.resize(nSteps);
-   modShiftWP_x.resize(nSteps);
-   modShiftWP_y.resize(nSteps);
-
-   realT avErr = 0;
-   effRad = 0;
-   for(int n=0;n<nSteps; ++n)
-   {
-      realT ang = math::two_pi<realT>()/nSteps * n+ bestAng;
-      modShift_x[n] = modRad*lD*cos(ang);
-      modShift_y[n] = modRad*lD*sin(ang);
-   
-      modShiftWP_x[n] = std::round(modShift_x[n]);
-      modShiftWP_y[n] = std::round(modShift_y[n]);
-      
-      modShift_x[n] = desRad*lD*cos(ang);
-      modShift_y[n] = desRad*lD*sin(ang);
-      
-      avErr += ( pow(modShiftWP_x[n] - modShift_x[n],2) + pow(modShiftWP_y[n]-modShift_y[n],2));
-      effRad += sqrt( pow(modShiftWP_x[n],2) + pow(modShiftWP_y[n],2));
-   }
-
-   effRad = effRad/nSteps/lD;
-   rmsRad = sqrt(avErr/nSteps)/lD;
-
-   
-   
-   return 0;
-   
-}
-
-
 
 template<typename realT, typename detectorT>
 int pyramidSensor<realT, detectorT>::quadSz()
@@ -760,73 +583,65 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
    m_opdMask.resize(m_wfSz, m_wfSz);
    opdMaskQ.resize(  m_wfSz, m_wfSz);
    
+   //m_opdMask.set(std::complex<realT>(1,0));
+   realT shift = 0.5*(m_quadSz);
+
    opdMaskQ.set(std::complex<realT>(0,1));
-   wfp::tiltWavefront(opdMaskQ, 0.5*m_quadSz, 0.5*m_quadSz);
+   wfp::tiltWavefront(opdMaskQ, shift, shift);
    wfp::extractBlock(m_opdMask, 0, 0.5*m_wfSz, 0, 0.5*m_wfSz, opdMaskQ, 0 , 0);
 
    opdMaskQ.set(std::complex<realT>(0,1));
-   wfp::tiltWavefront( opdMaskQ, -0.5*m_quadSz, -0.5*m_quadSz); 
-   wfp::extractBlock(m_opdMask, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz, opdMaskQ, 0 , 0);
+   wfp::tiltWavefront( opdMaskQ, -shift, -shift); 
+   wfp::extractBlock(m_opdMask, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz-1, opdMaskQ, 0.5*m_wfSz, 0.5*m_wfSz);
    
    opdMaskQ.set(std::complex<realT>(0,1));
-   wfp::tiltWavefront( opdMaskQ, 0.5*m_quadSz, -0.5*m_quadSz); 
-   wfp::extractBlock(m_opdMask, 0, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz, opdMaskQ, 0 , 0);
+   wfp::tiltWavefront( opdMaskQ, shift, -shift); 
+   wfp::extractBlock(m_opdMask, 0, 0.5*m_wfSz, 0.5*m_wfSz, 0.5*m_wfSz, opdMaskQ, 0 , 0.5*m_wfSz);
    
    opdMaskQ.set(std::complex<realT>(0,1));
-   wfp::tiltWavefront( opdMaskQ, -0.5*m_quadSz, 0.5*m_quadSz);
-   wfp::extractBlock(m_opdMask, 0.5*m_wfSz, 0.5*m_wfSz, 0, 0.5*m_wfSz, opdMaskQ, 0 , 0);
-   
+   wfp::tiltWavefront( opdMaskQ, -shift, shift);
+   wfp::extractBlock(m_opdMask, 0.5*m_wfSz, 0.5*m_wfSz, 0, 0.5*m_wfSz, opdMaskQ, 0.5*m_wfSz, 0);
+
+   /*for(int n =0; n < m_wfSz; ++n)
+   {
+      m_opdMask(0.5*m_wfSz, n) = 0;
+      m_opdMask(n, 0.5*m_wfSz) = 0;
+   }*/
+
    m_opdMaskMade = true;
 
    
 }
 
-template<typename realT, typename detectorT>
+template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::makeTilts()
 {
-   if(!m_wpMod)
-   {
-      constexpr realT pi = math::pi<realT>();
-      
-      realT dang = 2*pi/(m_modSteps);
-      realT dx, dy;
-      
-      m_tilts.resize(m_modSteps);
-      
-      std::cout << "WF Size: " << m_wfSz << "\n";
-      std::cout << "WF PS:   " << m_wfPS << "\n";
-      std::cout << "Lambda:  " << m_lambda << "\n";
-      std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda)*206265. << " (mas/pix)\n";
-      std::cout << "Mod. steps: " << m_modSteps << "\n";
-      std::cout << "Mod rad: " << m_modRadius * (m_lambda/_D)/wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) << " (pixels)\n";
-      
-      for(int i=0; i < m_modSteps; ++i)
-      { 
-         dx = m_modRadius * (m_lambda/_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * cos(0.5*dang+dang * i);
-         dy = m_modRadius * (m_lambda/_D) /  wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * sin(0.5*dang+dang * i);
-      
-         m_tilts[i].resize(m_wfSz, m_wfSz);
-         m_tilts[i].set(std::complex<realT>(0,1));
-       
-         wfp::tiltWavefront(m_tilts[i], dx, dy);
-      }
-   }
-   else
-   {
-      realT lD = m_wfSz / ( _D / m_wfPS );
-   
-      optWPMod( m_effRad,  m_rmsRad, m_bestRad, m_bestAng, m_modShift_x, m_modShift_y, m_modShiftWP_x, m_modShiftWP_y, m_modRadius, lD, m_perStep);
-      m_modSteps = m_modShift_x.size();
-      
-      std::cout << "WF Size:       " << m_wfSz << "\n";
-      std::cout << "WF PS:         " << m_wfPS << "\n";
-      std::cout << "Lambda:        " << m_lambda << "\n";
-      std::cout << "Mod. steps:    " << m_modSteps << "\n";
-      std::cout << "Eff. Mod. Rad: " << m_effRad << " +/- " << m_rmsRad << " lambda/D\n";
-      std::cout << "Angle shift:   " << m_bestAng * 180./math::pi<realT>() << " deg\n";
-   }
-   
-   m_tiltsMade = true;
+    constexpr realT pi = math::pi<realT>();
+
+    realT dang = 2 * pi / (m_modSteps);
+    realT dx, dy;
+
+    m_tilts.resize(m_modSteps);
+
+    std::cout << "WF Size: " << m_wfSz << "\n";
+    std::cout << "WF PS:   " << m_wfPS << "\n";
+    std::cout << "Lambda:  " << m_lambda << "\n";
+    std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * 206265. << " (mas/pix)\n";
+    std::cout << "Mod. steps: " << m_modSteps << "\n";
+    std::cout << "Mod rad: " << m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) << " (pixels)\n";
+
+    for (int i = 0; i < m_modSteps; ++i)
+    {
+        dx = m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * cos(0.0 * dang + dang * i);
+        dy = m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * sin(0.0 * dang + dang * i);
+
+        m_tilts[i].resize(m_wfSz, m_wfSz);
+        m_tilts[i].set(std::complex<realT>(0, 1));
+
+        wfp::tiltWavefront(m_tilts[i], dx, dy);
+    }
+
+    m_tiltsMade = true;
 }
 
 template<typename realT, typename detectorT>
@@ -834,13 +649,13 @@ void pyramidSensor<realT, detectorT>::allocThreadMem()
 {
    m_pupilPlaneCF.resize(m_wfSz, m_wfSz);
 
-   m_focalPlane.resize(m_wfSz, m_wfSz);
-   
    int maxTh = omp_get_max_threads();
    m_th_tiltedPlane.resize(maxTh);
    
    m_th_focalPlane.resize(maxTh);
    
+   m_th_focalImage.resize(maxTh);
+
    m_th_sensorPlane.resize(maxTh);
    
    m_th_sensorImage.resize(maxTh);  
@@ -851,6 +666,8 @@ void pyramidSensor<realT, detectorT>::allocThreadMem()
       
       m_th_focalPlane[nTh].resize(m_wfSz, m_wfSz);
       
+      m_th_focalImage[nTh].resize(m_wfSz, m_wfSz);
+
       m_th_sensorPlane[nTh].resize(m_wfSz, m_wfSz);
       
       m_th_sensorImage[nTh].resize(m_quadSz*2, m_quadSz*2);
@@ -1015,8 +832,6 @@ bool pyramidSensor<realT, detectorT>::senseWavefrontCal(wavefrontT & pupilPlane)
 template<typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::doSenseWavefront()
 { 
-   
-
    BREAD_CRUMB;
    
    wavefrontT pupilPlane;
@@ -1030,10 +845,8 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
    
    realT avgIt = _wavefronts[_firstWavefront].iterNo;
    
-   //std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
    BREAD_CRUMB;
    
-   std::cerr << pupilPlane.amplitude.rows() << " " << _wavefronts[_firstWavefront].amplitude.rows() << std::endl;
    for(int i=0; i<_iTime; ++i)
    {
       ++_firstWavefront;
@@ -1062,8 +875,6 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
 {    
    if(m_modRadius == 0) return doSenseWavefrontNoMod(pupilPlane);
    
-   if(!m_tiltsMade) makeTilts();
-   if(!m_opdMaskMade) makeOpdMask();
    if(!m_preAllocated) preAllocate();
    
    BREAD_CRUMB;
@@ -1071,23 +882,21 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
    m_wfsImage.image.resize(2*m_quadSz, 2*m_quadSz);
    m_wfsImage.image.setZero();
             
+   wfsTipImage.image.resize(m_wfSz, m_wfSz);
+   wfsTipImage.image.setZero();
+
    for(size_t l = 0; l<m_wavelengths.size(); ++l)
    {
       pupilPlane.lambda = m_lambda;
       pupilPlane.getWavefront(m_pupilPlaneCF, m_wavelengths[l], m_wfSz);
       
-      if(m_wpMod)
-      {
-         //Do propagation to tip here
-         fi.propagatePupilToFocal(m_focalPlane, m_pupilPlaneCF, false);
-      }
-      
       #pragma omp parallel 
       {
          int nTh = omp_get_thread_num();
-                     
+         
          m_th_sensorImage[nTh].setZero();
-      
+         m_th_focalImage[nTh].setZero();
+         
          complexT * tp_data;
          complexT * pp_data; 
          complexT * ti_data; 
@@ -1104,54 +913,46 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
          #pragma omp for 
          for(int i=0; i < m_modSteps; ++i)
          { 
-            if(!m_wpMod)
-            {
                
-               ti_data = m_tilts[i].data();
-               
-               //---------------------------------------------
-               //Apply the modulating tip 
-               //---------------------------------------------
-               for(int ii=0; ii< nelem; ++ii)
-               {
-                  tp_data[ii] = pp_data[ii]*ti_data[ii];
-               }
-               
-               //---------------------------------------------
-               //Propagate to Pyramid tip 
-               //---------------------------------------------
-               
-               fi.propagatePupilToFocal(m_th_focalPlane[nTh], m_th_tiltedPlane[nTh], false);   
-               
-               //---------------------------------------------
-               //Now apply the pyramid OPD 
-               //---------------------------------------------
-               for(int ii=0; ii< nelem; ++ii)
-               {
-                  fp_data[ii] = fp_data[ii]*opd_data[ii];
-               }
-            }
-            else
-            {
-               //---------------------------------------------
-               //Whole-pixel shift of tip image
-               //---------------------------------------------
-               improc::imageShiftWP(m_th_focalPlane[nTh], m_focalPlane, m_opdMask, m_modShiftWP_x[i], m_modShiftWP_y[i]);
-            }
-         
+             ti_data = m_tilts[i].data();
+             
+             //---------------------------------------------
+             //Apply the modulating tip 
+             //---------------------------------------------
+             for(int ii=0; ii< nelem; ++ii)
+             {
+                tp_data[ii] = pp_data[ii]*ti_data[ii];
+             }
+             
+             //---------------------------------------------
+             //Propagate to Pyramid tip 
+             //---------------------------------------------
+             
+             m_frProp.propagatePupilToFocal(m_th_focalPlane[nTh], m_th_tiltedPlane[nTh], true);   
+             
+             //---------------------------------------------
+             //Extract the tip image.
+             //---------------------------------------------
+             wfp::extractIntensityImageAccum(m_th_focalImage[nTh], 0, m_wfSz, 0, m_wfSz, m_th_focalPlane[nTh], 0, 0);
+             //---------------------------------------------
+             //Now apply the pyramid OPD 
+             //---------------------------------------------
+             for(int ii=0; ii< nelem; ++ii)
+             {
+                fp_data[ii] = fp_data[ii]*opd_data[ii];
+             }
+           
+             //---------------------------------------------
+             //Propagate to sensor plane
+             //---------------------------------------------
+             m_frProp.propagateFocalToPupil(m_th_sensorPlane[nTh], m_th_focalPlane[nTh],true);
+             
+             //---------------------------------------------
+             //Extract the image.
+             //---------------------------------------------
+             wfp::extractIntensityImageAccum(m_th_sensorImage[nTh], 0, 2*m_quadSz, 0, 2*m_quadSz, m_th_sensorPlane[nTh], 
+                                                                                        0.5*m_wfSz-m_quadSz, 0.5*m_wfSz-m_quadSz);
             
-      
-            //---------------------------------------------
-            //Propagate to sensor plane
-            //---------------------------------------------
-            fi.propagateFocalToPupil(m_th_sensorPlane[nTh], m_th_focalPlane[nTh],false);
-            
-            //---------------------------------------------
-            //Extract the image.
-            //---------------------------------------------
-            wfp::extractIntensityImageAccum(m_th_sensorImage[nTh], 0, 2*m_quadSz, 0, 2*m_quadSz, m_th_sensorPlane[nTh], 0.5*m_wfSz-m_quadSz, 0.5*m_wfSz-m_quadSz);
-            
-      
          }//for
          
          BREAD_CRUMB;
@@ -1159,22 +960,18 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
          #pragma omp critical
          {
             m_wfsImage.image += m_th_sensorImage[nTh] * _wavelengthWeights[l];
-           // wfsTipImage.image += pyramidImage * _wavelengthWeights[l];
-            
+            wfsTipImage.image += m_th_focalImage[nTh] * _wavelengthWeights[l];
          }
       }//#pragma omp parallel
       
    } //l for wavelength
 
          
-   
-   
    BREAD_CRUMB;
    
    m_wfsImage.image /= m_modSteps;
+   wfsTipImage.image /= m_modSteps;
 
-   
-   
 }
 
 
@@ -1200,7 +997,6 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    focalPlane.resize(m_wfSz, m_wfSz);
    sensorPlane.resize(m_wfSz, m_wfSz);
       
-
    int nelem = m_wfSz*m_wfSz;
          
    complexT * tp_data = tiltedPlane.data();
@@ -1211,7 +1007,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    BREAD_CRUMB;
    
    //---------------------------------------------
-   //Apply modulator tilt 
+   //Apply NO modulator tilt 
    //---------------------------------------------
    for(int ii=0; ii< nelem; ++ii)
    {
@@ -1223,7 +1019,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    //---------------------------------------------
    //Propagate to Pyramid tip 
    //---------------------------------------------
-   fi.propagatePupilToFocal(focalPlane, tiltedPlane);          
+   m_frProp.propagatePupilToFocal(focalPlane, tiltedPlane, true);          
 
    
    BREAD_CRUMB;
@@ -1242,7 +1038,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    //---------------------------------------------
    //Propagate to sensor plane
    //---------------------------------------------
-   fi.propagateFocalToPupil(sensorPlane, focalPlane);
+   m_frProp.propagateFocalToPupil(sensorPlane, focalPlane, true);
          
    BREAD_CRUMB;
 

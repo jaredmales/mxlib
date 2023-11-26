@@ -193,7 +193,7 @@ public:
                   const std::string & efile, ///< [in] the source file in which the exception occurred, normally __FILE__
                   const int & line,          ///< [in] the line number where the exception was thrown
                   const std::string & expl   ///< [in] the explanation for why the exception was thrown
-                ) : mxException(esrc, MXE_INVALIDARG,MXE_INVALIDARG_NAME, efile, line, expl)
+                ) : mxException(esrc, MXE_INVALIDCONFIG,MXE_INVALIDCONFIG_NAME, efile, line, expl)
    {
    }
 };

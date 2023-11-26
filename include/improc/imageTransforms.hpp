@@ -356,7 +356,7 @@ void imageShiftWP( outputArrT & out,  ///< [out] contains the shifted image.  Mu
                continue;
             }
                   
-                     for(int rr=0; rr<outr; ++rr)
+            for(int rr=0; rr<outr; ++rr)
             {
                x = rr - dx;
          

@@ -306,10 +306,15 @@ void ccdDetector<realT>::exposeImage(imageT & out, imageT & in)
    using poisson_param_t = typename std::poisson_distribution<int>::param_type;
    using gamma_param_t = typename std::gamma_distribution<realT>::param_type;
 
-
+   BREAD_CRUMB 
+   
    out.resize(m_rows, m_cols);
-
+   
+   BREAD_CRUMB 
+   
    improc::imageDownSample(out, in);
+
+   BREAD_CRUMB 
 
    if(m_noNoise) return;
 

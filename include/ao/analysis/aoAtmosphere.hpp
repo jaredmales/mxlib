@@ -36,7 +36,8 @@ namespace analysis
    
 ///A class to specify atmosphere parameters and perform related calculations.
 /** 
-  * \todo Add layer outer scales.
+  * \todo layer outer scales need work
+  * \todo layer PSD params isn't finished.  Need to push that to PSD itself, and manage things like wavelength dependence.
   * 
   * \tparam realT is the real floating type in which all calculations are performed.
   * 

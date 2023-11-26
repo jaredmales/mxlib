@@ -79,6 +79,7 @@ public:
 
    void shallowCopy(eigenCube<dataT> & src, bool takeOwner = false);
 
+   /// De-allocate and set all sizes to 0
    void clear();
 
    void resize(int r, int c, int p);

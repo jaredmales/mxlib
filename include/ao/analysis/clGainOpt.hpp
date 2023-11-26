@@ -162,6 +162,14 @@ public:
      */
    void b( const Eigen::Array<realT, -1, -1> & newB  /**< [in] a column-vector Eigen::Array of coefficients, which is copied to _b.*/);
 
+   void bScale( realT scale)
+   {    
+      for(size_t n=0; n < _b.size(); ++n)
+      {
+         _b[n] *= scale;
+      }  
+   }
+
    /// Set the vector of IIR coefficients
    /**
      */
@@ -173,6 +181,14 @@ public:
    void a( const Eigen::Array<realT, -1, -1> & newA  /**< [in] a column-vector Eigen::Array of coefficients, which is copied to _a.*/);
 
    realT a( size_t i) { return _a[i];}
+
+   void aScale( realT scale)
+   {    
+      for(size_t n=0; n < _a.size(); ++n)
+      {
+         _a[n] *= scale;
+      }  
+   }
 
    /// Set the FIR and IIR coefficients so that the control law is a leaky integrator.
    /** Set remember to 1.0 for a pure integrator control law.

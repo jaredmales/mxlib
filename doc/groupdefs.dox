@@ -445,7 +445,10 @@
 
 //----------------- utils ---------------------------
 
-
+/** \defgroup base Base Classes 
+  * \ingroup utils
+  * Various useful base classes to provide common functionality.
+  */
 
 
 /** \defgroup ioutils Input/Output Utilities

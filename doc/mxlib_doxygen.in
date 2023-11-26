@@ -799,6 +799,7 @@ INPUT                  = ./groupdefs.dox \
                          ./ao/gettingStarted.dox \
                          ../include/app \
                          ../include/astro \
+                         ../include/base \
                          ./boost_const.dox \
                          ../include/improc \
                          ../include/math \
