@@ -58,7 +58,7 @@ namespace ipc
    \endverbatim
   * and so on. 
   *
-  * \note This can reduce performance due to critical points it creates if used in fast loops (e.g. do not use inside the inner most loop!).
+  * \note This can reduce performance due to critical points it creates if used in fast loops (i.e. do not use inside the inner most loop!).
   *
   * The behavior of the output is controlled through template parameters.  A different output-type can be specified, which needs to accept size_t, and optionally
   * float, and character input using the << operator.

@@ -82,7 +82,7 @@ SOFTWARE.
     --warning-color-darker: #472204;
     --note-color: rgba(183, 235, 183, 0.3);
     --note-color-dark: #d4aa10;
-    --note-color-darker: #8d781a;
+    --note-color-darker: #ffffff;
     --deprecated-color: rgb(214, 216, 224);
     --deprecated-color-dark: #5b6269;
     --deprecated-color-darker: #43454a;
@@ -194,7 +194,7 @@ SOFTWARE.
         --warning-color-darker: #472204;
         --note-color: rgba(183, 235, 183, 0.3);
         --note-color-dark: #d4aa10;
-        --note-color-darker: #8d781a;
+        --note-color-darker: #ffffff;
         --deprecated-color: rgb(88, 90, 96);
         --deprecated-color-dark: #262e37;
         --deprecated-color-darker: #a0a5b0;
