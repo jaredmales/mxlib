@@ -222,6 +222,14 @@ public:
       */
     operator eigenMap<dataT>();
 
+    /// Set the write flag
+    /** The write flag is set to indicate whether or not the the data is being changed.
+      * The write flag will be set to false by \ref post().
+      *  
+      * \throws mx::err::mxException if the image is not opened
+      */
+    void setWrite( bool wrflag = true /**< [in] [optional] the desired value of the write flag.  Default is true.*/);
+
     /// Update the metadata and post all semaphores
     /**
       * \throws mx::err::mxException if the image is not opened
@@ -374,6 +382,17 @@ bool milkImage<dataT>::valid()
     }
 
     return true;
+}
+
+template<typename dataT>
+void milkImage<dataT>::setWrite(bool wrflag)
+{
+    if(m_image == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+    }
+
+    m_image->md->write = wrflag;
 }
 
 template<typename dataT>

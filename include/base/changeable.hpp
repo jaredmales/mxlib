@@ -23,9 +23,12 @@ namespace base
   * 
   * \ingroup base
   */
+template<class _derivedT>
 class changeable
 {
+
 public:
+    typedef _derivedT derivedT;
 
     /// The integer type of the counter.
     typedef uint64_t changeT;
@@ -34,6 +37,9 @@ private:
     
     /// The counter itself.
     changeT m_change {0};
+
+    /// A marker for last change, set by \ref setChangePoint
+    changeT m_changePoint {std::numeric_limits<changeT>::max()};
 
 public:
 
@@ -53,6 +59,16 @@ public:
     changeT change()
     {
         return m_change;
+    }
+
+    void setChangePoint()
+    {
+        m_changePoint = m_change;
+    }
+
+    bool isChanged()
+    {
+        return (m_change != m_changePoint);
     }
 };
 

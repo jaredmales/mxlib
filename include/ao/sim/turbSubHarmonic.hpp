@@ -34,6 +34,8 @@
 
 #include "turbAtmosphere.hpp"
 
+#include "../../base/changeable.hpp"
+
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 
@@ -54,7 +56,7 @@ namespace sim
   * \ingroup mxAOSim
   */
 template<typename _turbAtmosphereT>
-class turbSubHarmonic
+class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT>>
 {
 
 public:
@@ -68,7 +70,7 @@ protected:
       * @{ 
       */
 
-    turbAtmosphereT * m_turbAtmo {nullptr};
+    turbAtmosphereT * m_turbAtmo {nullptr}; ///< Pointer to the parent atmosphere object.
     
     unsigned m_level {1}; ///< The subharmonic level to apply.
 
@@ -82,10 +84,10 @@ protected:
 
     uint32_t m_scrnSz; ///< The wavefront screen size from the layer being simulated.
 
-    std::vector<realT> m_noise;
+    std::vector<realT> m_noise; ///< Vector of Gaussian deviates prepared for each screen generation.
 
-    std::vector<realT> m_m;
-    std::vector<realT> m_n;
+    std::vector<realT> m_m; ///< m-coordinate fractional spatial frequency indices of the subharmonics 
+    std::vector<realT> m_n; ///< n-coordinate fractional spatial frequency indices of the subharmonics
 
     std::vector<realT> m_sqrtPSD; //the square-root of the PSD at each point
     
@@ -139,8 +141,10 @@ public:
       * @{ 
       */
 
+    /// Allocate needed memory and initialize the subharmonic transform 
     void initGrid( uint32_t layerNo );
 
+    /// Generate a realization of the subharmonic phase screen
     void screen( improc::eigenImage<realT> & scrn );
 
     /// Deallocate memory
@@ -157,7 +161,11 @@ turbSubHarmonic<turbAtmosphereT>::turbSubHarmonic()
 template<typename turbAtmosphereT>
 void turbSubHarmonic<turbAtmosphereT>::turbAtmo( turbAtmosphereT * turbatm )
 {
-    m_turbAtmo = turbatm;
+    if(turbatm != m_turbAtmo)
+    {
+        m_turbAtmo = turbatm;
+        this->changed();
+    }
 }
 
 template<typename turbAtmosphereT>
@@ -169,7 +177,11 @@ turbAtmosphereT * turbSubHarmonic<turbAtmosphereT>::turbAtmo()
 template<typename turbAtmosphereT>
 void turbSubHarmonic<turbAtmosphereT>::level( uint32_t ml )
 {
-    m_level = ml;
+    if(ml != m_level)
+    {
+        m_level = ml;
+        this->changed();
+    }
 }
 
 template<typename turbAtmosphereT>
@@ -181,7 +193,11 @@ uint32_t turbSubHarmonic<turbAtmosphereT>::level()
 template<typename turbAtmosphereT>
 void turbSubHarmonic<turbAtmosphereT>::preCalc( bool pc )
 {
-    m_preCalc = pc;
+    if(pc != m_preCalc)
+    {
+        m_preCalc = pc;
+        this->changed();
+    }
 }
 
 template<typename turbAtmosphereT>
@@ -230,16 +246,14 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
     if(N == 0) 
     {
         m_modes.clear();
+        this->setChangePoint();
         return;
     }
-
-    
 
     realT r0 = m_turbAtmo->aosys()->atm.r_0(m_turbAtmo->aosys()->lam_sci());
     realT D = m_turbAtmo->aosys()->D();
     uint32_t wfSz = m_turbAtmo->wfSz();
     
-
     realT beta = 0.0218/pow(r0, 5./3.)/pow((D/wfSz)*m_scrnSz,2) ;
 
     realT sqrt_alpha = 0.5*11./3.;
@@ -314,6 +328,8 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
             }
         }
     }
+
+    this->setChangePoint();
 }
 
 template<typename turbAtmosphereT>
@@ -327,6 +343,11 @@ void turbSubHarmonic<turbAtmosphereT>::screen(improc::eigenImage<realT> & scrn)
     if(m_turbAtmo == nullptr)
     {
         mxThrowException(err::paramnotset, "mx::AO::sim::turbSubHarmonic::screen", "atmosphere is not set (m_turbAtmo is nullptr)"); 
+    }
+
+    if(this->isChanged())
+    {
+        mxThrowException(err::invalidconfig, "mx::AO::sim::turbSubHarmonic::screen", "configuration has changed but not re-initialized"); 
     }
 
     if(scrn.rows() != m_scrnSz || scrn.cols() != m_scrnSz)
@@ -390,6 +411,8 @@ void turbSubHarmonic<turbAtmosphereT>::deinit()
     m_sqrtPSD.clear();
     m_noise.clear();
     m_modes.resize(0, 0, 0);
+
+    this->changed();
 }
 
 } //namespace sim

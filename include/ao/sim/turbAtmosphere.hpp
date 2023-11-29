@@ -79,14 +79,12 @@ namespace sim
   * \ingroup mxAOSim
   */
 template<typename _aoSystemT>
-struct turbAtmosphere : public base::changeable
+struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
 {
 
-public:
-
+public:    
     typedef _aoSystemT aoSystemT;
     typedef typename aoSystemT::realT realT;
-    //typedef typename aoSystemT::atmosphereT atmosphereT;
     typedef Eigen::Array<realT, -1, -1> imageT;
 
 protected:
@@ -143,8 +141,6 @@ protected:
     int m_nWf {0}; ///< Number of iterations which have occurred.
 
     math::normDistT<realT> m_normVar; ///< Normal random deviate generator.  This seeded in the constructor.
-
-    improc::eigenImage<realT> m_phaseWork;
 
 public:
 
@@ -342,11 +338,9 @@ void turbAtmosphere<aoSystemT>::wfSz( uint32_t ws )
 {
     if(ws != m_wfSz) 
     {
-        changed();
+        m_wfSz = ws;
+        this->changed();
     }
-
-    m_wfSz = ws;
-    m_phaseWork.resize(m_wfSz, m_wfSz);
 }
 
 template<typename aoSystemT>
@@ -360,10 +354,9 @@ void turbAtmosphere<aoSystemT>::buffSz( uint32_t bs )
 {
     if(bs != m_buffSz)
     {
-        changed();
+        m_buffSz = bs;
+        this->changed();
     }
-
-    m_buffSz = bs;
 }
 
 template<typename aoSystemT>
@@ -378,7 +371,7 @@ void turbAtmosphere<aoSystemT>::aosys( aoSystemT * aos)
     if(aos != m_aosys)
     {
         m_aosys = aos;
-        changed();
+        this->changed();
     }
 }
 
@@ -394,7 +387,7 @@ void turbAtmosphere<aoSystemT>::shLevel( uint32_t shl )
     if(shl != m_shLevel)
     {
         m_shLevel = shl;
-        changed();
+        this->changed();
     }
 }
 
@@ -410,7 +403,7 @@ void turbAtmosphere<aoSystemT>::shPreCalc( bool shp )
     if(shp != m_shPreCalc)
     {
         m_shPreCalc = shp;
-        changed();
+        this->changed();
     }
 }
 
@@ -426,7 +419,7 @@ void turbAtmosphere<aoSystemT>::retain( bool rtn )
     if(rtn != m_retain)
     {
         m_retain = rtn;
-        changed();
+        this->changed();
     }
 }
 
@@ -441,7 +434,7 @@ void turbAtmosphere<aoSystemT>::forceGen( bool fg )
 {
     if(fg != m_forceGen)
     {
-        changed();
+        this->changed();
     }
 
     m_forceGen = fg;
@@ -458,7 +451,7 @@ void turbAtmosphere<aoSystemT>::dataDir( const std::string & dd )
 {
     if(dd != m_dataDir)
     {
-        changed();
+        this->changed();
     }
 
     m_dataDir = dd;
@@ -487,7 +480,7 @@ void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> & scrnSz)
 
     if(nLayers != m_layers.size())
     {
-        changed();
+        this->changed();
     }
 
     m_layers.resize(nLayers);
@@ -501,7 +494,7 @@ void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> & scrnSz)
     {
         if(nLayers != m_subHarms.size())
         {
-            changed();
+            this->changed();
         }
 
         m_subHarms.resize(nLayers);
@@ -568,6 +561,8 @@ void turbAtmosphere<aoSystemT>::genLayers()
             fname = fbase + ioutils::convertToString<int>(i) + ".fits";
             ff.read(m_layers[i].m_phase, fname);
         }
+        
+        this->setChangePoint();
 
         return;
     }
@@ -638,6 +633,8 @@ void turbAtmosphere<aoSystemT>::genLayers()
             ff.write(fname, m_layers[i].m_phase);
         }
     }
+
+    this->setChangePoint();
 }
 
 template<typename aoSystemT>
@@ -645,25 +642,29 @@ int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> & milkPhase,
                                       realT dt 
                                     )
 {
+    if(this->isChanged())
+    {
+        mxThrowException(err::invalidconfig, "mx::AO::sim::turbAtmosphere::shift", "configuration has changed but genLayers has not been run.");
+    }
+
     improc::eigenMap<realT> phase(milkPhase);
 
     if(phase.rows() != m_wfSz || phase.cols() != m_wfSz)
     {
     }
 
-    m_phaseWork.setZero();
-
     #pragma omp parallel for
     for(size_t j=0; j< m_layers.size(); ++j)
     {
         m_layers[j].shift( dt );
-
-        //This is faster than a separate loop by 5-10%
-        #pragma omp critical
-        m_phaseWork += sqrt( m_aosys->atm.layer_Cn2(j)) * m_layers[j].m_shiftPhase.block(m_buffSz, m_buffSz, m_wfSz, m_wfSz);
     }
 
-    phase = m_phaseWork;
+    milkPhase.setWrite();
+    phase.setZero();
+    for(size_t j=0; j< m_layers.size(); ++j)
+    {
+        phase += sqrt( m_aosys->atm.layer_Cn2(j)) * m_layers[j].m_shiftPhase.block(m_buffSz, m_buffSz, m_wfSz, m_wfSz);
+    }
     milkPhase.post();
 
     return 0;
