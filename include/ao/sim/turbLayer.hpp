@@ -250,16 +250,22 @@ void turbLayer<aoSystemT>::alloc()
 
     if(m_parent->shLevel() > 0)
     {
-        m_psd(0,0) = 0;
-        m_psd(0,1) *= 0.5*0.5;
-        m_psd(1,0) *= 0.5*0.5;
-        m_psd(m_psd.rows()-1, 0) *= 0.5*0.5;
-        m_psd(0, m_psd.cols()-1) *= 0.5*0.5;
+        realT onoff = 1;
+        if(m_parent->outerSubHarmonics())
+        {
+            onoff = 0; //just make all of these 0
+        }
 
-        m_psd(1,1) *= 0.75*0.75;
-        m_psd(m_psd.rows()-1, m_psd.cols()-1) *= 0.75*0.75;
-        m_psd(m_psd.rows()-1, 1) *= 0.75*0.75;
-        m_psd(1, m_psd.cols()-1) *= 0.75*0.75;
+        m_psd(0,0) = 0;
+        m_psd(0,1) *= 0.5*0.5*onoff;
+        m_psd(1,0) *= 0.5*0.5*onoff;
+        m_psd(m_psd.rows()-1, 0) *= 0.5*0.5*onoff;
+        m_psd(0, m_psd.cols()-1) *= 0.5*0.5*onoff;
+
+        m_psd(1,1) *= 0.75*0.75*onoff;
+        m_psd(m_psd.rows()-1, m_psd.cols()-1) *= 0.75*0.75*onoff;
+        m_psd(m_psd.rows()-1, 1) *= 0.75*0.75*onoff;
+        m_psd(1, m_psd.cols()-1) *= 0.75*0.75*onoff;
     }
 }
 

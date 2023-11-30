@@ -102,6 +102,9 @@ protected:
                               *  1 level is needed to obtain good Tip/Tilt results.  See \ref turbSubHarmonic.
                               */
 
+    bool m_outerSubHarmonics {true}; /**< Whether or not the outer subharmonics are included.
+                                       *  See \ref m_turbSubHarmonic.
+                                       */
     bool m_shPreCalc {true}; /**< Whether or not to pre-calculate the subharmonic modes.  This is a
                                *  trade of speed vs. memory use. See \ref turbSubHarmonic.
                                */
@@ -207,6 +210,18 @@ public:
       * \returns the current value of \ref m_shLevel
       */
     uint32_t shLevel();
+
+    /// Set whether outer subharmonics are included
+    /**
+      * see \ref m_outerSubHarmonics
+      */
+    void outerSubHarmonics( bool osh /**< [in] the new value of flag controlling outer subharmonics */);
+
+    /// Get whether outer subharmonics are included
+    /**
+      * \returns the current value of \ref m_outerSubHarmonics
+      */
+    bool outerSubHarmonics();
 
     /// Set whether subharmonic modes are pre-calculated
     /**
@@ -398,6 +413,23 @@ uint32_t turbAtmosphere<aoSystemT>::shLevel()
 }
 
 template<typename aoSystemT>
+void turbAtmosphere<aoSystemT>::outerSubHarmonics( bool osh )
+{
+    if(osh != m_outerSubHarmonics)
+    {
+        m_outerSubHarmonics = osh;
+        this->changed();
+    }
+}
+
+template<typename aoSystemT>
+bool turbAtmosphere<aoSystemT>::outerSubHarmonics()
+{
+    return m_outerSubHarmonics;
+}
+
+
+template<typename aoSystemT>
 void turbAtmosphere<aoSystemT>::shPreCalc( bool shp )
 {
     if(shp != m_shPreCalc)
@@ -504,6 +536,7 @@ void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> & scrnSz)
             m_subHarms[i].turbAtmo(this);
             m_subHarms[i].preCalc(m_shPreCalc);
             m_subHarms[i].level(m_shLevel);
+            m_subHarms[i].outerSubHarmonics(m_outerSubHarmonics);
             m_subHarms[i].initGrid(i);
         }
     }

@@ -74,6 +74,8 @@ protected:
     
     unsigned m_level {1}; ///< The subharmonic level to apply.
 
+    bool m_outerSubHarmonics {true}; ///< Whether or not to include the outer subharmonics
+
     bool m_preCalc {false}; ///< whether or not the modes are pre-calculated.
 
     ///@}
@@ -126,8 +128,18 @@ public:
       */
     uint32_t level();
 
+    /// Set whether or not the outer subharmonics are included
+    void outerSubHarmonics( bool osh /**< [in] the new value of the \ref m_outerSubHarmonics flag */);
+
+    /// Get whether or not the outer subharmonics are included
+    /**
+      * \returns the current value of the \ref m_outerSubHarmonics flag 
+      */
+    bool outerSubHarmonics();
+
+
     /// Set whether or not to pre-calculate the modes
-    void preCalc( bool pc /**< [in] the new value of the preCalc flag*/ );
+    void preCalc( bool pc /**< [in] the new value of the \ref m_preCalc flag*/ );
 
     /// Get whether or not the modes are pre-calculated
     /**
@@ -191,6 +203,22 @@ uint32_t turbSubHarmonic<turbAtmosphereT>::level()
 }
 
 template<typename turbAtmosphereT>
+void turbSubHarmonic<turbAtmosphereT>::outerSubHarmonics( bool osh )
+{
+    if(osh != m_outerSubHarmonics)
+    {
+        m_outerSubHarmonics = osh;
+        this->changed();
+    }
+}
+
+template<typename turbAtmosphereT>
+bool turbSubHarmonic<turbAtmosphereT>::outerSubHarmonics()
+{
+    return m_outerSubHarmonics;
+}
+
+template<typename turbAtmosphereT>
 void turbSubHarmonic<turbAtmosphereT>::preCalc( bool pc )
 {
     if(pc != m_preCalc)
@@ -233,10 +261,15 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
     else
     {
         N = 36.0 + 32.0*(m_level-1);
+
+        if(m_outerSubHarmonics)
+        {
+            N += 20;
+        }
     }
 
-    m_m.resize(N);
-    m_n.resize(N);
+    m_m.resize(0); //resized dynamically below
+    m_n.resize(0);
     m_sqrtPSD.resize(N);
     m_noise.resize(N);
 
@@ -245,6 +278,7 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
     
     if(N == 0) 
     {
+        
         m_modes.clear();
         this->setChangePoint();
         return;
@@ -269,7 +303,18 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
         m_modes.resize(m_scrnSz, m_scrnSz, N);
     }
 
-    int n = 0;
+    
+    std::vector<realT> scs;
+
+    if(m_outerSubHarmonics)
+    {
+        realT sc = 0.25;
+
+        m_m = std::vector<realT>({ -1.25, -0.75, -0.25,  0.25,  0.75,  1.25, -1.25,  1.25, -1.25,  1.25, -1.25, 1.25, -1.25, 1.25, -1.25, -0.75, -0.25, 0.25, 0.75, 1.25});
+        m_n = std::vector<realT>({ -1.25, -1.25, -1.25, -1.25, -1.25, -1.25, -0.75, -0.75, -0.25, -0.25,  0.25, 0.25,  0.75, 0.75,  1.25,  1.25,  1.25, 1.25, 1.25, 1.25});
+        scs.resize(m_m.size(), sc);
+    }
+    
     for(int nl = 1; nl <= m_level; ++nl)
     {
         realT sc = pow(3.0, -nl);
@@ -290,41 +335,44 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
                     }
                 }
 
-                m_m[n] = sc*(mp+0.5);
-                m_n[n] = sc*(np+0.5);
-
-                realT k = sqrt((pow(m_m[n],2) + pow(m_n[n],2)))/((D/wfSz)*m_scrnSz);
+                m_m.push_back(sc*(mp+0.5));
+                m_n.push_back(sc*(np+0.5));
+                scs.push_back(sc);
+            }
+        }   
+    }
+    
+    int n = 0;
+    for(int n = 0; n < m_m.size(); ++n)
+    {
+        realT k = sqrt((pow(m_m[n],2) + pow(m_n[n],2)))/((D/wfSz)*m_scrnSz);
                 
-                realT tpsd = beta / pow( k*k + L02, sqrt_alpha);
+        realT tpsd = beta / pow( k*k + L02, sqrt_alpha);
 
-                realT Ppiston = 0;
-                realT Ptiptilt = 0;
-                if(m_turbAtmo->aosys()->psd.subPiston())
-                {
-                    Ppiston = pow(2*math::func::jinc(math::pi<realT>() * k * D), 2);
-                }
+        realT Ppiston = 0;
+        realT Ptiptilt = 0;
+        if(m_turbAtmo->aosys()->psd.subPiston())
+        {
+            Ppiston = pow(2*math::func::jinc(math::pi<realT>() * k * D), 2);
+        }
 
-                if(m_turbAtmo->aosys()->psd.subTipTilt())
-                {
-                    Ptiptilt = pow(4*math::func::jincN(2,math::pi<realT>() * k * D), 2);
-                }
+        if(m_turbAtmo->aosys()->psd.subTipTilt())
+        {
+            Ptiptilt = pow(4*math::func::jincN(2,math::pi<realT>() * k * D), 2);
+        }
 
-                m_sqrtPSD[n] = sc*sqrt(tpsd*(1-Ppiston-Ptiptilt));
+        m_sqrtPSD[n] = scs[n]*sqrt(tpsd*(1-Ppiston-Ptiptilt));
                 
-                if(m_preCalc)
+        if(m_preCalc)
+        {
+            for(int cc=0; cc < m_scrnSz; ++cc)
+            {
+                realT np = cc - 0.5*m_scrnSz;
+                for(int rr=0; rr < m_scrnSz; ++rr)
                 {
-                    for(int cc=0; cc < m_scrnSz; ++cc)
-                    {
-                        realT np = cc - 0.5*m_scrnSz;
-                        for(int rr=0; rr < m_scrnSz; ++rr)
-                        {
-                            realT mp = rr - 0.5*m_scrnSz;                    
-                            m_modes.image(n)(rr,cc) = m_sqrtPSD[n]*cos(math::two_pi<realT>()*(m_m[n]*mp + m_n[n]*np)/m_scrnSz);
-                        }
-                    }
+                    realT mp = rr - 0.5*m_scrnSz;                    
+                    m_modes.image(n)(rr,cc) = m_sqrtPSD[n]*cos(math::two_pi<realT>()*(m_m[n]*mp + m_n[n]*np)/m_scrnSz);
                 }
-                
-                ++n;
             }
         }
     }
