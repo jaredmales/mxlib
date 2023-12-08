@@ -188,7 +188,7 @@ public:
    ///@}
 
 
-   ///Calculate the temporal PSD for a Fourier mode for a single layer.
+   ///Calculate the temporal PSD for a Zernike mode for a single layer.
    /**
      *
      * \todo implement error checking.
@@ -483,7 +483,7 @@ int zernikeTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
                              
 
 
-///Worker function for GSL Integration for the basic sin/cos Fourier modes.
+///Worker function for GSL Integration for the Zernike modes.
 /** \ingroup mxAOAnalytic
   */
 template<typename realT, typename aosysT>

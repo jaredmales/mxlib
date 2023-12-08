@@ -617,7 +617,7 @@ void oneoverf_psd( eigenArrp  & psd,
   *
   * \tparam floatT a floating point
   */
-template<typename floatT, typename floatfT, typename alphaT, typename T0T, typename t0T, typename betaT>
+template<typename floatT, typename floatfT, typename alphaT, typename T0T = double, typename t0T = double, typename betaT = double>
 int vonKarmanPSD( std::vector<floatT> & psd, ///< [out] the PSD vector, will be resized.
                   std::vector<floatfT> & f,  ///< [in] the frequency vector
                   alphaT alpha,              ///< [in] the exponent, by convention @f$ alpha > 0 @f$.

@@ -177,30 +177,34 @@ void gslInterpolator<interpT>::setup( realT *xin,
                                       size_t Nin  
                                     )
 {
-   if(m_interp != nullptr) gsl_interp_free(m_interp);
-   if(m_acc != nullptr) gsl_interp_accel_free(m_acc);
+    if(m_interp != nullptr) gsl_interp_free(m_interp);
+    if(m_acc != nullptr) gsl_interp_accel_free(m_acc);
    
-   m_interp =  gsl_interp_alloc(interpT::interpolator(), Nin);
-   if(!m_interp) mxThrowException(err::allocerr, "gslInterpolation::setup", "gsl_interp_alloc failed");
+    m_interp =  gsl_interp_alloc(interpT::interpolator(), Nin);
+    if(!m_interp) 
+    {
+        mxThrowException(err::allocerr, "gslInterpolation::setup", "gsl_interp_alloc failed");
+    }
+
+    m_acc = gsl_interp_accel_alloc ();
+    if(!m_acc) 
+    {
+        mxThrowException(err::allocerr, "gslInterpolation::setup", "gsl_interp_accel_alloc failed");
+    }
+
+    int errv = gsl_interp_init(m_interp, xin, yin, Nin);
+    if(errv != 0)
+    {
+        mxThrowException(err::liberr, "gslInterpolation::setup", std::string("gsl_interp_init failed: ") + gsl_strerror(errv));
+    }
    
-   m_acc = gsl_interp_accel_alloc ();
-   if(!m_acc) mxThrowException(err::allocerr, "gslInterpolation::setup", "gsl_interp_accel_alloc failed");
-
-
-   int errv = gsl_interp_init(m_interp, xin, yin, Nin);
-
-   if(errv != 0)
-   {
-      mxThrowException(err::liberr, "gslInterpolation::setup", std::string("gsl_interp_init failed: ") + gsl_strerror(errv));
-   }
-   errv = gsl_interp_accel_reset(m_acc);
-   
-   if(errv != 0)
-   {
-      mxThrowException(err::liberr, "gslInterpolation::setup", std::string("gsl_interp_accel_reset failed: ") + gsl_strerror(errv));
-   }
-   m_xin = xin;
-   m_yin = yin;
+    errv = gsl_interp_accel_reset(m_acc);
+    if(errv != 0)
+    {
+        mxThrowException(err::liberr, "gslInterpolation::setup", std::string("gsl_interp_accel_reset failed: ") + gsl_strerror(errv));
+    }
+    m_xin = xin;
+    m_yin = yin;
 }
 
 template<typename interpT>

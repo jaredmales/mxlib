@@ -156,8 +156,8 @@ public:
     /// Allocate needed memory and initialize the subharmonic transform 
     void initGrid( uint32_t layerNo );
 
-    /// Generate a realization of the subharmonic phase screen
-    void screen( improc::eigenImage<realT> & scrn );
+    /// Generate a realization of the subharmonic phase screen and add it to the input screen
+    void screen( improc::eigenImage<realT> & scrn /**< [in] the input phase screen to which to add the low-frequency screen.  Must be m_scrnSz X m_scrnsz*/ );
 
     /// Deallocate memory
     void deinit();

@@ -566,6 +566,60 @@ int zernikeBasis( cubeT & cube,                    ///< [in.out] the pre-allocat
   * \tparam realT is the floating point type used for arithmetic
   */
 template<typename realT>
+std::complex<realT> zernikeQ( realT k,   /**< [in] the radial coordinate of normalized spatial frequency. This is in the 
+                                           *       \cite noll_1976 convention of cycles-per-radius.
+                                           */
+                              realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
+                              int n,     ///< [in] the Zernike polynomial n
+                              int m      ///< [in] the Zernike polynomial m
+                            )
+{
+   
+    std::complex<realT> Q;
+
+    //sloppy implementation of jinc_n for k ~ 0
+    if(k < 1e-12)
+    {
+        if( n == 0 ) Q = 1.0;
+        else Q = 0.0;
+    }
+    else
+    {
+        Q = math::func::bessel_j(n+1, math::two_pi<realT>()*k) / (math::pi<realT>()*k);
+    }
+
+    Q = sqrt(n+1) * Q;
+    
+     
+    if (m > 0 ) // Even j (see Noll 1976)
+    {
+        Q = Q * pow(-1, 0.5*(n-m)) * pow(std::complex<realT>({0,1}), m)*sqrt(2)*cos(m*phi);
+    }
+    else if( m < 0 ) // Odd j (see Noll 1976) , but m can't really be neg
+    {
+        Q = Q * pow(-1, 0.5*(n+m)) * pow(std::complex<realT>({0,1}), -m)*sqrt(2)*sin(-m*phi);
+    }
+    else
+    {
+        Q = Q * pow(-1, 0.5*n);
+    }
+   
+    return Q;
+}
+
+
+///Calculate the square-normed Fourier transform of a Zernike polynomial at position (k,phi)
+/** Implements Equation (8) of Noll (1976) \cite noll_1976.
+  * 
+  * \todo need a more robust jinc_n function for n > 1
+  * 
+  * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]" 
+  * 
+  * \returns the value of |Q(k,phi)|^2
+  * 
+  * \tparam realT is the floating point type used for arithmetic
+  */
+template<typename realT>
 realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency. This is in the \cite noll_1976 convention of cycles-per-radius.
                     realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                     int n,     ///< [in] the Zernike polynomial n
@@ -592,7 +646,7 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
    {
       Q2 = 2*Q2 * pow(cos(m*phi), 2);
    }
-   else if( m < 0 ) //%Odd j (see Noll 1976)
+   else if( m < 0 ) // Odd j (see Noll 1976)
    {
       Q2 = 2*Q2 * pow(sin(-m*phi), 2);
    }

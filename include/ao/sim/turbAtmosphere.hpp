@@ -303,6 +303,22 @@ public:
 
     ///@} - Construction and Configuration
 
+
+    uint32_t scrnLengthPixels();
+
+    uint32_t scrnLengthPixels(uint32_t n);
+
+    realT scrnLength();
+
+    realT scrnLength(uint32_t n);
+
+    uint32_t maxShift( realT dt );
+
+    uint32_t maxShift( uint32_t n,
+                       realT dt 
+                     );
+
+
     /** \name Screen Generation
       * @{
       */
@@ -579,6 +595,49 @@ math::normDistT<typename aoSystemT::realT> & turbAtmosphere<aoSystemT>::normVar(
 }
 
 template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::scrnLengthPixels()
+{
+    return 0;
+}
+
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::scrnLengthPixels(uint32_t n)
+{
+
+    return 0;
+/*    realT dx = (scrnSz-wfSz-turb.buffSz()) / cos(m_aosys->atm.layer_v_wind(n));
+
+    pow(2*pow(scrnSz-wfSz-turb.buffSz(),2), 0.5) - 1;
+    */
+}
+
+template<typename aoSystemT>
+realT turbAtmosphere<aoSystemT>::scrnLength()
+{
+    return 0;
+}
+
+template<typename aoSystemT>
+realT turbAtmosphere<aoSystemT>::scrnLength(uint32_t n)
+{
+    return 0;
+}
+
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::maxShift( realT dt )
+{
+    return 0;
+}
+
+template<typename aoSystemT>
+uint32_t turbAtmosphere<aoSystemT>::maxShift( uint32_t n,
+                                              realT dt 
+                                            )
+{
+    return 0;
+}
+
+template<typename aoSystemT>
 void turbAtmosphere<aoSystemT>::genLayers()
 {
     if(m_dataDir != "" && !m_forceGen)
@@ -686,10 +745,21 @@ int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> & milkPhase,
     {
     }
 
-    #pragma omp parallel for
-    for(size_t j=0; j< m_layers.size(); ++j)
+    //Don't use OMP if no multiple layers b/c it seems to make it use multiple threads in some awful way
+    if(m_layers.size() > 1)
     {
-        m_layers[j].shift( dt );
+        #pragma omp parallel for
+        for(size_t j=0; j< m_layers.size(); ++j)
+        {
+            m_layers[j].shift( dt );
+        }
+    }
+    else
+    {
+        for(size_t j=0; j< m_layers.size(); ++j)
+        {
+            m_layers[j].shift( dt );
+        }
     }
 
     milkPhase.setWrite();

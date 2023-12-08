@@ -81,7 +81,7 @@ public:
    {
       if(x.size() != y.size())
       {
-         mxThrowException(err::sizeerr, "radprofIntegral", "vectors must have same size");
+         mxThrowException(err::sizeerr, "logInterpolator", "vectors must have same size");
       }
 
       m_logx.resize(x.size());
@@ -91,12 +91,12 @@ public:
       {
          if(x[n] <= 0)
          {
-            mxThrowException(err::invalidarg, "radprofIntegral", "x values must > 0");
+            mxThrowException(err::invalidarg, "logInterpolator", "x values must > 0");
          }
 
          if(y[n] <= 0)
          {
-            mxThrowException(err::invalidarg, "radprofIntegral", "y values must > 0");
+            mxThrowException(err::invalidarg, "logInterpolator", "y values must > 0");
          }
 
          
