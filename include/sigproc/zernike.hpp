@@ -31,7 +31,7 @@
 #define math_zernike_hpp
 
 #include <cmath>
-
+#include <complex>
 #include <vector>
 
 #include "../math/func/bessel.hpp"

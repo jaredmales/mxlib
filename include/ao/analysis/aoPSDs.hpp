@@ -363,7 +363,7 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the 
 {
    realT psd = operator()(par, layer_i, k, secZeta);
    
-   if( par.nonKolmogorov() == false ) psd *= pow( par.lambda()/lambda, 2);
+   if( par.nonKolmogorov() == false ) psd *= pow( par.lam_0()/lambda, 2);
    
    if(psd < 0) return -1;
    
