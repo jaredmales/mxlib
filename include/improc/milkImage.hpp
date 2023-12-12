@@ -241,7 +241,7 @@ public:
     operator eigenMap<dataT>();
 
     /// Copy data from an Eigen Array type to the shared memory stream
-    /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flat, then posts.
+    /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
       * 
       * \throws mxException on an error
       * 
