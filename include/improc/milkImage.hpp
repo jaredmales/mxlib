@@ -184,6 +184,24 @@ public:
                  uint32_t sz1                ///< [in] the y size of the image
                );
 
+    /// Get the width of the image
+    /**
+      * \returns the current value of m_size_0 
+      */
+    uint32_t rows();
+
+    /// Get the height of the image
+    /**
+      * \returns the current value of m_size_1
+      */
+    uint32_t cols();
+
+    /// Get the size of a dimension of the image
+    /**
+      * \returns the current value of m_size_0 or m_size_1 depending on n
+      */
+    uint32_t size( unsigned n /**< [in] the dimension to get the size of*/);
+
     /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
       *
@@ -222,6 +240,15 @@ public:
       */
     operator eigenMap<dataT>();
 
+    /// Copy data from an Eigen Array type to the shared memory stream
+    /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flat, then posts.
+      * 
+      * \throws mxException on an error
+      * 
+      */
+    template<typename eigenT> 
+    milkImage & operator=(const eigenT & im /**< [in] the eigen array to copy to the stream*/);
+
     /// Set the write flag
     /** The write flag is set to indicate whether or not the the data is being changed.
       * The write flag will be set to false by \ref post().
@@ -231,7 +258,9 @@ public:
     void setWrite( bool wrflag = true /**< [in] [optional] the desired value of the write flag.  Default is true.*/);
 
     /// Update the metadata and post all semaphores
-    /**
+    /** 
+      * \todo need to set wtime, have a version with atime
+      * 
       * \throws mx::err::mxException if the image is not opened
       */ 
     void post();
@@ -366,6 +395,33 @@ void milkImage<dataT>::close()
 }
 
 template<typename dataT>
+uint32_t milkImage<dataT>::rows()
+{
+    return m_size_0;
+}
+
+template<typename dataT>
+uint32_t milkImage<dataT>::cols()
+{
+    return m_size_1;
+}
+
+template<typename dataT>
+uint32_t milkImage<dataT>::size( unsigned n )
+{
+    if(n == 0)
+    {
+        return m_size_0;
+    }
+    else if(n == 1)
+    {
+        return m_size_1;
+    }
+
+    return 0;
+}
+
+template<typename dataT>
 bool milkImage<dataT>::valid()
 {
     if(m_image == nullptr)
@@ -382,6 +438,23 @@ bool milkImage<dataT>::valid()
     }
 
     return true;
+}
+
+template<typename dataT>
+template<typename eigenT> 
+milkImage<dataT> & milkImage<dataT>::operator=(const eigenT & im)
+{
+    eigenMap<dataT> map((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
+        
+    setWrite(true);
+
+    map = im;
+        
+    setWrite(false);
+        
+    post();
+
+    return *this;
 }
 
 template<typename dataT>
@@ -405,7 +478,10 @@ void milkImage<dataT>::post()
 
     errno_t rv = ImageStreamIO_UpdateIm(m_image);
 
-    if(rv != IMAGESTREAMIO_SUCCESS) throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error");
+    if(rv != IMAGESTREAMIO_SUCCESS) 
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error");
+    }
 }
 
 }
