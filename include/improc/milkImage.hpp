@@ -157,6 +157,8 @@ protected:
 
     dataT * m_raw {nullptr}; //The raw pointer address is stored here for checks
 
+    eigenMap<dataT> * m_map {nullptr}; //An Eigen::Map of the array
+    
     uint64_t m_size_0 {0}; ///< The size[0] of the image when last opened.
 
     uint64_t m_size_1 {0}; ///< The size[1] of the image when last opened.
@@ -168,6 +170,9 @@ public:
 
     /// Constructor which opens the specified image
     milkImage( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
+
+    /// D'tor
+    ~milkImage();
 
     /// Open and connect to an image, allocating the eigenMap.
     /**
@@ -222,6 +227,19 @@ public:
     // Close the image
     void close();
 
+    /// Get an eigenMap 
+    /** Use with caution:
+      * - there is no way to know if the image has changed
+      * - you should check \ref valid() before using
+      * 
+      * 
+      * \returns an Eigen::Map<Array,-1,-1> reference
+      * 
+      * \throws mx::err::mxException if the image is not opened
+      * 
+      */
+    eigenMap<dataT> & operator()();
+
     /// Conversion operator returns an eigenMap
     /** Use this like
       * \code
@@ -230,8 +248,8 @@ public:
       * \endcode
       * but with caution:
       * - there is no way to know if the image has changed
+      * - you should check \ref valid() before using
       * 
-      * Note: we assume this does a move
       * 
       * \returns an Eigen::Map<Array,-1,-1> object
       * 
@@ -239,6 +257,8 @@ public:
       * 
       */
     operator eigenMap<dataT>();
+
+    
 
     /// Copy data from an Eigen Array type to the shared memory stream
     /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
@@ -279,6 +299,12 @@ milkImage<dataT>::milkImage( const std::string & imname )
 }
 
 template<typename dataT>
+milkImage<dataT>::~milkImage()
+{
+    close();
+}
+
+template<typename dataT>
 void milkImage<dataT>::open( const std::string & imname )
 {
     if(m_image)
@@ -288,6 +314,12 @@ void milkImage<dataT>::open( const std::string & imname )
         m_image = nullptr;
     }
     
+    if(m_map)
+    {
+        delete m_map;
+        m_map = nullptr;
+    }
+
     m_image = new IMAGE;
     
     errno_t rv = ImageStreamIO_openIm(m_image, imname.c_str());
@@ -310,6 +342,8 @@ void milkImage<dataT>::open( const std::string & imname )
     m_raw = (dataT*) m_image->array.raw;
     m_size_0 = m_image->md->size[0];
     m_size_1 = m_image->md->size[1];
+
+    m_map = new eigenMap<dataT>(m_raw, m_size_0, m_size_1);
 }
 
 template<typename dataT>
@@ -325,6 +359,12 @@ void milkImage<dataT>::create( const std::string & imname,
         m_image = nullptr;
     }
     
+    if(m_map)
+    {
+        delete m_map;
+        m_map = nullptr;
+    }
+
     m_image = new IMAGE;
     
     uint32_t imsize[3];
@@ -352,24 +392,27 @@ void milkImage<dataT>::create( const std::string & imname,
     m_name = imname;
     m_raw = (dataT*) m_image->array.raw;
     m_size_0 = m_image->md->size[0];
-    m_size_1 = m_image->md->size[1];                
+    m_size_1 = m_image->md->size[1];
 
+    m_map = new eigenMap<dataT>(m_raw, m_size_0, m_size_1);          
+
+}
+
+template<typename dataT>
+eigenMap<dataT> & milkImage<dataT>::operator()()
+{
+    if(m_map == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (map is null)");
+    }
+
+    return *m_map;
 }
 
 template<typename dataT>
 milkImage<dataT>::operator eigenMap<dataT>()
 {
-    if(m_image == nullptr)
-    {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
-    }
-
-    if(!valid())
-    {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not valid");
-    }
-
-    return eigenMap<dataT>((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
+    return operator()();
 }
 
 template<typename dataT>
@@ -382,9 +425,15 @@ void milkImage<dataT>::reopen()
 template<typename dataT>
 void milkImage<dataT>::close()
 {
+    if(m_map != nullptr)
+    {
+        delete m_map;
+        m_map = nullptr;
+    }
+
     if(m_image == nullptr) 
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+        return;
     }
 
     errno_t rv = ImageStreamIO_closeIm(m_image);
@@ -477,6 +526,7 @@ void milkImage<dataT>::post()
     }
 
     errno_t rv = ImageStreamIO_UpdateIm(m_image);
+    m_image->md->atime=m_image->md->writetime;
 
     if(rv != IMAGESTREAMIO_SUCCESS) 
     {
