@@ -279,7 +279,7 @@ void application::help() //virtual
    tt.m_colSep = " ";
    tt.m_rowSep = "";
 
-   std::cerr << "usage: " << invokedName << " [options] \n";
+   std::cerr << "usage: " << invokedName << " [options] " << m_nonOptionHelp << "\n";
    std::cerr << "\n";
    std::cerr << "  Required arguments:\n";
 

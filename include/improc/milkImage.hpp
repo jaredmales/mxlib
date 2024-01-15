@@ -171,6 +171,11 @@ public:
     /// Constructor which opens the specified image
     milkImage( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
 
+    /// Constructor which opens the specified image and copies the provided image to it
+    milkImage( const std::string & imname,  /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ 
+               const eigenImage<dataT> & im ///< [in] An existing eigenImage
+             );
+
     /// D'tor
     ~milkImage();
 
@@ -187,6 +192,14 @@ public:
     void create( const std::string & imname, ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
                  uint32_t sz0,               ///< [in] the x size of the image
                  uint32_t sz1                ///< [in] the y size of the image
+               );
+
+    /// Create and connect to an image using an existing eigenImage, allocating the eigenMap and copying the image to the shmim.
+    /**
+      * \throws std::invalid_argument if the image type_code does not match dataT.
+      */  
+    void create( const std::string & imname,  ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
+                 const eigenImage<dataT> & im ///< [in] An existing eigenImage
                );
 
     /// Get the width of the image
@@ -399,6 +412,15 @@ void milkImage<dataT>::create( const std::string & imname,
 }
 
 template<typename dataT>
+void milkImage<dataT>::create( const std::string & imname,
+                               const eigenImage<dataT> & im 
+                             )
+{
+    create(imname, im.rows(), im.cols());
+    operator=(im);
+}
+
+template<typename dataT>
 eigenMap<dataT> & milkImage<dataT>::operator()()
 {
     if(m_map == nullptr)
@@ -493,11 +515,19 @@ template<typename dataT>
 template<typename eigenT> 
 milkImage<dataT> & milkImage<dataT>::operator=(const eigenT & im)
 {
-    eigenMap<dataT> map((dataT*)m_image->array.raw, m_image->md->size[0], m_image->md->size[1]);
+    if(m_image == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (image is null)");
+    }
+
+    if(m_map == nullptr)
+    {
+        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (map is null)");
+    }
         
     setWrite(true);
 
-    map = im;
+    *m_map = im;
         
     setWrite(false);
         

@@ -222,6 +222,11 @@
   * \ingroup signal_processing
   */
 
+/** \defgroup arpsds Autoregressive Power Spectra
+  * Tools for for AR process PSDs 
+  * \ingroup psds
+  */
+  
 /** \defgroup fourier_basis The Fourier Basis
   * \ingroup signal_processing
   */

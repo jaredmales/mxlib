@@ -365,27 +365,23 @@ MXLAPACK_INT calcKLModes( eigenT & klModes,             ///< [out] on exit conta
    
 } //calcKLModes        
 
-///Compute the SVD of an Eigen::Array using LAPACK's xgesdd
+/// Compute the SVD of an Eigen::Array using LAPACK's xgesdd
 /** Computes the SVD of A, \f$ A = U S V^T \f$.
   * 
-  * \param[out] U the A.rows() x A.rows() left matrix
-  * \param[out] S the A.cols() x 1 matrix of singular values
-  * \param[out] VT the A.cols() x A.cols() right matrix, note this is the transpose.
-  * \param[in] A the input matrix to be decomposed
-  *
-  * \returns 
-  * \parblock
-  *     0 on success
-  *     -i on error in ith parameter (from LAPACK xgesdd)
-  *     >0 did not converge (from LAPACK xgesdd)
-  * \endparblock
+  * \returns 0 on success
+  * \returns -i on error in ith parameter (from LAPACK xgesdd)
+  * \returns >0 did not converge (from LAPACK xgesdd)
   * 
   * \tparam dataT is either float or double.
   * 
   * \ingroup eigen_lapack
   */ 
 template<typename dataT>
-MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U, Eigen::Array<dataT,-1,-1> & S, Eigen::Array<dataT,-1,-1> & VT, Eigen::Array<dataT,-1,-1> & A )
+MXLAPACK_INT eigenGESDD( Eigen::Array<dataT,-1,-1> & U,  ///< [out] the A.rows() x A.rows() left matrix
+                         Eigen::Array<dataT,-1,-1> & S,  ///< [out] the A.cols() x 1 matrix of singular values
+                         Eigen::Array<dataT,-1,-1> & VT, ///< [out] the A.cols() x A.cols() right matrix, note this is the transpose.
+                         Eigen::Array<dataT,-1,-1> & A   ///< [in]  the input matrix to be decomposed
+                       )
 {
    char JOBZ = 'A';
    MXLAPACK_INT M = A.rows();
@@ -542,6 +538,7 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
    
    condition = 1;
    nRejected = 0;
+
     for(MXLAPACK_INT i=0; i< S.rows(); ++i)
     {
         

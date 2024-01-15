@@ -126,6 +126,8 @@ protected:
    int m_helpCFColWidth {25}; ///< The width of the config file option column in the help message.
    int m_helpTypeColWidth {15}; ///< The width of the argument type column in the help message.
 
+   std::string m_nonOptionHelp; ///< String to print to describe non-option arguments.
+   
    int m_argc; ///< Store argc for later use. E.g. in reReadConfig().
    char ** m_argv; ///< Store argv for later use. E.g. in reReadConfig().
 
