@@ -103,8 +103,8 @@ void application::setup( int argc,
 
    setDefaults(argc, argv);
 
-   config.readConfig(m_configPathGlobal);
-   config.readConfig(m_configPathUser);
+   config.readConfig(m_configPathGlobal, m_requireConfigPathGlobal);
+   config.readConfig(m_configPathUser, m_requireConfigPathUser);
    config.readConfig(m_configPathLocal, m_requireConfigPathLocal);
 
    //Parse CL just to get the CL config.

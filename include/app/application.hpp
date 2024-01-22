@@ -108,7 +108,9 @@ protected:
    std::string m_configPathLocal;      ///< The path to a local configuration file. Set in constructor to use.
    std::string m_configPathLocal_env;  ///< Environment variable to check for the local config path.  Set in constructor to use.
    
-   bool m_requireConfigPathLocal {true}; ///< Flag controlling whether lack of a local  configuration file should be reported.
+   bool m_requireConfigPathGlobal {true}; ///< Flag controlling whether lack of a global configuration file should be reported.
+   bool m_requireConfigPathUser   {true}; ///< Flag controlling whether lack of a user configuration file should be reported.
+   bool m_requireConfigPathLocal  {true}; ///< Flag controlling whether lack of a local configuration file should be reported.
    
    std::string m_configPathCL;         ///< The path to a configuration file specified on the command line. 
    std::string m_configPathCLBase;     ///< A base path to add to the CL path.  Set in constructor to use.
