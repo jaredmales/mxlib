@@ -149,7 +149,7 @@ public:
      * \returns -1 on error.
      * \returns the value of \ref execute() otherwise.
      */
-   int main( int argc, ///< [in] standard command line result specifying number of argumetns in argv
+   int main( int argc,   ///< [in] standard command line result specifying number of arguments in argv
              char **argv ///< [in] standard command line result containing the arguments.
            );
 
@@ -195,7 +195,7 @@ protected:
      * This will not normally need to be implemented by derived clasess --
      * only do so if you intend to change the configuration process!
      */
-   virtual void setup( int argc, ///< [in] standard command line result specifying number of argumetns in argv
+   virtual void setup( int argc,    ///< [in] standard command line result specifying number of arguments in argv
                        char ** argv ///< [in] standard command line result containing the arguments.
                      );
 
