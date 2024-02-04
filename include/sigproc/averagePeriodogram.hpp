@@ -39,12 +39,19 @@ namespace sigproc
 
 /// Calculate the average periodogram of a time-series.
 /**
-  * Implements the overlapped average periodogram, cf. pp 843 to 845 of \cite 10.5555.1795494. This produces
+  * Implements the overlapped average periodogram, cf. pp 843 to 845 of \cite 10.5555.1795494. A.k.a. Welch's method
+  * (https://en.wikipedia.org/wiki/Welch's_method). 
+  * 
+  * This produces
   * the variance normalized 1-sided PSD estimate of the periodogram.  
   * 
   * Optionally includes a window (by default no window is used, which is equivalent to the rectangle window). 
   * 
-  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time series.
+  * Optionally includes zero-padding, which is applied after windowing.  This can be used to increase frequency
+  * resolution while still allowing overlapping.
+  *
+  * Can also be used to calculate the unaveraged non-overlapped periodogram of the entire time series, with or without
+  * windowing and zero-padding.
   * 
   * Example:
   \code
@@ -58,7 +65,7 @@ namespace sigproc
    
    realT dt = 0.1; //The sampling of ts is 0.1 seconds.
    
-   averagePeriodogram<realT> avgPgram(2.0/dt, dt); //This sets the averaging length to 2 seconds (20 samples), with a 1 second overlap (set automatically)
+   averagePeriodogram<realT> avgPgram(2.0/dt, 4.0/dt, dt); //This sets the averaging length to 2 seconds (20 samples), zero padding to 4 seconds, with a 1 second overlap (set automatically)
    
    avgPgram.win(window::hann); //Set the Hann window
    
@@ -85,9 +92,13 @@ protected:
      *@{
      */
    
-   size_t m_avgLen {0};  ///< The number of samples in each periodgoram estimate.
+   size_t m_avgLen {0};  ///< The number of samples in each periodogram estimate.
    size_t m_overlap {0}; ///< The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
    
+   size_t m_padLen {0}; ///< The size of the periodogram estimate with zero-padding
+
+protected:
+
    realT m_dt {1}; ///< The time sampling.  Only used for normalization and calculation of the frequency scale.
 
    std::vector<realT> m_win; ///< The window function.  By default this is empty, which is equivalent to setting it to the rectangular window.
@@ -104,7 +115,6 @@ protected:
    math::fft::fftT< realT, std::complex<realT>, 1, 0> m_fft;
    
    realT * m_tsWork {nullptr};
-   size_t m_tsWorkSize {0};
    
    std::complex<realT> * m_fftWork {nullptr};
    size_t m_fftWorkSize {0};
@@ -119,8 +129,19 @@ public:
        \endcode
      */
    explicit averagePeriodogram( size_t avgLen /**< [in] The length of averaging in samples.*/ );
+
+   /// C'tor which sets up the optimum overlapped periodogram of the timeseries with zero-padding
+   /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
+     * the alternate constructor:
+     * \code
+       averagePeriogram p( avgLen, 0, padLen, dt);
+       \endcode
+     */
+   explicit averagePeriodogram( size_t avgLen, ///< [in] The length of averaging in samples. 
+                                size_t padLen  ///< [in] [optional] the length of the padded sample.  If 0 or omitted then no padding used.
+                              );
    
-   /// C'tor which sets up the optimum overlapped periodogram of the timeseries and sets the sampling.
+   /// C'tor which sets up the optimum overlapped periodogram of the timeseries with zero-padding and sets the sampling.
    /** Sets m_overlap = 0.5*m_avgLen.  If you desire the non-overlapped case use 
      * the alternate constructor:
      * \code
@@ -128,14 +149,16 @@ public:
        \endcode
      */
    averagePeriodogram( size_t avgLen, ///< [in] The length of averaging in samples. 
-                       realT dt ///< [in] the sampling interval of the time-series
+                       size_t padLen, ///< [in] the length of the padded sample.  Set to 0 for no padding.
+                       realT dt       ///< [in] the sampling interval of the time-series
                      );
    
    /// C'tor setting up an arbitrary overlap.
    /** Set olap to 0 for the unoverlapped case.  
      */
    averagePeriodogram( size_t avgLen, ///< [in] The number of samples in each periodgoram estimate.
-                       size_t olap,   ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
+                       size_t padLen, ///< [in] the length of the padded sample.  Set to 0 for no padding.
+                       size_t olap,   ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.       
                        realT dt       ///< [in] the sampling interval of the time-series
                      );
    
@@ -174,6 +197,7 @@ public:
      * \returns -1 on error
      */ 
    int resize( size_t avgLen, ///< [in] The number of samples in each periodgoram estimate.
+               size_t padLen, ///< [in] the length of the sample after zero-padding.
                size_t olap    ///< [in] The number of samples by which to overlap.  This should almost always be 0.5*m_avgLen.  Set 0 for the non-overlapped case.
              );
       
@@ -243,26 +267,37 @@ public:
 template<typename realT>
 averagePeriodogram<realT>::averagePeriodogram( size_t avgLen )
 {
-   resize(avgLen, 0.5*avgLen);
+   resize(avgLen, 0, 0.5*avgLen);
    dt(1);
 }
 
 template<typename realT>
 averagePeriodogram<realT>::averagePeriodogram( size_t avgLen,
+                                               size_t padLen 
+                                             )
+{
+   resize(avgLen, padLen, 0.5*avgLen);
+   dt(1);
+}
+
+template<typename realT>
+averagePeriodogram<realT>::averagePeriodogram( size_t avgLen,
+                                               size_t padLen,
                                                realT ndt
                                              )
 {
-   resize(avgLen, 0.5*avgLen);
+   resize(avgLen, padLen, 0.5*avgLen);
    dt(ndt);
 } 
 
 template<typename realT>
 averagePeriodogram<realT>::averagePeriodogram( size_t avgLen,
+                                               size_t padLen,
                                                size_t olap,
                                                realT ndt
                                              )
 {
-   resize(avgLen, olap);
+   resize(avgLen, padLen, olap);
    dt(ndt);
 }
 
@@ -277,7 +312,7 @@ template<typename realT>
 void averagePeriodogram<realT>::dt( realT ndt)
 {
    m_dt = ndt;
-   m_df = 1.0/(m_avgLen*m_dt);
+   m_df = 1.0/(m_padLen*m_dt);
 }
 
 template<typename realT>
@@ -296,34 +331,42 @@ realT averagePeriodogram<realT>::df()
 template<typename realT>
 int averagePeriodogram<realT>::resize( size_t avgLen )
 {
-   return resize(avgLen, 0.5*avgLen);
+   return resize(avgLen, 0, 0.5*avgLen);
 }
 
 template<typename realT>
 int averagePeriodogram<realT>::resize( size_t avgLen, 
+                                       size_t padLen,
                                        size_t olap 
                                      )
 {
-   m_avgLen = avgLen;
+    m_avgLen = avgLen;
+    m_padLen = padLen;
     
-   m_size = m_avgLen/2 + 1;
+    if(m_padLen < m_avgLen)
+    {
+        m_padLen = m_avgLen;
+    }
+
+    m_size = m_padLen/2 + 1;
    
-   m_df = 1.0/(m_avgLen*m_dt);
+    m_df = 1.0/(m_padLen*m_dt);
     
-   m_overlap = olap;
+    m_overlap = olap;
    
-   m_nOver = (m_avgLen-m_overlap);
+    m_nOver = (m_avgLen-m_overlap);
    
-   m_fft.plan(m_avgLen, MXFFT_FORWARD, false);
+    m_fft.plan(m_padLen, MXFFT_FORWARD, false);
    
-   if(m_tsWork) fftw_free(m_tsWork);
-   m_tsWork = math::fft::fftw_malloc<realT>( m_avgLen );
+    if(m_tsWork) fftw_free(m_tsWork);
+
+    m_tsWork = math::fft::fftw_malloc<realT>( m_padLen );
    
-   if(m_fftWork) fftw_free(m_fftWork);
+    if(m_fftWork) fftw_free(m_fftWork);
    
-   m_fftWork = math::fft::fftw_malloc<std::complex<realT>>( (m_avgLen/2 + 1) );
+    m_fftWork = math::fft::fftw_malloc<std::complex<realT>>( (m_padLen/2 + 1) );
    
-   return 0;
+    return 0;
 }
    
 template<typename realT>
@@ -358,51 +401,50 @@ void averagePeriodogram<realT>::operator()( realT * pgram,
                                             size_t sz
                                           )
 {
-   if( m_win.size() > 0 && m_win.size() != m_avgLen )
-   {
-      std::cerr << "averagePeriodogram: Window size not correct.\n";
-   }
+    if( m_win.size() > 0 && m_win.size() != m_avgLen )
+    {
+        std::cerr << "averagePeriodogram: Window size not correct.\n";
+    }
 
-   int Navg = sz/m_nOver;
+    int Navg = sz/m_nOver;
 
-   while(Navg*m_nOver + m_avgLen > sz) --Navg;
+    while(Navg*m_nOver + m_avgLen > sz) --Navg;
 
-   if(Navg < 1) Navg = 1; //Always do at least 1!
+    if(Navg < 1) Navg = 1; //Always do at least 1!
 
-   //mx::fftT< realT, std::complex<realT>, 1, 0> fft(m_avgLen);
+    for(int i=0;i<Navg;++i)
+    {
+        if(m_win.size() == m_avgLen) //no if inside the for loop
+        {
+            for(size_t j=0;j<m_avgLen;++j)
+            {
+                m_tsWork[j] = ts[i*m_nOver + j] * m_win[j];
+            }
+        }
+        else
+        {
+            for(size_t j=0;j<m_avgLen;++j)
+            {
+                m_tsWork[j] = ts[i*m_nOver + j];
+            }
+        }
 
-   for(int i=0;i<Navg;++i)
-   {
-      if(m_win.size() == m_avgLen) //no if inside the for loop
-      {
-         for(size_t j=0;j<m_avgLen;++j)
-         {
-            m_tsWork[j] = ts[i*m_nOver + j] * m_win[j];
-         }
-      }
-      else
-      {
-         for(size_t j=0;j<m_avgLen;++j)
-         {
-            m_tsWork[j] = ts[i*m_nOver + j];
-         }
-      }
+        //Zero-pad
+        for(size_t j=m_avgLen;j<m_padLen;++j)
+        {
+            m_tsWork[j] = 0;
+        }
 
-      m_fft( m_fftWork, m_tsWork);
+        m_fft( m_fftWork, m_tsWork);
 
-      for(size_t j=0;j<m_size;++j) pgram[j] += norm(m_fftWork[j]);
-   }
+        for(size_t j=0;j<m_size;++j) pgram[j] += norm(m_fftWork[j]);
+    }
 
-   //This is what you'd do to normalize for dt=1
-   //for(size_t j=0;j<m_size;++j) pgram[j] /= (m_avgLen*Navg);
-
-   //but we will just always normalize:
-
-   realT pgramVar = psdVar1sided(m_df, pgram, m_size);
+    realT pgramVar = psdVar1sided(m_df, pgram, m_size);
    
-   realT tsVar = mx::math::vectorVariance(ts, sz);
+    realT tsVar = mx::math::vectorVariance(ts, sz);
 
-   for(size_t j =0; j< m_size; ++j) pgram[j] *= tsVar/pgramVar; 
+    for(size_t j =0; j< m_size; ++j) pgram[j] *= tsVar/pgramVar; 
    
 }
 
