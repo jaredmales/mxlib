@@ -56,7 +56,12 @@ struct hasJacobian;
   * {
   *    typedef _realT realT; //required
   * 
-  *    static void func(realT *p, realT *hx, int m, int n, void *adata)
+  *    static void func( realT *p,   // [in]  the parameter values, size m
+  *                      realT *hx,  // [out] the error for this p, size n
+  *                      int m,      // [in]  the number of parameters
+  *                      int n,      // [in]  the number of data points
+  *                      void *adata // [in]  auxiliary data
+  *                    )
   *     {
   *        //do stuff here . . .
   *     }
@@ -72,13 +77,23 @@ struct hasJacobian;
   * 
   *    typdef bool hasJacobian; //this signals that jacf exists and should be used.
   * 
-  *    static void func(realT *p, realT *hx, int m, int n, void *adata)
+  *    static void func( realT *p,   // [in]  the parameter values, size m
+  *                      realT *hx,  // [out] the error for this p, size n
+  *                      int m,      // [in]  the number of parameters
+  *                      int n,      // [in]  the number of data points
+  *                      void *adata // [in]  auxiliary data
+  *                    )
   *    {
   *        //do stuff here . . .
   *    }
   * 
   *    // This is the jacobian.
-  *    static void jacf(realT *p, realT *j, int m, int n, void *adata)
+  *    static void jacf( realT *p,   // [in]  the parameter values, size m
+  *                      realT *j,   // [out] the jacobian for this p, size n
+  *                      int m,      // [in]  the number of parameters
+  *                      int n,      // [in]  the number of data points
+  *                      void *adata // [in]  auxiliary data
+  *                    )
   *    {
   *        //do stuff here . . .
   *    }
