@@ -72,8 +72,8 @@ protected:
 
    eigenImage<realT> * m_nanMask {nullptr};
    
-   realT m_bgMin;
-   realT m_bgMax;
+   realT m_bgMin {0};
+   realT m_bgMax {0};
 
    std::vector<realT> m_bgx;
    std::vector<realT> m_bgy;
@@ -312,7 +312,7 @@ int aperturePhotometer<realT>::cumPhotWork( std::vector<realT> & cumPhot,
       std::vector<realT> bgann(m_bgx.size());
       for(size_t n=0; n < m_bgx.size(); ++n)
       {
-         bgann[n] = im(m_bgx[n], m_bgy[n]);
+         bgann[n] = im((int) m_bgx[n], (int) m_bgy[n]);
       }
 
       bg = math::vectorMedian(bgann);
