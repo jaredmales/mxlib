@@ -910,7 +910,7 @@ int rebin1SidedPSD( std::vector<realT> & binFreq, ///< [out] the binned frequenc
                     std::vector<realT> & freq,    ///< [in] the frequency scale of the PSD to bin.
                     std::vector<realT> & PSD,     ///< [in] the PSD to bin.
                     realT binSize,                ///< [in] in same units as freq
-                    bool binAtZero = true         ///< [in] [optional] controls whether the zero point is binned for copied.
+                    bool binAtZero = true         ///< [in] [optional] controls whether the zero point is binned or copied.
                   )
 {
    binFreq.clear();
@@ -1000,8 +1000,8 @@ int rebin1SidedPSD( std::vector<realT> & binFreq, ///< [out] the binned frequenc
 
 
    //Now normalize variance
-   realT var = psdVar(freq[1]-freq[0],PSD);
-   realT binv = psdVar(binFreq[1]-binFreq[0], binPSD);
+   realT var = psdVar(freq,PSD);
+   realT binv = psdVar(binFreq, binPSD);
 
    for(int i=0; i<binFreq.size();++i) binPSD[i] *= var/binv;
 
