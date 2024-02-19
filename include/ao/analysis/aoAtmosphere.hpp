@@ -1244,7 +1244,7 @@ void aoAtmosphere<realT>::loadLCO()
    layer_v_wind(   {10.0,      10.0,         20.0,    20.0,    25.0,     30.0,      25.0});
    layer_dir(      {1.05,      1.05,        1.31,     1.31,    1.75,     1.92,     1.75});
    
-   r_0(0.17, 0.5e-6);
+   r_0(0.16, 0.5e-6);
    
    L_0({25.0,25.0,25.0,25.0, 25.0, 25.0, 25.0});
    l_0({0.0,0,0,0,0,0,0});
@@ -1346,8 +1346,9 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator & config )
    config.add("atm.layer_Cn2"    ,"", "atm.layer_Cn2"    , argType::Required, "atm", "layer_Cn2",     false, "vector<real>", "Layer Cn^2.  Note that this does not set r_0.");  
    config.add("atm.layer_v_wind" ,"", "atm.layer_v_wind" , argType::Required, "atm", "layer_v_wind",  false, "vector<real>", "Layer wind speeds [m/s]");
    config.add("atm.layer_dir"    ,"", "atm.layer_dir"    , argType::Required, "atm", "layer_dir",     false, "vector<real>", "Layer wind directions [rad]");
-   config.add("atm.v_wind"       ,"", "atm.v_wind"       , argType::Required, "atm", "v_wind",        false, "real"        , "Mean windspeed (5/3 momement), rescales layers [m/s]");
-   config.add("atm.z_mean"       ,"", "atm.z_mean"       , argType::Required, "atm", "z_mean",        false, "real"        , "Mean layer height (5/3 momemnt), rescales layers [m/s]");   
+   config.add("atm.v_wind"       ,"", "atm.v_wind"       , argType::Required, "atm", "v_wind",        false, "real"        , "Mean windspeed (5/3 momement), rescales layer speeds [m/s]");
+   config.add("atm.tau_0"        ,"", "atm.tau_0"        , argType::Required, "atm", "tau_0",         false, "real"        , "AO time constant, sets v_wind and rescales layer speeds. [s]");
+   config.add("atm.z_mean"       ,"", "atm.z_mean"       , argType::Required, "atm", "z_mean",        false, "real"        , "Mean layer height (5/3 momemnt), rescales layer heights [m/s]");   
    config.add("atm.nonKolmogorov","", "atm.nonKolmogorov", argType::Required, "atm", "nonKolmogorov", false, "bool"        , "Set to use a non-Kolmogorov PSD. See alpha and beta.");   
    config.add("atm.alpha"        ,"", "atm.alpha"        , argType::Required, "atm", "alpha"        , false, "vector<real>", "Non-kolmogorov PSD exponent.");   
    config.add("atm.beta"         ,"", "atm.beta"         , argType::Required, "atm", "beta"         , false, "vector<real>", "Non-kolmogorov PSD normalization.");
@@ -1400,6 +1401,13 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator & config )
    config(vw,"atm.v_wind"); //Do this no matter what to record source
    if(config.isSet("atm.v_wind")) v_wind(vw); //but only call this if changed
 
+   realT t0 = tau_0();
+   config(t0,"atm.tau_0"); //Do this no matter what to record source
+   if(config.isSet("atm.tau_0")) 
+   {
+    std::cerr << "setting tau_0 " << t0 << "\n";
+    tau_0(t0, m_lam_0); //but only call this if changed
+   }
    realT zm = m_z_mean;
    config(zm,"atm.z_mean"); //Do this no matter what to record source
    if(config.isSet("atm.z_mean")) z_mean(zm); //but only call this if changed

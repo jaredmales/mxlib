@@ -2263,11 +2263,23 @@ template<typename realT, class inputSpectT, typename iosT>
 realT aoSystem<realT, inputSpectT, iosT>::ncpError( int m, 
                                                           int n )
 {
-   if(m ==0 and n == 0) return 0;
+    if(m ==0 and n == 0) return 0;
    
-   realT k = sqrt(m*m + n*n)/m_D;
+    realT k = sqrt(m*m + n*n)/m_D;
    
-   return (m_ncp_alpha - 2)/(math::two_pi<realT>()) * pow(m_D, -m_ncp_alpha) * ncpError() * pow(k, -m_ncp_alpha);
+    realT kmax = m_fit_mn_max/m_D;
+    realT kmin = 1./m_D;
+
+    realT beta;
+    if(m_ncp_alpha != 2)
+    {
+        beta = (m_ncp_alpha - 2)/(math::two_pi<realT>()) * 1./(pow(kmin, -m_ncp_alpha+2) - pow(kmax, -m_ncp_alpha+2));
+    }
+    else
+    {
+        beta = 1./(math::two_pi<realT>() * log(kmax/kmin));
+    }
+    return  beta* ncpError() * pow(k, -m_ncp_alpha) * pow(kmin,2);
 }
 
 template<typename realT, class inputSpectT, typename iosT>
@@ -2325,11 +2337,10 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl( realT d,
             wfeVar += fittingError(m,n);
          }
 
-         realT wfeNCP = ncpError(m, n);
-         wfeVar += wfeNCP;
       }
    }
 
+   wfeVar += ncpError();
    return exp(-1 * wfeVar);
    
 }
@@ -2400,10 +2411,12 @@ void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
             m_wfeFitting += fittingError(m,n);
          }
 
-         m_wfeNCP += ncpError(m, n);
+        
       }
    }
    
+    m_wfeNCP = ncpError();
+
    m_wfeVar = m_wfeMeasurement + m_wfeTimeDelay  + m_wfeFitting  + m_wfeChromScintOPD +m_wfeChromIndex + m_wfeAnisoOPD + m_wfeNCP;
    
    m_strehl = exp(-1 * m_wfeVar);

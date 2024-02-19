@@ -106,7 +106,23 @@ struct zernikeTemporalPSD
    ///Pointer to an AO system structure.
    aosysT * m_aosys {nullptr};
 
-   realT m_f {0}; ///< the current temporal frequency0
+protected:
+    realT m_apertureRatio {1}; /// Aperture ratio, < 1, used for segments.
+    realT m_apertureRatio4 {1};   /// Aperture ratio ^4 used for calculations
+
+public:
+    void apertureRatio( realT ar )
+    {
+        m_apertureRatio = ar;
+        m_apertureRatio4 = pow(ar,4);
+    }
+
+    realT apertureRatio4()
+    {
+        return m_apertureRatio4;
+    }
+
+   realT m_f {0}; ///< the current temporal frequency
    realT m_zern_j {0}; ///< the current mode number
    int m_zern_m {0}; ///< The current mode m
    int m_zern_n {0}; ///< The current mode n
@@ -336,6 +352,8 @@ int zernikeTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
    zernikeTemporalPSD<realT, aosysT> params(true);
 
    params.m_aosys = m_aosys;
+   params.m_apertureRatio = m_apertureRatio;
+   params.m_apertureRatio4 = m_apertureRatio4;
    params._layer_i = layer_i;
    params.m_zern_j = zern_j;
    sigproc::noll_nm(params.m_zern_n, params.m_zern_m, params.m_zern_j);
@@ -489,24 +507,26 @@ int zernikeTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> & PSD,
 template<typename realT, typename aosysT>
 realT F_zernike (realT kv, void * params)
 {
-   zernikeTemporalPSD<realT, aosysT> * Fp = (zernikeTemporalPSD<realT, aosysT> *) params;
+    zernikeTemporalPSD<realT, aosysT> * Fp = (zernikeTemporalPSD<realT, aosysT> *) params;
 
-   realT f = Fp->m_f;
-   realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
-   realT D = Fp->m_aosys->D();
+    realT f = Fp->m_f;
+    realT v_wind = Fp->m_aosys->atm.layer_v_wind(Fp->_layer_i);
+    realT D = Fp->m_aosys->D();
 
-   realT ku = f/v_wind;
+    realT apertureRatio4 = Fp->apertureRatio4();
 
-   realT phi = atan(kv/ku);
+    realT ku = f/v_wind;
 
-   realT k = sqrt( pow(ku,2) + pow(kv,2) );
+    realT phi = atan(kv/ku);
+
+    realT k = sqrt( pow(ku,2) + pow(kv,2) );
   
-   realT Q2norm = sigproc::zernikeQNorm(k*D/2.0, phi, Fp->m_zern_n, Fp->m_zern_m);
+    realT Q2norm = apertureRatio4 * sigproc::zernikeQNorm(k*D/2.0, phi, Fp->m_zern_n, Fp->m_zern_m);
 
-   realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, k, Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+    realT P =  Fp->m_aosys->psd(Fp->m_aosys->atm, Fp->_layer_i, k, Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
 
 
-   return P*Q2norm ;
+    return P*Q2norm ;
 }
 
 
