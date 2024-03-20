@@ -477,7 +477,7 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
         }
     }
 
-    int modesToReject = S.rows();
+    int modesToReject = 0;
     if(maxCondition < 0) //Rejecting mode numbers
     {
         modesToReject = -maxCondition;
@@ -486,84 +486,126 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> & PInv, ///< [out] The pseud
         {
             maxCondition = Smax/S(modesToReject-1,0);
         }
-        else maxCondition = 0;
     }
 
-   if(interact & MX_PINV_PLOT)
-   {
-      gnuPlot gp;
-      gp.command("set title \"SVD Singular Values\"");
-      gp.logy();
-      gp.plot( S.data(), S.rows(), " w lp", "singular values");
-   }
 
-   if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
-   {
-      dataT mine;
-      std::cout << "Maximum singular value: " << Smax << "\n";
-      std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
-      std::cout << "Enter singular value threshold: ";
-      std::cin >> mine;
-   
-      if(mine > 0)
-      {
-         maxCondition = Smax/mine;
-      }
-      else maxCondition = 0;
-   }
-   else if( interact & MX_PINV_ASK_NMODES)
-   {
-      unsigned mine;
-      std::cout << "Maximum singular value: " << Smax << "\n";
-      std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
-      std::cout << "Enter number of modes to keep: ";
-      std::cin >> mine;
-      modesToReject = mine;
-      if(modesToReject > 0 && modesToReject < S.rows()-1)
-      {
-         maxCondition = Smax/S(modesToReject-1,0);
-      }
-      else maxCondition = 0;
-   }
-   
-   dataT threshold = 0;
-   if(maxCondition > 0)
-   {
-      threshold = Smax/maxCondition;
-   }
-   
-   Eigen::Array<dataT, -1,-1> sigma;
-   sigma.resize(S.rows(), S.rows());
-   sigma.setZero();
-   
-   condition = 1;
-   nRejected = 0;
-
-    for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+    if(interact & MX_PINV_PLOT)
     {
-        
-        if( S(i) >= threshold && i < modesToReject )
+        gnuPlot gp;
+        gp.command("set title \"SVD Singular Values\"");
+        gp.logy();
+        gp.plot( S.data(), S.rows(), " w lp", "singular values");
+    }
+
+    if(interact & MX_PINV_ASK && ! (interact & MX_PINV_ASK_NMODES))
+    {
+        dataT mine;
+        std::cout << "Maximum singular value: " << Smax << "\n";
+        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+        std::cout << "Enter singular value threshold: ";
+        std::cin >> mine;
+   
+        if(mine > 0)
         {
-            sigma(i,i) = 1./S(i);
-            if(Smax/S(i) > condition) condition = Smax/S(i);
+            maxCondition = Smax/mine;
         }
-        else
+        else maxCondition = Smax/S(S.rows()-1,0);
+    }
+    else if( interact & MX_PINV_ASK_NMODES)
+    {
+        unsigned mine;
+        std::cout << "Maximum singular value: " << Smax << "\n";
+        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+        std::cout << "Enter number of modes to keep: ";
+        std::cin >> mine;
+        modesToReject = S.rows() - mine;
+        
+        if(modesToReject <= 0 || modesToReject > S.rows())
         {
-            sigma(i,i) = 0;
-            ++nRejected;
+            modesToReject = 0;
+        }
+
+        maxCondition = -modesToReject;
+
+    }
+
+    Eigen::Array<dataT, -1,-1> sigma;
+    sigma.resize(S.rows(), S.rows());
+    sigma.setZero();
+   
+    nRejected = 0;
+
+    if(maxCondition > 0)
+    {
+        dataT threshold = 0;
+   
+        if(maxCondition > 0)
+        {
+            threshold = Smax/maxCondition;
+        
+            condition = 1;
+
+            for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+            {
+                if( S(i) >= threshold)
+                {
+                    sigma(i,i) = 1./S(i);
+                    if(Smax/S(i) > condition) condition = Smax/S(i);
+                }
+                else
+                {
+                    sigma(i,i) = 0;
+                    ++nRejected;
+                }
+            }
+        }
+    }
+    else //rejecting modes
+    {   
+        std::cerr << "rejecting based on modes\n";
+        std::cerr << " modes to reject: " << modesToReject << "\n";
+        for(MXLAPACK_INT i=0; i< S.rows(); ++i)
+        {
+            if( i < S.rows()-modesToReject )
+            {
+                sigma(i,i) = 1./S(i);
+                if(Smax/S(i) > condition) condition = Smax/S(i);
+            }
+            else
+            {
+                sigma(i,i) = 0;
+                ++nRejected;
+            }
         }
     }
 
-   if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
-   {
-      dataT mine;
-      std::cout << "Modes Rejected: " << nRejected << "\n";
-      std::cout << "Condition Number: " << condition << "\n";
-   }
-   
-   PInv = (VT.matrix().transpose()*sigma.matrix().transpose() ) * U.block(0,0, U.rows(),minMN).matrix().transpose(); 
+    if(interact & MX_PINV_PLOT)
+    {
+        std::cerr << "plotting again\n";
 
-   return 0;
+        std::vector<dataT> vsig(sigma.rows());
+        for(int rr = 0; rr < sigma.rows(); ++rr)
+        {
+            vsig[rr] = sigma(rr,rr);
+        }
+
+        gnuPlot gp;
+        gp.command("set title \"Inverted Singular Values\"");
+        gp.logy();
+        gp.plot( vsig.data(), vsig.size(), " w lp", "inverted singular values");
+    }
+
+
+    if(interact & MX_PINV_ASK  || interact & MX_PINV_ASK_NMODES)
+    {
+        dataT mine;
+        std::cout << "Modes Rejected: " << nRejected << "\n";
+        std::cout << "Condition Number: " << condition << "\n";
+    }
+   
+    PInv = (VT.matrix().transpose()*sigma.matrix().transpose() ) * U.block(0,0, U.rows(),minMN).matrix().transpose(); 
+
+    return 0;
 }
 
 
