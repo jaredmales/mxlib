@@ -1073,19 +1073,19 @@ int fitsFile<dataT>::read( cubeT & cube,
       return -1;
    }
 
-
    //Open the first file to get the dimensions.
    if( fileName(flist[0], 1) < 0) return -1;
 
    long *fpix, *lpix, *inc;
    pixarrs(&fpix, &lpix, &inc);
+ 
+   std::cerr << lpix[0]-fpix[0]+1 << " " << lpix[1]-fpix[1]+1 << " " << lpix[2]-fpix[2]+1 << "\n";
 
-   cube.resize(lpix[0]-fpix[0]+1, lpix[1]-fpix[1]+1, lpix[2]-fpix[2]+1);
-
+   cube.resize(lpix[0]-fpix[0]+1, lpix[1]-fpix[1]+1, flist.size());
+   
    //Now read first image.
    fits_read_subset(m_fptr, fitsType<typename cubeT::Scalar>(), fpix, lpix, inc, (void *) &m_nulval,
                                      (void *) cube.image(0).data(), &m_anynul, &fstatus);
-
 
    if (fstatus && fstatus != 107)
    {
