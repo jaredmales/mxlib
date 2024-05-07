@@ -26,6 +26,10 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#ifndef mx_math_logInterpolator_hpp
+#define mx_math_logInterpolator_hpp
+
+
 #include "../mxException.hpp"
 #include "gslInterpolator.hpp"
 
@@ -45,12 +49,16 @@ namespace math
   *  
   * \ingroup interpolation
   */  
-template<typename realT>
+template<typename interpT>
 class logInterpolator
 {
 
+public:
+
+   typedef typename interpT::realT realT;
+
 protected:
-   gslInterpolator<gsl_interp_linear<realT>> m_interp; ///< The interpolator
+   gslInterpolator<interpT> m_interp; ///< The interpolator
 
    std::vector<realT>  m_logx; ///< Internal storage of the log10 values of the x values
    std::vector<realT>  m_logy; ///< Internal storage of the lgo10 values of the y values
@@ -121,3 +129,6 @@ public:
 
 } //namespace math
 } //namespace mx
+
+#endif //mx_math_logInterpolator_hpp
+

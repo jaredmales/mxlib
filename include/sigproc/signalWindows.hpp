@@ -520,6 +520,77 @@ void tukey2dAnnulus( arrT & filt,                 ///< [in,out] a pre-allocated 
    return tukey2dAnnulus(filt, filt.rows(), filt.cols(), D, eps, alpha, xc, yc);
 }
 
+/** \brief Create a 2-D Tukey window on a rectangle
+  * 
+  * Function to create a 2-D Tukey window on a rectangle.  
+  * 
+  * The shape of the window is controlled by alpha.  alpha = 0 is a rectangle window, alpha=1.0 is the Hann window.
+  * 
+  * See https://en.wikipedia.org/wiki/Window_function
+  *
+  *  \ingroup signal_windows2D
+  */
+template<typename realT>
+void tukey2dSquare( realT *filt, ///< [out] a pre-allocated array of size \p rows x \p cols (column major)
+                    int rows,    ///< [in] the number of rows in filt
+                    int cols,    ///< [in] the number of cols in filt
+                    realT W,     ///< [in] the width of the window, corresponds to rows
+                    realT H,     ///< [in] the height of the window, corresponds to cols
+                    realT alpha, ///< [in] controls the window shape.  1.0 gives a Hann window, 0.0 gives a cylinder (a.k.a. no window)
+                    realT xc,    ///< [in] the desired x center of the window.
+                    realT yc     ///< [in] the desired y center of the window.
+                  )
+{
+   
+    int ii, jj;
+
+    realT W2 = 0.5*(W-1.0);
+    realT H2 = 0.5*(H-1.0);
+
+    realT pi = math::pi<realT>();
+   
+    for(int cc=0; cc<cols; ++cc)
+    {
+        realT y = fabs(( (realT) cc) - yc);
+
+        if( y > H2 + 0.5)
+        {
+            for(int rr=0; rr<rows; ++rr)
+            {
+                filt[cc*rows + rr] = 0;
+            }
+            continue;
+        }
+
+        for(int rr=0; rr<rows; ++rr)
+        {
+            realT x = fabs(( (realT) rr) - xc);
+
+            if( x > W2 + 0.5)
+            {
+                filt[cc*rows + rr] = 0;
+                continue;
+            }
+            else if( (W2 + x > (W-1)*(1-0.5*alpha)) && (H2 + x > (H-1)*(1-0.5*alpha)) && alpha > 0.)
+            {
+                //Have to prevent going greater than N-1 due to half pixel inclusion.
+                realT dx = W2+x;
+                if(dx > W-1) dx = W-1;
+            
+                realT dy = H2+y;
+                if(dy > H-1) dy = H-1;
+
+                filt[cc*rows + rr] = 0.5*(1.0 + cos(pi * ( 2.*(dx)/(alpha*(W-1)) - 2./alpha + 1.0) ));
+                filt[cc*rows + rr] *= 0.5*(1.0 + cos(pi * ( 2.*(dy)/(alpha*(H-1)) - 2./alpha + 1.0) ));
+         }
+         else
+         {
+                filt[cc*rows + rr] = 1.0;
+         }
+      }
+   }
+}
+
 } //namespace window
 } //namespace sigproc 
 } //namespace mx

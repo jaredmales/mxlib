@@ -89,6 +89,10 @@ protected:
    wfs<realT, iosT> * m_wfsBeta {nullptr}; ///< The WFS beta_p class.
    bool m_ownWfsBeta {false}; ///< Flag indicating if the WFS beta_p pointer is owned by this instance.
    
+public:
+   realT m_opticalGain {1};
+
+protected:
    realT m_lam_wfs {0}; ///< WFS wavelength [m]
 
    //WFS detector parameters, which may be a function of binning
@@ -129,7 +133,7 @@ protected:
    bool m_specsChanged {true};///< Flag to indicate that a specification has changed.
    bool m_dminChanged {true};///< Flag to indicate that d_min has changed.
 
-   Eigen::Array<bool,-1,-1> m_controlledModes; ///< Map of which modes are under control.  Set by calcStrehl.
+   Eigen::Array<int,-1,-1> m_controlledModes; ///< Map of which modes are under control.  Set by calcStrehl.
 
    realT m_wfeMeasurement {0}; ///< Total WFE due to measurement a error [rad^2 at m_lam_sci]
    realT m_wfeTimeDelay {0}; ///< Total WFE due to time delay [rad^2 at m_lam_sci]
@@ -244,6 +248,7 @@ public:
      * \returns a pointer to the current m_wfsBeta 
      */ 
    wfs<realT, iosT> * wfsBeta();
+
 
    /// Get the value of beta_p for a spatial frequency
    /** beta_p is the photon noise sensitivity of the WFS.
@@ -557,7 +562,7 @@ public:
      *
      * \returns a const reference to m_controlledModes.
      */
-   const Eigen::Array<bool, -1, -1> & controlledModes();
+   const Eigen::Array<int, -1, -1> & controlledModes();
 
    /** \name Measurement Error
      * Calculating the WFE due to WFS measurement noise.
@@ -1817,7 +1822,7 @@ realT aoSystem<realT, inputSpectT, iosT>::Fg()
 }
 
 template<typename realT, class inputSpectT, typename iosT>
-const Eigen::Array<bool, -1, -1> & aoSystem<realT, inputSpectT, iosT>::controlledModes()
+const Eigen::Array<int, -1, -1> & aoSystem<realT, inputSpectT, iosT>::controlledModes()
 {
    return m_controlledModes;
 }
@@ -1861,8 +1866,8 @@ realT aoSystem<realT, inputSpectT, iosT>::measurementError( realT m,
 
    if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::measurementError", "The WFS is not assigned."); 
    
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs));
-   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, d, atm.r_0(m_lam_wfs));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, d, atm.r_0(m_lam_wfs))/sqrt(m_opticalGain);
+   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, d, atm.r_0(m_lam_wfs));//sqrt(m_opticalGain);
    realT Nph = 0;
    realT snr2 = signal2Noise2( Nph, tau_wfs, d, b );
    
@@ -2062,8 +2067,8 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS( realT m,
 
    if (m_wfsBeta == 0) mxThrowException(err::paramnotset, "aoSystem::beta_p", "The WFS is not assigned."); 
       
-   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_wfs));
-   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, dact, atm.r_0(m_lam_wfs));
+   realT beta_p = m_wfsBeta->beta_p(m,n,m_D, dact, atm.r_0(m_lam_wfs))/sqrt(m_opticalGain);
+   realT beta_r = m_wfsBeta->beta_r(m,n,m_D, dact, atm.r_0(m_lam_wfs))/sqrt(m_opticalGain);
 
    //Set up for root finding:
    realT a, b, c, d, e;

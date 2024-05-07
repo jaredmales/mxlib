@@ -158,7 +158,7 @@ public:
               typename std::enable_if<crank==2>::type* = 0 
             );
 
-   /// Planning routine for rank 2 transforms.
+   /// Planning routine for rank 3 transforms.
    template<int crank = _rank>
    void plan( int nx,                 ///< [in] the desired x size of the FFT
               int ny,                 ///< [in] the desired y size of the FFT

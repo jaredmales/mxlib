@@ -754,41 +754,44 @@ int vectorBinMeans( std::vector<vectorT> & means, ///< [out] the means in each d
   *
   * \tparam realT is the real floating point type of the data.
   */
-template<typename realT>
+template<typename realT, typename fwhmT, typename winhwT>
 int vectorGaussConvolve( std::vector<realT> & dataOut,      ///< [out] The smoothed data vector.  Resized.
                          const std::vector<realT> & dataIn, ///< [in] The data vector to smooth.
                          const std::vector<realT> & scale,  ///< [in] The scale vector used to calculate the kernel.
-                         const realT fwhm,                  ///< [in] The FWHM of the Gaussian kernel, same units as scale.
-                         const int winhw                    ///< [in] The window half-width in pixels.
+                         const fwhmT fwhm,                  ///< [in] The FWHM of the Gaussian kernel, same units as scale.
+                         const winhwT winhw                    ///< [in] The window half-width in pixels.
                        )
 {
 
-   if(dataIn.size() != scale.size()) return -1;
+    if(dataIn.size() != scale.size()) return -1;
 
-   dataOut.resize(dataIn.size());
+    realT _fwhm = fwhm;
+    int _winhw = winhw;
 
-   realT sigma = func::fwhm2sigma<realT>(fwhm);
+    dataOut.resize(dataIn.size());
 
-   for(int i=0; i< dataIn.size(); ++i)
-   {
-      realT G;
-      realT sum = 0;
-      realT norm = 0;
-      for(int j=i-winhw; j<i+winhw; ++j)
-      {
-         if(j < 0) continue;
-         if(j > dataIn.size()-1) continue;
+    realT sigma = func::fwhm2sigma<realT>(_fwhm);
 
-         G = func::gaussian<realT>( scale[j], 0.0, 1.0, scale[i], sigma);
+    for(int i=0; i< dataIn.size(); ++i)
+    {
+        realT G;
+        realT sum = 0;
+        realT norm = 0;
+        for(int j=i-_winhw; j<i+_winhw; ++j)
+        {
+            if(j < 0) continue;
+            if(j > dataIn.size()-1) continue;
 
-         sum += G*dataIn[j];
-         norm += G;
-      }
+            G = func::gaussian<realT>( scale[j], 0.0, 1.0, scale[i], sigma);
 
-      dataOut[i] = sum/norm;
-   }
+            sum += G*dataIn[j];
+            norm += G;
+        }
 
-   return 0;
+        dataOut[i] = sum/norm;
+    }
+
+    return 0;
 }
 
 

@@ -4,7 +4,7 @@
 
 INCLUDES += -I../include
 
-OBJS = testsMain.o \
+OBJS = testMain.o \
        include/ao/analysis/aoAtmosphere_test.o \
        include/ao/analysis/aoSystem_test.o \
        include/ao/analysis/aoPSDs_test.o \
@@ -20,6 +20,7 @@ OBJS = testsMain.o \
        include/sigproc/psdUtils_test.o \
        include/sigproc/psdFilter_test.o \
        include/sigproc/zernike_test.o \
+	   include/sigproc/signalWindows_test.o \
        include/improc/imageTransforms_test.o \
        include/improc/imageUtils_test.o \
        include/sys/timeUtils_test.o \
