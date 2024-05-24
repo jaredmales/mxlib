@@ -27,6 +27,7 @@
 #ifndef improc_imageUtils_hpp
 #define improc_imageUtils_hpp
 
+#include <cstdint>
 
 #include "imageTransforms.hpp"
 

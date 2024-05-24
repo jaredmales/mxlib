@@ -29,6 +29,7 @@
 
 #include <vector>
 #include <complex>
+#include <cstdint>
 
 #include "../mxlib.hpp"
 #include "../mxError.hpp"
