@@ -46,8 +46,10 @@ CFLAGS += -std=c99 -fPIC
 
 #Set to -std=c++14 if 17 not supported
 CXXVERSION ?= -std=c++17
+NVCCXXVERSION ?= -std=c++17
 
 CXXFLAGS += $(CXXVERSION) -fPIC
+NVCCXXFLAGS += $(NVCCXXVERSION) -fPIC
 
 USE_FFT_FROM ?= fftw
 USE_BLAS_FROM ?= openblas
@@ -193,6 +195,7 @@ ifeq ($(NEED_MILK),yes)
 
 	CFLAGS += -DMXLIB_MILK
 	CXXFLAGS += -DMXLIB_MILK
+	NVCCXXFLAGS += -DMXLIB_MILK
 endif
 
 
@@ -224,6 +227,7 @@ LDFLAGS += $(EXTRA_LDFLAGS)
 
 CFLAGS += $(INCLUDES) $(OPTIMIZE)
 CXXFLAGS += $(INCLUDES) $(OPTIMIZE) 
+NVCCXXFLAGS += $(INCLUDES) $(OPTIMIZE) 
 
 #This is needed to force use of g++ for linking
 LINK.o = $(LINK.cc)
@@ -233,6 +237,7 @@ ifeq ($(NEED_CUDA),yes)
    CUDA_INCLUDES ?= -I/usr/local/cuda/include/
 
    CXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES) -DMXLIB_CUDA
+   NVCCXXFLAGS += -DEIGEN_NO_CUDA $(CUDA_INCLUDES) -DMXLIB_CUDA
 
 
    HOST_ARCH   := $(shell uname -m)
@@ -277,7 +282,7 @@ ifeq ($(NEED_CUDA),yes)
    ALL_CCFLAGS :=
    ALL_CCFLAGS += $(NVCCFLAGS)
    ALL_CCFLAGS += $(EXTRA_NVCCFLAGS)
-   ALL_CCFLAGS += $(addprefix -Xcompiler ,$(CXXFLAGS))
+   ALL_CCFLAGS += $(addprefix -Xcompiler ,$(NVCCXXFLAGS))
    ALL_CCFLAGS += $(addprefix -Xcompiler ,$(EXTRA_CCFLAGS))
    ALL_CCFLAGS +=
 

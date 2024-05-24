@@ -266,15 +266,6 @@ template
 int appConfigurator::get<char>( char & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
 
 template
-int appConfigurator::get<char16_t>( char16_t & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<char32_t>( char32_t & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<wchar_t>( wchar_t & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
 int appConfigurator::get<signed char>( signed char & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
 
 template
@@ -328,15 +319,6 @@ int appConfigurator::get<std::string>( std::string & v, const std::string & name
 
 template
 int appConfigurator::get<char>( char & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<char16_t>( char16_t & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<char32_t>( char32_t & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<wchar_t>( wchar_t & v, const std::string & name, size_t i);
 
 template
 int appConfigurator::get<signed char>( signed char & v, const std::string & name, size_t i);
@@ -394,15 +376,6 @@ template
 int appConfigurator::get<char>( char & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
 
 template
-int appConfigurator::get<char16_t>( char16_t & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<char32_t>( char32_t & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<wchar_t>( wchar_t & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
 int appConfigurator::get<signed char>( signed char & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
 
 template
@@ -456,15 +429,6 @@ int appConfigurator::get<std::string>( std::string & v, const std::string & name
 
 template
 int appConfigurator::get<char>( char & v, const std::string & name);
-
-template
-int appConfigurator::get<char16_t>( char16_t & v, const std::string & name);
-
-template
-int appConfigurator::get<char32_t>( char32_t & v, const std::string & name);
-
-template
-int appConfigurator::get<wchar_t>( wchar_t & v, const std::string & name);
 
 template
 int appConfigurator::get<signed char>( signed char & v, const std::string & name);
@@ -522,15 +486,6 @@ template
 int appConfigurator::get<char>( std::vector<char> & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
 
 template
-int appConfigurator::get<char16_t>( std::vector<char16_t> & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<char32_t>( std::vector<char32_t> & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<wchar_t>( std::vector<wchar_t> & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
-
-template
 int appConfigurator::get<signed char>( std::vector<signed char> & v, const std::string & name, size_t i, std::unordered_map<std::string, configTarget> & targets);
 
 template
@@ -584,15 +539,6 @@ int appConfigurator::get<std::string>( std::vector<std::string> & v, const std::
 
 template
 int appConfigurator::get<char>( std::vector<char> & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<char16_t>( std::vector<char16_t> & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<char32_t>( std::vector<char32_t> & v, const std::string & name, size_t i);
-
-template
-int appConfigurator::get<wchar_t>( std::vector<wchar_t> & v, const std::string & name, size_t i);
 
 template
 int appConfigurator::get<signed char>( std::vector<signed char> & v, const std::string & name, size_t i);
@@ -649,15 +595,6 @@ template
 int appConfigurator::get<char>( std::vector<char> & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
 
 template
-int appConfigurator::get<char16_t>( std::vector<char16_t> & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<char32_t>( std::vector<char32_t> & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
-int appConfigurator::get<wchar_t>( std::vector<wchar_t> & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
-
-template
 int appConfigurator::get<signed char>( std::vector<signed char> & v, const std::string & name, std::unordered_map<std::string, configTarget> & targets);
 
 template
@@ -710,15 +647,6 @@ int appConfigurator::get<std::string>( std::vector<std::string> & v, const std::
 
 template
 int appConfigurator::get<char>( std::vector<char> & v, const std::string & name);
-
-template
-int appConfigurator::get<char16_t>( std::vector<char16_t> & v, const std::string & name);
-
-template
-int appConfigurator::get<char32_t>( std::vector<char32_t> & v, const std::string & name);
-
-template
-int appConfigurator::get<wchar_t>( std::vector<wchar_t> & v, const std::string & name);
 
 template
 int appConfigurator::get<signed char>( std::vector<signed char> & v, const std::string & name);
@@ -776,15 +704,6 @@ template
 int appConfigurator::operator()<char>( char & v, const std::string & name);
 
 template
-int appConfigurator::operator()<char16_t>( char16_t & v, const std::string & name);
-
-template
-int appConfigurator::operator()<char32_t>( char32_t & v, const std::string & name);
-
-template
-int appConfigurator::operator()<wchar_t>( wchar_t & v, const std::string & name);
-
-template
 int appConfigurator::operator()<signed char>( signed char & v, const std::string & name);
 
 template
@@ -840,15 +759,6 @@ template
 int appConfigurator::configUnused<char>( char & v, const std::string & key);
 
 template
-int appConfigurator::configUnused<char16_t>( char16_t & v, const std::string & key);
-
-template
-int appConfigurator::configUnused<char32_t>( char32_t & v, const std::string & key);
-
-template
-int appConfigurator::configUnused<wchar_t>( wchar_t & v, const std::string & key);
-
-template
 int appConfigurator::configUnused<signed char>( signed char & v, const std::string & key);
 
 template
@@ -902,15 +812,6 @@ int appConfigurator::configUnused<std::string>( std::string & v, const std::stri
 
 template
 int appConfigurator::configUnused<char>( char & v, const std::string & section, const std::string & keyword);
-
-template
-int appConfigurator::configUnused<char16_t>( char16_t & v, const std::string & section, const std::string & keyword);
-
-template
-int appConfigurator::configUnused<char32_t>( char32_t & v, const std::string & section, const std::string & keyword);
-
-template
-int appConfigurator::configUnused<wchar_t>( wchar_t & v, const std::string & section, const std::string & keyword);
 
 template
 int appConfigurator::configUnused<signed char>( signed char & v, const std::string & section, const std::string & keyword);
