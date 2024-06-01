@@ -89,8 +89,7 @@ protected:
    wfs<realT, iosT> * m_wfsBeta {nullptr}; ///< The WFS beta_p class.
    bool m_ownWfsBeta {false}; ///< Flag indicating if the WFS beta_p pointer is owned by this instance.
    
-public:
-   realT m_opticalGain {1};
+   realT m_opticalGain {1}; ///< The optical gain of the WFS, 0-1. Treated as a sensitivity reduction in measurement noise.  Default 1.
 
 protected:
    realT m_lam_wfs {0}; ///< WFS wavelength [m]
@@ -267,6 +266,19 @@ public:
    realT beta_r( realT m, ///< [in] the spatial frequency index 
                  realT n  ///< [in] the spatial frequency index
                );
+
+   /// Set the value of the Optical Gain.
+   /**
+     */
+   void opticalGain( realT og /**< [in] the new value of m_opticalGain*/ );
+
+   /// Get the value of the optical gain
+   /** Optical gain is applied in the WFS noise calculation
+     *
+     * \returns the current value of m_opticalGain
+     */
+   realT opticalGain();
+
 
    /// Set the value of the WFS wavelength.
    /**
@@ -1395,6 +1407,19 @@ realT aoSystem<realT, inputSpectT, iosT>::beta_r( realT m, realT n)
    return m_wfsBeta->beta_r(m, n, m_D, d_opt(), atm.r_0(m_lam_sci) );
 }
 
+template<typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::opticalGain(realT og)
+{
+    m_opticalGain = og;
+    m_specsChanged = true;
+    m_dminChanged = true;
+}
+
+template<typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::opticalGain()
+{
+    return m_opticalGain;
+}
 
 template<typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::lam_wfs(realT nlam)

@@ -735,10 +735,14 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
 
    fout.close();
 
+   //Make directory
+   std::string psddir = dir + "/psds";
+   mkdir(psddir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
    //Create frequency scale.
    math::vectorScale(freq, N, dFreq, 0);//dFreq); //offset from 0 by dFreq, so f=0 not included
 
-   fn = dir + '/' + "freq.binv";
+   fn = psddir + '/' + "freq.binv";
 
    ioutils::writeBinVector( fn, freq);
 
@@ -768,7 +772,7 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid( const std::string & dir,
          
          multiLayerPSD<false>( PSD, freq, m, n, 1, fmax);
 
-         fname = dir + '/' + "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+         fname = psddir + '/' + "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
 
          ioutils::writeBinVector( fname, PSD);
 
@@ -2134,7 +2138,7 @@ int fourierTemporalPSD<realT, aosysT>::getGridFreq( std::vector<realT> & freq,
                                                      const std::string & dir )
 {
    std::string fn;
-   fn = dir + '/' + "freq.binv";
+   fn = dir + "/psds/freq.binv";
    return ioutils::readBinVector(freq, fn);
 }
 
@@ -2145,7 +2149,7 @@ int fourierTemporalPSD<realT, aosysT>::getGridPSD( std::vector<realT> & psd,
                                                      int n )
 {
    std::string fn;
-   fn = dir + '/' + "psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
+   fn = dir + "/psds/psd_" + ioutils::convertToString(m) + '_' + ioutils::convertToString(n) + ".binv";
    return ioutils::readBinVector(psd, fn);
 }
 
