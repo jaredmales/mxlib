@@ -1824,6 +1824,8 @@ realT aoSystem<realT, inputSpectT, iosT>::Fg()
 template<typename realT, class inputSpectT, typename iosT>
 const Eigen::Array<int, -1, -1> & aoSystem<realT, inputSpectT, iosT>::controlledModes()
 {
+   if(m_specsChanged || m_dminChanged ) calcStrehl();
+
    return m_controlledModes;
 }
 
@@ -2377,6 +2379,11 @@ void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
    {
       for(int n = -m_fit_mn_max; n <= m_fit_mn_max; ++n)
       {
+         if(m == 0 && n == 0) 
+         {
+            continue;
+         }
+
          controlled = false;
          if(m_circularLimit)
          {
@@ -2422,11 +2429,11 @@ void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
    
     m_wfeNCP = ncpError();
 
-   m_wfeVar = m_wfeMeasurement + m_wfeTimeDelay  + m_wfeFitting  + m_wfeChromScintOPD +m_wfeChromIndex + m_wfeAnisoOPD + m_wfeNCP;
+    m_wfeVar = m_wfeMeasurement + m_wfeTimeDelay  + m_wfeFitting  + m_wfeChromScintOPD +m_wfeChromIndex + m_wfeAnisoOPD + m_wfeNCP;
    
-   m_strehl = exp(-1 * m_wfeVar);
+    m_strehl = exp(-1 * m_wfeVar);
    
-   m_specsChanged = false;
+    m_specsChanged = false;
 }
 
 template<typename realT, class inputSpectT, typename iosT>
