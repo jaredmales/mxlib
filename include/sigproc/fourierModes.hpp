@@ -587,13 +587,6 @@ int fourierModeCoordinates( int & m, ///< [out] is the m spatial frequency coord
    return 0;
 }
 
-
-
-
-
-
-
-
 ///Generate a rectangular spatial frequency grid.
 /**
   * \param spf is a vector of fourierModeDef structures, which will be resized and populated.

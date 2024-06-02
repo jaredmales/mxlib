@@ -318,9 +318,9 @@ void ccdDetector<realT>::exposeImage(imageT & out, imageT & in)
 
    if(m_noNoise) return;
 
-   for(int i=0;i<m_rows;++i)
+   for(int j=0; j<m_cols;++j)
    {
-      for(int j=0; j<m_cols;++j)
+      for(int i=0;i<m_rows;++i)   
       {
          realT charge = (out(i,j)*m_qe + m_darkCurrent) * m_expTime + m_cic;
 
@@ -338,16 +338,21 @@ void ccdDetector<realT>::exposeImage(imageT & out, imageT & in)
          {
             m_gammaVar.distribution.param(gamma_param_t{out(i,j), m_gain});
 
-
             out(i,j) = m_gammaVar;
 
          }
 
-         out(i,j) += m_normVar*m_ron;
+         if(m_ron > 0)
+         {
+            out(i,j) += m_normVar*m_ron;
+         }
 
-         if(m_gain > 1) out(i,j) /= m_gain;
+         if(m_gain > 1) 
+         {
+            out(i,j) /= m_gain;
+         }
 
-         out(i,j) = round(out(i,j));
+         //out(i,j) = round(out(i,j));
 
       }
    }

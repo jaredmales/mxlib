@@ -48,7 +48,7 @@ struct wfsImageT
    imageT tipImage;
 };
 
-template<typename _realT, typename _detectorT>
+template<typename _realT, typename m_DetectorT>
 class pyramidSensor
 {
 public:   
@@ -66,15 +66,15 @@ public:
    ///The wavefront sensor detector image type
    //typedef Eigen::Array< realT, Eigen::Dynamic, Eigen::Dynamic> wfsImageT;
    
-   typedef _detectorT detectorT;
+   typedef m_DetectorT detectorT;
    
 protected:   
    
    /* Standard WFS Interface: */
    int m_wfSz; ///< Size of the wavefront in pixels
 
-   int _detRows; ///<The number of rows of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
-   int _detCols; ///<The number of columns of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
+   int m_DetRows; ///<The number of rows of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
+   int m_DetCols; ///<The number of columns of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
 
    realT m_lambda; ///< Central wavelength, in meters
 
@@ -88,18 +88,18 @@ public:
    
 protected:
    
-   int _iTime; ///<Integration time in loop steps
+   int m_iTime; ///<Integration time in loop steps
          
-   int _roTime; ///<Readout time in loop steps
+   int m_roTime; ///<Readout time in loop steps
 
-   realT _simStep; ///<The simulation stepsize in seconds.
+   realT m_simStep; ///<The simulation stepsize in seconds.
 
    
    /* PyWFS Specific: */
    
    realT m_wfPS; ///< Wavefront pixel scale, in meters/pixel
    
-   realT _D; ///< Telescope diameter, in meters
+   realT m_D; ///< Telescope diameter, in meters
    
    /** \name Modulation
      * Pyramid sensor modulation setup
@@ -180,15 +180,15 @@ public:
    std::vector<typename wfsImageT<realT>::imageT> m_th_sensorImage; ///< Thread-local sensor-pupil-plane intensity image  
    
    
-   int _iTime_counter; 
+   int m_iTime_counter; 
    
-   int _reading;
+   int m_reading;
    
-   int _roTime_counter;
+   int m_roTime_counter;
    
    std::vector<wavefrontT> _wavefronts;
    
-   int _lastWavefront;
+   int m_lastWavefront;
    
 public:   
    ///Default c'tor
@@ -215,13 +215,13 @@ public:
    
    ///Get the detector rows  in pixels
    /**
-     * \returns _detRows
+     * \returns m_DetRows
      */ 
    int detRows();
       
    ///Get the detector columns  in pixels
    /**
-     * \returns _detCols
+     * \returns m_DetCols
      */ 
    int detCols();
    
@@ -360,8 +360,8 @@ template<typename realT, typename detectorT>
 pyramidSensor<realT, detectorT>::pyramidSensor()
 {
    m_wfSz = 0;
-   _detRows = 0;
-   _detCols = 0;
+   m_DetRows = 0;
+   m_DetCols = 0;
    m_lambda = 0;
    
    
@@ -370,13 +370,13 @@ pyramidSensor<realT, detectorT>::pyramidSensor()
    
    
    iTime(1);
-   _iTime_counter = 0;
+   m_iTime_counter = 0;
    
-   _reading =0;
-   _roTime = 1;
-   _roTime_counter = 0;
+   m_reading =0;
+   m_roTime = 1;
+   m_roTime_counter = 0;
    
-   _simStep = 0.001;
+   m_simStep = 0.001;
    
    m_opdMaskMade = false;
    
@@ -411,26 +411,26 @@ void pyramidSensor<realT, detectorT>::wfSz(int sz)
 template<typename realT, typename detectorT>
 int pyramidSensor<realT, detectorT>::detRows()
 {
-   return _detRows;
+   return m_DetRows;
 }
 
 
 template<typename realT, typename detectorT>
 int pyramidSensor<realT, detectorT>::detCols()
 {
-   return _detCols;
+   return m_DetCols;
 }
 
 template<typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::detSize(int nrows, int ncols)
 {
-   if( _detRows == nrows && _detCols == ncols) return;
+   if( m_DetRows == nrows && m_DetCols == ncols) return;
    
-   _detRows = nrows;
-   _detCols = ncols;
+   m_DetRows = nrows;
+   m_DetCols = ncols;
    
-   detector.setSize(_detRows, _detCols);
-   detectorImage.image.resize(_detRows, _detCols);
+   detector.setSize(m_DetRows, m_DetCols);
+   detectorImage.image.resize(m_DetRows, m_DetCols);
    
    
 }
@@ -462,7 +462,7 @@ template<typename AOSysT>
 void pyramidSensor<realT, detectorT>::linkSystem(AOSysT & AOSys)
 {
    AOSys.wfs.wfPS(AOSys.m_wfPS);
-   AOSys.wfs.D(AOSys._D);
+   AOSys.wfs.D(AOSys.m_D);
 
 }
 
@@ -482,13 +482,13 @@ void pyramidSensor<realT, detectorT>::wfPS(realT ps)
 template<typename realT, typename detectorT>
 realT pyramidSensor<realT, detectorT>::D()
 {
-   return _D;
+   return m_D;
 }
 
 template<typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::D(realT d)
 {
-   _D = d;
+   m_D = d;
 }
 
 template<typename realT, typename detectorT>
@@ -628,12 +628,12 @@ void pyramidSensor<realT, detectorT>::makeTilts()
     std::cout << "Lambda:  " << m_lambda << "\n";
     std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * 206265. << " (mas/pix)\n";
     std::cout << "Mod. steps: " << m_modSteps << "\n";
-    std::cout << "Mod rad: " << m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) << " (pixels)\n";
+    std::cout << "Mod rad: " << m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) << " (pixels)\n";
 
     for (int i = 0; i < m_modSteps; ++i)
     {
-        dx = m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * cos(0.0 * dang + dang * i);
-        dy = m_modRadius * (m_lambda / _D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * sin(0.0 * dang + dang * i);
+        dx = m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * cos(0.0 * dang + dang * i);
+        dy = m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * sin(0.0 * dang + dang * i);
 
         m_tilts[i].resize(m_wfSz, m_wfSz);
         m_tilts[i].set(std::complex<realT>(0, 1));
@@ -687,7 +687,7 @@ void pyramidSensor<realT, detectorT>::preAllocate()
 template<typename realT, typename detectorT>
 int pyramidSensor<realT, detectorT>::iTime()
 {
-   return _iTime;
+   return m_iTime;
 }
    
 template<typename realT, typename detectorT>
@@ -699,12 +699,12 @@ void pyramidSensor<realT, detectorT>::iTime(int it)
       it = 1;
    }
    
-   _iTime = it;
+   m_iTime = it;
    
-   _wavefronts.resize(_iTime+2);
-   _lastWavefront = -1;
+   _wavefronts.resize(m_iTime+2);
+   m_lastWavefront = -1;
    
-   detector.expTime(_simStep*_iTime);
+   detector.expTime(m_simStep*m_iTime);
    
 }
 
@@ -723,7 +723,7 @@ void pyramidSensor<realT, detectorT>::roTime(int rt)
       rt = 1;
    }
    
-   _roTime = rt;
+   m_roTime = rt;
    
 
 }
@@ -731,16 +731,16 @@ void pyramidSensor<realT, detectorT>::roTime(int rt)
 template<typename realT, typename detectorT>
 realT pyramidSensor<realT, detectorT>::simStep()
 {
-   return simStep;
+   return m_simStep;
 }
 
 template<typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::simStep(realT st)
 {
    
-   _simStep = st;
+   m_simStep = st;
    
-   detector.expTime(_simStep*_iTime);
+   detector.expTime(m_simStep*m_iTime);
    
 
 }
@@ -750,11 +750,11 @@ template<typename realT, typename detectorT>
 bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT & pupilPlane)
 {
    
-   ++_lastWavefront;
-   if(_lastWavefront >= _wavefronts.size()) _lastWavefront = 0;
-   _wavefronts[_lastWavefront].amplitude = pupilPlane.amplitude;
-   _wavefronts[_lastWavefront].phase = pupilPlane.phase;
-   _wavefronts[_lastWavefront].iterNo = pupilPlane.iterNo;
+   ++m_lastWavefront;
+   if(m_lastWavefront >= _wavefronts.size()) m_lastWavefront = 0;
+   _wavefronts[m_lastWavefront].amplitude = pupilPlane.amplitude;
+   _wavefronts[m_lastWavefront].phase = pupilPlane.phase;
+   _wavefronts[m_lastWavefront].iterNo = pupilPlane.iterNo;
    
    //Always skip the first one for averaging to center of iTime.
    if(firstRun)
@@ -763,35 +763,35 @@ bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT & pupilPlane)
       return false;
    }
    
-   ++_iTime_counter;
+   ++m_iTime_counter;
 
    
    bool rv = false;
    
-   if(_reading)
+   if(m_reading)
    {
-      ++_roTime_counter;
+      ++m_roTime_counter;
       
-      if(_roTime_counter >= _roTime)
+      if(m_roTime_counter >= m_roTime)
       {
          detector.exposeImage(detectorImage.image, m_wfsImage.image);
          
          detectorImage.tipImage = wfsTipImage.image;
          detectorImage.iterNo = m_wfsImage.iterNo;
          
-         _roTime_counter = 0;
-         _reading=0;
+         m_roTime_counter = 0;
+         m_reading=0;
          rv = true;
       }
    }
    
-   if( _iTime_counter >= _iTime)
+   if( m_iTime_counter >= m_iTime)
    {
       doSenseWavefront();
-      _iTime_counter = 0;
+      m_iTime_counter = 0;
       
-      _reading = 1;
-      _roTime_counter = 0;
+      m_reading = 1;
+      m_roTime_counter = 0;
    }
 
 
@@ -804,18 +804,20 @@ template<typename realT, typename detectorT>
 bool pyramidSensor<realT, detectorT>::senseWavefrontCal(wavefrontT & pupilPlane)
 {
    
-   _lastWavefront =1;
+   /*m_lastWavefront =1;
 
    _wavefronts[0].amplitude = pupilPlane.amplitude;
    _wavefronts[0].phase = pupilPlane.phase;
    
    _wavefronts[1].amplitude = pupilPlane.amplitude;
    _wavefronts[1].phase = pupilPlane.phase;
-   
+   */
 
    BREAD_CRUMB;
    
-   doSenseWavefront();
+   doSenseWavefront(pupilPlane);
+
+   //doSenseWavefront();
       
    BREAD_CRUMB;
    
@@ -837,7 +839,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
    wavefrontT pupilPlane;
    
    /* Here make average wavefront for now */
-   int _firstWavefront = _lastWavefront - _iTime;
+   int _firstWavefront = m_lastWavefront - m_iTime;
    if(_firstWavefront < 0) _firstWavefront += _wavefronts.size();
    
    pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
@@ -847,7 +849,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
    
    BREAD_CRUMB;
    
-   for(int i=0; i<_iTime; ++i)
+   for(int i=0; i<m_iTime; ++i)
    {
       ++_firstWavefront;
       if( (size_t) _firstWavefront >= _wavefronts.size()) _firstWavefront = 0;
@@ -859,10 +861,10 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
    
    BREAD_CRUMB;
    
-   pupilPlane.amplitude /= (_iTime+1);
-   pupilPlane.phase /= (_iTime+1);
+   pupilPlane.amplitude /= (m_iTime+1);
+   pupilPlane.phase /= (m_iTime+1);
    
-   avgIt /= (_iTime + 1.0);
+   avgIt /= (m_iTime + 1.0);
    
    /*=====================================*/
    doSenseWavefront(pupilPlane);
@@ -897,16 +899,16 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
          m_th_sensorImage[nTh].setZero();
          m_th_focalImage[nTh].setZero();
          
-         complexT * tp_data;
-         complexT * pp_data; 
-         complexT * ti_data; 
-         complexT * fp_data; 
-         complexT * opd_data;
+         complexT * tpm_Data;
+         complexT * ppm_Data; 
+         complexT * tim_Data; 
+         complexT * fpm_Data; 
+         complexT * opdm_Data;
             
-         pp_data = m_pupilPlaneCF.data();
-         tp_data = m_th_tiltedPlane[nTh].data();  
-         fp_data = m_th_focalPlane[nTh].data();
-         opd_data = m_opdMask.data();
+         ppm_Data = m_pupilPlaneCF.data();
+         tpm_Data = m_th_tiltedPlane[nTh].data();  
+         fpm_Data = m_th_focalPlane[nTh].data();
+         opdm_Data = m_opdMask.data();
          
          int nelem = m_wfSz*m_wfSz;
          
@@ -914,14 +916,14 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
          for(int i=0; i < m_modSteps; ++i)
          { 
                
-             ti_data = m_tilts[i].data();
+             tim_Data = m_tilts[i].data();
              
              //---------------------------------------------
              //Apply the modulating tip 
              //---------------------------------------------
              for(int ii=0; ii< nelem; ++ii)
              {
-                tp_data[ii] = pp_data[ii]*ti_data[ii];
+                tpm_Data[ii] = ppm_Data[ii]*tim_Data[ii];
              }
              
              //---------------------------------------------
@@ -939,7 +941,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT & pupilPlane)
              //---------------------------------------------
              for(int ii=0; ii< nelem; ++ii)
              {
-                fp_data[ii] = fp_data[ii]*opd_data[ii];
+                fpm_Data[ii] = fpm_Data[ii]*opdm_Data[ii];
              }
            
              //---------------------------------------------
@@ -999,10 +1001,10 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
       
    int nelem = m_wfSz*m_wfSz;
          
-   complexT * tp_data = tiltedPlane.data();
-   complexT * pp_data = m_pupilPlaneCF.data();
-   complexT * opd_data = m_opdMask.data();
-   complexT * fp_data = focalPlane.data();
+   complexT * tpm_Data = tiltedPlane.data();
+   complexT * ppm_Data = m_pupilPlaneCF.data();
+   complexT * opdm_Data = m_opdMask.data();
+   complexT * fpm_Data = focalPlane.data();
    
    BREAD_CRUMB;
    
@@ -1011,7 +1013,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    //---------------------------------------------
    for(int ii=0; ii< nelem; ++ii)
    {
-      tp_data[ii] = pp_data[ii];
+      tpm_Data[ii] = ppm_Data[ii];
    }
          
    BREAD_CRUMB;
@@ -1029,7 +1031,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT & pupilPl
    //---------------------------------------------
    for(int ii=0; ii< nelem; ++ii)
    {
-      fp_data[ii] = fp_data[ii]*opd_data[ii];
+      fpm_Data[ii] = fpm_Data[ii]*opdm_Data[ii];
    }
    
    
