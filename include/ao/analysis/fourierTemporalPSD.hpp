@@ -882,7 +882,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
         }
     }
     
-    
+    m_aosys->beta_p(1,1);
+
     ipc::ompLoopWatcher<> watcher(nModes*mags.size(), std::cout);
  
     for(size_t s = 0; s < mags.size(); ++s)
@@ -974,6 +975,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
           
             //**>
           
+            /*#pragma omp critical
+            std::cerr << __FILE__ << " " << __LINE__ << "\n";
+*/
             //want to schedule dynamic with small chunks so maximal processor usage,
             //otherwise we can end up with a small number of cores being used at the end
             #pragma omp for schedule(dynamic, 5)
@@ -982,8 +986,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                 //Determine the spatial frequency at this step
                 m = fms[2*i].m;
                 n = fms[2*i].n;
-
-
              
                 if( fabs((realT)m/m_aosys->D()) >= m_aosys->spatialFilter_ku() 
                        || fabs((realT)n/m_aosys->D()) >= m_aosys->spatialFilter_kv() )
@@ -1053,8 +1055,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     
                     if(inside)
                     {
+                        /*#pragma omp critical
+                        std::cerr << "\n" << __FILE__ << " " << __LINE__ << "\n";*/
+
                         //Get the WFS noise PSD (which is already resized to match tfreq)
                         wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
+
+                        /*#pragma omp critical
+                        std::cerr << "\n" << __FILE__ << " " << __LINE__ << "\n";*/
+
 
                         gmax = 0;
                         if(gfixed > 0)

@@ -298,16 +298,24 @@ struct calculatedWFS : public wfs<realT, iosT>
                           realT r0 ///< [in] Fried's parameter
                         )
     {
-        if (m_beta_p.rows() == 0)
+        
+        if (m_beta_p.rows() == 0) 
         {
-            fits::fitsFile<realT> ff;
-            ff.read(m_beta_p, m_beta_p_file);
-
-            if (m_sensitivity)
+            #pragma omp critical //Make sure we don't race in m/t 
             {
-                m_beta_p = 1.0 / m_beta_p;
+                if(m_beta_p.rows() == 0) //Check again after critical locks
+                {
+                    fits::fitsFile<realT> ff;
+                    ff.read(m_beta_p, m_beta_p_file);
+
+                    if (m_sensitivity)
+                    {
+                        m_beta_p = 1.0 / m_beta_p;
+                    }
+                }
             }
         }
+        
 
         int midx = 0.5 * (m_beta_p.rows() - 1.0) + m;
         int nidx = 0.5 * (m_beta_p.cols() - 1.0) + n;
