@@ -156,7 +156,7 @@ struct clAOLinearPredictor
          realT ll = 0, ul = 0;
          gmax_lp = go_lp.maxStableGain(ll,ul);
          if(gmax_lp> m_gmax_lp) gmax_lp = m_gmax_lp;
-         gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
+         gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp, false);
       
          if(printout)
          {
@@ -239,7 +239,7 @@ struct clAOLinearPredictor
       
       realT ll = 0, ul = 0;
       gmax_lp = go_lp.maxStableGain(ll,ul);
-      gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp);
+      gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp, false);
       
       return 0;
    }

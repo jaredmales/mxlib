@@ -982,6 +982,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                 //Determine the spatial frequency at this step
                 m = fms[2*i].m;
                 n = fms[2*i].n;
+
+
              
                 if( fabs((realT)m/m_aosys->D()) >= m_aosys->spatialFilter_ku() 
                        || fabs((realT)n/m_aosys->D()) >= m_aosys->spatialFilter_kv() )
@@ -1007,8 +1009,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
           
                     realT k = sqrt(m*m + n*n)/m_aosys->D();
                     
-                    //Get the WFS noise PSD (which is already resized to match tfreq)
-                    wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
+                    
                     
                     //**< Get the open-loop turb. PSD
                     getGridPSD( tPSDp, psdDir, m, n );
@@ -1048,9 +1049,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     }
                     //**>
                     
+                    //if( !(( m ==-91 && n == 76 ) || (m==-91 && n == 75))) inside = false;
                     
                     if(inside)
                     {
+                        //Get the WFS noise PSD (which is already resized to match tfreq)
+                        wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
+
                         gmax = 0;
                         if(gfixed > 0)
                         {
@@ -1060,10 +1065,29 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                         else 
                         {
                             //Calculate gain using the POL PSD
-                            gopt = go_si.optGainOpenLoop(var, tPSDpPOL, tPSDn, gmax);
+                            gopt = go_si.optGainOpenLoop(var, tPSDpPOL, tPSDn, gmax, true);
                             gopt *= m_opticalGain;
                             //But use the variance from the actual POL
                             var = go_si.clVariance(tPSDp, tPSDn, gopt);
+/*
+                            #pragma omp critical
+                            {
+                                std::string foutn = "gcurve_";
+                                foutn += std::to_string(m) + "_" + std::to_string(n) + ".dat";
+
+                                std::ofstream foutf(foutn);
+
+                                for(size_t n = 0; n < 10000; ++n)
+                                {
+                                    realT gg = (1.0*n)/10000.;
+                                    foutf << gg << " " << go_si.clVariance(tPSDp, tPSDn, gg) << "\n";
+                                }
+
+                                foutf.close();
+
+                                std::cerr << "\n" << gmax << " " << gopt << " " << var << " " << go_si.clVariance(tPSDp, tPSDn, 0.64) << "\n";
+                            }
+                            */
                         }
      
                         var += limVar;
@@ -1089,6 +1113,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     }
                     else
                     {
+                       //Zero the noise PSD
+                       tPSDn.assign(tPSDn.size(), 0.0);
+
                        gopt = 0;
                        var = var0;
                        var_lp = var0;

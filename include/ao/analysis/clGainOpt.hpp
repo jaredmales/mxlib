@@ -310,8 +310,8 @@ public:
      */
    realT clVariance( realT & varErr,                ///< [out] the variance in the residual process error.
                      realT & varNoise,              ///< [out] the variance in the residual measurement noise.
-                     std::vector<realT> & PSDerr,   ///< [in] the open-loop process error PSD.
-                     std::vector<realT> & PSDnoise, ///< [in] the open-loop measurement noise PSD.
+                     const std::vector<realT> & PSDerr,   ///< [in] the open-loop process error PSD.
+                     const std::vector<realT> & PSDnoise, ///< [in] the open-loop measurement noise PSD.
                      realT g                        ///< [in] the gain.
                    );
 
@@ -322,8 +322,8 @@ public:
      *
      * \returns the total variance (error + noise) in closed loop
      */
-   realT clVariance( std::vector<realT> & PSDerr,   ///< [in] the open-loop process error PSD.
-                     std::vector<realT> & PSDnoise, ///< [in] the open-loop measurement noise PSD.
+   realT clVariance( const std::vector<realT> & PSDerr,   ///< [in] the open-loop process error PSD.
+                     const std::vector<realT> & PSDnoise, ///< [in] the open-loop measurement noise PSD.
                      realT g                        ///< [in] the gain.
                    );
 
@@ -373,19 +373,21 @@ public:
    /** Uses _gmax for the upper limit.
      * \returns the optimum gain
      */
-   realT optGainOpenLoop( realT & var,                    ///< [out] the variance at the optimum gain
-                          std::vector<realT> & PSDerr,    ///< [in] open loop error PSD
-                          std::vector<realT> & PSDnoise   ///< [in] open loop measurement noise PSD
+   realT optGainOpenLoop( realT & var,                         ///< [out] the variance at the optimum gain
+                          const std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
+                          const std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
+                          bool gridSearch                      ///< [in] flag controlling whether an intial grid search is done to find the global minimum
                         );
 
    ///Return the optimum closed loop gain given an open loop PSD
    /**
      * \returns the optimum gain.
      */
-   realT optGainOpenLoop( realT & var,                   ///< [out] the variance at the optimum gain
-                          std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
-                          std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
-                          realT & gmax                   ///< [in] maximum gain to consider.  If 0, then _gmax is used.
+   realT optGainOpenLoop( realT & var,                         ///< [out] the variance at the optimum gain
+                          const std::vector<realT> & PSDerr,   ///< [in] open loop error PSD
+                          const std::vector<realT> & PSDnoise, ///< [in] open loop measurement noise PSD
+                          realT & gmax,                        ///< [in] maximum gain to consider.  If 0, then _gmax is used.
+                          bool gridSearch                      ///< [in] flag controlling whether an intial grid search is done to find the global minimum
                         );
    
    ///Calculate the pseudo open-loop PSD given a closed loop PSD
@@ -432,7 +434,7 @@ void clGainOpt<realT>::init()
    _minFindMin = 1e-9;
    _minFindMaxFact = 0.999;
    _minFindBits = std::numeric_limits<realT>::digits;
-   _minFindMaxIter = 1000;
+   _minFindMaxIter = 10000;
 
    _fChanged = true;
    _changed = true;
@@ -845,8 +847,8 @@ void clGainOpt<realT>::clTF2( realT & ETF,
 template<typename realT>
 realT clGainOpt<realT>::clVariance( realT & varErr,
                                     realT & varNoise,
-                                    std::vector<realT> & PSDerr,
-                                    std::vector<realT> & PSDnoise,
+                                    const std::vector<realT> & PSDerr,
+                                    const std::vector<realT> & PSDnoise,
                                     realT g
                                   )
 {
@@ -882,8 +884,8 @@ realT clGainOpt<realT>::clVariance( realT & varErr,
 }
 
 template<typename realT>
-realT clGainOpt<realT>::clVariance( std::vector<realT> & PSDerr,
-                                    std::vector<realT> & PSDnoise,
+realT clGainOpt<realT>::clVariance( const std::vector<realT> & PSDerr,
+                                    const std::vector<realT> & PSDnoise,
                                     realT g
                                   )
 {
@@ -947,11 +949,12 @@ namespace impl
 template<typename realT>
 realT optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
                        realT & var,
-                       realT & gmax,
-                       realT & minFindMin,
-                       realT & minFindMaxFact,
+                       const realT & gmax,
+                       const realT & minFindMin,
+                       const realT & minFindMaxFact,
                        int minFindBits,
-                       uintmax_t minFindMaxIter
+                       uintmax_t minFindMaxIter,
+                       uintmax_t & iters
                      )
 {
    #ifdef MX_INCLUDE_BOOST
@@ -960,7 +963,7 @@ realT optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
    try
    {
       std::pair<realT,realT> brack;
-      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, minFindMaxIter);
+      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, minFindMaxIter, iters);
       gopt = brack.first;
       var = brack.second;
    }
@@ -981,42 +984,46 @@ realT optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
 template<>
 float optGainOpenLoop<float>( clGainOptOptGain_OL<float> & olgo,
                               float & var,
-                              float & gmax,
-                              float & minFindMin,
-                              float & minFindMaxFact,
+                              const float & gmax,
+                              const float & minFindMin,
+                              const float & minFindMaxFact,
                               int minFindBits,
-                              uintmax_t minFindMaxIter
+                              uintmax_t minFindMaxIter,
+                              uintmax_t & iters
                             );
 
 template<>
 double optGainOpenLoop<double>( clGainOptOptGain_OL<double> & olgo,
                                 double & var,
-                                double & gmax,
-                                double & minFindMin,
-                                double & minFindMaxFact,
+                                const double & gmax,
+                                const double & minFindMin,
+                                const double & minFindMaxFact,
                                 int minFindBits,
-                                uintmax_t minFindMaxIter
+                                uintmax_t minFindMaxIter,
+                                uintmax_t & iters
                               );
 
 template<>
 long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> & olgo,
                                           long double & var,
-                                          long double & gmax,
-                                          long double & minFindMin,
-                                          long double & minFindMaxFact,
+                                          const long double & gmax,
+                                          const long double & minFindMin,
+                                          const long double & minFindMaxFact,
                                           int minFindBits,
-                                          uintmax_t minFindMaxIter
+                                          uintmax_t minFindMaxIter,
+                                          uintmax_t & iters
                                         );
 
 #ifdef HASQUAD
 template<>
 __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> & olgo,
                                         __float128 & var,
-                                        __float128 & gmax,
-                                        __float128 & minFindMin,
-                                        __float128 & minFindMaxFact,
+                                        const __float128 & gmax,
+                                        const __float128 & minFindMin,
+                                        const __float128 & minFindMaxFact,
                                         int minFindBits,
-                                        uintmax_t minFindMaxIter
+                                        uintmax_t minFindMaxIter,
+                                        uintmax_t & iters
                                       );
 #endif
 
@@ -1024,19 +1031,23 @@ __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> & olgo,
 
 template<typename realT>
 realT clGainOpt<realT>::optGainOpenLoop( realT & var,
-                                         std::vector<realT> & PSDerr,
-                                         std::vector<realT> & PSDnoise)
+                                         const std::vector<realT> & PSDerr,
+                                         const std::vector<realT> & PSDnoise,
+                                         bool gridSearch
+                                       )
 {
    realT gmax = 0;
-   return optGainOpenLoop(var, PSDerr, PSDnoise, gmax);
+   return optGainOpenLoop(var, PSDerr, PSDnoise, gmax, gridSearch);
 }
 
 
 template<typename realT>
 realT clGainOpt<realT>::optGainOpenLoop( realT & var,
-                                         std::vector<realT> & PSDerr,
-                                         std::vector<realT> & PSDnoise,
-                                         realT & gmax )
+                                         const std::vector<realT> & PSDerr,
+                                         const std::vector<realT> & PSDnoise,
+                                         realT & gmax,
+                                         bool gridSearch
+                                       )
 {
    clGainOptOptGain_OL<realT> olgo;
    olgo.go = this;
@@ -1044,8 +1055,45 @@ realT clGainOpt<realT>::optGainOpenLoop( realT & var,
    olgo.PSDnoise = &PSDnoise;
 
    if(gmax <= 0) gmax = maxStableGain();
+
+   realT ming = _minFindMin;
+   realT maxg = gmax;
+
+   if(gridSearch)
+   {
+      realT gstpsz = 0.05;
+      realT gg = _minFindMaxFact * gmax;
+      realT var0 = clVariance(PSDerr, PSDnoise, gg);
+      realT mingg = gg;
    
-   return impl::optGainOpenLoop( olgo, var, gmax, _minFindMin, _minFindMaxFact, _minFindBits, _minFindMaxIter);
+      while(gg > _minFindMin)
+      {
+         gg -= gstpsz;
+         realT var1 = clVariance(PSDerr, PSDnoise, gg);
+
+         if(var1 < var0)
+         {
+             var0 = var1;
+             mingg = gg;
+         }
+      }
+
+      ming = mingg-gstpsz;
+      maxg = mingg+gstpsz;
+   }
+
+   uintmax_t iters;
+   realT val = impl::optGainOpenLoop( olgo, var, maxg, ming, _minFindMaxFact, _minFindBits, _minFindMaxIter, iters);
+
+   if(iters >= _minFindMaxIter)
+   {
+      #pragma omp critical
+      {
+         std::cerr << "\nclGainOpt<realT>::optGainOpenLoop: minFindMaxIter (" << _minFindMaxIter << ") reached\n";
+      }
+   }
+
+   return val;
 }
 
 template<typename realT>
@@ -1090,8 +1138,8 @@ template<typename realT>
 struct clGainOptOptGain_OL
 {
    clGainOpt<realT> * go;
-   std::vector<realT> * PSDerr;
-   std::vector<realT> * PSDnoise;
+   const std::vector<realT> * PSDerr;
+   const std::vector<realT> * PSDnoise;
 
    realT operator()(const realT & g)
    {

@@ -73,8 +73,10 @@ mxlib.o: .FORCE
 mxError.o: ../include/mxError.hpp ../include/mxException.hpp
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
-ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ao/analysis/aoSystem.o
+ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o ../include/ao/analysis/aoWFS.hpp
+ao/analysis/clGainOpt.o: ../include/ao/analysis/clGainOpt.hpp
+ao/analysis/clAOLinearPredictor.o: ../include/ao/analysis/clAOLinearPredictor.hpp ao/analysis/clGainOpt.o
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ao/analysis/aoSystem.o ao/analysis/clGainOpt.o ao/analysis/clAOLinearPredictor.o
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/clOptions.o: ../include/app/clOptions.hpp

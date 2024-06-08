@@ -43,21 +43,29 @@ namespace impl
 template<typename realT>
 realT _optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
                         realT & var,
-                        realT & gmax,
-                        realT & minFindMin,
-                        realT & minFindMaxFact,
+                        const realT & gmax,
+                        const realT & minFindMin,
+                        const realT & minFindMaxFact,
                         int minFindBits,
-                        uintmax_t minFindMaxIter
+                        uintmax_t minFindMaxIter,
+                        uintmax_t & iters
                       )
 {
    realT gopt;
 
+   iters = minFindMaxIter;
+   
    try
    {
       std::pair<realT,realT> brack;
-      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, minFindMaxIter);
+      brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, iters);
       gopt = brack.first;
       var = brack.second;
+
+      /*#pragma omp critical
+      {
+         std::cerr << "\n" << iters << "\n";
+      }*/
    }
    catch(...)
    {
@@ -72,40 +80,43 @@ realT _optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
 template<>
 float optGainOpenLoop<float>( clGainOptOptGain_OL<float> & olgo,
                               float & var,
-                              float & gmax,
-                              float & minFindMin,
-                              float & minFindMaxFact,
+                              const float & gmax,
+                              const float & minFindMin,
+                              const float & minFindMaxFact,
                               int minFindBits,
-                              uintmax_t minFindMaxIter
+                              uintmax_t minFindMaxIter,
+                              uintmax_t & iters
                             )
 {
-   return _optGainOpenLoop<float>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
+   return _optGainOpenLoop<float>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters);
 }
 
 template<>
 double optGainOpenLoop<double>( clGainOptOptGain_OL<double> & olgo,
                                 double & var,
-                                double & gmax,
-                                double & minFindMin,
-                                double & minFindMaxFact,
+                                const double & gmax,
+                                const double & minFindMin,
+                                const double & minFindMaxFact,
                                 int minFindBits,
-                                uintmax_t minFindMaxIter
+                                uintmax_t minFindMaxIter,
+                                uintmax_t & iters
                               )
 {
-   return _optGainOpenLoop<double>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
+   return _optGainOpenLoop<double>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters);
 }
  
 template<>
 long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> & olgo,
                                           long double & var,
-                                          long double & gmax,
-                                          long double & minFindMin,
-                                          long double & minFindMaxFact,
+                                          const long double & gmax,
+                                          const long double & minFindMin,
+                                          const long double & minFindMaxFact,
                                           int minFindBits,
-                                          uintmax_t minFindMaxIter
+                                          uintmax_t minFindMaxIter,
+                                          uintmax_t & iters
                                         )
 {
-   return _optGainOpenLoop<long double>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
+   return _optGainOpenLoop<long double>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters);
 }
 
 #ifdef HASQUAD
@@ -116,10 +127,11 @@ __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> & olgo,
                                           __float128 & minFindMin,
                                           __float128 & minFindMaxFact,
                                           int minFindBits,
-                                          uintmax_t minFindMaxIter
+                                          uintmax_t minFindMaxIter,
+                                          uintmax_t iters
                                         )
 {
-   return _optGainOpenLoop<__float128>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter);
+   return _optGainOpenLoop<__float128>(olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters);
 }
 #endif
 
