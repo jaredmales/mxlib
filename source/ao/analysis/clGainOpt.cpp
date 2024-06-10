@@ -61,11 +61,6 @@ realT _optGainOpenLoop( clGainOptOptGain_OL<realT> & olgo,
       brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(olgo, minFindMin, minFindMaxFact*gmax, minFindBits, iters);
       gopt = brack.first;
       var = brack.second;
-
-      /*#pragma omp critical
-      {
-         std::cerr << "\n" << iters << "\n";
-      }*/
    }
    catch(...)
    {

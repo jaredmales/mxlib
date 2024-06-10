@@ -330,6 +330,7 @@ public:
                        int mnCon,                          ///< [in]  the maximum value of m and n which can be controlled.
                        realT gfixed,                       ///< [in]  if \> 0 then this fixed gain is used in the SI.
                        int lpNc,                           ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
+                       realT lpRegPrecision,               ///< [in]  the initial precision for the LP regularization algorithm.  Normal value is 2.  Higher is faster. Decrease if getting stuck in local minima.  
                        std::vector<realT> & mags,          ///< [in]  the guide star magnitudes to analyze for.
                        int lifetimeTrials = 0,             ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0, lifetimes are not calculated. 
                        bool uncontrolledLifetimes = false, ///< [in]  [optional] flag controlling whether lifetimes are calculated for uncontrolled modes.
@@ -788,6 +789,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                                        int mnCon,
                                                        realT gfixed,
                                                        int lpNc,
+                                                       realT lpRegPrecision,
                                                        std::vector<realT> & mags,
                                                        int lifetimeTrials,
                                                        bool uncontrolledLifetimes,
@@ -819,10 +821,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
     fout << "#    uncontrolledLifetimes = " << uncontrolledLifetimes << '\n';
     fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
     fout << "#    writeXfer = " << std::boolalpha << writeXfer << '\n';
- 
-    //fout << "#    intTimes = ";
-    //for(int i=0; i<intTimes.size()-1; ++i) fout << intTimes[i] << ",";
-    //fout << intTimes[intTimes.size()-1] << '\n';
  
     fout.close();
  
@@ -935,6 +933,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
  
             //**< Setup the controllers
             mx::AO::analysis::clAOLinearPredictor<realT> tflp;
+            tflp.m_precision0 = lpRegPrecision;
+            
             mx::AO::analysis::clGainOpt<realT> go_si(tauWFS, deltaTau);
             mx::AO::analysis::clGainOpt<realT> go_lp(tauWFS, deltaTau);
  
@@ -1051,19 +1051,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     }
                     //**>
                     
-                    //if( !(( m ==-91 && n == 76 ) || (m==-91 && n == 75))) inside = false;
+                    /* This is to select specific points for troubleshooting*/
+                    //if( !( ( m ==-2 && n == 84 ) || (m==-2 && n == 2800)) ) inside = false;
                     
                     if(inside)
                     {
-                        /*#pragma omp critical
-                        std::cerr << "\n" << __FILE__ << " " << __LINE__ << "\n";*/
-
                         //Get the WFS noise PSD (which is already resized to match tfreq)
                         wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
-
-                        /*#pragma omp critical
-                        std::cerr << "\n" << __FILE__ << " " << __LINE__ << "\n";*/
-
 
                         gmax = 0;
                         if(gfixed > 0)
@@ -1078,8 +1072,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                             gopt *= m_opticalGain;
                             //But use the variance from the actual POL
                             var = go_si.clVariance(tPSDp, tPSDn, gopt);
-/*
-                            #pragma omp critical
+
+                            //Output gain curve for this mode (for troubleshooting)
+                            /*#pragma omp critical
                             {
                                 std::string foutn = "gcurve_";
                                 foutn += std::to_string(m) + "_" + std::to_string(n) + ".dat";
@@ -1095,15 +1090,17 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                                 foutf.close();
 
                                 std::cerr << "\n" << gmax << " " << gopt << " " << var << " " << go_si.clVariance(tPSDp, tPSDn, 0.64) << "\n";
-                            }
-                            */
+                            }*/
+                            
                         }
      
                         var += limVar;
                        
                         if(doLP)
                         {
+
                             tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDpPOL, tPSDn, lpNc);
+
                             for(int n=0; n< lpNc; ++n) 
                             {
                                 lpC(i,n) = go_lp.a(n);
@@ -1135,17 +1132,13 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     
                     //**< Determine if closed-loop is making a difference:
                     
-                    //mult used to be 1.3 when using the vonKarman PSD instead of open-loop integral
-                    // 1.3 was a hack since we haven't yet done the convolution...
-                    
-                    realT mult = 1;
-                    if(gopt > 0 && var > mult*var0)
+                    if(gopt > 0 && var > var0)
                     {
                        gopt = 0;
                        var = var0;
                     }
                     
-                    if(gopt_lp > 0 && var_lp > mult*var0)
+                    if(gopt_lp > 0 && var_lp > var0)
                     {
                        gopt_lp = 0;
                        var_lp = var0;
@@ -1386,23 +1379,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
  
        fn = dir + "/varmap_" + ioutils::convertToString(mags[s]) + "_si.fits";
        ff.write( fn, vars);
- 
- 
-       //Perform convolution for uncontrolled modes
-       /*mx::AO::analysis::varmapToImage(cim, vars, psf);
- 
-       //Now switch to uncovolved variance for controlled modes
-       for(int m=0; m<= mnMax; ++m)
-       {
-          for(int n=-mnMax; n<= mnMax; ++n)
-          {
-             if(gains(mnMax + m, mnMax + n) > 0)
-             {
-                cim( mnMax + m, mnMax + n) = vars( mnMax + m, mnMax + n);
-                cim( mnMax - m, mnMax - n ) = vars( mnMax + m, mnMax + n);
-             }
-          }
-       }*/
+  
        cim = vars;
  
        realT S = exp(-1*cim.sum());

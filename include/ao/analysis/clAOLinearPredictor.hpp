@@ -49,7 +49,7 @@ struct clAOLinearPredictor
    
    realT m_min_var0 {0};
    realT m_min_sc0 {10};
-   realT m_precision0 {10};
+   realT m_precision0 {2};
    realT m_max_sc0 {100};
    realT m_dPrecision {3};
    
@@ -90,7 +90,6 @@ struct clAOLinearPredictor
 
       ac.resize(psd2s.size());
    
-      //#pragma omp critical
       acpsd(ac, psd2s);
 
       return lp.calcCoefficients(ac, Nc, condition, extrap);
@@ -107,7 +106,7 @@ struct clAOLinearPredictor
      * On subsequent calls, when min_var and min_sc are passed back in
      *     loop over scale factors from min_sc-precision to max_sc in steps of 
      */ 
-   template< bool printout=false>
+   template< bool printout>
    int _regularizeCoefficients( realT & min_var,           ///< [in.out] the minimum variance found.  Set to 0 on initial call
                                 realT & min_sc,            ///< [in.out] the scale factor at the minimum variance.
                                 realT precision,           ///< [in] the step-size for the scale factor
@@ -124,7 +123,7 @@ struct clAOLinearPredictor
       
       realT sc0;
       
-      realT last_var;
+      //realT last_var;
       
       
       
@@ -133,13 +132,13 @@ struct clAOLinearPredictor
       {
          sc0 = min_sc;  
          min_var = std::numeric_limits<realT>::max();
-         last_var = std::numeric_limits<realT>::max();
+         //last_var = std::numeric_limits<realT>::max();
       }
       else
       {
          sc0 = min_sc - precision*m_dPrecision;
          //sc0 = min_sc;  
-         last_var = min_var;
+         //last_var = min_var;
       }
 
       //auto it = std::max_element(std::begin(PSDt), std::end(PSDt));
@@ -155,7 +154,11 @@ struct clAOLinearPredictor
          
          realT ll = 0, ul = 0;
          gmax_lp = go_lp.maxStableGain(ll,ul);
-         if(gmax_lp> m_gmax_lp) gmax_lp = m_gmax_lp;
+         if( gmax_lp > m_gmax_lp ) 
+         {
+            gmax_lp = m_gmax_lp;
+         }
+
          gopt_lp = go_lp.optGainOpenLoop(var_lp, PSDt, PSDn, gmax_lp, false);
       
          if(printout)
@@ -170,9 +173,9 @@ struct clAOLinearPredictor
          }
    
          //A jump by a factor of 10 indicates the wall
-         if( var_lp/last_var > 10 ) return 0;
+         if( var_lp > 10 * min_var ) return 0;
          
-         last_var = var_lp;
+         //last_var = var_lp;
       }
       
       return -1;
@@ -249,7 +252,7 @@ struct clAOLinearPredictor
      * 
      * \tparam printout if true then the results are printed to stdout as they are calculated.
      */
-   template< bool printout=false>
+   template< bool printout = false>
    int optimizeNc( realT & gmax_lp,           ///< [out] the maximum gain calculated for the regularized PSD
                                realT & gopt_lp,           ///< [out] the optimum gain calculated for the regularized PSD
                                int & Nc,

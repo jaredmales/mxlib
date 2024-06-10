@@ -1080,6 +1080,9 @@ realT clGainOpt<realT>::optGainOpenLoop( realT & var,
 
       ming = mingg-gstpsz;
       maxg = mingg+gstpsz;
+
+      if(ming < _minFindMin) ming = _minFindMin;
+      if(maxg > gmax) maxg = gmax;
    }
 
    uintmax_t iters;
@@ -1087,7 +1090,7 @@ realT clGainOpt<realT>::optGainOpenLoop( realT & var,
 
    if(iters >= _minFindMaxIter)
    {
-      #pragma omp critical
+      //#pragma omp critical
       {
          std::cerr << "\nclGainOpt<realT>::optGainOpenLoop: minFindMaxIter (" << _minFindMaxIter << ") reached\n";
       }
