@@ -1427,7 +1427,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
   
        cim = vars;
  
-       realT S_si = exp(-1*cim.sum());
+       realT Ssi = exp(-1*cim.sum());
        S_si.push_back(strehl);
        cim /= strehl;
  
@@ -1456,9 +1456,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
           cim = vars_lp;
  
           //Scale Strehl by the ratio of total variance
-          realT S_lp = strehl*exp(-1*cim.sum())/S_si; //This is a hack until we do a real fitting error calculation or something
-          S_lp.push_back(S_lp);
-          cim /= S_lp;
+          realT Slp = strehl*exp(-1*cim.sum())/Ssi; //This is a hack until we do a real fitting error calculation or something
+          S_lp.push_back(Slp);
+          cim /= Slp;
  
           fn = dir + "/contrast_" + ioutils::convertToString(mags[s]) + "_lp.fits";
           ff.write( fn, cim);
