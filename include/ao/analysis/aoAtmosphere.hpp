@@ -823,7 +823,7 @@ std::vector<realT> aoAtmosphere<realT>::alpha()
 }
 
 template<typename realT>
-realT aoAtmosphere<realT>::beta(const size_t & n)
+realT aoAtmosphere<realT>::beta( const size_t & n )
 {
    if(!m_nonKolmogorov)
    {

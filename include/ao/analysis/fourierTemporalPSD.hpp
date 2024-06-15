@@ -128,7 +128,8 @@ struct fourierTemporalPSD
     realT m_sq {0}; ///< The sine of the wind direction
     realT m_spatialFilter  {false}; ///< Flag indicating if a spatial filter is applied
    
-    realT m_opticalGain {1.0};
+    bool m_strehlOG {false};
+    bool m_uncorrectedOG {false};
 
     realT m_f0 {0}; ///< the Berdja boiling parameter
 
@@ -886,6 +887,42 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
  
     for(size_t s = 0; s < mags.size(); ++s)
     {
+        m_aosys->starMag(mags[s]);
+
+        //In non-parallel space calculate OG=Strehl
+
+        realT opticalGain {1.0};
+
+        if(m_strehlOG)
+        {
+            // Iterative optical gain
+            /// \todo need upstream NCP and CP NCP and NCP NCP
+            realT ncp = m_aosys->ncp_wfe(); // save ncp and then set it to zero for this part.
+            m_aosys->ncp_wfe(0);
+
+            realT lam_sci = m_aosys->lam_sci();
+            m_aosys->lam_sci(m_aosys->lam_wfs());
+
+            realT S = m_aosys->strehl();
+            std::cerr << S << "\n";
+
+            for(int s = 0; s < 4; ++s)
+            {
+                m_aosys->opticalGain(S);
+                m_aosys->optd(m_aosys->optd()); // just trigger a re-calc
+                S = m_aosys->strehl();
+                std::cerr << S << "\n";
+            }
+            
+            opticalGain = S;
+
+            m_aosys->lam_sci(lam_sci);
+            m_aosys->ncp_wfe(ncp);
+        }
+
+        m_aosys->optd(m_aosys->optd()); // just trigger a re-calc
+        realT strehl = m_aosys->strehl();
+
         #pragma omp parallel
         {
             realT localMag = mags[s];
@@ -1029,12 +1066,22 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     
                     //And now determine the variance which has been erased.
                     //limVar is the out-of-band variance, which we add back in for completeness
-                    realT limVar = var0 - sigproc::psdVar( tfreq, tPSDp);
+                    realT limVar = 0;//var0 - sigproc::psdVar( tfreq, tPSDp);
 
                     //And construct the POL psd
-                    for(size_t n =0; n < tPSDp.size(); ++n)
+                    if(m_uncorrectedOG)
                     {
-                        tPSDpPOL[n] = tPSDp[n]*pow(m_opticalGain,2);
+                        for(size_t n =0; n < tPSDp.size(); ++n)
+                        {
+                            tPSDpPOL[n] = tPSDp[n]*pow(opticalGain,2);
+                        }
+                    }
+                    else
+                    {
+                        for(size_t n =0; n < tPSDp.size(); ++n)
+                        {
+                            tPSDpPOL[n] = tPSDp[n];
+                        }
                     }
                     //**>
                     
@@ -1057,7 +1104,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     if(inside)
                     {
                         //Get the WFS noise PSD (which is already resized to match tfreq)
-                        wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n), m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
+                        wfsNoisePSD<realT>( tPSDn, m_aosys->beta_p(m,n)/sqrt(opticalGain), 
+                                               m_aosys->Fg(localMag), tauWFS, m_aosys->npix_wfs((size_t) 0), 
+                                                       m_aosys->Fbg((size_t) 0), m_aosys->ron_wfs((size_t) 0));
 
                         gmax = 0;
                         if(gfixed > 0)
@@ -1069,7 +1118,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                         {
                             //Calculate gain using the POL PSD
                             gopt = go_si.optGainOpenLoop(var, tPSDpPOL, tPSDn, gmax, true);
-                            gopt *= m_opticalGain;
+
+                            if(m_uncorrectedOG)
+                            {
+                                gopt *= opticalGain;
+                            }
+
                             //But use the variance from the actual POL
                             var = go_si.clVariance(tPSDp, tPSDn, gopt);
 
@@ -1105,9 +1159,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                             {
                                 lpC(i,n) = go_lp.a(n);
                             }
-                            go_lp.aScale(m_opticalGain);
-                            go_lp.bScale(m_opticalGain);
-                            gopt_lp *= m_opticalGain;
+                            if(m_uncorrectedOG)
+                            {
+                                go_lp.aScale(opticalGain);
+                                go_lp.bScale(opticalGain);
+                                gopt_lp *= opticalGain;
+                            }
 
                             var_lp = go_lp.clVariance(tPSDp, tPSDn, gopt_lp);
                             var_lp += limVar;
@@ -1159,7 +1216,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                     vars_lp( mnMax - m, mnMax - n ) = var_lp;
                     //**>
                      
-                    //**< Calulcate Speckle Lifetimes
+                    //**< Calculate Speckle Lifetimes
                     if( (lifetimeTrials > 0 || writeXfer) && ( uncontrolledLifetimes || inside ))
                     {
                         std::vector<realT> spfreq, sppsd;
@@ -1311,8 +1368,6 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
                       ioutils::writeBinVector(psdOutFile, tfreqHF);
                    }
                    
-                   
-                   
                    if(doLP)
                    {
                       psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString(mags[s]) + "_lp/";
@@ -1361,17 +1416,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
           } //omp for i..nModes
        }//omp Parallel
  
-       Eigen::Array<realT, -1,-1> cim, psf;
- 
-       //Create Airy PSF for convolution with variance map.
-       psf.resize(77,77);
-       for(int i=0;i<psf.rows();++i)
-       {
-          for(int j=0;j<psf.cols();++j)
-          {
-             psf(i,j) = mx::math::func::airyPattern(sqrt( pow( i-floor(.5*psf.rows()),2) + pow(j-floor(.5*psf.cols()),2)));
-          }
-       }
+       Eigen::Array<realT, -1,-1> cim;
  
        fits::fitsFile<realT> ff;
        std::string fn = dir + "/gainmap_" + ioutils::convertToString(mags[s]) + "_si.fits";
@@ -1382,9 +1427,9 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
   
        cim = vars;
  
-       realT S = exp(-1*cim.sum());
-       S_si.push_back(S);
-       cim /= S;
+       realT S_si = exp(-1*cim.sum());
+       S_si.push_back(strehl);
+       cim /= strehl;
  
        fn = dir + "/contrast_" + ioutils::convertToString(mags[s]) + "_si.fits";
        ff.write( fn, cim);
@@ -1408,25 +1453,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string & subDi
           fn = dir + "/varmap_" + ioutils::convertToString(mags[s]) + "_lp.fits";
           ff.write( fn, vars_lp);
  
-          /*mx::AO::analysis::varmapToImage(cim, vars_lp, psf);
- 
-          //Now switch to unconvolved variance for controlled modes
-          for(int m=0; m<= mnMax; ++m)
-          {
-             for(int n=-mnMax; n<= mnMax; ++n)
-             {
-                if(gains_lp(mnMax + m, mnMax + n) > 0)
-                {
-                   cim( mnMax + m, mnMax + n) = vars_lp( mnMax + m, mnMax + n);
-                   cim( mnMax - m, mnMax - n ) = vars_lp( mnMax + m, mnMax + n);
-                }
-             }
-          }*/
           cim = vars_lp;
  
-          realT S = exp(-1*cim.sum());
-          S_lp.push_back(S);
-          cim /= S;
+          //Scale Strehl by the ratio of total variance
+          realT S_lp = strehl*exp(-1*cim.sum())/S_si; //This is a hack until we do a real fitting error calculation or something
+          S_lp.push_back(S_lp);
+          cim /= S_lp;
  
           fn = dir + "/contrast_" + ioutils::convertToString(mags[s]) + "_lp.fits";
           ff.write( fn, cim);
@@ -1789,19 +1821,6 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD( const std::string & subDir,
          improc::eigenCube<realT> spTSlp;
          spTSlp.resize(2*mnMax+1, 2*mnMax+1, tform1.size());
          
-         //Prepare PSF for the convolution
-         improc::eigenImage<realT> psf, im, im0;
-         psf.resize(7,7);
-         for(int cc =0; cc<psf.cols(); ++cc)
-         {
-            for(int rr=0;rr<psf.rows();++rr)
-            {
-               realT x = sqrt( pow(rr - 0.5*(psf.rows()-1),2) + pow(cc - 0.5*(psf.cols()-1),2));
-               psf(rr,cc) = mx::math::func::airyPattern(x);
-            }
-         }
-         psf /= psf.maxCoeff();
-            
          //Here's where the big loop of n-trials should start
          #pragma omp for
          for(int zz=0; zz<lifetimeTrials; ++zz)
@@ -1976,17 +1995,6 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD( const std::string & subDir,
                
             }
                
-            
-            /*********************************************************************/
-            // 2.4)  Convolve with PSF
-            /*********************************************************************/
-            //#pragma omp parallel for
-            /*for(int pp=0; pp < spTS.planes(); ++pp)
-            {
-               im0 = spTS.image(pp);
-               varmapToImage(im, im0, psf);
-               spTS.image(pp) = im;
-            }*/
             
             /*********************************************************************/
             // 2.5)  Calculate speckle PSD for each mode
