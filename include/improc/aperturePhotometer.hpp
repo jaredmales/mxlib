@@ -102,7 +102,7 @@ public:
      * \overload
      * 
      * \returns 0 on success
-     * \returns -1 on error 
+     * \returns -1 on error f
      */
    int resize( int sizeX, ///< [in] The new size in rows
                int sizeY  ///< [in] The new size in columns
@@ -287,8 +287,8 @@ int aperturePhotometer<realT>::cumPhotWork( std::vector<realT> & cumPhot,
                                             realT maxr                
                                           )
 {
-   realT xcen = 0.5*(m_indexIm.rows()-1);
-   realT ycen = 0.5*(m_indexIm.cols()-1);
+   realT xcen = m_xcen;//0.5*(m_indexIm.rows()-1);
+   realT ycen = m_ycen;//0.5*(m_indexIm.cols()-1);
    
    if(maxr <= 0) maxr = m_radius.back();
    

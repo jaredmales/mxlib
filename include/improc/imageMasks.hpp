@@ -447,8 +447,8 @@ void maskCircle( arrayT & m,                          ///< [in.out] the image to
 }   
 
 /// Mask an ellipse in an image.
-/** The ellipse is describe by its center coordinates and x and y direction radii (the semi-major and -minor axes, in either order). Any value can be set for the mask,
-  * with 0 being the default.
+/** The ellipse is describe by its center coordinates and x and y direction radii (the semi-major and -minor axes, 
+  * in either order). Any value can be set for the mask,cwith 0 being the default.
   * 
   * \tparam arrayT is an Eigen-like type.
   * 
@@ -504,6 +504,45 @@ void maskEllipse( arrayT & m,                         ///< [in.out] the image to
    }
 }   
 
+/// Mask a wedge in an image.
+/** The wedge is describe by its center coordinate, central angle, and angular half-width. Any value can be set for the mask.
+  * Pixels outside the masked circle are not altered.
+  * 
+  * \tparam arrayT is an Eigen-like type.
+  * 
+  * \ingroup image_masks
+  */
+template<class arrayT> 
+void maskWedge( arrayT & m,                          ///< [in.out] the image to be masked, is modified.
+                typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
+                typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
+                typename arrayT::Scalar angCen,      ///< [in] the central angle of the wedge, in degrees
+                typename arrayT::Scalar angHW,       ///< [in] the angular half-wdith of the wedge, in degrees
+                typename arrayT::Scalar val = 0      ///< [in] [optional] the mask value.  Default is 0.
+              )
+{
+   size_t l0 = m.rows();
+   size_t l1 = m.cols();
+   
+   typedef typename arrayT::Scalar angleT;
+   
+   angleT dang;
+   
+   for(size_t c=0; c < m.cols(); c++)
+   {
+      for(size_t r=0; r < m.rows(); r++)
+      {
+         
+         dang = math::angleDiff<math::degreesT<angleT>>(math::rtod(atan2( c-ycen, r-xcen )), angCen);
+         
+
+         if( dang > -angHW && dang <= angHW)
+         {
+            m(r,c) = val;
+         }
+      }
+   }
+}
 
 ///Draw a thin (1-pixel) line from one point to another.
 /** Calculates the line connecting the two points and sets the pixels along that line to the 
@@ -514,7 +553,7 @@ void maskEllipse( arrayT & m,                         ///< [in.out] the image to
   * \ingroup image_masks
   */  
 template<typename realT>
-int drawLine( eigenImage<realT> & mask, ///< [in.out] [pre-allocated] The array in which to draw the line.
+int drawLine( eigenImage<realT> & mask, ///< [in/out] [pre-allocated] The array in which to draw the line.
               realT x0,                 ///< [in] The x coordinate of the first point
               realT y0,                 ///< [in] The y coordinate of the first point
               realT x1,                 ///< [in] The x coordinate of the second point

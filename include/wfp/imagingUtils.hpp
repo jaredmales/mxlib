@@ -272,34 +272,82 @@ void tiltWavefront( wavefrontT & complexWavefront,
    }
 }
 
-template< typename imageT1, typename imageT2>
-void extractBlock(imageT1 & im,
-                  int imX0,
-                  int imXsz,
-                  int imY0,
-                  int imYsz,
-                  imageT2 & wf,
-                  int wfX0,
-                  int wfY0)
+/// Extract a block from one image and insert it into a second
+template< typename imageT1, 
+          typename imageT2
+        >
+void extractBlock(imageT1 & dest, ///< [in/out] the image in which to place the extracted block.  Must be pre-allocated.
+                  int imX0,     ///< [in] the x/row-coord of the lower left pixel of the destination region.
+                  int imXsz,    ///< [in] the x size (number of rows) of the block
+                  int imY0,     ///< [in] the y/col-coord of the lower left pixel of the desination region
+                  int imYsz,    ///< [in] the y=size (number of cols) ov the block
+                  imageT2 & src, ///< [in] the source of the block.  Must be large enough.
+                  int wfX0,     ///< [in] the x/row-coord of the lower left pixel of the source region
+                  int wfY0)     ///< [in] the y/col-coord of the lower left pixel of the source region
 {
-   int im_rows = im.cols();
+   int dest_cols = dest.cols();
    
-   int wf_rows = wf.cols();
+   int src_cols = src.cols();
    
    typedef typename imageT1::Scalar dataT;
    
-   dataT * im_data;
-   dataT * wf_data;
+   dataT * dest_data;
+   dataT * src_data;
    
    
 
    for(int j =0; j< imYsz; ++j)
    {
-      im_data = &im.data()[imX0 + (imY0+j)*im_rows];
-      wf_data = &wf.data()[wfX0 + (wfY0+j)*wf_rows];
+      dest_data = &dest.data()[imX0 + (imY0+j)*dest_cols];
+      src_data = &src.data()[wfX0 + (wfY0+j)*src_cols];
       
-      memcpy( im_data, wf_data, sizeof(dataT)*imXsz);
+      memcpy( dest_data, src_data, sizeof(dataT)*imXsz);
    }
+}
+
+/// Extract a pixels from one image and insert them into a second based on a mask
+/** Only pixels with a non-zero value in mask are changed in dest to have the value in src.  Other pixels are not   
+  * modified.
+  */
+template< typename imageT1, 
+          typename imageT2,
+          typename imageT3
+        >
+void extractMaskedPixels( imageT1 & dest,      ///< [in/out] the image in which to place the extracted pixels.  Must be the same size as src and mask.
+                          const imageT2 & src, ///< [in] the source of the pixels.  Must be the same size as mask.
+                          const imageT3 & mask ///< [in] the mask image, where any value other than 0 indicates a pixel to extract.  Must be the same size as src.
+                        )   
+{
+    if(dest.rows() != src.rows())
+    {
+        mxThrowException( mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "dest and src do not have same size (rows)" );
+    }
+
+    if(dest.cols() != src.cols())
+    {
+        mxThrowException( mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "dest and src do not have same size (cols)" );
+    }
+
+    if(src.rows() != mask.rows())
+    {
+        mxThrowException( mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "src and mask do not have same size (rows)" );
+    }
+
+    if(src.cols() != mask.cols())
+    {
+        mxThrowException( mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "src and mask do not have same size (cols)" );
+    }
+
+    for(int cc = 0; cc < dest.cols(); ++cc)
+    {
+        for(int rr = 0; rr < dest.rows(); ++rr)
+        {
+            if(mask(rr,cc) != 0)
+            {
+                dest(rr,cc) = src(rr,cc);
+            }
+        }
+    }
 }
 
 template< typename realImageT,

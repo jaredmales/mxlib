@@ -884,7 +884,7 @@ void radprof( vecT & rad,              ///< [out] the radius points for the prof
    maxr = rv.back().r;
    
    /*Now bin*/
-   floatT dr = 1.0;
+   floatT dr = 1;
    floatT r0 = minr;
    floatT r1 = minr + dr;
    int i1=0, i2, n;

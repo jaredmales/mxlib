@@ -180,7 +180,7 @@ typename angleT::realT angleMod(typename angleT::realT q /**< [in] the angle */)
   *
   * \returns the difference of q2 and q1
   * 
-  * \tparam degrad controls whether this is in degrees (0, default) or radians (1)
+  * \tparam angleT controls whether this is in degrees (0, default) or radians (1)
   * \tparam realT is the type in which to do arithmetic
   * 
   * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]" 
@@ -188,12 +188,10 @@ typename angleT::realT angleMod(typename angleT::realT q /**< [in] the angle */)
   * \ingroup geo
   */
 template<class angleT>
-typename angleT::realT angleDiff( typename angleT::realT q1, ///< [in] angle to subtract from q2, in degrees.
-                                  typename angleT::realT q2 ///< [in] angle to subtract q1 from, in degrees.
+typename angleT::realT angleDiff( typename angleT::realT q1, ///< [in] angle to subtract from q2.
+                                  typename angleT::realT q2 ///< [in] angle to subtract q1 from.
                                 )
-{ 
-   //typedef typename degradT::realT realT;
-   
+{    
    static_assert(std::is_floating_point<typename angleT::realT>::value, "angleDiff: realT must be floating point");
    
    typename angleT::realT dq = q2-q1;

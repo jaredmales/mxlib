@@ -4,6 +4,7 @@ doc/html/*
 doc/mxlib.tag.xml
 doc/citelist*
 doc/*.aux
+mxlib_git_version.h
 include/mxlib_uncomp_version.h
 source/mxlib_comp_version.h
 old/*
@@ -26,3 +27,10 @@ a.out
 *.o
 *.swp
 .*~
+
+#tests
+tests/mxlibTest
+tests/include/improc/imageMasks_test
+tests/include/sigproc/signalWindows_test
+tests/include/ao/sim/pyramidSensor_test
+
