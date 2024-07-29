@@ -82,7 +82,7 @@ std::string parentPath(const std::string & fname)
 
 
 
-std::vector<std::string> getFileNames( const std::string & directory, 
+std::vector<std::string> getFileNamesOld( const std::string & directory, 
                                        const std::string & prefix,    
                                        const std::string & substr,    
                                        const std::string & extension  
@@ -164,6 +164,77 @@ std::vector<std::string> getFileNames( const std::string & directory,
 
    return vect;
 }
+
+std::vector<std::string> getFileNames( const std::string & directory, 
+                                       const std::string & prefix,    
+                                       const std::string & substr,    
+                                       const std::string & extension  
+                                     )
+{
+   //typedef std::vector<path> vec;             // store paths,
+
+   std::vector<std::string> vect;
+   if( exists(directory) )
+   {
+      if(is_directory(directory) )
+      {
+         directory_iterator it{directory};
+         auto it_end = directory_iterator{};
+         for(it; it != it_end; ++it)
+         {
+            if(extension != "")
+            {
+               if(it->path().extension() != extension)
+               {
+                  continue;
+               }
+            }
+
+            std::string p = it->path().filename().generic_string();
+
+            if(prefix != "")
+            {
+               if( p.size() < prefix.size() )
+               {
+                  continue;
+               }
+               else
+               {
+                  if(p.compare(0, prefix.size(), prefix) != 0)
+                  {
+                     continue;
+                  }
+               }
+            }
+
+            if(substr != "")
+            {
+               if(p.find(substr) == std::string::npos)
+               {
+                  continue;
+               }
+            }
+
+            //If here then it passed all checks
+            vect.push_back(it->path().native());
+
+         }
+
+         sort(vect.begin(), vect.end());
+      }
+      else
+      {
+         std::cerr << directory << " is not a directory\n";
+      }
+   }
+   else
+   {
+      std::cerr << "directory " << directory << " does not exist\n";
+   }
+
+   return vect;
+}
+
 
 std::vector<std::string> getFileNames( const std::string & directory, 
                                        const std::string & extension  
