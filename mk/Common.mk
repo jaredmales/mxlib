@@ -73,7 +73,7 @@ ifeq ($(USE_BLAS_FROM),mkl)
     endif
     ifeq ($(UNAME),Linux)
         BLAS_LDFLAGS ?= -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed
-        BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+        BLAS_LDLIBS ?= -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
     endif
 endif
 
@@ -170,10 +170,10 @@ ifeq ($(USE_BLAS_FROM),atlas)
 endif
 
 ifeq ($(USE_FFT_FROM),fftw)
-    
+
     ifeq ($(UNAME),Darwin)
         #Order matters, _threads first.
-        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f -lfftw3l    
+        FFT_LDLIBS ?= -lfftw3_threads -lfftw3f_threads -lfftw3l_threads -lfftw3 -lfftw3f -lfftw3l
     endif
     ifeq ($(UNAME),Linux)
         FFT_LDLIBS ?= -lfftw3 -lfftw3f  -lfftw3l
@@ -199,7 +199,7 @@ ifeq ($(NEED_MILK),yes)
 endif
 
 
-EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(GSL_LIB) $(SOFA_LIB) $(MILK_LIB)
+EXTRA_LDLIBS ?= $(FITS_LIB) $(BOOST_LIB) $(SOFA_LIB) $(MILK_LIB)
 
 ifneq ($(UNAME),Darwin)
     EXTRA_LDLIBS += -lrt
@@ -222,12 +222,14 @@ EXTRA_LDFLAGS += $(BLAS_LDFLAGS)
 EIGEN_CFLAGS ?= $(shell pkg-config eigen3 --cflags)
 INCLUDES += $(EIGEN_CFLAGS)
 
+EXTRA_LDLIBS += $(GSL_LIB)
+
 LDLIBS += $(EXTRA_LDLIBS)
 LDFLAGS += $(EXTRA_LDFLAGS)
 
 CFLAGS += $(INCLUDES) $(OPTIMIZE)
-CXXFLAGS += $(INCLUDES) $(OPTIMIZE) 
-NVCCXXFLAGS += $(INCLUDES) $(OPTIMIZE) 
+CXXFLAGS += $(INCLUDES) $(OPTIMIZE)
+NVCCXXFLAGS += $(INCLUDES) $(OPTIMIZE)
 
 #This is needed to force use of g++ for linking
 LINK.o = $(LINK.cc)
