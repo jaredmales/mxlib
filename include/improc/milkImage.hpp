@@ -168,11 +168,18 @@ public:
     /// Default c'tor
     milkImage();
 
-    /// Constructor which opens the specified image
+    /// Constructor which opens the specified image, which must already exist in shared memory.
     milkImage( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
 
-    /// Constructor which opens the specified image and copies the provided image to it
-    milkImage( const std::string & imname,  /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ 
+
+    /// Constructor which (re-)creates the specified image with the given size
+    milkImage( const std::string & imname, ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
+               uint32_t sz0,               ///< [in] the x size of the image
+               uint32_t sz1                ///< [in] the y size of the image
+             );
+
+    /// Constructor which (re-)creates the specified image and copies the provided image to it
+    milkImage( const std::string & imname,  ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
                const eigenImage<dataT> & im ///< [in] An existing eigenImage
              );
 
@@ -185,7 +192,7 @@ public:
       */  
     void open( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/);
 
-    /// Create and connect to an image, allocating the eigenMap.
+    /// Create (or re-create) and connect to an image, allocating the eigenMap.
     /**
       * \throws std::invalid_argument if the image type_code does not match dataT.
       */  
@@ -222,7 +229,9 @@ public:
 
     /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
-      *
+      * 
+      * \todo check inode!
+      * 
       * \returns true if connected and no changes
       * \returns false if not connected or something changed.  All maps are now invalid. 
       */
@@ -271,8 +280,6 @@ public:
       */
     operator eigenMap<dataT>();
 
-    
-
     /// Copy data from an Eigen Array type to the shared memory stream
     /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
       * 
@@ -309,6 +316,23 @@ template<typename dataT>
 milkImage<dataT>::milkImage( const std::string & imname )
 {
     open(imname);
+}
+
+template<typename dataT>
+milkImage<dataT>::milkImage( const std::string & imname,
+                             const eigenImage<dataT> & im 
+                           )
+{
+    create(imname, im);
+}
+
+template<typename dataT>
+milkImage<dataT>::milkImage( const std::string & imname,
+                             uint32_t sz0, 
+                             uint32_t sz1 
+                           )
+{
+    create(imname, sz0, sz1);
 }
 
 template<typename dataT>
