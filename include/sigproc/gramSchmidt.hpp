@@ -35,11 +35,8 @@ namespace sigproc
 {
 
 /// Perform Gram-Schmidt ortogonalization of a basis set, and normalize the result.
-/** Performs the stabilized Gram-Schmidt procedure on the input basis set, followed
- * by normalization of the result.
- *
- * \param out [out] is the orthonormal basis set constructed from the input
- * \param int [in] is a basis set, where each column represents one vector.
+/** Performs the stabilized Gram-Schmidt procedure on the input basis set, which
+ * is the columns of the array.  Optionally the output is normalized.
  *
  * \tparam progress if true, then the loop index is printed for progress reporting
  * \tparam eigenTout is the Eigen array type of the desired output
@@ -48,7 +45,10 @@ namespace sigproc
  * \ingroup signal_processing
  */
 template <int progress = 0, typename eigenTout, typename eigenTin>
-void gramSchmidt( eigenTout &out, const eigenTin &in )
+void gramSchmidt( eigenTout &out,       ///< [out] the orthonormal basis set constructed from the input
+                  const eigenTin &in,   ///< [in] a basis set, where each column represents one vector.
+                  bool normalize = true ///< [in] [optional] whether or not to normalize the output
+)
 {
     out.resize( in.rows(), in.cols() );
 
@@ -75,9 +75,12 @@ void gramSchmidt( eigenTout &out, const eigenTin &in )
         }
     }
 
-    for( int i = 0; i < out.cols(); ++i )
+    if( normalize )
     {
-        out.col( i ) = out.col( i ) / out.col( i ).matrix().norm();
+        for( int i = 0; i < out.cols(); ++i )
+        {
+            out.col( i ) = out.col( i ) / out.col( i ).matrix().norm();
+        }
     }
 }
 
@@ -169,7 +172,7 @@ void gramSchmidtSpectrum(
     eigenTout2 &spect,                      ///< [out] the spectrum
     const eigenTin &in,                     ///< [in] a basis set, where each column represents one vector
     typename eigenTin::Scalar normPix = 0.0 /**< [in] [optional] area of (usually number of pixels in) the orthogonal
-                                             * region for normalization.  If 0 the basis is not renormalized */
+                                                       region for normalization.  If 0 the basis is not renormalized */
 )
 {
     typedef typename eigenTout::Scalar Scalar;
