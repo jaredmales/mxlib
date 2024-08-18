@@ -1,11 +1,11 @@
-name: Build (Linux, macOS)
-on:
+name: Build (Linux)
+on: [push]
 jobs:
   build-all:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     steps:
       - name: Who am I?
         run: echo "Triggered by ${{ github.event_name }}, branch ${{ github.ref }}, running on ${{ runner.os }}"
@@ -28,13 +28,6 @@ jobs:
           if [[ ! -e ~/miniconda3 ]]; then
             curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
             bash Miniconda3-latest-Linux-x86_64.sh -b
-          fi
-      - name: Install miniconda (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          if [[ ! -e ~/miniconda3 ]]; then
-            curl -OL https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-            bash Miniconda3-latest-MacOSX-x86_64.sh -b
           fi
       - name: (re-)Create build environment
         run: |
