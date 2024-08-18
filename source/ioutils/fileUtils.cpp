@@ -1,11 +1,11 @@
 /** \file fileUtils.cpp
-  * \brief Definitions of utilities for working with files
-  *
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  * \ingroup fileutils
-  *
-  */
+ * \brief Definitions of utilities for working with files
+ *
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ * \ingroup fileutils
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -49,302 +49,276 @@ namespace mx
 namespace ioutils
 {
 
-int createDirectories( const std::string & path )
+int createDirectories( const std::string &path )
 {
-   //Use the non throwing version and silently ignore EEXIST errors 
-   boost::system::error_code ec;
-   boost::filesystem::create_directories(path, ec);
-   if(ec.value() != boost::system::errc::success && ec.value() != boost::system::errc::file_exists)
-   {
-      return -1;
-   }
+    // Use the non throwing version and silently ignore EEXIST errors
+    boost::system::error_code ec;
+    boost::filesystem::create_directories( path, ec );
+    if( ec.value() != boost::system::errc::success && ec.value() != boost::system::errc::file_exists )
+    {
+        return -1;
+    }
 
-   return 0;
+    return 0;
 }
 
-std::string pathStem(const std::string & fname)
+std::string pathStem( const std::string &fname )
 {
-   boost::filesystem::path p(fname);
-   return p.stem().string();
+    boost::filesystem::path p( fname );
+    return p.stem().string();
 }
 
-std::string pathFilename( const std::string & fname)
+std::string pathFilename( const std::string &fname )
 {
-   boost::filesystem::path p(fname);
-   return p.filename().string();
+    boost::filesystem::path p( fname );
+    return p.filename().string();
 }
 
-std::string parentPath(const std::string & fname)
+std::string parentPath( const std::string &fname )
 {
-   boost::filesystem::path p(fname);
-   return p.parent_path().string();
+    boost::filesystem::path p( fname );
+    return p.parent_path().string();
 }
 
-
-
-std::vector<std::string> getFileNamesOld( const std::string & directory, 
-                                       const std::string & prefix,    
-                                       const std::string & substr,    
-                                       const std::string & extension  
-                                     )
+std::vector<std::string> getFileNamesOld( const std::string &directory,
+                                          const std::string &prefix,
+                                          const std::string &substr,
+                                          const std::string &extension )
 {
-   typedef std::vector<path> vec;             // store paths,
+    typedef std::vector<path> vec; // store paths,
 
-   std::vector<std::string> vect;
-   if( exists(directory) )
-   {
-      if(is_directory(directory) )
-      {
-         vec v;                                // so we can sort them later
+    std::vector<std::string> vect;
+    if( exists( directory ) )
+    {
+        if( is_directory( directory ) )
+        {
+            vec v; // so we can sort them later
 
-         copy(directory_iterator(directory), directory_iterator(), back_inserter(v));
+            copy( directory_iterator( directory ), directory_iterator(), back_inserter( v ) );
 
-         std::sort(v.begin(), v.end());             // sort, since directory iteration
-                                              // is not ordered on some file systems
+            std::sort( v.begin(), v.end() ); // sort, since directory iteration
+                                             // is not ordered on some file systems
 
-         auto it = v.begin();
-         auto it_end = v.end();
+            auto it = v.begin();
+            auto it_end = v.end();
 
-         while(it != it_end)
-         {
-            bool inc = true;
-
-            if(extension != "")
+            while( it != it_end )
             {
-               if(it->extension() != extension)
-               {
-                  inc = false;
-               }
+                bool inc = true;
+
+                if( extension != "" )
+                {
+                    if( it->extension() != extension )
+                    {
+                        inc = false;
+                    }
+                }
+
+                if( prefix != "" && inc )
+                {
+                    std::string p = it->filename().generic_string();
+
+                    if( p.size() < prefix.size() )
+                    {
+                        inc = false;
+                    }
+                    else
+                    {
+                        if( p.compare( 0, prefix.size(), prefix ) != 0 )
+                        {
+                            inc = false;
+                        }
+                    }
+                }
+
+                if( substr != "" && inc )
+                {
+                    std::string p = it->filename().generic_string();
+                    if( p.find( substr ) == std::string::npos )
+                    {
+                        inc = false;
+                    }
+                }
+
+                if( inc )
+                {
+                    vect.push_back( it->native() );
+                }
+
+                ++it;
+            }
+        }
+        else
+        {
+            std::cerr << directory << " is not a directory\n";
+        }
+    }
+    else
+    {
+        std::cerr << "directory " << directory << " does not exist\n";
+    }
+
+    return vect;
+}
+
+std::vector<std::string> getFileNames( const std::string &directory,
+                                       const std::string &prefix,
+                                       const std::string &substr,
+                                       const std::string &extension )
+{
+    // typedef std::vector<path> vec;             // store paths,
+
+    std::vector<std::string> vect;
+    if( exists( directory ) )
+    {
+        if( is_directory( directory ) )
+        {
+            directory_iterator it{ directory };
+            auto it_end = directory_iterator{};
+            for( it; it != it_end; ++it )
+            {
+                if( extension != "" )
+                {
+                    if( it->path().extension() != extension )
+                    {
+                        continue;
+                    }
+                }
+
+                std::string p = it->path().filename().generic_string();
+
+                if( prefix != "" )
+                {
+                    if( p.size() < prefix.size() )
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        if( p.compare( 0, prefix.size(), prefix ) != 0 )
+                        {
+                            continue;
+                        }
+                    }
+                }
+
+                if( substr != "" )
+                {
+                    if( p.find( substr ) == std::string::npos )
+                    {
+                        continue;
+                    }
+                }
+
+                // If here then it passed all checks
+                vect.push_back( it->path().native() );
             }
 
-            if(prefix != "" && inc)
-            {
-               std::string p = it->filename().generic_string();
+            sort( vect.begin(), vect.end() );
+        }
+        else
+        {
+            std::cerr << directory << " is not a directory\n";
+        }
+    }
+    else
+    {
+        std::cerr << "directory " << directory << " does not exist\n";
+    }
 
-               if( p.size() < prefix.size() )
-               {
-                  inc = false;
-               }
-               else
-               {
-                  if(p.compare(0, prefix.size(), prefix) != 0)
-                  {
-                     inc = false;
-                  }
-               }
-            }
-
-            if(substr != "" && inc)
-            {
-               std::string p = it->filename().generic_string();
-               if(p.find(substr) == std::string::npos)
-               {
-                  inc = false;
-               }
-            }
-
-            if(inc)
-            {
-               vect.push_back(it->native());
-            }
-
-            ++it;
-         }
-      }
-      else
-      {
-         std::cerr << directory << " is not a directory\n";
-      }
-
-   }
-   else
-   {
-      std::cerr << "directory " << directory << " does not exist\n";
-   }
-
-   return vect;
+    return vect;
 }
 
-std::vector<std::string> getFileNames( const std::string & directory, 
-                                       const std::string & prefix,    
-                                       const std::string & substr,    
-                                       const std::string & extension  
-                                     )
+std::vector<std::string> getFileNames( const std::string &directory, const std::string &extension )
 {
-   //typedef std::vector<path> vec;             // store paths,
-
-   std::vector<std::string> vect;
-   if( exists(directory) )
-   {
-      if(is_directory(directory) )
-      {
-         directory_iterator it{directory};
-         auto it_end = directory_iterator{};
-         for(it; it != it_end; ++it)
-         {
-            if(extension != "")
-            {
-               if(it->path().extension() != extension)
-               {
-                  continue;
-               }
-            }
-
-            std::string p = it->path().filename().generic_string();
-
-            if(prefix != "")
-            {
-               if( p.size() < prefix.size() )
-               {
-                  continue;
-               }
-               else
-               {
-                  if(p.compare(0, prefix.size(), prefix) != 0)
-                  {
-                     continue;
-                  }
-               }
-            }
-
-            if(substr != "")
-            {
-               if(p.find(substr) == std::string::npos)
-               {
-                  continue;
-               }
-            }
-
-            //If here then it passed all checks
-            vect.push_back(it->path().native());
-
-         }
-
-         sort(vect.begin(), vect.end());
-      }
-      else
-      {
-         std::cerr << directory << " is not a directory\n";
-      }
-   }
-   else
-   {
-      std::cerr << "directory " << directory << " does not exist\n";
-   }
-
-   return vect;
+    return getFileNames( directory, "", "", extension );
 }
 
-
-std::vector<std::string> getFileNames( const std::string & directory, 
-                                       const std::string & extension  
-                                     )
+std::vector<std::string> getFileNames( const std::string &directory )
 {
-   return getFileNames(directory, "", "", extension);
+    return getFileNames( directory, "", "", "" );
 }
 
-std::vector<std::string> getFileNames( const std::string & directory )
+std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )
 {
-   return getFileNames(directory, "", "", "");
+    std::string dir, base, ext;
+
+    path p = fname;
+    dir = p.parent_path().string();
+    base = p.stem().string();
+    ext = p.extension().string();
+
+    return dir + '/' + prepend + base + append + ext;
 }
 
-
-std::string  fileNamePrependAppend( const std::string & fname,   
-                                    const std::string & prepend, 
-                                    const std::string & append   
-                                  )
+std::string fileNameAppend( const std::string &fname, const std::string &append )
 {
-   std::string dir, base, ext;
-
-   path p = fname;
-   dir = p.parent_path().string();
-   base = p.stem().string();
-   ext = p.extension().string();
-
-
-   return dir +'/' + prepend + base + append + ext;
-
-
+    return fileNamePrependAppend( fname, "", append );
 }
 
-std::string  fileNameAppend( const std::string & fname, 
-                             const std::string & append
-                           )
+std::string fileNamePrepend( const std::string &fname, const std::string &prepend )
 {
-   return fileNamePrependAppend(fname, "", append);
+    return fileNamePrependAppend( fname, prepend, "" );
 }
 
-std::string  fileNamePrepend( const std::string & fname, 
-                              const std::string & prepend
-                            )
+std::string
+getSequentialFilename( const std::string &basename, const std::string &extension, const int startat, const int ndigit )
 {
-   return fileNamePrependAppend(fname, prepend, "");
-}
+    // int maxdig = 1;
+    // for(int j=0;j<ndigit;++j) maxdig *= 10;
+    int maxdig = pow( 10, ndigit );
 
-std::string getSequentialFilename( const std::string & basename,
-                                   const std::string & extension,
-                                   const int startat,
-                                   const int ndigit
-                                 )
-{
-   //int maxdig = 1;
-   //for(int j=0;j<ndigit;++j) maxdig *= 10;
-   int maxdig = pow(10, ndigit);
+    char formstr[64];
+    snprintf( formstr, sizeof( formstr ), "%%0%dd", ndigit );
 
-   char formstr[64];
-   snprintf(formstr, sizeof(formstr), "%%0%dd", ndigit);
-   
-   char digstr[64];
-   int i = startat;
+    char digstr[64];
+    int i = startat;
 
-   std::stringstream outn;
+    std::stringstream outn;
 
-   snprintf(digstr,sizeof(digstr),formstr, i);
+    snprintf( digstr, sizeof( digstr ), formstr, i );
 
-   outn << basename;
-   outn << digstr;
-   outn << extension;
+    outn << basename;
+    outn << digstr;
+    outn << extension;
 
-   while(boost::filesystem::exists(outn.str()) && i < maxdig)
-   {
-      ++i;
-      outn.str("");
+    while( boost::filesystem::exists( outn.str() ) && i < maxdig )
+    {
+        ++i;
+        outn.str( "" );
 
-      snprintf(digstr,sizeof(digstr), formstr, i);
+        snprintf( digstr, sizeof( digstr ), formstr, i );
 
-      outn << basename;
-      outn << digstr;
+        outn << basename;
+        outn << digstr;
 
-      outn << extension;
-   }
+        outn << extension;
+    }
 
-   return outn.str();
+    return outn.str();
 }
 
 off_t fileSize( int fd )
 {
-   if (fd == -1) 
-   {
-      return -1;
-   }
- 
-   struct stat stbuf;
- 
-   if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode))) 
-   {
-      return -1; 
-   }
-  
-   return stbuf.st_size;
-  
+    if( fd == -1 )
+    {
+        return -1;
+    }
+
+    struct stat stbuf;
+
+    if( ( fstat( fd, &stbuf ) != 0 ) || ( !S_ISREG( stbuf.st_mode ) ) )
+    {
+        return -1;
+    }
+
+    return stbuf.st_size;
 }
 
-off_t fileSize( FILE * f )
+off_t fileSize( FILE *f )
 {
-   return fileSize(fileno(f));  
+    return fileSize( fileno( f ) );
 }
 
-
-} //namespace ioutils
-} //namespace mx
-
+} // namespace ioutils
+} // namespace mx

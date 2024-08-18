@@ -37,274 +37,266 @@ namespace math
 namespace fit
 {
 
-template<typename realT>
+template <typename realT>
 struct array2FitGammaDistribution;
 
-
 /** \defgroup gammaDist_peak_fit Gamma Distribution
-  * \brief Fitting the Gamma Distribution to data.
-  * 
-  * The Gamma Distribution is fit to data.
-  * 
-  * \ingroup peak_fit 
-  */
+ * \brief Fitting the Gamma Distribution to data.
+ *
+ * The Gamma Distribution is fit to data.
+ *
+ * \ingroup peak_fit
+ */
 
-///Class to manage fitting the GammaDistribution Distribution to data via the \ref levmarInterface
+/// Class to manage fitting the GammaDistribution Distribution to data via the \ref levmarInterface
 /** In addition to the requirements on fitterT specified by \ref levmarInterface
-  * this class also requires this definition in fitterT
-  * \code
-  * static const int nparams = 3;
-  * \endcode
-  * where the number 3 is replaced by the number of parameters that fitterT expects to fit.
-  *
-  * \tparam fitterT a type meeting the above requirements.
-  *
-  * \ingroup gammaDist_peak_fit
-  *
-  */
-template<typename fitterT>
+ * this class also requires this definition in fitterT
+ * \code
+ * static const int nparams = 3;
+ * \endcode
+ * where the number 3 is replaced by the number of parameters that fitterT expects to fit.
+ *
+ * \tparam fitterT a type meeting the above requirements.
+ *
+ * \ingroup gammaDist_peak_fit
+ *
+ */
+template <typename fitterT>
 class fitGammaDistribution : public levmarInterface<fitterT>
 {
-   
-public:
-   
-   typedef typename fitterT::realT realT;
 
-   static const int nparams = fitterT::nparams;
+  public:
+    typedef typename fitterT::realT realT;
 
-   array2FitGammaDistribution<realT> arr;
-   
-   void initialize()
-   {
-      this->allocate_params(nparams);
-      this->adata = &arr;      
-   }
-   
-   fitGammaDistribution()
-   {
-      initialize();
-   }
-      
-   ~fitGammaDistribution()
-   {
-   }
-   
-   ///Set the initial guess.
-   void setGuess( realT x0,    ///< [in] the location parameter
-                  realT k,     ///< [in] the shape parameter
-                  realT theta, ///< [in] the scale parameter
-                  realT denom  ///< [in] the denominator or 1/peak-scale
-                )
-   {
-      static_assert( nparams==4 , "fitGammaDistribution: Wrong setGuess called for no location parameter.");
+    static const int nparams = fitterT::nparams;
 
-      this->p[2] = x0; //this is p[2] to make it easy to leave out
-      this->p[0] = k;
-      this->p[1] = theta;
-      this->p[3] = denom;
-   }
+    array2FitGammaDistribution<realT> arr;
 
-   ///Set the initial guess.
-   void setGuess( realT x0,   ///< [in] the location parameter
-                  realT k,    ///< [in] the shape parameter
-                  realT theta ///< [in] the scale parameter
-                )
-   {
-      static_assert( nparams==3 , "fitGammaDistribution: Wrong setGuess called for no location parameter.");
-      
-      this->p[2] = x0; //this is p[2] to make it easy to leave out
-      this->p[0] = k;
-      this->p[1] = theta;
-   }
-   
-   ///Set the initial guess when no location parameter is used.
-   void setGuess( realT k,    ///< [in] the shape parameter
-                  realT theta ///< [in] the scale parameter
-                )
-   {
-      static_assert( nparams==2 , "fitGammaDistribution: Wrong setGuess called for location parameter.");
+    void initialize()
+    {
+        this->allocate_params( nparams );
+        this->adata = &arr;
+    }
 
-      this->p[0] = k;
-      this->p[1] = theta;
-   }
+    fitGammaDistribution()
+    {
+        initialize();
+    }
 
-   void setArray(realT *data, int n)
-   {
-      arr.data = data;
-      arr.n = n;
+    ~fitGammaDistribution()
+    {
+    }
 
-      this->n = n;
-      
-   }
-   
-   void x0( realT nx0 )
-   {
-      arr.x0 = nx0;
-      if(nparams == 3)
-      {
-         this->p[2] = nx0;  //this is p[2] to make it easy to leave out
-      }
-   }
-   
-   void k( realT nk )
-   {
-      arr.k = nk;
-      this->p[0] = nk;
-   }
-   
-   void theta( realT na )
-   {
-      arr.lambda = na;
-      this->p[1] = na;
-   }
+    /// Set the initial guess.
+    void setGuess( realT x0,    ///< [in] the location parameter
+                   realT k,     ///< [in] the shape parameter
+                   realT theta, ///< [in] the scale parameter
+                   realT denom  ///< [in] the denominator or 1/peak-scale
+    )
+    {
+        static_assert( nparams == 4, "fitGammaDistribution: Wrong setGuess called for no location parameter." );
 
-   void denom( realT nd)
-   {
-      arr.denom = nd;
-      if(nparams == 4)
-      {
-         this->p[3] = nd;
-      }
-   }
+        this->p[2] = x0; // this is p[2] to make it easy to leave out
+        this->p[0] = k;
+        this->p[1] = theta;
+        this->p[3] = denom;
+    }
 
-   int fit()
-   {
-      return levmarInterface<fitterT>::fit();      
-   }
-      
-   realT x0()
-   {
-      if(nparams == 3)
-      {
-         return this->p[2];
-      }
-      else
-      {
-         return 0;
-      }
-   }
-   
-   realT k()
-   {
-      return this->p[0];
-   }
-   
-   realT theta()
-   {
-      return this->p[1];
-   }
-   
-   realT denom()
-   {
-      if(nparams == 4)
-      {
-         return this->p[3];
-      }
-      else
-      {
-         return func::gammaDistributionDenom<realT>(this->p[0], this->p[1]);
-      }
-   }
+    /// Set the initial guess.
+    void setGuess( realT x0,   ///< [in] the location parameter
+                   realT k,    ///< [in] the shape parameter
+                   realT theta ///< [in] the scale parameter
+    )
+    {
+        static_assert( nparams == 3, "fitGammaDistribution: Wrong setGuess called for no location parameter." );
 
-   
+        this->p[2] = x0; // this is p[2] to make it easy to leave out
+        this->p[0] = k;
+        this->p[1] = theta;
+    }
+
+    /// Set the initial guess when no location parameter is used.
+    void setGuess( realT k,    ///< [in] the shape parameter
+                   realT theta ///< [in] the scale parameter
+    )
+    {
+        static_assert( nparams == 2, "fitGammaDistribution: Wrong setGuess called for location parameter." );
+
+        this->p[0] = k;
+        this->p[1] = theta;
+    }
+
+    void setArray( realT *data, int n )
+    {
+        arr.data = data;
+        arr.n = n;
+
+        this->n = n;
+    }
+
+    void x0( realT nx0 )
+    {
+        arr.x0 = nx0;
+        if( nparams == 3 )
+        {
+            this->p[2] = nx0; // this is p[2] to make it easy to leave out
+        }
+    }
+
+    void k( realT nk )
+    {
+        arr.k = nk;
+        this->p[0] = nk;
+    }
+
+    void theta( realT na )
+    {
+        arr.lambda = na;
+        this->p[1] = na;
+    }
+
+    void denom( realT nd )
+    {
+        arr.denom = nd;
+        if( nparams == 4 )
+        {
+            this->p[3] = nd;
+        }
+    }
+
+    int fit()
+    {
+        return levmarInterface<fitterT>::fit();
+    }
+
+    realT x0()
+    {
+        if( nparams == 3 )
+        {
+            return this->p[2];
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    realT k()
+    {
+        return this->p[0];
+    }
+
+    realT theta()
+    {
+        return this->p[1];
+    }
+
+    realT denom()
+    {
+        if( nparams == 4 )
+        {
+            return this->p[3];
+        }
+        else
+        {
+            return func::gammaDistributionDenom<realT>( this->p[0], this->p[1] );
+        }
+    }
 };
 
-
-///Wrapper for a native array to pass to \ref levmarInterface, with GammaDistribution details.
+/// Wrapper for a native array to pass to \ref levmarInterface, with GammaDistribution details.
 /** \ingroup gammaDist_peak_fit
-  */
-template<typename realT>
+ */
+template <typename realT>
 struct array2FitGammaDistribution
 {
-   realT * data {nullptr}; ///< Pointer to the array
-   size_t n {0}; ///< dimension of the array
-   
-   realT x0 {0}; ///< the location parameter.
-   realT k {0}; ///< the shape parameter
-   realT theta {0}; ///< the scale parameter
-   realT denom {0}; ///< the denominator or 1/peak-scale
+    realT *data{ nullptr }; ///< Pointer to the array
+    size_t n{ 0 };          ///< dimension of the array
+
+    realT x0{ 0 };    ///< the location parameter.
+    realT k{ 0 };     ///< the shape parameter
+    realT theta{ 0 }; ///< the scale parameter
+    realT denom{ 0 }; ///< the denominator or 1/peak-scale
 };
 
 ///\ref levmarInterface fitter structure for the shifted Gamma Distribution with arbitrary peak scaling
 /**
-  *
-  * \ingroup gammaDist_peak_fit
-  *
-  */
-template<typename _realT>
+ *
+ * \ingroup gammaDist_peak_fit
+ *
+ */
+template <typename _realT>
 struct gammaDistribution_4param_fitter
 {
-   typedef _realT realT;
+    typedef _realT realT;
 
-   static const int nparams = 4;
+    static const int nparams = 4;
 
-   static void func(realT *p, realT *hx, int m, int n, void *adata)
-   {
-      array2FitGammaDistribution<realT> * arr = (array2FitGammaDistribution<realT> *) adata;
+    static void func( realT *p, realT *hx, int m, int n, void *adata )
+    {
+        array2FitGammaDistribution<realT> *arr = (array2FitGammaDistribution<realT> *)adata;
 
-      for(int i=0;i<arr->n; i++)
-      {
-         hx[i] = func::gammaDistribution<realT>(i, p[2], p[0], p[1], p[3]) - arr->data[i];
-      }
-   }
+        for( int i = 0; i < arr->n; i++ )
+        {
+            hx[i] = func::gammaDistribution<realT>( i, p[2], p[0], p[1], p[3] ) - arr->data[i];
+        }
+    }
 };
 
 ///\ref levmarInterface fitter structure for the shifted Gamma Distribution
 /**
-  * 
-  * \ingroup gammaDist_peak_fit
-  *
-  */
-template<typename _realT>
+ *
+ * \ingroup gammaDist_peak_fit
+ *
+ */
+template <typename _realT>
 struct gammaDistribution_3param_fitter
 {
-   typedef _realT realT;
-   
-   static const int nparams = 3;
-   
-   static void func(realT *p, realT *hx, int m, int n, void *adata)
-   {
-      array2FitGammaDistribution<realT> * arr = (array2FitGammaDistribution<realT> *) adata;
+    typedef _realT realT;
 
-      realT denom = func::gammaDistributionDenom<realT>(p[0], p[1]);
+    static const int nparams = 3;
 
-      for(int i=0;i<arr->n; i++)
-      {
-         hx[i] = func::gammaDistribution<realT>(i, p[2], p[0], p[1], denom) - arr->data[i];
-      }
-   }
+    static void func( realT *p, realT *hx, int m, int n, void *adata )
+    {
+        array2FitGammaDistribution<realT> *arr = (array2FitGammaDistribution<realT> *)adata;
+
+        realT denom = func::gammaDistributionDenom<realT>( p[0], p[1] );
+
+        for( int i = 0; i < arr->n; i++ )
+        {
+            hx[i] = func::gammaDistribution<realT>( i, p[2], p[0], p[1], denom ) - arr->data[i];
+        }
+    }
 };
 
 ///\ref levmarInterface fitter structure for the Gamma Distribution
 /**
-  *
-  * \ingroup gammaDist_peak_fit
-  *
-  */
-template<typename _realT>
+ *
+ * \ingroup gammaDist_peak_fit
+ *
+ */
+template <typename _realT>
 struct gammaDistribution_2param_fitter
 {
-   typedef _realT realT;
+    typedef _realT realT;
 
-   static const int nparams = 2;
+    static const int nparams = 2;
 
-   static void func(realT *p, realT *hx, int m, int n, void *adata)
-   {
-      array2FitGammaDistribution<realT> * arr = (array2FitGammaDistribution<realT> *) adata;
+    static void func( realT *p, realT *hx, int m, int n, void *adata )
+    {
+        array2FitGammaDistribution<realT> *arr = (array2FitGammaDistribution<realT> *)adata;
 
-      realT denom = func::gammaDistributionDenom<realT>(p[0], p[1]);
+        realT denom = func::gammaDistributionDenom<realT>( p[0], p[1] );
 
-      for(int i=0;i<arr->n; i++)
-      {
-         hx[i] = func::gammaDistribution<realT>(i, 0.0, p[0], p[1], denom) - arr->data[i];
-      }
-   }
+        for( int i = 0; i < arr->n; i++ )
+        {
+            hx[i] = func::gammaDistribution<realT>( i, 0.0, p[0], p[1], denom ) - arr->data[i];
+        }
+    }
 };
 
+} // namespace fit
+} // namespace math
+} // namespace mx
 
-} //namespace fit
-} //namespace math
-} //namespace mx
-
-#endif //fitGammaDistribution_hpp
-
+#endif // fitGammaDistribution_hpp

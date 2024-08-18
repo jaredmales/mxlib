@@ -1,9 +1,9 @@
 /** \file pupil.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Utilities for specifying pupils.
-  * \ingroup mxAO_files
-  * 
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Utilities for specifying pupils.
+ * \ingroup mxAO_files
+ *
+ */
 
 #ifndef pupil_hpp
 #define pupil_hpp
@@ -19,98 +19,90 @@
 
 namespace mx
 {
-   
+
 namespace AO
 {
 
-///Generate a circular pupil and saves it to disk
-template<typename realT>
-void circularPupil( const std::string & pupilName,
+/// Generate a circular pupil and saves it to disk
+template <typename realT>
+void circularPupil( const std::string &pupilName,
                     realT pupilDiamPixels,
                     realT pupilDiamMeters,
                     realT centralObs = 0,
-                    realT overscan = 0
-                  )
+                    realT overscan = 0 )
 {
-   using namespace mx::improc;
-   using namespace mx::wfp;
-   using namespace mx::sigproc;   
+    using namespace mx::improc;
+    using namespace mx::wfp;
+    using namespace mx::sigproc;
 
-   /*Create pupil*/
-   eigenImage<realT> pup;
-   
-   pup.resize(pupilDiamPixels, pupilDiamPixels);
-   
-   wfp::circularPupil( pup, centralObs,0,overscan);
-   
-   fits::fitsHeader phead;
-   phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
-   phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
-   phead.append("CENTOBS", centralObs, "Central obscuration ratio");
-   phead.append("OVERSCAN", overscan, "Fractional pixel overscan");
-   
-   fits::fitsFile<realT> ff;
-   
-   std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
+    /*Create pupil*/
+    eigenImage<realT> pup;
 
-   ff.write(fName, pup, phead);
-   
+    pup.resize( pupilDiamPixels, pupilDiamPixels );
+
+    wfp::circularPupil( pup, centralObs, 0, overscan );
+
+    fits::fitsHeader phead;
+    phead.append( "SCALE", pupilDiamMeters / pupilDiamPixels, "Scale in m/pix" );
+    phead.append( "PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]" );
+    phead.append( "CENTOBS", centralObs, "Central obscuration ratio" );
+    phead.append( "OVERSCAN", overscan, "Fractional pixel overscan" );
+
+    fits::fitsFile<realT> ff;
+
+    std::string fName = mx::AO::path::pupil::pupilFile( pupilName, true );
+
+    ff.write( fName, pup, phead );
 }
 
-
-///Generates a circular apodized pupil and saves it to disk
+/// Generates a circular apodized pupil and saves it to disk
 /** Apodization is with a Tukey window.
-  */
-template<typename realT>
-void circularApodizedPupil( const std::string & pupilName,
+ */
+template <typename realT>
+void circularApodizedPupil( const std::string &pupilName,
                             int pupilDiamPixels,
                             realT pupilDiamMeters,
                             realT tukeyAlpha,
                             realT centralObs = 0,
-                            realT overScan = 0)
+                            realT overScan = 0 )
 {
 
-   using namespace mx::improc;
-   using namespace mx::wfp;
-   using namespace mx::sigproc;   
-   
-   /*Create pupil*/
-   Eigen::Array<realT, -1, -1> pup;
-   
-   pup.resize(pupilDiamPixels, pupilDiamPixels);
-   
-   
-   realT cen = 0.5*(pupilDiamPixels - 1.0);
-   
-   if(centralObs == 0)
-   {
-      window::tukey2d<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, tukeyAlpha, cen,cen);
-   }
-   else
-   {
-      window::tukey2dAnnulus<realT>(pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, centralObs, tukeyAlpha, cen,cen);
-   }
-   
-   
-   
-   fits::fitsHeader phead;
-   phead.append("SCALE", pupilDiamMeters/pupilDiamPixels, "Scale in m/pix");
-   phead.append("PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]");
-   phead.append("CENTOBS", centralObs, "Central obscuration ratio");
-   phead.append("TUKALPHA", tukeyAlpha, "Tukey window alpha parameter");
-   phead.append("OVERSCAN", overScan, "Apodization overscan");
-    
-   fits::fitsFile<realT> ff;
-   
-   std::string fName = mx::AO::path::pupil::pupilFile(pupilName, true);
+    using namespace mx::improc;
+    using namespace mx::wfp;
+    using namespace mx::sigproc;
 
-   ff.write(fName, pup, phead);
-   
+    /*Create pupil*/
+    Eigen::Array<realT, -1, -1> pup;
+
+    pup.resize( pupilDiamPixels, pupilDiamPixels );
+
+    realT cen = 0.5 * ( pupilDiamPixels - 1.0 );
+
+    if( centralObs == 0 )
+    {
+        window::tukey2d<realT>( pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, tukeyAlpha, cen, cen );
+    }
+    else
+    {
+        window::tukey2dAnnulus<realT>(
+            pup.data(), pupilDiamPixels, pupilDiamPixels + overScan, centralObs, tukeyAlpha, cen, cen );
+    }
+
+    fits::fitsHeader phead;
+    phead.append( "SCALE", pupilDiamMeters / pupilDiamPixels, "Scale in m/pix" );
+    phead.append( "PUPILD", pupilDiamMeters, "Physical diameter of pupil image [m]" );
+    phead.append( "CENTOBS", centralObs, "Central obscuration ratio" );
+    phead.append( "TUKALPHA", tukeyAlpha, "Tukey window alpha parameter" );
+    phead.append( "OVERSCAN", overScan, "Apodization overscan" );
+
+    fits::fitsFile<realT> ff;
+
+    std::string fName = mx::AO::path::pupil::pupilFile( pupilName, true );
+
+    ff.write( fName, pup, phead );
 }
 
+} // namespace AO
+} // namespace mx
 
-} //namespace mx
-} //namespace AO
-
-   
 #endif //__basis_hpp__

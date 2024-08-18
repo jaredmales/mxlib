@@ -1,9 +1,9 @@
 /** \file templateCuda.hpp
-  * \author Jared R. Males
-  * \brief Utilities for a template interface to cuda
-  * \ingroup cuda_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Utilities for a template interface to cuda
+ * \ingroup cuda_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2019,2020 Jared R. Males (jaredmales@gmail.com)
@@ -37,42 +37,40 @@ namespace mx
 namespace cuda
 {
 
-template<typename realT>
+template <typename realT>
 struct complex;
 
-template<>
+template <>
 struct complex<float>
 {
-   typedef cuComplex cudaType;
+    typedef cuComplex cudaType;
 };
 
-template<>
+template <>
 struct complex<double>
 {
-   typedef cuDoubleComplex cudaType;
+    typedef cuDoubleComplex cudaType;
 };
 
-
-template<typename cppType>
+template <typename cppType>
 struct cpp2cudaType
 {
-   typedef cppType cudaType;
+    typedef cppType cudaType;
 };
 
-template<>
+template <>
 struct cpp2cudaType<std::complex<float>>
 {
-   typedef complex<float>::cudaType cudaType;
+    typedef complex<float>::cudaType cudaType;
 };
 
-template<>
+template <>
 struct cpp2cudaType<std::complex<double>>
 {
-   typedef complex<double>::cudaType cudaType;
+    typedef complex<double>::cudaType cudaType;
 };
 
-
-}//namespace cuda 
-}//namespace mx
+} // namespace cuda
+} // namespace mx
 
 #endif // templateCuda_hpp

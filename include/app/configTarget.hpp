@@ -30,7 +30,6 @@
 
 #include <unordered_map>
 
-
 #include "../ioutils/stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
 #include "../meta/typeTraits.hpp"
@@ -40,65 +39,64 @@
 
 namespace mx
 {
-namespace app 
+namespace app
 {
-   
+
 /// A configuration target
-/** Specifies the details of a configuration target, which is a value that can be set from the command line and/or a config file.
-  * A target has a name used as a key for accessing it, and defines how it is set with short and long command line options and the section and
-  * key for the config file.  Can also include help message details.
-  *
-  * \ingroup mxApp
-  */
+/** Specifies the details of a configuration target, which is a value that can be set from the command line and/or a
+ * config file. A target has a name used as a key for accessing it, and defines how it is set with short and long
+ * command line options and the section and key for the config file.  Can also include help message details.
+ *
+ * \ingroup mxApp
+ */
 struct configTarget
 {
-   std::string name; ///<The name of the target
-   std::string shortOpt; ///< The command-line short option (e.g. "f" for -f)
-   std::string longOpt; ///< The command-line long option (e.g. "file" for --file)
-   int clType {0}; ///< The command-line option type, argType::false, argType::true, argType::optional, argType::required
-   std::string section; ///< The config file section name, can be empty ""
-   std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
-   bool set {false}; ///< true if the value has been set by the configuration, use to distinguish empty strings
+    std::string name;     ///< The name of the target
+    std::string shortOpt; ///< The command-line short option (e.g. "f" for -f)
+    std::string longOpt;  ///< The command-line long option (e.g. "file" for --file)
+    int clType{
+        0 }; ///< The command-line option type, argType::false, argType::true, argType::optional, argType::required
+    std::string section; ///< The config file section name, can be empty ""
+    std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
+    bool set{ false };   ///< true if the value has been set by the configuration, use to distinguish empty strings
 
+    bool isRequired{ false };    ///< Whether or not this is option is required to be set.
+    std::string helpType;        ///< The type to display in the help message.
+    std::string helpExplanation; ///< The explanation to display in the help message.
 
-   bool isRequired {false}; ///< Whether or not this is option is required to be set.
-   std::string helpType;         ///< The type to display in the help message.
-   std::string helpExplanation;  ///< The explanation to display in the help message.
+    std::vector<std::string> values;  ///< holds the values in the order they are set by the configuration
+    std::vector<std::string> sources; ///< holds the sources of the values (command line or config file path)
 
+    int verbosity{ 0 };  ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc.
+    int orderAdded{ 0 }; ///< The order in which this was added.  Useful for displaying help messages.
 
-   std::vector<std::string> values; ///< holds the values in the order they are set by the configuration
-   std::vector<std::string> sources; ///< holds the sources of the values (command line or config file path)
-   
-   int verbosity {0}; ///< Records the verbosity of command line options.  E.g. for -v:1, -vv:2, -vvv:3 etc. 
-   int orderAdded {0}; ///< The order in which this was added.  Useful for displaying help messages.
+    bool used{ false };
 
-   bool used {false};
-   
-   /// Default c'tor
-   configTarget()
-   {
-   }
+    /// Default c'tor
+    configTarget()
+    {
+    }
 
-   /// Construct and set values
-   configTarget( const std::string &n,  ///< [in] The name of the target
-                 const std::string &so, ///< [in] The command-line short option (e.g. "f" for -f)
-                 const std::string &lo, ///< [in] The command-line long option (e.g. "file" for --file)
-                 int clt,               ///< [in] The command-line option type, argType::false, argType::true, argType::optional, argType::required
-                 const std::string & s, ///< [in] The config file section name, can be empty ""
-                 const std::string & kw, ///< [in] The config file keyword, read in a "keyword=value" pair
-                 bool isReq = false, ///< [in] Whether or not this is option is required to be set
-                 const std::string & ht = "",  ///< [in] The type to display in the help message
-                 const std::string & he = "",  ///< [in] The explanation to display in the help message
-                 int oa = 0 ///< [in] [optional] ///< the order in which this was added.
-               ) : name(n), shortOpt(so), longOpt(lo), clType (clt), section(s), keyword(kw), isRequired(isReq), helpType(ht), helpExplanation(he), orderAdded(oa)
-   {
-   }
+    /// Construct and set values
+    configTarget( const std::string &n,  ///< [in] The name of the target
+                  const std::string &so, ///< [in] The command-line short option (e.g. "f" for -f)
+                  const std::string &lo, ///< [in] The command-line long option (e.g. "file" for --file)
+                  int clt, ///< [in] The command-line option type, argType::false, argType::true, argType::optional,
+                           ///< argType::required
+                  const std::string &s,       ///< [in] The config file section name, can be empty ""
+                  const std::string &kw,      ///< [in] The config file keyword, read in a "keyword=value" pair
+                  bool isReq = false,         ///< [in] Whether or not this is option is required to be set
+                  const std::string &ht = "", ///< [in] The type to display in the help message
+                  const std::string &he = "", ///< [in] The explanation to display in the help message
+                  int oa = 0                  ///< [in] [optional] ///< the order in which this was added.
+                  )
+        : name( n ), shortOpt( so ), longOpt( lo ), clType( clt ), section( s ), keyword( kw ), isRequired( isReq ),
+          helpType( ht ), helpExplanation( he ), orderAdded( oa )
+    {
+    }
 };
 
-
-
-
-} //namespace app 
-} //namespace mx
+} // namespace app
+} // namespace mx
 
 #endif // appConfigurator_hpp

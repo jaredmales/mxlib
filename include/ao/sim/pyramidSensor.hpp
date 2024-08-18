@@ -52,15 +52,15 @@ struct wfsImageT
 
 /// A Pyramid Sensor Simulation
 /**
-  *
-  * \tparam _realT is the real floating point type used for calculations
-  * \tparam _detectorT is the detector used to record the PyWFS image.  Must conform to the mx::AO::sim detector interface specifications.
-  */
+ *
+ * \tparam _realT is the real floating point type used for calculations
+ * \tparam _detectorT is the detector used to record the PyWFS image.  Must conform to the mx::AO::sim detector
+ * interface specifications.
+ */
 template <typename _realT, typename _detectorT>
 class pyramidSensor
 {
-public:
-
+  public:
     /// The real floating point type used for calculations
     typedef _realT realT;
 
@@ -76,306 +76,305 @@ public:
     /// The wavefront sensor detector image type
     typedef _detectorT detectorT;
 
-public:
+  public:
     /// Default c'tor
     pyramidSensor();
 
     /** \name Standard WFS Interface
-      *
-      * @{
-      */
+     *
+     * @{
+     */
 
-protected:
+  protected:
     /* Standard WFS Interface: */
-    uint32_t m_wfSz {0}; ///< Size of the wavefront in pixels
+    uint32_t m_wfSz{ 0 }; ///< Size of the wavefront in pixels
 
-    uint32_t m_detRows {0}; ///< The number of rows of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
-    
-    uint32_t m_detCols {0}; ///< The number of columns of the WFS detector.  After forming the image the WFS detector plane is re-binned to this.
+    uint32_t m_detRows{ 0 }; ///< The number of rows of the WFS detector.  After forming the image the WFS detector
+                             ///< plane is re-binned to this.
 
-    realT m_lambda {0}; ///< Central wavelength, in meters
- 
+    uint32_t m_detCols{ 0 }; ///< The number of columns of the WFS detector.  After forming the image the WFS detector
+                             ///< plane is re-binned to this.
+
+    realT m_lambda{ 0 }; ///< Central wavelength, in meters
+
     /// \todo when the filter should be set with astrospectrum, and should re-calculate the central wavelength.
     /// \todo need to verify that the wavefront propagation is appropriately chromatic
     std::vector<realT> m_wavelengths;      ///< Vector of wavelengths in the WFS bandpass
     std::vector<realT> _wavelengthWeights; ///< The relative weights of the wavelengths
 
-    int m_iTime {1}; ///< Integration time in loop steps
+    int m_iTime{ 1 }; ///< Integration time in loop steps
 
-    int m_roTime {1}; ///< Readout time in loop steps
+    int m_roTime{ 1 }; ///< Readout time in loop steps
 
-    realT m_simStep {0.001}; ///< The simulation stepsize in seconds.
+    realT m_simStep{ 0.001 }; ///< The simulation stepsize in seconds.
 
-public:
+  public:
     /// Get the wavefront size in pixels
     /**
-      * \returns the wavefront size in pixels
-      */
+     * \returns the wavefront size in pixels
+     */
     int wfSz();
 
     /// Set the wavefront size in pixels.
     /**
-      * \param sz is the new size
-      */
-    void wfSz(const uint32_t & sz /**< */);
+     * \param sz is the new size
+     */
+    void wfSz( const uint32_t &sz /**< */ );
 
     /// Get the detector rows  in pixels
     /**
-      * \returns m_detRows
-      */
+     * \returns m_detRows
+     */
     uint32_t detRows();
 
     /// Get the detector columns  in pixels
     /**
-      * \returns m_detCols
-      */
+     * \returns m_detCols
+     */
     uint32_t detCols();
 
     /// Set the detector columns in pixels.
     /**
-      */
-    void detSize( const uint32_t & nrows, ///< The number of rows
-                  const uint32_t & ncols  ///< The number of columns
-                );
+     */
+    void detSize( const uint32_t &nrows, ///< The number of rows
+                  const uint32_t &ncols  ///< The number of columns
+    );
 
     /// Get the PyWFS central wavelength
     /**
-      * \returns the central wavelength in meters
-      */
+     * \returns the central wavelength in meters
+     */
     realT lambda();
 
     /// Set the PyWFS central wavelength
     /**
-      */
-    void lambda(const realT & l /**< The central wavelength, in meters*/);
+     */
+    void lambda( const realT &l /**< The central wavelength, in meters*/ );
 
     /// Get the PyWFS integration time, in time steps
     int iTime();
 
     /// Set the PyWFS integration time, in time steps
-    void iTime(const uint32_t & it /**<  the new integration time*/);
+    void iTime( const uint32_t &it /**<  the new integration time*/ );
 
     /// Get the PyWFS detector readout time, in time steps
     int roTime();
 
     /// Set the PyWFS detector readout time, in time steps
-    void roTime(const uint32_t & rt /**< the new readout time*/);
+    void roTime( const uint32_t &rt /**< the new readout time*/ );
 
     /// Get the simulation step-size, in seconds.
     realT simStep();
 
     /// Set the simulation step-size, in seconds.
-    void simStep(const realT & st /**< the new simulation step size*/);
+    void simStep( const realT &st /**< the new simulation step size*/ );
 
     /// Link this WFS to an AO system simulation
     template <typename AOSysT>
-    void linkSystem(AOSysT &AOSys /**< The AO system simulation to link to*/);
+    void linkSystem( AOSysT &AOSys /**< The AO system simulation to link to*/ );
 
     /// Sense the wavefront aberrations
     /**  \returns true if a new wavefront measurement is ready.
-      *  \returns false if still integrating.
-      */
-    bool senseWavefront(wavefrontT &pupilPlane /**< The input wavefront to be sensed*/);
+     *  \returns false if still integrating.
+     */
+    bool senseWavefront( wavefrontT &pupilPlane /**< The input wavefront to be sensed*/ );
 
     /// Sense the wavefront aberrations in calibration mode
     /** Allows for faster calibrations.
-      */
-    bool senseWavefrontCal(wavefrontT &pupilPlane /**< The input wavefront to be sensed*/);
+     */
+    bool senseWavefrontCal( wavefrontT &pupilPlane /**< The input wavefront to be sensed*/ );
 
-public:
-
+  public:
     /// The WFS detector
     detectorT detector;
 
     /// The image on the detector, resized from m_wfsImage
     wfsImageT<realT> detectorImage;
 
-
     /// @}
 
     /** \name Pyramid Sensor Interface
-      *
-      * @{
-      */
-protected:
-    realT m_nSides {4}; ///< Number of sides in the pyramid
+     *
+     * @{
+     */
+  protected:
+    realT m_nSides{ 4 }; ///< Number of sides in the pyramid
 
     /// The size of the pupil in wavefront pixels.
     /** This is the maximum diameter of the pupil in wavefront pixels.
-      * 
-      */
-    uint32_t m_pupilSz {0};
+     *
+     */
+    uint32_t m_pupilSz{ 0 };
 
     /// The separation of the pupil images in wavefront pixels.
     /** This sets the center-to-center separation of the pupils images in the focal plane wavefront.
-      * Note that the separation in detector pixels then depends on the scaling between wavefront pixels
-      * (m_wfSz) and detector pixels (m_detRows and m_detCols).
-      *   
-      * This sets the size of the region in the pre-detection image that each pupil image
-      * takes up, and therefore the size of the pre-detection image.  
-      * If the pupil (as defined in the input wavefront) is 60 pixels across
-      * and m_pupilSep is set to 64, then there will be a 2 pixel pad around each pupil image,
-      * resulting in 4 pixels between each geometric pupil image.
-      * 
-      * For a standard 4-sided pyramid, the pre-detection image will be
-      * 2*m_pupilSep across.  For other n-sided pyramids, m_pupilSep still specifies the size of the pupil
-      * image region, but the total image size will be a function of the resultant pupil positions.
-      * 
-      * If m_pupilSep is less than m_pupilSz, this will produce the "flattened pyramid", with overlap between
-      * the pupil images.  In this case, image size will also be set by pupilSz to ensure that there are enough
-      * pixels included to show all pupils.
-      */
-    uint32_t m_pupilSep {0}; 
+     * Note that the separation in detector pixels then depends on the scaling between wavefront pixels
+     * (m_wfSz) and detector pixels (m_detRows and m_detCols).
+     *
+     * This sets the size of the region in the pre-detection image that each pupil image
+     * takes up, and therefore the size of the pre-detection image.
+     * If the pupil (as defined in the input wavefront) is 60 pixels across
+     * and m_pupilSep is set to 64, then there will be a 2 pixel pad around each pupil image,
+     * resulting in 4 pixels between each geometric pupil image.
+     *
+     * For a standard 4-sided pyramid, the pre-detection image will be
+     * 2*m_pupilSep across.  For other n-sided pyramids, m_pupilSep still specifies the size of the pupil
+     * image region, but the total image size will be a function of the resultant pupil positions.
+     *
+     * If m_pupilSep is less than m_pupilSz, this will produce the "flattened pyramid", with overlap between
+     * the pupil images.  In this case, image size will also be set by pupilSz to ensure that there are enough
+     * pixels included to show all pupils.
+     */
+    uint32_t m_pupilSep{ 0 };
 
-    /// The size of the resulting PyWFS image in wavefront pixels.  
-    /** If \ref m_imageSzAuto is true, this is determined by number of sides (\ref m_nSides), the pupil size (\ref m_pupilSz), and the
-      * pupil separation (\ref m_pupilSep).  For a 4 sided pyramid this will be the larger of
-      * 2*m_pupilSep and 2*m_pupilSz.
-      * 
-      * If , then this is used regardless of the optimum size.
-      */
-    uint32_t m_imageSz {0}; 
+    /// The size of the resulting PyWFS image in wavefront pixels.
+    /** If \ref m_imageSzAuto is true, this is determined by number of sides (\ref m_nSides), the pupil size (\ref
+     * m_pupilSz), and the pupil separation (\ref m_pupilSep).  For a 4 sided pyramid this will be the larger of
+     * 2*m_pupilSep and 2*m_pupilSz.
+     *
+     * If , then this is used regardless of the optimum size.
+     */
+    uint32_t m_imageSz{ 0 };
 
-    bool m_imageSzAuto {true}; ///< Flag to track if \ref m_imageSz should be set to 0.
+    bool m_imageSzAuto{ true }; ///< Flag to track if \ref m_imageSz should be set to 0.
 
     realT m_wfPS; ///< Wavefront pixel scale, in meters/pixel
 
     realT m_D; ///< Telescope diameter, in meters
 
-    uint32_t m_modSteps{20}; ///< Number of modulation steps in one integration.  Can be set explicitly, but will be calculated if \ref m_perStep is set.
+    uint32_t m_modSteps{ 20 }; ///< Number of modulation steps in one integration.  Can be set explicitly, but will be
+                               ///< calculated if \ref m_perStep is set.
 
-    realT m_perStep{1}; ///< The minimum number of lamba/D per step in the modulation.  Smaller will result in more steps.
+    realT m_perStep{
+        1 }; ///< The minimum number of lamba/D per step in the modulation.  Smaller will result in more steps.
 
-    realT m_modRadius{3.0}; ///< Radius of the modulation in pixels
+    realT m_modRadius{ 3.0 }; ///< Radius of the modulation in pixels
 
-public:
-
+  public:
     /// Get the number of pyramid sides
     /**
-      * \returns the number of sides on the pyramid
-      */
+     * \returns the number of sides on the pyramid
+     */
     int nSides();
 
     /// Set the number of sides on the pyramid
     /**
-      */
-    void nSides(const int & ns /**< The new number of sides on the pyramid*/);
-        
+     */
+    void nSides( const int &ns /**< The new number of sides on the pyramid*/ );
+
     /// Get the minimum number of modulation steps
     /**
-      * \returns m_perStep;
-      */
+     * \returns m_perStep;
+     */
     realT perStep();
 
     /// Set the minimum number of modulation steps
     /**
-      * \param mSt is the new number of modulation steps
-      */
-    void perStep(const realT & prStp /**< The minimum number of lamba/D per step to take*/);
+     * \param mSt is the new number of modulation steps
+     */
+    void perStep( const realT &prStp /**< The minimum number of lamba/D per step to take*/ );
 
     /// Get the number of modulation steps
     /**
-      * \returns m_modSteps, which is defined by perStep.
-      */
+     * \returns m_modSteps, which is defined by perStep.
+     */
     int modSteps();
 
     /// Get the radius of modulation
     /**
-      * \returns m_modRadius;
-      */
+     * \returns m_modRadius;
+     */
     realT modRadius();
 
     /// Set the modulation radius
     /**
-      * \param mR is the new modulation radius in lambda/D
-      */
-    void modRadius(const realT & mR /**< [in] the new value of modulation radius */);
+     * \param mR is the new modulation radius in lambda/D
+     */
+    void modRadius( const realT &mR /**< [in] the new value of modulation radius */ );
 
     /// Get the wavefront pixel scale in meters per pixel
     /**
-      * \returns the wavefront pixel scale in meters/pixel
-      */
+     * \returns the wavefront pixel scale in meters/pixel
+     */
     realT wfPS();
 
     /// Get the telescope diameter
     /**
-      * \returns the telescope diameter in meters
-      */
+     * \returns the telescope diameter in meters
+     */
     realT D();
 
     /// Set the telescope diameter
     /**
-      * \param d is the new size in meters
-      */
-    void D(const realT & d /**< */);
+     * \param d is the new size in meters
+     */
+    void D( const realT &d /**< */ );
 
     /// Get the pupil size in pixels
     /** This is the pupil size in un-binned wavefront space
-      *
-      * \returns m_pupilSep
-      */
+     *
+     * \returns m_pupilSep
+     */
     uint32_t pupilSz();
 
     /// Set the pupil size in pixels.
     /** This is the size of the pupils in un-binned wavefront space.
-      * See \ref m_pupilSz.
-      * 
-      */
-    void pupilSz(const uint32_t & sz /**< the new pupil size.*/);
+     * See \ref m_pupilSz.
+     *
+     */
+    void pupilSz( const uint32_t &sz /**< the new pupil size.*/ );
 
     /// Get the pupil separation in pixels
     /** This is the pupil separation in un-binned wavefront space
-      *
-      * \returns m_pupilSep
-      */
+     *
+     * \returns m_pupilSep
+     */
     uint32_t pupilSep();
 
     /// Set the pupil separation in pixels.
     /** This is the separation of the pupils in un-binned wavefront space.
-      * See \ref m_pupilSep.
-      * 
-      */
-    void pupilSep(const uint32_t & sz /**< the new pupil separation.*/);
+     * See \ref m_pupilSep.
+     *
+     */
+    void pupilSep( const uint32_t &sz /**< the new pupil separation.*/ );
 
     /// Get the image size in wavefront pixels
     /** This is the size of the image in un-binned wavefront space
-      *
-      * \returns m_imageSz
-      */
+     *
+     * \returns m_imageSz
+     */
     uint32_t imageSz();
 
     /// Set the image size in wavefront pixels
     /** This is the size of the image in un-binned wavefront space
-      * Setting a non-zero value also sets m_imageSizeAuto to false.
-      * Setting 0 also sets m_imageSizeAuto to true.
-      */
-    void imageSz(const uint32_t & is);
+     * Setting a non-zero value also sets m_imageSizeAuto to false.
+     * Setting 0 also sets m_imageSizeAuto to true.
+     */
+    void imageSz( const uint32_t &is );
 
-    /// Get the value of the image size auto flag 
+    /// Get the value of the image size auto flag
     /** This controls whether image size is set automatically
-      *
-      * \returns m_imageSz
-      */
+     *
+     * \returns m_imageSz
+     */
     bool imageSzAuto();
 
-    /// Set the value of the image size auto flag 
+    /// Set the value of the image size auto flag
     /** This controls whether image size is set automatically
-      *
-      */
-    void imageSzAuto(const bool & ia);
+     *
+     */
+    void imageSzAuto( const bool &ia );
     ///@}
 
-    
-    
     wfp::fraunhoferPropagator<complexFieldT> m_frProp;
 
-    bool m_opdMaskMade{false};
+    bool m_opdMaskMade{ false };
     complexFieldT m_opdMask;
 
-    bool m_tiltsMade{false};
+    bool m_tiltsMade{ false };
     std::vector<complexFieldT> m_tilts;
 
-    bool m_preAllocated{false};
+    bool m_preAllocated{ false };
     complexFieldT m_pupilPlaneCF;
 
     // Pre-allocated working memory:
@@ -388,26 +387,26 @@ public:
 
     std::vector<complexFieldT> m_th_sensorPlane; ///< Thread-local sensor-pupil-plane wavefront
 
-    std::vector<typename wfsImageT<realT>::imageT> m_th_sensorImage; ///< Thread-local sensor-pupil-plane intensity image
+    std::vector<typename wfsImageT<realT>::imageT>
+        m_th_sensorImage; ///< Thread-local sensor-pupil-plane intensity image
 
-    int m_iTime_counter {0};
+    int m_iTime_counter{ 0 };
 
-    int m_reading {0};
+    int m_reading{ 0 };
 
-    int m_roTime_counter {0};
+    int m_roTime_counter{ 0 };
 
     std::vector<wavefrontT> _wavefronts;
 
-    int m_lastWavefront {0};
+    int m_lastWavefront{ 0 };
 
     /// The image formed by the WFS
     wfsImageT<realT> m_wfsImage;
 
-public:
-
+  public:
     wfsImageT<realT> wfsTipImage;
 
-protected: 
+  protected:
     void makeOpdMask();
 
     void makeTilts();
@@ -417,18 +416,18 @@ protected:
     void preAllocate();
 
     void doSenseWavefront();
-    void doSenseWavefront(wavefrontT & /**< */);
-    void doSenseWavefrontNoMod(wavefrontT & /**< */);
+    void doSenseWavefront( wavefrontT & /**< */ );
+    void doSenseWavefrontNoMod( wavefrontT & /**< */ );
 
-    bool m_firstRun {true};
+    bool m_firstRun{ true };
 };
 
 template <typename realT, typename detectorT>
 pyramidSensor<realT, detectorT>::pyramidSensor()
 {
-    iTime(m_iTime);
+    iTime( m_iTime );
 
-    m_frProp.wholePixel(0);
+    m_frProp.wholePixel( 0 );
 }
 
 template <typename realT, typename detectorT>
@@ -438,9 +437,9 @@ int pyramidSensor<realT, detectorT>::wfSz()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::wfSz(const uint32_t sz)
+void pyramidSensor<realT, detectorT>::wfSz( const uint32_t sz )
 {
-    if (m_wfSz == sz)
+    if( m_wfSz == sz )
     {
         return;
     }
@@ -465,18 +464,16 @@ int pyramidSensor<realT, detectorT>::detCols()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::detSize( const uint32_t & nrows, 
-                                               const uint32_t & ncols
-                                             )
+void pyramidSensor<realT, detectorT>::detSize( const uint32_t &nrows, const uint32_t &ncols )
 {
-    if (m_detRows == nrows && m_detCols == ncols)
+    if( m_detRows == nrows && m_detCols == ncols )
         return;
 
     m_detRows = nrows;
     m_detCols = ncols;
 
-    detector.setSize(m_detRows, m_detCols);
-    detectorImage.image.resize(m_detRows, m_detCols);
+    detector.setSize( m_detRows, m_detCols );
+    detectorImage.image.resize( m_detRows, m_detCols );
 }
 
 template <typename realT, typename detectorT>
@@ -486,17 +483,17 @@ realT pyramidSensor<realT, detectorT>::lambda()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::lambda(const realT & l)
+void pyramidSensor<realT, detectorT>::lambda( const realT &l )
 {
     m_lambda = l;
 
     //---------------------------------------
     //  Check if wavelength vector is filled
     //---------------------------------------
-    if (m_wavelengths.size() == 0)
+    if( m_wavelengths.size() == 0 )
     {
-        m_wavelengths.resize(1, m_lambda);
-        _wavelengthWeights.resize(1, 1.0);
+        m_wavelengths.resize( 1, m_lambda );
+        _wavelengthWeights.resize( 1, 1.0 );
     }
 }
 
@@ -507,19 +504,19 @@ int pyramidSensor<realT, detectorT>::iTime()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::iTime(const uint32_t & it)
+void pyramidSensor<realT, detectorT>::iTime( const uint32_t &it )
 {
-    if (it < 1)
+    if( it < 1 )
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::iTime", "iTime must be >= 1");
+        mxThrowException( mx::err::invalidconfig, "pyramidSensor::iTime", "iTime must be >= 1" );
     }
 
     m_iTime = it;
 
-    _wavefronts.resize(m_iTime + 2);
+    _wavefronts.resize( m_iTime + 2 );
     m_lastWavefront = -1;
 
-    detector.expTime(m_simStep * m_iTime);
+    detector.expTime( m_simStep * m_iTime );
 }
 
 template <typename realT, typename detectorT>
@@ -529,11 +526,11 @@ int pyramidSensor<realT, detectorT>::roTime()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::roTime(const uint32_t & rt)
+void pyramidSensor<realT, detectorT>::roTime( const uint32_t &rt )
 {
-    if (rt < 1)
+    if( rt < 1 )
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::roTime", "roTime must be >= 1");
+        mxThrowException( mx::err::invalidconfig, "pyramidSensor::roTime", "roTime must be >= 1" );
     }
 
     m_roTime = rt;
@@ -546,35 +543,35 @@ realT pyramidSensor<realT, detectorT>::simStep()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::simStep(const realT & st)
+void pyramidSensor<realT, detectorT>::simStep( const realT &st )
 {
 
     m_simStep = st;
 
-    detector.expTime(m_simStep * m_iTime);
+    detector.expTime( m_simStep * m_iTime );
 }
 
 template <typename realT, typename detectorT>
 template <typename AOSysT>
-void pyramidSensor<realT, detectorT>::linkSystem(AOSysT &AOSys)
+void pyramidSensor<realT, detectorT>::linkSystem( AOSysT &AOSys )
 {
-    AOSys.wfs.wfPS(AOSys.m_wfPS);
-    AOSys.wfs.D(AOSys.m_D);
+    AOSys.wfs.wfPS( AOSys.m_wfPS );
+    AOSys.wfs.D( AOSys.m_D );
 }
 
 template <typename realT, typename detectorT>
-bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT &pupilPlane)
+bool pyramidSensor<realT, detectorT>::senseWavefront( wavefrontT &pupilPlane )
 {
 
     ++m_lastWavefront;
-    if (m_lastWavefront >= _wavefronts.size())
+    if( m_lastWavefront >= _wavefronts.size() )
         m_lastWavefront = 0;
     _wavefronts[m_lastWavefront].amplitude = pupilPlane.amplitude;
     _wavefronts[m_lastWavefront].phase = pupilPlane.phase;
     _wavefronts[m_lastWavefront].iterNo = pupilPlane.iterNo;
 
     // Always skip the first one for averaging to center of iTime.
-    if (m_firstRun)
+    if( m_firstRun )
     {
         m_firstRun = false;
         return false;
@@ -584,13 +581,13 @@ bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT &pupilPlane)
 
     bool rv = false;
 
-    if (m_reading)
+    if( m_reading )
     {
         ++m_roTime_counter;
 
-        if (m_roTime_counter >= m_roTime)
+        if( m_roTime_counter >= m_roTime )
         {
-            detector.exposeImage(detectorImage.image, m_wfsImage.image);
+            detector.exposeImage( detectorImage.image, m_wfsImage.image );
 
             detectorImage.tipImage = wfsTipImage.image;
             detectorImage.iterNo = m_wfsImage.iterNo;
@@ -601,7 +598,7 @@ bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT &pupilPlane)
         }
     }
 
-    if (m_iTime_counter >= m_iTime)
+    if( m_iTime_counter >= m_iTime )
     {
         doSenseWavefront();
         m_iTime_counter = 0;
@@ -614,23 +611,23 @@ bool pyramidSensor<realT, detectorT>::senseWavefront(wavefrontT &pupilPlane)
 }
 
 template <typename realT, typename detectorT>
-bool pyramidSensor<realT, detectorT>::senseWavefrontCal(wavefrontT &pupilPlane)
+bool pyramidSensor<realT, detectorT>::senseWavefrontCal( wavefrontT &pupilPlane )
 {
 
     BREAD_CRUMB;
 
-    doSenseWavefront(pupilPlane);
+    doSenseWavefront( pupilPlane );
 
     BREAD_CRUMB;
 
-    detector.exposeImage(detectorImage.image, m_wfsImage.image);
+    detector.exposeImage( detectorImage.image, m_wfsImage.image );
 
     BREAD_CRUMB;
-    
+
     detectorImage.tipImage = wfsTipImage.image;
 
     BREAD_CRUMB;
-    
+
     return true;
 }
 
@@ -643,7 +640,7 @@ int pyramidSensor<realT, detectorT>::nSides()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::nSides(const int & ns)
+void pyramidSensor<realT, detectorT>::nSides( const int &ns )
 {
     m_nSides = ns;
     m_opdMaskMade = false;
@@ -662,10 +659,10 @@ realT pyramidSensor<realT, detectorT>::D()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::D(const realT & d)
+void pyramidSensor<realT, detectorT>::D( const realT &d )
 {
     m_D = d;
-    m_wfPS = m_D/m_pupilSz;
+    m_wfPS = m_D / m_pupilSz;
     m_tiltsMade = false;
 }
 
@@ -676,11 +673,11 @@ realT pyramidSensor<realT, detectorT>::perStep()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::perStep(const realT & prStp)
+void pyramidSensor<realT, detectorT>::perStep( const realT &prStp )
 {
     m_perStep = prStp;
 
-    if (m_modRadius <= 0)
+    if( m_modRadius <= 0 )
     {
         m_modSteps = 0;
         return;
@@ -690,7 +687,7 @@ void pyramidSensor<realT, detectorT>::perStep(const realT & prStp)
 
     // Get the minimum number of steps to meet m_perStep while having symmetry for the quadrants
     m_modSteps = 1;
-    while (math::half_pi<realT>() / m_modSteps > radPerStep)
+    while( math::half_pi<realT>() / m_modSteps > radPerStep )
     {
         ++m_modSteps;
     }
@@ -713,10 +710,10 @@ realT pyramidSensor<realT, detectorT>::modRadius()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::modRadius(const realT & mR)
+void pyramidSensor<realT, detectorT>::modRadius( const realT &mR )
 {
     m_modRadius = mR;
-    perStep(m_perStep); // to calculate m_modSteps;
+    perStep( m_perStep ); // to calculate m_modSteps;
 
     m_tiltsMade = false;
 }
@@ -728,16 +725,16 @@ uint32_t pyramidSensor<realT, detectorT>::pupilSz()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::pupilSz(const uint32_t & sz)
+void pyramidSensor<realT, detectorT>::pupilSz( const uint32_t &sz )
 {
-    if (m_pupilSz == sz)
+    if( m_pupilSz == sz )
     {
         return;
     }
 
     m_pupilSz = sz;
 
-    m_wfPS = m_D/m_pupilSz;
+    m_wfPS = m_D / m_pupilSz;
     m_tiltsMade = false;
     m_opdMaskMade = false;
     m_preAllocated = false;
@@ -750,9 +747,9 @@ uint32_t pyramidSensor<realT, detectorT>::pupilSep()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::pupilSep(const uint32_t & sz)
+void pyramidSensor<realT, detectorT>::pupilSep( const uint32_t &sz )
 {
-    if (m_pupilSep == sz)
+    if( m_pupilSep == sz )
     {
         return;
     }
@@ -766,7 +763,7 @@ void pyramidSensor<realT, detectorT>::pupilSep(const uint32_t & sz)
 template <typename realT, typename detectorT>
 uint32_t pyramidSensor<realT, detectorT>::imageSz()
 {
-    if(!m_opdMaskMade)
+    if( !m_opdMaskMade )
     {
         makeOpdMask();
     }
@@ -775,16 +772,16 @@ uint32_t pyramidSensor<realT, detectorT>::imageSz()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::imageSz(const uint32_t & sz)
+void pyramidSensor<realT, detectorT>::imageSz( const uint32_t &sz )
 {
-    if (m_imageSz == sz)
+    if( m_imageSz == sz )
     {
         return;
     }
 
     m_imageSz = sz;
 
-    if(m_imageSz == 0) 
+    if( m_imageSz == 0 )
     {
         m_imageSzAuto = true;
     }
@@ -804,95 +801,112 @@ bool pyramidSensor<realT, detectorT>::imageSzAuto()
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::imageSzAuto(const bool & ia)
+void pyramidSensor<realT, detectorT>::imageSzAuto( const bool &ia )
 {
     m_imageSzAuto = ia;
 
     m_opdMaskMade = false;
-    
+
     m_preAllocated = false;
 }
-
 
 template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::makeOpdMask()
 {
     complexFieldT opdMaskQ;
 
-    //Setup the Fraunhoffer Propagator
-    m_frProp.setWavefrontSizePixels(m_wfSz);
+    // Setup the Fraunhoffer Propagator
+    m_frProp.setWavefrontSizePixels( m_wfSz );
 
-    m_opdMask.resize(m_wfSz, m_wfSz);
-    opdMaskQ.resize(m_wfSz, m_wfSz);
+    m_opdMask.resize( m_wfSz, m_wfSz );
+    opdMaskQ.resize( m_wfSz, m_wfSz );
 
-    if(m_nSides == 4)
+    if( m_nSides == 4 )
     {
-        realT shift = 0.5 * (m_pupilSep);
+        realT shift = 0.5 * ( m_pupilSep );
 
-        opdMaskQ.set(std::complex<realT>(0, 1));
-        wfp::tiltWavefront(opdMaskQ, shift, shift);
-        wfp::extractBlock(m_opdMask, 0, 0.5 * m_wfSz, 0, 0.5 * m_wfSz, opdMaskQ, 0, 0);
+        opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+        wfp::tiltWavefront( opdMaskQ, shift, shift );
+        wfp::extractBlock( m_opdMask, 0, 0.5 * m_wfSz, 0, 0.5 * m_wfSz, opdMaskQ, 0, 0 );
 
-        opdMaskQ.set(std::complex<realT>(0, 1));
-        wfp::tiltWavefront(opdMaskQ, -shift, -shift);
-        wfp::extractBlock(m_opdMask, 0.5 * m_wfSz, 0.5 * m_wfSz, 0.5 * m_wfSz, 0.5 * m_wfSz - 1, opdMaskQ, 0.5 * m_wfSz, 0.5 * m_wfSz);
+        opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+        wfp::tiltWavefront( opdMaskQ, -shift, -shift );
+        wfp::extractBlock( m_opdMask,
+                           0.5 * m_wfSz,
+                           0.5 * m_wfSz,
+                           0.5 * m_wfSz,
+                           0.5 * m_wfSz - 1,
+                           opdMaskQ,
+                           0.5 * m_wfSz,
+                           0.5 * m_wfSz );
 
-        opdMaskQ.set(std::complex<realT>(0, 1));
-        wfp::tiltWavefront(opdMaskQ, shift, -shift);
-        wfp::extractBlock(m_opdMask, 0, 0.5 * m_wfSz, 0.5 * m_wfSz, 0.5 * m_wfSz, opdMaskQ, 0, 0.5 * m_wfSz);
+        opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+        wfp::tiltWavefront( opdMaskQ, shift, -shift );
+        wfp::extractBlock( m_opdMask, 0, 0.5 * m_wfSz, 0.5 * m_wfSz, 0.5 * m_wfSz, opdMaskQ, 0, 0.5 * m_wfSz );
 
-        opdMaskQ.set(std::complex<realT>(0, 1));
-        wfp::tiltWavefront(opdMaskQ, -shift, shift);
-        wfp::extractBlock(m_opdMask, 0.5 * m_wfSz, 0.5 * m_wfSz, 0, 0.5 * m_wfSz, opdMaskQ, 0.5 * m_wfSz, 0);
+        opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+        wfp::tiltWavefront( opdMaskQ, -shift, shift );
+        wfp::extractBlock( m_opdMask, 0.5 * m_wfSz, 0.5 * m_wfSz, 0, 0.5 * m_wfSz, opdMaskQ, 0.5 * m_wfSz, 0 );
 
-        if(m_imageSzAuto)
+        if( m_imageSzAuto )
         {
-            m_imageSz = 2*m_pupilSep;
+            m_imageSz = 2 * m_pupilSep;
         }
     }
-    else 
+    else
     {
         mx::improc::eigenImage<realT> mask;
-        
-        mask.resize(m_opdMask.rows(), m_opdMask.cols());
-        realT dang = mx::math::two_pi<realT>()/m_nSides;
+
+        mask.resize( m_opdMask.rows(), m_opdMask.cols() );
+        realT dang = mx::math::two_pi<realT>() / m_nSides;
 
         realT minx = 0;
         realT maxx = 0;
         realT miny = 0;
         realT maxy = 0;
 
-        for(int n = 0; n < m_nSides; ++n)
+        for( int n = 0; n < m_nSides; ++n )
         {
             realT ang = n * dang;
 
-            realT dx = m_pupilSep * cos(ang);
+            realT dx = m_pupilSep * cos( ang );
 
-            if(dx < minx) minx = dx;
-            if(dx > maxx) maxx = dx;
+            if( dx < minx )
+                minx = dx;
+            if( dx > maxx )
+                maxx = dx;
 
-            realT dy = m_pupilSep * sin(ang);
+            realT dy = m_pupilSep * sin( ang );
 
-            if(dy < miny) miny = dy;
-            if(dy > maxy) maxy = dy;
+            if( dy < miny )
+                miny = dy;
+            if( dy > maxy )
+                maxy = dy;
 
-            opdMaskQ.set(std::complex<realT>(0, 1));
-            wfp::tiltWavefront(opdMaskQ, dx, dy);
+            opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+            wfp::tiltWavefront( opdMaskQ, dx, dy );
             mask.setZero();
-            improc::maskWedge(mask, 0.5*(mask.rows()-1), 0.5*(mask.cols()-1), math::rtod(ang), 0.5*math::rtod(dang), 1);
-            wfp::extractMaskedPixels(m_opdMask, opdMaskQ, mask);
+            improc::maskWedge( mask,
+                               0.5 * ( mask.rows() - 1 ),
+                               0.5 * ( mask.cols() - 1 ),
+                               math::rtod( ang ),
+                               0.5 * math::rtod( dang ),
+                               1 );
+            wfp::extractMaskedPixels( m_opdMask, opdMaskQ, mask );
         }
 
-        int xsz = 2*std::max( {fabs(maxx), fabs(minx)} ) + 2*std::max({(m_pupilSep/2), (m_pupilSz/2)});
-        int ysz = 2*std::max( {fabs(maxy), fabs(miny)} ) + 2*std::max({(m_pupilSep/2), (m_pupilSz/2)});
+        int xsz =
+            2 * std::max( { fabs( maxx ), fabs( minx ) } ) + 2 * std::max( { ( m_pupilSep / 2 ), ( m_pupilSz / 2 ) } );
+        int ysz =
+            2 * std::max( { fabs( maxy ), fabs( miny ) } ) + 2 * std::max( { ( m_pupilSep / 2 ), ( m_pupilSz / 2 ) } );
 
-        if(m_imageSzAuto)
+        if( m_imageSzAuto )
         {
-            m_imageSz = std::max(xsz, ysz);
+            m_imageSz = std::max( xsz, ysz );
         }
     }
 
-    m_wfsImage.image.resize(m_imageSz, m_imageSz);
+    m_wfsImage.image.resize( m_imageSz, m_imageSz );
 
     m_opdMaskMade = true;
 }
@@ -902,41 +916,50 @@ void pyramidSensor<realT, detectorT>::makeTilts()
 {
     constexpr realT pi = math::pi<realT>();
 
-    if(m_modSteps == 0)
+    if( m_modSteps == 0 )
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::makeTilts()", "number of modulation steps (m_modSteps) has not been set.");
+        mxThrowException( mx::err::invalidconfig,
+                          "pyramidSensor::makeTilts()",
+                          "number of modulation steps (m_modSteps) has not been set." );
     }
-    if(m_wfPS == 0)
+    if( m_wfPS == 0 )
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::makeTilts()", "wavefront platescale (m_wfPS) is 0. Must set pupilSz and D first.");
+        mxThrowException( mx::err::invalidconfig,
+                          "pyramidSensor::makeTilts()",
+                          "wavefront platescale (m_wfPS) is 0. Must set pupilSz and D first." );
     }
 
-    if(!std::isfinite(m_wfPS))
+    if( !std::isfinite( m_wfPS ) )
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::makeTilts()", "wavefront platescale (m_wfPS) is infinite. Must set pupilSz and D first.");
+        mxThrowException( mx::err::invalidconfig,
+                          "pyramidSensor::makeTilts()",
+                          "wavefront platescale (m_wfPS) is infinite. Must set pupilSz and D first." );
     }
 
-    realT dang = 2 * pi / (m_modSteps);
+    realT dang = 2 * pi / ( m_modSteps );
     realT dx, dy;
 
-    m_tilts.resize(m_modSteps);
+    m_tilts.resize( m_modSteps );
 
     std::cout << "WF Size: " << m_wfSz << "\n";
     std::cout << "WF PS:   " << m_wfPS << "\n";
     std::cout << "Lambda:  " << m_lambda << "\n";
-    std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * 206265. << " (mas/pix)\n";
+    std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) * 206265. << " (mas/pix)\n";
     std::cout << "Mod. steps: " << m_modSteps << "\n";
-    std::cout << "Mod rad: " << m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) << " (pixels)\n";
+    std::cout << "Mod rad: " << m_modRadius * ( m_lambda / m_D ) / wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda )
+              << " (pixels)\n";
 
-    for (int i = 0; i < m_modSteps; ++i)
+    for( int i = 0; i < m_modSteps; ++i )
     {
-        dx = m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * cos(0.0 * dang + dang * i);
-        dy = m_modRadius * (m_lambda / m_D) / wfp::fftPlateScale<realT>(m_wfSz, m_wfPS, m_lambda) * sin(0.0 * dang + dang * i);
+        dx = m_modRadius * ( m_lambda / m_D ) / wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) *
+             cos( 0.0 * dang + dang * i );
+        dy = m_modRadius * ( m_lambda / m_D ) / wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) *
+             sin( 0.0 * dang + dang * i );
 
-        m_tilts[i].resize(m_wfSz, m_wfSz);
-        m_tilts[i].set(std::complex<realT>(0, 1));
+        m_tilts[i].resize( m_wfSz, m_wfSz );
+        m_tilts[i].set( std::complex<realT>( 0, 1 ) );
 
-        wfp::tiltWavefront(m_tilts[i], dx, dy);
+        wfp::tiltWavefront( m_tilts[i], dx, dy );
     }
 
     m_tiltsMade = true;
@@ -945,35 +968,35 @@ void pyramidSensor<realT, detectorT>::makeTilts()
 template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::allocThreadMem()
 {
-    if(!m_opdMaskMade)
+    if( !m_opdMaskMade )
     {
-        makeOpdMask(); //Needed for m_imageSz
+        makeOpdMask(); // Needed for m_imageSz
     }
 
-    m_pupilPlaneCF.resize(m_wfSz, m_wfSz);
+    m_pupilPlaneCF.resize( m_wfSz, m_wfSz );
 
     int maxTh = omp_get_max_threads();
-    m_th_tiltedPlane.resize(maxTh);
+    m_th_tiltedPlane.resize( maxTh );
 
-    m_th_focalPlane.resize(maxTh);
+    m_th_focalPlane.resize( maxTh );
 
-    m_th_focalImage.resize(maxTh);
+    m_th_focalImage.resize( maxTh );
 
-    m_th_sensorPlane.resize(maxTh);
+    m_th_sensorPlane.resize( maxTh );
 
-    m_th_sensorImage.resize(maxTh);
+    m_th_sensorImage.resize( maxTh );
 
-    for (int nTh = 0; nTh < maxTh; ++nTh)
+    for( int nTh = 0; nTh < maxTh; ++nTh )
     {
-        m_th_tiltedPlane[nTh].resize(m_wfSz, m_wfSz);
+        m_th_tiltedPlane[nTh].resize( m_wfSz, m_wfSz );
 
-        m_th_focalPlane[nTh].resize(m_wfSz, m_wfSz);
+        m_th_focalPlane[nTh].resize( m_wfSz, m_wfSz );
 
-        m_th_focalImage[nTh].resize(m_wfSz, m_wfSz);
+        m_th_focalImage[nTh].resize( m_wfSz, m_wfSz );
 
-        m_th_sensorPlane[nTh].resize(m_wfSz, m_wfSz);
+        m_th_sensorPlane[nTh].resize( m_wfSz, m_wfSz );
 
-        m_th_sensorImage[nTh].resize(m_imageSz, m_imageSz);
+        m_th_sensorImage[nTh].resize( m_imageSz, m_imageSz );
     }
 
     m_preAllocated = true;
@@ -982,24 +1005,21 @@ void pyramidSensor<realT, detectorT>::allocThreadMem()
 template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::preAllocate()
 {
-    if(!m_tiltsMade)
+    if( !m_tiltsMade )
     {
         makeTilts();
     }
-    
-    if(!m_opdMaskMade)
+
+    if( !m_opdMaskMade )
     {
         makeOpdMask();
     }
 
-    if(!m_preAllocated)
+    if( !m_preAllocated )
     {
         allocThreadMem();
     }
 }
-
-
-
 
 template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::doSenseWavefront()
@@ -1010,7 +1030,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
 
     /* Here make average wavefront for now */
     int _firstWavefront = m_lastWavefront - m_iTime;
-    if (_firstWavefront < 0)
+    if( _firstWavefront < 0 )
         _firstWavefront += _wavefronts.size();
 
     pupilPlane.amplitude = _wavefronts[_firstWavefront].amplitude;
@@ -1020,10 +1040,10 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
 
     BREAD_CRUMB;
 
-    for (int i = 0; i < m_iTime; ++i)
+    for( int i = 0; i < m_iTime; ++i )
     {
         ++_firstWavefront;
-        if ((size_t)_firstWavefront >= _wavefronts.size())
+        if( (size_t)_firstWavefront >= _wavefronts.size() )
             _firstWavefront = 0;
 
         pupilPlane.amplitude += _wavefronts[_firstWavefront].amplitude;
@@ -1033,44 +1053,44 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
 
     BREAD_CRUMB;
 
-    pupilPlane.amplitude /= (m_iTime + 1);
-    pupilPlane.phase /= (m_iTime + 1);
+    pupilPlane.amplitude /= ( m_iTime + 1 );
+    pupilPlane.phase /= ( m_iTime + 1 );
 
-    avgIt /= (m_iTime + 1.0);
+    avgIt /= ( m_iTime + 1.0 );
 
     /*=====================================*/
-    doSenseWavefront(pupilPlane);
+    doSenseWavefront( pupilPlane );
 
     m_wfsImage.iterNo = avgIt;
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
+void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
 {
-    if (m_modRadius == 0)
+    if( m_modRadius == 0 )
     {
-        return doSenseWavefrontNoMod(pupilPlane);
+        return doSenseWavefrontNoMod( pupilPlane );
     }
 
-    if (!m_preAllocated)
+    if( !m_preAllocated )
     {
         preAllocate();
     }
 
     BREAD_CRUMB;
 
-    m_wfsImage.image.resize(m_imageSz, m_imageSz);
+    m_wfsImage.image.resize( m_imageSz, m_imageSz );
     m_wfsImage.image.setZero();
 
-    wfsTipImage.image.resize(m_wfSz, m_wfSz);
+    wfsTipImage.image.resize( m_wfSz, m_wfSz );
     wfsTipImage.image.setZero();
 
-    for (size_t l = 0; l < m_wavelengths.size(); ++l)
+    for( size_t l = 0; l < m_wavelengths.size(); ++l )
     {
         pupilPlane.lambda = m_lambda;
-        pupilPlane.getWavefront(m_pupilPlaneCF, m_wavelengths[l], m_wfSz);
+        pupilPlane.getWavefront( m_pupilPlaneCF, m_wavelengths[l], m_wfSz );
 
-        #pragma omp parallel
+#pragma omp parallel
         {
             int nTh = omp_get_thread_num();
 
@@ -1090,8 +1110,8 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
 
             int nelem = m_wfSz * m_wfSz;
 
-            #pragma omp for
-            for (int i = 0; i < m_modSteps; ++i)
+#pragma omp for
+            for( int i = 0; i < m_modSteps; ++i )
             {
 
                 tim_Data = m_tilts[i].data();
@@ -1099,7 +1119,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
                 //---------------------------------------------
                 // Apply the modulating tip
                 //---------------------------------------------
-                for (int ii = 0; ii < nelem; ++ii)
+                for( int ii = 0; ii < nelem; ++ii )
                 {
                     tpm_Data[ii] = ppm_Data[ii] * tim_Data[ii];
                 }
@@ -1107,17 +1127,18 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
                 //---------------------------------------------
                 // Propagate to Pyramid tip
                 //---------------------------------------------
-                m_frProp.propagatePupilToFocal(m_th_focalPlane[nTh], m_th_tiltedPlane[nTh], true);
+                m_frProp.propagatePupilToFocal( m_th_focalPlane[nTh], m_th_tiltedPlane[nTh], true );
 
                 //---------------------------------------------
                 // Extract the tip image.
                 //---------------------------------------------
-                wfp::extractIntensityImageAccum(m_th_focalImage[nTh], 0, m_wfSz, 0, m_wfSz, m_th_focalPlane[nTh], 0, 0);
+                wfp::extractIntensityImageAccum(
+                    m_th_focalImage[nTh], 0, m_wfSz, 0, m_wfSz, m_th_focalPlane[nTh], 0, 0 );
 
                 //---------------------------------------------
                 // Now apply the pyramid OPD
                 //---------------------------------------------
-                for (int ii = 0; ii < nelem; ++ii)
+                for( int ii = 0; ii < nelem; ++ii )
                 {
                     fpm_Data[ii] = fpm_Data[ii] * opdm_Data[ii];
                 }
@@ -1125,19 +1146,25 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
                 //---------------------------------------------
                 // Propagate to sensor plane
                 //---------------------------------------------
-                m_frProp.propagateFocalToPupil(m_th_sensorPlane[nTh], m_th_focalPlane[nTh], true);
+                m_frProp.propagateFocalToPupil( m_th_sensorPlane[nTh], m_th_focalPlane[nTh], true );
 
                 //---------------------------------------------
                 // Extract the image.
                 //---------------------------------------------
-                wfp::extractIntensityImageAccum(m_th_sensorImage[nTh], 0, m_imageSz, 0, m_imageSz, m_th_sensorPlane[nTh],
-                                                0.5 * m_wfSz - m_imageSz/2, 0.5 * m_wfSz - m_imageSz/2);
+                wfp::extractIntensityImageAccum( m_th_sensorImage[nTh],
+                                                 0,
+                                                 m_imageSz,
+                                                 0,
+                                                 m_imageSz,
+                                                 m_th_sensorPlane[nTh],
+                                                 0.5 * m_wfSz - m_imageSz / 2,
+                                                 0.5 * m_wfSz - m_imageSz / 2 );
 
             } // for
 
             BREAD_CRUMB;
 
-            #pragma omp critical
+#pragma omp critical
             {
                 m_wfsImage.image += m_th_sensorImage[nTh] * _wavelengthWeights[l];
                 wfsTipImage.image += m_th_focalImage[nTh] * _wavelengthWeights[l];
@@ -1153,32 +1180,32 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront(wavefrontT &pupilPlane)
 }
 
 template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT &pupilPlane)
+void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPlane )
 {
     BREAD_CRUMB;
 
-    if (!m_opdMaskMade)
+    if( !m_opdMaskMade )
     {
         makeOpdMask();
     }
 
-    m_wfsImage.image.resize(m_imageSz, m_imageSz);
+    m_wfsImage.image.resize( m_imageSz, m_imageSz );
     m_wfsImage.image.setZero();
 
-    wfsTipImage.image.resize(m_wfSz, m_wfSz);
+    wfsTipImage.image.resize( m_wfSz, m_wfSz );
     wfsTipImage.image.setZero();
 
     complexFieldT m_pupilPlaneCF;
 
-    pupilPlane.getWavefront(m_pupilPlaneCF, m_wfSz);
+    pupilPlane.getWavefront( m_pupilPlaneCF, m_wfSz );
 
     complexFieldT tiltedPlane;
     complexFieldT focalPlane;
     complexFieldT sensorPlane;
 
-    tiltedPlane.resize(m_wfSz, m_wfSz);
-    focalPlane.resize(m_wfSz, m_wfSz);
-    sensorPlane.resize(m_wfSz, m_wfSz);
+    tiltedPlane.resize( m_wfSz, m_wfSz );
+    focalPlane.resize( m_wfSz, m_wfSz );
+    sensorPlane.resize( m_wfSz, m_wfSz );
 
     int nelem = m_wfSz * m_wfSz;
 
@@ -1192,7 +1219,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT &pupilPla
     //---------------------------------------------
     // Apply NO modulator tilt
     //---------------------------------------------
-    for (int ii = 0; ii < nelem; ++ii)
+    for( int ii = 0; ii < nelem; ++ii )
     {
         tpm_Data[ii] = ppm_Data[ii];
     }
@@ -1202,21 +1229,21 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT &pupilPla
     //---------------------------------------------
     // Propagate to Pyramid tip
     //---------------------------------------------
-    m_frProp.propagatePupilToFocal(focalPlane, tiltedPlane, true);
+    m_frProp.propagatePupilToFocal( focalPlane, tiltedPlane, true );
 
     BREAD_CRUMB;
 
     //---------------------------------------------
     // Extract the tip image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum( wfsTipImage.image, 0, m_wfSz, 0, m_wfSz, focalPlane, 0, 0);
-    
+    wfp::extractIntensityImageAccum( wfsTipImage.image, 0, m_wfSz, 0, m_wfSz, focalPlane, 0, 0 );
+
     BREAD_CRUMB;
 
     //---------------------------------------------
     // Now apply the pyramid OPD
     //---------------------------------------------
-    for (int ii = 0; ii < nelem; ++ii)
+    for( int ii = 0; ii < nelem; ++ii )
     {
         fpm_Data[ii] = fpm_Data[ii] * opdm_Data[ii];
     }
@@ -1226,17 +1253,22 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod(wavefrontT &pupilPla
     //---------------------------------------------
     // Propagate to sensor plane
     //---------------------------------------------
-    m_frProp.propagateFocalToPupil(sensorPlane, focalPlane, true);
+    m_frProp.propagateFocalToPupil( sensorPlane, focalPlane, true );
 
     BREAD_CRUMB;
 
     //---------------------------------------------
     // Extract the image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum(m_wfsImage.image, 0, m_imageSz, 0, m_imageSz, sensorPlane, 
-                                           0.5 * m_wfSz - m_imageSz/2, 0.5 * m_wfSz - m_imageSz/2);
+    wfp::extractIntensityImageAccum( m_wfsImage.image,
+                                     0,
+                                     m_imageSz,
+                                     0,
+                                     m_imageSz,
+                                     sensorPlane,
+                                     0.5 * m_wfSz - m_imageSz / 2,
+                                     0.5 * m_wfSz - m_imageSz / 2 );
 
-    
     BREAD_CRUMB;
 }
 

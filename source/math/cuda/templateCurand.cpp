@@ -1,9 +1,9 @@
 /** \file templateCurand.cpp
-  * \author Jared R. Males
-  * \brief Implementation of a template interface to curand
-  * \ingroup gen_math_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Implementation of a template interface to curand
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2019,2020 Jared R. Males (jaredmales@gmail.com)
@@ -26,34 +26,24 @@
 
 #include "math/cuda/templateCurand.hpp"
 
-
 namespace mx
 {
 namespace cuda
 {
 
-template<>
-curandStatus_t curandGenerateNormal<float>( curandGenerator_t generator, 
-                                            float *outputPtr, 
-                                            size_t n, 
-                                            float mean, 
-                                            float stddev
-                                          )
+template <>
+curandStatus_t
+curandGenerateNormal<float>( curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev )
 {
-   return ::curandGenerateNormal(generator, outputPtr, n, mean, stddev);
+    return ::curandGenerateNormal( generator, outputPtr, n, mean, stddev );
 }
 
-template<>
-curandStatus_t curandGenerateNormal<double>( curandGenerator_t generator, 
-                                             double *outputPtr, 
-                                             size_t n, 
-                                             double mean, 
-                                             double stddev
-                                           )
+template <>
+curandStatus_t
+curandGenerateNormal<double>( curandGenerator_t generator, double *outputPtr, size_t n, double mean, double stddev )
 {
-   return ::curandGenerateNormalDouble(generator, outputPtr, n, mean, stddev);
+    return ::curandGenerateNormalDouble( generator, outputPtr, n, mean, stddev );
 }
 
-}//namespace cuda 
-}//namespace mx
-
+} // namespace cuda
+} // namespace mx

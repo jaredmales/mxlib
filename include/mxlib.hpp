@@ -32,75 +32,78 @@
 
 namespace mx
 {
-   
-const char * mxlib_comp_current_branch();
 
-const char * mxlib_comp_current_sha1();
+const char *mxlib_comp_current_branch();
+
+const char *mxlib_comp_current_sha1();
 
 const bool mxlib_comp_repo_modified();
 
-///Dump the current git status of the library to a stream
+/// Dump the current git status of the library to a stream
 /** Prints the current SHA1 hash and whether or not the library
-  * has been modified since that commit.
-  *
-  * \tparam iosT a std::ostream-like type 
-  * \tparam comment a character to print at the beginning of each line.  Default is '#'.
-  */ 
-template<typename iosT, char comment='#'>
-iosT & dumpGitStatus( iosT & ios /**< [in] a std::ostream-like stream. */)
+ * has been modified since that commit.
+ *
+ * \tparam iosT a std::ostream-like type
+ * \tparam comment a character to print at the beginning of each line.  Default is '#'.
+ */
+template <typename iosT, char comment = '#'>
+iosT &dumpGitStatus( iosT &ios /**< [in] a std::ostream-like stream. */ )
 {
-   //This causes the stream to not output a '\0' if comment = '\0'
-   char c[] = {comment, '\0'};
-      
-   ios << c << "--------------------------------------------\n";
-   ios << c << " mxlib git status              \n";
-   ios << c << "  headers:              \n";
-   ios << c << "   branch: " << MXLIB_UNCOMP_BRANCH << "\n";
-   ios << c << "   SHA1: " << MXLIB_UNCOMP_CURRENT_SHA1 << "\n";
-   ios << c << "   modified flag: " << std::boolalpha << (bool) MXLIB_UNCOMP_REPO_MODIFIED << "\n";
-   ios << c << "  compiled:              \n";
-   ios << c << "   branch: " << mxlib_comp_current_branch() << "\n";
-   ios << c << "   SHA1: " << mxlib_comp_current_sha1() << "\n";
-   ios << c << "   modified flag: " << std::boolalpha << (bool) mxlib_comp_repo_modified() << "\n";
-   ios << c << "--------------------------------------------\n";
+    // This causes the stream to not output a '\0' if comment = '\0'
+    char c[] = { comment, '\0' };
 
-   return ios;
+    ios << c << "--------------------------------------------\n";
+    ios << c << " mxlib git status              \n";
+    ios << c << "  headers:              \n";
+    ios << c << "   branch: " << MXLIB_UNCOMP_BRANCH << "\n";
+    ios << c << "   SHA1: " << MXLIB_UNCOMP_CURRENT_SHA1 << "\n";
+    ios << c << "   modified flag: " << std::boolalpha << (bool)MXLIB_UNCOMP_REPO_MODIFIED << "\n";
+    ios << c << "  compiled:              \n";
+    ios << c << "   branch: " << mxlib_comp_current_branch() << "\n";
+    ios << c << "   SHA1: " << mxlib_comp_current_sha1() << "\n";
+    ios << c << "   modified flag: " << std::boolalpha << (bool)mxlib_comp_repo_modified() << "\n";
+    ios << c << "--------------------------------------------\n";
+
+    return ios;
 }
 
-///Dump the git status of a repository to a stream
+/// Dump the git status of a repository to a stream
 /** Prints the provided SHA1 hash and whether or not the library
-  * has been modified since that commit.
-  *
-  * \tparam iosT a std::ostream-like type 
-  * \tparam comment a character to print at the beginning of each line.  Default is '#'.
-  */ 
-template<typename iosT, char comment='#'>
-iosT & dumpGitStatus( iosT & ios,                      ///< [in] a std::ostream-like stream. 
-                      const std::string & repoName,    ///< [in] The name of the repository
-                      const std::string & branch,      ///< [in] The name of the branch
-                      const std::string & sha1,        ///< [in] The sha1 hash for the current commit
-                      const bool & modified,           ///< [in] Whether or not the repository is currently modified
-                      const std::string & section = "" ///< [in] [optional] Descriptive sub-section name (e.g. headers vs. compiled)
-                    )
+ * has been modified since that commit.
+ *
+ * \tparam iosT a std::ostream-like type
+ * \tparam comment a character to print at the beginning of each line.  Default is '#'.
+ */
+template <typename iosT, char comment = '#'>
+iosT &dumpGitStatus(
+    iosT &ios,                      ///< [in] a std::ostream-like stream.
+    const std::string &repoName,    ///< [in] The name of the repository
+    const std::string &branch,      ///< [in] The name of the branch
+    const std::string &sha1,        ///< [in] The sha1 hash for the current commit
+    const bool &modified,           ///< [in] Whether or not the repository is currently modified
+    const std::string &section = "" ///< [in] [optional] Descriptive sub-section name (e.g. headers vs. compiled)
+)
 {
-   //This causes the stream to not output a '\0' if comment = '\0'
-   char c[] = {comment, '\0'};
-      
-   bool sect = !(section == "");
-   std::string space = "  ";
-   if(sect) space += " ";
+    // This causes the stream to not output a '\0' if comment = '\0'
+    char c[] = { comment, '\0' };
 
-   ios << c << "--------------------------------------------\n";
-   ios << c << " " << repoName << " git status:\n";
-   if(sect) ios << c << "  " << section << ":\n";
-   ios << c << space << "branch: " << branch << "\n";
-   ios << c << space << "SHA1: " << sha1 << "\n";
-   ios << c << space << "modified flag: " << std::boolalpha << modified << "\n";
-   ios << c << "--------------------------------------------\n";
+    bool sect = !( section == "" );
+    std::string space = "  ";
+    if( sect )
+        space += " ";
 
-   return ios;
+    ios << c << "--------------------------------------------\n";
+    ios << c << " " << repoName << " git status:\n";
+    if( sect )
+        ios << c << "  " << section << ":\n";
+    ios << c << space << "branch: " << branch << "\n";
+    ios << c << space << "SHA1: " << sha1 << "\n";
+    ios << c << space << "modified flag: " << std::boolalpha << modified << "\n";
+    ios << c << "--------------------------------------------\n";
+
+    return ios;
 }
 
-}//namespace mx
-   
+} // namespace mx
+
 #endif // mxlib_hpp

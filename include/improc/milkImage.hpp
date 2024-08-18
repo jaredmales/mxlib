@@ -1,9 +1,9 @@
 /** \file milkImage.hpp
-  * \brief Interface to MILK::ImageStreamIO shared memory streams
-  * \ingroup image_processing_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Interface to MILK::ImageStreamIO shared memory streams
+ * \ingroup image_processing_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
@@ -40,83 +40,83 @@
 
 namespace mx
 {
-namespace improc 
+namespace improc
 {
 
-template<typename typeT>
+template <typename typeT>
 struct ImageStructTypeCode;
 
-template<>
+template <>
 struct ImageStructTypeCode<uint8_t>
 {
     constexpr static int TypeCode = _DATATYPE_UINT8;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<int8_t>
 {
     constexpr static int TypeCode = _DATATYPE_INT8;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<char>
 {
     constexpr static int TypeCode = _DATATYPE_INT8;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<uint16_t>
 {
     constexpr static int TypeCode = _DATATYPE_UINT16;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<int16_t>
 {
     constexpr static int TypeCode = _DATATYPE_INT16;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<uint32_t>
 {
     constexpr static int TypeCode = _DATATYPE_UINT32;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<int32_t>
 {
     constexpr static int TypeCode = _DATATYPE_INT32;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<uint64_t>
 {
     constexpr static int TypeCode = _DATATYPE_UINT64;
 };
-template<>
+template <>
 struct ImageStructTypeCode<int64_t>
 {
     constexpr static int TypeCode = _DATATYPE_INT64;
 };
-template<>
+template <>
 struct ImageStructTypeCode<float>
 {
     constexpr static int TypeCode = _DATATYPE_FLOAT;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<double>
 {
     constexpr static int TypeCode = _DATATYPE_DOUBLE;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<std::complex<float>>
 {
     constexpr static int TypeCode = _DATATYPE_COMPLEX_FLOAT;
 };
 
-template<>
+template <>
 struct ImageStructTypeCode<std::complex<double>>
 {
     constexpr static int TypeCode = _DATATYPE_COMPLEX_DOUBLE;
@@ -124,391 +124,388 @@ struct ImageStructTypeCode<std::complex<double>>
 
 /// Class to interface with an ImageStreamIO image in shared memory
 /**
-  *
-  * Use with Eigen::Map (aliased as mx::improc::eigenMap)
-  * \code
-  * using namespace mx::improc;
-  * milkImage<float> mim("image"); //connects to image.im.shm
-  * eigenMap<float> im(mim); //the conversion operator passes a reference to the internal map
-  * im.setRandom(); // im is now a map pointed at the image data.  Eigen functions are now available.
-  * im(64,64) *= 2000;
-  * im /= 0.2;
-  * \endcode
-  * Once you have changed something via the Eigen::Map you want to notify others connected to the stream 
-  * via
-  * \code
-  * mim.post();
-  * \endcode
-  * 
-  * \ingroup eigen_image_processing
-  */  
-template<typename _dataT>
+ *
+ * Use with Eigen::Map (aliased as mx::improc::eigenMap)
+ * \code
+ * using namespace mx::improc;
+ * milkImage<float> mim("image"); //connects to image.im.shm
+ * eigenMap<float> im(mim); //the conversion operator passes a reference to the internal map
+ * im.setRandom(); // im is now a map pointed at the image data.  Eigen functions are now available.
+ * im(64,64) *= 2000;
+ * im /= 0.2;
+ * \endcode
+ * Once you have changed something via the Eigen::Map you want to notify others connected to the stream
+ * via
+ * \code
+ * mim.post();
+ * \endcode
+ *
+ * \ingroup eigen_image_processing
+ */
+template <typename _dataT>
 class milkImage
 {
-public:
+  public:
+    typedef _dataT dataT; ///< The data type
 
-    typedef _dataT dataT; ///< The data type 
+  protected:
+    std::string m_name; ///< The image name, from name.im.shm (the .im.shm should not be given).
 
-protected:
+    IMAGE *m_image{ nullptr }; ///< Pointer to the ImageStreamIO IMAGE structure.
 
-    std::string m_name; ///< The image name, from name.im.shm (the .im.shm should not be given). 
+    dataT *m_raw{ nullptr }; // The raw pointer address is stored here for checks
 
-    IMAGE * m_image {nullptr}; ///< Pointer to the ImageStreamIO IMAGE structure.
+    eigenMap<dataT> *m_map{ nullptr }; // An Eigen::Map of the array
 
-    dataT * m_raw {nullptr}; //The raw pointer address is stored here for checks
+    uint64_t m_size_0{ 0 }; ///< The size[0] of the image when last opened.
 
-    eigenMap<dataT> * m_map {nullptr}; //An Eigen::Map of the array
-    
-    uint64_t m_size_0 {0}; ///< The size[0] of the image when last opened.
+    uint64_t m_size_1{ 0 }; ///< The size[1] of the image when last opened.
 
-    uint64_t m_size_1 {0}; ///< The size[1] of the image when last opened.
-
-public:
-
+  public:
     /// Default c'tor
     milkImage();
 
     /// Constructor which opens the specified image, which must already exist in shared memory.
-    milkImage( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
-
+    milkImage(
+        const std::string &imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
 
     /// Constructor which (re-)creates the specified image with the given size
-    milkImage( const std::string & imname, ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
-               uint32_t sz0,               ///< [in] the x size of the image
-               uint32_t sz1                ///< [in] the y size of the image
-             );
+    milkImage( const std::string &imname, ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
+               uint32_t sz0,              ///< [in] the x size of the image
+               uint32_t sz1               ///< [in] the y size of the image
+    );
 
     /// Constructor which (re-)creates the specified image and copies the provided image to it
-    milkImage( const std::string & imname,  ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
-               const eigenImage<dataT> & im ///< [in] An existing eigenImage
-             );
+    milkImage( const std::string &imname,  ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
+               const eigenImage<dataT> &im ///< [in] An existing eigenImage
+    );
 
     /// D'tor
     ~milkImage();
 
     /// Open and connect to an image, allocating the eigenMap.
     /**
-      * \throws std::invalid_argument if the image type_code does not match dataT.
-      */  
-    void open( const std::string & imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/);
+     * \throws std::invalid_argument if the image type_code does not match dataT.
+     */
+    void
+    open( const std::string &imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
 
     /// Create (or re-create) and connect to an image, allocating the eigenMap.
     /**
-      * \throws std::invalid_argument if the image type_code does not match dataT.
-      */  
-    void create( const std::string & imname, ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
-                 uint32_t sz0,               ///< [in] the x size of the image
-                 uint32_t sz1                ///< [in] the y size of the image
-               );
+     * \throws std::invalid_argument if the image type_code does not match dataT.
+     */
+    void create( const std::string &imname, ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
+                 uint32_t sz0,              ///< [in] the x size of the image
+                 uint32_t sz1               ///< [in] the y size of the image
+    );
 
-    /// Create and connect to an image using an existing eigenImage, allocating the eigenMap and copying the image to the shmim.
+    /// Create and connect to an image using an existing eigenImage, allocating the eigenMap and copying the image to
+    /// the shmim.
     /**
-      * \throws std::invalid_argument if the image type_code does not match dataT.
-      */  
-    void create( const std::string & imname,  ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
-                 const eigenImage<dataT> & im ///< [in] An existing eigenImage
-               );
+     * \throws std::invalid_argument if the image type_code does not match dataT.
+     */
+    void create( const std::string &imname, ///< [in] The image name, for name.im.shm (the .im.shm should not be given).
+                 const eigenImage<dataT> &im ///< [in] An existing eigenImage
+    );
 
     /// Get the width of the image
     /**
-      * \returns the current value of m_size_0 
-      */
+     * \returns the current value of m_size_0
+     */
     uint32_t rows();
 
     /// Get the height of the image
     /**
-      * \returns the current value of m_size_1
-      */
+     * \returns the current value of m_size_1
+     */
     uint32_t cols();
 
     /// Get the size of a dimension of the image
     /**
-      * \returns the current value of m_size_0 or m_size_1 depending on n
-      */
-    uint32_t size( unsigned n /**< [in] the dimension to get the size of*/);
+     * \returns the current value of m_size_0 or m_size_1 depending on n
+     */
+    uint32_t size( unsigned n /**< [in] the dimension to get the size of*/ );
 
     /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
-      * 
-      * \todo check inode!
-      * 
-      * \returns true if connected and no changes
-      * \returns false if not connected or something changed.  All maps are now invalid. 
-      */
+     *
+     * \todo check inode!
+     *
+     * \returns true if connected and no changes
+     * \returns false if not connected or something changed.  All maps are now invalid.
+     */
     bool valid();
 
-    /// Reopens the image. 
+    /// Reopens the image.
     /** Same as
-      * \code
-      * close();
-      * open(m_name);
-      * \endcode
-      */ 
+     * \code
+     * close();
+     * open(m_name);
+     * \endcode
+     */
     void reopen();
 
     // Close the image
     void close();
 
-    /// Get an eigenMap 
+    /// Get an eigenMap
     /** Use with caution:
-      * - there is no way to know if the image has changed
-      * - you should check \ref valid() before using
-      * 
-      * 
-      * \returns an Eigen::Map<Array,-1,-1> reference
-      * 
-      * \throws mx::err::mxException if the image is not opened
-      * 
-      */
-    eigenMap<dataT> & operator()();
+     * - there is no way to know if the image has changed
+     * - you should check \ref valid() before using
+     *
+     *
+     * \returns an Eigen::Map<Array,-1,-1> reference
+     *
+     * \throws mx::err::mxException if the image is not opened
+     *
+     */
+    eigenMap<dataT> &operator()();
 
     /// Conversion operator returns an eigenMap
     /** Use this like
-      * \code
-      * milkImage<float> mim("imname");
-      * eigenMap<float> im(mim); //you now have an Eigen interface to the image
-      * \endcode
-      * but with caution:
-      * - there is no way to know if the image has changed
-      * - you should check \ref valid() before using
-      * 
-      * 
-      * \returns an Eigen::Map<Array,-1,-1> object
-      * 
-      * \throws mx::err::mxException if the image is not opened
-      * 
-      */
+     * \code
+     * milkImage<float> mim("imname");
+     * eigenMap<float> im(mim); //you now have an Eigen interface to the image
+     * \endcode
+     * but with caution:
+     * - there is no way to know if the image has changed
+     * - you should check \ref valid() before using
+     *
+     *
+     * \returns an Eigen::Map<Array,-1,-1> object
+     *
+     * \throws mx::err::mxException if the image is not opened
+     *
+     */
     operator eigenMap<dataT>();
 
     /// Copy data from an Eigen Array type to the shared memory stream
     /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
-      * 
-      * \throws mxException on an error
-      * 
-      */
-    template<typename eigenT> 
-    milkImage & operator=(const eigenT & im /**< [in] the eigen array to copy to the stream*/);
+     *
+     * \throws mxException on an error
+     *
+     */
+    template <typename eigenT>
+    milkImage &operator=( const eigenT &im /**< [in] the eigen array to copy to the stream*/ );
 
     /// Set the write flag
     /** The write flag is set to indicate whether or not the the data is being changed.
-      * The write flag will be set to false by \ref post().
-      *  
-      * \throws mx::err::mxException if the image is not opened
-      */
-    void setWrite( bool wrflag = true /**< [in] [optional] the desired value of the write flag.  Default is true.*/);
+     * The write flag will be set to false by \ref post().
+     *
+     * \throws mx::err::mxException if the image is not opened
+     */
+    void setWrite( bool wrflag = true /**< [in] [optional] the desired value of the write flag.  Default is true.*/ );
 
     /// Update the metadata and post all semaphores
-    /** 
-      * \todo need to set wtime, have a version with atime
-      * 
-      * \throws mx::err::mxException if the image is not opened
-      */ 
+    /**
+     * \todo need to set wtime, have a version with atime
+     *
+     * \throws mx::err::mxException if the image is not opened
+     */
     void post();
-
 };
 
-template<typename dataT>
+template <typename dataT>
 milkImage<dataT>::milkImage()
 {
 }
 
-template<typename dataT>
-milkImage<dataT>::milkImage( const std::string & imname )
+template <typename dataT>
+milkImage<dataT>::milkImage( const std::string &imname )
 {
-    open(imname);
+    open( imname );
 }
 
-template<typename dataT>
-milkImage<dataT>::milkImage( const std::string & imname,
-                             const eigenImage<dataT> & im 
-                           )
+template <typename dataT>
+milkImage<dataT>::milkImage( const std::string &imname, const eigenImage<dataT> &im )
 {
-    create(imname, im);
+    create( imname, im );
 }
 
-template<typename dataT>
-milkImage<dataT>::milkImage( const std::string & imname,
-                             uint32_t sz0, 
-                             uint32_t sz1 
-                           )
+template <typename dataT>
+milkImage<dataT>::milkImage( const std::string &imname, uint32_t sz0, uint32_t sz1 )
 {
-    create(imname, sz0, sz1);
+    create( imname, sz0, sz1 );
 }
 
-template<typename dataT>
+template <typename dataT>
 milkImage<dataT>::~milkImage()
 {
     close();
 }
 
-template<typename dataT>
-void milkImage<dataT>::open( const std::string & imname )
+template <typename dataT>
+void milkImage<dataT>::open( const std::string &imname )
 {
-    if(m_image)
+    if( m_image )
     {
-        ImageStreamIO_closeIm(m_image);
+        ImageStreamIO_closeIm( m_image );
         delete m_image;
         m_image = nullptr;
     }
-    
-    if(m_map)
+
+    if( m_map )
     {
         delete m_map;
         m_map = nullptr;
     }
 
     m_image = new IMAGE;
-    
-    errno_t rv = ImageStreamIO_openIm(m_image, imname.c_str());
 
-    if(rv != IMAGESTREAMIO_SUCCESS) 
+    errno_t rv = ImageStreamIO_openIm( m_image, imname.c_str() );
+
+    if( rv != IMAGESTREAMIO_SUCCESS )
     {
         delete m_image;
         m_image = nullptr;
-        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_openIm returned an error");     
+        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_openIm returned an error" );
     }
 
-    if(ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype)
+    if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw std::invalid_argument("shmim datatype does not match template type");
+        throw std::invalid_argument( "shmim datatype does not match template type" );
     }
 
     m_name = imname;
-    m_raw = (dataT*) m_image->array.raw;
+    m_raw = (dataT *)m_image->array.raw;
     m_size_0 = m_image->md->size[0];
     m_size_1 = m_image->md->size[1];
 
-    m_map = new eigenMap<dataT>(m_raw, m_size_0, m_size_1);
+    m_map = new eigenMap<dataT>( m_raw, m_size_0, m_size_1 );
 }
 
-template<typename dataT>
-void milkImage<dataT>::create( const std::string & imname,
-                               uint32_t sz0, 
-                               uint32_t sz1  
-                             )
+template <typename dataT>
+void milkImage<dataT>::create( const std::string &imname, uint32_t sz0, uint32_t sz1 )
 {
-    if(m_image)
+    if( m_image )
     {
-        ImageStreamIO_closeIm(m_image);
+        ImageStreamIO_closeIm( m_image );
         delete m_image;
         m_image = nullptr;
     }
-    
-    if(m_map)
+
+    if( m_map )
     {
         delete m_map;
         m_map = nullptr;
     }
 
     m_image = new IMAGE;
-    
+
     uint32_t imsize[3];
-    imsize[0] = sz0; 
+    imsize[0] = sz0;
     imsize[1] = sz1;
     imsize[2] = 1;
 
-    errno_t rv =  ImageStreamIO_createIm_gpu(m_image, imname.c_str(), 3, imsize, ImageStructTypeCode<dataT>::TypeCode, 
-                                                   -1, 1, IMAGE_NB_SEMAPHORE, 0, CIRCULAR_BUFFER | ZAXIS_TEMPORAL, 0);
+    errno_t rv = ImageStreamIO_createIm_gpu( m_image,
+                                             imname.c_str(),
+                                             3,
+                                             imsize,
+                                             ImageStructTypeCode<dataT>::TypeCode,
+                                             -1,
+                                             1,
+                                             IMAGE_NB_SEMAPHORE,
+                                             0,
+                                             CIRCULAR_BUFFER | ZAXIS_TEMPORAL,
+                                             0 );
 
-    if(rv != IMAGESTREAMIO_SUCCESS) 
+    if( rv != IMAGESTREAMIO_SUCCESS )
     {
         delete m_image;
         m_image = nullptr;
-        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_createIm_gpu returned an error");     
+        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_createIm_gpu returned an error" );
     }
 
-    if(ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype)
+    if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw std::invalid_argument("shmim datatype does not match template type");
+        throw std::invalid_argument( "shmim datatype does not match template type" );
     }
 
     m_name = imname;
-    m_raw = (dataT*) m_image->array.raw;
+    m_raw = (dataT *)m_image->array.raw;
     m_size_0 = m_image->md->size[0];
     m_size_1 = m_image->md->size[1];
 
-    m_map = new eigenMap<dataT>(m_raw, m_size_0, m_size_1);          
-
+    m_map = new eigenMap<dataT>( m_raw, m_size_0, m_size_1 );
 }
 
-template<typename dataT>
-void milkImage<dataT>::create( const std::string & imname,
-                               const eigenImage<dataT> & im 
-                             )
+template <typename dataT>
+void milkImage<dataT>::create( const std::string &imname, const eigenImage<dataT> &im )
 {
-    create(imname, im.rows(), im.cols());
-    operator=(im);
+    create( imname, im.rows(), im.cols() );
+    operator=( im );
 }
 
-template<typename dataT>
-eigenMap<dataT> & milkImage<dataT>::operator()()
+template <typename dataT>
+eigenMap<dataT> &milkImage<dataT>::operator()()
 {
-    if(m_map == nullptr)
+    if( m_map == nullptr )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (map is null)");
+        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (map is null)" );
     }
 
     return *m_map;
 }
 
-template<typename dataT>
+template <typename dataT>
 milkImage<dataT>::operator eigenMap<dataT>()
 {
     return operator()();
 }
 
-template<typename dataT>
+template <typename dataT>
 void milkImage<dataT>::reopen()
 {
     close();
-    open(m_name);
+    open( m_name );
 }
 
-template<typename dataT>
+template <typename dataT>
 void milkImage<dataT>::close()
 {
-    if(m_map != nullptr)
+    if( m_map != nullptr )
     {
         delete m_map;
         m_map = nullptr;
     }
 
-    if(m_image == nullptr) 
+    if( m_image == nullptr )
     {
         return;
     }
 
-    errno_t rv = ImageStreamIO_closeIm(m_image);
+    errno_t rv = ImageStreamIO_closeIm( m_image );
     delete m_image;
     m_image = nullptr;
 
-    if(rv != IMAGESTREAMIO_SUCCESS) throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error");
+    if( rv != IMAGESTREAMIO_SUCCESS )
+        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error" );
 }
 
-template<typename dataT>
+template <typename dataT>
 uint32_t milkImage<dataT>::rows()
 {
     return m_size_0;
 }
 
-template<typename dataT>
+template <typename dataT>
 uint32_t milkImage<dataT>::cols()
 {
     return m_size_1;
 }
 
-template<typename dataT>
+template <typename dataT>
 uint32_t milkImage<dataT>::size( unsigned n )
 {
-    if(n == 0)
+    if( n == 0 )
     {
         return m_size_0;
     }
-    else if(n == 1)
+    else if( n == 1 )
     {
         return m_size_1;
     }
@@ -516,18 +513,16 @@ uint32_t milkImage<dataT>::size( unsigned n )
     return 0;
 }
 
-template<typename dataT>
+template <typename dataT>
 bool milkImage<dataT>::valid()
 {
-    if(m_image == nullptr)
+    if( m_image == nullptr )
     {
         return false;
     }
 
-    if( m_raw != (dataT*) m_image->array.raw || 
-            m_size_0 != m_image->md->size[0] ||
-                m_size_1 != m_image->md->size[1] ||
-                    ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
+    if( m_raw != (dataT *)m_image->array.raw || m_size_0 != m_image->md->size[0] || m_size_1 != m_image->md->size[1] ||
+        ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         return false;
     }
@@ -535,62 +530,61 @@ bool milkImage<dataT>::valid()
     return true;
 }
 
-template<typename dataT>
-template<typename eigenT> 
-milkImage<dataT> & milkImage<dataT>::operator=(const eigenT & im)
+template <typename dataT>
+template <typename eigenT>
+milkImage<dataT> &milkImage<dataT>::operator=( const eigenT &im )
 {
-    if(m_image == nullptr)
+    if( m_image == nullptr )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (image is null)");
+        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (image is null)" );
     }
 
-    if(m_map == nullptr)
+    if( m_map == nullptr )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open (map is null)");
+        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (map is null)" );
     }
-        
-    setWrite(true);
+
+    setWrite( true );
 
     *m_map = im;
-        
-    setWrite(false);
-        
+
+    setWrite( false );
+
     post();
 
     return *this;
 }
 
-template<typename dataT>
-void milkImage<dataT>::setWrite(bool wrflag)
+template <typename dataT>
+void milkImage<dataT>::setWrite( bool wrflag )
 {
-    if(m_image == nullptr)
+    if( m_image == nullptr )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open" );
     }
 
     m_image->md->write = wrflag;
 }
 
-template<typename dataT>
+template <typename dataT>
 void milkImage<dataT>::post()
 {
-    if(m_image == nullptr)
+    if( m_image == nullptr )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "Image is not open");
+        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open" );
     }
 
-    errno_t rv = ImageStreamIO_UpdateIm(m_image);
-    m_image->md->atime=m_image->md->writetime;
+    errno_t rv = ImageStreamIO_UpdateIm( m_image );
+    m_image->md->atime = m_image->md->writetime;
 
-    if(rv != IMAGESTREAMIO_SUCCESS) 
+    if( rv != IMAGESTREAMIO_SUCCESS )
     {
-        throw err::mxException("", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error");
+        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error" );
     }
 }
 
-}
-}
+} // namespace improc
+} // namespace mx
 
-#endif //MXLIB_MILK
-#endif //improc_milkImage_hpp
-
+#endif // MXLIB_MILK
+#endif // improc_milkImage_hpp

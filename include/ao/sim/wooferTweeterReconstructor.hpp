@@ -13,50 +13,44 @@ namespace AO
 namespace sim
 {
 
-template< typename wooferReconT, typename tweeterReconT >
+template <typename wooferReconT, typename tweeterReconT>
 struct wooferTweeterReconstructorSpec
 {
-   typename wooferReconT::specT woofer;
-   typename tweeterReconT::specT tweeter;
+    typename wooferReconT::specT woofer;
+    typename tweeterReconT::specT tweeter;
 };
 
-
-
-template< typename wooferReconT, typename tweeterReconT > 
+template <typename wooferReconT, typename tweeterReconT>
 class wooferTweeterReconstructor
 {
-public:
-   
-   typedef typename wooferReconT::floatT floatT;
-   
-   ///The type of the measurement (i.e. the slope vector)
-   //typedef wooferTweeterCommand<floatT> measurementT;
-   
-   ///The type of the WFS image
-   typedef Eigen::Array<floatT, -1, -1> imageT;
-    
-   typedef wooferTweeterReconstructorSpec<wooferReconT, tweeterReconT> specT;
-   
+  public:
+    typedef typename wooferReconT::floatT floatT;
 
-   
-   wooferReconT _woofer;
-   tweeterReconT _tweeter;
-   
-public:   
-   ///Default c'tor
-   wooferTweeterReconstructor();
-   
-   template<typename AOSysT>
-   void initialize(AOSysT & AOSys, specT & spec)
-   {
-      _woofer.initialize(AOSys, spec.woofer);
-      _tweeter.initialize(AOSys, spec.tweeter);
-      
-   }
+    /// The type of the measurement (i.e. the slope vector)
+    // typedef wooferTweeterCommand<floatT> measurementT;
 
-   ///Get the calibration amplitude used in response matrix acquisition (_calAmp)
-   std::vector<floatT> calAmp();
-   
+    /// The type of the WFS image
+    typedef Eigen::Array<floatT, -1, -1> imageT;
+
+    typedef wooferTweeterReconstructorSpec<wooferReconT, tweeterReconT> specT;
+
+    wooferReconT _woofer;
+    tweeterReconT _tweeter;
+
+  public:
+    /// Default c'tor
+    wooferTweeterReconstructor();
+
+    template <typename AOSysT>
+    void initialize( AOSysT &AOSys, specT &spec )
+    {
+        _woofer.initialize( AOSys, spec.woofer );
+        _tweeter.initialize( AOSys, spec.tweeter );
+    }
+
+    /// Get the calibration amplitude used in response matrix acquisition (_calAmp)
+    std::vector<floatT> calAmp();
+
 #if 0   
    ///Calculate the slope measurement
    /**
@@ -66,10 +60,9 @@ public:
    void calcMeasurement(measurementT & slopes, imageT & wfsImage);
 #endif
 
-   ///Reconstruct the wavefront from the input image, producing the modal amplitude vector 
-   template<typename measurementT, typename wfsImageT>
-   void reconstruct( measurementT & commandVect, 
-                     wfsImageT & wfsImage);
+    /// Reconstruct the wavefront from the input image, producing the modal amplitude vector
+    template <typename measurementT, typename wfsImageT>
+    void reconstruct( measurementT &commandVect, wfsImageT &wfsImage );
 
 #if 0  
    ///Initialize the response matrix for acquisition
@@ -96,30 +89,25 @@ public:
    void saveRMat(std::string fname);
       
    void saveRImages(std::string fname);
-      
-#endif   
-   
+
+#endif
 };
 
-
-template< typename wooferReconT, typename tweeterReconT >
+template <typename wooferReconT, typename tweeterReconT>
 wooferTweeterReconstructor<wooferReconT, tweeterReconT>::wooferTweeterReconstructor()
 {
 }
 
-
-template< typename wooferReconT, typename tweeterReconT >
+template <typename wooferReconT, typename tweeterReconT>
 std::vector<typename wooferReconT::floatT> wooferTweeterReconstructor<wooferReconT, tweeterReconT>::calAmp()
 {
-   std::vector<typename wooferReconT::floatT> ca(2);
-   
-   ca[0] = _woofer.calAmp();
-   ca[1] = _tweeter.calAmp();
-   
-   return ca;
-   
-}
+    std::vector<typename wooferReconT::floatT> ca( 2 );
 
+    ca[0] = _woofer.calAmp();
+    ca[1] = _tweeter.calAmp();
+
+    return ca;
+}
 
 #if 0
 template< typename wooferReconT, typename tweeterReconT >
@@ -128,30 +116,28 @@ void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::calcMeasurement(me
 }
 #endif
 
-template< typename wooferReconT, typename tweeterReconT >
-template< typename measurementT, typename wfsImageT >
-void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::reconstruct(measurementT & commandVect, wfsImageT & wfsImage)
+template <typename wooferReconT, typename tweeterReconT>
+template <typename measurementT, typename wfsImageT>
+void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::reconstruct( measurementT &commandVect,
+                                                                           wfsImageT &wfsImage )
 {
-   measurementT woofV;
-   _woofer.reconstruct( woofV, wfsImage);
-   
-   measurementT tweetV;
-   _tweeter.reconstruct( tweetV, wfsImage);
-   
-   commandVect.measurement.resize(1, woofV.measurement.cols() + tweetV.measurement.cols());
-   
-   
-   for(int i=0; i< woofV.measurement.cols(); ++i)
-   {
-      commandVect.measurement(0,i) = woofV.measurement(0,i);
-   }
-   
-   for(int i= 0; i< tweetV.measurement.cols(); ++i)
-   {
-      commandVect.measurement(0, woofV.measurement.cols()+i) = tweetV.measurement(0,i);
-   }
-   
-   
+    measurementT woofV;
+    _woofer.reconstruct( woofV, wfsImage );
+
+    measurementT tweetV;
+    _tweeter.reconstruct( tweetV, wfsImage );
+
+    commandVect.measurement.resize( 1, woofV.measurement.cols() + tweetV.measurement.cols() );
+
+    for( int i = 0; i < woofV.measurement.cols(); ++i )
+    {
+        commandVect.measurement( 0, i ) = woofV.measurement( 0, i );
+    }
+
+    for( int i = 0; i < tweetV.measurement.cols(); ++i )
+    {
+        commandVect.measurement( 0, woofV.measurement.cols() + i ) = tweetV.measurement( 0, i );
+    }
 }
 
 #if 0
@@ -184,9 +170,8 @@ void wooferTweeterReconstructor<wooferReconT, tweeterReconT>::saveRImages(std::s
 }
 #endif
 
-} //namespace sim 
-} //namespace AO
-} //namespace mx
+} // namespace sim
+} // namespace AO
+} // namespace mx
 
 #endif //__wooferTweeterReconstructor_hpp__
-

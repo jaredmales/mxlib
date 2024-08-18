@@ -1,9 +1,9 @@
 /** \file expModGaussian.hpp
-  * \brief The Exponentially Modified Gaussian distribution.
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief The Exponentially Modified Gaussian distribution.
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -37,122 +37,121 @@ namespace math
 namespace func
 {
 
-
-
-
 /// The Exponentially Modified Gaussian at a point.
 /** Calculates the value of the Exponentially Modified Gaussian distribution at a location specified by x.
-  *
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the value of the Exponentially Modified Gaussian distribution at x.
-  *
-  * \ingroup gen_math_expModGaussian
-  */
-template<typename realT>
+ *
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the value of the Exponentially Modified Gaussian distribution at x.
+ *
+ * \ingroup gen_math_expModGaussian
+ */
+template <typename realT>
 realT expModGaussian( realT x,     ///< [in] the location at which to calculate the distribution
                       realT mu,    ///< [in] the mean parameter
                       realT sigma, ///< [in] the standard deviation
                       realT lambda ///< [in] the rate of decay
-                    )
+)
 {
-   return (lambda/2)*exp((lambda/2)*(2*mu+lambda*sigma*sigma-2*x))*std::erfc((mu+lambda*sigma*sigma-x)/(root_two<realT>()*sigma));
+    return ( lambda / 2 ) * exp( ( lambda / 2 ) * ( 2 * mu + lambda * sigma * sigma - 2 * x ) ) *
+           std::erfc( ( mu + lambda * sigma * sigma - x ) / ( root_two<realT>() * sigma ) );
 }
 
 /// The Mean of the Exponentially Modified Gaussian.
 /** Calculates the mean of the Exponentially Modified Gaussian distribution.
-  *
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the mean of the Exponentially Modified Gaussian.
-  *
-  * \ingroup gen_math_expModGaussian
-  */
-template<typename realT>
+ *
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the mean of the Exponentially Modified Gaussian.
+ *
+ * \ingroup gen_math_expModGaussian
+ */
+template <typename realT>
 realT expModGaussianMean( realT mu,    ///< [in] the mean parameter
                           realT lambda ///< [in] the rate of decay
-                        )
+)
 {
-   return mu + 1.0/lambda;
+    return mu + 1.0 / lambda;
 }
 
 /// The Variance of the Exponentially Modified Gaussian.
 /** Calculates the variance of the Exponentially Modified Gaussian distribution.
-  *
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the variance of the Exponentially Modified Gaussian.
-  *
-  * \ingroup gen_math_expModGaussian
-  */
-template<typename realT>
+ *
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the variance of the Exponentially Modified Gaussian.
+ *
+ * \ingroup gen_math_expModGaussian
+ */
+template <typename realT>
 realT expModGaussianVariance( realT sigma, ///< [in] the standard deviation
                               realT lambda ///< [in] the rate of decay
-                            )
+)
 {
-   return sigma*sigma + 1.0/(lambda*lambda);
+    return sigma * sigma + 1.0 / ( lambda * lambda );
 }
 
-template<typename realT>
+template <typename realT>
 struct emgModeFunc
 {
-   realT mu;
-   realT sigma;
-   realT lambda;
+    realT mu;
+    realT sigma;
+    realT lambda;
 
-   realT operator()(const realT & x)
-   {
-     return -expModGaussian(x, mu, sigma, lambda);
-   }
+    realT operator()( const realT &x )
+    {
+        return -expModGaussian( x, mu, sigma, lambda );
+    }
 };
 
 /// The Mode of the Exponentially Modified Gaussian.
 /** Calculates the mode of the Exponentially Modified Gaussian distribution.
-  * This is done iteratively with Brent's method.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the mode of the Exponentially Modified Gaussian.
-  *
-  * \ingroup gen_math_expModGaussian
-  */
-template<typename realT>
+ * This is done iteratively with Brent's method.
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the mode of the Exponentially Modified Gaussian.
+ *
+ * \ingroup gen_math_expModGaussian
+ */
+template <typename realT>
 realT expModGaussianMode( realT mu,    ///< [in] the mean parameter
                           realT sigma, ///< [in] the standard deviation
                           realT lambda ///< [in] the rate of decay
-                        )
+)
 {
-   realT mn = expModGaussianMean(mu, lambda);
-   realT sd = sqrt(expModGaussianVariance(sigma, lambda));
+    realT mn = expModGaussianMean( mu, lambda );
+    realT sd = sqrt( expModGaussianVariance( sigma, lambda ) );
 
-   std::cerr << mn << " " << sd << "\n";
+    std::cerr << mn << " " << sd << "\n";
 
-   emgModeFunc<realT> mf;
-   mf.mu = mu;
-   mf.sigma = sigma;
-   mf.lambda = lambda;
+    emgModeFunc<realT> mf;
+    mf.mu = mu;
+    mf.sigma = sigma;
+    mf.lambda = lambda;
 
-   uintmax_t maxit = 1000;
-   try
-   {
-      std::pair<realT,realT> brack;
-      brack = boost::math::tools::brent_find_minima<emgModeFunc<realT>, realT>(mf, mn-2*sd, mn+2*sd, std::numeric_limits<realT>::digits, maxit);
-      std::cerr << brack.first << " " << brack.second << " " << maxit << "\n";
+    uintmax_t maxit = 1000;
+    try
+    {
+        std::pair<realT, realT> brack;
+        brack = boost::math::tools::brent_find_minima<emgModeFunc<realT>, realT>(
+            mf, mn - 2 * sd, mn + 2 * sd, std::numeric_limits<realT>::digits, maxit );
+        std::cerr << brack.first << " " << brack.second << " " << maxit << "\n";
 
-      return brack.first;
-   }
-   catch(...)
-   {
-      std::cerr << "expModGaussianMode: No mode found\n";
-      return std::numeric_limits<realT>::quiet_NaN();
-   }
+        return brack.first;
+    }
+    catch( ... )
+    {
+        std::cerr << "expModGaussianMode: No mode found\n";
+        return std::numeric_limits<realT>::quiet_NaN();
+    }
 }
 
-} //namespace func
-} //namespace math
-} //namespace mx
+} // namespace func
+} // namespace math
+} // namespace mx
 
-#endif //expModGaussian_hpp
+#endif // expModGaussian_hpp

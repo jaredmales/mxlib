@@ -1,9 +1,9 @@
 /** \file bessel.hpp
-  * \brief Declares and defines Bessel functions of the first kind.
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Declares and defines Bessel functions of the first kind.
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -39,69 +39,55 @@ namespace math
 {
 namespace func
 {
-   
+
 /// Bessel Functions of the First Kind.
 /** This is a wrapper for boost.
-  *
-  * \ingroup gen_math_bessel
-  */ 
-template<typename T1, typename T2>
-T2 bessel_j( T1 v, ///< [in] 
+ *
+ * \ingroup gen_math_bessel
+ */
+template <typename T1, typename T2>
+T2 bessel_j( T1 v, ///< [in]
              T2 x  ///< [in]
-           )
+)
 {
 #ifdef MX_INCLUDE_BOOST
-   return boost::math::cyl_bessel_j<T1, T2>(v,x);
+    return boost::math::cyl_bessel_j<T1, T2>( v, x );
 #else
-   static_assert(std::is_fundamental<T1>::value || !std::is_fundamental<T1>::value, "bessel_j<T1,T2> not specialized for type T1 and/or T2, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
-   return 0;
+    static_assert( std::is_fundamental<T1>::value || !std::is_fundamental<T1>::value,
+                   "bessel_j<T1,T2> not specialized for type T1 and/or T2, and MX_INCLUDE_BOOST is not defined, so I "
+                   "can't just use boost." );
+    return 0;
 #endif
 }
 
-template<>
-float bessel_j<float, float>( float v, 
-                              float x
-                            );
+template <>
+float bessel_j<float, float>( float v, float x );
 
-template<>
-float bessel_j<int, float>( int v,
-                            float x
-                          );
+template <>
+float bessel_j<int, float>( int v, float x );
 
-template<>
-double bessel_j<double, double>( double v, 
-                                 double x
-                               );
+template <>
+double bessel_j<double, double>( double v, double x );
 
-template<>
-double bessel_j<int, double>( int v,
-                              double x
-                            );
+template <>
+double bessel_j<int, double>( int v, double x );
 
-template<>
-long double bessel_j<long double, long double>( long double v, 
-                                 long double x
-                               );
+template <>
+long double bessel_j<long double, long double>( long double v, long double x );
 
-template<>
-long double bessel_j<int, long double>( int v,
-                              long double x
-                            );
+template <>
+long double bessel_j<int, long double>( int v, long double x );
 
 #ifdef HASQUAD
-template<>
-__float128 bessel_j<__float128, __float128>( __float128 v, 
-                                             __float128 x
-                                           );
+template <>
+__float128 bessel_j<__float128, __float128>( __float128 v, __float128 x );
 
-template<>
-__float128 bessel_j<int, __float128>( int v,
-                                      __float128 x
-                                    );
+template <>
+__float128 bessel_j<int, __float128>( int v, __float128 x );
 #endif
 
-}
-}
-}
+} // namespace func
+} // namespace math
+} // namespace mx
 
-#endif //mx_bessel_hpp
+#endif // mx_bessel_hpp

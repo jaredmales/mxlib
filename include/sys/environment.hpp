@@ -1,8 +1,8 @@
 /** \file environment.hpp
-  * \author Jared R. Males
-  * \brief Utilities for working with the environment
-  * \ingroup utils_files
-  */
+ * \author Jared R. Males
+ * \brief Utilities for working with the environment
+ * \ingroup utils_files
+ */
 
 //***********************************************************************//
 // Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
@@ -26,7 +26,6 @@
 #ifndef environment_hpp
 #define environment_hpp
 
-
 #include <locale>
 #include <string>
 
@@ -34,17 +33,17 @@ namespace mx
 {
 namespace sys
 {
-   
+
 /// Return the value of an environment variable
 /** Call the standard getenv function, but handles the null pointer as an empty string.
-  *
-  * \returns the value of the environment varialbe, or empty string if it doesn't exist
-  * 
-  * \ingroup system
-  */   
-std::string getEnv(const std::string & estr /**< [in] is the name of the environment variable to query */);
+ *
+ * \returns the value of the environment varialbe, or empty string if it doesn't exist
+ *
+ * \ingroup system
+ */
+std::string getEnv( const std::string &estr /**< [in] is the name of the environment variable to query */ );
 
-}
-}
+} // namespace sys
+} // namespace mx
 
-#endif //environment_hpp
+#endif // environment_hpp

@@ -36,50 +36,41 @@ namespace fit
 template class fitGaussian1D<float>;
 template class fitGaussian1D<double>;
 
-
 template struct gaussian1D_fitter<float>;
 template struct gaussian1D_fitter<double>;
-
 
 template class fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<float>>;
 template class fitGaussian2D<mx::math::fit::gaussian2D_sym_fitter<double>>;
 template class fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<float>>;
 template class fitGaussian2D<mx::math::fit::gaussian2D_gen_fitter<double>>;
 
+template int guessGauss2D_ang<float>( float &Ag,
+                                      float &xg,
+                                      float &yg,
+                                      float &xFWHM,
+                                      float &yFWHM,
+                                      float &angG,
+                                      mx::improc::eigenImage<float> &im,
+                                      float maxWidth,
+                                      float widthWidth,
+                                      float nAngs,
+                                      float xg0,
+                                      float yg0 );
 
-template
-int guessGauss2D_ang<float>( float & Ag, 
-                             float & xg,        
-                             float & yg, 
-                             float & xFWHM,
-                             float & yFWHM,
-                             float & angG,  
-                             mx::improc::eigenImage<float> & im,  
-                             float maxWidth,  
-                             float widthWidth,
-                             float nAngs, 
-                             float xg0,  
-                             float yg0  
-                           );
+template int guessGauss2D_ang<double>( double &Ag,
+                                       double &xg,
+                                       double &yg,
+                                       double &xFWHM,
+                                       double &yFWHM,
+                                       double &angG,
+                                       mx::improc::eigenImage<double> &im,
+                                       double maxWidth,
+                                       double widthWidth,
+                                       double nAngs,
+                                       double xg0,
+                                       double yg0 );
 
-template
-int guessGauss2D_ang<double>( double & Ag, 
-                              double & xg,        
-                              double & yg, 
-                              double & xFWHM,
-                              double & yFWHM,
-                              double & angG,  
-                              mx::improc::eigenImage<double> & im,  
-                              double maxWidth,  
-                              double widthWidth,
-                              double nAngs, 
-                              double xg0,  
-                              double yg0  
-                            );
+} // namespace fit
+} // namespace math
 
-} //namespace fit
-} //namespace math
-
-} //namespace mx
-
-
+} // namespace mx

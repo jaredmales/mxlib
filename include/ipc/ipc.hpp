@@ -1,8 +1,8 @@
 /** \file ipc.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Declarations for the mxlib interprocess communication (IPC) tools
-  * 
-*/
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Declarations for the mxlib interprocess communication (IPC) tools
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
@@ -26,29 +26,24 @@
 #ifndef ipc_ipc_hpp
 #define ipc_ipc_hpp
 
-
-
 #include <stdlib.h>
 #include <string.h>
 
 #include <unistd.h>
-   
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
 /** \addtogroup IPC
-  * @{
-  */
-///The maximum length of the IPC key string
+ * @{
+ */
+/// The maximum length of the IPC key string
 #define MX_IPC_KEYLEN 1024
 
-///The process interface buffer size
+/// The process interface buffer size
 #define MX_IPC_PI_BUFSZ 128
-
 
 ///@}
 
-#endif //mx_IPC_hpp
-
-
+#endif // mx_IPC_hpp

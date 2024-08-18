@@ -1,9 +1,9 @@
 /** \file aoPSDs.cpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Implementation of spatial power spectra used in adaptive optics.
-  * \ingroup mxAO_files
-  * 
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Implementation of spatial power spectra used in adaptive optics.
+ * \ingroup mxAO_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -32,47 +32,50 @@ namespace AO
 {
 namespace analysis
 {
-   
+
 namespace PSDComponent
 {
 
 std::string compName( int cc )
 {
-   if( cc == phase ) return "phase";
-   if( cc == amplitude ) return "amplitude";
-   if( cc == dispPhase ) return "dispPhase";
-   if( cc == dispAmplitude ) return "dispAmplitude";
-      
-   return "unknown";
+    if( cc == phase )
+        return "phase";
+    if( cc == amplitude )
+        return "amplitude";
+    if( cc == dispPhase )
+        return "dispPhase";
+    if( cc == dispAmplitude )
+        return "dispAmplitude";
+
+    return "unknown";
 }
 
-int compNum( const std::string & name )
+int compNum( const std::string &name )
 {
-  if( name == "phase") return phase;
-  else if( name == "amplitude" ) return amplitude;
-  else if( name == "dispPhase" ) return dispPhase;
-  else if( name == "dispAmplitude" ) return dispAmplitude;
+    if( name == "phase" )
+        return phase;
+    else if( name == "amplitude" )
+        return amplitude;
+    else if( name == "dispPhase" )
+        return dispPhase;
+    else if( name == "dispAmplitude" )
+        return dispAmplitude;
 
-  return -1;
+    return -1;
 }
 
-}
+} // namespace PSDComponent
 
-template
-struct vonKarmanSpectrum<float>;
+template struct vonKarmanSpectrum<float>;
 
-template
-struct vonKarmanSpectrum<double>;
+template struct vonKarmanSpectrum<double>;
 
-template
-struct vonKarmanSpectrum<long double>;
+template struct vonKarmanSpectrum<long double>;
 
 #ifdef HASQUAD
-template
-struct vonKarmanSpectrum<__float128>;
+template struct vonKarmanSpectrum<__float128>;
 #endif
-   
-} //namespace analysis
-} //namespace AO
-} //namespace mx
 
+} // namespace analysis
+} // namespace AO
+} // namespace mx

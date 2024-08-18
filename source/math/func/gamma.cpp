@@ -10,32 +10,32 @@ namespace math
 namespace func
 {
 
-template<>
+template <>
 float tgamma<float>( float x )
 {
-   return boost::math::tgamma<float>(x);
+    return boost::math::tgamma<float>( x );
 }
 
-template<>
+template <>
 double tgamma<double>( double x )
 {
-   return boost::math::tgamma<double>(x);
+    return boost::math::tgamma<double>( x );
 }
 
-template<>
+template <>
 long double tgamma<long double>( long double x )
 {
-   return boost::math::tgamma<long double>(x);
+    return boost::math::tgamma<long double>( x );
 }
 
 #ifdef HASQUAD
-template<>
+template <>
 __float128 tgamma<__float128>( __float128 x )
 {
-   return boost::math::tgamma<__float128>(x);
+    return boost::math::tgamma<__float128>( x );
 }
 #endif
 
-} //namespace mx
-} //namespace math
-} //namespace func
+} // namespace func
+} // namespace math
+} // namespace mx

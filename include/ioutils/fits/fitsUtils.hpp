@@ -1,9 +1,9 @@
 /** \file fitsUtils.hpp
-  * \brief Declares and defines utilities to work with FITS files
-  * \ingroup fits_processing_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Declares and defines utilities to work with FITS files
+ * \ingroup fits_processing_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015-2022 Jared R. Males (jaredmales@gmail.com)
@@ -27,7 +27,6 @@
 #ifndef ioutils_fits_fitsUtils_hpp
 #define ioutils_fits_fitsUtils_hpp
 
-
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -42,376 +41,347 @@ namespace mx
 namespace fits
 {
 
-///The standard width of the value entry in a header card
-#define stdValWidth (20)
+/// The standard width of the value entry in a header card
+#define stdValWidth ( 20 )
 
-//#define fitsTUNKNOWN (-5000)
+// #define fitsTUNKNOWN (-5000)
 struct fitsUnknownType
 {
 };
 
-//#define fitsTCOMMENT (-5001)
+// #define fitsTCOMMENT (-5001)
 struct fitsCommentType
 {
-   fitsCommentType()
-   {
-   }
-   
-   explicit fitsCommentType(char * v)
-   {
-      static_cast<void>(v);
-   }
-   
-   explicit fitsCommentType(const char * v)
-   {
-      static_cast<void>(v);
-   }
+    fitsCommentType()
+    {
+    }
+
+    explicit fitsCommentType( char *v )
+    {
+        static_cast<void>( v );
+    }
+
+    explicit fitsCommentType( const char *v )
+    {
+        static_cast<void>( v );
+    }
 };
 
-//#define fitsTHISTORY (-5002)
+// #define fitsTHISTORY (-5002)
 
 struct fitsHistoryType
 {
-   fitsHistoryType()
-   {
-   }
+    fitsHistoryType()
+    {
+    }
 
-   explicit fitsHistoryType(char * v)
-   {
-      static_cast<void>(v);
-   }
-   
-   explicit fitsHistoryType(const char * v)
-   {
-      static_cast<void>(v);
-   }
-   
+    explicit fitsHistoryType( char *v )
+    {
+        static_cast<void>( v );
+    }
+
+    explicit fitsHistoryType( const char *v )
+    {
+        static_cast<void>( v );
+    }
 };
 
-
 /** \ingroup fits_utils
-  * @{
-  */
+ * @{
+ */
 
 /// Return the cfitsio constant for a given data type.
-/** 
-  *
-  * \tparam scalarT is the type 
-  * 
-  * \returns a constant defined in cfitsio corresponding to the native type
-  * \returns -1 if not a define type in cfitsio
-  * 
-  * \ingroup fits_utils
-  */
-template<typename scalarT> 
+/**
+ *
+ * \tparam scalarT is the type
+ *
+ * \returns a constant defined in cfitsio corresponding to the native type
+ * \returns -1 if not a define type in cfitsio
+ *
+ * \ingroup fits_utils
+ */
+template <typename scalarT>
 constexpr int fitsType()
 {
-   return -5000; //This is the same as unknownType
+    return -5000; // This is the same as unknownType
 }
 
-template<> 
+template <>
 constexpr int fitsType<char *>()
 {
-   return TSTRING;
+    return TSTRING;
 }
 
-template<> 
+template <>
 constexpr int fitsType<std::string>()
 {
-   return TSTRING;
+    return TSTRING;
 }
 
-template<> 
-constexpr int fitsType<bool>() //mxlib extension, treated as uchar.
+template <>
+constexpr int fitsType<bool>() // mxlib extension, treated as uchar.
 {
-   return -14002;
+    return -14002;
 }
 
-template<> 
+template <>
 constexpr int fitsType<char>()
 {
-   return TSBYTE;
+    return TSBYTE;
 }
 
-template<> 
+template <>
 constexpr int fitsType<unsigned char>()
 {
-   return TBYTE;
+    return TBYTE;
 }
 
-template<> 
+template <>
 constexpr int fitsType<short>()
 {
-   return TSHORT;
+    return TSHORT;
 }
 
-template<> 
+template <>
 constexpr int fitsType<unsigned short>()
 {
-   return TUSHORT;
+    return TUSHORT;
 }
 
-template<> 
+template <>
 constexpr int fitsType<int>()
 {
-   return TINT;
+    return TINT;
 }
 
-template<> 
+template <>
 constexpr int fitsType<unsigned int>()
 {
-   return TUINT;
+    return TUINT;
 }
 
-template<> 
+template <>
 constexpr int fitsType<long>()
 {
-   return TLONG;
+    return TLONG;
 }
 
-template<> 
+template <>
 constexpr int fitsType<unsigned long>()
 {
-   return TULONG;
+    return TULONG;
 }
 
-template<> 
+template <>
 constexpr int fitsType<long long>()
 {
-   return TLONGLONG;
+    return TLONGLONG;
 }
 
-template<> 
+template <>
 constexpr int fitsType<unsigned long long>()
 {
-   return TULONGLONG;
+    return TULONGLONG;
 }
 
-template<> 
+template <>
 constexpr int fitsType<float>()
 {
-   return TFLOAT;
+    return TFLOAT;
 }
 
-template<> 
+template <>
 constexpr int fitsType<std::complex<float>>()
 {
-   return TCOMPLEX;
+    return TCOMPLEX;
 }
 
-template<> 
+template <>
 constexpr int fitsType<double>()
 {
-   return TDOUBLE;
+    return TDOUBLE;
 }
 
-template<> 
+template <>
 constexpr int fitsType<std::complex<double>>()
 {
-   return TDBLCOMPLEX;
+    return TDBLCOMPLEX;
 }
 
-template<> 
+template <>
 constexpr int fitsType<fitsUnknownType>()
 {
-   return -5000;
+    return -5000;
 }
 
-template<> 
+template <>
 constexpr int fitsType<fitsCommentType>()
 {
-   return -5001;
+    return -5001;
 }
 
-template<> 
+template <>
 constexpr int fitsType<fitsHistoryType>()
 {
-   return -5002;
+    return -5002;
 }
-
 
 /** Return the cfitsio BITPIX value for a given data type.
-  *
-  * \tparam scalarT is the type 
-  * \retval int > 0 if a constant is defined in cfitsio corresponding to the native type
-  * \retval -1 if not a defined type in cfitsio
-  */
-template<typename scalarT> 
+ *
+ * \tparam scalarT is the type
+ * \retval int > 0 if a constant is defined in cfitsio corresponding to the native type
+ * \retval -1 if not a defined type in cfitsio
+ */
+template <typename scalarT>
 constexpr int fitsBITPIX();
 
-template<> 
+template <>
 constexpr int fitsBITPIX<char>()
 {
-   return SBYTE_IMG;
+    return SBYTE_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<signed char>()
 {
-   return SBYTE_IMG;
+    return SBYTE_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<unsigned char>()
 {
-   return BYTE_IMG;
+    return BYTE_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<short>()
 {
-   return SHORT_IMG;
+    return SHORT_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<unsigned short>()
 {
-   return USHORT_IMG;
+    return USHORT_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<int>()
 {
-   return LONG_IMG; //Yes, this is right.  This returns 32
+    return LONG_IMG; // Yes, this is right.  This returns 32
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<unsigned int>()
 {
-   return ULONG_IMG; //Yes, this is right, this returns 40
+    return ULONG_IMG; // Yes, this is right, this returns 40
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<long>()
 {
-   return LONGLONG_IMG; //Yes, this is right, this returns 64
+    return LONGLONG_IMG; // Yes, this is right, this returns 64
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<unsigned long>()
 {
-   return ULONGLONG_IMG; //Yes, this is right, this returns 64
+    return ULONGLONG_IMG; // Yes, this is right, this returns 64
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<long long>()
 {
-   return LONGLONG_IMG; //Yes, this is right, this returns 64
+    return LONGLONG_IMG; // Yes, this is right, this returns 64
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<unsigned long long>()
 {
-   return ULONGLONG_IMG; //Yes, this is right, this returns 64
+    return ULONGLONG_IMG; // Yes, this is right, this returns 64
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<float>()
 {
-   return FLOAT_IMG;
+    return FLOAT_IMG;
 }
 
-template<> 
+template <>
 constexpr int fitsBITPIX<double>()
 {
-   return DOUBLE_IMG;
+    return DOUBLE_IMG;
 }
-
 
 /// Strip the apostrophes from a FITS value string
 /** The argument is modified if the first and/or last non-whitespace character is '
-  *
-  * \param s is the string from which to strip apostrophes
-  * 
-  * \retval int containing the number of stripped apostrophes
-  */ 
-int fitsStripApost(std::string & s);
+ *
+ * \param s is the string from which to strip apostrophes
+ *
+ * \retval int containing the number of stripped apostrophes
+ */
+int fitsStripApost( std::string &s );
 
-///Populate a fits header card with the value string copied verbatim
-/** 
-  * \param headStr is a c-string which must be 81 characters in length, including the '\n'
-  * \param keyword is the keyword name 
-  * \param value is the value string
-  * \param comment is the comment string
-  */ 
-void fitsPopulateCard(char headStr[81], char *keyword, char *value, char *comment);
+/// Populate a fits header card with the value string copied verbatim
+/**
+ * \param headStr is a c-string which must be 81 characters in length, including the '\n'
+ * \param keyword is the keyword name
+ * \param value is the value string
+ * \param comment is the comment string
+ */
+void fitsPopulateCard( char headStr[81], char *keyword, char *value, char *comment );
 
 /// Write a header card to a file
 /** This is a templatized wrapper for the cfitsio routine fits_write_key.
-  *
-  * \tparam typeT is the type of the value
-  *
-  * \param fptr is a pointer to an open fits file
-  * \param keyword is a c-string containing the keyword
-  * \param value is a pointer to the memory location of the value
-  * \param comment is a c-string, possibly NULL, containing a comment string
-  *  
-  * \retval int containing the status returned by the cfitsio routine.
-  * 
-  * \ingroup fits_utils
-  */
-template<typename typeT> 
-int fits_write_key( fitsfile * fptr, 
-                    char * keyword, 
-                    void * value, 
-                    char * comment
-                  )
+ *
+ * \tparam typeT is the type of the value
+ *
+ * \param fptr is a pointer to an open fits file
+ * \param keyword is a c-string containing the keyword
+ * \param value is a pointer to the memory location of the value
+ * \param comment is a c-string, possibly NULL, containing a comment string
+ *
+ * \retval int containing the status returned by the cfitsio routine.
+ *
+ * \ingroup fits_utils
+ */
+template <typename typeT>
+int fits_write_key( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
-   int fstatus = 0;
-   
-   fits_write_key(fptr, fitsType<typeT>(), keyword, value, comment,  &fstatus);
-   
-   return fstatus;
+    int fstatus = 0;
+
+    fits_write_key( fptr, fitsType<typeT>(), keyword, value, comment, &fstatus );
+
+    return fstatus;
 }
 
-template<>
-int fits_write_key<char *>( fitsfile * fptr, 
-                            char * keyword, 
-                            void * value, 
-                            char * comment
-                          );
+template <>
+int fits_write_key<char *>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
-template<>
-int fits_write_key<std::string>( fitsfile * fptr, 
-                                 char * keyword, 
-                                 void * value, 
-                                 char * comment
-                               );
+template <>
+int fits_write_key<std::string>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
 /// Specialization to handle the case bool
 /** This gets converted to unsigned char.
-  */
-template<>
-int fits_write_key<bool>( fitsfile * fptr, 
-                          char * keyword, 
-                          void * value, 
-                          char * comment
-                        );
+ */
+template <>
+int fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
-template<> 
-int fits_write_key<fitsUnknownType>( fitsfile * fptr, 
-                                     char * keyword, 
-                                     void * value, 
-                                     char * comment
-                                   );
+template <>
+int fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
-int fits_write_comment( fitsfile *fptr, 
-                        char * comment
-                      );
+int fits_write_comment( fitsfile *fptr, char *comment );
 
-int fits_write_history( fitsfile *fptr, 
-                        char * history
-                      );
+int fits_write_history( fitsfile *fptr, char *history );
 
 /// Generate a rich error meesage from a FITS status code.
-void fitsErrText( std::string & explan,         ///< [out] the explanatory message
-                  const std::string & filename, ///< [in] the FITS file's name which generated the problem
-                  int fstatus                   ///< [in] the cfitstio status code
-                );
+void fitsErrText( std::string &explan,         ///< [out] the explanatory message
+                  const std::string &filename, ///< [in] the FITS file's name which generated the problem
+                  int fstatus                  ///< [in] the cfitstio status code
+);
 ///@}
 
-} //namespace fits
-} //namespace mx
+} // namespace fits
+} // namespace mx
 
-#endif //ioutils_fits_fitsUtils_hpp
-
+#endif // ioutils_fits_fitsUtils_hpp

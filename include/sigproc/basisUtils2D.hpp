@@ -48,13 +48,13 @@ namespace sigproc
  * \ingroup signal_processing
  */
 template <typename realT>
-int basisMask(improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
-              improc::eigenImage<realT> &mask  ///< [in] 1/0 mask defining the domain of the basis
+int basisMask( improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
+               improc::eigenImage<realT> &mask  ///< [in] 1/0 mask defining the domain of the basis
 )
 {
-    for (int i = 0; i < modes.planes(); ++i)
+    for( int i = 0; i < modes.planes(); ++i )
     {
-        modes.image(i) *= mask;
+        modes.image( i ) *= mask;
     }
 
     return 0;
@@ -71,20 +71,21 @@ int basisMask(improc::eigenCube<realT> &modes, ///< [in.out] the basis to normal
  * \ingroup signal_processing
  */
 template <typename realT>
-int basisMeanSub(improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
-                 improc::eigenImage<realT> &mask, ///< [in] 1/0 mask defining the domain of the basis
-                 bool postMult = true             ///< [in] [optional] if true, then each image is multiplied by the mask after subtraction.
+int basisMeanSub(
+    improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
+    improc::eigenImage<realT> &mask, ///< [in] 1/0 mask defining the domain of the basis
+    bool postMult = true ///< [in] [optional] if true, then each image is multiplied by the mask after subtraction.
 )
 {
     realT maskSum = mask.sum();
-    for (int i = 0; i < modes.planes(); ++i)
+    for( int i = 0; i < modes.planes(); ++i )
     {
-        float mean = (modes.image(i) * mask).sum() / maskSum;
+        float mean = ( modes.image( i ) * mask ).sum() / maskSum;
 
-        modes.image(i) -= mean;
+        modes.image( i ) -= mean;
 
-        if (postMult)
-            modes.image(i) *= mask;
+        if( postMult )
+            modes.image( i ) *= mask;
     }
 
     return 0;
@@ -101,17 +102,17 @@ int basisMeanSub(improc::eigenCube<realT> &modes, ///< [in.out] the basis to nor
  * \ingroup signal_processing
  */
 template <typename realT>
-int basisNormalize(improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
-                   improc::eigenImage<realT> &mask  ///< [in] 1/0 mask defining the domain of the normalization
+int basisNormalize( improc::eigenCube<realT> &modes, ///< [in.out] the basis to normalize.
+                    improc::eigenImage<realT> &mask  ///< [in] 1/0 mask defining the domain of the normalization
 )
 {
-    if (mask.rows() != modes.rows())
+    if( mask.rows() != modes.rows() )
     {
         std::cerr << "mx::sigproc::basisUtils2D::basisNormalize: modes and mask have different numbers of rows\n";
         return -1;
     }
 
-    if (mask.cols() != modes.cols())
+    if( mask.cols() != modes.cols() )
     {
         std::cerr << "mx::sigproc::basisUtils2D::basisNormalize: modes and mask have different numbers of columns\n";
         return -1;
@@ -119,17 +120,17 @@ int basisNormalize(improc::eigenCube<realT> &modes, ///< [in.out] the basis to n
 
     realT psum = mask.sum();
 
-    if (psum <= 0)
+    if( psum <= 0 )
     {
         std::cerr << "mx::sigproc::basisUtils2D::basisNormalize: mask sums to <= 0\n";
         return -1;
     }
 
-    for (int i = 0; i < modes.planes(); ++i)
+    for( int i = 0; i < modes.planes(); ++i )
     {
-        float norm = (modes.image(i) * mask).square().sum() / psum;
+        float norm = ( modes.image( i ) * mask ).square().sum() / psum;
 
-        modes.image(i) /= sqrt(norm);
+        modes.image( i ) /= sqrt( norm );
     }
 
     return 0;
@@ -146,43 +147,45 @@ int basisNormalize(improc::eigenCube<realT> &modes, ///< [in.out] the basis to n
  * \ingroup signal_processing
  */
 template <typename realT>
-int basisAmplitudes(std::vector<realT> &amps,        ///< [out] the amplitudes of each mode fit to the image (will be resized).
-                    improc::eigenImage<realT> &im,   ///< [in.out] the image to fit.  Is subtracted in place if desired.
-                    improc::eigenCube<realT> &modes, ///< [in] the modes to fit.
-                    improc::eigenImage<realT> &mask, ///< [in] the 1/0 mask which defines the domain of the fit.
-                    bool subtract = false,           ///< [in] [optional] if true then the modes are subtracted as they are fit to the image
-                    int meanIgnore = 0,              ///< [in] [optional] if 1 then the mean, or if 2 the median, value is subtracted before fitting. If subtract  is false, this value is added back after the subtraction.
-                    int N = -1                       ///< [in] [optional] the number of modes to actually fit.  If N < 0 then all modes are fit.
+int basisAmplitudes(
+    std::vector<realT> &amps,        ///< [out] the amplitudes of each mode fit to the image (will be resized).
+    improc::eigenImage<realT> &im,   ///< [in.out] the image to fit.  Is subtracted in place if desired.
+    improc::eigenCube<realT> &modes, ///< [in] the modes to fit.
+    improc::eigenImage<realT> &mask, ///< [in] the 1/0 mask which defines the domain of the fit.
+    bool subtract = false, ///< [in] [optional] if true then the modes are subtracted as they are fit to the image
+    int meanIgnore = 0, ///< [in] [optional] if 1 then the mean, or if 2 the median, value is subtracted before fitting.
+                        ///< If subtract  is false, this value is added back after the subtraction.
+    int N = -1          ///< [in] [optional] the number of modes to actually fit.  If N < 0 then all modes are fit.
 )
 {
-    if (N < 0)
+    if( N < 0 )
         N = modes.planes();
-    amps.resize(N);
+    amps.resize( N );
 
     realT apertureNPix = mask.sum();
 
     realT mean;
-    if (meanIgnore)
+    if( meanIgnore )
     {
-        if (meanIgnore == 2)
-            mean = improc::imageMedian(im, &mask);
+        if( meanIgnore == 2 )
+            mean = improc::imageMedian( im, &mask );
         else
-            mean = (im * mask).sum() / apertureNPix;
+            mean = ( im * mask ).sum() / apertureNPix;
 
         im -= mean;
     }
 
-    for (int i = 0; i < N; ++i)
+    for( int i = 0; i < N; ++i )
     {
-        amps[i] = (im * modes.image(i) * mask).sum() / apertureNPix;
+        amps[i] = ( im * modes.image( i ) * mask ).sum() / apertureNPix;
 
-        if (subtract)
+        if( subtract )
         {
-            im -= amps[i] * modes.image(i);
+            im -= amps[i] * modes.image( i );
         }
     }
 
-    if (meanIgnore && !subtract)
+    if( meanIgnore && !subtract )
     {
         im += mean;
     }

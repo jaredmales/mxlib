@@ -1,9 +1,9 @@
 /** \file fft.cpp
-  * \brief The fast Fourier transform interface
-  * \ingroup fft_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief The fast Fourier transform interface
+ * \ingroup fft_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 //***********************************************************************//
 // Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
 //
@@ -29,49 +29,35 @@ namespace mx
 {
 namespace math
 {
-namespace fft 
+namespace fft
 {
-   
-template<>
-std::vector<int> fftwDimVec<1>( int szX, 
-                                int szY, 
-                                int szZ
-                              )
+
+template <>
+std::vector<int> fftwDimVec<1>( int szX, int szY, int szZ )
 {
-   static_cast<void>(szY);
-   static_cast<void>(szZ);
-   
-   std::vector<int> v({szX});
-   return v;
+    static_cast<void>( szY );
+    static_cast<void>( szZ );
+
+    std::vector<int> v( { szX } );
+    return v;
 }
 
-template<>
-std::vector<int> fftwDimVec<2>( int szX, 
-                                int szY, 
-                                int szZ
-                              )
+template <>
+std::vector<int> fftwDimVec<2>( int szX, int szY, int szZ )
 {
-   static_cast<void>(szZ);
-   
-   std::vector<int> v({szX, szY});
-   return v;
+    static_cast<void>( szZ );
+
+    std::vector<int> v( { szX, szY } );
+    return v;
 }
 
-template<>
-std::vector<int> fftwDimVec<3>( int szX, 
-                                int szY, 
-                                int szZ
-                              )
+template <>
+std::vector<int> fftwDimVec<3>( int szX, int szY, int szZ )
 {
-   std::vector<int> v({szX, szY, szZ});
-   return v;
+    std::vector<int> v( { szX, szY, szZ } );
+    return v;
 }
 
-
-
-
-}//namespace ffit 
-}//namespace math
-}//namespace mx
-
-
+} // namespace fft
+} // namespace math
+} // namespace mx

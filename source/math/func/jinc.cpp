@@ -1,9 +1,9 @@
 /** \file jinc.cpp
-  * \brief Instantiations of the Jinc and Jinc2 functions
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Instantiations of the Jinc and Jinc2 functions
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -30,68 +30,37 @@ namespace mx
 {
 namespace math
 {
-namespace func 
+namespace func
 {
 
+template float jinc<float>( const float &x );
 
-template
-float jinc<float>(const float & x);
+template double jinc<double>( const double &x );
 
-template
-double jinc<double>(const double & x);
-
-template
-long double jinc<long double>(const long double & x);
+template long double jinc<long double>( const long double &x );
 
 #ifdef HASQUAD
-template
-__float128 jinc<__float128>(const __float128 & x);
+template __float128 jinc<__float128>( const __float128 &x );
 #endif
 
+template float jincN<float, float>( const float &v, const float &x );
 
-template
-float jincN<float, float>( const float & v,
-                           const float & x
-                         );
+template float jincN<int, float>( const int &v, const float &x );
 
-template
-float jincN<int, float>( const int & v,
-                         const float & x
-                       );
+template double jincN<double, double>( const double &v, const double &x );
 
-template
-double jincN<double, double>( const double & v,
-                              const double & x
-                            );
+template double jincN<int, double>( const int &v, const double &x );
 
-template
-double jincN<int, double>( const int & v,
-                           const double & x
-                         );
+template long double jincN<long double, long double>( const long double &v, const long double &x );
 
-template
-long double jincN<long double, long double>( const long double & v,
-                                             const long double & x
-                                           );
-
-template
-long double jincN<int, long double>( const int & v,
-                                     const long double & x
-                                   );
+template long double jincN<int, long double>( const int &v, const long double &x );
 
 #ifdef HASQUAD
-template
-__float128 jincN<__float128, __float128>( const __float128 & v,
-                                          const __float128 & x
-                                        );
+template __float128 jincN<__float128, __float128>( const __float128 &v, const __float128 &x );
 
-template
-__float128 jincN<int, __float128>( const int & v,
-                                   const __float128 & x
-                                 );
+template __float128 jincN<int, __float128>( const int &v, const __float128 &x );
 #endif
 
-} //namespace func 
-} //namespace math
-} //namespace mx
-
+} // namespace func
+} // namespace math
+} // namespace mx

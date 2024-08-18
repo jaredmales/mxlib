@@ -1,9 +1,9 @@
 /** \file processInterface.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Process interface facilities
-  * \ingroup IPC
-  * 
-*/
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Process interface facilities
+ * \ingroup IPC
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
@@ -35,44 +35,46 @@
 
 namespace mx
 {
-namespace ipc 
+namespace ipc
 {
-   
-///Run a process and copy the output to a string
+
+/// Run a process and copy the output to a string
 /** Uses popen, so the attendant precautions about privileges apply.
-  *
-  * \param cmd is the command to run
-  * \param resp is the string to copy the response to.
-  * \param respsz is the available size of the string.
-  *
-  * \retval 0 on success 
-  * \retval -1 on error
-  *
-  * \ingroup IPC 
-  */
-int command_response(const char * cmd, char * resp, size_t respsz);
+ *
+ * \param cmd is the command to run
+ * \param resp is the string to copy the response to.
+ * \param respsz is the available size of the string.
+ *
+ * \retval 0 on success
+ * \retval -1 on error
+ *
+ * \ingroup IPC
+ */
+int command_response( const char *cmd, char *resp, size_t respsz );
 
 /// Runs a command (with parameters) passed in using fork/exec
 /** A new process is fork()-ed, and the child runs execvp with command provided.  The output of the process
-  * is captured in \p commandOutput, and error messages in \p commandStderr.
-  * 
-  * The process return value in \p retVal is only meaningful if this function returns 0.
-  * 
-  * If this function returns -1, the last entry in \p commandStderr will contain a message,
-  * and errno may be useful.
-  * 
-  * \returns 0 on success
-  * \returns -1 on error
-  * 
-  * \ingroup IPC
-  */
-int runCommand( int & retVal,                                ///< [out] the return value of the process. Only meaningful if this returns 0.
-                std::vector<std::string> & commandOutput,    ///< [out] the output, line by line.  If an error, first entry contains the message.
-                std::vector<std::string> & commandStderr,    ///< [out] the output of stderr.
-                const std::vector<std::string> & commandList ///< [in] command to be run, with one entry per command line word
-              );
+ * is captured in \p commandOutput, and error messages in \p commandStderr.
+ *
+ * The process return value in \p retVal is only meaningful if this function returns 0.
+ *
+ * If this function returns -1, the last entry in \p commandStderr will contain a message,
+ * and errno may be useful.
+ *
+ * \returns 0 on success
+ * \returns -1 on error
+ *
+ * \ingroup IPC
+ */
+int runCommand(
+    int &retVal, ///< [out] the return value of the process. Only meaningful if this returns 0.
+    std::vector<std::string>
+        &commandOutput, ///< [out] the output, line by line.  If an error, first entry contains the message.
+    std::vector<std::string> &commandStderr,    ///< [out] the output of stderr.
+    const std::vector<std::string> &commandList ///< [in] command to be run, with one entry per command line word
+);
 
-}//namespace ipc
-} //namespace mx
+} // namespace ipc
+} // namespace mx
 
-#endif //ipc_processInterface_hpp
+#endif // ipc_processInterface_hpp

@@ -35,10 +35,8 @@
 //   commented out ini.h
 // NOTE: original ini.h and ini.c are in the inih directory
 
-
 #ifndef ini_hpp
 #define ini_hpp
-
 
 /* inih -- simple .INI file parser
 
@@ -53,18 +51,14 @@ http://code.google.com/p/inih/
 #include <ctype.h>
 #include <string.h>
 
-//#include "ini.h"
+// #include "ini.h"
 
 /// Parse ini file
 /** Same as ini_parse(), but takes a FILE* instead of filename. This doesn't
    close the file when it's finished -- the caller must do that. */
-int ini_parse_file(FILE* file,
-                   int (*handler)(void*, const char*, const char*,
-                                  const char*),
-                   void* user
-                  );
+int ini_parse_file( FILE *file, int ( *handler )( void *, const char *, const char *, const char * ), void *user );
 
-/// Parse given INI-style file. 
+/// Parse given INI-style file.
 /** May have [section]s, name=value pairs
     (whitespace stripped), and comments.  By default comments start with ';' (semicolon)
     but this can be configured with the INI_COMMENT_CHAR macro. Section
@@ -79,9 +73,6 @@ int ini_parse_file(FILE* file,
     stop on first error), -1 on file open error, or -2 on memory allocation
     error (only when INI_USE_STACK is zero).
 */
-int ini_parse(const char* filename,
-              int (*handler)(void*, const char*, const char*, const char*),
-              void* user
-             );
+int ini_parse( const char *filename, int ( *handler )( void *, const char *, const char *, const char * ), void *user );
 
-#endif //ini_hpp
+#endif // ini_hpp

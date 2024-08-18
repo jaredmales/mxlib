@@ -23,29 +23,24 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-
 #include "mxlib_comp_version.h"
-
 
 namespace mx
 {
 
-const char * mxlib_comp_current_branch()
+const char *mxlib_comp_current_branch()
 {
-   return MXLIB_COMP_BRANCH;
+    return MXLIB_COMP_BRANCH;
 }
 
-const char * mxlib_comp_current_sha1()
+const char *mxlib_comp_current_sha1()
 {
-   return MXLIB_COMP_CURRENT_SHA1;
+    return MXLIB_COMP_CURRENT_SHA1;
 }
 
 const bool mxlib_comp_repo_modified()
 {
-   return MXLIB_COMP_REPO_MODIFIED;
+    return MXLIB_COMP_REPO_MODIFIED;
 }
 
-
-
-}//namespace mx
-   
+} // namespace mx

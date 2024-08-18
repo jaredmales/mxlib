@@ -1,9 +1,9 @@
 /** \file math.hpp
-  * \author Jared R. Males
-  * \brief Library include for the math module.
-  * \ingroup gen_math_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Library include for the math module.
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020-2023 Jared R. Males (jaredmales@gmail.com)
@@ -68,4 +68,4 @@
 #include "templateLapack.hpp"
 #include "vectorUtils.hpp"
 
-#endif //math_hpp
+#endif // math_hpp

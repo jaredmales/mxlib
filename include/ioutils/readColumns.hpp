@@ -1,8 +1,8 @@
 /** \file readColumns.hpp
-  * \author Jared R. Males
-  * \brief A utility to read in columns from a text file.
-  * \ingroup asciiutils
-  */
+ * \author Jared R. Males
+ * \brief A utility to read in columns from a text file.
+ * \ingroup asciiutils
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
@@ -43,198 +43,199 @@ namespace mx
 namespace ioutils
 {
 
-template<char delim=' ', char eol='\n'>
-void readcol(char * sin, int sz)
+template <char delim = ' ', char eol = '\n'>
+void readcol( char *sin, int sz )
 {
-   static_cast<void>(sin);
-   static_cast<void>(sz);
-   
-   return;
+    static_cast<void>( sin );
+    static_cast<void>( sz );
+
+    return;
 }
 
-template<char delim=' ', char eol='\n', typename arrT, typename... arrTs>
-void readcol(char * sin, int sz, arrT & array, arrTs &... arrays)
+template <char delim = ' ', char eol = '\n', typename arrT, typename... arrTs>
+void readcol( char *sin, int sz, arrT &array, arrTs &...arrays )
 {
-   //static const unsigned short int nargs = sizeof...(arrTs);
-   std::string str;
+    // static const unsigned short int nargs = sizeof...(arrTs);
+    std::string str;
 
-   int i=0;
-   int l = strlen(sin);
+    int i = 0;
+    int l = strlen( sin );
 
-   if(l < 1) return;
+    if( l < 1 )
+        return;
 
-   //Eat white space
-   while( isspace(sin[i]) && sin[i] != eol && i < l) ++i;
-   sin = sin + i;
-   sz = sz -i;
+    // Eat white space
+    while( isspace( sin[i] ) && sin[i] != eol && i < l )
+        ++i;
+    sin = sin + i;
+    sz = sz - i;
 
-   //If there's nothing here, we still need to populate the vector
-   if(sz <= 1)
-   {
-      array.push_back(convertFromString<typename arrT::value_type>(""));
-      return;
-   }
+    // If there's nothing here, we still need to populate the vector
+    if( sz <= 1 )
+    {
+        array.push_back( convertFromString<typename arrT::value_type>( "" ) );
+        return;
+    }
 
-   std::stringstream sinstr(sin);
+    std::stringstream sinstr( sin );
 
-   std::getline(sinstr, str, delim);
+    std::getline( sinstr, str, delim );
 
-   //Last entry in line might contain eol
-   if( str[str.size()-1] == eol)
-   {
-      str.erase(str.size()-1);
-   }
+    // Last entry in line might contain eol
+    if( str[str.size() - 1] == eol )
+    {
+        str.erase( str.size() - 1 );
+    }
 
-   if( str.size() == 0 )
-   {
-      array.push_back(convertFromString<typename arrT::value_type>(MX_READCOL_MISSINGVALSTR));
-   }
-   else
-   {
-      array.push_back(convertFromString<typename arrT::value_type>(str));
-   }
+    if( str.size() == 0 )
+    {
+        array.push_back( convertFromString<typename arrT::value_type>( MX_READCOL_MISSINGVALSTR ) );
+    }
+    else
+    {
+        array.push_back( convertFromString<typename arrT::value_type>( str ) );
+    }
 
-   sin += ( str.size()+1)*sizeof(char);
-   sz -= ( str.size()+1)*sizeof(char);
+    sin += ( str.size() + 1 ) * sizeof( char );
+    sz -= ( str.size() + 1 ) * sizeof( char );
 
-   readcol<delim,eol>(sin, sz, arrays...);
-
+    readcol<delim, eol>( sin, sz, arrays... );
 }
 
-
-
-///Read in columns from a text file
+/// Read in columns from a text file
 /** This function opens a file containing data formatted in columns and reads in the data row by row.
-  * The data are stored in std::vectors, which should not be pre-allocated (though they could be reserve()-ed).
-  *
-  * Example:
-  * \code
-  * std::vector<int> i1;
-  * std::vector<float> f1;
-  * std::vector<double> d1;
-  *
-  * readColumns("data_file.txt", i1, f1, d1);
-  * \endcode
-  *
-  * Note that the types of the vectors do not need to be specified as template arguments.
-  *
-  * The format of the file can be specified with template arguments like
-  * \code
-  * readColumns<',', ';', '\r'>("data_file.csv", i1, f1, d1);
-  * \endcode
-  * which sets the delimmiter to comma, the comment character to ;, and the end-of-line to \\r.
-  *
-  * Columns can be skipped using mx::ioutils::skipCol.
-  *
-  * \tparam delim is the character separating columns,  by default this is space.
-  * \tparam comment is the character starting a comment.  by default this is #
-  * \tparam eol is the end of line character.  by default this is \n
-  * \tparam arrTs a variadic list of array types. this is not specified by the user.
-  *
-  * \todo lineSize should be configurable
-  * 
-  * \ingroup asciiutils
-  */
-template<char delim=' ', char comment='#', char eol='\n', typename... arrTs>
-int readColumns( const std::string & fname, ///< [in] is the file name to read from
-                 arrTs &... arrays ///< [out] a variadic list of std::vectors. Any number with mixed value_type can be specified. Neither allocated nor cleared, so repeated calls will append data.
-               )
+ * The data are stored in std::vectors, which should not be pre-allocated (though they could be reserve()-ed).
+ *
+ * Example:
+ * \code
+ * std::vector<int> i1;
+ * std::vector<float> f1;
+ * std::vector<double> d1;
+ *
+ * readColumns("data_file.txt", i1, f1, d1);
+ * \endcode
+ *
+ * Note that the types of the vectors do not need to be specified as template arguments.
+ *
+ * The format of the file can be specified with template arguments like
+ * \code
+ * readColumns<',', ';', '\r'>("data_file.csv", i1, f1, d1);
+ * \endcode
+ * which sets the delimmiter to comma, the comment character to ;, and the end-of-line to \\r.
+ *
+ * Columns can be skipped using mx::ioutils::skipCol.
+ *
+ * \tparam delim is the character separating columns,  by default this is space.
+ * \tparam comment is the character starting a comment.  by default this is #
+ * \tparam eol is the end of line character.  by default this is \n
+ * \tparam arrTs a variadic list of array types. this is not specified by the user.
+ *
+ * \todo lineSize should be configurable
+ *
+ * \ingroup asciiutils
+ */
+template <char delim = ' ', char comment = '#', char eol = '\n', typename... arrTs>
+int readColumns( const std::string &fname, ///< [in] is the file name to read from
+                 arrTs &...arrays ///< [out] a variadic list of std::vectors. Any number with mixed value_type can be
+                                  ///< specified. Neither allocated nor cleared, so repeated calls will append data.
+)
 {
-   //open file
-   errno = 0;
-   std::ifstream fin;
-   fin.open(fname);
+    // open file
+    errno = 0;
+    std::ifstream fin;
+    fin.open( fname );
 
-   if(!fin.good())
-   {
-      if(errno != 0)
-      {
-         mxPError("readColumns", errno, "Occurred while opening " + fname + " for reading.");
-      }
-      else
-      {
-         mxError("readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading.");
-      }
-      return -1;
-   }
+    if( !fin.good() )
+    {
+        if( errno != 0 )
+        {
+            mxPError( "readColumns", errno, "Occurred while opening " + fname + " for reading." );
+        }
+        else
+        {
+            mxError( "readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading." );
+        }
+        return -1;
+    }
 
-   int lineSize = 4096;
-   char * line = new char[lineSize];
+    int lineSize = 4096;
+    char *line = new char[lineSize];
 
-   while(fin.good())
-   {
-      //Save one space for adding eol
-      fin.getline(line, lineSize-1, eol);
+    while( fin.good() )
+    {
+        // Save one space for adding eol
+        fin.getline( line, lineSize - 1, eol );
 
-      int i=0;
-      int l = strlen(line);
+        int i = 0;
+        int l = strlen( line );
 
-      if(l <= 0) break;
+        if( l <= 0 )
+            break;
 
-      //std::cerr << line << "\n";
+        // std::cerr << line << "\n";
 
-      //Find start of comment and end line at that point.
-      while(line[i] != comment )
-      {
-         ++i;
-         if( i == l ) break;
-      }
+        // Find start of comment and end line at that point.
+        while( line[i] != comment )
+        {
+            ++i;
+            if( i == l )
+                break;
+        }
 
-      if(i <= l-1)
-      {
-         line[i] = '\0';
-      }
+        if( i <= l - 1 )
+        {
+            line[i] = '\0';
+        }
 
-      l = strlen(line);
+        l = strlen( line );
 
-      if(l == 0) continue;
+        if( l == 0 )
+            continue;
 
-      //Make sure line ends with eol
-      line[l] = eol;
-      ++l;
-      line[l] = '\0';
+        // Make sure line ends with eol
+        line[l] = eol;
+        ++l;
+        line[l] = '\0';
 
-      readcol<delim,eol>(line, strlen(line), arrays...);
-   }
+        readcol<delim, eol>( line, strlen( line ), arrays... );
+    }
 
-   delete[] line;
+    delete[] line;
 
-   //getline will have set fail if there was no new line on the last line.
-   if(fin.bad() && !fin.fail())
-   {
-      if(errno != 0)
-      {
-         mxPError("readColumns", errno, "Occurred while reading from " + fname + ".");
-      }
-      else
-      {
-         mxError("readColumns", MXE_FILERERR, "Occurred while reading from " + fname + ".");
-      }
-      return -1;
-   }
+    // getline will have set fail if there was no new line on the last line.
+    if( fin.bad() && !fin.fail() )
+    {
+        if( errno != 0 )
+        {
+            mxPError( "readColumns", errno, "Occurred while reading from " + fname + "." );
+        }
+        else
+        {
+            mxError( "readColumns", MXE_FILERERR, "Occurred while reading from " + fname + "." );
+        }
+        return -1;
+    }
 
-   fin.clear(); //Clear the fail bit which may have been set by getline
-   fin.close();
+    fin.clear(); // Clear the fail bit which may have been set by getline
+    fin.close();
 
-   if(fin.fail())
-   {
-      if(errno != 0)
-      {
-         mxPError("readColumns", errno, "Occurred while closing " + fname + ".");
-      }
-      else
-      {
-         mxError("readColumns", MXE_FILECERR, "Occurred while closing " + fname + ".");
-      }
-      return -1;
-   }
+    if( fin.fail() )
+    {
+        if( errno != 0 )
+        {
+            mxPError( "readColumns", errno, "Occurred while closing " + fname + "." );
+        }
+        else
+        {
+            mxError( "readColumns", MXE_FILECERR, "Occurred while closing " + fname + "." );
+        }
+        return -1;
+    }
 
-
-
-   return 0;
+    return 0;
 }
 
-///A dummy class to allow mx::readColumns to skip a column(s) in a file without requiring memory allocation.
+/// A dummy class to allow mx::readColumns to skip a column(s) in a file without requiring memory allocation.
 /** The alternative is to use dummy vectors, which result in excess memory allocations and deallocations.
   * Usage:
   \code
@@ -247,17 +248,16 @@ int readColumns( const std::string & fname, ///< [in] is the file name to read f
   */
 struct skipCol
 {
-   typedef std::string value_type; ///< value_type is defined as std::string so that no conversions take place.
+    typedef std::string value_type; ///< value_type is defined as std::string so that no conversions take place.
 
-   template<typename T>
-   void push_back( const T & arg )
-   {
-      return;
-   }
+    template <typename T>
+    void push_back( const T &arg )
+    {
+        return;
+    }
 };
 
-
-} //namespace ioutils
-} //namespace mx
+} // namespace ioutils
+} // namespace mx
 
 #endif //__readColumns_hpp__

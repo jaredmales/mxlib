@@ -12,176 +12,166 @@
 #include <cmath>
 #include <cstdlib>
 
-
 #include "units.hpp"
 
 namespace mx
 {
-   
+
 namespace astro
 {
 
-
-   
 #ifndef KEPLER_TOL
-///The default tolerance for solutions to the Kepler problem
-#define KEPLER_TOL (1e-8)
+/// The default tolerance for solutions to the Kepler problem
+#define KEPLER_TOL ( 1e-8 )
 #endif
 
 #ifndef KEPLER_ITMAX
-///The default maximum number of iterations for solutions to the Kepler problem
-#define KEPLER_ITMAX (1000)
+/// The default maximum number of iterations for solutions to the Kepler problem
+#define KEPLER_ITMAX ( 1000 )
 #endif
 
-
-
-
-///Solve the hyperbolic kepler equation (for e> 1).
+/// Solve the hyperbolic kepler equation (for e> 1).
 /** \note this is not tested very well (as of 2014.08.09)
-  * 
-  * 
-  * \returns -1 on exceeding itmax, otherwise reurns the number of iterations.
-  * 
-  * \tparam realT is the type used for arithmetic
-  * 
-  * \ingroup kepler
-  */
-template<typename realT>
-long hyperbolic_kepler( realT & E,   ///< [out] is the eccentric anomaly
-                        realT & err, ///< [out] is the error after the last iteration
-                        realT e,     ///< [in] is the eccentricity
-                        realT M,     ///< [in] is the mean anomaly
-                        realT tol,   ///< [in] is the desired tolerance
-                        long itmax   ///< [in] is the maximum number of iterations
-                      )
+ *
+ *
+ * \returns -1 on exceeding itmax, otherwise reurns the number of iterations.
+ *
+ * \tparam realT is the type used for arithmetic
+ *
+ * \ingroup kepler
+ */
+template <typename realT>
+long hyperbolic_kepler( realT &E,   ///< [out] is the eccentric anomaly
+                        realT &err, ///< [out] is the error after the last iteration
+                        realT e,    ///< [in] is the eccentricity
+                        realT M,    ///< [in] is the mean anomaly
+                        realT tol,  ///< [in] is the desired tolerance
+                        long itmax  ///< [in] is the maximum number of iterations
+)
 {
-   realT curr, thresh;
-   int is_negative = 0;
-   long n_iter = 0;
+    realT curr, thresh;
+    int is_negative = 0;
+    long n_iter = 0;
 
-   if(e == 1) e = 1.000001;
+    if( e == 1 )
+        e = 1.000001;
 
-   if(M == 0) return( 0.);
+    if( M == 0 )
+        return ( 0. );
 
-   err = e * sinh( curr) - curr - M;
-   while( fabs( err) > tol && n_iter < 10000)
-   {
-      n_iter++;
-      curr -= err / (e * cosh( curr) - 1.);
-      err = e * sinh( curr) - curr - M;
-   }
-   
-   E = ( is_negative ? -curr : curr);
+    err = e * sinh( curr ) - curr - M;
+    while( fabs( err ) > tol && n_iter < 10000 )
+    {
+        n_iter++;
+        curr -= err / ( e * cosh( curr ) - 1. );
+        err = e * sinh( curr ) - curr - M;
+    }
 
-   if(n_iter > itmax)
-   {
-      std::cerr << "hyperbolic kepler failed to converge e=" << e << "\n";
-      return -1;
-   }
+    E = ( is_negative ? -curr : curr );
 
-   return n_iter;
+    if( n_iter > itmax )
+    {
+        std::cerr << "hyperbolic kepler failed to converge e=" << e << "\n";
+        return -1;
+    }
+
+    return n_iter;
 }
 
-///Calculate the next iteration of Danby's quartic Newton-Raphson method.
+/// Calculate the next iteration of Danby's quartic Newton-Raphson method.
 /** \ingroup kepler
-  */
-template<typename realT>
-realT kepler_danby_1( realT e, 
-                      realT M, 
-                      realT Ei)
+ */
+template <typename realT>
+realT kepler_danby_1( realT e, realT M, realT Ei )
 {
-   realT cosE, sinE, fi, fi1, fi2, fi3, di1, di2, di3;
-   
-   //These are expensive, do them just once.
-   cosE = cos(Ei);
-   sinE = sin(Ei);
-   
-   fi = Ei - e*sinE - M;
-   fi1 = 1.0 - e*cosE;
-   fi2 = e*sinE;
-   fi3 = e*cosE;
-   
-   di1 = -fi / fi1;
-   di2 = -fi/(fi1 + 0.5*di1*fi2);
-   di3 = -fi/(fi1 + 0.5*di2*fi2 + di2*di2*fi3/6.0);
-   
-   return Ei + di3;
+    realT cosE, sinE, fi, fi1, fi2, fi3, di1, di2, di3;
+
+    // These are expensive, do them just once.
+    cosE = cos( Ei );
+    sinE = sin( Ei );
+
+    fi = Ei - e * sinE - M;
+    fi1 = 1.0 - e * cosE;
+    fi2 = e * sinE;
+    fi3 = e * cosE;
+
+    di1 = -fi / fi1;
+    di2 = -fi / ( fi1 + 0.5 * di1 * fi2 );
+    di3 = -fi / ( fi1 + 0.5 * di2 * fi2 + di2 * di2 * fi3 / 6.0 );
+
+    return Ei + di3;
 }
 
-///Solve Kepler's equation using Danby's quartic Newton-Raphson method.
-/** 
-  * \returns -1 on exceeding itmax.
-  * \returns the number of iterations on success.
-  * 
-  * \ingroup kepler
-  */
-template<typename realT>
-long solve_kepler_danby( realT & E, ///< [out] is the eccentric anomaly
-                         realT & D, ///< [out] is the error after the last iteration
+/// Solve Kepler's equation using Danby's quartic Newton-Raphson method.
+/**
+ * \returns -1 on exceeding itmax.
+ * \returns the number of iterations on success.
+ *
+ * \ingroup kepler
+ */
+template <typename realT>
+long solve_kepler_danby( realT &E,  ///< [out] is the eccentric anomaly
+                         realT &D,  ///< [out] is the error after the last iteration
                          realT e,   ///< [in] is the eccentricity
                          realT M,   ///< [in] is the mean anomaly
                          realT tol, ///< [in] is the desired tolerance
-                         long itmax  ///< [in] is the maximum number of iterations
-                       )
+                         long itmax ///< [in] is the maximum number of iterations
+)
 {
-   long i;
-   realT lastE, sinE, sign;
-   
-   sinE = sin(M);
-   sign = 1.0;
-   if(sinE < 0.0) sign = -1.0;
-   
-   E = M + 0.85*e*sign;
-   
-   for(i=0; i < itmax; i++)
-   {
-      lastE = E;
-      E = kepler_danby_1(e, M, E);
-      
-      //Test for convergence to within tol
-      //Make sure we have iterated at least twice to prevent early convergence
-      if(i > 1 && fabs(E-lastE) < tol)
-      {
-         D = M - (E-e*sin(E));
-         return i;
-      }
-   }
-   
-   return -1;  //This means itmax exceeded.
+    long i;
+    realT lastE, sinE, sign;
+
+    sinE = sin( M );
+    sign = 1.0;
+    if( sinE < 0.0 )
+        sign = -1.0;
+
+    E = M + 0.85 * e * sign;
+
+    for( i = 0; i < itmax; i++ )
+    {
+        lastE = E;
+        E = kepler_danby_1( e, M, E );
+
+        // Test for convergence to within tol
+        // Make sure we have iterated at least twice to prevent early convergence
+        if( i > 1 && fabs( E - lastE ) < tol )
+        {
+            D = M - ( E - e * sin( E ) );
+            return i;
+        }
+    }
+
+    return -1; // This means itmax exceeded.
 }
 
-///Solve Kepler's equation for any e.  Uses solve_kepler_danby if e < 1.0, hyperbolic_kepler otherwise.
-/** 
-  * \returns the number of iterations on success.
-  * \returns -1 if itmax is exceeded.
-  * 
-  * \ingroup kepler
-  */
-template<typename realT>
-long solve_kepler( realT & E, ///< [out] is the eccentric anomaly
-                   realT & D, ///< [out] is the error after the last iteration
-                   realT e,   ///< [in] is the eccentricity
-                   realT M,   ///< [in] is the mean anomaly
-                   realT tol=KEPLER_TOL,  ///< [in] is the desired tolerance
-                   long itmax=KEPLER_ITMAX  ///< [in] is the maximum number of iterations
-                 )
-{   
-   if (e < 1.0)
-   {
-      return solve_kepler_danby(E, D, e, M, tol, itmax);
-   }
-   else return hyperbolic_kepler(E, D, e, M, tol, itmax);
-   
+/// Solve Kepler's equation for any e.  Uses solve_kepler_danby if e < 1.0, hyperbolic_kepler otherwise.
+/**
+ * \returns the number of iterations on success.
+ * \returns -1 if itmax is exceeded.
+ *
+ * \ingroup kepler
+ */
+template <typename realT>
+long solve_kepler( realT &E,                 ///< [out] is the eccentric anomaly
+                   realT &D,                 ///< [out] is the error after the last iteration
+                   realT e,                  ///< [in] is the eccentricity
+                   realT M,                  ///< [in] is the mean anomaly
+                   realT tol = KEPLER_TOL,   ///< [in] is the desired tolerance
+                   long itmax = KEPLER_ITMAX ///< [in] is the maximum number of iterations
+)
+{
+    if( e < 1.0 )
+    {
+        return solve_kepler_danby( E, D, e, M, tol, itmax );
+    }
+    else
+        return hyperbolic_kepler( E, D, e, M, tol, itmax );
 }
-
-
-
-
 
 #if 0
 
 #endif
-
 
 #if 0
 
@@ -307,6 +297,6 @@ int get_W_1pt_z0(arithT &W, arithT x, arithT y, arithT r, arithT f, arithT w)
 
 #endif
 
-} //namespace astro
-} //namespace mx
+} // namespace astro
+} // namespace mx
 #endif //__mx_astro_kepler_hpp__

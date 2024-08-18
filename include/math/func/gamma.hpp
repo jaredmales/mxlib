@@ -1,9 +1,9 @@
 /** \file gamma.hpp
-  * \brief Declares and defines the gamma function.
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Declares and defines the gamma function.
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -39,43 +39,45 @@ namespace math
 {
 namespace func
 {
-   
+
 /// The Gamma Function
 /** This is a wrapper for boost.
-  *
-  * \tparam T a real floating point type
-  *
-  * \returns the value of the Gamma Function.
-  *
-  * \ingroup gen_math_gamma
-  */ 
-template<typename T>
+ *
+ * \tparam T a real floating point type
+ *
+ * \returns the value of the Gamma Function.
+ *
+ * \ingroup gen_math_gamma
+ */
+template <typename T>
 T tgamma( T x /**< [in] the argument of the gamma function*/ )
 {
 #ifdef MX_INCLUDE_BOOST
-   return boost::math::tgamma<T>(x);
+    return boost::math::tgamma<T>( x );
 #else
-   static_assert(std::is_fundamental<T>::value || !std::is_fundamental<T>::value, "tgamma<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
-   return 0;
+    static_assert(
+        std::is_fundamental<T>::value || !std::is_fundamental<T>::value,
+        "tgamma<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost." );
+    return 0;
 #endif
 }
 
-template<>
-float tgamma<float>( float x);
+template <>
+float tgamma<float>( float x );
 
-template<>
+template <>
 double tgamma<double>( double x );
 
-template<>
+template <>
 long double tgamma<long double>( long double x );
 
 #ifdef HASQUAD
-template<>
+template <>
 __float128 tgamma<__float128>( __float128 x );
 #endif
 
-}
-}
-}
+} // namespace func
+} // namespace math
+} // namespace mx
 
-#endif //mx_gamma_hpp
+#endif // mx_gamma_hpp

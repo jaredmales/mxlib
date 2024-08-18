@@ -1,11 +1,11 @@
 /** \file textTable.cpp
-  * \brief implementation for a simple text table manager
-  *
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  * \ingroup asciiutils
-  *
-  */
+ * \brief implementation for a simple text table manager
+ *
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ * \ingroup asciiutils
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -33,37 +33,28 @@ namespace mx
 {
 namespace ioutils
 {
-void textTable::addCell( size_t row,
-                         size_t col,
-                         const std::string & cell
-                       )
+void textTable::addCell( size_t row, size_t col, const std::string &cell )
 {
-   //Increase size if needed.
-   if( row >= m_rows.size() )
-   {
-      size_t N = m_rows.size();
-      for(size_t i=0; i < row - N +1; ++i)
-      {
-         m_rows.push_back( std::vector<std::vector<std::string>>( m_colWidths.size()));
-      }
-   }
+    // Increase size if needed.
+    if( row >= m_rows.size() )
+    {
+        size_t N = m_rows.size();
+        for( size_t i = 0; i < row - N + 1; ++i )
+        {
+            m_rows.push_back( std::vector<std::vector<std::string>>( m_colWidths.size() ) );
+        }
+    }
 
-   m_rows[row][col].clear();
-   stringWrap(m_rows[row][col], cell, m_colWidths[col]);
+    m_rows[row][col].clear();
+    stringWrap( m_rows[row][col], cell, m_colWidths[col] );
 }
 
-
-void textTable::addCell(size_t row,
-                        size_t col,
-                        const char * cell
-                       )
+void textTable::addCell( size_t row, size_t col, const char *cell )
 {
-   addCell(row, col, std::string(cell));
+    addCell( row, col, std::string( cell ) );
 }
 
-template
-void textTable::outPut<std::ostream>(std::ostream & ios);
+template void textTable::outPut<std::ostream>( std::ostream &ios );
 
-} //namespace ioutils
-} //namespace mx
-
+} // namespace ioutils
+} // namespace mx

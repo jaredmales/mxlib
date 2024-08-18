@@ -10,25 +10,24 @@ namespace math
 namespace func
 {
 
-template<>
+template <>
 float sign<float>( float x )
 {
-   return boost::math::sign<float>(x);
+    return boost::math::sign<float>( x );
 }
 
-template<>
+template <>
 double sign<double>( double x )
 {
-   return boost::math::sign<double>(x);
+    return boost::math::sign<double>( x );
 }
 
-template<>
+template <>
 long double sign<long double>( long double x )
 {
-   return boost::math::sign<long double>(x);
+    return boost::math::sign<long double>( x );
 }
 
-
-} //namespace mx
-} //namespace math
-} //namespace func
+} // namespace func
+} // namespace math
+} // namespace mx

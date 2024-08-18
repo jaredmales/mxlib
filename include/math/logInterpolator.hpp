@@ -1,11 +1,11 @@
 /** \file logInterpolator.hpp
-  * \brief Interpolation in log space.
-  * 
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * 
-  * \ingroup gen_math_files
-  *
-  */
+ * \brief Interpolation in log space.
+ *
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2022 Jared R. Males (jaredmales@gmail.com)
@@ -29,106 +29,102 @@
 #ifndef mx_math_logInterpolator_hpp
 #define mx_math_logInterpolator_hpp
 
-
 #include "../mxException.hpp"
 #include "gslInterpolator.hpp"
 
 namespace mx
 {
-namespace math 
+namespace math
 {
 
 /// Interpolate a function in log space
 /** Given a discrete function, conduct linear interpolation in log space.
-  * The input vectors are converted to their log10 values.  Linear interpolation
-  * using gslInterpolator is conducted on the log10 of the input value.  The output
-  * is converted back. So the result is
-  * \code 
-  *   y = pow(10, interp(log10(x))). 
-  * \endcode
-  *  
-  * \ingroup interpolation
-  */  
-template<typename interpT>
+ * The input vectors are converted to their log10 values.  Linear interpolation
+ * using gslInterpolator is conducted on the log10 of the input value.  The output
+ * is converted back. So the result is
+ * \code
+ *   y = pow(10, interp(log10(x))).
+ * \endcode
+ *
+ * \ingroup interpolation
+ */
+template <typename interpT>
 class logInterpolator
 {
 
-public:
+  public:
+    typedef typename interpT::realT realT;
 
-   typedef typename interpT::realT realT;
+  protected:
+    gslInterpolator<interpT> m_interp; ///< The interpolator
 
-protected:
-   gslInterpolator<interpT> m_interp; ///< The interpolator
+    std::vector<realT> m_logx; ///< Internal storage of the log10 values of the x values
+    std::vector<realT> m_logy; ///< Internal storage of the lgo10 values of the y values
 
-   std::vector<realT>  m_logx; ///< Internal storage of the log10 values of the x values
-   std::vector<realT>  m_logy; ///< Internal storage of the lgo10 values of the y values
+  public:
+    /// Default constructor
+    logInterpolator()
+    {
+    }
 
-public:
-   /// Default constructor
-   logInterpolator(){}
-
-   /// Convert the inputs to their log10 values, and construct the interpolator.
-   /**
+    /// Convert the inputs to their log10 values, and construct the interpolator.
+    /**
      * \throws mxException if vectors are not the same size.
      */
-   logInterpolator( const std::vector<realT> & x, /// [in] the input x-axis
-                    const std::vector<realT> & y  /// [in] the input y-axis
-                  )
-   {
-      setup(x,y);
-   }
+    logInterpolator( const std::vector<realT> &x, /// [in] the input x-axis
+                     const std::vector<realT> &y  /// [in] the input y-axis
+    )
+    {
+        setup( x, y );
+    }
 
-   /// Convert the inputs to their log10 values, and construct the interpolator.
-   /**
+    /// Convert the inputs to their log10 values, and construct the interpolator.
+    /**
      * \throws mx::err::sizeerr if vectors are not the same size.
      * \throws mx::err::invalidarg if any of the values are \<= 0
-     */ 
-   void setup( const std::vector<realT> & x, /// [in] the input x-axis
-               const std::vector<realT> & y  /// [in] the input y-axis
-             )
-   {
-      if(x.size() != y.size())
-      {
-         mxThrowException(err::sizeerr, "logInterpolator", "vectors must have same size");
-      }
+     */
+    void setup( const std::vector<realT> &x, /// [in] the input x-axis
+                const std::vector<realT> &y  /// [in] the input y-axis
+    )
+    {
+        if( x.size() != y.size() )
+        {
+            mxThrowException( err::sizeerr, "logInterpolator", "vectors must have same size" );
+        }
 
-      m_logx.resize(x.size());
-      m_logy.resize(y.size());
+        m_logx.resize( x.size() );
+        m_logy.resize( y.size() );
 
-      for(size_t n = 0; n < x.size(); ++n)
-      {
-         if(x[n] <= 0)
-         {
-            mxThrowException(err::invalidarg, "logInterpolator", "x values must > 0");
-         }
+        for( size_t n = 0; n < x.size(); ++n )
+        {
+            if( x[n] <= 0 )
+            {
+                mxThrowException( err::invalidarg, "logInterpolator", "x values must > 0" );
+            }
 
-         if(y[n] <= 0)
-         {
-            mxThrowException(err::invalidarg, "logInterpolator", "y values must > 0");
-         }
+            if( y[n] <= 0 )
+            {
+                mxThrowException( err::invalidarg, "logInterpolator", "y values must > 0" );
+            }
 
-         
-         m_logx[n] = log10(x[n]);
-         m_logy[n] = log10(y[n]);
-         
-      }
+            m_logx[n] = log10( x[n] );
+            m_logy[n] = log10( y[n] );
+        }
 
-      m_interp.setup(m_logx, m_logy);
-   }
+        m_interp.setup( m_logx, m_logy );
+    }
 
-   /// Calculate the interpolated value at the input \par x.
-   /**
+    /// Calculate the interpolated value at the input \par x.
+    /**
      * \returns the interpolated value
-     */ 
-   realT operator()(const realT & x)
-   {
-      return pow(static_cast<realT>(10), m_interp(log10(x)));
-   }
-
+     */
+    realT operator()( const realT &x )
+    {
+        return pow( static_cast<realT>( 10 ), m_interp( log10( x ) ) );
+    }
 };
 
-} //namespace math
-} //namespace mx
+} // namespace math
+} // namespace mx
 
-#endif //mx_math_logInterpolator_hpp
-
+#endif // mx_math_logInterpolator_hpp

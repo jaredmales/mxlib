@@ -1,9 +1,9 @@
 /** \file fourierTemporalPSD.cpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Implementation of calculation of the temporal PSD of Fourier modes.
-  * \ingroup mxAOm_files
-  *
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Implementation of calculation of the temporal PSD of Fourier modes.
+ * \ingroup mxAOm_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -34,12 +34,10 @@ namespace AO
 namespace analysis
 {
 
-
 /*template
 struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/
 
-template
-struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
+template struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
 
 /*
 template
@@ -51,7 +49,6 @@ struct fourierTemporalPSD<__float128, aoSystem<__float128, vonKarmanSpectrum<__f
 #endif
 */
 
-} //namespace analysis
-} //namespace AO
-} //namespace mx
-
+} // namespace analysis
+} // namespace AO
+} // namespace mx

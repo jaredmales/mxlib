@@ -71,12 +71,11 @@ all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
 mxError.o: ../include/mxError.hpp ../include/mxException.hpp
-ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp 
+ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o ../include/ao/analysis/aoWFS.hpp
 ao/analysis/clGainOpt.o: ../include/ao/analysis/clGainOpt.hpp
-ao/analysis/clAOLinearPredictor.o: ../include/ao/analysis/clAOLinearPredictor.hpp ao/analysis/clGainOpt.o
-ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ao/analysis/aoSystem.o ao/analysis/clAOLinearPredictor.o
+ao/analysis/fourierTemporalPSD.o: ../include/ao/analysis/fourierTemporalPSD.hpp ../include/ao/analysis/clAOLinearPredictor.hpp ../include/math/gslInterpolation.hpp ../include/sigproc/psdVarMean.hpp ao/analysis/aoSystem.o
 app/application.o: ../include/app/application.hpp ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptions.hpp
 app/clOptions.o: ../include/app/clOptions.hpp
@@ -88,7 +87,7 @@ improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/ADIobservatio
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp
-ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ioutils/fits/fitsHeaderCard.o 
+ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ioutils/fits/fitsHeaderCard.o
 ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
@@ -111,7 +110,7 @@ libmxlib.$(LIB_SUFFIX): sofa $(OBJS) $(CUDA_OBJS)
 ifeq ($(UNAME),Darwin)
 	$(LINK.o) -dynamiclib -install_name @rpath/libmxlib.dylib -rpath @loader_path $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) $(SOFA_PATH)/*.o -o libmxlib.dylib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) $(SOFA_PATH)/libsofa_c.a
 else
-	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) $(SOFA_PATH)/*.o -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) 
+	$(LINK.o) -shared $(VENDOROBJS) $(OBJS) $(CUDA_OBJS) $(SOFA_PATH)/*.o -o $@ $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS)
 endif
 
 sofa:

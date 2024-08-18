@@ -1,9 +1,9 @@
 /** \file imagePeakInterp.hpp
-  * \brief A class to find the location of a peak using interpolation
-  * \ingroup image_processing_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief A class to find the location of a peak using interpolation
+ * \ingroup image_processing_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -30,68 +30,57 @@
 #include "eigenImage.hpp"
 #include "imageTransforms.hpp"
 
-//#define ICCS_OMP
+// #define ICCS_OMP
 namespace mx
 {
 namespace improc
 {
-   
 
 /// Find the peak of an image using interpolation
 /** Interpolates onto a finer grid according to m_tol
-  * 
-  * \tparam transformT is a transformation type
-  * 
-  * \ingroup image_reg
-  */ 
-template<typename transformT>
+ *
+ * \tparam transformT is a transformation type
+ *
+ * \ingroup image_reg
+ */
+template <typename transformT>
 struct imagePeakInterp
 {
 
-   typedef typename transformT::arithT realT;
+    typedef typename transformT::arithT realT;
 
-   transformT m_transform;
+    transformT m_transform;
 
-   realT m_tol {0.1};
+    realT m_tol{ 0.1 };
 
-   eigenImage<realT> m_magIm;
+    eigenImage<realT> m_magIm;
 
-   imagePeakInterp()
-   {
-   }
+    imagePeakInterp()
+    {
+    }
 
-   imagePeakInterp( realT tol ) : m_tol(tol)
-   {
-   }
+    imagePeakInterp( realT tol ) : m_tol( tol )
+    {
+    }
 
+    void operator()( realT &x, realT &y, eigenImage<realT> &im )
+    {
+        int r = ( 1.0 * im.rows() ) / m_tol + 1;
+        int c = ( 1.0 * im.cols() ) / m_tol + 1;
 
-   void operator()( realT & x,
-                  realT & y,
-                  eigenImage<realT> & im
-                )
-   {
-      int r = (1.0*im.rows())/m_tol + 1;
-      int c = (1.0*im.cols())/m_tol + 1;
+        m_magIm.resize( r, c );
 
+        imageMagnify( m_magIm, im, m_transform );
 
-      m_magIm.resize(r, c);
+        int nx, ny;
+        m_magIm.maxCoeff( &nx, &ny );
 
-      imageMagnify(m_magIm, im, m_transform);
-
-      int nx, ny;
-      m_magIm.maxCoeff(&nx,&ny);
-
-      x = nx*m_tol;
-      y = ny*m_tol;
-
-
-   }
-
-
-   
+        x = nx * m_tol;
+        y = ny * m_tol;
+    }
 };
-   
-} //improc
-} //mx 
+
+} // namespace improc
+} // namespace mx
 
 #endif //__imagePeakInterp_hpp__

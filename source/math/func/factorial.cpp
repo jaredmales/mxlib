@@ -10,32 +10,32 @@ namespace math
 namespace func
 {
 
-template<>
+template <>
 float factorial<float>( float x )
 {
-   return boost::math::factorial<float>(x);
+    return boost::math::factorial<float>( x );
 }
 
-template<>
+template <>
 double factorial<double>( double x )
 {
-   return boost::math::factorial<double>(x);
+    return boost::math::factorial<double>( x );
 }
 
-template<>
+template <>
 long double factorial<long double>( long double x )
 {
-   return boost::math::factorial<long double>(x);
+    return boost::math::factorial<long double>( x );
 }
 
 #ifdef HASQUAD
-template<>
+template <>
 __float128 factorial<__float128>( __float128 x )
 {
-   return boost::math::factorial<__float128>(x);
+    return boost::math::factorial<__float128>( x );
 }
 #endif
 
-} //namespace mx
-} //namespace math
-} //namespace func
+} // namespace func
+} // namespace math
+} // namespace mx

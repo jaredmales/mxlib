@@ -1,11 +1,11 @@
 /** \file logistic.hpp
-  * \brief The logistic function
-  * 
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * 
-  * \ingroup gen_math_files
-  *
-  */
+ * \brief The logistic function
+ *
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
@@ -32,64 +32,59 @@
 namespace mx
 {
 
-namespace math 
+namespace math
 {
-   
-namespace func 
+
+namespace func
 {
-   
 
-
-///Return the logistic function parameter for a specified rise time
+/// Return the logistic function parameter for a specified rise time
 /** The logistic function is
-  * \f[
-  *  f(t) = \frac{1}{1 + e^{-a(t-t_0)}}
-  * \f]
-  * The parameter \f$ a \f$ controls how fast the function rises.  Here it is specified by the
-  * value \f$ f(t_{1/2}) = x\f$, where \f$ 0 < x < 1 \f$.
-  * 
-  * 
-  * \returns the value of a
-  * 
-  * \tparam floatT is the floating point type of the arguments and the returned value.
-  * 
-  * \ingroup gen_math_logistic
-  */
-template<typename floatT>
+ * \f[
+ *  f(t) = \frac{1}{1 + e^{-a(t-t_0)}}
+ * \f]
+ * The parameter \f$ a \f$ controls how fast the function rises.  Here it is specified by the
+ * value \f$ f(t_{1/2}) = x\f$, where \f$ 0 < x < 1 \f$.
+ *
+ *
+ * \returns the value of a
+ *
+ * \tparam floatT is the floating point type of the arguments and the returned value.
+ *
+ * \ingroup gen_math_logistic
+ */
+template <typename floatT>
 floatT logistic_param( floatT x,    ///< [in] the value at which the rise time is specified.
                        floatT thalf ///< [in]  half the rise time, or the time after 0 when f(t) = x.
-                     )
+)
 {
-   return -log( 1.0/x - 1)/thalf;
+    return -log( 1.0 / x - 1 ) / thalf;
 }
 
-///Return the value of the logistic function
+/// Return the value of the logistic function
 /** The logistic function is
-  * \f[
-  *  f(t) = \frac{1}{1 + e^{-a(t-t_0)}}
-  * \f]
-  * 
-  * \param t [input] the argument.
-  * \param t0 [input] [optional] the center of the curve, defaults to 0.
-  * \param a [input] [optional] the exponent parameter, defaults to 1.
-  * 
-  * \returns the value of the logistic function at t
-  * 
-  * \tparam floatT is the floating point type of the arguments and the returned value.
-  * 
-  * \ingroup gen_math_logistic
-  */
-template<typename floatT>
-floatT logistic(floatT t, floatT t0 = 0, floatT a = 1)
+ * \f[
+ *  f(t) = \frac{1}{1 + e^{-a(t-t_0)}}
+ * \f]
+ *
+ * \param t [input] the argument.
+ * \param t0 [input] [optional] the center of the curve, defaults to 0.
+ * \param a [input] [optional] the exponent parameter, defaults to 1.
+ *
+ * \returns the value of the logistic function at t
+ *
+ * \tparam floatT is the floating point type of the arguments and the returned value.
+ *
+ * \ingroup gen_math_logistic
+ */
+template <typename floatT>
+floatT logistic( floatT t, floatT t0 = 0, floatT a = 1 )
 {
-   return 1.0/(1.0 + exp( -a*(t-t0)));
+    return 1.0 / ( 1.0 + exp( -a * ( t - t0 ) ) );
 }
 
-
-
-} //namespace func 
-} //namespace math 
-} //namespace mx
+} // namespace func
+} // namespace math
+} // namespace mx
 
 #endif //__logistic_hpp__
-

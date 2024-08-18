@@ -1,8 +1,8 @@
 /** \file gitRepo.hpp
-  * \author Jared R. Males
-  * \brief Interrogate the current state of a git repository (declarations)
-  * \ingroup utils_files
-  */
+ * \author Jared R. Males
+ * \brief Interrogate the current state of a git repository (declarations)
+ * \ingroup utils_files
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -33,11 +33,11 @@ namespace mx
 {
 namespace sys
 {
-   
+
 /// Interrogate the current state of a git repository
 /** Once the target directory is set, either on construction
   * or using the dir() member function, the repo name, branch,
-  * commit hash, and modification status are interrogated with 
+  * commit hash, and modification status are interrogated with
   * calls to git.  This includes a list of uncommitted changes,
   * including untracked files.
   *
@@ -48,115 +48,112 @@ namespace sys
     std::cout << gr.isNotCommitted("filename") << '\n'; //will be 1 if this file is not committed.  0 otherwise.
     \endcode
   *
-  */ 
+  */
 class gitRepo
 {
-protected:
+  protected:
+    // Set by user:
+    std::string m_dir; ///< The directory of the git repository
 
-   //Set by user:
-   std::string m_dir; ///< The directory of the git repository
+    // Found using git:
+    std::string m_name;       ///< The repo name
+    std::string m_branch;     ///< The current branch
+    std::string m_hash;       ///< The complete commit hash
+    bool m_modified{ false }; ///< The modification status, true or false.
 
-   //Found using git:
-   std::string m_name;      ///< The repo name
-   std::string m_branch;    ///< The current branch
-   std::string m_hash;      ///< The complete commit hash
-   bool m_modified {false}; ///< The modification status, true or false.
-   
-   std::set<std::string> m_modifiedFiles;  ///< Files which git lists as modified
-   std::set<std::string> m_deletedFiles;   ///< Files which git lists as deleted
-   std::set<std::string> m_renamedFiles;   ///< Files which git lists as renamed-from
-   std::set<std::string> m_renamedFiles2;  ///< Files which git lists as renamed-to
-   std::set<std::string> m_untrackedFiles; ///< Files which git lists as untracked
+    std::set<std::string> m_modifiedFiles;  ///< Files which git lists as modified
+    std::set<std::string> m_deletedFiles;   ///< Files which git lists as deleted
+    std::set<std::string> m_renamedFiles;   ///< Files which git lists as renamed-from
+    std::set<std::string> m_renamedFiles2;  ///< Files which git lists as renamed-to
+    std::set<std::string> m_untrackedFiles; ///< Files which git lists as untracked
 
-   /// Get the name of the git repo
-   /** Called whenever m_dir is set.
-     * 
-     * \returns 0 on success
-     * \returns -1 on error
-     */ 
-   int getGitName();
-   
-   /// Get the name of the current commit hash
-   /** Called whenever m_dir is set.
-     * 
+    /// Get the name of the git repo
+    /** Called whenever m_dir is set.
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
-   int getGitHash();
-   
-   /// Get the modification status of the repo
-   /** Called whenever m_dir is set.
-     * 
+    int getGitName();
+
+    /// Get the name of the current commit hash
+    /** Called whenever m_dir is set.
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
-   int getGitModified();
-   
-   /// Get the list of modified files, and the branch name.
-   /** Called whenever m_dir is set.
-     * 
+    int getGitHash();
+
+    /// Get the modification status of the repo
+    /** Called whenever m_dir is set.
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
-   int getGitFileState();
-      
-public:
-   
-   /// Default c'tor
-   gitRepo();
-   
-   /// Constructor which sets the directory.
-   /** This results in the git repo status being interrogated.
+    int getGitModified();
+
+    /// Get the list of modified files, and the branch name.
+    /** Called whenever m_dir is set.
+     *
+     * \returns 0 on success
+     * \returns -1 on error
      */
-   gitRepo(const std::string & d);
-   
-   /// Set the directory
-   /** This results in the git repo status being interrogated.
+    int getGitFileState();
+
+  public:
+    /// Default c'tor
+    gitRepo();
+
+    /// Constructor which sets the directory.
+    /** This results in the git repo status being interrogated.
      */
-   void dir(const std::string & d);
-   
-   /// Get the current directory
-   /** \returns the git repo directory
+    gitRepo( const std::string &d );
+
+    /// Set the directory
+    /** This results in the git repo status being interrogated.
      */
-   std::string dir();
-   
-   /// Get the current repo's .git directory
-   /** \returns the directory plus "/.git"
+    void dir( const std::string &d );
+
+    /// Get the current directory
+    /** \returns the git repo directory
      */
-   std::string gitDir();
-   
-   /// Get the repo's name
-   /** \returns the repo's name
+    std::string dir();
+
+    /// Get the current repo's .git directory
+    /** \returns the directory plus "/.git"
      */
-   std::string name();
-   
-   /// Get the current branch
-   /** \returns the current branch name
+    std::string gitDir();
+
+    /// Get the repo's name
+    /** \returns the repo's name
      */
-   std::string branch();
-   
-   /// Get the current commit hash
-   /** \returns the current value of the hash
+    std::string name();
+
+    /// Get the current branch
+    /** \returns the current branch name
      */
-   std::string hash();
-   
-   /// Get whether the repo is modified
-   /** \returns true is modified
-     * \returns false if not modified 
+    std::string branch();
+
+    /// Get the current commit hash
+    /** \returns the current value of the hash
      */
-   bool modified();
-   
-   /// Check whether a file is listed as not committed
-   /** Not committed means modified, deleted, renamed (from or to), or untracked.
+    std::string hash();
+
+    /// Get whether the repo is modified
+    /** \returns true is modified
+     * \returns false if not modified
+     */
+    bool modified();
+
+    /// Check whether a file is listed as not committed
+    /** Not committed means modified, deleted, renamed (from or to), or untracked.
      *
      * \returns true if not committed
      * \returns false otherwise
-     */ 
-   bool isNotCommitted(const std::string & file);
-   
+     */
+    bool isNotCommitted( const std::string &file );
 };
 
-}
-}
+} // namespace sys
+} // namespace mx
 
-#endif //gitRepo_hpp
+#endif // gitRepo_hpp

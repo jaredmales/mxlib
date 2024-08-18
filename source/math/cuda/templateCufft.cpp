@@ -1,9 +1,9 @@
 /** \file templateCufft.cpp
-  * \author Jared R. Males
-  * \brief Implementation of a template interface to cufft
-  * \ingroup gen_math_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Implementation of a template interface to cufft
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2019,2020 Jared R. Males (jaredmales@gmail.com)
@@ -31,83 +31,62 @@ namespace mx
 namespace cuda
 {
 
-template<>
-cufftResult cufftPlan2d<std::complex<float>, std::complex<float>>( cufftHandle *plan, 
-                                                                  int nx, 
-                                                                  int ny
-                                                                )
+template <>
+cufftResult cufftPlan2d<std::complex<float>, std::complex<float>>( cufftHandle *plan, int nx, int ny )
 {
-   return ::cufftPlan2d(plan, nx, ny, CUFFT_C2C);
+    return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
 }
 
-template<>
-cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, 
-                                               int nx, 
-                                               int ny
-                                             )
+template <>
+cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny )
 {
-   return ::cufftPlan2d(plan, nx, ny, CUFFT_C2C);
+    return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
 }
 
-template<>
-cufftResult cufftPlan2d<std::complex<double>, std::complex<double>>( cufftHandle *plan, 
-                                                                    int nx, 
-                                                                    int ny
-                                                                  )
+template <>
+cufftResult cufftPlan2d<std::complex<double>, std::complex<double>>( cufftHandle *plan, int nx, int ny )
 {
-   return ::cufftPlan2d(plan, nx, ny, CUFFT_Z2Z);
+    return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
 }
 
-template<>
-cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, 
-                                                           int nx, 
-                                                           int ny
-                                                         )
+template <>
+cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny )
 {
-   return ::cufftPlan2d(plan, nx, ny, CUFFT_Z2Z);
+    return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
 }
 
-template<>
-cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle plan, 
-                                                                 std::complex<float> *idata, 
-                                                                 std::complex<float> *odata, 
-                                                                 int direction
-                                                               )
+template <>
+cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle plan,
+                                                                 std::complex<float> *idata,
+                                                                 std::complex<float> *odata,
+                                                                 int direction )
 {
-   return ::cufftExecC2C(plan, (cuComplex *) idata, (cuComplex *) odata, direction);
+    return ::cufftExecC2C( plan, (cuComplex *)idata, (cuComplex *)odata, direction );
 }
 
-template<>
-cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, 
-                                             cuComplex *idata, 
-                                             cuComplex *odata, 
-                                             int direction
-                                           )
+template <>
+cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, cuComplex *idata, cuComplex *odata, int direction )
 {
-   return ::cufftExecC2C(plan, idata, odata, direction);
+    return ::cufftExecC2C( plan, idata, odata, direction );
 }
 
-template<>
-cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle plan, 
-                                                                   std::complex<double> *idata, 
-                                                                   std::complex<double> *odata, 
-                                                                   int direction
-                                                                 )
+template <>
+cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle plan,
+                                                                   std::complex<double> *idata,
+                                                                   std::complex<double> *odata,
+                                                                   int direction )
 {
-   return ::cufftExecZ2Z(plan, (cuDoubleComplex *) idata, (cuDoubleComplex *) odata, direction);
+    return ::cufftExecZ2Z( plan, (cuDoubleComplex *)idata, (cuDoubleComplex *)odata, direction );
 }
 
-template<>
-cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan, 
-                                                         cuDoubleComplex *idata, 
-                                                         cuDoubleComplex *odata, 
-                                                         int direction
-                                                       )
+template <>
+cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
+                                                         cuDoubleComplex *idata,
+                                                         cuDoubleComplex *odata,
+                                                         int direction )
 {
-   return ::cufftExecZ2Z(plan, idata, odata, direction);
+    return ::cufftExecZ2Z( plan, idata, odata, direction );
 }
 
-
-}//namespace cuda 
-}//namespace mx
-
+} // namespace cuda
+} // namespace mx

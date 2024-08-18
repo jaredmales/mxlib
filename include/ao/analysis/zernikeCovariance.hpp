@@ -1,13 +1,12 @@
 /** \file zernikeCovariance.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Calculation of the modal covariance in the zernike basis.
-  * \ingroup mxAO_files
-  *
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Calculation of the modal covariance in the zernike basis.
+ * \ingroup mxAO_files
+ *
+ */
 
 #ifndef zernikeCovariance_hpp
 #define zernikeCovariance_hpp
-
 
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_errno.h>
@@ -25,13 +24,10 @@
 
 #include "../../math/func/airyPattern.hpp"
 
-
-
 #include "aoAtmosphere.hpp"
 #include "aoPSDs.hpp"
 #include "aoSystem.hpp"
 #include "varmapToImage.hpp"
-
 
 namespace mx
 {
@@ -42,182 +38,185 @@ namespace analysis
 
 /// Structure to manage the zernike mode covariance calculation, passed to integration functions
 /**
-  * \tparam realT a floating point type used for all calculations.  As of Dec 2023 must be double due to gsl_integration.
-  * \tparam aosysT the type of the AO system structure
-  */
-template<typename realT, typename aosysT>
+ * \tparam realT a floating point type used for all calculations.  As of Dec 2023 must be double due to gsl_integration.
+ * \tparam aosysT the type of the AO system structure
+ */
+template <typename realT, typename aosysT>
 struct zernikeCovariance
 {
-   ///Pointer to an AO system, which contains the relevant spatial PSD of turbulence.
-   aosysT * m_aosys {nullptr};
+    /// Pointer to an AO system, which contains the relevant spatial PSD of turbulence.
+    aosysT *m_aosys{ nullptr };
 
-   ///The n-index of the unprimed mode.
-   realT m_n;
+    /// The n-index of the unprimed mode.
+    realT m_n;
 
-   ///The m-index of the unprimed mode.
-   realT m_m;
+    /// The m-index of the unprimed mode.
+    realT m_m;
 
-   ///The n-indexof the primed mode, corresponding to the \f$ k_v = n/D \f$ component of spatial frequency.
-   realT m_np;
+    /// The n-indexof the primed mode, corresponding to the \f$ k_v = n/D \f$ component of spatial frequency.
+    realT m_np;
 
-   ///The m-index of the primed mode, corresponding to the \f$ k_u = m/D \f$ component of spatial frequency.
-   realT m_mp;
+    /// The m-index of the primed mode, corresponding to the \f$ k_u = m/D \f$ component of spatial frequency.
+    realT m_mp;
 
-   ///Spatial frequency being calculated, passed for use in the integrand worker functions.
-   realT m_k;
+    /// Spatial frequency being calculated, passed for use in the integrand worker functions.
+    realT m_k;
 
-   ///Absolute tolerance for the radial integral.  Default is 1e-10. 
-   realT m_kIntEpsAbs {1e-10};
+    /// Absolute tolerance for the radial integral.  Default is 1e-10.
+    realT m_kIntEpsAbs{ 1e-10 };
 
-   ///Relative tolerance for the radial integral. Default is 0, meaning absolute is used.
-   realT m_kIntEpsRel {0};
+    /// Relative tolerance for the radial integral. Default is 0, meaning absolute is used.
+    realT m_kIntEpsRel{ 0 };
 
-    ///Absolute tolerance for the azimuthal integral.  Default is 1e-10.
-   realT m_phiIntEpsAbs {1e-10};
+    /// Absolute tolerance for the azimuthal integral.  Default is 1e-10.
+    realT m_phiIntEpsAbs{ 1e-10 };
 
-   ///Relative tolerance for the azimuthal integral. Default is 0, meaning absolute is used.
-   realT m_phiIntEpsRel {0};
+    /// Relative tolerance for the azimuthal integral. Default is 0, meaning absolute is used.
+    realT m_phiIntEpsRel{ 0 };
 
-protected:
-   size_t m_workspaceSize {1000000};
+  protected:
+    size_t m_workspaceSize{ 1000000 };
 
-   ///Working memory for the azimuthal integral.
-   gsl_integration_workspace * m_workspacePhi {nullptr};
+    /// Working memory for the azimuthal integral.
+    gsl_integration_workspace *m_workspacePhi{ nullptr };
 
-   ///Working memory for the radial integral.
-   gsl_integration_workspace * m_workspaceK {nullptr};
+    /// Working memory for the radial integral.
+    gsl_integration_workspace *m_workspaceK{ nullptr };
 
-public:
-
-     ///Constructor
-     zernikeCovariance()
-     {
-         m_workspacePhi = gsl_integration_workspace_alloc (m_workspaceSize);
-         m_workspaceK = gsl_integration_workspace_alloc (m_workspaceSize);
-     }
- 
-     ///Destructor
-     ~zernikeCovariance()
-     {
-         gsl_integration_workspace_free(m_workspacePhi);
-         gsl_integration_workspace_free(m_workspaceK);
-     }
- 
-     void workspaceSize( size_t wsz )
-     {
-         gsl_integration_workspace_free(m_workspacePhi);
-         gsl_integration_workspace_free(m_workspaceK);
- 
-         m_workspacePhi = gsl_integration_workspace_alloc (m_workspaceSize);
-         m_workspaceK = gsl_integration_workspace_alloc (m_workspaceSize);
-     }
- 
-     size_t workspaceSize()
-     {
-         return m_workspaceSize;
-     }
- 
-     gsl_integration_workspace * workspacePhi()
-     {
-         return m_workspacePhi;
-     }
-
-     ///Calculate the covariance between the two modes.
-     /** \todo document me
-       * \todo handle gsl errors
-       */
-     realT getCovariance(realT & error)
-     {
-         realT result;
-
-         if(m_aosys == nullptr)
-         {
-             mxThrowException(err::paramnotset, "zernikeCovariance::getCovariance", "AO system not setup (aosys is nullptr)");
-         }
-
-       gsl_function func;
-       func.function = &kInt;
-       func.params = this;
-
-       gsl_set_error_handler_off();
-
-       int ec = gsl_integration_qagiu (&func, 0, m_kIntEpsAbs, m_kIntEpsRel, m_workspaceSize, m_workspaceK, &result, &error);
-
-       return result;
+  public:
+    /// Constructor
+    zernikeCovariance()
+    {
+        m_workspacePhi = gsl_integration_workspace_alloc( m_workspaceSize );
+        m_workspaceK = gsl_integration_workspace_alloc( m_workspaceSize );
     }
 
-    ///Worker function for the radial integral in the covariance calculation
+    /// Destructor
+    ~zernikeCovariance()
+    {
+        gsl_integration_workspace_free( m_workspacePhi );
+        gsl_integration_workspace_free( m_workspaceK );
+    }
+
+    void workspaceSize( size_t wsz )
+    {
+        gsl_integration_workspace_free( m_workspacePhi );
+        gsl_integration_workspace_free( m_workspaceK );
+
+        m_workspacePhi = gsl_integration_workspace_alloc( m_workspaceSize );
+        m_workspaceK = gsl_integration_workspace_alloc( m_workspaceSize );
+    }
+
+    size_t workspaceSize()
+    {
+        return m_workspaceSize;
+    }
+
+    gsl_integration_workspace *workspacePhi()
+    {
+        return m_workspacePhi;
+    }
+
+    /// Calculate the covariance between the two modes.
+    /** \todo document me
+     * \todo handle gsl errors
+     */
+    realT getCovariance( realT &error )
+    {
+        realT result;
+
+        if( m_aosys == nullptr )
+        {
+            mxThrowException(
+                err::paramnotset, "zernikeCovariance::getCovariance", "AO system not setup (aosys is nullptr)" );
+        }
+
+        gsl_function func;
+        func.function = &kInt;
+        func.params = this;
+
+        gsl_set_error_handler_off();
+
+        int ec = gsl_integration_qagiu(
+            &func, 0, m_kIntEpsAbs, m_kIntEpsRel, m_workspaceSize, m_workspaceK, &result, &error );
+
+        return result;
+    }
+
+    /// Worker function for the radial integral in the covariance calculation
     /**
-      * \returns the value of the integrand at spatial frequency \p k.
-      */
-    static realT kInt( realT k,      ///< [in] the spatial frequency at which to evaluate the integrand, meters
-                       void * params ///< [in] a pointer to a object of type zernikeCovariance<realT, aosyT>
-                     );
+     * \returns the value of the integrand at spatial frequency \p k.
+     */
+    static realT kInt( realT k,     ///< [in] the spatial frequency at which to evaluate the integrand, meters
+                       void *params ///< [in] a pointer to a object of type zernikeCovariance<realT, aosyT>
+    );
 
     /// Worker for the azimuthal integral (in phi) for the zernike mode covariance.
     /**
-      * \return the value of the integrand at the angle \p phi
-      */
-    static realT phiInt( realT phi,    ///< [in] the angle at which to evaluate the integrand, radians
-                         void * params ///< [in] a pointer to a object of type zernikeCovariance<realT, aosyT>
-                       );
+     * \return the value of the integrand at the angle \p phi
+     */
+    static realT phiInt( realT phi,   ///< [in] the angle at which to evaluate the integrand, radians
+                         void *params ///< [in] a pointer to a object of type zernikeCovariance<realT, aosyT>
+    );
 };
 
-
-template<typename realT, typename aosysT>
-realT zernikeCovariance<realT, aosysT>::kInt( realT k, 
-                                              void * params
-                                            )
+template <typename realT, typename aosysT>
+realT zernikeCovariance<realT, aosysT>::kInt( realT k, void *params )
 {
-   zernikeCovariance<realT, aosysT> * Pp = (zernikeCovariance<realT, aosysT> *) params;
+    zernikeCovariance<realT, aosysT> *Pp = (zernikeCovariance<realT, aosysT> *)params;
 
-   realT result, error;
+    realT result, error;
 
-   gsl_function func;
+    gsl_function func;
 
-   func.function = &phiInt;
-   
-   func.params = Pp;
+    func.function = &phiInt;
 
-   Pp->m_k = k;
+    func.params = Pp;
 
-   gsl_integration_qag(&func, 0., math::two_pi<double>(), Pp->m_phiIntEpsAbs, Pp->m_phiIntEpsRel, Pp->workspaceSize(), GSL_INTEG_GAUSS61, Pp->workspacePhi(), &result, &error);
+    Pp->m_k = k;
 
+    gsl_integration_qag( &func,
+                         0.,
+                         math::two_pi<double>(),
+                         Pp->m_phiIntEpsAbs,
+                         Pp->m_phiIntEpsRel,
+                         Pp->workspaceSize(),
+                         GSL_INTEG_GAUSS61,
+                         Pp->workspacePhi(),
+                         &result,
+                         &error );
 
-   return result;
+    return result;
 }
 
-template<typename realT, typename aosysT>
-realT zernikeCovariance<realT, aosysT>::phiInt( realT phi, 
-                                                void * params
-                                              )
+template <typename realT, typename aosysT>
+realT zernikeCovariance<realT, aosysT>::phiInt( realT phi, void *params )
 {
-    zernikeCovariance<realT, aosysT> * Pp = (zernikeCovariance<realT, aosysT> *) params;
+    zernikeCovariance<realT, aosysT> *Pp = (zernikeCovariance<realT, aosysT> *)params;
 
     realT D = Pp->m_aosys->D();
 
     realT k = Pp->m_k;
-   
+
     /*** no prime ***/
     realT m = Pp->m_m;
     realT n = Pp->m_n;
 
-    std::complex<realT> Q_mn = zernikeQ(k*D/2.0, phi, n, m);
+    std::complex<realT> Q_mn = zernikeQ( k * D / 2.0, phi, n, m );
 
     /*** primed ***/
     realT mp = Pp->m_mp;
     realT np = Pp->m_np;
 
-    std::complex<realT> Q_mpnp = zernikeQ(k*D/2.0, phi, np, mp);
+    std::complex<realT> Q_mpnp = zernikeQ( k * D / 2.0, phi, np, mp );
 
     /*** The product ***/
-    realT QQ = real(conj(Q_mn)*Q_mpnp);
+    realT QQ = real( conj( Q_mn ) * Q_mpnp );
 
-    realT P = Pp->m_aosys->psd(Pp->m_aosys->atm, 0, k, Pp->m_aosys->lam_sci(), Pp->m_aosys->lam_wfs(), 1.0);
+    realT P = Pp->m_aosys->psd( Pp->m_aosys->atm, 0, k, Pp->m_aosys->lam_sci(), Pp->m_aosys->lam_wfs(), 1.0 );
 
-    return P*k*QQ;
+    return P * k * QQ;
 }
-
 
 #if 0
 
@@ -242,7 +241,7 @@ int zernikeVarVec( const std::string & fname,
       mnCon = floor( aosys.D()/aosys.d_min(0)/2.0);
    }
 
-   #pragma omp parallel
+#pragma omp parallel
    {
       zernikeCovariance<realT, aosysT> Pp;
       Pp.absTol = absTol;
@@ -253,7 +252,7 @@ int zernikeVarVec( const std::string & fname,
 
       realT result, error;
 
-      #pragma omp for schedule(dynamic,5)
+#pragma omp for schedule( dynamic, 5 )
       for(int i=0; i< N; ++i)
       {
          Pp.p = +1;
@@ -405,7 +404,7 @@ int zernikeCovarMap( const std::string & fname, ///< [out] the path where the ou
    ipc::ompLoopWatcher<> watcher(psz, std::cout);
 
    std::cerr << "Starting . . .\n";
-   #pragma omp parallel
+#pragma omp parallel
    {
       zernikeCovariance<realT, aoSystem<realT, vonKarmanSpectrum<realT> > > Pp;
       Pp.absTol = absTol;
@@ -416,7 +415,7 @@ int zernikeCovarMap( const std::string & fname, ///< [out] the path where the ou
 
       realT result, error;
 
-      #pragma omp for schedule(static,5)
+#pragma omp for schedule( static, 5 )
       for(int i=0; i< psz; ++i)
       {
          for(int j=i; j< psz; ++j)
@@ -483,7 +482,7 @@ int zernikeCovarMapSeparated( const std::string & fname,
 
    ipc::ompLoopWatcher<> watcher((psz+1)*0.125*(psz+1)*2, std::cout);
 
-   #pragma omp parallel
+#pragma omp parallel
    {
 
       zernikeCovariance<realT, aosysT > Pp;
@@ -497,7 +496,7 @@ int zernikeCovarMapSeparated( const std::string & fname,
 
       realT result, error;
 
-      #pragma omp for schedule(dynamic,5)
+#pragma omp for schedule( dynamic, 5 )
       for(int i=0; i< psz; i+=2)
       {
          for(int j=0; j<= 0.5*i; ++j)
@@ -651,8 +650,8 @@ void makeFKL( const std::string & outFile,
 
 #endif
 
-} //namespace analysis
-} //namespace AO
-} //namespace mx
+} // namespace analysis
+} // namespace AO
+} // namespace mx
 
-#endif //zernikeCovariance_hpp
+#endif // zernikeCovariance_hpp

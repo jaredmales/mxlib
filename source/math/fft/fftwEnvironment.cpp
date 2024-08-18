@@ -1,9 +1,9 @@
 /** \file fftwEnvironment.cpp
-  * \brief Definitions for the fftwEnvironment manager
-  * \ingroup fft_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Definitions for the fftwEnvironment manager
+ * \ingroup fft_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -28,39 +28,37 @@
 
 namespace mx
 {
-namespace math 
+namespace math
 {
-namespace fft 
+namespace fft
 {
-   
-template<>
+
+template <>
 std::string fftw_typename<float>()
 {
-   return "float";
+    return "float";
 }
 
-template<>
+template <>
 std::string fftw_typename<double>()
 {
-   return "double";
+    return "double";
 }
 
-template<>
+template <>
 std::string fftw_typename<long double>()
 {
-   return "long_double";
+    return "long_double";
 }
 
 #ifdef HASQUAD
-template<>
+template <>
 std::string fftw_typename<__float128>()
 {
-   return "quad";
+    return "quad";
 }
 #endif
 
-}//namespace fft 
-}//namespace math
-}//namespace mx
-
-
+} // namespace fft
+} // namespace math
+} // namespace mx

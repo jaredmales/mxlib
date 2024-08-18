@@ -1,9 +1,9 @@
 /** \file sigproc.hpp
-  * \author Jared R. Males
-  * \brief Library include for the sigproc module
-  * \ingroup signal_processing_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Library include for the sigproc module
+ * \ingroup signal_processing_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -40,5 +40,5 @@
 #include "psdVarMean.hpp"
 #include "signalWindows.hpp"
 #include "zernike.hpp"
-                    
-#endif //sigproc_hpp
+
+#endif // sigproc_hpp

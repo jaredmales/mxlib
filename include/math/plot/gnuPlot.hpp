@@ -1,9 +1,9 @@
 /** \file gnuPlot.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Declaration and definition of an interface to the gnuplot program
-  * \ingroup plotting_files
-  * 
-*/
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Declaration and definition of an interface to the gnuplot program
+ * \ingroup plotting_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015-2023 Jared R. Males (jaredmales@gmail.com)
@@ -50,49 +50,49 @@
 #include "../../sys/timeUtils.hpp"
 
 #ifndef MX_GP_FNAME_SZ
-///The size of the string for managing the stderr fifo
+/// The size of the string for managing the stderr fifo
 /** \ingroup plotting
-  */
-#define MX_GP_FNAME_SZ (128)
+ */
+#define MX_GP_FNAME_SZ ( 128 )
 #endif
-   
+
 #ifndef MX_GP_TEMP_SZ
-///The size of the string for managing temporary file names
+/// The size of the string for managing temporary file names
 /** \ingroup plotting
-  */
-#define MX_GP_TEMP_SZ (128)
+ */
+#define MX_GP_TEMP_SZ ( 128 )
 #endif
 
 #ifndef MX_GP_FC_TIME
 /** \def MX_GP_FC_TIME
-  * Time, in microseconds, to wait for gnuplot startup and file creation to complete.
-  * Opening is retried after each timeout of this length for MX_GP_FC_RETRIES attempts.
-  * \ingroup plotting
-  */ 
-#define MX_GP_FC_TIME (10000)
+ * Time, in microseconds, to wait for gnuplot startup and file creation to complete.
+ * Opening is retried after each timeout of this length for MX_GP_FC_RETRIES attempts.
+ * \ingroup plotting
+ */
+#define MX_GP_FC_TIME ( 10000 )
 #endif
-   
+
 #ifndef MX_GP_FC_RETRIES
-/** \def MX_GP_FC_RETRIES 
-  * Number of times to retry opening the gnuplot stderr file.
-  * \ingroup plotting
-  */
-#define MX_GP_FC_RETRIES (10)
+/** \def MX_GP_FC_RETRIES
+ * Number of times to retry opening the gnuplot stderr file.
+ * \ingroup plotting
+ */
+#define MX_GP_FC_RETRIES ( 10 )
 #endif
 
 namespace mx
 {
-namespace math 
+namespace math
 {
 
-   
-//Get the gnuplot binary format string for a type
-//Specializations below.
-template<typename dataT>
+// Get the gnuplot binary format string for a type
+// Specializations below.
+template <typename dataT>
 std::string gpBinaryFormat()
 {
-   static_assert(std::is_fundamental<dataT>::value || !std::is_fundamental<dataT>::value, "No gnuplot format specifier available for this type.");
-   return "";
+    static_assert( std::is_fundamental<dataT>::value || !std::is_fundamental<dataT>::value,
+                   "No gnuplot format specifier available for this type." );
+    return "";
 }
 
 struct gpCurve
@@ -105,426 +105,431 @@ struct gpCurve
 
     std::string m_binary;
 
-    gpCurve(){}
+    gpCurve()
+    {
+    }
 
-    gpCurve( const std::string & file,
-             const std::string & title,
-             const std::string & modifiers 
-           ) : m_file(file), m_title(title), m_modifiers(modifiers)
-    {}
+    gpCurve( const std::string &file, const std::string &title, const std::string &modifiers )
+        : m_file( file ), m_title( title ), m_modifiers( modifiers )
+    {
+    }
 
-    gpCurve( const std::string & file,
-             const std::string & title,
-             const std::string & modifiers,
-             const std::string & binary
-           ) : m_file(file), m_title(title), m_modifiers(modifiers), m_binary(binary)
-    {}
+    gpCurve( const std::string &file,
+             const std::string &title,
+             const std::string &modifiers,
+             const std::string &binary )
+        : m_file( file ), m_title( title ), m_modifiers( modifiers ), m_binary( binary )
+    {
+    }
 
-    gpCurve( const gpCurve & gpc )
+    gpCurve( const gpCurve &gpc )
     {
         m_file = gpc.m_file;
         m_title = gpc.m_title;
         m_modifiers = gpc.m_modifiers;
         m_binary = gpc.m_binary;
     }
-    
 };
 
 /// An interactive c++ interface to gnuplot
 /** Spawns a gnuplot sesssion and communicates with it.
-  * \ingroup plotting 
-  * 
-  * \todo Use mxError for error reporting.
-  * 
-  * An example of using gnuPlot to plot data from a file: 
-  * \code
-  * gnuPlot gp; //This automatically connects, and is now ready to plot.
-  * 
-  * gp.plot("my_data_file.dat", "u 1:2 w l"); //Plots the data in the file
-  * \endcode
-  * 
-  * Arrays can be plotted directly:
-  * \code
-  * std::vector<float> x;
-  * std::vector<double> y;
-  * 
-  * //...code to populate x and y
-  * 
-  * gp.plot(x, y); //Plots y vs x.  
-  * \endcode
-  * Note that the vector data types are different -- this is handled automatically.
-  * 
-  * To get a response from the gnuplot session:
-  * \code
-  * std::cout << gp.getResponse("show terminal") << "\n"; //Sends the command to gnuplot, gets the response.
-  * \endcode
-  * Error checking and reporting is not straightforward since gnuplot does not return a result if there is no error.  If there is an error,
-  * it can take several hundred milliseconds for a response to be available.  So for a typical 
-  * plot command, say, one does not want to try to read the stderr ouput just in case as this will just time out with a delay.
-  *
-  * For cases where a response is expected, the following example shows how to check for errors.
-  * \code
-  * errno = 0;
-  * std::string response = gp.getResponse("show terminal"); //Waits up to 0.5 seconds, or a user specified timeout. 
-  * 
-  * if(response == "") //This indicates some error occurred, or a timeout.
-  * {
-  *   if(gp.gpError())
-  *   {
-  *      std::cerr << "gnuplot returned error:\n" << gp.gpErrorMsg() << "\n";
-  *   }
-  *   else if(errno)
-  *   {
-  *      perror("error getting response: ");
-  *   }
-  *   else
-  *   {
-  *      std::cerr << "timed out\n";
-  *   }
-  * }
-  * else
-  * {
-  *   std::cout << response << "\n";
-  * }
-  * 
-  * \endcode
-  */
+ * \ingroup plotting
+ *
+ * \todo Use mxError for error reporting.
+ *
+ * An example of using gnuPlot to plot data from a file:
+ * \code
+ * gnuPlot gp; //This automatically connects, and is now ready to plot.
+ *
+ * gp.plot("my_data_file.dat", "u 1:2 w l"); //Plots the data in the file
+ * \endcode
+ *
+ * Arrays can be plotted directly:
+ * \code
+ * std::vector<float> x;
+ * std::vector<double> y;
+ *
+ * //...code to populate x and y
+ *
+ * gp.plot(x, y); //Plots y vs x.
+ * \endcode
+ * Note that the vector data types are different -- this is handled automatically.
+ *
+ * To get a response from the gnuplot session:
+ * \code
+ * std::cout << gp.getResponse("show terminal") << "\n"; //Sends the command to gnuplot, gets the response.
+ * \endcode
+ * Error checking and reporting is not straightforward since gnuplot does not return a result if there is no error.  If
+ * there is an error, it can take several hundred milliseconds for a response to be available.  So for a typical plot
+ * command, say, one does not want to try to read the stderr ouput just in case as this will just time out with a delay.
+ *
+ * For cases where a response is expected, the following example shows how to check for errors.
+ * \code
+ * errno = 0;
+ * std::string response = gp.getResponse("show terminal"); //Waits up to 0.5 seconds, or a user specified timeout.
+ *
+ * if(response == "") //This indicates some error occurred, or a timeout.
+ * {
+ *   if(gp.gpError())
+ *   {
+ *      std::cerr << "gnuplot returned error:\n" << gp.gpErrorMsg() << "\n";
+ *   }
+ *   else if(errno)
+ *   {
+ *      perror("error getting response: ");
+ *   }
+ *   else
+ *   {
+ *      std::cerr << "timed out\n";
+ *   }
+ * }
+ * else
+ * {
+ *   std::cout << response << "\n";
+ * }
+ *
+ * \endcode
+ */
 class gnuPlot
 {
-protected:   
+  protected:
+    int _connected{ 0 };
 
-   int _connected {0};
-   
-   ///Set to true if the response indicates a gnuplot error
-   bool _gpError {false};
-   std::string _gpErrorMsg;
-   
-   ///File stream for the gnuplot interface
-   FILE * _pipeH {0};
-   
-   ///Where to create gnuplot stderr fifo
-   /** Default is /dev/shm/
+    /// Set to true if the response indicates a gnuplot error
+    bool _gpError{ false };
+    std::string _gpErrorMsg;
+
+    /// File stream for the gnuplot interface
+    FILE *_pipeH{ 0 };
+
+    /// Where to create gnuplot stderr fifo
+    /** Default is /dev/shm/
      */
-   std::string _errLocation;
-   
-   ///File name of the gnuplot stderr fifo
-   std::string _errFName;
-   
-   ///File descriptor for the gnuplot stderr fifo
-   int _errFD {0};
-   
-   ///Location of temporary files 
-   /** Default is /dev/shm/
+    std::string _errLocation;
+
+    /// File name of the gnuplot stderr fifo
+    std::string _errFName;
+
+    /// File descriptor for the gnuplot stderr fifo
+    int _errFD{ 0 };
+
+    /// Location of temporary files
+    /** Default is /dev/shm/
      */
-   std::string _tempLocation;
-   
-   ///Vector of all temporary file names opened, used for removal on destruction.
-   std::vector<std::string> _tempFiles;
+    std::string _tempLocation;
 
-   ///Flag to control whether temporary files are deleted on destruction.  Default is true (files deleted).
-   bool _deleteTemp {true};
+    /// Vector of all temporary file names opened, used for removal on destruction.
+    std::vector<std::string> _tempFiles;
 
-   std::map<std::string, gpCurve> m_curveMap;
-   
-public:
-   
-   gnuPlot();
-   
-   ~gnuPlot();
+    /// Flag to control whether temporary files are deleted on destruction.  Default is true (files deleted).
+    bool _deleteTemp{ true };
 
-   ///Connect to gnuplot
-   /** Spawns a gnuplot session using popen with stderr redirected to a temporary file.  The temporary file
+    std::map<std::string, gpCurve> m_curveMap;
+
+  public:
+    gnuPlot();
+
+    ~gnuPlot();
+
+    /// Connect to gnuplot
+    /** Spawns a gnuplot session using popen with stderr redirected to a temporary file.  The temporary file
      * is opened for reading.
      *
      * \retval 0 on success
      * \retval -1 on error
-     */ 
-   int connect();
-   
-   ///Return the value of the gpError flag.
-   /** This flag is set if gnuplot returns an error message (see checkResponse()).  The error message
-     * can be accessed with gpErrorMsg(). 
+     */
+    int connect();
+
+    /// Return the value of the gpError flag.
+    /** This flag is set if gnuplot returns an error message (see checkResponse()).  The error message
+     * can be accessed with gpErrorMsg().
      *
      * \retval 0 if no error
-     * \retval -1 if an error has occurred. 
+     * \retval -1 if an error has occurred.
      */
-   bool gpError();
-   
-   ///Return the gnuplot error message
-   /** The error message is extracted by checkResponse() when the response from gnuplot begins with "gnuplot>".
+    bool gpError();
+
+    /// Return the gnuplot error message
+    /** The error message is extracted by checkResponse() when the response from gnuplot begins with "gnuplot>".
      */
-   std::string gpErrorMsg();
-   
-   ///Send a command to gnuplot
-   /** The newline is appended to the command, and then it is sent to gnuplot.
+    std::string gpErrorMsg();
+
+    /// Send a command to gnuplot
+    /** The newline is appended to the command, and then it is sent to gnuplot.
      *
      *
      * \retval 0 on success
      * \retval -1 on error
-     */ 
-   int command( const std::string & com, ///< [in] the command string
-                bool flush = true        ///< [in] [optional] if true (default), then the output stream is flushed once the command is written
-              );
-     
-   ///Check for a response from gnuplot.
-   /** It typically takes some time for a response from gnuplot to become readable,
-     * whether an error occurs or not. It is often 0.3 seconds or more.  If there is no error, there will be no response so waiting
-     * for a response to check for errors after every command can be very time consuming.  Thus it is a choice whether to check 
-     * for errors from gnuplot after every command, and what timeout to use. 
-     * 
+     */
+    int command( const std::string &com, ///< [in] the command string
+                 bool flush = true ///< [in] [optional] if true (default), then the output stream is flushed once the
+                                   ///< command is written
+    );
+
+    /// Check for a response from gnuplot.
+    /** It typically takes some time for a response from gnuplot to become readable,
+     * whether an error occurs or not. It is often 0.3 seconds or more.  If there is no error, there will be no response
+     * so waiting for a response to check for errors after every command can be very time consuming.  Thus it is a
+     * choice whether to check for errors from gnuplot after every command, and what timeout to use.
+     *
      * \todo investigate having a second thread monitor for responses.
-     * 
-     * gnuplot terminates all outputs with \c \\n\\n, so this reads up to these two characters.  It then strips any leading and trailing whitespace. 
-     * If the response begins with \c gnuplot>, then the response is an error.  In this case, checkResponse returns -1 and the gpError flag is set.  If gpError is not set 
-     * but the return value is -1, then some other error occurred (check \c errno).
-     * 
+     *
+     * gnuplot terminates all outputs with \c \\n\\n, so this reads up to these two characters.  It then strips any
+     * leading and trailing whitespace. If the response begins with \c gnuplot>, then the response is an error.  In this
+     * case, checkResponse returns -1 and the gpError flag is set.  If gpError is not set but the return value is -1,
+     * then some other error occurred (check \c errno).
+     *
      * \retval 0 on timeout or successful read
      * \retval -1 on error, or if the gnuplot response indicates an error.
      */
-   int checkResponse( std::string & response, ///< [out] contains the response from gnuplot, but is empty on timeout or error.
-                      double timeout = 0      ///< [in] [optional] the length of time, in seconds, to wait for a response. Default is 0, but a minimum of 0.5 if a response is expected.
-                    );
-   
-   ///Get a response from gnuplot for a given command.
-   /** This should only be used if a response is expected.
-     *
-     * \returns "" (empty string) on timeout or error (\c errno and gpError() should be checked), and the response from gnuplot otherwise.
-     */ 
-   std::string getResponse( const std::string & com, ///< [in] the command string
-                            double timeout=0.5       ///< [in] the length of time, in seconds, to wait for a response. Default is 0.5, which is the minimum that should be used.
-                          );
+    int checkResponse(
+        std::string &response, ///< [out] contains the response from gnuplot, but is empty on timeout or error.
+        double timeout = 0 ///< [in] [optional] the length of time, in seconds, to wait for a response. Default is 0,
+                           ///< but a minimum of 0.5 if a response is expected.
+    );
 
-   
-   /// Issue the \b replot command
-   /**
+    /// Get a response from gnuplot for a given command.
+    /** This should only be used if a response is expected.
+     *
+     * \returns "" (empty string) on timeout or error (\c errno and gpError() should be checked), and the response from
+     * gnuplot otherwise.
+     */
+    std::string getResponse( const std::string &com, ///< [in] the command string
+                             double timeout = 0.5    ///< [in] the length of time, in seconds, to wait for a response.
+                                                     ///< Default is 0.5, which is the minimum that should be used.
+    );
+
+    /// Issue the \b replot command
+    /**
      * \retval 0 on success
      * \retval -1 on error
      */
-   int replot();
-   
-   /// Set the x-axis range 
-   /** Sends the command:
+    int replot();
+
+    /// Set the x-axis range
+    /** Sends the command:
      * \verbatim
      * set xrange [x0:x1]
      * \endverbatim
-     * 
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
-    int xrange( double x0,
-                double x1
-              ); 
+    int xrange( double x0, double x1 );
 
-   /// Unset the x-axis range 
-   /** Sends the command:
+    /// Unset the x-axis range
+    /** Sends the command:
      * \verbatim
      * unset xrange
      * \endverbatim
-     * 
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
-    int xrange(); 
+    int xrange();
 
-    /// Set the y-axis range 
+    /// Set the y-axis range
     /** Sends the command:
-      * \verbatim
-      * set yrange [y0:y1]
-      * \endverbatim
-      * 
-      * \returns 0 on success
-      * \returns -1 on error
-      */
-    int yrange( double y0,
-                double y1
-              ); 
+     * \verbatim
+     * set yrange [y0:y1]
+     * \endverbatim
+     *
+     * \returns 0 on success
+     * \returns -1 on error
+     */
+    int yrange( double y0, double y1 );
 
-    /// Unset the y-axis range 
+    /// Unset the y-axis range
     /** Sends the command:
-      * \verbatim
-      * unset yrange
-      * \endverbatim
-      * 
-      * \returns 0 on success
-      * \returns -1 on error
-      */
+     * \verbatim
+     * unset yrange
+     * \endverbatim
+     *
+     * \returns 0 on success
+     * \returns -1 on error
+     */
     int yrange();
 
-   /// Set the y axis to log scale
-   /** Sends the command:
-     * \verbatim
-       set log y
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int logy();
-   
-   /// Set the x axis to log scale
-   /** Sends the command:
-     * \verbatim
-       set log x
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int logx();
-   
-   /// Set the x and y axes to log scale
-   /** Sends the commands:
-     * \verbatim
-       set log x
-       set log y
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int logxy();
-   
-   /// Unset the y axis from log scale
-   /** Sends the command:
-     * \verbatim
-       unset log y
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int ulogy();
-   
-   /// Unset the x axis from log scale
-   /** Sends the command:
-     * \verbatim
-       unset log x
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int ulogx();
-   
-   /// Unset the x and y axes from log scale
-   /** Sends the command:
-     * \verbatim
-       unset log x
-       unset log y
-      \endverbatim
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   int ulogxy();
-   
-   /// Plot from a file specifying all curve components.
-   /** Forms the gnuplot plot command as follows:
+    /// Set the y axis to log scale
+    /** Sends the command:
+      * \verbatim
+        set log y
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int logy();
+
+    /// Set the x axis to log scale
+    /** Sends the command:
+      * \verbatim
+        set log x
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int logx();
+
+    /// Set the x and y axes to log scale
+    /** Sends the commands:
+      * \verbatim
+        set log x
+        set log y
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int logxy();
+
+    /// Unset the y axis from log scale
+    /** Sends the command:
+      * \verbatim
+        unset log y
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int ulogy();
+
+    /// Unset the x axis from log scale
+    /** Sends the command:
+      * \verbatim
+        unset log x
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int ulogx();
+
+    /// Unset the x and y axes from log scale
+    /** Sends the command:
+      * \verbatim
+        unset log x
+        unset log y
+       \endverbatim
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    int ulogxy();
+
+    /// Plot from a file specifying all curve components.
+    /** Forms the gnuplot plot command as follows:
      * \verbatim
      * plot '<fname>' <modifiers> t '<title>'
      * \endverbatim
      * The modifiers string can contain any modifiers such as \a using, etc.  Should generally not include \a title.
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
      */
-   int plot( const std::string & fname,     ///< [in] the name (with full path) of the file containing data to plot
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command.
-             const std::string & title,     ///< [in] the title for this curve
-             const std::string & name       ///< [in] the name for this curve.  If "" then curve# is used.
-           );
+    int plot( const std::string &fname,     ///< [in] the name (with full path) of the file containing data to plot
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command.
+              const std::string &title,     ///< [in] the title for this curve
+              const std::string &name       ///< [in] the name for this curve.  If "" then curve# is used.
+    );
 
-   /// Plot from a file without specifying the title
-   /** Forms the gnuplot plot command as follows:
+    /// Plot from a file without specifying the title
+    /** Forms the gnuplot plot command as follows:
      * \verbatim
      * plot '<fname>' <modifiers> t ''
      * \endverbatim
      * The modifiers string can contain any modifiers such as \a using, etc.  Should generally not include \a title.
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
-     * 
+     *
      * \overload
      */
-   int plot( const std::string & fname,     ///< [in] the name (with full path) of the file containing data to plot
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command.
-             const std::string & name       ///< [in] the name for this curve.  If "" then the curve# is used.
-           );
+    int plot( const std::string &fname,     ///< [in] the name (with full path) of the file containing data to plot
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command.
+              const std::string &name       ///< [in] the name for this curve.  If "" then the curve# is used.
+    );
 
-   /// Plot from a file without modifiers
-   /** The file name is used for the identifying name
-     *  
+    /// Plot from a file without modifiers
+    /** The file name is used for the identifying name
+     *
      * Forms the gnuplot plot command as follows:
      * \verbatim
      * plot '<fname>' <modifiers> t ''
      * \endverbatim
      * The modifiers string can contain any modifiers such as \a using, etc.  Should generally not include \a title.
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
-     * 
+     *
      * \overload
      */
-   int plot( const std::string & fname,     ///< [in] the name (with full path) of the file containing data to plot
-             const std::string & name       ///< [in] the name for this curve.  If "" then the curve# is used
-           );
+    int plot( const std::string &fname, ///< [in] the name (with full path) of the file containing data to plot
+              const std::string &name   ///< [in] the name for this curve.  If "" then the curve# is used
+    );
 
-   /// Plot from a file without specifying the name or any modifiers
-   /** The file name is used for the identifying name
-     *  
+    /// Plot from a file without specifying the name or any modifiers
+    /** The file name is used for the identifying name
+     *
      * Forms the gnuplot plot command as follows:
      * \verbatim
      * plot '<fname>' t ''
      * \endverbatim
      * The modifiers string can contain any modifiers such as \a using, etc.  Should generally not include \a title.
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
-     * 
+     *
      * \overload
      */
-   int plot( const std::string & fname /**< [in] the name (with full path) of the file containing data to plot */  );
-   
-   /// Plot data from an array
-   /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    int plot( const std::string &fname /**< [in] the name (with full path) of the file containing data to plot */ );
+
+    /// Plot data from an array
+    /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t "title" <modifiers>
      * \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
+     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+     * can contain any other modifiers.  Title is specified so that the name of the temporary file name is not printed
+     * on the plot.
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const dataT * y,               ///< [in] a pointer to an array of data
-             size_t N,                      ///< [in] the length of the array
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & title,     ///< [in] contains the title of the data set, default is an empty string and no key on the plot
-             const std::string & name       ///< [in] the identifying name of this curve
-           );      
-   
-   /// Plot data from an array
-   /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    template <typename dataT>
+    int plot( const dataT *y,               ///< [in] a pointer to an array of data
+              size_t N,                     ///< [in] the length of the array
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &
+                  title, ///< [in] contains the title of the data set, default is an empty string and no key on the plot
+              const std::string &name ///< [in] the identifying name of this curve
+    );
+
+    /// Plot data from an array
+    /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t '' <modifiers>
      * \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
+     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+     * can contain any other modifiers.  Title is specified so that the name of the temporary file name is not printed
+     * on the plot.
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const dataT * y,               ///< [in] a pointer to an array of data
-             size_t N,                      ///< [in] the length of the array
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & name       ///< [in] the identifying name of this curve
-           );
+    template <typename dataT>
+    int plot( const dataT *y,               ///< [in] a pointer to an array of data
+              size_t N,                     ///< [in] the length of the array
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &name       ///< [in] the identifying name of this curve
+    );
 
-   /// Plot data from an array
-   /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot data from an array
+    /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t '' <modifiers>
      * \endverbatim
      *
@@ -532,262 +537,278 @@ public:
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const dataT * y,               ///< [in] a pointer to an array of data
-             size_t N,                      ///< [in] the length of the array
-             const std::string & name       ///< [in] the identifying name of this curve
-           );
+    template <typename dataT>
+    int plot( const dataT *y,         ///< [in] a pointer to an array of data
+              size_t N,               ///< [in] the length of the array
+              const std::string &name ///< [in] the identifying name of this curve
+    );
 
-   /// Plot data from an array
-   /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot data from an array
+    /** Copies the data in the array to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t ''
      * \endverbatim
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const dataT * y, ///< [in] a pointer to an array of data
-             size_t N         ///< [in] the length of the array
-           );
+    template <typename dataT>
+    int plot( const dataT *y, ///< [in] a pointer to an array of data
+              size_t N        ///< [in] the length of the array
+    );
 
-
-
-   /// Plot data from a vector
-   /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot data from a vector
+    /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t "title" <modifiers>
      * \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
-     * 
+     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+     * can contain any other modifiers.  Title is specified so that the name of the temporary file name is not printed
+     * on the plot.
+     *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const std::vector<dataT> & y,  ///< [in] the vector containing the data
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & title,     ///< [in] contains the title of the data set, default is an empty string and no key on the plot
-             const std::string & name       ///< [in] the identifying name of this curve
-           ); 
-   
-   /// Plot data from a vector
-   /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    template <typename dataT>
+    int plot( const std::vector<dataT> &y,  ///< [in] the vector containing the data
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &
+                  title, ///< [in] contains the title of the data set, default is an empty string and no key on the plot
+              const std::string &name ///< [in] the identifying name of this curve
+    );
+
+    /// Plot data from a vector
+    /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataT" u 1 t '' <modifiers>
      * \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
-     * 
+     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+     * can contain any other modifiers.  Title is specified so that the name of the temporary file name is not printed
+     * on the plot.
+     *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const std::vector<dataT> & y,  ///< [in] the vector containing the data
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & name       ///< [in] the identifying name of this curve
-           );
+    template <typename dataT>
+    int plot( const std::vector<dataT> &y,  ///< [in] the vector containing the data
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &name       ///< [in] the identifying name of this curve
+    );
 
-   /// Plot data from a vector
-   /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-     *  plot "temp-file-name" binary format="%dataT" u 1 t '' 
+    /// Plot data from a vector
+    /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
+     *  plot "temp-file-name" binary format="%dataT" u 1 t ''
      * \endverbatim
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const std::vector<dataT> & y,  ///< [in] the vector containing the data
-             const std::string & name       ///< [in] the identifying name of this curve
-           );
+    template <typename dataT>
+    int plot( const std::vector<dataT> &y, ///< [in] the vector containing the data
+              const std::string &name      ///< [in] the identifying name of this curve
+    );
 
-   /// Plot data from a vector
-   /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-     *  plot "temp-file-name" binary format="%dataT" u 1 t '' 
+    /// Plot data from a vector
+    /** Copies the data in the vector to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
+     *  plot "temp-file-name" binary format="%dataT" u 1 t ''
      * \endverbatim
-     * 
+     *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataT>
-   int plot( const std::vector<dataT> & y /**< [in] the vector containing the data*/);
+    template <typename dataT>
+    int plot( const std::vector<dataT> &y /**< [in] the vector containing the data*/ );
 
+    /// Plot y vs. x data from arrays
+    /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
+      * \verbatim
+        plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t "title" <modifiers>
+       \endverbatim
+      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+      can contain any other modifiers.  Title is
+      * specified so that the name of the temporary file name is not printed on the plot.
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    template <typename dataTx, typename dataTy>
+    int plot( const dataTx *x,              ///< [in] a pointer to an array of data for the independent variable
+              const dataTy *y,              ///< [in] a pointer to an array of data for the dependent variable
+              size_t N,                     ///< [in] the length of the arrays
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &title,     ///< [in] contains the title of the data set
+              const std::string &name       ///< [in] the identifying name of the curve
+    );
 
-   /// Plot y vs. x data from arrays
-   /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-       plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t "title" <modifiers>
-      \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
-     * 
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   template<typename dataTx, typename dataTy>
-   int plot( const dataTx * x,              ///< [in] a pointer to an array of data for the independent variable
-             const dataTy * y,              ///< [in] a pointer to an array of data for the dependent variable
-             size_t N,                      ///< [in] the length of the arrays
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & title,     ///< [in] contains the title of the data set
-             const std::string & name       ///< [in] the identifying name of the curve
-           );
-   
-   /// Plot y vs. x data from arrays
-   /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot y vs. x data from arrays
+    /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t '' <modifiers>
      * \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
-     * 
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   template<typename dataTx, typename dataTy>
-   int plot( const dataTx * x,              ///< [in] a pointer to an array of data for the independent variable
-             const dataTy * y,              ///< [in] a pointer to an array of data for the dependent variable
-             size_t N,                      ///< [in] the length of the arrays
-             const std::string & modifiers, ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & name       ///< [in] the identifying name of the curve
-           );
-
-   /// Plot y vs. x data from arrays
-   /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-     *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
-     * \endverbatim
-     * 
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   template<typename dataTx, typename dataTy>
-   int plot( const dataTx * x,              ///< [in] a pointer to an array of data for the independent variable
-             const dataTy * y,              ///< [in] a pointer to an array of data for the dependent variable
-             size_t N,                      ///< [in] the length of the arrays
-             const std::string & name       ///< [in] the identifying name of the curve
-           );
-
-   /// Plot y vs. x data from arrays
-   /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-     *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
-     * \endverbatim
-     * 
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   template<typename dataTx, typename dataTy>
-   int plot( const dataTx * x,  ///< [in] a pointer to an array of data for the independent variable
-             const dataTy * y,  ///< [in] a pointer to an array of data for the dependent variable
-             size_t N           ///< [in] the length of the arrays
-           );
-    
-
-   /// Plot y vs. x data from vectors
-   /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-       plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t "title" <modifiers>
-      \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
+     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+     * can contain any other modifiers.  Title is specified so that the name of the temporary file name is not printed
+     * on the plot.
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataTx, typename dataTy>
-   int plot( const std::vector<dataTx> & x,  ///< [in] a vector of data for the independent variable
-             const std::vector<dataTy> & y,  ///< [in] a vector of data for the dependent variable
-             const std::string & modifiers,  ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & title,      ///< [in] contains the title of the data set
-             const std::string & name        ///< [in] the identifying name of the curve
-           );
-   
-   /// Plot y vs. x data from vectors
-   /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
-       plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t '' <modifiers>
-      \endverbatim
-     * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but can contain any other modifiers.  Title is
-     * specified so that the name of the temporary file name is not printed on the plot. 
-     *
-     * \retval 0 on success
-     * \retval -1 on error
-     */
-   template<typename dataTx, typename dataTy>
-   int plot( const std::vector<dataTx> & x,  ///< [in] a vector of data for the independent variable
-             const std::vector<dataTy> & y,  ///< [in] a vector of data for the dependent variable
-             const std::string & modifiers,  ///< [in] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-             const std::string & name        ///< [in] the identifying name of the curve
-           );
+    template <typename dataTx, typename dataTy>
+    int plot( const dataTx *x,              ///< [in] a pointer to an array of data for the independent variable
+              const dataTy *y,              ///< [in] a pointer to an array of data for the dependent variable
+              size_t N,                     ///< [in] the length of the arrays
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &name       ///< [in] the identifying name of the curve
+    );
 
-   /// Plot y vs. x data from vectors
-   /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot y vs. x data from arrays
+    /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
      * \endverbatim
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataTx, typename dataTy>
-   int plot( const std::vector<dataTx> & x,  ///< [in] a vector of data for the independent variable
-             const std::vector<dataTy> & y,  ///< [in] a vector of data for the dependent variable
-             const std::string & name        ///< [in] the identifying name of the curve
-           );
+    template <typename dataTx, typename dataTy>
+    int plot( const dataTx *x,        ///< [in] a pointer to an array of data for the independent variable
+              const dataTy *y,        ///< [in] a pointer to an array of data for the dependent variable
+              size_t N,               ///< [in] the length of the arrays
+              const std::string &name ///< [in] the identifying name of the curve
+    );
 
-   /// Plot y vs. x data from vectors
-   /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
-     * \verbatim 
+    /// Plot y vs. x data from arrays
+    /** Copies the data in the arrays to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
      *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
      * \endverbatim
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataTx, typename dataTy>
-   int plot( const std::vector<dataTx> & x,  ///< [in] a vector of data for the independent variable
-             const std::vector<dataTy> & y  ///< [in] a vector of data for the dependent variable
-           );
+    template <typename dataTx, typename dataTy>
+    int plot( const dataTx *x, ///< [in] a pointer to an array of data for the independent variable
+              const dataTy *y, ///< [in] a pointer to an array of data for the dependent variable
+              size_t N         ///< [in] the length of the arrays
+    );
 
+    /// Plot y vs. x data from vectors
+    /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
+      * \verbatim
+        plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t "title" <modifiers>
+       \endverbatim
+      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+      can contain any other modifiers.  Title is
+      * specified so that the name of the temporary file name is not printed on the plot.
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    template <typename dataTx, typename dataTy>
+    int plot( const std::vector<dataTx> &x, ///< [in] a vector of data for the independent variable
+              const std::vector<dataTy> &y, ///< [in] a vector of data for the dependent variable
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &title,     ///< [in] contains the title of the data set
+              const std::string &name       ///< [in] the identifying name of the curve
+    );
 
-   /// Plot a single point
-   /** Copies the position as a length-1 vector to a temporary binary file, and then plots it.
-     * 
+    /// Plot y vs. x data from vectors
+    /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
+      * \verbatim
+        plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t '' <modifiers>
+       \endverbatim
+      * The modifiers string \b must \b NOT contain the \b binary, \b format, \b using, or the \b title  modifiers, but
+      can contain any other modifiers.  Title is
+      * specified so that the name of the temporary file name is not printed on the plot.
+      *
+      * \retval 0 on success
+      * \retval -1 on error
+      */
+    template <typename dataTx, typename dataTy>
+    int plot( const std::vector<dataTx> &x, ///< [in] a vector of data for the independent variable
+              const std::vector<dataTy> &y, ///< [in] a vector of data for the dependent variable
+              const std::string &modifiers, ///< [in] contains any modifiers to the plot command other than \b binary,
+                                            ///< \b format, \b using, and \b title.
+              const std::string &name       ///< [in] the identifying name of the curve
+    );
+
+    /// Plot y vs. x data from vectors
+    /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
+     *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
+     * \endverbatim
      *
      * \retval 0 on success
      * \retval -1 on error
      */
-   template<typename dataTx, typename dataTy>
-   int point( dataTx x,                           ///< [in] the independent axis (x) coordinate of the point
-              dataTy y,                           ///< [in] the dependent axis (y) coordinate of the point
-              const std::string & modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-              const std::string & title = ""      ///< [in] [optional] contains the title of the data set, default is an empty string and no key on the plot
-            );
-   
-   /// Draw a circle on the plot
-   /** Creates a circle with specified center and radius, and plots it.
+    template <typename dataTx, typename dataTy>
+    int plot( const std::vector<dataTx> &x, ///< [in] a vector of data for the independent variable
+              const std::vector<dataTy> &y, ///< [in] a vector of data for the dependent variable
+              const std::string &name       ///< [in] the identifying name of the curve
+    );
+
+    /// Plot y vs. x data from vectors
+    /** Copies the data in the vectors to a temporary binary file, and then forms the gnuplot plot command as follows:
+     * \verbatim
+     *  plot "temp-file-name" binary format="%dataTx%dataTy" u 1:2 t ''
+     * \endverbatim
+     *
+     * \retval 0 on success
+     * \retval -1 on error
      */
-   int circle( double xcen,                        ///< [in] the x-coordinate of the circle center
-               double ycen,                        ///< [in] the y-coordinate of the circle center
-               double radius,                      ///< [in] the circle radius
-               const std::string & modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-               const std::string & title = "",     ///< [in] [optional] contains the title of the data set, default is an empty string and no key on the plot
-               int npoints =  10                   ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is usually sufficient.
-             );
-   
-   /// Draw a circle on the plot around the origin
-   /** Creates a circle with radius and center (0,0), and plots it.
+    template <typename dataTx, typename dataTy>
+    int plot( const std::vector<dataTx> &x, ///< [in] a vector of data for the independent variable
+              const std::vector<dataTy> &y  ///< [in] a vector of data for the dependent variable
+    );
+
+    /// Plot a single point
+    /** Copies the position as a length-1 vector to a temporary binary file, and then plots it.
+     *
+     *
+     * \retval 0 on success
+     * \retval -1 on error
      */
-   int circle( double radius,                      ///< [in] the circle radius
-               const std::string & modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other than \b binary, \b format, \b using, and \b title.
-               const std::string & title = "",     ///< [in] [optional] contains the title of the data set, default is an empty string and no key on the plot
-               int npoints =  10                   ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is usually sufficient.
-             );
-   
+    template <typename dataTx, typename dataTy>
+    int point( dataTx x,                          ///< [in] the independent axis (x) coordinate of the point
+               dataTy y,                          ///< [in] the dependent axis (y) coordinate of the point
+               const std::string &modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other
+                                                  ///< than \b binary, \b format, \b using, and \b title.
+               const std::string &title = ""      ///< [in] [optional] contains the title of the data set, default is an
+                                                  ///< empty string and no key on the plot
+    );
+
+    /// Draw a circle on the plot
+    /** Creates a circle with specified center and radius, and plots it.
+     */
+    int circle( double xcen,                       ///< [in] the x-coordinate of the circle center
+                double ycen,                       ///< [in] the y-coordinate of the circle center
+                double radius,                     ///< [in] the circle radius
+                const std::string &modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other
+                                                   ///< than \b binary, \b format, \b using, and \b title.
+                const std::string &title = "", ///< [in] [optional] contains the title of the data set, default is an
+                                               ///< empty string and no key on the plot
+                int npoints = 10 ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is
+                                 ///< usually sufficient.
+    );
+
+    /// Draw a circle on the plot around the origin
+    /** Creates a circle with radius and center (0,0), and plots it.
+     */
+    int circle( double radius,                     ///< [in] the circle radius
+                const std::string &modifiers = "", ///< [in] [optional] contains any modifiers to the plot command other
+                                                   ///< than \b binary, \b format, \b using, and \b title.
+                const std::string &title = "", ///< [in] [optional] contains the title of the data set, default is an
+                                               ///< empty string and no key on the plot
+                int npoints = 10 ///< [in] [optional] specifies the number of points in each half circle.  Default 10 is
+                                 ///< usually sufficient.
+    );
+
     /// Clear all the curves
     void clear();
 
@@ -798,252 +819,217 @@ public:
     void listCurves();
 
     /// Modify the modifiers for a curve
-    void modifiers( const std::string & name,     ///< [in] the name of the curve
-                    const std::string & modifiers ///< [in] the new modifiers
-                  );
+    void modifiers( const std::string &name,     ///< [in] the name of the curve
+                    const std::string &modifiers ///< [in] the new modifiers
+    );
 
     /// Modify the title for a curve
-    void title( const std::string & name, ///< [in] the name of the curve
-                const std::string & title ///< [in] the new title
-              );
+    void title( const std::string &name, ///< [in] the name of the curve
+                const std::string &title ///< [in] the new title
+    );
 
-protected:
-   
-   /// Implementation of 1-D binary plotting.
-   int plotImpl( const void * y, 
-                 size_t Nbytes,
-                 const std::string & binary,
-                 const std::string & modifiers, 
-                 const std::string & title,
-                 const std::string & name
-               );
-   
-   /// Implementation of 2-d binary plotting.
-   int plotImpl( const void * x, 
-                 const void * y, 
-                 size_t Npts,
-                 size_t sizex,
-                 size_t sizey,
-                 const std::string & binaryx,
-                 const std::string & binaryy,
-                 const std::string & modifiers, 
-                 const std::string & title,
-                 const std::string & name
-               );
+  protected:
+    /// Implementation of 1-D binary plotting.
+    int plotImpl( const void *y,
+                  size_t Nbytes,
+                  const std::string &binary,
+                  const std::string &modifiers,
+                  const std::string &title,
+                  const std::string &name );
 
-   /// Issue the plot command for all the curves
-   int doPlotCommand();
+    /// Implementation of 2-d binary plotting.
+    int plotImpl( const void *x,
+                  const void *y,
+                  size_t Npts,
+                  size_t sizex,
+                  size_t sizey,
+                  const std::string &binaryx,
+                  const std::string &binaryy,
+                  const std::string &modifiers,
+                  const std::string &title,
+                  const std::string &name );
 
-   ///Open a temporary binary file, and provide the filename. 
-   FILE * openTempFile(char * fname);
-   
+    /// Issue the plot command for all the curves
+    int doPlotCommand();
 
+    /// Open a temporary binary file, and provide the filename.
+    FILE *openTempFile( char *fname );
 
-private:
-   ///Initialize an instance, only used at construction
-   void init();
-   
-   
+  private:
+    /// Initialize an instance, only used at construction
+    void init();
 };
 
-
-
-template<typename dataT>
-int gnuPlot::plot( const dataT * y, 
-                   size_t N,  
-                   const std::string & modifiers, 
-                   const std::string & title,
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot(
+    const dataT *y, size_t N, const std::string &modifiers, const std::string &title, const std::string &name )
 {
-   return plotImpl(y, N*sizeof(dataT), gpBinaryFormat<dataT>(), modifiers, title, name);
-}
-  
-template<typename dataT>
-int gnuPlot::plot( const dataT * y, 
-                   size_t N,  
-                   const std::string & modifiers, 
-                   const std::string & name
-                 )
-{
-   return plotImpl(y, N*sizeof(dataT), gpBinaryFormat<dataT>(), modifiers, "", name);
+    return plotImpl( y, N * sizeof( dataT ), gpBinaryFormat<dataT>(), modifiers, title, name );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const dataT * y, 
-                   size_t N,  
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot( const dataT *y, size_t N, const std::string &modifiers, const std::string &name )
 {
-   return plotImpl(y, N*sizeof(dataT), gpBinaryFormat<dataT>(), "", "", name);
+    return plotImpl( y, N * sizeof( dataT ), gpBinaryFormat<dataT>(), modifiers, "", name );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const dataT * y, 
-                   size_t N
-                 )
+template <typename dataT>
+int gnuPlot::plot( const dataT *y, size_t N, const std::string &name )
 {
-   return plotImpl(y, N*sizeof(dataT), gpBinaryFormat<dataT>(), "", "", "");
+    return plotImpl( y, N * sizeof( dataT ), gpBinaryFormat<dataT>(), "", "", name );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const std::vector<dataT> & y, 
-                   const std::string & modifiers, 
-                   const std::string & title,
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot( const dataT *y, size_t N )
 {
-   return plot<dataT>( y.data(), y.size(), modifiers, title, name);
+    return plotImpl( y, N * sizeof( dataT ), gpBinaryFormat<dataT>(), "", "", "" );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const std::vector<dataT> & y, 
-                   const std::string & modifiers, 
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot( const std::vector<dataT> &y,
+                   const std::string &modifiers,
+                   const std::string &title,
+                   const std::string &name )
 {
-   return plot<dataT>( y.data(), y.size(), modifiers, "", name);
+    return plot<dataT>( y.data(), y.size(), modifiers, title, name );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const std::vector<dataT> & y, 
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot( const std::vector<dataT> &y, const std::string &modifiers, const std::string &name )
 {
-   return plot<dataT>( y.data(), y.size(), "", "", name);
+    return plot<dataT>( y.data(), y.size(), modifiers, "", name );
 }
 
-template<typename dataT>
-int gnuPlot::plot( const std::vector<dataT> & y)
+template <typename dataT>
+int gnuPlot::plot( const std::vector<dataT> &y, const std::string &name )
 {
-   return plot<dataT>( y.data(), y.size(), "", "", "");
+    return plot<dataT>( y.data(), y.size(), "", "", name );
 }
 
-
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const dataTx * x, 
-                   const dataTy * y, 
-                   size_t N, 
-                   const std::string & modifiers, 
-                   const std::string & title,
-                   const std::string & name
-                 )
+template <typename dataT>
+int gnuPlot::plot( const std::vector<dataT> &y )
 {
-   return plotImpl(x, y, N, sizeof(dataTx), sizeof(dataTy), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), modifiers, title, name);
+    return plot<dataT>( y.data(), y.size(), "", "", "" );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const dataTx * x, 
-                   const dataTy * y, 
-                   size_t N, 
-                   const std::string & modifiers, 
-                   const std::string & name
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const dataTx *x,
+                   const dataTy *y,
+                   size_t N,
+                   const std::string &modifiers,
+                   const std::string &title,
+                   const std::string &name )
 {
-   return plotImpl(x, y, N, sizeof(dataTx), sizeof(dataTy), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), modifiers, "", name);
+    return plotImpl( x,
+                     y,
+                     N,
+                     sizeof( dataTx ),
+                     sizeof( dataTy ),
+                     gpBinaryFormat<dataTx>(),
+                     gpBinaryFormat<dataTy>(),
+                     modifiers,
+                     title,
+                     name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const dataTx * x, 
-                   const dataTy * y, 
-                   size_t N, 
-                   const std::string & name
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const dataTx *x, const dataTy *y, size_t N, const std::string &modifiers, const std::string &name )
 {
-   return plotImpl(x, y, N, sizeof(dataTx), sizeof(dataTy), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), "", "", name);
+    return plotImpl( x,
+                     y,
+                     N,
+                     sizeof( dataTx ),
+                     sizeof( dataTy ),
+                     gpBinaryFormat<dataTx>(),
+                     gpBinaryFormat<dataTy>(),
+                     modifiers,
+                     "",
+                     name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const dataTx * x, 
-                   const dataTy * y, 
-                   size_t N
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const dataTx *x, const dataTy *y, size_t N, const std::string &name )
 {
-   return plotImpl(x, y, N, sizeof(dataTx), sizeof(dataTy), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), "", "", "");
+    return plotImpl(
+        x, y, N, sizeof( dataTx ), sizeof( dataTy ), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), "", "", name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const std::vector<dataTx> & x, 
-                   const std::vector<dataTy> & y, 
-                   const std::string & modifiers, 
-                   const std::string & title,
-                   const std::string & name
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const dataTx *x, const dataTy *y, size_t N )
 {
-   return plot( x.data(), y.data(), x.size(), modifiers, title, name);
+    return plotImpl(
+        x, y, N, sizeof( dataTx ), sizeof( dataTy ), gpBinaryFormat<dataTx>(), gpBinaryFormat<dataTy>(), "", "", "" );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const std::vector<dataTx> & x, 
-                   const std::vector<dataTy> & y, 
-                   const std::string & modifiers, 
-                   const std::string & name
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const std::vector<dataTx> &x,
+                   const std::vector<dataTy> &y,
+                   const std::string &modifiers,
+                   const std::string &title,
+                   const std::string &name )
 {
-   return plot( x.data(), y.data(), x.size(), modifiers, "", name);
+    return plot( x.data(), y.data(), x.size(), modifiers, title, name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const std::vector<dataTx> & x, 
-                   const std::vector<dataTy> & y, 
-                   const std::string & name
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const std::vector<dataTx> &x,
+                   const std::vector<dataTy> &y,
+                   const std::string &modifiers,
+                   const std::string &name )
 {
-   return plot( x.data(), y.data(), x.size(), "", "", name);
+    return plot( x.data(), y.data(), x.size(), modifiers, "", name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::plot( const std::vector<dataTx> & x, 
-                   const std::vector<dataTy> & y 
-                 )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const std::vector<dataTx> &x, const std::vector<dataTy> &y, const std::string &name )
 {
-   return plot( x.data(), y.data(), x.size(), "", "", "");
+    return plot( x.data(), y.data(), x.size(), "", "", name );
 }
 
-template<typename dataTx, typename dataTy>
-int gnuPlot::point( dataTx x, 
-                    dataTy y, 
-                    const std::string & modifiers, 
-                    const std::string & title
-                  )
+template <typename dataTx, typename dataTy>
+int gnuPlot::plot( const std::vector<dataTx> &x, const std::vector<dataTy> &y )
 {
-   
-   return plot(&x, &y, 1, modifiers, title);
+    return plot( x.data(), y.data(), x.size(), "", "", "" );
 }
 
-template<>
+template <typename dataTx, typename dataTy>
+int gnuPlot::point( dataTx x, dataTy y, const std::string &modifiers, const std::string &title )
+{
+
+    return plot( &x, &y, 1, modifiers, title );
+}
+
+template <>
 std::string gpBinaryFormat<char>();
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned char>();
 
-template<>
+template <>
 std::string gpBinaryFormat<short>();
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned short>();
 
-template<>
+template <>
 std::string gpBinaryFormat<int>();
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned int>();
 
-template<>
+template <>
 std::string gpBinaryFormat<long>();
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned long>();
 
-template<>
+template <>
 std::string gpBinaryFormat<float>();
 
-template<>
+template <>
 std::string gpBinaryFormat<double>();
 
-}//namespace math
-}//namespace mx
+} // namespace math
+} // namespace mx
 
-   
-#endif //math_plot_gnuPlot_hpp
-
+#endif // math_plot_gnuPlot_hpp

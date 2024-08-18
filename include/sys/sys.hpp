@@ -1,9 +1,9 @@
 /** \file sys.hpp
-  * \author Jared R. Males
-  * \brief Library include for the sys module
-  * \ingroup utils_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Library include for the sys module
+ * \ingroup utils_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -31,4 +31,4 @@
 #include "environment.hpp"
 #include "gitRepo.hpp"
 
-#endif //sys_hpp
+#endif // sys_hpp

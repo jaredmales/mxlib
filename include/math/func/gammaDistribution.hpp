@@ -1,9 +1,9 @@
 /** \file gammaDistribution.hpp
-  * \brief The Gamma Distribution.
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief The Gamma Distribution.
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -40,136 +40,139 @@ namespace func
 
 /// The denominator of the Gamma Distribution
 /** Can be used to avoid repeated calculations when the parameters are constant
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the denominator of the Gamma Distribution.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the denominator of the Gamma Distribution.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistributionDenom( realT k, ///< [in] shape parameter
                               realT q  ///< [in] the scale parameter
-                            )
+)
 {
-  try
-  {
-    realT d = pow(q, k) * tgamma<realT>(k);
+    try
+    {
+        realT d = pow( q, k ) * tgamma<realT>( k );
 
-    if(!std::isnormal(d)) return std::numeric_limits<realT>::max();
+        if( !std::isnormal( d ) )
+            return std::numeric_limits<realT>::max();
 
-    return d;
-  }
-  catch(...)
-  {
-    return std::numeric_limits<realT>::max();
-  }
+        return d;
+    }
+    catch( ... )
+    {
+        return std::numeric_limits<realT>::max();
+    }
 }
 
-///The general shifted Gamma Distribution at a point using an arbitrary peak scaling parameter
+/// The general shifted Gamma Distribution at a point using an arbitrary peak scaling parameter
 /** Calculates the value of the Gamma Distribution at a location specified by x.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the value of the Gamma distribution at x.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the value of the Gamma distribution at x.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistribution( realT x,    ///< [in] the location at which to calculate the distribution
                          realT x0,   ///< [in] the location parameter
                          realT k,    ///< [in] shape parameter
                          realT q,    ///< [in] the scale parameter
                          realT denom ///< [in] the denominator, or 1/peak-scale.
-                       )
+)
 {
-  if(x - x0 < 0) return 0;
+    if( x - x0 < 0 )
+        return 0;
 
-  realT v = pow(x-x0, k-1) * exp( -(x-x0)/q) / denom;
+    realT v = pow( x - x0, k - 1 ) * exp( -( x - x0 ) / q ) / denom;
 
-  if(!std::isnormal(v)) return 0;
+    if( !std::isnormal( v ) )
+        return 0;
 
-  return v;
-
+    return v;
 }
 
-///The general shifted Gamma Distribution at a point.
+/// The general shifted Gamma Distribution at a point.
 /** Calculates the value of the Gamma Distribution at a location specified by x.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the value of the Gamma distribution at x.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the value of the Gamma distribution at x.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistribution( realT x,  ///< [in] the location at which to calculate the distribution
                          realT x0, ///< [in] the location parameter
                          realT k,  ///< [in] shape parameter
                          realT q   ///< [in] the scale parameter
-                       )
+)
 {
 
-   return gammaDistribution<realT>(x, x0, k, q, gammaDistributionDenom<realT>(k,q));
+    return gammaDistribution<realT>( x, x0, k, q, gammaDistributionDenom<realT>( k, q ) );
 }
 
 /// The mean of the Gamma Distribution
 /** Calculates the mean of the Gamma Distribution for the given parameters.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the mean of the Gamma Distribution.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the mean of the Gamma Distribution.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistributionMean( realT x0,   ///< [in] the location parameter
                              realT k,    ///< [in] shape parameter
                              realT theta ///< [in] the scale parameter
-                           )
+)
 {
-  return x0 + k*theta;
+    return x0 + k * theta;
 }
 
 /// The mode of the Gamma Distribution
 /** Calculates the mode of the Gamma Distribution for the given parameters.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the mode of the Gamma Distribution.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the mode of the Gamma Distribution.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistributionMode( realT x0,   ///< [in] the location parameter
                              realT k,    ///< [in] shape parameter
                              realT theta ///< [in] the scale parameter
-                           )
+)
 {
-  if(k >= 1) return x0 + (k-1)*theta;
+    if( k >= 1 )
+        return x0 + ( k - 1 ) * theta;
 
-  return 0;
+    return 0;
 }
 
 /// The variance of the Gamma Distribution
 /** Calculates the variance of the Gamma Distribution for the given parameters.
-  *
-  * \tparam realT a real floating point type
-  *
-  * \returns the variance of the Gamma Distribution.
-  *
-  * \ingroup gen_math_gammaDist
-  */
-template<typename realT>
+ *
+ * \tparam realT a real floating point type
+ *
+ * \returns the variance of the Gamma Distribution.
+ *
+ * \ingroup gen_math_gammaDist
+ */
+template <typename realT>
 realT gammaDistributionVariance( realT k,    ///< [in] shape parameter
                                  realT theta ///< [in] the scale parameter
-                               )
+)
 {
-  return k*theta*theta;
+    return k * theta * theta;
 }
 
-} //namespace func
-} //namespace math
-} //namespace mx
+} // namespace func
+} // namespace math
+} // namespace mx
 
-#endif //gammaDistribution_hpp
+#endif // gammaDistribution_hpp

@@ -1,9 +1,9 @@
 /** \file aoPSDs.hpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Spatial power spectra used in adaptive optics.
-  * \ingroup mxAO_files
-  * 
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Spatial power spectra used in adaptive optics.
+ * \ingroup mxAO_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2016-2018 Jared R. Males (jaredmales@gmail.com)
@@ -43,31 +43,34 @@ namespace AO
 {
 namespace analysis
 {
-   
+
 namespace PSDComponent
 {
-   ///Enum to specify which component of the PSD to calcualte
-   enum { phase,    ///< The phase or OPD
-          amplitude,  ///< The amplitude
-          dispPhase,  ///< The phase component of dispersive anisoplanatism
-          dispAmplitude  ///< The amplitude component of dispersive anisoplanatism
-        };
-        
-   std::string compName( int cc );
+/// Enum to specify which component of the PSD to calcualte
+enum
+{
+    phase,        ///< The phase or OPD
+    amplitude,    ///< The amplitude
+    dispPhase,    ///< The phase component of dispersive anisoplanatism
+    dispAmplitude ///< The amplitude component of dispersive anisoplanatism
+};
 
-   int compNum( const std::string & name);
-}
-   
-///Manage calculations using the von Karman spatial power spectrum.
+std::string compName( int cc );
+
+int compNum( const std::string &name );
+} // namespace PSDComponent
+
+/// Manage calculations using the von Karman spatial power spectrum.
 /** This very general PSD has the form
-  * 
-  * \f[ 
-    \mathcal{P}(k) = \frac{\beta}{ ( k^2 + k_0^2) ^{\alpha/2}} 
+  *
+  * \f[
+    \mathcal{P}(k) = \frac{\beta}{ ( k^2 + k_0^2) ^{\alpha/2}}
     \f]
-  *  
-  * Where \f$ k \f$ is spatial frequency, \f$ \beta \f$ is a normalization constant, and outer scale \f$ L_0 \f$ is included via \f$ k_0 = 1/L_0 \f$.
+  *
+  * Where \f$ k \f$ is spatial frequency, \f$ \beta \f$ is a normalization constant, and outer scale \f$ L_0 \f$ is
+  included via \f$ k_0 = 1/L_0 \f$.
   * For \f$ L_0 \rightarrow \infty \f$ this becomes a simple power law with index \f$ \alpha \f$.
-  * 
+  *
   * For atmospheric turbulence \f$ \alpha = 11/3 \f$ and the normalization is
   \f[
   \beta = \frac{\mathcal{A}_p}{r_0^{5/3}}
@@ -75,329 +78,335 @@ namespace PSDComponent
   * where \f$ A_p  = 0.0218...\f$  (see \ref mx::AO::constants::a_PSD ).
   *
   * \ingroup mxAOAnalytic
-  */ 
-template<typename realT>
+  */
+template <typename realT>
 struct vonKarmanSpectrum
 {
-   
-protected:
-   bool m_subPiston {true};///< flag controlling whether piston is subtracted from the PSD.  Default is true.
-   bool m_subTipTilt {false}; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
-   
-   bool m_scintillation {false}; ///< flag controlling whether or not scintillation is included
-   int m_component {PSDComponent::phase}; ///< If m_scintillation is true, this controls whether phase (0), amplitude (1), or dispersive contrast (2) is returned.
-   
-   realT m_D {1.0}; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
 
-   const char * m_id = "von Karman";
-   
-   //realT m_alpha {eleven_thirds<realT>()}; ///< The power-law index, 11/3 for Kolmogorov
-   
-public:   
-   
-   ///Default Constructor
-   vonKarmanSpectrum();
-   
-   ///Constructor specifying the parameters
-   /**
-     */ 
-   vonKarmanSpectrum( bool subP, ///< [in] is the value of m_subPiston.
-                      bool subT, ///< [in] is the value of m_subTipTilt.
-                      realT D ///< [in] is the value of m_D.
-                    );
-   
-   ///Get the value of m_subPiston
-   /**
-     * \returns m_subPiston
-     */ 
-   bool subPiston();
-   
-   ///Set the value of m_subPiston
-   /**
-     */ 
-   void subPiston( bool sp /**< [in] is the new value of m_subPiston */);
-   
-   ///Get the value of m_subTipTilt
-   /**
-     * \returns the value of m_subTipTilt.
-     */ 
-   bool subTipTilt();
-   
-   ///Set the value of the m_subTipTilt flag.
-   /**
-     */ 
-   void subTipTilt(bool st /**< [in] the new value of m_subTipTilt.*/);
-   
-   ///Get the value of m_scintillation
-   /**
-     * \returns m_scintillation
-     */ 
-   bool scintillation();
-   
-   ///Set the value of m_scintillation
-   /**
-     */ 
-   void scintillation(bool sc /**< [in] the new value of m_scintillation*/);
-   
-   ///Get the value of m_component
-   /**
-     * \returns m_component
-     */ 
-   int component();
-   
-   ///Set the value of m_component
-   /**
-     */ 
-   int component( int cc /**< [in] the new value of m_component */);
-   
-   ///Get the value of the diameter m_D.
-   /**
-     * \returns the current value of m_D, the diameter in m.
-     */ 
-   realT D();
-   
-   ///Set the aperture diameter
-   /**
+  protected:
+    bool m_subPiston{ true }; ///< flag controlling whether piston is subtracted from the PSD.  Default is true.
+    bool m_subTipTilt{
+        false }; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
+
+    bool m_scintillation{ false };          ///< flag controlling whether or not scintillation is included
+    int m_component{ PSDComponent::phase }; ///< If m_scintillation is true, this controls whether phase (0), amplitude
+                                            ///< (1), or dispersive contrast (2) is returned.
+
+    realT m_D{ 1.0 }; ///< Diameter used for piston and tip/tilt subtraction, in m. Default is 1 m.
+
+    const char *m_id = "von Karman";
+
+    // realT m_alpha {eleven_thirds<realT>()}; ///< The power-law index, 11/3 for Kolmogorov
+
+  public:
+    /// Default Constructor
+    vonKarmanSpectrum();
+
+    /// Constructor specifying the parameters
+    /**
      */
-   void D(realT nd /**< [in] the new diameter in m */);
-      
-   ///Get the value of the PSD at spatial frequency k and a zenith distance.
-   /**
+    vonKarmanSpectrum( bool subP, ///< [in] is the value of m_subPiston.
+                       bool subT, ///< [in] is the value of m_subTipTilt.
+                       realT D    ///< [in] is the value of m_D.
+    );
+
+    /// Get the value of m_subPiston
+    /**
+     * \returns m_subPiston
+     */
+    bool subPiston();
+
+    /// Set the value of m_subPiston
+    /**
+     */
+    void subPiston( bool sp /**< [in] is the new value of m_subPiston */ );
+
+    /// Get the value of m_subTipTilt
+    /**
+     * \returns the value of m_subTipTilt.
+     */
+    bool subTipTilt();
+
+    /// Set the value of the m_subTipTilt flag.
+    /**
+     */
+    void subTipTilt( bool st /**< [in] the new value of m_subTipTilt.*/ );
+
+    /// Get the value of m_scintillation
+    /**
+     * \returns m_scintillation
+     */
+    bool scintillation();
+
+    /// Set the value of m_scintillation
+    /**
+     */
+    void scintillation( bool sc /**< [in] the new value of m_scintillation*/ );
+
+    /// Get the value of m_component
+    /**
+     * \returns m_component
+     */
+    int component();
+
+    /// Set the value of m_component
+    /**
+     */
+    int component( int cc /**< [in] the new value of m_component */ );
+
+    /// Get the value of the diameter m_D.
+    /**
+     * \returns the current value of m_D, the diameter in m.
+     */
+    realT D();
+
+    /// Set the aperture diameter
+    /**
+     */
+    void D( realT nd /**< [in] the new diameter in m */ );
+
+    /// Get the value of the PSD at spatial frequency k and a zenith distance.
+    /**
      * \returns the von Karman PSD at the specified spatial frequency.
      * \returns -1 if an error occurs.
-     * 
-     */ 
-   template< class psdParamsT >
-   realT operator()( psdParamsT & par, ///< [in] gives the PSD parameters.
-                     size_t layer_i,
-                     realT k,          ///< [in] is the spatial frequency in m^-1.
-                     realT sec_zeta    ///< [in] is the secant of the zenith distance.
-                   );
-   
-   /// Get the value of the PSD at spatial frequency k and wavelength lambda, and a zenith distance, with a WFS at a different wavelength
-   /**
-     * 
+     *
+     */
+    template <class psdParamsT>
+    realT operator()( psdParamsT &par, ///< [in] gives the PSD parameters.
+                      size_t layer_i,
+                      realT k,       ///< [in] is the spatial frequency in m^-1.
+                      realT sec_zeta ///< [in] is the secant of the zenith distance.
+    );
+
+    /// Get the value of the PSD at spatial frequency k and wavelength lambda, and a zenith distance, with a WFS at a
+    /// different wavelength
+    /**
+     *
      * \returns the von Karman PSD at the specified spatial frequency for the specified wavelength.
      * \returns -1 if an error occurs.
-     */    
-   template< class psdParamsT >
-   realT operator()( psdParamsT & par, ///< [in] gives the PSD parameters.
-                     size_t layer_i,
-                     realT k,          ///< [in] is the spatial frequency in m^-1.
-                     realT lambda,     ///< [in] is the observation wavelength in m
-                     realT lambda_wfs, ///< [in] is the wavefront measurement wavelength in m
-                     realT secZeta     ///< [in] is the secant of the zenith distance
-                   );
-   
-   /// Get the fitting error for an actuator spacing d.
-   /**
+     */
+    template <class psdParamsT>
+    realT operator()( psdParamsT &par, ///< [in] gives the PSD parameters.
+                      size_t layer_i,
+                      realT k,          ///< [in] is the spatial frequency in m^-1.
+                      realT lambda,     ///< [in] is the observation wavelength in m
+                      realT lambda_wfs, ///< [in] is the wavefront measurement wavelength in m
+                      realT secZeta     ///< [in] is the secant of the zenith distance
+    );
+
+    /// Get the fitting error for an actuator spacing d.
+    /**
      * \todo generatlize for different alpha and beta
-     * 
+     *
      * \param atm gives the atmosphere parameters r_0 and L_0
      * \param d is the actuator spacing in m
-     */    
-   //realT fittingError(aoAtmosphere<realT> &atm, realT d);
-
-   template<typename iosT>
-   iosT & dumpPSD(iosT & ios);
-
-   /// Setup the configurator to configure this class
-   /**
-     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]" 
      */
-   void setupConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+    // realT fittingError(aoAtmosphere<realT> &atm, realT d);
 
-   /// Load the configuration of this class from a configurator
-   /**
+    template <typename iosT>
+    iosT &dumpPSD( iosT &ios );
+
+    /// Setup the configurator to configure this class
+    /**
      * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
      */
-   void loadConfig( app::appConfigurator & config /**< [in] the app::configurator object*/);
+    void setupConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
+    /// Load the configuration of this class from a configurator
+    /**
+     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+     */
+    void loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 };
 
-template< typename realT>
+template <typename realT>
 vonKarmanSpectrum<realT>::vonKarmanSpectrum()
 {
 }
 
-template< typename realT>
+template <typename realT>
 vonKarmanSpectrum<realT>::vonKarmanSpectrum( bool subP, // [in] is the value of m_subPiston.
                                              bool subT, // [in] is the value of m_subTipTilt.
                                              realT D    // [in] is the diameter
-                                           )
+)
 {
-   m_subPiston = subP;
-   m_subTipTilt = subT;
-   m_D = D;
+    m_subPiston = subP;
+    m_subTipTilt = subT;
+    m_D = D;
 }
 
-template< typename realT>
+template <typename realT>
 bool vonKarmanSpectrum<realT>::subPiston()
 {
-   return m_subPiston;
+    return m_subPiston;
 }
 
-
-template< typename realT>
-void vonKarmanSpectrum<realT>::subPiston( bool sp /* [in] is the new value of m_subPiston */)
+template <typename realT>
+void vonKarmanSpectrum<realT>::subPiston( bool sp /* [in] is the new value of m_subPiston */ )
 {
-   m_subPiston = sp;
+    m_subPiston = sp;
 }
 
-template< typename realT>
+template <typename realT>
 bool vonKarmanSpectrum<realT>::subTipTilt()
 {
-   return m_subTipTilt;
+    return m_subTipTilt;
 }
 
-template< typename realT>
-void vonKarmanSpectrum<realT>::subTipTilt(bool st /* [in] the new value of m_subTipTilt */)
+template <typename realT>
+void vonKarmanSpectrum<realT>::subTipTilt( bool st /* [in] the new value of m_subTipTilt */ )
 {
-   m_subTipTilt = st;
+    m_subTipTilt = st;
 }
 
-template< typename realT>
+template <typename realT>
 bool vonKarmanSpectrum<realT>::scintillation()
 {
-   return m_scintillation;
+    return m_scintillation;
 }
 
-template< typename realT>
-void vonKarmanSpectrum<realT>::scintillation(bool sc /* [in] the new value of m_scintillation */)
+template <typename realT>
+void vonKarmanSpectrum<realT>::scintillation( bool sc /* [in] the new value of m_scintillation */ )
 {
-   m_scintillation = sc;
+    m_scintillation = sc;
 }
 
-template< typename realT>
+template <typename realT>
 int vonKarmanSpectrum<realT>::component()
 {
-   return m_component;
+    return m_component;
 }
 
-template< typename realT>
-int vonKarmanSpectrum<realT>::component( int cc /* [in] the new value of m_component */)
+template <typename realT>
+int vonKarmanSpectrum<realT>::component( int cc /* [in] the new value of m_component */ )
 {
-   if( cc != PSDComponent::phase && cc != PSDComponent::amplitude && cc != PSDComponent::dispPhase && cc != PSDComponent::dispAmplitude )
-   {
-      mxError("vonKarmanSpectrum::component", MXE_INVALIDARG, "Unknown component");
-      return -1;
-   }
-   
-   m_component = cc;
-   return 0;         
+    if( cc != PSDComponent::phase && cc != PSDComponent::amplitude && cc != PSDComponent::dispPhase &&
+        cc != PSDComponent::dispAmplitude )
+    {
+        mxError( "vonKarmanSpectrum::component", MXE_INVALIDARG, "Unknown component" );
+        return -1;
+    }
+
+    m_component = cc;
+    return 0;
 }
 
-template< typename realT>
+template <typename realT>
 realT vonKarmanSpectrum<realT>::D()
 {
-   return m_D;
+    return m_D;
 }
 
-template< typename realT>
-void vonKarmanSpectrum<realT>::D(realT nd /**< [in] the new diameter in m */)
+template <typename realT>
+void vonKarmanSpectrum<realT>::D( realT nd /**< [in] the new diameter in m */ )
 {
-   m_D = nd;
+    m_D = nd;
 }
 
-template< typename realT>
-template< class psdParamsT >
-realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, //< [in] gives the PSD parameters.
+template <typename realT>
+template <class psdParamsT>
+realT vonKarmanSpectrum<realT>::operator()( psdParamsT &par, //< [in] gives the PSD parameters.
                                             size_t layer_i,
-                                            realT k, // [in] is the spatial frequency in m^-1.
+                                            realT k,       // [in] is the spatial frequency in m^-1.
                                             realT sec_zeta // [in] is the secant of the zenith distance.
-                                          )
+)
 {
-   realT k02;
-   
-   ///\todo this needs to handle layers with different L_0
-   if(par.L_0(layer_i) > 0)
-   {
-      k02 = (1)/(par.L_0(layer_i)*par.L_0(layer_i));
-   }
-   else k02 = 0;
+    realT k02;
 
-   if(k02 == 0 && k == 0)
-   {
-      return 0;
-   }
-   
-   realT Ppiston, Ptiptilt;
+    ///\todo this needs to handle layers with different L_0
+    if( par.L_0( layer_i ) > 0 )
+    {
+        k02 = ( 1 ) / ( par.L_0( layer_i ) * par.L_0( layer_i ) );
+    }
+    else
+        k02 = 0;
 
-   if( (m_subPiston || m_subTipTilt) )
-   {
-      if (m_D == 0)
-      {
-         mxError("aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction.");
-         return -1;
-      }
-      if(m_subPiston)
-      {
-         Ppiston = pow(2*math::func::jinc(math::pi<realT>()*k*m_D), 2);
-      }
-      else Ppiston = 0;
+    if( k02 == 0 && k == 0 )
+    {
+        return 0;
+    }
 
-      if(m_subTipTilt)
-      {
-         Ptiptilt = pow(4*math::func::jincN(2, math::pi<realT>()*k*m_D), 2);
-      }
-      else Ptiptilt = 0;
-   }
-   else
-   {
-      Ppiston = 0;
-      Ptiptilt = 0;
-   }
-   
-   return (par.beta(layer_i)*pow(k*k+k02, -1*par.alpha(layer_i)/2) + par.beta_0(layer_i) ) * (1.0-Ppiston - Ptiptilt)*sec_zeta;
+    realT Ppiston, Ptiptilt;
+
+    if( ( m_subPiston || m_subTipTilt ) )
+    {
+        if( m_D == 0 )
+        {
+            mxError( "aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction." );
+            return -1;
+        }
+        if( m_subPiston )
+        {
+            Ppiston = pow( 2 * math::func::jinc( math::pi<realT>() * k * m_D ), 2 );
+        }
+        else
+            Ppiston = 0;
+
+        if( m_subTipTilt )
+        {
+            Ptiptilt = pow( 4 * math::func::jincN( 2, math::pi<realT>() * k * m_D ), 2 );
+        }
+        else
+            Ptiptilt = 0;
+    }
+    else
+    {
+        Ppiston = 0;
+        Ptiptilt = 0;
+    }
+
+    return ( par.beta( layer_i ) * pow( k * k + k02, -1 * par.alpha( layer_i ) / 2 ) + par.beta_0( layer_i ) ) *
+           ( 1.0 - Ppiston - Ptiptilt ) * sec_zeta;
 }
 
-template< typename realT>
-template< class psdParamsT >
-realT vonKarmanSpectrum<realT>::operator()( psdParamsT & par, // [in] gives the PSD parameters.
-                                            size_t layer_i,
-                                            realT k, // [in] is the spatial frequency in m^-1.
-                                            realT lambda, // [in] is the observation wavelength in m.  Not used if par.nonKolmogorov==true
-                                            realT lambda_wfs, // [in] is the wavefront measurement wavelength in m. Only used if m_scintillation==true.
-                                            realT secZeta // [in] is the secant of the zenith distance.
-                                          )
+template <typename realT>
+template <class psdParamsT>
+realT vonKarmanSpectrum<realT>::operator()(
+    psdParamsT &par, // [in] gives the PSD parameters.
+    size_t layer_i,
+    realT k,          // [in] is the spatial frequency in m^-1.
+    realT lambda,     // [in] is the observation wavelength in m.  Not used if par.nonKolmogorov==true
+    realT lambda_wfs, // [in] is the wavefront measurement wavelength in m. Only used if m_scintillation==true.
+    realT secZeta     // [in] is the secant of the zenith distance.
+)
 {
-   realT psd = operator()(par, layer_i, k, secZeta);
-   
-   if( par.nonKolmogorov() == false ) 
-   {
-      psd *= pow( par.lam_0()/lambda, 2);
-   }
+    realT psd = operator()( par, layer_i, k, secZeta );
 
-   if(psd < 0) return -1;
-   
-   if(m_scintillation)
-   {
-      if(m_component == PSDComponent::phase)
-      {
-         psd *= (par.X(k, lambda, secZeta));
-      }
-      else if (m_component == PSDComponent::amplitude)
-      {
-         psd *= (par.Y(k, lambda, secZeta));
-      }
-      else if (m_component == PSDComponent::dispPhase)
-      {
-         psd *= (par.X_Z(k, lambda, lambda_wfs, secZeta));
-      }
-      else if (m_component == PSDComponent::dispAmplitude)
-      {
-         mxError("vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented");
-         return 0;
-      }
-      else
-      {
-         mxError("vonKarmanSpectrum::operator()", MXE_INVALIDARG, "Invalid component specified");
-         return 0;
-      }
-   }
-   
-   return psd;
-   
+    if( par.nonKolmogorov() == false )
+    {
+        psd *= pow( par.lam_0() / lambda, 2 );
+    }
+
+    if( psd < 0 )
+        return -1;
+
+    if( m_scintillation )
+    {
+        if( m_component == PSDComponent::phase )
+        {
+            psd *= ( par.X( k, lambda, secZeta ) );
+        }
+        else if( m_component == PSDComponent::amplitude )
+        {
+            psd *= ( par.Y( k, lambda, secZeta ) );
+        }
+        else if( m_component == PSDComponent::dispPhase )
+        {
+            psd *= ( par.X_Z( k, lambda, lambda_wfs, secZeta ) );
+        }
+        else if( m_component == PSDComponent::dispAmplitude )
+        {
+            mxError( "vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented" );
+            return 0;
+        }
+        else
+        {
+            mxError( "vonKarmanSpectrum::operator()", MXE_INVALIDARG, "Invalid component specified" );
+            return 0;
+        }
+    }
+
+    return psd;
 }
 
 /*template< typename realT>
@@ -410,67 +419,72 @@ realT vonKarmanSpectrum<realT>::fittingError(aoAtmosphere<realT> &atm, realT d)
    }
    else k0 = 0;
 
-   return (math::pi<realT>() * math::six_fifths<realT>())* constants::a_PSD<realT>()/ pow(atm.r_0(), math::five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, math::five_sixths<realT>()));
+   return (math::pi<realT>() * math::six_fifths<realT>())* constants::a_PSD<realT>()/ pow(atm.r_0(),
+math::five_thirds<realT>()) * (1./pow( pow(0.5/d,2) + k0, math::five_sixths<realT>()));
 }*/
 
-template< typename realT>
-template<typename iosT>
-iosT & vonKarmanSpectrum<realT>::dumpPSD(iosT & ios)
+template <typename realT>
+template <typename iosT>
+iosT &vonKarmanSpectrum<realT>::dumpPSD( iosT &ios )
 {
-   ios << "# PSD Parameters:" << '\n';
-   ios << "#    ID = " << m_id << '\n';
-   ios << "#    D = " << m_D  << '\n';
-   ios << "#    subPiston = " << std::boolalpha << m_subPiston << '\n';
-   ios << "#    subTipTilt = " << std::boolalpha << m_subTipTilt  << '\n';
-   ios << "#    Scintillation = " << std::boolalpha << m_scintillation << '\n';
-   ios << "#    Component = " << PSDComponent::compName(m_component) << '\n';
-   return ios;
-}
-   
-template<typename realT>
-void vonKarmanSpectrum<realT>::setupConfig( app::appConfigurator & config )
-{
-   using namespace mx::app;
-
-   config.add("psd.D"            , "", "psd.D"            , argType::Required, "psd", "D",             false, "real"        , "Aperture diameter.  Used for piston and tip/tilt subtraction.");
-   config.add("psd.subPiston"    , "", "psd.subPiston"    , argType::Required, "psd", "subPiston",     false, "real"        , "");
-   config.add("psd.subTipTilt"   , "", "psd.subTipTilt"   , argType::Required, "psd", "subTipTilt",    false, "real"        , "");
-   config.add("psd.scintillation", "", "psd.scintillation", argType::Required, "psd", "scintillation", false, "real"        , "");
-   config.add("psd.component"    , "", "psd.component"    , argType::Required, "psd", "component",     false, "real"        , "");
+    ios << "# PSD Parameters:" << '\n';
+    ios << "#    ID = " << m_id << '\n';
+    ios << "#    D = " << m_D << '\n';
+    ios << "#    subPiston = " << std::boolalpha << m_subPiston << '\n';
+    ios << "#    subTipTilt = " << std::boolalpha << m_subTipTilt << '\n';
+    ios << "#    Scintillation = " << std::boolalpha << m_scintillation << '\n';
+    ios << "#    Component = " << PSDComponent::compName( m_component ) << '\n';
+    return ios;
 }
 
-template<typename realT>
-void vonKarmanSpectrum<realT>::loadConfig( app::appConfigurator & config )
+template <typename realT>
+void vonKarmanSpectrum<realT>::setupConfig( app::appConfigurator &config )
 {
-   //Here "has side effecs" means that the set function does more than simply copy the value.
-   
-   config(m_D, "psd.D");
-   config(m_subPiston, "psd.subPiston");
-   config(m_subTipTilt, "psd.subTipTilt");
-   config(m_scintillation, "psd.scintillation");
-   
-   std::string cn = PSDComponent::compName(m_component);
-   config(cn, "psd.component");
-   component(PSDComponent::compNum(cn));
+    using namespace mx::app;
+
+    config.add( "psd.D",
+                "",
+                "psd.D",
+                argType::Required,
+                "psd",
+                "D",
+                false,
+                "real",
+                "Aperture diameter.  Used for piston and tip/tilt subtraction." );
+    config.add( "psd.subPiston", "", "psd.subPiston", argType::Required, "psd", "subPiston", false, "real", "" );
+    config.add( "psd.subTipTilt", "", "psd.subTipTilt", argType::Required, "psd", "subTipTilt", false, "real", "" );
+    config.add(
+        "psd.scintillation", "", "psd.scintillation", argType::Required, "psd", "scintillation", false, "real", "" );
+    config.add( "psd.component", "", "psd.component", argType::Required, "psd", "component", false, "real", "" );
 }
 
+template <typename realT>
+void vonKarmanSpectrum<realT>::loadConfig( app::appConfigurator &config )
+{
+    // Here "has side effecs" means that the set function does more than simply copy the value.
 
-extern template
-struct vonKarmanSpectrum<float>;
+    config( m_D, "psd.D" );
+    config( m_subPiston, "psd.subPiston" );
+    config( m_subTipTilt, "psd.subTipTilt" );
+    config( m_scintillation, "psd.scintillation" );
 
-extern template
-struct vonKarmanSpectrum<double>;
+    std::string cn = PSDComponent::compName( m_component );
+    config( cn, "psd.component" );
+    component( PSDComponent::compNum( cn ) );
+}
 
-extern template
-struct vonKarmanSpectrum<long double>;
+extern template struct vonKarmanSpectrum<float>;
+
+extern template struct vonKarmanSpectrum<double>;
+
+extern template struct vonKarmanSpectrum<long double>;
 
 #ifdef HASQUAD
-extern template
-struct vonKarmanSpectrum<__float128>;
+extern template struct vonKarmanSpectrum<__float128>;
 #endif
 
-} //namespace analysis
-} //namespace AO
-} //namespace mx
+} // namespace analysis
+} // namespace AO
+} // namespace mx
 
-#endif //aoPSDs_hpp
+#endif // aoPSDs_hpp

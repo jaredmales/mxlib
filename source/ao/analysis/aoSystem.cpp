@@ -1,9 +1,9 @@
 /** \file aoSystem.cpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Implementation of an analytical AO system
-  * \ingroup mxAO_files
-  * 
-  */
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Implementation of an analytical AO system
+ * \ingroup mxAO_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2021 Jared R. Males (jaredmales@gmail.com)
@@ -30,24 +30,19 @@ namespace mx
 {
 namespace AO
 {
-namespace analysis 
+namespace analysis
 {
-   
-template
-class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>; 
 
-template
-class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>; 
+template class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>;
 
-template
-class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>; 
+template class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>;
+
+template class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>;
 
 #ifdef HASQUAD
-template
-class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>; 
+template class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>;
 #endif
 
-} //namespace analysis
-} //namespace AO
-} //namespace mx
-
+} // namespace analysis
+} // namespace AO
+} // namespace mx

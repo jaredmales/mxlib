@@ -13,4 +13,6 @@ AlignTrailingComments: true
 BinPackArguments: false
 BinPackParameters: false
 
+#This will screw with forwards for template instantiation if true
+SortIncludes: false
 

@@ -1,9 +1,9 @@
 /** \file imageXCorr.hpp
-  * \brief CRTP base class to register images.
-  * \ingroup image_processing_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief CRTP base class to register images.
+ * \ingroup image_processing_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2022 Jared R. Males (jaredmales@gmail.com)
@@ -27,16 +27,20 @@
 #ifndef imageXCorr_hpp
 #define imageXCorr_hpp
 
-
 namespace mx
 {
 namespace improc
 {
-   
-enum class xcorrPeakMethod{ centerOfLight, gaussFit, interpPeak, none };
 
-   
-} //improc
-} //mx 
+enum class xcorrPeakMethod
+{
+    centerOfLight,
+    gaussFit,
+    interpPeak,
+    none
+};
 
-#endif //imageXCorr_hpp
+} // namespace improc
+} // namespace mx
+
+#endif // imageXCorr_hpp

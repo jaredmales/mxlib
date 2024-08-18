@@ -1,9 +1,9 @@
 /** \file factorial.hpp
-  * \brief Declares and defines the factorial function.
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Declares and defines the factorial function.
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -39,38 +39,40 @@ namespace math
 {
 namespace func
 {
-   
+
 /// The factorial function.
 /**
-  * \ingroup functions
-  */ 
-template<typename T>
-T factorial( T x  /**< [in] the argument */)
+ * \ingroup functions
+ */
+template <typename T>
+T factorial( T x /**< [in] the argument */ )
 {
 #ifdef MX_INCLUDE_BOOST
-   return boost::math::factorial<T>(x);
+    return boost::math::factorial<T>( x );
 #else
-   static_assert(std::is_fundamental<T>::value || !std::is_fundamental<T>::value, "factorial<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
-   return 0;
+    static_assert(
+        std::is_fundamental<T>::value || !std::is_fundamental<T>::value,
+        "factorial<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost." );
+    return 0;
 #endif
 }
 
-template<>
-float factorial<float>( float x);
+template <>
+float factorial<float>( float x );
 
-template<>
-double factorial<double>( double x);
+template <>
+double factorial<double>( double x );
 
-template<>
-long double factorial<long double>( long double x);
+template <>
+long double factorial<long double>( long double x );
 
 #ifdef HASQUAD
-template<>
-__float128 factorial<__float128>( __float128 x);
+template <>
+__float128 factorial<__float128>( __float128 x );
 #endif
 
-}
-}
-}
+} // namespace func
+} // namespace math
+} // namespace mx
 
-#endif //mx_factorial_hpp
+#endif // mx_factorial_hpp

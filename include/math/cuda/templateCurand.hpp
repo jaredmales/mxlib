@@ -1,9 +1,9 @@
 /** \file templateCurand.hpp
-  * \author Jared R. Males
-  * \brief A template interface to curand
-  * \ingroup cuda_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief A template interface to curand
+ * \ingroup cuda_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2019,2020 Jared R. Males (jaredmales@gmail.com)
@@ -27,43 +27,27 @@
 #ifndef math_templateCurand_hpp
 #define math_templateCurand_hpp
 
-
 #include <cuda_runtime.h>
 #include <curand.h>
-
 
 namespace mx
 {
 namespace cuda
 {
 
+template <typename realT>
+curandStatus_t
+curandGenerateNormal( curandGenerator_t generator, realT *outputPtr, size_t n, realT mean, realT stddev );
 
-template<typename realT>
-curandStatus_t curandGenerateNormal( curandGenerator_t generator, 
-                                     realT *outputPtr, 
-                                     size_t n, 
-                                     realT mean, 
-                                     realT stddev
-                                   );
+template <>
+curandStatus_t
+curandGenerateNormal<float>( curandGenerator_t generator, float *outputPtr, size_t n, float mean, float stddev );
 
-template<>
-curandStatus_t curandGenerateNormal<float>( curandGenerator_t generator, 
-                                            float *outputPtr, 
-                                            size_t n, 
-                                            float mean, 
-                                            float stddev
-                                          );
+template <>
+curandStatus_t
+curandGenerateNormal<double>( curandGenerator_t generator, double *outputPtr, size_t n, double mean, double stddev );
 
-template<>
-curandStatus_t curandGenerateNormal<double>( curandGenerator_t generator, 
-                                             double *outputPtr, 
-                                             size_t n, 
-                                             double mean, 
-                                             double stddev
-                                           );
+} // namespace cuda
+} // namespace mx
 
-
-}//namespace cuda 
-}//namespace mx
-
-#endif //math_templateCurand_hpp
+#endif // math_templateCurand_hpp

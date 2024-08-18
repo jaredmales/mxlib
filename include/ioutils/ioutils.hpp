@@ -1,9 +1,9 @@
 /** \file ioutils.hpp
-  * \author Jared R. Males
-  * \brief Library nclude for the ioutils module
-  * \ingroup image_processing_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Library nclude for the ioutils module
+ * \ingroup image_processing_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2023 Jared R. Males (jaredmales@gmail.com)
@@ -40,4 +40,4 @@
 #include "fits/fitsHeader.hpp"
 #include "fits/fitsUtils.hpp"
 
-#endif //ioutils_hpp
+#endif // ioutils_hpp

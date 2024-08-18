@@ -1,9 +1,9 @@
 /** \file templateLapack.hpp
-  * \brief Declares and defines templatized wrappers for the Lapack library
-  * \ingroup gen_math_files
-  * \author Jared R. Males (jaredmales@gmail.com)
-  *
-  */
+ * \brief Declares and defines templatized wrappers for the Lapack library
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
@@ -29,89 +29,84 @@
 
 #include <complex>
 
-
-//If using MKL:
+// If using MKL:
 extern "C"
 {
-#if defined(MXLIB_MKL)
+#if defined( MXLIB_MKL )
 
-   #define MKL_Complex8 float _Complex
-   #define MKL_Complex16 double _Complex
+#define MKL_Complex8 float _Complex
+#define MKL_Complex16 double _Complex
 
-   #include <mkl.h>
+#include <mkl.h>
 
 #endif
 }
 
-//MKL can use 64-bit integer types, standard BLAS and LAPACK use int
-//MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
+// MKL can use 64-bit integer types, standard BLAS and LAPACK use int
+// MKL declares some pointer args const.  Compiling with ATLAS doesn't seem to care, but just to be safe...
 #ifdef MXLIB_MKL
-   typedef MKL_INT MXLAPACK_INT;
-   #define MKL_CONST_PTR const
+typedef MKL_INT MXLAPACK_INT;
+#define MKL_CONST_PTR const
 #else
-   #ifndef MXLAPACK_INT
-      typedef int MXLAPACK_INT;
-   #endif
-
-   #define MKL_CONST_PTR
+#ifndef MXLAPACK_INT
+typedef int MXLAPACK_INT;
 #endif
 
+#define MKL_CONST_PTR
+#endif
 
-//lapack.h probably has a typedef for lapack_int that we need to synchronize
+// lapack.h probably has a typedef for lapack_int that we need to synchronize
 #ifndef MXNODEF_LAPACK_INT
-   #ifndef lapack_int
-      #define lapack_int MXLAPACK_INT
-   #endif
+#ifndef lapack_int
+#define lapack_int MXLAPACK_INT
+#endif
 #endif
 
-//Now if not using MKL, we bring in lapack
+// Now if not using MKL, we bring in lapack
 extern "C"
 {
 #ifndef MXLIB_MKL
 
-   #include <lapacke.h>
+#include <lapacke.h>
 
 #endif
 }
-
 
 namespace mx
 {
 namespace math
 {
 
-
-   
-/// Determine machine parameters. 
+/// Determine machine parameters.
 /** Wrapper for Lapack xLAMCH
-  *
-  * See more details at http://www.netlib.org/lapack/lapack-3.1.1/html/slamch.f.html.
-  * 
-  * * \tparam dataT is the data type of the arrays, and determines which underlying Lapack routine is called.
-  *
-  * \param[in] CMACH Specifies the value to be returned by SLAMCH: <pre>
-  *     = 'E' or 'e',   returns eps, the relative machine precision  
-  *     = 'S' or 's ,   returns sfmin, the safe minimum, such that 1/sfmin does not overflow  
-  *     = 'B' or 'b',   returns base, the base of the machine 
-  *     = 'P' or 'p',   returns eps*base  
-  *     = 'N' or 'n',   returns t, the number of (base) digits in the mantissa  
-  *     = 'R' or 'r',   returns rnd, 1.0 when rounding occurs in addition, 0.0 otherwise  
-  *     = 'M' or 'm',   returns emin, the minimum exponent before (gradual) underflow  
-  *     = 'U' or 'u',   returns rmin, the underflow threshold - base^(emin-1)  
-  *     = 'L' or 'l',   returns emax, the largest exponent before overflow  
-  *     = 'O' or 'o',   returns rmax, the overflow threshold  - (base^emax)*(1-eps)  
-  * </pre>
-  * 
-  * \returns the value of the specified machine parameters for the specified precision
-  * 
-  * \ingroup template_lapack
-  */
-template<typename dataT>
-dataT lamch (char CMACH)
+ *
+ * See more details at http://www.netlib.org/lapack/lapack-3.1.1/html/slamch.f.html.
+ *
+ * * \tparam dataT is the data type of the arrays, and determines which underlying Lapack routine is called.
+ *
+ * \param[in] CMACH Specifies the value to be returned by SLAMCH: <pre>
+ *     = 'E' or 'e',   returns eps, the relative machine precision
+ *     = 'S' or 's ,   returns sfmin, the safe minimum, such that 1/sfmin does not overflow
+ *     = 'B' or 'b',   returns base, the base of the machine
+ *     = 'P' or 'p',   returns eps*base
+ *     = 'N' or 'n',   returns t, the number of (base) digits in the mantissa
+ *     = 'R' or 'r',   returns rnd, 1.0 when rounding occurs in addition, 0.0 otherwise
+ *     = 'M' or 'm',   returns emin, the minimum exponent before (gradual) underflow
+ *     = 'U' or 'u',   returns rmin, the underflow threshold - base^(emin-1)
+ *     = 'L' or 'l',   returns emax, the largest exponent before overflow
+ *     = 'O' or 'o',   returns rmax, the overflow threshold  - (base^emax)*(1-eps)
+ * </pre>
+ *
+ * \returns the value of the specified machine parameters for the specified precision
+ *
+ * \ingroup template_lapack
+ */
+template <typename dataT>
+dataT lamch( char CMACH )
 {
-   return -1;
+    return -1;
 }
- 
+
 /*
 extern "C"
 {
@@ -120,144 +115,218 @@ extern "C"
 }*/
 
 // Float specialization of lamch, a wrapper for Lapack SLAMCH
-template<>
-float lamch<float>(char CMACH);
+template <>
+float lamch<float>( char CMACH );
 
 // Double specialization of lamch, a wrapper for Lapack DLAMCH
-template<>
-double lamch<double>(char CMACH);
+template <>
+double lamch<double>( char CMACH );
 
 /// Compute the Cholesky factorization of a real symmetric positive definite matrix A.
 /**
-  * The factorization has the form
-  *  A = U**T * U,  if UPLO = 'U', or
-  *  A = L  * L**T,  if UPLO = 'L',
-  * where U is an upper triangular matrix and L is lower triangular.
-  */ 
-template<typename dataT>
-MXLAPACK_INT potrf( char UPLO,          ///< [in] 'U' if upper triangle of A is stored, 'L' if lower triangle of A is stored.
-                    MXLAPACK_INT N,     ///< [in] The order of the matrix A,  \>= 0.
-                    dataT * A,          ///< [in.out] Symmetric matrix of dimension (LDA,N), stored as specified in UPLO.  Note that the opposite half is not referenced.
-                    MXLAPACK_INT LDA,   ///< [in] The leading dimension of A.
-                    MXLAPACK_INT & INFO ///< [out] 0 on success, \< 0 -INFO means the i-th argument had an illegal value, \>0 the leading minor of order INFO is not positive definite, and the factorization could not be completed.
-                  );
+ * The factorization has the form
+ *  A = U**T * U,  if UPLO = 'U', or
+ *  A = L  * L**T,  if UPLO = 'L',
+ * where U is an upper triangular matrix and L is lower triangular.
+ */
+template <typename dataT>
+MXLAPACK_INT potrf(
+    char UPLO,      ///< [in] 'U' if upper triangle of A is stored, 'L' if lower triangle of A is stored.
+    MXLAPACK_INT N, ///< [in] The order of the matrix A,  \>= 0.
+    dataT *A, ///< [in.out] Symmetric matrix of dimension (LDA,N), stored as specified in UPLO.  Note that the opposite
+              ///< half is not referenced.
+    MXLAPACK_INT LDA,  ///< [in] The leading dimension of A.
+    MXLAPACK_INT &INFO ///< [out] 0 on success, \< 0 -INFO means the i-th argument had an illegal value, \>0 the leading
+                       ///< minor of order INFO is not positive definite, and the factorization could not be completed.
+);
 
-template<>
-MXLAPACK_INT potrf<float> ( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+template <>
+MXLAPACK_INT potrf<float>( char UPLO, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
 
-template<>
-MXLAPACK_INT potrf<double> ( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+template <>
+MXLAPACK_INT potrf<double>( char UPLO, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
 
-template<>
-MXLAPACK_INT potrf<std::complex<float>> ( char UPLO, MXLAPACK_INT N, std::complex<float> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+template <>
+MXLAPACK_INT
+potrf<std::complex<float>>( char UPLO, MXLAPACK_INT N, std::complex<float> *A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
 
-template<>
-MXLAPACK_INT potrf<std::complex<double>> ( char UPLO, MXLAPACK_INT N, std::complex<double> * A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
+template <>
+MXLAPACK_INT
+potrf<std::complex<double>>( char UPLO, MXLAPACK_INT N, std::complex<double> *A, MXLAPACK_INT LDA, MXLAPACK_INT &INFO );
 
 /// Reduce a real symmetric matrix to real symmetric tridiagonal form by an orthogonal similarity transformation
 /** xSYTRD reduces a real symmetric matrix A to real symmetric
-  *  tridiagonal form T by an orthogonal similarity transformation:
-  * 
-  * \f$ Q^T * A * Q = T. \f$
-  * 
-  * For more see: http://www.netlib.org/lapack/lapack-3.1.1/html/ssytrd.f.html
-  * 
-  * \tparam dataT is the data type
-  *  
-  * \param UPLO 'U':  Upper triangle of A is stored, 'L':  Lower triangle of A is stored.
-  * \param N The order of the matrix A.  N >= 0.
-  * \param A  array, dimension (LDA,N)
-  * \param LDA The leading dimension of the array A.  LDA >= max(1,N).
-  * \param D (output) array, dimension (N), the diagonal elements of the tridiagonal matrix T:
-  * \param E (output) array, dimension (N-1), the off-diagonal elements of the tridiagonal matrix T:
-  * \param TAU (output) array, dimension (N-1), the scalar factors of the elementary reflectors (see Further Details).
-  * \param WORK (workspace/output) array, dimension (MAX(1,LWORK)) On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
-  * \param LWORK (input)  The dimension of the array WORK.  LWORK >= 1. For optimum performance LWORK >= N*NB, where NB is the optimal blocksize.
-  * \param INFO (output)  0:  successful exit < 0:  if INFO = -i, the i-th argument had an illegal value
-  * 
-  * \returns the value of INFO from the LAPACK routine
-  * 
-  * \ingroup template_lapack
-  */
-template<typename dataT>
-MXLAPACK_INT sytrd( char UPLO, 
-                    MXLAPACK_INT N, 
-                    dataT * A, 
-                    MXLAPACK_INT LDA, 
-                    dataT *D, 
-                    dataT *E, 
-                    dataT *TAU, 
-                    dataT *WORK, 
-                    MXLAPACK_INT LWORK, 
-                    MXLAPACK_INT INFO
-                  )
+ *  tridiagonal form T by an orthogonal similarity transformation:
+ *
+ * \f$ Q^T * A * Q = T. \f$
+ *
+ * For more see: http://www.netlib.org/lapack/lapack-3.1.1/html/ssytrd.f.html
+ *
+ * \tparam dataT is the data type
+ *
+ * \param UPLO 'U':  Upper triangle of A is stored, 'L':  Lower triangle of A is stored.
+ * \param N The order of the matrix A.  N >= 0.
+ * \param A  array, dimension (LDA,N)
+ * \param LDA The leading dimension of the array A.  LDA >= max(1,N).
+ * \param D (output) array, dimension (N), the diagonal elements of the tridiagonal matrix T:
+ * \param E (output) array, dimension (N-1), the off-diagonal elements of the tridiagonal matrix T:
+ * \param TAU (output) array, dimension (N-1), the scalar factors of the elementary reflectors (see Further Details).
+ * \param WORK (workspace/output) array, dimension (MAX(1,LWORK)) On exit, if INFO = 0, WORK(1) returns the optimal
+ * LWORK. \param LWORK (input)  The dimension of the array WORK.  LWORK >= 1. For optimum performance LWORK >= N*NB,
+ * where NB is the optimal blocksize. \param INFO (output)  0:  successful exit < 0:  if INFO = -i, the i-th argument
+ * had an illegal value
+ *
+ * \returns the value of INFO from the LAPACK routine
+ *
+ * \ingroup template_lapack
+ */
+template <typename dataT>
+MXLAPACK_INT sytrd( char UPLO,
+                    MXLAPACK_INT N,
+                    dataT *A,
+                    MXLAPACK_INT LDA,
+                    dataT *D,
+                    dataT *E,
+                    dataT *TAU,
+                    dataT *WORK,
+                    MXLAPACK_INT LWORK,
+                    MXLAPACK_INT INFO )
 {
-   return -1;
+    return -1;
 }
 
 /*
 //Declarations of the actual LAPACK functions
 extern "C"
 {
-   void ssytrd_( MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, float * A, MKL_CONST_PTR MXLAPACK_INT * LDA, float *D, float *E, float* TAU, float *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
-   void dsytrd_( MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, double * A, MKL_CONST_PTR MXLAPACK_INT * LDA, double *D, double *E, double* TAU, double *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
+   void ssytrd_( MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, float * A, MKL_CONST_PTR MXLAPACK_INT * LDA,
+float *D, float *E, float* TAU, float *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO ); void dsytrd_(
+MKL_CONST_PTR char * UPLO, MKL_CONST_PTR MXLAPACK_INT * N, double * A, MKL_CONST_PTR MXLAPACK_INT * LDA, double *D,
+double *E, double* TAU, double *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORK, MXLAPACK_INT *INFO );
 }*/
 
-template<>
-MXLAPACK_INT sytrd<float>( char UPLO, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float *D, float *E, float *TAU, float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO);
+template <>
+MXLAPACK_INT sytrd<float>( char UPLO,
+                           MXLAPACK_INT N,
+                           float *A,
+                           MXLAPACK_INT LDA,
+                           float *D,
+                           float *E,
+                           float *TAU,
+                           float *WORK,
+                           MXLAPACK_INT LWORK,
+                           MXLAPACK_INT INFO );
 
-template<>
-MXLAPACK_INT sytrd<double>( char UPLO, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, double *D, double *E, double *TAU, double *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT INFO);
+template <>
+MXLAPACK_INT sytrd<double>( char UPLO,
+                            MXLAPACK_INT N,
+                            double *A,
+                            MXLAPACK_INT LDA,
+                            double *D,
+                            double *E,
+                            double *TAU,
+                            double *WORK,
+                            MXLAPACK_INT LWORK,
+                            MXLAPACK_INT INFO );
 
 /// Compute selected eigenvalues and, optionally, eigenvectors of a real symmetric matrix
 /** xSYEVR computes selected eigenvalues and, optionally, eigenvectors
-  * of a real symmetric matrix A.  Eigenvalues and eigenvectors can be
-  * selected by specifying either a range of values or a range of
-  * indices for the desired eigenvalues.
-  * 
-  * See more details: http://www.netlib.org/lapack/lapack-3.1.1/html/ssyevr.f.html.
-  * 
-  * \ingroup template_lapack
-  */
-template<typename dataT>
-MXLAPACK_INT syevr (  char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, dataT *A, MXLAPACK_INT LDA, dataT VL, dataT VU, MXLAPACK_INT IL, 
-             MXLAPACK_INT IU, dataT ABSTOL, MXLAPACK_INT *M, dataT *W, dataT *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ, dataT *WORK, MXLAPACK_INT
-             LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK ) 
+ * of a real symmetric matrix A.  Eigenvalues and eigenvectors can be
+ * selected by specifying either a range of values or a range of
+ * indices for the desired eigenvalues.
+ *
+ * See more details: http://www.netlib.org/lapack/lapack-3.1.1/html/ssyevr.f.html.
+ *
+ * \ingroup template_lapack
+ */
+template <typename dataT>
+MXLAPACK_INT syevr( char JOBZ,
+                    char RANGE,
+                    char UPLO,
+                    MXLAPACK_INT N,
+                    dataT *A,
+                    MXLAPACK_INT LDA,
+                    dataT VL,
+                    dataT VU,
+                    MXLAPACK_INT IL,
+                    MXLAPACK_INT IU,
+                    dataT ABSTOL,
+                    MXLAPACK_INT *M,
+                    dataT *W,
+                    dataT *Z,
+                    MXLAPACK_INT LDZ,
+                    MXLAPACK_INT *ISUPPZ,
+                    dataT *WORK,
+                    MXLAPACK_INT LWORK,
+                    MXLAPACK_INT *IWORK,
+                    MXLAPACK_INT LIWORK )
 {
-   return -1;
+    return -1;
 }
-   
+
 /*
 extern "C"
 {
-   void  ssyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR MXLAPACK_INT *Np,
-                     float *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR float *VLp, MKL_CONST_PTR float *VUp,
-                       MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR float *ABSTOLp, MXLAPACK_INT *Mp,
-                         float *W, float *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
-                            float *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp,
-                              MXLAPACK_INT *INFOp);
-   
-   
-   void  dsyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR MXLAPACK_INT *Np,
-                     double *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR double *VLp, MKL_CONST_PTR double *VUp,
-                        MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR double *ABSTOLp, MXLAPACK_INT *Mp,
-                               double *W, double *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ,
-                                double *WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp,
-                                 MXLAPACK_INT *INFOp);
+   void  ssyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR
+MXLAPACK_INT *Np, float *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR float *VLp, MKL_CONST_PTR float *VUp,
+                       MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR float *ABSTOLp,
+MXLAPACK_INT *Mp, float *W, float *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ, float *WORK, MKL_CONST_PTR
+MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp, MXLAPACK_INT *INFOp);
+
+
+   void  dsyevr_ (MKL_CONST_PTR char *JOBZp, MKL_CONST_PTR char *RANGEp, MKL_CONST_PTR char *UPLOp, MKL_CONST_PTR
+MXLAPACK_INT *Np, double *A, MKL_CONST_PTR MXLAPACK_INT *LDAp, MKL_CONST_PTR double *VLp, MKL_CONST_PTR double *VUp,
+                        MKL_CONST_PTR MXLAPACK_INT *ILp, MKL_CONST_PTR MXLAPACK_INT *IUp, MKL_CONST_PTR double *ABSTOLp,
+MXLAPACK_INT *Mp, double *W, double *Z, MKL_CONST_PTR MXLAPACK_INT *LDZp, MXLAPACK_INT *ISUPPZ, double *WORK,
+MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *IWORK, MKL_CONST_PTR MXLAPACK_INT *LIWORKp, MXLAPACK_INT *INFOp);
 }
 */
 
 // Float specialization of syevr, a wrapper for Lapack SSYEVR
-template<>
-MXLAPACK_INT syevr<float> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, float VL, float VU,
-                    MXLAPACK_INT IL, MXLAPACK_INT IU,  float ABSTOL, MXLAPACK_INT *M, float *W, float *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ,
-                     float *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK );
+template <>
+MXLAPACK_INT syevr<float>( char JOBZ,
+                           char RANGE,
+                           char UPLO,
+                           MXLAPACK_INT N,
+                           float *A,
+                           MXLAPACK_INT LDA,
+                           float VL,
+                           float VU,
+                           MXLAPACK_INT IL,
+                           MXLAPACK_INT IU,
+                           float ABSTOL,
+                           MXLAPACK_INT *M,
+                           float *W,
+                           float *Z,
+                           MXLAPACK_INT LDZ,
+                           MXLAPACK_INT *ISUPPZ,
+                           float *WORK,
+                           MXLAPACK_INT LWORK,
+                           MXLAPACK_INT *IWORK,
+                           MXLAPACK_INT LIWORK );
 
 // Double specialization of syevr, a wrapper for Lapack DSYEVR
-template<>
-MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, double VL, double VU,
-                    MXLAPACK_INT IL, MXLAPACK_INT IU,  double ABSTOL, MXLAPACK_INT *M, double *W, double *Z, MXLAPACK_INT LDZ, MXLAPACK_INT *ISUPPZ,
-                     double *WORK, MXLAPACK_INT LWORK, MXLAPACK_INT *IWORK, MXLAPACK_INT LIWORK );
+template <>
+MXLAPACK_INT syevr<double>( char JOBZ,
+                            char RANGE,
+                            char UPLO,
+                            MXLAPACK_INT N,
+                            double *A,
+                            MXLAPACK_INT LDA,
+                            double VL,
+                            double VU,
+                            MXLAPACK_INT IL,
+                            MXLAPACK_INT IU,
+                            double ABSTOL,
+                            MXLAPACK_INT *M,
+                            double *W,
+                            double *Z,
+                            MXLAPACK_INT LDZ,
+                            MXLAPACK_INT *ISUPPZ,
+                            double *WORK,
+                            MXLAPACK_INT LWORK,
+                            MXLAPACK_INT *IWORK,
+                            MXLAPACK_INT LIWORK );
 
 /// Compute the singular value decomposition (SVD) of a real matrix
 /** xGESVD computes the singular value decomposition (SVD) of a real
@@ -274,23 +343,23 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
   * U and V are the left and right singular vectors of A.
   *
   * Note that the routine returns \f$ V^T \f$, not \f$ V \f$.
-  * 
+  *
   * See more details: http://www.netlib.org/lapack/explore-html/d8/d49/sgesvd_8f.html.
   * This documentation is taken from there.
-  * 
+  *
   * \tparam dataT is the data type of the arrays, and determines which underlying Lapack routine is called.
-  * 
+  *
   * \param[in] JOBU
   * \parblock
     (char) Specifies options for computing all or part of the matrix U: <br />
      = 'A':  all M columns of U are returned in array U  <br />
-     = 'S':  the first min(m,n) columns of U (the left singular vectors) 
-               are returned in the array U   <br /> 
+     = 'S':  the first min(m,n) columns of U (the left singular vectors)
+               are returned in the array U   <br />
      = 'O':  the first min(m,n) columns of U (the left singular  <br />
            vectors) are overwritten on the array A  <br />
      = 'N':  no columns of U (no left singular vectors) are
            computed.
-    
+
   * \param[in] JOBVT
   * \parblock
     (char) Specifies options for computing all or part of the matrix  V**T:
@@ -301,7 +370,7 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
             vectors) are overwritten on the array A<br />
     = 'N':  no rows of V**T (no right singular vectors) are
             computed.
-  
+
     JOBVT and JOBU cannot both be 'O'.
   *
   * \param[in] M
@@ -337,7 +406,7 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
   * \parblock
      (dataT *, dimension (min(M,N))
      The singular values of A, sorted so that S(i) >= S(i+1).
-  * 
+  *
   * \param[out] U
   * \parblock
      (dataT *, dimension (LDU,UCOL))
@@ -366,9 +435,9 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
   * \param[in] LDVT
   * \parblock
      (MXLAPACK_INT)
-     The leading dimension of the array VT. <br /> 
-     LDVT >= 1<br /> 
-     if JOBVT = 'A', LDVT >= N<br /> 
+     The leading dimension of the array VT. <br />
+     LDVT >= 1<br />
+     if JOBVT = 'A', LDVT >= N<br />
      if JOBVT = 'S', LDVT >= min(M,N).
   *
   * \param[out] WORK
@@ -386,11 +455,11 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
      (MXLAPACK_INT)
      The dimension of the array WORK.<br />
      LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
-        - PATH 1  (M much larger than N, JOBU='N') 
+        - PATH 1  (M much larger than N, JOBU='N')
         - PATH 1t (N much larger than M, JOBVT='N')
-     LWORK >= MAX(1,3*MIN(M,N)+MAX(M,N),5*MIN(M,N)) for the other paths 
+     LWORK >= MAX(1,3*MIN(M,N)+MAX(M,N),5*MIN(M,N)) for the other paths
      For good performance, LWORK should generally be larger.
-     
+
      If LWORK = -1, then a workspace query is assumed; the routine
      only calculates the optimal size of the WORK array, returns
      this value as the first entry of the WORK array, and no error
@@ -408,40 +477,76 @@ MXLAPACK_INT syevr<double> ( char JOBZ, char RANGE, char UPLO, MXLAPACK_INT N, d
   *
   * \ingroup template_lapack
   */
-template<typename dataT>
-MXLAPACK_INT gesvd( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, dataT * A, MXLAPACK_INT LDA, dataT * S, dataT *U, MXLAPACK_INT LDU, 
-                dataT * VT, MXLAPACK_INT LDVT, dataT * WORK, MXLAPACK_INT LWORK)       
+template <typename dataT>
+MXLAPACK_INT gesvd( char JOBU,
+                    char JOBVT,
+                    MXLAPACK_INT M,
+                    MXLAPACK_INT N,
+                    dataT *A,
+                    MXLAPACK_INT LDA,
+                    dataT *S,
+                    dataT *U,
+                    MXLAPACK_INT LDU,
+                    dataT *VT,
+                    MXLAPACK_INT LDVT,
+                    dataT *WORK,
+                    MXLAPACK_INT LWORK )
 {
-   return -1;
+    return -1;
 }
 
 /*
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR MXLAPACK_INT *Np, 
-                  float * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, float * S, float *U, MKL_CONST_PTR MXLAPACK_INT *LDUp, 
-                    float * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, float * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
+   void sgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR
+MXLAPACK_INT *Np, float * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, float * S, float *U, MKL_CONST_PTR MXLAPACK_INT *LDUp,
+                    float * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, float * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp,
+MXLAPACK_INT *INFOp);
 
-   void dgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR MXLAPACK_INT *Np, 
-                  double * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, double * S, double *U, MKL_CONST_PTR MXLAPACK_INT *LDUp, 
-                    double * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, double * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp, MXLAPACK_INT *INFOp);
+   void dgesvd_( MKL_CONST_PTR char *JOBUp, MKL_CONST_PTR char *JOBVTp, MKL_CONST_PTR MXLAPACK_INT *Mp, MKL_CONST_PTR
+MXLAPACK_INT *Np, double * A, MKL_CONST_PTR MXLAPACK_INT *LDAp, double * S, double *U, MKL_CONST_PTR MXLAPACK_INT *LDUp,
+                    double * VT, MKL_CONST_PTR MXLAPACK_INT *LDVTp, double * WORK, MKL_CONST_PTR MXLAPACK_INT *LWORKp,
+MXLAPACK_INT *INFOp);
 }*/
 
-//float specialization of gesvd
-template<>
-MXLAPACK_INT gesvd<float>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, float * A, MXLAPACK_INT LDA, float * S, float *U, MXLAPACK_INT LDU, 
-                float * VT, MXLAPACK_INT LDVT, float * WORK, MXLAPACK_INT LWORK);
+// float specialization of gesvd
+template <>
+MXLAPACK_INT gesvd<float>( char JOBU,
+                           char JOBVT,
+                           MXLAPACK_INT M,
+                           MXLAPACK_INT N,
+                           float *A,
+                           MXLAPACK_INT LDA,
+                           float *S,
+                           float *U,
+                           MXLAPACK_INT LDU,
+                           float *VT,
+                           MXLAPACK_INT LDVT,
+                           float *WORK,
+                           MXLAPACK_INT LWORK );
 
-//double specialization of gesvd
-template<>
-MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT N, double * A, MXLAPACK_INT LDA, double * S, double *U, MXLAPACK_INT LDU, 
-                double * VT, MXLAPACK_INT LDVT, double * WORK, MXLAPACK_INT LWORK);
+// double specialization of gesvd
+template <>
+MXLAPACK_INT gesvd<double>( char JOBU,
+                            char JOBVT,
+                            MXLAPACK_INT M,
+                            MXLAPACK_INT N,
+                            double *A,
+                            MXLAPACK_INT LDA,
+                            double *S,
+                            double *U,
+                            MXLAPACK_INT LDU,
+                            double *VT,
+                            MXLAPACK_INT LDVT,
+                            double *WORK,
+                            MXLAPACK_INT LWORK );
 
 /// Compute the singular value decomposition (SVD) of a real matrix with GESDD
-/** 
- This documentation copied shamelessly from the LAPACK source at <a href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#gac2cd4f1079370ac908186d77efcd5ea8">netlib</a>.
-  
+/**
+ This documentation copied shamelessly from the LAPACK source at <a
+href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#gac2cd4f1079370ac908186d77efcd5ea8">netlib</a>.
+
  SGESDD computes the singular value decomposition (SVD) of a real
  M-by-N matrix A, optionally computing the left and right singular
  vectors.  If singular vectors are desired, it uses a
@@ -508,7 +613,7 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
  \parblock
           LDA is INTEGER
           The leading dimension of the array A.  LDA >= max(1,M).
- 
+
 
  \param[out] S
  \parblock
@@ -560,7 +665,7 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
           If JOBZ = 'N',
             LWORK >= 3*min(M,N) + max(max(M,N),6*min(M,N)).
           If JOBZ = 'O',
-            LWORK >= 3*min(M,N) + 
+            LWORK >= 3*min(M,N) +
                      max(max(M,N),5*min(M,N)*min(M,N)+4*min(M,N)).
           If JOBZ = 'S' or 'A'
             LWORK >= min(M,N)*(7+4*min(M,N))
@@ -579,37 +684,80 @@ MXLAPACK_INT gesvd<double>( char JOBU, char JOBVT, MXLAPACK_INT M, MXLAPACK_INT 
           < 0:  if INFO = -i, the i-th argument had an illegal value.<br />
           > 0:  SBDSDC did not converge, updating process failed.
  \endparblock
- 
+
 \ingroup template_lapack
 
 */
-template<typename dataT>
-MXLAPACK_INT gesdd(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, dataT *A, MXLAPACK_INT LDA, dataT *S, dataT * U, MXLAPACK_INT LDU, dataT * VT, MXLAPACK_INT LDVT, dataT *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO)
+template <typename dataT>
+MXLAPACK_INT gesdd( char JOBZ,
+                    MXLAPACK_INT M,
+                    MXLAPACK_INT N,
+                    dataT *A,
+                    MXLAPACK_INT LDA,
+                    dataT *S,
+                    dataT *U,
+                    MXLAPACK_INT LDU,
+                    dataT *VT,
+                    MXLAPACK_INT LDVT,
+                    dataT *WORK,
+                    MXLAPACK_INT LWORK,
+                    MXLAPACK_INT *IWORK,
+                    MXLAPACK_INT INFO )
 {
-   return -1;
+    return -1;
 }
 
 /*
 //Declarations of the lapack calls
 extern "C"
 {
-   void sgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, float *A, MKL_CONST_PTR MXLAPACK_INT *LDA, float *S, float * U, MKL_CONST_PTR MXLAPACK_INT *LDU, float * VT, MKL_CONST_PTR MXLAPACK_INT *LDVT, float *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
-   
-   void dgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, double *A, MKL_CONST_PTR MXLAPACK_INT *LDA, double *S, double * U, MKL_CONST_PTR MXLAPACK_INT *LDU, double * VT, MKL_CONST_PTR MXLAPACK_INT *LDVT, double *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
-   
+   void sgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, float *A,
+MKL_CONST_PTR MXLAPACK_INT *LDA, float *S, float * U, MKL_CONST_PTR MXLAPACK_INT *LDU, float * VT, MKL_CONST_PTR
+MXLAPACK_INT *LDVT, float *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
+
+   void dgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, double *A,
+MKL_CONST_PTR MXLAPACK_INT *LDA, double *S, double * U, MKL_CONST_PTR MXLAPACK_INT *LDU, double * VT, MKL_CONST_PTR
+MXLAPACK_INT *LDVT, double *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
+
 }*/
 
-//float specialization of gesdd
-template<>
-MXLAPACK_INT gesdd<float>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, float *A, MXLAPACK_INT LDA, float *S, float * U, MXLAPACK_INT LDU, float * VT, MXLAPACK_INT LDVT, float *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO);
+// float specialization of gesdd
+template <>
+MXLAPACK_INT gesdd<float>( char JOBZ,
+                           MXLAPACK_INT M,
+                           MXLAPACK_INT N,
+                           float *A,
+                           MXLAPACK_INT LDA,
+                           float *S,
+                           float *U,
+                           MXLAPACK_INT LDU,
+                           float *VT,
+                           MXLAPACK_INT LDVT,
+                           float *WORK,
+                           MXLAPACK_INT LWORK,
+                           MXLAPACK_INT *IWORK,
+                           MXLAPACK_INT INFO );
 
-//double specialization of gesdd
-template<>
-MXLAPACK_INT gesdd<double>(char JOBZ, MXLAPACK_INT M, MXLAPACK_INT N, double *A, MXLAPACK_INT LDA, double *S, double * U, MXLAPACK_INT LDU, double * VT, MXLAPACK_INT LDVT, double *WORK, MXLAPACK_INT  LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT INFO);
+// double specialization of gesdd
+template <>
+MXLAPACK_INT gesdd<double>( char JOBZ,
+                            MXLAPACK_INT M,
+                            MXLAPACK_INT N,
+                            double *A,
+                            MXLAPACK_INT LDA,
+                            double *S,
+                            double *U,
+                            MXLAPACK_INT LDU,
+                            double *VT,
+                            MXLAPACK_INT LDVT,
+                            double *WORK,
+                            MXLAPACK_INT LWORK,
+                            MXLAPACK_INT *IWORK,
+                            MXLAPACK_INT INFO );
 
-} //namespace math
-} //namespace mx
+} // namespace math
+} // namespace mx
 
-// 
+//
 
-#endif //math_templateLapack_hpp
+#endif // math_templateLapack_hpp

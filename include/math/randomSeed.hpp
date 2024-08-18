@@ -1,9 +1,9 @@
 /** \file randomSeed.hpp
-  * \author Jared R. Males
-  * \brief Defines a random number seed generator
-  * \ingroup gen_math_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Defines a random number seed generator
+ * \ingroup gen_math_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2015, 2016, 2017, 2020 Jared R. Males (jaredmales@gmail.com)
@@ -27,87 +27,78 @@
 #ifndef mx_math_randomSeed_hpp
 #define mx_math_randomSeed_hpp
 
-
 #include <unistd.h>
 #include <fcntl.h>
 
-
 #include "../mxError.hpp"
-
-
 
 namespace mx
 {
-namespace math 
+namespace math
 {
 
-///Get a value to use as a random seed 
-/** On Linux systems, uses /dev/urandom to populate the value with sizeof(intT) bytes.  
-  * Otherwise, uses time(0) to get time since the epoch.
-  * 
-  * \returns 0 on success.
-  * \returns -1 on error.
-  * 
-  * \tparam intT is the integer type of seeval. 
-  * 
-  * \ingroup random
-  * 
-  */ 
-template<typename intT>
-int randomSeed(intT & seedval /**< [out] will be populated with the seed.*/ )
-{   
-   #ifdef __linux__
-   
-   int fd;
-   
-   errno = 0;
-   fd = open("/dev/urandom", O_RDONLY);
+/// Get a value to use as a random seed
+/** On Linux systems, uses /dev/urandom to populate the value with sizeof(intT) bytes.
+ * Otherwise, uses time(0) to get time since the epoch.
+ *
+ * \returns 0 on success.
+ * \returns -1 on error.
+ *
+ * \tparam intT is the integer type of seeval.
+ *
+ * \ingroup random
+ *
+ */
+template <typename intT>
+int randomSeed( intT &seedval /**< [out] will be populated with the seed.*/ )
+{
+#ifdef __linux__
 
-   if(fd < 0)
-   {
-      mxPError("randomSeed", errno, "error opening /dev/urandom");
-         
-      return -1;
-   }
-   
-   seedval = 0;
+    int fd;
 
-   errno = 0;
-   int rv = ::read(fd, &seedval, sizeof(intT));
-      
-      
-   if(rv < 0)
-   {
-      mxPError("randomSeed", errno, "Error on read from /dev/urandom.");
-      close(fd);
-      return -1;
-   }
-   
-   close(fd);
+    errno = 0;
+    fd = open( "/dev/urandom", O_RDONLY );
 
-   int sz = sizeof(intT);
-   
-   if(rv < sz)
-   {
-      mxError("randomSeed", MXE_FILERERR, "Read from /dev/urandom did not return enough bytes");
-         
-      return -1;
-   }
-   
-   return 0;
+    if( fd < 0 )
+    {
+        mxPError( "randomSeed", errno, "error opening /dev/urandom" );
 
-   
-   #endif //__linux__
-   
-   
-   seedval = time(0);
-   
-   return 0;
+        return -1;
+    }
 
+    seedval = 0;
+
+    errno = 0;
+    int rv = ::read( fd, &seedval, sizeof( intT ) );
+
+    if( rv < 0 )
+    {
+        mxPError( "randomSeed", errno, "Error on read from /dev/urandom." );
+        close( fd );
+        return -1;
+    }
+
+    close( fd );
+
+    int sz = sizeof( intT );
+
+    if( rv < sz )
+    {
+        mxError( "randomSeed", MXE_FILERERR, "Read from /dev/urandom did not return enough bytes" );
+
+        return -1;
+    }
+
+    return 0;
+
+#endif //__linux__
+
+    seedval = time( 0 );
+
+    return 0;
 }
 
-} //namespace math
-} //namespace mx
+} // namespace math
+} // namespace mx
 
-
-#endif //mx_math_randomSeed_hpp
+#endif // mx_math_randomSeed_hpp

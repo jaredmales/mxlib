@@ -1,9 +1,9 @@
 /** \file improc.hpp
-  * \author Jared R. Males
-  * \brief Library nclude for the improc module
-  * \ingroup image_processing_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief Library nclude for the improc module
+ * \ingroup image_processing_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020-2023 Jared R. Males (jaredmales@gmail.com)
@@ -42,4 +42,4 @@
 #include "milkImage.hpp"
 #include "sourceFinder.hpp"
 
-#endif //improc_hpp
+#endif // improc_hpp

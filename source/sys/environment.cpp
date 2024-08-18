@@ -1,8 +1,8 @@
 /** \file environment.cpp
-  * \author Jared R. Males
-  * \brief Utilities for working with the environment
-  * \ingroup utils_files
-  */
+ * \author Jared R. Males
+ * \brief Utilities for working with the environment
+ * \ingroup utils_files
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -27,17 +27,18 @@
 
 namespace mx
 {
-namespace sys 
+namespace sys
 {
-   
-std::string getEnv(const std::string & estr )
+
+std::string getEnv( const std::string &estr )
 {
-   char * e = getenv(estr.c_str());
-   
-   if(e) return std::string(e);
-   else return std::string("");
+    char *e = getenv( estr.c_str() );
+
+    if( e )
+        return std::string( e );
+    else
+        return std::string( "" );
 }
 
-}
-}
-
+} // namespace sys
+} // namespace mx

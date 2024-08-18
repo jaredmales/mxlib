@@ -1,9 +1,9 @@
 /** \file circularBuffer.hpp
-  * \author Jared R. Males
-  * \brief A circular buffer class
-  * \ingroup signal_processing_files
-  *
-  */
+ * \author Jared R. Males
+ * \brief A circular buffer class
+ * \ingroup signal_processing_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020 Jared R. Males (jaredmales@gmail.com)
@@ -31,509 +31,504 @@
 
 namespace mx
 {
-namespace sigproc 
+namespace sigproc
 {
-   
+
 /** \defgroup circular_buffer Circular Buffer
-  * \brief A circular buffer class
-  * 
-  * Three options for the circular buffer are provided, each inheriting the same underlying interface.  The choices
-  * vary the way in which the wrapping is handled at the end of the storage.  These are:
-  * - circularBufferMod: uses the mod operator, this is slowest in all situations and is provided for comparison
-  * - circularBufferBranch: uses an if statement (branch) to test for location in memory.  Slower in sequential access, possibly slightly faster in random access.
-  * - circularBufferIndex: uses a pre-populated index array, which adds some memory overhead.  Fastest in sequential access, possibly slightly slower in random access.
-  * 
-  * Benchmarks are clear that circularBufferIndex is fastest for sequential acceess, e.g. one element after the other in sequential order, by something like 30%.  
-  * For random access circularBufferBranch is possibly slightly faster, but not enough tests were performed to be conclusive.  
-  *  
-  * circularBufferMod is always much slower due to use of the `%` operator.
-  * 
-  * The memory overhead of circularBufferIndex is `2*maxEntries*sizeof(indexT)`, where `maxEntries` is the maximum length of the buffer, and indexT is the 
-  * type used for indexing and sizes.
-  * 
-  * \todo perform circular buffer testing on an isolated core, with one test per executable
-  * \todo implement a circular buffer with fixed power-of-two size to test `&` modulo
-  * 
-  * \ingroup signal_processing 
-  */
+ * \brief A circular buffer class
+ *
+ * Three options for the circular buffer are provided, each inheriting the same underlying interface.  The choices
+ * vary the way in which the wrapping is handled at the end of the storage.  These are:
+ * - circularBufferMod: uses the mod operator, this is slowest in all situations and is provided for comparison
+ * - circularBufferBranch: uses an if statement (branch) to test for location in memory.  Slower in sequential access,
+ * possibly slightly faster in random access.
+ * - circularBufferIndex: uses a pre-populated index array, which adds some memory overhead.  Fastest in sequential
+ * access, possibly slightly slower in random access.
+ *
+ * Benchmarks are clear that circularBufferIndex is fastest for sequential acceess, e.g. one element after the other in
+ * sequential order, by something like 30%. For random access circularBufferBranch is possibly slightly faster, but not
+ * enough tests were performed to be conclusive.
+ *
+ * circularBufferMod is always much slower due to use of the `%` operator.
+ *
+ * The memory overhead of circularBufferIndex is `2*maxEntries*sizeof(indexT)`, where `maxEntries` is the maximum length
+ * of the buffer, and indexT is the type used for indexing and sizes.
+ *
+ * \todo perform circular buffer testing on an isolated core, with one test per executable
+ * \todo implement a circular buffer with fixed power-of-two size to test `&` modulo
+ *
+ * \ingroup signal_processing
+ */
 
 /// CRTP base class for all circular buffers, providing the underlying memory management and accessors.
-/** The CRTP derived classes implement a standard interface based on how they handle wrapping from the end 
-  * to the beginning of the buffer.
-  *
-  * \tparam _derivedT the child class type
-  * \tparam _storedT the type stored in teh circular buffer
-  * \tparam _indexT the index type, also used for sizes (can be unsigned) 
-  * 
-  * \ingroup circular_buffer
-  */ 
-template<typename _derivedT, typename _storedT, typename _indexT>
+/** The CRTP derived classes implement a standard interface based on how they handle wrapping from the end
+ * to the beginning of the buffer.
+ *
+ * \tparam _derivedT the child class type
+ * \tparam _storedT the type stored in teh circular buffer
+ * \tparam _indexT the index type, also used for sizes (can be unsigned)
+ *
+ * \ingroup circular_buffer
+ */
+template <typename _derivedT, typename _storedT, typename _indexT>
 class circularBufferBase
 {
-public:
-   
-   typedef _derivedT derivedT; ///< The child class
-   
-   typedef _storedT storedT; ///< The type stored in the circular buffer
-   typedef _indexT indexT; ///< The index type, also used for sizes
+  public:
+    typedef _derivedT derivedT; ///< The child class
 
-protected:
-      
-   std::vector<storedT> m_buffer;  ///< The circular buffer storage
-   
-   indexT m_maxEntries {0}; ///< The maximum number of entries to allow in the buffer before wrapping
-   indexT m_nextEntry {0}; ///< Index into m_buffer of the next entry.  This is the oldest entry in the buffer.
-   indexT m_latest {0}; ///< Index into m_buff of the latest entry.  This is the newest entry in the buffer.
+    typedef _storedT storedT; ///< The type stored in the circular buffer
+    typedef _indexT indexT;   ///< The index type, also used for sizes
 
-   uint64_t m_mono{0}; ///< A monotonic counter, which is incremented for each new entry, and reset on call to maxEntries.
+  protected:
+    std::vector<storedT> m_buffer; ///< The circular buffer storage
 
-public:
-   
-   /// Default c'tor
-   circularBufferBase();
+    indexT m_maxEntries{ 0 }; ///< The maximum number of entries to allow in the buffer before wrapping
+    indexT m_nextEntry{ 0 };  ///< Index into m_buffer of the next entry.  This is the oldest entry in the buffer.
+    indexT m_latest{ 0 };     ///< Index into m_buff of the latest entry.  This is the newest entry in the buffer.
 
-   /// Sizing constructor
-   /** Sets the maximum size of the buffer.  Note that this will not be the size until 
+    uint64_t m_mono{
+        0 }; ///< A monotonic counter, which is incremented for each new entry, and reset on call to maxEntries.
+
+  public:
+    /// Default c'tor
+    circularBufferBase();
+
+    /// Sizing constructor
+    /** Sets the maximum size of the buffer.  Note that this will not be the size until
      * a full set of entries have been added to the buffer.
-     */ 
-   explicit circularBufferBase(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/);
-   
-   /// Set the maximum size of the buffer.
-   /** Note that this will not be the size until 
+     */
+    explicit circularBufferBase( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ );
+
+    /// Set the maximum size of the buffer.
+    /** Note that this will not be the size until
      * a full set of entries have been added to the buffer.
-     */ 
-   void maxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/);
-   
-   /// Get the maximum size of the buffer.
-   /** Note that this is not the current size of the buffer until
+     */
+    void maxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ );
+
+    /// Get the maximum size of the buffer.
+    /** Note that this is not the current size of the buffer until
      * at least maxEntries have been added.  Use size() to check current size.
      *
      * \returns the maximum size of the buffer, m_maxEntries
-     */ 
-   indexT maxEntries();
+     */
+    indexT maxEntries();
 
-   /// Get the number of entries.
-   /** Note that this is the current size.  It will not 
+    /// Get the number of entries.
+    /** Note that this is the current size.  It will not
      * be the same as maxEntries() until at least maxEntries
      * have been added.
-     */ 
-   indexT size() const;
-   
-   /// Add the next entry to the circular buffer
-   /** Adds the entry (will incur a deep copy) and updates
+     */
+    indexT size() const;
+
+    /// Add the next entry to the circular buffer
+    /** Adds the entry (will incur a deep copy) and updates
      * the wrapping system.
-     */ 
-   void nextEntry( const storedT & newEnt /**< [in] the new entry to add to the buffer*/);
-   
-   /// Returns the index of the earliest entry
-   /** This is particularly useful for accessing entries with the at() function
+     */
+    void nextEntry( const storedT &newEnt /**< [in] the new entry to add to the buffer*/ );
+
+    /// Returns the index of the earliest entry
+    /** This is particularly useful for accessing entries with the at() function
      * over an unchanging sequence if asynchronous updates are possible.
-     */ 
-   indexT earliest();
+     */
+    indexT earliest();
 
-   /// Returns the index of the latest entry
-   /** 
-     */ 
-   indexT latest();
-   
-   uint64_t mono();
+    /// Returns the index of the latest entry
+    /**
+     */
+    indexT latest();
 
-   /// Get the entry at a given index
-   /** `idx=0` is the earliest entry in the buffer. `idx=1` is the one after that.
+    uint64_t mono();
+
+    /// Get the entry at a given index
+    /** `idx=0` is the earliest entry in the buffer. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
-     * 
-     * \returns a reference to the indicated entry in the circular buffer.
-     */ 
-   storedT & operator[](indexT idx /**< [in] the index of the entry to access*/);
-   
-   const storedT & operator[](indexT idx /**< [in] the index of the entry to access*/) const;
-
-   /// Get the entry at a given index relative a fixed reference entry 
-   /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
-     * I.e., this counts forward from the oldest data
-     * 
+     *
      * \returns a reference to the indicated entry in the circular buffer.
      */
-   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
-                 indexT idx       ///< [in] the index of the entry to access
-               );
+    storedT &operator[]( indexT idx /**< [in] the index of the entry to access*/ );
 
-   /// Get the entry at a given index relative a fixed start entry, const version
-   /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
+    const storedT &operator[]( indexT idx /**< [in] the index of the entry to access*/ ) const;
+
+    /// Get the entry at a given index relative a fixed reference entry
+    /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
      * I.e., this counts forward from the oldest data
-     * 
+     *
+     * \returns a reference to the indicated entry in the circular buffer.
+     */
+    storedT &at( indexT refEntry, ///< [in] the entry to start counting from
+                 indexT idx       ///< [in] the index of the entry to access
+    );
+
+    /// Get the entry at a given index relative a fixed start entry, const version
+    /** `idx=0` is the entry at refEntry. `idx=1` is the one after that.
+     * I.e., this counts forward from the oldest data
+     *
      * \overload
-     * 
+     *
      * \returns a const reference to the indicated entry in the circular buffer.
      */
-   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    const storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                        indexT idx       ///< [in] the index of the entry to access
-                     ) const;
+    ) const;
 
-private:
-   derivedT & derived()
-   {
-      return *static_cast<derivedT *>(this);
-   }
+  private:
+    derivedT &derived()
+    {
+        return *static_cast<derivedT *>( this );
+    }
 
-   const derivedT & derived() const
-   {
-      return *static_cast<const derivedT *>(this);
-   }
-
+    const derivedT &derived() const
+    {
+        return *static_cast<const derivedT *>( this );
+    }
 };
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 circularBufferBase<derivedT, storedT, indexT>::circularBufferBase()
 {
 }
 
-template<class derivedT, typename storedT, typename indexT>
-circularBufferBase<derivedT, storedT, indexT>::circularBufferBase(indexT maxEnt)
+template <class derivedT, typename storedT, typename indexT>
+circularBufferBase<derivedT, storedT, indexT>::circularBufferBase( indexT maxEnt )
 {
-   maxEntries(maxEnt);
+    maxEntries( maxEnt );
 }
 
-template<class derivedT, typename storedT, typename indexT>
-void circularBufferBase<derivedT, storedT, indexT>::maxEntries(indexT maxEnt)
+template <class derivedT, typename storedT, typename indexT>
+void circularBufferBase<derivedT, storedT, indexT>::maxEntries( indexT maxEnt )
 {
-   m_buffer.clear();
-   m_nextEntry = 0;
-   m_latest = 0;
+    m_buffer.clear();
+    m_nextEntry = 0;
+    m_latest = 0;
 
-   m_maxEntries = maxEnt;
-   m_buffer.reserve(m_maxEntries);
-   
-   derived().setMaxEntries(maxEnt);
-   
-   m_mono = 0;
-   
+    m_maxEntries = maxEnt;
+    m_buffer.reserve( m_maxEntries );
+
+    derived().setMaxEntries( maxEnt );
+
+    m_mono = 0;
 }
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 indexT circularBufferBase<derivedT, storedT, indexT>::maxEntries()
 {
-   return m_maxEntries;
+    return m_maxEntries;
 }
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 indexT circularBufferBase<derivedT, storedT, indexT>::size() const
 {
-   return m_buffer.size();
+    return m_buffer.size();
 }
 
-template<class derivedT, typename storedT, typename indexT>
-void circularBufferBase<derivedT, storedT, indexT>::nextEntry(const storedT & newEnt)
+template <class derivedT, typename storedT, typename indexT>
+void circularBufferBase<derivedT, storedT, indexT>::nextEntry( const storedT &newEnt )
 {
-   if( m_buffer.size() < m_maxEntries )
-   {
-      m_buffer.push_back(newEnt);
-      m_latest = m_buffer.size()-1;
-      m_nextEntry = 0;
-      derived().setWrapStartup();
-   }
-   else
-   {
-      m_buffer[m_nextEntry] = newEnt;
-      m_latest = m_nextEntry;
-      ++m_nextEntry;
-      if(m_nextEntry >= m_buffer.size()) m_nextEntry = 0;
-      derived().setWrap();
-   }
+    if( m_buffer.size() < m_maxEntries )
+    {
+        m_buffer.push_back( newEnt );
+        m_latest = m_buffer.size() - 1;
+        m_nextEntry = 0;
+        derived().setWrapStartup();
+    }
+    else
+    {
+        m_buffer[m_nextEntry] = newEnt;
+        m_latest = m_nextEntry;
+        ++m_nextEntry;
+        if( m_nextEntry >= m_buffer.size() )
+            m_nextEntry = 0;
+        derived().setWrap();
+    }
 
-   ++m_mono;
-
+    ++m_mono;
 }
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 indexT circularBufferBase<derivedT, storedT, indexT>::earliest()
 {
-   return m_nextEntry;
+    return m_nextEntry;
 }
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 indexT circularBufferBase<derivedT, storedT, indexT>::latest()
 {
-   return m_latest;
+    return m_latest;
 }
 
-template<class derivedT, typename storedT, typename indexT>
+template <class derivedT, typename storedT, typename indexT>
 uint64_t circularBufferBase<derivedT, storedT, indexT>::mono()
 {
-   return m_mono;
+    return m_mono;
 }
 
-template<class derivedT, typename storedT, typename indexT>
-storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx)
+template <class derivedT, typename storedT, typename indexT>
+storedT &circularBufferBase<derivedT, storedT, indexT>::operator[]( indexT idx )
 {
-   return derived().at(m_nextEntry, idx);
+    return derived().at( m_nextEntry, idx );
 }
 
-template<class derivedT, typename storedT, typename indexT>
-const storedT & circularBufferBase<derivedT, storedT, indexT>::operator[](indexT idx) const
+template <class derivedT, typename storedT, typename indexT>
+const storedT &circularBufferBase<derivedT, storedT, indexT>::operator[]( indexT idx ) const
 {
-   return derived().at(m_nextEntry, idx);
+    return derived().at( m_nextEntry, idx );
 }
 
-template<class derivedT, typename storedT, typename indexT>
-storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
-                                                             indexT idx
-                                                           )
+template <class derivedT, typename storedT, typename indexT>
+storedT &circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry, indexT idx )
 {
-   return derived().at(refEntry, idx);
+    return derived().at( refEntry, idx );
 }
 
-template<class derivedT, typename storedT, typename indexT>
-const storedT & circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry,
-                                                                   indexT idx
-                                                                 ) const
+template <class derivedT, typename storedT, typename indexT>
+const storedT &circularBufferBase<derivedT, storedT, indexT>::at( indexT refEntry, indexT idx ) const
 {
-   return derived().at(refEntry, idx);
+    return derived().at( refEntry, idx );
 }
 
 /// Circular buffer which wraps with an if statement (branching) [faster than mod, less memory than index]
 /**
-  * \ingroup circular_buffer
-  */
-template<typename _storedT, typename _indexT>
-class circularBufferBranch : public circularBufferBase<circularBufferBranch<_storedT,_indexT>, _storedT, _indexT>
+ * \ingroup circular_buffer
+ */
+template <typename _storedT, typename _indexT>
+class circularBufferBranch : public circularBufferBase<circularBufferBranch<_storedT, _indexT>, _storedT, _indexT>
 {
-public:
-   
-   typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
-   typedef _indexT indexT; ///< The index type, also used for sizes
-   
-protected:
-   indexT m_wrapEntry{0};
-   
-public:
-   
-   /// Default c'tor
-   circularBufferBranch() : circularBufferBase<circularBufferBranch,storedT,indexT>()
-   {
-   }
-   
-   /// Sizing constructor
-   /** Sets the maximum size of the buffer.  Note that this will not be the size until 
+  public:
+    typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
+    typedef _indexT indexT;   ///< The index type, also used for sizes
+
+  protected:
+    indexT m_wrapEntry{ 0 };
+
+  public:
+    /// Default c'tor
+    circularBufferBranch() : circularBufferBase<circularBufferBranch, storedT, indexT>()
+    {
+    }
+
+    /// Sizing constructor
+    /** Sets the maximum size of the buffer.  Note that this will not be the size until
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferBranch(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferBranch,storedT,indexT>(maxEnt)
-   {
-   }
-   
-   /// Interface implementation for maxEntries.
-   /** Resets the wrap entry to 0.
-     */
-   void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/)
-   {
-      m_wrapEntry = 0;
-   }
+    explicit circularBufferBranch( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+        : circularBufferBase<circularBufferBranch, storedT, indexT>( maxEnt )
+    {
+    }
 
-   /// Interface implementation for wrapping setup during the startup phase
-   /** This is called before maxEntries have been added.
+    /// Interface implementation for maxEntries.
+    /** Resets the wrap entry to 0.
      */
-   void setWrapStartup()
-   {
-      m_wrapEntry = this->m_buffer.size();
-   }
-   
-   /// Interface implementation for wrapping setup after the startup phase
-   /** This is called after maxEntries have been added.
+    void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+    {
+        m_wrapEntry = 0;
+    }
+
+    /// Interface implementation for wrapping setup during the startup phase
+    /** This is called before maxEntries have been added.
      */
-   void setWrap()
-   {
-      m_wrapEntry = this->m_maxEntries - this->m_nextEntry - 1; 
-   }
-   
-   /// Interface implementation for entry access
-   /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
+    void setWrapStartup()
+    {
+        m_wrapEntry = this->m_buffer.size();
+    }
+
+    /// Interface implementation for wrapping setup after the startup phase
+    /** This is called after maxEntries have been added.
+     */
+    void setWrap()
+    {
+        m_wrapEntry = this->m_maxEntries - this->m_nextEntry - 1;
+    }
+
+    /// Interface implementation for entry access
+    /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                  indexT idx       ///< [in] the index of the entry to access
-               )
-   {
-      if(idx > this->m_wrapEntry) return this->m_buffer[refEntry + idx - this->m_buffer.size()];
-      else return this->m_buffer[refEntry + idx];
-   }
-   
-   /// Interface implementation for entry access, const version
-   /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
-     * 
+    )
+    {
+        if( idx > this->m_wrapEntry )
+            return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+        else
+            return this->m_buffer[refEntry + idx];
+    }
+
+    /// Interface implementation for entry access, const version
+    /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
+     *
      * \overload
-     * 
+     *
      * \returns a const reference to the idx-th element
      */
-   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    const storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                        indexT idx       ///< [in] the index of the entry to access
-                     ) const
-   {
-      if(idx > this->m_wrapEntry) return this->m_buffer[refEntry + idx - this->m_buffer.size()];
-      else return this->m_buffer[refEntry + idx];
-   }
-
+    ) const
+    {
+        if( idx > this->m_wrapEntry )
+            return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+        else
+            return this->m_buffer[refEntry + idx];
+    }
 };
 
 /// Circular buffer which wraps with the mod opoerator [very slow]
 /**
-  * \ingroup circular_buffer
-  */
-template<typename _storedT, typename _indexT>
-class circularBufferMod : public circularBufferBase<circularBufferMod<_storedT,_indexT>, _storedT, _indexT>
+ * \ingroup circular_buffer
+ */
+template <typename _storedT, typename _indexT>
+class circularBufferMod : public circularBufferBase<circularBufferMod<_storedT, _indexT>, _storedT, _indexT>
 {
-public:
-   typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
-   typedef _indexT indexT; ///< The index type, also used for sizes
-   
-   /// Default c'tor
-   circularBufferMod() : circularBufferBase<circularBufferMod,storedT,indexT>()
-   {
-   }
-   
-   /// Sizing constructor
-   /** Sets the maximum size of the buffer.  Note that this will not be the size until 
+  public:
+    typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
+    typedef _indexT indexT;   ///< The index type, also used for sizes
+
+    /// Default c'tor
+    circularBufferMod() : circularBufferBase<circularBufferMod, storedT, indexT>()
+    {
+    }
+
+    /// Sizing constructor
+    /** Sets the maximum size of the buffer.  Note that this will not be the size until
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferMod(indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferMod,storedT,indexT>(maxEnt)
-   {
-   }
-   
-   /// Interface implementation for maxEntries.
-   /** A no-op
-     */
-   void setMaxEntries( indexT maxEnt  /**< [in] the maximum number of entries this buffer will hold*/)
-   {
-   }
+    explicit circularBufferMod( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+        : circularBufferBase<circularBufferMod, storedT, indexT>( maxEnt )
+    {
+    }
 
-   /// Interface implementation for wrapping setup during the startup phase
-   /** This is called before maxEntries have been added.
+    /// Interface implementation for maxEntries.
+    /** A no-op
      */
-   void setWrapStartup()
-   {
-   }
-   
-   /// Interface implementation for wrapping setup after the startup phase
-   /** This is called after maxEntries have been added.
+    void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+    {
+    }
+
+    /// Interface implementation for wrapping setup during the startup phase
+    /** This is called before maxEntries have been added.
      */
-   void setWrap()
-   {
-   }
-   
-   /// Interface implementation for entry access
-   /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
+    void setWrapStartup()
+    {
+    }
+
+    /// Interface implementation for wrapping setup after the startup phase
+    /** This is called after maxEntries have been added.
+     */
+    void setWrap()
+    {
+    }
+
+    /// Interface implementation for entry access
+    /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                  indexT idx       ///< [in] the index of the entry to access
-               )
-   {
-      return this->m_buffer[(refEntry + idx) % this->m_buffer.size()];
-   }
-   
-   /// Interface implementation for entry access, const version
-   /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
+    )
+    {
+        return this->m_buffer[( refEntry + idx ) % this->m_buffer.size()];
+    }
+
+    /// Interface implementation for entry access, const version
+    /** Accesses the idx-th element relative to refEntry, using the mod operator to wrap
      *
      * \overload
-     * 
+     *
      * \returns a const reference to the idx-th element
      */
-   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    const storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                        indexT idx       ///< [in] the index of the entry to access
-                     ) const
-   {
-      return this->m_buffer[(refEntry + idx) % this->m_buffer.size()];
-   }
-
+    ) const
+    {
+        return this->m_buffer[( refEntry + idx ) % this->m_buffer.size()];
+    }
 };
 
 /// Circular buffer which wraps with a pre-populated indices array [generally fastest]
 /**
-  * \ingroup circular_buffer
-  */
-template<typename _storedT, typename _indexT>
-class circularBufferIndex : public circularBufferBase<circularBufferIndex<_storedT,_indexT>, _storedT, _indexT>
+ * \ingroup circular_buffer
+ */
+template <typename _storedT, typename _indexT>
+class circularBufferIndex : public circularBufferBase<circularBufferIndex<_storedT, _indexT>, _storedT, _indexT>
 {
-public:
-   typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
-   typedef _indexT indexT; ///< The index type, also used for sizes
-   
-protected:
+  public:
+    typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
+    typedef _indexT indexT;   ///< The index type, also used for sizes
 
-   std::vector<size_t> m_indices; ///< Vector of indices for fast indexing into parent's m_buffer
-     
-public:
-   
-   /// Default c'tor
-   circularBufferIndex() : circularBufferBase<circularBufferIndex,storedT,indexT>()
-   {
-   }
-   
-   /// Sizing constructor
-   /** Sets the maximum size of the buffer.  Note that this will not be the size until 
+  protected:
+    std::vector<size_t> m_indices; ///< Vector of indices for fast indexing into parent's m_buffer
+
+  public:
+    /// Default c'tor
+    circularBufferIndex() : circularBufferBase<circularBufferIndex, storedT, indexT>()
+    {
+    }
+
+    /// Sizing constructor
+    /** Sets the maximum size of the buffer.  Note that this will not be the size until
      * a full set of entries have been added to the buffer.
      */
-   explicit circularBufferIndex(indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/) : circularBufferBase<circularBufferIndex,storedT,indexT>(maxEnt)
-   {
-   }
-   
-   /// Interface implementation for maxEntries.
-   /** Resizes and populates the indices array.
-     */
-   void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/)
-   {
-      m_indices.resize(2*this->m_maxEntries);
-      for(size_t i=0; i< this->m_maxEntries; ++i)
-      {
-         m_indices[i] = i;
-         m_indices[this->m_maxEntries + i] = i;
-      }
-   }
+    explicit circularBufferIndex( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+        : circularBufferBase<circularBufferIndex, storedT, indexT>( maxEnt )
+    {
+    }
 
-   /// Interface implementation for wrapping setup during the startup phase
-   /** This is called before maxEntries have been added.
+    /// Interface implementation for maxEntries.
+    /** Resizes and populates the indices array.
      */
-   void setWrapStartup()
-   {
-   }
-   
-   /// Interface implementation for wrapping setup after the startup phase
-   /** This is called after maxEntries have been added.
+    void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
+    {
+        m_indices.resize( 2 * this->m_maxEntries );
+        for( size_t i = 0; i < this->m_maxEntries; ++i )
+        {
+            m_indices[i] = i;
+            m_indices[this->m_maxEntries + i] = i;
+        }
+    }
+
+    /// Interface implementation for wrapping setup during the startup phase
+    /** This is called before maxEntries have been added.
      */
-   void setWrap()
-   {
-   }
-   
-   /// Interface implementation for entry access
-   /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
+    void setWrapStartup()
+    {
+    }
+
+    /// Interface implementation for wrapping setup after the startup phase
+    /** This is called after maxEntries have been added.
+     */
+    void setWrap()
+    {
+    }
+
+    /// Interface implementation for entry access
+    /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
      *
      * \returns a reference to the idx-th element
      */
-   storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                  indexT idx       ///< [in] the index of the entry to access
-               )
-   {
-      return this->m_buffer[m_indices[refEntry + idx]];
-   }
-   
-   /// Interface implementation for entry access, const version
-   /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
+    )
+    {
+        return this->m_buffer[m_indices[refEntry + idx]];
+    }
+
+    /// Interface implementation for entry access, const version
+    /** Accesses the idx-th element relative to refEntry, using the pre-populated indices to wrap
      *
      * \overload
-     * 
+     *
      * \returns a const reference to the idx-th element
      */
-   const storedT & at( indexT refEntry, ///< [in] the entry to start counting from
+    const storedT &at( indexT refEntry, ///< [in] the entry to start counting from
                        indexT idx       ///< [in] the index of the entry to access
-                     ) const
-   {
-      return this->m_buffer[m_indices[refEntry + idx]];
-   }
-
+    ) const
+    {
+        return this->m_buffer[m_indices[refEntry + idx]];
+    }
 };
 
-} //namespace sigproc
-} //namespace circularBuffer
+} // namespace sigproc
+} // namespace mx
 
-#endif //sigproc_circularBuffer
+#endif // sigproc_circularBuffer

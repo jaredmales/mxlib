@@ -1,9 +1,9 @@
 /** \file gnuPlot.cpp
-  * \author Jared R. Males (jaredmales@gmail.com)
-  * \brief Implementation of an interface to the gnuplot program
-  * \ingroup plotting_files
-  * 
-*/
+ * \author Jared R. Males (jaredmales@gmail.com)
+ * \brief Implementation of an interface to the gnuplot program
+ * \ingroup plotting_files
+ *
+ */
 
 //***********************************************************************//
 // Copyright 2020-2023 Jared R. Males (jaredmales@gmail.com)
@@ -25,7 +25,7 @@
 //***********************************************************************//
 
 #include "math/plot/gnuPlot.hpp"
-   
+
 namespace mx
 {
 namespace math
@@ -33,339 +33,322 @@ namespace math
 
 gnuPlot::gnuPlot()
 {
-   init();
+    init();
 }
 
 void gnuPlot::init()
 {
-   _errLocation = "/dev/shm";
-   _tempLocation = "/dev/shm";
-
+    _errLocation = "/dev/shm";
+    _tempLocation = "/dev/shm";
 }
 
 gnuPlot::~gnuPlot()
 {
-   command("exit",true);
-   
-   if(_pipeH)
-   {
-      pclose(_pipeH);
-   }
-         
-   if(_errFD > 0)
-   {
-      close(_errFD);
-   }
-   
-   if(_errFName.length() > 0)
-   {
-      remove(_errFName.c_str());
-   }
-   
-   for(size_t i=0; i < _tempFiles.size(); ++i)
-   {
-      remove(_tempFiles[i].c_str());
-   }
-      
+    command( "exit", true );
+
+    if( _pipeH )
+    {
+        pclose( _pipeH );
+    }
+
+    if( _errFD > 0 )
+    {
+        close( _errFD );
+    }
+
+    if( _errFName.length() > 0 )
+    {
+        remove( _errFName.c_str() );
+    }
+
+    for( size_t i = 0; i < _tempFiles.size(); ++i )
+    {
+        remove( _tempFiles[i].c_str() );
+    }
 }
 
 int gnuPlot::connect()
 {
 
-   if(_connected) return 0;
+    if( _connected )
+        return 0;
 
-   srand( (unsigned long)  this);  //We don't need random, just different from all other instances in this process
-                                   
-   
-   char tmpStr[MX_GP_FNAME_SZ];
+    srand( (unsigned long)this ); // We don't need random, just different from all other instances in this process
 
-   snprintf(tmpStr, MX_GP_FNAME_SZ, "/gperr%d_%d", getpid(), rand());
+    char tmpStr[MX_GP_FNAME_SZ];
 
-   _errFName = _errLocation + tmpStr;
-   
-   
-   std::string comm = "gnuplot -persist 2>";
-   comm += _errFName;
-   
-   errno = 0;
-   _pipeH = popen(comm.c_str(), "w");
+    snprintf( tmpStr, MX_GP_FNAME_SZ, "/gperr%d_%d", getpid(), rand() );
 
-   if(_pipeH == NULL)
-   {
-      if(errno)
-      {
-         mxPError("gnuPlot", errno, "Error starting the gnuplot program with popen.");
-      }
-      else
-      {
-         mxError("gnuPlot", MXE_PROCERR, "Error starting the gnuplot program with popen.");
-      }
-      
-      return -1;
-   }
-   
-   
-   
-   usleep(MX_GP_FC_TIME);//allow file creation to finish before opening stderr file
-   
-   errno = 0;
-   _errFD = open(_errFName.c_str(), O_RDONLY);
-   
-   int n =0;
-   while(_errFD <= 0 && n < MX_GP_FC_RETRIES)
-   {
-      //First we try again after sleeping again.
-      usleep(MX_GP_FC_TIME);//allow file creation to finish before opening stderr file
-      _errFD = open(_errFName.c_str(), O_RDONLY);
-      ++n;
-   }
+    _errFName = _errLocation + tmpStr;
 
-   if(_errFD <= 0)
-   {  
-      mxPError("gnuPlot", errno, "gnuPlot failed to open stderr file: ");
-      return -1;
-   }
-      
-   _connected = 1;
-   
-   return 0;
+    std::string comm = "gnuplot -persist 2>";
+    comm += _errFName;
+
+    errno = 0;
+    _pipeH = popen( comm.c_str(), "w" );
+
+    if( _pipeH == NULL )
+    {
+        if( errno )
+        {
+            mxPError( "gnuPlot", errno, "Error starting the gnuplot program with popen." );
+        }
+        else
+        {
+            mxError( "gnuPlot", MXE_PROCERR, "Error starting the gnuplot program with popen." );
+        }
+
+        return -1;
+    }
+
+    usleep( MX_GP_FC_TIME ); // allow file creation to finish before opening stderr file
+
+    errno = 0;
+    _errFD = open( _errFName.c_str(), O_RDONLY );
+
+    int n = 0;
+    while( _errFD <= 0 && n < MX_GP_FC_RETRIES )
+    {
+        // First we try again after sleeping again.
+        usleep( MX_GP_FC_TIME ); // allow file creation to finish before opening stderr file
+        _errFD = open( _errFName.c_str(), O_RDONLY );
+        ++n;
+    }
+
+    if( _errFD <= 0 )
+    {
+        mxPError( "gnuPlot", errno, "gnuPlot failed to open stderr file: " );
+        return -1;
+    }
+
+    _connected = 1;
+
+    return 0;
 }
 
 bool gnuPlot::gpError()
 {
-   return _gpError;
+    return _gpError;
 }
 
 std::string gnuPlot::gpErrorMsg()
 {
-   return _gpErrorMsg;
-}
-   
-int gnuPlot::command( const std::string & com, 
-                      bool flush
-                    )
-{
-   
-   if(!_connected) connect();
-   
-   fprintf(_pipeH, "%s", (com + "\n").c_str());
-   if(flush) fflush(_pipeH);
-   
-   return 0;
-     
-
+    return _gpErrorMsg;
 }
 
-int gnuPlot::checkResponse( std::string & response, 
-                            double timeout
-                          )
+int gnuPlot::command( const std::string &com, bool flush )
 {
-   _gpError = false;
-   if(_errFD)
-   {
-      char errstr[1024];
-      int rv = 0;
-      
-      double t0 = sys::get_curr_time();
 
-      errno = 0;
-      rv = read(_errFD, errstr, 1024);
-      
-      while(rv == 0 && sys::get_curr_time() - t0 <= timeout)
-      {
-         usleep(10); //Give up the thread
-         rv = read(_errFD, errstr, 1024);
-      }
-      
-      if(rv < 0)
-      {
-         mxPError("gnuPlot", errno, "Occurred while reading gnuplot stderr");
-         
-         response = "";
-         return -1;
-      }
-      
-      if(rv == 0)
-      {
-         mxError("gnuPlot", MXE_TIMEOUT, "Timed out while reading from gnuplot stderr");
-         response = "";
-         return 0;
-      }
-      
-      errstr[rv] = '\0';
-      
-      response = errstr;
-      
-      bool done = false;
-      if(response.length() > 1)
-      {
-         if(response[response.length()-1] == '\n' && response[response.length()-2] == '\n') done = true;
-      }
-      
-      
-      while( !done && sys::get_curr_time() - t0 < timeout)
-      {
-         usleep(10); //Give up the thread
-         rv = read(_errFD, errstr, 1024);
-         
-         if(rv > 0)
-         {
-            errstr[rv] = '\0';
-            response += errstr;
-       
-            if(response.length() > 1)
-            {
-               if(response[response.length()-1] == '\n' && response[response.length()-2] == '\n') done = true;
-            }
-         }
-      }
+    if( !_connected )
+        connect();
 
-      size_t first =0;
-      while( isspace(response[first]) && first < response.length()-1) ++first;
-      response.erase(0, first);
-      
-      
-      int last = response.length()-1;
-      while( response[last] == '\n' && last > 0) --last;
-      if(response[last] != '\n') ++last;
-      
-      response.erase(last);
-      
-      
-      if(response.length() > 8)
-      {
-         if(response.substr(0,8) == "gnuplot>")
-         {
-            _gpError = true;
-            _gpErrorMsg = response;
-            
-            mxError("gnuPlot", MXE_GNUPLOTERR, "gnuplot says:\n" + response);
-            
+    fprintf( _pipeH, "%s", ( com + "\n" ).c_str() );
+    if( flush )
+        fflush( _pipeH );
+
+    return 0;
+}
+
+int gnuPlot::checkResponse( std::string &response, double timeout )
+{
+    _gpError = false;
+    if( _errFD )
+    {
+        char errstr[1024];
+        int rv = 0;
+
+        double t0 = sys::get_curr_time();
+
+        errno = 0;
+        rv = read( _errFD, errstr, 1024 );
+
+        while( rv == 0 && sys::get_curr_time() - t0 <= timeout )
+        {
+            usleep( 10 ); // Give up the thread
+            rv = read( _errFD, errstr, 1024 );
+        }
+
+        if( rv < 0 )
+        {
+            mxPError( "gnuPlot", errno, "Occurred while reading gnuplot stderr" );
+
             response = "";
             return -1;
-         }
-      }
-      
-      
-      return 0;
-   }
-   
-   //If errFD is not open for some reason
-   std::cerr << "gnuplot stderr is not open\n";
-   
-   
-   
-   return 1;
-   
-   
+        }
+
+        if( rv == 0 )
+        {
+            mxError( "gnuPlot", MXE_TIMEOUT, "Timed out while reading from gnuplot stderr" );
+            response = "";
+            return 0;
+        }
+
+        errstr[rv] = '\0';
+
+        response = errstr;
+
+        bool done = false;
+        if( response.length() > 1 )
+        {
+            if( response[response.length() - 1] == '\n' && response[response.length() - 2] == '\n' )
+                done = true;
+        }
+
+        while( !done && sys::get_curr_time() - t0 < timeout )
+        {
+            usleep( 10 ); // Give up the thread
+            rv = read( _errFD, errstr, 1024 );
+
+            if( rv > 0 )
+            {
+                errstr[rv] = '\0';
+                response += errstr;
+
+                if( response.length() > 1 )
+                {
+                    if( response[response.length() - 1] == '\n' && response[response.length() - 2] == '\n' )
+                        done = true;
+                }
+            }
+        }
+
+        size_t first = 0;
+        while( isspace( response[first] ) && first < response.length() - 1 )
+            ++first;
+        response.erase( 0, first );
+
+        int last = response.length() - 1;
+        while( response[last] == '\n' && last > 0 )
+            --last;
+        if( response[last] != '\n' )
+            ++last;
+
+        response.erase( last );
+
+        if( response.length() > 8 )
+        {
+            if( response.substr( 0, 8 ) == "gnuplot>" )
+            {
+                _gpError = true;
+                _gpErrorMsg = response;
+
+                mxError( "gnuPlot", MXE_GNUPLOTERR, "gnuplot says:\n" + response );
+
+                response = "";
+                return -1;
+            }
+        }
+
+        return 0;
+    }
+
+    // If errFD is not open for some reason
+    std::cerr << "gnuplot stderr is not open\n";
+
+    return 1;
 }
 
-std::string gnuPlot::getResponse( const std::string & com, 
-                                  double timeout
-                                )
+std::string gnuPlot::getResponse( const std::string &com, double timeout )
 {
-   std::string response;
-      
-   if(command(com, true) < 0) return response;
-   
-   checkResponse(response, timeout);
-   
-   return response;
+    std::string response;
+
+    if( command( com, true ) < 0 )
+        return response;
+
+    checkResponse( response, timeout );
+
+    return response;
 }
-   
+
 int gnuPlot::replot()
 {
-   return doPlotCommand();
+    return doPlotCommand();
 }
 
-int gnuPlot::xrange( double x0,
-                     double x1
-                   )
+int gnuPlot::xrange( double x0, double x1 )
 {
     std::ostringstream s;
     s << "set xrange [";
     s << x0 << ":" << x1 << "]";
 
-    return command(s.str());
+    return command( s.str() );
 }
 
 int gnuPlot::xrange()
 {
-    return command("unset xrange");
+    return command( "unset xrange" );
 }
 
-int gnuPlot::yrange( double y0,
-                     double y1
-                   )
+int gnuPlot::yrange( double y0, double y1 )
 {
     std::ostringstream s;
     s << "set yrange [";
     s << y0 << ":" << y1 << "]";
 
-    return command(s.str());
+    return command( s.str() );
 }
 
 int gnuPlot::yrange()
 {
-    return command("unset yrange");
+    return command( "unset yrange" );
 }
-
 
 int gnuPlot::logy()
 {
-   return command("set logscale y");
+    return command( "set logscale y" );
 }
 
 int gnuPlot::logx()
 {
-   return command("set logscale x");
+    return command( "set logscale x" );
 }
 
 int gnuPlot::logxy()
 {
-   int rv;
-   rv = logx();
-   if(rv !=0) return rv;
-   
-   return logy();
+    int rv;
+    rv = logx();
+    if( rv != 0 )
+        return rv;
+
+    return logy();
 }
 
 int gnuPlot::ulogy()
 {
-   return command("unset logscale y");
+    return command( "unset logscale y" );
 }
 
 int gnuPlot::ulogx()
 {
-   return command("unset logscale x");
+    return command( "unset logscale x" );
 }
 
 int gnuPlot::ulogxy()
 {
-   int rv;
-   rv = ulogx();
-   if(rv !=0) return rv;
-   
-   return ulogy();
+    int rv;
+    rv = ulogx();
+    if( rv != 0 )
+        return rv;
+
+    return ulogy();
 }
 
-int gnuPlot::plot( const std::string & fname, 
-                   const std::string & modifiers,
-                   const std::string & title,
-                   const std::string & name
-                 )
+int gnuPlot::plot( const std::string &fname,
+                   const std::string &modifiers,
+                   const std::string &title,
+                   const std::string &name )
 {
     std::string nname;
-    if(name == "") 
+    if( name == "" )
     {
-        nname = "curve" + std::to_string(m_curveMap.size());
+        nname = "curve" + std::to_string( m_curveMap.size() );
     }
     else
     {
         nname = name;
     }
 
-    if(m_curveMap.count(nname) > 0)
+    if( m_curveMap.count( nname ) > 0 )
     {
         m_curveMap[nname].m_file = fname;
         m_curveMap[nname].m_modifiers = modifiers;
@@ -374,70 +357,54 @@ int gnuPlot::plot( const std::string & fname,
     }
     else
     {
-        gpCurve gpc(fname, "", modifiers);
-        m_curveMap.insert({nname, gpc});
+        gpCurve gpc( fname, "", modifiers );
+        m_curveMap.insert( { nname, gpc } );
     }
 
     return doPlotCommand();
 }
 
-int gnuPlot::plot( const std::string & fname, 
-                   const std::string & modifiers,
-                   const std::string & name
-                 )
+int gnuPlot::plot( const std::string &fname, const std::string &modifiers, const std::string &name )
 {
-    return plot(fname, modifiers, "", name);
+    return plot( fname, modifiers, "", name );
 }
 
-int gnuPlot::plot( const std::string & fname, 
-                   const std::string & modifiers
-                 )
+int gnuPlot::plot( const std::string &fname, const std::string &modifiers )
 {
-    return plot(fname, modifiers, "", "");
+    return plot( fname, modifiers, "", "" );
 }
 
-int gnuPlot::plot( const std::string & fname )
+int gnuPlot::plot( const std::string &fname )
 {
-    return plot(fname, "", "", "");
+    return plot( fname, "", "", "" );
 }
 
+int gnuPlot::circle(
+    double xcen, double ycen, double radius, const std::string &modifiers, const std::string &title, int npoints )
+{
+    int halfCirc = ( 0.5 * 2.0 * math::pi<double>() * radius * npoints + 0.5 );
 
-int gnuPlot::circle( double xcen, 
-                     double ycen, 
-                     double radius, 
-                     const std::string & modifiers, 
-                     const std::string & title, 
-                     int npoints
-                   )
-{
-   int halfCirc = (0.5 * 2.0 * math::pi<double>() * radius * npoints + 0.5);
-   
-   std::vector<double> xpts(2*halfCirc), ypts(2*halfCirc);
-   
-   
-   for(int i=0; i < halfCirc; ++i)
-   {
-      double x = radius * cos(( (double) i) / ( (double) halfCirc) * math::pi<double>());
-      
-      double y = sqrt( radius*radius - x*x);
-      
-      xpts[i] = xcen + x;
-      ypts[i] = ycen + y;
-      
-      xpts[halfCirc + i] = xcen - x;
-      ypts[halfCirc + i] = ycen - y;
-   }
-   
-   return plot(xpts, ypts, modifiers, title);
+    std::vector<double> xpts( 2 * halfCirc ), ypts( 2 * halfCirc );
+
+    for( int i = 0; i < halfCirc; ++i )
+    {
+        double x = radius * cos( ( (double)i ) / ( (double)halfCirc ) * math::pi<double>() );
+
+        double y = sqrt( radius * radius - x * x );
+
+        xpts[i] = xcen + x;
+        ypts[i] = ycen + y;
+
+        xpts[halfCirc + i] = xcen - x;
+        ypts[halfCirc + i] = ycen - y;
+    }
+
+    return plot( xpts, ypts, modifiers, title );
 }
-   
-int gnuPlot::circle( double radius, 
-                     const std::string & modifiers, 
-                     const std::string & title, 
-                     int npoints
-                   )
+
+int gnuPlot::circle( double radius, const std::string &modifiers, const std::string &title, int npoints )
 {
-   return circle(0.0, 0.0, radius, modifiers, title, npoints);
+    return circle( 0.0, 0.0, radius, modifiers, title, npoints );
 }
 
 void gnuPlot::clear()
@@ -447,150 +414,154 @@ void gnuPlot::clear()
 void gnuPlot::reset()
 {
     m_curveMap.clear();
-    command("reset");
+    command( "reset" );
 }
 void gnuPlot::listCurves()
 {
-    for(auto it = m_curveMap.begin(); it != m_curveMap.end(); ++it)
+    for( auto it = m_curveMap.begin(); it != m_curveMap.end(); ++it )
     {
-        std::cout << it->first << ": " << it->second.m_file << " " << it->second.m_modifiers << " " << it->second.m_title << "\n";
+        std::cout << it->first << ": " << it->second.m_file << " " << it->second.m_modifiers << " "
+                  << it->second.m_title << "\n";
     }
 }
-void gnuPlot::modifiers( const std::string & name,
-                         const std::string & modifiers
-                       )
+void gnuPlot::modifiers( const std::string &name, const std::string &modifiers )
 {
-    if(m_curveMap.count(name) == 0) return;
+    if( m_curveMap.count( name ) == 0 )
+        return;
     m_curveMap[name].m_modifiers = modifiers;
 }
-void gnuPlot::title( const std::string & name,
-                     const std::string & title
-                   )
+void gnuPlot::title( const std::string &name, const std::string &title )
 {
-    if(m_curveMap.count(name) == 0) return;
+    if( m_curveMap.count( name ) == 0 )
+        return;
     m_curveMap[name].m_title = title;
 }
 
-int gnuPlot::plotImpl( const void * y, 
+int gnuPlot::plotImpl( const void *y,
                        size_t Nbytes,
-                       const std::string & binary,
-                       const std::string & modifiers, 
-                       const std::string & title,
-                       const std::string & name
-                     )
+                       const std::string &binary,
+                       const std::string &modifiers,
+                       const std::string &title,
+                       const std::string &name )
 {
-   FILE * fout;
-   char temp[MX_GP_TEMP_SZ];
+    FILE *fout;
+    char temp[MX_GP_TEMP_SZ];
 
-   std::string fname;
+    std::string fname;
 
-   std::string nname;
-   if(m_curveMap.count(name) > 0)
-   {
-      nname = name;
+    std::string nname;
+    if( m_curveMap.count( name ) > 0 )
+    {
+        nname = name;
 
-      fname = m_curveMap[name].m_file;
-      m_curveMap[name].m_title = title;
-      m_curveMap[name].m_modifiers = modifiers;
+        fname = m_curveMap[name].m_file;
+        m_curveMap[name].m_title = title;
+        m_curveMap[name].m_modifiers = modifiers;
 
-      fout = fopen(fname.c_str(), "wb");
-      if(fout == 0) return -1;
-   }
-   else
-   {
-      fout = openTempFile(temp);
-      if(fout == 0) return -1;
+        fout = fopen( fname.c_str(), "wb" );
+        if( fout == 0 )
+            return -1;
+    }
+    else
+    {
+        fout = openTempFile( temp );
+        if( fout == 0 )
+            return -1;
 
-      fname = temp;
+        fname = temp;
 
-      if(name == "") nname = "curve" + std::to_string(m_curveMap.size());
-      else nname = name;
+        if( name == "" )
+            nname = "curve" + std::to_string( m_curveMap.size() );
+        else
+            nname = name;
 
-      gpCurve gpc(fname, title, modifiers);
-      m_curveMap.insert({nname, gpc});
-   }
+        gpCurve gpc( fname, title, modifiers );
+        m_curveMap.insert( { nname, gpc } );
+    }
 
-   int rv = fwrite(y, 1, Nbytes, fout);
-   if(rv != Nbytes)
-   {
-      std::cerr << "Error writing to temporary file\n";
-      perror("gnuPlot: ");
-      return -1;
-   }
-   fflush(fout);
-   fclose(fout);
-   
-   m_curveMap[nname].m_binary = "binary format=\"";
-   m_curveMap[nname].m_binary +=  binary + "\" u 1 ";
-   
-   return doPlotCommand();
+    int rv = fwrite( y, 1, Nbytes, fout );
+    if( rv != Nbytes )
+    {
+        std::cerr << "Error writing to temporary file\n";
+        perror( "gnuPlot: " );
+        return -1;
+    }
+    fflush( fout );
+    fclose( fout );
 
+    m_curveMap[nname].m_binary = "binary format=\"";
+    m_curveMap[nname].m_binary += binary + "\" u 1 ";
+
+    return doPlotCommand();
 }
 
-int gnuPlot::plotImpl( const void * x, 
-                       const void * y, 
+int gnuPlot::plotImpl( const void *x,
+                       const void *y,
                        size_t Npts,
                        size_t sizex,
                        size_t sizey,
-                       const std::string & binaryx,
-                       const std::string & binaryy,
-                       const std::string & modifiers, 
-                       const std::string & title,
-                       const std::string & name
-                     )
+                       const std::string &binaryx,
+                       const std::string &binaryy,
+                       const std::string &modifiers,
+                       const std::string &title,
+                       const std::string &name )
 {
-   FILE * fout;
-   char temp[MX_GP_TEMP_SZ];
+    FILE *fout;
+    char temp[MX_GP_TEMP_SZ];
 
-   std::string fname;
+    std::string fname;
 
-   std::string nname;
+    std::string nname;
 
-   if(m_curveMap.count(name) > 0)
-   {
-      nname = name;
-      fname = m_curveMap[name].m_file;
-      m_curveMap[name].m_title = title;
-      m_curveMap[name].m_modifiers = modifiers;
+    if( m_curveMap.count( name ) > 0 )
+    {
+        nname = name;
+        fname = m_curveMap[name].m_file;
+        m_curveMap[name].m_title = title;
+        m_curveMap[name].m_modifiers = modifiers;
 
-      fout = fopen(fname.c_str(), "wb");
-      if(fout == 0) return -1;
-   }
-   else
-   {
-      fout = openTempFile(temp);
-      if(fout == 0) return -1;
+        fout = fopen( fname.c_str(), "wb" );
+        if( fout == 0 )
+            return -1;
+    }
+    else
+    {
+        fout = openTempFile( temp );
+        if( fout == 0 )
+            return -1;
 
-      fname = temp;
+        fname = temp;
 
-      if(name == "") nname = "curve" + std::to_string(m_curveMap.size());
-      else nname = name;
+        if( name == "" )
+            nname = "curve" + std::to_string( m_curveMap.size() );
+        else
+            nname = name;
 
-      gpCurve gpc(fname, title, modifiers);
-      m_curveMap.insert({nname, gpc});
-   }
-   
-   for(int i=0; i< Npts; ++i)
-   {
-      int rv = fwrite( (char *) x + i*sizex, sizex, 1, fout);
-      rv += fwrite( (char *) y + i*sizey, sizey, 1, fout);
-      
-      if(rv != 2)
-      {
-         std::cerr << "Error writing to temporary file\n";
-         perror("gnuPlot: ");
-         return -1;
-      }
-   }
-   fflush(fout);
-   fclose(fout);
-   
-   std::string com;
-   
-   m_curveMap[nname].m_binary = "binary format=\"";
-   m_curveMap[nname].m_binary +=  binaryx + binaryy + "\" u 1:2 ";
-         
-   return doPlotCommand();
+        gpCurve gpc( fname, title, modifiers );
+        m_curveMap.insert( { nname, gpc } );
+    }
+
+    for( int i = 0; i < Npts; ++i )
+    {
+        int rv = fwrite( (char *)x + i * sizex, sizex, 1, fout );
+        rv += fwrite( (char *)y + i * sizey, sizey, 1, fout );
+
+        if( rv != 2 )
+        {
+            std::cerr << "Error writing to temporary file\n";
+            perror( "gnuPlot: " );
+            return -1;
+        }
+    }
+    fflush( fout );
+    fclose( fout );
+
+    std::string com;
+
+    m_curveMap[nname].m_binary = "binary format=\"";
+    m_curveMap[nname].m_binary += binaryx + binaryy + "\" u 1:2 ";
+
+    return doPlotCommand();
 }
 
 int gnuPlot::doPlotCommand()
@@ -598,105 +569,104 @@ int gnuPlot::doPlotCommand()
     std::string com = "plot ";
 
     int n = 0;
-    for(auto it=m_curveMap.begin(); it != m_curveMap.end(); ++it)
+    for( auto it = m_curveMap.begin(); it != m_curveMap.end(); ++it )
     {
         com += "'" + it->second.m_file + "'";
         com += " " + it->second.m_binary;
         com += " " + it->second.m_modifiers;
         com += " t '" + it->second.m_title + "'";
-        if(n < m_curveMap.size()-1) com += ",";
+        if( n < m_curveMap.size() - 1 )
+            com += ",";
         ++n;
     }
 
-    return command(com, true);
+    return command( com, true );
 }
 
-FILE * gnuPlot::openTempFile(char * temp)
+FILE *gnuPlot::openTempFile( char *temp )
 {
-   FILE * fout;
-   
-   snprintf(temp, MX_GP_TEMP_SZ, "%s/gpplot_%d_XXXXXX", _tempLocation.c_str(), getpid());
-   int rv = mkstemp(temp);
-   if(rv < 0) return 0;
-      
-   close(rv);
-   
-   fout = fopen(temp, "wb");
+    FILE *fout;
 
-   if(fout == NULL)
-   {
-      std::cerr << "Could not open tempoary file (" << temp << ") for writing\n";
-      perror("gnuPlot: ");
-      return 0;
-   }
-   
-   _tempFiles.push_back(temp);
-   
-   return fout;
-} //FILE * gnuPlot::openTempFile(char * temp)
+    snprintf( temp, MX_GP_TEMP_SZ, "%s/gpplot_%d_XXXXXX", _tempLocation.c_str(), getpid() );
+    int rv = mkstemp( temp );
+    if( rv < 0 )
+        return 0;
 
-template<>
+    close( rv );
+
+    fout = fopen( temp, "wb" );
+
+    if( fout == NULL )
+    {
+        std::cerr << "Could not open tempoary file (" << temp << ") for writing\n";
+        perror( "gnuPlot: " );
+        return 0;
+    }
+
+    _tempFiles.push_back( temp );
+
+    return fout;
+} // FILE * gnuPlot::openTempFile(char * temp)
+
+template <>
 std::string gpBinaryFormat<char>()
 {
-   return "%char";
+    return "%char";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned char>()
 {
-   return "%uchar";
+    return "%uchar";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<short>()
 {
-   return "%short";
+    return "%short";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned short>()
 {
-   return "%ushort";
+    return "%ushort";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<int>()
 {
-   return "%int";
+    return "%int";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned int>()
 {
-   return "%uint";
+    return "%uint";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<long>()
 {
-   return "%long";
+    return "%long";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<unsigned long>()
 {
-   return "%ulong";
+    return "%ulong";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<float>()
 {
-   return "%float";
+    return "%float";
 }
 
-template<>
+template <>
 std::string gpBinaryFormat<double>()
 {
-   return "%double";
+    return "%double";
 }
 
-} //namespace math
-} //namespace mx
-
-   
-
+} // namespace math
+} // namespace mx

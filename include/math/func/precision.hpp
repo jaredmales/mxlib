@@ -1,6 +1,5 @@
 
 
-
 #ifndef mx_precision_hpp
 #define mx_precision_hpp
 
@@ -16,34 +15,35 @@ namespace math
 {
 namespace func
 {
-   
+
 /// Get the sqrt(epsilon) where epsilon is machine precision
 /** Wrapper for boost function
-  *
-  * \todo this isn't, but should be constexpr -- need constr sqrt.
-  *
-  * \ingroup gen_math_precision
-  */ 
-template<typename T>
-T root_epsilon() 
+ *
+ * \todo this isn't, but should be constexpr -- need constr sqrt.
+ *
+ * \ingroup gen_math_precision
+ */
+template <typename T>
+T root_epsilon()
 {
 #ifdef MX_INCLUDE_BOOST
-   return boost::math::tools::root_epsilon<T>();
+    return boost::math::tools::root_epsilon<T>();
 #else
-   static_assert(std::is_fundamental<T>::value || !std::is_fundamental<T>::value, "root_epsilon<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost.");
-   return 0;
+    static_assert(
+        std::is_fundamental<T>::value || !std::is_fundamental<T>::value,
+        "root_epsilon<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost." );
+    return 0;
 #endif
 }
 
-template<>
+template <>
 float root_epsilon<float>();
 
-template<>
+template <>
 double root_epsilon<double>();
 
+} // namespace func
+} // namespace math
+} // namespace mx
 
-}
-}
-}
-
-#endif //mx_precision_hpp
+#endif // mx_precision_hpp
