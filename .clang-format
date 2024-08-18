@@ -16,3 +16,5 @@ BinPackParameters: false
 #This will screw with forwards for template instantiation if true
 SortIncludes: false
 
+IndentPPDirectives: BeforeHash
+ContinuationIndentWidth: 4

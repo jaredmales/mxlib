@@ -401,13 +401,13 @@ void applyMask( eigenT &maskedIm,               ///< [out] the image to mask (wi
  * \ingroup image_masks
  */
 template <class arrayT>
-void maskCircle(
-    arrayT &m,                           ///< [in.out] the image to be masked, is modified.
-    typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
-    typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
-    typename arrayT::Scalar rad,         ///< [in] the radius of the circle
-    typename arrayT::Scalar val,         ///< [in] the mask value.
-    typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+void maskCircle( arrayT &m,                           ///< [in.out] the image to be masked, is modified.
+                 typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
+                 typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
+                 typename arrayT::Scalar rad,         ///< [in] the radius of the circle
+                 typename arrayT::Scalar val,         ///< [in] the mask value.
+                 typename arrayT::Scalar pixbuf = 0.5 /**< [in] [optional] buffer for radius comparison.
+                                                                Default is 0.5 pixels.*/
 )
 {
     size_t l0 = m.rows();
