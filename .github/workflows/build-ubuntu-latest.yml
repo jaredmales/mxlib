@@ -1,4 +1,4 @@
-name: Build (Linux)
+name: Build (Ubuntu)
 on: [push]
 jobs:
   build-all:
