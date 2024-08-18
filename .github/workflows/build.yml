@@ -1,5 +1,5 @@
 name: Build (Linux, macOS)
-on:
+on: [push]
 jobs:
   build-all:
     runs-on: ${{ matrix.os }}
