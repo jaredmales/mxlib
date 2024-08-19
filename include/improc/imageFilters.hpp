@@ -1261,18 +1261,22 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
  * \tparam eigenImT the eigen array type of the output and non-reference images.
  *
  */
-template <typename eigenCubeT, typename eigenCubeT1, typename eigenImT>
-void stddevImageCube( eigenCubeT &stdImc,     ///< [out]  the standard deviation image cube.  This will be resized.
-                      const eigenCubeT1 &imc, ///< [in] the image cube to form the standard deviation profile of.
-                      const eigenImT &mask, ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
-                      typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
-                      typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
-                      bool divide = false ///< [in] [optional] if true, the output is the input image is divided by the
-                                          ///< std-dev profile, i.e. a S/N map.  default is false.
+template <typename eigenCubeT, typename eigenCubeT1, typename eigenCubeT2, typename radT1, typename radT2>
+void stddevImageCube(
+    eigenCubeT &stdImc,          /**< [out] the standard deviation image cube.  This will be resized. */
+    const eigenCubeT1 &imc,      /**< [in] the image cube to form the standard deviation profile of. */
+    const eigenCubeT2 &maskCube, /**< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations. */
+    radT1 minRad,                /**< [in] the minimum radius to analyze */
+    radT2 maxRad,                /**< [in] the maximum radius to analyze */
+    bool divide = false          /**< [in] [optional] if true, the output is the input image is divided by the
+                                           std-dev profile, i.e. a S/N map.  default is false.*/
 )
 {
     int dim1 = imc.cols();
     int dim2 = imc.rows();
+
+    typename eigenCubeT::Scalar minRadF = minRad;
+    typename eigenCubeT::Scalar maxRadF = maxRad;
 
     eigenImage<typename eigenCubeT::Scalar> rad;
     rad.resize( dim1, dim2 );
@@ -1284,11 +1288,12 @@ void stddevImageCube( eigenCubeT &stdImc,     ///< [out]  the standard deviation
     // #pragma omp parallel for
     for( int i = 0; i < imc.planes(); ++i )
     {
-        eigenImage<typename eigenCubeT::Scalar> im, stdIm;
+        eigenImage<typename eigenCubeT::Scalar> im, stdIm, mask;
 
         im = imc.image( i );
+        mask = maskCube.image( i );
 
-        stddevImage( stdIm, im, rad, mask, minRad, maxRad, divide );
+        stddevImage( stdIm, im, rad, mask, minRadF, maxRadF, divide );
 
         stdImc.image( i ) = stdIm;
     }

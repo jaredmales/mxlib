@@ -135,10 +135,11 @@ class eigenCube
      * \tparam eigenCubeT an eigenCube type.
      */
     template <typename eigenT, typename eigenCubeT>
-    void mean( eigenT &mim,      ///< [out] the resultant mean image.  Is resized.
-               eigenCubeT &mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-               double minGoodFract =
-                   0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
+    void mean( eigenT &mim,              ///< [out] the resultant mean image.  Is resized.
+               eigenCubeT &mask,         /**< [in] a mask cube.  Only pixels with value 1 are included in the
+                                                   mean calculation. */
+               double minGoodFract = 0.0 /**< [in] [optional] the minimum fraction of good pixels, if not met
+                                                              then the pixel is NaN-ed. */
     );
 
     /// Calculate the weighted mean image of the cube
@@ -451,11 +452,11 @@ void eigenCube<dataT>::mean( eigenT &mim, eigenCubeT &mask, double minGoodFract 
 {
     mim.resize( _rows, _cols );
 
-#pragma omp parallel num_threads( Eigen::nbThreads() )
+    #pragma omp parallel
     {
         std::vector<dataT> work;
 
-#pragma omp for schedule( static, 1 )
+        #pragma omp for
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )
@@ -465,18 +466,20 @@ void eigenCube<dataT>::mean( eigenT &mim, eigenCubeT &mask, double minGoodFract 
 
                 for( Index k = 0; k < _planes; ++k )
                 {
-
                     if( ( mask.pixel( i, j ) )( k, 0 ) == 1 )
                     {
                         work.push_back( ( pixel( i, j ) )( k, 0 ) );
                     }
                 }
+
                 if( work.size() > minGoodFract * _planes )
                 {
                     mim( i, j ) = math::vectorMean( work );
                 }
                 else
-                    mim( i, j ) = std::numeric_limits<dataT>::quiet_NaN();
+                {
+                    mim( i, j ) = invalidNumber<float>();
+                }
             }
         }
     }
@@ -541,7 +544,7 @@ void eigenCube<dataT>::mean( eigenT &mim, std::vector<dataT> &weights, eigenCube
                     mim( i, j ) = math::vectorMean( work, wwork );
                 }
                 else
-                    mim( i, j ) = std::numeric_limits<dataT>::quiet_NaN();
+                    mim( i, j ) = invalidNumber<float>();
             }
         }
     }
@@ -571,11 +574,11 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, dataT sigma )
 {
     mim.resize( _rows, _cols );
 
-#pragma omp parallel num_threads( Eigen::nbThreads() )
+    #pragma omp parallel num_threads( Eigen::nbThreads() )
     {
         std::vector<Scalar> work;
 
-#pragma omp for schedule( static, 10 )
+    #pragma omp for schedule( static, 10 )
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )
@@ -596,11 +599,11 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, do
 {
     mim.resize( _rows, _cols );
 
-#pragma omp parallel num_threads( Eigen::nbThreads() )
+    #pragma omp parallel
     {
         std::vector<Scalar> work;
 
-#pragma omp for schedule( static, 10 )
+        #pragma omp for
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )
@@ -615,12 +618,15 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, do
                         work.push_back( ( pixel( i, j ) )( k, 0 ) );
                     }
                 }
+
                 if( work.size() > minGoodFract * _planes )
                 {
                     mim( i, j ) = math::vectorSigmaMean( work, sigma );
                 }
                 else
-                    mim( i, j ) = std::numeric_limits<dataT>::quiet_NaN();
+                {
+                    mim( i, j ) = invalidNumber<float>();
+                }
             }
         }
     }
@@ -686,7 +692,7 @@ void eigenCube<dataT>::sigmaMean(
                     mim( i, j ) = math::vectorSigmaMean( work, wwork, sigma );
                 }
                 else
-                    mim( i, j ) = std::numeric_limits<dataT>::quiet_NaN();
+                    mim( i, j ) = invalidNumber<float>();
             }
         }
     }

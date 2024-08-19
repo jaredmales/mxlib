@@ -186,17 +186,19 @@ void radAngImage(
  * \returns a vector containing the 1D indices of the region defined by the input parameters
  */
 template <typename angleT, typename eigenT1, typename eigenT2, typename eigenT3 = eigenT1>
-std::vector<size_t>
-annulusIndices( const eigenT1 &rIm,           ///< [in] a radius image of the type produced by \ref radiusImage
-                const eigenT2 &qIm,           ///< [in] an angle image of the type produce by \ref angleImage
-                typename angleT::realT xcen,  ///< [in] the x center of the image
-                typename angleT::realT ycen,  ///< [in] the y center of the image
-                typename angleT::realT min_r, ///< [in] the minimum radius of the region
-                typename angleT::realT max_r, ///< [in] the maximum radius of the region
-                typename angleT::realT min_q, ///< [in] the minimum angle of the region.
-                typename angleT::realT max_q, ///< [in] the maximum angle of the region.
-                eigenT3 *mask = 0             /**< [in] [optional] pointer to a mask image, only pixels of value 1
-                                                                   are included in the indices.*/
+std::vector<size_t> annulusIndices( const eigenT1 &rIm,           /**< [in] a radius image of the type produced by
+                                                                            \ref radiusImage */
+                                    const eigenT2 &qIm,           /**< [in] an angle image of the type produce by
+                                                                            \ref angleImage */
+                                    typename angleT::realT xcen,  /**< [in] the x center of the image */
+                                    typename angleT::realT ycen,  /**< [in] the y center of the image */
+                                    typename angleT::realT min_r, /**< [in] the minimum radius of the region */
+                                    typename angleT::realT max_r, /**< [in] the maximum radius of the region */
+                                    typename angleT::realT min_q, /**< [in] the minimum angle of the region. */
+                                    typename angleT::realT max_q, /**< [in] the maximum angle of the region. */
+                                    eigenT3 *mask = 0             /**< [in] [optional] pointer to a mask image, only
+                                                                                       pixels of value 1 are included
+                                                                                       in the indices. */
 )
 {
 
@@ -227,35 +229,47 @@ annulusIndices( const eigenT1 &rIm,           ///< [in] a radius image of the ty
     min_q = math::angleMod<angleT>( min_q );
     // If max_q is exactly 360/2pi (to within a tol of 100*eps) we don't mod, other mod.
     if( fabs( max_q - angleT::full ) > 100 * std::numeric_limits<typename angleT::realT>::epsilon() )
+    {
         max_q = math::angleMod<angleT>( max_q );
+    }
 
     // Find the mid-point to enable sectors wider than 180.
     typename angleT::realT mid_q;
     if( min_q <= max_q )
+    {
         mid_q = 0.5 * ( min_q + max_q );
+    }
     else
+    {
         mid_q = 0.5 * ( ( min_q - angleT::full ) + max_q );
+    }
 
-    std::cerr << min_q << " " << mid_q << " " << max_q << "\n";
     for( int j = y0; j < y1; ++j )
     {
         for( int i = x0; i < x1; ++i )
         {
             if( rIm( i, j ) < min_r )
+            {
                 continue;
+            }
             if( rIm( i, j ) >= max_r )
+            {
                 continue;
-
+            }
             if( !( ( math::angleDiff<angleT>( min_q, qIm( i, j ) ) >= 0 &&
                      math::angleDiff<angleT>( qIm( i, j ), mid_q ) > 0 ) ||
                    ( math::angleDiff<angleT>( mid_q, qIm( i, j ) ) >= 0 &&
                      math::angleDiff<angleT>( qIm( i, j ), max_q ) > 0 ) ) )
+            {
                 continue;
+            }
 
             if( mask )
             {
                 if( ( *mask )( i, j ) == 0 )
+                {
                     continue;
+                }
             }
 
             idx.push_back( j * rIm.rows() + i );
@@ -401,11 +415,11 @@ void applyMask( eigenT &maskedIm,               ///< [out] the image to mask (wi
  * \ingroup image_masks
  */
 template <class arrayT>
-void maskCircle( arrayT &m,                           ///< [in.out] the image to be masked, is modified.
-                 typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the circle
-                 typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the circle
-                 typename arrayT::Scalar rad,         ///< [in] the radius of the circle
-                 typename arrayT::Scalar val,         ///< [in] the mask value.
+void maskCircle( arrayT &m,                           /**< [in.out] the image to be masked, is modified. */
+                 typename arrayT::Scalar xcen,        /**< [in] the x coordinate of the center of the circle */
+                 typename arrayT::Scalar ycen,        /**< [in] the y coordinate of the center of the circle */
+                 typename arrayT::Scalar rad,         /**< [in] the radius of the circle */
+                 typename arrayT::Scalar val,         /**< [in] the mask value. */
                  typename arrayT::Scalar pixbuf = 0.5 /**< [in] [optional] buffer for radius comparison.
                                                                 Default is 0.5 pixels.*/
 )
@@ -833,10 +847,11 @@ void cutImageRegion( imageTout &imout,     ///< [out] a row-image containing the
  * \ingroup image_masks
  */
 template <typename imageTout, typename imageTin>
-void insertImageRegion(
-    imageTout imout,      ///< [out] a row-image into which the pixel values specified by the indices are inserted.
-    const imageTin &imin, ///< [in] a row-image containing the pixel values, same size as idx
-    const std::vector<size_t> &idx ///< [in] the linear indices of the pixel values
+void insertImageRegion( imageTout imout,               /**< [out] a row-image into which the pixel values
+                                                                  specified by the indices are inserted. */
+                        const imageTin &imin,          /**< [in] a row-image containing the pixel values,
+                                                                 same size as idx*/
+                        const std::vector<size_t> &idx /**< [in] the linear indices of the pixel values */
 )
 {
     // #pragma omp parallel for schedule(static, 1)

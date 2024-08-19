@@ -272,7 +272,9 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
     }
 
     if( HCIobservation<realT>::readFiles() < 0 )
+    {
         return -1;
+    }
 
     return 0;
 }
@@ -286,7 +288,9 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
     {
         std::cerr << "Injecting fakes in target images...\n";
         if( injectFake( this->m_tgtIms, this->m_fileList, m_derotF, 1, 1 ) < 0 )
+        {
             return -1;
+        }
     }
 
     return 0;
@@ -587,13 +591,20 @@ int ADIobservation<_realT, _derotFunctObj>::injectFake( eigenImageT &fakePSF,
     return 0;
 }
 
-template <typename _realT, class _derotFunctObj>
-void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
+template <typename realT, class derotFunctObj>
+void ADIobservation<realT, derotFunctObj>::makeMaskCube()
 {
     if( this->m_mask.rows() != this->m_Nrows || this->m_mask.cols() != this->m_Ncols )
     {
-        std::cerr << "\nMask is not the same size as images.\n\n";
-        exit( -1 );
+        // clang-format off
+        std::string message = "Mask is not the same size as images.\n";
+                   message += "    Mask:   rows=" + std::to_string(this->m_mask.rows()) + "\n";
+                   message += "            cols=" + std::to_string(this->m_mask.cols()) + "\n";
+                   message += "    Images: rows=" + std::to_string(this->m_Nrows) + "\n";
+                   message += "            cols=" + std::to_string(this->m_Ncols) + "\n";
+        // clang-format on
+
+        mxThrowException( err::invalidconfig, "ADIobservation<realT, derotFunctObj>::makeMaskCube", message );
     }
 
     this->m_maskCube.resize( this->m_Nrows, this->m_Ncols, this->m_Nims );
@@ -610,8 +621,16 @@ void ADIobservation<_realT, _derotFunctObj>::makeMaskCube()
         }
     }
 
+    ioutils::createDirectories(this->m_auxDataDir);
+    std::ofstream fout(this->m_auxDataDir + "angles.dat");
+    for( int i = 0; i < this->m_Nims; ++i )
+    {
+        fout << m_derotF.derotAngle( i ) << "\n";
+    }
+    fout.close();
+
     fits::fitsFile<realT> ff;
-    ff.write( "maskCube.fits", this->m_maskCube );
+    ff.write( this->m_auxDataDir + "maskCube.fits", this->m_maskCube );
 }
 
 template <typename _realT, class _derotFunctObj>

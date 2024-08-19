@@ -118,15 +118,16 @@ struct HCIobservation
      *  Populates the \ref m_RDIfileList vector by searching on disk for files which match
      * "RDIdir/RDIprefix*.RDIext".  See \ref load_RDIfileList
      */
-    HCIobservation(
-        const std::string &dir,    ///< [in] the directory to search.
-        const std::string &prefix, ///< [in] the initial part of the file name.  Can be empty "".
-        const std::string &ext,    ///< [in] the extension to append to the file name, must include the '.'.
-        const std::string &RDIdir, ///< [in] the directory to search for the reference files.
-        const std::string
-            &RDIprefix, ///< [in] the initial part of the file name for the reference files.  Can be empty "".
-        const std::string &RDIext = "" ///< [in] [optional] the extension to append to the RDI file name, must include
-                                       ///< the '.'.  If empty "" then same extension as target files is used.
+    HCIobservation( const std::string &dir,        /**< [in] the directory to search. */
+                    const std::string &prefix,     /**< [in] the initial part of the file name.  Can be empty "".*/
+                    const std::string &ext,        /**< [in] the extension to append to the file name, must include
+                                                             the '.'.*/
+                    const std::string &RDIdir,     /**< [in] the directory to search for the reference files.*/
+                    const std::string &RDIprefix,  /**< [in] the initial part of the file name for the reference files.
+                                                             Can be empty "".*/
+                    const std::string &RDIext = "" /**< [in] [optional] the extension to append to the RDI file name,
+                                                                        must include the '.'.  If empty "" then same
+                                                                        extension as target files is used.*/
     );
 
     /// Construct using a file containing the target file list and a file containing the RDI target file list
@@ -447,14 +448,16 @@ struct HCIobservation
 
     eigenImageT m_mask; ///< The mask
 
-    eigenCube<realT> m_maskCube; ///< A cube of masks, one for each input image, which may be modified versions (e.g.
-                                 ///< rotated) of mask.
+    eigenCube<realT> m_maskCube; /**< A cube of masks, one for each input image, which may be modified
+                                      versions (e.g. rotated) of mask. */
 
     /// Read the mask file, resizing to imSize if needed.
     void readMask();
 
-    /// Populate the mask cube which is used for post-processing.  Derived classes can do this as appropriate, e.g. by
-    /// rotating the mask.
+    /// Populate the mask cube which is used for post-processing.
+    /** Derived classes can do this as appropriate, e.g. by rotating the mask.
+     * \throws mx::err::invalidconfig if mask is not the same size as the images
+     */
     virtual void makeMaskCube();
 
     ///@}
@@ -569,6 +572,12 @@ struct HCIobservation
      * @{
      */
 
+    /// Location for temporary auxilliary output files (e.g. masks)
+    std::string m_auxDataDir{ "/tmp/klipReduceAux/" };
+
+    /// Whether or not to move the temp. aux files.
+    bool m_moveAuxDataDir {true};
+
     /// Set whether the final combined image is written to disk
     int m_doWriteFinim{ 1 };
 
@@ -606,8 +615,9 @@ struct HCIobservation
     /// Fill in the HCIobservation standard FITS header
     /**
      */
-    void stdFitsHeader(
-        fits::fitsHeader &head /**< [in.out] the fistHeader structure which will have cards appended to it. */ );
+    void stdFitsHeader( fits::fitsHeader &head /**< [in.out] the fistHeader structure which will
+                                                             have cards appended to it. */
+    );
 
     /// Write the final combined image to disk
     /**
@@ -700,6 +710,7 @@ template <typename _realT>
 void HCIobservation<_realT>::load_fileList( const std::string &dir, const std::string &prefix, const std::string &ext )
 {
     m_fileList = ioutils::getFileNames( dir, prefix, "", ext );
+
     m_filesDeleted = false;
 }
 
@@ -728,14 +739,14 @@ void HCIobservation<_realT>::load_RDIfileList( const std::string &fileListFile )
 
 // --< construction and initialization
 
-template <typename _realT>
-int HCIobservation<_realT>::readFiles()
+template <typename realT>
+int HCIobservation<realT>::readFiles()
 {
     if( m_fileList.size() == 0 )
     {
-        mxError(
-            "HCIobservation", MXE_FILENOTFOUND, "The target fileList has 0 length, there are no files to be read." );
-        return -1;
+        mxThrowException( err::invalidconfig,
+                          "HCIobservation<realT>::readFiles",
+                          "The target fileList has 0 length, there are no files to be read." );
     }
 
     // First make the list deletions
@@ -755,10 +766,9 @@ int HCIobservation<_realT>::readFiles()
 
     if( m_fileList.size() == 0 )
     {
-        mxError( "HCIobservation",
-                 MXE_FILENOTFOUND,
-                 "The target fileList has 0 length, there are no files to be read after deletions." );
-        return -1;
+        mxThrowException( err::invalidconfig,
+                          "HCIobservation<realT>::readFiles",
+                          "The target fileList has 0 length, there are no files to be read after deletions." );
     }
 
     if( m_qualityFile != "" )
@@ -771,10 +781,9 @@ int HCIobservation<_realT>::readFiles()
 
         if( m_fileList.size() == 0 )
         {
-            mxError( "HCIobservation",
-                     MXE_FILENOTFOUND,
-                     "The fileList has 0 length, there are no files to be read after thresholding." );
-            return -1;
+            mxThrowException( err::invalidconfig,
+                              "HCIobservation<realT>::readFiles",
+                              "The fileList has 0 length, there are no files to be read after thresholding." );
         }
 
         std::cerr << "Done.  Selected " << m_fileList.size() << " out of " << origsize << "\n";
@@ -826,15 +835,21 @@ int HCIobservation<_realT>::readFiles()
     {
         m_imSize = im.rows();
         if( m_imSize > im.cols() )
+        {
             m_imSize = im.cols();
+        }
     }
     else
     {
         // Now make sure we don't read too much.
         if( m_imSize > im.rows() )
+        {
             m_imSize = im.rows();
+        }
         if( m_imSize > im.cols() )
+        {
             m_imSize = im.cols();
+        }
     }
 
     // And now set the read size so we only read what we want.
@@ -843,6 +858,7 @@ int HCIobservation<_realT>::readFiles()
                    floor( 0.5 * ( im.cols() - 1.0 ) - 0.5 * ( m_imSize - 1.0 ) + 0.1 ),
                    m_imSize,
                    m_imSize );
+
     im.resize( m_imSize, m_imSize );
 
     /**** Right here is we got to coadd.
@@ -1373,14 +1389,22 @@ void HCIobservation<_realT>::readMask()
     }
 }
 
-template <typename _realT>
-void HCIobservation<_realT>::makeMaskCube()
+template <typename realT>
+void HCIobservation<realT>::makeMaskCube()
 {
     if( m_mask.rows() != m_Nrows || m_mask.cols() != m_Ncols )
     {
-        std::cerr << "\nMask is not the same size as images.\n\n";
-        exit( -1 );
+        // clang-format off
+        std::string message = "Mask is not the same size as images.\n";
+                   message += "    Mask:   rows=" + std::to_string(m_mask.rows()) + "\n";
+                   message += "            cols=" + std::to_string(m_mask.cols()) + "\n";
+                   message += "    Images: rows=" + std::to_string(m_Nrows) + "\n";
+                   message += "            cols=" + std::to_string(m_Ncols) + "\n";
+        // clang-format on
+
+        mxThrowException( err::invalidconfig, "HCIobservation<realT>::makeMaskCube", message );
     }
+
     m_maskCube.resize( m_Nrows, m_Ncols, m_Nims );
 
     for( int i = 0; i < m_Nims; ++i )
@@ -1609,7 +1633,9 @@ template <typename _realT>
 void HCIobservation<_realT>::combineFinim()
 {
     if( m_combineMethod == HCI::noCombine )
+    {
         return;
+    }
 
     t_combo_begin = sys::get_curr_time();
 
@@ -1800,14 +1826,15 @@ void HCIobservation<_realT>::writeFinim( fits::fitsHeader *addHead )
     stdFitsHeader( head );
 
     // Now add the final combination details:
-    head.append<std::string>( "COMBMTHD", HCI::combineMethodStr( m_combineMethod ), "combination method" );
+    head.append<std::string>( "COMBINATION METHOD", HCI::combineMethodStr( m_combineMethod ), "combination method" );
 
     if( m_weightFile != "" )
-        head.append( "WEIGHTF", m_weightFile, "file containing weights for combination" );
+        head.append( "WEIGHT FILE", m_weightFile, "file containing weights for combination" );
 
     if( m_combineMethod == HCI::sigmaMeanCombine )
-        head.append<realT>( "SIGMAT", m_sigmaThreshold, "threshold for sigma clipping" );
+        head.append<realT>( "SIGMA THRESHOLD", m_sigmaThreshold, "threshold for sigma clipping" );
 
+    head.append<realT>( "MIN FOOD FRACTION", m_minGoodFract, "minimum good fraction for inclusion" );
     if( addHead )
     {
         head.append( *addHead );

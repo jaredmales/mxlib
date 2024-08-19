@@ -28,6 +28,7 @@
 #define improc_imageUtils_hpp
 
 #include <cstdint>
+#include <cmath>
 
 #include "imageTransforms.hpp"
 
@@ -39,6 +40,19 @@ namespace improc
 /** \ingroup image_utils
  *@{
  */
+
+template <typename T>
+constexpr T invalidNumber()
+{
+    return -3e38;
+}
+
+/// Check if the number is nan, using several different methods
+inline bool IsNan( float value )
+{
+    return ( ( ( ( *(uint32_t *)&value ) & 0x7fffffff ) > 0x7f800000 ) || ( value == invalidNumber<float>() ) ||
+             !std::isfinite( value ) );
+}
 
 /// Reflect pixel coordinates across the given center pixel.
 /**
@@ -71,7 +85,7 @@ void zeroNaNs( imageT &im, ///< [in.out] image which will have any NaN pixels se
     {
         for( int r = 0; r < im.rows(); ++r )
         {
-            if( !std::isnormal( im( r, c ) ) )
+            if( IsNan( im( r, c ) ) )
             {
                 im( r, c ) = val;
             }
@@ -88,22 +102,44 @@ void zeroNaNs( imageT &im /**< [in.out] image which will have any NaN pixels set
 }
 
 /// Zero any NaNs in an image cube
-template <class cubeT>
-void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels set to zero */ )
+/** This version fills in a mask with 1s where there were nans, 0s elsewhere.
+ *
+ */
+template <class cubeT, class maskCubeT>
+void zeroNaNCube( cubeT &imc,     /**< [in.out] cube which will have any NaN pixels set to zero */
+                  maskCubeT *mask /**< [out] a 1/0 mask with 1 indicating which pixels where nan */
+)
 {
+    if( mask )
+    {
+        mask->resize( imc.rows(), imc.cols(), imc.planes() );
+        mask->setZero();
+    }
+
     for( int p = 0; p < imc.planes(); ++p )
     {
         for( int c = 0; c < imc.cols(); ++c )
         {
             for( int r = 0; r < imc.rows(); ++r )
             {
-                if( !std::isnormal( imc.image( p )( r, c ) ) )
+                if( IsNan( imc.image( p )( r, c ) ) )
                 {
                     imc.image( p )( r, c ) = 0;
+                    if( mask )
+                    {
+                        ( *mask ).image( p )( r, c ) = 1;
+                    }
                 }
             }
         }
     }
+}
+
+/// Zero any NaNs in an image cube
+template <class cubeT>
+void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels set to zero */ )
+{
+    return zeroNaNCube<cubeT, cubeT>( imc, nullptr );
 }
 
 /// Calculate the mean value of an image
