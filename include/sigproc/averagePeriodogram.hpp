@@ -298,9 +298,14 @@ template <typename realT>
 averagePeriodogram<realT>::~averagePeriodogram()
 {
     if( m_tsWork )
+    {
         fftw_free( m_tsWork );
+    }
+
     if( m_fftWork )
+    {
         fftw_free( m_fftWork );
+    }
 }
 
 template <typename realT>
@@ -350,12 +355,16 @@ int averagePeriodogram<realT>::resize( size_t avgLen, size_t padLen, size_t olap
     m_fft.plan( m_padLen, MXFFT_FORWARD, false );
 
     if( m_tsWork )
+    {
         fftw_free( m_tsWork );
+    }
 
     m_tsWork = math::fft::fftw_malloc<realT>( m_padLen );
 
     if( m_fftWork )
+    {
         fftw_free( m_fftWork );
+    }
 
     m_fftWork = math::fft::fftw_malloc<std::complex<realT>>( ( m_padLen / 2 + 1 ) );
 

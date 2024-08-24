@@ -121,23 +121,25 @@ struct appConfigurator
     /**
      * \overload
      */
-    void add( const std::string &n,  ///< [in] The name of the target
-              const std::string &so, ///< [in] The command-line short option (e.g. "f" for -f)
-              const std::string &lo, ///< [in] The command-line long option (e.g. "file" for --file)
-              int clt, ///< [in] The command-line option type, argType::false, argType::true, argType::optional,
-                       ///< argType::required
-              const std::string &s,       ///< [in] The config file section name, can be empty ""
-              const std::string &kw,      ///< [in] The config file keyword, read in a "keyword=value" pair
-              bool isReq = false,         ///< [in] Whether or not this option is required to be set
-              const std::string &ht = "", ///< [in] The type to display in the help message
-              const std::string &he = ""  ///< [in] The explanation to display in the help message
+    void add( const std::string &n,       /**< [in] The name of the target */
+              const std::string &so,      /**< [in] The command-line short option (e.g. "f" for -f) */
+              const std::string &lo,      /**< [in] The command-line long option (e.g. "file" for --file) */
+              int clt,                    /**< [in] The command-line option type, argType::false,
+                                                   argType::true, argType::optional, argType::required */
+              const std::string &s,       /**< [in] The config file section name, can be empty "" */
+              const std::string &kw,      /**< [in] The config file keyword, read in a "keyword=value" pair */
+              bool isReq = false,         /**< [in] Whether or not this option is required to be set */
+              const std::string &ht = "", /**< [in] The type to display in the help message */
+              const std::string &he = ""  /**< [in] The explanation to display in the help message */
     );
 
     /// Parse the command line, updating the targets
-    void parseCommandLine( int argc,    ///< [in] standard command line result specifying number of argumetns in argv
-                           char **argv, ///< [in] standard command line result containing the arguments.
-                           const std::string &oneTarget =
-                               "" ///< [in] [optional] if not empty, then only this target is extracted by the parser.
+    void parseCommandLine( int argc,                         /**< [in] standard command line result specifying number
+                                                                       of argumetns in argv */
+                           char **argv,                      /**< [in] standard command line result containing the
+                                                                       arguments. */
+                           const std::string &oneTarget = "" /**< [in] [optional] if not empty, then only this target
+                                                                                  is extracted by the parser. */
     );
 
     /// Read and parse a config/ini file, updating the targets
@@ -302,7 +304,7 @@ struct appConfigurator
              std::unordered_map<std::string, configTarget> &targets ///< [in] the map of config targets to use
     );
 
-    /// Get the i-th value of the target in the used set, as a vector containing the specified type.
+    /// Get the final value of the target in the used set, as a vector containing the specified type.
     /** The vector is only populated if the config target was set.  If it is populated,
      * it is cleared first. Thus if a vector filled with default values is passed
      * in, it will only be overwritten if the user specified new values.
@@ -396,7 +398,9 @@ int appConfigurator::get( typeT &v,
     }
 
     if( targets[name].values.size() <= i )
+    {
         return -1;
+    }
 
     v = ioutils::convertFromString<typeT>( targets[name].values[i] );
 

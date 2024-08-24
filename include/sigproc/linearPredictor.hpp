@@ -52,7 +52,7 @@ struct linearPredictor
 {
     typedef _realT realT;
 
-    Eigen::Array<realT, -1, -1> _c;
+    std::vector<realT> m_c;
 
     realT _setCondition{ 0 };
     realT _actCondition{ 0 };
@@ -62,12 +62,26 @@ struct linearPredictor
     /** If condition==0 then the levinson recursion is used.
      * Otherwise, SVD pseudo-inversion is used with the given condition number.
      */
-    int calcCoefficients( std::vector<realT> &ac, size_t Nc, realT condition = 0, size_t extrap = 0 )
+    int calcCoefficients( const std::vector<realT> &ac,
+                         size_t Nc,
+                         size_t Npred = 1,
+                         realT condition = 0
+                         )
+    {
+        return calcCoefficients( ac, ac.size(), Nc, Npred, condition);
+    }
+
+    int calcCoefficients( const realT *ac,
+                          size_t acSz,
+                          size_t Nc,
+                          size_t Npred = 1,
+                          realT condition = 0
+                          )
     {
 
         if( condition == 0 )
         {
-            return calcCoefficientsLevinson( ac, Nc, extrap );
+            return calcCoefficientsLevinson( ac, acSz, Nc, Npred );
         }
 
         Eigen::Array<realT, -1, -1> Rmat, Rvec, PInv, LPcoeff;
@@ -75,14 +89,14 @@ struct linearPredictor
         Rmat.resize( Nc, Nc );
         Rvec.resize( 1, Nc );
 
-        for( size_t i = 0; i < Nc; ++i )
+        for( int i = 0; i < Nc && i < acSz; ++i )
         {
-            for( size_t j = 0; j < Nc; ++j )
+            for( int j = 0; j < Nc && i < acSz; ++j )
             {
-                Rmat( i, j ) = ac[fabs( i - j )];
+                Rmat( i, j ) = ac[abs( i - j )];
             }
 
-            Rvec( 0, i ) = ac[i + 1];
+            Rvec( 0, i ) = ac[i + Npred];
         }
 
         realT tmpCond = condition;
@@ -92,66 +106,86 @@ struct linearPredictor
 
         _actCondition = tmpCond;
 
-        _c = Rvec.matrix() * PInv.matrix();
+        m_c.resize(Nc);
+        Eigen::Map<Eigen::Array<realT,-1,-1>> cmap(m_c.data(), 1, m_c.size());
+        cmap = Rvec.matrix() * PInv.matrix();
 
         return 0;
     }
 
-    int calcCoefficientsLevinson( std::vector<realT> &ac, size_t Nc, size_t extrap = 0 )
+    int calcCoefficientsLevinson( const std::vector<realT> &ac, /**< [in] The autocorrelation, at least
+                                                                          Nc+Npred in length */
+                                  size_t Nc,                    /**< [in] The number of LP coefficients desired */
+                                  size_t Npred = 1              /**< [in] [optional] The prediction length,
+                                                                                    default is 1 */
+    )
     {
+        return calcCoefficientsLevinson( ac.data(), ac.size(), Nc, Npred );
+    }
+
+    int calcCoefficientsLevinson( const realT *ac,   /**< [in] The autocorrelation, at least Nc+Npred in length */
+                                  size_t acSz,       /**< [in] The length of the autocorrelation */
+                                  size_t Nc,         /**< [in] The number of LP coefficients desired */
+                                  unsigned Npred = 1 /**< [in] [optional] The prediction length, default is 1 */
+    )
+    {
+        if( acSz < Nc + Npred )
+        {
+            std::string msg = "too many coefficients for size and prediction length\n";
+            msg += "    acSz  = " + std::to_string( acSz ) + "\n";
+            msg += "    Nc    = " + std::to_string( Nc ) + "\n";
+            msg += "    Npred = " + std::to_string( Npred ) + "\n";
+            mxThrowException( err::invalidarg, "linearPredictor::calcCoefficientsLevinson", msg );
+        }
+
         std::vector<realT> r, x, y;
 
         r.resize( 2. * Nc - 1 );
-        x.resize( Nc );
+        m_c.resize( Nc );
         y.resize( Nc );
 
         for( size_t i = 0; i < Nc; ++i )
-            r[i] = ac[Nc - i - 1];
-        for( size_t i = Nc; i < 2 * Nc - 1; ++i )
-            r[i] = ac[i - Nc + 1];
-
-        for( size_t i = 0; i < Nc; ++i )
-            y[i] = ac[i + 1];
-
-        levinsonRecursion( r.data(), x.data(), y.data(), Nc );
-
-        _c.resize( 1, Nc );
-        for( size_t i = 0; i < Nc; ++i )
-            _c( 0, i ) = x[i];
-
-        if( extrap == 1 )
         {
-            Eigen::Array<realT, -1, -1> ex( _c.rows(), _c.cols() );
-            for( size_t j = 0; j < extrap; ++j )
-            {
-                for( size_t i = 0; i < Nc - 1; ++i )
-                {
-                    ex( 0, i ) = _c( 0, 0 ) * _c( 0, i ) + _c( 0, i + 1 );
-                }
-                ex( 0, Nc - 1 ) = _c( 0, 0 ) * _c( 0, Nc - 1 );
-
-                _c = ex;
-            }
+            r[i] = ac[Nc - i - 1]; // this runs from Nc-1 to 0
         }
+
+        for( size_t i = Nc; i < 2 * Nc - 1; ++i )
+        {
+            r[i] = ac[i - Nc + 1]; // this runs from 1 to Nc-1
+        }
+
+        for( size_t i = 0; i < Nc; ++i )
+        {
+            y[i] = ac[i + Npred]; // this runs from Npred to Nc-1 + Npred
+        }
+
+        levinsonRecursion( r.data(), m_c.data(), y.data(), Nc );
 
         return 0;
     }
 
     realT c( size_t i )
     {
-        return _c( 0, i );
+        return m_c[i];
+    }
+
+    size_t Nc()
+    {
+        return m_c.size();
     }
 
     realT predict( std::vector<realT> &hist, int idx )
     {
         realT x = 0;
 
-        if( idx < _c.cols() )
-            return 0;
-
-        for( int i = 0; i < _c.cols(); ++i )
+        if( idx < m_c.size() )
         {
-            x += _c( 0, i ) * hist[idx - i];
+            return x;
+        }
+
+        for( int i = 0; i < m_c.size(); ++i )
+        {
+            x += m_c[i] * hist[idx - i];
         }
 
         return x;
@@ -159,13 +193,13 @@ struct linearPredictor
 
     realT spectralResponse( realT f, realT fs )
     {
-        int n = _c.cols();
+        int n = m_c.size();
 
         std::complex<realT> He = 0;
         for( int j = 0; j < n; ++j )
         {
             realT s = ( j + 1.0 ) * math::two_pi<realT>();
-            He += _c( 0, j ) * exp( s * std::complex<realT>( 0, -1.0 ) * f / fs );
+            He += m_c[j] * exp( s * std::complex<realT>( 0, -1.0 ) * f / fs );
         }
 
         realT one = 1.0;

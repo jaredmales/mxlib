@@ -622,6 +622,40 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( const std::vector<
             cutImageRegion( cmask, this->m_mask, idx, true );
         }
 
+        #if 1
+
+            std::vector<realT> sds;
+
+            //*** First mean subtract ***//
+            meanSubtract( tims, tims, cmask, sds );
+
+
+            mx::fits::fitsFile<realT> ffff;
+            ffff.write("tims.fits", tims);
+
+            std::ofstream fout("idx.dat");
+            std::ofstream aout("derot.dat");
+            for(auto i : idx)
+            {
+                fout << i << "\n";
+            }
+            fout.close();
+
+            for(int pp =0; pp < tims.planes(); ++pp)
+            {
+                aout << this->m_derotF.derotAngle( pp ) << "\n";
+            }
+            aout.close();
+
+            fout.open("dims.dat");
+            fout << this->m_Nrows << "\n";
+            fout << this->m_Ncols << "\n";
+            fout.close();
+
+
+            exit(0);
+        #endif
+
         realT dang = 0;
         realT dangMax = 0;
 
@@ -898,7 +932,7 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::worker( eigenCube<_realT> 
             int jj = idx[rr] / this->m_Ncols;
             int ii = idx[rr] - this->m_Ncols * jj;
 
-            maskCircle( rrmim, ii, jj, m_rightReasonRadius, 0 );
+            maskCircle( rrmim, ii, jj, m_rightReasonRadius, 0, 0 );
 
             //Extract the 2D r.r. mask into the row-vector image.
             for( int cc = 0; cc < rrMask.cols(); ++cc )

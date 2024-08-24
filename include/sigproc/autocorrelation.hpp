@@ -52,11 +52,10 @@ void autocorrelation(
 )
 {
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for( int i = 0; i < Nac; ++i )
     {
         ac[i] = 0;
-
         for( int j = 0; j < Nsig - i; ++j )
         {
             ac[i] += sig[j] * sig[j + i];
@@ -65,7 +64,9 @@ void autocorrelation(
 
     T norm = ac[0];
     for( int i = 0; i < Nac; ++i )
+    {
         ac[i] /= norm;
+    }
 }
 
 /// Calculate the autocorrelation of a time-series
@@ -83,7 +84,10 @@ void autocorrelation( std::vector<T> &ac, ///< [out] will contain the autocorrel
 )
 {
     if( ac.size() == 0 )
+    {
         ac.resize( sig.size() );
+    }
+
     autocorrelation( ac.data(), ac.size(), sig.data(), sig.size() );
 }
 

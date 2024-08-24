@@ -258,10 +258,10 @@ std::string removeWhiteSpace( const std::string &instr /**< [in] is the string t
 /// Wrap a string by breaking it into smaller sized portions of a desired width
 /** Whenever possible breaks at spaces.  A single space is discarded at the break.
  */
-int stringWrap( std::vector<std::string> &lines, ///< [out] each new entry contains a wrapped portion of the string. Not
-                                                 ///< cleared, so can accumulate.
-                const std::string &str, ///< [in] the string to wrap
-                int width               ///< [in] the maximum width of the output strings
+int stringWrap( std::vector<std::string> &lines, /**< [out] each new entry contains a wrapped portion of the string.
+                                                            Not cleared, so can accumulate. */
+                const std::string &str,          ///< [in] the string to wrap
+                int width                        ///< [in] the maximum width of the output strings
 );
 
 /// Parses a string into a vector of tokens delimited by a character
