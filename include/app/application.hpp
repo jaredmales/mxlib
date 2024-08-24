@@ -129,7 +129,8 @@ class application
     bool m_preserveConfig{ false }; ///< Flag controlling whether the configuration is cleared before execution.  Set in
                                     ///< derived constructor.
 
-    bool doHelp{ false }; ///< Flag to control whether the help message is printed or not.
+    bool m_doHelp{ false }; /**< Flag to control whether the help message is printed or not.
+                                 If true, it is printed and the app exits */
 
     int m_helpWidth{ 120 };       ///< The total text width available for the help message.
     int m_helpSOColWidth{ 2 };    ///< The width of the short option (-o) column in the help message.
@@ -149,8 +150,8 @@ class application
 
     /// The application main function.
     /** Call this from the true main function, passing the command line arguments to be processed.
-     * This calls \ref setup(), then checks if the doHelp flag was set.  If so, it calls \ref help() and returns.
-     * If doHelp is not set, it then clears the config structure, and then calls \ref execute().
+     * This calls \ref setup(), then checks if the m_doHelp flag was set.  If so, it calls \ref help() and returns.
+     * If m_doHelp is not set, it then clears the config structure, and then calls \ref execute().
      *
      * The configuration is cleared before the call to execute, unless m_preserveConfig = true.
      *
@@ -249,7 +250,7 @@ class application
      */
     virtual void loadStandardConfig();
 
-    /// Loads the value of "help" into doHelp.
+    /// Loads the value of "help" into m_doHelp.
     /** Override this function if you do not want to use this, or have different behavior.
      * See also \ref setupStandardConfig().
      */
@@ -274,7 +275,7 @@ class application
 
     /// Check the config.  This is called at the end of setup, before the configuration is cleared.
     /** It is up to you to decide how to handle the outcome.  If a bad config results in printing help,
-     * you can set the doHelp flag.
+     * you can set the m_doHelp flag.
      */
     virtual void checkConfig();
 
