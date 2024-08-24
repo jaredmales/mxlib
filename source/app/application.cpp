@@ -43,7 +43,7 @@ int application::main( int argc, char **argv )
 
     setup( argc, argv );
 
-    if( m_doHelp )
+    if( doHelp )
     {
         help();
         return 1;
@@ -198,7 +198,7 @@ void application::loadStandardConfig() // virtual
 
 void application::loadStandardHelp() // virtual
 {
-    config( m_doHelp, "help" );
+    config( doHelp, "help" );
 }
 
 void application::setupBasicConfig() // virtual
