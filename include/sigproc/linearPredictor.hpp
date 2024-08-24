@@ -68,7 +68,7 @@ struct linearPredictor
                          realT condition = 0
                          )
     {
-        return calcCoefficients( ac, ac.size(), Nc, Npred, condition);
+        return calcCoefficients( ac.data(), ac.size(), Nc, Npred, condition);
     }
 
     int calcCoefficients( const realT *ac,

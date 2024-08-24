@@ -146,8 +146,8 @@ struct clAOLinearPredictor
             if( calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc ) < 0 )
                 return -1;
 
-            go_lp.a( lp._c );
-            go_lp.b( lp._c );
+            go_lp.a( lp.m_c );
+            go_lp.b( lp.m_c );
 
             realT ll = 0, ul = 0;
             gmax_lp = go_lp.maxStableGain( ll, ul );
@@ -233,9 +233,9 @@ struct clAOLinearPredictor
         if( calcCoefficients( PSDt, PSDn, PSDt[0] * pow( 10, -min_sc / 10 ), Nc ) < 0 )
             return -1;
 
-        go_lp.a( lp._c );
+        go_lp.a( lp.m_c );
         // go_lp.a(std::vector<realT>({1}));
-        go_lp.b( lp._c );
+        go_lp.b( lp.m_c );
         // go_lp.b(std::vector<realT>({lp._c(0,0)}));
 
         realT ll = 0, ul = 0;
