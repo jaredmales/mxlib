@@ -129,7 +129,7 @@ class application
     bool m_preserveConfig{ false }; ///< Flag controlling whether the configuration is cleared before execution.  Set in
                                     ///< derived constructor.
 
-    bool m_doHelp{ false }; /**< Flag to control whether the help message is printed or not.
+    bool doHelp{ false }; /**< Flag to control whether the help message is printed or not.
                                  If true, it is printed and the app exits */
 
     int m_helpWidth{ 120 };       ///< The total text width available for the help message.

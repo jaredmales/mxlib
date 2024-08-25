@@ -43,7 +43,7 @@ int application::main( int argc, char **argv )
 
     setup( argc, argv );
 
-    if( m_doHelp )
+    if( doHelp )
     {
         help();
         return 1;
@@ -99,9 +99,23 @@ void application::setup( int argc, char **argv )
 
     setDefaults( argc, argv );
 
-    config.readConfig( m_configPathGlobal, m_requireConfigPathGlobal );
-    config.readConfig( m_configPathUser, m_requireConfigPathUser );
-    config.readConfig( m_configPathLocal, m_requireConfigPathLocal );
+    if(config.readConfig( m_configPathGlobal, m_requireConfigPathGlobal ) < 0)
+    {
+        doHelp = true;
+        return;
+    }
+
+    if(config.readConfig( m_configPathUser, m_requireConfigPathUser ) < 0)
+    {
+        doHelp = true;
+        return;
+    }
+
+    if(config.readConfig( m_configPathLocal, m_requireConfigPathLocal ) < 0)
+    {
+        doHelp = true;
+        return;
+    }
 
     // Parse CL just to get the CL config.
     config.parseCommandLine( argc, argv, "config" );
@@ -114,6 +128,11 @@ void application::setup( int argc, char **argv )
     config.parseCommandLine( argc, argv );
 
     loadStandardHelp();
+
+    if(doHelp)
+    {
+        return;
+    }
 
     loadBasicConfig();
     loadConfig();
@@ -198,7 +217,7 @@ void application::loadStandardConfig() // virtual
 
 void application::loadStandardHelp() // virtual
 {
-    config( m_doHelp, "help" );
+    config( doHelp, "help" );
 }
 
 void application::setupBasicConfig() // virtual
