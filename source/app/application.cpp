@@ -119,19 +119,19 @@ void application::setup( int argc, char **argv )
     //------------------------------------
     // Now start reading config files
     //------------------------------------
-    if(config.readConfig( m_configPathGlobal, m_requireConfigPathGlobal ) < 0)
+    if((config.readConfig( m_configPathGlobal, m_requireConfigPathGlobal ) < 0) && m_requireConfigPathGlobal)
     {
         doHelp = true;
         return;
     }
 
-    if(config.readConfig( m_configPathUser, m_requireConfigPathUser ) < 0)
+    if((config.readConfig( m_configPathUser, m_requireConfigPathUser ) < 0) && m_requireConfigPathUser)
     {
         doHelp = true;
         return;
     }
 
-    if(config.readConfig( m_configPathLocal, m_requireConfigPathLocal ) < 0)
+    if((config.readConfig( m_configPathLocal, m_requireConfigPathLocal ) < 0) && m_requireConfigPathLocal)
     {
         doHelp = true;
         return;
