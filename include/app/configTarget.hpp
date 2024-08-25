@@ -54,11 +54,11 @@ struct configTarget
     std::string name;     ///< The name of the target
     std::string shortOpt; ///< The command-line short option (e.g. "f" for -f)
     std::string longOpt;  ///< The command-line long option (e.g. "file" for --file)
-    int clType{
-        0 }; ///< The command-line option type, argType::false, argType::true, argType::optional, argType::required
-    std::string section; ///< The config file section name, can be empty ""
-    std::string keyword; ///< The config file keyword, read in a "keyword=value" pair
-    bool set{ false };   ///< true if the value has been set by the configuration, use to distinguish empty strings
+    int clType{ 0 };      /**< The command-line option type, argType::false, argType::true, argType::optional,
+                               argType::required*/
+    std::string section;  ///< The config file section name, can be empty ""
+    std::string keyword;  ///< The config file keyword, read in a "keyword=value" pair
+    bool set{ false };    ///< true if the value has been set by the configuration, use to distinguish empty strings
 
     bool isRequired{ false };    ///< Whether or not this is option is required to be set.
     std::string helpType;        ///< The type to display in the help message.

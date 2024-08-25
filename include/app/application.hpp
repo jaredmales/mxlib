@@ -132,6 +132,9 @@ class application
     bool doHelp{ false }; /**< Flag to control whether the help message is printed or not.
                                  If true, it is printed and the app exits */
 
+    bool m_configOnly {false}; /**< Flag to set if application should exit after loading the configuration. This
+                                    could be used to have a config validation mode.*/
+
     int m_helpWidth{ 120 };       ///< The total text width available for the help message.
     int m_helpSOColWidth{ 2 };    ///< The width of the short option (-o) column in the help message.
     int m_helpLOColWidth{ 25 };   ///< The width of the long option (--option) column in the help message.

@@ -43,6 +43,11 @@ int application::main( int argc, char **argv )
 
     setup( argc, argv );
 
+    if(m_configOnly)
+    {
+        return 1;
+    }
+
     if( doHelp )
     {
         help();
@@ -93,12 +98,27 @@ void application::setup( int argc, char **argv )
 
     setupStandardConfig();
     setupStandardHelp();
-
     setupBasicConfig();
     setupConfig();
 
     setDefaults( argc, argv );
 
+    //------------------------------------
+    // First check if help is requested.
+    // This short circuits everything else
+    //------------------------------------
+    config.parseCommandLine( argc, argv, "help" );
+
+    loadStandardHelp();
+
+    if(doHelp)
+    {
+        return;
+    }
+
+    //------------------------------------
+    // Now start reading config files
+    //------------------------------------
     if(config.readConfig( m_configPathGlobal, m_requireConfigPathGlobal ) < 0)
     {
         doHelp = true;
@@ -127,7 +147,7 @@ void application::setup( int argc, char **argv )
     // Now parse the command line for real.
     config.parseCommandLine( argc, argv );
 
-    loadStandardHelp();
+    loadStandardHelp(); //Check one more time, could have been config-filed
 
     if(doHelp)
     {
