@@ -908,8 +908,13 @@ void writeConfigFile( const std::string &fname,
             fout << "\n[" << currSection << "]\n";
         }
 
-        fout << keywords[i] << "=" << values[i] << "\n";
-
+        if(keywords.size() >= i && values.size() >= i)
+        {
+            if(keywords[i] != "")
+            {
+                fout << keywords[i] << "=" << values[i] << "\n";
+            }
+        }
         lastSection = currSection;
     }
 
