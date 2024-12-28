@@ -469,15 +469,15 @@ void maskCircle(
  * \ingroup image_masks
  */
 template <class arrayT>
-void maskEllipse(
-    arrayT &m,                           ///< [in.out] the image to be masked, is modified.
-    typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
-    typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
-    typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
-    typename arrayT::Scalar yrad,        ///< [in] the y radius of the ellipse
-    typename arrayT::Scalar ang,         ///< [in] the c.c.w. angle to rotate the ellipse by
-    typename arrayT::Scalar val = 0,     ///< [in] [optional] the mask value.  Default is 0.
-    typename arrayT::Scalar pixbuf = 0.5 ///< [in] [optional] buffer for radius comparison.  Default is 0.5 pixels.
+void maskEllipse( arrayT &m,                           ///< [in.out] the image to be masked, is modified.
+                  typename arrayT::Scalar xcen,        ///< [in] the x coordinate of the center of the ellipse
+                  typename arrayT::Scalar ycen,        ///< [in] the y coordinate of the center of the ellipse
+                  typename arrayT::Scalar xrad,        ///< [in] the x radius of the ellipse
+                  typename arrayT::Scalar yrad,        ///< [in] the y radius of the ellipse
+                  typename arrayT::Scalar ang,         ///< [in] the c.c.w. angle to rotate the ellipse by
+                  typename arrayT::Scalar val = 0,     ///< [in] [optional] the mask value.  Default is 0.
+                  typename arrayT::Scalar pixbuf = 0.5 /**< [in] [optional] buffer for radius comparison.
+                                                                            Default is 0.5 pixels.*/
 )
 {
     typedef typename arrayT::Scalar realT;
@@ -503,19 +503,28 @@ void maskEllipse(
         {
             y = j - ycen;
 
-            xr = x * cq - y * sq;
-            yr = x * sq + y * cq;
-
-            // Coordinate on the ellipse where the line to the point intersects
-            xe = ( pow( xrad * yrad, 2 ) / ( pow( yrad, 2 ) + pow( xrad * yr / xr, 2 ) ) );
-            ye = ( pow( yrad, 2 ) - xe * pow( yrad / xrad, 2 ) );
-
-            rad = sqrt( xe + ye );
-
-            r = sqrt( pow( xr, 2 ) + pow( yr, 2 ) );
-
-            if( r <= rad + pixbuf )
+            if( x == 0 && y == 0 )
+            {
                 m( i, j ) = val;
+            }
+            else
+            {
+                xr = x * cq - y * sq;
+                yr = x * sq + y * cq;
+
+                // Coordinate on the ellipse where the line to the point intersects
+                xe = ( pow( xrad * yrad, 2 ) / ( pow( yrad, 2 ) + pow( xrad * yr / xr, 2 ) ) );
+                ye = ( pow( yrad, 2 ) - xe * pow( yrad / xrad, 2 ) );
+
+                rad = sqrt( xe + ye );
+
+                r = sqrt( pow( xr, 2 ) + pow( yr, 2 ) );
+
+                if( r <= rad + pixbuf )
+                {
+                    m( i, j ) = val;
+                }
+            }
         }
     }
 }

@@ -39,7 +39,9 @@
 #include "imageUtils.hpp"
 #include "imCenterCircleSym.hpp"
 #include "imCenterRadon.hpp"
+#include "imageXCorrFFT.hpp"
 #include "milkImage.hpp"
 #include "sourceFinder.hpp"
+
 
 #endif // improc_hpp

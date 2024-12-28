@@ -430,7 +430,7 @@ void tukey2d( arrT &filt,                  ///< [in.out] a pre-allocated array
                                            ///< cylinder (a.k.a. no window)
               typename arrT::Scalar xc,    ///< [in] the desired x center of the window.
               typename arrT::Scalar yc     ///< [in] the desired y center of the window.
-)
+            )
 {
     tukey2d( filt.data(), filt.rows(), filt.cols(), D, alpha, xc, yc );
 }

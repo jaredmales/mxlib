@@ -77,7 +77,9 @@ class randomT
     randomT( bool doSeed = true /**< [in] [optional] if true then the seed method is called upon construction.*/ )
     {
         if( doSeed )
+        {
             seed();
+        }
     }
 
     /// The random distribution

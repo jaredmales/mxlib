@@ -1048,15 +1048,15 @@ void radprof(
  * \ingroup rad_prof
  */
 template <typename radprofT, typename eigenImT1, typename eigenImT2, typename eigenImT3>
-void radprofim(
-    radprofT &radprofIm,  ///< [out] the radial profile image.  This will be resized.
-    eigenImT1 &im,        ///< [in the image to form the profile of.
-    const eigenImT2 &rad, ///< [in] an array of radius values for each pixel
-    const eigenImT3
-        *mask, ///< [in] [optional 1/0 mask, only pixels with a value of 1 are included in the profile. Can be nullptr.
-    bool subtract,    ///< [in] if true, then on ouput im will have had its radial profile subtracted.
-    bool mean = false ///< [in] [optional] set to true to use the mean.  If false (default) the median is used.
-)
+void radprofim( radprofT &radprofIm,   ///< [out] the radial profile image.  This will be resized.
+                eigenImT1 &im,         ///< [in the image to form the profile of.
+                const eigenImT2 &rad,  ///< [in] an array of radius values for each pixel
+                const eigenImT3 *mask, /**< [in] [optional 1/0 mask, only pixels with a value of 1 are
+                                                            included in the profile. Can be nullptr. */
+                bool subtract,         /**< [in] if true, then on ouput im will have had its radial
+                                                  profile subtracted. */
+                bool mean = false      /**< [in] [optional] set to true to use the mean.
+                                                            If false (default) the median is used. */)
 {
 
     std::vector<double> med_r, med_v; // Must be double for GSL interpolator

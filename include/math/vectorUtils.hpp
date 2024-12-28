@@ -323,7 +323,9 @@ vectorVariance( const vectorT &vec,                      ///< [in] the vector
 
     var = 0;
     for( size_t i = 0; i < vec.size(); ++i )
+    {
         var += ( vec[i] - mean ) * ( vec[i] - mean );
+    }
 
     var /= ( vec.size() - 1 );
 
@@ -372,15 +374,18 @@ typename vectorT::value_type vectorVariance( const vectorT &vec /**< [in] the ve
  * \returns the sigma clipped mean of vec
  *
  * \tparam vectorT the std::vector type of vec
+ * \tparam sigmaT the type of sigma, which is converted to value_type
  *
  */
-template <typename vectorT>
-typename vectorT::value_type
-vectorSigmaMean( const vectorT &vec,                 ///<  [in] the vector (unaltered)
-                 const vectorT *weights,             ///<  [in] [optional] the weights (unaltered)
-                 typename vectorT::value_type sigma, ///< [in] the standard deviation threshold to apply.
-                 int &maxPasses ///< [in.out] [optional] the maximum number of sigma-clipping passes.  Set to actual
-                                ///< number of passes on return.
+template <typename vectorT, typename sigmaT>
+typename vectorT::value_type vectorSigmaMean( const vectorT &vec,     ///< [in] the vector (unaltered)
+                                              const vectorT *weights, ///< [in] [optional] the weights (unaltered)
+                                              const sigmaT &sigma,    /**< [in] the standard deviation threshold to
+                                                                                apply. */
+                                              int &maxPasses          /**< [in/out] [optional] the maximum number of
+                                                                                    sigma-clipping passes.  Is set
+                                                                                    to actual number of passes on
+                                                                                    return. */
 )
 {
     vectorT work, wwork;
@@ -391,7 +396,9 @@ vectorSigmaMean( const vectorT &vec,                 ///<  [in] the vector (unal
     if( weights )
     {
         if( weights->size() == vec.size() )
+        {
             doWeight = true;
+        }
     }
 
     Vsig = sigma * sigma;

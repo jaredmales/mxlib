@@ -101,7 +101,9 @@ class ompLoopWatcher
     {
         ++_counter;
         if( _time )
+        {
             t1 = sys::get_curr_time();
+        }
     }
 
     /// Advance the counter by a number of steps
@@ -109,7 +111,9 @@ class ompLoopWatcher
     {
         _counter += diff_count;
         if( _time )
+        {
             t1 = sys::get_curr_time();
+        }
     }
 
     /// Perform the output
@@ -119,9 +123,13 @@ class ompLoopWatcher
         {
             ( *_output ) << _counter;
             if( _printLoops )
+            {
                 ( *_output ) << " / " << _nLoops;
+            }
             if( _printPercent )
+            {
                 ( *_output ) << " (" << 100.0 * ( (float)_counter ) / _nLoops << "%)";
+            }
             if( _time )
             {
                 ( *_output ) << " " << ( t1 - t0 ) / _counter << " s/loop ";
@@ -129,9 +137,13 @@ class ompLoopWatcher
             }
 
             if( _printNLine )
+            {
                 ( *_output ) << '\n';
+            }
             if( !_printNLine )
+            {
                 ( *_output ) << "           \r";
+            }
 
             ( *_output ) << std::flush;
         }
@@ -139,13 +151,21 @@ class ompLoopWatcher
         {
             ( *_output ) << _counter;
             if( _printLoops )
+            {
                 ( *_output ) << _nLoops;
+            }
             if( _printPercent )
+            {
                 ( *_output ) << 100.0 * ( (float)_counter ) / _nLoops;
+            }
             if( _time )
+            {
                 ( *_output ) << " " << t0 << " " << t1;
+            }
             if( _printNLine )
+            {
                 ( *_output ) << '\n';
+            }
         }
     }
 
@@ -220,6 +240,22 @@ class ompLoopWatcher
         {
             _advance( diff_count );
             _outputStatus();
+        }
+    }
+
+    /// Clear the output line of any text
+    /** If printing pretty and not printing new lines, this writes a line of blank
+     *  spaces and carriage returns to clear out the last status update.
+     */
+    void clearOutput()
+    {
+        if( _printPretty )
+        {
+            if( !_printNLine )
+            {
+                ( *_output ) << "                                                  \r";
+                ( *_output ) << std::flush;
+            }
         }
     }
 };

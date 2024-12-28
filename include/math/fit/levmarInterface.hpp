@@ -647,7 +647,9 @@ int levmarInterface<fitterT>::fit()
     }
 
     for( int i = 0; i < m; ++i )
+    {
         init_p[i] = p[i];
+    }
 
     double t0 = sys::get_curr_time();
 

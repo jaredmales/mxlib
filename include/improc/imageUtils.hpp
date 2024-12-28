@@ -147,48 +147,49 @@ void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels s
  *
  * \returns the mean of the input image
  */
-template <class imageT>
-typename imageT::Scalar imageMean( imageT &im /**< [in] the image of which to calculate the mean*/ )
+template <class calcT, class imageT>
+calcT imageMean( imageT &im /**< [in] the image of which to calculate the mean*/ )
 {
-    typename imageT::Scalar m = 0;
-
-    for( int c = 0; c < im.cols(); ++c )
-    {
-        for( int r = 0; r < im.rows(); ++r )
-        {
-            m += im( r, c );
-        }
-    }
-
-    m /= ( im.rows() * im.cols() );
-
-    return m;
+    return static_cast<calcT>(im.sum()) / ( im.rows() * im.cols() );
 }
 
-/// Calculate the variance of an image w.r.t. a given value
+/// Calculate the mean value of an image over a mask
+/**
+ *
+ * \returns the mean of the input image in the masked region
+ */
+template <class calcT, class imageT, class maskT>
+calcT imageMean( imageT &im, /**< [in] the image of which to calculate the mean*/
+                 const maskT &mask /**< [in] a 1/0 mask where 1 defines the good pixels */)
+{
+    return static_cast<calcT>((im*mask).sum()) / ( mask.sum() );
+}
+
+/// Calculate the variance of an image given its mean
 /**
  *
  * \returns the variance of the input image
  */
-template <class imageT>
-typename imageT::Scalar
-imageVariance( imageT &im,                  ///< [in] the image of which to calculate the variance
-               typename imageT::Scalar mean ///< [in] the value to calculate the variance with respect to
-)
+template <typename calcT, class imageT>
+calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
+                     calcT mn /**< [in] the mean value of the image w.r.t. which to calcualate the variance */
+                   )
 {
-    typename imageT::Scalar v = 0;
+    return (im.template cast<calcT>()-mn).square().sum() / ( im.rows() * im.cols() );
+}
 
-    for( int c = 0; c < im.cols(); ++c )
-    {
-        for( int r = 0; r < im.rows(); ++r )
-        {
-            v += pow( im( r, c ) - mean, 2 );
-        }
-    }
-
-    v /= ( im.rows() * im.cols() );
-
-    return v;
+/// Calculate the variance of an image given its mean
+/**
+ *
+ * \returns the variance of the input image
+ */
+template <typename calcT, class imageT, class maskT>
+calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
+                     calcT mn, /**< [in] the mean value of the image w.r.t. which to calcualate the variance */
+                     const maskT &mask /**< [in] a 1/0 mask where 1 defines the good pixels */
+                   )
+{
+    return  (im.template cast<calcT>()*mask-mn).square().sum() / ( mask.sum() );
 }
 
 /// Calculate the center of light of an image

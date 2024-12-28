@@ -97,8 +97,8 @@ class fftT<_inputT, _outputT, _rank, 0>
     fftT( int nx,                   ///< [in] the desired size of the FFT
           int ndir = MXFFT_FORWARD, ///< [in] [optional] direction of this FFT, either MXFFT_FORWARD (default) or
                                     ///< MXFFT_BACKWARD
-          bool inPlace =
-              false, ///< [in] [optional] whether or not this is an in-place transform.  Default is false, out-of-place.
+          bool inPlace = false,     /**< [in] [optional] whether or not this is an in-place transform.
+                                                         Default is false, out-of-place.*/
           typename std::enable_if<crank == 1>::type * = 0 );
 
     /// Constructor for rank 2 FFT.
@@ -107,8 +107,8 @@ class fftT<_inputT, _outputT, _rank, 0>
           int ny,                   ///< [in] the desired y size of the FFT
           int ndir = MXFFT_FORWARD, ///< [in] [optional] direction of this FFT, either MXFFT_FORWARD (default) or
                                     ///< MXFFT_BACKWARD
-          bool inPlace =
-              false, ///< [in] [optional] whether or not this is an in-place transform.  Default is false, out-of-place.
+          bool inPlace = false,     /**< [in] [optional] whether or not this is an in-place transform.
+                                                         Default is false, out-of-place. */
           typename std::enable_if<crank == 2>::type * = 0 );
 
     /// Constructor for rank 3 FFT.
@@ -263,7 +263,7 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<false> &inPl
         pdir = FFTW_BACKWARD;
 
 #ifndef MX_FFTW_NOOMP
-#pragma omp critical
+    #pragma omp critical
 #endif
     { // scope for pragma
         m_plan = fftw_plan_dft<inputT, outputT>(
@@ -297,7 +297,7 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<true> &inPla
         pdir = FFTW_BACKWARD;
 
 #ifndef MX_FFTW_NOOMP
-#pragma omp critical
+    #pragma omp critical
 #endif
     { // scope for pragma
         m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),

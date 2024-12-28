@@ -86,8 +86,8 @@ class circularBufferBase
     indexT m_nextEntry{ 0 };  ///< Index into m_buffer of the next entry.  This is the oldest entry in the buffer.
     indexT m_latest{ 0 };     ///< Index into m_buff of the latest entry.  This is the newest entry in the buffer.
 
-    uint64_t m_mono{
-        0 }; ///< A monotonic counter, which is incremented for each new entry, and reset on call to maxEntries.
+    uint64_t m_mono{ 0 }; /**< A monotonic counter, which is incremented for each new entry,
+                               and reset on call to maxEntries.*/
 
   public:
     /// Default c'tor
