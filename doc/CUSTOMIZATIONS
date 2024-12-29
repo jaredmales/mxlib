@@ -1,0 +1,33 @@
+
+Follow doxygen-awesome-css/docs/extensions.md:
+
+doxygen -w html header.html delete_me.html delete_me.css
+
+delete the delete_me files
+
+in header.html add: [<a href="https://github.com/jaredmales/mxlib">git repo</a>] after $projectbrief in 2 places.
+
+add this before </HEAD>:
+<!-- ... other metadata & script includes ... -->
+<script type="text/javascript" src="$relpath^doxygen-awesome-darkmode-toggle.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeDarkModeToggle.init()
+</script>
+<script type="text/javascript" src="$relpath^doxygen-awesome-fragment-copy-button.js"></script>
+<script type="text/javascript">
+    DoxygenAwesomeFragmentCopyButton.init()
+</script>
+
+cp mxlib_header.html to mxlib_header.html.bup
+then move header.html to mxlib_header.html
+
+In mxlib_doxygen.in add:
+
+HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css \
+                         doxygen-awesome-css/doxygen-awesome-sidebar-only.css \
+                         doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css \
+
+HTML_EXTRA_FILES       = doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
+                         doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js
+
+HTML_COLORSTYLE        = LIGHT

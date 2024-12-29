@@ -1,7 +1,7 @@
 /** \mainpage mxlib
 
-mxlib is a collection of c++ code I use for analyzing data, image and signal processing, and other tasks in my research.  The source code can be obtained at <a href="https://github.com/jaredmales/mxlib"> github </a>.  
+mxlib is a collection of c++ code I use for analyzing data, image and signal processing, and other tasks in my research.  The source code can be obtained at <a href="https://github.com/jaredmales/mxlib"> github </a>.
 
-See the <a href="modules.html"> User's Guide </a>, which includes a guide to installing mxlib.
+See the <a href="topics.html"> User's Guide </a>, which includes a guide to installing mxlib.
 
 */
