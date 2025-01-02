@@ -1799,8 +1799,8 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
             normVar.seed();
 
             // FFTs for going to Fourier domain and back to time domain.
-            math::fft::fftT<realT, std::complex<realT>, 1, 0> fftF( sqrtOPDPSD[0].size() );
-            math::fft::fftT<std::complex<realT>, realT, 1, 0> fftB( sqrtOPDPSD[0].size(), MXFFT_BACKWARD );
+            math::ft::fftT<realT, std::complex<realT>, 1, 0> fftF( sqrtOPDPSD[0].size() );
+            math::ft::fftT<std::complex<realT>, realT, 1, 0> fftB( sqrtOPDPSD[0].size(), math::ft::dir::backward );
 
             // Working memory
             std::vector<std::complex<realT>> tform1( sqrtOPDPSD[0].size() );

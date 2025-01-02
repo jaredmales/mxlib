@@ -33,7 +33,7 @@ OBJS = \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
 	math/fit/fitGaussian.o \
-	math/fft/fft.o \
+	math/fft/fftT.o \
 	math/fft/fftwEnvironment.o \
 	math/fft/fftwTemplates.o \
 	math/func/bessel.o \

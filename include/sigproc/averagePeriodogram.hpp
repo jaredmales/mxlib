@@ -111,7 +111,7 @@ class averagePeriodogram
 
     realT m_df{ 1 }; ///< The frequency sampling.  This is used only for normalization and frequency scale output.
 
-    math::fft::fftT<realT, std::complex<realT>, 1, 0> m_fft;
+    math::ft::fftT<realT, std::complex<realT>, 1, 0> m_fft;
 
     realT *m_tsWork{ nullptr };
 
@@ -352,21 +352,21 @@ int averagePeriodogram<realT>::resize( size_t avgLen, size_t padLen, size_t olap
 
     m_nOver = ( m_avgLen - m_overlap );
 
-    m_fft.plan( m_padLen, MXFFT_FORWARD, false );
+    m_fft.plan( m_padLen, math::ft::dir::forward, false );
 
     if( m_tsWork )
     {
         fftw_free( m_tsWork );
     }
 
-    m_tsWork = math::fft::fftw_malloc<realT>( m_padLen );
+    m_tsWork = math::ft::fftw_malloc<realT>( m_padLen );
 
     if( m_fftWork )
     {
         fftw_free( m_fftWork );
     }
 
-    m_fftWork = math::fft::fftw_malloc<std::complex<realT>>( ( m_padLen / 2 + 1 ) );
+    m_fftWork = math::ft::fftw_malloc<std::complex<realT>>( ( m_padLen / 2 + 1 ) );
 
     return 0;
 }

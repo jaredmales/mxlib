@@ -1,12 +1,12 @@
-/** \file fftwEnvironment.cpp
- * \brief Definitions for the fftwEnvironment manager
- * \ingroup fft_files
+/** \file ft.hpp
+ * \brief Fourier Transforms
+ * \ingroup ft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
 //***********************************************************************//
-// Copyright 2020-2025 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2025 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,7 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "math/fft/fftwEnvironment.hpp"
+#ifndef ft_hpp
+#define ft_hpp
 
 namespace mx
 {
@@ -33,32 +34,21 @@ namespace math
 namespace ft
 {
 
-template <>
-std::string fftw_typename<float>()
-{
-    return "float";
-}
+/// Directions of the Fourier Transform
+/** \ingroup ft
+ *
+ */
+enum class dir{ forward,  ///< Specifies the forward transform
+                backward, ///< Specifies the backward transform
+              };
 
-template <>
-std::string fftw_typename<double>()
-{
-    return "double";
-}
 
-template <>
-std::string fftw_typename<long double>()
-{
-    return "long_double";
-}
-
-#ifdef HASQUAD
-template <>
-std::string fftw_typename<__float128>()
-{
-    return "quad";
-}
-#endif
-
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx
+
+#include "fftwEnvironment.hpp"
+#include "fftT.hpp"
+#include "mftT.hpp"
+
+#endif // ft_hpp

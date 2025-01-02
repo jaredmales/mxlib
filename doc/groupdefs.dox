@@ -3,7 +3,7 @@
   *
   */
 
-  
+
 /** \defgroup error_handling Error Handling
   * How mxlib handles errors
   */
@@ -11,7 +11,7 @@
 /** \defgroup gen_math General Mathematics
   * General mathematical utilities.
   */
-  
+
 /** \defgroup signal_processing Signal Processing
   * Tools for processing signals
   */
@@ -19,11 +19,11 @@
 /** \defgroup image_processing Image Processing
   * Tools for processing images
   */
-  
+
 /** \defgroup imaging Wavefront Propagation
   * Tools for modeling wavefront propagation
   */
-  
+
 /** \defgroup genastro Astronomy
   * Tools for working with the heavens.
   */
@@ -32,9 +32,9 @@
   * Various miscellaneous utilities
   */
 
-  
+
 //------------------ error_handling -----------------------
-  
+
 /** \defgroup error_macros Error Handling Macros
   * Macros controlling how mxlib reports errors
   * \ingroup error_handling
@@ -49,7 +49,7 @@
 
 //------------------ gen_math -----------------------
 
-  
+
 /** \defgroup constants Constants and units
   * Pre-defined constants and unit conversions
   * \ingroup gen_math
@@ -141,11 +141,11 @@
   * \ingroup template_blaslap
   */
 
-/** \defgroup integration Integration 
-  * Various tools for integration of functions 
-  * \ingroup gen_math 
+/** \defgroup integration Integration
+  * Various tools for integration of functions
+  * \ingroup gen_math
   */
-  
+
 /** \defgroup interpolation Interpolation
   * Various tools for interpolating data and discrete functions.
   * \ingroup gen_math
@@ -184,32 +184,48 @@
   * Utilities for working with std::vector.
   */
 
-/** \defgroup fft Fast Fourier Transforms
-  * Tools for using the FFT
+/** \defgroup ft Fourier Transforms
+  * \brief Methods for calculating the Fourier Transform.
   * \ingroup gen_math
   */
 
-/** \defgroup fftw_templates Template FFTW
+/** \defgroup fft Fast Fourier Transforms
+  * \brief The Fast Fourier Transform interface
+  * \ingroup ft
+  */
+
+/** \defgroup fftw FFTW Interface
+  * \brief The Interface to the FFTW Library
   * \ingroup fft
   */
 
-/** \defgroup fftw Getting FFTW
-  * Instructions for building and installing the FFTW library
-  * \ingroup fft
+/** \defgroup fftw_templates Template FFTW
+  * \brief A Template Interface to FFTW
+  * \ingroup fftw
+  */
+
+/** \defgroup fftw_env FFTW Environment
+  * \brief Management of FFTW Wisdom
+  * \ingroup fftw
+  */
+
+/** \defgroup mft Matrix Fourier Transforms
+  * \brief The Matrix Fouriter Transform interface.
+  * \ingroup ft
   */
 
 /** \defgroup cuda NVIDIA Cuda Interface
   * A templatized interface to the cuda libraries.
   * \ingroup gen_math
   */
-  
+
 /** \defgroup cublas NVIDIA Cuda cublas Interface
   * A templatized interface to the cublas library
-  * \ingroup cuda 
+  * \ingroup cuda
   * \ingroup template_blaslap
-  */  
+  */
 
-  
+
 //see gen_math_files
 
 
@@ -223,10 +239,10 @@
   */
 
 /** \defgroup arpsds Autoregressive Power Spectra
-  * Tools for for AR process PSDs 
+  * Tools for for AR process PSDs
   * \ingroup psds
   */
-  
+
 /** \defgroup fourier_basis The Fourier Basis
   * \ingroup signal_processing
   */
@@ -237,22 +253,22 @@
 
 /** \defgroup signal_windows Window Functions
   * Various window functions for spectral analysis
-  * 
+  *
   * Windows are provided in both 1 dimensional and 2 dimensional forms.
   *
   * \ingroup signal_processing
   */
-  
+
 /** \defgroup signal_windows1D 1-D Window Functions
   * 1-D window functions for spectral analysis
   * \ingroup signal_windows
   */
-  
+
 /** \defgroup signal_windows2D 2-D Window Functions
   * 2-D window functions for spectral analysis
   * \ingroup signal_windows
   */
-  
+
 //see signal_processing_files below
 
 
@@ -264,7 +280,7 @@
   * Useful functions for working with images
   * \ingroup image_processing
   */
-  
+
 /** \defgroup image_padding Image Padding
   * Functions for padding images.
   * \ingroup image_processing
@@ -292,21 +308,21 @@
   * \ingroup image_filters
   */
 
-/** \defgroup image_filters_average Filter With Averaging 
+/** \defgroup image_filters_average Filter With Averaging
   * Image filtering with averaging, mean or median
   * \ingroup image_filters
   */
 
 /** \defgroup rad_prof Radial Profiles
   * Radial profiles of images
-  * \ingroup image_filters 
+  * \ingroup image_filters
   */
-  
+
 /** \defgroup std_prof Noise Profiles
   * Noise profiles of images
-  * \ingroup image_filters 
+  * \ingroup image_filters
   */
-  
+
 /** \defgroup image_reg Image Registration
   * Tools for registering images.
   * \ingroup image_processing
@@ -428,7 +444,7 @@
   * \ingroup astrodynamics
   * Utilities for calculating sky positions
   */
-  
+
 /** \defgroup astrophot Astronomical Photometry
   * \ingroup genastro
   */
@@ -450,7 +466,7 @@
 
 //----------------- utils ---------------------------
 
-/** \defgroup base Base Classes 
+/** \defgroup base Base Classes
   * \ingroup utils
   * Various useful base classes to provide common functionality.
   */
@@ -475,7 +491,7 @@
   * \ingroup ioutils
   * ASCII input/output
   */
-  
+
 /** \defgroup fits_processing FITS Files
   * Tools for working with FITS files.
   * \ingroup ioutils
@@ -492,7 +508,7 @@
   * \ingroup fits_processing
   */
 
-  
+
 /** \defgroup timeutils Working with time
   * \ingroup utils
   * Various tools for working with time
@@ -502,12 +518,12 @@
   * \ingroup timeutils
   * Wrappers for std::this_thread::sleep_for
   */
-  
+
 /** \defgroup timeutils_tscomp Timespec comparisons
   * \ingroup timeutils
   * Comparison of timespec structures
   */
-  
+
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
   * Various template-meta-programming utilities.
@@ -560,21 +576,22 @@
   * Source files for General Mathematics
   * \ingroup gen_math
   */
-  
+
 /** \defgroup fitting_files Fitting Files
   * Source files for data fitting.
   * \ingroup gen_math_files
   */
 
-/** \defgroup fft_files FFT Files
+/** \defgroup ft_files Fourier Transform Files
   * \ingroup gen_math_files
+  * \ingroup ft
   */
 
 /** \defgroup cuda_files Cuda Files
   * Source files for interacing with cuda.
   * \ingroup gen_math_files
   */
-  
+
 /** \defgroup signal_processing_files Signal Processing Files
   * Source files for processing signals
   * \ingroup signal_processing
@@ -616,8 +633,8 @@
   * \ingroup mxApp
   * \ingroup utils_files
   */
-  
-  
+
+
 //This stuff is at the end to make sure it is last in whatever group listings it is in.
 
 /** \defgroup astro_sofa The SOFA Library
@@ -629,14 +646,14 @@
   * \ingroup fitting
   * A c language Levenberg-Marquardt facility
   */
-  
-  
+
+
 //The very end is for the coding standards
 
 /** \defgroup coding mxlib Coding Standards
-  * how to write mxlib code 
+  * how to write mxlib code
   */
-  
+
 /** \defgroup documenting mxlib Documentation Standards
   * \ingroup coding
   * how to document mxlib code

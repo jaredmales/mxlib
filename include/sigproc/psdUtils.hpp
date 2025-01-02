@@ -41,7 +41,7 @@
 
 #include "../mxError.hpp"
 
-#include "../math/fft/fft.hpp"
+#include "../math/fft/ft.hpp"
 #include "../math/vectorUtils.hpp"
 
 namespace mx

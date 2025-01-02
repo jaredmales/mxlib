@@ -1,11 +1,11 @@
-/** \file fft.cpp
+/** \file fftT.cpp
  * \brief The fast Fourier transform interface
  * \ingroup fft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 //***********************************************************************//
-// Copyright 2015-2020 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2025 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -23,13 +23,13 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "math/fft/fft.hpp"
+#include "math/fft/fftT.hpp"
 
 namespace mx
 {
 namespace math
 {
-namespace fft
+namespace ft
 {
 
 template <>
@@ -58,6 +58,6 @@ std::vector<int> fftwDimVec<3>( int szX, int szY, int szZ )
     return v;
 }
 
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx

@@ -30,7 +30,7 @@ namespace mx
 {
 namespace math
 {
-namespace fft
+namespace ft
 {
 
 template <>

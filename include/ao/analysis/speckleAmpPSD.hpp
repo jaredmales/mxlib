@@ -113,8 +113,8 @@ int speckleAmpPSD(
         nfilt.psd( npsd2, freq[1] - freq[0] );
 
         // FFTs for going to Fourier domain and back to time domain.
-        math::fft::fftT<realT, std::complex<realT>, 1, 0> fft( psd2.size() );
-        math::fft::fftT<std::complex<realT>, realT, 1, 0> fftB( psd2.size(), MXFFT_BACKWARD );
+        math::ft::fftT<realT, std::complex<realT>, 1, 0> fft( psd2.size() );
+        math::ft::fftT<std::complex<realT>, realT, 1, 0> fftB( psd2.size(), math::ft::dir::backward );
 
         // Fourier transform working memmory
         std::vector<std::complex<realT>> tform1( psd2.size() );

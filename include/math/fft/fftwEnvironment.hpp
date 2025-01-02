@@ -1,12 +1,12 @@
 /** \file fftwEnvironment.hpp
  * \brief Declares and defines the fftwEnvironment manager
- * \ingroup fft_files
+ * \ingroup ft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2015 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -37,15 +37,49 @@ namespace mx
 {
 namespace math
 {
-namespace fft
+namespace ft
 {
+
+/** \addtogroup fftw_env
+
+mxlib will manage the FFTW environment for you, which really means importing and exporting
+wisdom and cleaning up memory.  This can be done in a simple way using
+\ref mx::math::fft::ftwEnvironment.
+To make the best use of this, create a directory to store FFTW wisdom.  The typical choise is
+`$(HOME)/.fftw`
+
+Then add the environment variable to your bash profile (i.e. in .bash_profile or .bash_aliases) as so
+\verbatim
+export MXFFTW_WISDOM=/path/to/.fftw
+\endverbatim
+
+Using this facility requires only that you create an object of type \ref mx::math::fft::fftwEnvironment
+at the beginning of the program for the real floating point type you are using. E.g.:
+\code
+
+   #include <mx/fft/fftwEnvironment.hpp>
+
+   int main()
+   {
+      typedef double realT;
+      mx::math::ft::fftwEnvironment<realT> fftwEnv;
+
+      //do stuff . . .
+
+      return 0;
+   }
+   \endcode
+
+See the documentation for \ref mx::math::ft::fftwEnvironment for details.
+
+*/
 
 /// Return a string corresponding the fftw real floating point type.
 /** This is used for wisdom filenames.
  *
  * \tparam realT the real floating point type.
  *
- * \ingroup fft
+ * \ingroup fftw_env
  */
 template <typename realT>
 std::string fftw_typename();
@@ -69,7 +103,7 @@ std::string fftw_typename<__float128>();
  *
  * \tparam realT is the real floating point type.
  *
- * \ingroup fft
+ * \ingroup fftw_env
  */
 template <typename realT>
 std::string fftw_wisdom_filename()
@@ -105,7 +139,7 @@ std::string fftw_wisdom_filename()
    int main()
    {
       typedef double realT;
-      mx::fftwEnvironment<realT> fftwEnv;
+      mx::math::ft::fftwEnvironment<realT> fftwEnv;
 
       //do stuff . . .
 
@@ -114,7 +148,7 @@ std::string fftw_wisdom_filename()
    \endcode
   * Note that there is no need to explicitly destroy the object fftwEnv.
   *
-  * \ingroup fft
+  * \ingroup fftw_env
   */
 template <typename realT, bool threads = false>
 struct fftwEnvironment
@@ -142,12 +176,17 @@ template <typename realT>
 struct fftwEnvironment<realT, true>
 {
     /// Constructor
-    explicit fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.  This can be changed any time by the program by calling \ref fftw_plan_with_nthreads() */)
+    explicit fftwEnvironment(unsigned nThreads = 1 /**< [in] [optional] the number of threads to use.
+                                                   This can be changed any time by the program by calling
+                                                   \ref fftw_plan_with_nthreads() */)
     {
         fftw_make_planner_thread_safe<realT>();
 
         if( nThreads == 0 )
+        {
             nThreads = 1; // Just to be safe, 1 disables threads but the fftw docs don't say what happens for 0.
+        }
+
         fftw_plan_with_nthreads<realT>( nThreads );
 
         fftw_import_wisdom_from_filename<realT>( fftw_wisdom_filename<realT>().c_str() );
@@ -162,7 +201,7 @@ struct fftwEnvironment<realT, true>
     }
 };
 
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx
 

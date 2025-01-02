@@ -29,7 +29,7 @@
 
 #include "../mxError.hpp"
 #include "../mxException.hpp"
-#include "../math/fft/fft.hpp"
+#include "../math/fft/ft.hpp"
 #include "../math/fit/fitGaussian.hpp"
 
 #include "eigenImage.hpp"
@@ -151,13 +151,33 @@ class imageXCorrFFT
 
     complexArrayT m_ftIm0; ///< Working memory for the FT of the reference image.
 
+public:
     complexArrayT m_ftWork; ///< Working memory for the FFT.
 
-    complexArrayT m_ftWorkPadded; ///< Working memory for the padded inverse FFT.
+    #ifdef XCFFT_C2C
+    complexArrayT m_ftWorkIn; ///< Working memory for the FFT input.
+    #endif
 
-    math::fft::fftT<realT, complexT, 2, 0> m_fft_fwd; ///< FFT object for the forward transform.
+    complexArrayT m_ftWorkPadded; ///< Working memory for the padded inverse FFT input.
 
-    math::fft::fftT<complexT, realT, 2, 0> m_fft_back; ///< FFT object for the backward transfsorm.
+    #ifdef XCFFT_C2C
+    complexArrayT m_ftWorkPaddedOut; ///< Working memory for the FFT output.
+    #endif
+protected:
+
+    #ifdef XCFFT_C2C
+
+    math::ft::fftT<complexT, complexT, 2, 0> m_fft_fwd; ///< FFT object for the forward transform.
+
+    math::ft::fftT<complexT, complexT, 2, 0> m_fft_bwd; ///< FFT object for the backward transfsorm.
+
+    #else
+
+    math::ft::fftT<realT, complexT, 2, 0> m_fft_fwd; ///< FFT object for the forward transform.
+
+    math::ft::fftT<complexT, realT, 2, 0> m_fft_bwd; ///< FFT object for the backward transfsorm.
+
+    #endif
 
     ///@}
 
@@ -576,31 +596,57 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
     {
         m_ftIm0.resize( 0, 0 );
         m_ftWork.resize( 0, 0 );
+        #ifdef XCFFT_C2C
+        m_ftWorkIn.resize( 0, 0 );
+        #endif
         m_rowsPadded = 0;
         m_colsPadded = 0;
         m_ccIm.resize( 0, 0 );
         m_ftWorkPadded.resize( 0, 0 );
 
+        #ifdef XCFFT_C2C
+        m_ftWorkPaddedOut.resize( 0, 0 );
+        #endif
+
         return 0;
     }
+
+    #ifdef XCFFT_C2C
+
+    m_ftIm0.resize( m_rows, m_cols );
+
+    m_ftWork.resize( m_rows, m_cols );
+
+    m_ftWorkIn.resize( m_rows, m_cols );
+
+    #else
 
     m_ftIm0.resize( (int)( 0.5 * m_rows ) + 1, m_cols );
 
     m_ftWork.resize( (int)( 0.5 * m_rows ) + 1, m_cols );
 
+    #endif
+
     // fftw is row-major, eigen defaults to column-major
-    m_fft_fwd.plan( m_cols, m_rows, MXFFT_FORWARD, false );
+    m_fft_fwd.plan( m_cols, m_rows, math::ft::dir::forward, false );
 
     m_rowsPadded = ceil( m_rows * m_oversamp );
     m_colsPadded = ceil( m_cols * m_oversamp );
 
     m_ccIm.resize( m_rowsPadded, m_colsPadded );
 
+    #ifdef XCFFT_C2C
+
+    m_ftWorkPadded.resize( m_rowsPadded, m_colsPadded );
+    m_ftWorkPaddedOut.resize( m_rowsPadded, m_colsPadded );
+
+    #else
+
     m_ftWorkPadded.resize( (int)( 0.5 * m_rowsPadded ) + 1, m_colsPadded );
 
-    m_ftWorkPadded.setZero();
+    #endif
 
-    m_fft_back.plan( m_colsPadded, m_rowsPadded, MXFFT_BACKWARD, false );
+    m_fft_bwd.plan( m_colsPadded, m_rowsPadded, math::ft::dir::backward, false );
 
     return 0;
 } // resize(int, int, realT)
@@ -781,7 +827,18 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT oversamp )
     imageShiftWP( im0, m_refIm, 0.5 * m_rows + 1, 0.5 * m_cols + 1 );
 
     // Then FT
+    #ifdef XCFFT_C2C
+    for(int cc=0; cc < im0.cols(); ++cc)
+    {
+        for(int rr=0; rr < im0.rows(); ++rr)
+        {
+            m_ftWork(rr,cc) = im0(rr,cc);
+        }
+    }
+    m_fft_fwd( m_ftIm0.data(), m_ftWork.data() );
+    #else
     m_fft_fwd( m_ftIm0.data(), im0.data() );
+    #endif
 
     // Conjugate and normalize for FFTW scaling.
     for( int c = 0; c < m_ftIm0.cols(); ++c )
@@ -1069,7 +1126,18 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
         m_normIm *= m_winIm;
     }
 
+    #ifdef XCFFT_C2C
+    for(int cc=0; cc < m_normIm.cols(); ++cc)
+    {
+        for(int rr=0; rr < m_normIm.rows(); ++rr)
+        {
+            m_ftWorkIn(rr,cc) = m_normIm(rr,cc);
+        }
+    }
+    m_fft_fwd( m_ftWork.data(), m_ftWorkIn.data() );
+    #else
     m_fft_fwd( m_ftWork.data(), m_normIm.data() );
+    #endif
 
     // m_ftIm0 is the conjugated, fftw-normalized, reference image in the Fourier domain
     // So this is the FT of the cross-correlation:
@@ -1079,12 +1147,25 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
     int ci = 0.5 * m_ftWork.cols() + 1;
     int cf = m_ftWork.cols() - ci;
 
-    m_ftWorkPadded.setZero();
+    m_ftWorkPadded.setZero(); //fftw c2r overwrites the input
     m_ftWorkPadded.block( 0, 0, m_ftWork.rows(), ci ) = m_ftWork.block( 0, 0, m_ftWork.rows(), ci );
     m_ftWorkPadded.block( 0, m_ftWorkPadded.cols() - cf, m_ftWork.rows(), cf ) =
         m_ftWork.block( 0, m_ftWork.cols() - cf, m_ftWork.rows(), cf );
 
-    m_fft_back( m_ccIm.data(), m_ftWorkPadded.data() );
+    #ifdef XCFFT_C2C
+    m_fft_bwd( m_ftWorkPaddedOut.data(), m_ftWorkPadded.data() );
+
+    for(int cc = 0; cc < m_ccIm.cols(); ++cc)
+    {
+        for(int rr = 0; rr < m_ccIm.rows(); ++rr)
+        {
+            m_ccIm(rr,cc) = std::real(m_ftWorkPaddedOut(rr,cc));
+        }
+    }
+
+    #else
+    m_fft_bwd( m_ccIm.data(), m_ftWorkPadded.data() );
+    #endif
 
     findPeak( xShift, yShift );
 

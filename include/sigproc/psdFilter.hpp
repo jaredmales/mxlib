@@ -32,7 +32,7 @@
 #include <Eigen/Dense>
 
 #include "../mxError.hpp"
-#include "../math/fft/fft.hpp"
+#include "../math/fft/ft.hpp"
 #include "../improc/eigenCube.hpp"
 
 namespace mx
@@ -172,8 +172,8 @@ class psdFilter<_realT, _rank, 0>
     mutable complexArrayT
         m_ftWork; ///< Working memory for the FFT.  Declared mutable so it can be accessed in the const filter method.
 
-    math::fft::fftT<complexT, complexT, rank, 0> m_fft_fwd;  ///< FFT object for the forward transform.
-    math::fft::fftT<complexT, complexT, rank, 0> m_fft_back; ///< FFT object for the backward transfsorm.
+    math::ft::fftT<complexT, complexT, rank, 0> m_fft_fwd;  ///< FFT object for the forward transform.
+    math::ft::fftT<complexT, complexT, rank, 0> m_fft_bwd; ///< FFT object for the backward transfsorm.
 
   public:
     /// C'tor.
@@ -636,9 +636,9 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 1>::type *
 
     m_ftWork.resize( m_rows );
 
-    m_fft_fwd.plan( m_rows, MXFFT_FORWARD, true );
+    m_fft_fwd.plan( m_rows, math::ft::dir::forward, true );
 
-    m_fft_back.plan( m_rows, MXFFT_BACKWARD, true );
+    m_fft_bwd.plan( m_rows, math::ft::dir::backward, true );
 
     return 0;
 }
@@ -664,9 +664,9 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 2>::type *
 
     m_ftWork.resize( m_rows, m_cols );
 
-    m_fft_fwd.plan( m_rows, m_cols, MXFFT_FORWARD, true );
+    m_fft_fwd.plan( m_rows, m_cols, math::ft::dir::forward, true );
 
-    m_fft_back.plan( m_rows, m_cols, MXFFT_BACKWARD, true );
+    m_fft_bwd.plan( m_rows, m_cols, math::ft::dir::backward, true );
 
     return 0;
 }
@@ -692,9 +692,9 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 3>::type *
 
     m_ftWork.resize( m_rows, m_cols, m_planes );
 
-    m_fft_fwd.plan( m_planes, m_rows, m_cols, MXFFT_FORWARD, true );
+    m_fft_fwd.plan( m_planes, m_rows, m_cols, math::ft::dir::forward, true );
 
-    m_fft_back.plan( m_planes, m_rows, m_cols, MXFFT_BACKWARD, true );
+    m_fft_bwd.plan( m_planes, m_rows, m_cols, math::ft::dir::backward, true );
 
     return 0;
 }
@@ -901,7 +901,7 @@ int psdFilter<realT, rank>::filter( realArrayT &noise,
     for( int nn = 0; nn < m_ftWork.size(); ++nn )
         m_ftWork[nn] *= ( *m_psdSqrt )[nn];
 
-    m_fft_back( m_ftWork.data(), m_ftWork.data() );
+    m_fft_bwd( m_ftWork.data(), m_ftWork.data() );
 
     // Now take the real part, and normalize.
     realT norm = sqrt( noise.size() / m_dFreq1 );
@@ -938,7 +938,7 @@ int psdFilter<realT, rank>::filter( realArrayT &noise,
     // Apply the filter.
     m_ftWork *= *m_psdSqrt;
 
-    m_fft_back( m_ftWork.data(), m_ftWork.data() );
+    m_fft_bwd( m_ftWork.data(), m_ftWork.data() );
 
     realT norm = sqrt( noise.rows() * noise.cols() / ( m_dFreq1 * m_dFreq2 ) );
 
@@ -974,7 +974,7 @@ int psdFilter<realT, rank>::filter( realArrayMapT noise,
     // Apply the filter.
     m_ftWork *= *m_psdSqrt;
 
-    m_fft_back( m_ftWork.data(), m_ftWork.data() );
+    m_fft_bwd( m_ftWork.data(), m_ftWork.data() );
 
     realT norm = sqrt( noise.rows() * noise.cols() / ( m_dFreq1 * m_dFreq2 ) );
 
@@ -1014,7 +1014,7 @@ int psdFilter<realT, rank>::filter( realArrayT &noise,
     for( int pp = 0; pp < noise.planes(); ++pp )
         m_ftWork.image( pp ) *= m_psdSqrt->image( pp );
 
-    m_fft_back( m_ftWork.data(), m_ftWork.data() );
+    m_fft_bwd( m_ftWork.data(), m_ftWork.data() );
 
     // Now take the real part, and normalize.
 

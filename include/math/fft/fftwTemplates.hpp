@@ -1,6 +1,6 @@
 /** \file fftwTemplates.hpp
  * \brief Declares and defines templatized wrappers for the fftw library
- * \ingroup fft_files
+ * \ingroup ft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
@@ -36,13 +36,13 @@ namespace mx
 {
 namespace math
 {
-namespace fft
+namespace ft
 {
 
 /** \addtogroup fftw_templates
  *
- * A templatized interface to the fftw library.
- *
+ * A templatized interface to the fftw library.  Accesses the correct fftw types and
+ * functions based on the provided input and output types.
  */
 
 /** \defgroup fftw_template_types Types
