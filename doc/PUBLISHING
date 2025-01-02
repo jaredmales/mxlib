@@ -6,6 +6,19 @@ Steps to update (assuming you have access to the mxlib-doc repo):
 3) in this directory, type make (requires doxygen)
 4) copy contents of ./html to that repo (but not in a directory named html, rather at mxlib-doc/)
 5) in mxlib-doc do `git add *`
-6) in mxlib-doc do `git commit -a -m "updated docs"` 
+6) in mxlib-doc do `git commit -a -m "updated docs"`
 7) in mxlib-doc do `git push`
 8) now you can delete your local mxlib-doc copy
+
+To maintain the size of mxlib-doc at a manageable level:
+
+```
+git checkout --orphan temp <f>      # checkout to the status of the git repo at commit f; creating a branch named "temp"
+git commit -m "new root commit"     # create a new commit that is to be the new root commit
+git rebase --onto temp <f> master   # now rebase the part of history from <f> to master onthe temp branch
+git branch -D temp                  # we don't need the temp branch anymore
+git prune --progress                 # delete all the objects w/o references
+git gc --aggressive                  # aggressively collect garbage; may take a lot of time on large repos
+
+git push -f
+```
