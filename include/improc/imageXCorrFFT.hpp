@@ -68,8 +68,12 @@ namespace improc
  *  - xcorrPeakMethod::interpPeak uses interpolation to find the peak to a given tolerance.
  *  - xcorrPeakMethod::none will just return the coordinate of the max pixel
  *
+ * This class uses the real-to-complex transforms of FFTW by default.  This should offer
+ * improved speed and memory use.  For testing the complex-to-complex transforms can be
+ * used by defining `XCFFT_C2C` before including this file.
  *
- * \tparam _realImageT is the Eigen-like array type used for image processing.  See typedefs.
+ * \tparam _realImageT is the Eigen-like array type used for image processing.  Must have
+ *                     a real floating point Scalar type (float, double, etc.). See typedefs.
  *
  * \ingroup image_reg
  */
@@ -83,6 +87,7 @@ class imageXCorrFFT
 
     typedef std::complex<realT> complexT; ///< Complex floating point type.
 
+    // defaut is the real-to-complex.  Only use C2C if defined:
     #ifdef XCFFT_C2C
     typedef complexT fftOutT;
     typedef complexT fftInT;
