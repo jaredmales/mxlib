@@ -35,7 +35,7 @@
 #include "fftwTemplates.hpp"
 #include "../../meta/trueFalseT.hpp"
 
-#include "ft.hpp"
+#include "ftTypes.hpp"
 
 namespace mx
 {
@@ -279,11 +279,13 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<false> &inPl
 
 #ifndef MX_FFTW_NOOMP
     #pragma omp critical
-#endif
     { // scope for pragma
-        m_plan = fftw_plan_dft<inputT, outputT>(
+#endif
+    m_plan = fftw_plan_dft<inputT, outputT>(
             fftwDimVec<rank>( m_szX, m_szY, m_szZ ), forplan1, forplan2, pdir, FFTW_MEASURE );
+#ifndef MX_FFTW_NOOMP
     }
+#endif
 
     fftw_free<inputT>( forplan1 );
     fftw_free<outputT>( forplan2 );
@@ -313,14 +315,16 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<true> &inPla
 
 #ifndef MX_FFTW_NOOMP
     #pragma omp critical
-#endif
     { // scope for pragma
-        m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
-                                                 reinterpret_cast<inputT *>( forplan ),
-                                                 reinterpret_cast<outputT *>( forplan ),
-                                                 pdir,
-                                                 FFTW_MEASURE );
+#endif
+    m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
+                                             reinterpret_cast<inputT *>( forplan ),
+                                             reinterpret_cast<outputT *>( forplan ),
+                                             pdir,
+                                             FFTW_MEASURE );
+    #ifndef MX_FFTW_NOOMP
     }
+    #endif
 
     fftw_free<inputT>( reinterpret_cast<inputT *>( forplan ) );
 }

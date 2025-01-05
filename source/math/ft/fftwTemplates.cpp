@@ -24,7 +24,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "math/fft/fftwTemplates.hpp"
+#include "math/ft/fftwTemplates.hpp"
 
 namespace mx
 {

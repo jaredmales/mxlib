@@ -23,7 +23,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "math/fft/fftT.hpp"
+#include "math/ft/fftT.hpp"
 
 namespace mx
 {

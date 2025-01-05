@@ -1,5 +1,5 @@
-/** \file ft.hpp
- * \brief Fourier Transforms
+/** \file ftTypes.hpp
+ * \brief Fourier Transform Types
  * \ingroup ft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
@@ -24,8 +24,8 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef ft_hpp
-#define ft_hpp
+#ifndef ftTypes_hpp
+#define ftTypes_hpp
 
 namespace mx
 {
@@ -47,8 +47,5 @@ enum class dir{ forward,  ///< Specifies the forward transform
 } // namespace math
 } // namespace mx
 
-#include "fftwEnvironment.hpp"
-#include "fftT.hpp"
-#include "mftT.hpp"
 
-#endif // ft_hpp
+#endif // ftTypes_hpp

@@ -32,7 +32,7 @@
 #include <Eigen/Dense>
 
 #include "../mxError.hpp"
-#include "../math/fft/ft.hpp"
+#include "../math/ft/fftT.hpp"
 #include "../improc/eigenCube.hpp"
 
 namespace mx

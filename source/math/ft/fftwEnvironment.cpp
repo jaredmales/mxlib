@@ -1,12 +1,12 @@
-/** \file imageXCorr.hpp
- * \brief CRTP base class to register images.
- * \ingroup image_processing_files
+/** \file fftwEnvironment.cpp
+ * \brief Definitions for the fftwEnvironment manager
+ * \ingroup fft_files
  * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
 //***********************************************************************//
-// Copyright 2022 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2020-2025 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -24,24 +24,41 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef imageXCorr_hpp
-#define imageXCorr_hpp
+#include "math/ft/fftwEnvironment.hpp"
 
 namespace mx
 {
-namespace improc
+namespace math
+{
+namespace ft
 {
 
-enum class xcorrPeakMethod
+template <>
+std::string fftw_typename<float>()
 {
-    centerOfLight,
-    gaussFit,
-    interpPeak,
-    mftOversamp,
-    none
-};
+    return "float";
+}
 
-} // namespace improc
+template <>
+std::string fftw_typename<double>()
+{
+    return "double";
+}
+
+template <>
+std::string fftw_typename<long double>()
+{
+    return "long_double";
+}
+
+#ifdef HASQUAD
+template <>
+std::string fftw_typename<__float128>()
+{
+    return "quad";
+}
+#endif
+
+} // namespace fft
+} // namespace math
 } // namespace mx
-
-#endif // imageXCorr_hpp

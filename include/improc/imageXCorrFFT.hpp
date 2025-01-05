@@ -29,7 +29,11 @@
 
 #include "../mxError.hpp"
 #include "../mxException.hpp"
-#include "../math/fft/ft.hpp"
+#include "../math/ft/fftT.hpp"
+#include "../math/ft/mftT.hpp"
+#include "../math/ft/ftUtils.hpp"
+#include "../math/ft/fftwEnvironment.hpp"
+
 #include "../math/fit/fitGaussian.hpp"
 
 #include "eigenImage.hpp"
@@ -48,7 +52,7 @@ namespace improc
  * and windowed.  Seperate masks and windows for the reference and target image are used.
  *
  * The reference mask, reference window, and normalization flag must be set before setting the reference
- * (unless using the defaults).  If the reference window, reference window, or normalization flag are changed
+ * (unless using the defaults).  If the reference mask, reference window, or normalization flag are changed
  * then the reference must be set again. After configuring the reference, then operator() can be called
  * repeatedly to determine the shifts for a sequence of imaages.  The mask and window can be changed between
  * calls without requiring resetting the reference. No new heap allocations take place on these calls
@@ -79,6 +83,14 @@ class imageXCorrFFT
 
     typedef std::complex<realT> complexT; ///< Complex floating point type.
 
+    #ifdef XCFFT_C2C
+    typedef complexT fftOutT;
+    typedef complexT fftInT;
+    #else
+    typedef realT fftOutT;
+    typedef complexT fftInT;
+    #endif
+
     typedef eigenImage<complexT> complexArrayT; ///< Complex eigen array type with Scalar==complexT
 
   protected:
@@ -89,7 +101,13 @@ class imageXCorrFFT
 
     int m_cols{ 0 }; ///< The number of columns in the images
 
-    realT m_oversamp{ 1 }; ///< The oversampling factor for the CC
+    realT m_padFactor{ 1 }; ///< The padding factor for the CC
+
+    realT m_padFactorR{ 1 }; /**< The actual padding factor for rows of the CC
+                                  set based on the resultant array sizes.*/
+
+    realT m_padFactorC{ 1 }; /**< The actual padding factor for cols of the CC
+                                  set based on the resultant array sizes.*/
 
     int m_rowsPadded{ 0 }; ///< The number of rows in the padded CC
 
@@ -123,10 +141,15 @@ class imageXCorrFFT
 
     int m_maxLag{ 5 }; ///< The maximum lag to consider in the initial cross-correlation.  Default is 5.
 
-    realT m_tol{ 0.1 }; ///< The tolerance of the interpolated-magnified image, in pixels.
+    realT m_tol{ 0.1 }; /**< For xcorrPeakMethod::interpPeak, the tolerance of the
+                             interpolated-magnified image, in pixels.*/
 
     realT m_magSize{ 0 }; ///< Magnified size of the ccIm when using interp.  Set as function of m_tol and m_maxLag.
 
+    realT m_mag{ 1 }; /**< The magnification, in principle is 1/m_tol but will vary
+                           slightly based on integer array sizes*/
+
+    /// The peak finding method to use
     xcorrPeakMethod m_peakMethod{ xcorrPeakMethod::interpPeak };
 
     ///@}
@@ -151,33 +174,25 @@ class imageXCorrFFT
 
     complexArrayT m_ftIm0; ///< Working memory for the FT of the reference image.
 
-public:
+  public:
     complexArrayT m_ftWork; ///< Working memory for the FFT.
 
-    #ifdef XCFFT_C2C
+#ifdef XCFFT_C2C
     complexArrayT m_ftWorkIn; ///< Working memory for the FFT input.
-    #endif
+#endif
 
     complexArrayT m_ftWorkPadded; ///< Working memory for the padded inverse FFT input.
 
-    #ifdef XCFFT_C2C
-    complexArrayT m_ftWorkPaddedOut; ///< Working memory for the FFT output.
-    #endif
-protected:
+    complexArrayT m_ftWorkPaddedOut; ///< Working memory for the FFT and MFT output.
 
-    #ifdef XCFFT_C2C
+    complexArrayT m_mtWorkPadded; ///< Working memory for the MFT for xcorrPeakMethod::mftOversamp
 
-    math::ft::fftT<complexT, complexT, 2, 0> m_fft_fwd; ///< FFT object for the forward transform.
+    math::ft::fftT<fftOutT, fftInT, 2> m_fft_fwd; ///< FFT object for the forward transform.
 
-    math::ft::fftT<complexT, complexT, 2, 0> m_fft_bwd; ///< FFT object for the backward transfsorm.
+    math::ft::fftT<fftInT, fftOutT, 2> m_fft_bwd; ///< FFT object for the backward transform.
 
-    #else
-
-    math::ft::fftT<realT, complexT, 2, 0> m_fft_fwd; ///< FFT object for the forward transform.
-
-    math::ft::fftT<complexT, realT, 2, 0> m_fft_bwd; ///< FFT object for the backward transfsorm.
-
-    #endif
+    math::ft::mftT<complexT, complexT, 2> m_mft_bwd; /**< MFT object used to oversample the
+                                                       peak for xcorrPeakMethod::mftOversamp*/
 
     ///@}
 
@@ -216,20 +231,20 @@ protected:
      */
     int cols();
 
-    /// Set the oversampling factor
+    /// Set the padding factor
     /** This can also be set by a call to resize() or refIm().
-     *  The oversampling factor must be greater than or equal to 1.
+     *  The padding factor must be greater than or equal to 1.
      *
      *  If m_rows and m_cols are both greater than 0 this calls resize(int, int, realT).
      *
      */
-    int oversamp( realT os /**< [in] the new oversampling factor*/ );
+    int padFactor( realT os /**< [in] the new padding factor*/ );
 
-    /// Get the oversampling factor
+    /// Get the padding factor
     /**
-     * \returns the current value of m_oversamp
+     * \returns the current value of m_padFactor
      */
-    realT oversamp();
+    realT padFactor();
 
     /// Get the number of rows in the padded cross-correlation
     /** This can only be set by a call to resize() or refIm().
@@ -247,10 +262,10 @@ protected:
 
     /// Set the size of the cross-correlation problem based on input image size.
     /** This resizes all working memory and conducts fftw planning.
-     *  If there are no changes to size or oversampling, this returns immediately
+     *  If there are no changes to size or padding, this returns immediately
      *  making no changes.
      *
-     *  If there are changes to size or oversampling the reference is invalidated.
+     *  If there are changes to size or padding the reference is invalidated.
      *
      *  If nrows or ncols is 0, this resizes all working memory to 0.
      *
@@ -259,10 +274,10 @@ protected:
      */
     int resize( int nrows, /**< [in] the number of rows in the images to register */
                 int ncols, /**< [in] the number of columns in the images to register */
-                realT oversamp /**< [in] the oversampling factor.  Must be `>=` 1. */ );
+                realT padFactor /**< [in] the padding factor.  Must be `>=` 1. */ );
 
     /// Set the size of the cross-correlation problem based on input image size.
-    /** Calls resize(int, int, realT) with the current value of m_oversamp.
+    /** Calls resize(int, int, realT) with the current value of m_padFactor.
      *
      * \overload
      *
@@ -377,10 +392,10 @@ protected:
      * \returns -1 on error
      */
     int refIm( const realImageT &im0, /**< [in] The new reference image */
-               realT oversamp /**< [in] [optional] the oversampling factor to use */ );
+               realT padFactor /**< [in] [optional] the padding factor to use */ );
 
     /// Set the reference image
-    /** Calls refIm(const realImageT &, realT) with the current value of m_oversamp.
+    /** Calls refIm(const realImageT &, realT) with the current value of m_padFactor.
      *
      *  \overload
      *
@@ -528,11 +543,11 @@ int imageXCorrFFT<realImageT>::cols()
 }
 
 template <class realImageT>
-int imageXCorrFFT<realImageT>::oversamp( realT os )
+int imageXCorrFFT<realImageT>::padFactor( realT os )
 {
     if( os < 1 )
     {
-        mxError( "imageXCorrFFT::oversamp", MXE_INVALIDARG, "oversampling factor can't be less than 1" );
+        mxError( "imageXCorrFFT::padFactor", MXE_INVALIDARG, "padding factor can't be less than 1" );
         return MXE_INVALIDARG;
     }
 
@@ -542,15 +557,15 @@ int imageXCorrFFT<realImageT>::oversamp( realT os )
     }
     else
     {
-        m_oversamp = os;
+        m_padFactor = os;
         return 0;
     }
 }
 
 template <class realImageT>
-typename imageXCorrFFT<realImageT>::realT imageXCorrFFT<realImageT>::oversamp()
+typename imageXCorrFFT<realImageT>::realT imageXCorrFFT<realImageT>::padFactor()
 {
-    return m_oversamp;
+    return m_padFactor;
 }
 
 template <class realImageT>
@@ -566,17 +581,17 @@ int imageXCorrFFT<realImageT>::colsPadded()
 }
 
 template <class realImageT>
-int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
+int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT padFactor )
 {
     // No-op if no change
-    if( m_rows == nrows && m_cols == ncols && m_oversamp == oversamp )
+    if( m_rows == nrows && m_cols == ncols && m_padFactor == padFactor )
     {
         return 0;
     }
 
-    if( oversamp < 1 )
+    if( padFactor < 1 )
     {
-        mxError( "imageXCorrFFT::resize", MXE_INVALIDARG, "oversampling factor can't be less than 1" );
+        mxError( "imageXCorrFFT::resize", MXE_INVALIDARG, "padding factor can't be less than 1" );
         return MXE_INVALIDARG;
     }
 
@@ -584,11 +599,11 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
 
     m_cols = ncols;
 
-    m_oversamp = oversamp;
+    m_padFactor = padFactor;
 
     /* Any change here invalidates the reference.
      * This is trivially true for rows or cols.  Also must be
-     * handled for oversampling which will change the reference shifts.
+     * handled for padding which will change the reference shifts.
      */
     m_refValid = false;
 
@@ -596,22 +611,20 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
     {
         m_ftIm0.resize( 0, 0 );
         m_ftWork.resize( 0, 0 );
-        #ifdef XCFFT_C2C
+#ifdef XCFFT_C2C
         m_ftWorkIn.resize( 0, 0 );
-        #endif
+#endif
         m_rowsPadded = 0;
         m_colsPadded = 0;
         m_ccIm.resize( 0, 0 );
         m_ftWorkPadded.resize( 0, 0 );
-
-        #ifdef XCFFT_C2C
+        m_mtWorkPadded.resize( 0, 0 );
         m_ftWorkPaddedOut.resize( 0, 0 );
-        #endif
 
         return 0;
     }
 
-    #ifdef XCFFT_C2C
+#ifdef XCFFT_C2C
 
     m_ftIm0.resize( m_rows, m_cols );
 
@@ -619,32 +632,54 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
 
     m_ftWorkIn.resize( m_rows, m_cols );
 
-    #else
+#else
 
     m_ftIm0.resize( (int)( 0.5 * m_rows ) + 1, m_cols );
 
     m_ftWork.resize( (int)( 0.5 * m_rows ) + 1, m_cols );
 
-    #endif
+#endif
 
     // fftw is row-major, eigen defaults to column-major
     m_fft_fwd.plan( m_cols, m_rows, math::ft::dir::forward, false );
 
-    m_rowsPadded = ceil( m_rows * m_oversamp );
-    m_colsPadded = ceil( m_cols * m_oversamp );
+    m_rowsPadded = ceil( m_rows * m_padFactor );
+    m_colsPadded = ceil( m_cols * m_padFactor );
+
+    m_padFactorR = static_cast<realT>(m_rowsPadded)/static_cast<realT>(m_rows);
+    m_padFactorC = static_cast<realT>(m_colsPadded)/static_cast<realT>(m_cols);
 
     m_ccIm.resize( m_rowsPadded, m_colsPadded );
 
-    #ifdef XCFFT_C2C
+#ifdef XCFFT_C2C
 
     m_ftWorkPadded.resize( m_rowsPadded, m_colsPadded );
     m_ftWorkPaddedOut.resize( m_rowsPadded, m_colsPadded );
 
-    #else
+#else
 
     m_ftWorkPadded.resize( (int)( 0.5 * m_rowsPadded ) + 1, m_colsPadded );
 
-    #endif
+    if(m_peakMethod == xcorrPeakMethod::mftOversamp)
+    {
+        m_ftWorkPaddedOut.resize( m_rowsPadded, m_colsPadded );
+    }
+    else
+    {
+        m_ftWorkPaddedOut.resize( 0,0 );
+    }
+
+#endif
+
+    if(m_peakMethod == xcorrPeakMethod::mftOversamp)
+    {
+        m_mtWorkPadded.resize( m_rowsPadded, m_colsPadded );
+    }
+    else
+    {
+        m_mtWorkPadded.resize( 0, 0);
+    }
+
 
     m_fft_bwd.plan( m_colsPadded, m_rowsPadded, math::ft::dir::backward, false );
 
@@ -654,7 +689,7 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT oversamp )
 template <class realImageT>
 int imageXCorrFFT<realImageT>::resize( int nrows, int ncols )
 {
-    return resize( nrows, ncols, m_oversamp );
+    return resize( nrows, ncols, m_padFactor );
 }
 
 template <class realImageT>
@@ -762,7 +797,7 @@ bool imageXCorrFFT<realImageT>::normalize()
 }
 
 template <class realImageT>
-int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT oversamp )
+int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
 {
     realImageT im0;
 
@@ -821,24 +856,20 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT oversamp )
      * Note: we don't do this earlier in case we ever implement something (e.g. a filter)
      * that changes size before this point
      */
-    resize( im0.rows(), im0.cols(), oversamp );
+    resize( im0.rows(), im0.cols(), padFactor );
 
     // Now shift so center pixel is 0,0
     imageShiftWP( im0, m_refIm, 0.5 * m_rows + 1, 0.5 * m_cols + 1 );
 
-    // Then FT
-    #ifdef XCFFT_C2C
-    for(int cc=0; cc < im0.cols(); ++cc)
-    {
-        for(int rr=0; rr < im0.rows(); ++rr)
-        {
-            m_ftWork(rr,cc) = im0(rr,cc);
-        }
-    }
+// Then FT
+#ifdef XCFFT_C2C
+
+    m_ftWork = im0.template cast<complexT>();
+
     m_fft_fwd( m_ftIm0.data(), m_ftWork.data() );
-    #else
+#else
     m_fft_fwd( m_ftIm0.data(), im0.data() );
-    #endif
+#endif
 
     // Conjugate and normalize for FFTW scaling.
     for( int c = 0; c < m_ftIm0.cols(); ++c )
@@ -867,7 +898,7 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT oversamp )
 template <class realImageT>
 int imageXCorrFFT<realImageT>::refIm( const realImageT &im )
 {
-    return refIm( im, m_oversamp );
+    return refIm( im, m_padFactor );
 }
 
 template <class realImageT>
@@ -904,11 +935,11 @@ typename imageXCorrFFT<realImageT>::realT imageXCorrFFT<realImageT>::tol()
 template <class realImageT>
 void imageXCorrFFT<realImageT>::tol( realT nt )
 {
+    m_tol = nt;
+
     m_magSize = ceil( ( ( 2. * m_maxLag + 1 ) - 1.0 ) / nt ) + 1;
 
-    realT mag = ( m_magSize - 1.0 ) / ( ( 2. * m_maxLag + 1 ) - 1.0 );
-
-    m_tol = 1.0 / mag;
+    m_mag = ( m_magSize - 1.0 ) / ( ( 2. * m_maxLag + 1 ) - 1.0 );
 
     if( m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0 )
         return;
@@ -924,8 +955,15 @@ void imageXCorrFFT<realImageT>::peakMethod( xcorrPeakMethod xpm )
 {
     m_peakMethod = xpm;
 
+    if( xpm == xcorrPeakMethod::mftOversamp )
+    {
+        m_refValid = false;
+    }
+
     if( m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0 )
+    {
         return;
+    }
 
     // Find the reference shift
     m_refX0 = 0;
@@ -1030,8 +1068,8 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
             m_magIm, m_ccIm.block( x0, y0, 2 * m_maxLag + 1, 2 * m_maxLag + 1 ), cubicConvolTransform<realT>() );
 
         m_magIm.maxCoeff( &x, &y );
-        x0 = ( x * m_tol + x0 );
-        y0 = ( y * m_tol + y0 );
+        x0 = ( x * ( 1.0 / m_mag ) + x0 );
+        y0 = ( y * ( 1.0 / m_mag ) + y0 );
     }
     else if( m_peakMethod == xcorrPeakMethod::centerOfLight )
     {
@@ -1045,6 +1083,59 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
         x0 = ( x + x0 );
         y0 = ( y + y0 );
     }
+    else if( m_peakMethod == xcorrPeakMethod::mftOversamp )
+    {
+        int x, y;
+        m_ccIm.maxCoeff( &x, &y );
+
+        if( m_refX0 == 0 && m_refY0 == 0 ) // reference finding
+        {
+            x0 = x;
+            y0 = y;
+        }
+        else
+        {
+            x = x / m_padFactorR  - m_refX0;
+            y = y / m_padFactorC - m_refY0;
+
+            realT mag = 1.0 / m_tol; // m_mag is the effective mag for interpPeak...
+
+            realT tmagR = mag * m_padFactorR; // the total mag
+            realT tmagC = mag * m_padFactorC; // the total mag
+
+            realT shiftx0 = -1 * ( m_refX0 * m_padFactorR ) * ( mag - 1 ) - x * tmagR;
+            realT shifty0 = -1 * ( m_refY0 * m_padFactorC ) * ( mag - 1 ) - y * tmagC;
+
+            m_mft_bwd.plan(
+                m_rowsPadded, m_colsPadded, math::ft::dir::backward, shiftx0, shifty0, mag );
+
+
+            #ifdef XCFFT_C2C
+
+            m_mft_bwd( m_ftWorkPaddedOut, m_ftWorkPadded );
+
+            #else
+
+            m_mtWorkPadded.resize(m_rowsPadded, m_colsPadded);
+            m_mtWorkPadded.setZero();
+            math::ft::augmentR2CFFTOutput(m_mtWorkPadded, m_ftWork);
+
+            m_mft_bwd( m_ftWorkPaddedOut, m_mtWorkPadded );
+
+            #endif
+
+            m_magIm = m_ftWorkPaddedOut.real();
+
+            int xf, yf;
+            m_magIm.maxCoeff( &xf, &yf );
+
+            xShift = x + ( xf - m_refX0 * m_padFactorR ) / tmagR;
+            yShift = y + ( yf - m_refY0 * m_padFactorC ) / tmagC;
+
+            return;
+
+        }
+    }
     else if( m_peakMethod == xcorrPeakMethod::none )
     {
         int x, y;
@@ -1054,13 +1145,12 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
     }
     else
     {
-        mxThrowException(
-            mx::err::invalidconfig, "imageXCorrFFT<realImageT>::operator()", "unknown peak finding method" );
+        mxThrowException( mx::err::invalidconfig, "imageXCorrFFT::operator()", "unknown peak finding method" );
     }
 
     //--> unpad here, scaling the shifts
-    xShift = x0 * static_cast<realT>( m_rows ) / static_cast<realT>( m_rowsPadded ) - m_refX0;
-    yShift = y0 * static_cast<realT>( m_cols ) / static_cast<realT>( m_colsPadded ) - m_refY0;
+    xShift = x0 / m_padFactorR - m_refX0;
+    yShift = y0 / m_padFactorC - m_refY0;
 }
 
 template <class realImageT>
@@ -1069,27 +1159,18 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 {
     if( !m_refValid )
     {
-        mxThrowException( mx::err::sizeerr, "imageXCorrFFT", "reference image is not valid" );
+        mxThrowException( err::invalidconfig, "imageXCorrFFT", "reference image is not valid" );
     }
 
     if( im.rows() != m_rows )
     {
-        mxThrowException( mx::err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
+        mxThrowException( err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
     }
 
     if( im.cols() != m_cols )
     {
-        mxThrowException( mx::err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
+        mxThrowException( err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
     }
-
-    int maxLag = m_maxLag;
-    if( maxLag == 0 )
-    {
-        maxLag = 0.25 * m_rows - 1;
-    }
-
-    float maxLag_r = 0.5 * ( 1.0 * m_rows - 1.0 );
-    float maxLag_c = 0.5 * ( 1.0 * m_cols - 1.0 );
 
     // Mask and normalize as needed
     if( m_haveMask )
@@ -1126,46 +1207,35 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
         m_normIm *= m_winIm;
     }
 
-    #ifdef XCFFT_C2C
-    for(int cc=0; cc < m_normIm.cols(); ++cc)
-    {
-        for(int rr=0; rr < m_normIm.rows(); ++rr)
-        {
-            m_ftWorkIn(rr,cc) = m_normIm(rr,cc);
-        }
-    }
+#ifdef XCFFT_C2C
+    m_ftWorkIn = m_normIm.template cast<complexT>();
+
     m_fft_fwd( m_ftWork.data(), m_ftWorkIn.data() );
-    #else
+#else
     m_fft_fwd( m_ftWork.data(), m_normIm.data() );
-    #endif
+#endif
 
     // m_ftIm0 is the conjugated, fftw-normalized, reference image in the Fourier domain
     // So this is the FT of the cross-correlation:
     m_ftWork *= m_ftIm0;
 
-    //--> PAD here
-    int ci = 0.5 * m_ftWork.cols() + 1;
-    int cf = m_ftWork.cols() - ci;
+    m_ftWorkPadded.setZero();
 
-    m_ftWorkPadded.setZero(); //fftw c2r overwrites the input
-    m_ftWorkPadded.block( 0, 0, m_ftWork.rows(), ci ) = m_ftWork.block( 0, 0, m_ftWork.rows(), ci );
-    m_ftWorkPadded.block( 0, m_ftWorkPadded.cols() - cf, m_ftWork.rows(), cf ) =
-        m_ftWork.block( 0, m_ftWork.cols() - cf, m_ftWork.rows(), cf );
+#ifdef XCFFT_C2C
 
-    #ifdef XCFFT_C2C
+    math::ft::padC2CFFTOutput(m_ftWorkPadded, m_ftWork);
+
     m_fft_bwd( m_ftWorkPaddedOut.data(), m_ftWorkPadded.data() );
 
-    for(int cc = 0; cc < m_ccIm.cols(); ++cc)
-    {
-        for(int rr = 0; rr < m_ccIm.rows(); ++rr)
-        {
-            m_ccIm(rr,cc) = std::real(m_ftWorkPaddedOut(rr,cc));
-        }
-    }
+    m_ccIm = m_ftWorkPaddedOut.real();
 
-    #else
-    m_fft_bwd( m_ccIm.data(), m_ftWorkPadded.data() );
-    #endif
+#else
+
+    math::ft::padR2CFFTOutput(m_ftWorkPadded, m_ftWork);
+
+    m_fft_bwd( m_ccIm, m_ftWorkPadded );
+
+#endif
 
     findPeak( xShift, yShift );
 

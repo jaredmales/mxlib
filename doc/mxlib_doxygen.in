@@ -958,7 +958,7 @@ INPUT                  = ./groupdefs.dox \
                          ../include/math \
                          ../include/math/cuda \
                          ../include/math/fit \
-                         ../include/math/fft \
+                         ../include/math/ft \
                          ../include/math/func \
                          ../include/math/plot \
                          ../include/meta \

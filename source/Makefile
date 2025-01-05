@@ -33,9 +33,9 @@ OBJS = \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
 	math/fit/fitGaussian.o \
-	math/fft/fftT.o \
-	math/fft/fftwEnvironment.o \
-	math/fft/fftwTemplates.o \
+	math/ft/fftT.o \
+	math/ft/fftwEnvironment.o \
+	math/ft/fftwTemplates.o \
 	math/func/bessel.o \
 	math/func/factorial.o \
 	math/func/gamma.o \
@@ -93,8 +93,9 @@ math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
 math/fit/fitGaussian.o: ../include/math/fit/fitGaussian.hpp ../include/math/fit/array2FitGaussian1D.hpp
-math/fft/fftwEnvironment.o: ../include/math/fft/fftwEnvironment.hpp ../include/math/fft/fftwTemplates.hpp
-math/fft/fftwTemplates.o: ../include/math/fft/fftwTemplates.hpp
+math/ft/fftwEnvironment.o: ../include/math/ft/fftwEnvironment.hpp ../include/math/ft/fftwTemplates.hpp
+math/ft/fftwTemplates.o: ../include/math/ft/fftwTemplates.hpp
+math/ft/fftT.o: ../include/math/ft/fftT.hpp
 math/func/bessel.o: ../include/math/func/bessel.hpp
 math/func/legendre.o: ../include/math/func/legendre.hpp
 math/plot/gnuPlot.o: ../include/math/plot/gnuPlot.hpp ../include/math/constants.hpp ../include/mxError.hpp ../include/mxException.hpp ../include/sys/timeUtils.hpp

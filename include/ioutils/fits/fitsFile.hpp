@@ -631,7 +631,8 @@ int fitsFile<dataT>::open()
     {
         std::string explan = "Error opening file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILEOERR, explan );
+        //mxError( "fitsFile", MXE_FILEOERR, explan );
+        mxThrowException(err::liberr, "fitsFile::open", explan);
 
         return -1;
     }
@@ -641,7 +642,8 @@ int fitsFile<dataT>::open()
     {
         std::string explan = "Error getting number of axes in file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILERERR, explan );
+        //mxError( "fitsFile", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::open", explan);
 
         return -1;
     }
@@ -655,7 +657,8 @@ int fitsFile<dataT>::open()
     {
         std::string explan = "Error getting dimensions in file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILERERR, explan );
+        //mxError( "fitsFile", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::open", explan);
 
         return -1;
     }
@@ -686,7 +689,8 @@ int fitsFile<dataT>::close()
     {
         std::string explan = "Error closing file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILECERR, explan );
+        //mxError( "fitsFile", MXE_FILECERR, explan );
+        mxThrowException(err::liberr, "fitsFile::close", explan);
 
         return -1;
     }
@@ -850,7 +854,9 @@ int fitsFile<dataT>::read( dataT *data )
     {
         std::string explan = "Error reading data from file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILERERR, explan );
+        //mxError( "fitsFile", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::read", explan);
+
         return -1;
     }
 
@@ -895,7 +901,8 @@ int fitsFile<dataT>::read( dataT *im, const std::vector<std::string> &flist )
 {
     if( flist.size() == 0 )
     {
-        mxError( "fitsFile", MXE_PARAMNOTSET, "Empty file list" );
+        //mxError( "fitsFile", MXE_PARAMNOTSET,  );
+        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
         return -1;
     }
 
@@ -921,7 +928,7 @@ int fitsFile<dataT>::read( dataT *im, std::vector<fitsHeader> &heads, const std:
 {
     if( flist.size() == 0 )
     {
-        mxError( "fitsFile", MXE_PARAMNOTSET, "Empty file list" );
+        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
         return -1;
     }
 
@@ -1021,7 +1028,8 @@ int fitsFile<dataT>::read( arrT &im )
     {
         std::string explan = "Error reading data from file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILERERR, explan );
+        //mxError( "fitsFile", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::read", explan);
         return -1;
     }
 
@@ -1072,7 +1080,8 @@ int fitsFile<dataT>::read( cubeT &cube, const std::vector<std::string> &flist, s
 
     if( flist.size() == 0 )
     {
-        mxError( "fitsFile", MXE_PARAMNOTSET, "Empty file list" );
+        //mxError( "fitsFile", MXE_PARAMNOTSET, "Empty file list" );
+        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
         return -1;
     }
 
@@ -1082,8 +1091,6 @@ int fitsFile<dataT>::read( cubeT &cube, const std::vector<std::string> &flist, s
 
     long *fpix, *lpix, *inc;
     pixarrs( &fpix, &lpix, &inc );
-
-    std::cerr << lpix[0] - fpix[0] + 1 << " " << lpix[1] - fpix[1] + 1 << " " << lpix[2] - fpix[2] + 1 << "\n";
 
     cube.resize( lpix[0] - fpix[0] + 1, lpix[1] - fpix[1] + 1, flist.size() );
 
@@ -1101,10 +1108,11 @@ int fitsFile<dataT>::read( cubeT &cube, const std::vector<std::string> &flist, s
     if( fstatus && fstatus != 107 )
     {
 
-        std::string explan = "Error reading data from file";
+        std::string explan = "error reading data from file";
         fitsErrText( explan, m_fileName, fstatus );
 
-        mxError( "cfitsio", MXE_FILERERR, explan );
+        //mxError( "cfitsio", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::read", explan);
 
         delete[] fpix;
         delete[] lpix;
@@ -1139,7 +1147,8 @@ int fitsFile<dataT>::read( cubeT &cube, const std::vector<std::string> &flist, s
         {
             std::string explan = "Error reading data from file";
             fitsErrText( explan, m_fileName, fstatus );
-            mxError( "cfitsio", MXE_FILERERR, explan );
+            //mxError( "cfitsio", MXE_FILERERR, explan );
+            mxThrowException(err::liberr, "fitsFile::read", explan);
 
             delete[] fpix;
             delete[] lpix;
@@ -1221,7 +1230,8 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
     {
         std::string explan = "Error reading header from file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILERERR, explan );
+        //mxError( "fitsFile", MXE_FILERERR, explan );
+        mxThrowException(err::liberr, "fitsFile::readHeader", explan);
 
         if( comment )
             delete[] comment;
@@ -1237,7 +1247,8 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
         {
             std::string explan = "Error reading header from file";
             fitsErrText( explan, m_fileName, fstatus );
-            mxError( "fitsFile", MXE_FILERERR, explan );
+            //mxError( "fitsFile", MXE_FILERERR, explan );
+            mxThrowException(err::liberr, "fitsFile::readHeader", explan);
 
             if( comment )
                 delete[] comment;
@@ -1349,7 +1360,8 @@ int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader 
     {
         std::string explan = "Error creating file";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILEOERR, explan );
+        //mxError( "fitsFile::write", MXE_FILEOERR, explan );
+        mxThrowException(err::liberr, "fitsFile::write", explan);
 
         return -1;
     }
@@ -1360,7 +1372,8 @@ int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader 
     {
         std::string explan = "Error creating image";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILEWERR, explan );
+        //mxError( "fitsFile::write", MXE_FILEWERR, explan );
+        mxThrowException(err::liberr, "fitsFile::readHeader", explan);
 
         return -1;
     }
@@ -1380,7 +1393,8 @@ int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader 
     {
         std::string explan = "Error writing data";
         fitsErrText( explan, m_fileName, fstatus );
-        mxError( "fitsFile", MXE_FILEWERR, explan );
+        //mxError( "fitsFile::write", MXE_FILEWERR, explan );
+        mxThrowException(err::liberr, "fitsFile::write", explan);
 
         return -1;
     }
@@ -1396,7 +1410,8 @@ int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader 
             {
                 std::string explan = "Error writing keyword";
                 fitsErrText( explan, m_fileName, wrv );
-                mxError( "fitsFile", MXE_FILEWERR, explan );
+                //mxError( "fitsFile::write", MXE_FILEWERR, explan );
+                mxThrowException(err::liberr, "fitsFile::write", explan);
             }
         }
     }

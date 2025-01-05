@@ -30,7 +30,7 @@
 #pragma GCC system_header
 #include <Eigen/Dense>
 
-#include "ft.hpp"
+#include "ftTypes.hpp"
 #include "../../math/constants.hpp"
 
 /** \addtogroup mft
@@ -196,6 +196,11 @@ template <size_t crank>
 void mftT<inputT, outputT, rank, 0>::plan(
     int nx, int ny, dir ndir, realT xOff, realT yOff, realT osFac, typename std::enable_if<crank == 2>::type * )
 {
+    if(m_szX == nx && m_szY == ny && m_dir == ndir && m_xOff == xOff && m_yOff == yOff && m_osFac == osFac)
+    {
+        return;
+    }
+
     m_szX = nx;
     m_szY = ny;
     m_dir = ndir;
@@ -223,18 +228,16 @@ void mftT<inputT, outputT, rank, 0>::plan(
         for( int cc = 0; cc < m_szY; ++cc )
         {
             realT ccx = cc;
-            // if(ccx > m_szY/2) ccx = -1*(m_szY - ccx);
 
             for( int rr = 0; rr < m_szX; ++rr )
             {
-                realT x = static_cast<realT>( rr - m_xOff ) * ccx / osN;
+                realT x = ( rr - m_xOff ) * ccx / osN;
 
                 m_dftR( rr, cc ) = norm * exp( complexT( { 0, sign * 2 * pi<realT>() * x } ) );
 
                 realT rrx = rr;
-                // if(rrx > m_szX/2) rrx = -1*(m_szX - rrx);
 
-                x = rrx * static_cast<realT>( cc - m_yOff ) / osN;
+                x = rrx * ( cc - m_yOff ) / osN;
 
                 m_dftC( rr, cc ) = norm * exp( complexT( { 0, sign * 2 * pi<realT>() * x } ) );
             }
@@ -257,11 +260,11 @@ void mftT<inputT, outputT, rank, 0>::plan(
                 if( rrx > m_szX / 2 )
                     rrx = -1 * ( m_szX - rrx );
 
-                realT x = rrx * static_cast<realT>( cc - m_xOff ) / osN;
+                realT x = rrx * ( cc - m_xOff ) / osN;
 
                 m_dftR( cc, rr ) = norm * exp( complexT( { 0, sign * 2 * pi<realT>() * x } ) );
 
-                x = static_cast<realT>( rr - m_yOff ) * ccx / osN;
+                x = ( rr - m_yOff ) * ccx / osN;
 
                 m_dftC( cc, rr ) = norm * exp( complexT( { 0, sign * 2 * pi<realT>() * x } ) );
             }

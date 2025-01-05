@@ -32,7 +32,7 @@
 #include "cuda/templateCuda.hpp"
 #include "cuda/templateCufft.hpp"
 #include "cuda/templateCurand.hpp"
-#include "fft/ft.hpp"
+#include "ft/ft.hpp"
 #include "fit/array2FitGaussian2D.hpp"
 #include "fit/fitAiry.hpp"
 #include "fit/fitGaussian.hpp"

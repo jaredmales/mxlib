@@ -29,7 +29,7 @@
 #ifndef autocorrelation_hpp
 #define autocorrelation_hpp
 
-#include "../math/fft/ft.hpp"
+#include "../math/ft/fftT.hpp"
 
 namespace mx
 {
