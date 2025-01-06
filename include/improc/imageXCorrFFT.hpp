@@ -81,20 +81,20 @@ template <class _realImageT>
 class imageXCorrFFT
 {
   public:
-    typedef _realImageT realImageT; ///< the Eigen-like array type used for image processing
+    typedef _realImageT realImageT;             ///< the Eigen-like array type used for image processing
 
     typedef typename _realImageT::Scalar realT; ///< the scalar type of the image type
 
-    typedef std::complex<realT> complexT; ///< Complex floating point type.
+    typedef std::complex<realT> complexT;       ///< Complex floating point type.
 
-    // defaut is the real-to-complex.  Only use C2C if defined:
-    #ifdef XCFFT_C2C
+// defaut is the real-to-complex.  Only use C2C if defined:
+#ifdef XCFFT_C2C
     typedef complexT fftOutT;
     typedef complexT fftInT;
-    #else
+#else
     typedef realT fftOutT;
     typedef complexT fftInT;
-    #endif
+#endif
 
     typedef eigenImage<complexT> complexArrayT; ///< Complex eigen array type with Scalar==complexT
 
@@ -102,57 +102,58 @@ class imageXCorrFFT
     /** \name Configuration Member Data
      * @{
      */
-    int m_rows{ 0 }; ///< The number of rows in the images
+    int m_rows{ 0 };               ///< The number of rows in the images
 
-    int m_cols{ 0 }; ///< The number of columns in the images
+    int m_cols{ 0 };               ///< The number of columns in the images
 
-    realT m_padFactor{ 1 }; ///< The padding factor for the CC
+    realT m_padFactor{ 1 };        ///< The padding factor for the CC
 
-    realT m_padFactorR{ 1 }; /**< The actual padding factor for rows of the CC
-                                  set based on the resultant array sizes.*/
+    realT m_padFactorR{ 1 };       /**< The actual padding factor for rows of the CC
+                                        set based on the resultant array sizes.*/
 
-    realT m_padFactorC{ 1 }; /**< The actual padding factor for cols of the CC
-                                  set based on the resultant array sizes.*/
+    realT m_padFactorC{ 1 };       /**< The actual padding factor for cols of the CC
+                                        set based on the resultant array sizes.*/
 
-    int m_rowsPadded{ 0 }; ///< The number of rows in the padded CC
+    int m_rowsPadded{ 0 };         ///< The number of rows in the padded CC
 
-    int m_colsPadded{ 0 }; ///< The number of columns in the padded CC
+    int m_colsPadded{ 0 };         ///< The number of columns in the padded CC
 
-    realImageT m_refMaskIm; /**< Mask image to use for the reference, may be needed for proper normalization
-                            even if refIm has 0 mask applied.*/
+    realImageT m_refMaskIm;        /**< Mask image to use for the reference, may be needed for proper normalization
+                                   even if refIm has 0 mask applied.*/
 
-    bool m_haveRefMask{ false }; ///< Flag indicating that a referece mask has been provided.
+    bool m_haveRefMask{ false };   ///< Flag indicating that a referece mask has been provided.
 
-    realImageT m_maskIm; /**< Mask image to use, may be needed for proper normalization even if
-                         refIm has 0 mask applied.*/
+    realImageT m_maskIm;           /**< Mask image to use, may be needed for proper normalization even if
+                                   refIm has 0 mask applied.*/
 
-    bool m_haveMask{ false }; ///< Flag indicating that a mask has been provided.
+    bool m_haveMask{ false };      ///< Flag indicating that a mask has been provided.
 
-    realImageT m_refWinIm; ///< Window image to use for the reference
+    realImageT m_refWinIm;         ///< Window image to use for the reference
 
     bool m_haveRefWindow{ false }; ///< Flag indicating that a window has been provided for the reference
 
-    realImageT m_winIm; ///< Window image for the target image.
+    realImageT m_winIm;            ///< Window image for the target image.
 
-    bool m_haveWindow{ false }; ///< Flag indicating that a window has been provided.
+    bool m_haveWindow{ false };    ///< Flag indicating that a window has been provided.
 
-    bool m_normalize{ true }; /**< Flag specifying whether images should be normalized prior to performing
-                                   the cross-correlation*/
+    bool m_normalize{ true };      /**< Flag specifying whether images should be normalized prior to performing
+                                        the cross-correlation*/
 
-    realImageT m_refIm; ///< The normalized reference image.
+    realImageT m_refIm;            ///< The normalized reference image.
 
-    bool m_refValid{ false }; /**< Flag indicating whether the reference is valid.  It can be invalidated
-                                   if a mask, window, or normalize is set after the reference is set.*/
+    bool m_refValid{ false };      /**< Flag indicating whether the reference is valid.  It can be invalidated
+                                        if a mask, window, or normalize is set after the reference is set.*/
 
-    int m_maxLag{ 5 }; ///< The maximum lag to consider in the initial cross-correlation.  Default is 5.
+    int m_maxLag{ 5 };             ///< The maximum lag to consider in the initial cross-correlation.  Default is 5.
 
-    realT m_tol{ 0.1 }; /**< For xcorrPeakMethod::interpPeak, the tolerance of the
-                             interpolated-magnified image, in pixels.*/
+    realT m_tol{ 0.1 };            /**< For xcorrPeakMethod::interpPeak, the tolerance of the
+                                        interpolated-magnified image, in pixels.*/
 
-    realT m_magSize{ 0 }; ///< Magnified size of the ccIm when using interp.  Set as function of m_tol and m_maxLag.
+    realT m_magSize{ 0 };          /**< Magnified size of the ccIm when using interp.
+                                        Set as function of m_tol and m_maxLag.*/
 
-    realT m_mag{ 1 }; /**< The magnification, in principle is 1/m_tol but will vary
-                           slightly based on integer array sizes*/
+    realT m_mag{ 1 };              /**< The magnification, in principle is 1/m_tol but will vary
+                                        slightly based on integer array sizes*/
 
     /// The peak finding method to use
     xcorrPeakMethod m_peakMethod{ xcorrPeakMethod::interpPeak };
@@ -163,19 +164,19 @@ class imageXCorrFFT
      * @{
      */
 
-    realImageT m_refACIm; ///< The auto-correlation image of the reference.
+    realImageT m_refACIm;  ///< The auto-correlation image of the reference.
 
-    realT m_refX0{ 0 }; /**< The x-shift of the reference image to itself using the selected
-                             algorithm, used as coordinate origin*/
+    realT m_refX0{ 0 };    /**< The x-shift of the reference image to itself using the selected
+                                algorithm, used as coordinate origin*/
 
-    realT m_refY0{ 0 }; /**< The x-shift of the reference image to itself using the selected
-                             algorithm, used as coordinate origin*/
+    realT m_refY0{ 0 };    /**< The x-shift of the reference image to itself using the selected
+                                algorithm, used as coordinate origin*/
 
-    realImageT m_normIm; ///< The normalized image.
+    realImageT m_normIm;   ///< The normalized image.
 
-    realImageT m_ccIm; ///< The cross-correlation image
+    realImageT m_ccIm;     ///< The cross-correlation image
 
-    realImageT m_magIm; ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interpPeak
+    realImageT m_magIm;    ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interpPeak
 
     complexArrayT m_ftIm0; ///< Working memory for the FT of the reference image.
 
@@ -186,15 +187,15 @@ class imageXCorrFFT
     complexArrayT m_ftWorkIn; ///< Working memory for the FFT input.
 #endif
 
-    complexArrayT m_ftWorkPadded; ///< Working memory for the padded inverse FFT input.
+    complexArrayT m_ftWorkPadded;                    ///< Working memory for the padded inverse FFT input.
 
-    complexArrayT m_ftWorkPaddedOut; ///< Working memory for the FFT and MFT output.
+    complexArrayT m_ftWorkPaddedOut;                 ///< Working memory for the FFT and MFT output.
 
-    complexArrayT m_mtWorkPadded; ///< Working memory for the MFT for xcorrPeakMethod::mftOversamp
+    complexArrayT m_mtWorkPadded;                    ///< Working memory for the MFT for xcorrPeakMethod::mftOversamp
 
-    math::ft::fftT<fftOutT, fftInT, 2> m_fft_fwd; ///< FFT object for the forward transform.
+    math::ft::fftT<fftOutT, fftInT, 2> m_fft_fwd;    ///< FFT object for the forward transform.
 
-    math::ft::fftT<fftInT, fftOutT, 2> m_fft_bwd; ///< FFT object for the backward transform.
+    math::ft::fftT<fftInT, fftOutT, 2> m_fft_bwd;    ///< FFT object for the backward transform.
 
     math::ft::mftT<complexT, complexT, 2> m_mft_bwd; /**< MFT object used to oversample the
                                                        peak for xcorrPeakMethod::mftOversamp*/
@@ -509,8 +510,7 @@ class imageXCorrFFT
     template <class imT>
     int operator()( realT &xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                     realT &yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
-                    const imT &im  ///< [in] the image to cross-correlate with the reference
-    );
+                    const imT &im /**< [in] the image to cross-correlate with the reference*/ );
 
     /// Conduct the cross correlation to a specified tolerance
     /**
@@ -651,8 +651,8 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT padFactor )
     m_rowsPadded = ceil( m_rows * m_padFactor );
     m_colsPadded = ceil( m_cols * m_padFactor );
 
-    m_padFactorR = static_cast<realT>(m_rowsPadded)/static_cast<realT>(m_rows);
-    m_padFactorC = static_cast<realT>(m_colsPadded)/static_cast<realT>(m_cols);
+    m_padFactorR = static_cast<realT>( m_rowsPadded ) / static_cast<realT>( m_rows );
+    m_padFactorC = static_cast<realT>( m_colsPadded ) / static_cast<realT>( m_cols );
 
     m_ccIm.resize( m_rowsPadded, m_colsPadded );
 
@@ -665,26 +665,25 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT padFactor )
 
     m_ftWorkPadded.resize( (int)( 0.5 * m_rowsPadded ) + 1, m_colsPadded );
 
-    if(m_peakMethod == xcorrPeakMethod::mftOversamp)
+    if( m_peakMethod == xcorrPeakMethod::mftOversamp )
     {
         m_ftWorkPaddedOut.resize( m_rowsPadded, m_colsPadded );
     }
     else
     {
-        m_ftWorkPaddedOut.resize( 0,0 );
+        m_ftWorkPaddedOut.resize( 0, 0 );
     }
 
 #endif
 
-    if(m_peakMethod == xcorrPeakMethod::mftOversamp)
+    if( m_peakMethod == xcorrPeakMethod::mftOversamp )
     {
         m_mtWorkPadded.resize( m_rowsPadded, m_colsPadded );
     }
     else
     {
-        m_mtWorkPadded.resize( 0, 0);
+        m_mtWorkPadded.resize( 0, 0 );
     }
-
 
     m_fft_bwd.plan( m_colsPadded, m_rowsPadded, math::ft::dir::backward, false );
 
@@ -1069,8 +1068,9 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
         int x, y;
         m_magIm.resize( m_magSize, m_magSize );
 
-        imageMagnify(
-            m_magIm, m_ccIm.block( x0, y0, 2 * m_maxLag + 1, 2 * m_maxLag + 1 ), cubicConvolTransform<realT>() );
+        imageMagnify( m_magIm,
+                      m_ccIm.block( x0, y0, 2 * m_maxLag + 1, 2 * m_maxLag + 1 ),
+                      cubicConvolTransform<realT>() );
 
         m_magIm.maxCoeff( &x, &y );
         x0 = ( x * ( 1.0 / m_mag ) + x0 );
@@ -1100,10 +1100,10 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
         }
         else
         {
-            x = x / m_padFactorR  - m_refX0;
+            x = x / m_padFactorR - m_refX0;
             y = y / m_padFactorC - m_refY0;
 
-            realT mag = 1.0 / m_tol; // m_mag is the effective mag for interpPeak...
+            realT mag = 1.0 / m_tol;          // m_mag is the effective mag for interpPeak...
 
             realT tmagR = mag * m_padFactorR; // the total mag
             realT tmagC = mag * m_padFactorC; // the total mag
@@ -1111,23 +1111,21 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
             realT shiftx0 = -1 * ( m_refX0 * m_padFactorR ) * ( mag - 1 ) - x * tmagR;
             realT shifty0 = -1 * ( m_refY0 * m_padFactorC ) * ( mag - 1 ) - y * tmagC;
 
-            m_mft_bwd.plan(
-                m_rowsPadded, m_colsPadded, math::ft::dir::backward, shiftx0, shifty0, mag );
+            m_mft_bwd.plan( m_rowsPadded, m_colsPadded, math::ft::dir::backward, shiftx0, shifty0, mag );
 
-
-            #ifdef XCFFT_C2C
+#ifdef XCFFT_C2C
 
             m_mft_bwd( m_ftWorkPaddedOut, m_ftWorkPadded );
 
-            #else
+#else
 
-            m_mtWorkPadded.resize(m_rowsPadded, m_colsPadded);
+            m_mtWorkPadded.resize( m_rowsPadded, m_colsPadded );
             m_mtWorkPadded.setZero();
-            math::ft::augmentR2CFFTOutput(m_mtWorkPadded, m_ftWork);
+            math::ft::augmentR2CFFTOutput( m_mtWorkPadded, m_ftWork );
 
             m_mft_bwd( m_ftWorkPaddedOut, m_mtWorkPadded );
 
-            #endif
+#endif
 
             m_magIm = m_ftWorkPaddedOut.real();
 
@@ -1138,7 +1136,6 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
             yShift = y + ( yf - m_refY0 * m_padFactorC ) / tmagC;
 
             return;
-
         }
     }
     else if( m_peakMethod == xcorrPeakMethod::none )
@@ -1228,7 +1225,7 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 
 #ifdef XCFFT_C2C
 
-    math::ft::padC2CFFTOutput(m_ftWorkPadded, m_ftWork);
+    math::ft::padC2CFFTOutput( m_ftWorkPadded, m_ftWork );
 
     m_fft_bwd( m_ftWorkPaddedOut.data(), m_ftWorkPadded.data() );
 
@@ -1236,7 +1233,7 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 
 #else
 
-    math::ft::padR2CFFTOutput(m_ftWorkPadded, m_ftWork);
+    math::ft::padR2CFFTOutput( m_ftWorkPadded, m_ftWork );
 
     m_fft_bwd( m_ccIm, m_ftWorkPadded );
 

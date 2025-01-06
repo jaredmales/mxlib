@@ -94,13 +94,13 @@ class fftT<_inputT, _outputT, _rank, 0>
     typedef typename fftwPlanSpec<realT>::planT planT;
 
   protected:
-    dir m_dir{ dir::forward }; ///< Direction of this FFT, either dir::forward (default) or dir::backward
+    dir m_direction{ dir::forward }; ///< Direction of this FFT, either dir::forward (default) or dir::backward
 
-    int m_szX{ 0 }; ///< Size of the x dimension
-    int m_szY{ 0 }; ///< Size of the y dimension
-    int m_szZ{ 0 }; ///< size of the z dimension
+    int m_szX{ 0 };                  ///< Size of the x dimension
+    int m_szY{ 0 };                  ///< Size of the y dimension
+    int m_szZ{ 0 };                  ///< size of the z dimension
 
-    planT m_plan{ nullptr }; ///< The FFTW plan object.  This is a pointer, allocated by FFTW library calls.
+    planT m_plan{ nullptr };         ///< The FFTW plan object.  This is a pointer, allocated by FFTW library calls.
 
   public:
     /// Default c'tor
@@ -145,9 +145,9 @@ class fftT<_inputT, _outputT, _rank, 0>
     /// Get the direction of this FFT
     /** The direction is either dir::forward or dir::backward.
      *
-     * \returns the current value of m_dir.
+     * \returns the current value of m_direction.
      */
-    ft::dir dir();
+    ft::dir direction();
 
     /// Call the FFTW planning routine for an out-of-place transform.
     void doPlan( const meta::trueFalseT<false> &inPlace );
@@ -157,37 +157,37 @@ class fftT<_inputT, _outputT, _rank, 0>
 
     /// Planning routine for rank 1 transforms.
     template <int crank = _rank>
-    void plan( int nx,                  ///< [in] the desired size of the FFT
+    void plan( int nx,                      ///< [in] the desired size of the FFT
                ft::dir ndir = dir::forward, /**< [in] [optional] direction of this FFT, either dir::forward (default)
                                                               or dir::backward */
-               bool inPlace = false,    /**< [in] [optional] whether or not this is an in-place transform.
-                                                             Default is false, out-of-place. */
+               bool inPlace = false,        /**< [in] [optional] whether or not this is an in-place transform.
+                                                                 Default is false, out-of-place. */
                typename std::enable_if<crank == 1>::type * = 0 );
 
     /// Planning routine for rank 2 transforms.
     template <int crank = _rank>
-    void plan( int nx,                  ///< [in] the desired x size of the FFT
-               int ny,                  ///< [in] the desired y size of the FFT
+    void plan( int nx,                      ///< [in] the desired x size of the FFT
+               int ny,                      ///< [in] the desired y size of the FFT
                ft::dir ndir = dir::forward, /**< [in] [optional] direction of this FFT, either dir::forward (default)
                                                               or dir::backward */
-               bool inPlace = false,    /**< [in] [optional] whether or not this is an in-place transform.
-                                                             Default is false, out-of-place. */
+               bool inPlace = false,        /**< [in] [optional] whether or not this is an in-place transform.
+                                                                 Default is false, out-of-place. */
                typename std::enable_if<crank == 2>::type * = 0 );
 
     /// Planning routine for rank 3 transforms.
     template <int crank = _rank>
-    void plan( int nx,                  ///< [in] the desired x size of the FFT
-               int ny,                  ///< [in] the desired y size of the FFT
-               int nz,                  ///< [in] the desired z size of the FFT
+    void plan( int nx,                      ///< [in] the desired x size of the FFT
+               int ny,                      ///< [in] the desired y size of the FFT
+               int nz,                      ///< [in] the desired z size of the FFT
                ft::dir ndir = dir::forward, /**< [in] [optional] direction of this FFT, either dir::forward
                                                                 (default) or dir::backward */
-               bool inPlace = false,    /**< [in] [optional] whether or not this is an in-place transform.
-                                                             Default is false, out-of-place. */
+               bool inPlace = false,        /**< [in] [optional] whether or not this is an in-place transform.
+                                                                 Default is false, out-of-place. */
                typename std::enable_if<crank == 3>::type * = 0 );
 
     /// Conduct the FFT
-    void operator()( outputT *out,    ///< [out] the output of the FFT, must be pre-allocated
-                     inputT *in ///< [in] the input to the FFT
+    void operator()( outputT *out, ///< [out] the output of the FFT, must be pre-allocated
+                     inputT *in    ///< [in] the input to the FFT
     ) const;
 
     /// Conduct the MFT
@@ -204,7 +204,7 @@ template <typename inputT, typename outputT, size_t rank>
 template <int crank>
 fftT<inputT, outputT, rank, 0>::fftT( int nx, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 1>::type * )
 {
-    m_dir = ndir;
+    m_direction = ndir;
 
     plan( nx, ndir, inPlace );
 }
@@ -214,7 +214,7 @@ template <int crank>
 fftT<inputT, outputT, rank, 0>::fftT(
     int nx, int ny, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 2>::type * )
 {
-    m_dir = ndir;
+    m_direction = ndir;
 
     plan( nx, ny, ndir, inPlace );
 }
@@ -224,7 +224,7 @@ template <int crank>
 fftT<inputT, outputT, rank, 0>::fftT(
     int nx, int ny, int nz, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 3>::type * )
 {
-    m_dir = ndir;
+    m_direction = ndir;
 
     plan( nx, ny, nz, ndir, inPlace );
 }
@@ -248,9 +248,9 @@ void fftT<inputT, outputT, rank, 0>::destroyPlan()
 }
 
 template <typename inputT, typename outputT, size_t rank>
-ft::dir fftT<inputT, outputT, rank, 0>::dir()
+ft::dir fftT<inputT, outputT, rank, 0>::direction()
 {
-    return m_dir;
+    return m_direction;
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -274,15 +274,20 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<false> &inPl
     forplan2 = fftw_malloc<outputT>( sz );
 
     int pdir = FFTW_FORWARD;
-    if( m_dir == dir::backward )
+    if( m_direction == dir::backward )
+    {
         pdir = FFTW_BACKWARD;
+    }
 
 #ifndef MX_FFTW_NOOMP
     #pragma omp critical
     { // scope for pragma
 #endif
-    m_plan = fftw_plan_dft<inputT, outputT>(
-            fftwDimVec<rank>( m_szX, m_szY, m_szZ ), forplan1, forplan2, pdir, FFTW_MEASURE );
+        m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
+                                                 forplan1,
+                                                 forplan2,
+                                                 pdir,
+                                                 FFTW_MEASURE );
 #ifndef MX_FFTW_NOOMP
     }
 #endif
@@ -310,37 +315,42 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<true> &inPla
     forplan = fftw_malloc<complexT>( sz );
 
     int pdir = FFTW_FORWARD;
-    if( m_dir == dir::backward )
+    if( m_direction == dir::backward )
+    {
         pdir = FFTW_BACKWARD;
+    }
 
 #ifndef MX_FFTW_NOOMP
     #pragma omp critical
     { // scope for pragma
 #endif
-    m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
-                                             reinterpret_cast<inputT *>( forplan ),
-                                             reinterpret_cast<outputT *>( forplan ),
-                                             pdir,
-                                             FFTW_MEASURE );
-    #ifndef MX_FFTW_NOOMP
+        m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
+                                                 reinterpret_cast<inputT *>( forplan ),
+                                                 reinterpret_cast<outputT *>( forplan ),
+                                                 pdir,
+                                                 FFTW_MEASURE );
+#ifndef MX_FFTW_NOOMP
     }
-    #endif
+#endif
 
     fftw_free<inputT>( reinterpret_cast<inputT *>( forplan ) );
 }
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-void fftT<inputT, outputT, rank, 0>::plan( int nx, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 1>::type * )
+void fftT<inputT, outputT, rank, 0>::plan( int nx,
+                                           ft::dir ndir,
+                                           bool inPlace,
+                                           typename std::enable_if<crank == 1>::type * )
 {
-    if( m_szX == nx && m_dir == ndir && m_plan )
+    if( m_szX == nx && m_direction == ndir && m_plan )
     {
         return;
     }
 
     destroyPlan();
 
-    m_dir = ndir;
+    m_direction = ndir;
 
     m_szX = nx;
     m_szY = 0;
@@ -361,14 +371,14 @@ template <int crank>
 void fftT<inputT, outputT, rank, 0>::plan(
     int nx, int ny, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 2>::type * )
 {
-    if( m_szX == nx && m_szY == ny && m_dir == ndir && m_plan )
+    if( m_szX == nx && m_szY == ny && m_direction == ndir && m_plan )
     {
         return;
     }
 
     destroyPlan();
 
-    m_dir = ndir;
+    m_direction = ndir;
 
     m_szX = nx;
     m_szY = ny;
@@ -389,14 +399,14 @@ template <int crank>
 void fftT<inputT, outputT, rank, 0>::plan(
     int nx, int ny, int nz, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 3>::type * )
 {
-    if( m_szX == nx && m_szY == ny && m_szZ == nz && m_dir == ndir && m_plan )
+    if( m_szX == nx && m_szY == ny && m_szZ == nz && m_direction == ndir && m_plan )
     {
         return;
     }
 
     destroyPlan();
 
-    m_dir = ndir;
+    m_direction = ndir;
 
     m_szX = nx;
     m_szY = ny;
