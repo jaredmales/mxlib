@@ -32,6 +32,10 @@ namespace mx
 namespace improc
 {
 
+/// Methods for finding the cross-correlation peak
+/**
+  * \ingroup image_reg
+  */
 enum class xcorrPeakMethod
 {
     centerOfLight,
