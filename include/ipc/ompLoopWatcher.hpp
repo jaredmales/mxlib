@@ -219,6 +219,41 @@ class ompLoopWatcher
         _outputStatus();
     }
 
+    /// Output a final report about elapsed time
+    void outputFinalStatus()
+    {
+        if( _printPretty )
+        {
+            if( _time )
+            {
+                ( *_output ) << ( t1 - t0 ) << " s elapsed ";
+                ( *_output ) << " (" << ( t1 - t0 ) / _counter << " s/loop) ";
+            }
+
+            if( _printNLine )
+            {
+                ( *_output ) << '\n';
+            }
+            if( !_printNLine )
+            {
+                ( *_output ) << "           \r";
+            }
+
+            ( *_output ) << std::flush;
+        }
+        else
+        {
+            if( _time )
+            {
+                ( *_output ) << " " << t0 << " " << t1;
+            }
+            if( _printNLine )
+            {
+                ( *_output ) << '\n';
+            }
+        }
+    }
+
     /// Increment and output status.
     /** Call this to increment and then give a status update.  Has only one omp critical directive for the two steps.
      */
@@ -253,7 +288,7 @@ class ompLoopWatcher
         {
             if( !_printNLine )
             {
-                ( *_output ) << "                                                  \r";
+                ( *_output ) << "                                                               \r";
                 ( *_output ) << std::flush;
             }
         }
