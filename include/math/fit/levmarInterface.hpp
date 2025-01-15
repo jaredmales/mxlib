@@ -156,7 +156,7 @@ class levmarInterface
 
     /// Covariance matrix corresponding to LS solution; mxm.
     /** Here this is allocated to size m-x-m by allocate_work, but if you don't want it
-     * allcoated and calculated
+     * allocated and calculated
      * set \ref getCovar to false and NULL will be passed.
      */
     realT *covar;
@@ -246,15 +246,15 @@ class levmarInterface
     /// Set one of the minimization options to val
     /** The options correspond to:
      *
-     * 0: the scale factor of the initial \f$ \mu \f$
+     * 0: the scale factor of the initial \f$ \mu \f$, default is 1e-3.
      *
-     * 1: \f$ \epsilon_1 \f$ Stopping threshold for ||J^T e||_inf
+     * 1: \f$ \epsilon_1 \f$ Stopping threshold for ||J^T e||_inf, default is 1e-17.
      *
-     * 2: \f$ \epsilon_1 \f$ Stopping threshold for ||Dp||_2
+     * 2: \f$ \epsilon_2 \f$ Stopping threshold for ||Dp||_2, default is 1e-17.
      *
-     * 3: \f$ \epsilon_1 \f$ Stopping threshold for ||e||_2
+     * 3: \f$ \epsilon_3 \f$ Stopping threshold for ||e||_2, default is 1e-17.
      *
-     * 4: \f$ \Delta_{diff}\f$ Stepsize for finite differences
+     * 4: \f$ \Delta_{diff}\f$ Stepsize for finite differences, default is 1e-6.
      *
      * \param n is the option number
      * \param val is the value to set

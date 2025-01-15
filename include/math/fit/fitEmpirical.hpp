@@ -39,7 +39,6 @@ namespace math
 namespace fit
 {
 
-
 // forward
 template <typename realT>
 struct array2FitEmpirical;
@@ -87,9 +86,9 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
     /// Set whether each parameter is fixed.
     /** Sets the parameter indices appropriately.
      */
-    void setFixed( bool scale,    ///< [in] if true, then scale will be not be part of the fit
-                   bool dx,     ///< [in] if true, then dx will be not be part of the fit
-                   bool dy    ///< [in] if true, then dy will be not be part of the fit
+    void setFixed( bool scale, ///< [in] if true, then scale will be not be part of the fit
+                   bool dx,    ///< [in] if true, then dx will be not be part of the fit
+                   bool dy     ///< [in] if true, then dy will be not be part of the fit
     )
     {
         arr.setFixed( scale, dx, dy );
@@ -97,9 +96,9 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
     }
 
     /// Set the initial guess for the empirical fit
-    void setGuess( realT scale,    ///< [in] the scale factr
-                   realT dx,     ///< [in] the x shift
-                   realT dy    ///< [in] the y shift
+    void setGuess( realT scale, ///< [in] the scale factr
+                   realT dx,    ///< [in] the x shift
+                   realT dy     ///< [in] the y shift
     )
     {
         arr.scale( this->p, scale );
@@ -109,12 +108,21 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
 
     /// Set the data aray.
     void setArray( const eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
-                   const eigenImage<realT> * ref ///< [in] pointer to the empirical function to fit
+                   const eigenImage<realT> *ref,   ///< [in] pointer to the empirical function to fit
+                   const eigenImage<realT> *weights
     )
     {
-        arr.setup(data, ref);
+        arr.setup( data, ref, weights );
 
         this->n = arr.m_nx * arr.m_ny;
+    }
+
+    /// Set the data aray.
+    void setArray( const eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
+                   const eigenImage<realT> *ref   ///< [in] pointer to the empirical function to fit
+    )
+    {
+        setArray( data, ref, nullptr);
     }
 
     /// Get the current value of the scale factor.
@@ -143,7 +151,6 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
     {
         return arr.dy( this->p );
     }
-
 };
 
 /// Wrapper for a native array to pass to \ref levmarInterface, with empirical function fit details.
@@ -152,12 +159,13 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
 template <typename realT>
 struct array2FitEmpirical
 {
-    const eigenImage<realT> *m_data{ nullptr }; ///< Pointer to the data array
-    const eigenImage<realT> *m_ref{ nullptr }; ///< Pointer to the reference image to fit to the data
-    eigenImage<realT> m_refShifted; ///< Working memory for the shifted reference image
+    const eigenImage<realT> *m_data{ nullptr };    ///< Pointer to the data array
+    const eigenImage<realT> *m_ref{ nullptr };     ///< Pointer to the reference image to fit to the data
+    const eigenImage<realT> *m_weights{ nullptr }; ///< Pointer to the weight image
+    eigenImage<realT> m_refShifted;                ///< Working memory for the shifted reference image
 
-    size_t m_nx{ 0 };         ///< X dimension of the array
-    size_t m_ny{ 0 };         ///< Y dimension of the array
+    size_t m_nx{ 0 };                              ///< X dimension of the array
+    size_t m_ny{ 0 };                              ///< Y dimension of the array
 
     realT m_scale{ 0 };
     realT m_dx{ 0 };
@@ -169,21 +177,35 @@ struct array2FitEmpirical
 
     int m_nparams = 3;
 
-    void setup( const eigenImage<realT> *data,
-                const eigenImage<realT> *ref )
+    void setup( const eigenImage<realT> *data, const eigenImage<realT> *ref, const eigenImage<realT> *weights )
     {
         m_nx = data->rows();
         m_ny = data->cols();
 
-        if(ref->rows() != m_nx || ref->cols() != m_ny)
+        if( ref->rows() != m_nx || ref->cols() != m_ny )
         {
             std::cerr << "ref and data not same size\n";
-            exit(-1);
+            exit( -1 );
+        }
+
+        if( weights )
+        {
+            if( weights->rows() != m_nx || weights->cols() != m_ny )
+            {
+                std::cerr << "ref and data not same size\n";
+                exit( -1 );
+            }
         }
 
         m_data = data;
         m_ref = ref;
-        m_refShifted.resize(m_nx, m_ny);
+        m_weights = weights;
+        m_refShifted.resize( m_nx, m_ny );
+    }
+
+    void setup( const eigenImage<realT> *data, const eigenImage<realT> *ref )
+    {
+        setup( data, ref, nullptr );
     }
 
     /// Set whether each parameter is fixed.
@@ -312,16 +334,32 @@ struct empirical2D_fitter
         realT dx = arr->dx( p );
         realT dy = arr->dy( p );
 
-        imageShift(arr->m_refShifted, *(arr->m_ref), dx, dy, cubicConvolTransform<realT>());
+        imageShift( arr->m_refShifted, *( arr->m_ref ), dx, dy, cubicConvolTransform<realT>() );
 
         arr->m_refShifted *= scale;
-        for( int cc = 0; cc < arr->m_ny; ++cc )
-        {
-            for( int rr = 0; rr < arr->m_nx; ++rr )
-            {
-                hx[idx_dat] = pow(fabs((*(arr->m_data))(rr,cc)),1) * ((*(arr->m_data))(rr,cc) - arr->m_refShifted(rr,cc));
 
-                ++idx_dat;
+        if( arr->m_weights )
+        {
+            for( int cc = 0; cc < arr->m_ny; ++cc )
+            {
+                for( int rr = 0; rr < arr->m_nx; ++rr )
+                {
+                    hx[idx_dat] =(*arr->m_weights)(rr,cc)*( ( *arr->m_data)( rr, cc ) - arr->m_refShifted( rr, cc ) );
+
+                    ++idx_dat;
+                }
+            }
+        }
+        else
+        {
+            for( int cc = 0; cc < arr->m_ny; ++cc )
+            {
+                for( int rr = 0; rr < arr->m_nx; ++rr )
+                {
+                    hx[idx_dat] = ( ( *( arr->m_data ) )( rr, cc ) - arr->m_refShifted( rr, cc ) );
+
+                    ++idx_dat;
+                }
             }
         }
     }

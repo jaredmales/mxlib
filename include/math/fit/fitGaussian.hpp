@@ -305,7 +305,8 @@ class fitGaussian2D : public levmarInterface<fitterT>
     typedef typename fitterT::realT realT;
 
     array2FitGaussian2D<realT>
-        arr; ///< Data array to pass to the levmar library.  Contains the actual data plus the parameters if fixed.
+        arr; /**< Data array to pass to the levmar library.
+                  Contains the actual data plus the parameters if fixed.*/
 
     void initialize()
     {
@@ -588,13 +589,28 @@ struct gaussian2D_gen_fitter
             // If it's not positive-definite, then we just fill in with the value of the image itself.
             if( arr->mask == nullptr )
             {
-                for( int j = 0; j < arr->ny; ++j )
+                if( arr->weights == nullptr)
                 {
-                    for( int i = 0; i < arr->ny; ++i )
+                    for( int j = 0; j < arr->ny; ++j )
                     {
-                        idx_mat = i + j * arr->nx;
-                        hx[idx_dat] = arr->data[idx_mat];
-                        ++idx_dat;
+                        for( int i = 0; i < arr->ny; ++i )
+                        {
+                            idx_mat = i + j * arr->nx;
+                            hx[idx_dat] = arr->data[idx_mat];
+                            ++idx_dat;
+                        }
+                    }
+                }
+                else
+                {
+                    for( int j = 0; j < arr->ny; ++j )
+                    {
+                        for( int i = 0; i < arr->ny; ++i )
+                        {
+                            idx_mat = i + j * arr->nx;
+                            hx[idx_dat] = arr->data[idx_mat] * arr->weights[idx_mat];
+                            ++idx_dat;
+                        }
                     }
                 }
             }
@@ -606,7 +622,9 @@ struct gaussian2D_gen_fitter
                     {
                         idx_mat = i + j * arr->nx;
                         if( arr->mask[idx_mat] == 0 )
+                        {
                             continue;
+                        }
                         hx[idx_dat] = arr->data[idx_mat];
                         ++idx_dat;
                     }
@@ -620,15 +638,32 @@ struct gaussian2D_gen_fitter
 
         if( arr->mask == nullptr )
         {
-            for( int j = 0; j < arr->ny; ++j )
+            if(arr->weights == nullptr)
             {
-                for( int i = 0; i < arr->nx; ++i )
+                for( int j = 0; j < arr->ny; ++j )
                 {
-                    idx_mat = i + j * arr->nx;
+                    for( int i = 0; i < arr->nx; ++i )
+                    {
+                        idx_mat = i + j * arr->nx;
 
-                    hx[idx_dat] = func::gaussian2D<realT>( i, j, G0, G, x0, y0, a, b, c ) - arr->data[idx_mat];
+                        hx[idx_dat] = func::gaussian2D<realT>( i, j, G0, G, x0, y0, a, b, c ) - arr->data[idx_mat];
 
-                    ++idx_dat;
+                        ++idx_dat;
+                    }
+                }
+            }
+            else
+            {
+                for( int j = 0; j < arr->ny; ++j )
+                {
+                    for( int i = 0; i < arr->nx; ++i )
+                    {
+                        idx_mat = i + j * arr->nx;
+
+                        hx[idx_dat] = (func::gaussian2D<realT>( i, j, G0, G, x0, y0, a, b, c ) - arr->data[idx_mat])*arr->weights[idx_mat];
+
+                        ++idx_dat;
+                    }
                 }
             }
         }
