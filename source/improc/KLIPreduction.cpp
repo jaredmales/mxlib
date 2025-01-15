@@ -47,6 +47,46 @@ int meansubMethodFmStr( const std::string &method )
         return -1;
 }
 
+std::string pixelTSNormMethodStr( pixelTSNormMethod method )
+{
+    if( method == pixelTSNormMethod::none)
+    {
+        return "none";
+    }
+    else if( method == pixelTSNormMethod::rms)
+    {
+        return "rms";
+    }
+    else if ( method == pixelTSNormMethod::rmsSigmaClipped)
+    {
+        return "rmsSigmaClipped";
+    }
+    else
+    {
+        return "UNKNOWN";
+    }
+}
+
+pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method )
+{
+    if(method == "none")
+    {
+        return pixelTSNormMethod::none;
+    }
+    else if(method == "rms")
+    {
+        return pixelTSNormMethod::rms;
+    }
+    else if(method == "rmsSigmaClipped")
+    {
+        return pixelTSNormMethod::rmsSigmaClipped;
+    }
+    else
+    {
+        return pixelTSNormMethod::unknown;
+    }
+}
+
 std::string excludeMethodStr( int method )
 {
     if( method == excludeNone )

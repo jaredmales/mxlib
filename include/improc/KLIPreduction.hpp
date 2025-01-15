@@ -53,6 +53,18 @@ std::string meansubMethodStr( int method );
 
 int meansubMethodFmStr( const std::string &method );
 
+enum class pixelTSNormMethod
+{
+    none, ///< no pixel time series norm
+    rms, ///< the rms of the pixel time series
+    rmsSigmaClipped, ///< the sigma clipped rms of the pixel time series
+    unknown = -1 ///< unknown value, an error
+};
+
+std::string pixelTSNormMethodStr( pixelTSNormMethod method );
+
+pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method );
+
 /// Image exclusion methods
 /** \ingroup hc_imaging_enums
  */
@@ -84,6 +96,8 @@ std::string includeMethodStr( int method );
 
 int includeMethodFmStr( const std::string &method );
 } // namespace HCI
+
+
 
 /// An implementation of the Karhunen-Loeve Image Processing (KLIP) algorithm.
 /** KLIP\cite soummer_2012 is a principle components analysis (PCA) based
@@ -172,6 +186,17 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
      * from each image
      */
     int m_meanSubMethod{ HCI::imageMean };
+
+    /// Specify if each pixel time-series is normalized
+    /** This normalizaton is applied after centering. Can have the following values:
+     * - <b>HCI::pixelTSNormMethod::none</b>: no normalization (the default)
+     * - <b>HCI::pixelTSNormMethod::rms</b>: divide by the time-series rms
+     * - <b>HCI::pixelTSNormMethod::rmsSigmaClipped</b>: divide by the sigma-slipped time-series rms.
+     *                                                   The sigma is provided by m_pixelTSSigma.
+     */
+    HCI::pixelTSNormMethod m_pixelTSNormMethod {HCI::pixelTSNormMethod::none};
+
+    realT m_pixelTSSigma {3}; ///< Sigma-clipping parameter for pixel time-series normalization
 
     int m_padSize{ 4 };
 
@@ -262,7 +287,7 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
                                                ///< case they will be ignored.  Mean subtractedon output.
                        eigenImageT &cmask,     ///< [in] the cutout mask.  Ignored if empty.
                        std::vector<realT> &sds ///< [out] The standard deviation of the mean
-                                               ///< subtracted refernce images.
+                                               ///< subtracted reference images.
     );
 
     std::vector<_realT> m_minr;
@@ -385,14 +410,14 @@ KLIPreduction<_realT, _derotFunctObj, _evCalcT>::~KLIPreduction()
 {
 }
 
-template <typename _realT, class _derotFunctObj, typename _evCalcT>
-void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<realT> &ims,
+template <typename realT, class derotFunctObj, typename evCalcT>
+void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT> & rims,
                                                                     eigenCube<realT> &tims,
                                                                     eigenImageT &cmask,
-                                                                    std::vector<_realT> &norms )
+                                                                    std::vector<realT> &norms )
 {
 
-    norms.resize( ims.planes() );
+    norms.resize( rims.planes() );
 
     bool haveMask = false;
     if( cmask.rows() > 0 && cmask.cols() > 0 )
@@ -406,28 +431,37 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<re
 
         if( m_meanSubMethod == HCI::meanImage )
         {
-            ims.mean( mean );
+            rims.mean( mean );
         }
         else if( m_meanSubMethod == HCI::medianImage )
         {
-            ims.median( mean );
+            rims.median( mean );
         }
 
-        for( int n = 0; n < ims.planes(); ++n )
+        for( int n = 0; n < rims.planes(); ++n )
         {
-            ims.image( n ) -= mean;
+            rims.image( n ) -= mean;
 
             if( haveMask )
             {
-                ims.image( n ) *= cmask;
+                rims.image( n ) *= cmask;
             }
 
-            realT immean = ims.image( n ).mean();
-            norms[n] = ( ims.image( n ) - immean ).matrix().norm();
+            realT immean = rims.image( n ).mean();
+            norms[n] = ( rims.image( n ) - immean ).matrix().norm();
         }
 
-        if( &tims != &ims )
+        if( &tims != &rims )
         {
+            if( m_meanSubMethod == HCI::meanImage )
+            {
+                tims.mean( mean );
+            }
+            else if( m_meanSubMethod == HCI::medianImage )
+            {
+                tims.median( mean );
+            }
+
             for( int n = 0; n < tims.planes(); ++n )
             {
                 tims.image( n ) -= mean;
@@ -444,30 +478,30 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<re
         realT mean;
         std::vector<realT> work; // Working memmory for median calc
 
-        for( int n = 0; n < ims.planes(); ++n )
+        for( int n = 0; n < rims.planes(); ++n )
         {
             if( m_meanSubMethod == HCI::imageMean )
             {
-                mean = ims.image( n ).mean();
+                mean = rims.image( n ).mean();
             }
             else if( m_meanSubMethod == HCI::imageMedian )
             {
-                mean = imageMedian( ims.image( n ), &work );
+                mean = imageMedian( rims.image( n ), &work );
             }
 
-            ims.image( n ) -= mean;
+            rims.image( n ) -= mean;
 
             if( haveMask )
             {
-                ims.image( n ) *= cmask;
+                rims.image( n ) *= cmask;
             }
             // Because we might not have used the mean, we need to re-mean to
             // make this the standard deviation
-            realT immean = ims.image( n ).mean();
-            norms[n] = ( ims.image( n ) - immean ).matrix().norm();
+            realT immean = rims.image( n ).mean();
+            norms[n] = ( rims.image( n ) - immean ).matrix().norm();
         }
 
-        if( &tims != &ims )
+        if( &tims != &rims )
         {
             for( int n = 0; n < tims.planes(); ++n )
             {
@@ -484,6 +518,49 @@ void KLIPreduction<_realT, _derotFunctObj, _evCalcT>::meanSubtract( eigenCube<re
                 if( haveMask )
                 {
                     tims.image( n ) *= cmask;
+                }
+            }
+        }
+    }
+
+    if(m_pixelTSNormMethod == HCI::pixelTSNormMethod::unknown)
+    {
+        mxThrowException(err::invalidconfig, "KlipReduction::meanSubtract", "pixelTSNormMethod is unknown");
+    }
+    if(m_pixelTSNormMethod == HCI::pixelTSNormMethod::rmsSigmaClipped)
+    {
+        mxThrowException(err::invalidconfig, "KlipReduction::meanSubtract", "pixelTSNormMethod is rmsSigmaClipped, which is not implemented");
+    }
+
+    std::cerr << "preparing to normalize\n";
+    if( m_pixelTSNormMethod != HCI::pixelTSNormMethod::none )
+    {
+        std::cerr << "normalizing pixels\n";
+        std::vector<realT> pixs(rims.planes());
+
+        for(int cc = 0; cc < rims.cols(); ++cc)
+        {
+            for(int rr = 0; rr < rims.rows(); ++rr)
+            {
+                if(haveMask)
+                {
+                    if(cmask(rr,cc) == 0)
+                    {
+                        continue;
+                    }
+                }
+
+                //We bother to load a vector in prep to add sigma clipping later.
+                for(int pp = 0; pp < rims.planes(); ++pp)
+                {
+                    pixs[pp] = rims.image(pp)(rr,cc);
+                }
+
+                realT sd = sqrt(math::vectorVariance(pixs));
+
+                for(int pp = 0; pp < rims.planes(); ++pp)
+                {
+                    rims.image(pp)(rr,cc) /= sd;
                 }
             }
         }
@@ -622,7 +699,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( const std::vector<
             cutImageRegion( cmask, this->m_mask, idx, true );
         }
 
-        #if 1
+        #if 0
 
             std::vector<realT> sds;
 
@@ -660,9 +737,13 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::regions( const std::vector<
         realT dangMax = 0;
 
         if( m_minDPx < 0 )
+        {
             m_excludeMethod = HCI::excludeNone;
+        }
         if( m_maxDPx < 0 )
+        {
             m_excludeMethodMax = HCI::excludeNone;
+        }
 
         //------- If doing RDI, excludeMethod and excludeMethodMax must be none!
         if( this->m_refIms.planes() > 0 )
@@ -798,7 +879,9 @@ void collapseCovar( eigenT &cutCV,
         {
             if( fabs( math::angleDiff<math::radiansT<realT>>( derotF.derotAngle( j ), derotF.derotAngle( imno ) ) ) <=
                 dang )
+            {
                 allidx[j].included = false;
+            }
         }
     }
     else if( excludeMethod == HCI::excludeImno )
@@ -806,7 +889,9 @@ void collapseCovar( eigenT &cutCV,
         for( size_t j = 0; j < Nims; ++j )
         {
             if( fabs( (long)j - imno ) <= dang )
+            {
                 allidx[j].included = false;
+            }
         }
     }
 
@@ -834,7 +919,9 @@ void collapseCovar( eigenT &cutCV,
         for( size_t j = 0; j < Nims; ++j )
         {
             if( allidx[j].included == true )
+            {
                 ++kept;
+            }
         }
 
         // Get a vector for sorting
@@ -859,7 +946,9 @@ void collapseCovar( eigenT &cutCV,
         for( size_t j = 0; j < Nims; ++j )
         {
             if( allidx[j].cvVal < mincorr )
+            {
                 allidx[j].included = false;
+            }
         }
     }
 
@@ -1120,7 +1209,8 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
         head.append( "", fits::fitsCommentType(), "mx::KLIPreduction parameters:" );
         head.append( "", fits::fitsCommentType(), "----------------------------------------" );
 
-        head.append( "MEANSUBM", HCI::meansubMethodStr( m_meanSubMethod ), "PCA mean subtraction method" );
+        head.append( "MEAN SUB METHOD", HCI::meansubMethodStr( m_meanSubMethod ), "PCA mean subtraction method" );
+        head.append( "PIXTS NORM METHOD", HCI::pixelTSNormMethodStr( m_pixelTSNormMethod ), "Pixel TS norm method" );
 
         std::stringstream str;
 
