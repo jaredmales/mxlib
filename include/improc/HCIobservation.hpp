@@ -1271,14 +1271,14 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
         {
             ++imF;
 
-            if( imF >= Nims )
+            if( imF >= Nims ) //out of images
             {
                 imF = Nims;
                 increment = false;
                 break;
             }
 
-            if( imF - im0 > coaddMaxImno && coaddMaxImno > 0 )
+            if( imF - im0 > coaddMaxImno && coaddMaxImno > 0 ) //too many images in coadd
             {
                 --imF;
                 increment = false;
