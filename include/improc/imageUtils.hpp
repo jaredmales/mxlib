@@ -37,6 +37,36 @@ namespace mx
 namespace improc
 {
 
+/// Get the mxlib standard center coordinate of an image
+/**
+ * \returns 0.5*(rows_cols-1)
+ */
+template <typename realT = double>
+realT imCen( int rows_cols /**< [in] the number of rows or columns in the image */ )
+{
+    return 0.5 * ( 1.0 * rows_cols - 1 );
+}
+
+/// Get the mxlib standard center x-coordinate of an image
+/**
+ * \returns 0.5*(rows-1)
+ */
+template <typename realT = double, typename imT>
+realT imCenX( const imT &im /**< [in] the image to find the center of */ )
+{
+    return imCen<realT>( im.rows() );
+}
+
+/// Get the mxlib standard center y-coordinate of an image
+/**
+ * \returns 0.5*(cols-1)
+ */
+template <typename realT = double, typename imT>
+realT imCenY( const imT &im /**< [in] the image to find the center of */ )
+{
+    return imCen<realT>( im.cols() );
+}
+
 /** \ingroup image_utils
  *@{
  */
@@ -150,7 +180,7 @@ void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels s
 template <class calcT, class imageT>
 calcT imageMean( imageT &im /**< [in] the image of which to calculate the mean*/ )
 {
-    return static_cast<calcT>(im.sum()) / ( im.rows() * im.cols() );
+    return static_cast<calcT>( im.sum() ) / ( im.rows() * im.cols() );
 }
 
 /// Calculate the mean value of an image over a mask
@@ -160,9 +190,9 @@ calcT imageMean( imageT &im /**< [in] the image of which to calculate the mean*/
  */
 template <class calcT, class imageT, class maskT>
 calcT imageMean( imageT &im, /**< [in] the image of which to calculate the mean*/
-                 const maskT &mask /**< [in] a 1/0 mask where 1 defines the good pixels */)
+                 const maskT &mask /**< [in] a 1/0 mask where 1 defines the good pixels */ )
 {
-    return static_cast<calcT>((im*mask).sum()) / ( mask.sum() );
+    return static_cast<calcT>( ( im * mask ).sum() ) / ( mask.sum() );
 }
 
 /// Calculate the variance of an image given its mean
@@ -173,9 +203,9 @@ calcT imageMean( imageT &im, /**< [in] the image of which to calculate the mean*
 template <typename calcT, class imageT>
 calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
                      calcT mn /**< [in] the mean value of the image w.r.t. which to calcualate the variance */
-                   )
+)
 {
-    return (im.template cast<calcT>()-mn).square().sum() / ( im.rows() * im.cols() );
+    return ( im.template cast<calcT>() - mn ).square().sum() / ( im.rows() * im.cols() );
 }
 
 /// Calculate the variance of an image given its mean
@@ -185,11 +215,11 @@ calcT imageVariance( imageT &im /**< [in] the image of which to calculate the va
  */
 template <typename calcT, class imageT, class maskT>
 calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
-                     calcT mn, /**< [in] the mean value of the image w.r.t. which to calcualate the variance */
+                     calcT mn,         /**< [in] the mean value of the image w.r.t. which to calcualate the variance */
                      const maskT &mask /**< [in] a 1/0 mask where 1 defines the good pixels */
-                   )
+)
 {
-    return  (im.template cast<calcT>()*mask-mn).square().sum() / ( mask.sum() );
+    return ( im.template cast<calcT>() * mask - mn ).square().sum() / ( mask.sum() );
 }
 
 /// Calculate the center of light of an image

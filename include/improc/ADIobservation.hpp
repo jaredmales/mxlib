@@ -164,11 +164,11 @@ struct ADIobservation : public HCIobservation<_realT>
     /** \name Fake Planets
      * @{
      */
-    int m_fakeMethod{ HCI::single }; ///< Method for reading fake files, either HCI::single or HCI::list.
+    int m_fakeMethod{ HCI::single };   ///< Method for reading fake files, either HCI::single or HCI::list.
 
-    std::string m_fakeFileName; ///< FITS file containing the fake planet PSF to inject or a list of fake images
+    std::string m_fakeFileName;        ///< FITS file containing the fake planet PSF to inject or a list of fake images
 
-    std::string m_fakeScaleFileName; ///< One-column text file containing a scale factor for each point in time.
+    std::string m_fakeScaleFileName;   ///< One-column text file containing a scale factor for each point in time.
 
     std::vector<realT> m_fakeSep;      ///< Separation(s) of the fake planet(s)
     std::vector<realT> m_fakePA;       ///< Position angles(s) of the fake planet(s)
@@ -621,8 +621,8 @@ void ADIobservation<realT, derotFunctObj>::makeMaskCube()
         }
     }
 
-    ioutils::createDirectories(this->m_auxDataDir);
-    std::ofstream fout(this->m_auxDataDir + "angles.dat");
+    ioutils::createDirectories( this->m_auxDataDir );
+    std::ofstream fout( this->m_auxDataDir + "angles.dat" );
     for( int i = 0; i < this->m_Nims; ++i )
     {
         fout << m_derotF.derotAngle( i ) << "\n";
@@ -676,37 +676,47 @@ void ADIobservation<_realT, _derotFunctObj>::stdFitsHeader( fits::fitsHeader *he
     head->append( "POSTMEDS", m_postMedSub, "median subtraction after processing" );
 
     if( m_fakeFileName != "" )
+    {
         head->append( "FAKEFILE", m_fakeFileName, "name of fake planet PSF file" );
 
-    if( m_fakeScaleFileName != "" )
-        head->append( "FAKESCFL", m_fakeScaleFileName, "name of fake planet scale file name" );
+        if( m_fakeScaleFileName != "" )
+        {
+            head->append( "FAKESCFL", m_fakeScaleFileName, "name of fake planet scale file name" );
+        }
 
-    std::stringstream str;
+        std::stringstream str;
 
-    if( m_fakeSep.size() > 0 )
-    {
-        for( size_t nm = 0; nm < m_fakeSep.size() - 1; ++nm )
-            str << m_fakeSep[nm] << ",";
-        str << m_fakeSep[m_fakeSep.size() - 1];
-        head->append<char *>( "FAKESEP", (char *)str.str().c_str(), "separation of fake planets" );
-    }
+        if( m_fakeSep.size() > 0 )
+        {
+            for( size_t nm = 0; nm < m_fakeSep.size() - 1; ++nm )
+            {
+                str << m_fakeSep[nm] << ",";
+            }
+            str << m_fakeSep[m_fakeSep.size() - 1];
+            head->append<char *>( "FAKESEP", (char *)str.str().c_str(), "separation of fake planets" );
+        }
 
-    if( m_fakePA.size() > 0 )
-    {
-        str.str( "" );
-        for( size_t nm = 0; nm < m_fakePA.size() - 1; ++nm )
-            str << m_fakePA[nm] << ",";
-        str << m_fakePA[m_fakePA.size() - 1];
-        head->append<char *>( "FAKEPA", (char *)str.str().c_str(), "PA of fake planets" );
-    }
+        if( m_fakePA.size() > 0 )
+        {
+            str.str( "" );
+            for( size_t nm = 0; nm < m_fakePA.size() - 1; ++nm )
+            {
+                str << m_fakePA[nm] << ",";
+            }
+            str << m_fakePA[m_fakePA.size() - 1];
+            head->append<char *>( "FAKEPA", (char *)str.str().c_str(), "PA of fake planets" );
+        }
 
-    if( m_fakeContrast.size() > 0 )
-    {
-        str.str( "" );
-        for( size_t nm = 0; nm < m_fakeContrast.size() - 1; ++nm )
-            str << m_fakeContrast[nm] << ",";
-        str << m_fakeContrast[m_fakeContrast.size() - 1];
-        head->append<char *>( "FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets" );
+        if( m_fakeContrast.size() > 0 )
+        {
+            str.str( "" );
+            for( size_t nm = 0; nm < m_fakeContrast.size() - 1; ++nm )
+            {
+                str << m_fakeContrast[nm] << ",";
+            }
+            str << m_fakeContrast[m_fakeContrast.size() - 1];
+            head->append<char *>( "FAKECONT", (char *)str.str().c_str(), "Contrast of fake planets" );
+        }
     }
 }
 

@@ -128,6 +128,7 @@ struct cubicConvolTransform
         return 0;
     }
 
+    ///\todo why is this arithT not just the class's arithT?
     template <typename arrT, typename arithT>
     void operator()( arrT &kern, arithT x, arithT y )
     {

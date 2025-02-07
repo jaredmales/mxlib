@@ -79,9 +79,10 @@ void radiusImage( eigenT &m, ///< [out] the allocated radius array, will be fill
  * \tparam eigenT is an Eigen-like 2D array type
  */
 template <class eigenT>
-void radiusImage( eigenT &m, ///< [out] the allocated radius array, will be filled in with radius values.
-                  typename eigenT::Scalar scale = 1 ///< [in] [optional] a scaling to apply to each value (default = 1)
-)
+void radiusImage( eigenT &m,                        /**< [out] the allocated radius array,
+                                                               will be filled in with radius values.*/
+                  typename eigenT::Scalar scale = 1 /**< [in] [optional] a scaling to apply to
+                                                                         each value (default = 1) */ )
 {
     typedef typename eigenT::Scalar arithT;
 
@@ -100,10 +101,10 @@ void radiusImage( eigenT &m, ///< [out] the allocated radius array, will be fill
  * arithmetic. \tparam eigenT is an Eigen-like 2D array type
  */
 template <class angleT, class eigenT>
-void angleImage( eigenT &m,                 ///< [out]  the allocated angle array.  Will be filled in with angle values.
-                 typename angleT::realT xc, ///< [in] the x center
-                 typename angleT::realT yc  ///< [in] the y center
-)
+void angleImage( eigenT &m,                 /**< [out] the allocated angle array.  Will be filled
+                                                       in with angle values.*/
+                 typename angleT::realT xc, /**< [in] the x center*/
+                 typename angleT::realT yc /**< [in] the y center */ )
 {
     typedef typename angleT::realT realT;
 
@@ -148,13 +149,14 @@ void angleImage( eigenT &m /** < [out] the allocated angle array.  Will be fille
  *
  */
 template <class angleT, class eigenT1, class eigenT2>
-void radAngImage(
-    eigenT1 &rIm, ///< [out] the allocated radius array, will be filled in with radius values.
-    eigenT2 &qIm, ///< [out] the angle array, will be re-sized to match rIm.  Will be filled in with angle values.
-    typename angleT::realT xc,        ///< [in] the x center
-    typename angleT::realT yc,        ///< [in] the y center
-    typename angleT::realT rscale = 1 ///< [in] [optional] a scaling to apply to each radius value. Default is 1.0.
-)
+void radAngImage( eigenT1 &rIm,                     /**< [out] the allocated radius array, will be
+                                                               filled in with radius values.*/
+                  eigenT2 &qIm,                     /**< [out] the angle array, will be re-sized to match rIm.
+                                                               Will be filled in with angle values.*/
+                  typename angleT::realT xc,        /**< [in] the x center*/
+                  typename angleT::realT yc,        /**< [in] the y center*/
+                  typename angleT::realT rscale = 1 /**< [in] [optional] a scaling to apply to each
+                                                                         radius value. Default is 1.0.*/)
 {
     typedef typename angleT::realT realT;
 
@@ -174,40 +176,64 @@ void radAngImage(
     }
 }
 
-/// Get the vector indices of an annular region in an image
+template <typename vecT>
+struct maskCoordFormat;
+
+template <>
+struct maskCoordFormat<std::vector<size_t>>
+{
+    static size_t coord( int i, int j, int rows )
+    {
+        return j * rows + i;
+    }
+};
+
+template <>
+struct maskCoordFormat<std::vector<std::vector<int>>>
+{
+    static std::vector<int> coord( int i, int j, int rows )
+    {
+        return std::vector<int>( { i, j } );
+    }
+};
+
+/// Get the coordinates of an annular region in an image
 /**
  * \ingroup image_masks
  *
  * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all
- * arithmetic. \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler. \tparam eigenT2 is an
- * Eigen-like 2D array type.  Should be resolved by compiler. \tparam eigenT3 is an Eigen-like 2D array type.  Should be
- * resolved by compiler.
+ * arithmetic.
+ * \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT2 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT3 is an Eigen-like 2D array type.  Should be resolved by compiler.
  *
- * \returns a vector containing the 1D indices of the region defined by the input parameters
+ * \returns a vector containing the coordinates formatted bt maskCoordFormat of the region defined
+ * by the input parameters
  */
-template <typename angleT, typename eigenT1, typename eigenT2, typename eigenT3 = eigenT1>
-std::vector<size_t> annulusIndices( const eigenT1 &rIm,           /**< [in] a radius image of the type produced by
-                                                                            \ref radiusImage */
-                                    const eigenT2 &qIm,           /**< [in] an angle image of the type produce by
-                                                                            \ref angleImage */
-                                    typename angleT::realT xcen,  /**< [in] the x center of the image */
-                                    typename angleT::realT ycen,  /**< [in] the y center of the image */
-                                    typename angleT::realT min_r, /**< [in] the minimum radius of the region */
-                                    typename angleT::realT max_r, /**< [in] the maximum radius of the region */
-                                    typename angleT::realT min_q, /**< [in] the minimum angle of the region. */
-                                    typename angleT::realT max_q, /**< [in] the maximum angle of the region. */
-                                    eigenT3 *mask = 0             /**< [in] [optional] pointer to a mask image, only
-                                                                                       pixels of value 1 are included
-                                                                                       in the indices. */
-)
+template <typename vecT, typename angleT, typename eigenT1, typename eigenT2, typename eigenT3 = eigenT1>
+vecT annulusCoordsWorker( const eigenT1 &rIm,               /**< [in] a radius image of the type produced by
+                                                                                \ref radiusImage */
+                          const eigenT2 &qIm,               /**< [in] an angle image of the type produce by
+                                                                      \ref angleImage */
+                          typename angleT::realT xcen,      /**< [in] the x center of the image */
+                          typename angleT::realT ycen,      /**< [in] the y center of the image */
+                          typename angleT::realT min_r,     /**< [in] the minimum radius of the region */
+                          typename angleT::realT max_r,     /**< [in] the maximum radius of the region */
+                          typename angleT::realT min_q,     /**< [in] the minimum angle of the region. */
+                          typename angleT::realT max_q,     /**< [in] the maximum angle of the region. */
+                          eigenT3 *mask = 0,                /**< [in] [optional] pointer to a mask image, only
+                                                                                 pixels of value 1 are included
+                                                                                 in the indices. */
+                          typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
+                                                                                 rad comparisons */ )
 {
 
-    std::vector<size_t> idx;
+    vecT idx;
 
-    int min_x = -max_r;
     int max_x = max_r;
-    int min_y = -max_r;
+    int min_x = -max_x;
     int max_y = max_r;
+    int min_y = -max_y;
 
     int x0 = xcen + min_x;
     if( x0 < 0 )
@@ -248,11 +274,11 @@ std::vector<size_t> annulusIndices( const eigenT1 &rIm,           /**< [in] a ra
     {
         for( int i = x0; i < x1; ++i )
         {
-            if( rIm( i, j ) < min_r )
+            if( rIm( i, j ) < min_r - pixbuf )
             {
                 continue;
             }
-            if( rIm( i, j ) >= max_r )
+            if( rIm( i, j ) >= max_r + pixbuf )
             {
                 continue;
             }
@@ -272,11 +298,95 @@ std::vector<size_t> annulusIndices( const eigenT1 &rIm,           /**< [in] a ra
                 }
             }
 
-            idx.push_back( j * rIm.rows() + i );
+            idx.push_back( maskCoordFormat<vecT>::coord( i, j, rIm.rows() ) );
         }
     }
 
     return idx;
+}
+
+/// Get the array coordinates of an annular region in an image
+/**
+ * \ingroup image_masks
+ *
+ * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all
+ * arithmetic.
+ * \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT2 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT3 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ *
+ * \returns a vector containing vectors of the 2D indices of the region defined by the input parameters.
+ */
+template <typename angleT, typename eigenT1, typename eigenT2, typename eigenT3 = eigenT1>
+std::vector<std::vector<int>> annulusCoords( const eigenT1 &rIm, /**< [in] a radius image of the type produced by
+                                                                            \ref radiusImage */
+                                             const eigenT2 &qIm, /**< [in] an angle image of the type produce by
+                                                                           \ref angleImage */
+                                             typename angleT::realT xcen,  /**< [in] the x center of the image */
+                                             typename angleT::realT ycen,  /**< [in] the y center of the image */
+                                             typename angleT::realT min_r, /**< [in] the minimum radius of the region */
+                                             typename angleT::realT max_r, /**< [in] the maximum radius of the region */
+                                             typename angleT::realT min_q, /**< [in] the minimum angle of the region. */
+                                             typename angleT::realT max_q, /**< [in] the maximum angle of the region. */
+                                             eigenT3 *mask = 0, /**< [in] [optional] pointer to a mask image, only
+                                                                                     pixels of value 1 are included
+                                                                                     in the indices. */
+                                             typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
+                                                                                                    rad comparisons */
+
+)
+{
+    return annulusCoordsWorker<std::vector<std::vector<int>>, angleT, eigenT1, eigenT2, eigenT3>( rIm,
+                                                                                                  qIm,
+                                                                                                  xcen,
+                                                                                                  ycen,
+                                                                                                  min_r,
+                                                                                                  max_r,
+                                                                                                  min_q,
+                                                                                                  max_q,
+                                                                                                  mask );
+}
+
+/// Get the vector indices of an annular region in an image
+/**
+ * \ingroup image_masks
+ *
+ * \tparam angleT is the angle type, either radiansT<realT> or degreesT<realT>.  Note that realT sets the type for all
+ * arithmetic.
+ * \tparam eigenT1 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT2 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ * \tparam eigenT3 is an Eigen-like 2D array type.  Should be resolved by compiler.
+ *
+ * \returns a vector containing the 1D indices of the region defined by the input parameters
+ */
+template <typename angleT, typename eigenT1, typename eigenT2, typename eigenT3 = eigenT1>
+std::vector<size_t> annulusIndices( const eigenT1 &rIm,               /**< [in] a radius image of the type produced by
+                                                                                \ref radiusImage */
+                                    const eigenT2 &qIm,               /**< [in] an angle image of the type produce by
+                                                                                \ref angleImage */
+                                    typename angleT::realT xcen,      /**< [in] the x center of the image */
+                                    typename angleT::realT ycen,      /**< [in] the y center of the image */
+                                    typename angleT::realT min_r,     /**< [in] the minimum radius of the region */
+                                    typename angleT::realT max_r,     /**< [in] the maximum radius of the region */
+                                    typename angleT::realT min_q,     /**< [in] the minimum angle of the region. */
+                                    typename angleT::realT max_q,     /**< [in] the maximum angle of the region. */
+                                    eigenT3 *mask = 0,                /**< [in] [optional] pointer to a mask image, only
+                                                                                           pixels of value 1 are included
+                                                                                           in the indices. */
+                                    typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
+                                                                                           rad comparisons */
+
+)
+{
+    return annulusCoordsWorker<std::vector<size_t>, angleT, eigenT1, eigenT2, eigenT3>( rIm,
+                                                                                        qIm,
+                                                                                        xcen,
+                                                                                        ycen,
+                                                                                        min_r,
+                                                                                        max_r,
+                                                                                        min_q,
+                                                                                        max_q,
+                                                                                        mask );
 }
 
 /// Get the coordinates of the bounding rectangle of an annulus.
@@ -297,29 +407,31 @@ void annulusBoundingRect( int &x0,                      ///< [out] The lower lef
                           typename angleT::realT min_r, ///< [in] the minimum radius of the region
                           typename angleT::realT max_r, ///< [in] the maximum radius of the region
                           typename angleT::realT min_q, ///< [in] the minimum angle of the region.
-                          typename angleT::realT max_q  ///< [in] the maximum angle of the region.
+                          typename angleT::realT max_q, ///< [in] the maximum angle of the region.
+                          typename angleT::realT pixbuf = 0 /**< [in] [optional] the pixel buffer for radius
+                                                                                 comparisons */
 )
 {
     typedef typename angleT::realT realT;
 
     // Get the corners
-    realT x00 = xcen + min_r * cos( min_q * angleT::radians );
-    realT y00 = ycen + min_r * sin( min_q * angleT::radians );
-    realT x01 = xcen + max_r * cos( min_q * angleT::radians );
-    realT y01 = ycen + max_r * sin( min_q * angleT::radians );
+    realT x00 = xcen + ( min_r - pixbuf ) * cos( min_q * angleT::radians );
+    realT y00 = ycen + ( min_r - pixbuf ) * sin( min_q * angleT::radians );
+    realT x01 = xcen + ( max_r + pixbuf ) * cos( min_q * angleT::radians );
+    realT y01 = ycen + ( max_r + pixbuf ) * sin( min_q * angleT::radians );
 
-    realT x10 = xcen + min_r * cos( max_q * angleT::radians );
-    realT y10 = ycen + min_r * sin( max_q * angleT::radians );
-    realT x11 = xcen + max_r * cos( max_q * angleT::radians );
-    realT y11 = ycen + max_r * sin( max_q * angleT::radians );
+    realT x10 = xcen + ( min_r - pixbuf ) * cos( max_q * angleT::radians );
+    realT y10 = ycen + ( min_r - pixbuf ) * sin( max_q * angleT::radians );
+    realT x11 = xcen + ( max_r + pixbuf ) * cos( max_q * angleT::radians );
+    realT y11 = ycen + ( max_r + pixbuf ) * sin( max_q * angleT::radians );
 
     // vertex of min_r is probably not necessary, but might as well
-    realT x20 = xcen + min_r * cos( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
-    realT y20 = ycen + min_r * sin( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
+    realT x20 = xcen + ( min_r - pixbuf ) * cos( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
+    realT y20 = ycen + ( min_r - pixbuf ) * sin( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
 
     // vertex of max_r
-    realT x21 = xcen + max_r * cos( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
-    realT y21 = ycen + max_r * sin( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
+    realT x21 = xcen + ( max_r + pixbuf ) * cos( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
+    realT y21 = ycen + ( max_r + pixbuf ) * sin( math::angleMean<angleT>( { min_q, max_q } ) * angleT::radians );
 
     x0 = std::ceil( std::min( { x00, x01, x10, x11, x20, x21 } ) );
     y0 = std::ceil( std::min( { y00, y01, y10, y11, y20, y21 } ) );
@@ -403,6 +515,26 @@ void applyMask( eigenT &maskedIm,               ///< [out] the image to mask (wi
     for( size_t i = 0; i < idx.size(); ++i )
     {
         maskedIm( idx[i] ) = maskval;
+    }
+}
+
+/// Apply a mask to an image
+/** The pixels indicated by the coordinates in a vector are set to a value.
+ *
+ * \ingroup image_masks
+ *
+ * \tparam eigenT is an Eigen-like 2D array type
+ *
+ */
+template <class eigenT>
+void applyMask( eigenT &maskedIm,                           ///< [out] the image to mask (will be modified)
+                const std::vector<std::vector<int>> &coord, ///< [in] the coordinates of the pixels to mask
+                typename eigenT::Scalar maskval             ///< [in] the mask value.
+)
+{
+    for( size_t i = 0; i < coord.size(); ++i )
+    {
+        maskedIm( coord[i][0], coord[i][1] ) = maskval;
     }
 }
 

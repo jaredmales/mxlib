@@ -543,7 +543,10 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
     info = eigenGESDD( U, S, VT, A );
 
     if( info != 0 )
+    {
+        std::cerr << "eigenPseudoInverse: eigenGESDD failed with info = " << info << "\n";
         return info;
+    }
 
     dataT Smax = S.maxCoeff();
 

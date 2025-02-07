@@ -919,7 +919,9 @@ int HCIobservation<realT>::readFiles()
     {
         /*** Now do any pre-processing ***/
         if( m_preProcess_beforeCoadd )
+        {
             preProcess( m_tgtIms );
+        }
 
         if( m_coaddCombineMethod != HCI::noCombine )
         {
@@ -948,7 +950,9 @@ int HCIobservation<realT>::readFiles()
 
         /*** Now do any pre-processing if not done already***/
         if( !m_preProcess_beforeCoadd )
+        {
             preProcess( m_tgtIms );
+        }
 
         outputPreProcessed();
     }
@@ -1443,6 +1447,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
             {
                 Eigen::Map<Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic>> imRef( ims.image( i ) );
                 radprofim( rp, imRef, true );
+                zeroNaNs(imRef);
             }
         }
 
@@ -1744,8 +1749,9 @@ template <typename _realT>
 void HCIobservation<_realT>::outputPreProcessed()
 {
     if( m_preProcess_outputPrefix == "" )
+    {
         return;
-
+    }
     std::string bname, fname;
 
     fits::fitsFile<_realT> ff;
@@ -1754,7 +1760,7 @@ void HCIobservation<_realT>::outputPreProcessed()
     for( int i = 0; i < m_Nims; ++i )
     {
         bname = m_fileList[i];
-        fname = m_preProcess_outputPrefix + ioutils::pathFilename( bname.c_str() ) + ".fits";
+        fname = m_preProcess_outputPrefix + "/" + ioutils::pathFilename( bname.c_str() );
         ff.write( fname, m_tgtIms.image( i ).data(), m_Ncols, m_Nrows, 1, m_heads[i] );
     }
 } // void HCIobservation<_realT>::outputPreProcessed()
@@ -2080,11 +2086,6 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
 
         fits::fitsHeader fh = head;
         f.read( im, fh );
-
-        if( n == 0 )
-        {
-            std::cerr << fh["FAKEPA"].String() << "\n";
-        }
 
         // We set imSize to match the first image, but we make it a square.
         if( m_imSize == 0 )

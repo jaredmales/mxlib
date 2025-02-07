@@ -532,7 +532,6 @@ void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT
         mxThrowException(err::invalidconfig, "KlipReduction::meanSubtract", "pixelTSNormMethod is rmsSigmaClipped, which is not implemented");
     }
 
-    std::cerr << "preparing to normalize\n";
     if( m_pixelTSNormMethod != HCI::pixelTSNormMethod::none )
     {
         std::cerr << "normalizing pixels\n";
@@ -941,7 +940,7 @@ void collapseCovar( eigenT &cutCV,
         std::nth_element( cvVal.begin(), cvVal.begin() + ( kept - includeRefNum ), cvVal.end() );
 
         realT mincorr = cvVal[kept - includeRefNum];
-        std::cerr << "    Minimum correlation: " << mincorr << "\n";
+        //std::cerr << "    Minimum correlation: " << mincorr << "\n";
 
         for( size_t j = 0; j < Nims; ++j )
         {
