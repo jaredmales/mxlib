@@ -536,54 +536,49 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
  * \ingroup eigen_lapack
  */
 template <typename _evCalcT = double, typename eigenT, typename eigenT1>
-MXLAPACK_INT calcKLModes(
-    eigenT &klModes,             ///< [out] on exit contains the K-L modes (or P.C.s)
-    eigenT &cv,                  ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
-    const eigenT1 &Rims,         ///< [in] The reference data.  cv.rows() == Rims.cols().
-    int n_modes = 0,             ///< [in] [opt] Tbe maximum number of modes to solve for.  If 0 all modes
-                                 ///< are solved for.
-    syevrMem<_evCalcT> *mem = 0, ///< [in] [opt] A memory structure which can be re-used by SYEVR for efficiency.
-    double *t_eigenv = nullptr,  ///< [out] [opt] if not null, will be filled in with the time
-                                 ///< taken to calculate eigenvalues.
-    double *t_klim = nullptr     ///< [out] [opt] if not null, will be filled in with the time
-                                 ///< taken to calculate the KL modes.
-)
+MXLAPACK_INT calcKLModes( eigenT &klModes,             /**< [out] on exit contains the K-L modes (or P.C.s) */
+                          eigenT &cv,                  /**< [in] a lower-triangle (in the Lapack sense) square
+                                                                 covariance matrix.*/
+                          const eigenT1 &Rims,         /**< [in] The reference data.  cv.rows() == Rims.cols().*/
+                          int n_modes = 0,             /**< [in] [opt] Tbe maximum number of modes to solve for.
+                                                                       If 0 all modes are solved for.*/
+                          syevrMem<_evCalcT> *mem = 0, /**< [in] [opt] A memory structure which can be re-used
+                                                                       by SYEVR for efficiency.*/
+                          double *t_eigenv = nullptr,  /**< [out] [opt] if not null, will be filled in with the time
+                                                                        taken to calculate eigenvalues.*/
+                          double *t_klim = nullptr     /**< [out] [opt] if not null, will be filled in with the time
+                                                                        taken to calculate the KL modes.*/)
 {
     typedef _evCalcT evCalcT;
     typedef typename eigenT::Scalar realT;
 
-    eigenT evecs, evals;
+    bool localMem = false;
 
-    Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
-
-    if( cv.rows() != cv.cols() )
+    if( mem == 0 )
     {
-        std::cerr << "Non-square covariance matrix input to calcKLModes\n";
-        return -1;
+        mem = new syevrMem<evCalcT>;
+        localMem = true;
     }
 
-    /*if( cv.rows() != Rims.cols() )
+    if( cv.rows() != Rims.cols() )
     {
         std::cerr << "Covariance matrix - reference image size mismatch in calcKLModes\n";
         return -1;
-    }*/
+    }
+
+    eigenT evecs, evals;
 
     MXLAPACK_INT tNims = cv.rows();
     MXLAPACK_INT tNpix = Rims.rows();
 
     if( n_modes <= 0 || n_modes > tNims )
+    {
         n_modes = tNims;
+    }
 
-    if( t_eigenv )
-        *t_eigenv = sys::get_curr_time();
-
-    // Calculate eigenvectors and eigenvalues
-    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
-     */
-    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>( evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem );
-
-    if( t_eigenv )
-        *t_eigenv = sys::get_curr_time() - *t_eigenv;
+    // Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
+    mem->cvd = cv.template cast<evCalcT>();
+    MXLAPACK_INT info = calcEigenVecs( mem->evecsd, mem->evalsd, mem->cvd, n_modes, true, true, mem, t_eigenv );
 
     if( info != 0 )
     {
@@ -591,47 +586,15 @@ MXLAPACK_INT calcKLModes(
         return -1;
     }
 
-    evecs = evecsd.template cast<realT>();
-    evals = evalsd.template cast<realT>();
-
-    // Normalize the eigenvectors
-    for( MXLAPACK_INT i = 0; i < n_modes; ++i )
-    {
-        if( evals( i ) == 0 )
-        {
-            std::cerr << "got 0 eigenvalue (# " << i << ")\n";
-            evecs.col( i ) *= 0;
-        }
-        else if( evals( i ) < 0 )
-        {
-            std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
-            evecs.col( i ) *= 0;
-        }
-        else if( !std::isnormal( evals( i ) ) )
-        {
-            std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
-            evecs.col( i ) *= 0;
-        }
-        else
-        {
-            evecs.col( i ) = evecs.col( i ) / sqrt( evals( i ) );
-        }
-
-        for( int r = 0; r < evecs.rows(); ++r )
-        {
-            if( !std::isnormal( evecs.col( i )( r ) ) )
-            {
-                std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
-                evecs.col( i ) *= 0;
-                continue;
-            }
-        }
-    }
+    evecs = mem->evecsd.template cast<realT>();
+    evals = mem->evalsd.template cast<realT>();
 
     klModes.resize( n_modes, tNpix );
 
     if( t_klim )
+    {
         *t_klim = sys::get_curr_time();
+    }
 
     // Now calculate KL images
     /*
@@ -653,7 +616,14 @@ MXLAPACK_INT calcKLModes(
                  klModes.rows() );
 
     if( t_klim )
+    {
         *t_klim = sys::get_curr_time() - *t_klim;
+    }
+
+    if( localMem )
+    {
+        delete mem;
+    }
 
     return 0;
 
