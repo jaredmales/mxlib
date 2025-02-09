@@ -97,7 +97,7 @@ class ompLoopWatcher
     outputT *_output; ///< Pointer to the instance of type outputT
 
     size_t m_outputInterval {10};
-    size_t m_outputCount {10};
+    size_t m_outputCount {0};
 
     /// Increment the counter
     void _increment()
@@ -124,7 +124,7 @@ class ompLoopWatcher
     {
         if(m_outputInterval > 1)
         {
-            if(m_outputCount < m_outputInterval)
+            if(m_outputCount < (m_outputInterval-1))
             {
                 ++m_outputCount;
                 return;

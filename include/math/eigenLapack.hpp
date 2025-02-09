@@ -85,49 +85,92 @@ void eigenSYRK( eigenT1 &cv,       ///< [out] is the eigen matrix/array where to
 template <typename floatT>
 struct syevrMem
 {
-    MXLAPACK_INT sizeISuppZ;
-    MXLAPACK_INT sizeWork;
-    MXLAPACK_INT sizeIWork;
+    char UPLO{ 'L' };
+    MXLAPACK_INT n{ 0 };
+    char RANGE{ 'A' };
+    MXLAPACK_INT numeig{ 0 };
+    MXLAPACK_INT IL{ 0 };
+    MXLAPACK_INT IU{ 0 };
 
-    MXLAPACK_INT *iSuppZ;
+    MXLAPACK_INT sizeISuppZ{ 0 };
+    MXLAPACK_INT sizeMinWork{ 0 };
+    MXLAPACK_INT sizeWork{ 0 };
+    MXLAPACK_INT sizeMinIWork{ 0 };
+    MXLAPACK_INT sizeIWork{ 0 };
 
-    floatT *work;
+    MXLAPACK_INT *iSuppZ{ nullptr };
 
-    MXLAPACK_INT *iWork;
+    floatT *minWork{ nullptr };
+    floatT *work{ nullptr };
+
+    MXLAPACK_INT *minIWork{ nullptr };
+    MXLAPACK_INT *iWork{ nullptr };
+
+    // Working memory for the higher level ev calc routines
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> cvd, evecsd, evalsd;
 
     syevrMem()
     {
-        sizeISuppZ = 0;
-        sizeWork = 0;
-        sizeIWork = 0;
-
-        iSuppZ = 0;
-        work = 0;
-        iWork = 0;
     }
 
     ~syevrMem()
     {
         if( iSuppZ )
+        {
             ::free( iSuppZ );
+        }
+
+        if( minWork )
+        {
+            ::free( minWork );
+        }
+
         if( work )
+        {
             ::free( work );
+        }
+
+        if( minIWork )
+        {
+            ::free( minIWork );
+        }
+
         if( iWork )
+        {
             ::free( iWork );
+        }
     }
 
     void free()
     {
         if( iSuppZ )
+        {
             ::free( iSuppZ );
+        }
         sizeISuppZ = 0;
 
+        if( minWork )
+        {
+            ::free( minWork );
+        }
+        sizeMinWork = 0;
+
         if( work )
+        {
             ::free( work );
+        }
         sizeWork = 0;
 
+        if( minIWork )
+        {
+            ::free( minIWork );
+        }
+        sizeMinIWork = 0;
+
         if( iWork )
+        {
             ::free( iWork );
+        }
         sizeIWork = 0;
     }
 };
@@ -135,29 +178,33 @@ struct syevrMem
 /// Calculate select eigenvalues and eigenvectors of an Eigen Array
 /** Uses the templateLapack wrapper for syevr.
  *
- * \tparam cvT is the scalar type of X (a.k.a. the covariance matrix)
- * \tparam calcT is the type in which to calculate the eigenvectors/eigenvalues
+ * \tparam arrT is the eigen-like type containing the data
  *
  * \returns -1000 on an malloc allocation error.
  * \returns the return code from syevr (info) otherwise.
  *
  * \ingroup eigen_lapack
  */
-template <typename cvT, typename calcT>
-MXLAPACK_INT eigenSYEVR(
-    Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigvec, ///< [out] will contain the eigenvectors as columns
-    Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> &eigval, ///< [out] will contain the eigenvalues
-    Eigen::Array<cvT, Eigen::Dynamic, Eigen::Dynamic>
-        &X,                  ///< [in] is a square matrix which is either upper or lower (default) triangular
-    int ev0 = 0,             ///< [in] [optional] is the first desired eigenvalue (default = 0)
-    int ev1 = -1,            ///< [in] [optional] if >= ev0 then this is the last desired eigenvalue.
-                             ///< If -1 all eigenvalues are returned.
-    char UPLO = 'L',         ///< [in] [optional] specifies whether X is upper ('U') or lower ('L')
-                             ///< triangular.  Default is ('L').
-    syevrMem<calcT> *mem = 0 ///< [in] [optional] holds the working memory arrays, can be
-                             ///< re-passed to avoid unnecessary re-allocations
+template <typename arrT>
+MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvectors as columns*/
+                         arrT &eigval,    /**< [out] will contain the eigenvalues*/
+                         arrT &X,         /**< [in]  is a square matrix which is either upper
+                                                     or lower (default) triangular*/
+                         int ev0 = 0,     /**< [in] [opt] is the first desired eigenvalue
+                                                          (default = 0)*/
+                         int ev1 = -1,    /**< [in] [opt] if >= ev0 then this is the last desired
+                                                          eigenvalue. If -1 all eigenvalues are
+                                                          returned.*/
+                         char UPLO = 'L', /**< [in] [opt] specifies whether X is upper ('U')
+                                                          or lower ('L') triangular.
+                                                          Default is ('L').*/
+                         syevrMem<typename arrT::Scalar> *mem = 0 /**< [in] [opt] holds the working memory arrays,
+                                                                                  can be re-passed to avoid unnecessary
+                                                                                  re-allocations*/
 )
 {
+    typedef typename arrT::Scalar calcT;
+
     MXLAPACK_INT numeig, info;
     char RANGE = 'A';
 
@@ -183,99 +230,126 @@ MXLAPACK_INT eigenSYEVR(
     eigvec.resize( n, IU - IL + 1 );
     eigval.resize( n, 1 );
 
-    // Copy X, casting to calcT
-    Eigen::Array<calcT, Eigen::Dynamic, Eigen::Dynamic> Xc = X.template cast<calcT>();
-
-    if( mem->sizeISuppZ < 2 * n )
+    if( UPLO != mem->UPLO || n != mem->n || RANGE != mem->RANGE || mem->numeig != numeig || mem->IL != IL ||
+        mem->IU != IU )
     {
-        if( mem->iSuppZ )
-            free( mem->iSuppZ );
+        if( mem->sizeISuppZ < 2 * n )
+        {
+            if( mem->iSuppZ )
+            {
+                free( mem->iSuppZ );
+            }
 
-        mem->sizeISuppZ = 2 * n;
-        mem->iSuppZ = (MXLAPACK_INT *)malloc( mem->sizeISuppZ * sizeof( MXLAPACK_INT ) );
+            mem->sizeISuppZ = 2 * n;
+            mem->iSuppZ = (MXLAPACK_INT *)malloc( mem->sizeISuppZ * sizeof( MXLAPACK_INT ) );
 
-        if( mem->iSuppZ == NULL )
+            if( mem->iSuppZ == NULL )
+            {
+                mxError( "eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR." );
+                if( localMem )
+                {
+                    delete mem;
+                }
+                return -1000;
+            }
+        }
+
+        //  Allocate minimum allowed sizes for workspace
+        if( mem->sizeMinWork < 26 * n )
+        {
+            if( mem->minWork )
+            {
+                free( mem->minWork );
+            }
+            mem->sizeMinWork = 26 * n;
+            mem->minWork = (calcT *)malloc( mem->sizeMinWork * sizeof( calcT ) );
+        }
+
+        // MXLAPACK_INT sizeIWork = 10 * n;
+        if( mem->sizeMinIWork < 10 * n )
+        {
+            if( mem->minIWork )
+            {
+                free( mem->minIWork );
+            }
+            mem->sizeMinIWork = 10 * n;
+            mem->minIWork = (MXLAPACK_INT *)malloc( mem->sizeMinIWork * sizeof( MXLAPACK_INT ) );
+        }
+
+        //  Query for optimum sizes for workspace
+        info = math::syevr<calcT>( 'V',
+                                   RANGE,
+                                   UPLO,
+                                   n,
+                                   X.data(),
+                                   n,
+                                   0,
+                                   0,
+                                   IL,
+                                   IU,
+                                   math::lamch<calcT>( 'S' ),
+                                   &numeig,
+                                   eigval.data(),
+                                   eigvec.data(),
+                                   n,
+                                   mem->iSuppZ,
+                                   mem->minWork,
+                                   -1,
+                                   mem->minIWork,
+                                   -1 );
+
+        if( info != 0 )
+        {
+            mxError( "eigenSYEVR", MXE_LAPACKERR, "error from SYEVR" );
+            if( localMem )
+            {
+                delete mem;
+            }
+
+            return info;
+        }
+
+        // Now allocate optimum sizes
+        /* -- tested increasing by x10, didn't improve performance at all
+         */
+        if( mem->sizeWork < ( (MXLAPACK_INT)mem->minWork[0] ) * ( 1 ) )
+        {
+            if( mem->work )
+            {
+                free( mem->work );
+            }
+
+            mem->sizeWork = ( (MXLAPACK_INT)mem->minWork[0] ) * 1;
+            mem->work = (calcT *)malloc( ( mem->sizeWork ) * sizeof( calcT ) );
+        }
+
+        if( mem->sizeIWork < mem->minIWork[0] * 1 )
+        {
+            if( mem->iWork )
+            {
+                free( mem->iWork );
+            }
+
+            mem->sizeIWork = mem->minIWork[0] * 1;
+            mem->iWork = (MXLAPACK_INT *)malloc( ( mem->sizeIWork ) * sizeof( MXLAPACK_INT ) );
+        }
+
+        if( ( mem->work == NULL ) || ( mem->iWork == NULL ) )
         {
             mxError( "eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR." );
             if( localMem )
+            {
                 delete mem;
+            }
             return -1000;
         }
-    }
 
-    //  Allocate minimum allowed sizes for workspace
-    MXLAPACK_INT sizeWork = 26 * n;
-    calcT *work = (calcT *)malloc( sizeWork * sizeof( calcT ) );
-
-    MXLAPACK_INT sizeIWork = 10 * n;
-    MXLAPACK_INT *iWork = (MXLAPACK_INT *)malloc( sizeIWork * sizeof( MXLAPACK_INT ) );
-
-    //  Query for optimum sizes for workspace
-    info = math::syevr<calcT>( 'V',
-                               RANGE,
-                               UPLO,
-                               n,
-                               Xc.data(),
-                               n,
-                               0,
-                               0,
-                               IL,
-                               IU,
-                               math::lamch<calcT>( 'S' ),
-                               &numeig,
-                               eigval.data(),
-                               eigvec.data(),
-                               n,
-                               mem->iSuppZ,
-                               work,
-                               -1,
-                               iWork,
-                               -1 );
-
-    if( info != 0 )
-    {
-        mxError( "eigenSYEVR", MXE_LAPACKERR, "error from SYEVR" );
-        if( localMem )
-            delete mem;
-
-        if( iWork )
-            free( iWork );
-
-        if( work )
-            free( work );
-
-        return info;
-    }
-
-    // Now allocate optimum sizes
-    /* -- tested increasing by x10, didn't improve performance at all
-     */
-    if( mem->sizeWork < ( (MXLAPACK_INT)work[0] ) * ( 1 ) )
-    {
-        if( mem->work )
-            free( mem->work );
-
-        mem->sizeWork = ( (MXLAPACK_INT)work[0] ) * 1;
-        mem->work = (calcT *)malloc( ( mem->sizeWork ) * sizeof( calcT ) );
-    }
-    free( work );
-
-    if( mem->sizeIWork < iWork[0] * 1 )
-    {
-        if( mem->iWork )
-            free( mem->iWork );
-
-        mem->sizeIWork = iWork[0] * 1;
-        mem->iWork = (MXLAPACK_INT *)malloc( ( mem->sizeIWork ) * sizeof( MXLAPACK_INT ) );
-    }
-    free( iWork );
-
-    if( ( mem->work == NULL ) || ( mem->iWork == NULL ) )
-    {
-        mxError( "eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR." );
-        if( localMem )
-            delete mem;
-        return -1000;
+        mem->UPLO = UPLO;
+        mem->n = n;
+        mem->RANGE = RANGE;
+        mem->numeig = numeig;
+        mem->IL = IL;
+        mem->IU = IU;
     }
 
     // Now actually do the calculationg
@@ -283,7 +357,7 @@ MXLAPACK_INT eigenSYEVR(
                                RANGE,
                                UPLO,
                                n,
-                               Xc.data(),
+                               X.data(),
                                n,
                                0,
                                0,
@@ -303,17 +377,19 @@ MXLAPACK_INT eigenSYEVR(
     /*  Cleanup and exit  */
 
     if( localMem )
+    {
         delete mem;
+    }
 
     return info;
 }
 
-/// Calculate the K-L modes, or principle components, given a covariance matrix.
-/** Eigen-decomposition of the covariance matrix is performed using \ref eigenSYEVR().
+/// Calculate the eigenvectors and eigenvalues given a triangular matrix
+/** Eigen-decomposition of the matrix is performed using \ref eigenSYEVR().
  *
- * \tparam evCalcT is the type in which to perform eigen-decomposition.
+ * \tparam evCalcT is the type in which to perform eigen-decomposition, which may be different
+ *         from the input array and output arrays (which must be the same).
  * \tparam eigenT is a 2D Eigen-like type
- * \tparam eigenT1 is a 2D Eigen-like type.
  *
  * \ingroup eigen_lapack
  */
@@ -322,32 +398,45 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
                             eigenT &evals,               /**< [out] on exit contains the eigen vectors*/
                             eigenT &cv,                  /**< [in] a lower-triangle (in the Lapack sense) square
                                                                    covariance matrix.*/
-                            bool normalize = false,      /**< [in] [optional] flag specifying whether or not to
-                                                                              normalize the eigen vectors*/
-                            int n_modes = 0,             /**< [in] [optional] The maximum number of modes to solve for.
-                                                                              If 0 all modes are solved for.*/
-                            syevrMem<_evCalcT> *mem = 0, /**< [in] [optional] A memory structure which can be
+                            int nVecs = 0,               /**< [in] [opt] The maximum number of modes to solve
+                                                                              for. If 0 all modes are solved for.*/
+                            bool normalize = false,      /**< [in] [opt] flag specifying whether or not to
+                                                                              normalize the eigenvectors.*/
+                            bool check = false,          /**< [in] [opt] flag specifying whether or not to
+                                                                              check the eigenvalues/vectors for
+                                                                              validity. Requires normalize=true.*/
+                            syevrMem<_evCalcT> *mem = 0, /**< [in] [opt] A memory structure which can be
                                                                               re-used by SYEVR for efficiency.*/
-                            double *t_eigenv = nullptr   /**< [out] [optional] if not null, will be filled in
+                            double *t_eigenv = nullptr   /**< [out] [opt] if not null, will be filled in
                                                                                with the time taken to calculate
                                                                                eigenvalues.*/ )
 {
     typedef _evCalcT evCalcT;
     typedef typename eigenT::Scalar realT;
 
-    Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
+    bool localMem = false;
+
+    if( mem == 0 )
+    {
+        mem = new syevrMem<evCalcT>;
+        localMem = true;
+    }
 
     if( cv.rows() != cv.cols() )
     {
         std::cerr << "calcEigenVecs: Non-square covariance matrix input to calcKLModes\n";
+        if( localMem )
+        {
+            delete mem;
+        }
         return -1;
     }
 
     MXLAPACK_INT tNims = cv.rows();
 
-    if( n_modes <= 0 || n_modes > tNims )
+    if( nVecs <= 0 || nVecs > tNims )
     {
-        n_modes = tNims;
+        nVecs = tNims;
     }
 
     if( t_eigenv )
@@ -355,52 +444,69 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
         *t_eigenv = sys::get_curr_time();
     }
 
+    mem->cvd = cv.template cast<evCalcT>();
+
     // Calculate eigenvectors and eigenvalues
     /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
      */
-    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>( evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem );
+    MXLAPACK_INT info = eigenSYEVR( mem->evecsd, mem->evalsd, mem->cvd, tNims - nVecs, tNims, 'L', mem );
 
     if( info != 0 )
     {
         std::cerr << "calcEigenVecs: eigenSYEVR returned an error (info = " << info << ")\n";
+        if( localMem )
+        {
+            delete mem;
+        }
+
         return -1;
     }
 
-    evecs = evecsd.template cast<realT>();
-    evals = evalsd.template cast<realT>();
+    evecs = mem->evecsd.template cast<realT>();
+    evals = mem->evalsd.template cast<realT>();
 
     if( normalize )
     {
         // Normalize the eigenvectors
-        for( MXLAPACK_INT i = 0; i < n_modes; ++i )
+        if( !check )
         {
-            if( evals( i ) == 0 )
-            {
-                std::cerr << "got 0 eigenvalue (# " << i << ")\n";
-                evecs.col( i ) *= 0;
-            }
-            else if( evals( i ) < 0 )
-            {
-                std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
-                evecs.col( i ) *= 0;
-            }
-            else if( !std::isnormal( evals( i ) ) )
-            {
-                std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
-                evecs.col( i ) *= 0;
-            }
-            else
+            for( MXLAPACK_INT i = 0; i < nVecs; ++i )
             {
                 evecs.col( i ) = evecs.col( i ) / sqrt( evals( i ) );
             }
-
-            for( int r = 0; r < evecs.rows(); ++r )
+        }
+        else // here we check for invalid results and 0 things out
+        {
+            for( MXLAPACK_INT i = 0; i < nVecs; ++i )
             {
-                if( !std::isnormal( evecs.col( i )( r ) ) )
+                if( evals( i ) == 0 )
                 {
-                    std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
+                    std::cerr << "got 0 eigenvalue (# " << i << ")\n";
                     evecs.col( i ) *= 0;
-                    continue;
+                }
+                else if( evals( i ) < 0 )
+                {
+                    std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
+                    evecs.col( i ) *= 0;
+                }
+                else if( !std::isnormal( evals( i ) ) )
+                {
+                    std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
+                    evecs.col( i ) *= 0;
+                }
+                else
+                {
+                    evecs.col( i ) = evecs.col( i ) / sqrt( evals( i ) );
+                }
+
+                for( int r = 0; r < evecs.rows(); ++r )
+                {
+                    if( !std::isnormal( evecs.col( i )( r ) ) )
+                    {
+                        std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
+                        evecs.col( i ) *= 0;
+                        continue;
+                    }
                 }
             }
         }
@@ -409,6 +515,11 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
     if( t_eigenv )
     {
         *t_eigenv = sys::get_curr_time() - *t_eigenv;
+    }
+
+    if( localMem )
+    {
+        delete mem;
     }
 
     return 0;
@@ -429,12 +540,12 @@ MXLAPACK_INT calcKLModes(
     eigenT &klModes,             ///< [out] on exit contains the K-L modes (or P.C.s)
     eigenT &cv,                  ///< [in] a lower-triangle (in the Lapack sense) square covariance matrix.
     const eigenT1 &Rims,         ///< [in] The reference data.  cv.rows() == Rims.cols().
-    int n_modes = 0,             ///< [in] [optional] Tbe maximum number of modes to solve for.  If 0 all modes
+    int n_modes = 0,             ///< [in] [opt] Tbe maximum number of modes to solve for.  If 0 all modes
                                  ///< are solved for.
-    syevrMem<_evCalcT> *mem = 0, ///< [in] [optional] A memory structure which can be re-used by SYEVR for efficiency.
-    double *t_eigenv = nullptr,  ///< [out] [optional] if not null, will be filled in with the time
+    syevrMem<_evCalcT> *mem = 0, ///< [in] [opt] A memory structure which can be re-used by SYEVR for efficiency.
+    double *t_eigenv = nullptr,  ///< [out] [opt] if not null, will be filled in with the time
                                  ///< taken to calculate eigenvalues.
-    double *t_klim = nullptr     ///< [out] [optional] if not null, will be filled in with the time
+    double *t_klim = nullptr     ///< [out] [opt] if not null, will be filled in with the time
                                  ///< taken to calculate the KL modes.
 )
 {
@@ -633,13 +744,13 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
                                                                       threshold the singular values.  Set to 0 to
                                                                       include all eigenvalues/vectors. Ignored if
                                                                       interactive. */
-                        dataT alpha = 0,                   /**< [in] [optional] the Tikhonov regularization value, as
+                        dataT alpha = 0,                   /**< [in] [opt] the Tikhonov regularization value, as
                                                                      a fraction of the highest singular value.
                                                                      If alpha < 0, then it is treated as a (positive)
                                                                      floor (as a fraction of highest singular value)
                                                                      for the singular values, which is not the same as
                                                                     Tikhonov (alpha > 0).*/
-                        int interact = MX_PINV_NO_INTERACT /**< [in] [optional] a bitmask controlling interaction.
+                        int interact = MX_PINV_NO_INTERACT /**< [in] [opt] a bitmask controlling interaction.
                                                                      See above.*/
 )
 {
@@ -825,13 +936,13 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
                                                                       threshold the singular values.  Set to 0 to
                                                                       include all eigenvalues/vectors. Ignored if
                                                                       interactive. */
-                        dataT alpha = 0,                   /**< [in] [optional] the Tikhonov regularization value, as
+                        dataT alpha = 0,                   /**< [in] [opt] the Tikhonov regularization value, as
                                                                      a fraction of the highest singular value.
                                                                      If alpha < 0, then it is treated as a (positive)
                                                                      floor (as a fraction of highest singular value)
                                                                      for the singular values, which is not the same as
                                                                     Tikhonov (alpha > 0).*/
-                        int interact = MX_PINV_NO_INTERACT /**< [in] [optional] a bitmask controlling interaction.
+                        int interact = MX_PINV_NO_INTERACT /**< [in] [opt] a bitmask controlling interaction.
                                                                      See above.*/
 )
 {
@@ -879,13 +990,13 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
                                                                       threshold the singular values. Set to 0 to
                                                                       include all eigenvalues/vectors. Ignored if
                                                                       interactive.*/
-                        dataT alpha = 0,                   /**< [in] [optional] the Tikhonov regularization value,
+                        dataT alpha = 0,                   /**< [in] [opt] the Tikhonov regularization value,
                                                                      as a fraction of the highest singular value. If
                                                                      alpha < 0, then it is treated as a (positive)
                                                                      floor (as a fraction of highest singular value)
                                                                      for the singular values, which is not the same
                                                                      as Tikhonov (alpha > 0).*/
-                        int interact = MX_PINV_NO_INTERACT /**< [in] [optional] a bitmask controlling interaction.
+                        int interact = MX_PINV_NO_INTERACT /**< [in] [opt] a bitmask controlling interaction.
                                                                      See above.*/
 )
 {
