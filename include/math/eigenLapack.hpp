@@ -317,6 +317,113 @@ MXLAPACK_INT eigenSYEVR(
  *
  * \ingroup eigen_lapack
  */
+template <typename _evCalcT = double, typename eigenT>
+MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit contains the eigen vectors*/
+                            eigenT &evals,               /**< [out] on exit contains the eigen vectors*/
+                            eigenT &cv,                  /**< [in] a lower-triangle (in the Lapack sense) square
+                                                                   covariance matrix.*/
+                            bool normalize = false,      /**< [in] [optional] flag specifying whether or not to
+                                                                              normalize the eigen vectors*/
+                            int n_modes = 0,             /**< [in] [optional] The maximum number of modes to solve for.
+                                                                              If 0 all modes are solved for.*/
+                            syevrMem<_evCalcT> *mem = 0, /**< [in] [optional] A memory structure which can be
+                                                                              re-used by SYEVR for efficiency.*/
+                            double *t_eigenv = nullptr   /**< [out] [optional] if not null, will be filled in
+                                                                               with the time taken to calculate
+                                                                               eigenvalues.*/ )
+{
+    typedef _evCalcT evCalcT;
+    typedef typename eigenT::Scalar realT;
+
+    Eigen::Array<evCalcT, Eigen::Dynamic, Eigen::Dynamic> evecsd, evalsd;
+
+    if( cv.rows() != cv.cols() )
+    {
+        std::cerr << "calcEigenVecs: Non-square covariance matrix input to calcKLModes\n";
+        return -1;
+    }
+
+    MXLAPACK_INT tNims = cv.rows();
+
+    if( n_modes <= 0 || n_modes > tNims )
+    {
+        n_modes = tNims;
+    }
+
+    if( t_eigenv )
+    {
+        *t_eigenv = sys::get_curr_time();
+    }
+
+    // Calculate eigenvectors and eigenvalues
+    /* SYEVR sorts eigenvalues in ascending order, so we specifiy the top n_modes
+     */
+    MXLAPACK_INT info = eigenSYEVR<realT, evCalcT>( evecsd, evalsd, cv, tNims - n_modes, tNims, 'L', mem );
+
+    if( info != 0 )
+    {
+        std::cerr << "calcEigenVecs: eigenSYEVR returned an error (info = " << info << ")\n";
+        return -1;
+    }
+
+    evecs = evecsd.template cast<realT>();
+    evals = evalsd.template cast<realT>();
+
+    if( normalize )
+    {
+        // Normalize the eigenvectors
+        for( MXLAPACK_INT i = 0; i < n_modes; ++i )
+        {
+            if( evals( i ) == 0 )
+            {
+                std::cerr << "got 0 eigenvalue (# " << i << ")\n";
+                evecs.col( i ) *= 0;
+            }
+            else if( evals( i ) < 0 )
+            {
+                std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
+                evecs.col( i ) *= 0;
+            }
+            else if( !std::isnormal( evals( i ) ) )
+            {
+                std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
+                evecs.col( i ) *= 0;
+            }
+            else
+            {
+                evecs.col( i ) = evecs.col( i ) / sqrt( evals( i ) );
+            }
+
+            for( int r = 0; r < evecs.rows(); ++r )
+            {
+                if( !std::isnormal( evecs.col( i )( r ) ) )
+                {
+                    std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
+                    evecs.col( i ) *= 0;
+                    continue;
+                }
+            }
+        }
+    }
+
+    if( t_eigenv )
+    {
+        *t_eigenv = sys::get_curr_time() - *t_eigenv;
+    }
+
+    return 0;
+
+} // calcKLModes
+
+/// Calculate the K-L modes, or principle components, given a covariance matrix.
+/** Eigen-decomposition of the covariance matrix is performed using \ref eigenSYEVR().
+ *
+ * \tparam evCalcT is the type in which to perform eigen-decomposition.
+ * \tparam eigenT is a 2D Eigen-like type
+ * \tparam eigenT1 is a 2D Eigen-like type.
+ *
+ * \ingroup eigen_lapack
+ */
 template <typename _evCalcT = double, typename eigenT, typename eigenT1>
 MXLAPACK_INT calcKLModes(
     eigenT &klModes,             ///< [out] on exit contains the K-L modes (or P.C.s)
@@ -344,11 +451,11 @@ MXLAPACK_INT calcKLModes(
         return -1;
     }
 
-    if( cv.rows() != Rims.cols() )
+    /*if( cv.rows() != Rims.cols() )
     {
         std::cerr << "Covariance matrix - reference image size mismatch in calcKLModes\n";
         return -1;
-    }
+    }*/
 
     MXLAPACK_INT tNims = cv.rows();
     MXLAPACK_INT tNpix = Rims.rows();
@@ -476,15 +583,15 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT, -1, -1> &U,  ///< [out] the A.rows(
     MXLAPACK_INT *IWORK = new MXLAPACK_INT[8 * M];
     MXLAPACK_INT INFO;
 
-    math::gesdd<dataT>(
-        JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO );
+    math::gesdd<
+        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO );
 
     LWORK = wkOpt;
     // delete WORK;
     dataT *WORK = new dataT[LWORK];
 
-    INFO = math::gesdd<dataT>(
-        JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO );
+    INFO = math::gesdd<
+        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO );
 
     delete[] WORK;
     delete[] IWORK;
@@ -496,6 +603,198 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT, -1, -1> &U,  ///< [out] the A.rows(
 #define MX_PINV_PLOT 1
 #define MX_PINV_ASK 2
 #define MX_PINV_ASK_NMODES 4
+
+/// Calculate the pseudo-inverse of a patrix given its SVD
+/** Given the SVD of A, \f$ A = U S V^T \f$, as calculated by eigenGESDD the psuedo-inverse is
+ * calculated as \f$ A^+ = V S^+ U^T\f$.
+ *
+ * The parameter \p interact is intepreted as a bitmask.  The values can be
+ * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values
+ * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
+ * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using
+ * stdin.  Overrides MX_PINV_ASK. If \p interact is 0 then no interaction is used and \p
+ * maxCondition controls the inversion.
+ *
+ * \tparam dataT is either float or double.
+ *
+ * \ingroup eigen_lapack
+ */
+template <typename dataT>
+int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo-inverse of A
+                        dataT &condition,                  ///< [out] The final condition number.
+                        int &nRejected,                    ///< [out] The number of eigenvectors rejected
+                        Eigen::Array<dataT, -1, -1> &U,    ///< [in] the A.rows() x A.rows() left matrix
+                        Eigen::Array<dataT, -1, -1> &S,    ///< [in] the A.cols() x 1 matrix of singular values
+                        Eigen::Array<dataT, -1, -1> &VT,   /**< [in] the A.cols() x A.cols() right matrix, note this
+                                                                      is the transpose. */
+                        int minMN,                         ///< [in]  The minimum size of the matrix to invert.
+                        dataT &maxCondition,               /**< [in]  If \> 0, the maximum condition number desired.
+                                                                      If \<0 the number of modes to keep. Used to
+                                                                      threshold the singular values.  Set to 0 to
+                                                                      include all eigenvalues/vectors. Ignored if
+                                                                      interactive. */
+                        dataT alpha = 0,                   /**< [in] [optional] the Tikhonov regularization value, as
+                                                                     a fraction of the highest singular value.
+                                                                     If alpha < 0, then it is treated as a (positive)
+                                                                     floor (as a fraction of highest singular value)
+                                                                     for the singular values, which is not the same as
+                                                                    Tikhonov (alpha > 0).*/
+                        int interact = MX_PINV_NO_INTERACT /**< [in] [optional] a bitmask controlling interaction.
+                                                                     See above.*/
+)
+{
+
+    dataT Smax = S.maxCoeff();
+
+    if( alpha > 0 )
+    {
+        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
+        {
+            S( i ) = ( pow( S( i ), 2 ) + pow( alpha * Smax, 2 ) ) / S( i );
+        }
+    }
+
+    if( alpha < 0 )
+    {
+        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
+        {
+            S( i ) = S( i ) + -alpha * Smax;
+        }
+    }
+
+    int modesToReject = 0;
+    if( maxCondition < 0 ) // Rejecting mode numbers
+    {
+        modesToReject = -maxCondition;
+
+        if( modesToReject - 1 < S.rows() )
+        {
+            maxCondition = Smax / S( modesToReject - 1, 0 );
+        }
+    }
+
+    if( interact & MX_PINV_PLOT )
+    {
+        gnuPlot gp;
+        gp.command( "set title \"SVD Singular Values\"" );
+        gp.logy();
+        gp.plot( S.data(), S.rows(), " w lp", "singular values" );
+    }
+
+    if( interact & MX_PINV_ASK && !( interact & MX_PINV_ASK_NMODES ) )
+    {
+        dataT mine;
+        std::cout << "Maximum singular value: " << Smax << "\n";
+        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+        std::cout << "Enter singular value threshold: ";
+        std::cin >> mine;
+
+        if( mine > 0 )
+        {
+            maxCondition = Smax / mine;
+        }
+        else
+        {
+            maxCondition = Smax / S( S.rows() - 1, 0 );
+        }
+    }
+    else if( interact & MX_PINV_ASK_NMODES )
+    {
+        unsigned mine;
+        std::cout << "Maximum singular value: " << Smax << "\n";
+        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
+        std::cout << "Enter number of modes to keep: ";
+        std::cin >> mine;
+        modesToReject = S.rows() - mine;
+
+        if( modesToReject <= 0 || modesToReject > S.rows() )
+        {
+            modesToReject = 0;
+        }
+
+        maxCondition = -modesToReject;
+    }
+
+    Eigen::Array<dataT, -1, -1> sigma;
+    sigma.resize( S.rows(), S.rows() );
+    sigma.setZero();
+
+    nRejected = 0;
+
+    if( maxCondition > 0 )
+    {
+        dataT threshold = 0;
+
+        if( maxCondition > 0 )
+        {
+            threshold = Smax / maxCondition;
+
+            condition = 1;
+
+            for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
+            {
+                if( S( i ) >= threshold )
+                {
+                    sigma( i, i ) = 1. / S( i );
+                    if( Smax / S( i ) > condition )
+                    {
+                        condition = Smax / S( i );
+                    }
+                }
+                else
+                {
+                    sigma( i, i ) = 0;
+                    ++nRejected;
+                }
+            }
+        }
+    }
+    else // rejecting modes
+    {
+        std::cerr << "rejecting based on modes\n";
+        std::cerr << " modes to reject: " << modesToReject << "\n";
+        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
+        {
+            if( i < S.rows() - modesToReject )
+            {
+                sigma( i, i ) = 1. / S( i );
+                if( Smax / S( i ) > condition )
+                    condition = Smax / S( i );
+            }
+            else
+            {
+                sigma( i, i ) = 0;
+                ++nRejected;
+            }
+        }
+    }
+
+    if( interact & MX_PINV_PLOT )
+    {
+        std::vector<dataT> vsig( sigma.rows() );
+        for( int rr = 0; rr < sigma.rows(); ++rr )
+        {
+            vsig[rr] = sigma( rr, rr );
+        }
+
+        gnuPlot gp;
+        gp.command( "set title \"Inverted Singular Values\"" );
+        gp.logy();
+        gp.plot( vsig.data(), vsig.size(), " w lp", "inverted singular values" );
+    }
+
+    if( interact & MX_PINV_ASK || interact & MX_PINV_ASK_NMODES )
+    {
+        dataT mine;
+        std::cout << "Modes Rejected: " << nRejected << "\n";
+        std::cout << "Condition Number: " << condition << "\n";
+    }
+
+    PInv = ( VT.matrix().transpose() * sigma.matrix().transpose() ) *
+           U.block( 0, 0, U.rows(), minMN ).matrix().transpose();
+
+    return 0;
+}
 
 /// Calculate the pseudo-inverse of a patrix using the SVD
 /** First computes the SVD of A, \f$ A = U S V^T \f$, using eigenGESDD.  Then the psuedo-inverse is
@@ -548,154 +847,7 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
         return info;
     }
 
-    dataT Smax = S.maxCoeff();
-
-    if( alpha > 0 )
-    {
-        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
-        {
-            S( i ) = ( pow( S( i ), 2 ) + pow( alpha * Smax, 2 ) ) / S( i );
-        }
-    }
-
-    if( alpha < 0 )
-    {
-        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
-        {
-            S( i ) = S( i ) + -alpha * Smax;
-        }
-    }
-
-    int modesToReject = 0;
-    if( maxCondition < 0 ) // Rejecting mode numbers
-    {
-        modesToReject = -maxCondition;
-
-        if( modesToReject - 1 < S.rows() )
-        {
-            maxCondition = Smax / S( modesToReject - 1, 0 );
-        }
-    }
-
-    if( interact & MX_PINV_PLOT )
-    {
-        gnuPlot gp;
-        gp.command( "set title \"SVD Singular Values\"" );
-        gp.logy();
-        gp.plot( S.data(), S.rows(), " w lp", "singular values" );
-    }
-
-    if( interact & MX_PINV_ASK && !( interact & MX_PINV_ASK_NMODES ) )
-    {
-        dataT mine;
-        std::cout << "Maximum singular value: " << Smax << "\n";
-        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
-        std::cout << "Enter singular value threshold: ";
-        std::cin >> mine;
-
-        if( mine > 0 )
-        {
-            maxCondition = Smax / mine;
-        }
-        else
-            maxCondition = Smax / S( S.rows() - 1, 0 );
-    }
-    else if( interact & MX_PINV_ASK_NMODES )
-    {
-        unsigned mine;
-        std::cout << "Maximum singular value: " << Smax << "\n";
-        std::cout << "Minimum singular value: " << S.minCoeff() << "\n";
-        std::cout << "Enter number of modes to keep: ";
-        std::cin >> mine;
-        modesToReject = S.rows() - mine;
-
-        if( modesToReject <= 0 || modesToReject > S.rows() )
-        {
-            modesToReject = 0;
-        }
-
-        maxCondition = -modesToReject;
-    }
-
-    Eigen::Array<dataT, -1, -1> sigma;
-    sigma.resize( S.rows(), S.rows() );
-    sigma.setZero();
-
-    nRejected = 0;
-
-    if( maxCondition > 0 )
-    {
-        dataT threshold = 0;
-
-        if( maxCondition > 0 )
-        {
-            threshold = Smax / maxCondition;
-
-            condition = 1;
-
-            for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
-            {
-                if( S( i ) >= threshold )
-                {
-                    sigma( i, i ) = 1. / S( i );
-                    if( Smax / S( i ) > condition )
-                        condition = Smax / S( i );
-                }
-                else
-                {
-                    sigma( i, i ) = 0;
-                    ++nRejected;
-                }
-            }
-        }
-    }
-    else // rejecting modes
-    {
-        std::cerr << "rejecting based on modes\n";
-        std::cerr << " modes to reject: " << modesToReject << "\n";
-        for( MXLAPACK_INT i = 0; i < S.rows(); ++i )
-        {
-            if( i < S.rows() - modesToReject )
-            {
-                sigma( i, i ) = 1. / S( i );
-                if( Smax / S( i ) > condition )
-                    condition = Smax / S( i );
-            }
-            else
-            {
-                sigma( i, i ) = 0;
-                ++nRejected;
-            }
-        }
-    }
-
-    if( interact & MX_PINV_PLOT )
-    {
-        std::cerr << "plotting again\n";
-
-        std::vector<dataT> vsig( sigma.rows() );
-        for( int rr = 0; rr < sigma.rows(); ++rr )
-        {
-            vsig[rr] = sigma( rr, rr );
-        }
-
-        gnuPlot gp;
-        gp.command( "set title \"Inverted Singular Values\"" );
-        gp.logy();
-        gp.plot( vsig.data(), vsig.size(), " w lp", "inverted singular values" );
-    }
-
-    if( interact & MX_PINV_ASK || interact & MX_PINV_ASK_NMODES )
-    {
-        dataT mine;
-        std::cout << "Modes Rejected: " << nRejected << "\n";
-        std::cout << "Condition Number: " << condition << "\n";
-    }
-
-    PInv = ( VT.matrix().transpose() * sigma.matrix().transpose() ) *
-           U.block( 0, 0, U.rows(), minMN ).matrix().transpose();
-
-    return 0;
+    return eigenPseudoInverse( PInv, condition, nRejected, U, S, VT, minMN, maxCondition, alpha, interact );
 }
 
 /// Calculate the pseudo-inverse of a matrix using the SVD

@@ -96,6 +96,9 @@ class ompLoopWatcher
 
     outputT *_output; ///< Pointer to the instance of type outputT
 
+    size_t m_outputInterval {10};
+    size_t m_outputCount {10};
+
     /// Increment the counter
     void _increment()
     {
@@ -119,6 +122,17 @@ class ompLoopWatcher
     /// Perform the output
     void _outputStatus()
     {
+        if(m_outputInterval > 1)
+        {
+            if(m_outputCount < m_outputInterval)
+            {
+                ++m_outputCount;
+                return;
+            }
+
+            m_outputCount = 0;
+        }
+
         if( _printPretty )
         {
             ( *_output ) << _counter;
