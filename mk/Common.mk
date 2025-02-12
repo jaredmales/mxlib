@@ -299,7 +299,7 @@ ifeq ($(NEED_CUDA),yes)
 	$(EXEC) $(NVCC) $(ALL_CCFLAGS) $< -c -o $@
 
    #Finally we define the cuda libs for linking
-   CUDA_LIBS ?= -L/usr/local/cuda/lib64/ -lcudart -lcublas -lcufft -lcurand
+   CUDA_LIBS ?= -L/usr/local/cuda/lib64/ -lcudart -lcublas -lcufft -lcurand -lcusolver
 
 else
    CUDA_LIBS ?=
