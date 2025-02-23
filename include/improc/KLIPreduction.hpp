@@ -33,37 +33,7 @@ namespace improc
 namespace HCI
 {
 
-/// Mean subtraction methods
-/** These control how the data in each search region is centered to meet the PCA
- * requirement. \ingroup hc_imaging_enums
- */
-enum meansubMethods
-{
-    imageMean,   ///< The mean of each image (within the search region) is
-                 ///< subtracted from itself
-    imageMedian, ///< The median of each image (within the search region) is
-                 ///< subtracted from itself
-    imageMode,   ///< The mode of each image (within the search region) is
-                 ///< subtracted from itself
-    meanImage,   ///< The mean image of the data is subtracted from each image
-    medianImage  ///< The median image of the data is subtracted from each image
-};
 
-std::string meansubMethodStr( int method );
-
-int meansubMethodFmStr( const std::string &method );
-
-enum class pixelTSNormMethod
-{
-    none, ///< no pixel time series norm
-    rms, ///< the rms of the pixel time series
-    rmsSigmaClipped, ///< the sigma clipped rms of the pixel time series
-    unknown = -1 ///< unknown value, an error
-};
-
-std::string pixelTSNormMethodStr( pixelTSNormMethod method );
-
-pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method );
 
 /// Image exclusion methods
 /** \ingroup hc_imaging_enums
@@ -174,18 +144,18 @@ struct KLIPreduction : public ADIobservation<_realT, _derotFunctObj>
 
     /// Specify how the data are centered for PCA within each search region
     /** Can have the following values:
-     * - <b>HCI::imageMean</b> = the mean of each image (within the search
+     * - <b>HCI::meanSubMethod::imageMean</b> = the mean of each image (within the search
      * region) is subtracted from itself
-     * - <b>HCI::imageMedian</b> = the median of each image (within the search
+     * - <b>HCI::meanSubMethod::imageMedian</b> = the median of each image (within the search
      * region) is subtracted from itself
-     * - <b>HCI::imageMode</b>  = the mode of each image (within the search
+     * - <b>HCI::meanSubMethod::imageMode</b>  = the mode of each image (within the search
      * region) is subtracted from itself
-     * - <b>HCI::meanImage</b> = the mean image of the data is subtracted from
+     * - <b>HCI::meanSubMethod::meanImage</b> = the mean image of the data is subtracted from
      * each image
-     * - <b>HCI::medianImage</b> = the median image of the data is subtracted
+     * - <b>HCI::meanSubMethod::medianImage</b> = the median image of the data is subtracted
      * from each image
      */
-    int m_meanSubMethod{ HCI::imageMean };
+    HCI::meanSubMethod m_meanSubMethod{ HCI::meanSubMethod::imageMean };
 
     /// Specify if each pixel time-series is normalized
     /** This normalizaton is applied after centering. Can have the following values:
@@ -425,15 +395,15 @@ void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT
         haveMask = true;
     }
 
-    if( m_meanSubMethod == HCI::meanImage || m_meanSubMethod == HCI::medianImage )
+    if( m_meanSubMethod == HCI::meanSubMethod::meanImage || m_meanSubMethod == HCI::meanSubMethod::medianImage )
     {
         eigenImageT mean;
 
-        if( m_meanSubMethod == HCI::meanImage )
+        if( m_meanSubMethod == HCI::meanSubMethod::meanImage )
         {
             rims.mean( mean );
         }
-        else if( m_meanSubMethod == HCI::medianImage )
+        else if( m_meanSubMethod == HCI::meanSubMethod::medianImage )
         {
             rims.median( mean );
         }
@@ -453,11 +423,11 @@ void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT
 
         if( &tims != &rims )
         {
-            if( m_meanSubMethod == HCI::meanImage )
+            if( m_meanSubMethod == HCI::meanSubMethod::meanImage )
             {
                 tims.mean( mean );
             }
-            else if( m_meanSubMethod == HCI::medianImage )
+            else if( m_meanSubMethod == HCI::meanSubMethod::medianImage )
             {
                 tims.median( mean );
             }
@@ -480,11 +450,11 @@ void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT
 
         for( int n = 0; n < rims.planes(); ++n )
         {
-            if( m_meanSubMethod == HCI::imageMean )
+            if( m_meanSubMethod == HCI::meanSubMethod::imageMean )
             {
                 mean = rims.image( n ).mean();
             }
-            else if( m_meanSubMethod == HCI::imageMedian )
+            else if( m_meanSubMethod == HCI::meanSubMethod::imageMedian )
             {
                 mean = imageMedian( rims.image( n ), &work );
             }
@@ -505,11 +475,11 @@ void KLIPreduction<realT, derotFunctObj, evCalcT>::meanSubtract( eigenCube<realT
         {
             for( int n = 0; n < tims.planes(); ++n )
             {
-                if( m_meanSubMethod == HCI::imageMean )
+                if( m_meanSubMethod == HCI::meanSubMethod::imageMean )
                 {
                     mean = tims.image( n ).mean();
                 }
-                else if( m_meanSubMethod == HCI::imageMedian )
+                else if( m_meanSubMethod == HCI::meanSubMethod::imageMedian )
                 {
                     mean = imageMedian( tims.image( n ), &work );
                 }
@@ -1208,7 +1178,7 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::finalProcess()
         head.append( "", fits::fitsCommentType(), "mx::KLIPreduction parameters:" );
         head.append( "", fits::fitsCommentType(), "----------------------------------------" );
 
-        head.append( "MEAN SUB METHOD", HCI::meansubMethodStr( m_meanSubMethod ), "PCA mean subtraction method" );
+        head.append( "MEAN SUB METHOD", HCI::meanSubMethodStr( m_meanSubMethod ), "PCA mean subtraction method" );
         head.append( "PIXTS NORM METHOD", HCI::pixelTSNormMethodStr( m_pixelTSNormMethod ), "Pixel TS norm method" );
 
         std::stringstream str;
@@ -1308,8 +1278,8 @@ int KLIPreduction<_realT, _derotFunctObj, _evCalcT>::processPSFSub( const std::s
         mxError( "KLIPReduction", MXE_PARAMNOTSET, "MEANSUBM not found in FITS header." );
         return -1;
     }
-    m_meanSubMethod = HCI::meansubMethodFmStr( fh["MEANSUBM"].String() );
-    std::cerr << "meanSubMethod: " << HCI::meansubMethodStr( m_meanSubMethod ) << "\n";
+    m_meanSubMethod = HCI::meanSubMethodFmStr( fh["MEANSUBM"].String() );
+    std::cerr << "meanSubMethod: " << HCI::meanSubMethodStr( m_meanSubMethod ) << "\n";
 
     if( fh.count( "NMODES" ) == 0 )
     {

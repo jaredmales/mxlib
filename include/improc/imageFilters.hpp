@@ -1197,8 +1197,6 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
         r1 += dr;
     }
 
-    std::cerr << std_r.size() << " " << std_v.size() << "\n";
-
     /* And finally, interpolate onto the radius image */
     stdIm.resize( dim1, dim2 );
     math::gslInterpolator<math::gsl_interp_linear<double>> interp( std_r, std_v );

@@ -45,6 +45,42 @@ namespace improc
  */
 namespace HCI
 {
+
+/// Mean subtraction methods
+/** These control how the data in each search region is centered to meet the PCA
+ * requirement. \ingroup hc_imaging_enums
+ */
+enum class meanSubMethod
+{
+    none,        ///< No mean subtraction
+    meanImage,   ///< The mean image of the data is subtracted from each image
+    medianImage, ///< The median image of the data is subtracted from each image
+    imageMean,   ///< The mean of each image (within the search region) is
+                 ///< subtracted from itself
+    imageMedian, ///< The median of each image (within the search region) is
+                 ///< subtracted from itself
+    imageMode,   ///< The mode of each image (within the search region) is
+                 ///< subtracted from itself
+    unknown = -1 ///< unknown value, an error
+};
+
+std::string meanSubMethodStr( meanSubMethod method );
+
+meanSubMethod meanSubMethodFmStr( const std::string &method );
+
+enum class pixelTSNormMethod
+{
+    none, ///< no pixel time series norm
+    rms, ///< the rms of the pixel time series
+    rmsSigmaClipped, ///< the sigma clipped rms of the pixel time series
+    unknown = -1 ///< unknown value, an error
+};
+
+std::string pixelTSNormMethodStr( pixelTSNormMethod method );
+
+pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method );
+
+
 /// Possible combination methods
 /** \ingroup hc_imaging_enums
  */
@@ -474,6 +510,9 @@ struct HCIobservation
      * -# mask applied (enabled by m_preProcess_mask
      * -# azimuthal unsharp mask (m_preProcess_azUSM_azW, and m_preProcess_azUSM_radW)
      * -# mask applied (enabled by m_preProcess_mask)
+     * -# mean subtraction (enabled by m_preProcess_meanSubMethod)
+     * -# mask applied (enabled by m_preProcess_mask)
+     * -# pixel time-series normalization (enabled by m_preProcess_pixelTSNormMethod)
      * @{
      */
 
@@ -510,6 +549,22 @@ struct HCIobservation
      */
     realT m_preProcess_gaussUSM_fwhm{ 0 };
 
+    /// The mean subtraction method during pre-processing
+    /** Can only be none, meanImage, or meadianImage
+      */
+    HCI::meanSubMethod m_preProcess_meanSubMethod {HCI::meanSubMethod::none};
+
+    /// Specify if each pixel time-series is normalized
+    /** This normalizaton is applied after centering. Can have the following values:
+     * - <b>HCI::pixelTSNormMethod::none</b>: no normalization (the default)
+     * - <b>HCI::pixelTSNormMethod::rms</b>: divide by the time-series rms
+     * - <b>HCI::pixelTSNormMethod::rmsSigmaClipped</b>: divide by the sigma-slipped time-series rms.
+     *                                                   The sigma is provided by m_preProcess_pixelTSSigma.
+     */
+    HCI::pixelTSNormMethod m_preProcess_pixelTSNormMethod {HCI::pixelTSNormMethod::none};
+
+    realT m_pixelTSSigma {3}; ///< Sigma-clipping parameter for pixel time-series normalization
+
     /// Set path and file prefix to output the pre-processed images.
     /** If empty, then pre-processed images are not output.
      */
@@ -520,6 +575,13 @@ struct HCIobservation
 
     /// Do the pre-processing
     void preProcess( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
+
+    /// Do mean subtraction as part of pre-processing
+    void preProcess_meanSub( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
+
+    /// Do pixel time-series normalization as part of pre-processing
+    void preProcess_pixelTSNorm ( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
+
 
     ///@}
 
@@ -1465,6 +1527,9 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
         }
     }
 
+
+
+
     if( m_preProcess_medianUSM_fwhm > 0 )
     {
         std::cerr << "applying median USM . . .\n";
@@ -1573,9 +1638,109 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
         std::cerr << "done (" << t_azusm_end - t_azusm_begin << " sec)                                \n";
     }
 
+    preProcess_meanSub(ims);
+
+    preProcess_pixelTSNorm(ims);
+
     t_preproc_end = sys::get_curr_time();
 
 } // void HCIobservation<_realT>::preProcess()
+
+template <typename _realT>
+void HCIobservation<_realT>::preProcess_meanSub( eigenCube<realT> &ims )
+{
+    if(m_preProcess_meanSubMethod == HCI::meanSubMethod::none)
+    {
+        return;
+    }
+    else if( m_preProcess_meanSubMethod != HCI::meanSubMethod::meanImage && m_preProcess_meanSubMethod != HCI::meanSubMethod::medianImage )
+    {
+        std::string msg = "Mean subtraction by " + HCI::meanSubMethodStr(m_preProcess_meanSubMethod);
+        msg += " can't be done in pre-processing. Only meanImage or medianImage can be used in pre.";
+        mxThrowException(err::invalidconfig, "HCIobservation::preProcess_meanSub", msg);
+    }
+
+        eigenImageT mean;
+
+        if( m_preProcess_meanSubMethod == HCI::meanSubMethod::meanImage )
+        {
+            ims.mean( mean );
+        }
+        else if( m_preProcess_meanSubMethod == HCI::meanSubMethod::medianImage )
+        {
+            ims.median( mean );
+        }
+
+        #pragma omp parallel for
+        for( int n = 0; n < ims.planes(); ++n )
+        {
+            ims.image( n ) -= mean;
+
+            if( m_maskFile != "" && m_preProcess_mask )
+            {
+                ims.image( n ) *= m_mask;
+            }
+        }
+
+
+}
+
+template <typename _realT>
+void HCIobservation<_realT>::preProcess_pixelTSNorm( eigenCube<realT> &ims )
+{
+    if( m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::none )
+    {
+        return;
+    }
+
+    if(m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::unknown)
+    {
+        mxThrowException(err::invalidconfig, "KlipReduction::preProcess_pixelTSNorm", "pixelTSNormMethod is unknown");
+    }
+
+    if(m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::rmsSigmaClipped)
+    {
+        mxThrowException(err::invalidconfig, "KlipReduction::preProcess_pixelTSNorm", "pixelTSNormMethod is rmsSigmaClipped, which is not implemented");
+    }
+
+        std::cerr << "normalizing pixels\n";
+
+    #pragma omp parallel
+    {
+        std::vector<realT> pixs(ims.planes());
+
+        #pragma omp for
+        for(int cc = 0; cc < ims.cols(); ++cc)
+        {
+            for(int rr = 0; rr < ims.rows(); ++rr)
+            {
+                if( m_maskFile != "" && m_preProcess_mask )
+                {
+                    if(m_mask(rr,cc) == 0)
+                    {
+                        continue;
+                    }
+                }
+
+                //We bother to load a vector in prep to add sigma clipping later.
+                for(int pp = 0; pp < ims.planes(); ++pp)
+                {
+                    pixs[pp] = ims.image(pp)(rr,cc);
+                }
+
+                realT sd = sqrt(math::vectorVariance(pixs,0));
+
+                if(sd == 0) continue;
+
+                for(int pp = 0; pp < ims.planes(); ++pp)
+                {
+                    ims.image(pp)(rr,cc) /= sd;
+                }
+            }
+        }
+    }
+
+}
 
 template <typename _realT>
 int HCIobservation<_realT>::readWeights()
@@ -1807,6 +1972,9 @@ void HCIobservation<_realT>::stdFitsHeader( fits::fitsHeader &head )
         "PREPROC AZUSM RADWIDTH", m_preProcess_azUSM_radW, "pre-process azimuthal USM radial width [pixels]" );
     head.append<realT>( "PREPROC MEDIANUSM FWHM", m_preProcess_medianUSM_fwhm, "pre-process median USM fwhm [pixels]" );
     head.append<realT>( "PREPROC GAUSSUSM FWHM", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm [pixels]" );
+    head.append<std::string>( "PREPROC MEANSUB METHOD", HCI::meanSubMethodStr(m_preProcess_meanSubMethod), "pre-process mean subtraction method" );
+    head.append<std::string>( "PREPROC PIXELTSNORM METHOD", HCI::pixelTSNormMethodStr(m_preProcess_pixelTSNormMethod), "pre-process pixel time-series norm method" );
+
 }
 
 template <typename _realT>

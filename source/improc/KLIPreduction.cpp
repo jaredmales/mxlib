@@ -15,77 +15,7 @@ namespace improc
 {
 namespace HCI
 {
-std::string meansubMethodStr( int method )
-{
-    if( method == imageMean )
-        return "imageMean";
-    else if( method == imageMedian )
-        return "imageMedian";
-    else if( method == imageMode )
-        return "imageMode";
-    else if( method == meanImage )
-        return "meanImage";
-    else if( method == medianImage )
-        return "medianImage";
-    else
-        return "UNKNOWN";
-}
 
-int meansubMethodFmStr( const std::string &method )
-{
-    if( method == "imageMean" )
-        return imageMean;
-    else if( method == "imageMedian" )
-        return imageMedian;
-    else if( method == "imageMode" )
-        return imageMode;
-    else if( method == "meanImage" )
-        return meanImage;
-    else if( method == "medianImage" )
-        return medianImage;
-    else
-        return -1;
-}
-
-std::string pixelTSNormMethodStr( pixelTSNormMethod method )
-{
-    if( method == pixelTSNormMethod::none)
-    {
-        return "none";
-    }
-    else if( method == pixelTSNormMethod::rms)
-    {
-        return "rms";
-    }
-    else if ( method == pixelTSNormMethod::rmsSigmaClipped)
-    {
-        return "rmsSigmaClipped";
-    }
-    else
-    {
-        return "UNKNOWN";
-    }
-}
-
-pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method )
-{
-    if(method == "none")
-    {
-        return pixelTSNormMethod::none;
-    }
-    else if(method == "rms")
-    {
-        return pixelTSNormMethod::rms;
-    }
-    else if(method == "rmsSigmaClipped")
-    {
-        return pixelTSNormMethod::rmsSigmaClipped;
-    }
-    else
-    {
-        return pixelTSNormMethod::unknown;
-    }
-}
 
 std::string excludeMethodStr( int method )
 {
