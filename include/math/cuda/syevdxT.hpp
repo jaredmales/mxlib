@@ -44,7 +44,7 @@
 // #include <cublas_api.h>
 // #include <library_types.h>
 
-//#include "/home/jrmales/Source/CUDALibrarySamples/cuSOLVER/utils/cusolver_utils.h"
+// #include "/home/jrmales/Source/CUDALibrarySamples/cuSOLVER/utils/cusolver_utils.h"
 
 #include "../../mxException.hpp"
 
@@ -75,13 +75,13 @@ namespace cuda
 template <typename floatT>
 struct cusolver_traits;
 
-template<>
+template <>
 struct cusolver_traits<float>
 {
     static constexpr cudaDataType cuda_data_type = CUDA_R_32F;
 };
 
-template<>
+template <>
 struct cusolver_traits<double>
 {
     static constexpr cudaDataType cuda_data_type = CUDA_R_64F;
@@ -126,7 +126,7 @@ struct syevdxT
 
     void setup( cusolverDnHandle_t cusolverH, cusolverDnParams_t params, cudaStream_t stream = nullptr );
 
-    void allocate( int64_t n, int64_t nVecs, cublasFillMode_t uplo );
+    void allocate( int64_t n, int64_t nVecs, cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER );
 
     int execute( int64_t &numEig, floatT *A );
 
