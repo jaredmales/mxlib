@@ -284,6 +284,21 @@ int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 {
     m_derotF.extractKeywords( this->m_heads );
 
+    bool bad = false;
+    for(size_t n = 0; n < this->m_fileList.size(); ++n)
+    {
+        if(!std::isfinite( m_derotF.m_angles[n]))
+        {
+            std::cerr << this->m_fileList[n] << " has no derotation angle\n";
+            bad = true;
+        }
+    }
+
+    if(bad)
+    {
+        throw std::runtime_error("missing derotation angles");
+    }
+
     if( m_fakeFileName != "" && !this->m_skipPreProcess )
     {
         std::cerr << "Injecting fakes in target images...\n";

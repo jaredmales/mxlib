@@ -314,7 +314,14 @@ void headersToValues( std::vector<dataT> &v, std::vector<fitsHeader> &heads, con
 
     for( size_t i = 0; i < heads.size(); ++i )
     {
-        v[i] = heads[i][keyw].value<dataT>(); // convertFromString<dataT>(heads[i][keyw].value);
+        try
+        {
+            v[i] = heads[i][keyw].value<dataT>(); // convertFromString<dataT>(heads[i][keyw].value);
+        }
+        catch(...)
+        {
+            v[i] = std::numeric_limits<dataT>::quiet_NaN();
+        }
     }
 }
 

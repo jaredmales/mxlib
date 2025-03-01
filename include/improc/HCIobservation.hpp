@@ -923,7 +923,7 @@ int HCIobservation<realT>::readFiles()
 
     im.resize( m_imSize, m_imSize );
 
-    /**** Right here is we got to coadd.
+    /**** Right here is we go to coadd.
      */
 
     // But if not we just do it
@@ -971,7 +971,9 @@ int HCIobservation<realT>::readFiles()
 
     /*** Now do the post-read actions ***/
     if( postReadFiles() < 0 )
+    {
         return -1;
+    }
 
     /*** Read in the mask if present ***/
     readMask();
@@ -2355,7 +2357,9 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
 
     /*** Now do the post-read actions ***/
     if( postReadFiles() < 0 )
+    {
         return -1;
+    }
 
     readMask();
 
