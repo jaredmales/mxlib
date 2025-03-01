@@ -108,8 +108,9 @@ void fitsHeaderCard::convertToString()
 {
     if( !m_valueGood )
     {
-        mxThrowException(
-            err::paramnotset, "fitsHeaderCard::convertToString()", "no value to convert for " + m_keyword );
+        mxThrowException( err::paramnotset,
+                          "fitsHeaderCard::convertToString()",
+                          "no value to convert for " + m_keyword );
         return;
     }
 
@@ -182,7 +183,18 @@ template <>
 void fitsHeaderCard::convertFromString<char>()
 {
     m_type = fitsType<char>();
-    m_value.Char = std::stoi( m_valueStr.str() );
+    try
+    {
+        m_value.Char = std::stoi( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<char>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -190,7 +202,18 @@ template <>
 void fitsHeaderCard::convertFromString<unsigned char>()
 {
     m_type = fitsType<unsigned char>();
-    m_value.UChar = std::stoi( m_valueStr.str() );
+    try
+    {
+        m_value.UChar = std::stoi( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<unsigned char>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -198,7 +221,18 @@ template <>
 void fitsHeaderCard::convertFromString<short>()
 {
     m_type = fitsType<short>();
-    m_value.Short = std::stoi( m_valueStr.str() );
+    try
+    {
+        m_value.Short = std::stoi( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<short>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -206,7 +240,18 @@ template <>
 void fitsHeaderCard::convertFromString<unsigned short>()
 {
     m_type = fitsType<unsigned short>();
-    m_value.UShort = std::stoi( m_valueStr.str() );
+    try
+    {
+        m_value.UShort = std::stoi( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<unsigned short>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -214,7 +259,18 @@ template <>
 void fitsHeaderCard::convertFromString<int>()
 {
     m_type = fitsType<int>();
-    m_value.Int = std::stoi( m_valueStr.str() );
+    try
+    {
+        m_value.Int = std::stoi( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<int>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -222,7 +278,18 @@ template <>
 void fitsHeaderCard::convertFromString<unsigned int>()
 {
     m_type = fitsType<unsigned int>();
-    m_value.UInt = std::stol( m_valueStr.str() );
+    try
+    {
+        m_value.UInt = std::stol( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<unsigned int>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -230,7 +297,18 @@ template <>
 void fitsHeaderCard::convertFromString<long>()
 {
     m_type = fitsType<long>();
-    m_value.Long = std::stol( m_valueStr.str() );
+    try
+    {
+        m_value.Long = std::stol( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<long>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -238,7 +316,18 @@ template <>
 void fitsHeaderCard::convertFromString<unsigned long>()
 {
     m_type = fitsType<unsigned long>();
-    m_value.ULong = std::stoul( m_valueStr.str() );
+    try
+    {
+        m_value.ULong = std::stoul( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<unsigned long>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -246,7 +335,18 @@ template <>
 void fitsHeaderCard::convertFromString<long long>()
 {
     m_type = fitsType<long long>();
-    m_value.LongLong = std::stoll( m_valueStr.str() );
+    try
+    {
+        m_value.LongLong = std::stoll( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<long long>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -254,7 +354,18 @@ template <>
 void fitsHeaderCard::convertFromString<unsigned long long>()
 {
     m_type = fitsType<unsigned long long>();
-    m_value.ULongLong = std::stoull( m_valueStr.str() );
+    try
+    {
+        m_value.ULongLong = std::stoull( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stoi. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<unsigned long long>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -262,7 +373,18 @@ template <>
 void fitsHeaderCard::convertFromString<float>()
 {
     m_type = fitsType<float>();
-    m_value.Float = std::stof( m_valueStr.str() );
+    try
+    {
+        m_value.Float = std::stof( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stof. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<float>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -280,8 +402,21 @@ void fitsHeaderCard::convertFromString<std::complex<float>>()
 template <>
 void fitsHeaderCard::convertFromString<double>()
 {
+
     m_type = fitsType<double>();
-    m_value.Double = std::stof( m_valueStr.str() );
+
+    try
+    {
+        m_value.Double = std::stod( m_valueStr.str() );
+    }
+    catch( const std::exception &e )
+    {
+        std::string msg = "exception from std::stod. no value for ";
+        msg += m_keyword;
+        m_valueGood = false;
+
+        mxThrowException( err::invalidarg, "fitsHeaderCard::convertFromString<float>", msg );
+    }
     m_valueGood = true;
 }
 
@@ -363,13 +498,15 @@ typeT fitsHeaderCard::convertedValue()
     }
     case fitsType<fitsCommentType>():
     {
-        mxThrowException(
-            err::invalidarg, "fitsHeaderCard::convertedValue<typeT>", "cannot convert comment to numeric type" );
+        mxThrowException( err::invalidarg,
+                          "fitsHeaderCard::convertedValue<typeT>",
+                          "cannot convert comment to numeric type" );
     }
     case fitsType<fitsHistoryType>():
     {
-        mxThrowException(
-            err::invalidarg, "fitsHeaderCard::convertedValue<typeT>", "cannot convert history to numeric type" );
+        mxThrowException( err::invalidarg,
+                          "fitsHeaderCard::convertedValue<typeT>",
+                          "cannot convert history to numeric type" );
     }
     case TSTRING:
     {
@@ -495,7 +632,7 @@ void fitsHeaderCard::convertValue( int newtype )
     m_valueGood = true;
 }
 
-const std::string &fitsHeaderCard::keyword()
+const std::string &fitsHeaderCard::keyword() const
 {
     return m_keyword;
 }
@@ -983,7 +1120,7 @@ void fitsHeaderCard::value( const std::complex<double> &v )
     m_type = fitsType<std::complex<double>>();
 }
 
-int fitsHeaderCard::type()
+int fitsHeaderCard::type() const
 {
     return m_type;
 }
@@ -1042,16 +1179,20 @@ int fitsHeaderCard::write( fitsfile *fptr )
 {
     if( m_type == fitsType<char *>() || m_type == fitsType<std::string>() )
     {
-        return fits_write_key<char *>(
-            fptr, (char *)m_keyword.c_str(), (void *)m_valueStr.str().c_str(), (char *)m_comment.c_str() );
+        return fits_write_key<char *>( fptr,
+                                       (char *)m_keyword.c_str(),
+                                       (void *)m_valueStr.str().c_str(),
+                                       (char *)m_comment.c_str() );
     }
 
     // If the string is good, meaning already converted.
     if( m_valueStrGood == true )
     {
         // This populates the card directly.
-        return fits_write_key<fitsUnknownType>(
-            fptr, (char *)m_keyword.c_str(), (void *)m_valueStr.str().c_str(), (char *)m_comment.c_str() );
+        return fits_write_key<fitsUnknownType>( fptr,
+                                                (char *)m_keyword.c_str(),
+                                                (void *)m_valueStr.str().c_str(),
+                                                (char *)m_comment.c_str() );
     }
 
     // Ok, now we write the type directly using fitsio routines because it hasn't been converted.
@@ -1059,8 +1200,10 @@ int fitsHeaderCard::write( fitsfile *fptr )
     {
     case fitsType<unsigned char>():
     {
-        return fits_write_key<unsigned char>(
-            fptr, (char *)m_keyword.c_str(), &m_value.UChar, (char *)m_comment.c_str() );
+        return fits_write_key<unsigned char>( fptr,
+                                              (char *)m_keyword.c_str(),
+                                              &m_value.UChar,
+                                              (char *)m_comment.c_str() );
     }
     case fitsType<char>():
     {
@@ -1072,8 +1215,10 @@ int fitsHeaderCard::write( fitsfile *fptr )
     }
     case fitsType<unsigned short>():
     {
-        return fits_write_key<unsigned short>(
-            fptr, (char *)m_keyword.c_str(), &m_value.UShort, (char *)m_comment.c_str() );
+        return fits_write_key<unsigned short>( fptr,
+                                               (char *)m_keyword.c_str(),
+                                               &m_value.UShort,
+                                               (char *)m_comment.c_str() );
     }
     case fitsType<int>():
     {
@@ -1081,8 +1226,10 @@ int fitsHeaderCard::write( fitsfile *fptr )
     }
     case fitsType<unsigned int>():
     {
-        return fits_write_key<unsigned int>(
-            fptr, (char *)m_keyword.c_str(), &m_value.UInt, (char *)m_comment.c_str() );
+        return fits_write_key<unsigned int>( fptr,
+                                             (char *)m_keyword.c_str(),
+                                             &m_value.UInt,
+                                             (char *)m_comment.c_str() );
     }
     case fitsType<long>():
     {
@@ -1090,18 +1237,24 @@ int fitsHeaderCard::write( fitsfile *fptr )
     }
     case fitsType<unsigned long>():
     {
-        return fits_write_key<unsigned long>(
-            fptr, (char *)m_keyword.c_str(), &m_value.ULong, (char *)m_comment.c_str() );
+        return fits_write_key<unsigned long>( fptr,
+                                              (char *)m_keyword.c_str(),
+                                              &m_value.ULong,
+                                              (char *)m_comment.c_str() );
     }
     case fitsType<long long>():
     {
-        return fits_write_key<long long>(
-            fptr, (char *)m_keyword.c_str(), &m_value.LongLong, (char *)m_comment.c_str() );
+        return fits_write_key<long long>( fptr,
+                                          (char *)m_keyword.c_str(),
+                                          &m_value.LongLong,
+                                          (char *)m_comment.c_str() );
     }
     case fitsType<unsigned long long>():
     {
-        return fits_write_key<unsigned long long>(
-            fptr, (char *)m_keyword.c_str(), &m_value.ULongLong, (char *)m_comment.c_str() );
+        return fits_write_key<unsigned long long>( fptr,
+                                                   (char *)m_keyword.c_str(),
+                                                   &m_value.ULongLong,
+                                                   (char *)m_comment.c_str() );
     }
     case fitsType<float>():
     {
@@ -1121,8 +1274,9 @@ int fitsHeaderCard::write( fitsfile *fptr )
     }
     default:
     {
-        mxThrowException(
-            err::invalidarg, "fitsHeaderCard::write", std::string( "invalid FITS type for " ) + m_keyword );
+        mxThrowException( err::invalidarg,
+                          "fitsHeaderCard::write",
+                          std::string( "invalid FITS type for " ) + m_keyword );
     }
     }
 }

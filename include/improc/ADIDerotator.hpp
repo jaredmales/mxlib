@@ -8,9 +8,9 @@
 #include "../ioutils/fits/fitsHeader.hpp"
 
 #ifndef ADIDerotator_hpp
-#define ADIDerotator_hpp
+    #define ADIDerotator_hpp
 
-#include "../math/geo.hpp"
+    #include "../math/geo.hpp"
 
 namespace mx
 {
@@ -57,14 +57,23 @@ struct ADIDerotator
     bool isSetup()
     {
         if( ( m_angleKeyword == "" || m_keywords.size() == 0 ) || ( m_angleScale == 0 && m_angleConstant == 0 ) )
+        {
             return false;
+        }
+
         return true;
     }
 
     /// Method called by ADIobservation to get keyword-values
-    void extractKeywords( std::vector<fits::fitsHeader> &heads /**< [in] The headers from the images being reduced.*/ )
+    /**
+      * \returns an optional which, if true, contains a vector of the indices of \p heads for which 
+      *          the extraction of a value for \ref m_angleKeyword failed
+      */
+    std::optional<std::vector<size_t>>
+    extractKeywords( std::vector<fits::fitsHeader> &heads /**< [in] The headers from the images being reduced.*/ )
     {
-        m_angles = fits::headersToValues<realT>( heads, m_angleKeyword );
+        m_angles.clear();
+        return fits::headersToValues<realT>( m_angles, heads, m_angleKeyword );
     }
 
     /// Calculate the derotation angle for a given image number

@@ -31,6 +31,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <vector>
+#include <optional>
 
 #include "fitsHeaderCard.hpp"
 
@@ -136,7 +137,7 @@ class fitsHeader
     /**
      * \param card is a fitsHeaderCard already populated
      */
-    void append( fitsHeaderCard card );
+    void append( const fitsHeaderCard & card );
 
     /// Append a card to the end of the header, from the three components of a card.
     /**
@@ -305,13 +306,16 @@ void fitsHeader::insert_after( headerIterator it, const std::string &k, typeT v 
  * \param[out] v will contain the converted values
  * \param[in] heads contains the headers
  * \param[in] keyw contains the keyword designating which value to convert
+ * 
+ * \returns an optional which, if true, contains a vector of the indices of \p heads for which 
+ *          the extraction of a value for \p keyw failed
  *
  */
 template <typename dataT>
-void headersToValues( std::vector<dataT> &v, std::vector<fitsHeader> &heads, const std::string &keyw )
+std::optional<std::vector<size_t>> headersToValues( std::vector<dataT> &v, std::vector<fitsHeader> &heads, const std::string &keyw )
 {
     v.resize( heads.size() );
-
+    std::vector<size_t> bad;
     for( size_t i = 0; i < heads.size(); ++i )
     {
         try
@@ -320,29 +324,20 @@ void headersToValues( std::vector<dataT> &v, std::vector<fitsHeader> &heads, con
         }
         catch(...)
         {
-            v[i] = std::numeric_limits<dataT>::quiet_NaN();
+            bad.push_back(i);
+            v[i] = std::numeric_limits<dataT>::max();
         }
     }
-}
 
-/// Convert the values in a std::vector of \ref fitsHeader "fits headers" into a std::vector of values.
-/** Creates a vector of the appropriate type and size.
- *
- * \tparam dataT is the type of the header value
- *
- * \param[in] heads contains the headers
- * \param[in] keyw contains the keyword designating which value to convert
- *
- * \retval std::vector<dataT> containing the converted values
- */
-template <typename dataT>
-std::vector<dataT> headersToValues( std::vector<fitsHeader> &heads, const std::string &keyw )
-{
-    std::vector<dataT> v( heads.size() );
+    if(bad.size() > 0) 
+    {
+        return bad;
+    }
+    else 
+    {
+        return {};
+    }
 
-    headersToValues( v, heads, keyw );
-
-    return v;
 }
 
 /// Write the status of a Git repository to HISTORY in a FITS header.

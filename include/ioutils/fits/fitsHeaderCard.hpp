@@ -208,7 +208,7 @@ class fitsHeaderCard
     /// Get the keyword
     /** \returns a const reference to m_keyword
      */
-    const std::string &keyword();
+    const std::string &keyword() const;
 
     /// Set the keyword
     void keyword( const std::string &kw /**< [in] the new keyword */ );
@@ -216,7 +216,7 @@ class fitsHeaderCard
     /// Get the type
     /** \returns the value of m_type
      */
-    int type();
+    int type() const;
 
     /// Set the type
     /** If this is a change in type and the native type is set in m_value (indicated by m_valueGood == true)

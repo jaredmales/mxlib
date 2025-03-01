@@ -155,7 +155,7 @@ void fitsHeader::eraseStandardTop()
     }
 }
 
-void fitsHeader::append( fitsHeaderCard card )
+void fitsHeader::append( const fitsHeaderCard & card )
 {
     // First check if duplicate key
     if( cardMap.count( card.keyword() ) > 0 )

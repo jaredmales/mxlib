@@ -134,7 +134,13 @@ struct ADIobservation : public HCIobservation<_realT>
      */
     int readFiles();
 
-    /// Post target read actions, including fake injection
+    /// Actions to take after the files are first read in by HCIobservation
+    /** Exracts the angle keywords from the FITS headers, and checks that a valid value is found for each file.
+     * Performs fake planet injectio if configured.
+     *
+     * \throws
+     * \returns -1 if an error occurs.
+     */
     virtual int postReadFiles();
 
     /// Post target coadd actions.
@@ -174,12 +180,16 @@ struct ADIobservation : public HCIobservation<_realT>
     std::vector<realT> m_fakePA;       ///< Position angles(s) of the fake planet(s)
     std::vector<realT> m_fakeContrast; ///< Contrast(s) of the fake planet(s)
 
-    realT m_RDIFluxScale{
-        1 }; ///< Flux scaling to apply to fake planets injected in RDI.  Would depend on the assumed spectrum in SDI.
-    realT m_RDISepScale{
-        1 }; ///< Scaling to apply to fake planet separation in RDI.  Would be ratio of wavelengths for SDI.
+    realT m_RDIFluxScale{ 1 };         /**< Flux scaling to apply to fake planets injected in RDI.
+                                            Would depend on the assumed spectrum in SDI.*/
+    realT m_RDISepScale{ 1 };          /**< Scaling to apply to fake planet separation in RDI.
+                                            Would be ratio of wavelengths for SDI.*/
 
-    /// Inect the fake plants
+    /// Inkect the fake plants
+    /**
+     *  \todo should pad the fake before calling the single image version
+     *  \todo throw exceptions for all errors, and switch to void
+     */
     int injectFake( eigenCube<realT> &ims,              ///< [in.out] the image cube in which to inject the fakes.
                     std::vector<std::string> &fileList, ///< [in] a list of file paths used for per-image fake PSFs.  If
                                                         ///< empty, then m_fakeFileName is used.
@@ -189,6 +199,11 @@ struct ADIobservation : public HCIobservation<_realT>
                                         ///< after lambda/D scaling.
     );
 
+    /// Inject the fake planet into a single image
+    /**
+     *  \todo should pad the fake before this point
+     *  \todo throw exceptions for all errors, and switch to void
+     */
     int injectFake( eigenImageT &fakePSF,
                     eigenCube<realT> &ims,
                     int image_i,
@@ -282,21 +297,18 @@ int ADIobservation<_realT, _derotFunctObj>::readFiles()
 template <typename _realT, class _derotFunctObj>
 int ADIobservation<_realT, _derotFunctObj>::postReadFiles()
 {
-    m_derotF.extractKeywords( this->m_heads );
+    std::optional<std::vector<size_t>> bad = m_derotF.extractKeywords( this->m_heads );
 
-    bool bad = false;
-    for(size_t n = 0; n < this->m_fileList.size(); ++n)
+    if( bad )
     {
-        if(!std::isfinite( m_derotF.m_angles[n]))
+        for( size_t n = 0; n < bad->size(); ++n )
         {
-            std::cerr << this->m_fileList[n] << " has no derotation angle\n";
-            bad = true;
+            std::cerr << this->m_fileList[( *bad )[n]] << " conversion failed for " << m_derotF.m_angleKeyword << "\n";
         }
-    }
 
-    if(bad)
-    {
-        throw std::runtime_error("missing derotation angles");
+        mxThrowException( mx::err::invalidarg,
+                          "ADIobservation::postReadFiles",
+                          "bad derotation angles in FITS header" );
     }
 
     if( m_fakeFileName != "" && !this->m_skipPreProcess )

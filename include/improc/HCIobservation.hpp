@@ -70,16 +70,15 @@ meanSubMethod meanSubMethodFmStr( const std::string &method );
 
 enum class pixelTSNormMethod
 {
-    none, ///< no pixel time series norm
-    rms, ///< the rms of the pixel time series
+    none,            ///< no pixel time series norm
+    rms,             ///< the rms of the pixel time series
     rmsSigmaClipped, ///< the sigma clipped rms of the pixel time series
-    unknown = -1 ///< unknown value, an error
+    unknown = -1     ///< unknown value, an error
 };
 
 std::string pixelTSNormMethodStr( pixelTSNormMethod method );
 
 pixelTSNormMethod pixelTSNormMethodFmStr( const std::string &method );
-
 
 /// Possible combination methods
 /** \ingroup hc_imaging_enums
@@ -482,7 +481,7 @@ struct HCIobservation
      */
     std::string m_maskFile;
 
-    eigenImageT m_mask; ///< The mask
+    eigenImageT m_mask;          ///< The mask
 
     eigenCube<realT> m_maskCube; /**< A cube of masks, one for each input image, which may be modified
                                       versions (e.g. rotated) of mask. */
@@ -516,13 +515,13 @@ struct HCIobservation
      * @{
      */
 
-    bool m_skipPreProcess{ false }; ///< Don't do any of the pre-processing steps (including coadding).
+    bool m_skipPreProcess{ false };         ///< Don't do any of the pre-processing steps (including coadding).
 
     bool m_preProcess_beforeCoadd{ false }; ///< controls whether pre-processing takes place before or after coadding
 
-    bool m_preProcess_mask{ true }; ///< If true, the mask is applied during each pre-processing step.
+    bool m_preProcess_mask{ true };         ///< If true, the mask is applied during each pre-processing step.
 
-    bool m_preProcess_subradprof{ false }; ///< If true, a radial profile is subtracted from each image.
+    bool m_preProcess_subradprof{ false };  ///< If true, a radial profile is subtracted from each image.
 
     /// Azimuthal boxcar width for azimuthal unsharp mask [pixels]
     /** If this is 0 then azimuthal-USM is not performed.
@@ -551,8 +550,8 @@ struct HCIobservation
 
     /// The mean subtraction method during pre-processing
     /** Can only be none, meanImage, or meadianImage
-      */
-    HCI::meanSubMethod m_preProcess_meanSubMethod {HCI::meanSubMethod::none};
+     */
+    HCI::meanSubMethod m_preProcess_meanSubMethod{ HCI::meanSubMethod::none };
 
     /// Specify if each pixel time-series is normalized
     /** This normalizaton is applied after centering. Can have the following values:
@@ -561,9 +560,9 @@ struct HCIobservation
      * - <b>HCI::pixelTSNormMethod::rmsSigmaClipped</b>: divide by the sigma-slipped time-series rms.
      *                                                   The sigma is provided by m_preProcess_pixelTSSigma.
      */
-    HCI::pixelTSNormMethod m_preProcess_pixelTSNormMethod {HCI::pixelTSNormMethod::none};
+    HCI::pixelTSNormMethod m_preProcess_pixelTSNormMethod{ HCI::pixelTSNormMethod::none };
 
-    realT m_pixelTSSigma {3}; ///< Sigma-clipping parameter for pixel time-series normalization
+    realT m_pixelTSSigma{ 3 }; ///< Sigma-clipping parameter for pixel time-series normalization
 
     /// Set path and file prefix to output the pre-processed images.
     /** If empty, then pre-processed images are not output.
@@ -580,8 +579,8 @@ struct HCIobservation
     void preProcess_meanSub( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
 
     /// Do pixel time-series normalization as part of pre-processing
-    void preProcess_pixelTSNorm ( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
-
+    void
+    preProcess_pixelTSNorm( eigenCube<realT> &ims /**< [in] the image cube, should be either m_tgtIms or m_refIms */ );
 
     ///@}
 
@@ -638,7 +637,7 @@ struct HCIobservation
     std::string m_auxDataDir{ "/tmp/klipReduceAux/" };
 
     /// Whether or not to move the temp. aux files.
-    bool m_moveAuxDataDir {true};
+    bool m_moveAuxDataDir{ true };
 
     /// Set whether the final combined image is written to disk
     int m_doWriteFinim{ 1 };
@@ -923,6 +922,8 @@ int HCIobservation<realT>::readFiles()
 
     im.resize( m_imSize, m_imSize );
 
+    std::cerr << "image size is " << m_imSize << "\n";
+
     /**** Right here is we go to coadd.
      */
 
@@ -990,13 +991,22 @@ int HCIobservation<realT>::readFiles()
         if( m_coaddCombineMethod != HCI::noCombine )
         {
             std::cerr << "Coadding target images...\n";
-            coaddImages(
-                m_coaddCombineMethod, m_coaddMaxImno, m_coaddMaxTime, m_coaddKeywords, m_imageMJD, m_heads, m_tgtIms );
+            coaddImages( m_coaddCombineMethod,
+                         m_coaddMaxImno,
+                         m_coaddMaxTime,
+                         m_coaddKeywords,
+                         m_imageMJD,
+                         m_heads,
+                         m_tgtIms );
+
+            
 
             m_Nims = m_tgtIms.planes();
             m_Nrows = m_tgtIms.rows();
             m_Ncols = m_tgtIms.cols();
             m_Npix = m_tgtIms.rows() * m_tgtIms.cols();
+
+            std::cerr << "number of target images after coadding: " << m_Nims << "\n";
 
             if( postCoadd() < 0 )
             {
@@ -1178,7 +1188,9 @@ int HCIobservation<_realT>::readRDIFiles()
     {
         /*** Now do any pre-processing ***/
         if( m_preProcess_beforeCoadd )
+        {
             preProcess( m_refIms );
+        }
 
         if( m_coaddCombineMethod != HCI::noCombine )
         {
@@ -1191,6 +1203,8 @@ int HCIobservation<_realT>::readRDIFiles()
                          m_RDIheads,
                          m_refIms );
 
+            std::cerr << "number of reference images after coadding: " << m_refIms.planes() << "\n";
+
             if( postRDICoadd() < 0 )
             {
                 std::cerr << "Post coadd error " << __FILE__ << " " << __LINE__ << "\n";
@@ -1201,7 +1215,9 @@ int HCIobservation<_realT>::readRDIFiles()
 
         /*** Now do any pre-processing if not done already***/
         if( !m_preProcess_beforeCoadd )
+        {
             preProcess( m_refIms );
+        }
 
         // outputRDIPreProcessed();
     }
@@ -1298,10 +1314,16 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
     t_coadd_begin = sys::get_curr_time();
 
     std::vector<eigenImageT> coadds;
+    std::vector<std::vector<std::string>> coaddFileNames;
 
     // We do all math here in double, to avoid losing precision
     std::vector<double> avgMJD;
+    std::vector<double> startMJD;
+    std::vector<double> endMJD;
+
     std::vector<std::vector<double>> avgVals;
+    std::vector<std::vector<double>> startVals;
+    std::vector<std::vector<double>> endVals;
 
     int combineMethod = HCI::medianCombine;
     if( coaddCombineMethod == HCI::meanCombine )
@@ -1315,22 +1337,36 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
     // Accumulate images to coadd into a cube
     eigenCube<realT> imsToCoadd;
 
+    // The filenames of the images included in the coadd
+    std::vector<std::string> imsCoadded;
+
     // Temporary for combination.
     eigenImageT coadd;
 
     // Accumulate values
     double initMJD;
+
     std::vector<double> initVals;
     initVals.resize( coaddKeywords.size() );
+
+    std::vector<double> startVal;
+    startVal.resize( coaddKeywords.size() );
+
+    std::vector<double> endVal;
+    endVal.resize( coaddKeywords.size() );
 
     while( im0 < Nims )
     {
         // Initialize the accumulators
         initMJD = imageMJD[im0];
+        startMJD.push_back( initMJD );
+        endMJD.push_back( initMJD );
 
         for( size_t i = 0; i < coaddKeywords.size(); ++i )
         {
             initVals[i] = heads[im0][coaddKeywords[i]].value<double>();
+            startVal[i] = initVals[i];
+            endVal[i] = initVals[i];
         }
 
         // Now increment imF, then test whether each variable is now outside the range
@@ -1339,14 +1375,14 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
         {
             ++imF;
 
-            if( imF >= Nims ) //out of images
+            if( imF >= Nims ) // out of images
             {
                 imF = Nims;
                 increment = false;
                 break;
             }
 
-            if( imF - im0 > coaddMaxImno && coaddMaxImno > 0 ) //too many images in coadd
+            if( imF - im0 > coaddMaxImno && coaddMaxImno > 0 ) // too many images in coadd
             {
                 --imF;
                 increment = false;
@@ -1369,10 +1405,13 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
         for( int imno = im0 + 1; imno < imF; ++imno )
         {
             initMJD += imageMJD[imno];
+            endMJD.back() = imageMJD[imno]; // After the last one, this will be the last one
 
             for( size_t i = 0; i < coaddKeywords.size(); ++i )
             {
-                initVals[i] += heads[imno][coaddKeywords[i]].value<double>();
+                endVal[i] =
+                    heads[imno][coaddKeywords[i]].value<double>(); // After the last one, this will be the last one
+                initVals[i] += endVal[i];
             }
         }
 
@@ -1385,9 +1424,11 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
 
         // Extract the images into the temporary
         imsToCoadd.resize( Nrows, Ncols, imF - im0 );
+        imsCoadded.resize( imF - im0 );
         for( int i = 0; i < ( imF - im0 ); ++i )
         {
             imsToCoadd.image( i ) = ims.image( im0 + i );
+            imsCoadded[i] = ioutils::pathFilename( m_fileList[im0 + i] );
         }
 
         // Here do the combine and insert into the vector
@@ -1400,10 +1441,13 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
             imsToCoadd.mean( coadd );
         }
         coadds.push_back( coadd );
+        coaddFileNames.push_back( imsCoadded );
 
         // Insert the new averages
         avgMJD.push_back( initMJD );
         avgVals.push_back( initVals );
+        startVals.push_back( startVal );
+        endVals.push_back( endVal );
 
         im0 = imF;
         imF = im0 + 1;
@@ -1414,7 +1458,9 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
     Nims = coadds.size();
 
     for( int i = 0; i < Nims; ++i )
+    {
         ims.image( i ) = coadds[i];
+    }
 
     // Now deal with imageMJD and headers
     imageMJD.erase( imageMJD.begin() + Nims, imageMJD.end() );
@@ -1423,9 +1469,27 @@ void HCIobservation<_realT>::coaddImages( int coaddCombineMethod,
     for( int i = 0; i < Nims; ++i )
     {
         imageMJD[i] = avgMJD[i];
+        heads[i][m_MJDKeyword].value( mx::sys::ISO8601DateTimeStrMJD( imageMJD[i], 1 ) );
+        heads[i]["START " + m_MJDKeyword].value( mx::sys::ISO8601DateTimeStrMJD( startMJD[i], 1 ) );
+        heads[i]["END " + m_MJDKeyword].value( mx::sys::ISO8601DateTimeStrMJD( endMJD[i], 1 ) );
+        heads[i].append( "DELTA " + m_MJDKeyword,
+                         ( endMJD[i] - startMJD[i] ) * 86400,
+                         "change in " + m_MJDKeyword + " in seconds." );
+
         for( size_t j = 0; j < coaddKeywords.size(); ++j )
         {
             heads[i][coaddKeywords[j]].value( avgVals[i][j] );
+            heads[i]["START " + coaddKeywords[j]].value( startVals[i][j] );
+            heads[i]["END " + coaddKeywords[j]].value( endVals[i][j] );
+            heads[i]["DELTA " + coaddKeywords[j]].value( endVals[i][j] - startVals[i][j] );
+        }
+
+        heads[i].append( "IMAGES COADDED", coaddFileNames[i].size(), "number of images included in this coadd" );
+        for( size_t j = 0; j < coaddFileNames[i].size(); ++j )
+        {
+            // fits::fitsHistoryType t;
+            // fits::fitsHeaderCard c("HISTORY", t , "coadded file: " + coaddFileNames[i][j]);
+            heads[i].append( "HISTORY", fits::fitsHistoryType(), "coadded file: " + coaddFileNames[i][j] );
         }
     }
 
@@ -1511,7 +1575,7 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
             {
                 Eigen::Map<Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic>> imRef( ims.image( i ) );
                 radprofim( rp, imRef, true );
-                zeroNaNs(imRef);
+                zeroNaNs( imRef );
             }
         }
 
@@ -1528,9 +1592,6 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
             std::cerr << "done\n";
         }
     }
-
-
-
 
     if( m_preProcess_medianUSM_fwhm > 0 )
     {
@@ -1619,8 +1680,9 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
             im = ims.image( i );
             medianFilterImage( fim,
                                im,
-                               azBoxKernel<eigenImage<realT>>(
-                                   m_preProcess_azUSM_radW, m_preProcess_azUSM_azW, m_preProcess_azUSM_maxAz ) );
+                               azBoxKernel<eigenImage<realT>>( m_preProcess_azUSM_radW,
+                                                               m_preProcess_azUSM_azW,
+                                                               m_preProcess_azUSM_maxAz ) );
             im = ( im - fim );
             ims.image( i ) = im;
             status.incrementAndOutputStatus();
@@ -1640,9 +1702,9 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
         std::cerr << "done (" << t_azusm_end - t_azusm_begin << " sec)                                \n";
     }
 
-    preProcess_meanSub(ims);
+    preProcess_meanSub( ims );
 
-    preProcess_pixelTSNorm(ims);
+    preProcess_pixelTSNorm( ims );
 
     t_preproc_end = sys::get_curr_time();
 
@@ -1651,40 +1713,39 @@ void HCIobservation<_realT>::preProcess( eigenCube<realT> &ims )
 template <typename _realT>
 void HCIobservation<_realT>::preProcess_meanSub( eigenCube<realT> &ims )
 {
-    if(m_preProcess_meanSubMethod == HCI::meanSubMethod::none)
+    if( m_preProcess_meanSubMethod == HCI::meanSubMethod::none )
     {
         return;
     }
-    else if( m_preProcess_meanSubMethod != HCI::meanSubMethod::meanImage && m_preProcess_meanSubMethod != HCI::meanSubMethod::medianImage )
+    else if( m_preProcess_meanSubMethod != HCI::meanSubMethod::meanImage &&
+             m_preProcess_meanSubMethod != HCI::meanSubMethod::medianImage )
     {
-        std::string msg = "Mean subtraction by " + HCI::meanSubMethodStr(m_preProcess_meanSubMethod);
+        std::string msg = "Mean subtraction by " + HCI::meanSubMethodStr( m_preProcess_meanSubMethod );
         msg += " can't be done in pre-processing. Only meanImage or medianImage can be used in pre.";
-        mxThrowException(err::invalidconfig, "HCIobservation::preProcess_meanSub", msg);
+        mxThrowException( err::invalidconfig, "HCIobservation::preProcess_meanSub", msg );
     }
 
-        eigenImageT mean;
+    eigenImageT mean;
 
-        if( m_preProcess_meanSubMethod == HCI::meanSubMethod::meanImage )
+    if( m_preProcess_meanSubMethod == HCI::meanSubMethod::meanImage )
+    {
+        ims.mean( mean );
+    }
+    else if( m_preProcess_meanSubMethod == HCI::meanSubMethod::medianImage )
+    {
+        ims.median( mean );
+    }
+
+#pragma omp parallel for
+    for( int n = 0; n < ims.planes(); ++n )
+    {
+        ims.image( n ) -= mean;
+
+        if( m_maskFile != "" && m_preProcess_mask )
         {
-            ims.mean( mean );
+            ims.image( n ) *= m_mask;
         }
-        else if( m_preProcess_meanSubMethod == HCI::meanSubMethod::medianImage )
-        {
-            ims.median( mean );
-        }
-
-        #pragma omp parallel for
-        for( int n = 0; n < ims.planes(); ++n )
-        {
-            ims.image( n ) -= mean;
-
-            if( m_maskFile != "" && m_preProcess_mask )
-            {
-                ims.image( n ) *= m_mask;
-            }
-        }
-
-
+    }
 }
 
 template <typename _realT>
@@ -1695,53 +1756,55 @@ void HCIobservation<_realT>::preProcess_pixelTSNorm( eigenCube<realT> &ims )
         return;
     }
 
-    if(m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::unknown)
+    if( m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::unknown )
     {
-        mxThrowException(err::invalidconfig, "KlipReduction::preProcess_pixelTSNorm", "pixelTSNormMethod is unknown");
+        mxThrowException( err::invalidconfig, "KlipReduction::preProcess_pixelTSNorm", "pixelTSNormMethod is unknown" );
     }
 
-    if(m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::rmsSigmaClipped)
+    if( m_preProcess_pixelTSNormMethod == HCI::pixelTSNormMethod::rmsSigmaClipped )
     {
-        mxThrowException(err::invalidconfig, "KlipReduction::preProcess_pixelTSNorm", "pixelTSNormMethod is rmsSigmaClipped, which is not implemented");
+        mxThrowException( err::invalidconfig,
+                          "KlipReduction::preProcess_pixelTSNorm",
+                          "pixelTSNormMethod is rmsSigmaClipped, which is not implemented" );
     }
 
-        std::cerr << "normalizing pixels\n";
+    std::cerr << "normalizing pixels\n";
 
-    #pragma omp parallel
+#pragma omp parallel
     {
-        std::vector<realT> pixs(ims.planes());
+        std::vector<realT> pixs( ims.planes() );
 
-        #pragma omp for
-        for(int cc = 0; cc < ims.cols(); ++cc)
+#pragma omp for
+        for( int cc = 0; cc < ims.cols(); ++cc )
         {
-            for(int rr = 0; rr < ims.rows(); ++rr)
+            for( int rr = 0; rr < ims.rows(); ++rr )
             {
                 if( m_maskFile != "" && m_preProcess_mask )
                 {
-                    if(m_mask(rr,cc) == 0)
+                    if( m_mask( rr, cc ) == 0 )
                     {
                         continue;
                     }
                 }
 
-                //We bother to load a vector in prep to add sigma clipping later.
-                for(int pp = 0; pp < ims.planes(); ++pp)
+                // We bother to load a vector in prep to add sigma clipping later.
+                for( int pp = 0; pp < ims.planes(); ++pp )
                 {
-                    pixs[pp] = ims.image(pp)(rr,cc);
+                    pixs[pp] = ims.image( pp )( rr, cc );
                 }
 
-                realT sd = sqrt(math::vectorVariance(pixs,0));
+                realT sd = sqrt( math::vectorVariance( pixs, 0 ) );
 
-                if(sd == 0) continue;
+                if( sd == 0 )
+                    continue;
 
-                for(int pp = 0; pp < ims.planes(); ++pp)
+                for( int pp = 0; pp < ims.planes(); ++pp )
                 {
-                    ims.image(pp)(rr,cc) /= sd;
+                    ims.image( pp )( rr, cc ) /= sd;
                 }
             }
         }
     }
-
 }
 
 template <typename _realT>
@@ -1919,16 +1982,24 @@ void HCIobservation<_realT>::outputPreProcessed()
     {
         return;
     }
-    std::string bname, fname;
+
+    std::string dir = ioutils::parentPath( m_preProcess_outputPrefix );
+    ioutils::createDirectories( dir );
+
+    std::string fname;
 
     fits::fitsFile<_realT> ff;
 
     /** \todo Should add a HISTORY card here */
+    char nstr[16];
     for( int i = 0; i < m_Nims; ++i )
     {
-        bname = m_fileList[i];
-        fname = m_preProcess_outputPrefix + "/" + ioutils::pathFilename( bname.c_str() );
-        ff.write( fname, m_tgtIms.image( i ).data(), m_Ncols, m_Nrows, 1, m_heads[i] );
+        snprintf( nstr, sizeof( nstr ), "%06d", i );
+        fname = m_preProcess_outputPrefix + nstr + ".fits";
+
+        fits::fitsHeader fh = m_heads[i];
+        stdFitsHeader( fh );
+        ff.write( fname, m_tgtIms.image( i ).data(), m_Ncols, m_Nrows, 1, fh );
     }
 } // void HCIobservation<_realT>::outputPreProcessed()
 
@@ -1965,18 +2036,23 @@ void HCIobservation<_realT>::stdFitsHeader( fits::fitsHeader &head )
     head.append<int>( "PREPROC BEFORE", m_preProcess_beforeCoadd, "pre-process before coadd flag" );
     head.append<int>( "PREPROC MASK", m_preProcess_mask, "pre-process mask flag" );
     head.append<int>( "PREPROC SUBRADPROF", m_preProcess_subradprof, "pre-process subtract radial profile flag" );
-    head.append<realT>(
-        "PREPROC AZUSM AZWIDTH", m_preProcess_azUSM_azW, "pre-process azimuthal USM azimuthal width [pixels]" );
+    head.append<realT>( "PREPROC AZUSM AZWIDTH",
+                        m_preProcess_azUSM_azW,
+                        "pre-process azimuthal USM azimuthal width [pixels]" );
     head.append<realT>( "PREPROC AZUSM MAXAZ",
                         m_preProcess_azUSM_maxAz,
                         "pre-process azimuthal USM maximum azimuthal width [degrees]" );
-    head.append<realT>(
-        "PREPROC AZUSM RADWIDTH", m_preProcess_azUSM_radW, "pre-process azimuthal USM radial width [pixels]" );
+    head.append<realT>( "PREPROC AZUSM RADWIDTH",
+                        m_preProcess_azUSM_radW,
+                        "pre-process azimuthal USM radial width [pixels]" );
     head.append<realT>( "PREPROC MEDIANUSM FWHM", m_preProcess_medianUSM_fwhm, "pre-process median USM fwhm [pixels]" );
     head.append<realT>( "PREPROC GAUSSUSM FWHM", m_preProcess_gaussUSM_fwhm, "pre-process Gaussian USM fwhm [pixels]" );
-    head.append<std::string>( "PREPROC MEANSUB METHOD", HCI::meanSubMethodStr(m_preProcess_meanSubMethod), "pre-process mean subtraction method" );
-    head.append<std::string>( "PREPROC PIXELTSNORM METHOD", HCI::pixelTSNormMethodStr(m_preProcess_pixelTSNormMethod), "pre-process pixel time-series norm method" );
-
+    head.append<std::string>( "PREPROC MEANSUB METHOD",
+                              HCI::meanSubMethodStr( m_preProcess_meanSubMethod ),
+                              "pre-process mean subtraction method" );
+    head.append<std::string>( "PREPROC PIXELTSNORM METHOD",
+                              HCI::pixelTSNormMethodStr( m_preProcess_pixelTSNormMethod ),
+                              "pre-process pixel time-series norm method" );
 }
 
 template <typename _realT>
@@ -2165,8 +2241,9 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
     {
         if( fh.count( "MASKFILE" ) == 0 )
         {
-            mxError(
-                "KLIPReduction", MXE_PARAMNOTSET, "MASKFILE not found in FITS header and not set in configuration." );
+            mxError( "KLIPReduction",
+                     MXE_PARAMNOTSET,
+                     "MASKFILE not found in FITS header and not set in configuration." );
             return -1;
         }
         m_maskFile = fh["MASKFILE"].String();
@@ -2245,8 +2322,9 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
 
         if( m_fileList.size() == 0 )
         {
-            mxError(
-                "HCIobservation", MXE_FILENOTFOUND, "The m_fileList has 0 length, there are no files to be read." );
+            mxError( "HCIobservation",
+                     MXE_FILENOTFOUND,
+                     "The m_fileList has 0 length, there are no files to be read." );
             return -1;
         }
 
@@ -2262,15 +2340,21 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
         {
             m_imSize = im.rows();
             if( m_imSize > im.cols() )
+            {
                 m_imSize = im.cols();
+            }
         }
         else
         {
             // Now make sure we don't read too much.
             if( m_imSize > im.rows() )
+            {
                 m_imSize = im.rows();
+            }
             if( m_imSize > im.cols() )
+            {
                 m_imSize = im.cols();
+            }
         }
 
         // the +0.1 is just to make sure we don't have a problem with precision (we shouldn't)/
@@ -2279,6 +2363,8 @@ int HCIobservation<_realT>::readPSFSub( const std::string &dir,
                        m_imSize,
                        m_imSize );
         im.resize( m_imSize, m_imSize );
+
+        std::cerr << "image size is " << m_imSize << "\n";
 
         if( n > 0 )
         {
