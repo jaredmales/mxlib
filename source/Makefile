@@ -124,13 +124,17 @@ install: libmxlib.$(LIB_SUFFIX)
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(CUDA_OBJS)
-	$(MAKE) -C vendor/levmar-2.6/ clean
+
+.PHONY: vendorclean
+vendorclean:
 	$(MAKE) -C $(SOFA_PATH) clean
+	$(MAKE) -C vendor/levmar-2.6/ clean
 
 .PHONY: realclean
 realclean: clean
 	rm -f libmxlib.$(LIB_SUFFIX)
 	rm -f $(OBJS)
+	$(MAKE) -C $(SOFA_PATH) realclean
 	$(MAKE) -C vendor/levmar-2.6/ cleanall
 
 #for forcing the rebuild of mxlib.o everytime, needed for git tracking

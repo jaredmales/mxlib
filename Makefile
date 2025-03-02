@@ -33,7 +33,7 @@ INC_TO_INSTALL = ao \
                  mxError.hpp \
                  mxlib.hpp\
                  mxlib_uncomp_version.h
-                
+
 all: lib
 
 .PHONY: mxlib_uncomp_version
@@ -43,7 +43,7 @@ mxlib_uncomp_version:
 .PHONY: mxlib_comp_version
 mxlib_comp_version:
 	@bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
-	
+
 .PHONY: setup
 setup:
 	@for file in ./local/*.example.mk; do \
@@ -62,7 +62,7 @@ setup:
 
 lib: mxlib_uncomp_version mxlib_comp_version
 	cd source; ${MAKE}
-	
+
 install: all mxlib_uncomp_version
 	cd source; ${MAKE} install
 	install -d $(INCLUDE_PATH)/mx
@@ -76,6 +76,10 @@ clean:
 	rm -f include/mxlib_uncomp_version.h
 	rm -f include/mxlib_comp_version.h
 	$(MAKE) -C source clean
+
+.PHONY: vendorclean
+vendorclean:
+	$(MAKE) -C source vendorclean
 
 .PHONY: realclean
 realclean: clean
