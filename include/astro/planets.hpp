@@ -46,7 +46,7 @@ namespace astro
   \log_{10}^5\left(\frac{M}{M_\oplus}\right), & 15.84 \le M < 3591.1 M_\oplus \\ 32.03
   \left(\frac{M}{M_\oplus}\right)^{-1/8}, & 3591.1 M_\oplus \le M \end{cases} \f$
   *
-  * \image html planet_mrdiag_2017.06.19.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
+  * \image html planet_mrdiag_2020.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
   circles are the Solar system.  Black circles indicate expoplanets with Teq below that of a blackbody at Mercury's
   separation (413 K)."
   *
@@ -103,7 +103,7 @@ typename units::realT planetMass2Radius( typename units::realT mass /**< The mas
  * Above  \f$ 12 M_{Jup} we scale as \f$ M^{-1/8} \f$ based on the curve shown in Fortney et al. (2011) \cite
  * fortney_2010.
  *
- * \image html planet_mrdiag_2017.06.19.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
+ * \image html planet_mrdiag_2020.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
  * circles are the Solar system.  Points with error bars are from the NASA exoplanet catalog, selected for \f$T_{eq} <
  * 1000\f$ K
  *

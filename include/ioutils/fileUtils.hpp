@@ -44,6 +44,13 @@ namespace ioutils
  * @{
  */
 
+/// Check if a path exists
+/**
+ * \returns true if the path exists
+ * \returns false if it doesn't
+ */
+bool exists( const std::string &path /**< [in] the path to check for existence */ );
+
 /// Create a directory or directories
 /** This will create any directories in path that don't exist.  It silently ignores already existing directories.
  *
@@ -75,12 +82,12 @@ std::string parentPath( const std::string &fname );
  * \returns a std::vector\<std::string\> which contains the matching file names.
  */
 std::vector<std::string>
-getFileNames( const std::string &directory, ///< [in] the path to the directory to search. Can not be empty.
-              const std::string &prefix,   ///< [in] the file name prefix (the beginning characters of the file name) to
-                                           ///< search for, if "" then not used.
-              const std::string &substr,   ///< [in] a substring of the filename to earch for, if "" then not used.
-              const std::string &extension ///< [in] the file name extension to search for, if "" then not used.  Note
-                                           ///< that this must include the ".", as in".ext".
+getFileNames( const std::string &directory, /**< [in] the path to the directory to search. Can not be empty. */
+              const std::string &prefix,    /**< [in] the file name prefix (the beginning characters of the file
+                                                      name) to search for, if "" then not used.*/
+              const std::string &substr,    /**< [in] a substring of the filename to earch for, if "" then not used.*/
+              const std::string &extension  /**< [in] the file name extension to search for, if "" then not used.
+                                                      Note that this must include the ".", as in".ext".*/
 );
 
 /// Get a list of file names from the specified directory, specifying the extension
@@ -89,9 +96,9 @@ getFileNames( const std::string &directory, ///< [in] the path to the directory 
  * \returns a std::vector\<std::string\> which contains the matching file names.
  */
 std::vector<std::string>
-getFileNames( const std::string &directory, ///< [in] the path to the directory to search. Can not be empty.
-              const std::string &extension  ///< [in] the file name extension to search for, if "" then not used.  Note
-                                            ///< that this must include the ".", as in ".ext".
+getFileNames( const std::string &directory, /**< [in] the path to the directory to search. Can not be empty.*/
+              const std::string &extension  /**< [in] the file name extension to search for, if "" then not used.
+                                                      Note that this must include the ".", as in ".ext".*/
 );
 
 /// Get a list of file names from the specified directory
@@ -99,35 +106,39 @@ getFileNames( const std::string &directory, ///< [in] the path to the directory 
  *
  * \returns a std::vector\<std::string\> which contains the matching file names.
  */
-std::vector<std::string>
-getFileNames( const std::string &directory /**< [in] the path to the directory to search.  Can not be empty. */ );
+std::vector<std::string> getFileNames( const std::string &directory /**< [in] the path to the directory to search.
+                                                                              Can not be empty. */ );
 
 /// Prepend and/or append strings to a file name, leaving the directory and extension unaltered.
 /**
  * \returns the new file name
  */
-std::string fileNamePrependAppend(
-    const std::string &fname,   ///< [in] the original file name, possibly including a directory and extension
-    const std::string &prepend, ///< [in] is the string to insert at the beginning of the file name after the path
-    const std::string &append   ///< [in] is the string to insert at the end of the file name, before the extension
+std::string fileNamePrependAppend( const std::string &fname,   /**< [in] the original file name, possibly including a
+                                                                         directory and extension*/
+                                   const std::string &prepend, /**< [in] is the string to insert at the beginning of the
+                                                                         file name after the path*/
+                                   const std::string &append   /**< [in] is the string to insert at the end of the file
+                                                                         name, before the extension*/
 );
 
 /// Append a string to a file name, leaving the directory and extension unaltered.
 /**
  * \returns the new file name
  */
-std::string fileNameAppend(
-    const std::string &fname, ///< [in] the original file name, possibly including a directory and extension
-    const std::string &append ///< [in] is the string to insert at the end of the file name, before the extension
+std::string fileNameAppend( const std::string &fname, /**< [in] the original file name, possibly including
+                                                                a directory and extension*/
+                            const std::string &append /**< [in] is the string to insert at the end
+                                                                of the file name, before the extension*/
 );
 
 /// Prepend strings to a file name, leaving the directory and extension unaltered.
 /**
  * \returns the new file name
  */
-std::string fileNamePrepend(
-    const std::string &fname,  ///< [in] the original file name, possibly including a directory and extension
-    const std::string &prepend ///< [in] is the string to insert at the beginning of the file name after the path
+std::string fileNamePrepend( const std::string &fname,  /**< [in] the original file name, possibly including
+                                                                  a directory and extension*/
+                             const std::string &prepend /**< [in] is the string to insert at the beginning of
+                                                                  the file name after the path*/
 );
 
 /// Get the next file in a numbered sequence
@@ -143,11 +154,15 @@ std::string fileNamePrepend(
  *
  * \test Verify creation of sequential file names \ref tests_ioutils_fileUtils_getSequentialFilename "[test doc]"
  */
-std::string getSequentialFilename(
-    const std::string &basename,       ///< [in] path and initial name of the file
-    const std::string &extension = "", ///< [in] [optional] extension to append after the number. Default is empty.
-    const int startat = 0,             ///< [in] [optional] number to start the search from.  Default is 0.
-    int ndigit = 4 ///< [in] [optional] number of digits in string representation of the number.  Default is 4.
+std::string getSequentialFilename( const std::string &basename,       ///< [in] path and initial name of the file*/
+                                   const std::string &extension = "", /**< [in] [optional] extension to append after the
+                                                                                           number. Default is empty.*/
+                                   const int startat = 0,             /**< [in] [optional] number to start the
+                                                                                           search from.
+                                                                                           Default is 0.*/
+                                   int ndigit = 4                     /**< [in] [optional] number of digits in string
+                                                                                           representation
+                                                                                           of the number.Default is 4. */
 );
 
 /// Get the size in bytes of a file

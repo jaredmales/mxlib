@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
 
 using namespace boost::filesystem;
 
@@ -48,6 +49,11 @@ namespace mx
 {
 namespace ioutils
 {
+
+bool exists( const std::string & path )
+{
+    return boost::filesystem::exists(boost::filesystem::path(path));
+}
 
 int createDirectories( const std::string &path )
 {
