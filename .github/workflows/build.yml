@@ -10,9 +10,9 @@ jobs:
       - name: Who am I?
         run: echo "Triggered by ${{ github.event_name }}, branch ${{ github.ref }}, running on ${{ runner.os }}"
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Cache miniconda packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-miniconda
         with:
