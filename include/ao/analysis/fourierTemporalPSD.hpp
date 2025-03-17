@@ -1157,8 +1157,8 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                         if( doLP )
                         {
-
-                            tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, go_lp, tPSDpPOL, tPSDn, lpNc );
+                            realT min_sc;
+                            tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, min_sc, go_lp, tPSDpPOL, tPSDn, lpNc );
 
                             for( int n = 0; n < lpNc; ++n )
                             {

@@ -37,15 +37,25 @@ struct clAOLinearPredictor
 {
     typedef _realT realT;
 
-    std::vector<realT> PSDtn;
+public:
 
-    std::vector<realT> psd2s;
+    struct regResult
+    {
+        realT sc;
+        realT gopt;
+        realT gmax;
+        realT var;
+    };
 
-    std::vector<realT> ac;
+    std::vector<realT> m_PSDtn; ///< Working memory for the regularized PSD
 
-    sigproc::autocorrelationFromPSD<realT> acpsd;
+    std::vector<realT> m_psd2s; ///< Working memory for the 2-sided regularized PSD
 
-    sigproc::linearPredictor<realT> lp;
+    std::vector<realT> m_ac; ///< Working memory to hold the autocorrelation.
+
+    sigproc::autocorrelationFromPSD<realT> m_acpsd;
+
+    sigproc::linearPredictor<realT> m_lp;
 
     realT m_min_var0{ 0 };
     realT m_min_sc0{ 10 };
@@ -59,12 +69,13 @@ struct clAOLinearPredictor
     realT m_minPrecision{ 0.001 };
     int m_maxIts{ 100 };
 
-    int extrap;
+    int m_extrap {1}; ///< The LP extrapolation length in loop steps.  Normally it is 1 step.
+
+    std::vector<regResult> m_regResults;
+public:
 
     clAOLinearPredictor()
-    {
-        extrap = 0;
-    }
+    {}
 
     /// Calculate the LP coefficients for a turbulence PSD and a noise PSD.
     /** This combines the two PSDs, augments to two-sided, and calls the linearPredictor.calcCoefficients method.
@@ -76,27 +87,29 @@ struct clAOLinearPredictor
                           std::vector<realT> &PSDn, ///< [in] the WFS noise PSD
                           realT PSDreg,             ///< [in] the regularizing constant.  Set to 0 to not use.
                           int Nc,                   ///< [in] the number of LP coefficients.
-                          realT condition = 0 )
+                          realT condition = 0       /**< [in] the condition number for the SVD.  If 0 then
+                                                              levinson recursion is used. */
+                        )
     {
-        PSDtn.resize( PSDt.size() );
+        m_PSDtn.resize( PSDt.size() );
 
         for( size_t i = 0; i < PSDt.size(); ++i )
         {
-            PSDtn[i] = PSDt[i] + PSDn[i] + PSDreg;
+            m_PSDtn[i] = PSDt[i] + PSDn[i] + PSDreg;
         }
 
-        sigproc::augment1SidedPSD( psd2s, PSDtn, 1 );
+        sigproc::augment1SidedPSD( m_psd2s, m_PSDtn, 1 );
 
-        ac.resize( psd2s.size() );
+        m_ac.resize( m_psd2s.size() );
 
-        acpsd( ac, psd2s );
+        m_acpsd( m_ac, m_psd2s );
 
-        return lp.calcCoefficients( ac, Nc, condition, extrap );
+        return m_lp.calcCoefficients( m_ac, Nc, m_extrap , condition );
     }
 
     /// Worker function for regularizing the PSD for coefficient calculation.
     /**
-     * \tparam printout if true then the results are printed to stdout as they are calculated.
+     * \tparam telem if true then the results are collected in m_regResults.
      *
      * On first call (min_var = 0):
      *     loop over scale factors from min_sc to max_sc (<=) in steps of precision.
@@ -104,7 +117,7 @@ struct clAOLinearPredictor
      * On subsequent calls, when min_var and min_sc are passed back in
      *     loop over scale factors from min_sc-precision to max_sc in steps of
      */
-    template <bool printout>
+    template <bool telem>
     int _regularizeCoefficients( realT &min_var,  ///< [in.out] the minimum variance found.  Set to 0 on initial call
                                  realT &min_sc,   ///< [in.out] the scale factor at the minimum variance.
                                  realT precision, ///< [in] the step-size for the scale factor
@@ -121,33 +134,28 @@ struct clAOLinearPredictor
 
         realT sc0;
 
-        // realT last_var;
-
-        // min_var == 0 indicates first call
-        if( min_var == 0 )
+        if( min_var == 0 ) //first call
         {
             sc0 = min_sc;
             min_var = std::numeric_limits<realT>::max();
-            // last_var = std::numeric_limits<realT>::max();
         }
         else
         {
             sc0 = min_sc - precision * m_dPrecision;
-            // sc0 = min_sc;
-            // last_var = min_var;
         }
 
         // auto it = std::max_element(std::begin(PSDt), std::end(PSDt));
         realT psdReg = PSDt[0]; //*it/10;
 
         // Test from sc0 to max_sc in steps of precision
-        for( realT sc = sc0; sc <= max_sc; sc += precision )
+        //for( realT sc = sc0; sc <= max_sc; sc += precision )
+        for( realT sc = max_sc; sc >= sc0; sc -= precision )
         {
             if( calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc ) < 0 )
                 return -1;
 
-            go_lp.a( lp.m_c );
-            go_lp.b( lp.m_c );
+            go_lp.a( m_lp.m_c );
+            go_lp.b( m_lp.m_c );
 
             realT ll = 0, ul = 0;
             gmax_lp = go_lp.maxStableGain( ll, ul );
@@ -158,9 +166,9 @@ struct clAOLinearPredictor
 
             gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
 
-            if( printout )
+            if( telem )
             {
-                std::cout << -( sc ) / 10 << " " << gmax_lp << " " << gopt_lp << " " << var_lp << "\n";
+                m_regResults.push_back({sc, gopt_lp, gmax_lp, var_lp});
             }
 
             if( var_lp < min_var )
@@ -171,9 +179,9 @@ struct clAOLinearPredictor
 
             // A jump by a factor of 10 indicates the wall
             if( var_lp > 10 * min_var )
+            {
                 return 0;
-
-            // last_var = var_lp;
+            }
         }
 
         return -1;
@@ -183,12 +191,13 @@ struct clAOLinearPredictor
     /** The PSD is regularized by adding a constant to it.  This constant is found by minimizing the variance of the
      * residual PSD.
      *
-     * \tparam printout if true then the results are printed to stdout as they are calculated.
+     * \tparam telem if true then the results are collected in m_regResults
      */
-    template <bool printout = false>
+    template <bool telem = false>
     int regularizeCoefficients( realT &gmax_lp,           ///< [out] the maximum gain calculated for the regularized PSD
                                 realT &gopt_lp,           ///< [out] the optimum gain calculated for the regularized PSD
                                 realT &var_lp,            ///< [out] the variance at the optimum gain.
+                                realT &min_sc,            ///< [out] the optimum regularization scale factor
                                 clGainOpt<realT> &go_lp,  ///< [in] the gain optimization object
                                 std::vector<realT> &PSDt, ///< [in] the turbulence PSD
                                 std::vector<realT> &PSDn, ///< [in] the WFS noise PSD
@@ -197,14 +206,19 @@ struct clAOLinearPredictor
     {
 
         realT min_var = m_min_var0;
-        realT min_sc = m_min_sc0;
+        min_sc = m_min_sc0;
         realT precision = m_precision0;
         realT max_sc = m_max_sc0;
+
+        if(telem)
+        {
+            m_regResults.reserve(m_maxIts * 50);
+        }
 
         int its = 0;
         while( precision > m_minPrecision && its < m_maxIts )
         {
-            _regularizeCoefficients<printout>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc );
+            _regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc );
 
             if( min_sc == max_sc )
             {
@@ -231,12 +245,12 @@ struct clAOLinearPredictor
 
         // Now record final values
         if( calcCoefficients( PSDt, PSDn, PSDt[0] * pow( 10, -min_sc / 10 ), Nc ) < 0 )
+        {
             return -1;
+        }
 
-        go_lp.a( lp.m_c );
-        // go_lp.a(std::vector<realT>({1}));
-        go_lp.b( lp.m_c );
-        // go_lp.b(std::vector<realT>({lp._c(0,0)}));
+        go_lp.a( m_lp.m_c );
+        go_lp.b( m_lp.m_c );
 
         realT ll = 0, ul = 0;
         gmax_lp = go_lp.maxStableGain( ll, ul );
