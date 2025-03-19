@@ -236,8 +236,10 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry( const storedT &ne
         m_buffer[m_nextEntry] = newEnt;
         m_latest = m_nextEntry;
         ++m_nextEntry;
-        if( m_nextEntry >= m_buffer.size() )
+        if( m_nextEntry > m_buffer.size() - 1 )
+        {
             m_nextEntry = 0;
+        }
         derived().setWrap();
     }
 
@@ -297,9 +299,6 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
     typedef _storedT storedT; ///< The maximum number of entries to allow in the buffer before wrapping
     typedef _indexT indexT;   ///< The index type, also used for sizes
 
-  protected:
-    indexT m_wrapEntry{ 0 };
-
   public:
     /// Default c'tor
     circularBufferBranch() : circularBufferBase<circularBufferBranch, storedT, indexT>()
@@ -320,7 +319,6 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
      */
     void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
     {
-        m_wrapEntry = 0;
     }
 
     /// Interface implementation for wrapping setup during the startup phase
@@ -328,7 +326,6 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
      */
     void setWrapStartup()
     {
-        m_wrapEntry = this->m_buffer.size();
     }
 
     /// Interface implementation for wrapping setup after the startup phase
@@ -336,7 +333,6 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
      */
     void setWrap()
     {
-        m_wrapEntry = this->m_maxEntries - this->m_nextEntry - 1;
     }
 
     /// Interface implementation for entry access
@@ -348,10 +344,14 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
                  indexT idx       ///< [in] the index of the entry to access
     )
     {
-        if( idx > this->m_wrapEntry )
+        if( refEntry + idx > this->m_buffer.size()-1 )
+        {
             return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+        }
         else
+        {
             return this->m_buffer[refEntry + idx];
+        }
     }
 
     /// Interface implementation for entry access, const version
@@ -365,10 +365,14 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
                        indexT idx       ///< [in] the index of the entry to access
     ) const
     {
-        if( idx > this->m_wrapEntry )
+        if( refEntry + idx > this->m_buffer.size()-1 )
+        {
             return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+        }
         else
+        {
             return this->m_buffer[refEntry + idx];
+        }
     }
 };
 
