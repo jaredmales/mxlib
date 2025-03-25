@@ -38,7 +38,7 @@ namespace sigproc
  * \brief A circular buffer class
  *
  * Three options for the circular buffer are provided, each inheriting the same underlying interface.  The choices
- * vary the way in which the wrapping is handled at the end of the storage.  These are:
+ * vary the way in which the wrapping is handled at the beginning and end of the storage.  These are:
  * - circularBufferMod: uses the mod operator, this is slowest in all situations and is provided for comparison
  * - circularBufferBranch: uses an if statement (branch) to test for location in memory.  Slower in sequential access,
  * possibly slightly faster in random access.
@@ -49,10 +49,14 @@ namespace sigproc
  * sequential order, by something like 30%. For random access circularBufferBranch is possibly slightly faster, but not
  * enough tests were performed to be conclusive.
  *
- * circularBufferMod is always much slower due to use of the `%` operator.
+ * circularBufferMod is always much slower due to use of the `%` operator.  Don't use this for real work.
  *
- * The memory overhead of circularBufferIndex is `2*maxEntries*sizeof(indexT)`, where `maxEntries` is the maximum length
- * of the buffer, and indexT is the type used for indexing and sizes.
+ * The memory overhead of circularBufferIndex is `3*maxEntries*sizeof(indexT)`, where `maxEntries` is the maximum length
+ * of the buffer, and indexT is the type used for indexing and sizes.  The factor of 3 enables negative offsets, i.e.
+ * for traversal in reverse.
+ *
+ * \note circularBufferIndex will not properly wrap until it is full.  Attempts to access wrapped entries prior
+ *       to inserting maxEntries entries will segfault.
  *
  * \todo perform circular buffer testing on an isolated core, with one test per executable
  * \todo implement a circular buffer with fixed power-of-two size to test `&` modulo
@@ -66,7 +70,7 @@ namespace sigproc
  *
  * \tparam _derivedT the child class type
  * \tparam _storedT the type stored in teh circular buffer
- * \tparam _indexT the index type, also used for sizes (can be unsigned)
+ * \tparam _indexT the index type, also used for sizes (must be signed)
  *
  * \ingroup circular_buffer
  */
@@ -78,6 +82,8 @@ class circularBufferBase
 
     typedef _storedT storedT; ///< The type stored in the circular buffer
     typedef _indexT indexT;   ///< The index type, also used for sizes
+
+    static_assert(std::is_signed_v<_indexT> == true, "circularBuffer indexT must be signed");
 
   protected:
     std::vector<storedT> m_buffer; ///< The circular buffer storage
@@ -125,6 +131,12 @@ class circularBufferBase
      * the wrapping system.
      */
     void nextEntry( const storedT &newEnt /**< [in] the new entry to add to the buffer*/ );
+
+    /// Move to the next entry in the circular buffer
+    /** If not yet at maxEntries entries, this emplaces a new default constructed entry.
+     *  Otherwise it increments counters so that the old latest entry is now the newest entry.
+     */
+    void nextEntry();
 
     /// Returns the index of the earliest entry
     /** This is particularly useful for accessing entries with the at() function
@@ -229,7 +241,6 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry( const storedT &ne
         m_buffer.push_back( newEnt );
         m_latest = m_buffer.size() - 1;
         m_nextEntry = 0;
-        derived().setWrapStartup();
     }
     else
     {
@@ -240,7 +251,28 @@ void circularBufferBase<derivedT, storedT, indexT>::nextEntry( const storedT &ne
         {
             m_nextEntry = 0;
         }
-        derived().setWrap();
+    }
+
+    ++m_mono;
+}
+
+template <class derivedT, typename storedT, typename indexT>
+void circularBufferBase<derivedT, storedT, indexT>::nextEntry()
+{
+    if( m_buffer.size() < m_maxEntries )
+    {
+        m_buffer.emplace_back();
+        m_latest = m_buffer.size() - 1;
+        m_nextEntry = 0;
+    }
+    else
+    {
+        m_latest = m_nextEntry;
+        ++m_nextEntry;
+        if( m_nextEntry > m_buffer.size() - 1 )
+        {
+            m_nextEntry = 0;
+        }
     }
 
     ++m_mono;
@@ -321,20 +353,6 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
     {
     }
 
-    /// Interface implementation for wrapping setup during the startup phase
-    /** This is called before maxEntries have been added.
-     */
-    void setWrapStartup()
-    {
-    }
-
-    /// Interface implementation for wrapping setup after the startup phase
-    /** This is called after maxEntries have been added.
-     */
-    void setWrap()
-    {
-    }
-
     /// Interface implementation for entry access
     /** Accesses the idx-th element relative to refEntry, using a branch (if-statement) to wrap
      *
@@ -344,13 +362,18 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
                  indexT idx       ///< [in] the index of the entry to access
     )
     {
-        if( refEntry + idx > this->m_buffer.size()-1 )
+        indexT _idx = refEntry + idx;
+        if( _idx < 0)
         {
-            return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+            return this->m_buffer[_idx + this->m_buffer.size()];
+        }
+        else if( _idx > this->m_buffer.size()-1 )
+        {
+            return this->m_buffer[_idx - this->m_buffer.size()];
         }
         else
         {
-            return this->m_buffer[refEntry + idx];
+            return this->m_buffer[_idx];
         }
     }
 
@@ -365,13 +388,18 @@ class circularBufferBranch : public circularBufferBase<circularBufferBranch<_sto
                        indexT idx       ///< [in] the index of the entry to access
     ) const
     {
-        if( refEntry + idx > this->m_buffer.size()-1 )
+        indexT _idx = refEntry + idx;
+        if( _idx < 0)
         {
-            return this->m_buffer[refEntry + idx - this->m_buffer.size()];
+            return this->m_buffer[_idx + this->m_buffer.size()];
+        }
+        else if( _idx > this->m_buffer.size()-1 )
+        {
+            return this->m_buffer[_idx - this->m_buffer.size()];
         }
         else
         {
-            return this->m_buffer[refEntry + idx];
+            return this->m_buffer[_idx];
         }
     }
 };
@@ -405,20 +433,6 @@ class circularBufferMod : public circularBufferBase<circularBufferMod<_storedT, 
     /** A no-op
      */
     void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
-    {
-    }
-
-    /// Interface implementation for wrapping setup during the startup phase
-    /** This is called before maxEntries have been added.
-     */
-    void setWrapStartup()
-    {
-    }
-
-    /// Interface implementation for wrapping setup after the startup phase
-    /** This is called after maxEntries have been added.
-     */
-    void setWrap()
     {
     }
 
@@ -483,26 +497,13 @@ class circularBufferIndex : public circularBufferBase<circularBufferIndex<_store
      */
     void setMaxEntries( indexT maxEnt /**< [in] the maximum number of entries this buffer will hold*/ )
     {
-        m_indices.resize( 2 * this->m_maxEntries );
+        m_indices.resize( 3 * this->m_maxEntries );
         for( size_t i = 0; i < this->m_maxEntries; ++i )
         {
             m_indices[i] = i;
             m_indices[this->m_maxEntries + i] = i;
+            m_indices[2*this->m_maxEntries + i] = i;
         }
-    }
-
-    /// Interface implementation for wrapping setup during the startup phase
-    /** This is called before maxEntries have been added.
-     */
-    void setWrapStartup()
-    {
-    }
-
-    /// Interface implementation for wrapping setup after the startup phase
-    /** This is called after maxEntries have been added.
-     */
-    void setWrap()
-    {
     }
 
     /// Interface implementation for entry access
@@ -514,7 +515,7 @@ class circularBufferIndex : public circularBufferBase<circularBufferIndex<_store
                  indexT idx       ///< [in] the index of the entry to access
     )
     {
-        return this->m_buffer[m_indices[refEntry + idx]];
+        return this->m_buffer[m_indices[this->m_maxEntries+refEntry + idx]];
     }
 
     /// Interface implementation for entry access, const version
@@ -528,7 +529,7 @@ class circularBufferIndex : public circularBufferBase<circularBufferIndex<_store
                        indexT idx       ///< [in] the index of the entry to access
     ) const
     {
-        return this->m_buffer[m_indices[refEntry + idx]];
+        return this->m_buffer[this->m_maxEntries+m_indices[refEntry + idx]];
     }
 };
 

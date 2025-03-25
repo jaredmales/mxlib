@@ -33,4 +33,4 @@ tests/mxlibTest
 tests/include/improc/imageMasks_test
 tests/include/sigproc/signalWindows_test
 tests/include/ao/sim/pyramidSensor_test
-
+tests/include/sigproc/circularBuffer_test
