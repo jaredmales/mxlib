@@ -70,6 +70,7 @@ struct clGainOpt
     realT m_Ti;              ///< The loop sampling interval
     realT m_tau;             ///< The loop delay
 
+    realT m_remember{ 1.0 }; ///< The leaky integrator forget factor
     std::vector<realT> m_b;  ///< Vector of FIR coefficients
     std::vector<realT> m_a;  ///< Vector of IIR coefficients
 
@@ -172,13 +173,7 @@ struct clGainOpt
         return m_b;
     }
 
-    void bScale( realT scale )
-    {
-        for( size_t n = 0; n < m_b.size(); ++n )
-        {
-            m_b[n] *= scale;
-        }
-    }
+    void bScale( realT scale );
 
     /// Set the vector of IIR coefficients
     /**
@@ -196,13 +191,13 @@ struct clGainOpt
         return m_a[i];
     }
 
-    void aScale( realT scale )
-    {
-        for( size_t n = 0; n < m_a.size(); ++n )
-        {
-            m_a[n] *= scale;
-        }
-    }
+    void aScale( realT scale );
+
+    /// Set the remember factor for a leaky integrator
+    void remember( const realT &rem );
+
+    /// Get the remember factor
+    realT remember();
 
     /// Set the FIR and IIR coefficients so that the control law is a leaky integrator.
     /** Set remember to 1.0 for a pure integrator control law.
@@ -539,6 +534,17 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1> &newB )
 }
 
 template <typename realT>
+void clGainOpt<realT>::bScale( realT scale )
+    {
+        for( size_t n = 0; n < m_b.size(); ++n )
+        {
+            m_b[n] *= scale;
+        }
+
+        m_changed = true;
+    }
+
+template <typename realT>
 void clGainOpt<realT>::a( const std::vector<realT> &newA )
 {
     if( newA.size() + 1 > (size_t)m_cs.cols() )
@@ -569,16 +575,60 @@ void clGainOpt<realT>::a( const Eigen::Array<realT, -1, -1> &newA )
 }
 
 template <typename realT>
+void clGainOpt<realT>::aScale( realT scale )
+{
+    for( size_t n = 0; n < m_a.size(); ++n )
+    {
+        m_a[n] *= scale;
+    }
+
+    m_changed = true;
+}
+
+template <typename realT>
+void clGainOpt<realT>::remember( const realT &rem )
+{
+    if(m_remember != rem)
+    {
+        m_remember = rem;
+
+        m_changed = true;
+    }
+
+
+}
+
+template <typename realT>
+realT clGainOpt<realT>::remember()
+{
+    return m_remember;
+}
+
+template <typename realT>
 void clGainOpt<realT>::setLeakyIntegrator( realT remember )
 {
-    m_b.resize( 1 );
-    m_b[0] = 1.0;
+    if(m_b.size() != 1 || m_a.size() != 1 || m_b[0] != 1.0 || m_a[0] != 1.0 || m_remember != remember)
+    {
+        if(m_b.size() != 1)
+        {
+            m_b.resize( 1 );
+            m_fChanged = true;
+        }
 
-    m_a.resize( 1 );
-    m_a[0] = remember;
+        m_b[0] = 1.0;
 
-    m_fChanged = true;
-    m_changed = true;
+        if(m_a.size() != 1)
+        {
+            m_a.resize( 1 );
+            m_fChanged = true;
+        }
+
+        m_a[0] = 1.0;
+
+        m_remember = remember;
+
+        m_changed = true;
+    }
 }
 
 template <typename realT>
@@ -586,7 +636,9 @@ void clGainOpt<realT>::f( realT *newF, size_t nF )
 {
     m_f.resize( nF );
     for( int i = 0; i < nF; ++i )
+    {
         m_f[i] = newF[i];
+    }
 
     m_fChanged = true;
     m_changed = true;
@@ -712,11 +764,11 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
                 realT cs = m_cs( i, j );
                 realT ss = m_ss( i, j );
                 FIR += m_b[j] * complexT( cs, -ss );
-                IIR += m_a[j - 1] * complexT( cs, -ss );
+                IIR += m_remember * m_a[j - 1] * complexT( cs, -ss );
 #else
                 complexT expZ = exp( -s * m_Ti * realT( j ) );
                 FIR += m_b[j] * expZ;
-                IIR += m_a[j - 1] * expZ;
+                IIR += m_remember * m_a[j - 1] * expZ;
 #endif
             }
 
@@ -725,10 +777,10 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
 #ifdef PRECALC_TRIG
                 realT cs = m_cs( i, jj );
                 realT ss = m_ss( i, jj );
-                IIR += m_a[jj - 1] * complexT( cs, -ss );
+                IIR += m_remember * m_a[jj - 1] * complexT( cs, -ss );
 #else
                 complexT expZ = exp( -s * m_Ti * realT( jj ) );
-                IIR += m_a[jj - 1] * expZ;
+                IIR += m_remember * m_a[jj - 1] * expZ;
 #endif
             }
 
