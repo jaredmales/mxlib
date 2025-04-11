@@ -1194,8 +1194,9 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 
         if( m_normalize )
         {
-            realT m = imageMean<realT>( m_normIm );
-            realT v = imageVariance<realT>( m_normIm, m );
+            realT m = imageMean<realT>( im );
+            realT v = imageVariance<realT>( im, m );
+
             m_normIm = ( im - m ) / sqrt( v );
         }
         else
