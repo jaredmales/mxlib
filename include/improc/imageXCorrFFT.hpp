@@ -945,34 +945,22 @@ void imageXCorrFFT<realImageT>::tol( realT nt )
 
     m_mag = ( m_magSize - 1.0 ) / ( ( 2. * m_maxLag + 1 ) - 1.0 );
 
-    if( m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0 )
-        return;
+    m_refValid = false;
 
-    // Find the reference shift
-    m_refX0 = 0;
-    m_refY0 = 0;
-    operator()( m_refX0, m_refY0, m_refIm );
+    return;
 }
 
 template <class realImageT>
 void imageXCorrFFT<realImageT>::peakMethod( xcorrPeakMethod xpm )
 {
-    m_peakMethod = xpm;
-
-    if( xpm == xcorrPeakMethod::mftOversamp )
+    if(xpm != m_peakMethod)
     {
+        m_peakMethod = xpm;
+
         m_refValid = false;
     }
-
-    if( m_refIm.rows() != m_rows || m_refIm.cols() != m_cols || m_rows == 0 || m_cols == 0 )
-    {
-        return;
-    }
-
-    // Find the reference shift
-    m_refX0 = 0;
-    m_refY0 = 0;
-    operator()( m_refX0, m_refY0, m_refIm );
+    
+    return;
 }
 
 template <class realImageT>
