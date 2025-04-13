@@ -168,6 +168,18 @@ struct clGainOpt
                 &newB /**< [in] a column-vector Eigen::Array of coefficients,
                                 which is copied to m_b.*/ );
 
+    /// Get a single FIR coefficient
+    /** 
+       * \returns a single FIR coefficient 
+      */
+    realT b( size_t i /**< [in] the index of the FIR coefficient*/ )
+    {
+        return m_b[i];
+    }
+
+    /// Get the vector of FIR coefficients
+    /**
+     */
     const std::vector<realT> &b()
     {
         return m_b;
@@ -185,10 +197,21 @@ struct clGainOpt
      */
     void a( const Eigen::Array<realT, -1, -1> &newA /**< [in] a column-vector Eigen::Array of
                                                               coefficients, which is copied to m_a.*/ );
-
+    /// Get a single IIR coefficient
+    /** 
+       * \returns a single IIR coefficient 
+      */
     realT a( size_t i )
     {
         return m_a[i];
+    }
+
+    /// Get the vector of IIR coefficients
+    /**
+     */
+    const std::vector<realT> &a()
+    {
+        return m_a;
     }
 
     void aScale( realT scale );
