@@ -152,7 +152,9 @@ public:
         for( realT sc = max_sc; sc >= sc0; sc -= precision )
         {
             if( calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc ) < 0 )
+            {
                 return -1;
+            }
 
             go_lp.a( m_lp.m_c );
             go_lp.b( m_lp.m_c );
@@ -218,7 +220,10 @@ public:
         int its = 0;
         while( precision > m_minPrecision && its < m_maxIts )
         {
-            _regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc );
+            if(_regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc ) < 0)
+            {
+                return -1;
+            }
 
             if( min_sc == max_sc )
             {

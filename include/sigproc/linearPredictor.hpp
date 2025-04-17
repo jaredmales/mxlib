@@ -159,9 +159,7 @@ struct linearPredictor
             y[i] = ac[i + Npred]; // this runs from Npred to Nc-1 + Npred
         }
 
-        levinsonRecursion( r.data(), m_c.data(), y.data(), Nc );
-
-        return 0;
+        return levinsonRecursion( r.data(), m_c.data(), y.data(), Nc );
     }
 
     realT c( size_t i )

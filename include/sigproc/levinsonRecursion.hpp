@@ -26,7 +26,7 @@ j=1 R(N+i−j)xj = yi (i = 0,...,N-1). The Toeplitz matrix need
 not be symmetric. y[0..n-1] and r[0..2*n-2] are input arrays; x[0..n-1] is the output array.*/
 
 template <typename floatT>
-void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
+int levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
 {
 
     int j, k, m, m1, m2;
@@ -41,8 +41,8 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
 
     if( r[n] == 0.0 )
     {
-        std::cerr << "toeplz-1 singular principal minor" << "\n";
-        return;
+        //std::cerr << "toeplz-1 singular principal minor" << "\n";
+        return -1;
     }
 
     /*Have to adjust for the stupid NR convention of 1-counting*/
@@ -57,7 +57,7 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
     {
         delete[] _g;
         delete[] _h;
-        return;
+        return 0;
     }
 
     g[1] = r[n - 1] / r[n];
@@ -79,11 +79,11 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
 
         if( sd == 0.0 )
         {
-            std::cerr << "toeplz-2 singular principal minor" << "\n";
+            //std::cerr << "toeplz-2 singular principal minor" << "\n";
 
             delete[] _g;
             delete[] _h;
-            return;
+            return -3;
         }
 
         x[m1] = sxn / sd; // whence x.
@@ -95,7 +95,7 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
         {
             delete[] _g;
             delete[] _h;
-            return;
+            return 0;
         }
 
         sgn = -r[n - m1]; // Compute numerator and denominator for G and H,
@@ -113,11 +113,11 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
 
         if( sd == 0.0 || sgd == 0.0 )
         {
-            std::cerr << "toeplz-3 singular principal minor" << "\n";
+            //std::cerr << "toeplz-3 singular principal minor" << "\n";
 
             delete[] _g;
             delete[] _h;
-            return;
+            return -5;
         }
 
         g[m1] = sgn / sgd; // whence G and H.
@@ -140,11 +140,11 @@ void levinsonRecursion( floatT *_r, floatT *_x, floatT *_y, int n )
         }
     } // Back for another recurrence.
 
-    std::cerr << "toeplz - should not arrive here!" << "\n";
+    //std::cerr << "toeplz - should not arrive here!" << "\n";
 
     delete[] _g;
     delete[] _h;
-    return;
+    return -6;
 }
 
 #endif // levinsonRecursion_hpp
