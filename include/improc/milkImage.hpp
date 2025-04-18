@@ -161,6 +161,10 @@ class milkImage
 
     uint64_t m_size_1{ 0 }; ///< The size[1] of the image when last opened.
 
+    bool m_passive {false}; /**< If true then the cnt0 counter is not incremented on post.  Usage: this will not
+                                 trigger the dmcomb process in cacao, so the DM will not pick up the shape until
+                                 something does trigger it. */
+
   public:
     /// Default c'tor
     milkImage();
@@ -225,6 +229,18 @@ class milkImage
      * \returns the current value of m_size_0 or m_size_1 depending on n
      */
     uint32_t size( unsigned n /**< [in] the dimension to get the size of*/ );
+
+    /// Set the passive flag
+    /** Sets \ref m_passive 
+      * 
+     */
+    void passive( bool pass /**< [in] new value of the \ref m_passive flag */);
+
+    /// Get the passive flag
+    /** Gets \ref m_passive 
+      * 
+     */
+    bool passive();
 
     /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
@@ -514,6 +530,18 @@ uint32_t milkImage<dataT>::size( unsigned n )
 }
 
 template <typename dataT>
+void milkImage<dataT>::passive(bool pass)
+{
+    m_passive = pass;
+}
+
+template <typename dataT>
+bool milkImage<dataT>::passive()
+{
+    return m_passive;
+}
+
+template <typename dataT>
 bool milkImage<dataT>::valid()
 {
     if( m_image == nullptr )
@@ -574,12 +602,26 @@ void milkImage<dataT>::post()
         throw err::mxException( "", 0, "", 0, "", 0, "Image is not open" );
     }
 
-    errno_t rv = ImageStreamIO_UpdateIm( m_image );
-    m_image->md->atime = m_image->md->writetime;
-
-    if( rv != IMAGESTREAMIO_SUCCESS )
+    if(!m_passive)
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error" );
+        errno_t rv = ImageStreamIO_UpdateIm( m_image );
+        m_image->md->atime = m_image->md->writetime;
+
+        if( rv != IMAGESTREAMIO_SUCCESS )
+        {
+            throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error" );
+        }
+    }
+    else 
+    {
+        if(clock_gettime(CLOCK_ISIO, &m_image->md->writetime) == -1)
+        {
+            throw err::mxException( "", 0, "", 0, "", 0, "clock_gettime returned an error" );
+        }
+        m_image->md->atime = m_image->md->writetime;
+        
+        m_image->md->write = 0;
+        ImageStreamIO_sempost( m_image, -1 );
     }
 }
 
