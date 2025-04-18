@@ -26,6 +26,11 @@ namespace AO
 namespace analysis
 {
 
+#define CLAOLP_BREADCRUMB
+
+//#define CLAOLP_BREADCRUMB std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
+
+
 /// Class to manage the calculation of linear predictor coefficients for a closed-loop AO system.
 /**
  * \tparam _realT the real floating point type in which to do all arithmetic.
@@ -91,20 +96,27 @@ public:
                                                               levinson recursion is used. */
                         )
     {
+        CLAOLP_BREADCRUMB;
         m_PSDtn.resize( PSDt.size() );
 
+        CLAOLP_BREADCRUMB;
         for( size_t i = 0; i < PSDt.size(); ++i )
         {
             m_PSDtn[i] = PSDt[i] + PSDn[i] + PSDreg;
         }
 
+        CLAOLP_BREADCRUMB;
         sigproc::augment1SidedPSD( m_psd2s, m_PSDtn, 1 );
 
+        CLAOLP_BREADCRUMB;
         m_ac.resize( m_psd2s.size() );
 
+        CLAOLP_BREADCRUMB;
         m_acpsd( m_ac, m_psd2s );
+        CLAOLP_BREADCRUMB;
 
         return m_lp.calcCoefficients( m_ac, Nc, m_extrap , condition );
+
     }
 
     /// Worker function for regularizing the PSD for coefficient calculation.
@@ -128,6 +140,8 @@ public:
                                  int Nc                    ///< [in] the number of coefficients
     )
     {
+        CLAOLP_BREADCRUMB;
+
         realT gmax_lp;
         realT gopt_lp;
         realT var_lp;
@@ -144,21 +158,29 @@ public:
             sc0 = min_sc - precision * m_dPrecision;
         }
 
+        CLAOLP_BREADCRUMB;
+
         // auto it = std::max_element(std::begin(PSDt), std::end(PSDt));
         realT psdReg = PSDt[0]; //*it/10;
 
+        CLAOLP_BREADCRUMB;
         // Test from sc0 to max_sc in steps of precision
         //for( realT sc = sc0; sc <= max_sc; sc += precision )
         for( realT sc = max_sc; sc >= sc0; sc -= precision )
         {
+            CLAOLP_BREADCRUMB;
             if( calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc ) < 0 )
             {
                 return -1;
             }
 
+            CLAOLP_BREADCRUMB;
+
+            CLAOLP_BREADCRUMB;
             go_lp.a( m_lp.m_c );
             go_lp.b( m_lp.m_c );
 
+            CLAOLP_BREADCRUMB;
             realT ll = 0, ul = 0;
             gmax_lp = go_lp.maxStableGain( ll, ul );
             if( gmax_lp > m_gmax_lp )
@@ -166,6 +188,7 @@ public:
                 gmax_lp = m_gmax_lp;
             }
 
+            CLAOLP_BREADCRUMB;
             gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
 
             if( telem )
@@ -173,6 +196,7 @@ public:
                 m_regResults.push_back({sc, gopt_lp, gmax_lp, var_lp});
             }
 
+            CLAOLP_BREADCRUMB;
             if( var_lp < min_var )
             {
                 min_var = var_lp;
@@ -184,8 +208,11 @@ public:
             {
                 return 0;
             }
+
+            CLAOLP_BREADCRUMB;
         }
 
+        CLAOLP_BREADCRUMB;
         return -1;
     }
 
@@ -207,6 +234,8 @@ public:
     )
     {
 
+        CLAOLP_BREADCRUMB;
+
         realT min_var = m_min_var0;
         min_sc = m_min_sc0;
         realT precision = m_precision0;
@@ -217,14 +246,17 @@ public:
             m_regResults.reserve(m_maxIts * 50);
         }
 
+        CLAOLP_BREADCRUMB;
         int its = 0;
         while( precision > m_minPrecision && its < m_maxIts )
         {
+            CLAOLP_BREADCRUMB;
             if(_regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc ) < 0)
             {
                 return -1;
             }
 
+            CLAOLP_BREADCRUMB;
             if( min_sc == max_sc )
             {
                 if( its == 0 )
@@ -248,19 +280,23 @@ public:
             ++its;
         }
 
+        CLAOLP_BREADCRUMB;
         // Now record final values
         if( calcCoefficients( PSDt, PSDn, PSDt[0] * pow( 10, -min_sc / 10 ), Nc ) < 0 )
         {
             return -1;
         }
 
+        CLAOLP_BREADCRUMB;
         go_lp.a( m_lp.m_c );
         go_lp.b( m_lp.m_c );
 
+        CLAOLP_BREADCRUMB;
         realT ll = 0, ul = 0;
         gmax_lp = go_lp.maxStableGain( ll, ul );
         gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
 
+        CLAOLP_BREADCRUMB;
         return 0;
     }
 

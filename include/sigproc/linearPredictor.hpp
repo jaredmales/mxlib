@@ -42,6 +42,11 @@ namespace mx
 namespace sigproc
 {
 
+#define LP_BREADCRUMB
+
+//#define LP_BREADCRUMB std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
+
+
 /// A class to support linear prediction.
 /** \ingroup signal_processing
  *
@@ -81,6 +86,7 @@ struct linearPredictor
 
         if( condition == 0 )
         {
+            LP_BREADCRUMB;
             return calcCoefficientsLevinson( ac, acSz, Nc, Npred );
         }
 
@@ -120,6 +126,8 @@ struct linearPredictor
                                                                                     default is 1 */
     )
     {
+        LP_BREADCRUMB;
+
         return calcCoefficientsLevinson( ac.data(), ac.size(), Nc, Npred );
     }
 
@@ -129,6 +137,7 @@ struct linearPredictor
                                   unsigned Npred = 1 /**< [in] [optional] The prediction length, default is 1 */
     )
     {
+        LP_BREADCRUMB;
         if( acSz < Nc + Npred )
         {
             std::string msg = "too many coefficients for size and prediction length\n";
@@ -138,27 +147,38 @@ struct linearPredictor
             mxThrowException( err::invalidarg, "linearPredictor::calcCoefficientsLevinson", msg );
         }
 
+        if(Nc == 0)
+        {
+            std::string msg = "Nc can't be 0";
+            mxThrowException( err::invalidarg, "linearPredictor::calcCoefficientsLevinson", msg );
+        }
+
         std::vector<realT> r, x, y;
 
+        LP_BREADCRUMB;
         r.resize( 2. * Nc - 1 );
         m_c.resize( Nc );
         y.resize( Nc );
 
+        LP_BREADCRUMB;
         for( size_t i = 0; i < Nc; ++i )
         {
             r[i] = ac[Nc - i - 1]; // this runs from Nc-1 to 0
         }
 
+        LP_BREADCRUMB;
         for( size_t i = Nc; i < 2 * Nc - 1; ++i )
         {
             r[i] = ac[i - Nc + 1]; // this runs from 1 to Nc-1
         }
 
+        LP_BREADCRUMB;
         for( size_t i = 0; i < Nc; ++i )
         {
             y[i] = ac[i + Npred]; // this runs from Npred to Nc-1 + Npred
         }
 
+        LP_BREADCRUMB;
         return levinsonRecursion( r.data(), m_c.data(), y.data(), Nc );
     }
 
