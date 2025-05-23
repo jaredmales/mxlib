@@ -31,7 +31,7 @@
 #include "imagingArray.hpp"
 #include "imagingUtils.hpp"
 
-#include "../math/fft/fft.hpp"
+#include "../math/ft/fftT.hpp"
 
 namespace mx
 {
@@ -85,10 +85,10 @@ class fraunhoferPropagator
     wavefrontT m_centerPupil;
 
     /// FFT object for forward FFTs
-    math::fft::fftT<complexT, complexT, 2, 0> m_fft_fwd;
+    math::ft::fftT<complexT, complexT, 2, 0> m_fft_fwd;
 
     /// FFT object for backward FFTs
-    math::fft::fftT<complexT, complexT, 2, 0> m_fft_back;
+    math::ft::fftT<complexT, complexT, 2, 0> m_fft_back;
 
     /// Initialize members
     void initialize();
@@ -264,7 +264,7 @@ void fraunhoferPropagator<wavefrontT>::setWavefrontSizePixels( int wfsPix )
 
     m_fft_fwd.plan( wfsPix, wfsPix );
 
-    m_fft_back.plan( wfsPix, wfsPix, MXFFT_BACKWARD );
+    m_fft_back.plan( wfsPix, wfsPix, math::ft::dir::backward );
 }
 
 template <typename wavefrontT>

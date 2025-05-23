@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 
 #include "../math/templateBLAS.hpp"
-#include "../math/fft/fft.hpp"
+#include "../math/ft/fftT.hpp"
 
 namespace mx
 {
