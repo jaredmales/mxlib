@@ -936,8 +936,6 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
 
         if(dx < minx) minx = dx;
         if(dx > maxx) maxx = dx;
-        if(dx < minx) minx = dx;
-        if(dx > maxx) maxx = dx;
 
         realT dy = pupilRad * sin(ang);
 
@@ -951,12 +949,18 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
         wfp::extractMaskedPixels(m_opdMask, opdMaskQ, mask);
     }
 
-    int xsz = 2*std::max( {fabs(maxx), fabs(minx)} ) + 2*std::max({(pupilRad/2),((realT)m_pupilSz/2)});
+    int xsz = 2*std::max( {fabs(maxx), fabs(minx)} ) + 2*std::max({(pupilRad/2), ((realT)m_pupilSz/2)});
+
     int ysz = 2*std::max( {fabs(maxy), fabs(miny)} ) + 2*std::max({(pupilRad/2), ((realT)m_pupilSz/2)});
 
     if(m_imageSzAuto)
     {
         m_imageSz = std::max(xsz, ysz);
+
+        if(m_pupilSep > 1)
+        {
+            m_imageSz += (m_pupilSep-1.0)*m_pupilSz;
+        }
     }
 
     if(m_imageSz > m_wfSz)
@@ -976,7 +980,10 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
 
     if(m_detRows > m_imageSz || m_detCols > m_imageSz)
     {
-        mxThrowException(mx::err::invalidconfig, "pyramidSensor::makeOpdMask", "detector is larger than image size");
+        std::string msg = "image size (m_imageSz = " + std::to_string(m_imageSz) + ") ";
+        msg += "< detector size size (m_detRows = " + std::to_string(m_detRows) ;
+        msg += " m_detCols = " + std::to_string(m_detCols) + "). ";
+        mxThrowException(mx::err::invalidconfig, "pyramidSensor::makeOpdMask", msg);
     }
 
     m_opdMaskMade = true;
