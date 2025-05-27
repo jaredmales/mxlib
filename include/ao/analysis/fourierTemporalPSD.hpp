@@ -71,10 +71,10 @@ namespace analysis
 
 #ifndef WSZ
 
-/** \def WFZ
- * \brief Size of the GSL integration workspace
- */
-#define WSZ 100000
+    /** \def WFZ
+     * \brief Size of the GSL integration workspace
+     */
+    #define WSZ 100000
 
 #endif
 
@@ -144,10 +144,10 @@ struct fourierTemporalPSD
     /// Workspace for the gsl integrators, allocated to WSZ if constructed as worker (with allocate == true).
     gsl_integration_workspace *_w;
 
-    realT _absTol; ///< The absolute tolerance to use in the GSL integrator
-    realT _relTol; ///< The relative tolerance to use in the GSL integrator
+    realT _absTol;                            ///< The absolute tolerance to use in the GSL integrator
+    realT _relTol;                            ///< The relative tolerance to use in the GSL integrator
 
-    int m_mode_i; ///< Projected basis mode index
+    int m_mode_i;                             ///< Projected basis mode index
 
     Eigen::Array<realT, -1, -1> m_modeCoeffs; ///< Coeeficients of the projection onto the Fourier modes
     realT m_minCoeffVal;
@@ -311,7 +311,7 @@ struct fourierTemporalPSD
         realT n,   ///< [in] the second index of the spatial frequency
         int p,     ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
         realT fmax =
-            0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
+            0      ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
               /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
     );
 
@@ -337,46 +337,39 @@ struct fourierTemporalPSD
      * of optimum gains, predictor coefficients, variances, and contrasts for a range of guide star magnitudes.
      * Optionally calculates speckle lifetimes.  Optionally writes the closed-loop PSDs and transfer functions.
      */
-    int analyzePSDGrid(
-        const std::string &subDir, ///< [out] the sub-directory of psdDir where to write the results.  Is created.
-        const std::string &psdDir, ///< [in]  the directory containing the grid of PSDs.
-        int mnMax,                 ///< [in]  the maximum value of m and n in the grid.
-        int mnCon,                 ///< [in]  the maximum value of m and n which can be controlled.
-        realT gfixed,              ///< [in]  if \> 0 then this fixed gain is used in the SI.
-        int lpNc, ///< [in]  the number of linear predictor coefficients to analyze.  If 0 then LP is not analyzed.
-        realT lpRegPrecision, ///< [in]  the initial precision for the LP regularization algorithm.  Normal value is 2.
-                              ///< Higher is faster. Decrease if getting stuck in local minima.
-        std::vector<realT> &mags, ///< [in]  the guide star magnitudes to analyze for.
-        int lifetimeTrials = 0,   ///< [in]  [optional] number of trials used for calculating speckle lifetimes.  If 0,
-                                  ///< lifetimes are not calculated.
-        bool uncontrolledLifetimes =
-            false, ///< [in]  [optional] flag controlling whether lifetimes are calculated for uncontrolled modes.
-        bool writePSDs = false, ///< [in]  [optional] flag controlling if resultant PSDs are saved
-        bool writeXfer = false  ///< [in]  [optional] flag controlling if resultant Xfer functions are saved
+    int analyzePSDGrid( const std::string &subDir, /**< [out] the sub-directory of psdDir where to write the
+                                                        results. Is created. */
+                        const std::string &psdDir, ///< [in]  the directory containing the grid of PSDs.
+                        int mnMax,                 ///< [in]  the maximum value of m and n in the grid.
+                        int mnCon,                 ///< [in]  the maximum value of m and n which can be controlled.
+                        realT gfixed,              ///< [in]  if \> 0 then this fixed gain is used in the SI.
+                        int lpNc,                  /**< [in]  the number of linear predictor coefficients to analyze.
+                                                            If 0 then LP is not analyzed.*/
+                        realT lpRegPrecision,      /**< [in]  the initial precision for the LP regularization
+                                                              algorithm. Normal value is 2. Higher is faster. Decrease
+                                                              if getting stuck in local minima.*/
+                        std::vector<realT> &mags,  ///< [in]  the guide star magnitudes to analyze for.
+                        int lifetimeTrials = 0,    /**< [in] [optional] number of trials used for calculating speckle
+                                                    lifetimes.  If 0,lifetimes are not calculated. */
+                        bool ucLifeTs = false,     /**< [in] [optional] flag controlling whether lifetimes are
+                                                                              calculated for uncontrolled modes.*/
+                        bool writePSDs = false,    ///< [in] [optional] flag controlling if resultant PSDs are saved
+                        bool writeXfer = false     /**< [in] [optional] flag controlling if resultant
+                                                                        transfer functions are saved*/
     );
 
     int intensityPSD( const std::string &subDir,  // sub-directory of psdDir which contains the controlled system
                                                   // results, and where the lifetimes will be written.
-                      const std::string &psdDir,  // directory containing the PSDS
+                      const std::string &psdDir,  // directory containing the grid of PSDs
                       const std::string &CvdPath, // path to the covariance decomposition
-                      int mnMax,
-                      int mnCon,
-                      const std::string &si_or_lp,
-                      std::vector<realT> &mags,
-                      int lifetimeTrials,
-                      bool writePSDs );
-    /*const std::string & subDir,         ///< [out] the sub-directory of psdDir where to write the results.
-                        const std::string & psdDir,         ///< [in]  the directory containing the grid of PSDs.
-                       const std::string & CvdPath,
-                        int mnMax,                          ///< [in]  the maximum value of m and n in the grid.
-                        int mnCon,                          ///< [in]  the maximum value of m and n which can be
-       controlled. int lpNc,                           ///< [in]  the number of linear predictor coefficients to
-       analyze.  If 0 then LP is not analyzed. std::vector<realT> & mags,          ///< [in]  the guide star magnitudes
-       to analyze for. int lifetimeTrials = 0,             ///< [in]  [optional] number of trials used for calculating
-       speckle lifetimes.  If 0, lifetimes are not calculated. bool uncontrolledLifetimes = false, ///< [in] [optional]
-       flag controlling whether lifetimes are calculate for uncontrolled modes. bool writePSDs = false              ///<
-       [in]  [optional] flag controlling if resultant PSDs are saved
-                      );*/
+                      int mnMax,                  ///< [in]  the maximum value of m and n in the grid.
+                      int mnCon,                  ///< [in]  the maximum value of m and n which can be controlled.
+                      std::vector<realT> &mags,   ///< [in]  the guide star magnitudes
+                      int lifetimeTrials,         /**< [in]  [optional] number of trials used for calculating
+                                                                        speckle lifetimes.  If 0, lifetimes are not 
+                                                                        calculated.*/
+                      bool writePSDs              /**< [in]  [optional] flag controlling if resultant 
+                                                                        PSDs are saved*/ );
 
     /** \name Disk Storage
      * These methods handle writing to and reading from disk.  The calculated PSDs are store in the mx::BinVector binary
@@ -553,8 +546,9 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         func.function = &F_mod<realT, aosysT>;
         break;
     case basis::projected_basic: // MXAO_FTPSD_BASIS_PROJECTED_BASIC:
-        mxError(
-            "fourierTemporalPSD::singleLayerPSD", MXE_NOTIMPL, "Projected basic-basis modes are not implemented." );
+        mxError( "fourierTemporalPSD::singleLayerPSD",
+                 MXE_NOTIMPL,
+                 "Projected basic-basis modes are not implemented." );
         break;
     case basis::projectedm_modified: // MXAO_FTPSD_BASIS_PROJECTED_MODIFIED:
         params.Jps = Jps;
@@ -972,6 +966,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
             //**< Setup the controllers
             mx::AO::analysis::clAOLinearPredictor<realT> tflp;
             tflp.m_precision0 = lpRegPrecision;
+            /*tflp.m_min_sc0 = 0;
+            tflp.m_max_sc0 = 1000;*/
 
             mx::AO::analysis::clGainOpt<realT> go_si( tauWFS, deltaTau );
             mx::AO::analysis::clGainOpt<realT> go_lp( tauWFS, deltaTau );
@@ -1158,12 +1154,28 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         if( doLP )
                         {
                             realT min_sc;
-                            tflp.regularizeCoefficients( gmax_lp, gopt_lp, var_lp, min_sc, go_lp, tPSDpPOL, tPSDn, lpNc );
+                            int rv = tflp.regularizeCoefficients( gmax_lp,
+                                                                  gopt_lp,
+                                                                  var_lp,
+                                                                  min_sc,
+                                                                  go_lp,
+                                                                  tPSDpPOL,
+                                                                  tPSDn,
+                                                                  lpNc );
+
+                            if( rv < 0 )
+                            {
+                                std::cerr
+                                    << "fourierTemporalPSD::analyzePSDGrid: regularizeCoefficients returned error ";
+                                std::cerr << rv << ' ';
+                                std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
+                            }
 
                             for( int n = 0; n < lpNc; ++n )
                             {
                                 lpC( i, n ) = go_lp.a( n );
                             }
+
                             if( m_uncorrectedOG )
                             {
                                 go_lp.aScale( opticalGain );
@@ -1200,10 +1212,13 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         var = var0;
                     }
 
-                    if( gopt_lp > 0 && var_lp > var0 )
+                    if( gopt_lp > gopt && var_lp > var )
                     {
-                        gopt_lp = 0;
-                        var_lp = var0;
+                        //Set LP to SI (or off if SI is off)
+                        gopt_lp = gopt;
+                        var_lp = var;
+                        go_lp.a( std::vector<realT>( { 1 } ) );
+                        go_lp.b( std::vector<realT>( { 1 } ) );
                     }
                     //**>
 
@@ -1518,7 +1533,6 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
     const std::string &CvdPath, // path to the covariance decomposition
     int mnMax,
     int mnCon,
-    const std::string &si_or_lp,
     std::vector<realT> &mags,
     int lifetimeTrials,
     bool writePSDs )
@@ -1773,7 +1787,8 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
         }
 
         sigproc::averagePeriodogram<realT> tavgPgram(
-            sz2Sided / 1., 1 / fs ); // this is just to get the size right, per-thread instances below
+            sz2Sided / 1.,
+            1 / fs ); // this is just to get the size right, per-thread instances below
         std::vector<std::vector<realT>> spPSDs;
         spPSDs.resize( nModes );
         for( size_t pp = 0; pp < spPSDs.size(); ++pp )
@@ -1892,7 +1907,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
                     /**/
                 }
                 //** At this point we have correlated time-series, with the correct temporal PSD, but not yet spatially
-                //correlated
+                // correlated
 
                 /*********************************************************************/
                 // 2.2)  Correlate the time-series for each mode

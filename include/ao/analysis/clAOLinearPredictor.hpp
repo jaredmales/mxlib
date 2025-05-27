@@ -169,9 +169,10 @@ public:
         for( realT sc = max_sc; sc >= sc0; sc -= precision )
         {
             CLAOLP_BREADCRUMB;
-            if( calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc ) < 0 )
+            int rv = calcCoefficients( PSDt, PSDn, psdReg * pow( 10, -sc / 10 ), Nc );
+            if( rv < 0 )
             {
-                return -1;
+                return rv;
             }
 
             CLAOLP_BREADCRUMB;
@@ -213,7 +214,7 @@ public:
         }
 
         CLAOLP_BREADCRUMB;
-        return -1;
+        return 0;
     }
 
     /// Regularize the PSD and calculate the associated LP coefficients.
@@ -251,9 +252,10 @@ public:
         while( precision > m_minPrecision && its < m_maxIts )
         {
             CLAOLP_BREADCRUMB;
-            if(_regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc ) < 0)
+            int rv = _regularizeCoefficients<telem>( min_var, min_sc, precision, max_sc, go_lp, PSDt, PSDn, Nc );
+            if( rv < 0)
             {
-                return -1;
+                return rv;
             }
 
             CLAOLP_BREADCRUMB;
@@ -282,9 +284,10 @@ public:
 
         CLAOLP_BREADCRUMB;
         // Now record final values
-        if( calcCoefficients( PSDt, PSDn, PSDt[0] * pow( 10, -min_sc / 10 ), Nc ) < 0 )
+        int rv = calcCoefficients( PSDt, PSDn, PSDt[0] * pow( 10, -min_sc / 10 ), Nc );
+        if( rv < 0 )
         {
-            return -1;
+            return rv;
         }
 
         CLAOLP_BREADCRUMB;
