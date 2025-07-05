@@ -81,9 +81,7 @@ namespace analysis
 enum basis : unsigned int
 {
     basic,    ///< The basic sine and cosine Fourier modes
-    modified, ///< The modified Fourier basis from \cite males_guyon_2017
-    projected_basic,
-    projectedm_modified
+    modified ///< The modified Fourier basis from \cite males_guyon_2017
 };
 
 // Forward declaration
@@ -94,9 +92,6 @@ realT F_basic( realT kv, void *params );
 template <typename realT, typename aosysT>
 realT F_mod( realT kv, void *params );
 
-// Forward declaration
-template <typename realT, typename aosysT>
-realT Fm_projMod( realT kv, void *params );
 
 /// Class to manage the calculation of temporal PSDs of the Fourier modes in atmospheric turbulence.
 /** Works with both basic (sines/cosines) and modified Fourier modes.
@@ -366,9 +361,9 @@ struct fourierTemporalPSD
                       int mnCon,                  ///< [in]  the maximum value of m and n which can be controlled.
                       std::vector<realT> &mags,   ///< [in]  the guide star magnitudes
                       int lifetimeTrials,         /**< [in]  [optional] number of trials used for calculating
-                                                                        speckle lifetimes.  If 0, lifetimes are not 
+                                                                        speckle lifetimes.  If 0, lifetimes are not
                                                                         calculated.*/
-                      bool writePSDs              /**< [in]  [optional] flag controlling if resultant 
+                      bool writePSDs              /**< [in]  [optional] flag controlling if resultant
                                                                         PSDs are saved*/ );
 
     /** \name Disk Storage
@@ -528,6 +523,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         params.m_spatialFilter = true;
 
     params.m_p = p;
+    params.m_f0 = m_f0;
 
     params.m_mode_i = m_mode_i;
     params.m_modeCoeffs = m_modeCoeffs;
@@ -544,21 +540,6 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         break;
     case basis::modified: // MXAO_FTPSD_BASIS_MODIFIED:
         func.function = &F_mod<realT, aosysT>;
-        break;
-    case basis::projected_basic: // MXAO_FTPSD_BASIS_PROJECTED_BASIC:
-        mxError( "fourierTemporalPSD::singleLayerPSD",
-                 MXE_NOTIMPL,
-                 "Projected basic-basis modes are not implemented." );
-        break;
-    case basis::projectedm_modified: // MXAO_FTPSD_BASIS_PROJECTED_MODIFIED:
-        params.Jps = Jps;
-        params.Jms = Jms;
-        params.ms = ms;
-        params.ns = ns;
-        params.ps = ps;
-
-        func.function = &Fm_projMod<realT, aosysT>;
-
         break;
     default:
         mxError( "fourierTemporalPSD::singleLayerPSD", MXE_INVALIDARG, "value of _useBasis is not valid." );
@@ -1527,8 +1508,8 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
 template <typename realT, typename aosysT>
 int fourierTemporalPSD<realT, aosysT>::intensityPSD(
-    const std::string &subDir,  // sub-directory of psdDir which contains the controlled system results, and where the
-                                // lifetimes will be written.
+    const std::string &subDir,  // sub-directory of psdDir which contains the controlled system results,
+                                // and where the lifetimes will be written.
     const std::string &psdDir,  // directory containing the PSDS
     const std::string &CvdPath, // path to the covariance decomposition
     int mnMax,
@@ -2412,110 +2393,10 @@ realT F_mod( realT kv, void *params )
 
         P2 *= QQ;
 
-        return P1 + P2;
+        return 0.5*(P1 + P2);
     }
 }
 
-/// Worker function for GSL Integration for a basis projected onto the modified Fourier modes.
-/** \ingroup mxAOAnalytic
- */
-template <typename realT, typename aosysT>
-realT Fm_projMod( realT kv, void *params )
-{
-    fourierTemporalPSD<realT, aosysT> *Fp = (fourierTemporalPSD<realT, aosysT> *)params;
-
-    realT f = Fp->m_f;
-    realT v_wind = Fp->m_aosys->atm.layer_v_wind( Fp->_layer_i );
-
-    realT q_wind = Fp->m_aosys->atm.layer_dir( Fp->_layer_i );
-
-    // For rotating the basis
-    realT cq = cos( q_wind );
-    realT sq = sin( q_wind );
-
-    realT D = Fp->m_aosys->D();
-
-    int mode_i = Fp->m_mode_i;
-
-    realT m;
-    realT n;
-    int p, pp; // = Fp->m_p;
-
-    realT ku = f / v_wind;
-
-    realT kp, km, Jp, Jpp, Jm, Jmp, QQ;
-
-    QQ = 0;
-
-    for( int i = 0; i < Fp->m_modeCoeffs.cols(); ++i )
-    {
-        if( Fp->m_modeCoeffs( i, Fp->m_modeCoeffs.cols() - 1 - mode_i ) == 0 )
-            continue;
-
-        m = Fp->ms[i] * cq + Fp->ns[i] * sq;
-        n = -Fp->ms[i] * sq + Fp->ns[i] * cq;
-
-        kp = sqrt( pow( ku + m / D, 2 ) + pow( kv + n / D, 2 ) );
-        km = sqrt( pow( ku - m / D, 2 ) + pow( kv - n / D, 2 ) );
-
-        Fp->Jps[i] = math::func::jinc( math::pi<realT>() * D * kp );
-        Fp->Jms[i] = math::func::jinc( math::pi<realT>() * D * km );
-    }
-
-    int N = Fp->m_modeCoeffs.cols();
-
-    realT sc;
-
-    for( int i = 0; i < N; ++i )
-    {
-        if( fabs( Fp->m_modeCoeffs( i, Fp->m_modeCoeffs.cols() - 1 - mode_i ) ) < Fp->m_minCoeffVal )
-            continue;
-
-        Jp = Fp->Jps[i];
-        Jm = Fp->Jms[i];
-        p = Fp->ps[i];
-
-        QQ += 2 * ( Jp * Jp + Jm * Jm ) * Fp->m_modeCoeffs( i, Fp->m_modeCoeffs.cols() - 1 - mode_i ) *
-              Fp->m_modeCoeffs( mode_i, i );
-
-        for( int j = ( i + 1 ); j < N; ++j )
-        {
-            if( fabs( Fp->m_modeCoeffs( j, Fp->m_modeCoeffs.cols() - 1 - mode_i ) ) < Fp->m_minCoeffVal )
-                continue;
-            sc = Fp->m_modeCoeffs( i, Fp->m_modeCoeffs.cols() - 1 - mode_i ) *
-                 Fp->m_modeCoeffs( j, Fp->m_modeCoeffs.cols() - 1 - mode_i );
-
-            // if(fabs(sc) < m_minCoeffProduct) continue;
-
-            // if( sc*sc < 1e-2) continue;
-            Jpp = Fp->Jps[j];
-
-            Jmp = Fp->Jms[j];
-
-            pp = Fp->ps[j];
-
-            if( p == pp )
-            {
-                QQ += 2 * 2 * ( Jp * Jpp + Jm * Jmp ) * sc;
-            }
-            else
-            {
-                QQ += 2 * 2 * ( Jp * Jmp + Jm * Jpp ) * sc;
-            }
-        }
-    }
-
-    // realT QQ = 2*(Jp*Jp + Jm*Jm);
-
-    realT P = Fp->m_aosys->psd( Fp->m_aosys->atm,
-                                Fp->_layer_i,
-                                sqrt( pow( ku, 2 ) + pow( kv, 2 ) ),
-                                Fp->m_aosys->lam_sci(),
-                                Fp->m_aosys->lam_wfs(),
-                                Fp->m_aosys->secZeta() );
-
-    return P * QQ;
-}
 
 /*extern template
 struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/

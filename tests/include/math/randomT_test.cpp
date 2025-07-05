@@ -8,7 +8,8 @@
 
 #include "../../../include/math/randomT.hpp"
 
-/** Verify compilation and basic operation of randomT with std::distributions.
+/** \test Scenario: Verify compilation and basic operation of randomT with std::distributions.
+ *
  * Basic tests include verification that seeding works.  Note that there is the very slight
  * possibility that normal operation could return two consecutive variates with the same value
  * which would cause some of the below tests to fail.  Will probably never happen . . .
@@ -96,14 +97,15 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
     }
 }
 
-/** Verify compilation and basic operation of randomT with the Lapace distribution
+/** \test Scenario: Verify compilation and basic operation of randomT with the Laplace distribution
+ *
  * Basic tests include verification that seeding works.  Note that there is the very slight
  * possibility that normal operation could return two consecutive variates with the same value
  * which would cause some of the below tests to fail.  Will probably never happen . . .
  *
  * \anchor tests_math_randomT_basic_laplace
  */
-SCENARIO( "Verify compilation and basic operation of randomT with the Lapace distribution",
+SCENARIO( "Verify compilation and basic operation of randomT with the Laplace distribution",
           "[math::laplace_distribution]" )
 {
     GIVEN( "a laplace distribution is desired" )

@@ -21,7 +21,7 @@ namespace astro
  * @{
  */
 
-/// An ad-hoc planetary mass-to-radius relationship (old version)
+/// An ad-hoc planetary mass-to-radius relationship
 /** The goal of this function is to provide a radius given an exoplanet mass, for lightly-irradiated exoplanets.  By
   lightly-irradiated we mean (roughly) planet's at
   * Mercury's separation or further, scaled for stellar luminosity.

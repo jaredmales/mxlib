@@ -601,13 +601,15 @@ class aoAtmosphere
 
     /// Setup the configurator to configure this class
     /**
-     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+     * Tests:
+     *     - Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
      */
     void setupConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
     /// Load the configuration of this class from a configurator
     /**
-     * \test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+     * Tests:
+     *     - Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
      */
     void loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
