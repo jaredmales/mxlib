@@ -337,18 +337,6 @@
   * \ingroup image_processing
   */
 
-/** \defgroup hc_imaging High Contrast Imaging
-  * Tools for astronomical high contrast image processing.
-  * \ingroup genastro
-  * \ingroup image_processing
-  */
-
-/** \defgroup hc_imaging_enums HCI Enums
-  * Enums for high contrast imaging.
-  * \ingroup hc_imaging
-  */
-
-// see hc_imaging_files
 
 // see image_processing_files
 
@@ -606,11 +594,6 @@
   * Source of tools for working with FITS files.
   * \ingroup fits_processing
   * \ingroup image_processing_files
-  */
-
-/** \defgroup hc_imaging_files High Contrast Imaging Files
-  * Source files for High Contrast Imaging.
-  * \ingroup hc_imaging
   */
 
 /** \defgroup imaging_files Wavefront Propagation Files

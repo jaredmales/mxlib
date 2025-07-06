@@ -22,10 +22,6 @@ OBJS = \
 	ioutils/fits/fitsHeaderCard.o \
 	ioutils/fits/fitsHeader.o \
 	ioutils/textTable.o \
-	improc/ADIDerotator.o \
-	improc/ADIobservation.o \
-	improc/HCIobservation.o \
-	improc/KLIPreduction.o \
 	improc/imageUtils.o \
 	ipc/processInterface.o \
 	ipc/sharedMemSegment.o \
@@ -81,9 +77,6 @@ app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptio
 app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
-improc/HCIobservation.o: ../include/improc/HCIobservation.hpp ../include/improc/imageFilters.hpp ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
-improc/ADIobservation.o: ../include/improc/ADIobservation.hpp  improc/HCIobservation.o ../include/math/gslInterpolation.hpp ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
-improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/HCIobservation.o improc/ADIobservation.o ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp
