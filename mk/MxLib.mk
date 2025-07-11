@@ -4,7 +4,7 @@
 INCLUDES += -I../include
 
 # SOFA
-CURRENT_SOFA ?= 20210125
+CURRENT_SOFA ?= 20231011
 SOFA_PATH ?= $(abspath $(SELF_DIR)/../source/vendor/sofa/$(CURRENT_SOFA)/c/src/)
 EXTRA_LDFLAGS += -L$(SOFA_PATH)
 INCLUDES += -I$(SOFA_PATH)
