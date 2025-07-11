@@ -27,9 +27,9 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-# COMP is git status of the headers
+# COMP is git status of the compiled source
 add_custom_command(
-  OUTPUT source_group()/mxlib_comp_version.h
+  OUTPUT source/mxlib_comp_version.h
   COMMAND bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
   DEPENDS ${OBJLIB_SOURCES} source/mxlib_comp_version.h ./gengithead.sh
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -38,9 +38,9 @@ add_custom_command(
 ##########################################################################
 # The Object Library
 #
-# In addition to the sources, this depends on the COMP GIT status header
+# In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
 ##########################################################################
-add_library(objlib OBJECT ${OBJLIB_SOURCES} source/mxlib_comp_version.h)
+add_library(objlib OBJECT ${OBJLIB_SOURCES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h)
 
 # shared libraries need PIC
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
@@ -60,15 +60,15 @@ SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUT
 ### TODO
 #  cxxversion
 #
-#  OPTIMIZATIONS
-#  CXXFLAGS
-#  CXXVERSION
-#  CFLAGS
+#  OPTIMIZATIONS      X
+#  CXXFLAGS           X
+#  CXXVERSION         X
+#  CFLAGS             X
 #  EIGEN              X
 #  CFITSIO            X
 #  GSL                X
 #  levmar             X
-#  SOFA
+#  SOFA               X
 #
 # Options to implement:
 #                 linux   darwin
@@ -82,6 +82,19 @@ SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUT
 #
 #
 #
+
+set(MXLIB_CVERSION "--std=c99" CACHE STRING "c version")
+set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "c++ version")
+
+set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "optimization settings")
+
+set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "compiler command line defines")
+
+set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "c compiler flags")
+set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "c++ compiler flags")
+
+option(MXLIB_USE_OPENMP "Use OpenMP" ON)
+
 option(MXLIB_USE_CUDA  "Use CUDA library" ON)
 option(MXLIB_USE_ISIO  "Use ImageStreamIO library" ON)
 
@@ -96,6 +109,49 @@ set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL cflags")
 set(MXLIB_MKL_LINK_DIRECTORIES "$ENV{MKLROOT}/lib/intel64" CACHE STRING "MKL link directories")
 set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
 set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "MKL libraries")
+
+############################################
+# Compiler Setup
+############################################
+
+add_compile_definitions(${MXLIB_DEFINES})
+
+set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
+set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
+
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
+
+############################################
+# OpenMP setup
+############################################
+
+if(MXLIB_USE_OPENMP)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -fopenmp")
+
+    message("mxlib: OpenMP support enabled")
+
+    #This doesn't work on 24.04 as of 07/2025
+    #find_package(OpenMP)
+
+    #if(OpenMP_C_FOUND)
+
+    #    target_compile_features(objlib PUBLIC OpenMP)
+    #    target_compile_features(mxlib-shared PUBLIC OpenMP)
+    #    target_compile_features(mxlib-static PUBLIC OpenMP)
+
+    #    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${OpenMP_C_INCLUDE_DIRS} ${OpenMP_C_FLAGS}")
+
+    #    message("mxlib: OpenMP support enabled")
+    #else()
+    #    message("mxlib: OpenMP support not found")
+    #endif()
+
+else()
+    message("mxlib: OpenMP support not enabled")
+endif()
 
 ############################################
 # boost setup
@@ -157,7 +213,7 @@ if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${MXLIB_MKL_INCLUDE_DIRECTORY} ${MXLIB_MKL_DEFINITIONS} ${MXLIB_MKL_CFLAGS}" )
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${MXLIB_MKL_LDFLAGS}")
-else()
+else(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
     message(FATAL_ERROR "MXLIB_USE_BLAS_FROM = ${MXLIB_USE_BLAS_FROM} is not supported.")
 endif()
 
@@ -166,6 +222,7 @@ if(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
 else()
   message("mxlib: BLAS & Lapack support not enabled")
 endif()
+
 ############################################
 # FFTW setup
 ############################################
@@ -258,7 +315,7 @@ if(MXLIB_USE_CUDA)
 endif(MXLIB_USE_CUDA)
 
 if(MXLIB_USE_CUDA)
-  message("mxlib: CUDA support enabled")
+  message("mxlib: CUDA support enabled but not yet supported")
 else()
   message("mxlib: CUDA support not enabled")
 endif(MXLIB_USE_CUDA)

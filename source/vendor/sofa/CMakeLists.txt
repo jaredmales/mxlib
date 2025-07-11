@@ -4,7 +4,7 @@
 #
 ##########################################################################
 
-set(SOFA_DIR "20210125")
+set(SOFA_DIR "20231011")
 
 file(GLOB LIBSRCS CONFIGURE_DEPENDS "${SOFA_DIR}/c/src/*.h" "${SOFA_DIR}/c/src/*.c")
 

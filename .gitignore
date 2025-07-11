@@ -18,6 +18,9 @@ license.blurb
 
 .vscode/*
 
+build*/**
+_build*/**
+
 tests/mxlibTest
 tests/include/ao/sim/pyramidSensor_test
 *.a
