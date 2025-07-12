@@ -77,7 +77,9 @@ SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUT
 #  USE_FFT_FROM     X
 #  USE_BLAS_FROM
 #       MKL         X       -
-#       openblas    -       -
+#       openblas    X       -
+#       openblas-serial -   -
+#       openblas-openmp -   -
 #
 #
 #
@@ -100,7 +102,7 @@ option(MXLIB_USE_ISIO  "Use ImageStreamIO library" ON)
 
 set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface")
 
-set(MXLIB_USE_BLAS_FROM "mkl" CACHE STRING "Which library to use for BLAS and Lapack")
+set(MXLIB_USE_BLAS_FROM "mkl" CACHE STRING "Which library to use for BLAS and Lapack (mkl, openblas)")
 
 #These options are for MKL, which has a cmake config but it's hard to work with
 set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
@@ -133,7 +135,7 @@ if(MXLIB_USE_OPENMP)
 
     message("mxlib: OpenMP support enabled")
 
-    #This doesn't work on 24.04 as of 07/2025
+    #This doesn't work on 24.04 as of 07/2025:
     #find_package(OpenMP)
 
     #if(OpenMP_C_FOUND)
@@ -213,6 +215,22 @@ if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${MXLIB_MKL_INCLUDE_DIRECTORY} ${MXLIB_MKL_DEFINITIONS} ${MXLIB_MKL_CFLAGS}" )
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${MXLIB_MKL_LDFLAGS}")
+elseif(${MXLIB_USE_BLAS_FROM} STREQUAL "openblas")
+
+    pkg_check_modules(OPENBLAS REQUIRED IMPORTED_TARGET openblas)
+    target_link_libraries(objlib PUBLIC PkgConfig::OPENBLAS)
+    target_link_libraries (mxlib-shared PUBLIC PkgConfig::OPENBLAS)
+    target_link_libraries (mxlib-static PUBLIC PkgConfig::OPENBLAS)
+
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OPENBLAS_CFLAGS}")
+
+    pkg_check_modules(LAPACK REQUIRED IMPORTED_TARGET lapack)
+    target_link_libraries(objlib PUBLIC PkgConfig::LAPACK)
+    target_link_libraries (mxlib-shared PUBLIC PkgConfig::LAPACK)
+    target_link_libraries (mxlib-static PUBLIC PkgConfig::LAPACK)
+
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${LAPACK_CFLAGS}")
+
 else(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
     message(FATAL_ERROR "MXLIB_USE_BLAS_FROM = ${MXLIB_USE_BLAS_FROM} is not supported.")
 endif()
