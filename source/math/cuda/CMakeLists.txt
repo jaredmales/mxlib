@@ -1,6 +1,9 @@
-set(OBJLIB_SOURCES  app/appConfigurator.cpp
-                    app/application.cpp
-                    app/clOptions.cpp
-                    ini.cpp
-                    optionparser.cpp PARENT_SCOPE)
 
+if(MXLIB_USE_CUDA)
+
+    set(OBJLIB_SOURCES  ${OBJLIB_SOURCES}
+                        source/math/cuda/templateCublas.cu
+                        source/math/cuda/templateCufft.cpp
+                        source/math/cuda/templateCurand.cpp PARENT_SCOPE)
+
+endif()

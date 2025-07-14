@@ -1,4 +1,4 @@
-#add_subdirectory(cuda)
+add_subdirectory(cuda)
 add_subdirectory(fit)
 add_subdirectory(ft)
 add_subdirectory(func)

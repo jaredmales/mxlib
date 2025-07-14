@@ -1,12 +1,122 @@
+#################################################################
+#                      cmake configuration for mxlib
+#
+#################################################################
+## TODO
+#    - make FFT optional
+#    - make BLAS & Lapack optional
+#    - make CFITSIO optional
+#
+## Compliance with Makefile build;
+#                    linux   darwin
+#  OPTIMIZATIONS      X
+#  CXXFLAGS           X
+#  CXXVERSION         X
+#  CFLAGS             X
+#  EIGEN              X
+#  CFITSIO            X
+#  GSL                X
+#  levmar             X
+#  SOFA               X
+#
+# Options to implement:
+#                     linux   darwin
+#  NEED_CUDA            []
+#  NEED_ISIO            X       ?
+#  USE_FFT_FROM         X
+#  USE_BLAS_FROM:      ------------
+#       MKL             X       -
+#       openblas        X       -
+#       openblas-serial -       -
+#       openblas-openmp -       -
+#
+#
+#
+#
+
+#########################################
+# basic setup
+#
+#########################################
+
 cmake_minimum_required(VERSION 3.17)
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
 include(CheckLanguage)
 find_package(PkgConfig REQUIRED)
 
 project(mxlib LANGUAGES CXX C)
+
+
+#########################################
+# mxlib settings
+#
+# each setting is prefixed with MXLIB_
+#########################################
+
+set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
+set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version")
+
+set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c compiler flags")
+set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c++ compiler flags")
+
+set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
+
+set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
+
+option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other libraries" ON )
+
+option(MXLIB_USE_CUDA  "Use CUDA library for mxlib" ON)
+option(MXLIB_USE_ISIO  "Use ImageStreamIO library for mxlib" ON)
+
+set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface in mxlib")
+
+set(MXLIB_USE_BLAS_FROM "mkl" CACHE STRING "Which library to use for BLAS and Lapack in mxlib.  Supported choicess: mkl, openblas.")
+
+#These options are for MKL, which has a cmake config but it's hard to work with
+set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
+set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL defines")
+set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL cflags")
+set(MXLIB_MKL_LINK_DIRECTORIES "$ENV{MKLROOT}/lib/intel64" CACHE STRING "MKL link directories")
+set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
+set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "MKL libraries")
+
+#########################################
+# Validate config settings
+#
+# Only things needed for conditional includes
+#########################################
+
+# CUDA
+if(MXLIB_USE_CUDA)
+
+    check_language(CUDA)
+
+    if(CMAKE_CUDA_COMPILER)
+        #this has to be be before any CUDA code is included
+        if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+            set(CMAKE_CUDA_ARCHITECTURES 86)
+        endif()
+
+    else()
+        message(WARNING "No CUDA support found, setting MXLIB_USE_CUDA to off")
+        set(MXLIB_USE_CUDA OFF)
+    endif()
+endif()
+
+
+#########################################
+# header files
+#
+#
+#########################################
+
 include_directories(include)
+
+add_subdirectory(include)
+
+#set(MXLIB_PUBLIC_INCLUDE_DIRECTORIES include/)
 
 #########################################
 # Build the list of source files
@@ -22,16 +132,16 @@ add_subdirectory(source)
 # UNCOMP is git status of the headers
 add_custom_command(
   OUTPUT include/mxlib_uncomp_version.h
-  COMMAND bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
-  DEPENDS ${OBJLIB_SOURCES} include/mxlib_uncomp_version.h ./gengithead.sh
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh ${CMAKE_CURRENT_SOURCE_DIR} include/mxlib_uncomp_version.h MXLIB_UNCOMP
+  DEPENDS ${OBJLIB_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh
+  #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 # COMP is git status of the compiled source
 add_custom_command(
   OUTPUT source/mxlib_comp_version.h
   COMMAND bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
-  DEPENDS ${OBJLIB_SOURCES} source/mxlib_comp_version.h ./gengithead.sh
+  DEPENDS ${OBJLIB_SOURCES} ./gengithead.sh
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
@@ -40,7 +150,7 @@ add_custom_command(
 #
 # In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
 ##########################################################################
-add_library(objlib OBJECT ${OBJLIB_SOURCES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h)
+add_library(objlib OBJECT ${OBJLIB_SOURCES} ${OBJLIB_INCLUDES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h)
 
 # shared libraries need PIC
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
@@ -56,61 +166,11 @@ add_library(mxlib-static STATIC $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar
 SET_TARGET_PROPERTIES(mxlib-shared PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 
+install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h")
+install (FILES include/mxlib.hpp include/mxError.hpp include/mxException.hpp DESTINATION include/mx)
 
-### TODO
-#  cxxversion
-#
-#  OPTIMIZATIONS      X
-#  CXXFLAGS           X
-#  CXXVERSION         X
-#  CFLAGS             X
-#  EIGEN              X
-#  CFITSIO            X
-#  GSL                X
-#  levmar             X
-#  SOFA               X
-#
-# Options to implement:
-#                 linux   darwin
-#  NEED_CUDA        -       -
-#  NEED_ISIO        X       ?
-#  USE_FFT_FROM     X
-#  USE_BLAS_FROM
-#       MKL         X       -
-#       openblas    X       -
-#       openblas-serial -   -
-#       openblas-openmp -   -
-#
-#
-#
-#
-
-set(MXLIB_CVERSION "--std=c99" CACHE STRING "c version")
-set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "c++ version")
-
-set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "optimization settings")
-
-set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "compiler command line defines")
-
-set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "c compiler flags")
-set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "c++ compiler flags")
-
-option(MXLIB_USE_OPENMP "Use OpenMP" ON)
-
-option(MXLIB_USE_CUDA  "Use CUDA library" ON)
-option(MXLIB_USE_ISIO  "Use ImageStreamIO library" ON)
-
-set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface")
-
-set(MXLIB_USE_BLAS_FROM "mkl" CACHE STRING "Which library to use for BLAS and Lapack (mkl, openblas)")
-
-#These options are for MKL, which has a cmake config but it's hard to work with
-set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
-set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL defines")
-set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL cflags")
-set(MXLIB_MKL_LINK_DIRECTORIES "$ENV{MKLROOT}/lib/intel64" CACHE STRING "MKL link directories")
-set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
-set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "MKL libraries")
+#We install the generated version behind cmake's back so it does get treated as a changed depend
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/include/mxlib_uncomp_version.h DESTINATION include/mx)
 
 ############################################
 # Compiler Setup
@@ -122,6 +182,9 @@ set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
+
+set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS} -I${CMAKE_CURRENT_BINARY_DIR}/include")
+set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS} -I${CMAKE_CURRENT_BINARY_DIR}/include")
 
 ############################################
 # OpenMP setup
@@ -323,17 +386,10 @@ endif()
 # CUDA setup
 ############################################
 if(MXLIB_USE_CUDA)
-  check_language(CUDA)
-  if(CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-  else()
-    message(WARNING "No CUDA support found")
-    set(MXLIB_USE_CUDA OFF)
-  endif()
-endif(MXLIB_USE_CUDA)
 
-if(MXLIB_USE_CUDA)
-  message("mxlib: CUDA support enabled but not yet supported")
+    enable_language(CUDA)
+
+    message("mxlib: CUDA support enabled but not yet supported")
 else()
   message("mxlib: CUDA support not enabled")
 endif(MXLIB_USE_CUDA)
