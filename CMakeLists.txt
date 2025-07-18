@@ -21,7 +21,7 @@
 #
 # Options to implement:
 #                     linux   darwin
-#  NEED_CUDA            []
+#  NEED_CUDA            X
 #  NEED_ISIO            X       ?
 #  USE_FFT_FROM         X
 #  USE_BLAS_FROM:      ------------
@@ -40,6 +40,8 @@
 #########################################
 
 cmake_minimum_required(VERSION 3.24)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
@@ -48,7 +50,7 @@ find_package(PkgConfig REQUIRED)
 
 project(mxlib LANGUAGES CXX C)
 
-
+#Function for debugging
 function(dump_cmake_variables)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
@@ -177,15 +179,20 @@ SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUT
 
 
 
-install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h")
+install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc")
 install (FILES include/mxlib.hpp include/mxError.hpp include/mxException.hpp DESTINATION include/mx)
 
 #We install the generated version behind cmake's back so it does get treated as a changed depend
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/include/mxlib_uncomp_version.h DESTINATION include/mx)
 
-install (TARGETS mxlib-shared DESTINATION lib)
-install (TARGETS mxlib-static DESTINATION lib)
+install (TARGETS mxlib-shared EXPORT mxlib-sharedTargets DESTINATION lib)
+install (TARGETS mxlib-static EXPORT mxlib-staticTargets DESTINATION lib)
 
+install(
+    EXPORT mxlib-sharedTargets
+    FILE mxlib-sharedTargets.cmake
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/mxlib/cmake"
+)
 ############################################
 # Compiler Setup
 ############################################
@@ -437,6 +444,8 @@ if(MXLIB_USE_CUDA)
 
     target_link_libraries(mxlib-shared PUBLIC CUDA::cusolver)
     target_link_libraries(mxlib-static PUBLIC CUDA::cusolver_static)
+
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA")
     add_compile_definitions(-DEIGEN_NO_CUDA)
