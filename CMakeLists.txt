@@ -6,6 +6,15 @@
 #    - make FFT optional
 #    - make BLAS & Lapack optional
 #    - make CFITSIO optional
+#    - deal with HASQUAD (should be MXLIB_HASQUAD)
+#    - enable build without GSL
+#    - enable build without CFITSIO
+#    - test build without fftw
+#    - test build without BLAS
+#    - test build without ISIO
+#    - test build without CUDA
+# (i.o.w. minimum depends should be boost and Eigen.  maybe we don't even need Eigen)
+#
 #
 ## Compliance with Makefile build;
 #                    linux   darwin
@@ -30,8 +39,7 @@
 #       openblas-serial -       -
 #       openblas-openmp -       -
 #
-#
-#
+# New Todos:
 #
 
 #########################################
@@ -42,15 +50,82 @@
 cmake_minimum_required(VERSION 3.24)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-#set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
 include(CheckLanguage)
 find_package(PkgConfig REQUIRED)
 
-project(mxlib LANGUAGES CXX C)
+project(mxlib LANGUAGES CXX C
+              VERSION "0.2.0"
+              DESCRIPTION "c++ library for astronomy signal processing"
+              HOMEPAGE_URL "https://jaredmales.github.io/mxlib-doc/")
 
-#Function for debugging
+## macro linklibdirs_from_list
+ # Turn list of library directories into a -L delimited string for linking
+ #
+ # First: LINK_LIBDIRS: output string
+ # Second: LIB_DIRS_LIST: input list to process
+ #
+macro(linklibdirs_from_list LINK_LIBDIRS LIBDIR_LIST)
+
+    string(REPLACE ";" " -L" ${LINK_LIBDIRS} "${${LIBDIR_LIST}}")
+    set(${LINK_LIBDIRS} "-L${${LINK_LIBDIRS}}")
+
+endmacro()
+
+## Extract the library name from a path
+ # e.g. /path/to/libname.so produces name
+ #
+ # LIBNAME: output contains the library name
+ # LIBPATH: the path to the library
+ #
+macro(libname_from_path LIBNAME LIBPATH)
+
+    get_filename_component(${LIBNAME} ${${LIBPATH}} NAME)
+    get_filename_component(LIBEXT ${${LIBPATH}} LAST_EXT)
+
+    string(REPLACE "lib" "" ${LIBNAME} ${${LIBNAME}})
+    string(REPLACE ${LIBEXT} "" ${LIBNAME} ${${LIBNAME}})
+
+endmacro()
+
+## macro liblist_strip_namespace
+ # Strip namespace from library names in a list and add a prefix
+ # assumes that the same prefix is added to all libs in the list
+ # E.g. this can be used to strip Boost:: and replace it with boost_
+ #
+ # LIBRARY_LIST: input/output list of libraries
+ # prefix: input the prefix to add
+ #
+macro(liblist_strip_namespace LIBRARY_LIST prefix)
+
+    #strip namespace from beginning
+    string(REGEX REPLACE "^[^;]*::" "${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
+    #message("LIBRARY_LIST: ${${LIBRARY_LIST}}")
+    #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
+
+    #strip remaining namespaces
+    string(REGEX REPLACE "[ ;].*::" ";${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
+
+endmacro()
+
+## Function linklibs_from_list
+ # Turn list of library names into a -l delimited string for linking
+ #
+ # First: LINK_LIBRARIES: output string
+ # Second: LIBRARY_LIST: input list to process
+ #
+macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
+
+    string(REPLACE ";" " -l" ${LINK_LIBRARIES} "${${LIBRARY_LIST}}")
+    set(${LINK_LIBRARIES} "-l${${LINK_LIBRARIES}}")
+
+endmacro()
+
+## Function dump_cmake_variables
+ # Dump all the current variables for debugging
+ #
 function(dump_cmake_variables)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
@@ -191,7 +266,7 @@ install (TARGETS mxlib-static EXPORT mxlib-staticTargets DESTINATION lib)
 install(
     EXPORT mxlib-sharedTargets
     FILE mxlib-sharedTargets.cmake
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/mxlib/cmake"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/mxlib"
 )
 ############################################
 # Compiler Setup
@@ -209,6 +284,7 @@ set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
 ############################################
 
 if(MXLIB_USE_OPENMP)
+
     find_package(OpenMP)
 
     if(NOT (OpenMP_C_FOUND AND OpenMP_CXX_FOUND))
@@ -224,6 +300,17 @@ if(MXLIB_USE_OPENMP)
 
         set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OpenMP_CXX_FLAGS}")
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
+        #this is so dumb, the following does not produce a linkable system:
+        # linklibdirs_from_list(OpenMP_LIBDIRS_FLAGS OpenMP_CXX_LIBRARY)
+        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBDIRS_FLAGS}")
+
+        # linklibs_from_list(OpenMP_LIBRARIES_FLAGS OpenMP_CXX_LIB_NAMES)
+        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBRARIES_FLAGS}")
+        #but this does
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -fopenmp")
+        #which does not appear to be supported by any variable produced in FindOpenMP
+
         message("mxlib: OpenMP support enabled")
 
     endif()
@@ -245,6 +332,14 @@ target_link_libraries (mxlib-static PUBLIC ${Boost_LIBRARIES})
 
 # don't add anything to MXLIB_PC_CFLAGS b/c we don't link boost for apps
 
+linklibdirs_from_list(Boost_LIBDIRS_FLAGS Boost_LIBRARY_DIRS)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBDIRS_FLAGS}")
+
+liblist_strip_namespace(Boost_LIBRARIES "boost_")
+linklibs_from_list(Boost_LIBRARIES_FLAGS Boost_LIBRARIES)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBRARIES_FLAGS}")
+
+
 ############################################
 # GSL setup
 ############################################
@@ -258,6 +353,12 @@ set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${GSL_CFLAGS} ${GSL_CFLAGS_OTHER}"
 
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${GSL_CFLAGS}")
 
+linklibdirs_from_list(GSL_LIBDIRS_FLAGS GSL_LIBRARY_DIRS)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBDIRS_FLAGS}")
+
+linklibs_from_list(GSL_LIBRARIES_FLAGS GSL_LIBRARIES)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBRARIES_FLAGS}")
+
 ############################################
 # Eigen setup
 ############################################
@@ -267,14 +368,94 @@ target_link_libraries(objlib PUBLIC PkgConfig::EIGEN3)
 target_link_libraries (mxlib-shared PUBLIC PkgConfig::EIGEN3)
 target_link_libraries (mxlib-static PUBLIC PkgConfig::EIGEN3)
 
-
 #Don't let Eigen use openmp
 add_compile_definitions(-DEIGEN_DONT_PARALLELIZE)
 
-set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER}")
+set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${EIGEN3_CFLAGS} -DEIGEN_DONT_PARALLELIZE")
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER} -DEIGEN_DONT_PARALLELIZE")
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${EIGEN3_LDFLAGS}")
+
+############################################
+# FFTW setup
+############################################
+if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
+
+    #double
+    pkg_check_modules(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
+    include_directories(${FFTW3_INCLUDE_DIRS})
+    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3)
+    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3)
+    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3)
+
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3_CFLAGS} ${FFTW3_CFLAGS_OTHER}")
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3_INCLUDE_DIRS} -l${FFTW3_LIBRARIES}")
+
+    linklibdirs_from_list(FFTW3_LIBDIRS_FLAGS FFTW3_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(FFTW3_LIBRARIES_FLAGS FFTW3_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3_LIBRARIES_FLAGS}")
+
+    #float
+    pkg_check_modules(FFTW3F REQUIRED IMPORTED_TARGET fftw3f)
+    include_directories(${FFTW3F_INCLUDE_DIRS})
+    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3F)
+    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3F)
+    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3F)
+
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3F_CFLAGS} ${FFTW3F_CFLAGS_OTHER}")
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3F_INCLUDE_DIRS}")
+
+    linklibdirs_from_list(FFTW3F_LIBDIRS_FLAGS FFTW3F_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3F_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(FFTW3F_LIBRARIES_FLAGS FFTW3F_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3F_LIBRARIES_FLAGS}")
+
+    #long double
+    pkg_check_modules(FFTW3L REQUIRED IMPORTED_TARGET fftw3l)
+    include_directories(${FFTW3L_INCLUDE_DIRS})
+    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3L)
+    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3L)
+    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3L)
+
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3L_CFLAGS} ${FFTW3L_CFLAGS_OTHER}")
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3L_INCLUDE_DIRS}")
+
+    linklibdirs_from_list(FFTW3L_LIBDIRS_FLAGS FFTW3L_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTWL_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(FFTW3L_LIBRARIES_FLAGS FFTW3L_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBRARIES_FLAGS}")
+
+    #quad/f128
+    pkg_check_modules(FFTW3Q REQUIRED IMPORTED_TARGET fftw3q)
+    include_directories(${FFTW3Q_INCLUDE_DIRS})
+    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3Q)
+    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3Q)
+    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
+
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3Q_INCLUDE_DIRS}")
+
+    linklibdirs_from_list(FFTW3Q_LIBDIRS_FLAGS FFTW3Q_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(FFTW3Q_LIBRARIES_FLAGS FFTW3Q_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBRARIES_FLAGS}")
+
+
+else()
+    message(FATAL_ERROR "mxlib: MXLIB_USE_FFT_FROM = ${MXLIB_USE_FFT_FROM} is not supported.")
+endif()
+
+if(NOT ${MXLIB_USE_FFT_FROM} STREQUAL "")
+  message("mxlib: FFT support enabled with ${MXLIB_USE_FFT_FROM}")
+else()
+  message("mxlib: FFT support not enabled (must have fftw3, fftw3f, fftw3l, and fftw3q)")
+endif()
+
 
 ############################################
 # BLAS & Lapack setup
@@ -310,6 +491,13 @@ elseif(${MXLIB_USE_BLAS_FROM} STREQUAL "openblas")
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${OPENBLAS_CFLAGS} ${OPENBLAS_CFLAGS_OTHER}")
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OPENBLAS_CFLAGS} ${OPENBLAS_CFLAGS_OTHER}")
 
+    linklibdirs_from_list(OPENBLAS_LIBDIRS_FLAGS OPENBLAS_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OPENBLAS_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(OPENBLAS_LIBRARIES_FLAGS OPENBLAS_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OPENBLAS_LIBRARIES_FLAGS}")
+
+
     pkg_check_modules(LAPACK REQUIRED IMPORTED_TARGET lapack)
     target_link_libraries(objlib PUBLIC PkgConfig::LAPACK)
     target_link_libraries (mxlib-shared PUBLIC PkgConfig::LAPACK)
@@ -317,6 +505,12 @@ elseif(${MXLIB_USE_BLAS_FROM} STREQUAL "openblas")
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${LAPACK_CFLAGS} ${LAPACK_CFLAGS_OTHER}")
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${LAPACK_CFLAGS} ${LAPACK_CFLAGS_OTHER}")
+
+    linklibdirs_from_list(LAPACK_LIBDIRS_FLAGS LAPACK_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${LAPACK_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(LAPACK_LIBRARIES_FLAGS LAPACK_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${LAPACK_LIBRARIES_FLAGS}")
 
 else(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
 
@@ -328,56 +522,6 @@ if(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
   message("mxlib: BLAS & Lapack support enabled with ${MXLIB_USE_BLAS_FROM}")
 else()
   message("mxlib: BLAS & Lapack support not enabled")
-endif()
-
-############################################
-# FFTW setup
-############################################
-if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
-
-    pkg_check_modules(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
-    include_directories(${FFTW3_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3)
-
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3_CFLAGS} ${FFTW3_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3_INCLUDE_DIRS}")
-
-    pkg_check_modules(FFTW3F REQUIRED IMPORTED_TARGET fftw3f)
-    include_directories(${FFTW3F_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3F)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3F)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3F)
-
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3F_CFLAGS} ${FFTW3F_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3F_INCLUDE_DIRS}")
-
-    pkg_check_modules(FFTW3L REQUIRED IMPORTED_TARGET fftw3l)
-    include_directories(${FFTW3L_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3L)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3L)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3L)
-
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3L_CFLAGS} ${FFTW3L_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3L_INCLUDE_DIRS}")
-
-    pkg_check_modules(FFTW3Q REQUIRED IMPORTED_TARGET fftw3q)
-    include_directories(${FFTW3Q_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3Q)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3Q)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
-
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3Q_INCLUDE_DIRS}")
-else()
-    message(FATAL_ERROR "mxlib: MXLIB_USE_FFT_FROM = ${MXLIB_USE_FFT_FROM} is not supported.")
-endif()
-
-if(NOT ${MXLIB_USE_FFT_FROM} STREQUAL "")
-  message("mxlib: FFT support enabled with ${MXLIB_USE_FFT_FROM}")
-else()
-  message("mxlib: FFT support not enabled (must have fftw3, fftw3f, fftw3l, and fftw3q)")
 endif()
 
 ############################################
@@ -394,7 +538,11 @@ target_link_libraries(mxlib-static PUBLIC PkgConfig::CFITSIO)
 set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${CFITSIO_CFLAGS} ${CFITSIO_CFLAGS_OTHER}")
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CFITSIO_CFLAGS}")
 
+linklibdirs_from_list(CFITSIO_LIBDIRS_FLAGS CFITSIO_LIBRARY_DIRS)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${CFITSIO_LIBDIRS_FLAGS}")
 
+linklibs_from_list(CFITSIO_LIBRARIES_FLAGS CFITSIO_LIBRARIES)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${CFITSIO_LIBRARIES_FLAGS}")
 
 ############################################
 # ImageStreamIO (ISIO) setup
@@ -411,6 +559,13 @@ if(MXLIB_USE_ISIO)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK")
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK")
+
+    linklibdirs_from_list(ISIO_LIBDIRS_FLAGS ISIO_LIBRARY_DIRS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBDIRS_FLAGS}")
+
+    linklibs_from_list(ISIO_LIBRARIES_FLAGS ISIO_LIBRARIES)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBRARIES_FLAGS}")
+
 
     message("mxlib: ImageStreamIO support enabled")
 else()
@@ -433,17 +588,27 @@ if(MXLIB_USE_CUDA)
     target_link_libraries(mxlib-shared PUBLIC CUDA::cudart)
     target_link_libraries(mxlib-static PUBLIC CUDA::cudart_static)
 
+    libname_from_path(CUDA_cudart_LIBNAME CUDA_cudart_LIBRARY)
+
     target_link_libraries(mxlib-shared PUBLIC CUDA::cublas)
     target_link_libraries(mxlib-static PUBLIC CUDA::cublas_static)
+
+    libname_from_path(CUDA_cublas_LIBNAME CUDA_cublas_LIBRARY)
 
     target_link_libraries(mxlib-shared PUBLIC CUDA::cufft)
     target_link_libraries(mxlib-static PUBLIC CUDA::cufft_static)
 
+    libname_from_path(CUDA_cufft_LIBNAME CUDA_cufft_LIBRARY)
+
     target_link_libraries(mxlib-shared PUBLIC CUDA::curand)
     target_link_libraries(mxlib-static PUBLIC CUDA::curand_static)
 
+    libname_from_path(CUDA_curand_LIBNAME CUDA_curand_LIBRARY)
+
     target_link_libraries(mxlib-shared PUBLIC CUDA::cusolver)
     target_link_libraries(mxlib-static PUBLIC CUDA::cusolver_static)
+
+    libname_from_path(CUDA_cusolver_LIBNAME CUDA_cusolver_LIBRARY)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
 
@@ -461,7 +626,16 @@ if(MXLIB_USE_CUDA)
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA")
 
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -L${CUDAToolkit_LIBRARY_DIR}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cudart_LIBNAME}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cublas_LIBNAME}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cufft_LIBNAME}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_curand_LIBNAME}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cusolver_LIBNAME}")
+
     message("mxlib: CUDA support enabled")
+
+
 else()
   message("mxlib: CUDA support not enabled")
 endif(MXLIB_USE_CUDA)
@@ -483,5 +657,13 @@ string(REPLACE ";" " " MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS}")
 message("cflags= ${MXLIB_PC_CFLAGS}")
 message("ldflags= ${MXLIB_PC_LDFLAGS}")
 
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/${PROJECT_NAME}.pc.in
+                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
+                @ONLY )
+
+install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig
+)
 
 #dump_cmake_variables(".")
