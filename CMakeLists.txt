@@ -159,7 +159,7 @@ option(MXLIB_USE_ISIO  "Use ImageStreamIO library for mxlib" ON)
 
 set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface in mxlib")
 
-set(MXLIB_USE_BLAS_FROM "mkl" CACHE STRING "Which library to use for BLAS and Lapack in mxlib.  Supported choicess: mkl, openblas.")
+set(MXLIB_USE_BLAS_FROM "openblas" CACHE STRING "Which library to use for BLAS and Lapack in mxlib.  Supported choicess: mkl, openblas.")
 
 #These options are for MKL, which has a cmake config but it's hard to work with
 set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
@@ -583,7 +583,7 @@ if(MXLIB_USE_CUDA)
 
     enable_language(CUDA)
 
-    find_package(OpenMP)
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     target_link_libraries(mxlib-shared PUBLIC CUDA::cudart)
     target_link_libraries(mxlib-static PUBLIC CUDA::cudart_static)
@@ -610,11 +610,9 @@ if(MXLIB_USE_CUDA)
 
     libname_from_path(CUDA_cusolver_LIBNAME CUDA_cusolver_LIBRARY)
 
-    message("CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES: ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES} -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
-
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA")
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
     add_compile_definitions(-DEIGEN_NO_CUDA)
     add_compile_definitions(-DMXLIB_MILK)
 
@@ -651,10 +649,16 @@ endif(MXLIB_USE_CUDA)
 string(REPLACE " " ";" MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
 list(REMOVE_DUPLICATES MXLIB_PC_CFLAGS)
 string(REPLACE ";" " " MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
+#remove stray flags caused by empty strings
+string(REGEX REPLACE "-I |-I$" " " MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
+string(REGEX REPLACE "-D |-D$ " " " MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
 
 string(REPLACE " " ";" MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS}")
 list(REMOVE_DUPLICATES MXLIB_PC_LDFLAGS)
 string(REPLACE ";" " " MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS}")
+#remove stray flags caused by empty strings
+string(REGEX REPLACE "-l |-l$ " " " MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS}")
+string(REGEX REPLACE "-L |-L$ " " " MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS}")
 
 message("cflags= ${MXLIB_PC_CFLAGS}")
 message("ldflags= ${MXLIB_PC_LDFLAGS}")
