@@ -143,7 +143,7 @@ endfunction()
 #########################################
 
 set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
-set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version")
+set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version (minimum is c++17)")
 
 set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c compiler flags")
 set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c++ compiler flags")
@@ -154,17 +154,17 @@ set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command lin
 
 option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other libraries" ON )
 
-option(MXLIB_USE_CUDA  "Use CUDA library for mxlib" ON)
-option(MXLIB_USE_ISIO  "Use ImageStreamIO library for mxlib" ON)
+option(MXLIB_USE_CUDA  "Whether or not to use CUDA library for mxlib" ON)
+option(MXLIB_USE_ISIO  "Whether or not to use the ImageStreamIO library for mxlib" ON)
 
 set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface in mxlib")
 
-set(MXLIB_USE_BLAS_FROM "openblas" CACHE STRING "Which library to use for BLAS and Lapack in mxlib.  Supported choicess: mkl, openblas.")
+set(MXLIB_USE_BLAS_FROM "openblas" CACHE STRING "Which library to use for BLAS and Lapack in mxlib.  Supported choices: mkl, openblas.")
 
 #These options are for MKL, which has a cmake config but it's hard to work with
 set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
-set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL defines")
-set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL cflags")
+set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL compiler defines")
+set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL compiiler cflags (used for cxx too)")
 set(MXLIB_MKL_LINK_DIRECTORIES "$ENV{MKLROOT}/lib/intel64" CACHE STRING "MKL link directories")
 set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
 set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "MKL libraries")
@@ -430,20 +430,26 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBRARIES_FLAGS}")
 
     #quad/f128
-    pkg_check_modules(FFTW3Q REQUIRED IMPORTED_TARGET fftw3q)
-    include_directories(${FFTW3Q_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3Q)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3Q)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
+    pkg_check_modules(FFTW3Q IMPORTED_TARGET fftw3q)
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3Q_INCLUDE_DIRS}")
+    if(FFTW3Q_FOUND)
+        add_compile_definitions("-DHAS_QUAD")
+        include_directories(${FFTW3Q_INCLUDE_DIRS})
+        target_link_libraries(objlib PUBLIC PkgConfig::FFTW3Q)
+        target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3Q)
+        target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
 
-    linklibdirs_from_list(FFTW3Q_LIBDIRS_FLAGS FFTW3Q_LIBRARY_DIRS)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBDIRS_FLAGS}")
+        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DHAS_QUAD -I${FFTW3Q_INCLUDE_DIRS}")
 
-    linklibs_from_list(FFTW3Q_LIBRARIES_FLAGS FFTW3Q_LIBRARIES)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBRARIES_FLAGS}")
+        linklibdirs_from_list(FFTW3Q_LIBDIRS_FLAGS FFTW3Q_LIBRARY_DIRS)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBDIRS_FLAGS}")
+
+        linklibs_from_list(FFTW3Q_LIBRARIES_FLAGS FFTW3Q_LIBRARIES)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBRARIES_FLAGS}")
+    else()
+        message("mxlib: quad support in FFTW not found")
+    endif()
 
 
 else()
@@ -549,24 +555,31 @@ set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${CFITSIO_LIBRARIES_FLAGS}")
 ############################################
 if(MXLIB_USE_ISIO)
 
-    pkg_check_modules(ISIO REQUIRED IMPORTED_TARGET ImageStreamIO)
-    target_link_libraries(objlib PUBLIC PkgConfig::ISIO)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::ISIO)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::ISIO)
+    pkg_check_modules(ISIO IMPORTED_TARGET ImageStreamIO)
 
-    include_directories(${ISIO_INCLUDE_DIRS})
-    add_compile_definitions("-DMXLIB_MILK")
+    if(ISIO_FOUND)
+        target_link_libraries(objlib PUBLIC PkgConfig::ISIO)
+        target_link_libraries(mxlib-shared PUBLIC PkgConfig::ISIO)
+        target_link_libraries(mxlib-static PUBLIC PkgConfig::ISIO)
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK")
+        include_directories(${ISIO_INCLUDE_DIRS})
+        add_compile_definitions("-DMXLIB_MILK")
 
-    linklibdirs_from_list(ISIO_LIBDIRS_FLAGS ISIO_LIBRARY_DIRS)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBDIRS_FLAGS}")
+        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK")
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK")
 
-    linklibs_from_list(ISIO_LIBRARIES_FLAGS ISIO_LIBRARIES)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBRARIES_FLAGS}")
+        linklibdirs_from_list(ISIO_LIBDIRS_FLAGS ISIO_LIBRARY_DIRS)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBDIRS_FLAGS}")
 
+        linklibs_from_list(ISIO_LIBRARIES_FLAGS ISIO_LIBRARIES)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBRARIES_FLAGS}")
+    else()
+        message(WARNING "No ImageStreamIO support found, setting MXLIB_USE_ISIO to off")
+        set(MXLIB_USE_ISIO OFF)
+    endif()
+endif()
 
+if(MXLIB_USE_ISIO)
     message("mxlib: ImageStreamIO support enabled")
 else()
     message("mxlib: ImageStreamIO support not enabled")
