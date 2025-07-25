@@ -178,7 +178,7 @@ tagged with the version of the library used to generate them.  The goal is to al
 a given point so that previous results can be reproduced.  The library will issue a warning at compile time if
 there are any modifications to it that aren't yet committed, meaning that they aren't trackable.
 
-\subsection Liking to mxlib
+\subsection linking Linking to mxlib
 Once `mxlib` is built and installed, set the `$MXMAKEFILE` variable in your shell (and/or shell profile files):
 
 \code
