@@ -17,7 +17,7 @@
 #include "../../ioutils/fits/fitsFile.hpp"
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
-#include "../../mxlib_uncomp_version.h"
+#include "../../mxlib.hpp"
 #include "../../ipc/ompLoopWatcher.hpp"
 #include "../../sys/timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"
@@ -445,8 +445,7 @@ int zernikeCovarMap( const std::string & fname, ///< [out] the path where the ou
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
    head.append("RELTOL", relTol, "Relative tolerance in qagiu");
 
-   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
-   
+   fitsHeaderGitStatus( head, "mxlib", mxlib_comp_current_sha1(), mxlib_comp_repo_modified() );
 
    fits::fitsFile<realT> ff;
    ff.write(fname + ".fits", covar, head);
@@ -534,9 +533,8 @@ int zernikeCovarMapSeparated( const std::string & fname,
    head.append("ABSTOL", absTol, "Absolute tolerance in qagiu");
    head.append("RELTOL", relTol, "Relative tolerance in qagiu");
 
-   
-   fitsHeaderGitStatus(head, "mxlib_uncomp",  MXLIB_UNCOMP_CURRENT_SHA1, MXLIB_UNCOMP_REPO_MODIFIED);
-   
+   fitsHeaderGitStatus( head, "mxlib", mxlib_comp_current_sha1(), mxlib_comp_repo_modified() );
+
    fits::fitsFile<realT> ff;
    ff.write(fname + "_pp.fits", covar_pp, head);
    ff.write(fname + "_ppp.fits", covar_ppp, head);

@@ -9,14 +9,14 @@
 # https://opensource.org/licenses/MIT
 #
 # Author: Jared Males (jaredmales@pm.me)
-# 
+#
 # Contributors: Joseph Long
 #
 # Description: This script produces a C/C++ header (.h) with information
 #              about the state of a git repository. This allows recording
 #              of the state of a git repo at compilation, including whether
 #              or not the repo was modified.
-#            
+#
 #              This also prints a message at compile time to warn if the repo
 #              was modified.
 #
@@ -29,7 +29,7 @@
 #        output_path = optional ouput path, default './git_version.h'
 #        prefix = optional prefix for #define variable names, default is GIT
 #
-#        note: the arguments are positional, so to change output_path you must 
+#        note: the arguments are positional, so to change output_path you must
 #              define directory first.
 ##############################################################################
 
@@ -73,6 +73,7 @@ echo "" >> $GIT_HEADER
 if [ $GIT_MODIFIED = 1 ]; then
 echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
 echo "  #ifndef GITHEAD_NOWARNING" >> $GIT_HEADER
+echo "    #define GITHEAD_NOWARNING" >> $GIT_HEADER
 echo "    #pragma message (\"******************************************\")" >> $GIT_HEADER
 echo "    #pragma message (\"*                                        *\")" >> $GIT_HEADER
 centerName "WARNING: repository modified" >> $GIT_HEADER

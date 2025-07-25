@@ -27,6 +27,7 @@
 #ifndef aoSystem_hpp
 #define aoSystem_hpp
 
+#include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
 #include "../../math/roots.hpp"
 #include "../../mxError.hpp"
@@ -1950,7 +1951,7 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError( int m, int n )
 
 #if 0
    int mn_max = floor(0.5*m_D/d_opt());
-   
+
    realT sum = 0;
 
    for(int m = -mn_max; m <= mn_max; ++m)
@@ -1958,7 +1959,7 @@ realT aoSystem<realT, inputSpectT, iosT>::chromScintAmpError( int m, int n )
       for(int n = -mn_max; n <= mn_max; ++n)
       {
          if(n == 0 && m == 0) continue;
-         
+
          sum += C5var(m,n);
       }
    }
@@ -2002,7 +2003,7 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
 
 #if 0
    int mn_max = floor(0.5*m_D/d_opt());
-   
+
    realT sum = 0;
 
    for(int m = -mn_max; m <= mn_max; ++m)
@@ -2010,12 +2011,12 @@ realT aoSystem<realT, inputSpectT, iosT>::dispAnisoAmpError()
       for(int n = -mn_max; n <= mn_max; ++n)
       {
          if(n == 0 && m == 0) continue;
-         
+
          if( m_circularLimit )
          {
             if( m*m + n*n > mn_max*mn_max ) continue;
          }
-         
+
          sum += C8var(m,n);
       }
    }
