@@ -48,9 +48,9 @@
 #########################################
 
 cmake_minimum_required(VERSION 3.24)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
 include(CheckLanguage)
@@ -389,7 +389,7 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3_CFLAGS} ${FFTW3_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3_INCLUDE_DIRS} -l${FFTW3_LIBRARIES}")
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3_INCLUDE_DIRS}")
 
     linklibdirs_from_list(FFTW3_LIBDIRS_FLAGS FFTW3_LIBRARY_DIRS)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3_LIBDIRS_FLAGS}")
