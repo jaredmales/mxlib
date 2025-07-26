@@ -162,9 +162,9 @@ options allow for manual configuration of `mxlib` for MKL.
 <tr><td>MXLIB_MKL_INCLUDE_DIRECTORY    <td>string  <td>$ENV{MKLROOT}/include                                <td>MKL include directory
 <tr><td>MXLIB_MKL_DEFINITIONS          <td>string  <td>-DMXLIB_MKL                                          <td>MKL compiler defines
 <tr><td>MXLIB_MKL_CFLAGS               <td>string  <td>-m64                                                 <td>MKL compiler c-flags (used for cxx too)
-<tr><td>MXLIB_MKL_LINK_DIRECTORIES     <td>string  <td>$ENV{MKLROOT}/lib/intel64                            <td>MKL link directories
+<tr><td>MXLIB_MKL_LIBDIRS              <td>list    <td>$ENV{MKLROOT}/lib/intel64                            <td>MKL link directories
 <tr><td>MXLIB_MKL_LDFLAGS              <td>string  <td>-Wl,--no-as-needed                                   <td>MKL link flags
-<tr><td>MXLIB_MKL_LIBS                 <td>string  <td>mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl  <td>MKL libraries
+<tr><td>MXLIB_MKL_LIBS                 <td>list    <td>mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl  <td>MKL libraries
 </table>
 
 

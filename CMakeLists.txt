@@ -50,7 +50,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 #set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-#set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
 include(CheckLanguage)
@@ -165,9 +165,9 @@ set(MXLIB_USE_BLAS_FROM "openblas" CACHE STRING "Which library to use for BLAS a
 set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL include directory")
 set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL compiler defines")
 set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL compiiler cflags (used for cxx too)")
-set(MXLIB_MKL_LINK_DIRECTORIES "$ENV{MKLROOT}/lib/intel64" CACHE STRING "MKL link directories")
+set(MXLIB_MKL_LIBDIRS "$ENV{MKLROOT}/lib/intel64" CACHE STRING "list of MKL link directories")
 set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
-set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "MKL libraries")
+set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "list of MKL libraries")
 
 #########################################
 # Validate config settings
@@ -251,8 +251,6 @@ add_library(mxlib-static STATIC $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar
 #This makes it so we have libmxlib.so and libmxlib.a, without the -shared/-static
 SET_TARGET_PROPERTIES(mxlib-shared PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
-
-
 
 install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc")
 install (FILES include/mxlib.hpp include/mxError.hpp include/mxException.hpp DESTINATION include/mx)
@@ -339,25 +337,6 @@ liblist_strip_namespace(Boost_LIBRARIES "boost_")
 linklibs_from_list(Boost_LIBRARIES_FLAGS Boost_LIBRARIES)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBRARIES_FLAGS}")
 
-
-############################################
-# GSL setup
-############################################
-
-pkg_check_modules(GSL REQUIRED IMPORTED_TARGET gsl)
-target_link_libraries(objlib PUBLIC PkgConfig::GSL)
-target_link_libraries (mxlib-shared PUBLIC PkgConfig::GSL)
-target_link_libraries (mxlib-static PUBLIC PkgConfig::GSL)
-
-set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${GSL_CFLAGS} ${GSL_CFLAGS_OTHER}")
-
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${GSL_CFLAGS}")
-
-linklibdirs_from_list(GSL_LIBDIRS_FLAGS GSL_LIBRARY_DIRS)
-set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBDIRS_FLAGS}")
-
-linklibs_from_list(GSL_LIBRARIES_FLAGS GSL_LIBRARIES)
-set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBRARIES_FLAGS}")
 
 ############################################
 # Eigen setup
@@ -474,9 +453,9 @@ if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
     add_compile_options(${MXLIB_MKL_CFLAGS})
 
     add_link_options(${MXLIB_MKL_LDFLAGS})
-    target_link_directories(objlib PUBLIC ${MXLIB_MKL_LINK_DIRECTORIES})
-    target_link_directories(mxlib-shared PUBLIC ${MXLIB_MKL_LINK_DIRECTORIES})
-    target_link_directories(mxlib-static PUBLIC ${MXLIB_MKL_LINK_DIRECTORIES})
+    target_link_directories(objlib PUBLIC ${MXLIB_MKL_LIBDIRS})
+    target_link_directories(mxlib-shared PUBLIC ${MXLIB_MKL_LIBDIRS})
+    target_link_directories(mxlib-static PUBLIC ${MXLIB_MKL_LIBDIRS})
     target_link_libraries(objlib PUBLIC ${MXLIB_MKL_LIBS})
     target_link_libraries(mxlib-shared PUBLIC ${MXLIB_MKL_LIBS})
     target_link_libraries(mxlib-static PUBLIC ${MXLIB_MKL_LIBS})
@@ -485,7 +464,10 @@ if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_MKL_CFLAGS}")
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${MXLIB_MKL_INCLUDE_DIRECTORY} ${MXLIB_MKL_DEFINITIONS} ${MXLIB_MKL_CFLAGS}" )
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${MXLIB_MKL_LDFLAGS}")
+
+    linklibdirs_from_list(MXLIB_MKL_LIBDIRS_FLAGS MXLIB_MKL_LIBDIRS)
+    linklibs_from_list(MXLIB_MKL_LIBS_FLAGS MXLIB_MKL_LIBS)
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${MXLIB_MKL_LDFLAGS} ${MXLIB_MKL_LIBDIRS_FLAGS} ${MXLIB_MKL_LIBS_FLAGS}")
 
 elseif(${MXLIB_USE_BLAS_FROM} STREQUAL "openblas")
 
@@ -529,6 +511,28 @@ if(NOT ${MXLIB_USE_BLAS_FROM} STREQUAL "")
 else()
   message("mxlib: BLAS & Lapack support not enabled")
 endif()
+
+############################################
+# GSL setup
+#
+# After Blas to ensure gslcblas is used as last restort
+############################################
+
+pkg_check_modules(GSL REQUIRED IMPORTED_TARGET gsl)
+target_link_libraries(objlib PUBLIC PkgConfig::GSL)
+target_link_libraries (mxlib-shared PUBLIC PkgConfig::GSL)
+target_link_libraries (mxlib-static PUBLIC PkgConfig::GSL)
+
+set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${GSL_CFLAGS} ${GSL_CFLAGS_OTHER}")
+
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${GSL_CFLAGS}")
+
+linklibdirs_from_list(GSL_LIBDIRS_FLAGS GSL_LIBRARY_DIRS)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBDIRS_FLAGS}")
+
+linklibs_from_list(GSL_LIBRARIES_FLAGS GSL_LIBRARIES)
+set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBRARIES_FLAGS}")
+
 
 ############################################
 # cfitsio setup
