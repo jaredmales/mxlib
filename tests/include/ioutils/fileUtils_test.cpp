@@ -258,3 +258,4 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
         REQUIRE( caught == true );
     }
 }
+

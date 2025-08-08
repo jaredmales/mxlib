@@ -40,12 +40,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 #include "../../include/mxException.hpp"
-
-using namespace boost::filesystem;
 
 namespace mx
 {
@@ -54,15 +51,15 @@ namespace ioutils
 
 bool exists( const std::string &path )
 {
-    return boost::filesystem::exists( boost::filesystem::path( path ) );
+    return std::filesystem::exists( std::filesystem::path( path ) );
 }
 
 int createDirectories( const std::string &path )
 {
     // Use the non throwing version and silently ignore EEXIST errors
-    boost::system::error_code ec;
-    boost::filesystem::create_directories( path, ec );
-    if( ec.value() != boost::system::errc::success && ec.value() != boost::system::errc::file_exists )
+    std::error_code ec;
+    std::filesystem::create_directories( path, ec );
+    if( ec.value() != 0 && ec.value() != EEXIST )
     {
         return -1;
     }
@@ -72,19 +69,19 @@ int createDirectories( const std::string &path )
 
 std::string pathStem( const std::string &fname )
 {
-    boost::filesystem::path p( fname );
+    std::filesystem::path p( fname );
     return p.stem().string();
 }
 
 std::string pathFilename( const std::string &fname )
 {
-    boost::filesystem::path p( fname );
+    std::filesystem::path p( fname );
     return p.filename().string();
 }
 
 std::string parentPath( const std::string &fname )
 {
-    boost::filesystem::path p( fname );
+    std::filesystem::path p( fname );
     return p.parent_path().string();
 }
 
@@ -94,9 +91,9 @@ std::vector<std::string> getFileNames( const std::string &directory,
                                        const std::string &extension )
 {
     std::vector<std::string> vect;
-    if( exists( directory ) )
+    if( std::filesystem::exists( directory ) )
     {
-        if( is_directory( directory ) )
+        if( std::filesystem::is_directory( directory ) )
         {
             try
             {
@@ -126,8 +123,8 @@ std::vector<std::string> getFileNames( const std::string &directory,
                     hassub = true;
                 }
 
-                directory_iterator it{ directory };
-                auto it_end = directory_iterator{};
+                std::filesystem::directory_iterator it{ directory };
+                auto it_end = std::filesystem::directory_iterator{};
                 for( it; it != it_end; ++it )
                 {
                     if( hasext )
@@ -188,12 +185,30 @@ std::vector<std::string> getFileNames( const std::string &directory,
 
                 sort( vect.begin(), vect.end() );
             }
+            catch( const err::exceptthrown & e) //this is thrown from within the loop so just pass it on
+            {
+                throw; //don't add anything
+            }
+            catch( const std::filesystem::filesystem_error & e)
+            {
+                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
+                                                           __FILE__,
+                                                           __LINE__,
+                                                           std::string("from std::filesystem: ") + e.what() ) );
+            }
+            catch( const std::exception & e )
+            {
+                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
+                                                           __FILE__,
+                                                           __LINE__,
+                                                           std::string("(possibly from std::string) ") + e.what() ) );
+            }
             catch( ... )
             {
                 std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
                                                            __FILE__,
                                                            __LINE__,
-                                                           "possibly from std::filesystem or std::string" ) );
+                                                           "unknown exception" ) );
             }
         }
         else
@@ -223,7 +238,7 @@ std::string fileNamePrependAppend( const std::string &fname, const std::string &
 {
     std::string dir, base, ext;
 
-    path p = fname;
+    std::filesystem::path p = fname;
     dir = p.parent_path().string();
     base = p.stem().string();
     ext = p.extension().string();
@@ -262,7 +277,7 @@ getSequentialFilename( const std::string &basename, const std::string &extension
     outn << digstr;
     outn << extension;
 
-    while( boost::filesystem::exists( outn.str() ) && i < maxdig )
+    while( std::filesystem::exists( outn.str() ) && i < maxdig )
     {
         ++i;
         outn.str( "" );

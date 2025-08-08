@@ -19,7 +19,7 @@ sudo apt-get install -y \
     gcc \
     g++ \
     libgsl-dev \
-    libboost-all-dev \
+    libboost-system-dev \
     libcfitsio-dev \
     libopenblas-dev \
     liblapacke-dev \

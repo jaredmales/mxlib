@@ -321,7 +321,7 @@ endif()
 # boost setup
 ############################################
 
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Boost REQUIRED COMPONENTS system) # filesystem)
 
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(objlib PUBLIC ${Boost_LIBRARIES})
