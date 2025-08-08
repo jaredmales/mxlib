@@ -83,7 +83,7 @@ std::string parentPath( const std::string &fname );
  *
  * \throws mx::err::notfound if \p directory does not exist
  * \throws mx::err::invalidarg if \p directory is not a directory
- * \throws mx::err::exceptthrown if an exception is thrown during processing
+ * \throws mx::err::exceptthrown if an exception is thrown during processing (nested)
  *
  * \b Tests:
  * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
@@ -106,7 +106,7 @@ getFileNames( const std::string &directory, /**< [in] the path to the directory 
  *
  * \throws mx::err::notfound if \p directory does not exist
  * \throws mx::err::invalidarg if \p directory is not a directory
- * \throws mx::err::exceptthrown if an exception is thrown during processing
+ * \throws mx::err::exceptthrown if an exception is thrown during processing (nested)
  *
  * \b Tests:
  * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
@@ -124,7 +124,7 @@ getFileNames( const std::string &directory, /**< [in] the path to the directory 
  *
  * \throws mx::err::notfound if \p directory does not exist
  * \throws mx::err::invalidarg if \p directory is not a directory
- * \throws mx::err::exceptthrown if an exception is thrown during processing
+ * \throws mx::err::exceptthrown if an exception is thrown during processing (nested)
  *
  * \b Tests:
  * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
