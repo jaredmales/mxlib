@@ -244,6 +244,23 @@ class paramnotset : public mxException
     }
 };
 
+/// mxException for not found
+/**
+ * \ingroup exceptions
+ */
+class notfound : public mxException
+{
+  public:
+    notfound( const std::string &esrc,  ///< [in] the source of the exception, typically the class and function
+              const std::string &efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+              const int &line,          ///< [in] the line number where the exception was thrown
+              const std::string &expl   ///< [in] the explanation for why the exception was thrown
+              )
+        : mxException( esrc, MXE_NOTFOUND, MXE_NOTFOUND_NAME, efile, line, expl )
+    {
+    }
+};
+
 /// mxException for a size error
 /**
  * \ingroup exceptions
@@ -395,6 +412,23 @@ class liberr : public mxException
             const std::string &expl   ///< [in] the explanation for why the exception was thrown
             )
         : mxException( esrc, MXE_LIBERR, MXE_LIBERR_NAME, efile, line, expl )
+    {
+    }
+};
+
+/// mxException for an exception
+/**
+ * \ingroup exceptions
+ */
+class exceptthrown : public mxException
+{
+  public:
+    exceptthrown( const std::string &esrc,  ///< [in] the source of the exception, typically the class and function
+                  const std::string &efile, ///< [in] the source file in which the exception occurred, normally __FILE__
+                  const int &line,          ///< [in] the line number where the exception was thrown
+                  const std::string &expl   ///< [in] the explanation for why the exception was thrown
+                  )
+        : mxException( esrc, MXE_EXCEPTTHROWN, MXE_EXCEPTTHROWN_NAME, efile, line, expl )
     {
     }
 };

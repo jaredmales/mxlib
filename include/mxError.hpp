@@ -252,6 +252,18 @@ namespace mx
 #define MXE_LIBERR_NAME "MXE_LIBERR"
 #define MXE_LIBERR_MSG "An error was returned by a library."
 
+/** \def MXE_EXCEPTTHROWN
+ * \brief An exception was thrown.
+ *
+ * This gets used mainly to re-throw as a nested exception.
+ *
+ * \ingroup mxe_errors
+ */
+#define MXE_EXCEPTTHROWN 4010
+#define MXE_EXCEPTTHROWN_NAME "MXE_EXCEPTTHROWN"
+#define MXE_EXCEPTTHROWN_MSG "An exception was thrown."
+
+
 /** \def MXE_GNUPLOTERR
  * \brief An error was returned by gnuplot.
  * \ingroup mxe_errors

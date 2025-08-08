@@ -19,8 +19,6 @@ license.blurb
 build*/**
 _build*/**
 
-tests/mxlibTest
-tests/include/ao/sim/pyramidSensor_test
 *.a
 *.so
 *.dylib
@@ -31,6 +29,7 @@ a.out
 
 #tests
 tests/mxlibTest
+tests/include/ioutils/fileUtils_test
 tests/include/improc/imageMasks_test
 tests/include/sigproc/signalWindows_test
 tests/include/ao/sim/pyramidSensor_test

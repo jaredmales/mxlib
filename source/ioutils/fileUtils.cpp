@@ -43,6 +43,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include "../../include/mxException.hpp"
+
 using namespace boost::filesystem;
 
 namespace mx
@@ -50,9 +52,9 @@ namespace mx
 namespace ioutils
 {
 
-bool exists( const std::string & path )
+bool exists( const std::string &path )
 {
-    return boost::filesystem::exists(boost::filesystem::path(path));
+    return boost::filesystem::exists( boost::filesystem::path( path ) );
 }
 
 int createDirectories( const std::string &path )
@@ -86,150 +88,122 @@ std::string parentPath( const std::string &fname )
     return p.parent_path().string();
 }
 
-std::vector<std::string> getFileNamesOld( const std::string &directory,
-                                          const std::string &prefix,
-                                          const std::string &substr,
-                                          const std::string &extension )
-{
-    typedef std::vector<path> vec; // store paths,
-
-    std::vector<std::string> vect;
-    if( exists( directory ) )
-    {
-        if( is_directory( directory ) )
-        {
-            vec v; // so we can sort them later
-
-            copy( directory_iterator( directory ), directory_iterator(), back_inserter( v ) );
-
-            std::sort( v.begin(), v.end() ); // sort, since directory iteration
-                                             // is not ordered on some file systems
-
-            auto it = v.begin();
-            auto it_end = v.end();
-
-            while( it != it_end )
-            {
-                bool inc = true;
-
-                if( extension != "" )
-                {
-                    if( it->extension() != extension )
-                    {
-                        inc = false;
-                    }
-                }
-
-                if( prefix != "" && inc )
-                {
-                    std::string p = it->filename().generic_string();
-
-                    if( p.size() < prefix.size() )
-                    {
-                        inc = false;
-                    }
-                    else
-                    {
-                        if( p.compare( 0, prefix.size(), prefix ) != 0 )
-                        {
-                            inc = false;
-                        }
-                    }
-                }
-
-                if( substr != "" && inc )
-                {
-                    std::string p = it->filename().generic_string();
-                    if( p.find( substr ) == std::string::npos )
-                    {
-                        inc = false;
-                    }
-                }
-
-                if( inc )
-                {
-                    vect.push_back( it->native() );
-                }
-
-                ++it;
-            }
-        }
-        else
-        {
-            std::cerr << directory << " is not a directory\n";
-        }
-    }
-    else
-    {
-        std::cerr << "directory " << directory << " does not exist\n";
-    }
-
-    return vect;
-}
-
 std::vector<std::string> getFileNames( const std::string &directory,
                                        const std::string &prefix,
                                        const std::string &substr,
                                        const std::string &extension )
 {
-    // typedef std::vector<path> vec;             // store paths,
-
     std::vector<std::string> vect;
     if( exists( directory ) )
     {
         if( is_directory( directory ) )
         {
-            directory_iterator it{ directory };
-            auto it_end = directory_iterator{};
-            for( it; it != it_end; ++it )
+            try
             {
-                if( extension != "" )
+                bool hasext = false;
+                std::string _ext;
+                if( extension.size() > 0 )
                 {
-                    if( it->path().extension() != extension )
+                    if( extension[0] != '.' )
                     {
-                        continue;
+                        _ext = '.';
                     }
+
+                    _ext += extension;
+
+                    hasext = true;
                 }
 
-                std::string p = it->path().filename().generic_string();
-
+                bool hasprefix = false;
                 if( prefix != "" )
                 {
-                    if( p.size() < prefix.size() )
+                    hasprefix = true;
+                }
+
+                bool hassub = false;
+                if( substr != "" )
+                {
+                    hassub = true;
+                }
+
+                directory_iterator it{ directory };
+                auto it_end = directory_iterator{};
+                for( it; it != it_end; ++it )
+                {
+                    if( hasext )
                     {
-                        continue;
-                    }
-                    else
-                    {
-                        if( p.compare( 0, prefix.size(), prefix ) != 0 )
+                        if( it->path().extension() != _ext )
                         {
                             continue;
                         }
                     }
-                }
 
-                if( substr != "" )
-                {
-                    if( p.find( substr ) == std::string::npos )
+                    std::string p = it->path().filename().generic_string();
+
+                    if( hasprefix )
                     {
-                        continue;
+                        if( p.size() < prefix.size() )
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            if( p.compare( 0, prefix.size(), prefix ) != 0 )
+                            {
+                                continue;
+                            }
+                        }
                     }
+
+                    if( hassub )
+                    {
+                        if( p.size() < 2 )
+                        {
+                            continue;
+                        }
+
+                        size_t sspos;
+
+                        try
+                        {
+                            sspos = p.find( substr, 1 ); // only match if not prefix
+                        }
+                        catch( ... )
+                        {
+                            std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
+                                                                       __FILE__,
+                                                                       __LINE__,
+                                                                       "from std::string::find" ) );
+                        }
+
+                        if( sspos == std::string::npos )
+                        {
+                            continue;
+                        }
+                    }
+
+                    // If here then it passed all checks
+                    vect.push_back( it->path().native() );
                 }
 
-                // If here then it passed all checks
-                vect.push_back( it->path().native() );
+                sort( vect.begin(), vect.end() );
             }
-
-            sort( vect.begin(), vect.end() );
+            catch( ... )
+            {
+                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
+                                                           __FILE__,
+                                                           __LINE__,
+                                                           "possibly from std::filesystem or std::string" ) );
+            }
         }
         else
         {
-            std::cerr << directory << " is not a directory\n";
+            mxThrowException( err::invalidarg, "fileUtils::getFileNames", directory + " is not a directory" );
         }
     }
     else
     {
-        std::cerr << "directory " << directory << " does not exist\n";
+        mxThrowException( err::notfound, "fileUtils::getFileNames", directory + " does not exist" );
     }
 
     return vect;

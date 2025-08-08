@@ -80,20 +80,36 @@ std::string parentPath( const std::string &fname );
 /// Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /**
  * \returns a std::vector\<std::string\> which contains the matching file names.
+ *
+ * \throws mx::err::notfound if \p directory does not exist
+ * \throws mx::err::invalidarg if \p directory is not a directory
+ * \throws mx::err::exceptthrown if an exception is thrown during processing
+ *
+ * \b Tests:
+ * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
+ *
  */
 std::vector<std::string>
 getFileNames( const std::string &directory, /**< [in] the path to the directory to search. Can not be empty. */
               const std::string &prefix,    /**< [in] the file name prefix (the beginning characters of the file
                                                       name) to search for, if "" then not used.*/
-              const std::string &substr,    /**< [in] a substring of the filename to earch for, if "" then not used.*/
+              const std::string &substr,    /**< [in] a substring of the filename to search for, if "" then not used.
+                                                      Only matches after the first character.*/
               const std::string &extension  /**< [in] the file name extension to search for, if "" then not used.
-                                                      Note that this must include the ".", as in".ext".*/
+                                                      This does not need to include the ".", as in".ext".*/
 );
 
 /// Get a list of file names from the specified directory, specifying the extension
 /** \overload
  *
  * \returns a std::vector\<std::string\> which contains the matching file names.
+ *
+ * \throws mx::err::notfound if \p directory does not exist
+ * \throws mx::err::invalidarg if \p directory is not a directory
+ * \throws mx::err::exceptthrown if an exception is thrown during processing
+ *
+ * \b Tests:
+ * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
  */
 std::vector<std::string>
 getFileNames( const std::string &directory, /**< [in] the path to the directory to search. Can not be empty.*/
@@ -105,6 +121,14 @@ getFileNames( const std::string &directory, /**< [in] the path to the directory 
 /** \overload
  *
  * \returns a std::vector\<std::string\> which contains the matching file names.
+ *
+ * \throws mx::err::notfound if \p directory does not exist
+ * \throws mx::err::invalidarg if \p directory is not a directory
+ * \throws mx::err::exceptthrown if an exception is thrown during processing
+ *
+ * \b Tests:
+ * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
+ *
  */
 std::vector<std::string> getFileNames( const std::string &directory /**< [in] the path to the directory to search.
                                                                               Can not be empty. */ );
