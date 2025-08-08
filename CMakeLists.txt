@@ -687,4 +687,6 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/pkgconfig/${PROJECT_NAME}.pc.in
 install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig )
 
+install( PROGRAMS gengithead.sh DESTINATION bin)
+
 #dump_cmake_variables(".")

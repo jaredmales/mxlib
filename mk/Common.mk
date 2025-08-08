@@ -182,7 +182,7 @@ endif
 
 FITS_LIB = -lcfitsio
 
-BOOST_LIB = -lboost_system -lboost_filesystem
+BOOST_LIB = -lboost_system
 
 GSL_LIB = -lgsl
 

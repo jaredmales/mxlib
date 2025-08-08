@@ -19,6 +19,9 @@ license.blurb
 build*/**
 _build*/**
 
+#artifact of Makefile build:
+mxlib_git_version.h
+
 *.a
 *.so
 *.dylib
