@@ -56,9 +56,9 @@ You will need to make sure to install the `dev` packages.
     -# You need `make`
     -# To use the `cmake`  build system you need `cmake`  and `pkg-config`
 
--# You need the `boost` c++ library (this is probably obtainable from the linux distro package manager, fine to install with
+-# You need the `boost` c++ system library (this is probably obtainable from the linux distro package manager, fine to install with
    apt or yum).
-  - On Ubuntu you can just install `libboost-all-dev`.
+  - On Ubuntu you can just install `libboost-system-dev`.
 
 -# You need the `Eigen` matrix library (http://eigen.tuxfamily.org/index.php).
   - It is best to use `cmake` to configure Eigen and install it. This will ensure that the package config is updated.
