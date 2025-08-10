@@ -25,6 +25,7 @@
 //***********************************************************************//
 
 #include "mxError.hpp"
+#include <format>
 
 namespace mx
 {
@@ -155,11 +156,11 @@ std::string errno_CodeToName( int ec )
 #endif
 #ifdef EAGAIN
     case EAGAIN:
-#if( EWOULDBLOCK == EAGAIN )
+    #if ( EWOULDBLOCK == EAGAIN )
         return "EAGIAN / EWOULDBLOCK";
-#else
+    #else
         return "EAGAIN";
-#endif
+    #endif
 #endif
 #ifdef EALREADY
     case EALREADY:
@@ -366,10 +367,10 @@ std::string errno_CodeToName( int ec )
         return "ENOTSOCK";
 #endif
 #ifdef ENOTSUP
-#if( ENOTSUP != EOPNOTSUPP )
+    #if ( ENOTSUP != EOPNOTSUPP )
     case ENOTSUP:
         return "ENOTSUP";
-#endif
+    #endif
 #endif
 #ifdef ENOTTY
     case ENOTTY:
@@ -440,10 +441,10 @@ std::string errno_CodeToName( int ec )
         return "ETXTBSY";
 #endif
 #ifdef EWOULDBLOCK
-#if( EWOULDBLOCK != EAGAIN )
+    #if ( EWOULDBLOCK != EAGAIN )
     case EWOULDBLOCK:
         return "EWOULDBLOCK";
-#endif
+    #endif
 #endif
 #ifdef EXDEV
     case EXDEV:
@@ -499,6 +500,69 @@ errno_report( const std::string &source, int ec, const std::string &file, const 
         s << " explanation: " << expl << "\n";
 
     return s.str();
+}
+
+namespace internal
+{
+std::string mxlib_error_report( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return std::format( "An error has occurred in mxlib:\n"
+                        "  explanation: {}\n"
+                        "        error: {} ({})\n"
+                        "      in file: {}\n"
+                        "      at line: {}\n"
+                        "       source: {}\n",
+                        expl,
+                        errorMessage( code ),
+                        errorName( code ),
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
+}
+
+std::string mxlib_error_report( const error_t &code, const std::source_location &loc )
+{
+    return std::format( "An error has occurred in mxlib:\n"
+                        "    error: {} ({})\n"
+                        "  in file: {}\n"
+                        "  at line: {}\n"
+                        "   source: {}\n",
+                        errorMessage( code ),
+                        errorName( code ),
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
+}
+}
+
+std::string error_report( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return std::format( "An error has occurred:\n"
+                        "  explanation: {}\n"
+                        "        error: {} ({})\n"
+                        "      in file: {}\n"
+                        "      at line: {}\n"
+                        "       source: {}\n",
+                        expl,
+                        errorMessage( code ),
+                        errorName( code ),
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
+}
+
+std::string error_report( const error_t &code, const std::source_location &loc )
+{
+    return std::format( "An error has occurred:\n"
+                        "    error: {} ({})\n"
+                        "  in file: {}\n"
+                        "  at line: {}\n"
+                        "   source: {}\n",
+                        errorMessage( code ),
+                        errorName( code ),
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
 }
 
 } // namespace mx

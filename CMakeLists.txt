@@ -197,6 +197,27 @@ endif()
 #
 #########################################
 
+#first generate the error_t header
+add_executable(generate_errno_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_errno_info.cpp)
+
+add_custom_command(
+    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
+    COMMAND generate_errno_info
+    DEPENDS generate_errno_info include/error/generators/c++11_errnos.txt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
+    DEPENDS_EXPLICIT_ONLY
+)
+
+add_executable(generate_error_t ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp)
+
+add_custom_command(
+    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/error_t.hpp
+    COMMAND generate_error_t
+    DEPENDS generate_error_t include/error/generators/errno_info.hpp include/error/generators/error_t_list.txt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
+    DEPENDS_EXPLICIT_ONLY
+)
+
 include_directories(include)
 
 add_subdirectory(include)
@@ -234,7 +255,7 @@ add_custom_command(
 #
 # In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
 ##########################################################################
-add_library(objlib OBJECT ${OBJLIB_SOURCES} ${OBJLIB_INCLUDES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h)
+add_library(objlib OBJECT ${OBJLIB_SOURCES} ${OBJLIB_INCLUDES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h include/error/error_t.hpp)
 
 # shared libraries need PIC
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
@@ -252,8 +273,9 @@ add_library(mxlib-static STATIC $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar
 SET_TARGET_PROPERTIES(mxlib-shared PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 
-install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc")
+install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc" PATTERN "generators" EXCLUDE)
 install (FILES include/mxlib.hpp include/mxError.hpp include/mxException.hpp DESTINATION include/mx)
+install (FILES include/error/error_t.hpp DESTINATION include/mx/error)
 
 #We install the generated version behind cmake's back so it does get treated as a changed depend
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/include/mxlib_uncomp_version.h DESTINATION include/mx)

@@ -99,36 +99,19 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
     {
         WHEN( "directory only" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "", "" );
-            REQUIRE( fnames.size() == 10 );
-        }
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "", "" );
 
-        WHEN( "directory only, overload 1" )
-        {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "" );
-            REQUIRE( fnames.size() == 10 );
-        }
-
-        WHEN( "directory only, overload 2" )
-        {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir );
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 10 );
         }
 
         WHEN( "single extension with ." )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "", ".txt" );
-            REQUIRE( fnames.size() == 5 );
-            REQUIRE( fnames[0] == basedir + "/elif_txt_3.txt" );
-            REQUIRE( fnames[1] == basedir + "/elif_txt_5.txt" );
-            REQUIRE( fnames[2] == basedir + "/file_txt_1.txt" );
-            REQUIRE( fnames[3] == basedir + "/file_xtx_2.txt" );
-            REQUIRE( fnames[4] == basedir + "/file_xtx_4.txt" );
-        }
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "", ".txt" );
 
-        WHEN( "single extension with ., overload" )
-        {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, ".txt" );
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 5 );
             REQUIRE( fnames[0] == basedir + "/elif_txt_3.txt" );
             REQUIRE( fnames[1] == basedir + "/elif_txt_5.txt" );
@@ -139,7 +122,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "single extension without ." )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "", "txt" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "", "txt" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 5 );
             REQUIRE( fnames[0] == basedir + "/elif_txt_3.txt" );
             REQUIRE( fnames[1] == basedir + "/elif_txt_5.txt" );
@@ -150,7 +136,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "different extension with ." )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "", ".xxx" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "", ".xxx" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 5 );
             REQUIRE( fnames[0] == basedir + "/elif_txt_2.xxx" );
             REQUIRE( fnames[1] == basedir + "/elif_txt_4.xxx" );
@@ -161,7 +150,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "a prefix, no extension" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "file", "", "" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "file", "", "" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 5 );
             REQUIRE( fnames[0] == basedir + "/file_txt_1.txt" );
             REQUIRE( fnames[1] == basedir + "/file_xtx_2.txt" );
@@ -172,7 +164,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "a prefix, with extension with ." )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "file", "", ".txt" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "file", "", ".txt" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 3 );
             REQUIRE( fnames[0] == basedir + "/file_txt_1.txt" );
             REQUIRE( fnames[1] == basedir + "/file_xtx_2.txt" );
@@ -181,7 +176,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "a substr alone" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "xtx", "" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "xtx", "" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 5 );
             REQUIRE( fnames[0] == basedir + "/elif_xtx_1.xxx" );
             REQUIRE( fnames[1] == basedir + "/file_xtx_2.txt" );
@@ -192,19 +190,28 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "a substr which is actually the prefix" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "", "file", "" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "", "file", "" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 0 );
         }
 
         WHEN( "a prefix and a substr which is actually the prefix" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "file", "file", "" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "file", "file", "" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 0 );
         }
 
         WHEN( "a prefix, and a substr, no extension" )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "file", "xtx", "" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "file", "xtx", "" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 4 );
             REQUIRE( fnames[0] == basedir + "/file_xtx_2.txt" );
             REQUIRE( fnames[1] == basedir + "/file_xtx_3.xxx" );
@@ -214,7 +221,10 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
         WHEN( "a prefix, a substr, and an extension with ." )
         {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir, "file", "xtx", ".txt" );
+            std::vector<std::string> fnames;
+            mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir, "file", "xtx", ".txt" );
+
+            REQUIRE( errc == mx::error_t::noerror );
             REQUIRE( fnames.size() == 2 );
             REQUIRE( fnames[0] == basedir + "/file_xtx_2.txt" );
             REQUIRE( fnames[1] == basedir + "/file_xtx_4.txt" );
@@ -223,39 +233,33 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
 
     GIVEN( "a directory which does not exist" )
     {
-        bool caught = false;
-        try
-        {
-            std::vector<std::string> fnames = mx::ioutils::getFileNames( basedir + "nf", "file", "xtx", ".txt" );
-        }
-        catch( const mx::err::notfound &e )
-        {
-            caught = true;
-        }
-        catch( ... )
-        {
-        }
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir + "nf", "file", "xtx", ".txt" );
 
-        REQUIRE( caught == true );
+        REQUIRE( errc == mx::error_t::dirnotfound );
     }
 
     GIVEN( "a directory which is a file" )
     {
-        bool caught = false;
-        try
-        {
-            std::vector<std::string> fnames =
-                mx::ioutils::getFileNames( basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
-        }
-        catch( const mx::err::invalidarg &e )
-        {
-            caught = true;
-        }
-        catch( ... )
-        {
-        }
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
 
-        REQUIRE( caught == true );
+        REQUIRE( errc == mx::error_t::invalidarg );
+    }
+
+    GIVEN( "a directory which does not exist, verbose = false" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<false>( fnames, basedir + "nf", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::dirnotfound );
+    }
+
+    GIVEN( "a directory which is a file, verbose = false" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<false>( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::invalidarg );
     }
 }
-

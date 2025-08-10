@@ -30,6 +30,9 @@ a.out
 *.swp
 .*~
 
+include/error/error_t.hpp
+include/error/generators/errno_info.hpp
+
 #tests
 tests/mxlibTest
 tests/include/ioutils/fileUtils_test

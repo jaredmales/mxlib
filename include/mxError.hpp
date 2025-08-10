@@ -30,6 +30,7 @@
 #include <cerrno>
 #include <cstring>
 #include <sstream>
+#include <source_location>
 
 /** \addtogroup error_macros
  *
@@ -64,6 +65,7 @@
 
 #include <iostream>
 
+
 /** \def mxError
  * \brief This reports an mxlib specific error
  *
@@ -80,7 +82,10 @@
 
 #endif // mxError
 
+
 #ifndef mxPError
+
+#include <iostream>
 
 /** \def mxPError
  * \brief This reports a standard library error, taking after perror.
@@ -102,8 +107,11 @@
 
 /// @}
 
+#include "error/error_t.hpp"
+
 namespace mx
 {
+
 /** \defgroup mxe_errors mxlib Error Codes
  * \ingroup error_handling
  */
@@ -334,6 +342,48 @@ std::string errno_report(
     const std::string &file,     ///< [in] file should be passed the __FILE__ macro
     const int &line,             ///< [in] line should be passed the __LINE__ macro
     const std::string &expl = "" ///< [in] [optional] if more information can be provided, use this to inform the user.
+);
+
+//*********** With new error_t and location */
+
+namespace internal
+{
+std::string mxlib_error_report(
+    const error_t &code,
+    const std::string &expl,
+    const std::source_location & loc = std::source_location::current()
+);
+
+std::string mxlib_error_report(
+    const error_t &code,
+    const std::source_location & loc = std::source_location::current()
+);
+
+}
+
+/// Construct a rich error report given an mxlib \ref error_t code
+/**
+ *
+ * \return the formatted error report.
+ *
+ * \ingroup error_handling
+ */
+std::string error_report(
+    const error_t &code,             ///< [in] is an mx::error_t error code
+    const std::string &expl, ///< [in] [optional] if more information can be provided, use this to inform the user.
+    const std::source_location & loc = std::source_location::current()
+);
+
+/// Construct a rich error report given an mxlib \ref error_t code
+/**
+ *
+ * \return the formatted error report.
+ *
+ * \ingroup error_handling
+ */
+std::string error_report(
+    const error_t &code,             ///< [in] is an mx::error_t error code
+    const std::source_location & loc = std::source_location::current()
 );
 
 } // namespace mx

@@ -85,17 +85,22 @@ std::string parentPath( const std::string &fname )
     return p.parent_path().string();
 }
 
-std::vector<std::string> getFileNames( const std::string &directory,
-                                       const std::string &prefix,
-                                       const std::string &substr,
-                                       const std::string &extension )
+namespace impl
 {
-    std::vector<std::string> vect;
-    if( std::filesystem::exists( directory ) )
+template <bool verbose>
+error_t getFileNames( std::vector<std::string> &fileNames,
+                          const std::string &directory,
+                          const std::string &prefix,
+                          const std::string &substr,
+                          const std::string &extension )
+{
+    try // there are several things that can throw here
     {
-        if( std::filesystem::is_directory( directory ) )
+        fileNames.clear();
+
+        if( std::filesystem::exists( directory ) )
         {
-            try
+            if( std::filesystem::is_directory( directory ) )
             {
                 bool hasext = false;
                 std::string _ext;
@@ -111,17 +116,9 @@ std::vector<std::string> getFileNames( const std::string &directory,
                     hasext = true;
                 }
 
-                bool hasprefix = false;
-                if( prefix != "" )
-                {
-                    hasprefix = true;
-                }
+                bool hasprefix = ( prefix.size() > 0 );
 
-                bool hassub = false;
-                if( substr != "" )
-                {
-                    hassub = true;
-                }
+                bool hassub = ( substr.size() > 0 );
 
                 std::filesystem::directory_iterator it{ directory };
                 auto it_end = std::filesystem::directory_iterator{};
@@ -145,6 +142,11 @@ std::vector<std::string> getFileNames( const std::string &directory,
                         }
                         else
                         {
+                            // This won't throw because:
+                            //  - prefix has size > 0
+                            //  - p.size() >= prefix.size()
+                            //  - therefore prefix.size() > 0
+                            //  - so pos1 = 0 will not throw.
                             if( p.compare( 0, prefix.size(), prefix ) != 0 )
                             {
                                 continue;
@@ -159,19 +161,7 @@ std::vector<std::string> getFileNames( const std::string &directory,
                             continue;
                         }
 
-                        size_t sspos;
-
-                        try
-                        {
-                            sspos = p.find( substr, 1 ); // only match if not prefix
-                        }
-                        catch( ... )
-                        {
-                            std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
-                                                                       __FILE__,
-                                                                       __LINE__,
-                                                                       "from std::string::find" ) );
-                        }
+                        size_t sspos = p.find( substr, 1 ); // only match if not prefix
 
                         if( sspos == std::string::npos )
                         {
@@ -180,58 +170,69 @@ std::vector<std::string> getFileNames( const std::string &directory,
                     }
 
                     // If here then it passed all checks
-                    vect.push_back( it->path().native() );
+                    // this could throw
+                    fileNames.push_back( it->path().native() );
                 }
 
-                sort( vect.begin(), vect.end() );
+                sort( fileNames.begin(), fileNames.end() );
             }
-            catch( const err::exceptthrown & e) //this is thrown from within the loop so just pass it on
+            else
             {
-                throw; //don't add anything
-            }
-            catch( const std::filesystem::filesystem_error & e)
-            {
-                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
-                                                           __FILE__,
-                                                           __LINE__,
-                                                           std::string("from std::filesystem: ") + e.what() ) );
-            }
-            catch( const std::exception & e )
-            {
-                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
-                                                           __FILE__,
-                                                           __LINE__,
-                                                           std::string("(possibly from std::string) ") + e.what() ) );
-            }
-            catch( ... )
-            {
-                std::throw_with_nested( err::exceptthrown( "fileUtils::getFileNames",
-                                                           __FILE__,
-                                                           __LINE__,
-                                                           "unknown exception" ) );
+                if( verbose )
+                {
+                    std::cerr << internal::mxlib_error_report( error_t::invalidarg, directory + " is not a directory" ) << '\n';
+                }
+                return error_t::invalidarg;
             }
         }
         else
         {
-            mxThrowException( err::invalidarg, "fileUtils::getFileNames", directory + " is not a directory" );
+            if( verbose )
+            {
+                std::cerr << internal::mxlib_error_report( error_t::dirnotfound, directory + " was not found" ) << '\n';
+            }
+            return error_t::dirnotfound;
         }
+
+        return error_t::noerror;
     }
-    else
+    catch( const std::exception &e )
     {
-        mxThrowException( err::notfound, "fileUtils::getFileNames", directory + " does not exist" );
+        if( verbose )
+        {
+            std::cerr << internal::mxlib_error_report( error_t::exception, e.what() ) << '\n';
+        }
+        return error_t::exception;
     }
-
-    return vect;
+    catch( ... )
+    {
+        if( verbose )
+        {
+            std::cerr << internal::mxlib_error_report( error_t::exception ) << '\n';
+        }
+        return error_t::exception;
+    }
+}
 }
 
-std::vector<std::string> getFileNames( const std::string &directory, const std::string &extension )
+template <>
+error_t getFileNames<true>( std::vector<std::string> &fileNames,
+                            const std::string &directory,
+                            const std::string &prefix,
+                            const std::string &substr,
+                            const std::string &extension )
 {
-    return getFileNames( directory, "", "", extension );
+    return impl::getFileNames<true>( fileNames, directory, prefix, substr, extension );
 }
 
-std::vector<std::string> getFileNames( const std::string &directory )
+template <>
+error_t getFileNames<false>( std::vector<std::string> &fileNames,
+                             const std::string &directory,
+                             const std::string &prefix,
+                             const std::string &substr,
+                             const std::string &extension )
 {
-    return getFileNames( directory, "", "", "" );
+    return impl::getFileNames<false>( fileNames, directory, prefix, substr, extension );
 }
 
 std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )

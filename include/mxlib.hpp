@@ -30,6 +30,8 @@
 
 #include "mxlib_uncomp_version.h"
 
+#include "mxError.hpp"
+
 namespace mx
 {
 
