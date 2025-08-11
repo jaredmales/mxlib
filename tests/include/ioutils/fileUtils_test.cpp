@@ -4,7 +4,6 @@
 
 #define MX_NO_ERROR_REPORTS
 
-#include "../../../include/mxException.hpp"
 #include "../../../include/ioutils/fileUtils.hpp"
 
 /** Verify creation of sequential file names
@@ -247,18 +246,50 @@ SCENARIO( "Getting a list of files", "[ioutils::fileUtils]" )
         REQUIRE( errc == mx::error_t::invalidarg );
     }
 
-    GIVEN( "a directory which does not exist, verbose = false" )
+    GIVEN( "a directory which does not exist, verbose = vv" )
     {
         std::vector<std::string> fnames;
-        mx::error_t errc = mx::ioutils::getFileNames<false>( fnames, basedir + "nf", "file", "xtx", ".txt" );
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::vv>( fnames, basedir + "nf", "file", "xtx", ".txt" );
 
         REQUIRE( errc == mx::error_t::dirnotfound );
     }
 
-    GIVEN( "a directory which is a file, verbose = false" )
+    GIVEN( "a directory which is a file, verbose = vv" )
     {
         std::vector<std::string> fnames;
-        mx::error_t errc = mx::ioutils::getFileNames<false>( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::vv>( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::invalidarg );
+    }
+
+    GIVEN( "a directory which does not exist, verbose = v" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::v>( fnames, basedir + "nf", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::dirnotfound );
+    }
+
+    GIVEN( "a directory which is a file, verbose = v" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::v>( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::invalidarg );
+    }
+
+    GIVEN( "a directory which does not exist, verbose = o" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::o>( fnames, basedir + "nf", "file", "xtx", ".txt" );
+
+        REQUIRE( errc == mx::error_t::dirnotfound );
+    }
+
+    GIVEN( "a directory which is a file, verbose = o" )
+    {
+        std::vector<std::string> fnames;
+        mx::error_t errc = mx::ioutils::getFileNames<mx::verbose::o>( fnames, basedir + "/file_xtx_2.txt", "file", "xtx", ".txt" );
 
         REQUIRE( errc == mx::error_t::invalidarg );
     }

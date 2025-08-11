@@ -90,7 +90,7 @@ std::string parentPath( const std::string &fname );
  * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
  *
  */
-template<bool verbose = true>
+template<class verboseT=verbose::vvv>
 error_t getFileNames( std::vector<std::string> &fileNames, /** [out] The populated list of file names.*/
                         const std::string &directory,        /**< [in] The path to the directory to search.
                                                                        Can not be empty.*/
@@ -106,7 +106,7 @@ error_t getFileNames( std::vector<std::string> &fileNames, /** [out] The populat
 );
 
 template<>
-error_t getFileNames<true>( std::vector<std::string> &fileNames,
+error_t getFileNames<verbose::o>( std::vector<std::string> &fileNames,
                         const std::string &directory,
                         const std::string &prefix,
                         const std::string &substr,
@@ -114,13 +114,28 @@ error_t getFileNames<true>( std::vector<std::string> &fileNames,
 );
 
 template<>
-error_t getFileNames<false>( std::vector<std::string> &fileNames,
+error_t getFileNames<verbose::v>( std::vector<std::string> &fileNames,
                         const std::string &directory,
                         const std::string &prefix,
                         const std::string &substr,
                         const std::string &extension
 );
 
+template<>
+error_t getFileNames<verbose::vv>( std::vector<std::string> &fileNames,
+                        const std::string &directory,
+                        const std::string &prefix,
+                        const std::string &substr,
+                        const std::string &extension
+);
+
+template<>
+error_t getFileNames<verbose::vvv>( std::vector<std::string> &fileNames,
+                        const std::string &directory,
+                        const std::string &prefix,
+                        const std::string &substr,
+                        const std::string &extension
+);
 /// Prepend and/or append strings to a file name, leaving the directory and extension unaltered.
 /**
  * \returns the new file name

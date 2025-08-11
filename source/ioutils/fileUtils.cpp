@@ -87,12 +87,12 @@ std::string parentPath( const std::string &fname )
 
 namespace impl
 {
-template <bool verbose>
+template <class verboseT>
 error_t getFileNames( std::vector<std::string> &fileNames,
-                          const std::string &directory,
-                          const std::string &prefix,
-                          const std::string &substr,
-                          const std::string &extension )
+                      const std::string &directory,
+                      const std::string &prefix,
+                      const std::string &substr,
+                      const std::string &extension )
 {
     try // there are several things that can throw here
     {
@@ -178,61 +178,65 @@ error_t getFileNames( std::vector<std::string> &fileNames,
             }
             else
             {
-                if( verbose )
-                {
-                    std::cerr << internal::mxlib_error_report( error_t::invalidarg, directory + " is not a directory" ) << '\n';
-                }
-                return error_t::invalidarg;
+                return internal::mxlib_error_report<verboseT>( error_t::invalidarg, directory + " is not a directory" );
             }
         }
         else
         {
-            if( verbose )
-            {
-                std::cerr << internal::mxlib_error_report( error_t::dirnotfound, directory + " was not found" ) << '\n';
-            }
-            return error_t::dirnotfound;
+            return internal::mxlib_error_report<verboseT>( error_t::dirnotfound, directory + " was not found" );
         }
 
         return error_t::noerror;
     }
     catch( const std::exception &e )
     {
-        if( verbose )
-        {
-            std::cerr << internal::mxlib_error_report( error_t::exception, e.what() ) << '\n';
-        }
-        return error_t::exception;
+        return internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
     }
     catch( ... )
     {
-        if( verbose )
-        {
-            std::cerr << internal::mxlib_error_report( error_t::exception ) << '\n';
-        }
-        return error_t::exception;
+        return internal::mxlib_error_report<verboseT>( error_t::exception );
     }
 }
+} // namespace impl
+
+template <>
+error_t getFileNames<verbose::o>( std::vector<std::string> &fileNames,
+                                  const std::string &directory,
+                                  const std::string &prefix,
+                                  const std::string &substr,
+                                  const std::string &extension )
+{
+    return impl::getFileNames<verbose::o>( fileNames, directory, prefix, substr, extension );
 }
 
 template <>
-error_t getFileNames<true>( std::vector<std::string> &fileNames,
-                            const std::string &directory,
-                            const std::string &prefix,
-                            const std::string &substr,
-                            const std::string &extension )
+error_t getFileNames<verbose::v>( std::vector<std::string> &fileNames,
+                                  const std::string &directory,
+                                  const std::string &prefix,
+                                  const std::string &substr,
+                                  const std::string &extension )
 {
-    return impl::getFileNames<true>( fileNames, directory, prefix, substr, extension );
+    return impl::getFileNames<verbose::v>( fileNames, directory, prefix, substr, extension );
 }
 
 template <>
-error_t getFileNames<false>( std::vector<std::string> &fileNames,
-                             const std::string &directory,
-                             const std::string &prefix,
-                             const std::string &substr,
-                             const std::string &extension )
+error_t getFileNames<verbose::vv>( std::vector<std::string> &fileNames,
+                                   const std::string &directory,
+                                   const std::string &prefix,
+                                   const std::string &substr,
+                                   const std::string &extension )
 {
-    return impl::getFileNames<false>( fileNames, directory, prefix, substr, extension );
+    return impl::getFileNames<verbose::vv>( fileNames, directory, prefix, substr, extension );
+}
+
+template <>
+error_t getFileNames<verbose::vvv>( std::vector<std::string> &fileNames,
+                                    const std::string &directory,
+                                    const std::string &prefix,
+                                    const std::string &substr,
+                                    const std::string &extension )
+{
+    return impl::getFileNames<verbose::vvv>( fileNames, directory, prefix, substr, extension );
 }
 
 std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )

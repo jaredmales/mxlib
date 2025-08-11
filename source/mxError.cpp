@@ -504,15 +504,79 @@ errno_report( const std::string &source, int ec, const std::string &file, const 
 
 namespace internal
 {
-std::string mxlib_error_report( const error_t &code, const std::string &expl, const std::source_location &loc )
+
+template <>
+std::string mxlib_error_message<verbose::o>( [[maybe_unused]] const error_t &code,
+                                             [[maybe_unused]] const std::string &expl,
+                                             [[maybe_unused]] const std::source_location &loc )
+{
+    return "";
+}
+
+template <>
+std::string mxlib_error_message<verbose::v>( const error_t &code,
+                                             const std::string &expl,
+                                             [[maybe_unused]] const std::source_location &loc )
+{
+    return std::format( "{}: {}.", errorName( code ), expl );
+}
+
+template <>
+std::string
+mxlib_error_message<verbose::vv>( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return std::format( "{} ({}): {}. [{} {}]",
+                        errorMessage( code ),
+                        errorName( code ),
+                        expl,
+                        loc.file_name(),
+                        loc.line() );
+}
+
+template <>
+std::string
+mxlib_error_message<verbose::vvv>( const error_t &code, const std::string &expl, const std::source_location &loc )
 {
     return std::format( "An error has occurred in mxlib:\n"
+                        "        error: {} ({})\n"
                         "  explanation: {}\n"
+                        "      in file: {}\n"
+                        "      at line: {}\n"
+                        "       source: {}\n",
+                        errorMessage( code ),
+                        errorName( code ),
+                        expl,
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
+}
+
+template <>
+std::string mxlib_error_message<verbose::o>( const error_t &code, [[maybe_unused]] const std::source_location &loc )
+{
+    return "";
+}
+
+template <>
+std::string mxlib_error_message<verbose::v>( const error_t &code, [[maybe_unused]] const std::source_location &loc )
+{
+    return errorName( code );
+}
+
+template <>
+std::string mxlib_error_message<verbose::vv>( const error_t &code, const std::source_location &loc )
+{
+    return std::format( "{} ({}). [{} {}]", errorMessage( code ), errorName( code ), loc.file_name(), loc.line() );
+}
+
+template <>
+std::string mxlib_error_message<verbose::vvv>( const error_t &code, const std::source_location &loc )
+{
+    return std::format( "An error has occurred in mxlib:\n"
                         "        error: {} ({})\n"
                         "      in file: {}\n"
                         "      at line: {}\n"
                         "       source: {}\n",
-                        expl,
                         errorMessage( code ),
                         errorName( code ),
                         loc.file_name(),
@@ -520,9 +584,83 @@ std::string mxlib_error_report( const error_t &code, const std::string &expl, co
                         loc.function_name() );
 }
 
-std::string mxlib_error_report( const error_t &code, const std::source_location &loc )
+template <>
+error_t mxlib_error_report<verbose::o>( const error_t &code,
+                                        [[maybe_unused]] const std::string &expl,
+                                        [[maybe_unused]] const std::source_location &loc )
 {
-    return std::format( "An error has occurred in mxlib:\n"
+    return code;
+}
+
+template <>
+error_t mxlib_error_report<verbose::o>( const error_t &code, [[maybe_unused]] const std::source_location &loc )
+{
+    return code;
+}
+
+
+} // namespace internal
+
+template <>
+std::string error_message<verbose::o>( const error_t &code,
+                                       [[maybe_unused]] const std::string &expl,
+                                       [[maybe_unused]] const std::source_location &loc )
+{
+    return "";
+}
+
+template <>
+std::string error_message<verbose::v>( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return internal::mxlib_error_message<verbose::v>( code, expl, loc );
+}
+
+template <>
+std::string error_message<verbose::vv>( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return internal::mxlib_error_message<verbose::vv>( code, expl, loc );
+}
+
+template <>
+std::string error_message<verbose::vvv>( const error_t &code, const std::string &expl, const std::source_location &loc )
+{
+    return std::format( "An error has occurred:\n"
+                        "        error: {} ({})\n"
+                        "  explanation: {}\n"
+                        "      in file: {}\n"
+                        "      at line: {}\n"
+                        "       source: {}\n",
+                        errorMessage( code ),
+                        errorName( code ),
+                        expl,
+                        loc.file_name(),
+                        loc.line(),
+                        loc.function_name() );
+}
+
+template <>
+std::string error_message<verbose::o>( [[maybe_unused]] const error_t &code,
+                                       [[maybe_unused]] const std::source_location &loc )
+{
+    return "";
+}
+
+template <>
+std::string error_message<verbose::v>( const error_t &code, const std::source_location &loc )
+{
+    return internal::mxlib_error_message<verbose::v>( code, loc );
+}
+
+template <>
+std::string error_message<verbose::vv>( const error_t &code, const std::source_location &loc )
+{
+    return internal::mxlib_error_message<verbose::vv>( code, loc );
+}
+
+template <>
+std::string error_message<verbose::vvv>( const error_t &code, const std::source_location &loc )
+{
+    return std::format( "An error has occurred:\n"
                         "    error: {} ({})\n"
                         "  in file: {}\n"
                         "  at line: {}\n"
@@ -533,36 +671,19 @@ std::string mxlib_error_report( const error_t &code, const std::source_location 
                         loc.line(),
                         loc.function_name() );
 }
+
+template <>
+error_t error_report<verbose::o>( const error_t &code,
+                                  [[maybe_unused]] const std::string &expl,
+                                  [[maybe_unused]] const std::source_location &loc )
+{
+    return code;
 }
 
-std::string error_report( const error_t &code, const std::string &expl, const std::source_location &loc )
+template <>
+error_t error_report<verbose::o>( const error_t &code, [[maybe_unused]] const std::source_location &loc )
 {
-    return std::format( "An error has occurred:\n"
-                        "  explanation: {}\n"
-                        "        error: {} ({})\n"
-                        "      in file: {}\n"
-                        "      at line: {}\n"
-                        "       source: {}\n",
-                        expl,
-                        errorMessage( code ),
-                        errorName( code ),
-                        loc.file_name(),
-                        loc.line(),
-                        loc.function_name() );
-}
-
-std::string error_report( const error_t &code, const std::source_location &loc )
-{
-    return std::format( "An error has occurred:\n"
-                        "    error: {} ({})\n"
-                        "  in file: {}\n"
-                        "  at line: {}\n"
-                        "   source: {}\n",
-                        errorMessage( code ),
-                        errorName( code ),
-                        loc.file_name(),
-                        loc.line(),
-                        loc.function_name() );
+    return code;
 }
 
 } // namespace mx

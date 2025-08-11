@@ -35,14 +35,23 @@
 
 //------------------ error_handling -----------------------
 
+/** \defgroup error_handling_codes Error Codes
+  * The mxlib error codes and utility functions.
+  * \ingroup error_handling
+  */
+/** \defgroup error_handling_old Old Error Handling
+  * Now deprecated ways in which mxlib handles errors.  Some things still actually use this...
+  * \ingroup error_handling
+  */
+
 /** \defgroup error_macros Error Handling Macros
   * Macros controlling how mxlib reports errors
-  * \ingroup error_handling
+  * \ingroup error_handling_old
   */
 
 /** \defgroup exceptions Exceptions
   * Exceptions with detailed information
-  * \ingroup error_handling
+  * \ingroup error_handling_old
   */
 
 //See error_handling_files

@@ -75,7 +75,6 @@ install: all mxlib_uncomp_version
 .PHONY: clean
 clean:
 	rm -f *.o *~
-	rm -f include/mxlib_uncomp_version.h
 	rm -f include/mxlib_comp_version.h
 	$(MAKE) -C source clean
 

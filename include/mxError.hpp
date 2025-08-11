@@ -1,12 +1,11 @@
 /** \file mxError.hpp
- * \author Jared R. Males (jaredmales@gmail.com)
- * \brief Declares and defines the mxlib error reporting system.
+ * \brief The mxlib error reporting system.
  * \ingroup error_handling_files
  *
  */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2025 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -31,360 +30,417 @@
 #include <cstring>
 #include <sstream>
 #include <source_location>
-
-/** \addtogroup error_macros
- *
- * mxlib components use these macros to report errors to the user, which by default are wrappers for mx::error_report
- * and mx::errno_report. This behavior can be changed with preprocessor defines.
- *
- * To completely suppress all mxlib error reporting, include the following before includng any mxlib headers
- * \code
- * #define MX_NO_ERROR_REPORTS
- * \endcode
- */
-
-/** \ingroup error_handling
- * @{
- */
-
-/** \def MX_NO_ERROR_REPORTS
- * \brief If this is defined, then no errors are reported.
- * \ingroup error_macros
- */
-#ifdef MX_NO_ERROR_REPORTS
-
-// Just defining these as empty macros, though this is currently untested.
-/** \todo test MX_NO_ERROR_REPORTS */
-
-#define mxError( esrc, ecode, expl )
-#define mxPError( esrc, ecode, expl )
-
-#else
-
-#ifndef mxError
-
 #include <iostream>
+#include <string>
 
-
-/** \def mxError
- * \brief This reports an mxlib specific error
- *
- * Can be predefined to change the error reporting of mxlib.
- *
- * \param[in] esrc is intended to identify the component (i.e. the class name)
- * \param[in] ecode is an errno erro code
- * \param[in] expl [optional] if more information can be provided, use this to inform the user.
- *
- * \ingroup error_macros
- */
-#define mxError( esrc, ecode, expl )                                                                                   \
-    std::cerr << "\n" << mx::error_report( esrc, ecode, __FILE__, __LINE__, expl ) << "\n";
-
-#endif // mxError
-
-
-#ifndef mxPError
-
-#include <iostream>
-
-/** \def mxPError
- * \brief This reports a standard library error, taking after perror.
- *
- * Can be pre-defined to change the error reporting of mxlib.
- *
- * \param[in] esrc is intended to identify the component (i.e. the class name)
- * \param[in] ecode is an errno erro code
- * \param[in] expl [optional] if more information can be provided, use this to inform the user.
- *
- * \addtogroup error_macros
- */
-#define mxPError( esrc, ecode, expl )                                                                                  \
-    std::cerr << "\n" << mx::errno_report( esrc, ecode, __FILE__, __LINE__, expl ) << "\n";
-
-#endif // mxPError
-
-#endif // MX_NO_ERROR_REPORTS
-
-/// @}
-
+#include "error/mxErrorOld.hpp"
 #include "error/error_t.hpp"
 
 namespace mx
 {
 
-/** \defgroup mxe_errors mxlib Error Codes
+/** \defgroup error_verbosity Error Report Verbosity
  * \ingroup error_handling
- */
-
-/** \def MXE_INVALIDARG
- * \brief An argument was invalid.
- * \ingroup mxe_errors
- */
-#define MXE_INVALIDARG 25
-#define MXE_INVALIDARG_NAME "MXE_INVALIDARG"
-#define MXE_INVALIDARG_MSG "An argument was invalid."
-
-/** \def MXE_INVALIDCONFIG
- * \brief A config setting was invalid.
- * \ingroup mxe_errors
- */
-#define MXE_INVALIDCONFIG 27
-#define MXE_INVALIDCONFIG_NAME "MXE_INVALIDCONFIG"
-#define MXE_INVALIDCONFIG_MSG "A config setting was invalid."
-
-/** \def MXE_NOTIMPL
- * \brief A component or technique is not implemented.
- * \ingroup mxe_errors
- */
-#define MXE_NOTIMPL 30
-#define MXE_NOTIMPL_NAME "MXE_NOTIMPL"
-#define MXE_NOTIMPL_MSG "A component or technique is not implemented."
-
-/** \def MXE_PARAMNOTSET
- * \brief A parameter was not set
- * \ingroup mxe_errors
- */
-#define MXE_PARAMNOTSET 35
-#define MXE_PARAMNOTSET_NAME "MXE_PARAMNOTSET"
-#define MXE_PARAMNOTSET_MSG "A parameter was not set."
-
-/** \def MXE_ENVNOTSET
- * \brief An environment variable is not set
- * \ingroup mxe_errors
- */
-#define MXE_ENVNOTSET 36
-#define MXE_ENVNOTSET_NAME "MXE_ENVNOTSET"
-#define MXE_ENVNOTSET_MSG "An environment variable is not set."
-
-/** \def MXE_NOTFOUND
- * \brief An item was not found
- * \ingroup mxe_errors
- */
-#define MXE_NOTFOUND 40
-#define MXE_NOTFOUND_NAME "MXE_NOTFOUND"
-#define MXE_NOTFOUND_MSG "An item was not found."
-
-/** \def MXE_SIZEERR
- * \brief A size was invalid or calculated incorrectly
- * \ingroup mxe_errors
- */
-#define MXE_SIZEERR 55
-#define MXE_SIZEERR_NAME "MXE_SIZEERR"
-#define MXE_SIZEERR_MSG "A size was invalid or calculated incorrectly."
-
-/** \def MXE_ALLOCERR
- * \brief An error occurred during memory allocation.
- * \ingroup mxe_errors
- */
-#define MXE_ALLOCERR 60
-#define MXE_ALLOCERR_NAME "MXE_ALLOCERR"
-#define MXE_ALLOCERR_MSG "An error occurred during memory allocation."
-
-/** \def MXE_FREEERR
- * \brief An error occurred during memory de-allocation.
- * \ingroup mxe_errors
- */
-#define MXE_FREEERR 65
-#define MXE_FREEERR_NAME "MXE_FREEERR"
-#define MXE_FREEERR_MSG "An error occurred during memory de-allocation."
-
-/** \def MXE_PARSEERR
- * \brief A parsing error occurred.
- * \ingroup mxe_errors
- */
-#define MXE_PARSEERR 75
-#define MXE_PARSEERR_NAME "MXE_PARSEERR"
-#define MXE_PARSEERR_MSG "A parsing error occurred."
-
-/** \def MXE_FILEOERR
- * \brief An error occurred while opening a file.
- * \ingroup mxe_errors
- */
-#define MXE_FILEOERR 1034
-#define MXE_FILEOERR_NAME "MXE_FILEOERR"
-#define MXE_FILEOERR_MSG "An error occurred while opening a file."
-
-/** \def MXE_FILEWERR
- * \brief An error occurred while writing to a file.
- * \ingroup mxe_errors
- */
-#define MXE_FILEWERR 1044
-#define MXE_FILEWERR_NAME "MXE_FILEWERR"
-#define MXE_FILEWERR_MSG "An error occurred while writing to a file."
-
-/** \def MXE_FILERERR
- * \brief An error occurred while reading from a file.
- * \ingroup mxe_errors
- */
-#define MXE_FILERERR 1049
-#define MXE_FILERERR_NAME "MXE_FILERERR"
-#define MXE_FILERERR_MSG "An error occurred while reading from a file."
-
-/** \def MXE_FILECERR
- * \brief An error occurred while closing a file.
- * \ingroup mxe_errors
- */
-#define MXE_FILECERR 1054
-#define MXE_FILECERR_NAME "MXE_FILECERR"
-#define MXE_FILECERR_MSG "An error occurred while closing a file."
-
-/** \def MXE_FILENOTFOUND
- * \brief The file was not found.
- * \ingroup mxe_errors
- */
-#define MXE_FILENOTFOUND 1059
-#define MXE_FILENOTFOUND_NAME "MXE_FILENOTFOUND"
-#define MXE_FILENOTFOUND_MSG "The file was not found."
-
-/** \def MXE_PROCERR
- * \brief An error occrred while starting a process.
- * \ingroup mxe_errors
- */
-#define MXE_PROCERR 2001
-#define MXE_PROCERR_NAME "MXE_PROCERR"
-#define MXE_PROCERR_MSG "An error occured while starting a process."
-
-/** \def MXE_TIMEOUT
- * \brief A timeout occurred.
- * \ingroup mxe_errors
- */
-#define MXE_TIMEOUT 2322
-#define MXE_TIMEOUT_NAME "MXE_TIMEOUT"
-#define MXE_TIMEOUT_MSG "A timeout occurred."
-
-/** \def MXE_LIBERR
- * \brief An error was returned by a library.
- * \ingroup mxe_errors
- */
-#define MXE_LIBERR 4000
-#define MXE_LIBERR_NAME "MXE_LIBERR"
-#define MXE_LIBERR_MSG "An error was returned by a library."
-
-/** \def MXE_EXCEPTTHROWN
- * \brief An exception was thrown.
  *
- * This gets used mainly to re-throw as a nested exception.
+ * Error reports can be controlled with a verbosity template parameter,
+ * usually called `verboseT`.  The types in this namespace are the standard
+ * ones supported by `mxlib`.
  *
- * \ingroup mxe_errors
  */
-#define MXE_EXCEPTTHROWN 4010
-#define MXE_EXCEPTTHROWN_NAME "MXE_EXCEPTTHROWN"
-#define MXE_EXCEPTTHROWN_MSG "An exception was thrown."
 
-
-/** \def MXE_GNUPLOTERR
- * \brief An error was returned by gnuplot.
- * \ingroup mxe_errors
- */
-#define MXE_GNUPLOTERR 4567
-#define MXE_GNUPLOTERR_NAME "MXE_GNUPLOTERR"
-#define MXE_GNUPLOTERR_MSG "An error was returned by gnuplot."
-
-/** \def MXE_LAPACKERR
- * \brief An error was returned by Lapack.
- * \ingroup mxe_errors
- */
-#define MXE_LAPACKERR 6890
-#define MXE_LAPACKERR_NAME "MXE_LAPACKERR"
-#define MXE_LAPACKERR_MSG "An error was returned by Lapack."
-
-/// Return the name for an mxlib error code
+/// Namespace for the error reporting verbosity levels
 /**
- *
- * \returns the name of the macro corresponding to the error code.
- *
- * \ingroup error_handling
+ * \ingroup error_verbosity
  */
-std::string MXE_CodeToName( int ec /**< [in] the error code */ );
+namespace verbose
+{
 
-/// Return the description for an mxlib error code
+/// Verbosity level 0, no reports are generated or printed to stderr.
+/** o stands for off
+ *
+ * \ingroup error_verbosity
+ */
+struct o
+{
+    static constexpr int level = 0;
+};
+
+/// Verbosity level 1.  Minimal reports with no source location information.
+/** A typical example:
+ * \verbatim
+  dirnotfound: /tmp/fileUtils_test/dirnf was not found.
+ * \endverbatim
+ *
+ * \ingroup error_verbosity
+ */
+struct v
+{
+    static constexpr int level = 1;
+};
+
+/// Verbosity level 2.  Additional information is provided, including source file and line
+/** A typical example:
+ * \verbatim
+  The directory was not found (dirnotfound): /tmp/fileUtils_test/dirnf was not found. [ioutils/fileUtils.cpp 186]
+ * \endverbatim
+ *
+ * \ingroup error_verbosity
+ */
+struct vv
+{
+    static constexpr int level = 2;
+};
+
+/// Verbosity level 3.  A full report is provided.
+/** A typical example:
+ * \verbatim
+  An error has occurred in mxlib:
+        error: The directory was not found (dirnotfound)
+  explanation: /tmp/fileUtils_test/dirnf was not found
+      in file: ioutils/fileUtils.cpp
+      at line: 186
+       source: mx::error_t mx::ioutils::impl::getFileNames(std::vector<std::__cxx11::basic_string<char> >&,
+  const std::string&, const std::string&, const std::string&, const std::string&) [with verboseT =
+  mx::verbose::vvv; std::string = std::__cxx11::basic_string<char>]
+  \endverbatim
+ *
+ * \ingroup error_verbosity
+ */
+struct vvv
+{
+    static constexpr int level = 3;
+};
+
+} // namespace verbose
+
+/** \defgroup error_internal Internal Error Reporting
+ * \ingroup error_handling
+ *
+ * These functions are meant to be used by mxlib itself.  You should use the non-`internal` versions,
+ * which don't start with `mxlib_`, in most
+ * other cases.
+ */
+
+/// Namespace for the internal error reporting functions.
 /**
- *
- * \returns the description for and error code.
- *
- * \ingroup error_handling
+ * \ingroup error_internal
  */
-std::string MXE_CodeToDescription( int ec /**< [in] the error code */ );
-
-/// Return the macro name and a message for a standard errno code
-/**
- *
- * \returns the name of the macro corresponding to the code.
- *
- * \ingroup error_handling
- */
-std::string errno_CodeToName( int ec /**< [in] the error code */ );
-
-/// Construct a rich error report given an mxlib error code
-/**
- *
- * \return the formatted error report.
- *
- * \ingroup error_handling
- */
-std::string error_report(
-    const std::string &source,   ///< [in] is intended to identify the mxlib component (i.e. the class name)
-    const int &code,             ///< [in] is an MXE_* error code
-    const std::string &file,     ///< [in] should be passed the __FILE__ macro
-    const int &line,             ///< [in] should be passed the __LINE__ macro
-    const std::string &expl = "" ///< [in] [optional] if more information can be provided, use this to inform the user.
-);
-
-/// Construct a rich error report given a standard errno error code
-/**
- * \return the formatted error report.
- *
- * \ingroup error_handling
- */
-std::string errno_report(
-    const std::string &source,   ///< [in] intended to identify the component (i.e. the class name)
-    int ec,                      ///< [in] an errno erro code
-    const std::string &file,     ///< [in] file should be passed the __FILE__ macro
-    const int &line,             ///< [in] line should be passed the __LINE__ macro
-    const std::string &expl = "" ///< [in] [optional] if more information can be provided, use this to inform the user.
-);
-
-//*********** With new error_t and location */
-
 namespace internal
 {
-std::string mxlib_error_report(
-    const error_t &code,
-    const std::string &expl,
-    const std::source_location & loc = std::source_location::current()
-);
 
-std::string mxlib_error_report(
-    const error_t &code,
-    const std::source_location & loc = std::source_location::current()
-);
+/// Format a report given an mxlib \ref error_t code and explanation.
+/** What is included depends on the verbosity level set by the template parameter
+ *  This is for internal `mxlib` use, it includes `mxlib` in the vvv report.
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the formatted message
+ *
+ * \ingroup error_internal
+ */
+template <class verboseT>
+std::string mxlib_error_message( const error_t &code,     /**< [in] is an mx::error_t error code*/
+                                 const std::string &expl, /**< [in] [optional] if more information can be provided,
+                                                                               use this to inform the user.*/
+                                 const std::source_location &loc /**< [in] [optional] source location */
+                                 = std::source_location::current() );
 
+/// Specialization of \ref mxlib_error_message for \ref verbose::o
+/**
+ * \ingroup error_internal
+ */
+template <>
+std::string
+mxlib_error_message<verbose::o>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref mxlib_error_message for \ref verbose::v
+/**
+ * \ingroup error_internal
+ */
+template <>
+std::string
+mxlib_error_message<verbose::v>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref mxlib_error_message for \ref verbose::vv
+/**
+ * \ingroup error_internal
+ */
+template <>
+std::string
+mxlib_error_message<verbose::vv>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref mxlib_error_message for \ref verbose::vvv
+/**
+ * \ingroup error_internal
+ */
+template <>
+std::string
+mxlib_error_message<verbose::vvv>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Format a report given an mxlib \ref error_t code.
+/** What is included depends on the verbosity level set by the template parameter
+ *  This is for internal mxlib use, it includes `mxlib` in the vvv report.
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the formatted message
+ *
+ * \ingroup error_internal
+ */
+template <class verboseT>
+std::string mxlib_error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                                 const std::source_location &loc /**< [in] [optional] source location */
+                                 = std::source_location::current() );
+
+/** \brief Specialization of \ref mxlib_error_message(const error_t &, const std::source_location&)
+ * "mxlib_error_message" for
+ * \ref verbose::o
+ *
+ * \ingroup error_internal
+ */
+template <>
+std::string mxlib_error_message<verbose::o>( const error_t &code, const std::source_location &loc );
+
+/** \brief Specialization of \ref mxlib_error_message(const error_t &, const std::source_location&)
+ * "mxlib_error_message" for \ref verbose::v
+ *
+ * \ingroup error_internal
+ */
+template <>
+std::string mxlib_error_message<verbose::v>( const error_t &code, const std::source_location &loc );
+
+/** \brief  Specialization of \ref mxlib_error_message(const error_t &, const std::source_location&)
+ * "mxlib_error_message" for \ref verbose::vv
+ *
+ * \ingroup error_internal
+ */
+template <>
+std::string mxlib_error_message<verbose::vv>( const error_t &code, const std::source_location &loc );
+
+/** \brief Specialization of \ref mxlib_error_message(const error_t &, const std::source_location&)
+ * "mxlib_error_message" for \ref verbose::vvv
+ *
+ * \ingroup error_internal
+ */
+template <>
+std::string mxlib_error_message<verbose::vvv>( const error_t &code, const std::source_location &loc );
+
+/// Print a report to stderr given an mxlib \ref error_t \p code and explanation and return the \p code.
+/** What is printed depends on the verbosity level set by the template parameter
+ * This is for internal mxlib use, it includes `mxlib` in the vvv report.
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the provided \ref error_t \p code
+ *
+ * \ingroup error_internal
+ */
+template <class verboseT>
+error_t mxlib_error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                            const std::string &expl,        /**< [in] [optional] if more information can be provided,
+                                                                                 use this to inform the user.*/
+                            const std::source_location &loc /**< [in] [optional] source location */
+                            = std::source_location::current() )
+{
+    if( verboseT::level > 0 )
+    {
+        std::cerr << mxlib_error_message<verboseT>( code, expl, loc ) << '\n';
+    }
+
+    return code;
 }
 
-/// Construct a rich error report given an mxlib \ref error_t code
+/// Specialization of \ref mxlib_error_report for \ref verbose::o
 /**
- *
- * \return the formatted error report.
- *
- * \ingroup error_handling
+ * \ingroup error_internal
  */
-std::string error_report(
-    const error_t &code,             ///< [in] is an mx::error_t error code
-    const std::string &expl, ///< [in] [optional] if more information can be provided, use this to inform the user.
-    const std::source_location & loc = std::source_location::current()
-);
+template <>
+error_t mxlib_error_report<verbose::o>( const error_t &code, const std::string &expl, const std::source_location &loc );
 
-/// Construct a rich error report given an mxlib \ref error_t code
-/**
+/// Print a report to stderr given an mxlib \ref error_t \p code and return the \p code.
+/** What is printed depends on the verbosity level set by the template parameter
+ * This is for internal mxlib use, it includes `mxlib` in the vvv report.
  *
- * \return the formatted error report.
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the provided \ref error_t \p code
+ *
+ * \ingroup error_internal
+ */
+template <class verboseT>
+error_t mxlib_error_report( const error_t &code /**< [in] is an mx::error_t error code*/,
+                            const std::source_location &loc /**< [in] [optional] source location */
+                            = std::source_location::current() )
+{
+    if( verboseT::level > 0 )
+    {
+        std::cerr << mxlib_error_message<verboseT>( code, loc ) << '\n';
+    }
+
+    return code;
+}
+
+/** \brief  Specialization of \ref mxlib_error_report(const error_t &, const std::source_location&) "mxlib_error_report"
+ * for \ref verbose::o
+ *
+ * \ingroup error_internal
+ */
+template <>
+error_t mxlib_error_report<verbose::o>( const error_t &code, const std::source_location &loc );
+
+} // namespace internal
+
+/// Format a report given an mxlib \ref error_t \p code and explanation.
+/** What is included depends on the verbosity level set by the template parameter
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the formatted message
  *
  * \ingroup error_handling
  */
-std::string error_report(
-    const error_t &code,             ///< [in] is an mx::error_t error code
-    const std::source_location & loc = std::source_location::current()
-);
+template <class verboseT>
+std::string error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                           const std::string &expl,        /**< [in] [optional] if more information can be provided,
+                                                                     use this to inform the user.*/
+                           const std::source_location &loc /**< [in] [optional] source location */
+                           = std::source_location::current() );
+
+/// Specialization of \ref error_message for \ref verbose::o
+/**
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::o>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref error_message for \ref verbose::v
+/**
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::v>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref error_message for \ref verbose::vv
+/**
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::vv>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Specialization of \ref error_message for \ref verbose::vvv
+/**
+ * \ingroup error_handling
+ */
+template <>
+std::string
+error_message<verbose::vvv>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Format a report given an mxlib \ref error_t \p code.
+/** What is included depends on the verbosity level set by the template parameter
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the formatted message
+ *
+ * \ingroup error_handling
+ */
+template <class verboseT>
+std::string error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                           const std::source_location &loc /**< [in] [optional] source location */
+                           = std::source_location::current() );
+
+/** \brief Specialization of \ref error_message(const error_t &, const std::source_location&) "error_message" for  \ref
+ * verbose::o
+ *
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::o>( const error_t &code, const std::source_location &loc );
+
+/** \brief Specialization of \ref error_message(const error_t &, const std::source_location&) "error_message" for \ref
+ * verbose::v
+ *
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::v>( const error_t &code, const std::source_location &loc );
+
+/** \brief Specialization of \ref error_message(const error_t &, const std::source_location&) "error_message" for \ref
+ * verbose::vv
+ *
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::vv>( const error_t &code, const std::source_location &loc );
+
+/** \brief  Specialization of \ref error_message(const error_t &, const std::source_location&) "error_message" for \ref
+ * verbose::vvv
+ *
+ * \ingroup error_handling
+ */
+template <>
+std::string error_message<verbose::vvv>( const error_t &code, const std::source_location &loc );
+
+/// Print a report to stderr given an mxlib \ref error_t \p code and explanation and return the \p code.
+/** What is printed depends on the verbosity level set by the template parameter
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the provided \ref error_t \p code
+ *
+ * \ingroup error_handling
+ */
+template <class verboseT>
+error_t error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                      const std::string &expl,        /**< [in] [optional] if more information can be provided,
+                                                                           use this to inform the user.*/
+                      const std::source_location &loc /**< [in] [optional] source location */
+                      = std::source_location::current() )
+{
+    if( verboseT::level > 0 )
+    {
+        std::cerr << error_message<verboseT>( code, expl, loc ) << '\n';
+    }
+
+    return code;
+}
+
+/** \brief  Specialization of \ref error_report for \ref verbose::o
+ *
+ * \ingroup error_handling
+ */
+template <>
+error_t error_report<verbose::o>( const error_t &code, const std::string &expl, const std::source_location &loc );
+
+/// Print a report to stderr given an mxlib \ref error_t \p code and return the \p code.
+/** What is printed depends on the verbosity level set by the template parameter
+ *
+ * \tparam verboseT sets the verbosity level based on its `level` member.
+ *
+ * \returns the provided \ref error_t \p code
+ *
+ * \ingroup error_handling
+ */
+template <class verboseT>
+error_t error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
+                      const std::source_location &loc /**< [in] [optional] source location */
+                      = std::source_location::current() )
+{
+    if( verboseT::level > 0 )
+    {
+        std::cerr << error_message<verboseT>( code, loc ) << '\n';
+    }
+
+    return code;
+}
+
+/** \brief  Specialization of \ref error_report(const error_t &, const std::source_location&) "error_report"
+ * for \ref verbose::o
+ *
+ * \ingroup error_handling
+ */
+template <>
+error_t error_report<verbose::o>( const error_t &code, const std::source_location &loc );
 
 } // namespace mx
 

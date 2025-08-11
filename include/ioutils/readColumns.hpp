@@ -26,13 +26,12 @@
 #ifndef __readColumns_hpp__
 #define __readColumns_hpp__
 
-#include <fstream>
-#include <string>
 #include <cstring>
-#include <iostream>
+#include <string>
+#include <fstream>
+#include <format>
 
 #include "../mxlib.hpp"
-#include "../mxError.hpp"
 
 #include "stringUtils.hpp"
 
@@ -43,63 +42,106 @@ namespace mx
 namespace ioutils
 {
 
-template <char delim = ' ', char eol = '\n'>
-void readcol( char *sin, int sz )
+struct readColSpaceDelim
 {
-    static_cast<void>( sin );
-    static_cast<void>( sz );
+    static constexpr char delim = ' ';
+    static constexpr char strDelim = '"';
+    static constexpr char eol = '\n';
+    static constexpr char comment = '#';
+    static constexpr const char *missingValStr = MX_READCOL_MISSINGVALSTR;
+};
 
-    return;
+struct readColCommaDelim
+{
+    static constexpr char delim = ',';
+    static constexpr char strdelim = '"';
+    static constexpr char eol = '\n';
+    static constexpr char comment = '#';
+    static constexpr const char *missingValStr = MX_READCOL_MISSINGVALSTR;
+};
+
+template <class delimT, class verboseT>
+error_t readcol( [[maybe_unused]] const char *sin, [[maybe_unused]] int sz, [[maybe_unused]] int & colno )
+{
+    return error_t::noerror;
 }
 
-template <char delim = ' ', char eol = '\n', typename arrT, typename... arrTs>
-void readcol( char *sin, int sz, arrT &array, arrTs &...arrays )
+template <class delimT, class verboseT, typename arrT, typename... arrTs>
+error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...arrays )
 {
-    // static const unsigned short int nargs = sizeof...(arrTs);
-    std::string str;
-
-    int i = 0;
-    int l = strlen( sin );
-
-    if( l < 1 )
-        return;
-
-    // Eat white space
-    while( isspace( sin[i] ) && sin[i] != eol && i < l )
-        ++i;
-    sin = sin + i;
-    sz = sz - i;
-
-    // If there's nothing here, we still need to populate the vector
-    if( sz <= 1 )
+    try
     {
-        array.push_back( convertFromString<typename arrT::value_type>( "" ) );
-        return;
+
+        // static const unsigned short int nargs = sizeof...(arrTs);
+        std::string str;
+
+        int i = 0;
+        int l = strlen( sin );
+
+        if( l < 1 )
+        {
+            return error_t::noerror;
+        }
+
+        // Eat white space
+        while( isspace( sin[i] ) && sin[i] != delimT::eol && i < l )
+        {
+            ++i;
+        }
+        sin = sin + i;
+        sz = sz - i;
+
+        // If there's nothing here, we still need to populate the vector
+        if( sz <= 1 )
+        {
+            array.push_back( convertFromString<typename arrT::value_type>( "" ) );
+            return error_t::noerror;
+        }
+
+        std::stringstream sinstr( sin );
+
+        std::getline( sinstr, str, delimT::delim );
+
+        // Last entry in line might contain eol
+        if( str[str.size() - 1] == delimT::eol )
+        {
+            str.erase( str.size() - 1 );
+        }
+
+        if( str.size() == 0 )
+        {
+            array.push_back( convertFromString<typename arrT::value_type>( MX_READCOL_MISSINGVALSTR ) );
+        }
+        else
+        {
+            array.push_back( convertFromString<typename arrT::value_type>( str ) );
+        }
+
+        sin += ( str.size() + 1 ) * sizeof( char );
+        sz -= ( str.size() + 1 ) * sizeof( char );
+    }
+    catch( const std::invalid_argument &e )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::std_invalid_argument,
+                                             std::format( "processing column {}: {}", colno, e.what() ) );
+    }
+    catch( const std::out_of_range &e )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::std_out_of_range,
+                                             std::format( "processing column {}: {}", colno, e.what() ) );
+    }
+    catch( const std::exception &e )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::exception,
+                                             std::format( "processing column {}: {}", colno, e.what() ) );
+    }
+    catch( ... )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::exception, std::format( "processing column {}.", colno ) );
     }
 
-    std::stringstream sinstr( sin );
-
-    std::getline( sinstr, str, delim );
-
-    // Last entry in line might contain eol
-    if( str[str.size() - 1] == eol )
-    {
-        str.erase( str.size() - 1 );
-    }
-
-    if( str.size() == 0 )
-    {
-        array.push_back( convertFromString<typename arrT::value_type>( MX_READCOL_MISSINGVALSTR ) );
-    }
-    else
-    {
-        array.push_back( convertFromString<typename arrT::value_type>( str ) );
-    }
-
-    sin += ( str.size() + 1 ) * sizeof( char );
-    sz -= ( str.size() + 1 ) * sizeof( char );
-
-    readcol<delim, eol>( sin, sz, arrays... );
+    ++colno;
+    return readcol<delimT, verboseT>( sin, sz, colno, arrays... );
 }
 
 /// Read in columns from a text file
@@ -134,10 +176,11 @@ void readcol( char *sin, int sz, arrT &array, arrTs &...arrays )
  *
  * \ingroup asciiutils
  */
-template <char delim = ' ', char comment = '#', char eol = '\n', typename... arrTs>
-int readColumns( const std::string &fname, ///< [in] is the file name to read from
-                 arrTs &...arrays ///< [out] a variadic list of std::vectors. Any number with mixed value_type can be
-                                  ///< specified. Neither allocated nor cleared, so repeated calls will append data.
+template <class delimT = readColSpaceDelim, class verboseT = verbose::vvv, typename... arrTs>
+error_t readColumns( const std::string &fname, ///< [in] is the file name to read from
+                     arrTs &...arrays          /**< [out] a variadic list of std::vectors. Any number with mixed
+                                                          value_type can be specified. Neither allocated nor cleared,
+                                                          so repeated calls will append data.*/
 )
 {
     // open file
@@ -147,92 +190,116 @@ int readColumns( const std::string &fname, ///< [in] is the file name to read fr
 
     if( !fin.good() )
     {
+        error_t errc;
         if( errno != 0 )
         {
-            mxPError( "readColumns", errno, "Occurred while opening " + fname + " for reading." );
+            errc = errno2error_t( errno );
         }
         else
         {
-            mxError( "readColumns", MXE_FILEOERR, "Occurred while opening " + fname + " for reading." );
+            errc = error_t::fileoerr;
         }
-        return -1;
+
+        return internal::mxlib_error_report<verboseT>( errc, "Opening " + fname + " for reading" );
     }
 
-    int lineSize = 4096;
-    char *line = new char[lineSize];
+    std::string line;
+
+    int64_t lineno = -1;
 
     while( fin.good() )
     {
-        // Save one space for adding eol
-        fin.getline( line, lineSize - 1, eol );
+        ++lineno;
+        try
+        {
+            std::getline( fin, line, delimT::eol );
+        }
+        catch( const std::exception &e )
+        {
+            return internal::mxlib_error_report<verboseT>(
+                error_t::exception,
+                std::format( "Reading from {} at line {}. {}.", fname, lineno, e.what() ) );
+        }
+        catch( ... )
+        {
+            return internal::mxlib_error_report<verboseT>(
+                error_t::exception,
+                std::format( "Reading from {} at line {}.", fname, lineno ) );
+        }
 
-        int i = 0;
-        int l = strlen( line );
-
-        if( l <= 0 )
-            break;
-
-        // std::cerr << line << "\n";
+        if( line.size() == 0 )
+        {
+            continue;
+        }
 
         // Find start of comment and end line at that point.
-        while( line[i] != comment )
+        size_t i = 0;
+        bool nonspace = false; // record if we find a non-space character before the comment
+        while( i < line.size() && line[i] != delimT::comment )
         {
+            if( !nonspace && !isspace( line[i] ) )
+            {
+                nonspace = true;
+            }
             ++i;
-            if( i == l )
-                break;
         }
 
-        if( i <= l - 1 )
+        // Check if line is all comment
+        if( i == 0 || !nonspace )
         {
-            line[i] = '\0';
+            continue;
         }
 
-        l = strlen( line );
+        if( i < line.size() )                           // i is > 0 if we're here
+        {
+            line.erase( line.begin() + i, line.end() ); // does not throw
+        }
 
-        if( l == 0 )
-            continue;
+        int colno = 0;
+        error_t errc = readcol<delimT, verboseT>( line.c_str(), line.size(), colno, arrays... );
 
-        // Make sure line ends with eol
-        line[l] = eol;
-        ++l;
-        line[l] = '\0';
-
-        readcol<delim, eol>( line, strlen( line ), arrays... );
+        if(errc != error_t::noerror)
+        {
+            return internal::mxlib_error_report<verboseT>( errc, std::format("Reading from {} at line {} column {}",fname, lineno+1, colno+1) );
+        }
     }
-
-    delete[] line;
 
     // getline will have set fail if there was no new line on the last line.
     if( fin.bad() && !fin.fail() )
     {
+        error_t errc;
         if( errno != 0 )
         {
-            mxPError( "readColumns", errno, "Occurred while reading from " + fname + "." );
+            errc = errno2error_t( errno );
         }
         else
         {
-            mxError( "readColumns", MXE_FILERERR, "Occurred while reading from " + fname + "." );
+            errc = error_t::filererr;
         }
-        return -1;
+
+        return internal::mxlib_error_report<verboseT>( errc, "Reading from " + fname );
     }
 
     fin.clear(); // Clear the fail bit which may have been set by getline
+    errno = 0;
     fin.close();
 
     if( fin.fail() )
     {
+        error_t errc;
         if( errno != 0 )
         {
-            mxPError( "readColumns", errno, "Occurred while closing " + fname + "." );
+            errc = errno2error_t( errno );
         }
         else
         {
-            mxError( "readColumns", MXE_FILECERR, "Occurred while closing " + fname + "." );
+            errc = error_t::filecerr;
         }
-        return -1;
+
+        return internal::mxlib_error_report<verboseT>( errc, "Closing" + fname );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
 /// A dummy class to allow mx::readColumns to skip a column(s) in a file without requiring memory allocation.

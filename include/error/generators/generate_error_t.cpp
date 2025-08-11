@@ -118,7 +118,10 @@ int main()
     fout << '\n';
     fout << "namespace mx" << '\n';
     fout << "{\n" << '\n';
-
+    fout << '\n';
+    fout << "/// The mxlib error codes" << '\n';
+    fout << "/** \\ingroup error_handling_codes" << '\n';
+    fout << " */" << '\n';
     fout << "enum class error_t" << '\n';
     fout << "{" << '\n';
     for( size_t n = 0; n < error_ts.size(); ++n )
@@ -141,7 +144,13 @@ int main()
 
     fout << "};" << "\n" << '\n';
 
-    fout << "static constexpr const char * errorName( const error_t & errc)" << '\n';
+    fout << "/// Convert a \\ref error_t code to its name" << '\n';
+    fout << "/**" << '\n';
+    fout << " * \\returns the name of the \\ref error_t code" << '\n';
+    fout << " *" << '\n';
+    fout << " * \\ingroup error_handling_codes" << '\n';
+    fout << " */" << '\n';
+    fout << "static constexpr const char * errorName( const error_t & errc /**< [in] the error code to convert*/)" << '\n';
     fout << "{" << '\n';
     fout << "    switch(errc)" << '\n';
     fout << "    {" << '\n';
@@ -157,7 +166,13 @@ int main()
     fout << "}" << '\n';
     fout << '\n';
 
-    fout << "static constexpr const char * errorMessage( const error_t & errc)" << '\n';
+    fout << "/// Get the descriptive message for a \\ref error_t code." << '\n';
+    fout << "/**" << '\n';
+    fout << " * \\returns the descriptive message corresponding to the \\ref error_t code" << '\n';
+    fout << " *" << '\n';
+    fout << " * \\ingroup error_handling_codes" << '\n';
+    fout << " */" << '\n';
+    fout << "static constexpr const char * errorMessage( const error_t & errc /**< [in] the error code for which to get the message*/)" << '\n';
     fout << "{" << '\n';
     fout << "    switch(errc)" << '\n';
     fout << "    {" << '\n';
@@ -173,7 +188,13 @@ int main()
     fout << "}" << '\n';
     fout << '\n';
 
-    fout << "static constexpr error_t errno2error_t( const int & err)" << '\n';
+    fout << "/// Convert an errno code to \\ref errno_t" << '\n';
+    fout << "/**"  << '\n';
+    fout << " * \\returns the \\ref error_t code corresponding to the errno code" << '\n';
+    fout << " *" << '\n';
+    fout << " * \\ingroup error_handling_codes" << '\n';
+    fout << " */" << '\n';
+    fout << "static constexpr error_t errno2error_t( const int & err/**< [in] the errno code to convert*/)" << '\n';
     fout << "{" << '\n';
     fout << "    switch(err)" << '\n';
     fout << "    {" << '\n';

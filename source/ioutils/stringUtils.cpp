@@ -101,7 +101,8 @@ unsigned short convertFromString<unsigned short>( const std::string &str )
 template <>
 int convertFromString<int>( const std::string &str )
 {
-    return atoi( str.c_str() );
+    //return static_cast<int>(std::stod( str ));
+    return std::stoi( str );
 }
 
 // Template specialization of convertFromString for unsigned int
