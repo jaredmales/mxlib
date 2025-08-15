@@ -136,7 +136,7 @@ SCENARIO( "Reading space delimited numeric data with errors", "[ioutils::readCol
         {
             std::vector<int> data0, data1;
             mx::error_t errc = mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::v>(fname, data0, data1);
-            REQUIRE( errc == mx::error_t::std_out_of_range );
+            REQUIRE( errc == mx::error_t::erange );
         }
 
         /*WHEN( "reading as int64_t" )

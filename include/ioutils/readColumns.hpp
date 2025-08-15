@@ -71,8 +71,6 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
 {
     try
     {
-
-        // static const unsigned short int nargs = sizeof...(arrTs);
         std::string str;
 
         int i = 0;
@@ -94,8 +92,15 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
         // If there's nothing here, we still need to populate the vector
         if( sz <= 1 )
         {
-            array.push_back( convertFromString<typename arrT::value_type>( "" ) );
-            return error_t::noerror;
+            mx::error_t errc;
+            array.push_back( stoT<typename arrT::value_type>( "", &errc ) );
+
+            if(errc != mx::error_t::noerror)
+            {
+                return internal::mxlib_error_report<verboseT>(errc, std::format( "processing column {}", colno ));
+            }
+
+            return mx::error_t::noerror;
         }
 
         std::stringstream sinstr( sin );
@@ -108,13 +113,20 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
             str.erase( str.size() - 1 );
         }
 
+        mx::error_t errc;
         if( str.size() == 0 )
         {
-            array.push_back( convertFromString<typename arrT::value_type>( MX_READCOL_MISSINGVALSTR ) );
+            array.push_back( stoT<typename arrT::value_type>( MX_READCOL_MISSINGVALSTR, &errc ) );
         }
         else
         {
-            array.push_back( convertFromString<typename arrT::value_type>( str ) );
+            array.push_back( stoT<typename arrT::value_type>( str, &errc ) );
+        }
+
+        if(errc != mx::error_t::noerror)
+        {
+            return internal::mxlib_error_report<verboseT>( errc,
+                                             std::format( "processing column {}", colno ) );
         }
 
         sin += ( str.size() + 1 ) * sizeof( char );
@@ -130,9 +142,14 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
         return internal::mxlib_error_report<verboseT>( error_t::std_out_of_range,
                                              std::format( "processing column {}: {}", colno, e.what() ) );
     }
+    catch( const std::bad_alloc &e )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                             std::format( "processing column {}: {}", colno, e.what() ) );
+    }
     catch( const std::exception &e )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::exception,
+        return internal::mxlib_error_report<verboseT>( error_t::std_exception,
                                              std::format( "processing column {}: {}", colno, e.what() ) );
     }
     catch( ... )
@@ -167,12 +184,9 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
  *
  * Columns can be skipped using mx::ioutils::skipCol.
  *
- * \tparam delim is the character separating columns,  by default this is space.
- * \tparam comment is the character starting a comment.  by default this is #
- * \tparam eol is the end of line character.  by default this is \n
- * \tparam arrTs a variadic list of array types. this is not specified by the user.
+ * \tparam delimT specifies the delimiters.  By default this is \ref readColSpaceDelim
+ * \tparam verbose specifies the error reporting verbosity.  See \ref mx::verbose
  *
- * \todo lineSize should be configurable
  *
  * \ingroup asciiutils
  */

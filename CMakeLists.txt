@@ -197,7 +197,7 @@ endif()
 #
 #########################################
 
-#first generate the error_t header
+#first generate the errno header
 add_executable(generate_errno_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_errno_info.cpp)
 
 add_custom_command(
@@ -208,7 +208,22 @@ add_custom_command(
     DEPENDS_EXPLICIT_ONLY
 )
 
-add_executable(generate_error_t ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp)
+#then generate the FITS header
+add_executable(generate_fits_status_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_fits_status_info.cpp)
+
+add_custom_command(
+    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
+    COMMAND generate_fits_status_info
+    DEPENDS generate_fits_status_info include/error/generators/fits_error_codes.txt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
+    DEPENDS_EXPLICIT_ONLY
+)
+
+#now generate errno_t.hpp
+add_executable(generate_error_t ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
+                                ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
+                                ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
+                                )
 
 add_custom_command(
     OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/error_t.hpp

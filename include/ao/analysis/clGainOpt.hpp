@@ -169,8 +169,8 @@ struct clGainOpt
                                 which is copied to m_b.*/ );
 
     /// Get a single FIR coefficient
-    /** 
-       * \returns a single FIR coefficient 
+    /**
+       * \returns a single FIR coefficient
       */
     realT b( size_t i /**< [in] the index of the FIR coefficient*/ )
     {
@@ -198,8 +198,8 @@ struct clGainOpt
     void a( const Eigen::Array<realT, -1, -1> &newA /**< [in] a column-vector Eigen::Array of
                                                               coefficients, which is copied to m_a.*/ );
     /// Get a single IIR coefficient
-    /** 
-       * \returns a single IIR coefficient 
+    /**
+       * \returns a single IIR coefficient
       */
     realT a( size_t i )
     {
@@ -407,7 +407,7 @@ struct clGainOpt
     realT optGainOpenLoop( realT &var,                         ///< [out] the variance at the optimum gain
                            const std::vector<realT> &PSDerr,   ///< [in] open loop error PSD
                            const std::vector<realT> &PSDnoise, ///< [in] open loop measurement noise PSD
-                           bool gridSearch                     /**< [in] flag controlling whether an intial grid
+                           bool gridSearch                     /**< [in] flag controlling whether an initial grid
                                                                          search is done to find the global minimum*/
     );
 
@@ -420,7 +420,7 @@ struct clGainOpt
                            const std::vector<realT> &PSDnoise, ///< [in] open loop measurement noise PSD
                            realT &gmax,                        /**< [in] maximum gain to consider.
                                                                          If 0, then _gmax is used.*/
-                           bool gridSearch                     /**< [in] flag controlling whether an intial grid
+                           bool gridSearch                     /**< [in] flag controlling whether an initial grid
                                                                          search is done to find the global minimum*/
     );
 
@@ -1081,7 +1081,7 @@ realT optGainOpenLoop( clGainOptOptGain_OL<realT> &olgo,
 
     return gopt;
 #else
-    staticm_assert( std::is_fundamental<realT>::value || !std::is_fundamental<realT>::value,
+    static_assert( std::is_fundamental<realT>::value || !std::is_fundamental<realT>::value,
                     "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not "
                     "defined, so I can't just use boost." );
     return 0;

@@ -11,9 +11,11 @@ template <typename dataT>
 class fitsFile_test : public fitsFile<dataT>
 {
   public:
-    void pixarrs( long **fpix, long **lpix, long **inc )
+    typedef fitsFile<dataT>::pixarrT pixarrTT;
+
+    void calcPixarrs( pixarrTT & pixarrs )
     {
-        fitsFile<dataT>::pixarrs( fpix, lpix, inc );
+        fitsFile<dataT>::calcPixarrs( pixarrs );
     }
 
     void setnax( int naxis, long naxes0, long naxes1, long naxes2 )
@@ -56,17 +58,13 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
             REQUIRE( fft.naxes( 0 ) == 64 );
             REQUIRE( fft.naxes( 1 ) == -1 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 1 );
+            REQUIRE( pixarrs.lpix[0] == 64 );
+            REQUIRE( pixarrs.inc[0] == 1 );
 
-            REQUIRE( fpix[0] == 1 );
-            REQUIRE( lpix[0] == 64 );
-            REQUIRE( inc[0] == 1 );
-
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
 
         WHEN( "reading a subimage" )
@@ -81,17 +79,13 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
 
             fft.setReadSize( 10, 0, 7, 0 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 11 );
+            REQUIRE( pixarrs.lpix[0] == 17 );
+            REQUIRE( pixarrs.inc[0] == 1 );
 
-            REQUIRE( fpix[0] == 11 );
-            REQUIRE( lpix[0] == 17 );
-            REQUIRE( inc[0] == 1 );
-
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
     }
 
@@ -108,20 +102,16 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
             REQUIRE( fft.naxes( 1 ) == 64 );
             REQUIRE( fft.naxes( 2 ) == -1 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 1 );
+            REQUIRE( pixarrs.fpix[1] == 1 );
+            REQUIRE( pixarrs.lpix[0] == 64 );
+            REQUIRE( pixarrs.lpix[1] == 64 );
+            REQUIRE( pixarrs.inc[0] == 1 );
+            REQUIRE( pixarrs.inc[1] == 1 );
 
-            REQUIRE( fpix[0] == 1 );
-            REQUIRE( fpix[1] == 1 );
-            REQUIRE( lpix[0] == 64 );
-            REQUIRE( lpix[1] == 64 );
-            REQUIRE( inc[0] == 1 );
-            REQUIRE( inc[1] == 1 );
-
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
 
         WHEN( "reading a subimage" )
@@ -137,20 +127,16 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
 
             fft.setReadSize( 10, 9, 7, 10 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 11 );
+            REQUIRE( pixarrs.fpix[1] == 10 );
+            REQUIRE( pixarrs.lpix[0] == 17 );
+            REQUIRE( pixarrs.lpix[1] == 19 );
+            REQUIRE( pixarrs.inc[0] == 1 );
+            REQUIRE( pixarrs.inc[1] == 1 );
 
-            REQUIRE( fpix[0] == 11 );
-            REQUIRE( fpix[1] == 10 );
-            REQUIRE( lpix[0] == 17 );
-            REQUIRE( lpix[1] == 19 );
-            REQUIRE( inc[0] == 1 );
-            REQUIRE( inc[1] == 1 );
-
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
     }
 
@@ -168,24 +154,21 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
             REQUIRE( fft.naxes( 2 ) == 64 );
             REQUIRE( fft.naxes( 3 ) == -1 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 1 );
+            REQUIRE( pixarrs.fpix[1] == 1 );
+            REQUIRE( pixarrs.fpix[2] == 1 );
 
-            REQUIRE( fpix[0] == 1 );
-            REQUIRE( fpix[1] == 1 );
-            REQUIRE( fpix[2] == 1 );
+            REQUIRE( pixarrs.lpix[0] == 64 );
+            REQUIRE( pixarrs.lpix[1] == 64 );
+            REQUIRE( pixarrs.lpix[2] == 64 );
+            REQUIRE( pixarrs.inc[0] == 1 );
+            REQUIRE( pixarrs.inc[1] == 1 );
+            REQUIRE( pixarrs.inc[2] == 1 );
 
-            REQUIRE( lpix[0] == 64 );
-            REQUIRE( lpix[1] == 64 );
-            REQUIRE( lpix[2] == 64 );
-            REQUIRE( inc[0] == 1 );
-            REQUIRE( inc[1] == 1 );
-            REQUIRE( inc[2] == 1 );
 
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
 
         WHEN( "reading a subimage" )
@@ -203,23 +186,20 @@ SCENARIO( "fitsFile calculating subimage sizes", "[ioutils::fits::fitsFile]" )
             fft.setReadSize( 10, 9, 7, 10 );
             fft.setCubeReadSize( 5, 3 );
 
-            long *fpix, *lpix, *inc;
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
 
-            fft.pixarrs( &fpix, &lpix, &inc );
+            REQUIRE( pixarrs.fpix[0] == 11 );
+            REQUIRE( pixarrs.fpix[1] == 10 );
+            REQUIRE( pixarrs.fpix[2] == 6 );
+            REQUIRE( pixarrs.lpix[0] == 17 );
+            REQUIRE( pixarrs.lpix[1] == 19 );
+            REQUIRE( pixarrs.lpix[2] == 8 );
+            REQUIRE( pixarrs.inc[0] == 1 );
+            REQUIRE( pixarrs.inc[1] == 1 );
+            REQUIRE( pixarrs.inc[2] == 1 );
 
-            REQUIRE( fpix[0] == 11 );
-            REQUIRE( fpix[1] == 10 );
-            REQUIRE( fpix[2] == 6 );
-            REQUIRE( lpix[0] == 17 );
-            REQUIRE( lpix[1] == 19 );
-            REQUIRE( lpix[2] == 8 );
-            REQUIRE( inc[0] == 1 );
-            REQUIRE( inc[1] == 1 );
-            REQUIRE( inc[2] == 1 );
 
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
         }
     }
 }

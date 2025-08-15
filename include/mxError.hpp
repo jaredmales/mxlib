@@ -69,7 +69,7 @@ struct o
 /** A typical example:
  * \verbatim
   dirnotfound: /tmp/fileUtils_test/dirnf was not found.
- * \endverbatim
+ * \endverbatim:
  *
  * \ingroup error_verbosity
  */
@@ -242,6 +242,11 @@ error_t mxlib_error_report( const error_t &code,            /**< [in] is an mx::
                             const std::source_location &loc /**< [in] [optional] source location */
                             = std::source_location::current() )
 {
+    if( code == error_t::noerror )
+    {
+        return code;
+    }
+
     if( verboseT::level > 0 )
     {
         std::cerr << mxlib_error_message<verboseT>( code, expl, loc ) << '\n';
@@ -272,6 +277,11 @@ error_t mxlib_error_report( const error_t &code /**< [in] is an mx::error_t erro
                             const std::source_location &loc /**< [in] [optional] source location */
                             = std::source_location::current() )
 {
+    if( code == error_t::noerror )
+    {
+        return code;
+    }
+
     if( verboseT::level > 0 )
     {
         std::cerr << mxlib_error_message<verboseT>( code, loc ) << '\n';
@@ -288,6 +298,46 @@ error_t mxlib_error_report( const error_t &code /**< [in] is an mx::error_t erro
 template <>
 error_t mxlib_error_report<verbose::o>( const error_t &code, const std::source_location &loc );
 
+/** \brief Perform an error check, if an error occurs report it and return the error.  Does not return on no error.
+ *
+ * Scope protected so the error_t value does not interfere with other values.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param fxn is the function to call and check the return value of
+ *
+ * \ingroup error_internal
+ *
+ */
+#define mxlib_error_check( fxn )                                                                                       \
+    {                                                                                                                  \
+        mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
+        if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
+        {                                                                                                              \
+            return internal::mxlib_error_report<verboseT>( __mxlib_error_check_errc );                                 \
+        }                                                                                                              \
+    }
+
+/** \brief Perform an error check, if an error occurs report it, and return the error code even if no error.
+ *
+ * Scope protected so the error_t value does not interfere with other values.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param fxn is the function to call and check the return value of
+ *
+ * \ingroup error_internal
+ */
+#define mxlib_error_return( fxn )                                                                                      \
+    {                                                                                                                  \
+        mx::error_t __mxlib_error_return_errc = fxn;                                                                   \
+        if( __mxlib_error_return_errc != mx::error_t::noerror )                                                        \
+        {                                                                                                              \
+            return internal::mxlib_error_report<verboseT>( __mxlib_error_return_errc );                                \
+        }                                                                                                              \
+        return mx::error_t::noerror;                                                                                   \
+    }
+
 } // namespace internal
 
 /// Format a report given an mxlib \ref error_t \p code and explanation.
@@ -299,7 +349,7 @@ error_t mxlib_error_report<verbose::o>( const error_t &code, const std::source_l
  *
  * \ingroup error_handling
  */
-template <class verboseT>
+template <class verboseT = verbose::vvv>
 std::string error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
                            const std::string &expl,        /**< [in] [optional] if more information can be provided,
                                                                      use this to inform the user.*/
@@ -344,7 +394,7 @@ error_message<verbose::vvv>( const error_t &code, const std::string &expl, const
  *
  * \ingroup error_handling
  */
-template <class verboseT>
+template <class verboseT = verbose::vvv>
 std::string error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
                            const std::source_location &loc /**< [in] [optional] source location */
                            = std::source_location::current() );
@@ -390,13 +440,18 @@ std::string error_message<verbose::vvv>( const error_t &code, const std::source_
  *
  * \ingroup error_handling
  */
-template <class verboseT>
+template <class verboseT = verbose::vvv>
 error_t error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
                       const std::string &expl,        /**< [in] [optional] if more information can be provided,
                                                                            use this to inform the user.*/
                       const std::source_location &loc /**< [in] [optional] source location */
                       = std::source_location::current() )
 {
+    if( code == error_t::noerror )
+    {
+        return code;
+    }
+
     if( verboseT::level > 0 )
     {
         std::cerr << error_message<verboseT>( code, expl, loc ) << '\n';
@@ -421,11 +476,16 @@ error_t error_report<verbose::o>( const error_t &code, const std::string &expl, 
  *
  * \ingroup error_handling
  */
-template <class verboseT>
+template <class verboseT = verbose::vvv>
 error_t error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
                       const std::source_location &loc /**< [in] [optional] source location */
                       = std::source_location::current() )
 {
+    if( code == error_t::noerror )
+    {
+        return code;
+    }
+
     if( verboseT::level > 0 )
     {
         std::cerr << error_message<verboseT>( code, loc ) << '\n';
@@ -441,6 +501,69 @@ error_t error_report( const error_t &code,            /**< [in] is an mx::error_
  */
 template <>
 error_t error_report<verbose::o>( const error_t &code, const std::source_location &loc );
+
+/** \brief Perform an error check, if an error occurs report it and return the error.  Do not return on no error.
+ *
+ * Scope protected so the error_t value does not interfere with other values.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param fxn is the function to call and check the return value of
+ *
+ * \ingroup error_handling
+ */
+#define error_check( fxn )                                                                                             \
+    {                                                                                                                  \
+        mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
+        if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
+        {                                                                                                              \
+            return error_report<verboseT>( __mxlib_error_check_errc );                                                 \
+        }                                                                                                              \
+    }
+
+/** \brief Perform an error check, if an error occurs report it and return an arbitrary type.
+ *
+ * Does not return on no error. This is intended to be used in `int main()`, or any other case
+ * where the return value is something other than \ref mx::error_t.
+ *
+ * Scope protected so the \ref mx::error_t value does not interfere with other values.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT.  You may need to typedef it.
+ *
+ * \param fxn is the function to call and check the return value of (can also just be a code).
+ *
+ * \ingroup error_handling
+ *
+ */
+#define error_check_rv( fxn, rv )                                                                                      \
+    {                                                                                                                  \
+        mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
+        if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
+        {                                                                                                              \
+            error_report<verboseT>( __mxlib_error_check_errc );                                                        \
+            return rv;                                                                                                 \
+        }                                                                                                              \
+    }
+
+/** \brief Perform an error check, if an error occurs report it, and return the error code even if no error.
+ *
+ * Scope protected so the error_t value does not interfere with other values.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param fxn is the function to call and check the return value of
+ *
+ * \ingroup error_handling
+ */
+#define error_return( fxn )                                                                                            \
+    {                                                                                                                  \
+        mx::error_t __mx_error_return_errc = fxn;                                                                      \
+        if( __mx_error_return_errc != mx::error_t::noerror )                                                           \
+        {                                                                                                              \
+            return error_report<verboseT>( __mx_error_return_errc );                                                   \
+        }                                                                                                              \
+        return mx::error_t::noerror;                                                                                   \
+    }
 
 } // namespace mx
 

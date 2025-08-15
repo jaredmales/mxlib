@@ -80,6 +80,7 @@ namespace ioutils
   *
   */
 template <typename typeT, unsigned width = 0, char pad = ' '>
+[[deprecated( "Use std::format instead" )]]
 std::string convertToString(
     const typeT &value, ///< [in] the value of type typeT to be converted
     int precision = 0   ///< [in] [optional] the precision (see
@@ -125,119 +126,141 @@ std::string convertToString(
 template <>
 std::string convertToString<std::string>( const std::string &value, int precision );
 
+namespace stoTImpl
+{
+// tag overloads for stoT
+
+char stoT( const std::string &str, error_t *errc, const char & );
+unsigned char stoT( const std::string &str, error_t *errc, const unsigned char & );
+short stoT( const std::string &str, error_t *errc, const short & );
+unsigned short stoT( const std::string &str, error_t *errc, const unsigned short & );
+int stoT( const std::string &str, error_t *errc, const int & );
+unsigned int stoT( const std::string &str, error_t *errc, const unsigned int & );
+long stoT( const std::string &str, error_t *errc, const long & );
+unsigned long stoT( const std::string &str, error_t *errc, const unsigned long & );
+long long stoT( const std::string &str, error_t *errc, const long long & );
+unsigned long long stoT( const std::string &str, error_t *errc, const unsigned long long & );
+bool stoT( const std::string &str, error_t *errc, const bool & );
+float stoT( const std::string &str, error_t *errc, const float & );
+double stoT( const std::string &str, error_t *errc, const double & );
+long double stoT( const std::string &str, error_t *errc, const long double & );
+
+std::string stoT( const std::string &str, error_t *errc, const std::string & );
+
+#ifdef HAS_QUAD
+__float128 stoT( const std::string &str, error_t *errc, const __float128 & );
+#endif
+
+} // namespace stoTImpl
+
 /// Convert a string to a numerical value.
-/** The default version attempts to do the conversion with a simple c style cast.  Template specializations
- * handle conversions to the basic types.
+/** Provides exception-less string conversion.
  *
  * Example:
  * \code
  * std::string str = "2.34567";
+ * mx::error_t errc;
  * double d;
- * d = convertFromString<double>(str);
+ * d = stoT<double>(str, &errc);
+ * if(errc != mx::error_t::noerror)
+ * {
+ * //do something
+ * }
  * \endcode
+ *
+ * Values of `typeT=bool` are converted from strings that start with 0/f/F an 1/t/T as false and
+ * true respectively.  If that fails the string is converted to long long and then to bool, so if it is
+ * a valid number that fits in long long, it will evaluate to true or false based on whether or not it is 0.
+ *
+ * Complex types (`std::complex<realT>`) are not supported.
  *
  * \tparam typeT is the type of the numerical value desired
  *
  * \returns the converted numerical value.
+ *
+ * \b Error \b Codes
+ * - mx::error_t::noerror on success
+ * - mx::error_t::erange for an out of range value for typeT
+ * - mx::error_t::invalidarg for a string that can't be converted
  */
 template <typename typeT>
-typeT convertFromString( const std::string &str /**< [in] is the string to convert*/ )
+typeT stoT( const std::string &str, /**< [in] the string to convert*/
+            error_t *errc = nullptr /**< [out] [optional] mxlib error code set during the conversion */
+)
 {
-    // If no specialization exists, we try to cast
-    return (typeT)str;
+    return stoTImpl::stoT( str, errc, typeT() );
 }
 
-template <>
-char convertFromString<char>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-char16_t convertFromString<char16_t>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-char32_t convertFromString<char32_t>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-wchar_t convertFromString<wchar_t>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-signed char convertFromString<signed char>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-unsigned char convertFromString<unsigned char>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-short convertFromString<short>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-unsigned short convertFromString<unsigned short>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-int convertFromString<int>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-unsigned int convertFromString<unsigned int>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-long convertFromString<long>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-unsigned long convertFromString<unsigned long>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-long long convertFromString<long long>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-unsigned long long convertFromString<unsigned long long>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-float convertFromString<float>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-double convertFromString<double>( const std::string &str /* [in] is the string to convert*/ );
-
-template <>
-long double convertFromString<long double>( const std::string &str /* [in] is the string to convert*/ );
-
-/// Template specialization of convertFromString for bool
-/** First looks for 0/1, f/t, or F/T in the first non-space character of str.
- * Otherwise, we use convertFromString\<int\>.
+/// Convert a string to a numerical value.
+/** see \ref stoT
  *
- * \returns the converted numerical value.
+ * \deprecated
  */
-template <>
-bool convertFromString<bool>( const std::string &str /**< [in] is the string to convert*/ );
+template <typename typeT>
+[[deprecated( "Use mx::stoT<typeT> instead" )]]
+typeT convertFromString( const std::string &str, /**< [in] the string to convert*/
+                         error_t *errc = nullptr /**< [out] [optional] mxlib error code */ )
+{
+    // If no specialization exists, we try to cast
+    return stoT<typeT>( str, errc );
+}
 
 /// Convert a string to all lower case.
-/** Calls the c tolower function for each character in instr.
+/** Calls the c tolower function for each character in \p instr.
  *
+ * \returns mx::error_t::noerror on success
+ * \returns mx::error_t::std_length_error if string::resize throws a length error
+ * \returns mx::error_t::std_bad_alloc if string::resize throws a bad alloc
+ * \returns mx::error_t::std_exception if string::resize throws a std::exception
+ * \returns mx::error_t::exception if string::resize throws any other exception
  */
-void toLower( std::string &outstr,     ///< [out]  will be resized and populated with the lower case characters
-              const std::string &instr ///< [in] is the string to convert
+mx::error_t toLower( std::string &outstr,     ///< [out]  will be resized and populated with the lower case characters
+                     const std::string &instr ///< [in] is the string to convert
 );
 
 /// Convert a string to all lower case.
-/** Calls the c tolower function for each character in instr.
- *
+/** Calls the c tolower function for each character in \p instr.
  *
  * \return the all lower case string
- */
-std::string toLower( const std::string &instr /**< [in] is the string to convert*/ );
-
-/// Convert a string to all upper case.
-/** Calls the c toupper function for each character in instr.
+ *
+ * \b Errors
+ * - mx::error_t::noerror on success
+ * - mx::error_t::std_length_error if string::resize throws a length error
+ * - mx::error_t::std_bad_alloc if string::resize throws a bad alloc
+ * - mx::error_t::std_exception if string::resize throws a std::exception
+ * - mx::error_t::exception if string::resize throws any other exception
  *
  */
-void toUpper( std::string &outstr,     ///< [out]  will be resized and populated with the lower case characters
-              const std::string &instr ///< [in] is the string to convert
+std::string toLower( const std::string &instr, /**< [in] is the string to convert*/
+                     mx::error_t *errc = nullptr /**< [out] [optional] the error code indicating success or error */ );
+
+/// Convert a string to all upper case.
+/** Calls the c toupper function for each character in \p instr.
+ *
+ * \returns mx::error_t::noerror on success
+ * \returns mx::error_t::std_length_error if string::resize throws a length error
+ * \returns mx::error_t::std_bad_alloc if string::resize throws a bad alloc
+ * \returns mx::error_t::std_exception if string::resize throws a std::exception
+ * \returns mx::error_t::exception if string::resize throws any other exception
+ */
+mx::error_t toUpper( std::string &outstr,     ///< [out]  will be resized and populated with the lower case characters
+                 const std::string &instr ///< [in] is the string to convert
 );
 
 /// Convert a string to all upper case.
-/** Calls the c toupper function for each character in instr.
+/** Calls the c toupper function for each character in \p instr.
  *
+ * \returns the all upper case string
  *
- * \return the all lower case string
+ * \b Errors
+ * - mx::error_t::noerror on success
+ * - mx::error_t::std_length_error if string::resize throws a length error
+ * - mx::error_t::std_bad_alloc if string::resize throws a bad alloc
+ * - mx::error_t::std_exception if string::resize throws a std::exception
+ * - mx::error_t::exception if string::resize throws any other exception
  */
-std::string toUpper( const std::string &instr /**< [in] is the string to convert*/ );
+std::string toUpper( const std::string &instr, /**< [in] is the string to convert*/
+                     mx::error_t *errc = nullptr /**< [out] [optional] the error code indicating success or error */ );
 
 /// Remove all white space from a string.
 /**

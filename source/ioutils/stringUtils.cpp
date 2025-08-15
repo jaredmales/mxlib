@@ -26,7 +26,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "ioutils/stringUtils.hpp"
+#include "../../include/ioutils/stringUtils.hpp"
 
 namespace mx
 {
@@ -41,177 +41,469 @@ std::string convertToString<std::string>( const std::string &value, int precisio
     return value;
 }
 
-// Template specialization of convertFromString for char
-template <>
-char convertFromString<char>( const std::string &str )
+namespace stoTImpl
 {
-    return (char)atoi( str.c_str() );
+
+template <typename typeT>
+typeT stoInt32s( const std::string &str, error_t *errc )
+{
+    error_t _errc;
+
+    long val = stoT( str, &_errc, long() );
+
+    if( _errc == error_t::noerror )
+    {
+        if( val < std::numeric_limits<typeT>::lowest() )
+        {
+            _errc = error_t::erange;
+            val = std::numeric_limits<typeT>::lowest();
+        }
+        else if( val > std::numeric_limits<typeT>::max() )
+        {
+            _errc = error_t::erange;
+            val = std::numeric_limits<typeT>::max();
+        }
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return static_cast<typeT>( val );
 }
 
-// Template specialization of convertFromString for char16_t
-template <>
-char16_t convertFromString<char16_t>( const std::string &str )
+char stoT( const std::string &str, error_t *errc, const char & )
 {
-    return (char16_t)atoi( str.c_str() );
+    return stoInt32s<char>( str, errc );
 }
 
-// Template specialization of convertFromString for char32_t
-template <>
-char32_t convertFromString<char32_t>( const std::string &str )
+unsigned char stoT( const std::string &str, error_t *errc, const unsigned char & )
 {
-    return (char32_t)atoi( str.c_str() );
+    return stoInt32s<unsigned char>( str, errc );
 }
 
-// Template specialization of convertFromString for char32_t
-template <>
-wchar_t convertFromString<wchar_t>( const std::string &str )
+short stoT( const std::string &str, error_t *errc, const short & )
 {
-    return (wchar_t)atoi( str.c_str() );
+    return stoInt32s<short>( str, errc );
 }
 
-// Template specialization of convertFromString for unsigned char
-template <>
-signed char convertFromString<signed char>( const std::string &str )
+unsigned short stoT( const std::string &str, error_t *errc, const unsigned short & )
 {
-    return (signed char)atoi( str.c_str() );
+    return stoInt32s<unsigned short>( str, errc );
 }
 
-// Template specialization of convertFromString for unsigned char
-template <>
-unsigned char convertFromString<unsigned char>( const std::string &str )
+int stoT( const std::string &str, error_t *errc, const int & )
 {
-    return (unsigned char)atoi( str.c_str() );
+    return stoInt32s<int>( str, errc );
 }
 
-// Template specialization of convertFromString for short
-template <>
-short convertFromString<short>( const std::string &str )
+unsigned int stoT( const std::string &str, error_t *errc, const unsigned int & )
 {
-    return (short)atoi( str.c_str() );
+    error_t _errc;
+
+    typedef unsigned long ulong;
+    unsigned long val = stoT( str, &_errc, ulong() );
+
+    if( _errc == error_t::noerror )
+    {
+        if( val > std::numeric_limits<unsigned int>::max() )
+        {
+            _errc = error_t::erange;
+            val = std::numeric_limits<unsigned int>::max();
+        }
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return static_cast<unsigned int>( val );
 }
 
-// Template specialization of convertFromString for unsigned short
-template <>
-unsigned short convertFromString<unsigned short>( const std::string &str )
+long stoT( const std::string &str, error_t *errc, const long & )
 {
-    return (unsigned short)atoi( str.c_str() );
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    long val = std::strtol( str.c_str(), &end, 10 );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
 }
 
-// Template specialization of convertFromString for int
-template <>
-int convertFromString<int>( const std::string &str )
+unsigned long stoT( const std::string &str, error_t *errc, const unsigned long & )
 {
-    //return static_cast<int>(std::stod( str ));
-    return std::stoi( str );
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    unsigned long val = std::strtoul( str.c_str(), &end, 10 );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
 }
 
-// Template specialization of convertFromString for unsigned int
-template <>
-unsigned int convertFromString<unsigned int>( const std::string &str )
+long long stoT( const std::string &str, error_t *errc, const long long & )
 {
-    return (unsigned int)strtoul( str.c_str(), 0, 0 );
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    long long val = std::strtoll( str.c_str(), &end, 10 );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
 }
 
-// Template specialization of convertFromString for long
-template <>
-long convertFromString<long>( const std::string &str )
+unsigned long long stoT( const std::string &str, error_t *errc, const unsigned long long & )
 {
-    return strtol( str.c_str(), 0, 0 );
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    unsigned long long val = std::strtoull( str.c_str(), &end, 10 );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
 }
 
-// Template specialization of convertFromString for unsigned long
-template <>
-unsigned long convertFromString<unsigned long>( const std::string &str )
-{
-    return strtoul( str.c_str(), 0, 0 );
-}
-
-// Template specialization of convertFromString for long long
-template <>
-long long convertFromString<long long>( const std::string &str )
-{
-    return strtoll( str.c_str(), 0, 0 );
-}
-
-// Template specialization of convertFromString for unsigned long long
-template <>
-unsigned long long convertFromString<unsigned long long>( const std::string &str )
-{
-    return strtoull( str.c_str(), 0, 0 );
-}
-
-// Template specialization of convertFromString for float
-template <>
-float convertFromString<float>( const std::string &str )
-{
-    return strtof( str.c_str(), 0 );
-}
-
-// Template specialization of convertFromString for double
-template <>
-double convertFromString<double>( const std::string &str )
-{
-    return strtod( str.c_str(), 0 );
-}
-
-// Template specialization of convertFromString for long double
-template <>
-long double convertFromString<long double>( const std::string &str )
-{
-    return strtold( str.c_str(), 0 );
-}
-
-// Template specialization of convertFromString for bool
-template <>
-bool convertFromString<bool>( const std::string &str )
+/* bool specialization
+ * First looks for 0/1, f/t, or F/T in the first non-space character of str.
+ * Otherwise, uses long long and casts to bool.
+ *
+ * returns the converted numerical value.
+ */
+bool stoT( const std::string &str, error_t *errc, const bool & )
 {
     char c = str[0];
     size_t i = 0;
-    while( isspace( c ) && i < str.length() )
+    while( i < str.length() && isspace( c ) )
+    {
         c = str[i++];
+    }
 
     if( c == '0' || c == 'f' || c == 'F' )
+    {
         return false;
-    if( c == '1' || c == 't' || c == 'T' )
+    }
+    else if( c == '1' || c == 't' || c == 'T' )
+    {
         return true;
+    }
 
-    return (bool)convertFromString<int>( str );
+    typedef long long llong;
+
+    return static_cast<bool>( stoT( str, errc, llong() ) );
 }
 
-// Convert a string to all lower case.
-void toLower( std::string &outstr, const std::string &instr )
+float stoT( const std::string &str, error_t *errc, const float & )
 {
-    outstr.resize( instr.size() );
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    float val = std::strtof( str.c_str(), &end );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
+}
+
+double stoT( const std::string &str, error_t *errc, const double & )
+{
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    double val = std::strtod( str.c_str(), &end );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
+}
+
+long double stoT( const std::string &str, error_t *errc, const long double & )
+{
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    long double val = std::strtold( str.c_str(), &end );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
+}
+
+#ifdef HAS_QUAD
+__float128 stoT( const std::string &str, error_t *errc, const __float128 & )
+{
+    error_t _errc;
+
+    char *end;
+
+    errno = 0;
+
+    __float128 val = ::strtof128( str.c_str(), &end );
+
+    if( errno != 0 )
+    {
+        _errc = errno2error_t( errno );
+    }
+    else if( end == str.c_str() )
+    {
+        _errc = error_t::invalidarg;
+    }
+    else
+    {
+        _errc = error_t::noerror;
+    }
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
+
+    return val;
+}
+
+#endif // has_quad
+
+std::string stoT( const std::string &str, error_t *errc, const std::string & )
+{
+    if(errc)
+    {
+        *errc = mx::error_t::noerror;
+    }
+
+    return str;
+}
+
+} // namespace stoTImpl
+
+// Convert a string to all lower case.
+mx::error_t toLower( std::string &outstr, const std::string &instr )
+{
+    try
+    {
+        outstr.resize( instr.size() );
+    }
+    catch( const std::length_error &e )
+    {
+        return mx::error_t::std_length_error;
+    }
+    catch( const std::bad_alloc &e )
+    {
+        return mx::error_t::std_bad_alloc;
+    }
+    catch( const std::exception &e )
+    {
+        return mx::error_t::std_exception;
+    }
+    catch( ... )
+    {
+        return mx::error_t::exception;
+    }
 
     for( size_t i = 0; i < instr.size(); ++i )
+    {
         outstr[i] = tolower( instr[i] );
+    }
+
+    return mx::error_t::noerror;
 }
 
 // Convert a string to all lower case.
-std::string toLower( const std::string &instr )
+std::string toLower( const std::string &instr, mx::error_t *errc )
 {
     std::string outstr;
 
-    toLower( outstr, instr );
+    mx::error_t _errc = toLower( outstr, instr );
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
 
     return outstr;
 }
 
-// vConvert a string to all upper case.
-void toUpper( std::string &outstr, const std::string &instr )
+// Convert a string to all upper case.
+mx::error_t toUpper( std::string &outstr, const std::string &instr )
 {
-    outstr.resize( instr.size() );
+    try
+    {
+        outstr.resize( instr.size() );
+    }
+    catch( const std::length_error &e )
+    {
+        return mx::error_t::std_length_error;
+    }
+    catch( const std::bad_alloc &e )
+    {
+        return mx::error_t::std_bad_alloc;
+    }
+    catch( const std::exception &e )
+    {
+        return mx::error_t::std_exception;
+    }
+    catch( ... )
+    {
+        return mx::error_t::exception;
+    }
 
     for( size_t i = 0; i < instr.size(); ++i )
+    {
         outstr[i] = toupper( instr[i] );
+    }
+
+    return mx::error_t::noerror;
 }
 
 // Convert a string to all upper case.
-std::string toUpper( const std::string &instr )
+std::string toUpper( const std::string &instr, mx::error_t *errc )
 {
     std::string outstr;
 
-    toUpper( outstr, instr );
+    mx::error_t _errc = toUpper( outstr, instr );
+
+    if( errc )
+    {
+        *errc = _errc;
+    }
 
     return outstr;
 }

@@ -10,6 +10,7 @@
 #include <algorithm>
 
 #include "errno_info.hpp"
+#include "fits_status_info.hpp"
 
 int main()
 {
@@ -62,6 +63,9 @@ int main()
     std::vector<int> EVALs;
     errno_info( ERRNOs, EVALs, errnos, errno_msgs );
 
+    std::vector<std::string> fits_codes, fits_vals, fits_msgs;
+    fits_status_info(fits_codes, fits_vals, fits_msgs);
+
     // Get max length of a name for formatting
     int maxlen = 0;
     for( auto &en : error_ts )
@@ -77,6 +81,14 @@ int main()
         if( en.length() > maxlen )
         {
             maxlen = en.length();
+        }
+    }
+
+    for( auto &ft : fits_codes )
+    {
+        if( ft.length() > maxlen )
+        {
+            maxlen = ft.length();
         }
     }
 
@@ -113,6 +125,8 @@ int main()
     fout << "/* **********  THIS FILE IS GENERATED  ********** */" << '\n';
     fout << "/* ********** DO NOT MODIFY OR COMMIT  ********** */" << '\n';
     fout << '\n';
+    fout << "#include <fitsio.h>" << '\n';
+    fout << '\n';
     fout << "#ifndef mx_errno_t_hpp" << '\n';
     fout << "#define mx_errno_t_hpp" << '\n';
     fout << '\n';
@@ -130,7 +144,9 @@ int main()
         fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen + 1, error_t_msgs[n] );
     }
 
-    for( size_t n = 0; n < errnos.size() - 1; ++n )
+    std::cerr << __LINE__ << '\n';
+
+    for( size_t n = 0; n < errnos.size(); ++n )
     {
         error_ts.push_back( errnos[n] );
         error_t_msgs.push_back( errno_msgs[n] );
@@ -138,11 +154,27 @@ int main()
         std::string symbol = errnos[n] + ',';
         fout << std::format( "    {:{}} ///< {} ({})\n", symbol, maxlen+1, errno_msgs[n], ERRNOs[n] );
     }
-    error_ts.push_back( errnos.back() );
-    error_t_msgs.push_back( errno_msgs.back() );
-    fout << std::format( "    {:{}} ///< {} ({})\n", errnos.back(), maxlen+1, errno_msgs.back(), ERRNOs.back() );
+
+    std::cerr << __LINE__ << '\n';
+
+    std::cerr << fits_codes.size() << ' ' << fits_msgs.size() << '\n';
+    for(size_t n = 0; n < fits_codes.size()-1; ++n)
+    {
+        error_ts.push_back(fits_codes[n]);
+        error_t_msgs.push_back( fits_msgs[n] );
+        std::string symbol = fits_codes[n] + ',';
+        fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen+1, fits_msgs[n]);
+    }
+
+    std::cerr << __LINE__ << '\n';
+
+    error_ts.push_back( fits_codes.back() );
+    error_t_msgs.push_back( fits_msgs.back() );
+    fout << std::format( "    {:{}} ///< {}\n", fits_codes.back(), maxlen+1, fits_msgs.back() );
 
     fout << "};" << "\n" << '\n';
+
+    std::cerr << __LINE__ << '\n';
 
     fout << "/// Convert a \\ref error_t code to its name" << '\n';
     fout << "/**" << '\n';
@@ -209,75 +241,36 @@ int main()
     fout << "    }" << '\n';
     fout << "}" << '\n';
 
+    fout << '\n';
+
+    fout << "/// Convert a FITS status code to \\ref errno_t" << '\n';
+    fout << "/**"  << '\n';
+    fout << " * \\returns the \\ref error_t code corresponding to the FITS status code" << '\n';
+    fout << " *" << '\n';
+    fout << " * \\ingroup error_handling_codes" << '\n';
+    fout << " */" << '\n';
+    fout << "static constexpr error_t fits_status2error_t( const int & err/**< [in] the fits status code to convert*/)" << '\n';
+    fout << "{" << '\n';
+    fout << "    switch(err)" << '\n';
+    fout << "    {" << '\n';
+    fout << "        case " << "0" << ":" << '\n'; //this is not specified
+        fout << "            return error_t::noerror;" << '\n';
+
+    for( size_t n = 0; n < fits_vals.size(); ++n )
+    {
+        fout << "        case " << fits_vals[n] << ":" << '\n';
+        fout << "            return error_t::" << fits_codes[n] << ";" << '\n';
+    }
+    fout << "        default:" << '\n';
+    fout << "            return error_t::error;" << '\n';
+    fout << "    }" << '\n';
+    fout << "}" << '\n';
+
     fout << "} //namespace mx" << '\n';
     fout << "#endif //mx_error_t_hpp" << '\n';
 
     fout.close();
 
-    /*
-
-        mx::readColumns( "c++11_errnos.txt", errnos );
-
-        for( int i = 0; i < errnos.size(); ++i )
-        {
-            if( errnos[i] == "ENOTSUP" )
-            {
-                fout << "      #ifdef " << errnos[i] << "" << '\n';
-                fout << "      #if (ENOTSUP != EOPNOTSUPP)" << '\n';
-                fout << "      case " << errnos[i] << ":" << '\n';
-                fout << "          return \"" << errnos[i] << "\";" << '\n';
-                fout << "      #endif" << '\n';
-                fout << "      #endif " << '\n';
-
-                continue;
-            }
-
-            if( errnos[i] == "EOPNOTSUP" )
-            {
-                fout << "      #ifdef " << errnos[i] << "" << '\n';
-                fout << "      case " << errnos[i] << ":" << '\n';
-                fout << "          #if (ENOTSUP == EOPNOTSUPP)" << '\n';
-                fout << "             return \"ENOTSUP / EOPNOTSUPP\";" << '\n';
-                fout << "          #else" << '\n';
-                fout << "             return \"" << errnos[i] << "\";" << '\n';
-                fout << "          #endif" << '\n';
-                fout << "      #endif " << '\n';
-
-                continue;
-            }
-
-            if( errnos[i] == "EWOULDBLOCK" )
-            {
-                fout << "      #ifdef " << errnos[i] << "" << '\n';
-                fout << "      #if (EWOULDBLOCK != EAGAIN)" << '\n';
-                fout << "      case " << errnos[i] << ":" << '\n';
-                fout << "          return \"" << errnos[i] << "\";" << '\n';
-                fout << "      #endif" << '\n';
-                fout << "      #endif " << '\n';
-
-                continue;
-            }
-
-            if( errnos[i] == "EAGAIN" )
-            {
-                fout << "      #ifdef " << errnos[i] << "" << '\n';
-                fout << "      case " << errnos[i] << ":" << '\n';
-                fout << "          #if (EWOULDBLOCK == EAGAIN)" << '\n';
-                fout << "             return \"EAGIAN / EWOULDBLOCK\";" << '\n';
-                fout << "          #else" << '\n';
-                fout << "             return \"" << errnos[i] << "\";" << '\n';
-                fout << "          #endif" << '\n';
-                fout << "      #endif " << '\n';
-
-                continue;
-            }
-
-            fout << "      #ifdef " << errnos[i] << "" << '\n';
-            fout << "      case " << errnos[i] << ":" << '\n';
-            fout << "          return \"" << errnos[i] << "\";" << '\n';
-            fout << "      #endif " << '\n';
-        }
-            */
 
     return 0;
 }

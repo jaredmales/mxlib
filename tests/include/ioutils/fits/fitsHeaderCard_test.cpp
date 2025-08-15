@@ -7,7 +7,7 @@
 #include "../../../../include/ioutils/fits/fitsHeaderCard.hpp"
 using namespace mx::fits;
 
-/** Verify converstion of types
+/** \test Scenario: Verify converstion of types
  *
  * \anchor tests_ioutils_fits_fitsHeaderCard_converting_types
  */
@@ -77,7 +77,10 @@ SCENARIO( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
 
             fhc.type( fitsType<int>() );
             REQUIRE( fhc.type() == fitsType<int>() );
-            REQUIRE( fhc.Int() == 39 );
+            mx::error_t errc = mx::error_t::error;
+            REQUIRE( fhc.Int(&errc) == 39 );
+            REQUIRE(errc == mx::error_t::noerror);
+
             REQUIRE( fhc.valueGood() == true );
             REQUIRE( fhc.valueStrGood() == false );
 
