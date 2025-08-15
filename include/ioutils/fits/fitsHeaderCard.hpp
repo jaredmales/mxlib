@@ -38,6 +38,12 @@ namespace mx
 namespace fits
 {
 
+/// Empty type for tag dispatching
+template <typename T>
+struct tagT
+{
+};
+
 /// Class to manage the three components of a FITS header card
 /** Since FITS does not provide the type in keyword=value pairs in a FITS header, it is up to the user
  * to determine the type.  Furthermore, since we want to read values from files, type conversions must
@@ -89,10 +95,12 @@ class fitsHeaderCard
         long double LongDouble;                      ///< the long double value
         std::complex<long double> complexLongDouble; ///< the std::complex<long double> value
 
-#ifdef HAS_QUAD
+        // clang-format off
+        #ifdef HAS_QUAD
         __float128 Quad;                      ///< the float128 value
         std::complex<__float128> complexQuad; ///< the std::complex<__float128> value
-#endif
+        #endif
+        // clang-format on
 
         /// c'tor.  have to specify due to inclusion of std::complex types.
         values()
@@ -100,107 +108,109 @@ class fitsHeaderCard
             return;
         }
 
-        bool &member( const bool & )
+        bool &member( tagT<bool> )
         {
             return Bool;
         }
 
-        char &member( const char & )
+        char &member( tagT<char> )
         {
             return Char;
         }
 
-        unsigned char &member( const unsigned char & )
+        unsigned char &member( tagT<unsigned char> )
         {
             return UChar;
         }
 
-        short &member( const short & )
+        short &member( tagT<short> )
         {
             return Short;
         }
 
-        unsigned short &member( const unsigned short & )
+        unsigned short &member( tagT<unsigned short> )
         {
             return UShort;
         }
 
-        int &member( const int & )
+        int &member( tagT<int> )
         {
             return Int;
         }
 
-        unsigned int &member( const unsigned int & )
+        unsigned int &member( tagT<unsigned int> )
         {
             return UInt;
         }
 
-        long &member( const long & )
+        long &member( tagT<long> )
         {
             return Long;
         }
 
-        unsigned long &member( const unsigned long & )
+        unsigned long &member( tagT<unsigned long> )
         {
             return ULong;
         }
 
-        long long &member( const long long & )
+        long long &member( tagT<long long> )
         {
             return LongLong;
         }
 
-        unsigned long long &member( const unsigned long long & )
+        unsigned long long &member( tagT<unsigned long long> )
         {
             return ULongLong;
         }
 
-        float &member( const float & )
+        float &member( tagT<float> )
         {
             return Float;
         }
 
-        std::complex<float> &member( const std::complex<float> & )
+        std::complex<float> &member( tagT<std::complex<float>> )
         {
             return complexFloat;
         }
 
-        double &member( const double & )
+        double &member( tagT<double> )
         {
             return Double;
         }
 
-        std::complex<double> &member( const std::complex<double> & )
+        std::complex<double> &member( tagT<std::complex<double>> )
         {
             return complexDouble;
         }
 
-        long double &member( const long double & )
+        long double &member( tagT<long double> )
         {
             return LongDouble;
         }
 
-        std::complex<long double> &member( const std::complex<long double> & )
+        std::complex<long double> &member( tagT<std::complex<long double>> )
         {
             return complexLongDouble;
         }
 
-#ifdef HAS_QUAD
-        __float128 &member( const __float128 & )
+        // clang-format off
+        #ifdef HAS_QUAD
+        __float128 &member( tagT<__float128> )
         {
             return Quad;
         }
 
-        std::complex<__float128> &member( const std::complex<__float128> & )
+        std::complex<__float128> &member( tagT<std::complex<__float128>> )
         {
             return complexQuad;
         }
-#endif
+        #endif
+        // clang-format on
 
         template <typename typeT>
         typeT &member()
         {
-            return member( typeT() );
+            return member( tagT<typeT>() );
         }
 
     } m_value;
@@ -235,7 +245,7 @@ class fitsHeaderCard
     /** Have to provide overload for char * to avoid template version
      */
     fitsHeaderCard( const std::string &k,     ///< [in] the keyword
-                    char * v,     ///< [in] the value string
+                    char *v,                  ///< [in] the value string
                     const std::string &c = "" ///< [in] the comment
     );
 
@@ -243,7 +253,7 @@ class fitsHeaderCard
     /** Have to provide overload for const char * to avoid template version
      */
     fitsHeaderCard( const std::string &k,     ///< [in] the keyword
-                    const char * v,     ///< [in] the value string
+                    const char *v,            ///< [in] the value string
                     const std::string &c = "" ///< [in] the comment
     );
 
@@ -361,37 +371,35 @@ class fitsHeaderCard
      */
     error_t type( const int &t /**< [in] the new type */ );
 
-protected:
-
+  protected:
     /** \name tag dispatching for getting value
      * @{
-    */
+     */
 
-    //Get value for anything not a string
+    // Get value for anything not a string
     template <typename typeT>
-    typeT valueNonString(mx::error_t &errc);
+    typeT valueNonString( mx::error_t &errc );
 
-    //Special handling for string
-    std::string value( const std::string &, mx::error_t &errc );
+    // Special handling for string
+    std::string value( tagT<std::string>, mx::error_t &errc );
 
-    //All of these PODs just call valueNonString
-    char value( const char &, mx::error_t &errc );
-    unsigned char value( const unsigned char &, mx::error_t &errc );
-    short value( const short &, mx::error_t &errc );
-    unsigned short value( const unsigned short &, mx::error_t &errc );
-    int value( const int &, mx::error_t &errc );
-    unsigned int value( const unsigned int &, mx::error_t &errc );
-    long value( const long  &, mx::error_t &errc );
-    unsigned long value( const unsigned long &, mx::error_t &errc );
-    long long value( const long long &, mx::error_t &errc );
-    unsigned long long value( const unsigned long long &, mx::error_t &errc );
-    float value( const float &, mx::error_t &errc );
-    double value( const double &, mx::error_t &errc );
+    // All of these PODs just call valueNonString
+    char value( tagT<char>, mx::error_t &errc );
+    unsigned char value( tagT<unsigned char>, mx::error_t &errc );
+    short value( tagT<short>, mx::error_t &errc );
+    unsigned short value( tagT<unsigned short>, mx::error_t &errc );
+    int value( tagT<int>, mx::error_t &errc );
+    unsigned int value( tagT<unsigned int>, mx::error_t &errc );
+    long value( tagT<long>, mx::error_t &errc );
+    unsigned long value( tagT<unsigned long>, mx::error_t &errc );
+    long long value( tagT<long long>, mx::error_t &errc );
+    unsigned long long value( tagT<unsigned long long>, mx::error_t &errc );
+    float value( tagT<float>, mx::error_t &errc );
+    double value( tagT<double>, mx::error_t &errc );
 
     ///@}
 
-public:
-
+  public:
     /// Get the value
     /** Returns the value as typeT.  Conversions occur
      * automatically if necessary.
@@ -404,7 +412,7 @@ public:
      *
      */
     template <typename typeT>
-    typeT value( mx::error_t * errc = nullptr /**< [in] [optional] error code */);
+    typeT value( mx::error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a string
     /** This calls value<string>().
@@ -412,7 +420,7 @@ public:
      * \returns the value converted to string as necessary
      *
      */
-    std::string String(error_t * errc = nullptr /**< [in] [optional] error code */);
+    std::string String( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a char
     /** This calls value<char>().
@@ -420,7 +428,7 @@ public:
      * \returns the value converted to char as necessary
      *
      */
-    char Char(error_t * errc = nullptr /**< [in] [optional] error code */);
+    char Char( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as an unsigned char
     /** This calls value<unsigned char>().
@@ -428,7 +436,7 @@ public:
      * \returns the value converted to unsigned char as necessary
      *
      */
-    unsigned char UChar(error_t * errc = nullptr /**< [in] [optional] error code */);
+    unsigned char UChar( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a short
     /** This calls value<short>().
@@ -436,7 +444,7 @@ public:
      * \returns the value converted to short as necessary
      *
      */
-    short Short(error_t * errc = nullptr /**< [in] [optional] error code */);
+    short Short( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as an unsigned short
     /** This calls value<unsigned short>().
@@ -444,7 +452,7 @@ public:
      * \returns the value converted to unsigned short as necessary
      *
      */
-    unsigned short UShort(error_t * errc = nullptr /**< [in] [optional] error code */);
+    unsigned short UShort( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a int
     /** This calls value<int>().
@@ -452,7 +460,7 @@ public:
      * \returns the value converted to int as necessary
      *
      */
-    int Int(error_t * errc = nullptr /**< [in] [optional] error code */);
+    int Int( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as an unsigned int
     /** This calls value<unsigned int>().
@@ -460,7 +468,7 @@ public:
      * \returns the value converted to unsigned int as necessary
      *
      */
-    unsigned int UInt(error_t * errc = nullptr /**< [in] [optional] error code */);
+    unsigned int UInt( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a long
     /** This calls value<long>().
@@ -468,7 +476,7 @@ public:
      * \returns the value converted to long as necessary
      *
      */
-    long Long(error_t * errc = nullptr /**< [in] [optional] error code */);
+    long Long( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as an unsigned long
     /** This calls value<unsigned long>().
@@ -476,7 +484,7 @@ public:
      * \returns the value converted to unsigned long as necessary
      *
      */
-    unsigned long ULong(error_t * errc = nullptr /**< [in] [optional] error code */);
+    unsigned long ULong( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a long long
     /** This calls value<long long>().
@@ -484,7 +492,7 @@ public:
      * \returns the value converted to long long as necessary
      *
      */
-    long long LongLong(error_t * errc = nullptr /**< [in] [optional] error code */);
+    long long LongLong( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as an unsigned long long
     /** This calls value<unsigned long long>().
@@ -492,7 +500,7 @@ public:
      * \returns the value converted to unsigned long long as necessaryvalue(
      *
      */
-    unsigned long long ULongLong(error_t * errc = nullptr /**< [in] [optional] error code */);
+    unsigned long long ULongLong( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a float
     /** This calls value<float>().
@@ -500,7 +508,7 @@ public:
      * \returns the value converted to float as necessary
      *
      */
-    float Float(error_t * errc = nullptr /**< [in] [optional] error code */);
+    float Float( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a std::complex<float>
     /** This calls value<std::complex<float>>().
@@ -508,7 +516,7 @@ public:
      * \returns the value converted to std::complex<float> as necessary
      *
      */
-    std::complex<float> complexFloat(error_t * errc = nullptr /**< [in] [optional] error code */);
+    std::complex<float> complexFloat( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a double
     /** This calls value<double>().
@@ -516,7 +524,7 @@ public:
      * \returns the value converted to double as necessary
      *
      */
-    double Double(error_t * errc = nullptr /**< [in] [optional] error code */);
+    double Double( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Get the value as a std::complex<double>
     /** This calls value<std::complex<double>>().
@@ -524,7 +532,7 @@ public:
      * \returns the value converted to std::complex<double> as necessary
      *
      */
-    std::complex<double> complexDouble(error_t * errc = nullptr /**< [in] [optional] error code */);
+    std::complex<double> complexDouble( error_t *errc = nullptr /**< [in] [optional] error code */ );
 
     /// Set the value to a char * string
     error_t value( const char *v /**< [in] a character string*/ );
@@ -535,8 +543,8 @@ public:
     error_t value( const std::string &v /**< [in] a std::string*/ );
 
     /// Set the value for a non-string type
-    template<typename typeT>
-    mx::error_t value( const typeT & v/**< [in] the value to set */ );
+    template <typename typeT>
+    mx::error_t value( const typeT &v /**< [in] the value to set */ );
 
     /// Get the current value string
     /**
@@ -586,7 +594,8 @@ public:
 
 template <class verboseT>
 fitsHeaderCard<verboseT>::fitsHeaderCard()
-{}
+{
+}
 
 template <class verboseT>
 fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const std::string &v, const std::string &c )
@@ -600,7 +609,7 @@ fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const std::strin
 }
 
 template <class verboseT>
-fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, char * v, const std::string &c )
+fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, char *v, const std::string &c )
 {
     m_keyword = k;
     m_valueStr.str( v );
@@ -611,7 +620,7 @@ fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, char * v, const 
 }
 
 template <class verboseT>
-fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const char * v, const std::string &c )
+fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const char *v, const std::string &c )
 {
     m_keyword = k;
     m_valueStr.str( v );
@@ -708,7 +717,8 @@ mx::error_t fitsHeaderCard<verboseT>::convertToString()
 {
     if( !m_valueGood )
     {
-        return internal::mxlib_error_report<verboseT>( mx::error_t::paramnotset, "no value to convert for " + m_keyword );
+        return internal::mxlib_error_report<verboseT>( mx::error_t::paramnotset,
+                                                       "no value to convert for " + m_keyword );
     }
 
     if( m_type == fitsType<char *>() || m_type == fitsType<std::string>() )
@@ -722,54 +732,55 @@ mx::error_t fitsHeaderCard<verboseT>::convertToString()
 
     switch( m_type )
     {
-    case fitsType<char>():
-        m_valueStr << static_cast<int>( m_value.Char );
-        break;
-    case fitsType<unsigned char>():
-        m_valueStr << static_cast<int>( m_value.UChar );
-        break;
-    case fitsType<short>():
-        m_valueStr << m_value.Short;
-        break;
-    case fitsType<unsigned short>():
-        m_valueStr << m_value.UShort;
-        break;
-    case fitsType<int>():
-        m_valueStr << m_value.Int;
-        break;
-    case fitsType<unsigned int>():
-        m_valueStr << m_value.UInt;
-        break;
-    case fitsType<long>():
-        m_valueStr << m_value.Long;
-        break;
-    case fitsType<unsigned long>():
-        m_valueStr << m_value.ULong;
-        break;
-    case fitsType<long long>():
-        m_valueStr << m_value.LongLong;
-        break;
-    case fitsType<unsigned long long>():
-        m_valueStr << m_value.ULongLong;
-        break;
-    case fitsType<float>():
-        m_valueStr << m_value.Float;
-        break;
-    case fitsType<std::complex<float>>():
-        m_valueStr << m_value.complexFloat;
-        break;
-    case fitsType<double>():
-        m_valueStr << m_value.Double;
-        break;
-    case fitsType<std::complex<double>>():
-        m_valueStr << m_value.complexDouble;
-        break;
-    case fitsType<fitsCommentType>():
-        return mx::error_t::noerror;
-    case fitsType<fitsHistoryType>():
-        return mx::error_t::noerror;
-    default:
-        return internal::mxlib_error_report<verboseT>(mx::error_t::invalidarg, "Unknown FITS type for " + m_keyword );
+        case fitsType<char>():
+            m_valueStr << static_cast<int>( m_value.Char );
+            break;
+        case fitsType<unsigned char>():
+            m_valueStr << static_cast<int>( m_value.UChar );
+            break;
+        case fitsType<short>():
+            m_valueStr << m_value.Short;
+            break;
+        case fitsType<unsigned short>():
+            m_valueStr << m_value.UShort;
+            break;
+        case fitsType<int>():
+            m_valueStr << m_value.Int;
+            break;
+        case fitsType<unsigned int>():
+            m_valueStr << m_value.UInt;
+            break;
+        case fitsType<long>():
+            m_valueStr << m_value.Long;
+            break;
+        case fitsType<unsigned long>():
+            m_valueStr << m_value.ULong;
+            break;
+        case fitsType<long long>():
+            m_valueStr << m_value.LongLong;
+            break;
+        case fitsType<unsigned long long>():
+            m_valueStr << m_value.ULongLong;
+            break;
+        case fitsType<float>():
+            m_valueStr << m_value.Float;
+            break;
+        case fitsType<std::complex<float>>():
+            m_valueStr << m_value.complexFloat;
+            break;
+        case fitsType<double>():
+            m_valueStr << m_value.Double;
+            break;
+        case fitsType<std::complex<double>>():
+            m_valueStr << m_value.complexDouble;
+            break;
+        case fitsType<fitsCommentType>():
+            return mx::error_t::noerror;
+        case fitsType<fitsHistoryType>():
+            return mx::error_t::noerror;
+        default:
+            return internal::mxlib_error_report<verboseT>( mx::error_t::invalidarg,
+                                                           "Unknown FITS type for " + m_keyword );
     }
 
     m_valueStrGood = true;
@@ -803,96 +814,96 @@ error_t fitsHeaderCard<verboseT>::convertedValue( typeT &cval )
 {
     switch( m_type )
     {
-    case fitsType<unsigned char>():
-    {
-        cval = m_value.UChar;
-        return error_t::noerror;
-    }
-    case fitsType<char>():
-    {
-        cval = m_value.Char;
-        return error_t::noerror;
-    }
-    case fitsType<short>():
-    {
-        cval = m_value.Short;
-        return error_t::noerror;
-    }
-    case fitsType<unsigned short>():
-    {
-        cval = m_value.UShort;
-        return error_t::noerror;
-    }
-    case fitsType<int>():
-    {
-        cval = m_value.Int;
-        return error_t::noerror;
-    }
-    case fitsType<unsigned int>():
-    {
-        cval = m_value.UInt;
-        return error_t::noerror;
-    }
-    case fitsType<long>():
-    {
-        cval = m_value.Long;
-        return error_t::noerror;
-    }
-    case fitsType<unsigned long>():
-    {
-        cval = m_value.ULong;
-        return error_t::noerror;
-    }
-    case fitsType<long long>():
-    {
-        cval = m_value.LongLong;
-        return error_t::noerror;
-    }
-    case fitsType<unsigned long long>():
-    {
-        cval = m_value.ULongLong;
-        return error_t::noerror;
-    }
-    case fitsType<float>():
-    {
-        cval = m_value.Float;
-        return error_t::noerror;
-    }
-    case fitsType<std::complex<float>>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notimpl,
-                                                       "can't convert complex type for " + m_keyword );
-    }
-    case fitsType<double>():
-    {
-        cval = m_value.Double;
-        return error_t::noerror;
-    }
-    case fitsType<std::complex<double>>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notimpl,
-                                                       "can't convert complex type for " + m_keyword );
-    }
-    case fitsType<fitsCommentType>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "cannot convert comment to numeric type for " + m_keyword );
-    }
-    case fitsType<fitsHistoryType>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "cannot convert history to numeric type for " + m_keyword );
-    }
-    case TSTRING:
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "cannot convert string to numeric type for " + m_keyword );
-    }
-    default:
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "invalid FITS type conversion for " + m_keyword );
-    }
+        case fitsType<unsigned char>():
+        {
+            cval = m_value.UChar;
+            return error_t::noerror;
+        }
+        case fitsType<char>():
+        {
+            cval = m_value.Char;
+            return error_t::noerror;
+        }
+        case fitsType<short>():
+        {
+            cval = m_value.Short;
+            return error_t::noerror;
+        }
+        case fitsType<unsigned short>():
+        {
+            cval = m_value.UShort;
+            return error_t::noerror;
+        }
+        case fitsType<int>():
+        {
+            cval = m_value.Int;
+            return error_t::noerror;
+        }
+        case fitsType<unsigned int>():
+        {
+            cval = m_value.UInt;
+            return error_t::noerror;
+        }
+        case fitsType<long>():
+        {
+            cval = m_value.Long;
+            return error_t::noerror;
+        }
+        case fitsType<unsigned long>():
+        {
+            cval = m_value.ULong;
+            return error_t::noerror;
+        }
+        case fitsType<long long>():
+        {
+            cval = m_value.LongLong;
+            return error_t::noerror;
+        }
+        case fitsType<unsigned long long>():
+        {
+            cval = m_value.ULongLong;
+            return error_t::noerror;
+        }
+        case fitsType<float>():
+        {
+            cval = m_value.Float;
+            return error_t::noerror;
+        }
+        case fitsType<std::complex<float>>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::notimpl,
+                                                           "can't convert complex type for " + m_keyword );
+        }
+        case fitsType<double>():
+        {
+            cval = m_value.Double;
+            return error_t::noerror;
+        }
+        case fitsType<std::complex<double>>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::notimpl,
+                                                           "can't convert complex type for " + m_keyword );
+        }
+        case fitsType<fitsCommentType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert comment to numeric type for " + m_keyword );
+        }
+        case fitsType<fitsHistoryType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert history to numeric type for " + m_keyword );
+        }
+        case TSTRING:
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert string to numeric type for " + m_keyword );
+        }
+        default:
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "invalid FITS type conversion for " + m_keyword );
+        }
     }
 }
 
@@ -907,146 +918,146 @@ error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
 
     switch( newtype )
     {
-    case fitsType<unsigned char>():
-    {
-        error_t errc = convertedValue<unsigned char>( m_value.UChar );
-        if(errc != error_t::noerror)
+        case fitsType<unsigned char>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<unsigned char>( m_value.UChar );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<char>():
-    {
-        error_t errc = convertedValue<char>( m_value.Char ) ;
-        if(errc != error_t::noerror)
+        case fitsType<char>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<char>( m_value.Char );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<short>():
-    {
-        error_t errc = convertedValue<short>( m_value.Short );
-        if(errc != error_t::noerror)
+        case fitsType<short>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<short>( m_value.Short );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<unsigned short>():
-    {
-        error_t errc = convertedValue<unsigned short>( m_value.UShort );
-        if(errc != error_t::noerror)
+        case fitsType<unsigned short>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<unsigned short>( m_value.UShort );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<int>():
-    {
-        error_t errc = convertedValue<int>( m_value.Int );
-        if(errc != error_t::noerror)
+        case fitsType<int>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<int>( m_value.Int );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<unsigned int>():
-    {
-        error_t errc = convertedValue<unsigned int>( m_value.UInt );
-        if(errc != error_t::noerror)
+        case fitsType<unsigned int>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<unsigned int>( m_value.UInt );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<long>():
-    {
-        error_t errc = convertedValue<long>( m_value.Long );
-        if(errc != error_t::noerror)
+        case fitsType<long>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<long>( m_value.Long );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<unsigned long>():
-    {
-        error_t errc = convertedValue<unsigned long>( m_value.ULong );
-        if(errc != error_t::noerror)
+        case fitsType<unsigned long>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<unsigned long>( m_value.ULong );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<long long>():
-    {
-        error_t errc = convertedValue<long long>( m_value.LongLong );
-        if(errc != error_t::noerror)
+        case fitsType<long long>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<long long>( m_value.LongLong );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<unsigned long long>():
-    {
-        error_t errc = convertedValue<unsigned long long>( m_value.ULongLong );
-        if(errc != error_t::noerror)
+        case fitsType<unsigned long long>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<unsigned long long>( m_value.ULongLong );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<float>():
-    {
-        error_t errc = convertedValue<float>( m_value.Float );
-        if(errc != error_t::noerror)
+        case fitsType<float>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            error_t errc = convertedValue<float>( m_value.Float );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
         }
-        break;
-    }
-    case fitsType<std::complex<float>>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notimpl,
-                                                       "can't convert complex type for " + m_keyword );
-    }
-    case fitsType<double>():
-    {
-        error_t errc = convertedValue<double>( m_value.Double );
-        if(errc != error_t::noerror)
+        case fitsType<std::complex<float>>():
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            return internal::mxlib_error_report<verboseT>( error_t::notimpl,
+                                                           "can't convert complex type for " + m_keyword );
         }
-        break;
-    }
-    case fitsType<std::complex<double>>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notimpl,
-                                                       "can't convert complex type for " + m_keyword );
-    }
-    case fitsType<fitsCommentType>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "cannot convert comment to numeric type for " + m_keyword );
-    }
-    case fitsType<fitsHistoryType>():
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "cannot convert history to numeric type for " + m_keyword );
-    }
-    case TSTRING:
-    {
-        convertToString();
-        m_type = newtype;
-        m_valueGood = false;
-        return error_t::noerror;
-    }
-    default:
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
-                                                       "invalid FITS type conversion for " + m_keyword );
-    }
+        case fitsType<double>():
+        {
+            error_t errc = convertedValue<double>( m_value.Double );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
+            break;
+        }
+        case fitsType<std::complex<double>>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::notimpl,
+                                                           "can't convert complex type for " + m_keyword );
+        }
+        case fitsType<fitsCommentType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert comment to numeric type for " + m_keyword );
+        }
+        case fitsType<fitsHistoryType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert history to numeric type for " + m_keyword );
+        }
+        case TSTRING:
+        {
+            convertToString();
+            m_type = newtype;
+            m_valueGood = false;
+            return error_t::noerror;
+        }
+        default:
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "invalid FITS type conversion for " + m_keyword );
+        }
     }
 
     m_type = newtype;
@@ -1085,9 +1096,9 @@ error_t fitsHeaderCard<verboseT>::type( const int &t )
     if( m_valueGood )
     {
         error_t errc = convertValue( t );
-        if(errc != error_t::noerror)
+        if( errc != error_t::noerror )
         {
-            return internal::mxlib_error_report<verboseT>(errc);
+            return internal::mxlib_error_report<verboseT>( errc );
         }
     }
     else
@@ -1110,13 +1121,13 @@ typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
 {
     if( m_valueGood == false )
     {
-        convertFromString<typeT>(); //error check
+        convertFromString<typeT>(); // error check
     }
 
     if( m_type != fitsType<typeT>() )
     {
         typeT val;
-        errc = convertedValue<typeT>(val); //error report
+        errc = convertedValue<typeT>( val ); // error report
         return val;
     }
 
@@ -1126,7 +1137,7 @@ typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
 }
 
 template <class verboseT>
-std::string fitsHeaderCard<verboseT>::value( const std::string &, mx::error_t &errc )
+std::string fitsHeaderCard<verboseT>::value( tagT<std::string>, mx::error_t &errc )
 {
 
     if( m_valueStrGood == false )
@@ -1153,169 +1164,168 @@ std::string fitsHeaderCard<verboseT>::value( const std::string &, mx::error_t &e
 }
 
 template <class verboseT>
-char fitsHeaderCard<verboseT>::value( const char &, mx::error_t &errc )
+char fitsHeaderCard<verboseT>::value( tagT<char>, mx::error_t &errc )
 {
-    return valueNonString<char>(errc);
+    return valueNonString<char>( errc );
 }
 
 template <class verboseT>
-unsigned char fitsHeaderCard<verboseT>::value( const unsigned char &, mx::error_t &errc )
+unsigned char fitsHeaderCard<verboseT>::value( tagT<unsigned char>, mx::error_t &errc )
 {
-    return valueNonString<unsigned char>(errc);
+    return valueNonString<unsigned char>( errc );
 }
 
 template <class verboseT>
-short fitsHeaderCard<verboseT>::value( const short &, mx::error_t &errc )
+short fitsHeaderCard<verboseT>::value( tagT<short>, mx::error_t &errc )
 {
-    return valueNonString<short>(errc);
+    return valueNonString<short>( errc );
 }
 
 template <class verboseT>
-unsigned short fitsHeaderCard<verboseT>::value( const unsigned short &, mx::error_t &errc )
+unsigned short fitsHeaderCard<verboseT>::value( tagT<unsigned short>, mx::error_t &errc )
 {
-    return valueNonString<unsigned short>(errc);
+    return valueNonString<unsigned short>( errc );
 }
 
 template <class verboseT>
-int fitsHeaderCard<verboseT>::value( const int &, mx::error_t &errc )
+int fitsHeaderCard<verboseT>::value( tagT<int>, mx::error_t &errc )
 {
-    return valueNonString<int>(errc);
+    return valueNonString<int>( errc );
 }
 
 template <class verboseT>
-unsigned int fitsHeaderCard<verboseT>::value( const unsigned int &, mx::error_t &errc )
+unsigned int fitsHeaderCard<verboseT>::value( tagT<unsigned int>, mx::error_t &errc )
 {
-    return valueNonString<unsigned int>(errc);
+    return valueNonString<unsigned int>( errc );
 }
 
 template <class verboseT>
-long fitsHeaderCard<verboseT>::value( const long &, mx::error_t &errc )
+long fitsHeaderCard<verboseT>::value( tagT<long>, mx::error_t &errc )
 {
-    return valueNonString<long>(errc);
+    return valueNonString<long>( errc );
 }
 
 template <class verboseT>
-unsigned long fitsHeaderCard<verboseT>::value( const unsigned long &, mx::error_t &errc )
+unsigned long fitsHeaderCard<verboseT>::value( tagT<unsigned long>, mx::error_t &errc )
 {
-    return valueNonString<unsigned long>(errc);
+    return valueNonString<unsigned long>( errc );
 }
 
 template <class verboseT>
-long long fitsHeaderCard<verboseT>::value( const long long &, mx::error_t &errc )
+long long fitsHeaderCard<verboseT>::value( tagT<long long>, mx::error_t &errc )
 {
-    return valueNonString<long long>(errc);
+    return valueNonString<long long>( errc );
 }
 
 template <class verboseT>
-unsigned long long fitsHeaderCard<verboseT>::value( const unsigned long long &, mx::error_t &errc )
+unsigned long long fitsHeaderCard<verboseT>::value( tagT<unsigned long long>, mx::error_t &errc )
 {
-    return valueNonString<unsigned long long>(errc);
+    return valueNonString<unsigned long long>( errc );
 }
 
 template <class verboseT>
-float fitsHeaderCard<verboseT>::value( const float &, mx::error_t &errc )
+float fitsHeaderCard<verboseT>::value( tagT<float>, mx::error_t &errc )
 {
-    return valueNonString<float>(errc);
+    return valueNonString<float>( errc );
 }
 
 template <class verboseT>
-double fitsHeaderCard<verboseT>::value( const double &, mx::error_t &errc )
+double fitsHeaderCard<verboseT>::value( tagT<double>, mx::error_t &errc )
 {
-    return valueNonString<double>(errc);
+    return valueNonString<double>( errc );
 }
 
 template <class verboseT>
 template <typename typeT>
-typeT fitsHeaderCard<verboseT>::value(mx::error_t * errc)
+typeT fitsHeaderCard<verboseT>::value( mx::error_t *errc )
 {
     mx::error_t _errc;
 
-    typeT val = value(typeT(), _errc);
+    typeT val = value( tagT<typeT>(), _errc );
 
-    if(errc)
+    if( errc )
     {
         *errc = _errc;
     }
 
-    if(_errc != mx::error_t::noerror)
+    if( _errc != mx::error_t::noerror )
     {
-        internal::mxlib_error_report<verboseT>(_errc, "getting value for " + m_keyword);
+        internal::mxlib_error_report<verboseT>( _errc, "getting value for " + m_keyword );
     }
 
     return val;
-
 }
 
 template <class verboseT>
-std::string fitsHeaderCard<verboseT>::String(error_t * errc)
+std::string fitsHeaderCard<verboseT>::String( error_t *errc )
 {
-    return value<std::string>(errc);
+    return value<std::string>( errc );
 }
 
 template <class verboseT>
-char fitsHeaderCard<verboseT>::Char(error_t * errc)
+char fitsHeaderCard<verboseT>::Char( error_t *errc )
 {
-    return value<char>(errc);
+    return value<char>( errc );
 }
 
 template <class verboseT>
-unsigned char fitsHeaderCard<verboseT>::UChar(error_t * errc)
+unsigned char fitsHeaderCard<verboseT>::UChar( error_t *errc )
 {
-    return value<unsigned char>(errc);
+    return value<unsigned char>( errc );
 }
 
 template <class verboseT>
-short fitsHeaderCard<verboseT>::Short(error_t * errc)
+short fitsHeaderCard<verboseT>::Short( error_t *errc )
 {
-    return value<short>(errc);
+    return value<short>( errc );
 }
 
 template <class verboseT>
-unsigned short fitsHeaderCard<verboseT>::UShort(error_t * errc)
+unsigned short fitsHeaderCard<verboseT>::UShort( error_t *errc )
 {
-    return value<unsigned short>(errc);
+    return value<unsigned short>( errc );
 }
 
 template <class verboseT>
-int fitsHeaderCard<verboseT>::Int(error_t * errc)
+int fitsHeaderCard<verboseT>::Int( error_t *errc )
 {
-    return value<int>(errc);
+    return value<int>( errc );
 }
 
 template <class verboseT>
-unsigned int fitsHeaderCard<verboseT>::UInt(error_t * errc)
+unsigned int fitsHeaderCard<verboseT>::UInt( error_t *errc )
 {
-    return value<unsigned int>(errc);
+    return value<unsigned int>( errc );
 }
 
 template <class verboseT>
-long fitsHeaderCard<verboseT>::Long(error_t * errc)
+long fitsHeaderCard<verboseT>::Long( error_t *errc )
 {
-    return value<long>(errc);
+    return value<long>( errc );
 }
 
 template <class verboseT>
-unsigned long fitsHeaderCard<verboseT>::ULong(error_t * errc)
+unsigned long fitsHeaderCard<verboseT>::ULong( error_t *errc )
 {
-    return value<unsigned long>(errc);
+    return value<unsigned long>( errc );
 }
 
 template <class verboseT>
-long long fitsHeaderCard<verboseT>::LongLong(error_t * errc)
+long long fitsHeaderCard<verboseT>::LongLong( error_t *errc )
 {
-    return value<long long>(errc);
+    return value<long long>( errc );
 }
 
 template <class verboseT>
-unsigned long long fitsHeaderCard<verboseT>::ULongLong(error_t * errc)
+unsigned long long fitsHeaderCard<verboseT>::ULongLong( error_t *errc )
 {
-    return value<unsigned long long>(errc);
+    return value<unsigned long long>( errc );
 }
 
 template <class verboseT>
-float fitsHeaderCard<verboseT>::Float(error_t * errc)
+float fitsHeaderCard<verboseT>::Float( error_t *errc )
 {
-    return value<float>(errc);
+    return value<float>( errc );
 }
 
 /*template <class verboseT>
@@ -1325,9 +1335,9 @@ std::complex<float> fitsHeaderCard<verboseT>::complexFloat()
 }*/
 
 template <class verboseT>
-double fitsHeaderCard<verboseT>::Double(error_t * errc)
+double fitsHeaderCard<verboseT>::Double( error_t *errc )
 {
-    return value<double>(errc);
+    return value<double>( errc );
 }
 
 /*
@@ -1342,7 +1352,7 @@ mx::error_t fitsHeaderCard<verboseT>::value( const char *v )
 {
     std::string str = v;
 
-    return value(str);
+    return value( str );
 }
 
 template <class verboseT>
@@ -1369,7 +1379,6 @@ mx::error_t fitsHeaderCard<verboseT>::value( const std::string &v )
     return mx::error_t::noerror;
 }
 
-
 template <class verboseT>
 template <typename typeT>
 mx::error_t fitsHeaderCard<verboseT>::value( const typeT &v )
@@ -1381,8 +1390,6 @@ mx::error_t fitsHeaderCard<verboseT>::value( const typeT &v )
 
     return mx::error_t::noerror;
 }
-
-
 
 template <class verboseT>
 std::string fitsHeaderCard<verboseT>::valueStr()
@@ -1445,88 +1452,91 @@ mx::error_t fitsHeaderCard<verboseT>::write( fitsfile *fptr )
     // Ok, now we write the type directly using fitsio routines because it hasn't been converted.
     switch( m_type )
     {
-    case fitsType<bool>():
-    {
-        return fits_write_key<bool>( fptr, (char *)m_keyword.c_str(), &m_value.Bool, (char *)m_comment.c_str() );
-    }
-    case fitsType<char>():
-    {
-        return fits_write_key<char>( fptr, (char *)m_keyword.c_str(), &m_value.Char, (char *)m_comment.c_str() );
-    }
-    case fitsType<unsigned char>():
-    {
-        return fits_write_key<unsigned char>( fptr,
-                                              (char *)m_keyword.c_str(),
-                                              &m_value.UChar,
-                                              (char *)m_comment.c_str() );
-    }
-    case fitsType<short>():
-    {
-        return fits_write_key<short>( fptr, (char *)m_keyword.c_str(), &m_value.Short, (char *)m_comment.c_str() );
-    }
-    case fitsType<unsigned short>():
-    {
-        return fits_write_key<unsigned short>( fptr,
-                                               (char *)m_keyword.c_str(),
-                                               &m_value.UShort,
-                                               (char *)m_comment.c_str() );
-    }
-    case fitsType<int>():
-    {
-        return fits_write_key<int>( fptr, (char *)m_keyword.c_str(), &m_value.Int, (char *)m_comment.c_str() );
-    }
-    case fitsType<unsigned int>():
-    {
-        return fits_write_key<unsigned int>( fptr,
-                                             (char *)m_keyword.c_str(),
-                                             &m_value.UInt,
-                                             (char *)m_comment.c_str() );
-    }
-    case fitsType<long>():
-    {
-        return fits_write_key<long>( fptr, (char *)m_keyword.c_str(), &m_value.Long, (char *)m_comment.c_str() );
-    }
-    case fitsType<unsigned long>():
-    {
-        return fits_write_key<unsigned long>( fptr,
-                                              (char *)m_keyword.c_str(),
-                                              &m_value.ULong,
-                                              (char *)m_comment.c_str() );
-    }
-    case fitsType<long long>():
-    {
-        return fits_write_key<long long>( fptr,
-                                          (char *)m_keyword.c_str(),
-                                          &m_value.LongLong,
-                                          (char *)m_comment.c_str() );
-    }
-    case fitsType<unsigned long long>():
-    {
-        return fits_write_key<unsigned long long>( fptr,
+        case fitsType<bool>():
+        {
+            return fits_write_key<bool>( fptr, (char *)m_keyword.c_str(), &m_value.Bool, (char *)m_comment.c_str() );
+        }
+        case fitsType<char>():
+        {
+            return fits_write_key<char>( fptr, (char *)m_keyword.c_str(), &m_value.Char, (char *)m_comment.c_str() );
+        }
+        case fitsType<unsigned char>():
+        {
+            return fits_write_key<unsigned char>( fptr,
+                                                  (char *)m_keyword.c_str(),
+                                                  &m_value.UChar,
+                                                  (char *)m_comment.c_str() );
+        }
+        case fitsType<short>():
+        {
+            return fits_write_key<short>( fptr, (char *)m_keyword.c_str(), &m_value.Short, (char *)m_comment.c_str() );
+        }
+        case fitsType<unsigned short>():
+        {
+            return fits_write_key<unsigned short>( fptr,
                                                    (char *)m_keyword.c_str(),
-                                                   &m_value.ULongLong,
+                                                   &m_value.UShort,
                                                    (char *)m_comment.c_str() );
-    }
-    case fitsType<float>():
-    {
-        return fits_write_key<float>( fptr, (char *)m_keyword.c_str(), &m_value.Float, (char *)m_comment.c_str() );
-    }
-    case fitsType<double>():
-    {
-        return fits_write_key<double>( fptr, (char *)m_keyword.c_str(), &m_value.Double, (char *)m_comment.c_str() );
-    }
-    case fitsType<fitsCommentType>():
-    {
-        return fits_write_comment( fptr, (char *)m_comment.c_str() );
-    }
-    case fitsType<fitsHistoryType>():
-    {
-        return fits_write_history( fptr, (char *)m_comment.c_str() );
-    }
-    default:
-    {
-        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "invalid FITS type for " + m_keyword );
-    }
+        }
+        case fitsType<int>():
+        {
+            return fits_write_key<int>( fptr, (char *)m_keyword.c_str(), &m_value.Int, (char *)m_comment.c_str() );
+        }
+        case fitsType<unsigned int>():
+        {
+            return fits_write_key<unsigned int>( fptr,
+                                                 (char *)m_keyword.c_str(),
+                                                 &m_value.UInt,
+                                                 (char *)m_comment.c_str() );
+        }
+        case fitsType<long>():
+        {
+            return fits_write_key<long>( fptr, (char *)m_keyword.c_str(), &m_value.Long, (char *)m_comment.c_str() );
+        }
+        case fitsType<unsigned long>():
+        {
+            return fits_write_key<unsigned long>( fptr,
+                                                  (char *)m_keyword.c_str(),
+                                                  &m_value.ULong,
+                                                  (char *)m_comment.c_str() );
+        }
+        case fitsType<long long>():
+        {
+            return fits_write_key<long long>( fptr,
+                                              (char *)m_keyword.c_str(),
+                                              &m_value.LongLong,
+                                              (char *)m_comment.c_str() );
+        }
+        case fitsType<unsigned long long>():
+        {
+            return fits_write_key<unsigned long long>( fptr,
+                                                       (char *)m_keyword.c_str(),
+                                                       &m_value.ULongLong,
+                                                       (char *)m_comment.c_str() );
+        }
+        case fitsType<float>():
+        {
+            return fits_write_key<float>( fptr, (char *)m_keyword.c_str(), &m_value.Float, (char *)m_comment.c_str() );
+        }
+        case fitsType<double>():
+        {
+            return fits_write_key<double>( fptr,
+                                           (char *)m_keyword.c_str(),
+                                           &m_value.Double,
+                                           (char *)m_comment.c_str() );
+        }
+        case fitsType<fitsCommentType>():
+        {
+            return fits_write_comment( fptr, (char *)m_comment.c_str() );
+        }
+        case fitsType<fitsHistoryType>():
+        {
+            return fits_write_history( fptr, (char *)m_comment.c_str() );
+        }
+        default:
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "invalid FITS type for " + m_keyword );
+        }
     }
 }
 
