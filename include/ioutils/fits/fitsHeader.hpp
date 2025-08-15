@@ -808,6 +808,8 @@ error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, fitsHeaderCard<v
         #endif
         // clang-format on
     }
+
+    return error_t::noerror;
 }
 
 template <class verboseT>

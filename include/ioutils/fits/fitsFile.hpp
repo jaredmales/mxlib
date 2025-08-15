@@ -64,11 +64,11 @@ class fitsFile
     /// The cfitsio data structure
     fitsfile *m_fptr{ nullptr };
 
-    /// The dimensions of the image (1D, 2D, 3D etc)
+    /// The dimensions of the image (1D, 2D, or 3D)
     int m_naxis{ 0 };
 
     /// The size of each dimension
-    long *m_naxes{ nullptr };
+    long m_naxes [3];
 
     /// Flag indicating whether the file is open or not
     bool m_isOpen{ false };
@@ -730,10 +730,6 @@ fitsFile<dataT, verboseT>::~fitsFile()
         internal::mxlib_error_report<verboseT>( close() );
     }
 
-    if( m_naxes )
-    {
-        delete[] m_naxes;
-    }
 }
 
 template <typename dataT, class verboseT>
@@ -769,12 +765,7 @@ int fitsFile<dataT, verboseT>::naxis()
 template <typename dataT, class verboseT>
 long fitsFile<dataT, verboseT>::naxes( int dim )
 {
-    if( m_naxes == nullptr )
-    {
-        return -1;
-    }
-
-    if( dim >= m_naxis || dim >= 2)
+    if( dim >= m_naxis || dim > 2)
     {
         return -1;
     }
@@ -812,45 +803,7 @@ error_t fitsFile<dataT, verboseT>::open()
                                                        "Getting number of axes in file " + m_fileName );
     }
 
-    if( m_naxes )
-    {
-        delete[] m_naxes;
-    }
-
-    try
-    {
-        m_naxes = new long[m_naxis];
-    }
-    catch( const std::bad_alloc &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
-                                                std::string( "allocating m_naxes: " ) + e.what() );
-#ifdef MXLIB_TRAP_ALLOC_ERRORS
-        return error_t::std_bad_alloc;
-#else
-        throw;
-#endif
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                std::string( "allocating m_naxes: " ) + e.what() );
-#ifdef MXLIB_TRAP_ALLOC_ERRORS
-        return error_t::std_exception;
-#else
-        throw;
-#endif
-    }
-    catch( ... )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::exception, "allocating m_naxes" );
-#ifdef MXLIB_TRAP_ALLOC_ERRORS
-        return error_t::exception;
-#else
-        throw;
-#endif
-    }
-
+    //Currently can't be true since it's declared [3].
     if( m_naxes == nullptr )
     {
         return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
@@ -894,12 +847,6 @@ error_t fitsFile<dataT, verboseT>::close()
     m_isOpen = 0;
     fstatus = 0;
 
-    if( m_naxes )
-    {
-        delete[] m_naxes;
-    }
-
-    m_naxes = nullptr;
 
     return error_t::noerror;
 }
@@ -910,12 +857,6 @@ int fitsFile<dataT, verboseT>::getDimensions( error_t &errc )
     if( !m_isOpen )
     {
         errc = error_t::invalidconfig;
-        return -1;
-    }
-
-    if( !m_naxes )
-    {
-        errc = error_t::paramnotset;
         return -1;
     }
 
@@ -931,12 +872,6 @@ long fitsFile<dataT, verboseT>::getSize( error_t &errc )
         return -1;
     }
 
-    if( !m_naxes )
-    {
-        errc = error_t::paramnotset;
-        return -1;
-    }
-
     long sz = 1;
 
     errc = error_t::noerror;
@@ -947,7 +882,7 @@ long fitsFile<dataT, verboseT>::getSize( error_t &errc )
     }
     else
     {
-        for( int i = 0; i < m_naxis; ++i )
+        for( int i = 0; i < m_naxis && i < 3; ++i )
         {
             sz *= m_naxes[i];
         }
@@ -965,13 +900,7 @@ long fitsFile<dataT, verboseT>::getSize( size_t axis, error_t &errc )
         return -1;
     }
 
-    if( !m_naxes )
-    {
-        errc = error_t::paramnotset;
-        return -1;
-    }
-
-    if( axis >= m_naxis )
+    if( axis >= m_naxis || axis > 2 )
     {
         errc = error_t::invalidarg;
         return -1;
@@ -998,6 +927,7 @@ error_t fitsFile<dataT, verboseT>::calcPixarrs( pixarrT &pixarr )
 {
     error_t errc = pixarr.allocate( m_naxis );
 
+    //This currently can't be trude since it is declared as [3]
     if( m_naxes == nullptr )
     {
         return internal::mxlib_error_report<verboseT>( error_t::paramnotset, "m_naxes" );
@@ -1017,7 +947,7 @@ error_t fitsFile<dataT, verboseT>::calcPixarrs( pixarrT &pixarr )
     {
         if( m_x0 < 0 && m_y0 < 0 && m_xpix < 0 && m_ypix < 0 && m_z0 < 0 && m_zframes < 0 )
         {
-            for( int i = 0; i < m_naxis; i++ )
+            for( int i = 0; i < m_naxis && i < 3; i++ )
             {
                 pixarr.fpix[i] = 1;
                 pixarr.lpix[i] = m_naxes[i];
@@ -1667,13 +1597,6 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
         mxlib_error_check( close() );
     }
 
-    // delete before messing with m_naxis.
-    if( m_naxes )
-    {
-        delete[] m_naxes;
-        m_naxes = nullptr;
-    }
-
     m_naxis = 1;
     if( d2 > 0 )
     {
@@ -1687,40 +1610,7 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
         }
     }
 
-    try
-    {
-        m_naxes = new long[m_naxis];
-    }
-    catch( const std::bad_alloc &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
-                                                std::string( "allocating m_naxes: " ) + e.what() );
-#if defined(MXLIB_CATCH_ALLOC_EXCEPTIONS) || defined(MXLIB_CATCH_ALL_EXCEPTIONS)
-        return error_t::std_bad_alloc;
-#else
-        throw;
-#endif
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                std::string( "allocating m_naxes: " ) + e.what() );
-#ifdef MXLIB_CATCH_ALL_EXCEPTIONS
-        return error_t::std_exception;
-#else
-        throw;
-#endif
-    }
-    catch( ... )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::exception, "allocating m_naxes" );
-#ifdef MXLIB_CATCH_ALL_EXCEPTIONS
-        return error_t::exception;
-#else
-        throw;
-#endif
-    }
-
+    //currently can't be true since declared [3]
     if( m_naxes == nullptr )
     {
         return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
@@ -1760,7 +1650,7 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
 
     LONGLONG nelements = 1;
 
-    for( int i = 0; i < m_naxis; ++i )
+    for( int i = 0; i < m_naxis && i < 3; ++i )
     {
         nelements *= m_naxes[i];
     }
