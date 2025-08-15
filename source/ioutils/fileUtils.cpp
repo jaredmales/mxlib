@@ -188,13 +188,38 @@ error_t getFileNames( std::vector<std::string> &fileNames,
 
         return error_t::noerror;
     }
+    catch( const std::filesystem::filesystem_error &e )
+    {
+        internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return error_t::std_filesystem_error;
+        #else
+            throw;
+        #endif
+        // clang-format on
+    }
+    catch( const std::bad_alloc &e )
+    {
+        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+            return error_t::std_bad_alloc;
+        #else
+            throw;
+        #endif
+        // clang-format on
+    }
     catch( const std::exception &e )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
-    }
-    catch( ... )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::exception );
+        internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return error_t::std_exception;
+        #else
+            throw;
+        #endif
+        // clang-format on
     }
 }
 } // namespace impl

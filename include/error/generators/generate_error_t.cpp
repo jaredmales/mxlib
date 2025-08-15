@@ -144,8 +144,6 @@ int main()
         fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen + 1, error_t_msgs[n] );
     }
 
-    std::cerr << __LINE__ << '\n';
-
     for( size_t n = 0; n < errnos.size(); ++n )
     {
         error_ts.push_back( errnos[n] );
@@ -154,8 +152,6 @@ int main()
         std::string symbol = errnos[n] + ',';
         fout << std::format( "    {:{}} ///< {} ({})\n", symbol, maxlen+1, errno_msgs[n], ERRNOs[n] );
     }
-
-    std::cerr << __LINE__ << '\n';
 
     std::cerr << fits_codes.size() << ' ' << fits_msgs.size() << '\n';
     for(size_t n = 0; n < fits_codes.size()-1; ++n)
@@ -166,15 +162,11 @@ int main()
         fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen+1, fits_msgs[n]);
     }
 
-    std::cerr << __LINE__ << '\n';
-
     error_ts.push_back( fits_codes.back() );
     error_t_msgs.push_back( fits_msgs.back() );
     fout << std::format( "    {:{}} ///< {}\n", fits_codes.back(), maxlen+1, fits_msgs.back() );
 
     fout << "};" << "\n" << '\n';
-
-    std::cerr << __LINE__ << '\n';
 
     fout << "/// Convert a \\ref error_t code to its name" << '\n';
     fout << "/**" << '\n';

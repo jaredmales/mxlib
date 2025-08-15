@@ -21,7 +21,6 @@ class fitsFile_test : public fitsFile<dataT>
     void setnax( int naxis, long naxes0, long naxes1, long naxes2 )
     {
         fitsFile<dataT>::m_naxis = naxis;
-        fitsFile<dataT>::m_naxes = new long[naxis];
 
         if( naxis > 0 )
         {

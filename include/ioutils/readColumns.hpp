@@ -61,13 +61,13 @@ struct readColCommaDelim
 };
 
 template <class delimT, class verboseT>
-error_t readcol( [[maybe_unused]] const char *sin, [[maybe_unused]] int sz, [[maybe_unused]] int & colno )
+error_t readcol( [[maybe_unused]] const char *sin, [[maybe_unused]] int sz, [[maybe_unused]] int &colno )
 {
     return error_t::noerror;
 }
 
 template <class delimT, class verboseT, typename arrT, typename... arrTs>
-error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...arrays )
+error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arrays )
 {
     try
     {
@@ -95,9 +95,9 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
             mx::error_t errc;
             array.push_back( stoT<typename arrT::value_type>( "", &errc ) );
 
-            if(errc != mx::error_t::noerror)
+            if( errc != mx::error_t::noerror )
             {
-                return internal::mxlib_error_report<verboseT>(errc, std::format( "processing column {}", colno ));
+                return internal::mxlib_error_report<verboseT>( errc, std::format( "processing column {}", colno ) );
             }
 
             return mx::error_t::noerror;
@@ -123,10 +123,9 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
             array.push_back( stoT<typename arrT::value_type>( str, &errc ) );
         }
 
-        if(errc != mx::error_t::noerror)
+        if( errc != mx::error_t::noerror )
         {
-            return internal::mxlib_error_report<verboseT>( errc,
-                                             std::format( "processing column {}", colno ) );
+            return internal::mxlib_error_report<verboseT>( errc, std::format( "processing column {}", colno ) );
         }
 
         sin += ( str.size() + 1 ) * sizeof( char );
@@ -134,27 +133,39 @@ error_t readcol( const char *sin, int sz, int & colno, arrT &array, arrTs &...ar
     }
     catch( const std::invalid_argument &e )
     {
+        // We always catch this one
         return internal::mxlib_error_report<verboseT>( error_t::std_invalid_argument,
-                                             std::format( "processing column {}: {}", colno, e.what() ) );
+                                                       std::format( "processing column {}: {}", colno, e.what() ) );
     }
     catch( const std::out_of_range &e )
     {
+        // We always catch this one
         return internal::mxlib_error_report<verboseT>( error_t::std_out_of_range,
-                                             std::format( "processing column {}: {}", colno, e.what() ) );
+                                                       std::format( "processing column {}: {}", colno, e.what() ) );
     }
     catch( const std::bad_alloc &e )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
-                                             std::format( "processing column {}: {}", colno, e.what() ) );
+        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                std::format( "processing column {}: {}", colno, e.what() ) );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+            return error_t::std_bad_alloc;
+        #else
+            throw;
+        #endif
+        // clang-format on
     }
     catch( const std::exception &e )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                             std::format( "processing column {}: {}", colno, e.what() ) );
-    }
-    catch( ... )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::exception, std::format( "processing column {}.", colno ) );
+        internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                std::format( "processing column {}: {}", colno, e.what() ) );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return error_t::std_exception;
+        #else
+            throw;
+        #endif
+        // clang-format on
     }
 
     ++colno;
@@ -228,17 +239,33 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
         {
             std::getline( fin, line, delimT::eol );
         }
+        catch( const std::bad_alloc &e )
+        {
+            internal::mxlib_error_report<verboseT>(
+                error_t::std_bad_alloc,
+                std::format( "Reading from {} at line {}. {}.", fname, lineno, e.what() ) );
+
+            // clang-format off
+            #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+                return error_t::std_bad_alloc;
+            #else
+                throw;
+            #endif
+            // clang-format on
+        }
         catch( const std::exception &e )
         {
-            return internal::mxlib_error_report<verboseT>(
-                error_t::exception,
+            internal::mxlib_error_report<verboseT>(
+                error_t::std_exception,
                 std::format( "Reading from {} at line {}. {}.", fname, lineno, e.what() ) );
-        }
-        catch( ... )
-        {
-            return internal::mxlib_error_report<verboseT>(
-                error_t::exception,
-                std::format( "Reading from {} at line {}.", fname, lineno ) );
+
+            // clang-format off
+            #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
+                return error_t::std_bad_alloc;
+            #else
+                throw;
+            #endif
+            // clang-format on
         }
 
         if( line.size() == 0 )
@@ -272,9 +299,11 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
         int colno = 0;
         error_t errc = readcol<delimT, verboseT>( line.c_str(), line.size(), colno, arrays... );
 
-        if(errc != error_t::noerror)
+        if( errc != error_t::noerror )
         {
-            return internal::mxlib_error_report<verboseT>( errc, std::format("Reading from {} at line {} column {}",fname, lineno+1, colno+1) );
+            return internal::mxlib_error_report<verboseT>(
+                errc,
+                std::format( "Reading from {} at line {} column {}", fname, lineno + 1, colno + 1 ) );
         }
     }
 
