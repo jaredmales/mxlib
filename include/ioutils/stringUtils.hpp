@@ -212,7 +212,7 @@ typeT stoT( const std::string &str, /**< [in] the string to convert*/
             error_t &errc           /**< [out] [optional] mxlib error code set during the conversion */
 )
 {
-    return stoTImpl::stoT( str, &errc, typeT() );
+    return stoTImpl::stoT( str, &errc, meta::tagT<typeT>() );
 }
 
 /// Convert a string to a numerical value.
