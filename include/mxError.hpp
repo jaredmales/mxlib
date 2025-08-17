@@ -512,7 +512,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  *
  * \ingroup error_handling
  */
-#define error_check( fxn )                                                                                             \
+#define mx_error_check( fxn )                                                                                             \
     {                                                                                                                  \
         mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
         if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
@@ -535,7 +535,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  * \ingroup error_handling
  *
  */
-#define error_check_rv( fxn, rv )                                                                                      \
+#define mx_error_check_rv( fxn, rv )                                                                                      \
     {                                                                                                                  \
         mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
         if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
@@ -555,7 +555,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  *
  * \ingroup error_handling
  */
-#define error_return( fxn )                                                                                            \
+#define mx_error_return( fxn )                                                                                            \
     {                                                                                                                  \
         mx::error_t __mx_error_return_errc = fxn;                                                                      \
         if( __mx_error_return_errc != mx::error_t::noerror )                                                           \

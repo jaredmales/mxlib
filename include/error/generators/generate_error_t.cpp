@@ -24,9 +24,15 @@ int main()
         std::string line;
         std::getline( fin, line );
 
+
         size_t start = line.find_first_not_of( " \t" );
 
         if( start == std::string::npos )
+        {
+            continue;
+        }
+
+        if(line[start] == '#')
         {
             continue;
         }
