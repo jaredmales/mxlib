@@ -185,10 +185,32 @@ __float128 stoT( const std::string &str, error_t *errc, const __float128 & );
  */
 template <typename typeT>
 typeT stoT( const std::string &str, /**< [in] the string to convert*/
-            error_t *errc = nullptr /**< [out] [optional] mxlib error code set during the conversion */
+            error_t *errc = nullptr /**< [out] [optional] pointer to an mxlib error code set during the conversion */
 )
 {
     return stoTImpl::stoT( str, errc, typeT() );
+}
+
+/// Convert a string to a numerical value.
+/** Provides exception-less string conversion.
+ *
+ * \overload
+ *
+ * \tparam typeT is the type of the numerical value desired
+ *
+ * \returns the converted numerical value.
+ *
+ * \b Error \b Codes
+ * - mx::error_t::noerror on success
+ * - mx::error_t::erange for an out of range value for typeT
+ * - mx::error_t::invalidarg for a string that can't be converted
+ */
+template <typename typeT>
+typeT stoT( const std::string &str, /**< [in] the string to convert*/
+            error_t &errc           /**< [out] [optional] mxlib error code set during the conversion */
+)
+{
+    return stoTImpl::stoT( str, &errc, typeT() );
 }
 
 /// Convert a string to a numerical value.
@@ -244,7 +266,7 @@ std::string toLower( const std::string &instr, /**< [in] is the string to conver
  * \returns mx::error_t::exception if string::resize throws any other exception
  */
 mx::error_t toUpper( std::string &outstr,     ///< [out]  will be resized and populated with the lower case characters
-                 const std::string &instr ///< [in] is the string to convert
+                     const std::string &instr ///< [in] is the string to convert
 );
 
 /// Convert a string to all upper case.

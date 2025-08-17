@@ -502,7 +502,9 @@ error_t error_report( const error_t &code,            /**< [in] is an mx::error_
 template <>
 error_t error_report<verbose::o>( const error_t &code, const std::source_location &loc );
 
-/** \brief Perform an error check, if an error occurs report it and return the error.  Do not return on no error.
+/** \brief Perform an error check on the output of a function.
+ *
+ * If an error occurs report it and return the error.  Do not return on no error.
  *
  * Scope protected so the error_t value does not interfere with other values.
  *
@@ -512,7 +514,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  *
  * \ingroup error_handling
  */
-#define mx_error_check( fxn )                                                                                             \
+#define mx_error_check( fxn )                                                                                          \
     {                                                                                                                  \
         mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
         if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
@@ -521,10 +523,26 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
         }                                                                                                              \
     }
 
-/** \brief Perform an error check, if an error occurs report it and return an arbitrary type.
+/** \brief Perform an error check on an error_t code.
  *
- * Does not return on no error. This is intended to be used in `int main()`, or any other case
- * where the return value is something other than \ref mx::error_t.
+ * If an error is indicated report it and return the error.  Do not return on no error.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param errc is the code to check for an error value
+ *
+ * \ingroup error_handling
+ */
+#define mx_error_check_code( errc )                                                                                    \
+    if( errc != mx::error_t::noerror )                                                                                 \
+    {                                                                                                                  \
+        return error_report<verboseT>( errc );                                                                         \
+    }
+
+/** \brief Perform an error check on the output of a function.
+ *
+ * If an error occurs report it and return an arbitrary type. Does not return on no error. This is intended to be used
+ * in `int main()`, or any other case where the return value is something other than \ref mx::error_t.
  *
  * Scope protected so the \ref mx::error_t value does not interfere with other values.
  *
@@ -535,7 +553,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  * \ingroup error_handling
  *
  */
-#define mx_error_check_rv( fxn, rv )                                                                                      \
+#define mx_error_check_rv( fxn, rv )                                                                                   \
     {                                                                                                                  \
         mx::error_t __mxlib_error_check_errc = fxn;                                                                    \
         if( __mxlib_error_check_errc != mx::error_t::noerror )                                                         \
@@ -545,7 +563,26 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
         }                                                                                                              \
     }
 
-/** \brief Perform an error check, if an error occurs report it, and return the error code even if no error.
+/** \brief Perform an error check on an error_t code.
+ *
+ * If an error occurs report it and return an arbitrary type. Does not return on no error. This is intended to be used
+ * in `int main()`, or any other case where the return value is something other than \ref mx::error_t.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param errc is the code to check for an error value
+ *
+ * \ingroup error_handling
+ */
+#define mx_error_check_code_rv( errc )                                                                                 \
+    if( errc != mx::error_t::noerror )                                                                                 \
+    {                                                                                                                  \
+        return error_report<verboseT>( errc );                                                                         \
+    }
+
+/** \brief Perform an error check on a function and return the result
+ *
+ * If an error occurs it is reported. If no error occurs error_t::noerror is returned.
  *
  * Scope protected so the error_t value does not interfere with other values.
  *
@@ -555,7 +592,7 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
  *
  * \ingroup error_handling
  */
-#define mx_error_return( fxn )                                                                                            \
+#define mx_error_return( fxn )                                                                                         \
     {                                                                                                                  \
         mx::error_t __mx_error_return_errc = fxn;                                                                      \
         if( __mx_error_return_errc != mx::error_t::noerror )                                                           \
@@ -564,6 +601,23 @@ error_t error_report<verbose::o>( const error_t &code, const std::source_locatio
         }                                                                                                              \
         return mx::error_t::noerror;                                                                                   \
     }
+
+/** \brief Perform an error check on an error_t code and return the result
+ *
+ * If an error occurs it is reported and returned. If no error occurs error_t::noerror is returned.
+ *
+ * \note this requires that the verbosity template parameter is \b verboseT
+ *
+ * \param errc is the function to call and check the return value of
+ *
+ * \ingroup error_handling
+ */
+#define mx_error_return_code( errc )                                                                                   \
+    if( errc != mx::error_t::noerror )                                                                                 \
+    {                                                                                                                  \
+        return error_report<verboseT>( errc );                                                                         \
+    }                                                                                                                  \
+    return mx::error_t::noerror;
 
 } // namespace mx
 
