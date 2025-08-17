@@ -745,8 +745,8 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
 
             multiLayerPSD<false>( PSD, freq, m, n, 1, fmax );
 
-            fname =
-                psddir + '/' + "psd_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+            fname = std::format("{}/psd_{}_{}.binv",psddir,m,n);
+            //    psddir + '/' + "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
 
             ioutils::writeBinVector( fname, PSD );
 
@@ -843,12 +843,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     {
         for( size_t s = 0; s < mags.size(); ++s )
         {
-            std::string psdOutDir = dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_si";
+            std::string psdOutDir = std::format("{}/outputPSDS_{}_si",dir, mags[s]);
+            //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si";
             mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
             if( doLP )
             {
-                psdOutDir = dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_lp";
+                std::string psdOutDir = std::format("{}/outputPSDS_{}_lp",dir, mags[s]);
+                //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp";
                 mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
             }
         }
@@ -974,7 +976,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
 
                 if( writeXfer )
                 {
-                    std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_si/";
+                    std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
+                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
                     ioutils::createDirectories( tfOutFile );
                 }
 
@@ -982,7 +985,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
                 {
                     if( writeXfer )
                     {
-                        std::string tfOutFile = dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_lp/";
+                        std::string tfOutFile = std::format("{}/outputTF_{}_lp", dir, mags[s]);
+                        //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
                         ioutils::createDirectories( tfOutFile );
                     }
                 }
@@ -1241,15 +1245,17 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                         if( writeXfer )
                         {
-                            std::string tfOutFile =
-                                dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_si/";
+                            std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
+                            //    dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
 
-                            std::string etfOutFile = tfOutFile + "etf_" + ioutils::convertToString( m ) + '_' +
-                                                     ioutils::convertToString( n ) + ".binv";
+                            std::string etfOutFile = std::format("{}/etf_{}_{}.binv", tfOutFile,m, n);
+                            //tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
+                            //                         ioutils::convert ToString( n ) + ".binv";
                             ioutils::writeBinVector( etfOutFile, ETFxn );
 
-                            std::string ntfOutFile = tfOutFile + "ntf_" + ioutils::convertToString( m ) + '_' +
-                                                     ioutils::convertToString( n ) + ".binv";
+                            std::string ntfOutFile = std::format("{}/ntf_{}_{}.binv",tfOutFile, m, n);
+                            //tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
+                            //                         ioutils::convert ToString( n ) + ".binv";
                             ioutils::writeBinVector( ntfOutFile, NTFxn );
 
                             if( i == 0 ) // Write freq on the first one
@@ -1294,15 +1300,17 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( writeXfer )
                             {
-                                std::string tfOutFile =
-                                    dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_lp/";
+                                std::string tfOutFile = std::format("{}/outputTF_{}_lp",dir,mags[s]);
+                                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
 
-                                std::string etfOutFile = tfOutFile + "etf_" + ioutils::convertToString( m ) + '_' +
-                                                         ioutils::convertToString( n ) + ".binv";
+                                std::string etfOutFile = std::format("{}/etf_{}_{}.binv", tfOutFile, m, n);
+                                //tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
+                                                 //        ioutils::convert ToString( n ) + ".binv";
                                 ioutils::writeBinVector( etfOutFile, ETFxn );
 
-                                std::string ntfOutFile = tfOutFile + "ntf_" + ioutils::convertToString( m ) + '_' +
-                                                         ioutils::convertToString( n ) + ".binv";
+                                std::string ntfOutFile = std::format("{}/ntf_{}_{}.binv", tfOutFile, m, n);
+                                //tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
+                                  //                       ioutils::convert ToString( n ) + ".binv";
                                 ioutils::writeBinVector( ntfOutFile, NTFxn );
 
                                 if( i == 0 ) // Write freq on the first one
@@ -1332,10 +1340,11 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                     // Calculate the controlled PSDs and output
                     if( writePSDs )
                     {
-                        std::string psdOutFile =
-                            dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_si/";
-                        psdOutFile +=
-                            "psd_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                        std::string psdOutFile = std::format("{}/outputPSDs_{}_si/psd_{}_{}.binv",dir,mags[s],m,n);
+
+                         //   dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si/";
+                        //psdOutFile +=
+                         //   "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
 
                         std::vector<realT> psdOut( tPSDp.size() + tPSDpHF.size() );
 
@@ -1372,16 +1381,18 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                         if( i == 0 ) // Write freq on the first one
                         {
-                            psdOutFile =
-                                dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_si/freq.binv";
-                            ioutils::writeBinVector( psdOutFile, tfreqHF );
+                            psdOutFile = std::format("{}/outputPSDs_{}_si/freq.binv", dir, mags[s]);
+                            //    dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si/freq.binv";
+                            //ioutils::writeBinVector( psdOutFile, tfreqHF );
                         }
 
                         if( doLP )
                         {
-                            psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_lp/";
-                            psdOutFile +=
-                                "psd_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                            std::string psdOutFile = std::format("{}/outputPSDs_{}_lp/psd_{}_{}.binv",dir,mags[s],m,n);
+
+                            //psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                            //psdOutFile +=
+                            //    "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
 
                             // Calculate the output PSD if gains are applied
                             if( gopt_lp > 0 )
@@ -1415,9 +1426,10 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( i == 0 )
                             {
-                                psdOutFile =
-                                    dir + "/" + "outputPSDs_" + ioutils::convertToString( mags[s] ) + "_lp/freq.binv";
-                                ioutils::writeBinVector( psdOutFile, tfreq );
+                                psdOutFile = std::format("{}/outputPSDs_{}_lp/freq.binv", dir, mags[s]);
+                                //psdOutFile =
+                                //    dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp/freq.binv";
+                                //ioutils::writeBinVector( psdOutFile, tfreq );
                             }
                         }
                     }
@@ -1430,10 +1442,12 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
         Eigen::Array<realT, -1, -1> cim;
 
         fits::fitsFile<realT> ff;
-        std::string fn = dir + "/gainmap_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+        std::string fn = std::format("{}/gainmap_{}_si.fits",dir, mags[s]);
+        //dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, gains );
 
-        fn = dir + "/varmap_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+        fn = std::format("{}/varmap_{}_si.fits",dir, mags[s]);
+        //dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, vars );
 
         cim = vars;
@@ -1442,24 +1456,29 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
         S_si.push_back( strehl );
         cim /= strehl;
 
-        fn = dir + "/contrast_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+        fn = std::format("{}/contrast_{}_si.fits",dir, mags[s]);
+        //dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, cim );
 
         if( lifetimeTrials > 0 )
         {
-            fn = dir + "/speckleLifetimes_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+            fn = std::format("{}/speckleLifetimes_{}_si.fits",dir, mags[s]);
+            //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
             ff.write( fn, speckleLifetimes );
         }
 
         if( doLP )
         {
-            fn = dir + "/gainmap_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+            fn = std::format("{}/gainmap_{}_lp.fits",dir, mags[s]);
+            //dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, gains_lp );
 
-            fn = dir + "/lpcmap_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+            fn = std::format("{}/lpcmap_{}_lp.fits",dir, mags[s]);
+            //dir + "/lpcmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, lpC );
 
-            fn = dir + "/varmap_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+            fn = std::format("{}/varmap_{}_lp.fits",dir, mags[s]);
+            //dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, vars_lp );
 
             cim = vars_lp;
@@ -1470,12 +1489,14 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
             S_lp.push_back( Slp );
             cim /= Slp;
 
-            fn = dir + "/contrast_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+            fn = std::format("{}/contrast_{}_lp.fits",dir, mags[s]);
+            //dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, cim );
 
             if( lifetimeTrials > 0 )
             {
-                fn = dir + "/speckleLifetimes_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+                fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
+                //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
                 ff.write( fn, speckleLifetimes_lp );
             }
         }
@@ -1723,33 +1744,35 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
 
             if( inside )
             {
-                tfInFile = dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_si/";
+                tfInFile = std::format("{}/outputTF_{}_si",dir, mags[s]);
+                //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
 
-                etfInFile =
-                    tfInFile + "etf_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                etfInFile = std::format("{}/etf_{}_{}.binv",tfInFile, m, n);
+                    //tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, etfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     ETFsi[i][j] = psd2sidedc[j];
 
-                ntfInFile =
-                    tfInFile + "ntf_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                ntfInFile = std::format("{}/ntf_{}_{}.binv",tfInFile, m, n);
+                    //tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, ntfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     NTFsi[i][j] = psd2sidedc[j];
 
-                tfInFile = dir + "/" + "outputTF_" + ioutils::convertToString( mags[s] ) + "_lp/";
+                tfInFile = std::format("{}/outputTF_{}_lp",dir, mags[s]);
+                //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
 
-                etfInFile =
-                    tfInFile + "etf_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                etfInFile = std::format("{}/etf_{}_{}.binv",tfInFile, m, n);
+                    //tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, etfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     ETFlp[i][j] = psd2sidedc[j];
 
-                ntfInFile =
-                    tfInFile + "ntf_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+                ntfInFile = std::format("{}/ntf_{}_{}.binv",tfInFile, m, n);
+                    //tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, ntfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
@@ -2172,18 +2195,22 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
         /*********************************************************************/
         // 4.0)  Write the results to disk
         /*********************************************************************/
-        fn = dir + "/speckleLifetimes_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+        fn = std::format("{}/speckleLifetimes_{}_si.fits",dir, mags[s]);
+        //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, taus );
 
-        fn = dir + "/speckleLifetimes_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+        fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
+        //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
         ff.write( fn, tauslp );
 
         if( writePSDs )
         {
-            fn = dir + "/specklePSDs_" + ioutils::convertToString( mags[s] ) + "_si.fits";
+            fn = std::format("{}/specklePSDs_{}_si.fits",dir, mags[s]);
+            //dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
             ff.write( fn, imc );
 
-            fn = dir + "/specklePSDs_" + ioutils::convertToString( mags[s] ) + "_lp.fits";
+            fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
+            //dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, imclp );
         }
 
@@ -2204,7 +2231,8 @@ template <typename realT, typename aosysT>
 int fourierTemporalPSD<realT, aosysT>::getGridPSD( std::vector<realT> &psd, const std::string &dir, int m, int n )
 {
     std::string fn;
-    fn = dir + "/psds/psd_" + ioutils::convertToString( m ) + '_' + ioutils::convertToString( n ) + ".binv";
+    fn = std::format("{}/psds/psd_{}_{}.binv",dir,m,n);
+    //dir + "/psds/psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
     return ioutils::readBinVector( psd, fn );
 }
 

@@ -30,6 +30,7 @@
 
 #include <list>
 #include <fstream>
+#include <format>
 
 #include "../mxError.hpp"
 
@@ -391,7 +392,7 @@ int appConfigurator::get( typeT &v,
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), ioutils::convertToString( v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
         }
 
         return 0;
@@ -564,7 +565,7 @@ int appConfigurator::get( typeT &v, const std::string &name, std::unordered_map<
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), ioutils::convertToString( v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
         }
 
         return 0;

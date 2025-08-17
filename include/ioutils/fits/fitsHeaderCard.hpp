@@ -31,6 +31,7 @@
 
 #include "../../mxError.hpp"
 
+#include "../../meta/tagT.hpp"
 #include "fitsUtils.hpp"
 
 namespace mx
@@ -38,11 +39,6 @@ namespace mx
 namespace fits
 {
 
-/// Empty type for tag dispatching
-template <typename T>
-struct tagT
-{
-};
 
 /// Class to manage the three components of a FITS header card
 /** Since FITS does not provide the type in keyword=value pairs in a FITS header, it is up to the user
@@ -108,99 +104,99 @@ class fitsHeaderCard
             return;
         }
 
-        bool &member( tagT<bool> )
+        bool &member( meta::tagT<bool> )
         {
             return Bool;
         }
 
-        char &member( tagT<char> )
+        char &member( meta::tagT<char> )
         {
             return Char;
         }
 
-        unsigned char &member( tagT<unsigned char> )
+        unsigned char &member( meta::tagT<unsigned char> )
         {
             return UChar;
         }
 
-        short &member( tagT<short> )
+        short &member( meta::tagT<short> )
         {
             return Short;
         }
 
-        unsigned short &member( tagT<unsigned short> )
+        unsigned short &member( meta::tagT<unsigned short> )
         {
             return UShort;
         }
 
-        int &member( tagT<int> )
+        int &member( meta::tagT<int> )
         {
             return Int;
         }
 
-        unsigned int &member( tagT<unsigned int> )
+        unsigned int &member( meta::tagT<unsigned int> )
         {
             return UInt;
         }
 
-        long &member( tagT<long> )
+        long &member( meta::tagT<long> )
         {
             return Long;
         }
 
-        unsigned long &member( tagT<unsigned long> )
+        unsigned long &member( meta::tagT<unsigned long> )
         {
             return ULong;
         }
 
-        long long &member( tagT<long long> )
+        long long &member( meta::tagT<long long> )
         {
             return LongLong;
         }
 
-        unsigned long long &member( tagT<unsigned long long> )
+        unsigned long long &member( meta::tagT<unsigned long long> )
         {
             return ULongLong;
         }
 
-        float &member( tagT<float> )
+        float &member( meta::tagT<float> )
         {
             return Float;
         }
 
-        std::complex<float> &member( tagT<std::complex<float>> )
+        std::complex<float> &member( meta::tagT<std::complex<float>> )
         {
             return complexFloat;
         }
 
-        double &member( tagT<double> )
+        double &member( meta::tagT<double> )
         {
             return Double;
         }
 
-        std::complex<double> &member( tagT<std::complex<double>> )
+        std::complex<double> &member( meta::tagT<std::complex<double>> )
         {
             return complexDouble;
         }
 
-        long double &member( tagT<long double> )
+        long double &member( meta::tagT<long double> )
         {
             return LongDouble;
         }
 
-        std::complex<long double> &member( tagT<std::complex<long double>> )
+        std::complex<long double> &member( meta::tagT<std::complex<long double>> )
         {
             return complexLongDouble;
         }
 
         // clang-format off
         #ifdef HAS_QUAD
-        __float128 &member( tagT<__float128> )
+        __float128 &member( meta::tagT<__float128> )
         {
             return Quad;
         }
 
-        std::complex<__float128> &member( tagT<std::complex<__float128>> )
+        std::complex<__float128> &member( meta::tagT<std::complex<__float128>> )
         {
             return complexQuad;
         }
@@ -210,7 +206,7 @@ class fitsHeaderCard
         template <typename typeT>
         typeT &member()
         {
-            return member( tagT<typeT>() );
+            return member( meta::tagT<typeT>() );
         }
 
     } m_value;
@@ -381,21 +377,21 @@ class fitsHeaderCard
     typeT valueNonString( mx::error_t &errc );
 
     // Special handling for string
-    std::string value( tagT<std::string>, mx::error_t &errc );
+    std::string value( meta::tagT<std::string>, mx::error_t &errc );
 
     // All of these PODs just call valueNonString
-    char value( tagT<char>, mx::error_t &errc );
-    unsigned char value( tagT<unsigned char>, mx::error_t &errc );
-    short value( tagT<short>, mx::error_t &errc );
-    unsigned short value( tagT<unsigned short>, mx::error_t &errc );
-    int value( tagT<int>, mx::error_t &errc );
-    unsigned int value( tagT<unsigned int>, mx::error_t &errc );
-    long value( tagT<long>, mx::error_t &errc );
-    unsigned long value( tagT<unsigned long>, mx::error_t &errc );
-    long long value( tagT<long long>, mx::error_t &errc );
-    unsigned long long value( tagT<unsigned long long>, mx::error_t &errc );
-    float value( tagT<float>, mx::error_t &errc );
-    double value( tagT<double>, mx::error_t &errc );
+    char value( meta::tagT<char>, mx::error_t &errc );
+    unsigned char value( meta::tagT<unsigned char>, mx::error_t &errc );
+    short value( meta::tagT<short>, mx::error_t &errc );
+    unsigned short value( meta::tagT<unsigned short>, mx::error_t &errc );
+    int value( meta::tagT<int>, mx::error_t &errc );
+    unsigned int value( meta::tagT<unsigned int>, mx::error_t &errc );
+    long value( meta::tagT<long>, mx::error_t &errc );
+    unsigned long value( meta::tagT<unsigned long>, mx::error_t &errc );
+    long long value( meta::tagT<long long>, mx::error_t &errc );
+    unsigned long long value( meta::tagT<unsigned long long>, mx::error_t &errc );
+    float value( meta::tagT<float>, mx::error_t &errc );
+    double value( meta::tagT<double>, mx::error_t &errc );
 
     ///@}
 
@@ -1137,7 +1133,7 @@ typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
 }
 
 template <class verboseT>
-std::string fitsHeaderCard<verboseT>::value( tagT<std::string>, mx::error_t &errc )
+std::string fitsHeaderCard<verboseT>::value( meta::tagT<std::string>, mx::error_t &errc )
 {
 
     if( m_valueStrGood == false )
@@ -1164,73 +1160,73 @@ std::string fitsHeaderCard<verboseT>::value( tagT<std::string>, mx::error_t &err
 }
 
 template <class verboseT>
-char fitsHeaderCard<verboseT>::value( tagT<char>, mx::error_t &errc )
+char fitsHeaderCard<verboseT>::value( meta::tagT<char>, mx::error_t &errc )
 {
     return valueNonString<char>( errc );
 }
 
 template <class verboseT>
-unsigned char fitsHeaderCard<verboseT>::value( tagT<unsigned char>, mx::error_t &errc )
+unsigned char fitsHeaderCard<verboseT>::value( meta::tagT<unsigned char>, mx::error_t &errc )
 {
     return valueNonString<unsigned char>( errc );
 }
 
 template <class verboseT>
-short fitsHeaderCard<verboseT>::value( tagT<short>, mx::error_t &errc )
+short fitsHeaderCard<verboseT>::value( meta::tagT<short>, mx::error_t &errc )
 {
     return valueNonString<short>( errc );
 }
 
 template <class verboseT>
-unsigned short fitsHeaderCard<verboseT>::value( tagT<unsigned short>, mx::error_t &errc )
+unsigned short fitsHeaderCard<verboseT>::value( meta::tagT<unsigned short>, mx::error_t &errc )
 {
     return valueNonString<unsigned short>( errc );
 }
 
 template <class verboseT>
-int fitsHeaderCard<verboseT>::value( tagT<int>, mx::error_t &errc )
+int fitsHeaderCard<verboseT>::value( meta::tagT<int>, mx::error_t &errc )
 {
     return valueNonString<int>( errc );
 }
 
 template <class verboseT>
-unsigned int fitsHeaderCard<verboseT>::value( tagT<unsigned int>, mx::error_t &errc )
+unsigned int fitsHeaderCard<verboseT>::value( meta::tagT<unsigned int>, mx::error_t &errc )
 {
     return valueNonString<unsigned int>( errc );
 }
 
 template <class verboseT>
-long fitsHeaderCard<verboseT>::value( tagT<long>, mx::error_t &errc )
+long fitsHeaderCard<verboseT>::value( meta::tagT<long>, mx::error_t &errc )
 {
     return valueNonString<long>( errc );
 }
 
 template <class verboseT>
-unsigned long fitsHeaderCard<verboseT>::value( tagT<unsigned long>, mx::error_t &errc )
+unsigned long fitsHeaderCard<verboseT>::value( meta::tagT<unsigned long>, mx::error_t &errc )
 {
     return valueNonString<unsigned long>( errc );
 }
 
 template <class verboseT>
-long long fitsHeaderCard<verboseT>::value( tagT<long long>, mx::error_t &errc )
+long long fitsHeaderCard<verboseT>::value( meta::tagT<long long>, mx::error_t &errc )
 {
     return valueNonString<long long>( errc );
 }
 
 template <class verboseT>
-unsigned long long fitsHeaderCard<verboseT>::value( tagT<unsigned long long>, mx::error_t &errc )
+unsigned long long fitsHeaderCard<verboseT>::value( meta::tagT<unsigned long long>, mx::error_t &errc )
 {
     return valueNonString<unsigned long long>( errc );
 }
 
 template <class verboseT>
-float fitsHeaderCard<verboseT>::value( tagT<float>, mx::error_t &errc )
+float fitsHeaderCard<verboseT>::value( meta::tagT<float>, mx::error_t &errc )
 {
     return valueNonString<float>( errc );
 }
 
 template <class verboseT>
-double fitsHeaderCard<verboseT>::value( tagT<double>, mx::error_t &errc )
+double fitsHeaderCard<verboseT>::value( meta::tagT<double>, mx::error_t &errc )
 {
     return valueNonString<double>( errc );
 }
@@ -1241,7 +1237,7 @@ typeT fitsHeaderCard<verboseT>::value( mx::error_t *errc )
 {
     mx::error_t _errc;
 
-    typeT val = value( tagT<typeT>(), _errc );
+    typeT val = value( meta::tagT<typeT>(), _errc );
 
     if( errc )
     {

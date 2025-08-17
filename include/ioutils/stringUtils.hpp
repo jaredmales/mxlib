@@ -35,6 +35,7 @@
 #include <limits>
 #include <algorithm>
 
+#include "../meta/tagT.hpp"
 #include "../mxlib.hpp"
 
 namespace mx
@@ -130,25 +131,26 @@ namespace stoTImpl
 {
 // tag overloads for stoT
 
-char stoT( const std::string &str, error_t *errc, const char & );
-unsigned char stoT( const std::string &str, error_t *errc, const unsigned char & );
-short stoT( const std::string &str, error_t *errc, const short & );
-unsigned short stoT( const std::string &str, error_t *errc, const unsigned short & );
-int stoT( const std::string &str, error_t *errc, const int & );
-unsigned int stoT( const std::string &str, error_t *errc, const unsigned int & );
-long stoT( const std::string &str, error_t *errc, const long & );
-unsigned long stoT( const std::string &str, error_t *errc, const unsigned long & );
-long long stoT( const std::string &str, error_t *errc, const long long & );
-unsigned long long stoT( const std::string &str, error_t *errc, const unsigned long long & );
-bool stoT( const std::string &str, error_t *errc, const bool & );
-float stoT( const std::string &str, error_t *errc, const float & );
-double stoT( const std::string &str, error_t *errc, const double & );
-long double stoT( const std::string &str, error_t *errc, const long double & );
+char stoT( const std::string &str, error_t *errc, meta::tagT<char> );
+signed char stoT( const std::string &str, error_t *errc, meta::tagT<signed char> );
+unsigned char stoT( const std::string &str, error_t *errc, meta::tagT<unsigned char> );
+short stoT( const std::string &str, error_t *errc, meta::tagT<short> );
+unsigned short stoT( const std::string &str, error_t *errc, meta::tagT<unsigned short> );
+int stoT( const std::string &str, error_t *errc, meta::tagT<int> );
+unsigned int stoT( const std::string &str, error_t *errc, meta::tagT<unsigned int> );
+long stoT( const std::string &str, error_t *errc, meta::tagT<long> );
+unsigned long stoT( const std::string &str, error_t *errc, meta::tagT<unsigned long> );
+long long stoT( const std::string &str, error_t *errc, meta::tagT<long long> );
+unsigned long long stoT( const std::string &str, error_t *errc, meta::tagT<unsigned long long> );
+bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> );
+float stoT( const std::string &str, error_t *errc, meta::tagT<float> );
+double stoT( const std::string &str, error_t *errc, meta::tagT<double> );
+long double stoT( const std::string &str, error_t *errc, meta::tagT<long double> );
 
-std::string stoT( const std::string &str, error_t *errc, const std::string & );
+std::string stoT( const std::string &str, error_t *errc, meta::tagT<std::string> );
 
 #ifdef HAS_QUAD
-__float128 stoT( const std::string &str, error_t *errc, const __float128 & );
+__float128 stoT( const std::string &str, error_t *errc, meta::tagT<__float128> );
 #endif
 
 } // namespace stoTImpl
@@ -188,7 +190,7 @@ typeT stoT( const std::string &str, /**< [in] the string to convert*/
             error_t *errc = nullptr /**< [out] [optional] pointer to an mxlib error code set during the conversion */
 )
 {
-    return stoTImpl::stoT( str, errc, typeT() );
+    return stoTImpl::stoT( str, errc, meta::tagT<typeT>() );
 }
 
 /// Convert a string to a numerical value.

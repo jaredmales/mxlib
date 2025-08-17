@@ -172,7 +172,7 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
     st = 0;
     en = hmsstr.find( ':', st );
 
-    h = ioutils::convertFromString<floatT>( hmsstr.substr( st, en - st ).c_str() );
+    h = ioutils::stoT<floatT>( hmsstr.substr( st, en - st ).c_str() );
 
     // Check for negative
     if( std::signbit( h ) )
@@ -182,11 +182,11 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
 
     en = hmsstr.find( ':', st );
 
-    m = sgn * ioutils::convertFromString<floatT>( hmsstr.substr( st, en - st ) );
+    m = sgn * ioutils::stoT<floatT>( hmsstr.substr( st, en - st ) );
 
     st = en + 1;
 
-    s = sgn * ioutils::convertFromString<floatT>( hmsstr.substr( st, hmsstr.length() - st ).c_str() );
+    s = sgn * ioutils::stoT<floatT>( hmsstr.substr( st, hmsstr.length() - st ).c_str() );
 }
 
 /// Converts a Gregorian calendar date into modified Julian date (MJD).

@@ -49,7 +49,7 @@ typeT stoInt32s( const std::string &str, error_t *errc )
 {
     error_t _errc;
 
-    long val = stoT( str, &_errc, long() );
+    long val = stoT( str, &_errc, meta::tagT<long>() );
 
     if( _errc == error_t::noerror )
     {
@@ -73,37 +73,41 @@ typeT stoInt32s( const std::string &str, error_t *errc )
     return static_cast<typeT>( val );
 }
 
-char stoT( const std::string &str, error_t *errc, const char & )
+char stoT( const std::string &str, error_t *errc, meta::tagT<char> )
 {
     return stoInt32s<char>( str, errc );
 }
 
-unsigned char stoT( const std::string &str, error_t *errc, const unsigned char & )
+signed char stoT( const std::string &str, error_t *errc, meta::tagT<signed char> )
+{
+    return stoInt32s<signed char>( str, errc );
+}
+
+unsigned char stoT( const std::string &str, error_t *errc, meta::tagT<unsigned char> )
 {
     return stoInt32s<unsigned char>( str, errc );
 }
 
-short stoT( const std::string &str, error_t *errc, const short & )
+short stoT( const std::string &str, error_t *errc, meta::tagT<short> )
 {
     return stoInt32s<short>( str, errc );
 }
 
-unsigned short stoT( const std::string &str, error_t *errc, const unsigned short & )
+unsigned short stoT( const std::string &str, error_t *errc, meta::tagT<unsigned short> )
 {
     return stoInt32s<unsigned short>( str, errc );
 }
 
-int stoT( const std::string &str, error_t *errc, const int & )
+int stoT( const std::string &str, error_t *errc, meta::tagT<int> )
 {
     return stoInt32s<int>( str, errc );
 }
 
-unsigned int stoT( const std::string &str, error_t *errc, const unsigned int & )
+unsigned int stoT( const std::string &str, error_t *errc, meta::tagT<unsigned int> )
 {
     error_t _errc;
 
-    typedef unsigned long ulong;
-    unsigned long val = stoT( str, &_errc, ulong() );
+    unsigned long val = stoT( str, &_errc, meta::tagT<unsigned long>() );
 
     if( _errc == error_t::noerror )
     {
@@ -122,7 +126,7 @@ unsigned int stoT( const std::string &str, error_t *errc, const unsigned int & )
     return static_cast<unsigned int>( val );
 }
 
-long stoT( const std::string &str, error_t *errc, const long & )
+long stoT( const std::string &str, error_t *errc, meta::tagT<long> )
 {
     error_t _errc;
 
@@ -153,7 +157,7 @@ long stoT( const std::string &str, error_t *errc, const long & )
     return val;
 }
 
-unsigned long stoT( const std::string &str, error_t *errc, const unsigned long & )
+unsigned long stoT( const std::string &str, error_t *errc, meta::tagT<unsigned long> )
 {
     error_t _errc;
 
@@ -184,7 +188,7 @@ unsigned long stoT( const std::string &str, error_t *errc, const unsigned long &
     return val;
 }
 
-long long stoT( const std::string &str, error_t *errc, const long long & )
+long long stoT( const std::string &str, error_t *errc, meta::tagT<long long> )
 {
     error_t _errc;
 
@@ -215,7 +219,7 @@ long long stoT( const std::string &str, error_t *errc, const long long & )
     return val;
 }
 
-unsigned long long stoT( const std::string &str, error_t *errc, const unsigned long long & )
+unsigned long long stoT( const std::string &str, error_t *errc, meta::tagT<unsigned long long> )
 {
     error_t _errc;
 
@@ -252,7 +256,7 @@ unsigned long long stoT( const std::string &str, error_t *errc, const unsigned l
  *
  * returns the converted numerical value.
  */
-bool stoT( const std::string &str, error_t *errc, const bool & )
+bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> )
 {
     char c = str[0];
     size_t i = 0;
@@ -270,12 +274,10 @@ bool stoT( const std::string &str, error_t *errc, const bool & )
         return true;
     }
 
-    typedef long long llong;
-
-    return static_cast<bool>( stoT( str, errc, llong() ) );
+    return static_cast<bool>( stoT( str, errc, meta::tagT<long long>() ) );
 }
 
-float stoT( const std::string &str, error_t *errc, const float & )
+float stoT( const std::string &str, error_t *errc, meta::tagT<float> )
 {
     error_t _errc;
 
@@ -306,7 +308,7 @@ float stoT( const std::string &str, error_t *errc, const float & )
     return val;
 }
 
-double stoT( const std::string &str, error_t *errc, const double & )
+double stoT( const std::string &str, error_t *errc, meta::tagT<double> )
 {
     error_t _errc;
 
@@ -337,7 +339,7 @@ double stoT( const std::string &str, error_t *errc, const double & )
     return val;
 }
 
-long double stoT( const std::string &str, error_t *errc, const long double & )
+long double stoT( const std::string &str, error_t *errc, meta::tagT<long double> )
 {
     error_t _errc;
 
@@ -369,7 +371,7 @@ long double stoT( const std::string &str, error_t *errc, const long double & )
 }
 
 #ifdef HAS_QUAD
-__float128 stoT( const std::string &str, error_t *errc, const __float128 & )
+__float128 stoT( const std::string &str, error_t *errc, meta::tagT<__float128> )
 {
     error_t _errc;
 
@@ -402,7 +404,7 @@ __float128 stoT( const std::string &str, error_t *errc, const __float128 & )
 
 #endif // has_quad
 
-std::string stoT( const std::string &str, error_t *errc, const std::string & )
+std::string stoT( const std::string &str, error_t *errc, meta::tagT<std::string> )
 {
     if(errc)
     {

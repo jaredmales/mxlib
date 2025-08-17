@@ -523,13 +523,13 @@
 
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
-  * Various template-meta-programming utilities.
+  * Various template meta-programming utilities.
   */
 
 /** \defgroup mtutils Multi-threading Utilities
   * \ingroup utils
   * Tools for multi-threaded programming
-  /
+  */
 
 /** \defgroup system System Programming
   * \ingroup utils
