@@ -44,4 +44,7 @@ jobs:
         run: |
           source ~/miniconda3/etc/profile.d/conda.sh
           conda activate build
-          make install PREFIX=$CONDA_PREFIX NEED_CUDA=no
+          mkdir _build
+          cd _build
+          cmake -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_ISIO=OFF -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX ..
+          make install
