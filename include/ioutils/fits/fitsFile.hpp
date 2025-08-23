@@ -151,8 +151,6 @@ class fitsFile
     /**
      * \returns the current value of m_naxis
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test
-     * doc]"
      */
     int naxis();
 
@@ -160,8 +158,6 @@ class fitsFile
     /**
      * \returns the current value of m_naxes for the specified dimension. -1 if no such dimension
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test
-     * doc]"
      */
     long naxes( int dim /**< [in] the dimension */ );
 
@@ -321,8 +317,6 @@ class fitsFile
 
     /// Fill in the read-size arrays for reading a subset (always used)
     /**
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test
-     * doc]"
      */
     error_t calcPixarrs( pixarrT &pixarr /**< [out] Populated with the allocated read-size arrays*/ );
 
@@ -659,9 +653,6 @@ class fitsFile
 
     /// Set to read only a subset of the pixels in the file
     /**
-     *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test
-     * doc]"
      */
     void setReadSize( long x0,   ///< is the starting x-pixel to read
                       long y0,   ///< is the starting y-pixel to read
@@ -677,8 +668,6 @@ class fitsFile
     /// Set the number of frames to read from a cube.
     /**
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test
-     * doc]"
      */
     void setCubeReadSize( long z0,     ///< is the starting frame to read
                           long zframes ///< is the number of frames to read
@@ -1356,7 +1345,7 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
         return internal::mxlib_error_report<verboseT>( errc );
     }
 
-    cube.resize( pixarrs.lpix[0] - pixarrs.fpix[0] + 1, pixarrs.lpix[1] - pixarrs.fpix[1] + 1, pixarrs.flist.size() );
+    cube.resize( pixarrs.lpix[0] - pixarrs.fpix[0] + 1, pixarrs.lpix[1] - pixarrs.fpix[1] + 1, flist.size() );
 
     // Now read first image.
     fits_read_subset( m_fptr,
@@ -1430,11 +1419,6 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
                                          const std::vector<std::string> &flist )
 {
     mxlib_error_return( read( cube, flist, &heads ) );
-    /*    error_t errc = read( cube, flist, &heads );
-        if(errc != mx::noerror)
-        {
-            return internal::mxlib_error_report<verboseT>( errc );
-        }*/
 }
 
 template <typename dataT, class verboseT>
@@ -1576,6 +1560,16 @@ template <typename dataT, class verboseT>
 error_t fitsFile<dataT, verboseT>::readHeader( std::vector<fitsHeader<verboseT>> &heads,
                                                const std::vector<std::string> &flist )
 {
+    if(heads.size() != 0 && heads.size() != flist.size())
+    {
+        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "head vector is not empty and not same size as file list");
+    }
+
+    if(heads.size() == 0)
+    {
+        heads.resize(flist.size());
+    }
+
     error_t errc;
     for( int i = 0; i < flist.size(); ++i )
     {

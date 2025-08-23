@@ -205,7 +205,7 @@ add_custom_command(
     COMMAND generate_errno_info
     DEPENDS generate_errno_info include/error/generators/c++11_errnos.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    DEPENDS_EXPLICIT_ONLY
+    #DEPENDS_EXPLICIT_ONLY
 )
 
 #then generate the FITS header
@@ -216,7 +216,7 @@ add_custom_command(
     COMMAND generate_fits_status_info
     DEPENDS generate_fits_status_info include/error/generators/fits_error_codes.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    DEPENDS_EXPLICIT_ONLY
+    #DEPENDS_EXPLICIT_ONLY
 )
 
 #now generate errno_t.hpp
@@ -230,7 +230,7 @@ add_custom_command(
     COMMAND generate_error_t
     DEPENDS generate_error_t include/error/generators/errno_info.hpp include/error/generators/error_t_list.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    DEPENDS_EXPLICIT_ONLY
+    #DEPENDS_EXPLICIT_ONLY
 )
 
 include_directories(include)

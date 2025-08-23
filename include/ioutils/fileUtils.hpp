@@ -27,11 +27,13 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef filtUtils_hpp
-#define filtUtils_hpp
+#ifndef ioutils_fileUtils_hpp
+#define ioutils_fileUtils_hpp
 
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <algorithm>
 
 #include "../mxlib.hpp"
 
@@ -39,6 +41,11 @@ namespace mx
 {
 namespace ioutils
 {
+
+#ifdef MXLIBTEST_NAMESPACE
+namespace MXLIBTEST_NAMESPACE
+{
+#endif
 
 /** \addtogroup fileutils
  * @{
@@ -54,10 +61,10 @@ bool exists( const std::string &path /**< [in] the path to check for existence *
 /// Create a directory or directories
 /** This will create any directories in path that don't exist.  It silently ignores already existing directories.
  *
- * \returns 0 on success, indicating the directories were created or already existed.
- * \returns -1 on error
+ * \returns error_t::noerror on success, indicating the directories were created or already existed.
+ * \returns other codes, error_t::exxxx (from errno) or error_t::filesystem, on errors.
  */
-int createDirectories( const std::string &path /**< [in] the path of the directory(ies)to create */ );
+error_t createDirectories( const std::string &path /**< [in] the path of the directory(ies)to create */ );
 
 /// Get the stem of the filename
 /**
@@ -77,6 +84,16 @@ std::string pathFilename( const std::string &fname );
  */
 std::string parentPath( const std::string &fname );
 
+/// Check if a path exists and is a directory
+/**
+ * \returns true only if \p dir both exists and is a directory, and no errors occur
+ * \returns false otherwise
+ */
+template <class verboseT = verbose::vv>
+bool dir_exists_is( const std::string &dir, /**< [in] the path to check */
+                    mx::error_t &errc       /**< [out] error code. Typically convereted as errno from std::filesystem*/
+);
+
 /// Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /**
  * \returns mx::error_t::success on success
@@ -86,56 +103,23 @@ std::string parentPath( const std::string &fname );
  *
  * \tparam verbose if true then error messages are printed as they occur
  *
- * \b Tests:
- * - Getting a list of files \ref tests_ioutils_fileUtils_getFileNames "[test doc]"
  *
  */
-template<class verboseT=verbose::vvv>
+template <class verboseT = verbose::vvv>
 error_t getFileNames( std::vector<std::string> &fileNames, /** [out] The populated list of file names.*/
-                        const std::string &directory,        /**< [in] The path to the directory to search.
-                                                                       Can not be empty.*/
-                        const std::string &prefix,           /**< [in] The file name prefix (the beginning
-                                                                       characters of the file name) to search
-                                                                       for. If "" then not used.*/
-                        const std::string &substr,           /**< [in] A substring of the filename to search
-                                                                       for. If "" then not used. Only matches
-                                                                       after the first character.*/
-                        const std::string &extension         /**< [in] The file name extension to search for.
-                                                                       If "" then not used. This does not need
-                                                                       to include the ".", as in".ext".*/
+                      const std::string &directory,        /**< [in] The path to the directory to search.
+                                                                     Can not be empty.*/
+                      const std::string &prefix,           /**< [in] The file name prefix (the beginning
+                                                                     characters of the file name) to search
+                                                                     for. If "" then not used.*/
+                      const std::string &substr,           /**< [in] A substring of the filename to search
+                                                                     for. If "" then not used. Only matches
+                                                                     after the first character.*/
+                      const std::string &extension         /**< [in] The file name extension to search for.
+                                                                     If "" then not used. This does not need
+                                                                     to include the ".", as in".ext".*/
 );
 
-template<>
-error_t getFileNames<verbose::o>( std::vector<std::string> &fileNames,
-                        const std::string &directory,
-                        const std::string &prefix,
-                        const std::string &substr,
-                        const std::string &extension
-);
-
-template<>
-error_t getFileNames<verbose::v>( std::vector<std::string> &fileNames,
-                        const std::string &directory,
-                        const std::string &prefix,
-                        const std::string &substr,
-                        const std::string &extension
-);
-
-template<>
-error_t getFileNames<verbose::vv>( std::vector<std::string> &fileNames,
-                        const std::string &directory,
-                        const std::string &prefix,
-                        const std::string &substr,
-                        const std::string &extension
-);
-
-template<>
-error_t getFileNames<verbose::vvv>( std::vector<std::string> &fileNames,
-                        const std::string &directory,
-                        const std::string &prefix,
-                        const std::string &substr,
-                        const std::string &extension
-);
 /// Prepend and/or append strings to a file name, leaving the directory and extension unaltered.
 /**
  * \returns the new file name
@@ -179,7 +163,6 @@ std::string fileNamePrepend( const std::string &fname,  /**< [in] the original f
  *
  * \retval std::string containing the next filename.
  *
- * \test Verify creation of sequential file names \ref tests_ioutils_fileUtils_getSequentialFilename "[test doc]"
  */
 std::string getSequentialFilename( const std::string &basename,       ///< [in] path and initial name of the file*/
                                    const std::string &extension = "", /**< [in] [optional] extension to append after the
@@ -211,6 +194,204 @@ off_t fileSize( int fd /**< [in] an open file descriptor */ );
 off_t fileSize( FILE *f /**< [in] an open file */ );
 
 ///@} -fileutils
+
+/* ===================================================================== */
+/*                       implementations                                 */
+
+template <class verboseT>
+bool dir_exists_is( const std::string &dir, mx::error_t &errc )
+{
+    std::error_code ec;
+    bool exists = std::filesystem::exists( dir, ec );
+
+    // clang-format off
+    #ifdef MXLIBTEST_DIREXISTSIS_ISEXISTSERR
+        ec = std::error_code( EEXIST, std::system_category() ); // LCOV_EXCL_LINE
+    #endif
+    // clang-format on
+
+    if( ec.value() != 0 )
+    {
+        errc = mx::errno2error_t( ec.value() );
+        if( errc == error_t::error )
+        {
+            errc = error_t::filesystem;
+        }
+
+        internal::mxlib_error_report<verboseT>( errc, ec.message() );
+
+        return false;
+    }
+
+    if( !exists )
+    {
+        return false;
+    }
+
+    bool isdir = std::filesystem::is_directory( dir, ec );
+
+    // clang-format off
+    #ifdef MXLIBTEST_DIREXISTSIS_ISDIRERR
+        ec = std::error_code( EACCES, std::system_category() ); // LCOV_EXCL_LINE
+    #endif
+    // clang-format on
+
+    if( ec.value() != 0 )
+    {
+        errc = errno2error_t( ec.value() );
+        if( errc == mx::error_t::error )
+        {
+            errc = mx::error_t::filesystem;
+        }
+
+        internal::mxlib_error_report<verboseT>( errc, ec.message() );
+
+        return false;
+    }
+
+    errc = error_t::noerror;
+    return isdir;
+}
+
+template <class verboseT>
+error_t getFileNames( std::vector<std::string> &fileNames,
+                      const std::string &directory,
+                      const std::string &prefix,
+                      const std::string &substr,
+                      const std::string &extension )
+{
+    try // there are several things that can throw here
+    {
+        fileNames.clear();
+
+        if( std::filesystem::exists( directory ) )
+        {
+            if( std::filesystem::is_directory( directory ) )
+            {
+                bool hasext = false;
+                std::string _ext;
+                if( extension.size() > 0 )
+                {
+                    if( extension[0] != '.' )
+                    {
+                        _ext = '.';
+                    }
+
+                    _ext += extension;
+
+                    hasext = true;
+                }
+
+                bool hasprefix = ( prefix.size() > 0 );
+
+                bool hassub = ( substr.size() > 0 );
+
+                std::filesystem::directory_iterator it{ directory };
+                auto it_end = std::filesystem::directory_iterator{};
+                for( it; it != it_end; ++it )
+                {
+                    if( hasext )
+                    {
+                        if( it->path().extension() != _ext )
+                        {
+                            continue;
+                        }
+                    }
+
+                    std::string p = it->path().filename().generic_string();
+
+                    if( hasprefix )
+                    {
+                        if( p.size() < prefix.size() )
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            // This won't throw because:
+                            //  - prefix has size > 0
+                            //  - p.size() >= prefix.size()
+                            //  - therefore prefix.size() > 0
+                            //  - so pos1 = 0 will not throw.
+                            if( p.compare( 0, prefix.size(), prefix ) != 0 )
+                            {
+                                continue;
+                            }
+                        }
+                    }
+
+                    if( hassub )
+                    {
+                        if( p.size() < 2 )
+                        {
+                            continue;
+                        }
+
+                        size_t sspos = p.find( substr, 1 ); // only match if not prefix
+
+                        if( sspos == std::string::npos )
+                        {
+                            continue;
+                        }
+                    }
+
+                    // If here then it passed all checks
+                    // this could throw
+                    fileNames.push_back( it->path().native() );
+                }
+
+                std::sort( fileNames.begin(), fileNames.end() );
+            }
+            else
+            {
+                return internal::mxlib_error_report<verboseT>( error_t::invalidarg, directory + " is not a directory" );
+            }
+        }
+        else
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::dirnotfound, directory + " was not found" );
+        }
+
+        return error_t::noerror;
+    }
+    catch( const std::filesystem::filesystem_error &e )
+    {
+        internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return error_t::std_filesystem_error;
+        #else
+            throw;
+        #endif
+        // clang-format on
+    }
+    catch( const std::bad_alloc &e )
+    {
+        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+            return error_t::std_bad_alloc;
+        #else
+            throw;
+        #endif
+        // clang-format on
+    }
+    catch( const std::exception &e )
+    {
+        internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return error_t::std_exception;
+        #else
+            throw;
+        #endif
+        // clang-format on
+    }
+}
+
+#ifdef MXLIBTEST_NAMESPACE
+} // namespace MXLIBTEST_NAMESPACE
+#endif
 
 } // namespace ioutils
 } // namespace mx

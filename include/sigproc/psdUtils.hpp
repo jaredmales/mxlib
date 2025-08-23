@@ -828,8 +828,7 @@ void vonKarmanPSD( eigenArrp &psd, eigenArrf &freq, alphaT alpha, L0T L0 = 0, l0
  * Entries in psdOneSided are cast to the value_type of psdTwoSided,
  * for instance to allow for conversion to complex type.
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test
- * doc]"
+ * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename vectorTout, typename vectorTin>
 void augment1SidedPSD(
@@ -888,8 +887,7 @@ void augment1SidedPSD(
  *
  * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test
- * doc]"
+ * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename T>
 void augment1SidedPSDFreq(

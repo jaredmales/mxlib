@@ -39,7 +39,6 @@ namespace mx
 namespace fits
 {
 
-
 /// Class to manage the three components of a FITS header card
 /** Since FITS does not provide the type in keyword=value pairs in a FITS header, it is up to the user
  * to determine the type.  Furthermore, since we want to read values from files, type conversions must
@@ -1115,19 +1114,30 @@ template <class verboseT>
 template <typename typeT>
 typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
 {
+    errc = mx::error_t::noerror; //to be changed if needed
+
     if( m_valueGood == false )
     {
-        convertFromString<typeT>(); // error check
+        errc = convertFromString<typeT>(); // error check
+
+        if(errc != error_t::noerror)
+        {
+            internal::mxlib_error_report<verboseT>(errc);
+        }
+
     }
 
     if( m_type != fitsType<typeT>() )
     {
         typeT val;
-        errc = convertedValue<typeT>( val ); // error report
+        errc = convertedValue<typeT>( val );
+        if(errc != error_t::noerror)
+        {
+            internal::mxlib_error_report<verboseT>(errc);
+        }
         return val;
     }
 
-    errc = mx::error_t::noerror;
 
     return m_value.template member<typeT>();
 }

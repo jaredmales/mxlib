@@ -5,10 +5,9 @@
 #include "../../../../include/math/cuda/cudaPtr.hpp"
 #include "../../../../include/math/cuda/templateCublas.hpp"
 
-/** \test Scenario: scaling a vector with cublas
- * Tests cublasTscal, as well as basic cudaPtr operations.
- *
- * \anchor test_math_templateCublas_scal
+/// Tests cublasTscal, as well as basic cudaPtr operations.
+/**
+ * \test
  */
 SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
 {

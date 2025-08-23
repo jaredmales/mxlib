@@ -7,6 +7,13 @@
 
 using namespace mx::app;
 
+/*namespace test_unit
+{
+namespace appTest
+{
+namespace appConfigurator_test
+{*/
+
 SCENARIO( "config file parsing", "[appConfigurator]" )
 {
     GIVEN( "a basic config file" )
@@ -344,3 +351,9 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
     }
 #endif
 }
+
+/*
+} // namespace appConfiguratorTest
+} // namespace appTest
+} // namespace testUnit
+ */

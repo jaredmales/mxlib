@@ -45,8 +45,6 @@ namespace cuda
  *
  * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
  *
- * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
- *
  * \ingroup cublas
  */
 template <typename floatT>

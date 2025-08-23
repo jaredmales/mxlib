@@ -34,7 +34,6 @@
 #include <sstream>
 #include <libgen.h>
 #include <cmath>
-#include <algorithm>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,17 +53,22 @@ bool exists( const std::string &path )
     return std::filesystem::exists( std::filesystem::path( path ) );
 }
 
-int createDirectories( const std::string &path )
+error_t createDirectories( const std::string &path )
 {
     // Use the non throwing version and silently ignore EEXIST errors
     std::error_code ec;
     std::filesystem::create_directories( path, ec );
     if( ec.value() != 0 && ec.value() != EEXIST )
     {
-        return -1;
+        mx::error_t errc = errno2error_t(ec.value());
+        if(errc == error_t::error)
+        {
+            errc = error_t::filesystem;
+        }
+        return errc;
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
 std::string pathStem( const std::string &fname )
@@ -85,184 +89,40 @@ std::string parentPath( const std::string &fname )
     return p.parent_path().string();
 }
 
-namespace impl
-{
-template <class verboseT>
-error_t getFileNames( std::vector<std::string> &fileNames,
-                      const std::string &directory,
-                      const std::string &prefix,
-                      const std::string &substr,
-                      const std::string &extension )
-{
-    try // there are several things that can throw here
-    {
-        fileNames.clear();
+template bool dir_exists_is<verbose::o>( const std::string &, error_t &);
+template bool dir_exists_is<verbose::v>( const std::string &, error_t &);
+template bool dir_exists_is<verbose::vv>( const std::string &, error_t &);
+template bool dir_exists_is<verbose::vvv>( const std::string &, error_t &);
 
-        if( std::filesystem::exists( directory ) )
-        {
-            if( std::filesystem::is_directory( directory ) )
-            {
-                bool hasext = false;
-                std::string _ext;
-                if( extension.size() > 0 )
-                {
-                    if( extension[0] != '.' )
-                    {
-                        _ext = '.';
-                    }
 
-                    _ext += extension;
 
-                    hasext = true;
-                }
-
-                bool hasprefix = ( prefix.size() > 0 );
-
-                bool hassub = ( substr.size() > 0 );
-
-                std::filesystem::directory_iterator it{ directory };
-                auto it_end = std::filesystem::directory_iterator{};
-                for( it; it != it_end; ++it )
-                {
-                    if( hasext )
-                    {
-                        if( it->path().extension() != _ext )
-                        {
-                            continue;
-                        }
-                    }
-
-                    std::string p = it->path().filename().generic_string();
-
-                    if( hasprefix )
-                    {
-                        if( p.size() < prefix.size() )
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            // This won't throw because:
-                            //  - prefix has size > 0
-                            //  - p.size() >= prefix.size()
-                            //  - therefore prefix.size() > 0
-                            //  - so pos1 = 0 will not throw.
-                            if( p.compare( 0, prefix.size(), prefix ) != 0 )
-                            {
-                                continue;
-                            }
-                        }
-                    }
-
-                    if( hassub )
-                    {
-                        if( p.size() < 2 )
-                        {
-                            continue;
-                        }
-
-                        size_t sspos = p.find( substr, 1 ); // only match if not prefix
-
-                        if( sspos == std::string::npos )
-                        {
-                            continue;
-                        }
-                    }
-
-                    // If here then it passed all checks
-                    // this could throw
-                    fileNames.push_back( it->path().native() );
-                }
-
-                sort( fileNames.begin(), fileNames.end() );
-            }
-            else
-            {
-                return internal::mxlib_error_report<verboseT>( error_t::invalidarg, directory + " is not a directory" );
-            }
-        }
-        else
-        {
-            return internal::mxlib_error_report<verboseT>( error_t::dirnotfound, directory + " was not found" );
-        }
-
-        return error_t::noerror;
-    }
-    catch( const std::filesystem::filesystem_error &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_filesystem_error;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
-    catch( const std::bad_alloc &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
-            return error_t::std_bad_alloc;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
-}
-} // namespace impl
-
-template <>
+template
 error_t getFileNames<verbose::o>( std::vector<std::string> &fileNames,
                                   const std::string &directory,
                                   const std::string &prefix,
                                   const std::string &substr,
-                                  const std::string &extension )
-{
-    return impl::getFileNames<verbose::o>( fileNames, directory, prefix, substr, extension );
-}
+                                  const std::string &extension );
 
-template <>
+template
 error_t getFileNames<verbose::v>( std::vector<std::string> &fileNames,
                                   const std::string &directory,
                                   const std::string &prefix,
                                   const std::string &substr,
-                                  const std::string &extension )
-{
-    return impl::getFileNames<verbose::v>( fileNames, directory, prefix, substr, extension );
-}
+                                  const std::string &extension );
 
-template <>
+template
 error_t getFileNames<verbose::vv>( std::vector<std::string> &fileNames,
                                    const std::string &directory,
                                    const std::string &prefix,
                                    const std::string &substr,
-                                   const std::string &extension )
-{
-    return impl::getFileNames<verbose::vv>( fileNames, directory, prefix, substr, extension );
-}
+                                   const std::string &extension );
 
-template <>
+template
 error_t getFileNames<verbose::vvv>( std::vector<std::string> &fileNames,
                                     const std::string &directory,
                                     const std::string &prefix,
                                     const std::string &substr,
-                                    const std::string &extension )
-{
-    return impl::getFileNames<verbose::vvv>( fileNames, directory, prefix, substr, extension );
-}
+                                    const std::string &extension );
 
 std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )
 {

@@ -986,6 +986,7 @@ INPUT                  = ./groupdefs.dox \
                          ../tests/include/astro \
                          ../tests/include/improc \
                          ../tests/include/ioutils \
+                         ../tests/include/ioutils/fits \
                          ../tests/include/math \
                          ../tests/include/math/cuda \
                          ../tests/include/math/func \

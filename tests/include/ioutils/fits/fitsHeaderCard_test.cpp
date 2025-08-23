@@ -7,15 +7,24 @@
 #include "../../../../include/ioutils/fits/fitsHeaderCard.hpp"
 using namespace mx::fits;
 
-/** \test Scenario: Verify converstion of types
- *
- * \anchor tests_ioutils_fits_fitsHeaderCard_converting_types
- */
-SCENARIO( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
+namespace unitTest
 {
-    GIVEN( "a fitsHeaderCard constructed with char type" )
+namespace ioutilsTest
+{
+namespace fitsTest
+{
+namespace fitsHeaderCardTest
+{
+
+/// Verify conversion of types
+/**
+ * \ingroup fitsHeaderCard_unit_tests
+ */
+TEST_CASE( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
+{
+    SECTION( "a fitsHeaderCard constructed with char type" )
     {
-        WHEN( "setting a char from a string" )
+        SECTION( "setting a char from a string" )
         {
             fitsHeaderCard fhc( "KEYWORD", "39", fitsType<char>(), "this comment" );
 
@@ -48,7 +57,7 @@ SCENARIO( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
             REQUIRE( s == "39" );
             REQUIRE( fhc.valueStrGood() == true );
         }
-        WHEN( "setting a char from a char" )
+        SECTION( "setting a char from a char" )
         {
             fitsHeaderCard fhc( "KEYWORD", static_cast<char>( 39 ), "this comment" );
 
@@ -78,8 +87,8 @@ SCENARIO( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
             fhc.type( fitsType<int>() );
             REQUIRE( fhc.type() == fitsType<int>() );
             mx::error_t errc = mx::error_t::error;
-            REQUIRE( fhc.Int(&errc) == 39 );
-            REQUIRE(errc == mx::error_t::noerror);
+            REQUIRE( fhc.Int( &errc ) == 39 );
+            REQUIRE( errc == mx::error_t::noerror );
 
             REQUIRE( fhc.valueGood() == true );
             REQUIRE( fhc.valueStrGood() == false );
@@ -90,3 +99,8 @@ SCENARIO( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
         }
     }
 }
+
+} // namespace fitsHeaderCardTest
+} // namespace fitsTest
+} // namespace ioutilsTest
+} // namespace unitTest

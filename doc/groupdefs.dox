@@ -56,6 +56,7 @@
 
 //See error_handling_files
 
+
 //------------------ gen_math -----------------------
 
 
@@ -473,7 +474,6 @@
   * \ingroup utils
   * Various input/output utilities
   */
-
 /** \defgroup stringutils Working with strings
   * \ingroup ioutils
   * Various tools for working with strings
@@ -558,6 +558,44 @@
 
 
 // see utils_files
+
+//------------------ testing -----------------------
+
+/** \defgroup mxlib_testing Testing
+  */
+
+    /** \defgroup unit_tests Unit Tests
+      * \ingroup mxlib_testing
+      */
+
+        /** \defgroup ioutils_unit_tests I/O Utilities Unit Tests
+          * \ingroup unit_tests
+          */
+
+                /** \defgroup fileUtils_unit_tests File Utilities Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup stringUtils_unit_tests String Utilities Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup readColumns_unit_tests readColumns Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup fits_unit_tests FITS Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                    /** \defgroup fitsFile_unit_tests fitsFile Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
+                    /** \defgroup fitsHeaderCard_unit_tests fitsHeaderCard Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
 
 //-----------------------------------------------------------------------
 
