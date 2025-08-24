@@ -984,6 +984,7 @@ INPUT                  = ./groupdefs.dox \
                          ../tests/include/ao/analysis \
                          ../tests/include/app \
                          ../tests/include/astro \
+                         ../tests/include/error \
                          ../tests/include/improc \
                          ../tests/include/ioutils \
                          ../tests/include/ioutils/fits \

@@ -568,6 +568,17 @@
       * \ingroup mxlib_testing
       */
 
+        /** \defgroup error_unit_tests Error Handling Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup error_error_unit_tests Error Reporting Unit Tests
+              * \ingroup error_unit_tests
+              */
+
+            /** \defgroup error_error_t_unit_tests error_t Utilities Unit Tests
+              * \ingroup error_unit_tests
+              */
+
         /** \defgroup ioutils_unit_tests I/O Utilities Unit Tests
           * \ingroup unit_tests
           */

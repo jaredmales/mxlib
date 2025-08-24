@@ -58,7 +58,7 @@ namespace fits
  *
  * \ingroup fits_processing
  */
-template <class verboseT = verbose::vvv>
+template <class verboseT = verbose::d>
 class fitsHeaderCard
 {
 
@@ -1546,10 +1546,7 @@ mx::error_t fitsHeaderCard<verboseT>::write( fitsfile *fptr )
     }
 }
 
-extern template class fitsHeaderCard<verbose::o>;
-extern template class fitsHeaderCard<verbose::v>;
-extern template class fitsHeaderCard<verbose::vv>;
-extern template class fitsHeaderCard<verbose::vvv>;
+extern template class fitsHeaderCard<verbose::d>;
 
 } // namespace fits
 } // namespace mx

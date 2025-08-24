@@ -48,7 +48,7 @@ namespace fits
  *
  * \ingroup fits_processing
  */
-template <typename dataT, class verboseT = verbose::vvv>
+template <typename dataT, class verboseT = verbose::d>
 class fitsFile
 {
 
@@ -1786,35 +1786,12 @@ typedef fitsFile<double> fitsFiled;
 
 ///@}
 
-extern template class fitsFile<short, verbose::o>;
-extern template class fitsFile<short, verbose::v>;
-extern template class fitsFile<short, verbose::vv>;
-extern template class fitsFile<short, verbose::vvv>;
-
-extern template class fitsFile<unsigned short, verbose::o>;
-extern template class fitsFile<unsigned short, verbose::v>;
-extern template class fitsFile<unsigned short, verbose::vv>;
-extern template class fitsFile<unsigned short, verbose::vvv>;
-
-extern template class fitsFile<int, verbose::o>;
-extern template class fitsFile<int, verbose::v>;
-extern template class fitsFile<int, verbose::vv>;
-extern template class fitsFile<int, verbose::vvv>;
-
-extern template class fitsFile<unsigned int, verbose::o>;
-extern template class fitsFile<unsigned int, verbose::v>;
-extern template class fitsFile<unsigned int, verbose::vv>;
-extern template class fitsFile<unsigned int, verbose::vvv>;
-
-extern template class fitsFile<float, verbose::o>;
-extern template class fitsFile<float, verbose::v>;
-extern template class fitsFile<float, verbose::vv>;
-extern template class fitsFile<float, verbose::vvv>;
-
-extern template class fitsFile<double, verbose::o>;
-extern template class fitsFile<double, verbose::v>;
-extern template class fitsFile<double, verbose::vv>;
-extern template class fitsFile<double, verbose::vvv>;
+extern template class fitsFile<short, verbose::d>;
+extern template class fitsFile<unsigned short, verbose::d>;
+extern template class fitsFile<int, verbose::d>;
+extern template class fitsFile<unsigned int, verbose::d>;
+extern template class fitsFile<float, verbose::d>;
+extern template class fitsFile<double, verbose::d>;
 
 } // namespace fits
 } // namespace mx

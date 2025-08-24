@@ -201,7 +201,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
  *
  * \ingroup asciiutils
  */
-template <class delimT = readColSpaceDelim, class verboseT = verbose::vvv, typename... arrTs>
+template <class delimT = readColSpaceDelim, class verboseT = verbose::d, typename... arrTs>
 error_t readColumns( const std::string &fname, ///< [in] is the file name to read from
                      arrTs &...arrays          /**< [out] a variadic list of std::vectors. Any number with mixed
                                                           value_type can be specified. Neither allocated nor cleared,
@@ -261,7 +261,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
 
             // clang-format off
             #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
-                return error_t::std_bad_alloc;
+                return error_t::std_exception;
             #else
                 throw;
             #endif

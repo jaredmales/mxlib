@@ -306,7 +306,7 @@ TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )
     {
 
         fitsFile<float> ff;
-        std::vector<mx::fits::fitsHeader<mx::verbose::vvv>> fh;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
         REQUIRE(ff.readHeader(fh, fnames) == mx::error_t::noerror);
@@ -324,7 +324,7 @@ TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )
     {
 
         fitsFile<float> ff;
-        std::vector<mx::fits::fitsHeader<mx::verbose::vvv>> fh;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
         fh.resize(fnames.size());
@@ -354,7 +354,7 @@ TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )
     SECTION("write three frames and read their headers as a vector, allocated to wrong size")
     {
         fitsFile<float> ff;
-        std::vector<mx::fits::fitsHeader<mx::verbose::vvv>> fh;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
         fh.resize(fnames.size()+1);
@@ -365,7 +365,7 @@ TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )
     {
 
         fitsFile<float> ff;
-        std::vector<mx::fits::fitsHeader<mx::verbose::vvv>> fh;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
         fh.resize(fnames.size());

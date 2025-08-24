@@ -48,10 +48,9 @@ namespace mx
 namespace ioutils
 {
 
-bool exists( const std::string &path )
-{
-    return std::filesystem::exists( std::filesystem::path( path ) );
-}
+template bool exists<verbose::d>( const std::string &, error_t &);
+
+template bool dir_exists_is<verbose::d>( const std::string &, error_t &);
 
 error_t createDirectories( const std::string &path )
 {
@@ -89,40 +88,17 @@ std::string parentPath( const std::string &fname )
     return p.parent_path().string();
 }
 
-template bool dir_exists_is<verbose::o>( const std::string &, error_t &);
-template bool dir_exists_is<verbose::v>( const std::string &, error_t &);
-template bool dir_exists_is<verbose::vv>( const std::string &, error_t &);
-template bool dir_exists_is<verbose::vvv>( const std::string &, error_t &);
 
 
 
 template
-error_t getFileNames<verbose::o>( std::vector<std::string> &fileNames,
+error_t getFileNames<verbose::d>( std::vector<std::string> &fileNames,
                                   const std::string &directory,
                                   const std::string &prefix,
                                   const std::string &substr,
                                   const std::string &extension );
 
-template
-error_t getFileNames<verbose::v>( std::vector<std::string> &fileNames,
-                                  const std::string &directory,
-                                  const std::string &prefix,
-                                  const std::string &substr,
-                                  const std::string &extension );
 
-template
-error_t getFileNames<verbose::vv>( std::vector<std::string> &fileNames,
-                                   const std::string &directory,
-                                   const std::string &prefix,
-                                   const std::string &substr,
-                                   const std::string &extension );
-
-template
-error_t getFileNames<verbose::vvv>( std::vector<std::string> &fileNames,
-                                    const std::string &directory,
-                                    const std::string &prefix,
-                                    const std::string &substr,
-                                    const std::string &extension );
 
 std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )
 {

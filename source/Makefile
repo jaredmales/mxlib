@@ -5,7 +5,6 @@
 
 OBJS = \
 	mxlib.o \
-	mxError.o \
 	ao/analysis/clGainOpt.o \
 	ao/analysis/aoAtmosphere.o \
 	ao/analysis/aoSystem.o \
@@ -16,6 +15,8 @@ OBJS = \
 	app/clOptions.o \
 	app/ini.o \
 	app/optionparser.o \
+	error/error.o \
+	error/mxErrorOld.o \
 	ioutils/fileUtils.o \
 	ioutils/stringUtils.o \
 	ioutils/fits/fitsUtils.o \
@@ -67,7 +68,6 @@ VENDOROBJS = \
 all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
-mxError.o: ../include/mxError.hpp ../include/mxException.hpp
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o ../include/ao/analysis/aoWFS.hpp
@@ -78,6 +78,8 @@ app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptio
 app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
+error/error.o: ../include/error/error.hpp ../include/error/error_t.hpp
+error/mxErrorOld.o: ../include/error/mxErrorOld.hpp
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp

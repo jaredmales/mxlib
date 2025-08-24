@@ -51,12 +51,39 @@ namespace MXLIBTEST_NAMESPACE
  * @{
  */
 
+/// Convert a string to a path, handling exceptions.
+/** Wrapper for `path = str` assignment that handles exceptions
+ * and implements mxlib standard error handling.
+ *
+ * \returns error_t::noerror if no exceptions
+ * \returns error_t::std_bad_alloc if std::bad_alloc is caught
+ * \returns error_t::std_filesystem_error if std::filesystem::filesystem_error is caught
+ * \returns error_t::std_exception if any other exceptions are caught
+ *
+ * \throws a nested mx::exception for any uncaught exceptions.
+ */
+template <class verboseT>
+error_t string2path( std::filesystem::path & path, const std::string &str);
+
 /// Check if a path exists
 /**
- * \returns true if the path exists
- * \returns false if it doesn't
+ * \returns true if the path exists and no errors occur
+ * \returns false otherwise
  */
-bool exists( const std::string &path /**< [in] the path to check for existence */ );
+template <class verboseT = verbose::d>
+bool exists( const std::string &path, /**< [in] the path to check for existence */
+             mx::error_t &errc        /**< [out] error code. Typically convereted as errno from std::filesystem*/
+);
+
+/// Check if a path exists and is a directory
+/**
+ * \returns true only if \p dir both exists and is a directory, and no errors occur
+ * \returns false otherwise
+ */
+template <class verboseT = verbose::d>
+bool dir_exists_is( const std::string &dir, /**< [in] the path to check */
+                    mx::error_t &errc       /**< [out] error code. Typically convereted as errno from std::filesystem*/
+);
 
 /// Create a directory or directories
 /** This will create any directories in path that don't exist.  It silently ignores already existing directories.
@@ -84,16 +111,6 @@ std::string pathFilename( const std::string &fname );
  */
 std::string parentPath( const std::string &fname );
 
-/// Check if a path exists and is a directory
-/**
- * \returns true only if \p dir both exists and is a directory, and no errors occur
- * \returns false otherwise
- */
-template <class verboseT = verbose::vv>
-bool dir_exists_is( const std::string &dir, /**< [in] the path to check */
-                    mx::error_t &errc       /**< [out] error code. Typically convereted as errno from std::filesystem*/
-);
-
 /// Get a list of file names from the specified directory, specifying a prefix, a substring to match, and an extension
 /**
  * \returns mx::error_t::success on success
@@ -105,7 +122,7 @@ bool dir_exists_is( const std::string &dir, /**< [in] the path to check */
  *
  *
  */
-template <class verboseT = verbose::vvv>
+template <class verboseT = verbose::d>
 error_t getFileNames( std::vector<std::string> &fileNames, /** [out] The populated list of file names.*/
                       const std::string &directory,        /**< [in] The path to the directory to search.
                                                                      Can not be empty.*/
@@ -199,10 +216,120 @@ off_t fileSize( FILE *f /**< [in] an open file */ );
 /*                       implementations                                 */
 
 template <class verboseT>
+error_t string2path( std::filesystem::path & path, const std::string &str)
+{
+    try
+    {
+        path = str;
+
+        return error_t::noerror;
+    }
+    catch( const std::bad_alloc &e )
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+            return error_t::std_bad_alloc;
+        #else
+            std::throw_with_nested(std::bad_alloc());
+        #endif
+        // clang-format on
+    }
+    catch( const std::filesystem::filesystem_error &e )
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
+            return internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
+        #else
+            std::throw_with_nested(std::exception());
+        #endif
+        // clang-format on
+    }
+    catch( const std::exception &e )
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
+            return internal::mxlib_error_report<verboseT>( error_t::std_exception, e.what() );
+        #else
+            std::throw_with_nested(std::exception());
+        #endif
+        // clang-format on
+    }
+    catch(...)
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
+            return internal::mxlib_error_report<verboseT>( error_t::exception, "unknown exception");
+        #else
+            std::throw_with_nested(std::exception());
+        #endif
+        // clang-format on
+    }
+}
+
+template <class verboseT>
+bool exists( const std::string &strpath, mx::error_t &errc )
+{
+    std::error_code ec;
+
+    std::filesystem::path path;
+
+    try
+    {
+        errc = string2path<verboseT>(path, strpath);
+
+        if(!!errc)
+        {
+            internal::mxlib_error_report<verboseT>( errc, "converting path" );
+            return false;
+        }
+    }
+    catch( ... )
+    {
+        std::throw_with_nested(std::exception());
+    }
+
+    bool ex = std::filesystem::exists( path, ec );
+
+    if( ec.value() != 0 )
+    {
+        errc = mx::errno2error_t( ec.value() );
+        if( errc == error_t::error )
+        {
+            errc = error_t::filesystem;
+        }
+
+        internal::mxlib_error_report<verboseT>( errc, ec.message() );
+
+        return false;
+    }
+
+    errc = error_t::noerror;
+    return ex;
+}
+
+template <class verboseT>
 bool dir_exists_is( const std::string &dir, mx::error_t &errc )
 {
     std::error_code ec;
-    bool exists = std::filesystem::exists( dir, ec );
+
+    std::filesystem::path path;
+
+    try
+    {
+        errc = string2path<verboseT>(path, dir);
+
+        if(!!errc)
+        {
+            internal::mxlib_error_report<verboseT>( errc, "converting path" );
+            return false;
+        }
+    }
+    catch( ... )
+    {
+        std::throw_with_nested(std::exception());
+    }
+
+    bool exists = std::filesystem::exists( path, ec );
 
     // clang-format off
     #ifdef MXLIBTEST_DIREXISTSIS_ISEXISTSERR
@@ -228,7 +355,7 @@ bool dir_exists_is( const std::string &dir, mx::error_t &errc )
         return false;
     }
 
-    bool isdir = std::filesystem::is_directory( dir, ec );
+    bool isdir = std::filesystem::is_directory( path, ec );
 
     // clang-format off
     #ifdef MXLIBTEST_DIREXISTSIS_ISDIRERR

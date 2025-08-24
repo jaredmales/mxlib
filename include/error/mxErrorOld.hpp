@@ -24,6 +24,12 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
+#include <cerrno>
+#include <cstring>
+#include <sstream>
+#include <iostream>
+#include <string>
+
 #ifndef __mxErrorOld__
 #define __mxErrorOld__
 

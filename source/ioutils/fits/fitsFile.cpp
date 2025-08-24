@@ -31,35 +31,17 @@ namespace mx
 namespace fits
 {
 
-template class fitsFile<short,verbose::o>;
-template class fitsFile<short,verbose::v>;
-template class fitsFile<short,verbose::vv>;
-template class fitsFile<short,verbose::vvv>;
+template class fitsFile<short,verbose::d>;
 
-template class fitsFile<unsigned short,verbose::o>;
-template class fitsFile<unsigned short,verbose::v>;
-template class fitsFile<unsigned short,verbose::vv>;
-template class fitsFile<unsigned short,verbose::vvv>;
+template class fitsFile<unsigned short,verbose::d>;
 
-template class fitsFile<int,verbose::o>;
-template class fitsFile<int,verbose::v>;
-template class fitsFile<int,verbose::vv>;
-template class fitsFile<int,verbose::vvv>;
+template class fitsFile<int,verbose::d>;
 
-template class fitsFile<unsigned int,verbose::o>;
-template class fitsFile<unsigned int,verbose::v>;
-template class fitsFile<unsigned int,verbose::vv>;
-template class fitsFile<unsigned int,verbose::vvv>;
+template class fitsFile<unsigned int,verbose::d>;
 
-template class fitsFile<float,verbose::o>;
-template class fitsFile<float,verbose::v>;
-template class fitsFile<float,verbose::vv>;
-template class fitsFile<float,verbose::vvv>;
+template class fitsFile<float,verbose::d>;
 
-template class fitsFile<double,verbose::o>;
-template class fitsFile<double,verbose::v>;
-template class fitsFile<double,verbose::vv>;
-template class fitsFile<double,verbose::vvv>;
+template class fitsFile<double,verbose::d>;
 
 } // namespace fits
 } // namespace mx

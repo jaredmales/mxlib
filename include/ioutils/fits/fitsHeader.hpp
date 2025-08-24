@@ -49,7 +49,7 @@ namespace fits
  *
  * \ingroup fits_processing
  */
-template <class verboseT = verbose::vvv>
+template <class verboseT = verbose::d>
 class fitsHeader
 {
   public:
@@ -941,10 +941,7 @@ void fitsHeaderGitStatus( fitsHeaderT &head, const std::string &repoName, const 
 
 ///@}
 
-extern template class fitsHeader<verbose::o>;
-extern template class fitsHeader<verbose::v>;
-extern template class fitsHeader<verbose::vv>;
-extern template class fitsHeader<verbose::vvv>;
+extern template class fitsHeader<verbose::d>;
 
 } // namespace fits
 } // namespace mx

@@ -31,10 +31,7 @@ namespace mx
 namespace fits
 {
 
-template class fitsHeader<verbose::o>;
-template class fitsHeader<verbose::v>;
-template class fitsHeader<verbose::vv>;
-template class fitsHeader<verbose::vvv>;
+template class fitsHeader<verbose::d>;
 
 
 

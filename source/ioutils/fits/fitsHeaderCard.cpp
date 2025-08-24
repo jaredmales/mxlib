@@ -31,10 +31,7 @@ namespace mx
 namespace fits
 {
 
-template class fitsHeaderCard<verbose::o>;
-template class fitsHeaderCard<verbose::v>;
-template class fitsHeaderCard<verbose::vv>;
-template class fitsHeaderCard<verbose::vvv>;
+template class fitsHeaderCard<verbose::d>;
 
 } // namespace fits
 } // namespace mx
