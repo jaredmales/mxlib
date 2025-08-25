@@ -34,12 +34,13 @@
 #include <complex>
 #include <vector>
 
+#include "../mxlib.hpp"
 #include "../math/func/bessel.hpp"
 #include "../math/func/jinc.hpp"
 #include "../math/func/factorial.hpp"
 #include "../math/func/sign.hpp"
 #include "../math/constants.hpp"
-#include "../mxError.hpp"
+
 
 namespace mx
 {
@@ -108,7 +109,7 @@ int zernikeRCoeffs(
 
     if( n < m )
     {
-        mxError( "zernikeRCoeffs", MXE_INVALIDARG, "n cannot be less than m in the Zernike polynomials" );
+        internal::mxlib_error_report(error_t::invalidarg, "n cannot be less than m in the Zernike polynomials" );
         return -1;
     }
 
@@ -172,7 +173,7 @@ realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1
 
     if( c.size() != 0.5 * ( n - m ) + 1 )
     {
-        mxError( "zernikeR", MXE_INVALIDARG, "c vector has incorrect length for n and m." );
+        internal::mxlib_error_report(error_t::invalidarg, "c vector has incorrect length for n and m." );
         return -9999;
     }
 
@@ -682,13 +683,13 @@ int zernikeQNorm(
 {
     if( arr.rows() != k.rows() || arr.cols() != k.cols() )
     {
-        mxError( "zernikeQNorm", MXE_INVALIDARG, "output array and input k are not the same size" );
+        internal::mxlib_error_report(error_t::invalidarg, "output array and input k are not the same size" );
         return -1;
     }
 
     if( arr.rows() != phi.rows() || arr.cols() != phi.cols() )
     {
-        mxError( "zernikeQNorm", MXE_INVALIDARG, "output array and input phi are not the same size" );
+        internal::mxlib_error_report(error_t::invalidarg, "output array and input phi are not the same size" );
         return -1;
     }
 

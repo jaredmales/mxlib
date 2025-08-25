@@ -29,7 +29,7 @@
 
 #include <format>
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 
 #include "../../meta/tagT.hpp"
 #include "fitsUtils.hpp"

@@ -29,8 +29,8 @@
 
 #include <cmath>
 
+#include "../mxlib.hpp"
 #include "../math/constants.hpp"
-#include "../mxError.hpp"
 
 #include "imagingArray.hpp"
 
@@ -79,13 +79,13 @@ int circularPupil( arrayT &m, ///< [in.out] is the allocated Array.  Dimensions 
 
     if( eps < 0 )
     {
-        mxError( "circularPupil", MXE_INVALIDARG, "Central obscuration can not be < 0." );
+        internal::mxlib_error_report(error_t::invalidarg, "Central obscuration can not be < 0." );
         return -1;
     }
 
     if( eps > 1 )
     {
-        mxError( "circularPupil", MXE_INVALIDARG, "Central obscuration can not be > 1." );
+        internal::mxlib_error_report(error_t::invalidarg, "Central obscuration can not be > 1." );
         return -1;
     }
 

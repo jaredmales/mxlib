@@ -31,6 +31,7 @@
 #include "mxlib_uncomp_version.h"
 
 #include "error/error.hpp"
+#include "error/exception.hpp"
 
 namespace mx
 {

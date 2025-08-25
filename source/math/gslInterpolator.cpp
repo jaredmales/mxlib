@@ -1,6 +1,7 @@
-/** \file mxError.hpp
- * \brief The mxlib error reporting system.
- * \ingroup error_handling_files
+/** \file gslInterpolator.cpp
+ * \brief Implementation of Class for managing 1-D interpolation using the GNU Scientific Library
+ * \ingroup gen_math_files
+ * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
@@ -23,7 +24,15 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#pragma message ("mxError.hpp is deprecated.  Use 'error/error.hpp' instead.")
+#include "math/gslInterpolator.hpp"
 
-#include "error/error.hpp"
-#include "error/mxErrorOld.hpp"
+namespace mx
+{
+namespace math
+{
+
+template class gslInterpolator<gsl_interp_linear<double>>;
+template class gslInterpolator<gsl_interp_steffen<double>>;
+
+} // namespace math
+} // namespace mx

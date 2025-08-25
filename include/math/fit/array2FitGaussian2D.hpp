@@ -27,7 +27,7 @@
 #ifndef math_fit_array2FitGaussian2D_hpp
 #define math_fit_array2FitGaussian2D_hpp
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 
 namespace mx
 {
@@ -190,8 +190,7 @@ void array2FitGaussian2D<realT>::setFixed( bool G0, bool G, bool x0, bool y0, bo
     {
         if( sigma_x || sigma_y || theta )
         {
-            mxError(
-                "array2FitGaussian2D::setFixed", MXE_NOTIMPL, "cannot fix sigma_x, sigma_y, and theta separately" );
+            internal::mxlib_error_report(error_t::notimpl, "cannot fix sigma_x, sigma_y, and theta separately" );
         }
 
         m_sigma_x_idx = idx++;

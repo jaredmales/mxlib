@@ -27,7 +27,7 @@
 #ifndef ioutils_fits_fitsFile_hpp
 #define ioutils_fits_fitsFile_hpp
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 
 #include "../../improc/eigenImage.hpp"
 

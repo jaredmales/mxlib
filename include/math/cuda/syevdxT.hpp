@@ -46,7 +46,6 @@
 
 // #include "/home/jrmales/Source/CUDALibrarySamples/cuSOLVER/utils/cusolver_utils.h"
 
-#include "../../mxException.hpp"
 
 namespace mx
 {

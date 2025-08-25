@@ -38,6 +38,7 @@
 
 #include <Eigen/Dense>
 
+#include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../math/func/airyPattern.hpp"
@@ -50,7 +51,6 @@
 #include "../../ioutils/fileUtils.hpp"
 
 #include "../../ipc/ompLoopWatcher.hpp"
-#include "../../mxError.hpp"
 
 #include "aoSystem.hpp"
 #include "aoPSDs.hpp"

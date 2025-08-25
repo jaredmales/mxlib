@@ -27,7 +27,7 @@
 #ifndef math_fit_array2FitGaussian1D_hpp
 #define math_fit_array2FitGaussian1D_hpp
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 
 namespace mx
 {

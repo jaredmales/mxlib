@@ -375,10 +375,10 @@ mx::error_t fits_write_comment( fitsfile *fptr, char *comment );
 mx::error_t fits_write_history( fitsfile *fptr, char *history );
 
 /// Generate a rich error meesage from a FITS status code.
-void fitsErrText( std::string &explan,         ///< [out] the explanatory message
+/*void fitsErrText( std::string &explan,         ///< [out] the explanatory message
                   const std::string &filename, ///< [in] the FITS file's name which generated the problem
                   int fstatus                  ///< [in] the cfitstio status code
-);
+);*/
 ///@}
 
 } // namespace fits

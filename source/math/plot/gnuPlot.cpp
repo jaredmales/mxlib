@@ -91,11 +91,15 @@ int gnuPlot::connect()
     {
         if( errno )
         {
-            mxPError( "gnuPlot", errno, "Error starting the gnuplot program with popen." );
+            internal::mxlib_error_report<verboseT>( errno2error_t( errno ),
+                                                    "Error starting the gnuplot program with popen." );
+            // mxPError( "gnuPlot", errno, "Error starting the gnuplot program with popen." );
         }
         else
         {
-            mxError( "gnuPlot", MXE_PROCERR, "Error starting the gnuplot program with popen." );
+            internal::mxlib_error_report<verboseT>( error_t::procerr,
+                                                    "Error starting the gnuplot program with popen." );
+            // mxError( "gnuPlot", MXE_PROCERR, "Error starting the gnuplot program with popen." );
         }
 
         return -1;
@@ -117,7 +121,8 @@ int gnuPlot::connect()
 
     if( _errFD <= 0 )
     {
-        mxPError( "gnuPlot", errno, "gnuPlot failed to open stderr file: " );
+        internal::mxlib_error_report<verboseT>( errno2error_t( errno ), "gnuPlot failed to open stderr file" );
+        //        mxPError( "gnuPlot", errno, "gnuPlot failed to open stderr file: " );
         return -1;
     }
 
@@ -170,7 +175,8 @@ int gnuPlot::checkResponse( std::string &response, double timeout )
 
         if( rv < 0 )
         {
-            mxPError( "gnuPlot", errno, "Occurred while reading gnuplot stderr" );
+            internal::mxlib_error_report<verboseT>(errno2error_t(errno), "Occurred while reading gnuplot stderr" );
+            //mxPError( "gnuPlot", errno, "Occurred while reading gnuplot stderr" );
 
             response = "";
             return -1;
@@ -178,7 +184,8 @@ int gnuPlot::checkResponse( std::string &response, double timeout )
 
         if( rv == 0 )
         {
-            mxError( "gnuPlot", MXE_TIMEOUT, "Timed out while reading from gnuplot stderr" );
+            internal::mxlib_error_report<verboseT>(error_t::timeout, "Timed out while reading from gnuplot stderr" );
+            //mxError( "gnuPlot", MXE_TIMEOUT, "Timed out while reading from gnuplot stderr" );
             response = "";
             return 0;
         }
@@ -232,7 +239,8 @@ int gnuPlot::checkResponse( std::string &response, double timeout )
                 _gpError = true;
                 _gpErrorMsg = response;
 
-                mxError( "gnuPlot", MXE_GNUPLOTERR, "gnuplot says:\n" + response );
+                internal::mxlib_error_report<verboseT>(error_t::gnuploterr, "gnuplot says: " + response);
+                //mxError( "gnuPlot", MXE_GNUPLOTERR, "gnuplot says:\n" + response );
 
                 response = "";
                 return -1;

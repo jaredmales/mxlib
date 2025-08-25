@@ -16,7 +16,6 @@
 #include <algorithm>
 
 #include "../../mxlib.hpp"
-#include "../../mxError.hpp"
 
 #include "aoConstants.hpp"
 
@@ -628,31 +627,31 @@ int aoAtmosphere<realT>::checkLayers()
 
     if( m_l_0.size() != n )
     {
-        mxError( "aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (inner scale vs. outer scale)" );
+        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (inner scale vs. outer scale)");
         return -1;
     }
 
     if( m_layer_z.size() != n )
     {
-        mxError( "aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_z  vs. outer scale)" );
+        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_z  vs. outer scale)");
         return -1;
     }
 
     if( m_layer_Cn2.size() != n )
     {
-        mxError( "aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_Cn2  vs. outer scale)" );
+        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_Cn2  vs. outer scale)" );
         return -1;
     }
 
     if( m_layer_dir.size() != n )
     {
-        mxError( "aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_dir  vs. outer scale)" );
+        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_dir  vs. outer scale)");
         return -1;
     }
 
     if( m_layer_v_wind.size() != n )
     {
-        mxError( "aoAtmosphere", MXE_SIZEERR, "mismatched layer numbers (layer_v_wind vs. outer scale)" );
+        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_v_wind vs. outer scale)");
         return -1;
     }
 

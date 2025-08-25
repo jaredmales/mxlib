@@ -32,7 +32,7 @@
 #include <fstream>
 #include <format>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 #include "clOptions.hpp"
 #include "iniFile.hpp"

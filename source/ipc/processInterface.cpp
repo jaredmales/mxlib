@@ -25,7 +25,7 @@
 //***********************************************************************//
 
 #include "ipc/processInterface.hpp"
-#include "mxError.hpp"
+#include "mxlib.hpp"
 
 #include <cstring>
 #include <sstream>
@@ -66,7 +66,7 @@ int command_response( const char *cmd, char *resp, size_t respsz )
 }
 
 int runCommand(
-    int &retVal, // [out] the return value of the process. Only meaningful if this returns 0.
+    int &retVal,        // [out] the return value of the process. Only meaningful if this returns 0.
     std::vector<std::string>
         &commandOutput, // [out] the output, line by line.  If an error, first entry contains the message.
     std::vector<std::string> &commandStderr,    // [out] the output of stderr.
@@ -80,19 +80,19 @@ int runCommand(
 
     if( pipe( link ) == -1 )
     {
-        mxPError( "mx::ipc::runCommand", errno, "piping stdout" );
+        internal::mxlib_error_report(errno2error_t(errno),  "piping stdout" );
         return -1;
     }
 
     if( pipe( errlink ) == -1 )
     {
-        mxPError( "mx::ipc::runCommand", errno, "piping stderr" );
+        internal::mxlib_error_report(errno2error_t(errno),  "piping stderr" );
         return -1;
     }
 
     if( ( pid = fork() ) == -1 )
     {
-        mxPError( "mx::ipc::runCommand", errno, "forking" );
+        internal::mxlib_error_report(errno2error_t(errno),  "forking" );
         return -1;
     }
 
@@ -100,37 +100,37 @@ int runCommand(
     {
         if( dup2( link[1], STDOUT_FILENO ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "dup2" );
+            internal::mxlib_error_report(errno2error_t(errno),  "dup2" );
             return -1;
         }
 
         if( close( link[0] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report(errno2error_t(errno),  "close" );
             return -1;
         }
 
         if( close( link[1] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+           internal::mxlib_error_report(errno2error_t(errno),  "close" );
             return -1;
         }
 
         if( dup2( errlink[1], STDERR_FILENO ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "dup2" );
+           internal::mxlib_error_report(errno2error_t(errno), "dup2" );
             return -1;
         }
 
         if( close( errlink[0] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report(errno2error_t(errno), "close" );
             return -1;
         }
 
         if( close( errlink[1] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report(errno2error_t(errno), "close" );
             return -1;
         }
 
@@ -142,7 +142,7 @@ int runCommand(
         }
         execvp( charCommandList[0], const_cast<char **>( charCommandList.data() ) );
 
-        mxPError( "mx::ipc::runCommand", errno, "execvp returned" );
+       internal::mxlib_error_report(errno2error_t(errno),  "execvp returned" );
 
         return -1;
     }
@@ -156,7 +156,7 @@ int runCommand(
 
         if( rvid < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "waitpid" );
+            internal::mxlib_error_report( errno2error_t( errno ), "waitpid" );
             return -1;
         }
 
@@ -166,40 +166,46 @@ int runCommand(
         }
         else
         {
-            mxError( "mx::ipc::runCommand", MXE_PROCERR, "child did not exit" );
+            internal::mxlib_error_report( error_t::procerr, "child did not exit" );
             return -1;
         }
 
         if( close( link[1] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report( errno2error_t( errno ), "close" );
             return -1;
         }
 
         if( close( errlink[1] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report( errno2error_t( errno ), "close" );
             return -1;
         }
 
         int rd;
         if( ( rd = read( link[0], commandOutput_c, sizeof( commandOutput_c ) ) ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "read" );
+            internal::mxlib_error_report( errno2error_t( errno ), "read" );
 
             if( close( errlink[0] ) < 0 )
-                mxPError( "mx::ipc::runCommand", errno, "close" );
+            {
+                internal::mxlib_error_report( errno2error_t( errno ), "close" );
+            }
             if( close( link[0] ) < 0 )
-                mxPError( "mx::ipc::runCommand", errno, "close" );
+            {
+                internal::mxlib_error_report( errno2error_t( errno ), "close" );
+            }
 
             return -1;
         }
 
         if( close( link[0] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report( errno2error_t( errno ), "close" );
             if( close( errlink[0] ) < 0 )
-                mxPError( "mx::ipc::runCommand", errno, "close" );
+            {
+                internal::mxlib_error_report( errno2error_t( errno ), "close" );
+            }
             return -1;
         }
 
@@ -219,14 +225,13 @@ int runCommand(
         if( ( rd = read( errlink[0], commandOutput_c, sizeof( commandOutput_c ) ) ) < 0 )
         {
             commandStderr.push_back( std::string( "Read error on stderr: " ) + strerror( errno ) );
-            if( close( errlink[0] ) < 0 )
-                mxPError( "mx::ipc::runCommand", errno, "close" );
+            if( close( errlink[0] ) < 0 ){internal::mxlib_error_report(errno2error_t(errno),  "close" );}
             return -1;
         }
 
         if( close( errlink[0] ) < 0 )
         {
-            mxPError( "mx::ipc::runCommand", errno, "close" );
+            internal::mxlib_error_report(errno2error_t(errno), "close" );
             return -1;
         }
 

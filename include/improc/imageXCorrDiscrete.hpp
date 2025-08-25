@@ -27,7 +27,7 @@
 #ifndef imageXCorrDiscrete_hpp
 #define imageXCorrDiscrete_hpp
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 #include "../math/fit/fitGaussian.hpp"
 #include "imageUtils.hpp"
 
@@ -259,7 +259,7 @@ int imageXCorrDiscrete<ccImT>::refIm( const ccImT &im )
     {
         if( im.rows() != m_maskIm.rows() && im.cols() != m_maskIm.cols() )
         {
-            mxError( "imageXCorFit::setReference", MXE_SIZEERR, "reference and mask are not the same size" );
+            internal::mxlib_error_report(error_t::sizeerr, "reference and mask are not the same size" );
             return -1;
         }
 
@@ -307,13 +307,13 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar &xShift, Scalar &yShift, const
 {
     if( im.rows() <= m_refIm.rows() )
     {
-        mxError( "imageXCorrDiscrete", MXE_SIZEERR, "reference must be smaller than target image (rows)" );
+        internal::mxlib_error_report(error_t::sizeerr,"reference must be smaller than target image (rows)" );
         return -1;
     }
 
     if( im.cols() <= m_refIm.cols() )
     {
-        mxError( "imageXCorrDiscrete", MXE_SIZEERR, "reference must be smaller than target image (cols)" );
+        internal::mxlib_error_report(error_t::sizeerr, "reference must be smaller than target image (cols)" );
         return -1;
     }
     // 16/4    15/4   16/3   15/3

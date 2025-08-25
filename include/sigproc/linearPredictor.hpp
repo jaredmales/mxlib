@@ -32,6 +32,7 @@
 #include <vector>
 #include <complex>
 
+#include "../mxlib.hpp"
 #include "../math/constants.hpp"
 #include "../math/eigenLapack.hpp"
 
@@ -144,13 +145,13 @@ struct linearPredictor
             msg += "    acSz  = " + std::to_string( acSz ) + "\n";
             msg += "    Nc    = " + std::to_string( Nc ) + "\n";
             msg += "    Npred = " + std::to_string( Npred ) + "\n";
-            mxThrowException( err::invalidarg, "linearPredictor::calcCoefficientsLevinson", msg );
+            throw(mx::exception( error_t::invalidarg ,msg));
         }
 
         if(Nc == 0)
         {
             std::string msg = "Nc can't be 0";
-            mxThrowException( err::invalidarg, "linearPredictor::calcCoefficientsLevinson", msg );
+            throw(mx::exception( error_t::invalidarg , msg));
         }
 
         std::vector<realT> r, x, y;

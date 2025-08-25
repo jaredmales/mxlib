@@ -30,7 +30,7 @@
 #include "array2FitGaussian1D.hpp"
 #include "array2FitGaussian2D.hpp"
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 #include "levmarInterface.hpp"
 #include "../func/gaussian.hpp"
 #include "../constants.hpp"

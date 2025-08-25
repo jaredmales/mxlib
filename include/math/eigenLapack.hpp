@@ -245,7 +245,7 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
 
             if( mem->iSuppZ == NULL )
             {
-                mxError( "eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR." );
+                internal::mxlib_error_report( error_t::allocerr, "malloc failed in eigenSYEVR." );
                 if( localMem )
                 {
                     delete mem;
@@ -300,7 +300,7 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
 
         if( info != 0 )
         {
-            mxError( "eigenSYEVR", MXE_LAPACKERR, "error from SYEVR" );
+            internal::mxlib_error_report( error_t::lapackerr, "error from SYEVR" );
             if( localMem )
             {
                 delete mem;
@@ -336,7 +336,7 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
 
         if( ( mem->work == NULL ) || ( mem->iWork == NULL ) )
         {
-            mxError( "eigenSYEVR", MXE_ALLOCERR, "malloc failed in eigenSYEVR." );
+            internal::mxlib_error_report( error_t::allocerr, "malloc failed in eigenSYEVR." );
             if( localMem )
             {
                 delete mem;

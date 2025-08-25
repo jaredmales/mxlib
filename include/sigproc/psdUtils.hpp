@@ -39,7 +39,7 @@
 
 #include <iostream>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 #include "../math/ft/fftT.hpp"
 #include "../math/vectorUtils.hpp"
@@ -271,7 +271,7 @@ int frequencyGrid(
     {
         if( vec.size() % 2 == 1 )
         {
-            mxError( "frequencyGrid", MXE_INVALIDARG, "Frequency scale can't be odd-sized for FFT order" );
+            internal::mxlib_error_report(error_t::invalidarg,"Frequency scale can't be odd-sized for FFT order" );
             return -1;
         }
 

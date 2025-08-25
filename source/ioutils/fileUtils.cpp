@@ -41,7 +41,6 @@
 
 #include <filesystem>
 
-#include "../../include/mxException.hpp"
 
 namespace mx
 {

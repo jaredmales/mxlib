@@ -35,7 +35,7 @@
 
 #include <ImageStreamIO/ImageStreamIO.h>
 
-#include "../mxException.hpp"
+#include "../mxlib.hpp"
 #include "eigenImage.hpp"
 
 namespace mx
@@ -231,14 +231,14 @@ class milkImage
     uint32_t size( unsigned n /**< [in] the dimension to get the size of*/ );
 
     /// Set the passive flag
-    /** Sets \ref m_passive 
-      * 
+    /** Sets \ref m_passive
+      *
      */
     void passive( bool pass /**< [in] new value of the \ref m_passive flag */);
 
     /// Get the passive flag
-    /** Gets \ref m_passive 
-      * 
+    /** Gets \ref m_passive
+      *
      */
     bool passive();
 
@@ -374,14 +374,14 @@ void milkImage<dataT>::open( const std::string &imname )
     {
         delete m_image;
         m_image = nullptr;
-        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_openIm returned an error" );
+        throw(mx::exception(error_t::liberr, "ImageStreamIO_openIm returned an error" ));
     }
 
     if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw std::invalid_argument( "shmim datatype does not match template type" );
+        throw(mx::exception(error_t::invalidarg,"shmim datatype does not match template type" ));
     }
 
     m_name = imname;
@@ -431,14 +431,14 @@ void milkImage<dataT>::create( const std::string &imname, uint32_t sz0, uint32_t
     {
         delete m_image;
         m_image = nullptr;
-        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_createIm_gpu returned an error" );
+        throw(mx::exception(error_t::liberr,  "ImageStreamIO_createIm_gpu returned an error" ));
     }
 
     if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw std::invalid_argument( "shmim datatype does not match template type" );
+        throw(mx::exception(error_t::invalidarg, "shmim datatype does not match template type" ));
     }
 
     m_name = imname;
@@ -461,7 +461,7 @@ eigenMap<dataT> &milkImage<dataT>::operator()()
 {
     if( m_map == nullptr )
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (map is null)" );
+        throw(mx::exception(error_t::invalidconfig, "Image is not open (map is null)") );
     }
 
     return *m_map;
@@ -499,7 +499,9 @@ void milkImage<dataT>::close()
     m_image = nullptr;
 
     if( rv != IMAGESTREAMIO_SUCCESS )
-        throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_closeIm returned an error" );
+    {
+        throw(mx::exception(error_t::liberr,  "ImageStreamIO_closeIm returned an error") );
+    }
 }
 
 template <typename dataT>
@@ -564,12 +566,12 @@ milkImage<dataT> &milkImage<dataT>::operator=( const eigenT &im )
 {
     if( m_image == nullptr )
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (image is null)" );
+        throw(mx::exception(error_t::invalidconfig, "Image is not open (image is null)" ));
     }
 
     if( m_map == nullptr )
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open (map is null)" );
+        throw(mx::exception(error_t::invalidconfig,  "Image is not open (map is null)") );
     }
 
     setWrite( true );
@@ -588,7 +590,7 @@ void milkImage<dataT>::setWrite( bool wrflag )
 {
     if( m_image == nullptr )
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open" );
+        throw(mx::exception(error_t::invalidconfig, "Image is not open" ));
     }
 
     m_image->md->write = wrflag;
@@ -599,7 +601,7 @@ void milkImage<dataT>::post()
 {
     if( m_image == nullptr )
     {
-        throw err::mxException( "", 0, "", 0, "", 0, "Image is not open" );
+        throw(mx::exception(error_t::invalidconfig, "Image is not open" ));
     }
 
     if(!m_passive)
@@ -609,17 +611,17 @@ void milkImage<dataT>::post()
 
         if( rv != IMAGESTREAMIO_SUCCESS )
         {
-            throw err::mxException( "", 0, "", 0, "", 0, "ImageStreamIO_UpdateIm returned an error" );
+            throw(mx::exception(error_t::liberr, "ImageStreamIO_UpdateIm returned an error" ));
         }
     }
-    else 
+    else
     {
         if(clock_gettime(CLOCK_ISIO, &m_image->md->writetime) == -1)
         {
-            throw err::mxException( "", 0, "", 0, "", 0, "clock_gettime returned an error" );
+            throw(mx::exception(errno2error_t(errno), "clock_gettime returned an error" ));
         }
         m_image->md->atime = m_image->md->writetime;
-        
+
         m_image->md->write = 0;
         ImageStreamIO_sempost( m_image, -1 );
     }

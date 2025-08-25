@@ -1,6 +1,7 @@
 add_subdirectory(ao)
 add_subdirectory(app)
 add_subdirectory(astro)
+add_subdirectory(error)
 add_subdirectory(base)
 add_subdirectory(improc)
 add_subdirectory(ioutils)

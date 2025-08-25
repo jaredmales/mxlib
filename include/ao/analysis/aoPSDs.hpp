@@ -29,7 +29,7 @@
 
 #include <string>
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 
@@ -82,11 +82,12 @@ int compNum( const std::string &name );
 template <typename realT>
 struct vonKarmanSpectrum
 {
+    typedef verbose::d verboseT;
 
   protected:
     bool m_subPiston{ true }; ///< flag controlling whether piston is subtracted from the PSD.  Default is true.
     bool m_subTipTilt{
-        false }; ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
+        false };              ///< flag controlling whether tip and tilt are subtracted from the PSD.  Default is false.
 
     bool m_scintillation{ false };          ///< flag controlling whether or not scintillation is included
     int m_component{ PSDComponent::phase }; ///< If m_scintillation is true, this controls whether phase (0), amplitude
@@ -174,8 +175,8 @@ struct vonKarmanSpectrum
     template <class psdParamsT>
     realT operator()( psdParamsT &par, ///< [in] gives the PSD parameters.
                       size_t layer_i,
-                      realT k,       ///< [in] is the spatial frequency in m^-1.
-                      realT sec_zeta ///< [in] is the secant of the zenith distance.
+                      realT k,         ///< [in] is the spatial frequency in m^-1.
+                      realT sec_zeta   ///< [in] is the secant of the zenith distance.
     );
 
     /// Get the value of the PSD at spatial frequency k and wavelength lambda, and a zenith distance, with a WFS at a
@@ -186,7 +187,7 @@ struct vonKarmanSpectrum
      * \returns -1 if an error occurs.
      */
     template <class psdParamsT>
-    realT operator()( psdParamsT &par, ///< [in] gives the PSD parameters.
+    realT operator()( psdParamsT &par,  ///< [in] gives the PSD parameters.
                       size_t layer_i,
                       realT k,          ///< [in] is the spatial frequency in m^-1.
                       realT lambda,     ///< [in] is the observation wavelength in m
@@ -285,7 +286,8 @@ int vonKarmanSpectrum<realT>::component( int cc /* [in] the new value of m_compo
     if( cc != PSDComponent::phase && cc != PSDComponent::amplitude && cc != PSDComponent::dispPhase &&
         cc != PSDComponent::dispAmplitude )
     {
-        mxError( "vonKarmanSpectrum::component", MXE_INVALIDARG, "Unknown component" );
+        internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Unknown component" );
+        //        mxError( "vonKarmanSpectrum::component", MXE_INVALIDARG, "Unknown component" );
         return -1;
     }
 
@@ -309,8 +311,8 @@ template <typename realT>
 template <class psdParamsT>
 realT vonKarmanSpectrum<realT>::operator()( psdParamsT &par, //< [in] gives the PSD parameters.
                                             size_t layer_i,
-                                            realT k,       // [in] is the spatial frequency in m^-1.
-                                            realT sec_zeta // [in] is the secant of the zenith distance.
+                                            realT k,         // [in] is the spatial frequency in m^-1.
+                                            realT sec_zeta   // [in] is the secant of the zenith distance.
 )
 {
     realT k02;
@@ -334,7 +336,10 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT &par, //< [in] gives the 
     {
         if( m_D == 0 )
         {
-            mxError( "aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction." );
+            internal::mxlib_error_report<verboseT>( error_t::paramnotset,
+                                                    "Diameter D not set for Piston and/or TT subtraction." );
+
+            // mxError( "aoAtmosphere", MXE_PARAMNOTSET, "Diameter D not set for Piston and/or TT subtraction." );
             return -1;
         }
         if( m_subPiston )
@@ -364,7 +369,7 @@ realT vonKarmanSpectrum<realT>::operator()( psdParamsT &par, //< [in] gives the 
 template <typename realT>
 template <class psdParamsT>
 realT vonKarmanSpectrum<realT>::operator()(
-    psdParamsT &par, // [in] gives the PSD parameters.
+    psdParamsT &par,  // [in] gives the PSD parameters.
     size_t layer_i,
     realT k,          // [in] is the spatial frequency in m^-1.
     realT lambda,     // [in] is the observation wavelength in m.  Not used if par.nonKolmogorov==true
@@ -398,12 +403,14 @@ realT vonKarmanSpectrum<realT>::operator()(
         }
         else if( m_component == PSDComponent::dispAmplitude )
         {
-            mxError( "vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented" );
+            internal::mxlib_error_report<verboseT>( error_t::notimpl, "Dispersive-aniso amplitude not implemented" );
+            // mxError( "vonKarmanSpectrum::operator()", MXE_NOTIMPL, "Dispersive-aniso amplitude not implemented" );
             return 0;
         }
         else
         {
-            mxError( "vonKarmanSpectrum::operator()", MXE_INVALIDARG, "Invalid component specified" );
+            internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Invalid component specified" );
+            // mxError( "vonKarmanSpectrum::operator()", MXE_INVALIDARG, "Invalid component specified" );
             return 0;
         }
     }
@@ -455,8 +462,15 @@ void vonKarmanSpectrum<realT>::setupConfig( app::appConfigurator &config )
                 "Aperture diameter.  Used for piston and tip/tilt subtraction." );
     config.add( "psd.subPiston", "", "psd.subPiston", argType::Required, "psd", "subPiston", false, "real", "" );
     config.add( "psd.subTipTilt", "", "psd.subTipTilt", argType::Required, "psd", "subTipTilt", false, "real", "" );
-    config.add(
-        "psd.scintillation", "", "psd.scintillation", argType::Required, "psd", "scintillation", false, "real", "" );
+    config.add( "psd.scintillation",
+                "",
+                "psd.scintillation",
+                argType::Required,
+                "psd",
+                "scintillation",
+                false,
+                "real",
+                "" );
     config.add( "psd.component", "", "psd.component", argType::Required, "psd", "component", false, "real", "" );
 }
 

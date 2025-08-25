@@ -172,7 +172,7 @@ mx::error_t fits_write_history( fitsfile *fptr, char *history )
     return fits_status2error_t(fstatus);
 }
 
-void fitsErrText( std::string &explan, const std::string &filename, int fstatus )
+/*void fitsErrText( std::string &explan, const std::string &filename, int fstatus )
 {
     char emnem[31];
 
@@ -184,9 +184,9 @@ void fitsErrText( std::string &explan, const std::string &filename, int fstatus 
 
     explan += emnem;
     explan += " (";
-    explan += ioutils::convertToString( fstatus );
+    explan += std::format( fstatus );
     explan += ")";
-}
+}*/
 
 } // namespace fits
 } // namespace mx

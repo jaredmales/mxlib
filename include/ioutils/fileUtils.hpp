@@ -228,9 +228,9 @@ error_t string2path( std::filesystem::path & path, const std::string &str)
     {
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
-            return error_t::std_bad_alloc;
+            return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );
         #else
-            std::throw_with_nested(std::bad_alloc());
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_bad_alloc));
         #endif
         // clang-format on
     }
@@ -240,7 +240,7 @@ error_t string2path( std::filesystem::path & path, const std::string &str)
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
             return internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
         #else
-            std::throw_with_nested(std::exception());
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_filesystem_error));
         #endif
         // clang-format on
     }
@@ -250,7 +250,7 @@ error_t string2path( std::filesystem::path & path, const std::string &str)
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
             return internal::mxlib_error_report<verboseT>( error_t::std_exception, e.what() );
         #else
-            std::throw_with_nested(std::exception());
+            std::throw_with_nested(mx::exception<verboseT>());
         #endif
         // clang-format on
     }
@@ -260,7 +260,7 @@ error_t string2path( std::filesystem::path & path, const std::string &str)
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
             return internal::mxlib_error_report<verboseT>( error_t::exception, "unknown exception");
         #else
-            std::throw_with_nested(std::exception());
+            std::throw_with_nested(mx::exception<verboseT>());
         #endif
         // clang-format on
     }
@@ -283,9 +283,9 @@ bool exists( const std::string &strpath, mx::error_t &errc )
             return false;
         }
     }
-    catch( ... )
+    catch(const mx::exception<verboseT> & e)
     {
-        std::throw_with_nested(std::exception());
+        std::throw_with_nested(mx::exception<verboseT>(e.code()));
     }
 
     bool ex = std::filesystem::exists( path, ec );
@@ -324,9 +324,9 @@ bool dir_exists_is( const std::string &dir, mx::error_t &errc )
             return false;
         }
     }
-    catch( ... )
+    catch(const mx::exception<verboseT> & e)
     {
-        std::throw_with_nested(std::exception());
+        std::throw_with_nested(mx::exception<verboseT>(e.code()));
     }
 
     bool exists = std::filesystem::exists( path, ec );
@@ -481,36 +481,43 @@ error_t getFileNames( std::vector<std::string> &fileNames,
 
         return error_t::noerror;
     }
-    catch( const std::filesystem::filesystem_error &e )
+    catch( const std::bad_alloc &e )
     {
-        internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
         // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_filesystem_error;
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
+            return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );;
         #else
-            throw;
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_bad_alloc));
         #endif
         // clang-format on
     }
-    catch( const std::bad_alloc &e )
+    catch( const std::filesystem::filesystem_error &e )
     {
-        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc, e.what() );
         // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
-            return error_t::std_bad_alloc;
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return internal::mxlib_error_report<verboseT>( error_t::std_filesystem_error, e.what() );
         #else
-            throw;
+            std::throw_with_nested(mx::exception(error_t::std_filesystem_error));
         #endif
         // clang-format on
     }
     catch( const std::exception &e )
     {
-        internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
+            return internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
         #else
-            throw;
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_exception));
+        #endif
+        // clang-format on
+    }
+    catch( ... )
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return internal::mxlib_error_report<verboseT>( error_t::exception );
+        #else
+            std::throw_with_nested(mx::exception<verboseT>());
         #endif
         // clang-format on
     }

@@ -37,6 +37,7 @@
 
 #include <Eigen/Dense>
 
+#include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../math/func/airyPattern.hpp"
@@ -50,7 +51,6 @@
 #include "../../ioutils/fileUtils.hpp"
 
 #include "../../ipc/ompLoopWatcher.hpp"
-#include "../../mxError.hpp"
 
 #include "aoSystem.hpp"
 #include "aoPSDs.hpp"
@@ -542,7 +542,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         func.function = &F_mod<realT, aosysT>;
         break;
     default:
-        mxError( "fourierTemporalPSD::singleLayerPSD", MXE_INVALIDARG, "value of _useBasis is not valid." );
+        internal::mxlib_error_report(error_t::invalidarg,"value of _useBasis is not valid." );
         return -1;
     }
 

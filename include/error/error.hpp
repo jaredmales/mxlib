@@ -228,7 +228,7 @@ namespace internal
  *
  * \ingroup error_internal
  */
-template <class verboseT>
+template <class verboseT=verbose::d>
 std::string mxlib_error_message( const error_t &code,     /**< [in] is an mx::error_t error code*/
                                  const std::string &expl, /**< [in] [opt] if more information can be provided,
                                                                                use this to inform the user.*/
@@ -279,7 +279,7 @@ mxlib_error_message<mx::verbose::vvv>( const error_t &code, const std::string &e
  *
  * \ingroup error_internal
  */
-template <class verboseT>
+template <class verboseT=verbose::d>
 std::string mxlib_error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
                                  const std::source_location &loc /**< [in] [opt] source location */
                                  = std::source_location::current() );
@@ -327,7 +327,7 @@ std::string mxlib_error_message<mx::verbose::vvv>( const error_t &code, const st
  *
  * \ingroup error_internal
  */
-template <class verboseT>
+template <class verboseT=verbose::d>
 error_t mxlib_error_report( const error_t &code,            /**< [in] is an mx::error_t error code*/
                             const std::string &expl,        /**< [in] [opt] if more information can be provided,
                                                                                  use this to inform the user.*/
@@ -365,7 +365,7 @@ mxlib_error_report<mx::verbose::o>( const error_t &code, const std::string &expl
  *
  * \ingroup error_internal
  */
-template <class verboseT>
+template <class verboseT=verbose::d>
 error_t mxlib_error_report( const error_t &code /**< [in] is an mx::error_t error code*/,
                             const std::source_location &loc /**< [in] [opt] source location */
                             = std::source_location::current() )
@@ -442,7 +442,7 @@ error_t mxlib_error_report<mx::verbose::o>( const error_t &code, const std::sour
  *
  * \ingroup error_handling
  */
-template <class verboseT = verbose::vvv>
+template <class verboseT = verbose::d>
 std::string error_message( const error_t &code,            /**< [in] is an mx::error_t error code*/
                            const std::string &expl,        /**< [in] [opt] if more information can be provided,
                                                                      use this to inform the user.*/

@@ -145,27 +145,43 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
     }
     catch( const std::bad_alloc &e )
     {
-        internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
-                                                std::format( "processing column {}: {}", colno, e.what() ) );
+
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
-            return error_t::std_bad_alloc;
+            return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                std::format( "processing column {}: {}", colno, e.what() ) );
         #else
-            throw;
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_bad_alloc,
+                                                std::format( "processing column {}: {}", colno, e.what() ) ));
         #endif
         // clang-format on
     }
     catch( const std::exception &e )
     {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                std::format( "processing column {}: {}", colno, e.what() ) );
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
+            return internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                std::format( "processing column {}: {}", colno, e.what() ) );
+
         #else
-            throw;
+            std::throw_with_nested(mx::exception<verboseT>(error_t::std_exception,
+                                                std::format( "processing column {}: {}", colno, e.what() ) ));
+
         #endif
         // clang-format on
+    }
+    catch(...)
+    {
+        // clang-format off
+        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
+            return internal::mxlib_error_report<verboseT>( error_t::exception,
+                                                std::format( "processing column {}", colno) );
+
+        #else
+            std::throw_with_nested(mx::exception<verboseT>(error_t::exception,
+                                                std::format( "processing column {}", colno) ));
+
+        #endif
     }
 
     ++colno;
@@ -241,29 +257,52 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
         }
         catch( const std::bad_alloc &e )
         {
-            internal::mxlib_error_report<verboseT>(
-                error_t::std_bad_alloc,
-                std::format( "Reading from {} at line {}. {}.", fname, lineno, e.what() ) );
 
             // clang-format off
             #if defined( MXLIB_CATCH_ALL_EXCEPTIONS )
-                return error_t::std_bad_alloc;
+                return internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                               std::format( "Reading from {} at line {}: {}.",
+                                                               fname, lineno, e.what() ) );
+;
             #else
-                throw;
+                std::throw_with_nested( mx::exception<verboseT>( error_t::std_bad_alloc,
+                                                               std::format( "Reading from {} at line {}: {}.",
+                                                               fname, lineno, e.what() ) ) );
             #endif
             // clang-format on
         }
         catch( const std::exception &e )
         {
-            internal::mxlib_error_report<verboseT>(
-                error_t::std_exception,
-                std::format( "Reading from {} at line {}. {}.", fname, lineno, e.what() ) );
 
             // clang-format off
             #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
-                return error_t::std_exception;
+
+                return internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                               std::format( "Reading from {} at line {}: {}.",
+                                                                             fname,
+                                                                             lineno,
+                                                                             e.what() ) );
             #else
-                throw;
+                std::throw_with_nested(mx::exception<verboseT>( error_t::std_exception,
+                                                                std::format( "Reading from {} at line {}: {}.",
+                                                                             fname, lineno, e.what() ) ) );
+            #endif
+            // clang-format on
+        }
+        catch( ... )
+        {
+
+            // clang-format off
+            #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
+
+                return internal::mxlib_error_report<verboseT>( error_t::exception,
+                                                               std::format( "Reading from {} at line {}",
+                                                                             fname,
+                                                                             lineno ) );
+            #else
+                std::throw_with_nested(mx::exception<verboseT>( error_t::exception,
+                                                                std::format( "Reading from {} at line {}",
+                                                                             fname, lineno) ) );
             #endif
             // clang-format on
         }
