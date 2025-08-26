@@ -27,6 +27,7 @@ OBJS = \
 	improc/imageUtils.o \
 	ipc/processInterface.o \
 	ipc/sharedMemSegment.o \
+	math/gslInterpolator.cpp \
 	math/templateBLAS.o \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
@@ -86,6 +87,7 @@ ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../inc
 ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ioutils/fits/fitsHeaderCard.o
 ioutils/fits/fitsFile.o: ../include/ioutils/fits/fitsFile.hpp ioutils/fits/fitsHeader.o
 ipc/processInterface.o: ../include/ipc/processInterface.hpp
+math/gslInterpolator.o: ../include/math/gslInterpolator.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp

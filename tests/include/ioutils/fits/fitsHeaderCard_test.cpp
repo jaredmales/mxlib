@@ -7,9 +7,9 @@
 #include "../../../../include/ioutils/fits/fitsHeaderCard.hpp"
 using namespace mx::fits;
 
-namespace unitTest
+namespace mx
 {
-namespace ioutilsTest
+namespace unitTest
 {
 namespace fitsTest
 {
@@ -84,9 +84,11 @@ TEST_CASE( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
             REQUIRE( fhc.valueGood() == true );
             REQUIRE( fhc.valueStrGood() == true );
 
-            fhc.type( fitsType<int>() );
+            mx::error_t errc = fhc.type( fitsType<int>() );
+            REQUIRE( !errc );
+
             REQUIRE( fhc.type() == fitsType<int>() );
-            mx::error_t errc = mx::error_t::error;
+            errc = mx::error_t::error;
             REQUIRE( fhc.Int( &errc ) == 39 );
             REQUIRE( errc == mx::error_t::noerror );
 
@@ -100,7 +102,118 @@ TEST_CASE( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
     }
 }
 
+/// Removing white space around string values
+/**
+ * \ingroup fitsHeaderCard_unit_tests
+ */
+TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHeaderCard]" )
+{
+    // clang-format off
+    #ifdef MXLIBTEST_DOXYGEN_REF
+        fitsHeaderCard fhc;
+        mx::error_t errc;
+        fhc.value( mx::meta::tagT<std::string>(), errc );
+    #endif
+    // clang-format on
+
+    SECTION( "typical case" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'simple         '", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "no ' and no space" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "simple", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "no spaces" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'simple'", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "no '" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "simple         ", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "space at beginning" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'   simple         '", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "spaces at beginning, no spaces at end" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'     simple'", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "spaces at beginning, no '" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "   simple         ", "comment" );
+        REQUIRE( fhc.String() == "simple" );
+    }
+
+    SECTION( "empty" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "", "comment" );
+        REQUIRE( fhc.String() == "" );
+    }
+
+    SECTION( "one '" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'", "comment" );
+        REQUIRE( fhc.String() == "" );
+    }
+
+    SECTION( "two ''" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "''", "comment" );
+        REQUIRE( fhc.String() == "" );
+    }
+
+    SECTION( "two '', spaces" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'  '", "comment" );
+        REQUIRE( fhc.String() == "" );
+    }
+
+    SECTION( "spaces only" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "    ", "comment" );
+        REQUIRE( fhc.String() == "" );
+    }
+
+    SECTION( "' part of value" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "z'", "comment" );
+        REQUIRE( fhc.String() == "z'" );
+    }
+
+    SECTION( "' part of value at end with spaces" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'z'   '", "comment" );
+        REQUIRE( fhc.String() == "z'" );
+    }
+
+    SECTION( "' part of value at beginning with spaces" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "''z   '", "comment" );
+        REQUIRE( fhc.String() == "'z" );
+    }
+
+    SECTION( "spaces before and after '' with ' in value surrounded by spaces" )
+    {
+        fitsHeaderCard fhc( "KEYTEST", "   '  'z   '  ", "comment" );
+        REQUIRE( fhc.String() == "'z" );
+    }
+}
+
 } // namespace fitsHeaderCardTest
 } // namespace fitsTest
-} // namespace ioutilsTest
 } // namespace unitTest
+} // namespace mx

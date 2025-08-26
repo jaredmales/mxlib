@@ -603,6 +603,10 @@
                       * \ingroup fits_unit_tests
                       */
 
+                    /** \defgroup fitsHeader_unit_tests fitsHeader Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
                     /** \defgroup fitsHeaderCard_unit_tests fitsHeaderCard Unit Tests
                       * \ingroup fits_unit_tests
                       */

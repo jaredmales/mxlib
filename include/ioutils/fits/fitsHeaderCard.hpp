@@ -371,25 +371,73 @@ class fitsHeaderCard
      * @{
      */
 
-    // Get value for anything not a string
+    /// Get value for anything not a string
     template <typename typeT>
     typeT valueNonString( mx::error_t &errc );
 
-    // Special handling for string
+    /// Get value tag dispatcher for std::string
+    /**
+     */
     std::string value( meta::tagT<std::string>, mx::error_t &errc );
 
-    // All of these PODs just call valueNonString
+    /// Get value tag dispatcher for char
+    /** Calls valueNonString
+     */
     char value( meta::tagT<char>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for unsigned char
+    /** Calls valueNonString
+     */
     unsigned char value( meta::tagT<unsigned char>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for short
+    /** Calls valueNonString
+     */
     short value( meta::tagT<short>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for unsigned short
+    /** Calls valueNonString
+     */
     unsigned short value( meta::tagT<unsigned short>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for int
+    /** Calls valueNonString
+     */
     int value( meta::tagT<int>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for unsigned int
+    /** Calls valueNonString
+     */
     unsigned int value( meta::tagT<unsigned int>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for long
+    /** Calls valueNonString
+     */
     long value( meta::tagT<long>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for unsigned long
+    /** Calls valueNonString
+     */
     unsigned long value( meta::tagT<unsigned long>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for long long
+    /** Calls valueNonString
+     */
     long long value( meta::tagT<long long>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for unsigned long long
+    /** Calls valueNonString
+     */
     unsigned long long value( meta::tagT<unsigned long long>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for float
+    /** Calls valueNonString
+     */
     float value( meta::tagT<float>, mx::error_t &errc );
+
+    /// Get value tag dispatcher for double
+    /** Calls valueNonString
+     */
     double value( meta::tagT<double>, mx::error_t &errc );
 
     ///@}
@@ -712,8 +760,7 @@ mx::error_t fitsHeaderCard<verboseT>::convertToString()
 {
     if( !m_valueGood )
     {
-        return internal::mxlib_error_report<verboseT>( mx::error_t::paramnotset,
-                                                       "no value to convert for " + m_keyword );
+        return mx::error_t::paramnotset;
     }
 
     if( m_type == fitsType<char *>() || m_type == fitsType<std::string>() )
@@ -795,7 +842,7 @@ error_t fitsHeaderCard<verboseT>::convertFromString()
     if( errc != mx::error_t::noerror )
     {
         m_valueGood = false;
-        return internal::mxlib_error_report<verboseT>( errc, "No value for " + m_keyword );
+        return errc;
     }
 
     m_valueGood = true;
@@ -911,105 +958,62 @@ error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
         return error_t::noerror;
     }
 
+    mx::error_t errc;
     switch( newtype )
     {
         case fitsType<unsigned char>():
         {
-            error_t errc = convertedValue<unsigned char>( m_value.UChar );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<unsigned char>( m_value.UChar );
             break;
         }
         case fitsType<char>():
         {
-            error_t errc = convertedValue<char>( m_value.Char );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<char>( m_value.Char );
             break;
         }
         case fitsType<short>():
         {
-            error_t errc = convertedValue<short>( m_value.Short );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<short>( m_value.Short );
             break;
         }
         case fitsType<unsigned short>():
         {
-            error_t errc = convertedValue<unsigned short>( m_value.UShort );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<unsigned short>( m_value.UShort );
             break;
         }
         case fitsType<int>():
         {
-            error_t errc = convertedValue<int>( m_value.Int );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<int>( m_value.Int );
             break;
         }
         case fitsType<unsigned int>():
         {
-            error_t errc = convertedValue<unsigned int>( m_value.UInt );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<unsigned int>( m_value.UInt );
             break;
         }
         case fitsType<long>():
         {
-            error_t errc = convertedValue<long>( m_value.Long );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<long>( m_value.Long );
             break;
         }
         case fitsType<unsigned long>():
         {
-            error_t errc = convertedValue<unsigned long>( m_value.ULong );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<unsigned long>( m_value.ULong );
             break;
         }
         case fitsType<long long>():
         {
-            error_t errc = convertedValue<long long>( m_value.LongLong );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<long long>( m_value.LongLong );
             break;
         }
         case fitsType<unsigned long long>():
         {
-            error_t errc = convertedValue<unsigned long long>( m_value.ULongLong );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<unsigned long long>( m_value.ULongLong );
             break;
         }
         case fitsType<float>():
         {
-            error_t errc = convertedValue<float>( m_value.Float );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<float>( m_value.Float );
             break;
         }
         case fitsType<std::complex<float>>():
@@ -1019,11 +1023,7 @@ error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
         }
         case fitsType<double>():
         {
-            error_t errc = convertedValue<double>( m_value.Double );
-            if( errc != error_t::noerror )
-            {
-                return internal::mxlib_error_report<verboseT>( errc );
-            }
+            errc = convertedValue<double>( m_value.Double );
             break;
         }
         case fitsType<std::complex<double>>():
@@ -1053,6 +1053,11 @@ error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
             return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
                                                            "invalid FITS type conversion for " + m_keyword );
         }
+    }
+
+    if( !!errc )
+    {
+        return errc;
     }
 
     m_type = newtype;
@@ -1093,7 +1098,7 @@ error_t fitsHeaderCard<verboseT>::type( const int &t )
         error_t errc = convertValue( t );
         if( errc != error_t::noerror )
         {
-            return internal::mxlib_error_report<verboseT>( errc );
+            return errc;
         }
     }
     else
@@ -1114,57 +1119,127 @@ template <class verboseT>
 template <typename typeT>
 typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
 {
-    errc = mx::error_t::noerror; //to be changed if needed
+    errc = mx::error_t::noerror; // to be changed if needed
 
     if( m_valueGood == false )
     {
-        errc = convertFromString<typeT>(); // error check
-
-        if(errc != error_t::noerror)
-        {
-            internal::mxlib_error_report<verboseT>(errc);
-        }
-
+        errc = convertFromString<typeT>();
     }
 
     if( m_type != fitsType<typeT>() )
     {
         typeT val;
         errc = convertedValue<typeT>( val );
-        if(errc != error_t::noerror)
-        {
-            internal::mxlib_error_report<verboseT>(errc);
-        }
         return val;
     }
 
-
     return m_value.template member<typeT>();
+}
+
+inline
+void stripApostWS( std::string & str)
+{
+    if( str.size() == 0 )
+    {
+        return;
+    }
+
+    if(str[0] != '\'' && str[0] != ' ' && str.back() != ' ') //get out fast if we can
+    {
+        return;
+    }
+
+    // strip white space at front
+    size_t ns = str.find_first_not_of( " \t\r\n" );
+    if( ns != std::string::npos && ns != 0)
+    {
+        str.erase( 0, ns);
+
+        if( str.size() == 0 )
+        {
+            return;
+        }
+    }
+    else if (ns == std::string::npos) //the rare all spaces
+    {
+        str = "";
+        return;
+    }
+
+    // strip white space at back
+    ns = str.find_last_not_of( " \t\r\n" );
+    if( ns != std::string::npos && ns != str.size()-1)
+    {
+        str.erase( ns + 1);
+
+        if( str.size() == 0 )
+        {
+            return;
+        }
+    }
+
+    if( str[0] == '\'' && str.back() == '\'' )
+    {
+        if( str.size() == 1 || str.size() == 2 )
+        {
+            str = "";
+            return;
+        }
+        str.erase( str.size() - 1, 1 );
+        str.erase( 0, 1 );
+
+        ns = str.find_first_not_of( " \t\r\n" );
+        if( ns != std::string::npos && ns > 0)
+        {
+            str.erase( 0, ns);
+
+            if( str.size() == 0 )
+            {
+                return;
+            }
+        }
+        else if(ns == std::string::npos)
+        {
+            str = "";
+            return;
+        }
+
+        // strip white space at back
+        ns = str.find_last_not_of( " \t\r\n" );
+        if( ns < str.size()-1)
+        {
+            str.erase( ns+1, str.size() - ns );
+
+            if( str.size() == 0 )
+            {
+                return;
+            }
+        }
+    }
+
 }
 
 template <class verboseT>
 std::string fitsHeaderCard<verboseT>::value( meta::tagT<std::string>, mx::error_t &errc )
 {
+    errc = mx::error_t::noerror;
 
     if( m_valueStrGood == false )
     {
-        convertToString();
+        errc = convertToString();
+        if( !!errc )
+        {
+            return "";
+        }
     }
 
     // Strip ' from beginning and end if present
     std::string str = m_valueStr.str();
 
-    if( str[0] == '\'' )
-    {
-        str.erase( 0, 1 );
-    }
+    stripApostWS(str);
 
-    if( str[str.size() - 1] == '\'' )
-    {
-        str.erase( str.size() - 1, 1 );
-    }
-
-    errc = mx::error_t::noerror;
+    //Reload it so it's there for next time:
+    m_valueStr.str(str);
 
     return str;
 }
@@ -1367,16 +1442,9 @@ mx::error_t fitsHeaderCard<verboseT>::value( const std::string &v )
     // Strip ' from beginning and end if present
     std::string str = v;
 
-    if( str[0] == '\'' )
-    {
-        str.erase( 0, 1 );
-    }
+    stripApostWS(str);
 
-    if( str[str.size() - 1] == '\'' )
-    {
-        str.erase( str.size() - 1, 1 );
-    }
-
+    //Reload it so it's there for next time:
     m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;

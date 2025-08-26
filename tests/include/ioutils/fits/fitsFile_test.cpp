@@ -9,9 +9,9 @@ using namespace mx::fits;
 
 #include "../../../../include/improc/eigenImage.hpp"
 
-namespace unitTest
+namespace mx
 {
-namespace ioutilsTest
+namespace unitTest
 {
 namespace fitsTest
 {
@@ -52,26 +52,25 @@ class fitsFile_test : public fitsFile<dataT>
         }
     }
 
-    mx::error_t writeTestFrame(const std::string & fname, int n)
+    mx::error_t writeTestFrame( const std::string &fname, int n )
     {
-        mx::improc::eigenImage<float> im(1024,1024);
+        mx::improc::eigenImage<float> im( 1024, 1024 );
 
-        for(int cc = 0; cc < im.cols(); ++cc)
+        for( int cc = 0; cc < im.cols(); ++cc )
         {
-            for(int rr = 0; rr < im.rows(); ++rr)
+            for( int rr = 0; rr < im.rows(); ++rr )
             {
-                im(rr,cc) = cc*im.rows() + rr;
+                im( rr, cc ) = cc * im.rows() + rr;
             }
         }
 
         fitsHeader fh;
-        fh.append(std::format("FLOAT{}",n), static_cast<float>(1.1), "testing 1.1");
-        fh.append(std::format("INT{}",n), static_cast<int>(2), "testing 1.1");
+        fh.append( std::format( "FLOAT{}", n ), static_cast<float>( 1.1 ), "testing 1.1" );
+        fh.append( std::format( "INT{}", n ), static_cast<int>( 2 ), "testing 1.1" );
 
-        return this->write(std::format("{}{}.fits",fname,n), im, fh);
+        return this->write( std::format( "{}{}.fits", fname, n ), im, fh );
     }
 };
-
 
 /// Calculating subimage sizes
 /** Verify calculation of subimage sizes
@@ -80,16 +79,15 @@ class fitsFile_test : public fitsFile<dataT>
  */
 TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
 {
-    //document what protected members are tested here
-    #ifdef MXLIB_DOXYGEN_PROTECTED_REF
+// document what protected members are tested here
+#ifdef MXLIB_DOXYGEN_PROTECTED_REF
     fitsFile<float> ff;
     fitsFile<float>::pixarrTT pixarrs;
     ff.calcPixarrs( pixarrs );
     ff.naxis();
-    ff.naxes(0);
-    ff.setReadSize( 10, 9, 7, 10 )
-    ff.setCubeReadSize( 5, 3 );
-    #endif
+    ff.naxes( 0 );
+    ff.setReadSize( 10, 9, 7, 10 ) ff.setCubeReadSize( 5, 3 );
+#endif
 
     SECTION( "a 1D image to read" )
     {
@@ -248,35 +246,32 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
  */
 TEST_CASE( "Basic writing and reading", "[ioutils::fits::fitsFile]" )
 {
-    //document what fitsFile_test is doing
-    #ifdef MXLIB_DOXYGEN_PROTECTED_REF
+// document what fitsFile_test is doing
+#ifdef MXLIB_DOXYGEN_PROTECTED_REF
     fitsFile<float> ff;
     fitsHeader fh;
-    fh.append("dummy", 2, "dummy");
+    fh.append( "dummy", 2, "dummy" );
     mx::improc::eigenImage<float> im;
-    ff.write("dummy", im, fh);
-    #endif
+    ff.write( "dummy", im, fh );
+#endif
 
-    SECTION("write a frame and read it back in")
+    SECTION( "write a frame and read it back in" )
     {
         fitsFile_test<float> fft;
 
-        REQUIRE(fft.writeTestFrame("/tmp/fitsFile_test", 1) == mx::error_t::noerror);
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 1 ) == mx::error_t::noerror );
 
         fitsFile<float> ff;
         fitsHeader fh;
         mx::improc::eigenImage<float> im;
 
-        REQUIRE(ff.read(im, fh, "/tmp/fitsFile_test1.fits") == mx::error_t::noerror);
+        REQUIRE( ff.read( im, fh, "/tmp/fitsFile_test1.fits" ) == mx::error_t::noerror );
 
-        REQUIRE_THAT(fh["FLOAT1"].Float(), WithinAbs(1.1, 1e-5));
-        REQUIRE(fh["INT1"].Int() == 2);
-        REQUIRE(im.rows() == 1024);
-        REQUIRE(im.cols() == 1024);
-
-
+        REQUIRE_THAT( fh["FLOAT1"].Float(), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( fh["INT1"].Int() == 2 );
+        REQUIRE( im.rows() == 1024 );
+        REQUIRE( im.cols() == 1024 );
     }
-
 }
 
 /// Reading headers
@@ -286,126 +281,125 @@ TEST_CASE( "Basic writing and reading", "[ioutils::fits::fitsFile]" )
  */
 TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )
 {
-    //document what fitsFile_test is doing
-    #ifdef MXLIB_DOXYGEN_PROTECTED_REF
+// document what fitsFile_test is doing
+#ifdef MXLIB_DOXYGEN_PROTECTED_REF
     fitsFile<float> ff;
     fitsHeader fh;
-    fh.append("dummy", 2, "dummy");
+    fh.append( "dummy", 2, "dummy" );
     mx::improc::eigenImage<float> im;
-    ff.write("dummy", im, fh);
-    #endif
+    ff.write( "dummy", im, fh );
+#endif
 
     fitsFile_test<float> fft;
 
-    std::vector<std::string> fnames({"/tmp/fitsFile_test1.fits","/tmp/fitsFile_test2.fits","/tmp/fitsFile_test3.fits"});
-    REQUIRE(fft.writeTestFrame("/tmp/fitsFile_test",1) == mx::error_t::noerror);
-    REQUIRE(fft.writeTestFrame("/tmp/fitsFile_test",2) == mx::error_t::noerror);
-    REQUIRE(fft.writeTestFrame("/tmp/fitsFile_test",3) == mx::error_t::noerror);
+    std::vector<std::string> fnames(
+        { "/tmp/fitsFile_test1.fits", "/tmp/fitsFile_test2.fits", "/tmp/fitsFile_test3.fits" } );
+    REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 1 ) == mx::error_t::noerror );
+    REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 2 ) == mx::error_t::noerror );
+    REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 3 ) == mx::error_t::noerror );
 
-    SECTION("write three frames and read their headers as a vector, not allocated")
+    SECTION( "write three frames and read their headers as a vector, not allocated" )
     {
 
         fitsFile<float> ff;
         std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
-        REQUIRE(ff.readHeader(fh, fnames) == mx::error_t::noerror);
-        REQUIRE(fh.size() == fnames.size());
+        REQUIRE( ff.readHeader( fh, fnames ) == mx::error_t::noerror );
+        REQUIRE( fh.size() == fnames.size() );
 
-        REQUIRE_THAT(fh[0]["FLOAT1"].Float(), WithinAbs(1.1, 1e-5));
-        REQUIRE(fh[0]["INT1"].Int() == 2);
-        REQUIRE_THAT(fh[1]["FLOAT2"].Float(), WithinAbs(1.1, 1e-5));
-        REQUIRE(fh[1]["INT2"].Int() == 2);
-        REQUIRE_THAT(fh[2]["FLOAT3"].Float(), WithinAbs(1.1, 1e-5));
-        REQUIRE(fh[2]["INT3"].Int() == 2);
+        REQUIRE_THAT( fh[0]["FLOAT1"].Float(), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( fh[0]["INT1"].Int() == 2 );
+        REQUIRE_THAT( fh[1]["FLOAT2"].Float(), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( fh[1]["INT2"].Int() == 2 );
+        REQUIRE_THAT( fh[2]["FLOAT3"].Float(), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( fh[2]["INT3"].Int() == 2 );
     }
 
-    SECTION("write three frames and read their headers as a vector, allocated")
+    SECTION( "write three frames and read their headers as a vector, allocated" )
     {
 
         fitsFile<float> ff;
         std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
-        fh.resize(fnames.size());
-        REQUIRE(ff.readHeader(fh, fnames) == mx::error_t::noerror);
+        fh.resize( fnames.size() );
+        REQUIRE( ff.readHeader( fh, fnames ) == mx::error_t::noerror );
 
         mx::error_t errc;
         errc = mx::error_t::error;
-        REQUIRE_THAT(fh[0]["FLOAT1"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE_THAT( fh[0]["FLOAT1"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
         errc = mx::error_t::error;
-        REQUIRE(fh[0]["INT1"].Int(&errc) == 2);
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE( fh[0]["INT1"].Int( &errc ) == 2 );
+        REQUIRE( errc == mx::error_t::noerror );
         errc = mx::error_t::error;
-        REQUIRE_THAT(fh[1]["FLOAT2"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE_THAT( fh[1]["FLOAT2"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
         errc = mx::error_t::error;
-        REQUIRE(fh[1]["INT2"].Int(&errc) == 2);
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE( fh[1]["INT2"].Int( &errc ) == 2 );
+        REQUIRE( errc == mx::error_t::noerror );
         errc = mx::error_t::error;
-        REQUIRE_THAT(fh[2]["FLOAT3"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE_THAT( fh[2]["FLOAT3"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
         errc = mx::error_t::error;
-        REQUIRE(fh[2]["INT3"].Int(&errc) == 2);
-        REQUIRE(errc == mx::error_t::noerror);
+        REQUIRE( fh[2]["INT3"].Int( &errc ) == 2 );
+        REQUIRE( errc == mx::error_t::noerror );
     }
 
-    SECTION("write three frames and read their headers as a vector, allocated to wrong size")
+    SECTION( "write three frames and read their headers as a vector, allocated to wrong size" )
     {
         fitsFile<float> ff;
         std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
-        fh.resize(fnames.size()+1);
-        REQUIRE(ff.readHeader(fh, fnames) == mx::error_t::invalidarg);
+        fh.resize( fnames.size() + 1 );
+        REQUIRE( ff.readHeader( fh, fnames ) == mx::error_t::invalidarg );
     }
 
-    SECTION("write three frames and read their headers as a vector, extracting only 1 keyword")
+    SECTION( "write three frames and read their headers as a vector, extracting only 1 keyword" )
     {
 
         fitsFile<float> ff;
         std::vector<mx::fits::fitsHeader<mx::verbose::d>> fh;
         mx::improc::eigenImage<float> im;
 
-        fh.resize(fnames.size());
-        fh[0].append("FLOAT1");
-        fh[1].append("FLOAT2");
-        fh[2].append("FLOAT3");
+        fh.resize( fnames.size() );
+        fh[0].append( "FLOAT1" );
+        fh[1].append( "FLOAT2" );
+        fh[2].append( "FLOAT3" );
 
-
-        REQUIRE(ff.readHeader(fh, fnames) == mx::error_t::noerror);
+        REQUIRE( ff.readHeader( fh, fnames ) == mx::error_t::noerror );
 
         mx::error_t errc;
 
-        REQUIRE_THAT(fh[0]["FLOAT1"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
-        REQUIRE(fh[0]["FLOAT1"].valueGood() == true);
+        REQUIRE_THAT( fh[0]["FLOAT1"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
+        REQUIRE( fh[0]["FLOAT1"].valueGood() == true );
 
-        REQUIRE(fh[0]["INT1"].Int(&errc) == 0);
-        REQUIRE(errc == mx::error_t::invalidarg);
-        REQUIRE(fh[0]["INT1"].valueGood() == false);
+        REQUIRE( fh[0]["INT1"].Int( &errc ) == 0 );
+        REQUIRE( errc == mx::error_t::invalidarg );
+        REQUIRE( fh[0]["INT1"].valueGood() == false );
 
-        REQUIRE_THAT(fh[1]["FLOAT2"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
-        REQUIRE(fh[1]["FLOAT2"].valueGood() == true);
+        REQUIRE_THAT( fh[1]["FLOAT2"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
+        REQUIRE( fh[1]["FLOAT2"].valueGood() == true );
 
-        REQUIRE(fh[1]["INT2"].Int(&errc) == 0);
-        REQUIRE(errc == mx::error_t::invalidarg);
-        REQUIRE(fh[1]["INT2"].valueGood() == false);
+        REQUIRE( fh[1]["INT2"].Int( &errc ) == 0 );
+        REQUIRE( errc == mx::error_t::invalidarg );
+        REQUIRE( fh[1]["INT2"].valueGood() == false );
 
-        REQUIRE_THAT(fh[2]["FLOAT3"].Float(&errc), WithinAbs(1.1, 1e-5));
-        REQUIRE(errc == mx::error_t::noerror);
-        REQUIRE(fh[2]["FLOAT3"].valueGood() == true);
+        REQUIRE_THAT( fh[2]["FLOAT3"].Float( &errc ), WithinAbs( 1.1, 1e-5 ) );
+        REQUIRE( errc == mx::error_t::noerror );
+        REQUIRE( fh[2]["FLOAT3"].valueGood() == true );
 
-        REQUIRE(fh[2]["INT3"].Int(&errc) == 0);
-        REQUIRE(errc == mx::error_t::invalidarg);
-        REQUIRE(fh[2]["INT3"].valueGood() == false);
+        REQUIRE( fh[2]["INT3"].Int( &errc ) == 0 );
+        REQUIRE( errc == mx::error_t::invalidarg );
+        REQUIRE( fh[2]["INT3"].valueGood() == false );
     }
-
 }
 
-} // namespace fitsFile
-} // namespace fits
-} // namespace ioutils
-} // namespace test
+} // namespace fitsFileTest
+} // namespace fitsTest
+} // namespace unitTest
+} // namespace mx

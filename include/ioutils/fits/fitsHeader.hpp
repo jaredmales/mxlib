@@ -874,33 +874,32 @@ const fitsHeaderCard<verboseT> &fitsHeader<verboseT>::operator[]( const std::str
 /// Convert the values in a std::vector of \ref fitsHeader "fits headers" into a std::vector of values.
 /** Resizes the vector of the appropriate type.
  *
- * \todo this needs to make better use of error handling.  probably doesn't currently work since we no longer rely on
- * exceptions
- *
- * \returns an optional which, if true, contains a vector of the indices of \p heads for which
- *          the extraction of a value for \p keyw failed
+ * \returns error_t::noerror on success. \p bad will be empty.
+ * \returns error_t::error if the keyword fails to convert for any header.  \p bad will contain the indices of
+ *          \p heads for which the extraction of a value for \p keyw failed
  *
  * \tparam dataT is the type of the header value
+ * \tparam fitsHeaderT is the fitsHeader type
  *
  */
 template <typename dataT, class fitsHeaderT>
-std::optional<std::vector<size_t>>
-headersToValues( std::vector<dataT> &v,           /**< [out] will contain the converted values*/
-                 std::vector<fitsHeaderT> &heads, /**< [in] contains the headers */
-                 const std::string &keyw          /**< [in] contains the keyword designating which value to convert*/
+error_t headersToValues( std::vector<dataT> &v,           /**< [out] will contain the converted values*/
+                         std::vector<size_t> &bad,        /**<[out] will contain the indices of any
+                                                                    headers that failed conversion */
+                         std::vector<fitsHeaderT> &heads, /**< [in] contains the headers */
+                         const std::string &keyw          /**< [in] contains the keyword designating which
+                                                                    value to convert*/
 )
 {
-    #pragma message ("headersToValues probably doesn't work anymore" )
-
     v.resize( heads.size() );
-    std::vector<size_t> bad;
+    bad.clear();
+
     for( size_t i = 0; i < heads.size(); ++i )
     {
-        try
-        {
-            v[i] = heads[i][keyw].template value<dataT>(); // convertFromString<dataT>(heads[i][keyw].value);
-        }
-        catch( ... )
+        error_t errc;
+        v[i] = heads[i][keyw].template value<dataT>( &errc ); // convertFromString<dataT>(heads[i][keyw].value);
+
+        if( errc != error_t::noerror )
         {
             bad.push_back( i );
             v[i] = std::numeric_limits<dataT>::max();
@@ -909,11 +908,11 @@ headersToValues( std::vector<dataT> &v,           /**< [out] will contain the co
 
     if( bad.size() > 0 )
     {
-        return bad;
+        return error_t::error;
     }
     else
     {
-        return {};
+        return error_t::noerror;
     }
 }
 
