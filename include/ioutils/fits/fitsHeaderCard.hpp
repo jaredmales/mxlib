@@ -39,6 +39,90 @@ namespace mx
 namespace fits
 {
 
+/// \cond
+// strip opening and closing '' and leading and trailing whitespace
+inline void stripApostWS( std::string &str )
+{
+    if( str.size() == 0 )
+    {
+        return;
+    }
+
+    if( str[0] != '\'' && str[0] != ' ' && str.back() != ' ' ) // get out fast if we can
+    {
+        return;
+    }
+
+    // strip white space at front
+    size_t ns = str.find_first_not_of( " \t\r\n" );
+    if( ns != std::string::npos && ns != 0 )
+    {
+        str.erase( 0, ns );
+
+        if( str.size() == 0 )
+        {
+            return;
+        }
+    }
+    else if( ns == std::string::npos ) // the rare all spaces
+    {
+        str = "";
+        return;
+    }
+
+    // strip white space at back
+    ns = str.find_last_not_of( " \t\r\n" );
+    if( ns != std::string::npos && ns != str.size() - 1 )
+    {
+        str.erase( ns + 1 );
+
+        if( str.size() == 0 )
+        {
+            return;
+        }
+    }
+
+    if( str[0] == '\'' && str.back() == '\'' )
+    {
+        if( str.size() == 1 || str.size() == 2 )
+        {
+            str = "";
+            return;
+        }
+        str.erase( str.size() - 1, 1 );
+        str.erase( 0, 1 );
+
+        ns = str.find_first_not_of( " \t\r\n" );
+        if( ns != std::string::npos && ns > 0 )
+        {
+            str.erase( 0, ns );
+
+            if( str.size() == 0 )
+            {
+                return;
+            }
+        }
+        else if( ns == std::string::npos )
+        {
+            str = "";
+            return;
+        }
+
+        // strip white space at back
+        ns = str.find_last_not_of( " \t\r\n" );
+        if( ns < str.size() - 1 )
+        {
+            str.erase( ns + 1, str.size() - ns );
+
+            if( str.size() == 0 )
+            {
+                return;
+            }
+        }
+    }
+}
+/// \endcond
+
 /// Class to manage the three components of a FITS header card
 /** Since FITS does not provide the type in keyword=value pairs in a FITS header, it is up to the user
  * to determine the type.  Furthermore, since we want to read values from files, type conversions must
@@ -644,7 +728,10 @@ template <class verboseT>
 fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const std::string &v, const std::string &c )
 {
     m_keyword = k;
-    m_valueStr.str( v );
+
+    std::string str = v;
+    stripApostWS( str );
+    m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;
     m_type = fitsType<std::string>();
@@ -655,7 +742,9 @@ template <class verboseT>
 fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, char *v, const std::string &c )
 {
     m_keyword = k;
-    m_valueStr.str( v );
+    std::string str = v;
+    stripApostWS( str );
+    m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;
     m_type = fitsType<std::string>();
@@ -666,7 +755,9 @@ template <class verboseT>
 fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k, const char *v, const std::string &c )
 {
     m_keyword = k;
-    m_valueStr.str( v );
+    std::string str = v;
+    stripApostWS( str );
+    m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;
     m_type = fitsType<std::string>();
@@ -680,7 +771,9 @@ fitsHeaderCard<verboseT>::fitsHeaderCard( const std::string &k,
                                           const std::string &c )
 {
     m_keyword = k;
-    m_valueStr.str( v );
+    std::string str = v;
+    stripApostWS( str );
+    m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;
     m_type = type;
@@ -1136,89 +1229,6 @@ typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
     return m_value.template member<typeT>();
 }
 
-inline
-void stripApostWS( std::string & str)
-{
-    if( str.size() == 0 )
-    {
-        return;
-    }
-
-    if(str[0] != '\'' && str[0] != ' ' && str.back() != ' ') //get out fast if we can
-    {
-        return;
-    }
-
-    // strip white space at front
-    size_t ns = str.find_first_not_of( " \t\r\n" );
-    if( ns != std::string::npos && ns != 0)
-    {
-        str.erase( 0, ns);
-
-        if( str.size() == 0 )
-        {
-            return;
-        }
-    }
-    else if (ns == std::string::npos) //the rare all spaces
-    {
-        str = "";
-        return;
-    }
-
-    // strip white space at back
-    ns = str.find_last_not_of( " \t\r\n" );
-    if( ns != std::string::npos && ns != str.size()-1)
-    {
-        str.erase( ns + 1);
-
-        if( str.size() == 0 )
-        {
-            return;
-        }
-    }
-
-    if( str[0] == '\'' && str.back() == '\'' )
-    {
-        if( str.size() == 1 || str.size() == 2 )
-        {
-            str = "";
-            return;
-        }
-        str.erase( str.size() - 1, 1 );
-        str.erase( 0, 1 );
-
-        ns = str.find_first_not_of( " \t\r\n" );
-        if( ns != std::string::npos && ns > 0)
-        {
-            str.erase( 0, ns);
-
-            if( str.size() == 0 )
-            {
-                return;
-            }
-        }
-        else if(ns == std::string::npos)
-        {
-            str = "";
-            return;
-        }
-
-        // strip white space at back
-        ns = str.find_last_not_of( " \t\r\n" );
-        if( ns < str.size()-1)
-        {
-            str.erase( ns+1, str.size() - ns );
-
-            if( str.size() == 0 )
-            {
-                return;
-            }
-        }
-    }
-
-}
-
 template <class verboseT>
 std::string fitsHeaderCard<verboseT>::value( meta::tagT<std::string>, mx::error_t &errc )
 {
@@ -1236,10 +1246,8 @@ std::string fitsHeaderCard<verboseT>::value( meta::tagT<std::string>, mx::error_
     // Strip ' from beginning and end if present
     std::string str = m_valueStr.str();
 
-    stripApostWS(str);
-
-    //Reload it so it's there for next time:
-    m_valueStr.str(str);
+    // Reload it so it's there for next time:
+    m_valueStr.str( str );
 
     return str;
 }
@@ -1442,9 +1450,9 @@ mx::error_t fitsHeaderCard<verboseT>::value( const std::string &v )
     // Strip ' from beginning and end if present
     std::string str = v;
 
-    stripApostWS(str);
+    stripApostWS( str );
 
-    //Reload it so it's there for next time:
+    // Reload it so it's there for next time:
     m_valueStr.str( str );
     m_valueGood = false;
     m_valueStrGood = true;
