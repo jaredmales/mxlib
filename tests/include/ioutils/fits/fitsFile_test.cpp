@@ -8,6 +8,7 @@ using namespace Catch::Matchers;
 using namespace mx::fits;
 
 #include "../../../../include/improc/eigenImage.hpp"
+#include "../../../../include/improc/eigenCube.hpp"
 
 namespace mx
 {
@@ -241,19 +242,20 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
 
 /// Basic writing and reading
 /**
- *
  * \ingroup fitsFile_unit_tests
  */
 TEST_CASE( "Basic writing and reading", "[ioutils::fits::fitsFile]" )
 {
-// document what fitsFile_test is doing
-#ifdef MXLIB_DOXYGEN_PROTECTED_REF
-    fitsFile<float> ff;
-    fitsHeader fh;
-    fh.append( "dummy", 2, "dummy" );
-    mx::improc::eigenImage<float> im;
-    ff.write( "dummy", im, fh );
-#endif
+    // clang-format off
+    // document what fitsFile_test is doing
+    #ifdef MXLIB_DOXYGEN_PROTECTED_REF
+        fitsFile<float> ff;
+        fitsHeader fh;
+        fh.append( "dummy", 2, "dummy" );
+        mx::improc::eigenImage<float> im;
+        ff.write( "dummy", im, fh );
+    #endif
+    // clang-format on
 
     SECTION( "write a frame and read it back in" )
     {
@@ -271,6 +273,47 @@ TEST_CASE( "Basic writing and reading", "[ioutils::fits::fitsFile]" )
         REQUIRE( fh["INT1"].Int() == 2 );
         REQUIRE( im.rows() == 1024 );
         REQUIRE( im.cols() == 1024 );
+    }
+}
+
+/// Cube writing and reading
+/**
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
+{
+    // clang-format off
+    // document what fitsFile_test is doing
+    #ifdef MXLIB_DOXYGEN_PROTECTED_REF
+        fitsFile<float> ff;
+        fitsHeader fh;
+        fh.append( "dummy", 2, "dummy" );
+        mx::improc::eigenImage<float> im;
+        ff.write( "dummy", im, fh );
+    #endif
+    // clang-format on
+
+    SECTION( "write 5 frames and read them back in as a cube" )
+    {
+        fitsFile_test<float> fft;
+
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 1 ) == mx::error_t::noerror );
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 2 ) == mx::error_t::noerror );
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 3 ) == mx::error_t::noerror );
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 4 ) == mx::error_t::noerror );
+        REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 5 ) == mx::error_t::noerror );
+
+        std::vector<std::string> flist({"/tmp/fitsFile_test1.fits","/tmp/fitsFile_test2.fits",
+            "/tmp/fitsFile_test3.fits","/tmp/fitsFile_test4.fits","/tmp/fitsFile_test5.fits"});
+
+        fitsFile<float> ff;
+        mx::improc::eigenCube<float> imc;
+
+        REQUIRE( ff.read( imc, flist ) == mx::error_t::noerror );
+
+        REQUIRE( imc.rows() == 1024 );
+        REQUIRE( imc.cols() == 1024 );
+        REQUIRE( imc.planes() == 5 );
     }
 }
 

@@ -81,7 +81,7 @@ int readRawBinary( T *data,                    ///< [out] the data pointer
 
     if( res != 0 )
     {
-        throw(mx::exception(errno2error_t(errno), "Error closing file [" + fileName + "]" );
+        throw(mx::exception(errno2error_t(errno), "Error closing file [" + fileName + "]" ));
     }
 
     return 0;
@@ -120,7 +120,7 @@ int writeRawBinary( const std::string &fileName, ///< [in] the file to write to
         // Have to handle case where EOF reached but no error.
         if( en != 0 )
         {
-            throw(mx::exception(error_t::filewerr, "Error writing to file [" + fileName + "]" );
+            throw(mx::exception(error_t::filewerr, "Error writing to file [" + fileName + "]" ));
         }
         else
         {

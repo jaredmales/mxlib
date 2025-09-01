@@ -272,7 +272,7 @@ class milkImage
      *
      * \returns an Eigen::Map<Array,-1,-1> reference
      *
-     * \throws mx::err::mxException if the image is not opened
+     * \throws if the image is not opened
      *
      */
     eigenMap<dataT> &operator()();
@@ -290,7 +290,7 @@ class milkImage
      *
      * \returns an Eigen::Map<Array,-1,-1> object
      *
-     * \throws mx::err::mxException if the image is not opened
+     * \throws if the image is not opened
      *
      */
     operator eigenMap<dataT>();
@@ -298,7 +298,7 @@ class milkImage
     /// Copy data from an Eigen Array type to the shared memory stream
     /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
      *
-     * \throws mxException on an error
+     * \throws on an error
      *
      */
     template <typename eigenT>
@@ -308,7 +308,7 @@ class milkImage
     /** The write flag is set to indicate whether or not the the data is being changed.
      * The write flag will be set to false by \ref post().
      *
-     * \throws mx::err::mxException if the image is not opened
+     * \throws if the image is not opened
      */
     void setWrite( bool wrflag = true /**< [in] [optional] the desired value of the write flag.  Default is true.*/ );
 
@@ -316,7 +316,7 @@ class milkImage
     /**
      * \todo need to set wtime, have a version with atime
      *
-     * \throws mx::err::mxException if the image is not opened
+     * \throws if the image is not opened
      */
     void post();
 };

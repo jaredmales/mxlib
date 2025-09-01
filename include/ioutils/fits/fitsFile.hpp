@@ -1334,13 +1334,15 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
 
     // Open the first file to get the dimensions.
     errc = fileName( flist[0], 1 );
-    if( errc != error_t::noerror )
+    if( !!errc )
     {
         return internal::mxlib_error_report<verboseT>( errc );
     }
 
     pixarrT pixarrs;
     errc = calcPixarrs( pixarrs );
+
+    if(!!errc)
     {
         return internal::mxlib_error_report<verboseT>( errc );
     }

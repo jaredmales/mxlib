@@ -809,7 +809,7 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im.rows() != m_refMaskIm.rows() && im.cols() != m_refMaskIm.cols() )
         {
-            internal::mxlib_error_report(error_t::sizeerr "reference and reference mask are not the same size" );
+            internal::mxlib_error_report(error_t::sizeerr, "reference and reference mask are not the same size" );
             return -1;
         }
 
@@ -845,7 +845,7 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im0.rows() != m_refWinIm.rows() && im.cols() != m_refWinIm.cols() )
         {
-            internal::mxlib_error_report(error_t::sizeerr "reference and reference window are not the same size" );
+            internal::mxlib_error_report(error_t::sizeerr, "reference and reference window are not the same size" );
             return -1;
         }
 
@@ -1134,7 +1134,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
     }
     else
     {
-        throw(mx::exception(error_t::invalidconfig, "unknown peak finding method" );
+        throw(mx::exception(error_t::invalidconfig, "unknown peak finding method" ));
     }
 
     //--> unpad here, scaling the shifts
@@ -1148,17 +1148,17 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 {
     if( !m_refValid )
     {
-        throw(mx::exception(error_t::invalidconfig, "reference image is not valid" );
+        throw(mx::exception(error_t::invalidconfig, "reference image is not valid" ));
     }
 
     if( im.rows() != m_rows )
     {
-        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" );
+        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
     }
 
     if( im.cols() != m_cols )
     {
-        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" );
+        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
     }
 
     // Mask and normalize as needed

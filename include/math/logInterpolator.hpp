@@ -89,7 +89,7 @@ class logInterpolator
     {
         if( x.size() != y.size() )
         {
-            throw(mx::exception(error_t::sizeerr, "vectors must have same size" );
+            throw(mx::exception(error_t::sizeerr, "vectors must have same size" ));
         }
 
         m_logx.resize( x.size() );
@@ -99,12 +99,12 @@ class logInterpolator
         {
             if( x[n] <= 0 )
             {
-                throw(mx::exception(error_t::invalidarg, "x values must > 0" );
+                throw(mx::exception(error_t::invalidarg, "x values must > 0" ));
             }
 
             if( y[n] <= 0 )
             {
-                throw(mx::exception(error_t::invalidarg, "y values must > 0" );
+                throw(mx::exception(error_t::invalidarg, "y values must > 0" ));
             }
 
             m_logx[n] = log10( x[n] );

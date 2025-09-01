@@ -153,11 +153,60 @@ TEST_CASE( "Reading space delimited numeric data with errors", "[ioutils::readCo
         }*/
     }
 
-    #if 0 //for doxygen
+#if 0 // for doxygen
     std::string fname;
     std::vector<int> data0, data1;
     mx::ioutils::readColumns( fname, data0, data1 );
-    #endif
+#endif
+}
+
+/// Reading combined type data
+/**
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Reading combined type data", "[ioutils::readColumns]" )
+{
+    SECTION( "a single column of floating point numbers" )
+    {
+        std::string fname = "/tmp/readcol_test_combos.dat";
+        std::ofstream fout;
+        fout.open( fname );
+        fout << "test1 1.23 2.56\n";
+        fout << "test2 2.15 8.93\n";
+        fout << "test3 0 0\n";
+        fout << "test4 6.7 1\n";
+        fout << "test5 0 22.2\n";
+        fout << "test6 1e-4 0\n";
+        fout.close();
+
+        std::vector<std::string> str0;
+        std::vector<float> data1, data2;
+        mx::error_t errc =
+            mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( fname, str0, data1, data2 );
+
+        REQUIRE( errc == mx::error_t::noerror );
+
+        REQUIRE( str0[0] == "test1" );
+        REQUIRE( str0[1] == "test2" );
+        REQUIRE( str0[2] == "test3" );
+        REQUIRE( str0[3] == "test4" );
+        REQUIRE( str0[4] == "test5" );
+        REQUIRE( str0[5] == "test6" );
+
+        REQUIRE_THAT( data1[0], WithinRel( 1.23, 1e-7 ) );
+        REQUIRE_THAT( data1[1], WithinRel( 2.15, 1e-7 ) );
+        REQUIRE( data1[2] == 0 );
+        REQUIRE_THAT( data1[3], WithinRel( 6.7, 1e-7 ) );
+        REQUIRE( data1[4] == 0 );
+        REQUIRE_THAT( data1[5], WithinRel( 1e-4, 1e-7 ) );
+
+        REQUIRE_THAT( data2[0], WithinRel( 2.56, 1e-7 ) );
+        REQUIRE_THAT( data2[1], WithinRel( 8.93, 1e-7 ) );
+        REQUIRE( data2[2] == 0 );
+        REQUIRE_THAT( data2[3], WithinRel( 1, 1e-7 ) );
+        REQUIRE_THAT( data2[4], WithinRel( 22.2, 1e-7 ) );
+        REQUIRE( data2[5] == 0 );
+    }
 }
 
 } // namespace readColumnsTest

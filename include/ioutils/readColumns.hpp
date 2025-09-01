@@ -90,7 +90,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
         sz = sz - i;
 
         // If there's nothing here, we still need to populate the vector
-        if( sz <= 1 )
+        if( sz == 0 )
         {
             mx::error_t errc;
             array.push_back( stoT<typename arrT::value_type>( "", &errc ) );

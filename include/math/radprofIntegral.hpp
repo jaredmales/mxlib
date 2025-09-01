@@ -70,12 +70,12 @@ typename vectorT::value_type radprofIntegral( vectorScT r, /// [in] the r
 
     if( r.size() != p.size() )
     {
-        throw(mx::exception(error_t::sizeerr, "vectors must have same size" );
+        throw(mx::exception(error_t::sizeerr, "vectors must have same size" ));
     }
 
     if( r.size() < 2 )
     {
-        throw(mx::exception(error_t::sizeerr, "must be at least 2 elements in radial profile" );
+        throw(mx::exception(error_t::sizeerr, "must be at least 2 elements in radial profile" ));
     }
 
     floatT s = 0;

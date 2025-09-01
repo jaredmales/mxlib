@@ -164,9 +164,8 @@ struct azBoxKernel
             errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y
                  << "|" << rad0 << "|" << sinq << "|" << cosq;
             errs << "|" << w << "|" << h << "|";
-            mxThrowException( err::sizeerr,
-                              "azBoxKernel::setKernel",
-                              "width bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() );
+            throw(mx::exception(error_t::sizeerr,
+                              "width bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() ));
         }
 
         if( h > m_maxWidth * 2 )
@@ -175,9 +174,8 @@ struct azBoxKernel
             errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y
                  << "|" << rad0 << "|" << sinq << "|" << cosq;
             errs << "|" << w << "|" << h << "|";
-            mxThrowException( err::sizeerr,
-                              "azBoxKernel::setKernel",
-                              "height bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() );
+            throw(mx::exception(error_t::sizeerr,
+                              "height bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() ));
         }
 
         kernel.resize( w, h );
@@ -229,9 +227,8 @@ struct azBoxKernel
         arithT ksum = kernel.sum();
         if( ksum == 0 )
         {
-            mxThrowException( err::invalidconfig,
-                              "azBoxKernel::setKernel",
-                              "kernel sum 0 at " + std::to_string( x ) + "," + std::to_string( y ) );
+            throw(mx::exception(error_t::invalidconfig,
+                              "kernel sum 0 at " + std::to_string( x ) + "," + std::to_string( y ) ));
         }
         kernel /= ksum;
     }
