@@ -72,7 +72,7 @@ struct gaussKernel
         return _kernW * _fwhm;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernelArray )
+    error_t setKernel( arithT x, arithT y, arrayT &kernelArray ) const
     {
         // Unused parts of interface:
         static_cast<void>( x );
@@ -149,7 +149,7 @@ struct azBoxKernel
         return m_maxWidth;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernel )
+    error_t setKernel( arithT x, arithT y, arrayT &kernel ) const
     {
         arithT rad0 = sqrt( (arithT)( x * x + y * y ) );
 
@@ -297,12 +297,12 @@ struct precalcKernel
         }
     }
 
-    int maxWidth()
+    int maxWidth() const
     {
         return m_maxWidth;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernel )
+    error_t setKernel( arithT x, arithT y, arrayT &kernel ) const
     {
         size_t n = ( y + m_ycen ) * m_rows + ( x + m_xcen );
 
@@ -367,7 +367,7 @@ struct precalcKernel
 template <typename imageOutT, typename imageInT, typename kernelT>
 error_t filterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
                      imageInT im,    /**< [in] the image to be filtered*/
-                     kernelT kernel, /**< [in] a fully configured kernel object*/
+                     const kernelT & kernel, /**< [in] a fully configured kernel object*/
                      int maxr = 0    /**< [in] [opt] the maximum radius from the image center to apply the kernel.
                                                      pixels outside this radius are set to 0.*/
 )
@@ -543,7 +543,7 @@ error_t filterImage( imageOutT &fim, /**< [out] Contains the filtered image, wil
 template <typename imageOutT, typename imageInT, typename kernelT>
 void medianFilterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
                         imageInT im,    /**< [in] the image to be filtered*/
-                        kernelT kernel, /**< [in] a fully configured kernel object*/
+                        const kernelT & kernel, /**< [in] a fully configured kernel object*/
                         int maxr = 0,   /**< [in] [opt] the maximum radius from the image center to apply the kernel.
                                                        pixels outside this radius are set to 0.*/
                         int maxrproc = 1 )
