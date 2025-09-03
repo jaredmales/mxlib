@@ -25,12 +25,14 @@ namespace improc
 /** \ingroup image_filters_kernels
  *
  */
-template <typename _arrayT, size_t _kernW = 4>
+template <typename _arrayT, size_t _kernW = 4, class _verboseT = verbose::d>
 struct gaussKernel
 {
     typedef _arrayT arrayT;
     typedef typename _arrayT::Scalar arithT;
     static const int kernW = _kernW;
+
+    typedef _verboseT verboseT;
 
     arrayT kernel;
 
@@ -65,33 +67,37 @@ struct gaussKernel
         kernel /= kernel.sum();
     }
 
-    int maxWidth()
+    int maxWidth() const
     {
         return _kernW * _fwhm;
     }
 
-    void setKernel( arithT x, arithT y, arrayT &kernelArray )
+    error_t setKernel( arithT x, arithT y, arrayT &kernelArray )
     {
         // Unused parts of interface:
         static_cast<void>( x );
         static_cast<void>( y );
 
         kernelArray = kernel;
+
+        return error_t::noerror;
     }
 };
 
-/// Azimuthally variable boxcare kernel.
-/** Averages the image in a boxcare defined by a radial and azimuthal extent.
+/// Azimuthally variable boxcar kernel.
+/** Averages the image in a boxcar defined by a radial and azimuthal extent.
  *
  * \ingroup image_filters_kernels
  */
-template <typename _arrayT, size_t _kernW = 2>
+template <typename _arrayT, size_t _kernW = 2, class _verboseT = verbose::d>
 struct azBoxKernel
 {
     typedef _arrayT arrayT;
     typedef typename _arrayT::Scalar arithT;
 
     static const int kernW = _kernW;
+
+    typedef _verboseT verboseT;
 
     arithT m_radWidth{ 0 }; ///< the half-width of the averaging box, in the radial direction, in pixels.
     arithT m_azWidth{ 0 };  ///< the half-width of the averaging box, in the azimuthal direction, in pixels.
@@ -110,7 +116,7 @@ struct azBoxKernel
 
     azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
                  arithT azWidth,  ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
-                 arithT maxAz     ///< [in] the maximum half-width of the averging box in the azimuthal direction, in
+                 arithT maxAz     ///< [in] the maximum half-width of the averaging box in the azimuthal direction, in
                                   ///< degrees. \>= 0. If 0 or \>= 180, then no maximum is enforced.
                  )
         : m_radWidth( fabs( radWidth ) ), m_azWidth( fabs( azWidth ) )
@@ -138,12 +144,12 @@ struct azBoxKernel
         m_maxWidth = 0.5 * std::max( mx1, mx2 );
     }
 
-    int maxWidth()
+    int maxWidth() const
     {
         return m_maxWidth;
     }
 
-    void setKernel( arithT x, arithT y, arrayT &kernel )
+    error_t setKernel( arithT x, arithT y, arrayT &kernel )
     {
         arithT rad0 = sqrt( (arithT)( x * x + y * y ) );
 
@@ -153,29 +159,49 @@ struct azBoxKernel
         // Only calc q if we're going to use it.
         arithT q = 0;
         if( m_maxAz > 0 )
+        {
             q = atan2( sinq, cosq );
+        }
 
         int w = kernW * ( (int)( fabs( m_azWidth * sinq ) + fabs( m_radWidth * cosq ) ) + 1 );
         int h = kernW * ( (int)( fabs( m_azWidth * cosq ) + fabs( m_radWidth * sinq ) ) + 1 );
 
         if( w > m_maxWidth * 2 )
         {
-            std::stringstream errs;
-            errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y
-                 << "|" << rad0 << "|" << sinq << "|" << cosq;
-            errs << "|" << w << "|" << h << "|";
-            throw(mx::exception(error_t::sizeerr,
-                              "width bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() ));
+            return internal::mxlib_error_report<verboseT>( error_t::sizeerr,
+                                                           std::format( "Width bigger than 2*maxWidth. "
+                                                                        "This is a bug. Details: "
+                                                                        "|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|",
+                                                                        kernW,
+                                                                        m_radWidth,
+                                                                        m_azWidth,
+                                                                        m_maxWidth,
+                                                                        x,
+                                                                        y,
+                                                                        rad0,
+                                                                        sinq,
+                                                                        cosq,
+                                                                        w,
+                                                                        h ) );
         }
 
         if( h > m_maxWidth * 2 )
         {
-            std::stringstream errs;
-            errs << "|" << kernW << "|" << m_radWidth << "|" << m_azWidth << "|" << m_maxWidth << "|" << x << "|" << y
-                 << "|" << rad0 << "|" << sinq << "|" << cosq;
-            errs << "|" << w << "|" << h << "|";
-            throw(mx::exception(error_t::sizeerr,
-                              "height bigger than 2*maxWidth.  This is a bug.  Details: " + errs.str() ));
+            return internal::mxlib_error_report<verboseT>( error_t::sizeerr,
+                                                           std::format( "Height bigger than 2*maxWidth. "
+                                                                        "This is a bug. Details: "
+                                                                        "|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|",
+                                                                        kernW,
+                                                                        m_radWidth,
+                                                                        m_azWidth,
+                                                                        m_maxWidth,
+                                                                        x,
+                                                                        y,
+                                                                        rad0,
+                                                                        sinq,
+                                                                        cosq,
+                                                                        w,
+                                                                        h ) );
         }
 
         kernel.resize( w, h );
@@ -227,27 +253,86 @@ struct azBoxKernel
         arithT ksum = kernel.sum();
         if( ksum == 0 )
         {
-            throw(mx::exception(error_t::invalidconfig,
-                              "kernel sum 0 at " + std::to_string( x ) + "," + std::to_string( y ) ));
+            return internal::mxlib_error_report<verboseT>( error_t::invalidconfig,
+                                                           std::format( "kernel sum 0 at {},{}", x, y ) );
         }
         kernel /= ksum;
+
+        return error_t::noerror;
+    }
+};
+
+template <class kernelT>
+struct precalcKernel
+{
+    typedef kernelT::arrayT arrayT;
+    typedef kernelT::arrayT::Scalar arithT;
+    typedef kernelT::verboseT verboseT;
+
+    kernelT m_kernel;
+
+    uint32_t m_rows;
+    uint32_t m_cols;
+    arithT m_xcen;
+    arithT m_ycen;
+
+    int m_maxWidth;
+
+    std::vector<arrayT> m_kernels;
+
+    precalcKernel( const kernelT &kernel, uint32_t rows, uint32_t cols, arithT xcen, arithT ycen )
+        : m_kernel( kernel ), m_rows( rows ), m_cols( cols ), m_xcen( xcen ), m_ycen( ycen )
+    {
+        m_maxWidth = kernel.maxWidth();
+
+        m_kernels.resize( m_rows * m_cols );
+        size_t n = 0;
+        for( int cc = 0; cc < m_cols; ++cc )
+        {
+            for( int rr = 0; rr < m_rows; ++rr )
+            {
+                m_kernel.setKernel( rr - xcen, cc - ycen, m_kernels[n] );
+                ++n;
+            }
+        }
+    }
+
+    int maxWidth()
+    {
+        return m_maxWidth;
+    }
+
+    error_t setKernel( arithT x, arithT y, arrayT &kernel )
+    {
+        size_t n = ( y + m_ycen ) * m_rows + ( x + m_xcen );
+
+        if( m_kernels.size() == 0 )
+        {
+            return error_t::invalidconfig;
+        }
+
+        if( n > m_kernels.size() - 1 )
+        {
+            return error_t::invalidarg;
+        }
+
+        kernel = m_kernels[n];
+
+        return error_t::noerror;
     }
 };
 
 /// Filter an image with a mean kernel.
 /** Applies the kernel to each pixel in the image and sums, storing the filtered result in the output image.
+ *
  * The kernel-type (kernelT) must have the following interface:
  * \code
- * template<typename _arrayT, size_t kernW>
  * struct filterKernel
  * {
- *     typedef _arrayT arrayT; // arrayT must have an eigen-like interface
- *     typedef typename _arrayT::Scalar arithT;
+ *     typedef <eigen-like type> arrayT; // arrayT must have an eigen-like interface
+ *     typedef typename arrayT::Scalar arithT;
  *
- *     filterKernel()
- *     {
- *        //constructor
- *     }
+ *     typedef <verbosity-type> verboseT;
  *
  *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
  *     //Called once
@@ -257,39 +342,47 @@ struct azBoxKernel
  *     }
  *
  *     //The setKernel function is called for each pixel.
- *     void setKernel(arithT x, arithT y, arrayT & kernel)
+ *     void setKernel( arithT x,       // the pixel x-position relative to the image center (not the pixel index)
+ *                     arithT y,       // the pixel y-position relative to the image center (not the pixel index)
+ *                     arrayT & kernel // the array to be resized and populated
+ *                   )
  *     {
  *        //This must resize and populate the passed in kernel array each time
  *        //so that it is re-entrant.
+ *
  *        //Note: On output kernel array should be normalized so that sum() = 1.0
+ *
  *        //Note: the width and height of the kernel array should always be odd
  *     }
  * };
  * \endcode
  *
- * \param [out] fim will be allocated with resize, and on output contains the filtered image
- * \param [in] im is the image to be filtered
- * \param [in] kernel a fully configured obect of type kernelT
- * \param [in] maxr is the maximum radius from the image center to apply the kernel.  pixels
- *                  outside this radius are set to 0.
- *
- * \tparam imageOutT the type of the output image (must have an Eigen like interface)
- * \tparam imageInT the type of the input image (must have an Eigen like interface)
+ * \tparam imageOutT the type of the output image (must have an Eigen-like interface)
+ * \tparam imageInT the type of the input image (must have an Eigen-like interface)
  * \tparam kernelT is the kernel type (see above)
  *
  * \ingroup image_filters_kernels
  *
  */
 template <typename imageOutT, typename imageInT, typename kernelT>
-void filterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 0 )
+error_t filterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
+                     imageInT im,    /**< [in] the image to be filtered*/
+                     kernelT kernel, /**< [in] a fully configured kernel object*/
+                     int maxr = 0    /**< [in] [opt] the maximum radius from the image center to apply the kernel.
+                                                     pixels outside this radius are set to 0.*/
+)
 {
+    typedef typename kernelT::verboseT verboseT;
+
     fim.resize( im.rows(), im.cols() );
 
     float xcen = 0.5 * ( im.rows() - 1 );
     float ycen = 0.5 * ( im.cols() - 1 );
 
     if( maxr == 0 )
+    {
         maxr = 0.5 * im.rows() - kernel.maxWidth();
+    }
 
     int mini = 0.5 * im.rows() - maxr;
     int maxi = 0.5 * im.rows() + maxr;
@@ -298,20 +391,37 @@ void filterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 0 )
 
     typename kernelT::arrayT kernelArray;
 
-#pragma omp parallel private( kernelArray )
+    error_t top_errc = error_t::noerror;
+
+    // clang-format off
+    #pragma omp parallel private( kernelArray ) // clang-format on
     {
         int im_i, im_j, im_p, im_q;
         int kern_i, kern_j, kern_p, kern_q;
         typename imageOutT::Scalar norm;
 
-#pragma omp for
+        error_t errc = error_t::noerror;
+
+        // clang-format off
+        #pragma omp for // clang-format on
         for( int i = 0; i < im.rows(); ++i )
         {
+            if( top_errc != error_t::noerror ) // can't return from omp loop
+            {
+                continue;
+            }
+
             for( int j = 0; j < im.cols(); ++j )
             {
+                if( errc != error_t::noerror ) // can't return from omp loop
+                {
+                    continue;
+                }
+
                 if( ( i >= mini && i < maxi ) && ( j >= minj && j < maxj ) )
                 {
-                    kernel.setKernel( i - xcen, j - ycen, kernelArray );
+                    errc = kernel.setKernel( i - xcen, j - ycen, kernelArray );
+
                     fim( i, j ) = ( im.block( i - 0.5 * ( kernelArray.rows() - 1 ),
                                               j - 0.5 * ( kernelArray.cols() - 1 ),
                                               kernelArray.rows(),
@@ -321,7 +431,7 @@ void filterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 0 )
                 }
                 else
                 {
-                    kernel.setKernel( i - xcen, j - ycen, kernelArray );
+                    errc = kernel.setKernel( i - xcen, j - ycen, kernelArray );
 
                     im_i = i - 0.5 * ( kernelArray.rows() - 1 );
                     if( im_i < 0 )
@@ -370,13 +480,73 @@ void filterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 0 )
                     if( !std::isfinite( fim( i, j ) ) )
                         fim( i, j ) = 0.0;
                 }
+            } // for rows
+
+            // clang-format off
+            #pragma omp critical // clang-format on
+            {
+                if( errc != error_t::noerror && top_errc == error_t::noerror )
+                {
+                    top_errc = errc;
+                }
             }
-        }
+
+        } // for cols
     } // pragma omp parallel
+
+    return top_errc;
 }
 
+/// Filter an image with a median kernel.
+/** Calculates the median of all pixels corresponding to non-zero pixels in the kernel,
+ *  storing the filtered result in the output image.
+ *
+ * The kernel-type (kernelT) must have the following interface:
+ * \code
+ * struct filterKernel
+ * {
+ *     typedef <eigen-like type> arrayT; // arrayT must have an eigen-like interface
+ *     typedef typename arrayT::Scalar arithT;
+ *
+ *     typedef <verbosity-type> verboseT;
+ *
+ *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
+ *     //Called once
+ *     int maxWidth()
+ *     {
+ *        //returns the maximum half-width given the configuration
+ *     }
+ *
+ *     //The setKernel function is called for each pixel.
+ *     void setKernel( arithT x,       // the pixel x-position relative to the image center (not the pixel index)
+ *                     arithT y,       // the pixel y-position relative to the image center (not the pixel index)
+ *                     arrayT & kernel // the array to be resized and populated
+ *                   )
+ *     {
+ *        //This must resize and populate the passed in kernel array each time
+ *        //so that it is re-entrant.
+ *
+ *        //Note: On output kernel array should be normalized so that sum() = 1.0
+ *
+ *        //Note: the width and height of the kernel array should always be odd
+ *     }
+ * };
+ * \endcode
+ *
+ * \tparam imageOutT the type of the output image (must have an Eigen-like interface)
+ * \tparam imageInT the type of the input image (must have an Eigen-like interface)
+ * \tparam kernelT is the kernel type (see above)
+ *
+ * \ingroup image_filters_kernels
+ *
+ */
 template <typename imageOutT, typename imageInT, typename kernelT>
-void medianFilterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 0, int maxrproc = 1 )
+void medianFilterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
+                        imageInT im,    /**< [in] the image to be filtered*/
+                        kernelT kernel, /**< [in] a fully configured kernel object*/
+                        int maxr = 0,   /**< [in] [opt] the maximum radius from the image center to apply the kernel.
+                                                       pixels outside this radius are set to 0.*/
+                        int maxrproc = 1 )
 {
     fim.resize( im.rows(), im.cols() );
 
@@ -393,7 +563,8 @@ void medianFilterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 
 
     typename kernelT::arrayT kernelArray;
 
-#pragma omp parallel private( kernelArray )
+    // clang-format off
+    #pragma omp parallel private( kernelArray ) // clang-format on
     {
         int im_i, im_j, im_p, im_q;
         int kern_i, kern_j, kern_p, kern_q;
@@ -401,7 +572,8 @@ void medianFilterImage( imageOutT &fim, imageInT im, kernelT kernel, int maxr = 
 
         std::vector<typename imageOutT::Scalar> pixels;
 
-#pragma omp for
+        // clang-format off
+        #pragma omp for // clang-format on
         for( int i = 0; i < im.rows(); ++i )
         {
             for( int j = 0; j < im.cols(); ++j )
