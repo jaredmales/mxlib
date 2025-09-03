@@ -120,11 +120,15 @@ struct cubicConvolTransform
     arithT cubicConvolKernel( arithT d )
     {
         if( d <= 1 )
+        {
             return ( cubic + 2. ) * d * d * d - ( cubic + 3. ) * d * d + 1.;
+        }
 
         if( d < 2 )
+        {
             return cubic * d * d * d - 5. * cubic * d * d + 8. * cubic * d - 4. * cubic;
-
+        }
+        
         return 0;
     }
 
@@ -232,17 +236,19 @@ void imageRotate( arrT &transim,   ///< [out] The rotated image.  Must be pre-al
     xc_x_cosq += yc_x_sinq;
     xc_x_sinq -= yc_x_cosq;
 
-#ifdef MXLIB_USE_OMP
-#pragma omp parallel private( x0, y0, i0, j0, x, y )
-#endif
+    // clang-format off
+    #ifdef MXLIB_USE_OMP
+    #pragma omp parallel private( x0, y0, i0, j0, x, y )
+    #endif // clang-format on
     {
         arithT i_x_cosq, i_x_sinq;
         arrT kern;
         kern.resize( width, width );
 
-#ifdef MXLIB_USE_OMP
-#pragma omp for schedule( static, 1 )
-#endif
+        // clang-format off
+        #ifdef MXLIB_USE_OMP
+        #pragma omp for schedule( static, 1 )
+        #endif // clang-format on
         for( int i = 0; i < Nrows; ++i )
         {
             i_x_cosq = i * cosq - xc_x_cosq;      // + xcen;
@@ -307,17 +313,19 @@ void imageShiftWP( outputArrT &out, ///< [out] contains the shifted image.  Must
     int inr = in.rows();
     int inc = in.cols();
 
-#ifdef MXLIB_USE_OMP
-#pragma omp parallel
-#endif
+    // clang-format off
+    #ifdef MXLIB_USE_OMP
+    #pragma omp parallel
+    #endif // clang-format on
     {
         int x, y;
 
         if( wrap )
         {
-#ifdef MXLIB_USE_OMP
-#pragma omp for
-#endif
+            // clang-format off
+            #ifdef MXLIB_USE_OMP
+            #pragma omp for
+            #endif //clang-format on
             for( int cc = 0; cc < outc; ++cc )
             {
                 y = cc - dy;
@@ -342,9 +350,10 @@ void imageShiftWP( outputArrT &out, ///< [out] contains the shifted image.  Must
         }
         else
         {
-#ifdef MXLIB_USE_OMP
-#pragma omp for
-#endif
+            // clang-format off
+            #ifdef MXLIB_USE_OMP
+            #pragma omp for
+            #endif // clang-format on
             for( int cc = 0; cc < outc; ++cc )
             {
                 y = cc - dy;
@@ -389,13 +398,13 @@ void imageShiftWP( outputArrT &out, ///< [out] contains the shifted image.  Must
  *
  */
 template <typename outputArrT, typename inputArrT, typename scaleArrT>
-void imageShiftWPScale(
-    outputArrT
-        &out,      ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller than the in array.
-    inputArrT &in, ///< [in] the image to be shifted.
-    scaleArrT &scale, ///< [in] image of scale values applied per-pixel to the output (shifted) image, same size as out
-    int dx,           ///< [in] the amount to shift in the x direction
-    int dy            ///< [in] the amount to shift in the y direction
+void imageShiftWPScale( outputArrT &out,  /**< [out] contains the shifted image.  Must be pre-allocated,
+                                                     but can be smaller than the in array. */
+                        inputArrT &in,    ///< [in] the image to be shifted.
+                        scaleArrT &scale, /**< [in] image of scale values applied per-pixel to the output (shifted)
+                                                    image, same size as out*/
+                        int dx,           ///< [in] the amount to shift in the x direction
+                        int dy            ///< [in] the amount to shift in the y direction
 )
 {
     dx %= in.rows();
@@ -405,15 +414,18 @@ void imageShiftWPScale(
     int outc = out.cols();
     int inr = in.rows();
     int inc = in.cols();
-#ifdef MXLIB_USE_OMP
-// #pragma omp parallel
-#endif
+
+    // clang-format off
+    #ifdef MXLIB_USE_OMP
+    // #pragma omp parallel
+    #endif // clang-format on
     {
         int x, y;
 
-#ifdef MXLIB_USE_OMP
-// #pragma omp for
-#endif
+        // clang-format off
+        #ifdef MXLIB_USE_OMP
+        // #pragma omp for
+        #endif // clang-format on
         for( int cc = 0; cc < outc; ++cc )
         {
             y = cc - dy;
@@ -486,7 +498,7 @@ void imageShift( arrOutT &transim, ///< [out] Will contain the shifted image.  W
     transim.resize( Nrows, Ncols );
 
 #ifdef MXLIB_USE_OMP
-#pragma omp parallel
+    #pragma omp parallel
 #endif
     {
         int i0, j0;
@@ -499,7 +511,7 @@ void imageShift( arrOutT &transim, ///< [out] Will contain the shifted image.  W
         trans( kern, rx, ry );
 
 #ifdef MXLIB_USE_OMP
-#pragma omp for
+    #pragma omp for
 #endif
         for( int i = 0; i < Nrows; ++i )
         {

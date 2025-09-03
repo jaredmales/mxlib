@@ -399,7 +399,10 @@ eigenCube<dataT>::pixel( Index i, Index j )
     return Eigen::Map<Eigen::Array<dataT, Eigen::Dynamic, Eigen::Dynamic>,
                       Eigen::Unaligned,
                       Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
-        m_data + j * _rows + i, _planes, 1, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>( 0, _rows * _cols ) );
+        m_data + j * _rows + i,
+        _planes,
+        1,
+        Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>( 0, _rows * _cols ) );
 }
 
 template <typename dataT>
@@ -452,11 +455,11 @@ void eigenCube<dataT>::mean( eigenT &mim, eigenCubeT &mask, double minGoodFract 
 {
     mim.resize( _rows, _cols );
 
-    #pragma omp parallel
+#pragma omp parallel
     {
         std::vector<dataT> work;
 
-        #pragma omp for
+#pragma omp for
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )
@@ -574,18 +577,22 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, dataT sigma )
 {
     mim.resize( _rows, _cols );
 
-    #pragma omp parallel num_threads( Eigen::nbThreads() )
+    // clang-format off
+    #pragma omp parallel //clang-format on
     {
         std::vector<Scalar> work;
 
-    #pragma omp for schedule( static, 10 )
+        // clang-format off
+        #pragma omp for // clang-format off
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )
             {
-                work.resize( _planes ); // work could be smaller after sigmaMean
+                work.resize( _planes );
                 for( int k = 0; k < _planes; ++k )
+                {
                     work[k] = ( pixel( i, j ) )( k, 0 );
+                }
 
                 mim( i, j ) = math::vectorSigmaMean( work, sigma );
             }
@@ -599,11 +606,11 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, do
 {
     mim.resize( _rows, _cols );
 
-    #pragma omp parallel
+#pragma omp parallel
     {
         std::vector<Scalar> work;
 
-        #pragma omp for
+#pragma omp for
         for( Index i = 0; i < _rows; ++i )
         {
             for( Index j = 0; j < _cols; ++j )

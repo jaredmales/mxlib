@@ -21,6 +21,43 @@ namespace mx
 namespace improc
 {
 
+/** \addtogroup image_filters_kernels *
+ * The filter function use a kernel that specifies how to filter the image.  Filter kernels, usually
+ * denoted as type kernelT below, must have the following interface:
+ * \code
+ * struct filterKernel
+ * {
+ *     typedef <eigen-like type> arrayT; // arrayT must have an eigen-like interface
+ *
+ *     typedef <type> arithT; // the type used for arithmetic, normally `typename arrayT::Scalar`
+ *
+ *     typedef <verbosity-type> verboseT; // the mxlib verbosity for error reports
+ *
+ *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
+ *     // Called only once for each call to the filter function
+ *     int maxWidth() const
+ *     {
+ *        //returns the maximum half-width given the configuration
+ *     }
+ *
+ *     //The setKernel function is called for each pixel.
+ *     void setKernel( arithT x,       // the pixel x-position relative to the image center (not the pixel index)
+ *                     arithT y,       // the pixel y-position relative to the image center (not the pixel index)
+ *                     arrayT & kernel // the array to be resized and populated
+ *                   ) const
+ *     {
+ *        //This must resize and populate the passed in kernel array each time
+ *        //so that it is re-entrant.
+ *
+ *        //Note: On output kernel array should be normalized so that sum() = 1.0
+ *
+ *        //Note: the width and height of the kernel array should always be odd
+ *     }
+ * };
+ * \endcode
+ * Additionally `kernelT` must be copyable.
+ *
+ * /
 /// Symetric Gaussian smoothing kernel
 /** \ingroup image_filters_kernels
  *
@@ -72,7 +109,10 @@ struct gaussKernel
         return _kernW * _fwhm;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernelArray ) const
+    error_t setKernel( arithT x,           /**< [in] x-coordinate relative to image center */
+                       arithT y,           /**< [in] x-coordinate relative to image center */
+                       arrayT &kernelArray /**< [in] the array to populate with the kernel, resized */
+    ) const
     {
         // Unused parts of interface:
         static_cast<void>( x );
@@ -149,7 +189,10 @@ struct azBoxKernel
         return m_maxWidth;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernel ) const
+    error_t setKernel( arithT x,      /**< [in] x-coordinate relative to image center */
+                       arithT y,      /**< [in] x-coordinate relative to image center */
+                       arrayT &kernel /**< [in] the array to populate with the kernel, resized */
+    ) const
     {
         arithT rad0 = sqrt( (arithT)( x * x + y * y ) );
 
@@ -262,6 +305,11 @@ struct azBoxKernel
     }
 };
 
+/// A kernel that is pre-calculated for the entire image, useful for repeated applications
+/** Use this for spatially variable kernels.  It is not needed for, e.g., the symmetric Gaussian.
+ *
+ * \tparam kernelT is the kernel type. See above for the requirements on kernelT.
+ */
 template <class kernelT>
 struct precalcKernel
 {
@@ -280,7 +328,14 @@ struct precalcKernel
 
     std::vector<arrayT> m_kernels;
 
-    precalcKernel( const kernelT &kernel, uint32_t rows, uint32_t cols, arithT xcen, arithT ycen )
+    precalKernel() = delete;
+
+    precalcKernel( const kernelT &kernel, /**< [in] A fully initialized kernel.  Is copied.*/
+                   uint32_t rows,         /**< [in] The rows in the images to be filtered*/
+                   uint32_t cols,         /**< [in] The columns in the images to be filtered*/
+                   arithT xcen,           /**< [in] The pixel x-coordinate of the center of the image*/
+                   arithT ycen            /**< [in] The pixel y-coordinate of the center of the image*/
+                   )
         : m_kernel( kernel ), m_rows( rows ), m_cols( cols ), m_xcen( xcen ), m_ycen( ycen )
     {
         m_maxWidth = kernel.maxWidth();
@@ -302,7 +357,10 @@ struct precalcKernel
         return m_maxWidth;
     }
 
-    error_t setKernel( arithT x, arithT y, arrayT &kernel ) const
+    error_t setKernel( arithT x,      /**< [in] x-coordinate relative to image center */
+                       arithT y,      /**< [in] x-coordinate relative to image center */
+                       arrayT &kernel /**< [in] the array to populate with the kernel, resized */
+    ) const
     {
         size_t n = ( y + m_ycen ) * m_rows + ( x + m_xcen );
 
@@ -325,51 +383,20 @@ struct precalcKernel
 /// Filter an image with a mean kernel.
 /** Applies the kernel to each pixel in the image and sums, storing the filtered result in the output image.
  *
- * The kernel-type (kernelT) must have the following interface:
- * \code
- * struct filterKernel
- * {
- *     typedef <eigen-like type> arrayT; // arrayT must have an eigen-like interface
- *     typedef typename arrayT::Scalar arithT;
- *
- *     typedef <verbosity-type> verboseT;
- *
- *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
- *     //Called once
- *     int maxWidth()
- *     {
- *        //returns the maximum half-width given the configuration
- *     }
- *
- *     //The setKernel function is called for each pixel.
- *     void setKernel( arithT x,       // the pixel x-position relative to the image center (not the pixel index)
- *                     arithT y,       // the pixel y-position relative to the image center (not the pixel index)
- *                     arrayT & kernel // the array to be resized and populated
- *                   )
- *     {
- *        //This must resize and populate the passed in kernel array each time
- *        //so that it is re-entrant.
- *
- *        //Note: On output kernel array should be normalized so that sum() = 1.0
- *
- *        //Note: the width and height of the kernel array should always be odd
- *     }
- * };
- * \endcode
- *
  * \tparam imageOutT the type of the output image (must have an Eigen-like interface)
  * \tparam imageInT the type of the input image (must have an Eigen-like interface)
- * \tparam kernelT is the kernel type (see above)
+ * \tparam kernelT is the kernel type (see above for requirements)
  *
  * \ingroup image_filters_kernels
  *
  */
 template <typename imageOutT, typename imageInT, typename kernelT>
-error_t filterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
-                     imageInT im,    /**< [in] the image to be filtered*/
-                     const kernelT & kernel, /**< [in] a fully configured kernel object*/
-                     int maxr = 0    /**< [in] [opt] the maximum radius from the image center to apply the kernel.
-                                                     pixels outside this radius are set to 0.*/
+error_t filterImage( imageOutT &fim,        /**< [out] Contains the filtered image, will be resized*/
+                     imageInT im,           /**< [in] the image to be filtered*/
+                     const kernelT &kernel, /**< [in] a fully configured kernel object*/
+                     int maxr = 0           /**< [in] [opt] the maximum radius from the image center to
+                                                            apply the kernel. pixels outside this radius are
+                                                            set to 0.*/
 )
 {
     typedef typename kernelT::verboseT verboseT;
@@ -501,51 +528,19 @@ error_t filterImage( imageOutT &fim, /**< [out] Contains the filtered image, wil
 /** Calculates the median of all pixels corresponding to non-zero pixels in the kernel,
  *  storing the filtered result in the output image.
  *
- * The kernel-type (kernelT) must have the following interface:
- * \code
- * struct filterKernel
- * {
- *     typedef <eigen-like type> arrayT; // arrayT must have an eigen-like interface
- *     typedef typename arrayT::Scalar arithT;
- *
- *     typedef <verbosity-type> verboseT;
- *
- *     //The maxWidth function returns the maximum possible full-width (in either direction) of the kernel
- *     //Called once
- *     int maxWidth()
- *     {
- *        //returns the maximum half-width given the configuration
- *     }
- *
- *     //The setKernel function is called for each pixel.
- *     void setKernel( arithT x,       // the pixel x-position relative to the image center (not the pixel index)
- *                     arithT y,       // the pixel y-position relative to the image center (not the pixel index)
- *                     arrayT & kernel // the array to be resized and populated
- *                   )
- *     {
- *        //This must resize and populate the passed in kernel array each time
- *        //so that it is re-entrant.
- *
- *        //Note: On output kernel array should be normalized so that sum() = 1.0
- *
- *        //Note: the width and height of the kernel array should always be odd
- *     }
- * };
- * \endcode
- *
  * \tparam imageOutT the type of the output image (must have an Eigen-like interface)
  * \tparam imageInT the type of the input image (must have an Eigen-like interface)
- * \tparam kernelT is the kernel type (see above)
+ * \tparam kernelT is the kernel type (see above for requirements)
  *
  * \ingroup image_filters_kernels
  *
  */
 template <typename imageOutT, typename imageInT, typename kernelT>
-void medianFilterImage( imageOutT &fim, /**< [out] Contains the filtered image, will be resized*/
-                        imageInT im,    /**< [in] the image to be filtered*/
-                        const kernelT & kernel, /**< [in] a fully configured kernel object*/
-                        int maxr = 0,   /**< [in] [opt] the maximum radius from the image center to apply the kernel.
-                                                       pixels outside this radius are set to 0.*/
+void medianFilterImage( imageOutT &fim,        /**< [out] Contains the filtered image, will be resized*/
+                        imageInT im,           /**< [in] the image to be filtered*/
+                        const kernelT &kernel, /**< [in] a fully configured kernel object*/
+                        int maxr = 0, /**< [in] [opt] the maximum radius from the image center to apply the kernel.
+                                                     pixels outside this radius are set to 0.*/
                         int maxrproc = 1 )
 {
     fim.resize( im.rows(), im.cols() );
@@ -671,9 +666,9 @@ void medianFilterImage( imageOutT &fim, /**< [out] Contains the filtered image, 
 ///@}
 
 /// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
-/** Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the
- * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns of the input image, and
- * the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+/** Calculates the mean value in a rectangular box of imIn, of size meanFullWidth X meanFullWidth and stores it in the
+ * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns on the edge of the input
+ * image, and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
  *
  * imOut is not re-allocated.
  *
@@ -689,7 +684,8 @@ void medianFilterImage( imageOutT &fim, /**< [out] Contains the filtered image, 
  * \ingroup image_filters_average
  */
 template <typename imageTout, typename imageTin>
-int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
+int meanSmooth( imageTout &imOut,         /**< [out] the smoothed image. Not re-allocated, and the edge
+                                                     pixels are not modified.*/
                 const imageTin &imIn,     ///< [in] the image to smooth
                 int meanFullWidth,        ///< [in] the full-width of the smoothing box
                 bool rejectMinMax = false ///< [in] whether or not to reject the min and max value.
@@ -749,11 +745,12 @@ int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocate
     return 0;
 }
 
-/// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.  Determines
-/// the location and value of the highest pixel.
-/** Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the
- * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns of the input image, and
- * the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+/** \brief Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
+ * Determines  the location and value of the highest pixel.
+ *
+ * Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the
+ * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns on the edge of the input
+ * image, and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
  *
  * imOut is not re-allocated.
  *
