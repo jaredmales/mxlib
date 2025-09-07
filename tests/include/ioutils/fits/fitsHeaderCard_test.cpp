@@ -119,7 +119,7 @@ TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHea
     SECTION( "typical case" )
     {
         fitsHeaderCard fhc( "KEYTEST", "'simple         '", "comment" );
-        REQUIRE( fhc.String() == "simple" );
+        REQUIRE( fhc.String() == "simple         " );
     }
 
     SECTION( "no ' and no space" )
@@ -143,13 +143,13 @@ TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHea
     SECTION( "space at beginning" )
     {
         fitsHeaderCard fhc( "KEYTEST", "'   simple         '", "comment" );
-        REQUIRE( fhc.String() == "simple" );
+        REQUIRE( fhc.String() == "   simple         " );
     }
 
     SECTION( "spaces at beginning, no spaces at end" )
     {
         fitsHeaderCard fhc( "KEYTEST", "'     simple'", "comment" );
-        REQUIRE( fhc.String() == "simple" );
+        REQUIRE( fhc.String() == "     simple" );
     }
 
     SECTION( "spaces at beginning, no '" )
@@ -179,7 +179,7 @@ TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHea
     SECTION( "two '', spaces" )
     {
         fitsHeaderCard fhc( "KEYTEST", "'  '", "comment" );
-        REQUIRE( fhc.String() == "" );
+        REQUIRE( fhc.String() == "  " );
     }
 
     SECTION( "spaces only" )
@@ -197,19 +197,65 @@ TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHea
     SECTION( "' part of value at end with spaces" )
     {
         fitsHeaderCard fhc( "KEYTEST", "'z'   '", "comment" );
-        REQUIRE( fhc.String() == "z'" );
+        REQUIRE( fhc.String() == "z'   " );
     }
 
     SECTION( "' part of value at beginning with spaces" )
     {
         fitsHeaderCard fhc( "KEYTEST", "''z   '", "comment" );
-        REQUIRE( fhc.String() == "'z" );
+        REQUIRE( fhc.String() == "'z   " );
     }
 
     SECTION( "spaces before and after '' with ' in value surrounded by spaces" )
     {
         fitsHeaderCard fhc( "KEYTEST", "   '  'z   '  ", "comment" );
-        REQUIRE( fhc.String() == "'z" );
+        REQUIRE( fhc.String() == "  'z   " );
+    }
+}
+
+/// CONTINUE-ing a card
+/**
+ * \ingroup fitsHeaderCard_unit_tests
+ */
+TEST_CASE( "CONTINUE-ing a card", "[ioutils::fits::fitsHeaderCard]" )
+{
+    SECTION("normal CONTINUE, trailing space")
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'one,two,three,&'", "" );
+        fitsHeaderCard fhcc( "CONTINUE", "", "'four,five,six' / the comment" );
+
+        REQUIRE(fhc.appendContinue(fhcc) == error_t::noerror);
+
+        REQUIRE(fhc.keyword() == "KEYTEST");
+        REQUIRE(fhc.String() == "one,two,three,four,five,six");
+        REQUIRE(fhc.comment() == "the comment");
+
+    }
+
+    SECTION("normal CONTINUE, trailing space")
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'one two three &'", "" );
+        fitsHeaderCard fhcc( "CONTINUE", "", "'four five six' / the comment" );
+
+        REQUIRE(fhc.appendContinue(fhcc) == error_t::noerror);
+
+        REQUIRE(fhc.keyword() == "KEYTEST");
+        REQUIRE(fhc.String() == "one two three four five six");
+        REQUIRE(fhc.comment() == "the comment");
+
+    }
+
+    SECTION("normal CONTINUE, leading space")
+    {
+        fitsHeaderCard fhc( "KEYTEST", "'one two three&'", "" );
+        fitsHeaderCard fhcc( "CONTINUE", "", "' four five six' / the comment" );
+
+        REQUIRE(fhc.appendContinue(fhcc) == error_t::noerror);
+
+        REQUIRE(fhc.keyword() == "KEYTEST");
+        REQUIRE(fhc.String() == "one two three four five six");
+        REQUIRE(fhc.comment() == "the comment");
+
     }
 }
 

@@ -260,17 +260,28 @@ bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> )
 {
     char c = str[0];
     size_t i = 0;
-    while( i < str.length() && isspace( c ) )
+    while( i < str.length()-1 && isspace( c ) )
     {
-        c = str[i++];
+        ++i;
+        c = str[i];
     }
 
     if( c == '0' || c == 'f' || c == 'F' )
     {
+        if(errc)
+        {
+            *errc = error_t::noerror;
+        }
+
         return false;
     }
     else if( c == '1' || c == 't' || c == 'T' )
     {
+        if(errc)
+        {
+            *errc = error_t::noerror;
+        }
+
         return true;
     }
 

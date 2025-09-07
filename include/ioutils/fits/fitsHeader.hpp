@@ -514,6 +514,13 @@ error_t fitsHeader<verboseT>::eraseStandardTop()
 template <class verboseT>
 error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
 {
+    if( card.keyword() == "CONTINUE" )
+    {
+        headerIteratorT backIt = m_cardList.end();
+        --backIt;
+        return backIt->appendContinue( card );
+    }
+
     // First check if duplicate key
     if( m_cardMap.count( card.keyword() ) > 0 )
     {

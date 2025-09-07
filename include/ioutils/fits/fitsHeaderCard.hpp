@@ -92,7 +92,7 @@ inline void stripApostWS( std::string &str )
         str.erase( str.size() - 1, 1 );
         str.erase( 0, 1 );
 
-        ns = str.find_first_not_of( " \t\r\n" );
+        /*ns = str.find_first_not_of( " \t\r\n" );
         if( ns != std::string::npos && ns > 0 )
         {
             str.erase( 0, ns );
@@ -118,7 +118,7 @@ inline void stripApostWS( std::string &str )
             {
                 return;
             }
-        }
+        }*/
     }
 }
 /// \endcond
@@ -704,6 +704,8 @@ class fitsHeaderCard
 
     //@}
 
+    error_t appendContinue( const fitsHeaderCard & card);
+
     ///\name Output
     /**
      */
@@ -913,6 +915,8 @@ mx::error_t fitsHeaderCard<verboseT>::convertToString()
             return mx::error_t::noerror;
         case fitsType<fitsHistoryType>():
             return mx::error_t::noerror;
+        case fitsType<fitsContinueType>():
+            return mx::error_t::noerror;
         default:
             return internal::mxlib_error_report<verboseT>( mx::error_t::invalidarg,
                                                            "Unknown FITS type for " + m_keyword );
@@ -1029,6 +1033,11 @@ error_t fitsHeaderCard<verboseT>::convertedValue( typeT &cval )
             return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
                                                            "cannot convert history to numeric type for " + m_keyword );
         }
+        case fitsType<fitsContinueType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert continue to numeric type for " + m_keyword );
+        }
         case TSTRING:
         {
             return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
@@ -1133,6 +1142,11 @@ error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
         {
             return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
                                                            "cannot convert history to numeric type for " + m_keyword );
+        }
+        case fitsType<fitsContinueType>():
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "cannot convert continue to numeric type for " + m_keyword );
         }
         case TSTRING:
         {
@@ -1507,6 +1521,56 @@ template <class verboseT>
 error_t fitsHeaderCard<verboseT>::comment( const std::string &c )
 {
     m_comment = c;
+    return error_t::noerror;
+}
+
+template <class verboseT>
+error_t fitsHeaderCard<verboseT>::appendContinue( const fitsHeaderCard<verboseT> & card)
+{
+    //Check if m_type is string
+    if(m_type != fitsType<char*>() && m_type != fitsType<std::string>())
+    {
+        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "attempt to continue a non-string card");
+    }
+
+    //Check if m_valueStrGood is true
+    if(!m_valueStrGood)
+    {
+        return internal::mxlib_error_report<verboseT>(error_t::invalidconfig, "attempt to continue a card with no value");
+    }
+
+    std::string newstr = card.m_comment;
+
+    //Check if this is the last one
+    size_t slash = newstr.find_last_of('\'');
+    if(slash != std::string::npos)
+    {
+        slash = newstr.find_first_of('/', slash);
+
+        if(slash != std::string::npos)
+        {
+            //extract comment
+            size_t comm = newstr.find_first_not_of(' ', slash+1);
+            if(comm != std::string::npos)
+            {
+                m_comment = newstr.substr(comm);
+            }
+
+            //and then erase it
+            newstr.erase(slash);
+        }
+    }
+    stripApostWS(newstr);
+
+    // have to remove & if needed
+    std::string vstr = m_valueStr.str();
+    if(vstr.back() == '&')
+    {
+        vstr.erase(vstr.size()-1);
+    }
+
+    m_valueStr.str(vstr + newstr);
+
     return error_t::noerror;
 }
 

@@ -8,7 +8,9 @@
 #ifndef __imageFilters_hpp__
 #define __imageFilters_hpp__
 
+
 #include <cstdlib>
+#include <format>
 
 #include "../math/gslInterpolator.hpp"
 #include "../math/vectorUtils.hpp"

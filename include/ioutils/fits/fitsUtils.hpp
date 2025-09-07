@@ -86,6 +86,23 @@ struct fitsHistoryType
     }
 };
 
+struct fitsContinueType
+{
+    fitsContinueType()
+    {
+    }
+
+    explicit fitsContinueType( char *v )
+    {
+        static_cast<void>( v );
+    }
+
+    explicit fitsContinueType( const char *v )
+    {
+        static_cast<void>( v );
+    }
+};
+
 /** \ingroup fits_utils
  * @{
  */
@@ -224,6 +241,12 @@ template <>
 constexpr int fitsType<fitsHistoryType>()
 {
     return -5002;
+}
+
+template <>
+constexpr int fitsType<fitsContinueType>()
+{
+    return -5003;
 }
 
 /** Return the cfitsio BITPIX value for a given data type.

@@ -65,6 +65,14 @@ TEST_CASE( "Converting strings to numbers", "[ioutils::stringUtils]" )
             REQUIRE( static_cast<int>( val ) == 0 );
             REQUIRE( errc == mx::error_t::invalidarg );
         }
+
+        SECTION( "string valid w/ leading spaces, negative, w/ error check" )
+        {
+            mx::error_t errc;
+            char val = stoT<char>( "  -5", &errc );
+            REQUIRE( static_cast<int>( val ) == -5 );
+            REQUIRE( errc == mx::error_t::noerror );
+        }
     }
 
     SECTION( "a string unsigned char" )
@@ -467,6 +475,14 @@ TEST_CASE( "Converting strings to numbers", "[ioutils::stringUtils]" )
             REQUIRE( static_cast<bool>( val ) == 0 );
             REQUIRE( errc == mx::error_t::invalidarg );
         }
+
+        SECTION( "string valid w/ leading spaces, t, w/ error check" )
+        {
+            mx::error_t errc;
+            bool val = stoT<bool>( "  t", &errc );
+            REQUIRE( static_cast<bool>( val ) == true );
+            REQUIRE( errc == mx::error_t::noerror );
+        }
     }
 
     SECTION( "a string float" )
@@ -509,93 +525,99 @@ TEST_CASE( "Converting strings to numbers", "[ioutils::stringUtils]" )
             REQUIRE( errc == mx::error_t::invalidarg );
         }
 
-        SECTION( "a string double" )
+        SECTION( "string valid w/ leading spaces, negative, w/ error check" )
         {
-            SECTION( "string valid, positive, no error check" )
-            {
-                double val = stoT<double>( "22.2567" );
-                REQUIRE_THAT( val,
-                              WithinRel( static_cast<double>( 22.2567 ), std::numeric_limits<double>::epsilon() ) );
-            }
+            mx::error_t errc;
+            float val = stoT<float>( "    -2300000.897", &errc );
+            REQUIRE_THAT( val, WithinRel( static_cast<float>( -2300000.897 ), std::numeric_limits<float>::epsilon() ) );
+            REQUIRE( errc == mx::error_t::noerror );
+        }
+    }
 
-            SECTION( "string valid, negative, w/ error check" )
-            {
-                mx::error_t errc;
-                double val = stoT<double>( "-2300000.897987", &errc );
-                REQUIRE_THAT(
-                    val,
-                    WithinRel( static_cast<double>( -2300000.897987 ), std::numeric_limits<double>::epsilon() ) );
-                REQUIRE( errc == mx::error_t::noerror );
-            }
-
-            SECTION( "positive overflow, w/ error check" )
-            {
-                mx::error_t errc;
-                double val = stoT<double>( "1e400", &errc );
-                // inf comparison won't work
-                REQUIRE( errc == mx::error_t::erange );
-            }
-
-            SECTION( "negative overflow, w/ error check" )
-            {
-                mx::error_t errc;
-                double val = stoT<double>( "-1e400", &errc );
-                // inf comparison won't work
-                REQUIRE( errc == mx::error_t::erange );
-            }
-
-            SECTION( "invalid string, w/ error check" )
-            {
-                mx::error_t errc;
-                double val = stoT<double>( "+d", &errc );
-                REQUIRE( static_cast<double>( val ) == 0 );
-                REQUIRE( errc == mx::error_t::invalidarg );
-            }
+    SECTION( "a string double" )
+    {
+        SECTION( "string valid, positive, no error check" )
+        {
+            double val = stoT<double>( "22.2567" );
+            REQUIRE_THAT( val, WithinRel( static_cast<double>( 22.2567 ), std::numeric_limits<double>::epsilon() ) );
         }
 
-        SECTION( "a string long double" )
+        SECTION( "string valid, negative, w/ error check" )
         {
-            // These long double values don't seem quite right, should be able to use epsilon.
-            // new catch2 might work better
-            SECTION( "string valid, positive, no error check" )
-            {
-                long double val = stoT<long double>( "22.2567" );
-                REQUIRE( fabs( val - static_cast<long double>( 22.2567 ) ) <
-                         fabs( 1e-9 * static_cast<long double>( 22.2567 ) ) );
-            }
+            mx::error_t errc;
+            double val = stoT<double>( "-2300000.897987", &errc );
+            REQUIRE_THAT( val,
+                          WithinRel( static_cast<double>( -2300000.897987 ), std::numeric_limits<double>::epsilon() ) );
+            REQUIRE( errc == mx::error_t::noerror );
+        }
 
-            SECTION( "string valid, negative, w/ error check" )
-            {
-                mx::error_t errc;
-                long double val = stoT<long double>( "-2300000.897987", &errc );
-                REQUIRE( fabs( val - static_cast<long double>( -2300000.897987 ) ) <
-                         fabs( 1e-9 * static_cast<long double>( -2300000.897987 ) ) );
-                REQUIRE( errc == mx::error_t::noerror );
-            }
+        SECTION( "positive overflow, w/ error check" )
+        {
+            mx::error_t errc;
+            double val = stoT<double>( "1e400", &errc );
+            // inf comparison won't work
+            REQUIRE( errc == mx::error_t::erange );
+        }
 
-            SECTION( "positive overflow, w/ error check" )
-            {
-                mx::error_t errc;
-                long double val = stoT<long double>( "1e10000", &errc );
-                // inf comparison won't work
-                REQUIRE( errc == mx::error_t::erange );
-            }
+        SECTION( "negative overflow, w/ error check" )
+        {
+            mx::error_t errc;
+            double val = stoT<double>( "-1e400", &errc );
+            // inf comparison won't work
+            REQUIRE( errc == mx::error_t::erange );
+        }
 
-            SECTION( "negative overflow, w/ error check" )
-            {
-                mx::error_t errc;
-                long double val = stoT<long double>( "-1e10000", &errc );
-                // inf comparison won't work
-                REQUIRE( errc == mx::error_t::erange );
-            }
+        SECTION( "invalid string, w/ error check" )
+        {
+            mx::error_t errc;
+            double val = stoT<double>( "+d", &errc );
+            REQUIRE( static_cast<double>( val ) == 0 );
+            REQUIRE( errc == mx::error_t::invalidarg );
+        }
+    }
 
-            SECTION( "invalid string, w/ error check" )
-            {
-                mx::error_t errc;
-                long double val = stoT<long double>( "+d", &errc );
-                REQUIRE( static_cast<long double>( val ) == 0 );
-                REQUIRE( errc == mx::error_t::invalidarg );
-            }
+    SECTION( "a string long double" )
+    {
+        // These long double values don't seem quite right, should be able to use epsilon.
+        // new catch2 might work better
+        SECTION( "string valid, positive, no error check" )
+        {
+            long double val = stoT<long double>( "22.2567" );
+            REQUIRE( fabs( val - static_cast<long double>( 22.2567 ) ) <
+                     fabs( 1e-9 * static_cast<long double>( 22.2567 ) ) );
+        }
+
+        SECTION( "string valid, negative, w/ error check" )
+        {
+            mx::error_t errc;
+            long double val = stoT<long double>( "-2300000.897987", &errc );
+            REQUIRE( fabs( val - static_cast<long double>( -2300000.897987 ) ) <
+                     fabs( 1e-9 * static_cast<long double>( -2300000.897987 ) ) );
+            REQUIRE( errc == mx::error_t::noerror );
+        }
+
+        SECTION( "positive overflow, w/ error check" )
+        {
+            mx::error_t errc;
+            long double val = stoT<long double>( "1e10000", &errc );
+            // inf comparison won't work
+            REQUIRE( errc == mx::error_t::erange );
+        }
+
+        SECTION( "negative overflow, w/ error check" )
+        {
+            mx::error_t errc;
+            long double val = stoT<long double>( "-1e10000", &errc );
+            // inf comparison won't work
+            REQUIRE( errc == mx::error_t::erange );
+        }
+
+        SECTION( "invalid string, w/ error check" )
+        {
+            mx::error_t errc;
+            long double val = stoT<long double>( "+d", &errc );
+            REQUIRE( static_cast<long double>( val ) == 0 );
+            REQUIRE( errc == mx::error_t::invalidarg );
         }
     }
 }

@@ -87,7 +87,7 @@ struct cahoySpectrumRaw
     }
 
     /// Read the spectrum from the file specified by path.  Extra columns are discarded.
-    static int readSpectrum( std::vector<realT> &rawLambda,
+    static error_t readSpectrum( std::vector<realT> &rawLambda,
                              std::vector<realT> &rawSpectrum,
                              const std::string &path,
                              const paramsT &params )
