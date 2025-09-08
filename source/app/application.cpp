@@ -204,16 +204,29 @@ void application::setDefaults( int argc, char **argv )
 
     if( m_configPathLocal_env != "" )
     {
-        m_configPathLocal = sys::getEnv( m_configPathLocal_env.c_str() );
+        std::string cpl = sys::getEnv( m_configPathLocal_env.c_str() );
+        if(cpl.size() > 0)
+        {
+            m_configPathLocal = cpl;
+            if( m_configPathLocal.back() != '/' )
+            {
+                m_configPathLocal += '/';
+            }
+        }
     }
 
     if( m_configPathCLBase_env != "" )
     {
-        m_configPathCLBase = sys::getEnv( m_configPathCLBase_env.c_str() );
+        std::string cpclbase = sys::getEnv( m_configPathCLBase_env.c_str() );
 
-        if( m_configPathCLBase.size() > 0 )
-            if( m_configPathCLBase[m_configPathCLBase.size() - 1] != '/' )
+        if( cpclbase.size() > 0 )
+        {
+            m_configPathCLBase = cpclbase;
+            if( m_configPathCLBase.back() != '/' )
+            {
                 m_configPathCLBase += '/';
+            }
+        }
     }
 
     return;

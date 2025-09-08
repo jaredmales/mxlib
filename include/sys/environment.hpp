@@ -28,6 +28,7 @@
 
 #include <locale>
 #include <string>
+#include <string.h>
 
 namespace mx
 {
@@ -39,9 +40,32 @@ namespace sys
  *
  * \returns the value of the environment varialbe, or empty string if it doesn't exist
  *
+ * \tparam maxsz is the maximum allowable size of the environment variable.  Prevents buffer overflow.
+ *
  * \ingroup system
  */
-std::string getEnv( const std::string &estr /**< [in] is the name of the environment variable to query */ );
+template<size_t maxsz=4096>
+std::string getEnv( const std::string &estr /**< [in] is the name of the environment variable to query */ )
+{
+    char *e = getenv( estr.c_str() );
+
+    if( e )
+    {
+        size_t sz = strnlen(e, maxsz);
+        if(sz < maxsz)
+        {
+            return std::string( e );
+        }
+        else
+        {
+            return "";
+        }
+    }
+    else
+    {
+        return "";
+    }
+}
 
 } // namespace sys
 } // namespace mx

@@ -30,15 +30,8 @@ namespace mx
 namespace sys
 {
 
-std::string getEnv( const std::string &estr )
-{
-    char *e = getenv( estr.c_str() );
-
-    if( e )
-        return std::string( e );
-    else
-        return std::string( "" );
-}
+template
+std::string getEnv<4096>( const std::string &estr );
 
 } // namespace sys
 } // namespace mx

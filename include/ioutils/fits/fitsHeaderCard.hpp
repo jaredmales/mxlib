@@ -40,7 +40,7 @@ namespace fits
 {
 
 /// \cond
-// strip opening and closing '' and leading and trailing whitespace
+// strip leading and trailing whitespace and then opening and closing ''.  leaves spaces between ''.
 inline void stripApostWS( std::string &str )
 {
     if( str.size() == 0 )
@@ -91,34 +91,6 @@ inline void stripApostWS( std::string &str )
         }
         str.erase( str.size() - 1, 1 );
         str.erase( 0, 1 );
-
-        /*ns = str.find_first_not_of( " \t\r\n" );
-        if( ns != std::string::npos && ns > 0 )
-        {
-            str.erase( 0, ns );
-
-            if( str.size() == 0 )
-            {
-                return;
-            }
-        }
-        else if( ns == std::string::npos )
-        {
-            str = "";
-            return;
-        }
-
-        // strip white space at back
-        ns = str.find_last_not_of( " \t\r\n" );
-        if( ns < str.size() - 1 )
-        {
-            str.erase( ns + 1, str.size() - ns );
-
-            if( str.size() == 0 )
-            {
-                return;
-            }
-        }*/
     }
 }
 /// \endcond
