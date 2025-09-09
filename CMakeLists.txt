@@ -182,6 +182,14 @@ if(MXLIB_USE_CUDA)
 
     find_package(CUDAToolkit)
 
+    if(CUDAToolkit_FOUND)
+	    message("found cudatoolkit")
+    endif()
+
+    if(CMAKE_CUDA_COMPILER)
+	    message("found cuda compiler")
+    endif()
+
     if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
 
     else()
