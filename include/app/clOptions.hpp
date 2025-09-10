@@ -83,10 +83,13 @@ struct clOptions
     );
 
     /// Parse the command line
+    /**
+     * \todo test for descriptions of size 0 and with/without ending sentinel
+     */
     void parse( int argc,    ///< [in] From main(argc, argv), the number of command line arguments
                 char **argv, ///< in] From main(argc, argv), the command line arguments
-                std::vector<std::string> *nonOptions =
-                    0 ///< [out] [optional] the elements in argv which are not option or option-arguments.
+                std::vector<std::string> *nonOptions = 0 /**< [out] [optional] the elements in argv
+                                                       which are not option or option-arguments. */
     );
 
     /// Get the value of the option, if present.
