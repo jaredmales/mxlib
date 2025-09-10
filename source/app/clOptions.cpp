@@ -102,10 +102,10 @@ void clOptions::parse( int argc, char **argv, std::vector<std::string> *nonOptio
     argv += ( argc > 0 ); // skip program name argv[0] if present
 
     // If not already done, we push the unknown catcher and the termination descriptor.
-    if( descriptions.back().index != 0 )
+    if( descriptions.size() == 0 || descriptions.back().shortopt != 0 )
     {
-        descriptions.push_back(
-            { nOpts, 0, "", "", option::Arg::None, "" } ); // This is inserted to catch unknown options
+        // This is inserted to catch unknown options
+        descriptions.push_back( { nOpts, 0, "", "", option::Arg::None, "" } );
         descriptions.push_back( { 0, 0, 0, 0, 0, 0 } );
     }
 
