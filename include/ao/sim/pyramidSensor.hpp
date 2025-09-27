@@ -491,7 +491,9 @@ template <typename realT, typename detectorT>
 void pyramidSensor<realT, detectorT>::detSize( const uint32_t &nrows, const uint32_t &ncols )
 {
     if( m_detRows == nrows && m_detCols == ncols )
+    {
         return;
+    }
 
     m_detRows = nrows;
     m_detCols = ncols;
@@ -501,7 +503,6 @@ void pyramidSensor<realT, detectorT>::detSize( const uint32_t &nrows, const uint
 
     m_opdMaskMade = false; // make sure size check is run on current settings
 
-    m_opdMaskMade = false; // make sure size check is run on current settings
 }
 
 template <typename realT, typename detectorT>
@@ -536,7 +537,7 @@ void pyramidSensor<realT, detectorT>::iTime( const uint32_t &it )
 {
     if( it < 1 )
     {
-        throw(mx::exception(error_t::invalidconfig, "iTime must be >= 1" );
+        throw mx::exception( error_t::invalidconfig, "iTime must be >= 1" );
     }
 
     m_iTime = it;
@@ -558,7 +559,7 @@ void pyramidSensor<realT, detectorT>::roTime( const uint32_t &rt )
 {
     if( rt < 1 )
     {
-        throw(mx::exception(error_t::invalidconfig, "roTime must be >= 1" );
+        throw mx::exception( error_t::invalidconfig, "roTime must be >= 1" );
     }
 
     m_roTime = rt;
@@ -898,25 +899,21 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
 
     if( m_wfPS == 0 )
     {
-        mxThrowException( mx::err::invalidconfig,
-                          "pyramidSensor::makeOpdMask()",
-                          "wavefront platescale (m_wfPS) is 0. Must set pupilSz and D first." );
+        throw mx::exception( error_t::invalidconfig,
+                             "wavefront platescale (m_wfPS) is 0. Must set pupilSz and D first." );
     }
 
     if( !std::isfinite( m_wfPS ) || !std::isnormal( m_wfPS ) )
     {
-        mxThrowException( mx::err::invalidconfig,
-                          "pyramidSensor::makeOpdMask()",
-                          "wavefront platescale (m_wfPS) is infinite. Must set pupilSz and D first." );
+        throw mx::exception( error_t::invalidconfig,
+                             "wavefront platescale (m_wfPS) is infinite. Must set pupilSz and D first." );
     }
 
     std::cerr << m_wfPS << " " << m_D << "\n";
 
     if( m_D == 0 )
     {
-        mxThrowException( mx::err::invalidconfig,
-                          "pyramidSensor::makeOpdMask()",
-                          "pupil diameter is 0. Must set D > 0 first." );
+        throw mx::exception( error_t::invalidconfig, "pupil diameter is 0. Must set D > 0 first." );
     }
 
     // Setup the Fraunhoffer Propagator
@@ -988,22 +985,21 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
         std::string msg = "image size (m_imageSz = " + std::to_string( m_imageSz ) + ") ";
         msg += "> wavefront size (m_wfSz = " + std::to_string( m_wfSz ) + "). ";
         msg += "Decrease number of sides (m_nSides = " + std::to_string( m_nSides ) + ") or increase wavefront size. ";
-        mxThrowException( mx::err::invalidconfig, "pyramidSensor::makeOpdMask", msg );
+        throw mx::exception( error_t::invalidconfig, msg );
     }
 
     m_wfsImage.image.resize( m_imageSz, m_imageSz );
 
     if( m_detRows == 0 || m_detCols == 0 )
     {
-        mxThrowException( mx::err::invalidconfig, "pyramidSensor::makeOpdMask", "must set detector size" );
+        detSize(m_imageSz, m_imageSz);
     }
-
-    if( m_detRows > m_imageSz || m_detCols > m_imageSz )
+    else if( m_detRows > m_imageSz || m_detCols > m_imageSz )
     {
         std::string msg = "image size (m_imageSz = " + std::to_string( m_imageSz ) + ") ";
         msg += "< detector size size (m_detRows = " + std::to_string( m_detRows );
         msg += " m_detCols = " + std::to_string( m_detCols ) + "). ";
-        mxThrowException( mx::err::invalidconfig, "pyramidSensor::makeOpdMask", msg );
+        throw mx::exception( error_t::invalidconfig, msg );
     }
 
     m_opdMaskMade = true;
@@ -1016,30 +1012,26 @@ void pyramidSensor<realT, detectorT>::makeTilts()
 
     if( m_modSteps == 0 )
     {
-        throw(mx::exception(error_t::invalidconfig,
-
-                          "number of modulation steps (m_modSteps) has not been set." );
+        throw mx::exception( error_t::invalidconfig, "number of modulation steps (m_modSteps) has not been set." );
     }
 
     if( m_wfPS == 0 )
     {
-        throw(mx::exception(error_t::invalidconfig,
-
-                          "wavefront platescale (m_wfPS) is 0. Must set pupilSz and D first." );
+        throw mx::exception( error_t::invalidconfig,
+                             "wavefront platescale (m_wfPS) is 0. "
+                             "Must set pupilSz and D first." );
     }
 
     if( !std::isfinite( m_wfPS ) )
     {
-        throw(mx::exception(error_t::invalidconfig,
-
-                          "wavefront platescale (m_wfPS) is infinite. Must set pupilSz and D first." );
+        throw mx::exception( error_t::invalidconfig,
+                             "wavefront platescale (m_wfPS) is infinite. "
+                             "Must set pupilSz and D first." );
     }
 
     if( m_D == 0 )
     {
-        mxThrowException( mx::err::invalidconfig,
-                          "pyramidSensor::makeTilts()",
-                          "pupil diameter is 0. Must set D > 0 first." );
+        throw mx::exception( error_t::invalidconfig, "pupil diameter is 0. Must set D > 0 first." );
     }
 
     realT dang = 2 * pi / ( m_modSteps );

@@ -320,26 +320,22 @@ void extractMaskedPixels( imageT1 &dest, ///< [in/out] the image in which to pla
 {
     if( dest.rows() != src.rows() )
     {
-        mxThrowException(
-            mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "dest and src do not have same size (rows)" );
+        throw mx::exception(error_t::sizeerr, "dest and src do not have same size (rows)" );
     }
 
     if( dest.cols() != src.cols() )
     {
-        mxThrowException(
-            mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "dest and src do not have same size (cols)" );
+        throw mx::exception(error_t::sizeerr, "dest and src do not have same size (cols)" );
     }
 
     if( src.rows() != mask.rows() )
     {
-        mxThrowException(
-            mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "src and mask do not have same size (rows)" );
+        throw mx::exception(error_t::sizeerr, "src and mask do not have same size (rows)" );
     }
 
     if( src.cols() != mask.cols() )
     {
-        mxThrowException(
-            mx::err::sizeerr, "mx::imagingUtils::extractMaskedPixels", "src and mask do not have same size (cols)" );
+        throw mx::exception(error_t::sizeerr, "src and mask do not have same size (cols)" );
     }
 
     for( int cc = 0; cc < dest.cols(); ++cc )

@@ -676,6 +676,7 @@ if(MXLIB_USE_CUDA)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
     add_compile_definitions(-DEIGEN_NO_CUDA)
+    add_compile_definitions(-DMXLIB_CUDA)
     add_compile_definitions(-DMXLIB_MILK)
 
     #Strip the includes, extra spaces, and prepend -Xcompiler

@@ -59,6 +59,15 @@ struct cudaPtr
     /// The allocated size
     size_t m_size{ 0 };
 
+    /// The number of rows set on allocation
+    uint32_t m_rows {0};
+
+    /// The number of columns set on allocation
+    uint32_t m_cols {0};
+
+    /// The number of planes set on allocation
+    uint32_t m_planes {0};
+
     /// Destructor, frees memory if allocated.
     ~cudaPtr();
 
@@ -67,15 +76,38 @@ struct cudaPtr
         return m_size;
     }
 
+    uint32_t rows()
+    {
+        return m_rows;
+    }
+
+    uint32_t cols()
+    {
+        return m_cols;
+    }
+
+    uint32_t planes()
+    {
+        return m_planes;
+    }
+
+    private:
     /// Resize the memory allocation, in 1D
     /** If no size change, this is a no-op.
      *
      * \returns 0 on success.
      * \returns a cuda error code otherwise.
      *
-     * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
-     * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+     */
+    int resizeImpl( size_t sz /**< [in] the new size */ );
+
+    public:
+    /// Resize the memory allocation, in 1D
+    /** If no size change, this is a no-op.
+     *
+     * \returns 0 on success.
+     * \returns a cuda error code otherwise.
+     *
      */
     int resize( size_t sz /**< [in] the new size */ );
 
@@ -86,8 +118,8 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resize( size_t x_sz, ///< [in] the new x size,
-                size_t y_sz  ///< [in] the new y size
+    int resize( uint32_t x_sz, ///< [in] the new x size,
+                uint32_t y_sz  ///< [in] the new y size
     );
 
     /// Resize the memory allocation, in 3D
@@ -97,9 +129,9 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resize( size_t x_sz, ///< [in] the new x size,
-                size_t y_sz, ///< [in] the new y size,
-                size_t z_sz  ///< [in] the new z size
+    int resize( uint32_t x_sz, ///< [in] the new x size,
+                uint32_t y_sz, ///< [in] the new y size,
+                uint32_t z_sz  ///< [in] the new z size
     );
 
     /// Initialize the array bytes to 0.
@@ -123,53 +155,77 @@ struct cudaPtr
      * \returns 0 on success.
      * \returns a cuda error code otherwise.
      *
-     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
     int upload( const hostPtrT *src /**< [in] The host location */ );
 
-    /// Copy from the host to the device with allocation.
+    /// Copy from the host to the device with 1D allocation.
     /**
      * The device pointer will be re-allocated as needed.
      *
      * \returns 0 on success.
      * \returns a cuda error code otherwise.
      *
-     * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
-     * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
     int upload( const hostPtrT *src, ///< [in] The host location
-                size_t sz            ///< [in] The size of the array
+                size_t x_sz            ///< [in] The x size of the array
+    );
+
+    /// Copy from the host to the device with 2D allocation.
+    /**
+     * The device pointer will be re-allocated as needed.
+     *
+     * \returns 0 on success.
+     * \returns a cuda error code otherwise.
+     *
+     */
+    int upload( const hostPtrT *src, ///< [in] The host location
+                uint32_t x_sz,            ///< [in] The x size of the array
+                uint32_t y_sz            ///< [in] The x size of the array
+    );
+
+    /// Copy from the host to the device with #D allocation.
+    /**
+     * The device pointer will be re-allocated as needed.
+     *
+     * \returns 0 on success.
+     * \returns a cuda error code otherwise.
+     *
+     */
+    int upload( const hostPtrT *src, ///< [in] The host location
+                uint32_t x_sz,            ///< [in] The x size of the array
+                uint32_t y_sz,            ///< [in] The x size of the array
+                uint32_t z_sz            ///< [in] The x size of the array
     );
 
     /// Copy from the device to the host.
     /**
      *
-     * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
-     * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
     int download( hostPtrT *dest /**< [in] The host location, allocated.*/ );
 
+    /// Accesses the device pointer for use in Cuda functions.
+    /**
+     */
+    typename cpp2cudaType<devicePtrT>::cudaType *data()
+    {
+        return reinterpret_cast<typename cpp2cudaType<devicePtrT>::cudaType *>(m_devicePtr);
+    }
+
     /// Conversion operator, accesses the device pointer for use in Cuda functions.
     /**
-     * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
-     * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
      */
     typename cpp2cudaType<devicePtrT>::cudaType *operator()()
     {
-        return (typename cpp2cudaType<devicePtrT>::cudaType *)m_devicePtr;
+       return reinterpret_cast<typename cpp2cudaType<devicePtrT>::cudaType *>(m_devicePtr);
     }
 
     /// Conversion operator, accesses the device pointer for use in Cuda functions.
     /**
      *
-     * \b Tests
-     *     - Scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
      */
     const typename cpp2cudaType<devicePtrT>::cudaType *operator()() const
     {
-        return (typename cpp2cudaType<devicePtrT>::cudaType *)m_devicePtr;
+        return reinterpret_cast<typename cpp2cudaType<devicePtrT>::cudaType *>(m_devicePtr);
     }
 };
 
@@ -180,10 +236,12 @@ cudaPtr<T>::~cudaPtr()
 }
 
 template <typename T>
-int cudaPtr<T>::resize( size_t sz )
+int cudaPtr<T>::resizeImpl( size_t sz )
 {
     if( m_size == sz )
+    {
         return 0;
+    }
 
     m_size = sz;
 
@@ -198,15 +256,31 @@ int cudaPtr<T>::resize( size_t sz )
     return 0;
 }
 
+
 template <typename T>
-int cudaPtr<T>::resize( size_t x_sz, size_t y_sz )
+int cudaPtr<T>::resize( size_t sz )
 {
-    return resize( x_sz * y_sz );
+    m_rows =sz;
+    m_cols = 1;
+    m_planes = 1;
+    return resizeImpl(sz);
 }
 
 template <typename T>
-int cudaPtr<T>::resize( size_t x_sz, size_t y_sz, size_t z_sz )
+int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz )
 {
+    m_rows = x_sz;
+    m_cols = y_sz;
+    m_planes = 1;
+    return resizeImpl( x_sz * y_sz );
+}
+
+template <typename T>
+int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
+{
+    m_rows = x_sz;
+    m_cols = y_sz;
+    m_planes = z_sz;
     return resize( x_sz * y_sz * z_sz );
 }
 
@@ -252,14 +326,46 @@ int cudaPtr<T>::upload( const hostPtrT *src )
 }
 
 template <typename T>
-int cudaPtr<T>::upload( const hostPtrT *src, size_t sz )
+int cudaPtr<T>::upload( const hostPtrT *src, size_t x_sz )
 {
     int rv;
 
-    rv = resize( sz );
+    rv = resize( x_sz );
 
     if( rv )
+    {
         return rv;
+    }
+
+    return upload( src );
+}
+
+template <typename T>
+int cudaPtr<T>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz )
+{
+    int rv;
+
+    rv = resize( x_sz, y_sz );
+
+    if( rv )
+    {
+        return rv;
+    }
+
+    return upload( src );
+}
+
+template <typename T>
+int cudaPtr<T>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
+{
+    int rv;
+
+    rv = resize( x_sz, y_sz, z_sz );
+
+    if( rv )
+    {
+        return rv;
+    }
 
     return upload( src );
 }
