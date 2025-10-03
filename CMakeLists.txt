@@ -169,6 +169,8 @@ set(MXLIB_MKL_LIBDIRS "$ENV{MKLROOT}/lib/intel64" CACHE STRING "list of MKL link
 set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
 set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "list of MKL libraries")
 
+set(MXLIB_CUDA_ARCH "native" CACHE STRING "the cuda architecture")
+
 #########################################
 # Validate config settings
 #
@@ -639,9 +641,9 @@ endif()
 ############################################
 if(MXLIB_USE_CUDA)
 
-    set_property( TARGET objlib PROPERTY CUDA_ARCHITECTURES native)
-    set_property( TARGET mxlib-shared PROPERTY CUDA_ARCHITECTURES native)
-    set_property( TARGET mxlib-static PROPERTY CUDA_ARCHITECTURES native)
+    set_property( TARGET objlib PROPERTY CUDA_ARCHITECTURES ${MXLIB_CUDA_ARCH})
+    set_property( TARGET mxlib-shared PROPERTY CUDA_ARCHITECTURES ${MXLIB_CUDA_ARCH})
+    set_property( TARGET mxlib-static PROPERTY CUDA_ARCHITECTURES ${MXLIB_CUDA_ARCH})
 
     enable_language(CUDA)
 
