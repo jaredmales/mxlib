@@ -22,3 +22,5 @@ SortIncludes: false
 
 IndentPPDirectives: BeforeHash
 ContinuationIndentWidth: 4
+
+IndentCaseLabels: true

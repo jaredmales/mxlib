@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 namespace mx
 {
@@ -61,7 +61,7 @@ int randomSeed( intT &seedval /**< [out] will be populated with the seed.*/ )
 
     if( fd < 0 )
     {
-        mxPError( "randomSeed", errno, "error opening /dev/urandom" );
+        internal::mxlib_error_report(errno2error_t(errno), "error opening /dev/urandom" );
 
         return -1;
     }
@@ -73,7 +73,7 @@ int randomSeed( intT &seedval /**< [out] will be populated with the seed.*/ )
 
     if( rv < 0 )
     {
-        mxPError( "randomSeed", errno, "Error on read from /dev/urandom." );
+        internal::mxlib_error_report(errno2error_t(errno), "Error on read from /dev/urandom." );
         close( fd );
         return -1;
     }
@@ -84,7 +84,7 @@ int randomSeed( intT &seedval /**< [out] will be populated with the seed.*/ )
 
     if( rv < sz )
     {
-        mxError( "randomSeed", MXE_FILERERR, "Read from /dev/urandom did not return enough bytes" );
+        internal::mxlib_error_report(error_t::filererr, "Read from /dev/urandom did not return enough bytes" );
 
         return -1;
     }

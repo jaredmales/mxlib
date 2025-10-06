@@ -31,7 +31,7 @@
 #include <complex>
 #include <Eigen/Dense>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 #include "../math/ft/fftT.hpp"
 #include "../improc/eigenCube.hpp"
 
@@ -621,7 +621,7 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 1>::type *
 {
     if( m_psdSqrt == 0 )
     {
-        mxError( "psdFilter", MXE_PARAMNOTSET, "m_psdSqrt has not been set yet, is still NULL." );
+        internal::mxlib_error_report(error_t::paramnotset, "m_psdSqrt has not been set yet, is still NULL." );
         return -1;
     }
 
@@ -649,7 +649,7 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 2>::type *
 {
     if( m_psdSqrt == 0 )
     {
-        mxError( "psdFilter", MXE_PARAMNOTSET, "m_psdSqrt has not been set yet, is still NULL." );
+        internal::mxlib_error_report(error_t::paramnotset, "m_psdSqrt has not been set yet, is still NULL." );
         return -1;
     }
 
@@ -677,7 +677,7 @@ int psdFilter<realT, rank>::setSize( typename std::enable_if<crank == 3>::type *
 {
     if( m_psdSqrt == 0 )
     {
-        mxError( "psdFilter", MXE_PARAMNOTSET, "m_psdSqrt has not been set yet, is still NULL." );
+        internal::mxlib_error_report(error_t::paramnotset, "m_psdSqrt has not been set yet, is still NULL." );
         return -1;
     }
 

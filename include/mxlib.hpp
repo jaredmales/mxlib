@@ -30,6 +30,9 @@
 
 #include "mxlib_uncomp_version.h"
 
+#include "error/error.hpp"
+#include "error/exception.hpp"
+
 namespace mx
 {
 
@@ -38,34 +41,6 @@ const char *mxlib_comp_current_branch();
 const char *mxlib_comp_current_sha1();
 
 const bool mxlib_comp_repo_modified();
-
-/// Dump the current git status of the library to a stream
-/** Prints the current SHA1 hash and whether or not the library
- * has been modified since that commit.
- *
- * \tparam iosT a std::ostream-like type
- * \tparam comment a character to print at the beginning of each line.  Default is '#'.
- */
-template <typename iosT, char comment = '#'>
-iosT &dumpGitStatus( iosT &ios /**< [in] a std::ostream-like stream. */ )
-{
-    // This causes the stream to not output a '\0' if comment = '\0'
-    char c[] = { comment, '\0' };
-
-    ios << c << "--------------------------------------------\n";
-    ios << c << " mxlib git status              \n";
-    ios << c << "  headers:              \n";
-    ios << c << "   branch: " << MXLIB_UNCOMP_BRANCH << "\n";
-    ios << c << "   SHA1: " << MXLIB_UNCOMP_CURRENT_SHA1 << "\n";
-    ios << c << "   modified flag: " << std::boolalpha << (bool)MXLIB_UNCOMP_REPO_MODIFIED << "\n";
-    ios << c << "  compiled:              \n";
-    ios << c << "   branch: " << mxlib_comp_current_branch() << "\n";
-    ios << c << "   SHA1: " << mxlib_comp_current_sha1() << "\n";
-    ios << c << "   modified flag: " << std::boolalpha << (bool)mxlib_comp_repo_modified() << "\n";
-    ios << c << "--------------------------------------------\n";
-
-    return ios;
-}
 
 /// Dump the git status of a repository to a stream
 /** Prints the provided SHA1 hash and whether or not the library
@@ -102,6 +77,23 @@ iosT &dumpGitStatus(
     ios << c << "--------------------------------------------\n";
 
     return ios;
+}
+
+/// Dump the current git status of the mxlib library to a stream
+/** Prints the current SHA1 hash and whether or not the library
+ * has been modified since that commit.
+ *
+ * \tparam iosT a std::ostream-like type
+ * \tparam comment a character to print at the beginning of each line.  Default is '#'.
+ */
+template <typename iosT, char comment = '#'>
+iosT &dumpGitStatus( iosT &ios /**< [in] a std::ostream-like stream. */ )
+{
+    return dumpGitStatus( ios,
+                          "mxlib",
+                          mxlib_comp_current_branch(),
+                          mxlib_comp_current_sha1(),
+                          mxlib_comp_repo_modified() );
 }
 
 } // namespace mx

@@ -954,6 +954,7 @@ INPUT                  = ./groupdefs.dox \
                          ../include/astro \
                          ../include/base \
                          ./boost_const.dox \
+                         ../include/error \
                          ../include/improc \
                          ../include/math \
                          ../include/math/cuda \
@@ -983,8 +984,10 @@ INPUT                  = ./groupdefs.dox \
                          ../tests/include/ao/analysis \
                          ../tests/include/app \
                          ../tests/include/astro \
+                         ../tests/include/error \
                          ../tests/include/improc \
                          ../tests/include/ioutils \
+                         ../tests/include/ioutils/fits \
                          ../tests/include/math \
                          ../tests/include/math/cuda \
                          ../tests/include/math/func \
@@ -1213,7 +1216,7 @@ REFERENCES_RELATION    = YES
 # link to the documentation.
 # The default value is: YES.
 
-REFERENCES_LINK_SOURCE = YES
+REFERENCES_LINK_SOURCE = NO
 
 # If SOURCE_TOOLTIPS is enabled (the default) then hovering a hyperlink in the
 # source code will show a tooltip with additional information such as prototype,
@@ -2384,7 +2387,7 @@ PERLMOD_MAKEVAR_PREFIX =
 # C-preprocessor directives found in the sources and include files.
 # The default value is: YES.
 
-ENABLE_PREPROCESSING   = NO
+ENABLE_PREPROCESSING   = YES
 
 # If the MACRO_EXPANSION tag is set to YES, doxygen will expand all macro names
 # in the source code. If set to NO, only conditional compilation will be

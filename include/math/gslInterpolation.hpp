@@ -33,8 +33,6 @@
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_errno.h>
 
-#include "../mxException.hpp"
-
 namespace mx
 {
 namespace math

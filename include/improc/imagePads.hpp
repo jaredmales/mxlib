@@ -29,7 +29,7 @@
 
 #include <vector>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 namespace mx
 {
@@ -192,12 +192,12 @@ int padImage( imOutT &imOut,     ///< [out] On return contains the padded image.
 
     if( stR < 0 )
     {
-        mxError( "padImage", MXE_INVALIDARG, "imMask must have at least as many rows as imIn." );
+        internal::mxlib_error_report(error_t::invalidarg, "imMask must have at least as many rows as imIn." );
         return -1;
     }
     if( stC < 0 )
     {
-        mxError( "padImage", MXE_INVALIDARG, "imMask must have at least as many columns as imIn." );
+        internal::mxlib_error_report(error_t::invalidarg, "imMask must have at least as many columns as imIn." );
         return -1;
     }
 
@@ -280,13 +280,13 @@ int cutPaddedImage(
 {
     if( 2 * padSz > imIn.rows() )
     {
-        mxError( "cutPaddedImage", MXE_INVALIDARG, "padSz too large, must be < imIn.rows()/2" );
+        internal::mxlib_error_report(error_t::invalidarg, "padSz too large, must be < imIn.rows()/2" );
         return -1;
     }
 
     if( 2 * padSz > imIn.cols() )
     {
-        mxError( "cutPaddedImage", MXE_INVALIDARG, "padSz too large, must be < imIn.cols()/2" );
+        internal::mxlib_error_report(error_t::invalidarg, "padSz too large, must be < imIn.cols()/2" );
         return -1;
     }
 

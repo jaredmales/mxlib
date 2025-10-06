@@ -38,7 +38,8 @@ all: lib
 
 .PHONY: mxlib_uncomp_version
 mxlib_uncomp_version:
-	@bash ./gengithead.sh ./ ./include/mxlib_uncomp_version.h MXLIB_UNCOMP
+	rm -rf /tmp/mxlib_uncomp_version.h
+	@bash ./gengithead.sh ./ /tmp/mxlib_uncomp_version.h MXLIB_UNCOMP
 
 .PHONY: mxlib_comp_version
 mxlib_comp_version:
@@ -69,11 +70,11 @@ install: all mxlib_uncomp_version
 	install -d $(BIN_PATH)
 	install gengithead.sh $(BIN_PATH)/
 	cp -r include/* $(INCLUDE_PATH)/mx/
+	mv /tmp/mxlib_uncomp_version.h $(INCLUDE_PATH)/mx/
 
 .PHONY: clean
 clean:
 	rm -f *.o *~
-	rm -f include/mxlib_uncomp_version.h
 	rm -f include/mxlib_comp_version.h
 	$(MAKE) -C source clean
 

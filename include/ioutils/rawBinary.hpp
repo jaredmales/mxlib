@@ -31,7 +31,6 @@
 #include <string>
 
 #include "../mxlib.hpp"
-#include "../mxException.hpp"
 
 namespace mx
 {
@@ -57,7 +56,7 @@ int readRawBinary( T *data,                    ///< [out] the data pointer
     fout = fopen( fileName.c_str(), "rb" );
     if( fout == 0 )
     {
-        mxThrowExceptionErrno( mx::err::fileoerr, errno, "readRawBinary", "Error from fopen [" + fileName + "]" );
+        throw( mx::exception( errno2error_t( errno ), "Error from fopen [" + fileName + "]" ) );
     }
 
     int nrd = fread( data, sizeof( T ), szData, fout );
@@ -69,13 +68,12 @@ int readRawBinary( T *data,                    ///< [out] the data pointer
         // Have to handle case where EOF reached but no error.
         if( en != 0 )
         {
-            mxThrowExceptionErrno( mx::err::filererr, en, "readRawBinary", "Error from file [" + fileName + "]" );
+            throw( mx::exception( error_t::filererr, "Error from file [" + fileName + "]" ) );
         }
         else
         {
-            mxThrowException( mx::err::filererr,
-                              "readRawBinary",
-                              "Error reading from file, did not read all elements. [" + fileName + "]" );
+            throw( mx::exception( error_t::filererr,
+                                  "Error reading from file, did not read all elements. [" + fileName + "]" ) );
         }
     }
 
@@ -83,7 +81,7 @@ int readRawBinary( T *data,                    ///< [out] the data pointer
 
     if( res != 0 )
     {
-        mxThrowExceptionErrno( mx::err::filecerr, errno, "readRawBinary", "Error closing file [" + fileName + "]" );
+        throw(mx::exception(errno2error_t(errno), "Error closing file [" + fileName + "]" ));
     }
 
     return 0;
@@ -109,7 +107,7 @@ int writeRawBinary( const std::string &fileName, ///< [in] the file to write to
     fout = fopen( fileName.c_str(), "wb" );
     if( fout == 0 )
     {
-        mxThrowExceptionErrno( mx::err::fileoerr, errno, "writeRawBinary", "Error from fopen [" + fileName + "]" );
+        throw( mx::exception( errno2error_t( errno ), "Error from fopen [" + fileName + "]" ) );
     }
 
     int nwr = fwrite( data, sizeof( T ), szData, fout );
@@ -122,14 +120,12 @@ int writeRawBinary( const std::string &fileName, ///< [in] the file to write to
         // Have to handle case where EOF reached but no error.
         if( en != 0 )
         {
-            mxThrowExceptionErrno(
-                mx::err::filewerr, en, "writeRawBinary", "Error writing to file [" + fileName + "]" );
+            throw(mx::exception(error_t::filewerr, "Error writing to file [" + fileName + "]" ));
         }
         else
         {
-            mxThrowException( mx::err::filewerr,
-                              "writeRawBinary",
-                              "Error writing to file, did not write all elements. [" + fileName + "]" );
+            throw(mx::exception(error_t::filewerr,
+                              "Error writing to file, did not write all elements. [" + fileName + "]" ));
         }
     }
 
@@ -137,7 +133,7 @@ int writeRawBinary( const std::string &fileName, ///< [in] the file to write to
 
     if( res != 0 )
     {
-        mxThrowExceptionErrno( mx::err::filecerr, errno, "writeRawBinary", "Error closing file [" + fileName + "]" );
+        throw(mx::exception(error_t::filecerr,"Error closing file [" + fileName + "]" ));
     }
 
     return 0;

@@ -33,7 +33,7 @@
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_errno.h>
 
-#include "../mxException.hpp"
+#include "../mxlib.hpp"
 
 namespace mx
 {
@@ -90,8 +90,8 @@ class gslInterpolator
     gsl_interp *m_interp{ nullptr };    ///< the gsl interpolator structure
     gsl_interp_accel *m_acc{ nullptr }; ///< the gsl interpolation accelerator structure
 
-    realT *m_xin; ///< the input x data
-    realT *m_yin; ///< the input y data
+    realT *m_xin;                       ///< the input x data
+    realT *m_yin;                       ///< the input y data
 
   public:
     /// Default constructor
@@ -134,7 +134,7 @@ class gslInterpolator
     void setup( std::vector<realT>
                     &xin, ///< [in] the input x data, the pointer to xin.data() is stored and xin must remain unchanged
                 std::vector<realT>
-                    &yin ///< [in] the input y data, the pointer to yin.data() is stored and yin must remain unchanged
+                    &yin  ///< [in] the input y data, the pointer to yin.data() is stored and yin must remain unchanged
     );
 
     /// Calculate the interpolated function value at a point
@@ -181,28 +181,26 @@ void gslInterpolator<interpT>::setup( realT *xin, realT *yin, size_t Nin )
     m_interp = gsl_interp_alloc( interpT::interpolator(), Nin );
     if( !m_interp )
     {
-        mxThrowException( err::allocerr, "gslInterpolation::setup", "gsl_interp_alloc failed" );
+        throw(mx::exception(error_t::allocerr, "gsl_interp_alloc failed"));
     }
 
     m_acc = gsl_interp_accel_alloc();
     if( !m_acc )
     {
-        mxThrowException( err::allocerr, "gslInterpolation::setup", "gsl_interp_accel_alloc failed" );
+        throw(mx::exception(error_t::allocerr, "gsl_interp_accel_alloc failed" ));
     }
 
     int errv = gsl_interp_init( m_interp, xin, yin, Nin );
     if( errv != 0 )
     {
-        mxThrowException(
-            err::liberr, "gslInterpolation::setup", std::string( "gsl_interp_init failed: " ) + gsl_strerror( errv ) );
+        throw( mx::exception( error_t::liberr, std::string( "gsl_interp_init failed: " ) + gsl_strerror( errv ) ) );
     }
 
     errv = gsl_interp_accel_reset( m_acc );
     if( errv != 0 )
     {
-        mxThrowException( err::liberr,
-                          "gslInterpolation::setup",
-                          std::string( "gsl_interp_accel_reset failed: " ) + gsl_strerror( errv ) );
+        throw(
+            mx::exception( error_t::liberr, std::string( "gsl_interp_accel_reset failed: " ) + gsl_strerror( errv ) ) );
     }
     m_xin = xin;
     m_yin = yin;
@@ -213,7 +211,7 @@ void gslInterpolator<interpT>::setup( std::vector<realT> &xin, std::vector<realT
 {
     if( xin.size() != yin.size() )
     {
-        mxThrowException( err::sizeerr, "gslInterpolator<interpT>::setup", "input vectors must be the same size" );
+        throw(mx::exception(error_t::sizeerr,"input vectors must be the same size" ));
     }
     setup( xin.data(), yin.data(), xin.size() );
 }
@@ -225,10 +223,13 @@ typename interpT::realT gslInterpolator<interpT>::operator()( const realT &x )
     int errv = gsl_interp_eval_e( m_interp, m_xin, m_yin, x, m_acc, &y );
     if( errv != 0 && errv != GSL_EDOM )
     {
-        mxThrowException( err::liberr, "gslInterpolation::setup", "gsl_interp_eval_e failed" );
+        throw(mx::exception(error_t::liberr,"gsl_interp_eval_e failed" ));
     }
     return y;
 }
+
+extern template class gslInterpolator<gsl_interp_linear<double>>;
+extern template class gslInterpolator<gsl_interp_steffen<double>>;
 
 } // namespace math
 } // namespace mx

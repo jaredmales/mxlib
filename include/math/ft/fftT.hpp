@@ -58,7 +58,7 @@ std::vector<int> fftwDimVec( int szX, int szY, int szZ );
  * the planning step.  This can be mitigated using "wisdom", managed by \ref fftwEnvironment.
  *
  * Calls to the FFTW plan functions are protected by `\#pragma omp critical` directives
- * unless MX_FFTW_NOOMP is define prior to the first inclusion of this file.  This means that
+ * unless MX_FFTW_NOOMP is defined prior to the first inclusion of this file.  This means that
  * you do not need to use the `fftw_make_planner_thread_safe` facility in FFTW.
  *
  * \note I recommend not using fftw_make_planner_thread_safe or specifying number of threads in
@@ -443,50 +443,9 @@ std::vector<int> fftwDimVec<2>( int szX, int szY, int szZ );
 template <>
 std::vector<int> fftwDimVec<3>( int szX, int szY, int szZ );
 
-#ifdef MX_CUDA
+#ifdef MXLIB_CUDA
 
-template <>
-class fft<std::complex<float>, std::complex<float>, 2, 1>
-{
-  protected:
-    int m_szX;
-    int m_szY;
-
-    cufftHandle m_plan;
-
-  public:
-    fft()
-    {
-        m_szX = 0;
-        m_szY = 0;
-    }
-
-    fft( int nx, int ny )
-    {
-        m_szX = 0;
-        m_szY = 0;
-
-        plan( nx, ny );
-    }
-
-    void plan( int nx, int ny )
-    {
-        if( m_szX == nx && m_szY == ny )
-        {
-            return;
-        }
-
-        m_szX = nx;
-        m_szY = ny;
-
-        cufftPlan2d( &m_plan, m_szX, m_szY, CUFFT_C2C );
-    }
-
-    void fwdFFT( std::complex<float> *in, std::complex<float> *out )
-    {
-        cufftExecC2C( m_plan, (cufftComplex *)in, (cufftComplex *)out, CUFFT_FORWARD );
-    }
-};
+#include "fftTcuda.hpp"
 
 #endif
 

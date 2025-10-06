@@ -102,25 +102,30 @@ void fitsPopulateCard( char headStr[81], char *keyword, char *value, char *comme
 }
 
 template <>
-int fits_write_key<char *>( fitsfile *fptr, char *keyword, void *value, char *comment )
+mx::error_t fits_write_key<char *>( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
     int fstatus = 0;
 
     fits_write_key_longwarn( fptr, &fstatus );
 
+    if(fstatus != 0)
+    {
+        return fits_status2error_t(fstatus);
+    }
+
     fits_write_key_longstr( fptr, keyword, (const char *)value, comment, &fstatus );
 
-    return fstatus;
+    return fits_status2error_t(fstatus);
 }
 
 template <>
-int fits_write_key<std::string>( fitsfile *fptr, char *keyword, void *value, char *comment )
+mx::error_t fits_write_key<std::string>( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
     return fits_write_key<char *>( fptr, keyword, value, comment );
 }
 
 template <>
-int fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comment )
+mx::error_t fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
     unsigned char bc = *( (bool *)value );
 
@@ -128,11 +133,11 @@ int fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comm
 
     fits_write_key( fptr, fitsType<unsigned char>(), keyword, &bc, comment, &fstatus );
 
-    return fstatus;
+    return fits_status2error_t(fstatus);
 }
 
 template <>
-int fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value, char *comment )
+mx::error_t fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
 
     int fstatus = 0;
@@ -145,28 +150,29 @@ int fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value,
     fitsPopulateCard( headStr, keyword, vstr, comment );
 
     fits_write_record( fptr, headStr, &fstatus );
-    return fstatus;
+
+    return fits_status2error_t(fstatus);
 }
 
-int fits_write_comment( fitsfile *fptr, char *comment )
+mx::error_t fits_write_comment( fitsfile *fptr, char *comment )
 {
     int fstatus = 0;
 
     fits_write_comment( fptr, comment, &fstatus );
 
-    return fstatus;
+    return fits_status2error_t(fstatus);
 }
 
-int fits_write_history( fitsfile *fptr, char *history )
+mx::error_t fits_write_history( fitsfile *fptr, char *history )
 {
     int fstatus = 0;
 
     fits_write_history( fptr, history, &fstatus );
 
-    return fstatus;
+    return fits_status2error_t(fstatus);
 }
 
-void fitsErrText( std::string &explan, const std::string &filename, int fstatus )
+/*void fitsErrText( std::string &explan, const std::string &filename, int fstatus )
 {
     char emnem[31];
 
@@ -178,9 +184,9 @@ void fitsErrText( std::string &explan, const std::string &filename, int fstatus 
 
     explan += emnem;
     explan += " (";
-    explan += ioutils::convertToString( fstatus );
+    explan += std::format( fstatus );
     explan += ")";
-}
+}*/
 
 } // namespace fits
 } // namespace mx

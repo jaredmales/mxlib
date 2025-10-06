@@ -30,7 +30,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 #include "../math/constants.hpp"
 #include "../math/geo.hpp"
@@ -174,7 +174,7 @@ int makeFourierMode( typeN im, typename typeN::Scalar m, typename typeN::Scalar 
     if( p == 1 )
         return makeFourierModeC( im, m, n );
 
-    mxError( "makeFourierMode", MXE_INVALIDARG, "p must be +1 (cosine) or -1 (sine)." );
+    internal::mxlib_error_report( error_t::invalidarg, "p must be +1 (cosine) or -1 (sine)." );
 
     return -1;
 }
@@ -204,7 +204,8 @@ int makeModifiedFourierMode(
 
     if( p != 1 && p != -1 )
     {
-        mxError( "makeModifiedFourierMode", MXE_INVALIDARG, "p must be +1 or -1." );
+        internal::mxlib_error_report( error_t::invalidarg, "p must be +1 or -1." );
+        return -1;
     }
 
     int dim1 = im.cols();
@@ -351,7 +352,7 @@ int makeFourierModeFreqs_PandV( std::vector<fourierModeDef> &spf, int N )
         {
             if( modeCount >= Nmodes )
             {
-                mxError( "makeFourierModeFreqs_PandV", MXE_SIZEERR, "mode count exceeded expected number of modes" );
+                internal::mxlib_error_report( error_t::sizeerr, "mode count exceeded expected number of modes" );
                 return -1;
             }
 
@@ -463,7 +464,7 @@ int makeFourierModeFreqs_Circ( std::vector<fourierModeDef> &spf, int N )
             {
                 if( modeCount >= Nmodes )
                 {
-                    mxError( "makeFourierModeFreqs_Circ", MXE_SIZEERR, "mode count exceeded expected number of modes" );
+                    internal::mxlib_error_report( error_t::sizeerr, "mode count exceeded expected number of modes" );
                     return -1;
                 }
 
@@ -499,13 +500,13 @@ int fourierModeNumber( int m, int n, int p )
 
     if( p != -1 && p != 1 )
     {
-        mxError( "fourierModeCoordinates", MXE_INVALIDARG, "p must +/-1" );
+        internal::mxlib_error_report(error_t::invalidarg, "p must +/-1" );
         return -1;
     }
 
     if( m == 0 && n == 0 )
     {
-        mxError( "fourierModeCoordinates", MXE_INVALIDARG, "piston is ignored" );
+        internal::mxlib_error_report(error_t::invalidarg, "piston is ignored" );
         return -1;
     }
 
@@ -546,7 +547,7 @@ int fourierModeCoordinates(
 {
     if( i < 0 )
     {
-        mxError( "fourierModeCoordinates", MXE_INVALIDARG, "i must be >= 0" );
+        internal::mxlib_error_report( error_t::invalidarg, "i must be >= 0" );
         m = 0;
         n = 0;
         p = 0;

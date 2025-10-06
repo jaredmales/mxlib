@@ -23,7 +23,6 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "mxError.hpp"
 #include "sys/gitRepo.hpp"
 
 #include "ipc/processInterface.hpp"
@@ -72,13 +71,13 @@ int gitRepo::getGitName()
     if( ipc::runCommand( retVal, stdOut, stdErr, { "git", "--git-dir=" + gitDir(), "rev-parse", "--show-toplevel" } ) <
         0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command" );
+        internal::mxlib_error_report(error_t::procerr, "error running git command" );
         return -1;
     }
 
     if( stdErr.size() > 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "error returned by git" );
 
         for( size_t n = 0; n < stdErr.size(); ++n )
         {
@@ -90,13 +89,13 @@ int gitRepo::getGitName()
 
     if( stdOut.size() < 1 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "nothing returned by git" );
         return -1;
     }
 
     if( stdOut.size() > 1 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "too much returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "too much returned by git" );
         return -1;
     }
 
@@ -115,13 +114,13 @@ int gitRepo::getGitHash()
                          stdErr,
                          { "git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "log", "-1", "--format=%H" } ) < 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command" );
+        internal::mxlib_error_report(error_t::procerr, "error running git command" );
         return -1;
     }
 
     if( stdErr.size() > 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "error returned by git" );
 
         for( size_t n = 0; n < stdErr.size(); ++n )
         {
@@ -133,13 +132,13 @@ int gitRepo::getGitHash()
 
     if( stdOut.size() < 1 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git" );
+       internal::mxlib_error_report(error_t::procerr, "nothing returned by git" );
         return -1;
     }
 
     if( stdOut.size() > 1 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "too much returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "too much returned by git" );
         return -1;
     }
 
@@ -158,13 +157,13 @@ int gitRepo::getGitModified()
                          stdErr,
                          { "git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "diff-index", "HEAD", "--" } ) < 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command" );
+        internal::mxlib_error_report(error_t::procerr, "error running git command" );
         return -1;
     }
 
     if( stdErr.size() > 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "error returned by git" );
         for( size_t n = 0; n < stdErr.size(); ++n )
         {
             std::cerr << "err: " << stdErr[n] << "\n";
@@ -186,13 +185,13 @@ int gitRepo::getGitFileState()
     if( ipc::runCommand(
             retVal, stdOut, stdErr, { "git", "--git-dir=" + gitDir(), "--work-tree=" + dir(), "status" } ) < 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error running git command" );
+        internal::mxlib_error_report(error_t::procerr, "error running git command" );
         return -1;
     }
 
     if( stdErr.size() > 0 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "error returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "error returned by git" );
 
         for( size_t n = 0; n < stdErr.size(); ++n )
         {
@@ -204,7 +203,7 @@ int gitRepo::getGitFileState()
 
     if( stdOut.size() < 1 )
     {
-        mxError( "mx::sys::gitRepo::getGitName", MXE_PROCERR, "nothing returned by git" );
+        internal::mxlib_error_report(error_t::procerr, "nothing returned by git" );
         return -1;
     }
 

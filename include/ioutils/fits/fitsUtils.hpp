@@ -86,6 +86,23 @@ struct fitsHistoryType
     }
 };
 
+struct fitsContinueType
+{
+    fitsContinueType()
+    {
+    }
+
+    explicit fitsContinueType( char *v )
+    {
+        static_cast<void>( v );
+    }
+
+    explicit fitsContinueType( const char *v )
+    {
+        static_cast<void>( v );
+    }
+};
+
 /** \ingroup fits_utils
  * @{
  */
@@ -226,6 +243,12 @@ constexpr int fitsType<fitsHistoryType>()
     return -5002;
 }
 
+template <>
+constexpr int fitsType<fitsContinueType>()
+{
+    return -5003;
+}
+
 /** Return the cfitsio BITPIX value for a given data type.
  *
  * \tparam scalarT is the type
@@ -346,39 +369,39 @@ void fitsPopulateCard( char headStr[81], char *keyword, char *value, char *comme
  * \ingroup fits_utils
  */
 template <typename typeT>
-int fits_write_key( fitsfile *fptr, char *keyword, void *value, char *comment )
+mx::error_t fits_write_key( fitsfile *fptr, char *keyword, void *value, char *comment )
 {
     int fstatus = 0;
 
     fits_write_key( fptr, fitsType<typeT>(), keyword, value, comment, &fstatus );
 
-    return fstatus;
+    return fits_status2error_t(fstatus);
 }
 
 template <>
-int fits_write_key<char *>( fitsfile *fptr, char *keyword, void *value, char *comment );
+mx::error_t fits_write_key<char *>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
 template <>
-int fits_write_key<std::string>( fitsfile *fptr, char *keyword, void *value, char *comment );
+mx::error_t fits_write_key<std::string>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
 /// Specialization to handle the case bool
 /** This gets converted to unsigned char.
  */
 template <>
-int fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comment );
+mx::error_t fits_write_key<bool>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
 template <>
-int fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value, char *comment );
+mx::error_t fits_write_key<fitsUnknownType>( fitsfile *fptr, char *keyword, void *value, char *comment );
 
-int fits_write_comment( fitsfile *fptr, char *comment );
+mx::error_t fits_write_comment( fitsfile *fptr, char *comment );
 
-int fits_write_history( fitsfile *fptr, char *history );
+mx::error_t fits_write_history( fitsfile *fptr, char *history );
 
 /// Generate a rich error meesage from a FITS status code.
-void fitsErrText( std::string &explan,         ///< [out] the explanatory message
+/*void fitsErrText( std::string &explan,         ///< [out] the explanatory message
                   const std::string &filename, ///< [in] the FITS file's name which generated the problem
                   int fstatus                  ///< [in] the cfitstio status code
-);
+);*/
 ///@}
 
 } // namespace fits

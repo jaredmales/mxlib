@@ -30,7 +30,7 @@
 #define psdUtils_hpp
 
 #ifndef EIGEN_NO_CUDA
-#define EIGEN_NO_CUDA
+    #define EIGEN_NO_CUDA
 #endif
 
 #include <type_traits>
@@ -39,7 +39,7 @@
 
 #include <iostream>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 #include "../math/ft/fftT.hpp"
 #include "../math/vectorUtils.hpp"
@@ -75,7 +75,9 @@ realT psdVar1sided( realT df,         ///< [in] the frequency scale of the PSD
     var = half * PSD[0];
 
     for( size_t i = 1; i < sz - 1; ++i )
+    {
         var += PSD[i];
+    }
 
     var += half * PSD[sz - 1];
 
@@ -140,9 +142,13 @@ realT psdVar( const std::vector<realT> &f,   ///< [in] the frequency scale of th
 )
 {
     if( f.back() < 0 )
+    {
         return psdVar2sided( f[1] - f[0], PSD.data(), PSD.size(), half );
+    }
     else
+    {
         return psdVar1sided( f[1] - f[0], PSD.data(), PSD.size(), half );
+    }
 }
 
 /// Calculate the variance of a PSD
@@ -265,7 +271,7 @@ int frequencyGrid(
     {
         if( vec.size() % 2 == 1 )
         {
-            mxError( "frequencyGrid", MXE_INVALIDARG, "Frequency scale can't be odd-sized for FFT order" );
+            internal::mxlib_error_report(error_t::invalidarg,"Frequency scale can't be odd-sized for FFT order" );
             return -1;
         }
 
@@ -631,6 +637,7 @@ void oneoverf_psd( eigenArrp &psd,
  * If you set \f$ T_0 \le 0 \f$ and \f$ t_0 = 0\f$ this reverts to a simple \f$ 1/f^\alpha \f$ law (i.e.
  * it treats this as infinite outer scale and inner scale).
  *
+ * \returns error_t::noerror on success
  *
  * \tparam floatT a floating point
  */
@@ -640,46 +647,56 @@ template <typename floatT,
           typename T0T = double,
           typename t0T = double,
           typename betaT = double>
-int vonKarmanPSD( std::vector<floatT> &psd, ///< [out] the PSD vector, will be resized.
-                  std::vector<floatfT> &f,  ///< [in] the frequency vector
-                  alphaT alpha,             ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
-                  T0T T0 = 0,               ///< [in] the outer scale, default is 0 (not used).
-                  t0T t0 = 0,               ///< [in] the inner scale, default is 0 (not used).
-                  betaT beta = 1            ///< [in] the scaling constant, default is 1
+mx::error_t vonKarmanPSD( std::vector<floatT> &psd, ///< [out] the PSD vector, will be resized.
+                          std::vector<floatfT> &f,  ///< [in] the frequency vector
+                          alphaT alpha,             ///< [in] the exponent, by convention @f$ alpha > 0 @f$.
+                          T0T T0 = 0,               ///< [in] the outer scale, default is 0 (not used).
+                          t0T t0 = 0,               ///< [in] the inner scale, default is 0 (not used).
+                          betaT beta = 1            ///< [in] the scaling constant, default is 1
 )
 {
 
-#ifndef MX_VKPSD_REFACT
-    static_assert( 0 * std::is_floating_point<floatT>::value,
-                   "the 1D vonKarmanPSD has been refactored.  After modifying your code to match, you must define "
-                   "MX_VKPSD_REFACT before including psdUtils.hpp to avoid this error." );
-#endif
-
     floatT T02;
     if( T0 > 0 )
+    {
         T02 = 1.0 / ( T0 * T0 );
+    }
     else
+    {
         T02 = 0;
+    }
 
     floatT sqrt_alpha = 0.5 * alpha;
 
     floatT _beta;
     if( beta <= 0 )
+    {
         _beta = 1;
+    }
     else
+    {
         _beta = beta;
+    }
 
     psd.resize( f.size() );
 
-    for( size_t i = 0; i < f.size(); ++i )
+    if( t0 > 0 )
     {
-        floatT p = _beta / pow( pow( f[i], 2 ) + T02, sqrt_alpha );
-        if( t0 > 0 )
-            p *= exp( -1 * pow( f[i] * static_cast<floatT>( t0 ), 2 ) );
-        psd[i] = p;
+        floatT _t0 = static_cast<floatT>( t0 );
+        for( size_t i = 0; i < f.size(); ++i )
+        {
+            psd[i] = _beta / pow( pow( f[i], 2 ) + T02, sqrt_alpha ) * exp( -1 * pow( f[i] * _t0, 2 ) );
+        }
+    }
+    else
+    {
+        for( size_t i = 0; i < f.size(); ++i )
+        {
+            psd[i] = _beta / pow( pow( f[i], 2 ) + T02, sqrt_alpha );
+        }
     }
 
-    return 0;
+    return mx::error_t::noerror;
 }
 
 /// Generate a 1-D "knee" PSD
@@ -731,8 +748,8 @@ int kneePSD( std::vector<floatT> &psd, ///< [out] the PSD vector, will be resize
  * \param [in] alpha is the power law exponent, by convention @f$ alpha > 0 @f$.
  * \param [in] L0 [optional] is the outer scale.
  * \param [in] l0 [optional] is the inner scale.
- * \param [in] beta [optional] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default) then
- *                           the PSD is normalized using \ref oneoverf_norm.
+ * \param [in] beta [optional] is a normalization constant to multiply the raw spectrum by.  If beta==-1 (default)
+ * then the PSD is normalized using \ref oneoverf_norm.
  *
  * \tparam eigenArrp is the Eigen array type of the psd
  * \tparam eigenArrf is the Eigen array type of the frequency grid

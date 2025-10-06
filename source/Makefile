@@ -5,7 +5,6 @@
 
 OBJS = \
 	mxlib.o \
-	mxError.o \
 	ao/analysis/clGainOpt.o \
 	ao/analysis/aoAtmosphere.o \
 	ao/analysis/aoSystem.o \
@@ -16,19 +15,19 @@ OBJS = \
 	app/clOptions.o \
 	app/ini.o \
 	app/optionparser.o \
+	error/error.o \
+	error/mxErrorOld.o \
 	ioutils/fileUtils.o \
 	ioutils/stringUtils.o \
 	ioutils/fits/fitsUtils.o \
 	ioutils/fits/fitsHeaderCard.o \
 	ioutils/fits/fitsHeader.o \
+	ioutils/fits/fitsFile.o \
 	ioutils/textTable.o \
-	improc/ADIDerotator.o \
-	improc/ADIobservation.o \
-	improc/HCIobservation.o \
-	improc/KLIPreduction.o \
 	improc/imageUtils.o \
 	ipc/processInterface.o \
 	ipc/sharedMemSegment.o \
+	math/gslInterpolator.cpp \
 	math/templateBLAS.o \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
@@ -70,7 +69,6 @@ VENDOROBJS = \
 all: libmxlib.$(LIB_SUFFIX)
 
 mxlib.o: .FORCE
-mxError.o: ../include/mxError.hpp ../include/mxException.hpp
 ao/analysis/aoAtmosphere.o: ../include/ao/analysis/aoAtmosphere.hpp
 ao/analysis/aoPSDs.o: ../include/ao/analysis/aoPSDs.hpp
 ao/analysis/aoSystem.o: ../include/ao/analysis/aoSystem.hpp ao/analysis/aoAtmosphere.o ao/analysis/aoPSDs.o ../include/ao/analysis/aoWFS.hpp
@@ -81,14 +79,15 @@ app/appConfigurator.o: ../include/app/appConfigurator.hpp ../include/app/clOptio
 app/clOptions.o: ../include/app/clOptions.hpp
 app/ini.o: ../include/app/ini.hpp
 app/optionparser.o: ../include/app/optionparser/optionparser.h
-improc/HCIobservation.o: ../include/improc/HCIobservation.hpp ../include/improc/imageFilters.hpp ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
-improc/ADIobservation.o: ../include/improc/ADIobservation.hpp  improc/HCIobservation.o ../include/math/gslInterpolation.hpp ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
-improc/KLIPreduction.o: ../include/improc/KLIPreduction.hpp improc/HCIobservation.o improc/ADIobservation.o ../include/improc/imageMasks.hpp ../include/improc/imageUtils.hpp
+error/error.o: ../include/error/error.hpp ../include/error/error_t.hpp
+error/mxErrorOld.o: ../include/error/mxErrorOld.hpp
 ioutils/fileUtils.o: ../include/ioutils/fileUtils.hpp
 ioutils/fits/fitsUtils.o: ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeaderCard.o: ../include/ioutils/fits/fitsHeaderCard.hpp ../include/ioutils/fits/fitsUtils.hpp
 ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ioutils/fits/fitsHeaderCard.o
+ioutils/fits/fitsFile.o: ../include/ioutils/fits/fitsFile.hpp ioutils/fits/fitsHeader.o
 ipc/processInterface.o: ../include/ipc/processInterface.hpp
+math/gslInterpolator.o: ../include/math/gslInterpolator.hpp
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp

@@ -4,12 +4,13 @@
 
 #include "../../../include/sys/timeUtils.hpp"
 
-/** Verify operation of get_curr_time.  This only
- * checks for increasing time on subsequent calls.
+/** \test Scenario: Verify operation of get_curr_time.
+ *
+ * This only checks for increasing time on subsequent calls.
  *
  *  \anchor tests_sys_timeUtils_get_curr_time
  */
-SCENARIO( "getting the current time in seconds", "[timeutils]" )
+SCENARIO( "Verify operation of get_curr_time", "[timeutils]" )
 {
     GIVEN( "getting the time" )
     {
@@ -36,13 +37,13 @@ SCENARIO( "getting the current time in seconds", "[timeutils]" )
     }
 }
 
-/** Verify operation of thread sleep functions.
+/** \test Scenario: Verify operation of thread sleep functions
  *
  * Uses mx::sys::get_curr_time to verify duration of sleep.
  *
  *  \anchor tests_sys_timeUtils_sleep
  */
-SCENARIO( "putting a thread to sleep", "[timeutils]" )
+SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
 {
     GIVEN( "sleeping for 1 second" )
     {
@@ -81,11 +82,11 @@ SCENARIO( "putting a thread to sleep", "[timeutils]" )
     }
 }
 
-/** Verify operation of timespecAddNsec.
+/** \test Scenario: Verify operation of timespecAddNsec
  *
  *  \anchor tests_sys_timeUtils_timespecAddNsec
  */
-SCENARIO( "adding time to a timespec", "[timeutils]" )
+SCENARIO( "Verify operation of timespecAddNsec", "[timeutils]" )
 {
     GIVEN( "a timespec" )
     {
@@ -184,12 +185,13 @@ SCENARIO( "adding time to a timespec", "[timeutils]" )
     }
 }
 
-/** Verify parsing of a formatted time string.
+/** \test Scenario: Verify parsing of a formatted time string
+ *
  *  Tests parsing of a string of format hh:mm:ss.s
  *
  *  \anchor tests_sys_timeUtils_parse_hms
  */
-SCENARIO( "parsing a formatted time string", "[timeutils]" )
+SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
 {
     GIVEN( "a valid time string" )
     {
@@ -247,11 +249,11 @@ SCENARIO( "parsing a formatted time string", "[timeutils]" )
     }
 }
 
-/** Verify calculation of MJD.
+/** \test Scenario: Verify calculation of MJD
  *
  *  \anchor tests_sys_timeUtils_Cal2mjd
  */
-SCENARIO( "calculating MJD from a Gregorian date", "[timeutils]" )
+SCENARIO( "Verify calculation of MJD", "[timeutils]" )
 {
     GIVEN( "a valid Gregorian date" )
     {
@@ -272,11 +274,11 @@ SCENARIO( "calculating MJD from a Gregorian date", "[timeutils]" )
     }
 }
 
-/** Verify parsing of an ISO 8601 time string.
+/** \test Scenario: Verify parsing of an ISO 8601 time string
  *
  *  \anchor tests_sys_timeUtils_ISO8601dateBreakdown
  */
-SCENARIO( "parsing an ISO 8601 time string", "[timeutils]" )
+SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
 {
     GIVEN( "a valid ISO 8601 time string" )
     {
@@ -327,11 +329,11 @@ SCENARIO( "parsing an ISO 8601 time string", "[timeutils]" )
     }
 }
 
-/** Verify conversion of an ISO 8601 time string to MJD.
+/** \test Scenario: Verify conversion of an ISO 8601 time string to MJD
  *
  *  \anchor tests_sys_timeUtils_ISO8601date2mjd
  */
-SCENARIO( "coverting an ISO 8601 time string to MJD", "[timeutils]" )
+SCENARIO( "Verify conversion of an ISO 8601 time string to MJD", "[timeutils]" )
 {
     GIVEN( "a valid ISO 8601 time string" )
     {

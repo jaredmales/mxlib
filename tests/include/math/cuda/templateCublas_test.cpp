@@ -5,10 +5,9 @@
 #include "../../../../include/math/cuda/cudaPtr.hpp"
 #include "../../../../include/math/cuda/templateCublas.hpp"
 
-/** Scenario: scaling a vector with cublas
- * Tests cublasTscal, as well as basic cudaPtr operations.
- *
- * \anchor test_math_templateCublas_scal
+/// Tests cublasTscal, as well as basic cudaPtr operations.
+/**
+ * \test
  */
 SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
 {
@@ -152,7 +151,7 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
     }
 }
 
-/** Scenario: scaling and accumulating a vector with cublas
+/** \test Scenario: scaling and accumulating a vector with cublas
  * Tests cublasTaxpy, as well as basic cudaPtr operations.
  *
  * \anchor test_math_templateCublas_axpy
@@ -327,7 +326,7 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
     }
 }
 
-/** Scenario: multiplying two vectors element by element
+/** \test Scenario: multiplying two vectors element by element
  * Tests mx::cuda::elementwiseXxY, as well as basic cudaPtr operations.
  *
  * \anchor test_math_templateCublas_elementwiseXxY

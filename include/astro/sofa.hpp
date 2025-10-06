@@ -14,8 +14,10 @@ namespace sofa
 {
 #ifndef MX_GLOBAL_SOFA
 #include "sofa/sofa.h"
+#include "sofa/sofam.h"
 #else
 #include <sofa.h>
+#include <sofam.h>
 #endif
 } // namespace sofa
 

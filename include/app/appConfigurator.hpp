@@ -30,8 +30,9 @@
 
 #include <list>
 #include <fstream>
+#include <format>
 
-#include "../mxError.hpp"
+#include "../mxlib.hpp"
 
 #include "clOptions.hpp"
 #include "iniFile.hpp"
@@ -391,7 +392,7 @@ int appConfigurator::get( typeT &v,
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), ioutils::convertToString( v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
         }
 
         return 0;
@@ -402,7 +403,7 @@ int appConfigurator::get( typeT &v,
         return -1;
     }
 
-    v = ioutils::convertFromString<typeT>( targets[name].values[i] );
+    v = ioutils::stoT<typeT>( targets[name].values[i] );
 
     // Log it here.
     if( configLog )
@@ -564,7 +565,7 @@ int appConfigurator::get( typeT &v, const std::string &name, std::unordered_map<
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), ioutils::convertToString( v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
         }
 
         return 0;
@@ -714,7 +715,7 @@ int appConfigurator::get( std::vector<typeT> &v,
 
     std::string s;
 
-    s = ioutils::convertFromString<std::string>( targets[name].values[i] );
+    s = ioutils::stoT<std::string>( targets[name].values[i] );
 
     // if( get<std::string>(s, name, i, targets) < 0) return -1;
 
@@ -751,14 +752,14 @@ int appConfigurator::get( std::vector<typeT> &v,
 
     while( com != std::string::npos )
     {
-        v.push_back( ioutils::convertFromString<typeT>( s.substr( st, com - st ) ) );
+        v.push_back( ioutils::stoT<typeT>( s.substr( st, com - st ) ) );
         st = com + 1;
         while( ::isspace( s[st] ) && st < s.size() - 1 )
             ++st;
 
         com = s.find( ',', st );
     }
-    v.push_back( ioutils::convertFromString<typeT>( s.substr( st, s.size() - st ) ) );
+    v.push_back( ioutils::stoT<typeT>( s.substr( st, s.size() - st ) ) );
 
     // Log it here.
     if( configLog )

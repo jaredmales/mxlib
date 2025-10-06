@@ -30,12 +30,12 @@
 
 #include <unordered_map>
 
+#include "../mxlib.hpp"
 #include "../ioutils/stringUtils.hpp"
 #include "../meta/trueFalseT.hpp"
 #include "../meta/typeTraits.hpp"
 #include "../meta/typeDescription.hpp"
 
-#include "../mxError.hpp"
 
 namespace mx
 {

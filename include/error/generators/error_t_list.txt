@@ -1,0 +1,57 @@
+#list of error_t for mxlib
+#used for generating error_t.hpp
+#should not be installed
+#
+# format: name  "explanation"
+# name will is without error_t:: namespace
+# explanation is in quotes
+#
+# any line that starts with # is ignored
+noerror "No error has occurred"
+error "A general error has occurred"
+invalidarg "An argument was invalid"
+invalidconfig "A config setting was invalid"
+notimpl "A component or technique is not implemented"
+paramnotset "A parameter was not set"
+envnotset "A environment variable was not set"
+notfound "An item was not found"
+sizeerr "A size was invalid or calculated incorrectly"
+allocerr "An error occurred during memory allocation"
+freeerr "An error occurred during memory de-allocation"
+parseerr "A parsing error occurred"
+filesystem "A general filesystem error occurred"
+fileoerr "An error occurred while opening a file"
+filewerr "An error occurred while writing to a file"
+filererr "An error occurred while reading from a file"
+filecerr "An error occurred while closing a file"
+filenotfound "The file was not found"
+fileempty "The file is empty"
+dirnotfound "The directory was not found"
+dirempty "The directory was empty"
+procerr "An error occurred while starting a process"
+timeout "A timeout occurred"
+liberr "An error was returned by a library"
+#generic exception
+exception "An exception was thrown"
+#std::exceptions
+std_exception "An exception was thrown"
+std_bad_alloc "A bad allocation exception was thrown"
+#std::log_errors#
+std_logic_error "A logic error exception was thrown"
+std_invalid_argument "An invalid argument exception was thrown"
+std_domain_error "A domain error exception was thrown"
+std_length_error "A length error exception was thrown"
+std_out_of_range "An out of range exception was thrown"
+std_future_error "A future error exception was thrown"
+std_bad_optional_access "A bad optional access exception was thrown"
+std_filesystem_error "A filesystem error exception was thrown"
+#std::runtime_errors
+std_runtime_error "A runtime error exception was thrown"
+std_range_error "A range error exception was thrown"
+std_overflow_error "An overflow exception was thrown"
+std_underflow_error "An underflow exception was thrown"
+std_ios_base_failure "An ios::base::failure exception was thrown"
+std_format_error "A format library exception was thrown"
+#other library errors
+gnuploterr "An error was returned by gnuplot"
+lapackerr  "An error was returned by Lapack"

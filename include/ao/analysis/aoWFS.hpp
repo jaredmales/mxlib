@@ -9,8 +9,7 @@
 #define aoWFS_hpp
 
 #include "../../math/constants.hpp"
-#include "../../mxError.hpp"
-#include "../../mxException.hpp"
+#include "../../mxlib.hpp"
 #include "../../improc/eigenImage.hpp"
 #include "../../ioutils/fits/fitsFile.hpp"
 
@@ -274,6 +273,8 @@ struct shwfs : public wfs<realT, iosT>
 template <typename realT, typename iosT = std::ostream>
 struct calculatedWFS : public wfs<realT, iosT>
 {
+    typedef verbose::d verboseT;
+
     std::string m_beta_p_file;
     std::string m_beta_r_file;
     bool m_sensitivity{ false };
@@ -370,12 +371,12 @@ struct calculatedWFS : public wfs<realT, iosT>
 
         if( midx > m_beta_r.rows() - 1 || midx < 0 )
         {
-            mxThrowException( err::sizeerr, "calculatedWFS::beta_r", "m index out of range" );
+            throw(mx::exception<verboseT>(error_t::sizeerr, "m index out of range" ));
         }
 
         if( nidx > m_beta_r.cols() - 1 || nidx < 0 )
         {
-            mxThrowException( err::sizeerr, "calculatedWFS::beta_r", "n index out of range" );
+            throw(mx::exception<verboseT>(error_t::sizeerr, "n index out of range" ));
         }
 
         return m_beta_r( midx, nidx );

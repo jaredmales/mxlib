@@ -35,17 +35,27 @@
 
 //------------------ error_handling -----------------------
 
+/** \defgroup error_handling_codes Error Codes
+  * The mxlib error codes and utility functions.
+  * \ingroup error_handling
+  */
+/** \defgroup error_handling_old Old Error Handling
+  * Now deprecated ways in which mxlib handles errors.  Some things still actually use this...
+  * \ingroup error_handling
+  */
+
 /** \defgroup error_macros Error Handling Macros
   * Macros controlling how mxlib reports errors
-  * \ingroup error_handling
+  * \ingroup error_handling_old
   */
 
 /** \defgroup exceptions Exceptions
   * Exceptions with detailed information
-  * \ingroup error_handling
+  * \ingroup error_handling_old
   */
 
 //See error_handling_files
+
 
 //------------------ gen_math -----------------------
 
@@ -337,18 +347,6 @@
   * \ingroup image_processing
   */
 
-/** \defgroup hc_imaging High Contrast Imaging
-  * Tools for astronomical high contrast image processing.
-  * \ingroup genastro
-  * \ingroup image_processing
-  */
-
-/** \defgroup hc_imaging_enums HCI Enums
-  * Enums for high contrast imaging.
-  * \ingroup hc_imaging
-  */
-
-// see hc_imaging_files
 
 // see image_processing_files
 
@@ -476,7 +474,6 @@
   * \ingroup utils
   * Various input/output utilities
   */
-
 /** \defgroup stringutils Working with strings
   * \ingroup ioutils
   * Various tools for working with strings
@@ -526,13 +523,13 @@
 
 /** \defgroup meta Meta-programming Utilities.
   * \ingroup utils
-  * Various template-meta-programming utilities.
+  * Various template meta-programming utilities.
   */
 
 /** \defgroup mtutils Multi-threading Utilities
   * \ingroup utils
   * Tools for multi-threaded programming
-  /
+  */
 
 /** \defgroup system System Programming
   * \ingroup utils
@@ -561,6 +558,59 @@
 
 
 // see utils_files
+
+//------------------ testing -----------------------
+
+/** \defgroup mxlib_testing Testing
+  */
+
+    /** \defgroup unit_tests Unit Tests
+      * \ingroup mxlib_testing
+      */
+
+        /** \defgroup error_unit_tests Error Handling Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup error_error_unit_tests Error Reporting Unit Tests
+              * \ingroup error_unit_tests
+              */
+
+            /** \defgroup error_error_t_unit_tests error_t Utilities Unit Tests
+              * \ingroup error_unit_tests
+              */
+
+        /** \defgroup ioutils_unit_tests I/O Utilities Unit Tests
+          * \ingroup unit_tests
+          */
+
+                /** \defgroup fileUtils_unit_tests File Utilities Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup stringUtils_unit_tests String Utilities Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup readColumns_unit_tests readColumns Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                /** \defgroup fits_unit_tests FITS Unit Tests
+                  * \ingroup ioutils_unit_tests
+                  */
+
+                    /** \defgroup fitsFile_unit_tests fitsFile Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
+                    /** \defgroup fitsHeader_unit_tests fitsHeader Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
+                    /** \defgroup fitsHeaderCard_unit_tests fitsHeaderCard Unit Tests
+                      * \ingroup fits_unit_tests
+                      */
+
 
 //-----------------------------------------------------------------------
 
@@ -606,11 +656,6 @@
   * Source of tools for working with FITS files.
   * \ingroup fits_processing
   * \ingroup image_processing_files
-  */
-
-/** \defgroup hc_imaging_files High Contrast Imaging Files
-  * Source files for High Contrast Imaging.
-  * \ingroup hc_imaging
   */
 
 /** \defgroup imaging_files Wavefront Propagation Files

@@ -27,8 +27,7 @@
 #ifndef imageXCorrFFT_hpp
 #define imageXCorrFFT_hpp
 
-#include "../mxError.hpp"
-#include "../mxException.hpp"
+#include "../mxlib.hpp"
 #include "../math/ft/fftT.hpp"
 #include "../math/ft/mftT.hpp"
 #include "../math/ft/ftUtils.hpp"
@@ -552,8 +551,8 @@ int imageXCorrFFT<realImageT>::padFactor( realT os )
 {
     if( os < 1 )
     {
-        mxError( "imageXCorrFFT::padFactor", MXE_INVALIDARG, "padding factor can't be less than 1" );
-        return MXE_INVALIDARG;
+        internal::mxlib_error_report(error_t::invalidarg, "padding factor can't be less than 1" );
+        return -1;
     }
 
     if( m_rows > 0 && m_cols > 0 )
@@ -596,8 +595,8 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT padFactor )
 
     if( padFactor < 1 )
     {
-        mxError( "imageXCorrFFT::resize", MXE_INVALIDARG, "padding factor can't be less than 1" );
-        return MXE_INVALIDARG;
+        internal::mxlib_error_report(error_t::invalidarg, "padding factor can't be less than 1" );
+        return -1;
     }
 
     m_rows = nrows;
@@ -810,8 +809,8 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im.rows() != m_refMaskIm.rows() && im.cols() != m_refMaskIm.cols() )
         {
-            mxError( "imageXCorrFFT::refIm", MXE_SIZEERR, "reference and reference mask are not the same size" );
-            return MXE_SIZEERR;
+            internal::mxlib_error_report(error_t::sizeerr, "reference and reference mask are not the same size" );
+            return -1;
         }
 
         // Now normalize
@@ -846,8 +845,8 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im0.rows() != m_refWinIm.rows() && im.cols() != m_refWinIm.cols() )
         {
-            mxError( "imageXCorrFFT::refIm", MXE_SIZEERR, "reference and reference window are not the same size" );
-            return MXE_SIZEERR;
+            internal::mxlib_error_report(error_t::sizeerr, "reference and reference window are not the same size" );
+            return -1;
         }
 
         im0 *= m_refWinIm;
@@ -959,7 +958,7 @@ void imageXCorrFFT<realImageT>::peakMethod( xcorrPeakMethod xpm )
 
         m_refValid = false;
     }
-    
+
     return;
 }
 
@@ -1135,7 +1134,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
     }
     else
     {
-        mxThrowException( mx::err::invalidconfig, "imageXCorrFFT::operator()", "unknown peak finding method" );
+        throw(mx::exception(error_t::invalidconfig, "unknown peak finding method" ));
     }
 
     //--> unpad here, scaling the shifts
@@ -1149,17 +1148,17 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 {
     if( !m_refValid )
     {
-        mxThrowException( err::invalidconfig, "imageXCorrFFT", "reference image is not valid" );
+        throw(mx::exception(error_t::invalidconfig, "reference image is not valid" ));
     }
 
     if( im.rows() != m_rows )
     {
-        mxThrowException( err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
+        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
     }
 
     if( im.cols() != m_cols )
     {
-        mxThrowException( err::sizeerr, "imageXCorrFFT", "image must be same size as reference (rows)" );
+        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
     }
 
     // Mask and normalize as needed

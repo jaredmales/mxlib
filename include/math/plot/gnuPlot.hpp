@@ -46,7 +46,7 @@
 #include <map>
 
 #include "../constants.hpp"
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 #include "../../sys/timeUtils.hpp"
 
 #ifndef MX_GP_FNAME_SZ
@@ -192,6 +192,7 @@ struct gpCurve
  */
 class gnuPlot
 {
+    typedef verbose::d verboseT;
   protected:
     int _connected{ 0 };
 

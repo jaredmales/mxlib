@@ -36,7 +36,7 @@ int noll_nm( int &n, int &m, int j )
 {
     if( j < 1 )
     {
-        mxError( "noll_nm", MXE_INVALIDARG, "The Noll index j cannot be less than 1 in the Zernike polynomials" );
+        internal::mxlib_error_report(error_t::invalidarg, "The Noll index j cannot be less than 1 in the Zernike polynomials" );
         return -1;
     }
 

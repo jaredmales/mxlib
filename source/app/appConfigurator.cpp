@@ -162,19 +162,20 @@ int appConfigurator::readConfig( const std::string &fname, bool reportFileNotFou
         if( !reportFileNotFound )
             return -1;
 
-        mxError( "appConfigurator: ", MXE_FILENOTFOUND, "The file " + fname + " was not found" );
+        internal::mxlib_error_report( error_t::filenotfound, "The file " + fname + " was not found" );
         return -1;
     }
 
     if( prv == -2 )
     {
-        mxError( "appConfigurator: ", MXE_ALLOCERR, "Memory allocation error in config file parser" );
+        internal::mxlib_error_report( error_t::allocerr, "Memory allocation error in config file parser" );
         return -1;
     }
 
     if( prv > 0 )
     {
-        mxError( "appConfigurator: ", MXE_PARSEERR, "Parsing error in " + fname + " at line " + std::to_string( prv ) );
+        internal::mxlib_error_report( error_t::parseerr,
+                                      "Parsing error in " + fname + " at line " + std::to_string( prv ) );
         return -1;
     }
 
@@ -908,9 +909,9 @@ void writeConfigFile( const std::string &fname,
             fout << "\n[" << currSection << "]\n";
         }
 
-        if(keywords.size() >= i && values.size() >= i)
+        if( keywords.size() >= i && values.size() >= i )
         {
-            if(keywords[i] != "")
+            if( keywords[i] != "" )
             {
                 fout << keywords[i] << "=" << values[i] << "\n";
             }

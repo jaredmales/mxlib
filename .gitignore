@@ -1,11 +1,13 @@
+
+
+
+
 work/*
 doc/html
 doc/html/*
 doc/mxlib.tag.xml
 doc/citelist*
 doc/*.aux
-mxlib_git_version.h
-include/mxlib_uncomp_version.h
 source/mxlib_comp_version.h
 old/*
 testing/*
@@ -18,8 +20,12 @@ license.blurb
 
 .vscode/*
 
-tests/mxlibTest
-tests/include/ao/sim/pyramidSensor_test
+build*/**
+_build*/**
+
+#artifact of Makefile build:
+mxlib_git_version.h
+
 *.a
 *.so
 *.dylib
@@ -28,9 +34,22 @@ a.out
 *.swp
 .*~
 
+err.txt
+
+include/error/error_t.hpp
+include/error/generators/errno_info.hpp
+include/error/generators/fits_status_info.hpp
+
 #tests
 tests/mxlibTest
+tests/include/ioutils/fits/fitsFile_test
+tests/include/ioutils/fits/fitsHeaderCard_test
+tests/include/ioutils/fileUtils_test
+tests/include/ioutils/readColumns_test
+tests/include/ioutils/stringUtils_test
 tests/include/improc/imageMasks_test
 tests/include/sigproc/signalWindows_test
 tests/include/ao/sim/pyramidSensor_test
 tests/include/sigproc/circularBuffer_test
+
+

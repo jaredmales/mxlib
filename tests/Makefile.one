@@ -1,6 +1,6 @@
 #############################################################
 #              makefile for a single test                   #
-#                                                           #  
+#                                                           #
 # Command:                                                  #
 # $ make -f Makefile.one t=<full-path-to-test>              #
 #                                                           #
@@ -11,10 +11,10 @@
 #   -- can not include precompiled header as tests need to  #
 #      define things differently in many cases              #
 #                                                           #
-#############################################################       
+#############################################################
 
 
-       
+
 SELF_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include $(SELF_DIR)/../mk/Common.mk
 
@@ -35,21 +35,31 @@ $(TESTNAME): $(OBJNAME) testMain.o
 	$(LINK.o) -o $(TESTNAME) testMain.o $(OBJNAME) $(abspath $(SELF_DIR)/../source/libmxlib.so) $(LDFLAGS) $(LDLIBS)
 	$(SETUID)
 
+##################################################
+# Force, without building all of catch2 using -B
+#
+# for this to work TARGET must include .cpp
+#################################################
+force:
+	@echo $(TARGET)
+	@touch $(TARGET)
+	$(MAKE) -f Makefile.one all
+
 #This just prints the command name, primarily to allow easy access for running a single test
 .PHONY: pcommand
 pcommand:
 	@echo $(TESTNAME)
-	
+
 .PHONY: mxlib_git_version.h
 mxlib_git_version.h:
 	@gengithead.sh $(abspath $(SELF_DIR)/../) $(SELF_DIR)/../mxlib_git_version.h MXLIB
-	
+
 .PHONY: clean
 clean:
 	@echo cleaning $(TESTNAME)
 	@rm -f $(OBJNAME)
 	@rm -f $(TESTNAME)
-			
+
 
 .PHONY: realclean
 realclean: clean

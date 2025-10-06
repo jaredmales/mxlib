@@ -45,8 +45,6 @@ namespace cuda
  *
  * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
  *
- * \test Scenario: scaling a vector with cublas \ref test_math_templateCublas_scal "[test doc]"
- *
  * \ingroup cublas
  */
 template <typename floatT>
@@ -99,7 +97,8 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
  * - complex-double, double
  * - complex-double, complex-double
  *
- * \test Scenario: multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
+ * Tests:
+ *     - Multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
  *
  * \ingroup cublas
  */
@@ -123,7 +122,8 @@ cudaError_t elementwiseXxY(
  *
  * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
  *
- * \tests Scenario: multiplying a vectory by a matrix \ref test_math_templateCublas_cublasTgemv_inc "[code doc]"
+ * Tests:
+ *     - Multiplying a vectory by a matrix \ref test_math_templateCublas_cublasTgemv_inc "[code doc]"
  *
  * \ingroup cublas
  */

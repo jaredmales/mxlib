@@ -37,6 +37,8 @@ namespace meta
 
 /// Struct which contains static members describing a type.
 /** Specializations are provided for the fundamental types, std::string, and std::vector of fundamental types.
+ *
+ * \ingroup meta
  */
 template <typename T>
 struct typeDescription

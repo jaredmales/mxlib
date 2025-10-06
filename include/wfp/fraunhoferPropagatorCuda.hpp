@@ -11,9 +11,10 @@
 #include "../math/constants.hpp"
 
 #include "fraunhoferPropagator.hpp"
-#include "../cuda/templateCuda.hpp"
-#include "../cuda/templateCudaPtr.hpp"
-
+#include "../math/cuda/templateCuda.hpp"
+#include "../math/cuda/cudaPtr.hpp"
+#include "../math/cuda/templateCufft.hpp"
+#include "../math/cuda/templateCublas.hpp"
 namespace mx
 {
 namespace wfp
@@ -116,7 +117,7 @@ fraunhoferPropagator<wavefrontT, 1>::~fraunhoferPropagator()
 {
     if( m_fftPlan )
     {
-        checkCudaErrors( cufftDestroy( m_fftPlan ) );
+        cufftDestroy( m_fftPlan );
     }
 }
 
@@ -135,14 +136,14 @@ void fraunhoferPropagator<wavefrontT, 1>::setWavefrontSizePixels( int wfsPix )
     makeShiftPhase();
 
     // Plan the FFT
-    checkCudaErrors( cufftPlan2d( &m_fftPlan, wavefrontSizePixels, wavefrontSizePixels, CUFFT_C2C ) );
+    cufftPlan2d( &m_fftPlan, wavefrontSizePixels, wavefrontSizePixels, CUFFT_C2C );
 }
 
 template <typename wavefrontT>
 void fraunhoferPropagator<wavefrontT, 1>::propagatePupilToFocal( devicePtrT *complexFocal, devicePtrT *complexPupil )
 {
     // Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
-    mx::cuda::pointwiseMul<cuComplex><<<32, 256>>>(
+    mx::cuda::elementwiseXxY(
         (cuComplex *)complexPupil, (cuComplex *)m_centerFocal.m_devicePtr, wavefrontSizePixels * wavefrontSizePixels );
 
     cufftExecC2C( m_fftPlan, (cufftComplex *)complexPupil, (cufftComplex *)complexFocal, CUFFT_FORWARD );
@@ -154,7 +155,7 @@ void fraunhoferPropagator<wavefrontT, 1>::propagateFocalToPupil( devicePtrT *com
     cufftExecC2C( m_fftPlan, (cufftComplex *)complexFocal, (cufftComplex *)complexPupil, CUFFT_INVERSE );
 
     // Unshift the wavefront and normalize
-    mx::cuda::pointwiseMul<cuComplex><<<32, 256>>>(
+    mx::cuda::elementwiseXxY(
         (cuComplex *)complexPupil, (cuComplex *)m_centerPupil.m_devicePtr, wavefrontSizePixels * wavefrontSizePixels );
 }
 

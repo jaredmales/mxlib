@@ -41,6 +41,7 @@
 #include "../ioutils/stringUtils.hpp"
 #include "../astro/sofa.hpp"
 
+
 namespace mx
 {
 namespace sys
@@ -55,7 +56,8 @@ namespace sys
  *
  * \retval typeT containing the current time in seconds
  *
- * \test Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
+ * Tests:
+ *     - Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -82,7 +84,8 @@ double get_curr_time<double, CLOCK_REALTIME>( timespec &tsp );
  *
  * \retval typeT containing the current time in seconds
  *
- * \test Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
+ * Tests:
+ *     - Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -99,7 +102,8 @@ double get_curr_time<double, CLOCK_REALTIME>();
 
 /// Sleep for a specified period in seconds.
 /**
- * \test Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
+ * Tests:
+ *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -107,7 +111,8 @@ void sleep( unsigned sec /**< [in] the number of seconds to sleep. */ );
 
 /// Sleep for a specified period in milliseconds.
 /**
- * \test Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
+ * Tests:
+ *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -115,7 +120,8 @@ void milliSleep( unsigned msec /**< [in] the number of milliseconds to sleep. */
 
 /// Sleep for a specified period in microseconds.
 /**
- * \test Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
+ * Tests:
+ *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -123,7 +129,8 @@ void microSleep( unsigned usec /**< [in] the number of microseconds to sleep. */
 
 /// Sleep for a specified period in nanoseconds.
 /**
- * \test Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
+ * Tests
+ *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -132,7 +139,8 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */ 
 /// Adds a time offset to an existing timespec
 /** The offset is specified in nanoseconds, which can be greater than 1e9.
  *
- * \test Verify operation of timespecAddNsec. \ref tests_sys_timeUtils_timespecAddNsec "[test doc]"
+ * Tests:
+ *     - Verify operation of timespecAddNsec. \ref tests_sys_timeUtils_timespecAddNsec "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -145,7 +153,8 @@ void timespecAddNsec( timespec &ts, ///< [in.out] the time to add to
  *
  * \tparam floatT is a floating point type
  *
- * \test Verify parsing of a formatted time string. \ref tests_sys_timeUtils_parse_hms "[test doc]"
+ * Tests
+ *     - Verify parsing of a formatted time string. \ref tests_sys_timeUtils_parse_hms "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -163,7 +172,7 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
     st = 0;
     en = hmsstr.find( ':', st );
 
-    h = ioutils::convertFromString<floatT>( hmsstr.substr( st, en - st ).c_str() );
+    h = ioutils::stoT<floatT>( hmsstr.substr( st, en - st ).c_str() );
 
     // Check for negative
     if( std::signbit( h ) )
@@ -173,11 +182,11 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
 
     en = hmsstr.find( ':', st );
 
-    m = sgn * ioutils::convertFromString<floatT>( hmsstr.substr( st, en - st ) );
+    m = sgn * ioutils::stoT<floatT>( hmsstr.substr( st, en - st ) );
 
     st = en + 1;
 
-    s = sgn * ioutils::convertFromString<floatT>( hmsstr.substr( st, hmsstr.length() - st ).c_str() );
+    s = sgn * ioutils::stoT<floatT>( hmsstr.substr( st, hmsstr.length() - st ).c_str() );
 }
 
 /// Converts a Gregorian calendar date into modified Julian date (MJD).
@@ -187,7 +196,8 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
  * \retval double containing the MJD
  * \retval <0 on error (-1 = bad year, -2 = bad month, -3 = bad day)
  *
- * \test Verify calculation of MJD. \ref tests_sys_timeUtils_Cal2mjd "[test doc]"
+ * Tests:
+ *     - Verify calculation of MJD. \ref tests_sys_timeUtils_Cal2mjd "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -206,7 +216,8 @@ double Cal2mjd( int yr,    ///< [in] Gregorian calendar year
  * \returns 0 on success
  * \returns -4 if fdate is not long enough
  *
- * \test Verify parsing of an ISO 8601 time string \ref tests_sys_timeUtils_ISO8601dateBreakdown "[test doc]"
+ * Tests:
+ *     - Verify parsing of an ISO 8601 time string \ref tests_sys_timeUtils_ISO8601dateBreakdown "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -224,7 +235,8 @@ int ISO8601dateBreakdown( int &yr,                 ///< [out] Gregorian calendar
  * See https://en.wikipedia.org/?title=ISO_8601.
  * After parsing calls Cal2mjd.
  *
- * \test Verify conversion of an ISO 8601 time string to MJD. \ref tests_sys_timeUtils_ISO8601date2mjd "[test doc]"
+ * Tests:
+ *     - Verify conversion of an ISO 8601 time string to MJD. \ref tests_sys_timeUtils_ISO8601date2mjd "[test doc]"
  *
  * \ingroup timeutils
  */

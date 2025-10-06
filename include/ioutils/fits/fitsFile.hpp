@@ -27,7 +27,7 @@
 #ifndef ioutils_fits_fitsFile_hpp
 #define ioutils_fits_fitsFile_hpp
 
-#include "../../mxError.hpp"
+#include "../../mxlib.hpp"
 
 #include "../../improc/eigenImage.hpp"
 
@@ -42,16 +42,20 @@ namespace fits
 /// Class to manage interactions with a FITS file
 /** This class wraps the functionality of cfitsio.
  *
- * \tparam dataT is the datatype to use for in-memory storage of the image.  This does not have to match the data type
+ * \tparam dataT is the datatype to use for in-memory storage of the image.
+ * This does not have to match the data type
  * stored on disk for reading, but will be the type used for writing.
  *
  * \ingroup fits_processing
  */
-template <typename dataT>
+template <typename dataT, class verboseT = verbose::d>
 class fitsFile
 {
 
     friend class fitsFile_test;
+
+  public:
+    typedef typename fitsHeader<verboseT>::headerIteratorT headerIteratorT;
 
   protected:
     /// The path to the file
@@ -60,11 +64,11 @@ class fitsFile
     /// The cfitsio data structure
     fitsfile *m_fptr{ nullptr };
 
-    /// The dimensions of the image (1D, 2D, 3D etc)
-    int m_naxis;
+    /// The dimensions of the image (1D, 2D, or 3D)
+    int m_naxis{ 0 };
 
     /// The size of each dimension
-    long *m_naxes{ nullptr };
+    long m_naxes [3];
 
     /// Flag indicating whether the file is open or not
     bool m_isOpen{ false };
@@ -103,9 +107,26 @@ class fitsFile
     /// Default constructor
     fitsFile();
 
-    /// Constructor with m_fileName, and option to open.
+    /// Default constructor with error code
+    fitsFile( error_t &errc /**< [out] error_t code indicating success or error */ );
+
+    /// Constructor with file name and error code
+    /** The file is not opened.
+     *
+     */
+    fitsFile( const std::string &fname, ///< [in] File name to set on construction
+              error_t &errc             /**< [out] error_t code indicating success or error */
+    );
+
+    /// Constructor with file name, and option to open.
+    fitsFile( const std::string &fname, ///< [in] File name to set on construction
+              bool doopen = true        ///< [in] [optional] If true, then the file is opened (the default).
+    );
+
+    /// Constructor with file name, option to open, and error code
     fitsFile( const std::string &fname, ///< File name to set on construction
-              bool doopen = true        ///< If true, then the file is opened (the default).
+              bool doopen,              ///< If true, then the file is opened (the default).
+              error_t &errc             /**< [out] error_t code indicating success or error */
     );
 
     /// Destructor
@@ -119,18 +140,17 @@ class fitsFile
 
     /// Set the file path, and optionally open the file.
     /**
-     * \returns 0 on success
-     * \returns -1 on success
+     * \returns mx::error_t::noerror on success
+     * \returns mx::error_t codes from \ref close or \ref open
      */
-    int fileName( const std::string &fname, ///< The new file name.
-                  bool doopen = true        ///< If true, then the file is opened (the default).
+    error_t fileName( const std::string &fname, ///< The new file name.
+                      bool doopen = true        ///< If true, then the file is opened (the default).
     );
 
     /// Get the current value of m_naxis
     /**
      * \returns the current value of m_naxis
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
     int naxis();
 
@@ -138,7 +158,6 @@ class fitsFile
     /**
      * \returns the current value of m_naxes for the specified dimension. -1 if no such dimension
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
     long naxes( int dim /**< [in] the dimension */ );
 
@@ -146,33 +165,44 @@ class fitsFile
     /** File name needs to already have been set.
      * If the file has already been opened, this returns immediately with no re-open.
      *
-     * \returns 0 on success
-     * \returns -1 on error
+     * \returns mx::error_t::noerror on success
+     * \returns mx::invalidconfig if m_filename is empty.
+     * \returns mx::error_t::bad_alloc on an allocation error
+     * \returns mx::error_t::std_exception on other errors during allocations
+     * \returns mx::error_t::exception on unexpected errors during allocations
+     * \returns mx::error_t::allocerr if allocation fails without an exception
+     * \returns mx::error_t::fits_* codes from cfitsio functions
+     *
      */
-    int open();
+    error_t open();
 
     /// Open the file, first setting the file path.
     /**
-     * \returns 0 on success
-     * \returns -1 on error
+     * \returns mx::error_t::noerror on success
+     * \returns mx::invalidconfig if m_filename is empty.
+     * \returns mx::error_t::bad_alloc on an allocation error
+     * \returns mx::error_t::std_exception on other errors during allocations
+     * \returns mx::error_t::exception on unexpected errors during allocations
+     * \returns mx::error_t::allocerr if allocation fails without an exception
+     * \returns mx::error_t::fits_* codes from cfitsio functions
      */
-    int open( const std::string &fname /**< The name of the file to open. */ );
+    error_t open( const std::string &fname /**< The name of the file to open. */ );
 
     /// Close the file.
     /**
-     * \returns 0 on success
-     * \returns -1 on error
+     * \returns mx::error_t::noerror on success
+     * \returns mx::error_t::fits_* codes from cfitsio functions
      */
-    int close();
+    error_t close();
 
     /// Get the number of dimensions (i.e. m_naxis)
-    int getDimensions();
+    int getDimensions( error_t &errc );
 
     /// Get the total size
-    long getSize();
+    long getSize( error_t &errc );
 
     /// Get the size of a specific dimension
-    long getSize( size_t axis );
+    long getSize( size_t axis, error_t &errc );
 
     /** \name Reading Basic Arrays
      * These methods read FITS data into basic or raw arrays specified by a pointer.
@@ -180,15 +210,115 @@ class fitsFile
      */
 
   protected:
+    struct pixarrT
+    {
+        long *fpix{ nullptr }; ///< Populated with the lower left pixel to read.
+        long *lpix{ nullptr }; ///< Populated with the upper right pixel to read.
+        long *inc{ nullptr };  ///< The increment.
+
+        error_t allocate( int naxis )
+        {
+            if( naxis <= 0 )
+            {
+                return internal::mxlib_error_report<verboseT>( error_t::paramnotset, "naxis" );
+            }
+
+            if( fpix )
+            {
+                delete[] fpix;
+                fpix = nullptr;
+            }
+
+            if( lpix )
+            {
+                delete[] lpix;
+                lpix = nullptr;
+            }
+
+            if( inc )
+            {
+                delete[] inc;
+                inc = nullptr;
+            }
+
+            try
+            {
+                fpix = new long[naxis];
+                lpix = new long[naxis];
+                inc = new long[naxis];
+            }
+            catch( const std::bad_alloc &e )
+            {
+                internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                        std::string( "allocating pixel read arrays: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+                return error_t::std_bad_alloc;
+#else
+                throw;
+#endif
+            }
+            catch( const std::exception &e )
+            {
+                internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                        std::string( "allocating pixel read arrays: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+                return error_t::exception;
+#else
+                throw;
+#endif
+            }
+            catch( ... )
+            {
+                internal::mxlib_error_report<verboseT>( error_t::exception, "allocating pixel read arrays" );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+                return error_t::exception;
+#else
+                throw;
+#endif
+            }
+
+            // also check for null allocations (in case compiled with exceptions off)
+            if( fpix == nullptr )
+            {
+                return internal::mxlib_error_report<verboseT>( error_t::allocerr, "fpix is nullptr" );
+            }
+
+            if( lpix == nullptr )
+            {
+                return internal::mxlib_error_report<verboseT>( error_t::allocerr, "lpix is nullptr" );
+            }
+
+            if( inc == nullptr )
+            {
+                return internal::mxlib_error_report<verboseT>( error_t::allocerr, "inc is nullptr" );
+            }
+
+            return error_t::noerror;
+        }
+
+        ~pixarrT()
+        {
+            if( fpix )
+            {
+                delete[] fpix;
+            }
+
+            if( lpix )
+            {
+                delete[] lpix;
+            }
+
+            if( inc )
+            {
+                delete[] inc;
+            }
+        }
+    };
+
     /// Fill in the read-size arrays for reading a subset (always used)
-    /** \note this allocates with new.  You are responsible for calling delete.
-     *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
+    /**
      */
-    void pixarrs( long **fpix, ///< Populated with the lower left pixel to read.  Is allocated.
-                  long **lpix, ///< Populated with the upper right pixel to read. Is allocated.
-                  long **inc   ///< The increment.  Is allocated.
-    );
+    error_t calcPixarrs( pixarrT &pixarr /**< [out] Populated with the allocated read-size arrays*/ );
 
   public:
     /// Read the contents of the FITS file into an array.
@@ -197,7 +327,7 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int read( dataT *data /**< [out] an allocated arrray large enough to hold the entire image */ );
+    error_t read( dataT *data /**< [out] an allocated arrray large enough to hold the entire image */ );
 
     /// Read the contents of the FITS file into an array.
     /** The array pointed to by data must have been allocated.
@@ -205,8 +335,8 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int read( dataT *data,     ///< [out] an allocated arrray large enough to hold the entire image
-              fitsHeader &head ///< [out] a fitsHeader object which is passed to \ref readHeader
+    error_t read( dataT *data,               ///< [out] an allocated arrray large enough to hold the entire image
+                  fitsHeader<verboseT> &head ///< [out] a fitsHeader object which is passed to \ref readHeader
     );
 
     /// Read the contents of the FITS file into an array.
@@ -215,8 +345,8 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int read( dataT *data,             ///< [out] is an allocated arrray large enough to hold the entire image
-              const std::string &fname ///< [in] is the file path, which is passed to \ref fileName
+    error_t read( dataT *data,             ///< [out] is an allocated arrray large enough to hold the entire image
+                  const std::string &fname ///< [in] is the file path, which is passed to \ref fileName
     );
 
     /// Read the contents of the FITS file into an array and read the header.
@@ -225,21 +355,21 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int read( dataT *data,             ///< [out] an allocated arrray large enough to hold the entire image
-              fitsHeader &head,        ///< [out] a fitsHeader object which is passed to \ref readHeader
-              const std::string &fname ///< [in] the file path, which is passed to \ref fileName
+    error_t read( dataT *data,                ///< [out] an allocated arrray large enough to hold the entire image
+                  fitsHeader<verboseT> &head, ///< [out] a fitsHeader object which is passed to \ref readHeader
+                  const std::string &fname    ///< [in] the file path, which is passed to \ref fileName
     );
 
     /// Read data from a vector list of files into an image cube
-    int read( dataT *im,                            ///< [out] An allocated array large enough to hold all the images
-              const std::vector<std::string> &flist ///< [in] The list of files to read.
+    error_t read( dataT *im, ///< [out] An allocated array large enough to hold all the images
+                  const std::vector<std::string> &flist ///< [in] The list of files to read.
     );
 
     /// Read data from a vector of files into an image cube with individual headers
-    int
-    read( dataT *im,                      ///< [out] An allocated array large enough to hold all the images
-          std::vector<fitsHeader> &heads, ///< [in.out] The vector of fits headers, allocated to contain one per image.
-          const std::vector<std::string> &flist ///< [in] The list of files to read.
+    error_t read( dataT *im, /**< [out] An allocated array large enough to hold all the images */
+                  std::vector<fitsHeader<verboseT>> &heads, /**< [in/out] The vector of fits headers, allocated
+                                                                to contain one per image. */
+                  const std::vector<std::string> &flist     /**< [in] The list of files to read. */
     );
 
     ///@}
@@ -261,8 +391,8 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int
-    read( arrT &data /**< [out] is the array, which will be resized as necessary using its resize(int, int) member */ );
+    error_t read( arrT &data /**< [out] is the array, which will be resized as
+        necessary using its resize(int, int) member */ );
 
     /// Read the contents of the FITS file into an Eigen array type (not a simple pointer).
     /** The type arrT can be any type with the following members defined:
@@ -276,8 +406,9 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int read( arrT &data, ///< [out] is the array, which will be resized as necessary using its resize(int, int) member
-              fitsHeader &head ///< [out] is a fitsHeader object which is passed to \ref readHeader
+    error_t read( arrT &data,                /**< [out] is the array, which will be resized as necessary
+                                                        using its resize(int, int) member*/
+                  fitsHeader<verboseT> &head ///< [out] is a fitsHeader object which is passed to \ref readHeader
     );
 
     /// Read the contents of the FITS file into an Eigen array type (not a simple pointer).
@@ -292,8 +423,9 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int read( arrT &data, ///< [out] is the array, which will be resized as necessary using its resize(int, int) member
-              const std::string &fname ///< [in] is the file path, which is passed to \ref fileName
+    error_t read( arrT &data,              /**< [out] is the array, which will be resized as
+                                                      necessary using its resize(int, int) member*/
+                  const std::string &fname ///< [in] is the file path, which is passed to \ref fileName
     );
 
     /// Read the contents of the FITS file into an Eigen array type (not a simple pointer).
@@ -308,9 +440,10 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int read( arrT &data, ///< [out] the array, which will be resized as necessary using its resize(int, int) member
-              fitsHeader &head,        ///< [out] a fitsHeader object which is passed to \ref readHeader
-              const std::string &fname ///< [in] the file path, which is passed to \ref fileName
+    error_t read( arrT &data,                 /**< [out] the array, which will be resized as
+                                                         necessary using its resize(int, int) member*/
+                  fitsHeader<verboseT> &head, ///< [out] a fitsHeader object which is passed to \ref readHeader
+                  const std::string &fname    ///< [in] the file path, which is passed to \ref fileName
     );
 
     /// Read data from a vector list of files into an image cube
@@ -327,10 +460,10 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename cubeT>
-    int read( cubeT &cube, ///< [out] A cube which will be resized using its resize(int, int, int) member.
-              const std::vector<std::string> &flist, ///< [in] The list of files to read.
-              std::vector<fitsHeader> *heads =
-                  0 ///< [out] [optional] A vector of fits headers, allocated to contain one per image.
+    error_t read( cubeT &cube, ///< [out] A cube which will be resized using its resize(int, int, int) member.
+                  const std::vector<std::string> &flist, ///< [in] The list of files to read.
+                  std::vector<fitsHeader<verboseT>> *heads =
+                      0 ///< [out] [optional] A vector of fits headers, allocated to contain one per image.
     );
 
     /// Read data from a vector of files into an image cube with individual headers
@@ -345,9 +478,11 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename cubeT>
-    int read( cubeT &cube, ///< [out] A cube which will be resized using its resize(int, int, int) member.
-              std::vector<fitsHeader> &heads, ///< [out] The vector of fits headers, allocated to contain one per image.
-              const std::vector<std::string> &flist ///< [in] The list of files to read.
+    error_t read( cubeT &cube,                              /**< [out] A cube which will be resized
+                                                                       using its resize(int, int, int) member.*/
+                  std::vector<fitsHeader<verboseT>> &heads, /**< [out] The vector of fits headers, allocated to
+                                                             contain one per image.*/
+                  const std::vector<std::string> &flist     ///< [in] The list of files to read.
     );
 
     ///@}
@@ -363,7 +498,7 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int readHeader( fitsHeader &head /**< [out] a fitsHeader object */ );
+    error_t readHeader( fitsHeader<verboseT> &head /**< [out] a fitsHeader object */ );
 
     /// Read the header from the fits file.
     /** If head is not empty, then only the keywords already in head are updated.  Otherwise
@@ -372,8 +507,8 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int readHeader( fitsHeader &head,        ///< [out] a fitsHeader object
-                    const std::string &fname ///< [in] the file path, which is passed to \ref fileName
+    error_t readHeader( fitsHeader<verboseT> &head, ///< [out] a fitsHeader object
+                        const std::string &fname    ///< [in] the file path, which is passed to \ref fileName
     );
 
     /// Read the headers from a list of FITS files.
@@ -383,9 +518,9 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int readHeader(
-        std::vector<fitsHeader> &heads,       /// A vector of fitsHeader objects to read into.
-        const std::vector<std::string> &flist ///< [in] A list of files, each of which is passed to \ref fileName
+    error_t readHeader(
+        std::vector<fitsHeader<verboseT>> &heads, /// A vector of fitsHeader objects to read into.
+        const std::vector<std::string> &flist     ///< [in] A list of files, each of which is passed to \ref fileName
     );
 
     ///@}
@@ -400,11 +535,11 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int write( const dataT *im, ///< [in] is the array
-               int d1,          ///< [in] is the first dimension
-               int d2,          ///< [in] is the second dimension
-               int d3,          ///< [in] is the third dimenesion (minimum value is 1)
-               fitsHeader *head ///< [in] a pointer to the header.  Set to 0 if not used.
+    error_t write( const dataT *im,           ///< [in] is the array
+                   int d1,                    ///< [in] is the first dimension
+                   int d2,                    ///< [in] is the second dimension
+                   int d3,                    ///< [in] is the third dimenesion (minimum value is 1)
+                   fitsHeader<verboseT> *head ///< [in] a pointer to the header.  Set to 0 if not used.
     );
 
     /// Write the contents of a raw array to the FITS file.
@@ -412,10 +547,10 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int write( const dataT *im, ///< [in] is the array
-               int d1,          ///< [in] is the first dimension
-               int d2,          ///< [in] is the second dimension
-               int d3           ///< [in] is the third dimenesion (minimum value is 1)
+    error_t write( const dataT *im, ///< [in] is the array
+                   int d1,          ///< [in] is the first dimension
+                   int d2,          ///< [in] is the second dimension
+                   int d3           ///< [in] is the third dimenesion (minimum value is 1)
     );
 
     /// Write the contents of a raw array to the FITS file.
@@ -425,11 +560,11 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int write( const dataT *im, ///< [in] is the array
-               int d1,          ///< [in] is the first dimension
-               int d2,          ///< [in] is the second dimension
-               int d3,          ///< [in] is the third dimenesion (minimum value is 1)
-               fitsHeader &head ///< [in] is the header
+    error_t write( const dataT *im,           ///< [in] is the array
+                   int d1,                    ///< [in] is the first dimension
+                   int d2,                    ///< [in] is the second dimension
+                   int d3,                    ///< [in] is the third dimenesion (minimum value is 1)
+                   fitsHeader<verboseT> &head ///< [in] is the header
     );
 
     /// Write the contents of a raw array to the FITS file.
@@ -437,11 +572,11 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int write( const std::string &fname, ///< [in] is the name of the file.
-               const dataT *im,          ///< [in] is the array
-               int d1,                   ///< [in] is the first dimension
-               int d2,                   ///< [in] is the second dimension
-               int d3                    ///< [in] is the third dimenesion (minimum value is 1)
+    error_t write( const std::string &fname, ///< [in] is the name of the file.
+                   const dataT *im,          ///< [in] is the array
+                   int d1,                   ///< [in] is the first dimension
+                   int d2,                   ///< [in] is the second dimension
+                   int d3                    ///< [in] is the third dimenesion (minimum value is 1)
     );
 
     /// Write the contents of a raw array to the FITS file.
@@ -449,12 +584,12 @@ class fitsFile
      * \returns 0 on success
      * \returns -1 on error
      */
-    int write( const std::string &fname, ///< [in] is the name of the file.
-               const dataT *im,          ///< [in] is the array
-               int d1,                   ///< [in] is the first dimension
-               int d2,                   ///< [in] is the second dimension
-               int d3,                   ///< [in] is the third dimenesion (minimum value is 1)
-               fitsHeader &head          ///< [in] is the header
+    error_t write( const std::string &fname,  ///< [in] is the name of the file.
+                   const dataT *im,           ///< [in] is the array
+                   int d1,                    ///< [in] is the first dimension
+                   int d2,                    ///< [in] is the second dimension
+                   int d3,                    ///< [in] is the third dimenesion (minimum value is 1)
+                   fitsHeader<verboseT> &head ///< [in] is the header
     );
 
     ///@}
@@ -479,8 +614,8 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int write( const std::string &fname, ///< [in] is the name of the file.
-               const arrT &im            ///< [in] is the array
+    error_t write( const std::string &fname, ///< [in] is the name of the file.
+                   const arrT &im            ///< [in] is the array
     );
 
     /// Write the contents of an Eigen-type array to a FITS file.
@@ -498,12 +633,12 @@ class fitsFile
      * \returns -1 on error
      */
     template <typename arrT>
-    int write( const std::string &fname, ///< [in] is the file path, which is passed to \ref fileName
-               const arrT &im,           ///< [in] is the array
-               fitsHeader &head          ///< [in] is a fitsHeader object which is passed to \ref readHeader
+    error_t write( const std::string &fname,  ///< [in] is the file path, which is passed to \ref fileName
+                   const arrT &im,            ///< [in] is the array
+                   fitsHeader<verboseT> &head ///< [in] is a fitsHeader object which is passed to \ref readHeader
     );
 
-    // int writeHeader( fitsHeader &head );
+    // int writeHeader( fitsHeader<verboseT> &head );
 
     ///@}
 
@@ -518,8 +653,6 @@ class fitsFile
 
     /// Set to read only a subset of the pixels in the file
     /**
-     *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
     void setReadSize( long x0,   ///< is the starting x-pixel to read
                       long y0,   ///< is the starting y-pixel to read
@@ -535,7 +668,6 @@ class fitsFile
     /// Set the number of frames to read from a cube.
     /**
      *
-     * \test Scenario: fitsFile calculating subimage sizes \ref tests_ioutils_fits_fitsFile_subimage_sizes "[test doc]"
      */
     void setCubeReadSize( long z0,     ///< is the starting frame to read
                           long zframes ///< is the number of frames to read
@@ -545,82 +677,102 @@ class fitsFile
 
 }; // fitsFile
 
-template <typename dataT>
-void fitsFile<dataT>::construct()
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::fitsFile()
 {
 }
 
-template <typename dataT>
-fitsFile<dataT>::fitsFile()
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::fitsFile( error_t &errc )
 {
-    construct();
+    errc = error_t::noerror;
 }
 
-template <typename dataT>
-fitsFile<dataT>::fitsFile( const std::string &fname, bool doopen )
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::fitsFile( const std::string &fname, error_t &errc )
 {
-    construct();
-    fileName( fname, doopen );
+    // no errors are actually possible
+    errc = internal::mxlib_error_report<verboseT>( fileName( fname, false ) ); // nothing printed if noerror
 }
 
-template <typename dataT>
-fitsFile<dataT>::~fitsFile()
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::fitsFile( const std::string &fname, bool doopen )
+{
+    // If an error happens on open(), then m_open will be false and this will persist
+    // so no need to throw an exception
+    internal::mxlib_error_report<verboseT>( fileName( fname, doopen ) ); // nothing printed if noerror
+}
+
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::fitsFile( const std::string &fname, bool doopen, error_t &errc )
+{
+    // If an error happens on open(), then m_open will be false and this will persist
+    // so no need to throw an exception
+    errc = internal::mxlib_error_report<verboseT>( fileName( fname, doopen ) ); // nothing printed if noerror
+}
+
+template <typename dataT, class verboseT>
+fitsFile<dataT, verboseT>::~fitsFile()
 {
     if( m_isOpen )
-        close();
+    {
+        internal::mxlib_error_report<verboseT>( close() );
+    }
 
-    if( m_naxes )
-        delete[] m_naxes;
 }
 
-template <typename dataT>
-std::string fitsFile<dataT>::fileName()
+template <typename dataT, class verboseT>
+std::string fitsFile<dataT, verboseT>::fileName()
 {
     return m_fileName;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::fileName( const std::string &fname, bool doopen )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::fileName( const std::string &fname, bool doopen )
 {
     if( m_isOpen )
     {
-        close();
+        mxlib_error_check( close() );
     }
 
     m_fileName = fname;
 
     if( doopen )
     {
-        return open();
+        mxlib_error_check( open() );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::naxis()
+template <typename dataT, class verboseT>
+int fitsFile<dataT, verboseT>::naxis()
 {
     return m_naxis;
 }
 
-template <typename dataT>
-long fitsFile<dataT>::naxes( int dim )
+template <typename dataT, class verboseT>
+long fitsFile<dataT, verboseT>::naxes( int dim )
 {
-    if( m_naxes == nullptr )
+    if( dim >= m_naxis || dim > 2)
+    {
         return -1;
-
-    if( dim >= m_naxis )
-        return -1;
+    }
 
     return m_naxes[dim];
 }
 
-template <typename dataT>
-int fitsFile<dataT>::open()
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::open()
 {
     if( m_isOpen ) // no-op
     {
-        return 0;
+        return error_t::noerror;
+    }
+
+    if( m_fileName == "" )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::invalidconfig, "File name is not set" );
     }
 
     int fstatus = 0;
@@ -629,57 +781,48 @@ int fitsFile<dataT>::open()
 
     if( fstatus )
     {
-        std::string explan = "Error opening file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILEOERR, explan );
-        mxThrowException(err::liberr, "fitsFile::open", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Opening file " + m_fileName );
     }
 
+    fstatus = 0;
     fits_get_img_dim( m_fptr, &m_naxis, &fstatus );
     if( fstatus )
     {
-        std::string explan = "Error getting number of axes in file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::open", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Getting number of axes in file " + m_fileName );
     }
 
-    if( m_naxes )
-        delete[] m_naxes;
-    m_naxes = new long[m_naxis];
+    //Currently can't be true since it's declared [3].
+    if( m_naxes == nullptr )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
+    }
 
+    fstatus = 0;
     fits_get_img_size( m_fptr, m_naxis, m_naxes, &fstatus );
     if( fstatus )
     {
-        std::string explan = "Error getting dimensions in file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::open", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Getting dimensions in file " + m_fileName );
     }
 
     m_isOpen = true; // Only set this after opening is complete.
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::open( const std::string &fname )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::open( const std::string &fname )
 {
-    return fileName( fname, true );
+    mxlib_error_return( fileName( fname, true ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::close()
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::close()
 {
     if( !m_isOpen )
     {
-        return 0; // No error.
+        return error_t::noerror; // No error.
     }
 
     int fstatus = 0;
@@ -687,41 +830,40 @@ int fitsFile<dataT>::close()
 
     if( fstatus )
     {
-        std::string explan = "Error closing file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILECERR, explan );
-        mxThrowException(err::liberr, "fitsFile::close", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Closing file " + m_fileName );
     }
 
     m_isOpen = 0;
     fstatus = 0;
 
-    if( m_naxes )
-        delete[] m_naxes;
 
-    m_naxes = nullptr;
-
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::getDimensions()
+template <typename dataT, class verboseT>
+int fitsFile<dataT, verboseT>::getDimensions( error_t &errc )
 {
-    if( !m_isOpen or !m_naxes )
+    if( !m_isOpen )
+    {
+        errc = error_t::invalidconfig;
         return -1;
+    }
 
     return m_naxis;
 }
 
-template <typename dataT>
-long fitsFile<dataT>::getSize()
+template <typename dataT, class verboseT>
+long fitsFile<dataT, verboseT>::getSize( error_t &errc )
 {
-    if( !m_isOpen or !m_naxes )
+    if( !m_isOpen )
+    {
+        errc = error_t::invalidconfig;
         return -1;
+    }
 
     long sz = 1;
+
+    errc = error_t::noerror;
 
     if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
@@ -729,23 +871,38 @@ long fitsFile<dataT>::getSize()
     }
     else
     {
-        for( int i = 0; i < m_naxis; ++i )
+        for( int i = 0; i < m_naxis && i < 3; ++i )
+        {
             sz *= m_naxes[i];
+        }
     }
 
     return sz;
 }
 
-template <typename dataT>
-long fitsFile<dataT>::getSize( size_t axis )
+template <typename dataT, class verboseT>
+long fitsFile<dataT, verboseT>::getSize( size_t axis, error_t &errc )
 {
-    if( !m_isOpen or !m_naxes )
+    if( !m_isOpen )
+    {
+        errc = error_t::invalidconfig;
         return -1;
+    }
+
+    if( axis >= m_naxis || axis > 2 )
+    {
+        errc = error_t::invalidarg;
+        return -1;
+    }
+
+    errc = error_t::noerror;
 
     if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
         if( axis == 0 )
+        {
             return m_xpix;
+        }
         return m_ypix;
     }
     else
@@ -754,432 +911,520 @@ long fitsFile<dataT>::getSize( size_t axis )
     }
 }
 
-template <typename dataT>
-void fitsFile<dataT>::pixarrs( long **fpix, long **lpix, long **inc )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::calcPixarrs( pixarrT &pixarr )
 {
-    *fpix = new long[m_naxis];
-    *lpix = new long[m_naxis];
-    *inc = new long[m_naxis];
+    error_t errc = pixarr.allocate( m_naxis );
+
+    //This currently can't be trude since it is declared as [3]
+    if( m_naxes == nullptr )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::paramnotset, "m_naxes" );
+    }
 
     if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
-        ( *fpix )[0] = m_x0 + 1;
-        ( *lpix )[0] = ( *fpix )[0] + m_xpix - 1;
-        ( *fpix )[1] = m_y0 + 1;
-        ( *lpix )[1] = ( *fpix )[1] + m_ypix - 1;
+        pixarr.fpix[0] = m_x0 + 1;
+        pixarr.lpix[0] = pixarr.fpix[0] + m_xpix - 1;
+        pixarr.fpix[1] = m_y0 + 1;
+        pixarr.lpix[1] = pixarr.fpix[1] + m_ypix - 1;
 
-        ( *inc )[0] = 1;
-        ( *inc )[1] = 1;
+        pixarr.inc[0] = 1;
+        pixarr.inc[1] = 1;
     }
     else
     {
         if( m_x0 < 0 && m_y0 < 0 && m_xpix < 0 && m_ypix < 0 && m_z0 < 0 && m_zframes < 0 )
         {
-            for( int i = 0; i < m_naxis; i++ )
+            for( int i = 0; i < m_naxis && i < 3; i++ )
             {
-                ( *fpix )[i] = 1;
-                ( *lpix )[i] = m_naxes[i];
-                ( *inc )[i] = 1;
+                pixarr.fpix[i] = 1;
+                pixarr.lpix[i] = m_naxes[i];
+                pixarr.inc[i] = 1;
             }
         }
         else
         {
             if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 )
             {
-                ( *fpix )[0] = m_x0 + 1;
-                ( *lpix )[0] = ( *fpix )[0] + m_xpix - 1;
-                ( *fpix )[1] = m_y0 + 1;
-                ( *lpix )[1] = ( *fpix )[1] + m_ypix - 1;
+                pixarr.fpix[0] = m_x0 + 1;
+                pixarr.lpix[0] = pixarr.fpix[0] + m_xpix - 1;
+                pixarr.fpix[1] = m_y0 + 1;
+                pixarr.lpix[1] = pixarr.fpix[1] + m_ypix - 1;
 
-                ( *inc )[0] = 1;
-                ( *inc )[1] = 1;
+                pixarr.inc[0] = 1;
+                pixarr.inc[1] = 1;
             }
             else
             {
-                ( *fpix )[0] = 1;
-                ( *lpix )[0] = m_naxes[0];
-                ( *fpix )[1] = 1;
-                ( *lpix )[1] = m_naxes[1];
+                pixarr.fpix[0] = 1;
+                pixarr.lpix[0] = m_naxes[0];
+                pixarr.fpix[1] = 1;
+                pixarr.lpix[1] = m_naxes[1];
 
-                ( *inc )[0] = 1;
-                ( *inc )[1] = 1;
+                pixarr.inc[0] = 1;
+                pixarr.inc[1] = 1;
             }
 
             if( m_z0 > -1 && m_zframes > -1 )
             {
-                ( *fpix )[2] = m_z0 + 1;
-                ( *lpix )[2] = ( *fpix )[2] + m_zframes - 1;
-                ( *inc )[2] = 1;
+                pixarr.fpix[2] = m_z0 + 1;
+                pixarr.lpix[2] = pixarr.fpix[2] + m_zframes - 1;
+                pixarr.inc[2] = 1;
             }
             else
             {
-                ( *fpix )[2] = 1;
-                ( *lpix )[2] = m_naxes[2];
-                ( *inc )[2] = 1;
+                pixarr.fpix[2] = 1;
+                pixarr.lpix[2] = m_naxes[2];
+                pixarr.inc[2] = 1;
             }
         }
     }
+
+    return error_t::noerror;
 }
 
 /************************************************************/
 /***                      Basic Arrays                    ***/
 /************************************************************/
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *data )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *data )
 {
-    int fstatus = 0;
-
     if( !m_isOpen )
     {
-        if( open() < 0 )
-            return -1;
+        mxlib_error_check( open() );
     }
 
-    long *fpix, *lpix, *inc;
-    pixarrs( &fpix, &lpix, &inc );
+    pixarrT pixarrs;
+
+    mxlib_error_check( calcPixarrs( pixarrs ) );
 
     ///\todo test if there is a speed difference for full reads for fits_read_pix/subset
 
-    // fits_read_pix(m_fptr, fitsType<dataT>(), fpix, nelements, (void *) &m_nulval,
-    //(void *) data, &m_anynul, &fstatus);
-    fits_read_subset(
-        m_fptr, fitsType<dataT>(), fpix, lpix, inc, (void *)&m_nulval, (void *)data, &m_anynul, &fstatus );
+    int fstatus = 0;
 
-    delete[] fpix;
-    delete[] lpix;
-    delete[] inc;
+    fits_read_subset( m_fptr,
+                      fitsType<dataT>(),
+                      pixarrs.fpix,
+                      pixarrs.lpix,
+                      pixarrs.inc,
+                      (void *)&m_nulval,
+                      (void *)data,
+                      &m_anynul,
+                      &fstatus );
 
-    if( fstatus && fstatus != 107 )
+    if( fstatus && fstatus != END_OF_FILE )
     {
-        std::string explan = "Error reading data from file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::read", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Reading data from " + m_fileName );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *data, fitsHeader &head )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *data, fitsHeader<verboseT> &head )
 {
-    if( read( data ) < 0 )
-        return -1;
-    if( readHeader( head ) < 0 )
-        return -1;
+    mxlib_error_check( read( data ) );
 
-    return 0;
+    mxlib_error_return( readHeader( head ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *data, const std::string &fname )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *data, const std::string &fname )
 {
-    if( fileName( fname ) < 0 )
-        return -1;
-    if( read( data ) < 0 )
-        return -1;
-    return 0;
+    mxlib_error_check( fileName( fname ) );
+
+    mxlib_error_return( read( data ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *data, fitsHeader &head, const std::string &fname )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *data, fitsHeader<verboseT> &head, const std::string &fname )
 {
-    if( fileName( fname ) < 0 )
-        return -1;
-    if( read( data ) < 0 )
-        return -1;
-    if( readHeader( head ) < 0 )
-        return -1;
-    return 0;
+    mxlib_error_check( fileName( fname ) );
+
+    mxlib_error_check( read( data ) );
+
+    mxlib_error_return( readHeader( head ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *im, const std::vector<std::string> &flist )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *im, const std::vector<std::string> &flist )
 {
     if( flist.size() == 0 )
     {
-        //mxError( "fitsFile", MXE_PARAMNOTSET,  );
-        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
-        return -1;
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Empty file list" );
     }
 
     long sz0 = 0, sz1 = 0;
 
     for( int i = 0; i < flist.size(); ++i )
     {
-        if( fileName( flist[i], 1 ) < 0 )
-            return -1;
+        mxlib_error_check( fileName( flist[i], 1 ) );
 
-        if( read( im + i * sz0 * sz1 ) < 0 )
-            return -1;
+        mxlib_error_check( read( im + i * sz0 * sz1 ) );
 
-        sz0 = getSize( 0 );
-        sz1 = getSize( 1 );
+        error_t errc;
+        sz0 = getSize( 0, errc );
+        mxlib_error_check( errc );
+
+        sz1 = getSize( 1, errc );
+        mxlib_error_check( errc );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::read( dataT *im, std::vector<fitsHeader> &heads, const std::vector<std::string> &flist )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::read( dataT *im,
+                                         std::vector<fitsHeader<verboseT>> &heads,
+                                         const std::vector<std::string> &flist )
 {
     if( flist.size() == 0 )
     {
-        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
-        return -1;
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Empty file list" );
     }
 
     long sz0 = 0, sz1 = 0;
 
     for( size_t i = 0; i < flist.size(); ++i )
     {
-        if( fileName( flist[i], 1 ) < 0 )
-            return -1;
 
-        if( read( im + i * sz0 * sz1 ) < 0 )
-            return -1;
+        mxlib_error_check( fileName( flist[i], 1 ) );
 
-        if( readHeader( heads[i] ) < 0 )
-            return -1;
+        mxlib_error_check( read( im + i * sz0 * sz1 ) );
 
-        sz0 = getSize( 0 );
-        sz1 = getSize( 1 );
+        mxlib_error_check( readHeader( heads[i] ) );
+
+        error_t errc;
+        sz0 = getSize( 0, errc );
+        mxlib_error_check( errc );
+
+        sz1 = getSize( 1, errc );
+        mxlib_error_check( errc );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
 /************************************************************/
 /***                      Eigen Arrays                    ***/
 /************************************************************/
 
-template <typename arrT, bool isCube = improc::is_eigenCube<arrT>::value>
+template <typename arrT, class verboseT, bool isCube = improc::is_eigenCube<arrT>::value>
 struct eigenArrResize
 {
     // If it's a cube, always pass zsz
-    void resize( arrT &arr, int xsz, int ysz, int zsz )
+    error_t resize( arrT &arr, int xsz, int ysz, int zsz )
     {
-        arr.resize( xsz, ysz, zsz );
+        try
+        {
+            arr.resize( xsz, ysz, zsz );
+        }
+        catch( const std::bad_alloc &e )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                    std::string( "resizing array: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::std_bad_alloc;
+#else
+            throw;
+#endif
+        }
+        catch( const std::exception &e )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                    std::string( "resizing array: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::std_exception;
+#else
+            throw;
+#endif
+        }
+        catch( ... )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::exception, "resizing array" );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::exception;
+#else
+            throw;
+#endif
+        }
+
+        return error_t::noerror;
     }
 };
 
-template <typename arrT>
-struct eigenArrResize<arrT, false>
+template <typename arrT, class verboseT>
+struct eigenArrResize<arrT, verboseT, false>
 {
     // If it's not a cube, never pass zsz
-    void resize( arrT &arr, int xsz, int ysz, int zsz )
+    error_t resize( arrT &arr, int xsz, int ysz, [[maybe_unused]] int zsz )
     {
-        static_cast<void>( zsz );
+        try
+        {
+            arr.resize( xsz, ysz );
+        }
+        catch( const std::bad_alloc &e )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
+                                                    std::string( "resizing array: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::std_bad_alloc;
+#else
+            throw;
+#endif
+        }
+        catch( const std::exception &e )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::std_exception,
+                                                    std::string( "resizing array: " ) + e.what() );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::std_exception;
+#else
+            throw;
+#endif
+        }
+        catch( ... )
+        {
+            internal::mxlib_error_report<verboseT>( error_t::exception, "resizing array" );
+#ifdef MXLIB_TRAP_ALLOC_ERRORS
+            return error_t::exception;
+#else
+            throw;
+#endif
+        }
 
-        arr.resize( xsz, ysz );
+        return error_t::noerror;
     }
 };
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::read( arrT &im )
+error_t fitsFile<dataT, verboseT>::read( arrT &im )
 {
     ///\todo this can probably be made part of one read function (or call read(data *)) with a call to resize with
-    ///SFINAE
+    /// SFINAE
     int fstatus = 0;
 
     if( !m_isOpen )
     {
-        if( open() < 0 )
-            return -1;
+        mxlib_error_check( open() );
     }
 
-    long *fpix, *lpix, *inc;
-    pixarrs( &fpix, &lpix, &inc );
+    pixarrT pixarrs;
+    mxlib_error_check( calcPixarrs( pixarrs ) );
 
-    eigenArrResize<arrT> arrresz;
+    eigenArrResize<arrT, verboseT> arrresz;
     if( m_naxis > 2 )
     {
-        arrresz.resize( im, lpix[0] - fpix[0] + 1, lpix[1] - fpix[1] + 1, lpix[2] - fpix[2] + 1 );
+        mxlib_error_check( arrresz.resize( im,
+                                           pixarrs.lpix[0] - pixarrs.fpix[0] + 1,
+                                           pixarrs.lpix[1] - pixarrs.fpix[1] + 1,
+                                           pixarrs.lpix[2] - pixarrs.fpix[2] + 1 ) );
     }
     else if( m_naxis > 1 )
     {
-        arrresz.resize( im, lpix[0] - fpix[0] + 1, lpix[1] - fpix[1] + 1, 1 );
+        mxlib_error_check(
+            arrresz.resize( im, pixarrs.lpix[0] - pixarrs.fpix[0] + 1, pixarrs.lpix[1] - pixarrs.fpix[1] + 1, 1 ) );
     }
     else
     {
-        arrresz.resize( im, lpix[0] - fpix[0] + 1, 1, 1 );
+        mxlib_error_check( arrresz.resize( im, pixarrs.lpix[0] - pixarrs.fpix[0] + 1, 1, 1 ) );
     }
 
-    if( fits_read_subset( m_fptr,
-                          fitsType<typename arrT::Scalar>(),
-                          fpix,
-                          lpix,
-                          inc,
-                          (void *)&m_nulval,
-                          (void *)im.data(),
-                          &m_anynul,
-                          &fstatus ) < 0 )
-        return -1;
+    fits_read_subset( m_fptr,
+                      fitsType<typename arrT::Scalar>(),
+                      pixarrs.fpix,
+                      pixarrs.lpix,
+                      pixarrs.inc,
+                      (void *)&m_nulval,
+                      (void *)im.data(),
+                      &m_anynul,
+                      &fstatus );
 
-    delete[] fpix;
-    delete[] lpix;
-    delete[] inc;
-
-    if( fstatus && fstatus != 107 )
+    if( fstatus && fstatus != END_OF_FILE )
     {
-        std::string explan = "Error reading data from file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::read", explan);
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Reading data from " + m_fileName );
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::read( arrT &data, fitsHeader &head )
+error_t fitsFile<dataT, verboseT>::read( arrT &data, fitsHeader<verboseT> &head )
 {
-    if( read( data ) < 0 )
-        return -1;
-    if( readHeader( head ) < 0 )
-        return -1;
-    return 0;
+    error_t errc;
+    errc = read( data );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    errc = readHeader( head );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    return error_t::noerror;
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::read( arrT &data, const std::string &fname )
+error_t fitsFile<dataT, verboseT>::read( arrT &data, const std::string &fname )
 {
-    if( fileName( fname ) < 0 )
-        return -1;
-    if( read( data ) < 0 )
-        return -1;
-    return 0;
+    error_t errc;
+    errc = fileName( fname );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    errc = read( data );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+    return error_t::noerror;
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::read( arrT &data, fitsHeader &head, const std::string &fname )
+error_t fitsFile<dataT, verboseT>::read( arrT &data, fitsHeader<verboseT> &head, const std::string &fname )
 {
-    if( fileName( fname ) < 0 )
-        return -1;
-    if( read( data ) < 0 )
-        return -1;
-    if( readHeader( head ) < 0 )
-        return -1;
+    error_t errc;
+    errc = fileName( fname );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
 
-    return 0;
+    errc = read( data );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    errc = readHeader( head );
+    if( errc != error_t::noerror )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    return error_t::noerror;
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename cubeT>
-int fitsFile<dataT>::read( cubeT &cube, const std::vector<std::string> &flist, std::vector<fitsHeader> *heads )
+error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
+                                         const std::vector<std::string> &flist,
+                                         std::vector<fitsHeader<verboseT>> *heads )
 {
+    error_t errc;
     int fstatus = 0;
 
     if( flist.size() == 0 )
     {
-        //mxError( "fitsFile", MXE_PARAMNOTSET, "Empty file list" );
-        mxThrowException(err::paramnotset, "fitsFile::read", "Empty file list");
-        return -1;
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Empty file list" );
     }
 
     // Open the first file to get the dimensions.
-    if( fileName( flist[0], 1 ) < 0 )
-        return -1;
+    errc = fileName( flist[0], 1 );
+    if( !!errc )
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
 
-    long *fpix, *lpix, *inc;
-    pixarrs( &fpix, &lpix, &inc );
+    pixarrT pixarrs;
+    errc = calcPixarrs( pixarrs );
 
-    cube.resize( lpix[0] - fpix[0] + 1, lpix[1] - fpix[1] + 1, flist.size() );
+    if(!!errc)
+    {
+        return internal::mxlib_error_report<verboseT>( errc );
+    }
+
+    cube.resize( pixarrs.lpix[0] - pixarrs.fpix[0] + 1, pixarrs.lpix[1] - pixarrs.fpix[1] + 1, flist.size() );
 
     // Now read first image.
     fits_read_subset( m_fptr,
                       fitsType<typename cubeT::Scalar>(),
-                      fpix,
-                      lpix,
-                      inc,
+                      pixarrs.fpix,
+                      pixarrs.lpix,
+                      pixarrs.inc,
                       (void *)&m_nulval,
                       (void *)cube.image( 0 ).data(),
                       &m_anynul,
                       &fstatus );
 
-    if( fstatus && fstatus != 107 )
+    if( fstatus && fstatus != END_OF_FILE )
     {
-
-        std::string explan = "error reading data from file";
-        fitsErrText( explan, m_fileName, fstatus );
-
-        //mxError( "cfitsio", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::read", explan);
-
-        delete[] fpix;
-        delete[] lpix;
-        delete[] inc;
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Reading data from " + m_fileName );
     }
 
     if( heads )
     {
-        if( readHeader( ( *heads )[0] ) < 0 )
-            return -1;
+        errc = readHeader( ( *heads )[0] );
+        if( errc != error_t::noerror )
+        {
+            return internal::mxlib_error_report<verboseT>( errc );
+        }
     }
 
     // Now read in the rest.
     for( int i = 1; i < flist.size(); ++i )
     {
-        fileName( flist[i], 1 );
+        errc = fileName( flist[i], 1 );
+        if( errc != error_t::noerror )
+        {
+            return internal::mxlib_error_report<verboseT>( errc );
+        }
 
         // Now read image.
         fits_read_subset( m_fptr,
                           fitsType<typename cubeT::Scalar>(),
-                          fpix,
-                          lpix,
-                          inc,
+                          pixarrs.fpix,
+                          pixarrs.lpix,
+                          pixarrs.inc,
                           (void *)&m_nulval,
                           (void *)cube.image( i ).data(),
                           &m_anynul,
                           &fstatus );
 
-        if( fstatus && fstatus != 107 )
+        if( fstatus && fstatus != END_OF_FILE )
         {
-            std::string explan = "Error reading data from file";
-            fitsErrText( explan, m_fileName, fstatus );
-            //mxError( "cfitsio", MXE_FILERERR, explan );
-            mxThrowException(err::liberr, "fitsFile::read", explan);
-
-            delete[] fpix;
-            delete[] lpix;
-            delete[] inc;
-
-            return -1;
+            return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                           "Reading data from " + m_fileName );
         }
 
         if( heads )
         {
-            if( readHeader( ( *heads )[i] ) < 0 )
-                return -1;
+            errc = readHeader( ( *heads )[i] );
+            if( errc != error_t::noerror )
+            {
+                return internal::mxlib_error_report<verboseT>( errc );
+            }
         }
     }
 
-    delete[] fpix;
-    delete[] lpix;
-    delete[] inc;
-
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename cubeT>
-int fitsFile<dataT>::read( cubeT &cube, std::vector<fitsHeader> &heads, const std::vector<std::string> &flist )
+error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
+                                         std::vector<fitsHeader<verboseT>> &heads,
+                                         const std::vector<std::string> &flist )
 {
-    return read( cube, flist, &heads );
+    mxlib_error_return( read( cube, flist, &heads ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::readHeader( fitsHeader &head )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head )
 {
     int fstatus = 0;
 
@@ -1188,15 +1433,15 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
     char *comment;
 
     // The keys to look for if head is already populated
-    std::list<fitsHeader::headerIterator> head_keys;
-    std::list<fitsHeader::headerIterator>::iterator head_keys_it;
+    typename std::list<headerIteratorT> head_keys;
+    typename std::list<headerIteratorT>::iterator head_keys_it;
     //   int num_head_keys;
 
     bool head_keys_only = false;
     if( head.size() > 0 )
     {
         head_keys_only = true;
-        fitsHeader::headerIterator headIt = head.begin();
+        headerIteratorT headIt = head.begin();
         while( headIt != head.end() )
         {
             head_keys.push_back( headIt );
@@ -1220,7 +1465,7 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
 
     if( !m_isOpen )
     {
-        open();
+        mxlib_error_check( open() );
     }
 
     // This gets the number of header keys to read
@@ -1228,15 +1473,13 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
 
     if( fstatus )
     {
-        std::string explan = "Error reading header from file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile", MXE_FILERERR, explan );
-        mxThrowException(err::liberr, "fitsFile::readHeader", explan);
-
         if( comment )
+        {
             delete[] comment;
+        }
 
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Reading header from " + m_fileName );
     }
 
     for( int i = 0; i < keysexist; i++ )
@@ -1245,26 +1488,24 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
 
         if( fstatus )
         {
-            std::string explan = "Error reading header from file";
-            fitsErrText( explan, m_fileName, fstatus );
-            //mxError( "fitsFile", MXE_FILERERR, explan );
-            mxThrowException(err::liberr, "fitsFile::readHeader", explan);
-
             if( comment )
+            {
                 delete[] comment;
+            }
 
-            return -1;
+            return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                           "Reading header from " + m_fileName );
         }
 
         if( !head_keys_only )
         {
             if( strcmp( keyword, "COMMENT" ) == 0 )
             {
-                head.append<fitsCommentType>( keyword, fitsCommentType( value ), comment );
+                head.template append<fitsCommentType>( keyword, fitsCommentType( value ), comment );
             }
             else if( strcmp( keyword, "HISTORY" ) == 0 )
             {
-                head.append<fitsHistoryType>( keyword, fitsHistoryType( value ), comment );
+                head.template append<fitsHistoryType>( keyword, fitsHistoryType( value ), comment );
             }
             else
             {
@@ -1279,9 +1520,11 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
             {
                 if( ( *( *head_keys_it ) ).keyword() == keyword )
                 {
-                    head[keyword].value( value );
+                    head[keyword].value( (const char *)value );
                     if( comment )
+                    {
                         head[keyword].comment( comment );
+                    }
 
                     head_keys.erase( head_keys_it );
 
@@ -1292,90 +1535,108 @@ int fitsFile<dataT>::readHeader( fitsHeader &head )
 
             // Quit if we're done.
             if( head_keys.empty() )
+            {
                 break;
+            }
         }
     }
 
     if( comment )
-        delete[] comment;
-
-    return 0;
-}
-
-template <typename dataT>
-int fitsFile<dataT>::readHeader( fitsHeader &head, const std::string &fname )
-{
-    if( fileName( fname ) < 0 )
-        return -1;
-    if( readHeader( head ) < 0 )
-        return -1;
-}
-
-template <typename dataT>
-int fitsFile<dataT>::readHeader( std::vector<fitsHeader> &heads, const std::vector<std::string> &flist )
-{
-    for( int i = 0; i < flist.size(); ++i )
     {
-        fileName( flist[i], 1 );
-
-        if( readHeader( heads[i] ) < 0 )
-            return -1;
+        delete[] comment;
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename dataT>
-int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader *head )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head, const std::string &fname )
+{
+    error_t errc;
+    mxlib_error_check( fileName( fname ) );
+    mxlib_error_check( readHeader( head ) );
+    return error_t::noerror;
+}
+
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::readHeader( std::vector<fitsHeader<verboseT>> &heads,
+                                               const std::vector<std::string> &flist )
+{
+    if(heads.size() != 0 && heads.size() != flist.size())
+    {
+        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "head vector is not empty and not same size as file list");
+    }
+
+    if(heads.size() == 0)
+    {
+        heads.resize(flist.size());
+    }
+
+    error_t errc;
+    for( int i = 0; i < flist.size(); ++i )
+    {
+        mxlib_error_check( fileName( flist[i], 1 ) );
+
+        mxlib_error_check( readHeader( heads[i] ) );
+    }
+
+    return error_t::noerror;
+}
+
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader<verboseT> *head )
 {
     int fstatus = 0;
 
     if( m_isOpen )
-        close();
-    if( m_naxes )
-        delete[] m_naxes;
+    {
+        mxlib_error_check( close() );
+    }
 
-    fstatus = 0;
     m_naxis = 1;
     if( d2 > 0 )
     {
         if( d3 > 1 )
+        {
             m_naxis = 3;
+        }
         else
+        {
             m_naxis = 2;
+        }
     }
 
-    m_naxes = new long[m_naxis];
+    //currently can't be true since declared [3]
+    if( m_naxes == nullptr )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
+    }
 
     m_naxes[0] = d1;
     if( m_naxis > 1 )
+    {
         m_naxes[1] = d2;
+    }
     if( m_naxis > 2 )
+    {
         m_naxes[2] = d3;
+    }
 
     std::string forceFileName = "!" + m_fileName;
 
     fits_create_file( &m_fptr, forceFileName.c_str(), &fstatus );
     if( fstatus )
     {
-        std::string explan = "Error creating file";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile::write", MXE_FILEOERR, explan );
-        mxThrowException(err::liberr, "fitsFile::write", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Creating " + m_fileName );
     }
     m_isOpen = true;
 
+    fstatus = 0;
     fits_create_img( m_fptr, fitsBITPIX<dataT>(), m_naxis, m_naxes, &fstatus );
     if( fstatus )
     {
-        std::string explan = "Error creating image";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile::write", MXE_FILEWERR, explan );
-        mxThrowException(err::liberr, "fitsFile::readHeader", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                       "Creating image in" + m_fileName );
     }
 
     long fpixel[3];
@@ -1385,91 +1646,85 @@ int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader 
 
     LONGLONG nelements = 1;
 
-    for( int i = 0; i < m_naxis; ++i )
+    for( int i = 0; i < m_naxis && i < 3; ++i )
+    {
         nelements *= m_naxes[i];
+    }
 
+    fstatus = 0;
     fits_write_pix( m_fptr, fitsType<dataT>(), fpixel, nelements, (void *)im, &fstatus );
     if( fstatus )
     {
-        std::string explan = "Error writing data";
-        fitsErrText( explan, m_fileName, fstatus );
-        //mxError( "fitsFile::write", MXE_FILEWERR, explan );
-        mxThrowException(err::liberr, "fitsFile::write", explan);
-
-        return -1;
+        return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Writing data " + m_fileName );
     }
 
     if( head != 0 )
     {
-        fitsHeader::headerIterator it;
+        headerIteratorT it;
 
         for( it = head->begin(); it != head->end(); ++it )
         {
-            int wrv = it->write( m_fptr );
-            if( wrv != 0 )
+            error_t errc = it->write( m_fptr );
+            if( errc != error_t::noerror )
             {
-                std::string explan = "Error writing keyword";
-                fitsErrText( explan, m_fileName, wrv );
-                //mxError( "fitsFile::write", MXE_FILEWERR, explan );
-                mxThrowException(err::liberr, "fitsFile::write", explan);
+                return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
+                                                               "Writing keyword " + m_fileName );
             }
         }
     }
 
-    if( close() < 0 )
-        return -1;
-
-    return 0;
+    mxlib_error_return( close() )
 }
 
-template <typename dataT>
-int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3 )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d3 )
 {
-    return write( im, d1, d2, d3, (fitsHeader *)0 );
+    mxlib_error_return( write( im, d1, d2, d3, (fitsHeader<verboseT> *)0 ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader &head )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d3, fitsHeader<verboseT> &head )
 {
-    return write( im, d1, d2, d3, &head );
+    mxlib_error_return( write( im, d1, d2, d3, &head ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::write( const std::string &fname, const dataT *im, int d1, int d2, int d3 )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::write( const std::string &fname, const dataT *im, int d1, int d2, int d3 )
 {
-    if( fileName( fname, false ) < 0 )
-        return -1;
-    return write( im, d1, d2, d3, (fitsHeader *)0 );
+    mxlib_error_check( fileName( fname, false ) );
+
+    mxlib_error_return( write( im, d1, d2, d3, (fitsHeader<verboseT> *)0 ) );
 }
 
-template <typename dataT>
-int fitsFile<dataT>::write( const std::string &fname, const dataT *im, int d1, int d2, int d3, fitsHeader &head )
+template <typename dataT, class verboseT>
+error_t fitsFile<dataT, verboseT>::write(
+    const std::string &fname, const dataT *im, int d1, int d2, int d3, fitsHeader<verboseT> &head )
 {
-    if( fileName( fname, false ) < 0 )
-        return -1;
-    return write( im, d1, d2, d3, &head );
+    mxlib_error_check( fileName( fname, false ) );
+
+    mxlib_error_return( write( im, d1, d2, d3, &head ) );
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::write( const std::string &fname, const arrT &im )
+error_t fitsFile<dataT, verboseT>::write( const std::string &fname, const arrT &im )
 {
     improc::eigenArrPlanes<arrT> planes;
 
-    return write( fname, im.data(), im.rows(), im.cols(), planes( im ) );
+    mxlib_error_return( write( fname, im.data(), im.rows(), im.cols(), planes( im ) ) );
 }
 
-template <typename dataT>
+template <typename dataT, class verboseT>
 template <typename arrT>
-int fitsFile<dataT>::write( const std::string &fname, const arrT &im, fitsHeader &head )
+error_t fitsFile<dataT, verboseT>::write( const std::string &fname, const arrT &im, fitsHeader<verboseT> &head )
 {
     improc::eigenArrPlanes<arrT> planes;
 
     return write( fname, im.data(), im.rows(), im.cols(), planes( im ), head );
 }
 
-template <typename dataT>
-void fitsFile<dataT>::setReadSize()
+template <typename dataT, class verboseT>
+void fitsFile<dataT, verboseT>::setReadSize()
 {
     m_x0 = -1;
     m_y0 = -1;
@@ -1477,8 +1732,8 @@ void fitsFile<dataT>::setReadSize()
     m_ypix = -1;
 }
 
-template <typename dataT>
-void fitsFile<dataT>::setReadSize( long x0, long y0, long xpix, long ypix )
+template <typename dataT, class verboseT>
+void fitsFile<dataT, verboseT>::setReadSize( long x0, long y0, long xpix, long ypix )
 {
     m_x0 = x0;
     m_y0 = y0;
@@ -1486,15 +1741,15 @@ void fitsFile<dataT>::setReadSize( long x0, long y0, long xpix, long ypix )
     m_ypix = ypix;
 }
 
-template <typename dataT>
-void fitsFile<dataT>::setCubeReadSize()
+template <typename dataT, class verboseT>
+void fitsFile<dataT, verboseT>::setCubeReadSize()
 {
     m_z0 = -1;
     m_zframes = -1;
 }
 
-template <typename dataT>
-void fitsFile<dataT>::setCubeReadSize( long z0, long zframes )
+template <typename dataT, class verboseT>
+void fitsFile<dataT, verboseT>::setCubeReadSize( long z0, long zframes )
 {
     m_z0 = z0;
     m_zframes = zframes;
@@ -1532,6 +1787,13 @@ typedef fitsFile<float> fitsFilef;
 typedef fitsFile<double> fitsFiled;
 
 ///@}
+
+extern template class fitsFile<short, verbose::d>;
+extern template class fitsFile<unsigned short, verbose::d>;
+extern template class fitsFile<int, verbose::d>;
+extern template class fitsFile<unsigned int, verbose::d>;
+extern template class fitsFile<float, verbose::d>;
+extern template class fitsFile<double, verbose::d>;
 
 } // namespace fits
 } // namespace mx
