@@ -48,8 +48,8 @@ struct array2FitGaussian2D
     size_t nx{ 0 };         ///< X dimension of the array
     size_t ny{ 0 };         ///< Y dimension of the array
 
-    realT *weights{ nullptr }; /**< Pointer to the (optional) weight array.  Normallt this should be the
-                                   square root of the vaiance.*/
+    realT *weights{ nullptr }; /**< Pointer to the (optional) weight array.  Normally this should be the
+                                   square root of the variance.*/
 
     realT *mask{ nullptr }; ///< Pointer to the (optional) mask array.  Any 0 pixels are excluded from the fit.
 
