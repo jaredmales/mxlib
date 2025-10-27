@@ -32,7 +32,7 @@ namespace cuda
 {
 
 template <>
-cufftResult cufftPlan2d<std::complex<float>, std::complex<float>>( cufftHandle *plan, int nx, int ny )
+cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny )
 {
     return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
 }
@@ -44,7 +44,7 @@ cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny
 }
 
 template <>
-cufftResult cufftPlan2d<std::complex<double>, std::complex<double>>( cufftHandle *plan, int nx, int ny )
+cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny )
 {
     return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
 }
@@ -56,9 +56,9 @@ cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, in
 }
 
 template <>
-cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle plan,
-                                                                 std::complex<float> *idata,
-                                                                 std::complex<float> *odata,
+cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan,
+                                                                 cuComplex *idata,
+                                                                 cuComplex *odata,
                                                                  int direction )
 {
     return ::cufftExecC2C( plan, (cuComplex *)idata, (cuComplex *)odata, direction );
@@ -71,9 +71,9 @@ cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, cuComplex *idata,
 }
 
 template <>
-cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle plan,
-                                                                   std::complex<double> *idata,
-                                                                   std::complex<double> *odata,
+cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
+                                                                   cuDoubleComplex *idata,
+                                                                   cuDoubleComplex *odata,
                                                                    int direction )
 {
     return ::cufftExecZ2Z( plan, (cuDoubleComplex *)idata, (cuDoubleComplex *)odata, direction );
