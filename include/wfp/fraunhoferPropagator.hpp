@@ -60,7 +60,7 @@ struct fraunhoferPropagatorArrayT<wavefrontT, 0>
 template <typename wavefrontT>
 struct fraunhoferPropagatorArrayT<wavefrontT, 1>
 {
-    typedef mx::cuda::cudaPtr<typename wavefrontT::scalar> arrayT;
+    typedef mx::cuda::cudaPtr<typename wavefrontT::Scalar> arrayT;
 };
 
 /// Class to perform Fraunhofer propagation between pupil and focal planes
@@ -145,7 +145,7 @@ class fraunhoferPropagator
      * You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
+    template <int ccudaGPU = cudaGPU>
     void shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                      typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
@@ -154,7 +154,7 @@ class fraunhoferPropagator
      * You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
+    template <int ccudaGPU = cudaGPU>
     void shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                      typename std::enable_if<ccudaGPU == 1>::type * = 0 );
 
@@ -162,7 +162,7 @@ class fraunhoferPropagator
     /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
+    template <int ccudaGPU = cudaGPU>
     void unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                        typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
@@ -170,10 +170,9 @@ class fraunhoferPropagator
     /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
+    template <int ccudaGPU = cudaGPU>
     void unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                        typename std::enable_if<ccudaGPU == 1>::type * = 0 );
-
 
   public:
     /// Propagate the wavefront from the pupil plane to the focal plane
@@ -211,11 +210,13 @@ class fraunhoferPropagator
     void setWavefrontSizePixels( int wfsPix /**< [in] the desired new size of the wavefront */ );
 
   protected:
-    template<int ccudaGPU = cudaGPU>
-    void setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    void
+    setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
-    template<int ccudaGPU = cudaGPU>
-    void setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    void
+    setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 1>::type * = 0 );
 
     /// Calculate the complex tilt arrays for centering and normalizing the wavefronts
     /**
@@ -253,7 +254,7 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::wholePixel( realT wp )
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
                                                             typename std::enable_if<ccudaGPU == 0>::type * )
 {
@@ -261,7 +262,7 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
                                                             typename std::enable_if<ccudaGPU == 1>::type * )
 {
@@ -273,7 +274,7 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
                                                               typename std::enable_if<ccudaGPU == 0>::type * )
 {
@@ -281,17 +282,16 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPup
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
                                                               typename std::enable_if<ccudaGPU == 1>::type * )
 {
     #ifdef MXLIB_CUDA
-    mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil._m_devicePtr ),
+    mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil.m_devicePtr ),
                               reinterpret_cast<cuComplex *>( m_centerPupil.m_devicePtr ),
                               pow( m_wavefrontSizePixels, 2 ) );
     #endif
 }
-
 
 template <typename wavefrontT, int cudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::propagatePupilToFocal( arrayT &complexFocal,
@@ -353,7 +353,7 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::setWavefrontSizePixels( int wfsP
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerFocal,
                                                                complexT *centerPupil,
                                                                typename std::enable_if<ccudaGPU == 0>::type * )
@@ -373,7 +373,7 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerF
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerFocal,
                                                                complexT *centerPupil,
                                                                typename std::enable_if<ccudaGPU == 1>::type * )

@@ -282,7 +282,7 @@ void fftT<inputT, outputT, rank, 0>::doPlan( bool inPlace )
 
     if( inPlace )
     {
-        forplan2 = forplan1;
+        forplan2 = reinterpret_cast<outputT *>(forplan1);
     }
     else
     {
@@ -311,7 +311,8 @@ void fftT<inputT, outputT, rank, 0>::doPlan( bool inPlace )
     }
     #endif // clang-format on
 
-    if( forplan2 != nullptr && forplan2 != forplan1 )
+    //Only free forplan2 if it's distinct.  Have to do comparison as same type.
+    if( forplan2 != nullptr && reinterpret_cast<char *>(forplan2) != reinterpret_cast<char *>(forplan1) )
     {
         fftw_free<outputT>( forplan2 );
     }

@@ -31,12 +31,19 @@ namespace mx
 namespace cuda
 {
 
+    /*
 template <>
-cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny )
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx )
 {
-    return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
+    return ::cufftPlan1d( plan, nx, CUFFT_C2C );
 }
 
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx )
+{
+    return ::cufftPlan1d( plan, nx, CUFFT_C2C );
+}
+*/
 template <>
 cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny )
 {
@@ -47,36 +54,12 @@ template <>
 cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny )
 {
     return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
-}
-
-template <>
-cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny )
-{
-    return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
-}
-
-template <>
-cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan,
-                                                                 cuComplex *idata,
-                                                                 cuComplex *odata,
-                                                                 int direction )
-{
-    return ::cufftExecC2C( plan, (cuComplex *)idata, (cuComplex *)odata, direction );
 }
 
 template <>
 cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, cuComplex *idata, cuComplex *odata, int direction )
 {
     return ::cufftExecC2C( plan, idata, odata, direction );
-}
-
-template <>
-cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
-                                                                   cuDoubleComplex *idata,
-                                                                   cuDoubleComplex *odata,
-                                                                   int direction )
-{
-    return ::cufftExecZ2Z( plan, (cuDoubleComplex *)idata, (cuDoubleComplex *)odata, direction );
 }
 
 template <>

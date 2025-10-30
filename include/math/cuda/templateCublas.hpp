@@ -97,9 +97,6 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
  * - complex-double, double
  * - complex-double, complex-double
  *
- * Tests:
- *     - Multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
- *
  * \ingroup cublas
  */
 template <typename dataT1, typename dataT2>
@@ -107,6 +104,31 @@ cudaError_t elementwiseXxY(
     dataT1 *x, ///< [in.out] device pointer for the 1st vector.  Is replaced with the product of the two vectors
     dataT2 *y, ///< [in] device pointer for the 2nd vector.
     int size   ///< [in] the number of elements in the vectors.
+);
+
+/// Calculates the element-wise product of two vectors, storing the result in a third vector.
+/** Calculates
+ * \f$
+ * z = x * y
+ * \f$
+ * element by element, a.k.a. the Hadamard product.
+ *
+ * Specializations are provided for:
+ * - float, float,float
+ * - complex-float, complex-float, float
+ * - complex-float, complex-float, complex-float
+ * - double, double, double
+ * - complex-double, complex-double, double
+ * - complex-double, complex-double, complex-double
+ *
+ * \ingroup cublas
+ */
+template <typename dataT0, typename dataT1, typename dataT2>
+cudaError_t elementwiseXxY( dataT0 *z, /**< [out] device pointer for the result vector.  Is filled in with the
+                                                  product of the second two vectors*/
+                            dataT1 *x, ///< [in] device pointer for the 1st vector.
+                            dataT2 *y, ///< [in] device pointer for the 2nd vector.
+                            int size   ///< [in] the number of elements in the vectors.
 );
 
 //----------------------------------------------------

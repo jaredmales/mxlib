@@ -1,4 +1,4 @@
-/** \file randomT_test.cpp
+/** \file fftTT_test.cpp
  */
 #include "../../../catch2/catch.hpp"
 

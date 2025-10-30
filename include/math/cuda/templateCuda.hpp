@@ -70,6 +70,7 @@ struct cpp2cudaType<std::complex<double>>
     typedef complex<double>::cudaType cudaType;
 };
 
+
 } // namespace cuda
 } // namespace mx
 

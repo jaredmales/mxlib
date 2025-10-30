@@ -36,14 +36,19 @@ namespace mx
 namespace cuda
 {
 
+/*
+template <typename inputT, typename outputT>
+cufftResult cufftPlan1d( cufftHandle *plan, int nx);
+
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx );
+
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx );
+*/
+
 template <typename inputT, typename outputT>
 cufftResult cufftPlan2d( cufftHandle *plan, int nx, int ny );
-
-template <>
-cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny );
-
-template <>
-cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny );
 
 template <>
 cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny );

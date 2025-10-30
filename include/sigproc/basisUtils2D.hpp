@@ -159,7 +159,10 @@ int basisAmplitudes(
 )
 {
     if( N < 0 )
+    {
         N = modes.planes();
+    }
+
     amps.resize( N );
 
     realT apertureNPix = mask.sum();
@@ -168,9 +171,13 @@ int basisAmplitudes(
     if( meanIgnore )
     {
         if( meanIgnore == 2 )
+        {
             mean = improc::imageMedian( im, &mask );
+        }
         else
+        {
             mean = ( im * mask ).sum() / apertureNPix;
+        }
 
         im -= mean;
     }

@@ -276,7 +276,7 @@ class imagingArray<_Scalar, _allocatorT, 0>
     }
 
     template <typename argT>
-    void set( argT val )
+    void setConstant( argT val )
     {
         int N = _cols * _rows;
 
@@ -287,7 +287,7 @@ class imagingArray<_Scalar, _allocatorT, 0>
 
     void setZero()
     {
-        set( (Scalar)0 );
+        setConstant( (Scalar)0 );
     }
 
     imagingArray &operator=( const imagingArray &arr )

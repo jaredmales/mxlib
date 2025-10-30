@@ -7,6 +7,7 @@ add_subdirectory(ipc)
 add_subdirectory(math)
 add_subdirectory(sigproc)
 add_subdirectory(sys)
+add_subdirectory(wfp)
 
 set(OBJLIB_SOURCES ${OBJLIB_SOURCES} source/mxlib.cpp PARENT_SCOPE)
 

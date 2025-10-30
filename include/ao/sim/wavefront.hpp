@@ -29,7 +29,7 @@ struct wavefront
     typedef Eigen::Array<_realT, Eigen::Dynamic, Eigen::Dynamic> realImageT;
 
     /// The wavefront data type
-    typedef wfp::imagingArray<std::complex<realT>, wfp::fftwAllocator<std::complex<realT>>, 0> complexAmplitudeT;
+    typedef improc::eigenImage<std::complex<realT>> complexAmplitudeT;
 
     /// The wavefront amplitude
     realImageT amplitude;

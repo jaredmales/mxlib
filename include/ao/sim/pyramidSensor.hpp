@@ -59,10 +59,12 @@ struct wfsImageT
  * \tparam _detectorT is the detector used to record the PyWFS image.  Must conform to the mx::AO::sim detector
  * interface specifications.
  */
-template <typename _realT, typename _detectorT>
+template <typename _realT, typename _detectorT, int _cudaGPU = 0>
 class pyramidSensor
 {
   public:
+    static constexpr int cudaGPU = _cudaGPU;
+
     /// The real floating point type used for calculations
     typedef _realT realT;
 
@@ -72,8 +74,16 @@ class pyramidSensor
     /// The wavefront data type
     typedef wavefront<realT> wavefrontT;
 
+    typedef improc::eigenImage<realT> realImageT;
+
     /// The wavefront complex field type
-    typedef wfp::imagingArray<std::complex<realT>, wfp::fftwAllocator<std::complex<realT>>, 0> complexFieldT;
+    typedef improc::eigenImage<std::complex<realT>> complexFieldT;
+
+    /// The real array data type
+    typedef typename wfp::fraunhoferPropagatorArrayT<realImageT, cudaGPU>::arrayT realArrayT;
+
+    /// The complex array data type
+    typedef typename wfp::fraunhoferPropagatorArrayT<complexFieldT, cudaGPU>::arrayT complexArrayT;
 
     /// The wavefront sensor detector image type
     typedef _detectorT detectorT;
@@ -390,7 +400,7 @@ class pyramidSensor
     void imageSzAuto( const bool &ia );
     ///@}
 
-    wfp::fraunhoferPropagator<complexFieldT> m_frProp;
+    wfp::fraunhoferPropagator<complexFieldT, cudaGPU> m_frProp;
 
     bool m_opdMaskMade{ false };
     complexFieldT m_opdMask;
@@ -403,16 +413,16 @@ class pyramidSensor
 
     // Pre-allocated working memory:
 
-    std::vector<complexFieldT> m_th_tiltedPlane; ///< Thread-local modulated wavefront
+    std::vector<complexArrayT> m_th_tiltedPlane; ///< Thread-local modulated wavefront
 
-    std::vector<complexFieldT> m_th_focalPlane;  ///< Thread-local tip wavefront, used for FFT tilting
+    std::vector<complexArrayT> m_th_focalPlane;  ///< Thread-local tip wavefront, used for FFT tilting
 
-    std::vector<typename wfsImageT<realT>::imageT> m_th_focalImage; ///< Thread-local tip image
+    std::vector<realArrayT> m_th_focalImage;     ///< Thread-local tip image
 
-    std::vector<complexFieldT> m_th_sensorPlane;                    ///< Thread-local sensor-pupil-plane wavefront
+    std::vector<complexArrayT> m_th_sensorPlane; ///< Thread-local sensor-pupil-plane wavefront
 
-    std::vector<typename wfsImageT<realT>::imageT>
-        m_th_sensorImage; ///< Thread-local sensor-pupil-plane intensity image
+    std::vector<realArrayT> m_th_sensorImage;    /**< Thread-local sensor-pupil-plane
+                                                                             intensity image*/
 
     int m_iTime_counter{ 0 };
 
@@ -424,11 +434,14 @@ class pyramidSensor
 
     int m_lastWavefront{ 0 };
 
+    realArrayT m_wfsTipImageAccum;
+    realArrayT m_wfsImageAccum;
+
     /// The image formed by the WFS
     wfsImageT<realT> m_wfsImage;
 
   public:
-    wfsImageT<realT> wfsTipImage;
+    wfsImageT<realT> m_wfsTipImage;
 
   protected:
     void makeOpdMask();
@@ -446,22 +459,22 @@ class pyramidSensor
     bool m_firstRun{ true };
 };
 
-template <typename realT, typename detectorT>
-pyramidSensor<realT, detectorT>::pyramidSensor()
+template <typename realT, typename detectorT, int cudaGPU>
+pyramidSensor<realT, detectorT, cudaGPU>::pyramidSensor()
 {
     iTime( m_iTime );
 
     m_frProp.wholePixel( 0 );
 }
 
-template <typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::wfSz()
+template <typename realT, typename detectorT, int cudaGPU>
+int pyramidSensor<realT, detectorT, cudaGPU>::wfSz()
 {
     return m_wfSz;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::wfSz( const uint32_t &sz )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::wfSz( const uint32_t &sz )
 {
     if( m_wfSz == sz )
     {
@@ -475,20 +488,20 @@ void pyramidSensor<realT, detectorT>::wfSz( const uint32_t &sz )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-uint32_t pyramidSensor<realT, detectorT>::detRows()
+template <typename realT, typename detectorT, int cudaGPU>
+uint32_t pyramidSensor<realT, detectorT, cudaGPU>::detRows()
 {
     return m_detRows;
 }
 
-template <typename realT, typename detectorT>
-uint32_t pyramidSensor<realT, detectorT>::detCols()
+template <typename realT, typename detectorT, int cudaGPU>
+uint32_t pyramidSensor<realT, detectorT, cudaGPU>::detCols()
 {
     return m_detCols;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::detSize( const uint32_t &nrows, const uint32_t &ncols )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::detSize( const uint32_t &nrows, const uint32_t &ncols )
 {
     if( m_detRows == nrows && m_detCols == ncols )
     {
@@ -502,17 +515,16 @@ void pyramidSensor<realT, detectorT>::detSize( const uint32_t &nrows, const uint
     detectorImage.image.resize( m_detRows, m_detCols );
 
     m_opdMaskMade = false; // make sure size check is run on current settings
-
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::lambda()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::lambda()
 {
     return m_lambda;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::lambda( const realT &l )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::lambda( const realT &l )
 {
     m_lambda = l;
 
@@ -526,14 +538,14 @@ void pyramidSensor<realT, detectorT>::lambda( const realT &l )
     }
 }
 
-template <typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::iTime()
+template <typename realT, typename detectorT, int cudaGPU>
+int pyramidSensor<realT, detectorT, cudaGPU>::iTime()
 {
     return m_iTime;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::iTime( const uint32_t &it )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::iTime( const uint32_t &it )
 {
     if( it < 1 )
     {
@@ -548,14 +560,14 @@ void pyramidSensor<realT, detectorT>::iTime( const uint32_t &it )
     detector.expTime( m_simStep * m_iTime );
 }
 
-template <typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::roTime()
+template <typename realT, typename detectorT, int cudaGPU>
+int pyramidSensor<realT, detectorT, cudaGPU>::roTime()
 {
     return roTime;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::roTime( const uint32_t &rt )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::roTime( const uint32_t &rt )
 {
     if( rt < 1 )
     {
@@ -565,14 +577,14 @@ void pyramidSensor<realT, detectorT>::roTime( const uint32_t &rt )
     m_roTime = rt;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::simStep()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::simStep()
 {
     return m_simStep;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::simStep( const realT &st )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::simStep( const realT &st )
 {
 
     m_simStep = st;
@@ -580,16 +592,16 @@ void pyramidSensor<realT, detectorT>::simStep( const realT &st )
     detector.expTime( m_simStep * m_iTime );
 }
 
-template <typename realT, typename detectorT>
+template <typename realT, typename detectorT, int cudaGPU>
 template <typename AOSysT>
-void pyramidSensor<realT, detectorT>::linkSystem( AOSysT &AOSys )
+void pyramidSensor<realT, detectorT, cudaGPU>::linkSystem( AOSysT &AOSys )
 {
     AOSys.wfs.wfPS( AOSys.m_wfPS );
     AOSys.wfs.D( AOSys.m_D );
 }
 
-template <typename realT, typename detectorT>
-bool pyramidSensor<realT, detectorT>::senseWavefront( wavefrontT &pupilPlane )
+template <typename realT, typename detectorT, int cudaGPU>
+bool pyramidSensor<realT, detectorT, cudaGPU>::senseWavefront( wavefrontT &pupilPlane )
 {
 
     ++m_lastWavefront;
@@ -618,7 +630,7 @@ bool pyramidSensor<realT, detectorT>::senseWavefront( wavefrontT &pupilPlane )
         {
             detector.exposeImage( detectorImage.image, m_wfsImage.image );
 
-            detectorImage.tipImage = wfsTipImage.image;
+            detectorImage.tipImage = m_wfsTipImage.image;
             detectorImage.iterNo = m_wfsImage.iterNo;
 
             m_roTime_counter = 0;
@@ -639,8 +651,8 @@ bool pyramidSensor<realT, detectorT>::senseWavefront( wavefrontT &pupilPlane )
     return rv;
 }
 
-template <typename realT, typename detectorT>
-bool pyramidSensor<realT, detectorT>::senseWavefrontCal( wavefrontT &pupilPlane )
+template <typename realT, typename detectorT, int cudaGPU>
+bool pyramidSensor<realT, detectorT, cudaGPU>::senseWavefrontCal( wavefrontT &pupilPlane )
 {
 
     BREAD_CRUMB;
@@ -653,7 +665,7 @@ bool pyramidSensor<realT, detectorT>::senseWavefrontCal( wavefrontT &pupilPlane 
 
     BREAD_CRUMB;
 
-    detectorImage.tipImage = wfsTipImage.image;
+    detectorImage.tipImage = m_wfsTipImage.image;
 
     BREAD_CRUMB;
 
@@ -662,33 +674,33 @@ bool pyramidSensor<realT, detectorT>::senseWavefrontCal( wavefrontT &pupilPlane 
 
 /* Pyramid Specifics */
 
-template <typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::nSides()
+template <typename realT, typename detectorT, int cudaGPU>
+int pyramidSensor<realT, detectorT, cudaGPU>::nSides()
 {
     return m_nSides;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::nSides( const uint32_t &ns )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::nSides( const uint32_t &ns )
 {
     m_nSides = ns;
     m_opdMaskMade = false;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::wfPS()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::wfPS()
 {
     return m_wfPS;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::D()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::D()
 {
     return m_D;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::D( const realT &d )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::D( const realT &d )
 {
     m_D = d;
 
@@ -709,14 +721,14 @@ void pyramidSensor<realT, detectorT>::D( const realT &d )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::perStep()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::perStep()
 {
     return m_perStep;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::perStep( const realT &prStp )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::perStep( const realT &prStp )
 {
     m_perStep = prStp;
 
@@ -740,20 +752,20 @@ void pyramidSensor<realT, detectorT>::perStep( const realT &prStp )
     m_tiltsMade = false;
 }
 
-template <typename realT, typename detectorT>
-int pyramidSensor<realT, detectorT>::modSteps()
+template <typename realT, typename detectorT, int cudaGPU>
+int pyramidSensor<realT, detectorT, cudaGPU>::modSteps()
 {
     return m_modSteps;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::modRadius()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::modRadius()
 {
     return m_modRadius;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::modRadius( const realT &mR )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::modRadius( const realT &mR )
 {
     m_modRadius = mR;
     perStep( m_perStep ); // to calculate m_modSteps;
@@ -761,14 +773,14 @@ void pyramidSensor<realT, detectorT>::modRadius( const realT &mR )
     m_tiltsMade = false;
 }
 
-template <typename realT, typename detectorT>
-uint32_t pyramidSensor<realT, detectorT>::pupilSz()
+template <typename realT, typename detectorT, int cudaGPU>
+uint32_t pyramidSensor<realT, detectorT, cudaGPU>::pupilSz()
 {
     return m_pupilSz;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::pupilSz( const uint32_t &sz )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::pupilSz( const uint32_t &sz )
 {
     if( m_pupilSz == sz )
     {
@@ -802,14 +814,14 @@ void pyramidSensor<realT, detectorT>::pupilSz( const uint32_t &sz )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::pupilSep()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::pupilSep()
 {
     return m_pupilSep;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::pupilSep( const realT &sz )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::pupilSep( const realT &sz )
 {
     if( m_pupilSep == sz )
     {
@@ -822,14 +834,14 @@ void pyramidSensor<realT, detectorT>::pupilSep( const realT &sz )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-realT pyramidSensor<realT, detectorT>::angleOffset()
+template <typename realT, typename detectorT, int cudaGPU>
+realT pyramidSensor<realT, detectorT, cudaGPU>::angleOffset()
 {
     return m_angleOffset;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::angleOffset( const realT &ao )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::angleOffset( const realT &ao )
 {
     if( m_angleOffset == ao )
     {
@@ -842,8 +854,8 @@ void pyramidSensor<realT, detectorT>::angleOffset( const realT &ao )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-uint32_t pyramidSensor<realT, detectorT>::imageSz()
+template <typename realT, typename detectorT, int cudaGPU>
+uint32_t pyramidSensor<realT, detectorT, cudaGPU>::imageSz()
 {
     if( !m_opdMaskMade )
     {
@@ -853,8 +865,8 @@ uint32_t pyramidSensor<realT, detectorT>::imageSz()
     return m_imageSz;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::imageSz( const uint32_t &sz )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::imageSz( const uint32_t &sz )
 {
     if( m_imageSz == sz )
     {
@@ -876,14 +888,14 @@ void pyramidSensor<realT, detectorT>::imageSz( const uint32_t &sz )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-bool pyramidSensor<realT, detectorT>::imageSzAuto()
+template <typename realT, typename detectorT, int cudaGPU>
+bool pyramidSensor<realT, detectorT, cudaGPU>::imageSzAuto()
 {
     return m_imageSzAuto;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::imageSzAuto( const bool &ia )
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::imageSzAuto( const bool &ia )
 {
     m_imageSzAuto = ia;
 
@@ -892,8 +904,8 @@ void pyramidSensor<realT, detectorT>::imageSzAuto( const bool &ia )
     m_preAllocated = false;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::makeOpdMask()
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
 {
     complexFieldT opdMaskQ;
 
@@ -952,7 +964,7 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
         if( dy > maxy )
             maxy = dy;
 
-        opdMaskQ.set( std::complex<realT>( 0, 1 ) );
+        opdMaskQ.setConstant( std::complex<realT>( 0, 1 ) );
         wfp::tiltWavefront( opdMaskQ, dx, dy );
         mask.setZero();
         improc::maskWedge( mask,
@@ -992,7 +1004,7 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
 
     if( m_detRows == 0 || m_detCols == 0 )
     {
-        detSize(m_imageSz, m_imageSz);
+        detSize( m_imageSz, m_imageSz );
     }
     else if( m_detRows > m_imageSz || m_detCols > m_imageSz )
     {
@@ -1005,8 +1017,8 @@ void pyramidSensor<realT, detectorT>::makeOpdMask()
     m_opdMaskMade = true;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::makeTilts()
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::makeTilts()
 {
     constexpr realT pi = math::pi<realT>();
 
@@ -1055,7 +1067,7 @@ void pyramidSensor<realT, detectorT>::makeTilts()
              sin( 0.0 * dang + dang * i );
 
         m_tilts[i].resize( m_wfSz, m_wfSz );
-        m_tilts[i].set( std::complex<realT>( 0, 1 ) );
+        m_tilts[i].setConstant( std::complex<realT>( 0, 1 ) );
 
         wfp::tiltWavefront( m_tilts[i], dx, dy );
     }
@@ -1063,8 +1075,8 @@ void pyramidSensor<realT, detectorT>::makeTilts()
     m_tiltsMade = true;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::allocThreadMem()
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::allocThreadMem()
 {
     if( !m_opdMaskMade )
     {
@@ -1097,11 +1109,14 @@ void pyramidSensor<realT, detectorT>::allocThreadMem()
         m_th_sensorImage[nTh].resize( m_imageSz, m_imageSz );
     }
 
+    m_wfsTipImageAccum.resize(m_imageSz, m_imageSz);
+    m_wfsImageAccum.resize(m_imageSz, m_imageSz);
+
     m_preAllocated = true;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::preAllocate()
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::preAllocate()
 {
     if( !m_tiltsMade )
     {
@@ -1119,8 +1134,8 @@ void pyramidSensor<realT, detectorT>::preAllocate()
     }
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::doSenseWavefront()
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront()
 {
     BREAD_CRUMB;
 
@@ -1162,8 +1177,62 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront()
     m_wfsImage.iterNo = avgIt;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
+template <typename complexT>
+void elWiseProduct_cpu( complexT *out, complexT *in1, complexT *in2, size_t nelem )
+{
+    for( int ii = 0; ii < nelem; ++ii )
+    {
+        out[ii] = in1[ii] * in2[ii];
+    }
+}
+
+template <typename complexT>
+void elWiseProduct_gpu( complexT *out, complexT *in1, complexT *in2, size_t nelem )
+{
+    cuda::elementwiseXxY(out, in1, in2, nelem);
+}
+
+template <typename complexT, int cudaGPU>
+void elWiseProduct( complexT *out, complexT *in1, complexT *in2, size_t nelem );
+
+template <>
+void elWiseProduct<std::complex<float>, 0>( std::complex<float> *out,
+                                            std::complex<float> *in1,
+                                            std::complex<float> *in2,
+                                            size_t nelem )
+{
+    elWiseProduct_cpu(out,in1,in2,nelem);
+}
+
+template <>
+void elWiseProduct<std::complex<double>, 0>( std::complex<double> *out,
+                                            std::complex<double> *in1,
+                                            std::complex<double> *in2,
+                                            size_t nelem )
+{
+    elWiseProduct_cpu(out,in1,in2,nelem);
+}
+
+template <>
+void elWiseProduct<std::complex<float>, 1>( std::complex<float> *out,
+                                            std::complex<float> *in1,
+                                            std::complex<float> *in2,
+                                            size_t nelem )
+{
+    elWiseProduct_cpu(out,in1,in2,nelem);
+}
+
+template <>
+void elWiseProduct<std::complex<double>, 1>( std::complex<double> *out,
+                                            std::complex<double> *in1,
+                                            std::complex<double> *in2,
+                                            size_t nelem )
+{
+    elWiseProduct_cpu(out,in1,in2,nelem);
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pupilPlane )
 {
     if( m_modRadius == 0 )
     {
@@ -1177,21 +1246,22 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
 
     BREAD_CRUMB;
 
-    m_wfsImage.image.resize( m_imageSz, m_imageSz );
-    m_wfsImage.image.setZero();
-
-    wfsTipImage.image.resize( m_wfSz, m_wfSz );
-    wfsTipImage.image.setZero();
+    m_wfsTipImageAccum.setZero();
+    m_wfsImageAccum.setZero();
 
     for( size_t l = 0; l < m_wavelengths.size(); ++l )
     {
         pupilPlane.lambda = m_lambda;
         pupilPlane.getWavefront( m_pupilPlaneCF, m_wavelengths[l], m_wfSz );
 
-#pragma omp parallel
+        // CUDA: here we need to upload m_pupilPlaneCF
+
+        // clang-format off
+        #pragma omp parallel // clang-format on
         {
             int nTh = omp_get_thread_num();
 
+            // CUDA: these are cudaPtrs
             m_th_sensorImage[nTh].setZero();
             m_th_focalImage[nTh].setZero();
 
@@ -1208,7 +1278,8 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
 
             int nelem = m_wfSz * m_wfSz;
 
-#pragma omp for
+            // clang-format off
+            #pragma omp for // clang-format on
             for( int i = 0; i < m_modSteps; ++i )
             {
 
@@ -1217,10 +1288,7 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
                 //---------------------------------------------
                 // Apply the modulating tip
                 //---------------------------------------------
-                for( int ii = 0; ii < nelem; ++ii )
-                {
-                    tpm_Data[ii] = ppm_Data[ii] * tim_Data[ii];
-                }
+                elWiseProduct<complexT,cudaGPU>(tpm_Data, ppm_Data, tim_Data, nelem);
 
                 //---------------------------------------------
                 // Propagate to Pyramid tip
@@ -1230,22 +1298,20 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
                 //---------------------------------------------
                 // Extract the tip image.
                 //---------------------------------------------
-                wfp::extractIntensityImageAccum( m_th_focalImage[nTh],
-                                                 0,
-                                                 m_wfSz,
-                                                 0,
-                                                 m_wfSz,
-                                                 m_th_focalPlane[nTh],
-                                                 0,
-                                                 0 );
+                // CUDA: need equivalent of this
+                wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_th_focalImage[nTh],
+                                                                                     0,
+                                                                                     m_wfSz,
+                                                                                     0,
+                                                                                     m_wfSz,
+                                                                                     m_th_focalPlane[nTh],
+                                                                                     0,
+                                                                                     0 );
 
                 //---------------------------------------------
                 // Now apply the pyramid OPD
                 //---------------------------------------------
-                for( int ii = 0; ii < nelem; ++ii )
-                {
-                    fpm_Data[ii] = fpm_Data[ii] * opdm_Data[ii];
-                }
+                elWiseProduct<complexT, cudaGPU>(fpm_Data, fpm_Data, opdm_Data, nelem);
 
                 //---------------------------------------------
                 // Propagate to sensor plane
@@ -1255,23 +1321,26 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
                 //---------------------------------------------
                 // Extract the image.
                 //---------------------------------------------
-                wfp::extractIntensityImageAccum( m_th_sensorImage[nTh],
-                                                 0,
-                                                 m_imageSz,
-                                                 0,
-                                                 m_imageSz,
-                                                 m_th_sensorPlane[nTh],
-                                                 0.5 * m_wfSz - m_imageSz / 2,
-                                                 0.5 * m_wfSz - m_imageSz / 2 );
+                // CUDA: need equivalent of this
+                wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_th_sensorImage[nTh],
+                                                                                     0,
+                                                                                     m_imageSz,
+                                                                                     0,
+                                                                                     m_imageSz,
+                                                                                     m_th_sensorPlane[nTh],
+                                                                                     0.5 * m_wfSz - m_imageSz / 2,
+                                                                                     0.5 * m_wfSz - m_imageSz / 2 );
 
             } // for
 
             BREAD_CRUMB;
 
-#pragma omp critical
+            // clang-format off
+            #pragma omp critical // clang-format on
             {
-                m_wfsImage.image += m_th_sensorImage[nTh] * _wavelengthWeights[l];
-                wfsTipImage.image += m_th_focalImage[nTh] * _wavelengthWeights[l];
+                // CUDA: these are probably BLAS ops
+                m_wfsImageAccum += m_th_sensorImage[nTh] * _wavelengthWeights[l];
+                m_wfsTipImageAccum += m_th_focalImage[nTh] * _wavelengthWeights[l];
             }
         } // #pragma omp parallel
 
@@ -1279,12 +1348,51 @@ void pyramidSensor<realT, detectorT>::doSenseWavefront( wavefrontT &pupilPlane )
 
     BREAD_CRUMB;
 
-    m_wfsImage.image /= m_modSteps;
-    wfsTipImage.image /= m_modSteps;
+    m_wfsImage.image  =  m_wfsImageAccum / m_modSteps;
+    m_wfsTipImage.image = m_wfsTipImageAccum / m_modSteps;
 }
 
-template <typename realT, typename detectorT>
-void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPlane )
+template<typename T>
+void memCopy_cpu(T * out, T* in, size_t nelem)
+{
+    memcpy(out, in, nelem*sizeof(T));
+}
+
+template<typename T>
+void memCopy_gpu(T * out, T* in, size_t nelem)
+{
+    cudaMemcpy(out,in, nelem*sizeof(T),cudaMemcpyDeviceToDevice);
+}
+
+template<typename T, int cudaGPU>
+void memCopy(T * out, T* in, size_t nelem);
+
+template<>
+void memCopy<std::complex<float>, 0>(std::complex<float> * out, std::complex<float>* in, size_t nelem)
+{
+    memCopy_cpu(out, in, nelem);
+}
+
+template<>
+void memCopy<std::complex<double>, 0>(std::complex<double> * out, std::complex<double>* in, size_t nelem)
+{
+    memCopy_cpu(out, in, nelem);
+}
+
+template<>
+void memCopy<std::complex<float>, 1>(std::complex<float> * out, std::complex<float>* in, size_t nelem)
+{
+    memCopy_gpu(out, in, nelem);
+}
+
+template<>
+void memCopy<std::complex<double>, 1>(std::complex<double> * out, std::complex<double>* in, size_t nelem)
+{
+    memCopy_gpu(out, in, nelem);
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT &pupilPlane )
 {
     BREAD_CRUMB;
 
@@ -1296,8 +1404,8 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPl
     m_wfsImage.image.resize( m_imageSz, m_imageSz );
     m_wfsImage.image.setZero();
 
-    wfsTipImage.image.resize( m_wfSz, m_wfSz );
-    wfsTipImage.image.setZero();
+    m_wfsTipImage.image.resize( m_wfSz, m_wfSz );
+    m_wfsTipImage.image.setZero();
 
     complexFieldT m_pupilPlaneCF;
 
@@ -1323,10 +1431,11 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPl
     //---------------------------------------------
     // Apply NO modulator tilt
     //---------------------------------------------
-    for( int ii = 0; ii < nelem; ++ii )
+    memCopy<complexT, cudaGPU>(tpm_Data, ppm_Data, nelem);
+    /*for( int ii = 0; ii < nelem; ++ii )
     {
         tpm_Data[ii] = ppm_Data[ii];
-    }
+    }*/
 
     BREAD_CRUMB;
 
@@ -1340,17 +1449,25 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPl
     //---------------------------------------------
     // Extract the tip image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum( wfsTipImage.image, 0, m_wfSz, 0, m_wfSz, focalPlane, 0, 0 );
+    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsTipImage.image,
+                                                                         0,
+                                                                         m_wfSz,
+                                                                         0,
+                                                                         m_wfSz,
+                                                                         focalPlane,
+                                                                         0,
+                                                                         0 );
 
     BREAD_CRUMB;
 
     //---------------------------------------------
     // Now apply the pyramid OPD
     //---------------------------------------------
-    for( int ii = 0; ii < nelem; ++ii )
+    elWiseProduct<complexT,cudaGPU>(fpm_Data, fpm_Data, opdm_Data, nelem);
+    /*for( int ii = 0; ii < nelem; ++ii )
     {
         fpm_Data[ii] = fpm_Data[ii] * opdm_Data[ii];
-    }
+    }*/
 
     BREAD_CRUMB;
 
@@ -1364,14 +1481,14 @@ void pyramidSensor<realT, detectorT>::doSenseWavefrontNoMod( wavefrontT &pupilPl
     //---------------------------------------------
     // Extract the image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum( m_wfsImage.image,
-                                     0,
-                                     m_imageSz,
-                                     0,
-                                     m_imageSz,
-                                     sensorPlane,
-                                     0.5 * m_wfSz - m_imageSz / 2,
-                                     0.5 * m_wfSz - m_imageSz / 2 );
+    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsImage.image,
+                                                                         0,
+                                                                         m_imageSz,
+                                                                         0,
+                                                                         m_imageSz,
+                                                                         sensorPlane,
+                                                                         0.5 * m_wfSz - m_imageSz / 2,
+                                                                         0.5 * m_wfSz - m_imageSz / 2 );
 
     BREAD_CRUMB;
 }
