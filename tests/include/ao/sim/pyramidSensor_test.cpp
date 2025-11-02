@@ -97,7 +97,7 @@ TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
     uint32_t pupSz = 56.0;
     uint32_t wfSz = 256.0;
 
-    //omp_set_num_threads(4);
+    omp_set_num_threads(4);
 
     pyramidSensor<realT, ccdDetector<realT>, 1> pwfs;
 
