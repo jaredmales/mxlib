@@ -3,7 +3,7 @@
 #should not be installed
 #
 # format: name  "explanation"
-# name will is without error_t:: namespace
+# name is without error_t:: namespace
 # explanation is in quotes
 #
 # any line that starts with # is ignored

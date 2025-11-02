@@ -57,7 +57,6 @@ struct cublasHandle
      */
     cublasHandle()
     {
-        create();
     }
 
     /// Constructor with option to create / not create the handle

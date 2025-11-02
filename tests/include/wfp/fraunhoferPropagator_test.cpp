@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+//#define DEBUG
+
 #include "../../../include/wfp/fraunhoferPropagator.hpp"
 #include "../../../include/improc/eigenImage.hpp"
 #include "../../../include/improc/imageMasks.hpp"
@@ -88,23 +90,33 @@ TEST_CASE( "Make an Airy pattern and go back to pupil on GPU", "[wfp]" )
 
     mx::cuda::cudaPtr<complexT> dev_complexPupil,dev_complexFocal;
 
-
     dev_complexPupil.upload(complexPupil.data(), complexPupil.rows(), complexPupil.cols());
     dev_complexFocal.resize(complexPupil.rows(), complexPupil.cols());
 
+    BREAD_CRUMB;
 
     fi.propagatePupilToFocal( dev_complexFocal, dev_complexPupil );
 
+    BREAD_CRUMB;
+
     dev_complexFocal.download(complexFocal.data());
 
+    BREAD_CRUMB;
+
     mx::wfp::extractIntensityImage( realFocal, 0, complexFocal.rows(), 0, complexFocal.cols(), complexFocal, 0, 0 );
+
+    BREAD_CRUMB;
 
     realT expwr = pupil.square().sum();
     realT pwr = realFocal.sum();
 
     REQUIRE( fabs(expwr - pwr)/pwr < 1e-4 );
 
+    BREAD_CRUMB;
+
     fi.propagateFocalToPupil( dev_complexPupil, dev_complexFocal);
+
+    BREAD_CRUMB;
 
     complexPupil.setZero(); //make sure
     dev_complexPupil.download(complexPupil.data());

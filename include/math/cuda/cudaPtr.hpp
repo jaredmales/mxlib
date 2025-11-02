@@ -31,6 +31,8 @@
 
 #include <cuda_runtime.h>
 
+#include "../../mxlib.hpp"
+
 #include "templateCuda.hpp"
 
 namespace mx
@@ -42,9 +44,10 @@ namespace cuda
 /**
  * \ingroup cuda
  */
-template <typename T>
+template <typename T, class verboseT = verbose::d>
 struct cudaPtr
 {
+
     /// The host data type.
     // typedef typename cudaType<T>::hostType hostPtrT;
     typedef T hostPtrT;
@@ -99,7 +102,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resizeImpl( size_t sz /**< [in] the new size */ );
+    error_t resizeImpl( size_t sz /**< [in] the new size */ );
 
     public:
     /// Resize the memory allocation, in 1D
@@ -109,7 +112,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resize( size_t sz /**< [in] the new size */ );
+    error_t resize( size_t sz /**< [in] the new size */ );
 
     /// Resize the memory allocation, in 2D
     /** If no size change, this is a no-op.
@@ -118,7 +121,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resize( uint32_t x_sz, ///< [in] the new x size,
+    error_t resize( uint32_t x_sz, ///< [in] the new x size,
                 uint32_t y_sz  ///< [in] the new y size
     );
 
@@ -129,16 +132,22 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int resize( uint32_t x_sz, ///< [in] the new x size,
+    error_t resize( uint32_t x_sz, ///< [in] the new x size,
                 uint32_t y_sz, ///< [in] the new y size,
                 uint32_t z_sz  ///< [in] the new z size
     );
 
     /// Initialize the array bytes to 0.
-    /** Just a wrapper to cudaMemset.
+    /** Same as setZero, just a wrapper to cudaMemset.
      *
      */
-    cudaError_t initialize();
+    error_t initialize();
+
+    /// Initialize the array bytes to 0.
+    /** Same as initialize, just a wrapper to cudaMemset.
+     *
+     */
+    error_t setZero();
 
     /// Free the memory allocation
     /**
@@ -146,7 +155,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int free();
+    error_t free();
 
     /// Copy from the host to the device, after allocation.
     /**
@@ -156,7 +165,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int upload( const hostPtrT *src /**< [in] The host location */ );
+    error_t upload( const hostPtrT *src /**< [in] The host location */ );
 
     /// Copy from the host to the device with 1D allocation.
     /**
@@ -166,7 +175,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int upload( const hostPtrT *src, ///< [in] The host location
+    error_t upload( const hostPtrT *src, ///< [in] The host location
                 size_t x_sz            ///< [in] The x size of the array
     );
 
@@ -178,7 +187,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int upload( const hostPtrT *src, ///< [in] The host location
+    error_t upload( const hostPtrT *src, ///< [in] The host location
                 uint32_t x_sz,            ///< [in] The x size of the array
                 uint32_t y_sz            ///< [in] The x size of the array
     );
@@ -191,7 +200,7 @@ struct cudaPtr
      * \returns a cuda error code otherwise.
      *
      */
-    int upload( const hostPtrT *src, ///< [in] The host location
+    error_t upload( const hostPtrT *src, ///< [in] The host location
                 uint32_t x_sz,            ///< [in] The x size of the array
                 uint32_t y_sz,            ///< [in] The x size of the array
                 uint32_t z_sz            ///< [in] The x size of the array
@@ -201,7 +210,7 @@ struct cudaPtr
     /**
      *
      */
-    int download( hostPtrT *dest /**< [in] The host location, allocated.*/ );
+    error_t download( hostPtrT *dest /**< [in] The host location, allocated.*/ );
 
     /// Accesses the device pointer for use in Cuda functions.
     /**
@@ -219,7 +228,7 @@ struct cudaPtr
        return reinterpret_cast<typename cpp2cudaType<devicePtrT>::cudaType *>(m_devicePtr);
     }
 
-    /// Conversion operator, accesses the device pointer for use in Cuda functions.
+    /// Conversion operator, accesses the device pointer for use in Cfuda functions.
     /**
      *
      */
@@ -229,18 +238,18 @@ struct cudaPtr
     }
 };
 
-template <typename T>
-cudaPtr<T>::~cudaPtr()
+template <typename T, class verboseT>
+cudaPtr<T, verboseT>::~cudaPtr()
 {
     free();
 }
 
-template <typename T>
-int cudaPtr<T>::resizeImpl( size_t sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::resizeImpl( size_t sz )
 {
     if( m_size == sz )
     {
-        return 0;
+        return error_t::noerror;
     }
 
     m_size = sz;
@@ -249,16 +258,15 @@ int cudaPtr<T>::resizeImpl( size_t sz )
 
     if( rv != cudaSuccess )
     {
-        std::cerr << "Error from cudaMalloc: ";
-        printf( "[%s] %s\n", cudaGetErrorName( rv ), cudaGetErrorString( rv ) );
+        return internal::mxlib_error_report<verboseT>(cudaError2error_t(rv), "cudaMalloc");
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
 
-template <typename T>
-int cudaPtr<T>::resize( size_t sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::resize( size_t sz )
 {
     m_rows =sz;
     m_cols = 1;
@@ -266,8 +274,8 @@ int cudaPtr<T>::resize( size_t sz )
     return resizeImpl(sz);
 }
 
-template <typename T>
-int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::resize( uint32_t x_sz, uint32_t y_sz )
 {
     m_rows = x_sz;
     m_cols = y_sz;
@@ -275,8 +283,8 @@ int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz )
     return resizeImpl( x_sz * y_sz );
 }
 
-template <typename T>
-int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::resize( uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
 {
     m_rows = x_sz;
     m_cols = y_sz;
@@ -284,105 +292,116 @@ int cudaPtr<T>::resize( uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
     return resize( x_sz * y_sz * z_sz );
 }
 
-template <typename T>
-cudaError_t cudaPtr<T>::initialize()
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::initialize()
 {
-    return ::cudaMemset( m_devicePtr, 0, m_size * sizeof( devicePtrT ) );
+    cudaError_t rv = ::cudaMemset( m_devicePtr, 0, m_size * sizeof( devicePtrT ) );
+
+    if(rv != cudaSuccess)
+    {
+        return internal::mxlib_error_report<verboseT>(cudaError2error_t(rv), "cudaMemset");
+    }
+
+    return error_t::noerror;
 }
 
-template <typename T>
-int cudaPtr<T>::free()
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::setZero()
+{
+    return initialize();
+}
+
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::free()
 {
     if( m_devicePtr )
     {
-        int rv = cudaFree( m_devicePtr );
+        cudaError_t rv = cudaFree( m_devicePtr );
 
         if( rv != cudaSuccess )
         {
-            std::cerr << "Cuda Free Error \n";
-            return rv;
+            return internal::mxlib_error_report<verboseT>(cudaError2error_t(rv), "cudaFree");
         }
+        return error_t::noerror;
     }
 
     m_devicePtr = 0;
     m_size = 0;
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename T>
-int cudaPtr<T>::upload( const hostPtrT *src )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::upload( const hostPtrT *src )
 {
     // Copy host memory to device
-    int rv = cudaMemcpy( m_devicePtr, src, m_size * sizeof( devicePtrT ), cudaMemcpyHostToDevice );
+    cudaError_t rv = cudaMemcpy( m_devicePtr, src, m_size * sizeof( devicePtrT ), cudaMemcpyHostToDevice );
 
     if( rv != cudaSuccess )
     {
-        std::cerr << "Cuda Memcpy error \n";
-        return rv;
+        return internal::mxlib_error_report<verboseT>(cudaError2error_t(rv), "cudaMemcpy");
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
-template <typename T>
-int cudaPtr<T>::upload( const hostPtrT *src, size_t x_sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::upload( const hostPtrT *src, size_t x_sz )
 {
-    int rv;
+    error_t rv;
 
     rv = resize( x_sz );
 
-    if( rv )
+    if( !!rv )
     {
-        return rv;
+        return internal::mxlib_error_report<verboseT>(rv);
     }
 
     return upload( src );
 }
 
-template <typename T>
-int cudaPtr<T>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz )
 {
-    int rv;
+    error_t rv;
 
     rv = resize( x_sz, y_sz );
 
-    if( rv )
+    if( !!rv )
     {
-        return rv;
+        return internal::mxlib_error_report<verboseT>(rv);
     }
 
     return upload( src );
 }
 
-template <typename T>
-int cudaPtr<T>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::upload( const hostPtrT *src, uint32_t x_sz, uint32_t y_sz, uint32_t z_sz )
 {
-    int rv;
+    error_t rv;
 
     rv = resize( x_sz, y_sz, z_sz );
 
-    if( rv )
+    if( !!rv )
     {
-        return rv;
+        return internal::mxlib_error_report<verboseT>(rv);
     }
 
     return upload( src );
 }
 
-template <typename T>
-int cudaPtr<T>::download( hostPtrT *dest )
+template <typename T, class verboseT>
+error_t cudaPtr<T, verboseT>::download( hostPtrT *dest )
 {
     // Copy device memory to host
-    int rv = cudaMemcpy( dest, m_devicePtr, m_size * sizeof( devicePtrT ), cudaMemcpyDeviceToHost );
+    cudaError_t rv = cudaMemcpy( dest, m_devicePtr, m_size * sizeof( devicePtrT ), cudaMemcpyDeviceToHost );
 
     if( rv != cudaSuccess )
     {
-        std::cerr << "Cuda Memcpy error \n";
-        return rv;
+        return internal::mxlib_error_report<verboseT>(cudaError2error_t(rv), "cudaMemcpy");
     }
 
-    return 0;
+    return error_t::noerror;
 }
 
 } // namespace cuda

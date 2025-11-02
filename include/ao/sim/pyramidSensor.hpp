@@ -22,12 +22,16 @@
 #include "../../math/constants.hpp"
 #include "../../math/geo.hpp"
 
+#ifdef MXLIB_CUDA
+#include "../../math/cuda/cublasHandle.hpp"
+#endif
+
 #include "wavefront.hpp"
 
 #ifdef DEBUG
-    #define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
+#define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
 #else
-    #define BREAD_CRUMB
+#define BREAD_CRUMB
 #endif
 
 namespace mx
@@ -89,8 +93,11 @@ class pyramidSensor
     typedef _detectorT detectorT;
 
   public:
-    /// Default c'tor
+    /// Default constructor
     pyramidSensor();
+
+    /// Destructor
+    ~pyramidSensor();
 
     /** \name Standard WFS Interface
      *
@@ -403,13 +410,15 @@ class pyramidSensor
     wfp::fraunhoferPropagator<complexFieldT, cudaGPU> m_frProp;
 
     bool m_opdMaskMade{ false };
-    complexFieldT m_opdMask;
+    complexArrayT m_opdMask;
 
     bool m_tiltsMade{ false };
-    std::vector<complexFieldT> m_tilts;
+    std::vector<complexArrayT> m_tilts;
 
     bool m_preAllocated{ false };
     complexFieldT m_pupilPlaneCF;
+
+    complexArrayT m_pupilPlaneCF_gpu;
 
     // Pre-allocated working memory:
 
@@ -446,17 +455,87 @@ class pyramidSensor
   protected:
     void makeOpdMask();
 
+    // These are called upload tilt but they are also used for opdMask. Maybe uploadField?
+    template <int ccudaGPU = cudaGPU>
+    error_t uploadTilt( complexArrayT &tilt, complexFieldT &ltilt, typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+
+    template <int ccudaGPU = cudaGPU>
+    error_t uploadTilt( complexArrayT &tilt, complexFieldT &ltilt, typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+
     void makeTilts();
 
     void allocThreadMem();
 
     void preAllocate();
 
+    /// Convert a cpu complex field to a pointer to its CPU memory
+    /** This just returns a pointer to the input array
+     *
+     */
+    template <int ccudaGPU = cudaGPU>
+    complexArrayT *uploadPupilPlaneCF( complexFieldT &cf /**< [in] the CPU complex field  */,
+                                       typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+
+    /// Convert a cpu complex field to a pointer to its GPU memory
+    /** This uploads the input array to the device and returns a cudaPtr.
+     *
+     */
+    template <int ccudaGPU = cudaGPU>
+    complexArrayT *uploadPupilPlaneCF( complexFieldT &cf /**< [in] the CPU complex field  */,
+                                       typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+
+    /// Accumulate an image with a weight applied on the CPU
+    /**
+     * aim += im*w
+     */
+    template <int ccudaGPU = cudaGPU>
+    void accumWeightedImage( realArrayT &aim, /**< [out] the image in which to accumulate the results*/
+                             realArrayT &im,  /**< [in] the image to weight and then add to output*/
+                             realT w,         /**< [in] the weight*/
+                             typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+
+    /// Accumulate an image with a weight applied on the GPU
+    /**
+     * aim += im*w
+     */
+    template <int ccudaGPU = cudaGPU>
+    void accumWeightedImage( realArrayT &aim, /**< [out] the image in which to accumulate the results*/
+                             realArrayT &im,  /**< [in] the image to weight and then add to output*/
+                             realT w,         /**< [in] the weight*/
+                             typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+
+    /// Scale the accumulated image by number of accumulations and assign it to the output image. CPU version.
+    /**
+     * im = aim / naccums
+     */
+    template <int ccudaGPU = cudaGPU>
+    void downloadAccumImage( realImageT &im,
+                             realArrayT &aim,
+                             uint32_t naccums,
+                             typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+
+    /// Scale the accumulated image by number of accumulations and assign it to the output image. GPU version.
+    /**
+     * im = aim / naccums
+     */
+    template <int ccudaGPU = cudaGPU>
+    void downloadAccumImage( realImageT &im,
+                             realArrayT &aim,
+                             uint32_t naccums,
+                             typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+
     void doSenseWavefront();
     void doSenseWavefront( wavefrontT & /**< */ );
     void doSenseWavefrontNoMod( wavefrontT & /**< */ );
 
     bool m_firstRun{ true };
+
+  protected:
+    // clang-format off
+    #ifdef MXLIB_CUDA
+    std::vector<mx::cuda::cublasHandle *> m_cublasHandle;
+    #endif
+    // clang-format on
 };
 
 template <typename realT, typename detectorT, int cudaGPU>
@@ -465,6 +544,21 @@ pyramidSensor<realT, detectorT, cudaGPU>::pyramidSensor()
     iTime( m_iTime );
 
     m_frProp.wholePixel( 0 );
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+pyramidSensor<realT, detectorT, cudaGPU>::~pyramidSensor()
+{
+    // clang-format off
+    #ifdef MXLIB_CUDA
+    if(cudaGPU)
+    {
+        for(size_t nTh = 0; nTh < m_cublasHandle.size(); ++nTh)
+        {
+            delete m_cublasHandle[nTh];
+        }
+    }
+    #endif // clang-format on
 }
 
 template <typename realT, typename detectorT, int cudaGPU>
@@ -907,7 +1001,6 @@ void pyramidSensor<realT, detectorT, cudaGPU>::imageSzAuto( const bool &ia )
 template <typename realT, typename detectorT, int cudaGPU>
 void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
 {
-    complexFieldT opdMaskQ;
 
     if( m_wfPS == 0 )
     {
@@ -932,6 +1025,11 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
     m_frProp.setWavefrontSizePixels( m_wfSz );
 
     m_opdMask.resize( m_wfSz, m_wfSz );
+
+    complexFieldT opdMask;
+    opdMask.resize( m_wfSz, m_wfSz );
+
+    complexFieldT opdMaskQ;
     opdMaskQ.resize( m_wfSz, m_wfSz );
 
     mx::improc::eigenImage<realT> mask;
@@ -973,8 +1071,10 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
                            math::rtod( ang ),
                            0.5 * math::rtod( dang ),
                            1 );
-        wfp::extractMaskedPixels( m_opdMask, opdMaskQ, mask );
+        wfp::extractMaskedPixels( opdMask, opdMaskQ, mask );
     }
+
+    uploadTilt( m_opdMask, opdMask );
 
     int xsz =
         2 * std::max( { fabs( maxx ), fabs( minx ) } ) + 2 * std::max( { ( pupilRad / 2 ), ( (realT)m_pupilSz / 2 ) } );
@@ -1001,6 +1101,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
     }
 
     m_wfsImage.image.resize( m_imageSz, m_imageSz );
+    m_wfsTipImage.image.resize( m_wfSz, m_wfSz );
 
     if( m_detRows == 0 || m_detCols == 0 )
     {
@@ -1015,6 +1116,25 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
     }
 
     m_opdMaskMade = true;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+error_t pyramidSensor<realT, detectorT, cudaGPU>::uploadTilt( complexArrayT &tilt,
+                                                              complexFieldT &ltilt,
+                                                              typename std::enable_if<ccudaGPU == 0>::type * )
+{
+    tilt = ltilt;
+    return error_t::noerror;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+error_t pyramidSensor<realT, detectorT, cudaGPU>::uploadTilt( complexArrayT &tilt,
+                                                              complexFieldT &ltilt,
+                                                              typename std::enable_if<ccudaGPU == 1>::type * )
+{
+    return tilt.upload( ltilt.data(), ltilt.size() );
 }
 
 template <typename realT, typename detectorT, int cudaGPU>
@@ -1066,10 +1186,13 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeTilts()
         dy = m_modRadius * ( m_lambda / m_D ) / wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) *
              sin( 0.0 * dang + dang * i );
 
-        m_tilts[i].resize( m_wfSz, m_wfSz );
-        m_tilts[i].setConstant( std::complex<realT>( 0, 1 ) );
+        complexFieldT tilt;
+        tilt.resize( m_wfSz, m_wfSz );
+        tilt.setConstant( std::complex<realT>( 0, 1 ) );
 
-        wfp::tiltWavefront( m_tilts[i], dx, dy );
+        wfp::tiltWavefront( tilt, dx, dy );
+
+        uploadTilt( m_tilts[i], tilt );
     }
 
     m_tiltsMade = true;
@@ -1085,6 +1208,11 @@ void pyramidSensor<realT, detectorT, cudaGPU>::allocThreadMem()
 
     m_pupilPlaneCF.resize( m_wfSz, m_wfSz );
 
+    if( cudaGPU )
+    {
+        m_pupilPlaneCF_gpu.resize( m_wfSz, m_wfSz );
+    }
+
     int maxTh = omp_get_max_threads();
     m_th_tiltedPlane.resize( maxTh );
 
@@ -1095,6 +1223,14 @@ void pyramidSensor<realT, detectorT, cudaGPU>::allocThreadMem()
     m_th_sensorPlane.resize( maxTh );
 
     m_th_sensorImage.resize( maxTh );
+
+    // clang-format off
+    #ifdef MXLIB_CUDA
+    if(cudaGPU)
+    {
+        m_cublasHandle.resize(maxTh);
+    }
+    #endif // clang-format on
 
     for( int nTh = 0; nTh < maxTh; ++nTh )
     {
@@ -1107,10 +1243,18 @@ void pyramidSensor<realT, detectorT, cudaGPU>::allocThreadMem()
         m_th_sensorPlane[nTh].resize( m_wfSz, m_wfSz );
 
         m_th_sensorImage[nTh].resize( m_imageSz, m_imageSz );
+
+        // clang-format off
+        #ifdef MXLIB_CUDA
+        if(cudaGPU)
+        {
+            m_cublasHandle[nTh] = new mx::cuda::cublasHandle(true);
+        }
+        #endif // clang-format on
     }
 
-    m_wfsTipImageAccum.resize(m_imageSz, m_imageSz);
-    m_wfsImageAccum.resize(m_imageSz, m_imageSz);
+    m_wfsTipImageAccum.resize( m_wfSz, m_wfSz );
+    m_wfsImageAccum.resize( m_imageSz, m_imageSz );
 
     m_preAllocated = true;
 }
@@ -1189,7 +1333,18 @@ void elWiseProduct_cpu( complexT *out, complexT *in1, complexT *in2, size_t nele
 template <typename complexT>
 void elWiseProduct_gpu( complexT *out, complexT *in1, complexT *in2, size_t nelem )
 {
-    cuda::elementwiseXxY(out, in1, in2, nelem);
+    BREAD_CRUMB;
+    cuda::elementwiseXxY( out, in1, in2, nelem );
+    BREAD_CRUMB;
+
+    cudaError_t ce = cudaDeviceSynchronize();
+
+    if( ce != cudaSuccess )
+    {
+        std::cerr << "cudaError " << cudaGetErrorName( ce ) << ": " << cudaGetErrorString( ce ) << '\n';
+        return;
+    }
+    BREAD_CRUMB;
 }
 
 template <typename complexT, int cudaGPU>
@@ -1201,16 +1356,16 @@ void elWiseProduct<std::complex<float>, 0>( std::complex<float> *out,
                                             std::complex<float> *in2,
                                             size_t nelem )
 {
-    elWiseProduct_cpu(out,in1,in2,nelem);
+    elWiseProduct_cpu( out, in1, in2, nelem );
 }
 
 template <>
 void elWiseProduct<std::complex<double>, 0>( std::complex<double> *out,
-                                            std::complex<double> *in1,
-                                            std::complex<double> *in2,
-                                            size_t nelem )
+                                             std::complex<double> *in1,
+                                             std::complex<double> *in2,
+                                             size_t nelem )
 {
-    elWiseProduct_cpu(out,in1,in2,nelem);
+    elWiseProduct_cpu( out, in1, in2, nelem );
 }
 
 template <>
@@ -1219,16 +1374,99 @@ void elWiseProduct<std::complex<float>, 1>( std::complex<float> *out,
                                             std::complex<float> *in2,
                                             size_t nelem )
 {
-    elWiseProduct_cpu(out,in1,in2,nelem);
+    BREAD_CRUMB;
+    elWiseProduct_gpu( reinterpret_cast<cuComplex *>( out ),
+                       reinterpret_cast<cuComplex *>( in1 ),
+                       reinterpret_cast<cuComplex *>( in2 ),
+                       nelem );
+
+    cudaError_t ce = cudaDeviceSynchronize();
+
+    if( ce != cudaSuccess )
+    {
+        std::cerr << "cudaError " << cudaGetErrorName( ce ) << ": " << cudaGetErrorString( ce ) << '\n';
+        return;
+    }
+    BREAD_CRUMB;
 }
 
 template <>
 void elWiseProduct<std::complex<double>, 1>( std::complex<double> *out,
-                                            std::complex<double> *in1,
-                                            std::complex<double> *in2,
-                                            size_t nelem )
+                                             std::complex<double> *in1,
+                                             std::complex<double> *in2,
+                                             size_t nelem )
 {
-    elWiseProduct_cpu(out,in1,in2,nelem);
+    elWiseProduct_gpu( reinterpret_cast<cuDoubleComplex *>( out ),
+                       reinterpret_cast<cuDoubleComplex *>( in1 ),
+                       reinterpret_cast<cuDoubleComplex *>( in2 ),
+                       nelem );
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+pyramidSensor<realT, detectorT, cudaGPU>::complexArrayT *
+pyramidSensor<realT, detectorT, cudaGPU>::uploadPupilPlaneCF( complexFieldT &cf,
+                                                              typename std::enable_if<ccudaGPU == 0>::type * )
+{
+    return &cf;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+pyramidSensor<realT, detectorT, cudaGPU>::complexArrayT *
+pyramidSensor<realT, detectorT, cudaGPU>::uploadPupilPlaneCF( complexFieldT &cf,
+                                                              typename std::enable_if<ccudaGPU == 1>::type * )
+{
+    m_pupilPlaneCF_gpu.upload( cf.data() );
+    return &m_pupilPlaneCF_gpu;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::accumWeightedImage( realArrayT &aim,
+                                                                   realArrayT &im,
+                                                                   realT w,
+                                                                   typename std::enable_if<ccudaGPU == 0>::type * )
+{
+    aim += im * w;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::accumWeightedImage( realArrayT &aim,
+                                                                   realArrayT &im,
+                                                                   realT w,
+                                                                   typename std::enable_if<ccudaGPU == 1>::type * )
+{
+
+    // clang-format off
+    #ifdef MXLIB_CUDA
+
+    mx::cuda::cublasTaxpy<realT>( *m_cublasHandle[omp_get_thread_num()], aim.size(), &w, im.data(), 1, aim.data(), 1 );
+
+    #endif
+    // clang-format on
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( realImageT &im,
+                                                                   realArrayT &aim,
+                                                                   uint32_t naccums,
+                                                                   typename std::enable_if<ccudaGPU == 0>::type * )
+{
+    im = aim / naccums;
+}
+
+template <typename realT, typename detectorT, int cudaGPU>
+template <int ccudaGPU>
+void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( realImageT &im,
+                                                                   realArrayT &aim,
+                                                                   uint32_t naccums,
+                                                                   typename std::enable_if<ccudaGPU == 1>::type * )
+{
+    aim.download( im.data() );
+    im /= naccums;
 }
 
 template <typename realT, typename detectorT, int cudaGPU>
@@ -1246,18 +1484,22 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
 
     BREAD_CRUMB;
 
+    BREAD_CRUMB;
+
     m_wfsTipImageAccum.setZero();
     m_wfsImageAccum.setZero();
+
+    BREAD_CRUMB;
 
     for( size_t l = 0; l < m_wavelengths.size(); ++l )
     {
         pupilPlane.lambda = m_lambda;
         pupilPlane.getWavefront( m_pupilPlaneCF, m_wavelengths[l], m_wfSz );
 
-        // CUDA: here we need to upload m_pupilPlaneCF
+        complexArrayT *pupilPlaneCF = uploadPupilPlaneCF( m_pupilPlaneCF );
 
         // clang-format off
-        #pragma omp parallel // clang-format on
+        #pragma omp parallel// clang-format on
         {
             int nTh = omp_get_thread_num();
 
@@ -1265,16 +1507,18 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
             m_th_sensorImage[nTh].setZero();
             m_th_focalImage[nTh].setZero();
 
-            complexT *tpm_Data;
+            BREAD_CRUMB;
+
             complexT *ppm_Data;
-            complexT *tim_Data;
+            complexT *tpm_Data;
             complexT *fpm_Data;
             complexT *opdm_Data;
+            complexT *tim_Data;
 
-            ppm_Data = m_pupilPlaneCF.data();
-            tpm_Data = m_th_tiltedPlane[nTh].data();
-            fpm_Data = m_th_focalPlane[nTh].data();
-            opdm_Data = m_opdMask.data();
+            ppm_Data = reinterpret_cast<complexT *>( pupilPlaneCF->data() );
+            tpm_Data = reinterpret_cast<complexT *>( m_th_tiltedPlane[nTh].data() );
+            fpm_Data = reinterpret_cast<complexT *>( m_th_focalPlane[nTh].data() );
+            opdm_Data = reinterpret_cast<complexT *>( m_opdMask.data() );
 
             int nelem = m_wfSz * m_wfSz;
 
@@ -1283,22 +1527,27 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
             for( int i = 0; i < m_modSteps; ++i )
             {
 
-                tim_Data = m_tilts[i].data();
+                tim_Data = reinterpret_cast<complexT*>(m_tilts[i].data());
+
+                BREAD_CRUMB;
 
                 //---------------------------------------------
                 // Apply the modulating tip
                 //---------------------------------------------
-                elWiseProduct<complexT,cudaGPU>(tpm_Data, ppm_Data, tim_Data, nelem);
+                elWiseProduct<complexT, cudaGPU>( tpm_Data, ppm_Data, tim_Data, nelem );
+
+                BREAD_CRUMB;
 
                 //---------------------------------------------
                 // Propagate to Pyramid tip
                 //---------------------------------------------
                 m_frProp.propagatePupilToFocal( m_th_focalPlane[nTh], m_th_tiltedPlane[nTh], true );
 
+                BREAD_CRUMB;
+
                 //---------------------------------------------
                 // Extract the tip image.
                 //---------------------------------------------
-                // CUDA: need equivalent of this
                 wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_th_focalImage[nTh],
                                                                                      0,
                                                                                      m_wfSz,
@@ -1308,20 +1557,26 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
                                                                                      0,
                                                                                      0 );
 
+                BREAD_CRUMB;
+
                 //---------------------------------------------
                 // Now apply the pyramid OPD
                 //---------------------------------------------
-                elWiseProduct<complexT, cudaGPU>(fpm_Data, fpm_Data, opdm_Data, nelem);
+                elWiseProduct<complexT, cudaGPU>( fpm_Data, fpm_Data, opdm_Data, nelem );
+
+                BREAD_CRUMB;
 
                 //---------------------------------------------
                 // Propagate to sensor plane
                 //---------------------------------------------
                 m_frProp.propagateFocalToPupil( m_th_sensorPlane[nTh], m_th_focalPlane[nTh], true );
 
+                BREAD_CRUMB;
+
                 //---------------------------------------------
                 // Extract the image.
                 //---------------------------------------------
-                // CUDA: need equivalent of this
+
                 wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_th_sensorImage[nTh],
                                                                                      0,
                                                                                      m_imageSz,
@@ -1331,6 +1586,8 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
                                                                                      0.5 * m_wfSz - m_imageSz / 2,
                                                                                      0.5 * m_wfSz - m_imageSz / 2 );
 
+
+
             } // for
 
             BREAD_CRUMB;
@@ -1338,62 +1595,67 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
             // clang-format off
             #pragma omp critical // clang-format on
             {
-                // CUDA: these are probably BLAS ops
-                m_wfsImageAccum += m_th_sensorImage[nTh] * _wavelengthWeights[l];
-                m_wfsTipImageAccum += m_th_focalImage[nTh] * _wavelengthWeights[l];
+                accumWeightedImage( m_wfsTipImageAccum, m_th_focalImage[nTh], _wavelengthWeights[l] );
+
+                accumWeightedImage( m_wfsImageAccum, m_th_sensorImage[nTh], _wavelengthWeights[l] );
             }
+
         } // #pragma omp parallel
 
     } // l for wavelength
 
     BREAD_CRUMB;
 
-    m_wfsImage.image  =  m_wfsImageAccum / m_modSteps;
-    m_wfsTipImage.image = m_wfsTipImageAccum / m_modSteps;
+    downloadAccumImage( m_wfsTipImage.image, m_wfsTipImageAccum, m_modSteps );
+    downloadAccumImage( m_wfsImage.image, m_wfsImageAccum, m_modSteps );
+
+    BREAD_CRUMB;
+
 }
 
-template<typename T>
-void memCopy_cpu(T * out, T* in, size_t nelem)
+template <typename T>
+void memCopy_cpu( T *out, T *in, size_t nelem )
 {
-    memcpy(out, in, nelem*sizeof(T));
+    memcpy( out, in, nelem * sizeof( T ) );
 }
 
-template<typename T>
-void memCopy_gpu(T * out, T* in, size_t nelem)
+template <typename T>
+void memCopy_gpu( T *out, T *in, size_t nelem )
 {
-    cudaMemcpy(out,in, nelem*sizeof(T),cudaMemcpyDeviceToDevice);
+    cudaMemcpy( out, in, nelem * sizeof( T ), cudaMemcpyDeviceToDevice );
 }
 
-template<typename T, int cudaGPU>
-void memCopy(T * out, T* in, size_t nelem);
+template <typename T, int cudaGPU>
+void memCopy( T *out, T *in, size_t nelem );
 
-template<>
-void memCopy<std::complex<float>, 0>(std::complex<float> * out, std::complex<float>* in, size_t nelem)
+template <>
+void memCopy<std::complex<float>, 0>( std::complex<float> *out, std::complex<float> *in, size_t nelem )
 {
-    memCopy_cpu(out, in, nelem);
+    memCopy_cpu( out, in, nelem );
 }
 
-template<>
-void memCopy<std::complex<double>, 0>(std::complex<double> * out, std::complex<double>* in, size_t nelem)
+template <>
+void memCopy<std::complex<double>, 0>( std::complex<double> *out, std::complex<double> *in, size_t nelem )
 {
-    memCopy_cpu(out, in, nelem);
+    memCopy_cpu( out, in, nelem );
 }
 
-template<>
-void memCopy<std::complex<float>, 1>(std::complex<float> * out, std::complex<float>* in, size_t nelem)
+template <>
+void memCopy<std::complex<float>, 1>( std::complex<float> *out, std::complex<float> *in, size_t nelem )
 {
-    memCopy_gpu(out, in, nelem);
+    memCopy_gpu( out, in, nelem );
 }
 
-template<>
-void memCopy<std::complex<double>, 1>(std::complex<double> * out, std::complex<double>* in, size_t nelem)
+template <>
+void memCopy<std::complex<double>, 1>( std::complex<double> *out, std::complex<double> *in, size_t nelem )
 {
-    memCopy_gpu(out, in, nelem);
+    memCopy_gpu( out, in, nelem );
 }
 
 template <typename realT, typename detectorT, int cudaGPU>
 void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT &pupilPlane )
 {
+#ifndef MXLIB_CUDA
     BREAD_CRUMB;
 
     if( !m_opdMaskMade )
@@ -1407,9 +1669,9 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
     m_wfsTipImage.image.resize( m_wfSz, m_wfSz );
     m_wfsTipImage.image.setZero();
 
-    complexFieldT m_pupilPlaneCF;
-
     pupilPlane.getWavefront( m_pupilPlaneCF, m_wfSz );
+
+    complexArrayT *pupilPlaneCF = uploadPupilPlaneCF( m_pupilPlaneCF );
 
     complexFieldT tiltedPlane;
     complexFieldT focalPlane;
@@ -1421,17 +1683,17 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
 
     int nelem = m_wfSz * m_wfSz;
 
-    complexT *tpm_Data = tiltedPlane.data();
-    complexT *ppm_Data = m_pupilPlaneCF.data();
-    complexT *opdm_Data = m_opdMask.data();
-    complexT *fpm_Data = focalPlane.data();
+    complexT *tpm_Data = reinterpret_cast<complexT *>( tiltedPlane.data() );
+    complexT *ppm_Data = reinterpret_cast<complexT *>( pupilPlaneCF->data() );
+    complexT *opdm_Data = reinterpret_cast<complexT *>( m_opdMask.data() );
+    complexT *fpm_Data = reinterpret_cast<complexT *>( focalPlane.data() );
 
     BREAD_CRUMB;
 
     //---------------------------------------------
     // Apply NO modulator tilt
     //---------------------------------------------
-    memCopy<complexT, cudaGPU>(tpm_Data, ppm_Data, nelem);
+    memCopy<complexT, cudaGPU>( tpm_Data, ppm_Data, nelem );
     /*for( int ii = 0; ii < nelem; ++ii )
     {
         tpm_Data[ii] = ppm_Data[ii];
@@ -1463,7 +1725,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
     //---------------------------------------------
     // Now apply the pyramid OPD
     //---------------------------------------------
-    elWiseProduct<complexT,cudaGPU>(fpm_Data, fpm_Data, opdm_Data, nelem);
+    elWiseProduct<complexT, cudaGPU>( fpm_Data, fpm_Data, opdm_Data, nelem );
     /*for( int ii = 0; ii < nelem; ++ii )
     {
         fpm_Data[ii] = fpm_Data[ii] * opdm_Data[ii];
@@ -1491,6 +1753,8 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
                                                                          0.5 * m_wfSz - m_imageSz / 2 );
 
     BREAD_CRUMB;
+
+#endif
 }
 
 } // namespace sim

@@ -71,8 +71,8 @@ cublasStatus_t cublasTscal( cublasHandle_t handle, ///< [in] The cublas context 
  */
 template <typename floatT>
 cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLAS library context.
-                            int n,                 ///< [in] scalar used for multiplication.
-                            const floatT *alpha,   ///< [in] number of elements in the vector x and y
+                            int n,                 ///< [in] number of elements in the vector x and y
+                            const floatT *alpha,   ///< [in] scalar used for multiplication.
                             const floatT *x,       ///< [in] vector with n elements.
                             int incx,              ///< [in] stride between consecutive elements of x
                             floatT *y,             ///< [in.out] vector with n elements.
@@ -131,6 +131,28 @@ cudaError_t elementwiseXxY( dataT0 *z, /**< [out] device pointer for the result 
                             int size   ///< [in] the number of elements in the vectors.
 );
 
+/// Calculates the element-wise product of two vectors, accumulating the result in a third vector.
+/** Calculates
+ * \f$
+ * z += x * y
+ * \f$
+ * element by element, a.k.a. the Hadamard product of x and y.
+ *
+ * Specializations are provided for:
+ * - float, float,float
+ * - double, double, double
+ *
+ * \todo Complex overloads won't compile for some reason.
+ *
+ * \ingroup cublas
+ */
+template <typename dataT0, typename dataT1, typename dataT2>
+cudaError_t elementwiseXxYAccum( dataT0 *z, /**< [out] device pointer for the result vector.  Is filled in with the
+                                                       product of the second two vectors*/
+                                 dataT1 *x, ///< [in] device pointer for the 1st vector.
+                                 dataT2 *y, ///< [in] device pointer for the 2nd vector.
+                                 int size   ///< [in] the number of elements in the vectors.
+);
 //----------------------------------------------------
 // Tgemv
 
