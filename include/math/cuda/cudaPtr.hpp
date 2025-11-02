@@ -28,6 +28,7 @@
 #define math_cudaPtr_hpp
 
 #include <iostream>
+#include <cstdint>
 
 #include <cuda_runtime.h>
 

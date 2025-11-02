@@ -45,8 +45,8 @@ OPTIMIZE ?= $(DEFAULT_OPTIMIZATIONS)
 CFLAGS += -std=c99 -fPIC
 
 #Set to -std=c++14 if 17 not supported
-CXXVERSION ?= -std=c++17
-NVCCXXVERSION ?= -std=c++17
+CXXVERSION ?= -std=c++20
+NVCCXXVERSION ?= -std=c++20
 
 CXXFLAGS += $(CXXVERSION) -fPIC
 NVCCXXFLAGS += $(NVCCXXVERSION) -fPIC
