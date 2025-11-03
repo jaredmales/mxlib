@@ -1174,7 +1174,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeTilts()
     std::cout << "WF Size: " << m_wfSz << "\n";
     std::cout << "WF PS:   " << m_wfPS << "\n";
     std::cout << "Lambda:  " << m_lambda << "\n";
-    std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) * 206265. << " (mas/pix)\n";
+    std::cout << "Pyr. PS: " << wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda ) * 206265.*1000 << " (mas/pix)\n";
     std::cout << "Mod. steps: " << m_modSteps << "\n";
     std::cout << "Mod rad: " << m_modRadius * ( m_lambda / m_D ) / wfp::fftPlateScale<realT>( m_wfSz, m_wfPS, m_lambda )
               << " (pixels)\n";

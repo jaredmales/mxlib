@@ -34,7 +34,6 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
     uint32_t pupSz = 56.0;
     uint32_t wfSz = 256.0;
 
-
     pyramidSensor<realT, ccdDetector<realT>> pwfs;
 
     eigenImage<realT> pupil, fm;
@@ -61,11 +60,13 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
     pwfs.detector.noNoise(true);
     pwfs.detector.expTime(1);
 
-    pwfs.lambda(800e-9);
+    pwfs.lambda(850e-9);
 
     wf.setPhase(fm * 0);
 
-    size_t N = 1000;
+    pwfs.senseWavefrontCal(wf);
+
+    size_t N = 10;
     double t0 = mx::sys::get_curr_time();
     for(size_t n = 0; n < N; ++n)
     {
@@ -73,14 +74,18 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
     }
     double t1 = mx::sys::get_curr_time();
 
-    std::cerr << "CPU: " << 1.0*N / (t1-t0) << " fps\n";
+    std::cerr << "\nCPU: " << 1.0*N / (t1-t0) << " fps\n\n";
 
     eigenImage<realT> ref = pwfs.detectorImage.image;
 
     fitsFile<realT> ff;
     ff.write("ref.fits", ref);
+    ff.write("tip.fits", pwfs.m_wfsTipImage.image);
 
-    std::cout << ref.sum() << '\n';
+    realT s = ref.sum();
+    std::cout << s << '\n';
+
+    REQUIRE(s > 9.9e9);
 
 }
 
@@ -125,13 +130,13 @@ TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
     pwfs.detector.noNoise(true);
     pwfs.detector.expTime(1);
 
-    pwfs.lambda(800e-9);
+    pwfs.lambda(850e-9);
 
     wf.setPhase(fm * 0);
 
     pwfs.senseWavefrontCal(wf);
 
-    size_t N = 1000;
+    size_t N = 10;
     double t0 = mx::sys::get_curr_time();
     for(size_t n = 0; n < N; ++n)
     {
@@ -139,14 +144,18 @@ TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
     }
     double t1 = mx::sys::get_curr_time();
 
-    std::cerr << "GPU: " << 1.0*N / (t1-t0) << " fps\n";
+    std::cerr << "\nGPU: " << 1.0*N / (t1-t0) << " fps\n\n";
 
     eigenImage<realT> ref = pwfs.detectorImage.image;
 
     fitsFile<realT> ff;
     ff.write("refgpu.fits", ref);
+    ff.write("tipgpu.fits", pwfs.m_wfsTipImage.image);
 
-    std::cout << ref.sum() << '\n';
+    realT s = ref.sum();
+    std::cout << s << '\n';
+
+    REQUIRE(s > 9.9e9);
 
 }
 
