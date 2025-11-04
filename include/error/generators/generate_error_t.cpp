@@ -106,6 +106,7 @@ int main()
         }
     }
 
+    #ifdef MXLIB_CUDA
     for( auto &ct : cuda_codes )
     {
         if( ct.length() > maxlen )
@@ -113,6 +114,7 @@ int main()
             maxlen = ct.length();
         }
     }
+    #endif
 
     std::vector<std::string> uniqueERRNOs, uniqueerrnos;
     for( size_t n = 1; n < ERRNOs.size(); ++n )
@@ -320,6 +322,7 @@ int main()
     fout << "#endif //MXLIB_CUDA\n";
     fout << '\n';
     #endif //MXLIB_CUDA
+
     fout << "} //namespace mx" << '\n';
     fout << "#endif //mx_error_t_hpp" << '\n';
 
