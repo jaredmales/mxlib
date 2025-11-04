@@ -242,12 +242,17 @@ if(MXLIB_USE_CUDA)
         )
 endif()
 
-#now generate errno_t.hpp
-add_executable(generate_error_t ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
+
+set(ERROR_T_SRCS ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
                                 ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
                                 ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
-                                ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp
                                 )
+if(MXLIB_USE_CUDA)
+set(ERROR_T_SRCS ${ERROR_T_SRCS} ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp)
+endif()
+
+#now generate errno_t.hpp
+add_executable(generate_error_t ${ERROR_T_SRCS})
 
 add_custom_command(
     OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/error_t.hpp
