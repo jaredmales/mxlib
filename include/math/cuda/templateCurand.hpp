@@ -27,6 +27,8 @@
 #ifndef math_templateCurand_hpp
 #define math_templateCurand_hpp
 
+#ifdef  MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <curand.h>
 
@@ -49,5 +51,7 @@ curandGenerateNormal<double>( curandGenerator_t generator, double *outputPtr, si
 
 } // namespace cuda
 } // namespace mx
+
+#endif  //MXLIB_CUDA
 
 #endif // math_templateCurand_hpp

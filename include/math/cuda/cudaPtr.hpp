@@ -27,6 +27,8 @@
 #ifndef math_cudaPtr_hpp
 #define math_cudaPtr_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <iostream>
 #include <cstdint>
 
@@ -407,4 +409,6 @@ error_t cudaPtr<T, verboseT>::download( hostPtrT *dest )
 
 } // namespace cuda
 } // namespace mx
+
+#endif // MXLIB_CUDA
 #endif // math_cudaPtr_hpp

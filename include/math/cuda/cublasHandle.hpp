@@ -27,6 +27,8 @@
 #ifndef math_cublasHandle_hpp
 #define math_cublasHandle_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -109,4 +111,7 @@ struct cublasHandle
 
 } // namespace cuda
 } // namespace mx
+
+#endif // MXLIB_CUDA
+
 #endif // math_cublasHandle_hpp

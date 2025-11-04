@@ -27,6 +27,8 @@
 #ifndef math_templateCufft_hpp
 #define math_templateCufft_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <complex>
 #include <cuda_runtime.h>
 #include <cufft.h>
@@ -82,5 +84,7 @@ cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
 
 } // namespace cuda
 } // namespace mx
+
+#endif  //MXLIB_CUDA
 
 #endif // math_templateCufft_hpp

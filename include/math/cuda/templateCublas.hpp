@@ -27,6 +27,8 @@
 #ifndef math_templateCublas_hpp
 #define math_templateCublas_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -274,4 +276,7 @@ cublasStatus_t cublasTgemv<double>( cublasHandle_t handle,
 
 } // namespace cuda
 } // namespace mx
+
+#endif //MXLIB_CUDA
+
 #endif // math_templateCublas_hpp

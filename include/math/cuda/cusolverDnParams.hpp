@@ -27,6 +27,8 @@
 #ifndef math_cusolverDnParams_hpp
 #define math_cusolverDnParams_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 
@@ -110,4 +112,7 @@ struct cusolverDnParams
 
 } // namespace cuda
 } // namespace mx
+
+#endif //MXLIB_CUDA
+
 #endif // math_cusolverDnParams_hpp
