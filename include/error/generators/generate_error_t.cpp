@@ -151,7 +151,10 @@ int main()
     fout << '\n';
     fout << "#include <fitsio.h>" << '\n';
     #ifdef MXLIB_CUDA
+    fout << "\n";
+    fout << "#ifdef MXLIB_CUDA" << '\n';
     fout << "#include <cuda_runtime.h>" << '\n';
+    fout << "#endif //MXLIB_CUDA\n";
     #endif
     fout << '\n';
     fout << "#ifndef mx_error_t_hpp" << '\n';
