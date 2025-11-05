@@ -24,17 +24,13 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#ifndef fftT_hpp
-#define fftT_hpp
-
-#pragma GCC system_header
-#include <Eigen/Dense>
+#ifndef fftTcuda_hpp
+#define fftTcuda_hpp
 
 #include "../cuda/templateCufft.hpp"
+#include "../cuda/cudaPtr.hpp"
 
 #include "fftT.hpp"
-
-#include "ftTypes.hpp"
 
 namespace mx
 {
@@ -68,11 +64,14 @@ class fftT<_inputT, _outputT, _rank, 1>
 
     typedef typename fftwTypeSpec<inputT, outputT>::complexT complexT;
 
-    typedef Eigen::Array<inputT, -1, -1> eigenArrayInT;
+    typedef typename cuda::cpp2cudaType<inputT>::cudaType cudaInT;
+    typedef typename cuda::cpp2cudaType<outputT>::cudaType cudaOutT;
 
-    typedef Eigen::Array<outputT, -1, -1> eigenArrayOutT;
+    typedef cuda::cudaPtr<inputT> cudaPtrInT;
 
-    typedef typename cufftHandle planT;
+    typedef cuda::cudaPtr<outputT> cudaPtrOutT;
+
+    typedef cufftHandle planT;
 
   protected:
     dir m_direction{ dir::forward };       ///< Direction of this FFT, either dir::forward (default) or dir::backward
@@ -82,7 +81,7 @@ class fftT<_inputT, _outputT, _rank, 1>
     int m_szY{ 0 };                        ///< Size of the y dimension
     int m_szZ{ 0 };                        ///< size of the z dimension
 
-    planT m_plan{ nullptr };               ///< The cufft handle object.
+    planT m_plan {0};               ///< The cufft handle object.
 
   public:
     /// Default c'tor
@@ -162,23 +161,23 @@ class fftT<_inputT, _outputT, _rank, 1>
                typename std::enable_if<crank == 3>::type * = 0 );
 
     /// Conduct the FFT
-    void operator()( outputT *out, ///< [out] the output of the FFT, must be pre-allocated
-                     inputT *in    ///< [in] the input to the FFT
+    cufftResult operator()( cudaOutT *out, ///< [out] [device] the output of the FFT, must be pre-allocated
+                     cudaInT *in    ///< [in] [device] the input to the FFT
     ) const;
 
     /// Conduct the MFT
-    void operator()( eigenArrayOutT &out, /**< [out] the output of the DFT */
-                     eigenArrayInT &in /**< [in] the input to the DFT */ ) const;
+    cufftResult operator()( cudaPtrOutT &out, /**< [out] the output of the DFT */
+                     cudaPtrInT &in /**< [in] the input to the DFT */ ) const;
 };
 
 template <typename inputT, typename outputT, size_t rank>
-fftT<inputT, outputT, rank, 0>::fftT()
+fftT<inputT, outputT, rank, 1>::fftT()
 {
 }
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-fftT<inputT, outputT, rank, 0>::fftT( int nx, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 1>::type * )
+fftT<inputT, outputT, rank, 1>::fftT( int nx, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 1>::type * )
 {
     static_assert( crank == 2, "only rank 2 is currently supported for cuda fftT" );
     // m_direction = ndir;
@@ -188,7 +187,7 @@ fftT<inputT, outputT, rank, 0>::fftT( int nx, ft::dir ndir, bool inPlace, typena
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-fftT<inputT, outputT, rank, 0>::fftT(
+fftT<inputT, outputT, rank, 1>::fftT(
     int nx, int ny, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 2>::type * )
 {
     plan( nx, ny, ndir, inPlace );
@@ -196,7 +195,7 @@ fftT<inputT, outputT, rank, 0>::fftT(
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-fftT<inputT, outputT, rank, 0>::fftT(
+fftT<inputT, outputT, rank, 1>::fftT(
     int nx, int ny, int nz, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 3>::type * )
 {
     static_assert( crank == 2, "only rank 2 is currently supported for cuda fftT" );
@@ -207,32 +206,35 @@ fftT<inputT, outputT, rank, 0>::fftT(
 }
 
 template <typename inputT, typename outputT, size_t rank>
-fftT<inputT, outputT, rank, 0>::~fftT()
+fftT<inputT, outputT, rank, 1>::~fftT()
 {
     destroyPlan();
 }
 
 template <typename inputT, typename outputT, size_t rank>
-void fftT<inputT, outputT, rank, 0>::destroyPlan()
+void fftT<inputT, outputT, rank, 1>::destroyPlan()
 {
     if( m_plan )
-        fftw_destroy_plan<realT>( m_plan );
+    {
+        cufftDestroy( m_plan );
+    }
 
     m_plan = 0;
 
     m_szX = 0;
     m_szY = 0;
+    m_szZ = 0;
 }
 
 template <typename inputT, typename outputT, size_t rank>
-ft::dir fftT<inputT, outputT, rank, 0>::direction()
+ft::dir fftT<inputT, outputT, rank, 1>::direction()
 {
     return m_direction;
 }
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-void fftT<inputT, outputT, rank, 0>::plan( int nx,
+void fftT<inputT, outputT, rank, 1>::plan( int nx,
                                            ft::dir ndir,
                                            bool inPlace,
                                            typename std::enable_if<crank == 1>::type * )
@@ -242,7 +244,7 @@ void fftT<inputT, outputT, rank, 0>::plan( int nx,
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-void fftT<inputT, outputT, rank, 0>::plan(
+void fftT<inputT, outputT, rank, 1>::plan(
     int nx, int ny, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 2>::type * )
 {
     m_direction = ndir;
@@ -256,31 +258,31 @@ void fftT<inputT, outputT, rank, 0>::plan(
         m_cufftDirection = CUFFT_FORWARD;
     }
 
-    mx::cuda::cufftPlan2d<inputT, outputT>( m_plan, nx, ny );
+    mx::cuda::cufftPlan2d<cudaInT, cudaOutT>( &m_plan, nx, ny );
 }
 
 template <typename inputT, typename outputT, size_t rank>
 template <int crank>
-void fftT<inputT, outputT, rank, 0>::plan(
+void fftT<inputT, outputT, rank, 1>::plan(
     int nx, int ny, int nz, ft::dir ndir, bool inPlace, typename std::enable_if<crank == 3>::type * )
 {
     static_assert( crank == 2, "only rank 2 is currently supported for cuda fftT" );
 }
 
 template <typename inputT, typename outputT, size_t rank>
-void fftT<inputT, outputT, rank, 0>::operator()( outputT *out, inputT *in ) const
+cufftResult fftT<inputT, outputT, rank, 1>::operator()( cudaOutT *out, cudaInT *in ) const
 {
-    mx::cuda::cufftExec<inputT, outputT>( m_plan, in, out, m_cufftDirection );
+    return mx::cuda::cufftExec<cudaInT, cudaOutT>( m_plan, in, out, m_cufftDirection );
 }
 
 template <typename inputT, typename outputT, size_t rank>
-void fftT<inputT, outputT, rank, 0>::operator()( eigenArrayOutT &out, eigenArrayInT &in ) const
+cufftResult fftT<inputT, outputT, rank, 1>::operator()( cudaPtrOutT &out, cudaPtrInT &in ) const
 {
-    mx::cuda::cufftExec<inputT, outputT>( m_plan, in.data(), out.data(), m_cufftDirection );
+    return mx::cuda::cufftExec<cudaInT, cudaOutT>( m_plan, in.data(), out.data(), m_cufftDirection );
 }
 
 } // namespace ft
 } // namespace math
 } // namespace mx
 
-#endif // fftT_hpp
+#endif // fftTcuda_hpp

@@ -27,6 +27,8 @@
 #ifndef math_templateCuda_hpp
 #define math_templateCuda_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <complex>
 
 #include <cuda_runtime.h>
@@ -70,7 +72,10 @@ struct cpp2cudaType<std::complex<double>>
     typedef complex<double>::cudaType cudaType;
 };
 
+
 } // namespace cuda
 } // namespace mx
+
+#endif  //MXLIB_CUDA
 
 #endif // templateCuda_hpp

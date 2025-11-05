@@ -239,7 +239,7 @@ struct clGainOpt
     /// Set the vector of frequencies
     /**
      */
-    void f( std::vector<realT> &newF /**< [in] a vector containing the new frequencies */ );
+    void f( const std::vector<realT> &newF /**< [in] a vector containing the new frequencies */ );
 
     /// Get the size of the frequency vector
     /**
@@ -668,7 +668,7 @@ void clGainOpt<realT>::f( realT *newF, size_t nF )
 }
 
 template <typename realT>
-void clGainOpt<realT>::f( std::vector<realT> &newF )
+void clGainOpt<realT>::f( const std::vector<realT> &newF )
 {
     m_f = newF;
     m_fChanged = true;
@@ -700,13 +700,14 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi )
 template <typename realT>
 std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &H_del, complexT &H_con )
 {
-#ifndef ALLOW_F_ZERO
+    // clang-format off
+    #ifndef ALLOW_F_ZERO
     if( m_f[fi] <= 0 )
     {
-#else
+    #else
     if( m_f[fi] < 0 )
     {
-#endif
+    #endif // clang-format on
 
         H_dm = 0;
         H_del = 0;
@@ -751,13 +752,18 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
         // #pragma omp parallel for
         for( size_t i = 0; i < m_f.size(); ++i )
         {
-#ifndef ALLOW_F_ZERO
-            if( m_f[i] <= 0 )
-                continue;
-#else
-            if( m_f[i] < 0 )
-                continue;
-#endif
+            // clang-format off
+            #ifndef ALLOW_F_ZERO
+                if( m_f[i] <= 0 )
+                {
+                    continue;
+                }
+            #else
+                if( m_f[i] < 0 )
+                {
+                    continue;
+                }
+            #endif // clang-format on
 
             complexT s = complexT( 0.0, math::two_pi<realT>() * m_f[i] );
 
@@ -797,14 +803,15 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
 
             for( size_t jj = jmax; jj < m_a.size() + 1; ++jj )
             {
-#ifdef PRECALC_TRIG
-                realT cs = m_cs( i, jj );
-                realT ss = m_ss( i, jj );
-                IIR += m_remember * m_a[jj - 1] * complexT( cs, -ss );
-#else
-                complexT expZ = exp( -s * m_Ti * realT( jj ) );
-                IIR += m_remember * m_a[jj - 1] * expZ;
-#endif
+                // clang-format off
+                #ifdef PRECALC_TRIG
+                    realT cs = m_cs( i, jj );
+                    realT ss = m_ss( i, jj );
+                    IIR += m_remember * m_a[jj - 1] * complexT( cs, -ss );
+                #else
+                    complexT expZ = exp( -s * m_Ti * realT( jj ) );
+                    IIR += m_remember * m_a[jj - 1] * expZ;
+                #endif // clang-format on
             }
 
             for( size_t jj = jmax; jj < m_b.size(); ++jj )
@@ -1152,7 +1159,9 @@ realT clGainOpt<realT>::optGainOpenLoop(
     olgo.PSDnoise = &PSDnoise;
 
     if( gmax <= 0 )
+    {
         gmax = maxStableGain();
+    }
 
     realT ming = m_minFindMin;
     realT maxg = gmax;

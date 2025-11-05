@@ -12,6 +12,10 @@
 #include "errno_info.hpp"
 #include "fits_status_info.hpp"
 
+#ifdef MXLIB_CUDA
+#include "cudaError_info.hpp"
+#endif
+
 int main()
 {
     std::vector<std::string> error_ts, error_t_msgs;
@@ -71,6 +75,11 @@ int main()
     std::vector<std::string> fits_codes, fits_vals, fits_msgs;
     fits_status_info( fits_codes, fits_vals, fits_msgs );
 
+    #ifdef MXLIB_CUDA
+    std::vector<std::string> cuda_codes, cuda_vals, cuda_msgs;
+    cuda_info(cuda_vals, cuda_codes, cuda_msgs);
+    #endif
+
     // Get max length of a name for formatting
     int maxlen = 0;
     for( auto &en : error_ts )
@@ -96,6 +105,16 @@ int main()
             maxlen = ft.length();
         }
     }
+
+    #ifdef MXLIB_CUDA
+    for( auto &ct : cuda_codes )
+    {
+        if( ct.length() > maxlen )
+        {
+            maxlen = ct.length();
+        }
+    }
+    #endif
 
     std::vector<std::string> uniqueERRNOs, uniqueerrnos;
     for( size_t n = 1; n < ERRNOs.size(); ++n )
@@ -131,6 +150,12 @@ int main()
     fout << "/* ********** DO NOT MODIFY OR COMMIT  ********** */" << '\n';
     fout << '\n';
     fout << "#include <fitsio.h>" << '\n';
+    #ifdef MXLIB_CUDA
+    fout << "\n";
+    fout << "#ifdef MXLIB_CUDA" << '\n';
+    fout << "#include <cuda_runtime.h>" << '\n';
+    fout << "#endif //MXLIB_CUDA\n";
+    #endif
     fout << '\n';
     fout << "#ifndef mx_error_t_hpp" << '\n';
     fout << "#define mx_error_t_hpp" << '\n';
@@ -158,8 +183,7 @@ int main()
         fout << std::format( "    {:{}} ///< {} ({})\n", symbol, maxlen + 1, errno_msgs[n], ERRNOs[n] );
     }
 
-    std::cerr << fits_codes.size() << ' ' << fits_msgs.size() << '\n';
-    for( size_t n = 0; n < fits_codes.size() - 1; ++n )
+    for( size_t n = 0; n < fits_codes.size() ; ++n )
     {
         error_ts.push_back( fits_codes[n] );
         error_t_msgs.push_back( fits_msgs[n] );
@@ -167,9 +191,17 @@ int main()
         fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen + 1, fits_msgs[n] );
     }
 
-    error_ts.push_back( fits_codes.back() );
-    error_t_msgs.push_back( fits_msgs.back() );
-    fout << std::format( "    {:{}} ///< {}\n", fits_codes.back(), maxlen + 1, fits_msgs.back() );
+    #ifdef MXLIB_CUDA
+    for( size_t n = 0; n < cuda_codes.size(); ++n )
+    {
+        error_ts.push_back( cuda_codes[n] );
+        error_t_msgs.push_back( cuda_msgs[n] );
+        std::string symbol = cuda_codes[n] + ',';
+        fout << std::format( "    {:{}} ///< {}\n", symbol, maxlen + 1, cuda_msgs[n] );
+    }
+    #endif
+    fout << std::format( "    {:{}} ///< {}\n", "__sentinel", maxlen + 1, "do not use" );
+
 
     fout << "}; //enum class error_t" << "\n" << '\n';
 
@@ -267,6 +299,32 @@ int main()
     fout << "    }" << '\n';
     fout << "} //fits_status2error_t" << '\n';
     fout << '\n';
+
+    #ifdef MXLIB_CUDA
+    fout << "#ifdef MXLIB_CUDA\n";
+    fout << "/// Convert a cudaError code to \\ref error_t" << '\n';
+    fout << "/**" << '\n';
+    fout << " * \\returns the \\ref error_t code corresponding to the cudaError code" << '\n';
+    fout << " *" << '\n';
+    fout << " * \\ingroup cuda_utils" << '\n';
+    fout << " */" << '\n';
+    fout << "static constexpr error_t cudaError2error_t( const cudaError_t & err/**< [in] the cudaError code to convert*/)"
+         << '\n';
+    fout << "{" << '\n';
+    fout << "    switch(err)" << '\n';
+    fout << "    {" << '\n';
+    for( size_t n = 0; n < cuda_vals.size(); ++n )
+    {
+        fout << "        case " << cuda_vals[n] << ":" << '\n';
+        fout << "            return error_t::" << cuda_codes[n] << ";" << '\n';
+    }
+    fout << "        default:" << '\n';
+    fout << "            return error_t::error;" << '\n';
+    fout << "    }" << '\n';
+    fout << "} //cudaError2error_t" << '\n';
+    fout << "#endif //MXLIB_CUDA\n";
+    fout << '\n';
+    #endif //MXLIB_CUDA
 
     fout << "} //namespace mx" << '\n';
     fout << "#endif //mx_error_t_hpp" << '\n';

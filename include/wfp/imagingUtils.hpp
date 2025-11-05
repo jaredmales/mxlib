@@ -30,6 +30,7 @@
 #include <cmath>
 
 #include "../mxlib.hpp"
+#include "../improc/eigenImage.hpp"
 #include "../math/constants.hpp"
 
 #include "imagingArray.hpp"
@@ -79,13 +80,13 @@ int circularPupil( arrayT &m, ///< [in.out] is the allocated Array.  Dimensions 
 
     if( eps < 0 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "Central obscuration can not be < 0." );
+        internal::mxlib_error_report( error_t::invalidarg, "Central obscuration can not be < 0." );
         return -1;
     }
 
     if( eps > 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "Central obscuration can not be > 1." );
+        internal::mxlib_error_report( error_t::invalidarg, "Central obscuration can not be > 1." );
         return -1;
     }
 
@@ -187,7 +188,7 @@ void makeComplexPupil( arrayOutT &complexPupil, const arrayInT &realPupil, int w
 {
 
     complexPupil.resize( wavefrontSizePixels, wavefrontSizePixels );
-    complexPupil.set( typename arrayOutT::Scalar( 0, 0 ) );
+    complexPupil.setZero();
 
     // Lower-left corner of insertion region
     int bl = 0.5 * ( complexPupil.rows() - 1 ) - 0.5 * ( realPupil.rows() - 1. );
@@ -221,7 +222,7 @@ void makeComplexPupil( arrayOutT &complexWavefront,
 {
 
     complexWavefront.resize( wavefrontSizePixels, wavefrontSizePixels );
-    complexWavefront.set( typename arrayOutT::Scalar( 0, 0 ) );
+    complexWavefront.setConstant( typename arrayOutT::Scalar( 0, 0 ) );
 
     // Lower-left corner of insertion region
     int bl = 0.5 * ( complexWavefront.rows() - 1 ) - 0.5 * ( realAmplitude.rows() - 1. );
@@ -320,22 +321,22 @@ void extractMaskedPixels( imageT1 &dest, ///< [in/out] the image in which to pla
 {
     if( dest.rows() != src.rows() )
     {
-        throw mx::exception(error_t::sizeerr, "dest and src do not have same size (rows)" );
+        throw mx::exception( error_t::sizeerr, "dest and src do not have same size (rows)" );
     }
 
     if( dest.cols() != src.cols() )
     {
-        throw mx::exception(error_t::sizeerr, "dest and src do not have same size (cols)" );
+        throw mx::exception( error_t::sizeerr, "dest and src do not have same size (cols)" );
     }
 
     if( src.rows() != mask.rows() )
     {
-        throw mx::exception(error_t::sizeerr, "src and mask do not have same size (rows)" );
+        throw mx::exception( error_t::sizeerr, "src and mask do not have same size (rows)" );
     }
 
     if( src.cols() != mask.cols() )
     {
-        throw mx::exception(error_t::sizeerr, "src and mask do not have same size (cols)" );
+        throw mx::exception( error_t::sizeerr, "src and mask do not have same size (cols)" );
     }
 
     for( int cc = 0; cc < dest.cols(); ++cc )
@@ -372,27 +373,46 @@ void extractIntensityImage(
     }
 }
 
-template <typename realImageT, typename complexImageT>
-void extractIntensityImageAccum(
-    realImageT &im, int imX0, int imXsz, int imY0, int imYsz, complexImageT &wf, int wfX0, int wfY0 )
-{
-    int im_rows = im.cols();
+/// Extract the intensity image from a complex wavefront and accumulate the result
+/** Can work on a subset of either or both of the image and the wavefront.  This way only
+ * a small part of the image can be extracted for an oversampled wavefront.
+ */
+template <typename realImageT, typename complexImageT, int cudaGPU = 0>
+void extractIntensityImageAccum( realImageT &im,    /**<[out] The real image to populate with intensity */
+                                 int imX0,          /**<[in] The x-coord of the starting image pixel*/
+                                 int imXsz,         /**<[in] The number of x image pixels*/
+                                 int imY0,          /**<[in] The y-coord of the starting image pixel */
+                                 int imYsz,         /**<[in] The number of y image pixels */
+                                 complexImageT &wf, /**<[in] The complex wavefront*/
+                                 int wfX0,          /**<[in] The x-coord of the starting wavefront pixel*/
+                                 int wfY0           /**<[in] The y-coord of the starting wavefront pixel*/
+);
 
-    int wf_rows = wf.cols();
 
-    typename realImageT::Scalar *im_data;
-    typename complexImageT::Scalar *wf_data;
 
-    for( int j = 0; j < imXsz; ++j )
-    {
-        im_data = &im.data()[imX0 + ( imY0 + j ) * im_rows];
-        wf_data = &wf.data()[wfX0 + ( wfY0 + j ) * wf_rows];
-        for( int i = 0; i < imYsz; ++i )
-        {
-            im_data[i] += norm( wf_data[i] );
-        }
-    }
-}
+// CPU versions
+template <>
+void extractIntensityImageAccum<improc::eigenImage<float>, improc::eigenImage<std::complex<float>>, 0>(
+    improc::eigenImage<float> &im, int imX0, int imXsz, int imY0, int imYsz, improc::eigenImage<std::complex<float>> &wf, int wfX0, int wfY0 );
+
+template <>
+void extractIntensityImageAccum<improc::eigenImage<double>, improc::eigenImage<std::complex<double>>, 0>(
+    improc::eigenImage<double> &im, int imX0, int imXsz, int imY0, int imYsz, improc::eigenImage<std::complex<double>> &wf, int wfX0, int wfY0 );
+
+
+#ifdef MXLIB_CUDA
+
+
+// GPU versions
+template <>
+void extractIntensityImageAccum<cuda::cudaPtr<float>, cuda::cudaPtr<std::complex<float>>, 1>(
+    cuda::cudaPtr<float> &im, int imX0, int imXsz, int imY0, int imYsz, cuda::cudaPtr<std::complex<float>> &wf, int wfX0, int wfY0 );
+
+template <>
+void extractIntensityImageAccum<cuda::cudaPtr<double>, cuda::cudaPtr<std::complex<double>>, 1>(
+    cuda::cudaPtr<double> &im, int imX0, int imXsz, int imY0, int imYsz, cuda::cudaPtr<std::complex<double>> &wf, int wfX0, int wfY0 );
+
+#endif
 
 } // namespace wfp
 } // namespace mx

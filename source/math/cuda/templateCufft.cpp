@@ -31,22 +31,23 @@ namespace mx
 namespace cuda
 {
 
+    /*
 template <>
-cufftResult cufftPlan2d<std::complex<float>, std::complex<float>>( cufftHandle *plan, int nx, int ny )
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx )
 {
-    return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
+    return ::cufftPlan1d( plan, nx, CUFFT_C2C );
 }
 
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx )
+{
+    return ::cufftPlan1d( plan, nx, CUFFT_C2C );
+}
+*/
 template <>
 cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny )
 {
     return ::cufftPlan2d( plan, nx, ny, CUFFT_C2C );
-}
-
-template <>
-cufftResult cufftPlan2d<std::complex<double>, std::complex<double>>( cufftHandle *plan, int nx, int ny )
-{
-    return ::cufftPlan2d( plan, nx, ny, CUFFT_Z2Z );
 }
 
 template <>
@@ -56,27 +57,9 @@ cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, in
 }
 
 template <>
-cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle plan,
-                                                                 std::complex<float> *idata,
-                                                                 std::complex<float> *odata,
-                                                                 int direction )
-{
-    return ::cufftExecC2C( plan, (cuComplex *)idata, (cuComplex *)odata, direction );
-}
-
-template <>
 cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, cuComplex *idata, cuComplex *odata, int direction )
 {
     return ::cufftExecC2C( plan, idata, odata, direction );
-}
-
-template <>
-cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle plan,
-                                                                   std::complex<double> *idata,
-                                                                   std::complex<double> *odata,
-                                                                   int direction )
-{
-    return ::cufftExecZ2Z( plan, (cuDoubleComplex *)idata, (cuDoubleComplex *)odata, direction );
 }
 
 template <>

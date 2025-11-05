@@ -32,8 +32,10 @@ TESTNAME = $(PATHNAME)$(notdir $(BASENAME))
 all: mxlib_git_version.h $(TESTNAME) pcommand
 
 $(TESTNAME): $(OBJNAME) testMain.o
-	$(LINK.o) -o $(TESTNAME) testMain.o $(OBJNAME) $(abspath $(SELF_DIR)/../source/libmxlib.so) $(LDFLAGS) $(LDLIBS)
+	$(LINK.o) -o $(TESTNAME) testMain.o $(OBJNAME) $(OTHER_OBJS) -lmxlib $(LDFLAGS) $(LDLIBS) $(CUDA_LIBS) $(OTHER_LIBS)
 	$(SETUID)
+
+#$(LINK.o) -o $(TESTNAME) testMain.o $(OBJNAME) $(abspath $(SELF_DIR)/../source/libmxlib.so) $(LDFLAGS) $(LDLIBS)
 
 ##################################################
 # Force, without building all of catch2 using -B

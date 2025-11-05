@@ -27,6 +27,8 @@
 #ifndef math_syevdxT_hpp
 #define math_syevdxT_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <Eigen/Dense>
 
 #include <cmath>
@@ -490,4 +492,7 @@ int syevdxT<floatT>::calcEigenVecs( eigenT &evecs, eigenT &evals, eigenT &cv, bo
 
 } // namespace cuda
 } // namespace mx
+
+#endif //#MXLIB_CUDA
+
 #endif // math_syevdxT_hpp

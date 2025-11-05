@@ -1,62 +1,162 @@
+/** \file pyramidSensor_test.cpp
+ */
+#include "../../../catch2/catch.hpp"
 
-#define EIGEN_DONT_PARALLELIZE ( 1 )
+#define MX_NO_ERROR_REPORTS
 
-#include <omp.h>
+//#define DEBUG
+
+
+#include "../../../../include/ioutils/fits/fitsFile.hpp"
+using namespace mx::fits;
 
 #include "../../../../include/ao/sim/pyramidSensor.hpp"
 #include "../../../../include/ao/sim/ccdDetector.hpp"
+using namespace mx::AO::sim;
+
 
 #include "../../../../include/improc/eigenImage.hpp"
 #include "../../../../include/improc/imageMasks.hpp"
-
-#include "../../../../include/ioutils/fits/fitsFile.hpp"
-
-#include "../../../../include/sys/timeUtils.hpp"
-
-using namespace mx::sys;
-using namespace mx::AO::sim;
+//#include <mx/improc/milkImage.hpp>
+//#include <mx/improc/eigenCube.hpp>
 using namespace mx::improc;
-using namespace mx::fits;
 
-int main()
+
+
+/// Simulate a pyramid sensor on CPU
+/**
+ * \ingroup ao_sim_pyramidSensor_tests
+ */
+TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
 {
     typedef float realT;
-    typedef ccdDetector<realT> detectorT;
 
-    pyramidSensor<realT, detectorT> pwfs;
+    uint32_t pupSz = 56.0;
+    uint32_t wfSz = 256.0;
 
-    int wfSz = 768;
-    int pupSz = 336;
-    realT D = 6.5;
+    pyramidSensor<realT, ccdDetector<realT>> pwfs;
 
-    eigenImage<realT> pupilMask( wfSz, wfSz );
-    pupilMask.setZero();
-    maskCircle( pupilMask, 0.5 * ( wfSz - 1.0 ), 0.5 * ( wfSz - 1.0 ), 0.5 * pupSz, 1.0 );
+    eigenImage<realT> pupil, fm;
+    pupil.resize(pupSz, pupSz);
+    pupil.setConstant(0);
+    maskCircle(pupil, 0.5 * (1.0 * pupSz - 1), 1);
 
-    pyramidSensor<realT, detectorT>::wavefrontT wf;
-    wf.phase.resize( wfSz, wfSz );
-    wf.phase.setZero();
-    wf.amplitude = pupilMask;
+    wavefront<realT> wf;
+    realT nphperpix = 1e10 / pupil.sum();
 
-    pwfs.wfSz( wfSz );
-    pwfs.detSize( 120., 120. );
+    wf.setAmplitude(pupil * sqrt(nphperpix));
 
-    pwfs.quadSz( pupSz * 60. / 56. );
-    pwfs.wfPS( D / pupSz );
-    pwfs.lambda( 0.8e-6 );
-    pwfs.D( D );
-    pwfs.perStep( 1 );
-    pwfs.modRadius( 3.0 );
-    pwfs.wholePixelModulation( true );
-    pwfs.preAllocate();
+    fm.resize(pupSz, pupSz);
 
-    timespec ts;
-    double t0 = get_curr_time( ts );
-    for( int i = 0; i < 100; ++i )
-        pwfs.doSenseWavefront( wf );
-    double t1 = get_curr_time( ts );
+    pwfs.D(6.5);
+    pwfs.pupilSz(pupSz);
+    pwfs.wfSz(wfSz);
+    pwfs.pupilSep(1 + 4.1 / 56.);
 
-    std::cerr << ( t1 - t0 ) / 100. << "\n";
+    pwfs.perStep(0.5);
+    pwfs.modRadius(3);
+
+    pwfs.detSize(120, 120);
+    pwfs.detector.noNoise(true);
+    pwfs.detector.expTime(1);
+
+    pwfs.lambda(850e-9);
+
+    wf.setPhase(fm * 0);
+
+    pwfs.senseWavefrontCal(wf);
+
+    size_t N = 10;
+    double t0 = mx::sys::get_curr_time();
+    for(size_t n = 0; n < N; ++n)
+    {
+        pwfs.senseWavefrontCal(wf);
+    }
+    double t1 = mx::sys::get_curr_time();
+
+    std::cerr << "\nCPU: " << 1.0*N / (t1-t0) << " fps\n\n";
+
+    eigenImage<realT> ref = pwfs.detectorImage.image;
+
     fitsFile<realT> ff;
-    ff.write( "wfsImage.fits", pwfs.m_wfsImage.image );
+    ff.write("ref.fits", ref);
+    ff.write("tip.fits", pwfs.m_wfsTipImage.image);
+
+    realT s = ref.sum();
+    std::cout << s << '\n';
+
+    REQUIRE(s > 9.9e9);
+
 }
+
+
+
+/// Simulate a pyramid sensor on GPU
+/**
+ * \ingroup ao_sim_pyramidSensor_tests
+ */
+TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
+{
+    typedef float realT;
+
+    uint32_t pupSz = 56.0;
+    uint32_t wfSz = 256.0;
+
+    omp_set_num_threads(4);
+
+    pyramidSensor<realT, ccdDetector<realT>, 1> pwfs;
+
+    eigenImage<realT> pupil, fm;
+    pupil.resize(pupSz, pupSz);
+    pupil.setConstant(0);
+    maskCircle(pupil, 0.5 * (1.0 * pupSz - 1), 1);
+
+    wavefront<realT> wf;
+    realT nphperpix = 1e10 / pupil.sum();
+
+    wf.setAmplitude(pupil * sqrt(nphperpix));
+
+    fm.resize(pupSz, pupSz);
+
+    pwfs.D(6.5);
+    pwfs.pupilSz(pupSz);
+    pwfs.wfSz(wfSz);
+    pwfs.pupilSep(1 + 4.1 / 56.);
+
+    pwfs.perStep(0.5);
+    pwfs.modRadius(3);
+
+    pwfs.detSize(120, 120);
+    pwfs.detector.noNoise(true);
+    pwfs.detector.expTime(1);
+
+    pwfs.lambda(850e-9);
+
+    wf.setPhase(fm * 0);
+
+    pwfs.senseWavefrontCal(wf);
+
+    size_t N = 10;
+    double t0 = mx::sys::get_curr_time();
+    for(size_t n = 0; n < N; ++n)
+    {
+        pwfs.senseWavefrontCal(wf);
+    }
+    double t1 = mx::sys::get_curr_time();
+
+    std::cerr << "\nGPU: " << 1.0*N / (t1-t0) << " fps\n\n";
+
+    eigenImage<realT> ref = pwfs.detectorImage.image;
+
+    fitsFile<realT> ff;
+    ff.write("refgpu.fits", ref);
+    ff.write("tipgpu.fits", pwfs.m_wfsTipImage.image);
+
+    realT s = ref.sum();
+    std::cout << s << '\n';
+
+    REQUIRE(s > 9.9e9);
+
+}
+
+

@@ -20,7 +20,7 @@ AllowAllArgumentsOnNextLine: false
 #This will screw with forwards for template instantiation if true
 SortIncludes: false
 
-IndentPPDirectives: BeforeHash
+#IndentPPDirectives: BeforeHash
 ContinuationIndentWidth: 4
 
 IndentCaseLabels: true

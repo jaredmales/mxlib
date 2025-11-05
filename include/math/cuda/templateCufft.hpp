@@ -27,6 +27,8 @@
 #ifndef math_templateCufft_hpp
 #define math_templateCufft_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <complex>
 #include <cuda_runtime.h>
 #include <cufft.h>
@@ -36,17 +38,22 @@ namespace mx
 namespace cuda
 {
 
+/*
+template <typename inputT, typename outputT>
+cufftResult cufftPlan1d( cufftHandle *plan, int nx);
+
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx );
+
+template <>
+cufftResult cufftPlan1d<cuComplex, cuComplex>( cufftHandle *plan, int nx );
+*/
+
 template <typename inputT, typename outputT>
 cufftResult cufftPlan2d( cufftHandle *plan, int nx, int ny );
 
 template <>
-cufftResult cufftPlan2d<std::complex<float>, std::complex<float>>( cufftHandle *plan, int nx, int ny );
-
-template <>
-cufftResult cufftPlan2d<cuComplex, cuComplex>( cufftHandle *plan, int nx, int ny );
-
-template <>
-cufftResult cufftPlan2d<std::complex<double>, std::complex<double>>( cufftHandle *plan, int nx, int ny );
+cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny );
 
 template <>
 cufftResult cufftPlan2d<cuDoubleComplex, cuDoubleComplex>( cufftHandle *plan, int nx, int ny );
@@ -55,18 +62,18 @@ template <typename inputT, typename outputT>
 cufftResult cufftExec( cufftHandle plan, inputT *idata, inputT *odata, int direction );
 
 template <>
-cufftResult cufftExec<std::complex<float>, std::complex<float>>( cufftHandle plan,
-                                                                 std::complex<float> *idata,
-                                                                 std::complex<float> *odata,
+cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan,
+                                                                 cuComplex *idata,
+                                                                 cuComplex *odata,
                                                                  int direction );
 
 template <>
 cufftResult cufftExec<cuComplex, cuComplex>( cufftHandle plan, cuComplex *idata, cuComplex *odata, int direction );
 
 template <>
-cufftResult cufftExec<std::complex<double>, std::complex<double>>( cufftHandle plan,
-                                                                   std::complex<double> *idata,
-                                                                   std::complex<double> *odata,
+cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
+                                                                   cuDoubleComplex *idata,
+                                                                   cuDoubleComplex *odata,
                                                                    int direction );
 
 template <>
@@ -77,5 +84,7 @@ cufftResult cufftExec<cuDoubleComplex, cuDoubleComplex>( cufftHandle plan,
 
 } // namespace cuda
 } // namespace mx
+
+#endif  //MXLIB_CUDA
 
 #endif // math_templateCufft_hpp

@@ -39,6 +39,7 @@ err.txt
 include/error/error_t.hpp
 include/error/generators/errno_info.hpp
 include/error/generators/fits_status_info.hpp
+include/error/generators/cudaError_info.hpp
 
 #tests
 tests/mxlibTest

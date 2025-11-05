@@ -143,7 +143,7 @@ endfunction()
 #########################################
 
 set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
-set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version (minimum is c++17)")
+set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version (minimum is c++20)")
 
 set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c compiler flags")
 set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c++ compiler flags")
@@ -229,11 +229,30 @@ add_custom_command(
     #DEPENDS_EXPLICIT_ONLY
 )
 
-#now generate errno_t.hpp
-add_executable(generate_error_t ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
+#then generate the CUDA header
+if(MXLIB_USE_CUDA)
+    add_executable(generate_cudaError_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_cudaError_info.cpp)
+    target_link_libraries(generate_cudaError_info PUBLIC CUDA::cudart)
+
+    add_custom_command(
+        OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp
+        COMMAND generate_cudaError_info
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
+        #DEPENDS_EXPLICIT_ONLY
+        )
+endif()
+
+
+set(ERROR_T_SRCS ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
                                 ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
                                 ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
                                 )
+if(MXLIB_USE_CUDA)
+set(ERROR_T_SRCS ${ERROR_T_SRCS} ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp)
+endif()
+
+#now generate errno_t.hpp
+add_executable(generate_error_t ${ERROR_T_SRCS})
 
 add_custom_command(
     OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/error_t.hpp
@@ -674,7 +693,7 @@ if(MXLIB_USE_CUDA)
 
     libname_from_path(CUDA_cusolver_LIBNAME CUDA_cusolver_LIBRARY)
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXVERSION} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
     add_compile_definitions(-DEIGEN_NO_CUDA)
@@ -687,7 +706,12 @@ if(MXLIB_USE_CUDA)
     string(REPLACE " " " -Xcompiler=" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
 
     #and add to the CUDA flags
+
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${MXLIB_NVCCXX_FLAGS}")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std c++20")
+
+    set(CMAKE_CUDA_STANDARD 20)
+    #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 

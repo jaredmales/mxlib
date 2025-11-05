@@ -27,6 +27,8 @@
 #ifndef math_templateCublas_hpp
 #define math_templateCublas_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -71,8 +73,8 @@ cublasStatus_t cublasTscal( cublasHandle_t handle, ///< [in] The cublas context 
  */
 template <typename floatT>
 cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLAS library context.
-                            int n,                 ///< [in] scalar used for multiplication.
-                            const floatT *alpha,   ///< [in] number of elements in the vector x and y
+                            int n,                 ///< [in] number of elements in the vector x and y
+                            const floatT *alpha,   ///< [in] scalar used for multiplication.
                             const floatT *x,       ///< [in] vector with n elements.
                             int incx,              ///< [in] stride between consecutive elements of x
                             floatT *y,             ///< [in.out] vector with n elements.
@@ -97,9 +99,6 @@ cublasStatus_t cublasTaxpy( cublasHandle_t handle, ///< [in] handle to the cuBLA
  * - complex-double, double
  * - complex-double, complex-double
  *
- * Tests:
- *     - Multiplying two vectors element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
- *
  * \ingroup cublas
  */
 template <typename dataT1, typename dataT2>
@@ -109,6 +108,53 @@ cudaError_t elementwiseXxY(
     int size   ///< [in] the number of elements in the vectors.
 );
 
+/// Calculates the element-wise product of two vectors, storing the result in a third vector.
+/** Calculates
+ * \f$
+ * z = x * y
+ * \f$
+ * element by element, a.k.a. the Hadamard product.
+ *
+ * Specializations are provided for:
+ * - float, float,float
+ * - complex-float, complex-float, float
+ * - complex-float, complex-float, complex-float
+ * - double, double, double
+ * - complex-double, complex-double, double
+ * - complex-double, complex-double, complex-double
+ *
+ * \ingroup cublas
+ */
+template <typename dataT0, typename dataT1, typename dataT2>
+cudaError_t elementwiseXxY( dataT0 *z, /**< [out] device pointer for the result vector.  Is filled in with the
+                                                  product of the second two vectors*/
+                            dataT1 *x, ///< [in] device pointer for the 1st vector.
+                            dataT2 *y, ///< [in] device pointer for the 2nd vector.
+                            int size   ///< [in] the number of elements in the vectors.
+);
+
+/// Calculates the element-wise product of two vectors, accumulating the result in a third vector.
+/** Calculates
+ * \f$
+ * z += x * y
+ * \f$
+ * element by element, a.k.a. the Hadamard product of x and y.
+ *
+ * Specializations are provided for:
+ * - float, float,float
+ * - double, double, double
+ *
+ * \todo Complex overloads won't compile for some reason.
+ *
+ * \ingroup cublas
+ */
+template <typename dataT0, typename dataT1, typename dataT2>
+cudaError_t elementwiseXxYAccum( dataT0 *z, /**< [out] device pointer for the result vector.  Is filled in with the
+                                                       product of the second two vectors*/
+                                 dataT1 *x, ///< [in] device pointer for the 1st vector.
+                                 dataT2 *y, ///< [in] device pointer for the 2nd vector.
+                                 int size   ///< [in] the number of elements in the vectors.
+);
 //----------------------------------------------------
 // Tgemv
 
@@ -230,4 +276,7 @@ cublasStatus_t cublasTgemv<double>( cublasHandle_t handle,
 
 } // namespace cuda
 } // namespace mx
+
+#endif //MXLIB_CUDA
+
 #endif // math_templateCublas_hpp

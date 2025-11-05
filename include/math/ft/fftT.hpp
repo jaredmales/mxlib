@@ -149,11 +149,11 @@ class fftT<_inputT, _outputT, _rank, 0>
      */
     ft::dir direction();
 
-    /// Call the FFTW planning routine for an out-of-place transform.
-    void doPlan( const meta::trueFalseT<false> &inPlace );
+protected:
+    /// Call the FFTW planning routine
+    void doPlan( bool inPlace /**< [in] whether or not the tranform is in-place */ );
 
-    /// Call the FFTW planning routine for an in-place transform.
-    void doPlan( const meta::trueFalseT<true> &inPlace );
+public:
 
     /// Planning routine for rank 1 transforms.
     template <int crank = _rank>
@@ -190,7 +190,7 @@ class fftT<_inputT, _outputT, _rank, 0>
                      inputT *in    ///< [in] the input to the FFT
     ) const;
 
-    /// Conduct the MFT
+    /// Conduct the FFT
     void operator()( eigenArrayOutT &out, /**< [out] the output of the DFT */
                      eigenArrayInT &in /**< [in] the input to the DFT */ ) const;
 };
@@ -239,12 +239,15 @@ template <typename inputT, typename outputT, size_t rank>
 void fftT<inputT, outputT, rank, 0>::destroyPlan()
 {
     if( m_plan )
+    {
         fftw_destroy_plan<realT>( m_plan );
+    }
 
     m_plan = 0;
 
     m_szX = 0;
     m_szY = 0;
+    m_szZ = 0;
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -254,24 +257,37 @@ ft::dir fftT<inputT, outputT, rank, 0>::direction()
 }
 
 template <typename inputT, typename outputT, size_t rank>
-void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<false> &inPlace )
+void fftT<inputT, outputT, rank, 0>::doPlan( bool inPlace )
 {
-    (void)inPlace;
 
-    inputT *forplan1;
-    outputT *forplan2;
+    inputT *forplan1 = nullptr;
+    outputT *forplan2 = nullptr;
 
     int sz;
 
     if( rank == 1 )
+    {
         sz = m_szX;
+    }
     if( rank == 2 )
+    {
         sz = m_szX * m_szY;
+    }
     if( rank == 3 )
+    {
         sz = m_szX * m_szY * m_szZ;
+    }
 
     forplan1 = fftw_malloc<inputT>( sz );
-    forplan2 = fftw_malloc<outputT>( sz );
+
+    if( inPlace )
+    {
+        forplan2 = reinterpret_cast<outputT *>(forplan1);
+    }
+    else
+    {
+        forplan2 = fftw_malloc<outputT>( sz );
+    }
 
     int pdir = FFTW_FORWARD;
     if( m_direction == dir::backward )
@@ -279,61 +295,32 @@ void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<false> &inPl
         pdir = FFTW_BACKWARD;
     }
 
-#ifndef MX_FFTW_NOOMP
+    // clang-format off
+    #ifndef MX_FFTW_NOOMP
     #pragma omp critical
-    { // scope for pragma
-#endif
+    {
+    #endif // clang-format on
+
         m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
                                                  forplan1,
                                                  forplan2,
                                                  pdir,
                                                  FFTW_MEASURE );
-#ifndef MX_FFTW_NOOMP
+        // clang-format off
+    #ifndef MX_FFTW_NOOMP
     }
-#endif
+    #endif // clang-format on
 
-    fftw_free<inputT>( forplan1 );
-    fftw_free<outputT>( forplan2 );
-}
-
-template <typename inputT, typename outputT, size_t rank>
-void fftT<inputT, outputT, rank, 0>::doPlan( const meta::trueFalseT<true> &inPlace )
-{
-    (void)inPlace;
-
-    complexT *forplan;
-
-    int sz;
-
-    if( rank == 1 )
-        sz = m_szX;
-    if( rank == 2 )
-        sz = m_szX * m_szY;
-    if( rank == 3 )
-        sz = m_szX * m_szY * m_szZ;
-
-    forplan = fftw_malloc<complexT>( sz );
-
-    int pdir = FFTW_FORWARD;
-    if( m_direction == dir::backward )
+    //Only free forplan2 if it's distinct.  Have to do comparison as same type.
+    if( forplan2 != nullptr && reinterpret_cast<char *>(forplan2) != reinterpret_cast<char *>(forplan1) )
     {
-        pdir = FFTW_BACKWARD;
+        fftw_free<outputT>( forplan2 );
     }
 
-#ifndef MX_FFTW_NOOMP
-    #pragma omp critical
-    { // scope for pragma
-#endif
-        m_plan = fftw_plan_dft<inputT, outputT>( fftwDimVec<rank>( m_szX, m_szY, m_szZ ),
-                                                 reinterpret_cast<inputT *>( forplan ),
-                                                 reinterpret_cast<outputT *>( forplan ),
-                                                 pdir,
-                                                 FFTW_MEASURE );
-#ifndef MX_FFTW_NOOMP
+    if( forplan1 != nullptr )
+    {
+        fftw_free<inputT>( forplan1 );
     }
-#endif
-
-    fftw_free<inputT>( reinterpret_cast<inputT *>( forplan ) );
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -356,14 +343,7 @@ void fftT<inputT, outputT, rank, 0>::plan( int nx,
     m_szY = 0;
     m_szZ = 0;
 
-    if( inPlace == false )
-    {
-        doPlan( meta::trueFalseT<false>() );
-    }
-    else
-    {
-        doPlan( meta::trueFalseT<true>() );
-    }
+    doPlan( inPlace );
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -384,14 +364,7 @@ void fftT<inputT, outputT, rank, 0>::plan(
     m_szY = ny;
     m_szZ = 0;
 
-    if( inPlace == false )
-    {
-        doPlan( meta::trueFalseT<false>() );
-    }
-    else
-    {
-        doPlan( meta::trueFalseT<true>() );
-    }
+    doPlan( inPlace );
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -412,14 +385,7 @@ void fftT<inputT, outputT, rank, 0>::plan(
     m_szY = ny;
     m_szZ = nz;
 
-    if( inPlace == false )
-    {
-        doPlan( meta::trueFalseT<false>() );
-    }
-    else
-    {
-        doPlan( meta::trueFalseT<true>() );
-    }
+    doPlan( inPlace );
 }
 
 template <typename inputT, typename outputT, size_t rank>
@@ -443,14 +409,15 @@ std::vector<int> fftwDimVec<2>( int szX, int szY, int szZ );
 template <>
 std::vector<int> fftwDimVec<3>( int szX, int szY, int szZ );
 
-#ifdef MXLIB_CUDA
-
-#include "fftTcuda.hpp"
-
-#endif
 
 } // namespace ft
 } // namespace math
 } // namespace mx
+
+#ifdef MXLIB_CUDA
+
+    #include "fftTcuda.hpp"
+
+#endif
 
 #endif // fftT_hpp

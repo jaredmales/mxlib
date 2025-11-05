@@ -27,6 +27,8 @@
 #ifndef math_cublasHandle_hpp
 #define math_cublasHandle_hpp
 
+#ifdef MXLIB_CUDA
+
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -57,7 +59,6 @@ struct cublasHandle
      */
     cublasHandle()
     {
-        create();
     }
 
     /// Constructor with option to create / not create the handle
@@ -110,4 +111,7 @@ struct cublasHandle
 
 } // namespace cuda
 } // namespace mx
+
+#endif // MXLIB_CUDA
+
 #endif // math_cublasHandle_hpp

@@ -24,23 +24,29 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-// clang-format off
 #ifndef wfp_fraunhoferPropagator_hpp
 #define wfp_fraunhoferPropagator_hpp
-// clang-format on
 
-    #include "../math/constants.hpp"
-    #include "imagingArray.hpp"
-    #include "imagingUtils.hpp"
+#include "../mxlib.hpp"
 
-    #include "../math/ft/fftT.hpp"
+#include "../math/constants.hpp"
+#include "imagingArray.hpp"
+#include "imagingUtils.hpp"
 
-    #ifdef MXLIB_CUDA
-        #include "../math/cuda/templateCuda.hpp"
-        #include "../math/cuda/cudaPtr.hpp"
-        #include "../math/cuda/templateCufft.hpp"
-        #include "../math/cuda/templateCublas.hpp"
-    #endif
+#include "../math/ft/fftT.hpp"
+
+#ifdef MXLIB_CUDA
+#include "../math/cuda/templateCuda.hpp"
+#include "../math/cuda/cudaPtr.hpp"
+#include "../math/cuda/templateCufft.hpp"
+#include "../math/cuda/templateCublas.hpp"
+#endif
+
+#ifdef DEBUG
+#define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
+#else
+#define BREAD_CRUMB
+#endif
 
 namespace mx
 {
@@ -57,11 +63,13 @@ struct fraunhoferPropagatorArrayT<wavefrontT, 0>
     typedef wavefrontT arrayT;
 };
 
+#ifdef MXLIB_CUDA
 template <typename wavefrontT>
 struct fraunhoferPropagatorArrayT<wavefrontT, 1>
 {
-    typedef mx::cuda::cudaPtr<typename wavefrontT::scalar> arrayT;
+    typedef mx::cuda::cudaPtr<typename wavefrontT::Scalar> arrayT;
 };
+#endif
 
 /// Class to perform Fraunhofer propagation between pupil and focal planes
 /** This class uses the FFT to propagate between planes, and normalizes so that flux
@@ -94,6 +102,8 @@ class fraunhoferPropagator
 
     /// The array data type
     typedef typename fraunhoferPropagatorArrayT<wavefrontT, cudaGPU>::arrayT arrayT;
+
+    typedef verbose::d verboseT;
 
   protected:
     /// The size of the wavefront in pixels
@@ -145,35 +155,34 @@ class fraunhoferPropagator
      * You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
-    void shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
-                     typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    error_t shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
+                        typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
     /// Apply the shift to a pupil wavefront  and apply the normalization.
     /** This will center the resultant focal plane image.
      * You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
-    void shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
-                     typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    error_t shiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
+                        typename std::enable_if<ccudaGPU == 1>::type * = 0 );
 
     /// Apply the shift to a pupil wavefront which will restore it to a centered pupil image, with correct flux.
     /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
-    void unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
+    template <int ccudaGPU = cudaGPU>
+    error_t unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                        typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
     /// Apply the shift to a pupil wavefront which will restore it to a centered pupil image, with correct flux.
     /** You must have allocated the shift screens first, by calling propagatePupilToFocal, propagateFocalToPupil, or
      * setWavefrontSizePixels.
      */
-    template<int ccudaGPU = cudaGPU>
-    void unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
+    template <int ccudaGPU = cudaGPU>
+    error_t unshiftPupil( arrayT &complexPupil, /**< [in.out] the complex pupil plane wavefront to shift*/
                        typename std::enable_if<ccudaGPU == 1>::type * = 0 );
-
 
   public:
     /// Propagate the wavefront from the pupil plane to the focal plane
@@ -182,7 +191,7 @@ class fraunhoferPropagator
      * setting doCenter to false.
      *
      */
-    void propagatePupilToFocal( arrayT &complexFocal, /**< [out] the focal plane wavefront.  Must be
+    error_t propagatePupilToFocal( arrayT &complexFocal, /**< [out] the focal plane wavefront.  Must be
                                                                      pre-allocated to same size as complexPupil.*/
                                 arrayT &complexPupil, /**< [in] the pupil plane wavefront. Modified due
                                                                     to application of centering tilt.*/
@@ -196,7 +205,7 @@ class fraunhoferPropagator
      * setting doCenter to false.
      *
      */
-    void propagateFocalToPupil( arrayT &complexPupil, /**< [out] the pupil plane wavefront. Must be
+    error_t propagateFocalToPupil( arrayT &complexPupil, /**< [out] the pupil plane wavefront. Must be
                                                                      pre-allocated to same size as complexFocal.*/
                                 arrayT &complexFocal, /**< [in] the focal plane wavefront. */
                                 bool doCenter = true  /**< [in] [optional] set to false to not apply
@@ -211,11 +220,13 @@ class fraunhoferPropagator
     void setWavefrontSizePixels( int wfsPix /**< [in] the desired new size of the wavefront */ );
 
   protected:
-    template<int ccudaGPU = cudaGPU>
-    void setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 0>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    void
+    setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 0>::type * = 0 );
 
-    template<int ccudaGPU = cudaGPU>
-    void setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 1>::type * = 0 );
+    template <int ccudaGPU = cudaGPU>
+    void
+    setShiftPhase( complexT *shiftFocal, complexT *shiftPupil, typename std::enable_if<ccudaGPU == 1>::type * = 0 );
 
     /// Calculate the complex tilt arrays for centering and normalizing the wavefronts
     /**
@@ -253,107 +264,174 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::wholePixel( realT wp )
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
-                                                            typename std::enable_if<ccudaGPU == 0>::type * )
+template <int ccudaGPU>
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
+                                                                   typename std::enable_if<ccudaGPU == 0>::type * )
 {
     complexPupil *= m_centerFocal;
+
+    return error_t::noerror;
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
-                                                            typename std::enable_if<ccudaGPU == 1>::type * )
+template <int ccudaGPU>
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::shiftPupil( arrayT &complexPupil,
+                                                                   typename std::enable_if<ccudaGPU == 1>::type * )
 {
-    #ifdef MXLIB_CUDA
-    mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil.m_devicePtr ),
-                              reinterpret_cast<cuComplex *>( m_centerFocal.m_devicePtr ),
-                              pow( m_wavefrontSizePixels, 2 ) );
-    #endif
+    BREAD_CRUMB;
+#ifdef MXLIB_CUDA
+
+    cudaError_t ce = mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil.m_devicePtr ),
+                                               reinterpret_cast<cuComplex *>( m_centerFocal.m_devicePtr ),
+                                               pow( m_wavefrontSizePixels, 2 ) );
+
+    if( ce != cudaSuccess )
+    {
+        return internal::mxlib_error_report<verboseT>( cudaError2error_t( ce ), "from mx::cuda::elementwiseXxY" );
+    }
+
+#endif
+
+    BREAD_CRUMB;
+
+    return error_t::noerror;
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
-                                                              typename std::enable_if<ccudaGPU == 0>::type * )
+template <int ccudaGPU>
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
+                                                                 typename std::enable_if<ccudaGPU == 0>::type * )
 {
     complexPupil *= m_centerPupil;
+
+    return error_t::noerror;
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
-                                                              typename std::enable_if<ccudaGPU == 1>::type * )
+template <int ccudaGPU>
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::unshiftPupil( arrayT &complexPupil,
+                                                                 typename std::enable_if<ccudaGPU == 1>::type * )
 {
-    #ifdef MXLIB_CUDA
-    mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil._m_devicePtr ),
+#ifdef MXLIB_CUDA
+    cudaError_t ce = mx::cuda::elementwiseXxY( reinterpret_cast<cuComplex *>( complexPupil.m_devicePtr ),
                               reinterpret_cast<cuComplex *>( m_centerPupil.m_devicePtr ),
                               pow( m_wavefrontSizePixels, 2 ) );
-    #endif
+
+    if( ce != cudaSuccess )
+    {
+        return internal::mxlib_error_report<verboseT>( cudaError2error_t( ce ), "from mx::cuda::elementwiseXxY" );
+    }
+#endif
+
+    return error_t::noerror;
 }
 
-
 template <typename wavefrontT, int cudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::propagatePupilToFocal( arrayT &complexFocal,
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::propagatePupilToFocal( arrayT &complexFocal,
                                                                        arrayT &complexPupil,
                                                                        bool doCenter /*default = true*/
 )
 {
+
+    BREAD_CRUMB;
+
     // First setup the tilt screens (does nothing if there's no change in size)
     setWavefrontSizePixels( complexPupil.rows() );
+
+    BREAD_CRUMB;
 
     // Apply the centering shift -- this adjusts by 0.5 pixels and normalizes
     if( doCenter )
     {
-        shiftPupil( complexPupil );
+        error_t ec = shiftPupil( complexPupil );
+
+        if(ec != error_t::noerror)
+        {
+            return internal::mxlib_error_report<verboseT>(ec, "from shiftPupil");
+        }
     }
+
+    BREAD_CRUMB;
 
     // fft_fwd.fft(complexPupil.data(), complexFocal.data() );
     m_fft_fwd( complexFocal.data(), complexPupil.data() );
+
+    BREAD_CRUMB;
+
+    return error_t::noerror;
 }
 
 template <typename wavefrontT, int cudaGPU>
-void fraunhoferPropagator<wavefrontT, cudaGPU>::propagateFocalToPupil( arrayT &complexPupil,
+error_t fraunhoferPropagator<wavefrontT, cudaGPU>::propagateFocalToPupil( arrayT &complexPupil,
                                                                        arrayT &complexFocal,
                                                                        bool doCenter /*default = true*/
 )
 {
+    BREAD_CRUMB;
+
     // First setup the tilt screens (does nothing if there's no change in size)
     setWavefrontSizePixels( complexPupil.rows() );
 
+    BREAD_CRUMB;
     // fft_back.fft( complexFocal.data(), complexPupil.data());
     m_fft_back( complexPupil.data(), complexFocal.data() );
+
+    BREAD_CRUMB;
 
     // Unshift the wavefront and normalize
     if( doCenter )
     {
-        unshiftPupil( complexPupil );
+        error_t ec = unshiftPupil( complexPupil );
+
+        if(ec != error_t::noerror)
+        {
+            return internal::mxlib_error_report<verboseT>(ec, "from unshiftPupil");
+        }
+
     }
+
+    BREAD_CRUMB;
+
+    return error_t::noerror;
 }
 
 template <typename wavefrontT, int cudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::setWavefrontSizePixels( int wfsPix )
 {
+    BREAD_CRUMB;
+
     // If no change in size, do nothing
     if( wfsPix == m_centerFocal.rows() )
     {
         return;
     }
 
+    BREAD_CRUMB;
+
     m_wavefrontSizePixels = wfsPix;
+
+    BREAD_CRUMB;
 
     m_xcen = 0.5 * ( wfsPix - 1.0 );
     m_ycen = 0.5 * ( wfsPix - 1.0 );
 
+    BREAD_CRUMB;
+
     makeShiftPhase();
+
+    BREAD_CRUMB;
 
     m_fft_fwd.plan( wfsPix, wfsPix );
 
+    BREAD_CRUMB;
+
     m_fft_back.plan( wfsPix, wfsPix, math::ft::dir::backward );
+
+    BREAD_CRUMB;
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerFocal,
                                                                complexT *centerPupil,
                                                                typename std::enable_if<ccudaGPU == 0>::type * )
@@ -373,15 +451,24 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerF
 }
 
 template <typename wavefrontT, int cudaGPU>
-template<int ccudaGPU>
+template <int ccudaGPU>
 void fraunhoferPropagator<wavefrontT, cudaGPU>::setShiftPhase( complexT *centerFocal,
                                                                complexT *centerPupil,
                                                                typename std::enable_if<ccudaGPU == 1>::type * )
 {
-    #ifdef MXLIB_CUDA
-    m_centerFocal.upload( centerFocal, pow( m_wavefrontSizePixels, 2 ) );
-    m_centerPupil.upload( centerPupil, pow( m_wavefrontSizePixels, 2 ) );
-    #endif
+#ifdef MXLIB_CUDA
+
+    BREAD_CRUMB;
+
+    m_centerFocal.upload( centerFocal, m_wavefrontSizePixels, m_wavefrontSizePixels );
+
+    BREAD_CRUMB;
+
+    m_centerPupil.upload( centerPupil, m_wavefrontSizePixels, m_wavefrontSizePixels );
+
+    BREAD_CRUMB;
+
+#endif
 }
 
 template <typename wavefrontT, int cudaGPU>
@@ -392,6 +479,8 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::makeShiftPhase()
     // The normalization is included in the tilt.
     realT norm = 1. / ( m_wavefrontSizePixels * sqrt( 2 ) );
     complexT cnorm = complexT( norm, norm );
+
+    BREAD_CRUMB;
 
     /// Host memory to build the shift screens
     complexT *centerFocal = new complexT[m_wavefrontSizePixels * m_wavefrontSizePixels];
@@ -412,7 +501,11 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::makeShiftPhase()
         }
     }
 
+    BREAD_CRUMB;
+
     setShiftPhase( centerFocal, centerPupil );
+
+    BREAD_CRUMB;
 
     delete[] centerFocal;
     delete[] centerPupil;
@@ -422,9 +515,3 @@ void fraunhoferPropagator<wavefrontT, cudaGPU>::makeShiftPhase()
 } // namespace mx
 
 #endif // wfp_fraunhoferPropagator_hpp
-
-// #ifdef MXLIB_CUDA
-
-// #include "fraunhoferPropagatorCuda.hpp"
-
-// #endif
