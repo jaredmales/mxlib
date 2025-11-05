@@ -29,8 +29,12 @@
 #include "improc/eigenImage.hpp"
 using namespace mx::improc;
 
+#ifdef MXLIB_CUDA
+
 #include "math/cuda/cudaPtr.hpp"
 using namespace mx::cuda;
+
+#endif //MXLIB_CUDA
 
 //#include <iostream>
 #include <Eigen/Dense>
@@ -79,10 +83,11 @@ void extractIntensityImageAccum<eigenImage<double>, eigenImage<std::complex<doub
     return extractIntensityImageAccum_cpu(im, imX0, imXsz, imY0, imYsz, wf, wfX0, wfY0);
 }
 
+#ifdef MXLIB_CUDA
+
 template <typename realT, typename complexT>
 cudaError_t extractIntensityImageAccum_gpu(
     realT *im, int im_cols, int imX0, int imXsz, int imY0, int imYsz, complexT *wf, int wf_cols, int wfX0, int wfY0 );
-
 
 template <>
 void extractIntensityImageAccum<cudaPtr<float>, cudaPtr<std::complex<float>>, 1>(
@@ -112,6 +117,7 @@ void extractIntensityImageAccum<cudaPtr<double>, cudaPtr<std::complex<double>>, 
 {
     extractIntensityImageAccum_gpu( im.data(), im.cols(), imX0, imXsz, imY0, imYsz, wf.data(), wf.cols(), wfX0, wfY0 );
 }
+#endif // MXLIB_CUDA
 
 
 } // namespace wfp
