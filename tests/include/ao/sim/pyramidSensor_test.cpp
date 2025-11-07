@@ -76,11 +76,11 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
 
     std::cerr << "\nCPU: " << 1.0*N / (t1-t0) << " fps\n\n";
 
-    eigenImage<realT> ref = pwfs.detectorImage.image;
+    eigenImage<realT> ref = pwfs.detectorImage.image();
 
     fitsFile<realT> ff;
     ff.write("ref.fits", ref);
-    ff.write("tip.fits", pwfs.m_wfsTipImage.image);
+    ff.write("tip.fits", pwfs.detectorImage.tipImage());
 
     realT s = ref.sum();
     std::cout << s << '\n';
@@ -146,11 +146,11 @@ TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
 
     std::cerr << "\nGPU: " << 1.0*N / (t1-t0) << " fps\n\n";
 
-    eigenImage<realT> ref = pwfs.detectorImage.image;
+    eigenImage<realT> ref = pwfs.detectorImage.image();
 
     fitsFile<realT> ff;
     ff.write("refgpu.fits", ref);
-    ff.write("tipgpu.fits", pwfs.m_wfsTipImage.image);
+    ff.write("tipgpu.fits", pwfs.detectorImage.tipImage());
 
     realT s = ref.sum();
     std::cout << s << '\n';

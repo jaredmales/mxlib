@@ -39,7 +39,7 @@ class ccdDetector
 
     typedef wavefront<realT> wavefrontT;
 
-    typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
+    //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
 
     typedef mx::math::randomT<realT, std::mt19937_64, std::normal_distribution<realT>> norm_distT;
 
@@ -127,8 +127,9 @@ class ccdDetector
      * -# Read noise is applied
      * -# Result is rounded to nearest whole integer.
      */
-    void exposeImage( imageT &out, ///< [out] The output image, after all above steps applied.
-                      imageT &in   ///< [in] the input image, in photons/sec flux units.
+    template<typename imageTout, typename imageTin>
+    void exposeImage( imageTout &out, ///< [out] The output image, after all above steps applied.
+                      imageTin &in   ///< [in] the input image, in photons/sec flux units.
     );
 };
 
@@ -281,7 +282,8 @@ void ccdDetector<realT>::noNoise( bool nn )
 }
 
 template <typename realT>
-void ccdDetector<realT>::exposeImage( imageT &out, imageT &in )
+template<typename imageTout, typename imageTin>
+void ccdDetector<realT>::exposeImage( imageTout &out, imageTin &in )
 {
 
     using poisson_param_t = typename std::poisson_distribution<int>::param_type;

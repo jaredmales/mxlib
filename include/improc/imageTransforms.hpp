@@ -33,6 +33,8 @@
 #include <iostream>
 #include <limits>
 
+#include "eigenImage.hpp"
+
 namespace mx
 {
 namespace improc
@@ -128,7 +130,7 @@ struct cubicConvolTransform
         {
             return cubic * d * d * d - 5. * cubic * d * d + 8. * cubic * d - 4. * cubic;
         }
-        
+
         return 0;
     }
 
@@ -904,7 +906,7 @@ void imageDownSample( imageOutT &imout, const imageInT &imin )
     }
 
     // Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> temp;
-    imageOutT temp;
+    eigenImage<Scalar> temp;
     temp.resize( imin.rows() / closestRebin, imin.cols() / closestRebin );
 
     for( int i = 0; i < temp.rows(); ++i )
@@ -926,7 +928,7 @@ void imageDownSample( imageOutT &imout, const imageInT &imin )
 
     transformT trans;
     // Eigen::Array<Scalar, -1,-1> kern;
-    imageOutT kern;
+    eigenImage<Scalar> kern;
 
     const int lbuff = transformT::lbuff;
     const int width = transformT::width;

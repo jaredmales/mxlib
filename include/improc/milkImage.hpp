@@ -149,29 +149,30 @@ class milkImage
     typedef _dataT dataT; ///< The data type
 
   protected:
-    std::string m_name; ///< The image name, from name.im.shm (the .im.shm should not be given).
+    std::string m_name;                ///< The image name, from name.im.shm (the .im.shm should not be given).
 
-    IMAGE *m_image{ nullptr }; ///< Pointer to the ImageStreamIO IMAGE structure.
+    IMAGE *m_image{ nullptr };         ///< Pointer to the ImageStreamIO IMAGE structure.
 
-    dataT *m_raw{ nullptr }; // The raw pointer address is stored here for checks
+    dataT *m_raw{ nullptr };           // The raw pointer address is stored here for checks
 
     eigenMap<dataT> *m_map{ nullptr }; // An Eigen::Map of the array
 
-    uint64_t m_size_0{ 0 }; ///< The size[0] of the image when last opened.
+    uint64_t m_size_0{ 0 };            ///< The size[0] of the image when last opened.
 
-    uint64_t m_size_1{ 0 }; ///< The size[1] of the image when last opened.
+    uint64_t m_size_1{ 0 };            ///< The size[1] of the image when last opened.
 
-    bool m_passive {false}; /**< If true then the cnt0 counter is not incremented on post.  Usage: this will not
-                                 trigger the dmcomb process in cacao, so the DM will not pick up the shape until
-                                 something does trigger it. */
+    bool m_passive{ false }; /**< If true then the cnt0 counter is not incremented on post.  Usage: this will not
+                                  trigger the dmcomb process in cacao, so the DM will not pick up the shape until
+                                  something does trigger it. */
 
   public:
     /// Default c'tor
     milkImage();
 
     /// Constructor which opens the specified image, which must already exist in shared memory.
-    milkImage(
-        const std::string &imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
+    milkImage( const std::string &imname /**< [in] The image name, from name.im.shm
+                                                   (the .im.shm should not be given).*/
+    );
 
     /// Constructor which (re-)creates the specified image with the given size
     milkImage( const std::string &imname, ///< [in] The image name, from name.im.shm (the .im.shm should not be given).
@@ -191,8 +192,9 @@ class milkImage
     /**
      * \throws std::invalid_argument if the image type_code does not match dataT.
      */
-    void
-    open( const std::string &imname /**< [in] The image name, from name.im.shm (the .im.shm should not be given).*/ );
+    void open( const std::string &imname /**< [in] The image name, from name.im.shm
+             (the .im.shm should not be given).*/
+    );
 
     /// Create (or re-create) and connect to an image, allocating the eigenMap.
     /**
@@ -212,35 +214,47 @@ class milkImage
                  const eigenImage<dataT> &im ///< [in] An existing eigenImage
     );
 
+    /// Get the raw pointer
+    dataT *data();
+
+    /// Get the raw pointer
+    const dataT *data() const;
+
     /// Get the width of the image
     /**
      * \returns the current value of m_size_0
      */
-    uint32_t rows();
+    uint32_t rows() const;
 
     /// Get the height of the image
     /**
      * \returns the current value of m_size_1
      */
-    uint32_t cols();
+    uint32_t cols() const;
+
+    /// Get the total size of the image
+    /**
+     * \returns the current value of m_size_0 x m_size_1
+     */
+    uint64_t size() const;
 
     /// Get the size of a dimension of the image
     /**
      * \returns the current value of m_size_0 or m_size_1 depending on n
      */
-    uint32_t size( unsigned n /**< [in] the dimension to get the size of*/ );
+    uint32_t size( unsigned n /**< [in] the dimension to get the size of*/ ) const;
 
     /// Set the passive flag
     /** Sets \ref m_passive
-      *
+     *
      */
-    void passive( bool pass /**< [in] new value of the \ref m_passive flag */);
+    void passive( bool pass /**< [in] new value of the \ref m_passive flag */ );
 
     /// Get the passive flag
     /** Gets \ref m_passive
-      *
+     *
      */
-    bool passive();
+    bool passive() const;
 
     /// Checks if the image is connected and is still the same format as when connected.
     /** Checks on pointer value, size[], and data_type.
@@ -250,7 +264,7 @@ class milkImage
      * \returns true if connected and no changes
      * \returns false if not connected or something changed.  All maps are now invalid.
      */
-    bool valid();
+    bool valid() const;
 
     /// Reopens the image.
     /** Same as
@@ -276,6 +290,19 @@ class milkImage
      *
      */
     eigenMap<dataT> &operator()();
+
+    /// Get an eigenMap (const version)
+    /** Use with caution:
+     * - there is no way to know if the image has changed
+     * - you should check \ref valid() before using
+     *
+     *
+     * \returns an Eigen::Map<Array,-1,-1> reference
+     *
+     * \throws if the image is not opened
+     *
+     */
+    const eigenMap<dataT> &operator()() const;
 
     /// Conversion operator returns an eigenMap
     /** Use this like
@@ -303,6 +330,54 @@ class milkImage
      */
     template <typename eigenT>
     milkImage &operator=( const eigenT &im /**< [in] the eigen array to copy to the stream*/ );
+
+    /// Access a single value in the array by its linear index
+    /** This does not set the write flag or post after finishing.  You must manage these steps
+     *  if using this to modify the array.
+     *
+     * This is intended for use inside loops and so does no validity or range checks.  You must ensure that the image is
+     * connected and valid and that \p idx is in range.
+     *
+     * \returns a reference to the value at the given position
+     */
+    dataT &operator[]( size_t idx /**< [in] the linear index of the pixel in the array */ );
+
+    /// Access a single value in the array by its linear index (const version)
+    /** This does not set the write flag or post after finishing.  You must manage these steps
+     *  if using this to modify the array.
+     *
+     * This is intended for use inside loops and so does no validity or range checks.  You must ensure that the image is
+     * connected and valid and that \p idx is in range.
+     *
+     * \returns a reference to the value at the given position
+     */
+    const dataT &operator[]( size_t idx /**< [in] the linear index of the pixel in the array */ ) const;
+
+    /// Access a single value in the array by its row and column coordinates
+    /** This does not set the write flag or post after finishing.  You must manage these steps
+     *  if using this to modify the array.
+     *
+     * This is intended for use inside loops and so does no validity or range checks.  You must ensure that the image is
+     * connected and valid and that \p row and \p col are in range.
+     *
+     * \returns a reference to the value at the given position
+     */
+    dataT &operator()( int row, /**< [in] the row of the element*/
+                       int col  /**< [in] the columnof the element */
+    );
+
+    /// Access a single value in the array by its row and column coordinates (const version)
+    /** This does not set the write flag or post after finishing.  You must manage these steps
+     *  if using this to modify the array.
+     *
+     * This is intended for use inside loops and so does no validity or range checks.  You must ensure that the image is
+     * connected and valid and that \p row and \p col are in range.
+     *
+     * \returns a reference to the value at the given position
+     */
+    const dataT &operator()( int row, /**< [in] the row of the element*/
+                       int col  /**< [in] the columnof the element */
+    ) const;
 
     /// Set the write flag
     /** The write flag is set to indicate whether or not the the data is being changed.
@@ -374,14 +449,14 @@ void milkImage<dataT>::open( const std::string &imname )
     {
         delete m_image;
         m_image = nullptr;
-        throw(mx::exception(error_t::liberr, "ImageStreamIO_openIm returned an error" ));
+        throw( mx::exception( error_t::liberr, "ImageStreamIO_openIm returned an error" ) );
     }
 
     if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw(mx::exception(error_t::invalidarg,"shmim datatype does not match template type" ));
+        throw( mx::exception( error_t::invalidarg, "shmim datatype does not match template type" ) );
     }
 
     m_name = imname;
@@ -431,14 +506,14 @@ void milkImage<dataT>::create( const std::string &imname, uint32_t sz0, uint32_t
     {
         delete m_image;
         m_image = nullptr;
-        throw(mx::exception(error_t::liberr,  "ImageStreamIO_createIm_gpu returned an error" ));
+        throw( mx::exception( error_t::liberr, "ImageStreamIO_createIm_gpu returned an error" ) );
     }
 
     if( ImageStructTypeCode<dataT>::TypeCode != m_image->md->datatype )
     {
         delete m_image;
         m_image = nullptr;
-        throw(mx::exception(error_t::invalidarg, "shmim datatype does not match template type" ));
+        throw( mx::exception( error_t::invalidarg, "shmim datatype does not match template type" ) );
     }
 
     m_name = imname;
@@ -461,7 +536,18 @@ eigenMap<dataT> &milkImage<dataT>::operator()()
 {
     if( m_map == nullptr )
     {
-        throw(mx::exception(error_t::invalidconfig, "Image is not open (map is null)") );
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (map is null)" ) );
+    }
+
+    return *m_map;
+}
+
+template <typename dataT>
+const eigenMap<dataT> &milkImage<dataT>::operator()() const
+{
+    if( m_map == nullptr )
+    {
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (map is null)" ) );
     }
 
     return *m_map;
@@ -500,24 +586,36 @@ void milkImage<dataT>::close()
 
     if( rv != IMAGESTREAMIO_SUCCESS )
     {
-        throw(mx::exception(error_t::liberr,  "ImageStreamIO_closeIm returned an error") );
+        throw( mx::exception( error_t::liberr, "ImageStreamIO_closeIm returned an error" ) );
     }
 }
 
 template <typename dataT>
-uint32_t milkImage<dataT>::rows()
+dataT *milkImage<dataT>::data()
+{
+    return m_raw;
+}
+
+template <typename dataT>
+const dataT *milkImage<dataT>::data() const
+{
+    return m_raw;
+}
+
+template <typename dataT>
+uint32_t milkImage<dataT>::rows() const
 {
     return m_size_0;
 }
 
 template <typename dataT>
-uint32_t milkImage<dataT>::cols()
+uint32_t milkImage<dataT>::cols() const
 {
     return m_size_1;
 }
 
 template <typename dataT>
-uint32_t milkImage<dataT>::size( unsigned n )
+uint32_t milkImage<dataT>::size( unsigned n ) const
 {
     if( n == 0 )
     {
@@ -532,19 +630,25 @@ uint32_t milkImage<dataT>::size( unsigned n )
 }
 
 template <typename dataT>
-void milkImage<dataT>::passive(bool pass)
+uint64_t milkImage<dataT>::size() const
+{
+    return m_size_0 * m_size_1;
+}
+
+template <typename dataT>
+void milkImage<dataT>::passive( bool pass )
 {
     m_passive = pass;
 }
 
 template <typename dataT>
-bool milkImage<dataT>::passive()
+bool milkImage<dataT>::passive() const
 {
     return m_passive;
 }
 
 template <typename dataT>
-bool milkImage<dataT>::valid()
+bool milkImage<dataT>::valid() const
 {
     if( m_image == nullptr )
     {
@@ -566,12 +670,12 @@ milkImage<dataT> &milkImage<dataT>::operator=( const eigenT &im )
 {
     if( m_image == nullptr )
     {
-        throw(mx::exception(error_t::invalidconfig, "Image is not open (image is null)" ));
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (image is null)" ) );
     }
 
     if( m_map == nullptr )
     {
-        throw(mx::exception(error_t::invalidconfig,  "Image is not open (map is null)") );
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (map is null)" ) );
     }
 
     setWrite( true );
@@ -586,11 +690,35 @@ milkImage<dataT> &milkImage<dataT>::operator=( const eigenT &im )
 }
 
 template <typename dataT>
+dataT &milkImage<dataT>::operator[]( size_t idx )
+{
+    return m_raw[idx];
+}
+
+template <typename dataT>
+const dataT &milkImage<dataT>::operator[]( size_t idx ) const
+{
+    return m_raw[idx];
+}
+
+template <typename dataT>
+dataT &milkImage<dataT>::operator()( int row, int col )
+{
+    return ( *m_map )( row, col );
+}
+
+template <typename dataT>
+const dataT &milkImage<dataT>::operator()( int row, int col ) const
+{
+    return ( *m_map )( row, col );
+}
+
+template <typename dataT>
 void milkImage<dataT>::setWrite( bool wrflag )
 {
     if( m_image == nullptr )
     {
-        throw(mx::exception(error_t::invalidconfig, "Image is not open" ));
+        throw( mx::exception( error_t::invalidconfig, "Image is not open" ) );
     }
 
     m_image->md->write = wrflag;
@@ -601,24 +729,24 @@ void milkImage<dataT>::post()
 {
     if( m_image == nullptr )
     {
-        throw(mx::exception(error_t::invalidconfig, "Image is not open" ));
+        throw( mx::exception( error_t::invalidconfig, "Image is not open" ) );
     }
 
-    if(!m_passive)
+    if( !m_passive )
     {
         errno_t rv = ImageStreamIO_UpdateIm( m_image );
         m_image->md->atime = m_image->md->writetime;
 
         if( rv != IMAGESTREAMIO_SUCCESS )
         {
-            throw(mx::exception(error_t::liberr, "ImageStreamIO_UpdateIm returned an error" ));
+            throw( mx::exception( error_t::liberr, "ImageStreamIO_UpdateIm returned an error" ) );
         }
     }
     else
     {
-        if(clock_gettime(CLOCK_ISIO, &m_image->md->writetime) == -1)
+        if( clock_gettime( CLOCK_ISIO, &m_image->md->writetime ) == -1 )
         {
-            throw(mx::exception(errno2error_t(errno), "clock_gettime returned an error" ));
+            throw( mx::exception( errno2error_t( errno ), "clock_gettime returned an error" ) );
         }
         m_image->md->atime = m_image->md->writetime;
 
