@@ -322,6 +322,14 @@ class milkImage
      */
     operator eigenMap<dataT>();
 
+    /// Copy data from another milkImage to this shared memory stream
+    /** Sets the write flag, copies using the Eigen assignment to map, unsets the write flag, then posts.
+     *
+     * \throws on an error
+     *
+     */
+    milkImage &operator=( const milkImage &im /**< [in] the milkImage to copy to this stream*/ );
+
     /// Copy data from an Eigen Array type to the shared memory stream
     /** Sets the write flag, copies using the Eigen assigment to map, unsets the write flag, then posts.
      *
@@ -376,7 +384,7 @@ class milkImage
      * \returns a reference to the value at the given position
      */
     const dataT &operator()( int row, /**< [in] the row of the element*/
-                       int col  /**< [in] the columnof the element */
+                             int col  /**< [in] the columnof the element */
     ) const;
 
     /// Set the write flag
@@ -662,6 +670,30 @@ bool milkImage<dataT>::valid() const
     }
 
     return true;
+}
+
+template <typename dataT>
+milkImage<dataT> &milkImage<dataT>::operator=( const milkImage<dataT> &im )
+{
+    if( m_image == nullptr )
+    {
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (image is null)" ) );
+    }
+
+    if( m_map == nullptr )
+    {
+        throw( mx::exception( error_t::invalidconfig, "Image is not open (map is null)" ) );
+    }
+
+    setWrite( true );
+
+    *m_map = im(); // gets the map from im, will throw on invalid
+
+    setWrite( false );
+
+    post();
+
+    return *this;
 }
 
 template <typename dataT>
