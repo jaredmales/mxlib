@@ -55,7 +55,7 @@ struct cublasHandle
 
   public:
     /// Default c'tor
-    /** Creates the handle.
+    /** Does not create the handle.
      */
     cublasHandle()
     {
@@ -66,28 +66,70 @@ struct cublasHandle
     {
         if( create )
         {
-            this->create();
+            cublasStatus_t cbec = this->create();
+
+            if( cbec != CUBLAS_STATUS_SUCCESS )
+            {
+                std::string msg = std::format( "cublasHandle::cublasHandle error from create: [{}] {}\n",
+                                          cublasGetStatusName( cbec ),
+                                          cublasGetStatusString( cbec ) );
+
+                throw mx::exception<verbose::d>( mx::error_t::liberr, msg);
+            }
         }
     }
 
     /// Destructor
     ~cublasHandle()
     {
-        if( m_handle )
+        cublasStatus_t cbec = destroy();
+        if( cbec != CUBLAS_STATUS_SUCCESS )
         {
-            cublasDestroy( m_handle );
+            std::cerr << std::format( "cublasHandle::~cublasHandle error from destroy: [{}] {}\n",
+                                      cublasGetStatusName( cbec ),
+                                      cublasGetStatusString( cbec ) );
         }
     }
 
     /// Create (allocate) the handle.
-    void create()
+    /**
+     *  \returns the cuBLAS status code from cublasDestroy or cublasCreate
+     */
+    cublasStatus_t create()
     {
-        cublasStatus_t cbec = cublasCreate( &m_handle );
+
+        cublasStatus_t cbec = destroy();
         if( cbec != CUBLAS_STATUS_SUCCESS )
         {
-            std::cerr << __FILE__ << " " << __LINE__ << " " << cbec << "\n";
-            exit( -1 );
+            return cbec;
         }
+
+        cbec = cublasCreate( &m_handle );
+
+        if( cbec != CUBLAS_STATUS_SUCCESS )
+        {
+            destroy(); // we try but ignore any errors.  Hoping that any possible cleanup occurs, and sets nullptr if
+                       // needed.
+        }
+
+        return cbec;
+    }
+
+    /// Destroy (de-allocate) the handle.
+    /**
+     *  \returns the cuBLAS status code from cublasDestroy
+     */
+    cublasStatus_t destroy()
+    {
+        cublasStatus_t cbec = CUBLAS_STATUS_SUCCESS;
+        if( m_handle )
+        {
+            cublasStatus_t cbec = cublasDestroy( m_handle );
+
+            m_handle = nullptr;
+        }
+
+        return cbec;
     }
 
     /// Get the handle for use in calls to cublas routines

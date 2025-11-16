@@ -175,22 +175,25 @@ cudaError_t elementwiseXxYAccum( dataT0 *z, /**< [out] device pointer for the re
  */
 template <typename floatT>
 cublasStatus_t
-cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuBLAS library context.
-             cublasOperation_t trans, ///< [in] operation on a, CUBLAS_OP_N for none, and CUBLAS_OP_T for transpose
-             int m,                   ///< [in] rows in matrix A.
-             int n,                   ///< [in] columns in matrix A.
-             const floatT *alpha,     ///< [in] scalar used for multiplication of A
-             const floatT *A, ///< [in] array of dimension lda x n with lda >= max(1,m). The leading m by n part of the
-                              ///< array A is multiplied by alpha and x.  Unchanged.
-             int lda,         ///< [in] leading dimension of A. lda must be at least max(1,m).
-             const floatT *x, ///< [in] vector of at least (1+(n-1)*abs(incx)) elements if transa==CUBLAS_OP_N and at
-                              ///< least (1+(m-1)*abs(incx)) elements otherwise.
-             int incx,        ///< [in] stride of x.
-             const floatT *
-                 beta, ///< [in] scalar used for multiplication of y, if beta==0 then y does not need to be initialized.
-             floatT *y, ///< [in.out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at
-                        ///< least (1+(n-1)*abs(incy)) elements otherwise.
-             int incy   ///< [in] stride of y
+cublasTgemv( cublasHandle_t handle,   /**< [in] handle to the cuBLAS library context. */
+             cublasOperation_t trans, /**< [in] operation on a, CUBLAS_OP_N for none, and CUBLAS_OP_T for transpose */
+             int m,                   /**< [in] [host] rows in matrix A. */
+             int n,                   /**< [in] [host] columns in matrix A. */
+             const floatT *alpha,     /**< [in] [host/device] scalar used for multiplication of A */
+             const floatT *A,         /**< [in] [device] array of dimension lda x n with lda >= max(1,m).
+                                                         The leading m by n part of the
+                                                         array A is multiplied by alpha and x.  Unchanged. */
+             int lda,                 /**< [in] [host] leading dimension of A. lda must be at least max(1,m). */
+             const floatT *x,         /**< [in] [device] vector of at least (1+(n-1)*abs(incx)) elements if
+                                                         transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx))
+                                                         elements otherwise. */
+             int incx,                /**< [in] [host] stride of x. */
+             const floatT *beta,      /**< [in] [host/device] scalar used for multiplication of y, if beta==0
+                                                              then y does not need to be initialized.*/
+             floatT *y,               /**< [in.out] [device] vector of at least (1+(m-1)*abs(incy)) elements
+                                                             if transa==CUBLAS_OP_N and at
+                                                             least (1+(n-1)*abs(incy)) elements otherwise.*/
+             int incy                 /**< [in] [host] stride of y */
 );
 
 /// Perform a matrix-vector multiplication for stride-less arrays
@@ -277,6 +280,6 @@ cublasStatus_t cublasTgemv<double>( cublasHandle_t handle,
 } // namespace cuda
 } // namespace mx
 
-#endif //MXLIB_CUDA
+#endif // MXLIB_CUDA
 
 #endif // math_templateCublas_hpp
