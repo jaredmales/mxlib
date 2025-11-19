@@ -17,6 +17,7 @@
 #include "../../sys/timeUtils.hpp"
 
 #include "../../improc/eigenImage.hpp"
+#include "../../improc/milkImage.hpp"
 #include "../../improc/imageMasks.hpp"
 
 #include "../../math/constants.hpp"
@@ -49,7 +50,8 @@ struct wfsImageT
     unsigned iterNo;
 
     /// The wavefront sensor detector image type
-    typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
+    //typedef Eigen::Array<realT, Eigen::Dynamic, Eigen::Dynamic> imageT;
+    typedef improc::milkImage<realT> imageT;
 
     imageT image;
 
@@ -449,9 +451,6 @@ class pyramidSensor
     /// The image formed by the WFS
     wfsImageT<realT> m_wfsImage;
 
-  public:
-    wfsImageT<realT> m_wfsTipImage;
-
   protected:
     void makeOpdMask();
 
@@ -509,7 +508,7 @@ class pyramidSensor
      * im = aim / naccums
      */
     template <int ccudaGPU = cudaGPU>
-    void downloadAccumImage( realImageT &im,
+    void downloadAccumImage( improc::eigenMap<realT> &im,
                              realArrayT &aim,
                              uint32_t naccums,
                              typename std::enable_if<ccudaGPU == 0>::type * = 0 );
@@ -519,7 +518,7 @@ class pyramidSensor
      * im = aim / naccums
      */
     template <int ccudaGPU = cudaGPU>
-    void downloadAccumImage( realImageT &im,
+    void downloadAccumImage( improc::eigenMap<realT> &im,
                              realArrayT &aim,
                              uint32_t naccums,
                              typename std::enable_if<ccudaGPU == 1>::type * = 0 );
@@ -606,7 +605,9 @@ void pyramidSensor<realT, detectorT, cudaGPU>::detSize( const uint32_t &nrows, c
     m_detCols = ncols;
 
     detector.setSize( m_detRows, m_detCols );
-    detectorImage.image.resize( m_detRows, m_detCols );
+
+    detectorImage.image.create("camwfs", m_detRows, m_detCols );
+    detectorImage.tipImage.create("camtip", m_wfSz, m_wfSz);
 
     m_opdMaskMade = false; // make sure size check is run on current settings
 }
@@ -722,9 +723,12 @@ bool pyramidSensor<realT, detectorT, cudaGPU>::senseWavefront( wavefrontT &pupil
 
         if( m_roTime_counter >= m_roTime )
         {
-            detector.exposeImage( detectorImage.image, m_wfsImage.image );
+            detector.exposeImage( detectorImage.image(), m_wfsImage.image() );
+            detectorImage.image.post();
 
-            detectorImage.tipImage = m_wfsTipImage.image;
+            detectorImage.tipImage() = m_wfsImage.tipImage();
+            detectorImage.tipImage.post();
+
             detectorImage.iterNo = m_wfsImage.iterNo;
 
             m_roTime_counter = 0;
@@ -755,11 +759,13 @@ bool pyramidSensor<realT, detectorT, cudaGPU>::senseWavefrontCal( wavefrontT &pu
 
     BREAD_CRUMB;
 
-    detector.exposeImage( detectorImage.image, m_wfsImage.image );
+    detector.exposeImage( detectorImage.image(), m_wfsImage.image() );
+    detectorImage.image.post();
 
     BREAD_CRUMB;
 
-    detectorImage.tipImage = m_wfsTipImage.image;
+    detectorImage.tipImage() = m_wfsImage.tipImage();
+    detectorImage.tipImage.post();
 
     BREAD_CRUMB;
 
@@ -1100,13 +1106,14 @@ void pyramidSensor<realT, detectorT, cudaGPU>::makeOpdMask()
         throw mx::exception( error_t::invalidconfig, msg );
     }
 
-    m_wfsImage.image.resize( m_imageSz, m_imageSz );
-    m_wfsTipImage.image.resize( m_wfSz, m_wfSz );
+    m_wfsImage.image.create("camwfs_raw", m_imageSz, m_imageSz );
+    m_wfsImage.tipImage.create( "camtip_raw", m_wfSz, m_wfSz );
 
     if( m_detRows == 0 || m_detCols == 0 )
     {
         detSize( m_imageSz, m_imageSz );
     }
+
     else if( m_detRows > m_imageSz || m_detCols > m_imageSz )
     {
         std::string msg = "image size (m_imageSz = " + std::to_string( m_imageSz ) + ") ";
@@ -1450,7 +1457,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::accumWeightedImage( realArrayT &a
 
 template <typename realT, typename detectorT, int cudaGPU>
 template <int ccudaGPU>
-void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( realImageT &im,
+void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( improc::eigenMap<realT> &im,
                                                                    realArrayT &aim,
                                                                    uint32_t naccums,
                                                                    typename std::enable_if<ccudaGPU == 0>::type * )
@@ -1460,7 +1467,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( realImageT &i
 
 template <typename realT, typename detectorT, int cudaGPU>
 template <int ccudaGPU>
-void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( realImageT &im,
+void pyramidSensor<realT, detectorT, cudaGPU>::downloadAccumImage( improc::eigenMap<realT> &im,
                                                                    realArrayT &aim,
                                                                    uint32_t naccums,
                                                                    typename std::enable_if<ccudaGPU == 1>::type * )
@@ -1606,8 +1613,11 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefront( wavefrontT &pup
 
     BREAD_CRUMB;
 
-    downloadAccumImage( m_wfsTipImage.image, m_wfsTipImageAccum, m_modSteps );
-    downloadAccumImage( m_wfsImage.image, m_wfsImageAccum, m_modSteps );
+    downloadAccumImage( m_wfsImage.tipImage(), m_wfsTipImageAccum, m_modSteps );
+    m_wfsImage.tipImage.post();
+
+    downloadAccumImage( m_wfsImage.image(), m_wfsImageAccum, m_modSteps );
+    m_wfsImage.image.post();
 
     BREAD_CRUMB;
 
@@ -1663,11 +1673,13 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
         makeOpdMask();
     }
 
-    m_wfsImage.image.resize( m_imageSz, m_imageSz );
-    m_wfsImage.image.setZero();
+    m_wfsImage.image.create("camwfs", m_imageSz, m_imageSz );
+    m_wfsImage.image().setZero();
+    m_wfsImage.image.post();
 
-    m_wfsTipImage.image.resize( m_wfSz, m_wfSz );
-    m_wfsTipImage.image.setZero();
+    m_wfsImage.tipImage.create("camtip", m_wfSz, m_wfSz );
+    m_wfsImage.tipImage().setZero();
+    m_wfsImage.tipImage.post();
 
     pupilPlane.getWavefront( m_pupilPlaneCF, m_wfSz );
 
@@ -1711,7 +1723,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
     //---------------------------------------------
     // Extract the tip image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsTipImage.image,
+    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsImage.tipImage(),
                                                                          0,
                                                                          m_wfSz,
                                                                          0,
@@ -1743,7 +1755,7 @@ void pyramidSensor<realT, detectorT, cudaGPU>::doSenseWavefrontNoMod( wavefrontT
     //---------------------------------------------
     // Extract the image.
     //---------------------------------------------
-    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsImage.image,
+    wfp::extractIntensityImageAccum<realArrayT, complexArrayT, cudaGPU>( m_wfsImage.image(),
                                                                          0,
                                                                          m_imageSz,
                                                                          0,

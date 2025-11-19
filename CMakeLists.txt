@@ -102,8 +102,6 @@ macro(liblist_strip_namespace LIBRARY_LIST prefix)
 
     #strip namespace from beginning
     string(REGEX REPLACE "^[^;]*::" "${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
-    #message("LIBRARY_LIST: ${${LIBRARY_LIST}}")
-    #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
 
     #strip remaining namespaces
     string(REGEX REPLACE "[ ;].*::" ";${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
@@ -112,14 +110,32 @@ endmacro()
 
 ## Function linklibs_from_list
  # Turn list of library names into a -l delimited string for linking
+ # If the library is specified with a full path we don't mess with it
  #
  # First: LINK_LIBRARIES: output string
  # Second: LIBRARY_LIST: input list to process
  #
 macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
 
-    string(REPLACE ";" " -l" ${LINK_LIBRARIES} "${${LIBRARY_LIST}}")
-    set(${LINK_LIBRARIES} "-l${${LINK_LIBRARIES}}")
+    foreach(lib ${${LIBRARY_LIST}})
+
+         cmake_path(HAS_PARENT_PATH lib LIB_IS_PATH)
+
+         #message("lib: ${lib} ${LIB_IS_PATH}")
+
+         if(NOT LIB_IS_PATH)
+            string(PREPEND lib "-l")
+         endif()
+
+         set(LIBRARY_LIST_OUT "${LIBRARY_LIST_OUT} ${lib}")
+
+    endforeach()
+
+    #message("LIBRARY_LIST_OUT: ${LIBRARY_LIST_OUT}")
+
+    set(${LINK_LIBRARIES} "${LIBRARY_LIST_OUT}")
+
+    #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
 
 endmacro()
 
@@ -635,8 +651,8 @@ if(MXLIB_USE_ISIO)
         include_directories(${ISIO_INCLUDE_DIRS})
         add_compile_definitions("-DMXLIB_MILK")
 
-        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK")
-        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK")
+        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK -DHAVE_CUDA")
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK -DHAVE_CUDA")
 
         linklibdirs_from_list(ISIO_LIBDIRS_FLAGS ISIO_LIBRARY_DIRS)
         set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${ISIO_LIBDIRS_FLAGS}")
