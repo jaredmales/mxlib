@@ -180,9 +180,9 @@ cublasTgemv( cublasHandle_t handle,   /**< [in] handle to the cuBLAS library con
              int m,                   /**< [in] [host] rows in matrix A. */
              int n,                   /**< [in] [host] columns in matrix A. */
              const floatT *alpha,     /**< [in] [host/device] scalar used for multiplication of A */
-             const floatT *A,         /**< [in] [device] array of dimension lda x n with lda >= max(1,m).
-                                                         The leading m by n part of the
-                                                         array A is multiplied by alpha and x.  Unchanged. */
+             const floatT *A,         /**< [in] [device] vector of at least (1+(n-1)*abs(incx)) elements if
+                                                         transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx))
+                                                         elements otherwise. */
              int lda,                 /**< [in] [host] leading dimension of A. lda must be at least max(1,m). */
              const floatT *x,         /**< [in] [device] vector of at least (1+(n-1)*abs(incx)) elements if
                                                          transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx))
@@ -213,18 +213,22 @@ cublasTgemv( cublasHandle_t handle,   /**< [in] handle to the cuBLAS library con
  */
 template <typename floatT>
 cublasStatus_t
-cublasTgemv( cublasHandle_t handle,   ///< [in] handle to the cuBLAS library context.
-             cublasOperation_t trans, ///< [in] operation on a, CUBLAS_OP_N for none, and CUBLAS_OP_T for transpose
-             int m,                   ///< [in] rows in matrix A.
-             int n,                   ///< [in] columns in matrix A.
-             const floatT *alpha,     ///< [in] scalar used for multiplication of A
-             const floatT *A,         ///< [in] array of dimension m x n.  Unchanged.
-             const floatT *x, ///< [in] vector of at least (1+(n-1)*abs(incx)) elements if transa==CUBLAS_OP_N and at
-                              ///< least (1+(m-1)*abs(incx)) elements otherwise.
-             const floatT *
-                 beta, ///< [in] scalar used for multiplication of y, if beta==0 then y does not need to be initialized.
-             floatT *y ///< [in.out] vector of at least (1+(m-1)*abs(incy)) elements if transa==CUBLAS_OP_N and at least
-                       ///< (1+(n-1)*abs(incy)) elements otherwise.
+cublasTgemv( cublasHandle_t handle,   /**< [in] handle to the cuBLAS library context. */
+             cublasOperation_t trans, /**< [in] operation on a, CUBLAS_OP_N for none, and CUBLAS_OP_T for transpose */
+             int m,                   /**< [in] rows in matrix A. */
+             int n,                   /**< [in] columns in matrix A. */
+             const floatT *alpha,     /**< [in] scalar used for multiplication of A */
+             const floatT *A,         /**< [in] [device] vector of at least (1+(n-1)*abs(incx)) elements if
+                                                         transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx))
+                                                         elements otherwise. */
+             const floatT *x,         /**< [in] [device] vector of at least (1+(n-1)*abs(incx)) elements if
+                                                         transa==CUBLAS_OP_N and at least (1+(m-1)*abs(incx))
+                                                         elements otherwise. */
+             const floatT *beta,      /**< [in] [host/device] scalar used for multiplication of y, if beta==0
+                                                              then y does not need to be initialized.*/
+             floatT *y                /**< [in/out] [device] vector of at least (1+(m-1)*abs(incy)) elements
+                                                             if transa==CUBLAS_OP_N and at
+                                                             least (1+(n-1)*abs(incy)) elements otherwise.*/
 );
 
 template <>

@@ -714,8 +714,6 @@ milkImage<dataT> &milkImage<dataT>::operator=( const eigenT &im )
 
     *m_map = im;
 
-    setWrite( false );
-
     post();
 
     return *this;
