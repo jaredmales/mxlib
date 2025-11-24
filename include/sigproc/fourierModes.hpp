@@ -500,13 +500,13 @@ int fourierModeNumber( int m, int n, int p )
 
     if( p != -1 && p != 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "p must +/-1" );
+        internal::mxlib_error_report( error_t::invalidarg, "p must +/-1" );
         return -1;
     }
 
     if( m == 0 && n == 0 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "piston is ignored" );
+        internal::mxlib_error_report( error_t::invalidarg, "piston is ignored" );
         return -1;
     }
 
@@ -615,16 +615,18 @@ int makeFourierModeFreqs_Rect( std::vector<fourierModeDef> &spf, int N )
 /// Fill in a cube with a Fourier basis.
 /** Fills the cube with either the basic or modified Fourier basis for the modes specified.
  *
- * \param[out] cube will be allocated to hold and will be filled with the modes
- * \param[in] dim is the linear size of the maps, each is
- * \param[in] spf is a vector of mode definitions to use for each mode
- * \param[in] basisType is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC
  *
  * \tparam cubeT is an eigen-like cube, e.g. \ref mx::eigenCube.
  */
 template <typename cubeT>
-int fillFourierBasis(
-    cubeT &cube, int dim, std::vector<fourierModeDef> spf, int basisType, typename cubeT::Scalar ang = 0 )
+int fillFourierBasis( cubeT &cube,                     /**< [out] will be allocated to hold and
+                                                                  will be filled with the modes*/
+                      int dim,                         /**< [in] is the linear size of the maps*/
+                      std::vector<fourierModeDef> spf, /**< [in] is a vector of mode definitions
+                                                                 to use for each mode*/
+                      int basisType,                   /**< [in] is either MX_FOURIER_MODIFIED or MX_FOURIER_BASIC*/
+                      typename cubeT::Scalar ang = 0   /**< [in] */
+)
 {
     int Nmodes = spf.size();
 
