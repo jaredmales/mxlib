@@ -161,8 +161,9 @@ endfunction()
 set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
 set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version (minimum is c++20)")
 
-set(MXLIB_CFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c compiler flags")
-set(MXLIB_CXXFLAGS "-march=native -mfma -DNDEBUG" CACHE STRING "mxlib c++ compiler flags")
+#Jared's setup: "-march=native -mfma -DNDEBUG"
+set(MXLIB_CFLAGS "-march=native" CACHE STRING "mxlib c compiler flags")
+set(MXLIB_CXXFLAGS "-march=native" CACHE STRING "mxlib c++ compiler flags")
 
 set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
 
