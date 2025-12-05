@@ -327,7 +327,8 @@ void syevdxT<floatT>::allocate( int64_t n, int64_t nVecs, cublasFillMode_t uplo 
         m_host_work = reinterpret_cast<void *>( malloc( m_host_wsBytes ) );
         if( m_host_work == nullptr )
         {
-            mxThrowException( err::allocerr, "syevdxT::allocate:", "allocating host memory for work" );
+            throw  std::runtime_error("syevdxT::allocate: allocating host memory for work" );
+            //mxThrowException( err::allocerr, "syevdxT::allocate:", "allocating host memory for work" );
         }
     }
     else

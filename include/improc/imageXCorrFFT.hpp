@@ -171,6 +171,8 @@ class imageXCorrFFT
     realT m_refY0{ 0 };    /**< The x-shift of the reference image to itself using the selected
                                 algorithm, used as coordinate origin*/
 
+    realT m_refPeak{ 0 };  /**< the x-corr peak of the reference shift to itself */
+
     realImageT m_normIm;   ///< The normalized image.
 
     realImageT m_ccIm;     ///< The cross-correlation image
@@ -492,7 +494,9 @@ class imageXCorrFFT
      */
   protected:
     void findPeak( realT &xShift, /**< [out] the x shift of im w.r.t. im0, in pixels */
-                   realT &yShift /**< [out] the y shift of im w.r.t. im0, in pixels */ );
+                   realT &yShift, /**< [out] the y shift of im w.r.t. im0, in pixels */
+                   realT &xcPeak  /**< [out] the x-corr peak */
+    );
 
     ///@}
 
@@ -509,6 +513,7 @@ class imageXCorrFFT
     template <class imT>
     int operator()( realT &xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                     realT &yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
+                    realT &xcPeak, ///< [out] the xc peak
                     const imT &im /**< [in] the image to cross-correlate with the reference*/ );
 
     /// Conduct the cross correlation to a specified tolerance
@@ -521,6 +526,7 @@ class imageXCorrFFT
     template <class im0T, class imT>
     int operator()( realT &xShift, ///< [out] the x shift of im w.r.t. im0, in pixels
                     realT &yShift, ///< [out] the y shift of im w.r.t. im0, in pixels
+                    realT &xcPeak, ///< [out] the xc peak
                     im0T &im0,     ///< [in] a new reference image
                     imT &im        ///< [in] the image to cross-correlate with the reference
     );
@@ -551,7 +557,7 @@ int imageXCorrFFT<realImageT>::padFactor( realT os )
 {
     if( os < 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "padding factor can't be less than 1" );
+        internal::mxlib_error_report( error_t::invalidarg, "padding factor can't be less than 1" );
         return -1;
     }
 
@@ -595,7 +601,7 @@ int imageXCorrFFT<realImageT>::resize( int nrows, int ncols, realT padFactor )
 
     if( padFactor < 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "padding factor can't be less than 1" );
+        internal::mxlib_error_report( error_t::invalidarg, "padding factor can't be less than 1" );
         return -1;
     }
 
@@ -809,7 +815,7 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im.rows() != m_refMaskIm.rows() && im.cols() != m_refMaskIm.cols() )
         {
-            internal::mxlib_error_report(error_t::sizeerr, "reference and reference mask are not the same size" );
+            internal::mxlib_error_report( error_t::sizeerr, "reference and reference mask are not the same size" );
             return -1;
         }
 
@@ -845,7 +851,7 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     {
         if( im0.rows() != m_refWinIm.rows() && im.cols() != m_refWinIm.cols() )
         {
-            internal::mxlib_error_report(error_t::sizeerr, "reference and reference window are not the same size" );
+            internal::mxlib_error_report( error_t::sizeerr, "reference and reference window are not the same size" );
             return -1;
         }
 
@@ -888,10 +894,10 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     // And finally find the reference shift
     m_refX0 = 0;
     m_refY0 = 0;
-
+    m_refPeak = 0;
     m_refValid = true;
 
-    operator()( m_refX0, m_refY0, m_refIm );
+    operator()( m_refX0, m_refY0, m_refPeak, m_refIm );
 
     m_refACIm = m_ccIm;
 
@@ -952,7 +958,7 @@ void imageXCorrFFT<realImageT>::tol( realT nt )
 template <class realImageT>
 void imageXCorrFFT<realImageT>::peakMethod( xcorrPeakMethod xpm )
 {
-    if(xpm != m_peakMethod)
+    if( xpm != m_peakMethod )
     {
         m_peakMethod = xpm;
 
@@ -1005,7 +1011,7 @@ const realImageT &imageXCorrFFT<realImageT>::magIm()
 }
 
 template <class realImageT>
-void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
+void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift, realT &xcPeak )
 {
     int xLag0, yLag0;
 
@@ -1049,6 +1055,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
 
         x0 = ( m_fitter.x0() + x0 );
         y0 = ( m_fitter.y0() + y0 );
+        xcPeak = m_fitter.G();
     }
     else if( m_peakMethod == xcorrPeakMethod::interpPeak )
     {
@@ -1059,7 +1066,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
                       m_ccIm.block( x0, y0, 2 * m_maxLag + 1, 2 * m_maxLag + 1 ),
                       cubicConvolTransform<realT>() );
 
-        m_magIm.maxCoeff( &x, &y );
+        xcPeak = m_magIm.maxCoeff( &x, &y );
         x0 = ( x * ( 1.0 / m_mag ) + x0 );
         y0 = ( y * ( 1.0 / m_mag ) + y0 );
     }
@@ -1069,7 +1076,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
 
         m_magIm = m_ccIm.block( x0, y0, 2 * m_maxLag + 1, 2 * m_maxLag + 1 );
         m_magIm -= m_magIm.minCoeff(); // Must sum to > 0.
-
+        xcPeak = m_magIm.maxCoeff();
         imageCenterOfLight( x, y, m_magIm );
 
         x0 = ( x + x0 );
@@ -1117,7 +1124,7 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
             m_magIm = m_ftWorkPaddedOut.real();
 
             int xf, yf;
-            m_magIm.maxCoeff( &xf, &yf );
+            xcPeak = m_magIm.maxCoeff( &xf, &yf );
 
             xShift = x + ( xf - m_refX0 * m_padFactorR ) / tmagR;
             yShift = y + ( yf - m_refY0 * m_padFactorC ) / tmagC;
@@ -1128,13 +1135,13 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
     else if( m_peakMethod == xcorrPeakMethod::none )
     {
         int x, y;
-        m_ccIm.maxCoeff( &x, &y );
+        xcPeak = m_ccIm.maxCoeff( &x, &y );
         x0 = x;
         y0 = y;
     }
     else
     {
-        throw(mx::exception(error_t::invalidconfig, "unknown peak finding method" ));
+        throw( mx::exception( error_t::invalidconfig, "unknown peak finding method" ) );
     }
 
     //--> unpad here, scaling the shifts
@@ -1144,21 +1151,21 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift )
 
 template <class realImageT>
 template <class imT>
-int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const imT &im )
+int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, realT &xcPeak, const imT &im )
 {
     if( !m_refValid )
     {
-        throw(mx::exception(error_t::invalidconfig, "reference image is not valid" ));
+        throw( mx::exception( error_t::invalidconfig, "reference image is not valid" ) );
     }
 
     if( im.rows() != m_rows )
     {
-        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
+        throw( mx::exception( error_t::sizeerr, "image must be same size as reference (rows)" ) );
     }
 
     if( im.cols() != m_cols )
     {
-        throw(mx::exception(error_t::sizeerr,"image must be same size as reference (rows)" ));
+        throw( mx::exception( error_t::sizeerr, "image must be same size as reference (rows)" ) );
     }
 
     // Mask and normalize as needed
@@ -1227,17 +1234,17 @@ int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, const i
 
 #endif
 
-    findPeak( xShift, yShift );
+    findPeak( xShift, yShift, xcPeak );
 
     return 0;
 }
 
 template <class realImageT>
 template <class im0T, class imT>
-int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, im0T &im0, imT &im )
+int imageXCorrFFT<realImageT>::operator()( realT &xShift, realT &yShift, realT &xcPeak, im0T &im0, imT &im )
 {
     setReference( im0 );
-    return operator()( xShift, yShift, im );
+    return operator()( xShift, yShift, xcPeak, im );
 }
 
 } // namespace improc
