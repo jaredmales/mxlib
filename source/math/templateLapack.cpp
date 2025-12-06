@@ -402,9 +402,11 @@ MXLAPACK_INT gesdd<float>( char JOBZ,
                            MXLAPACK_INT LDVT,
                            float *WORK,
                            MXLAPACK_INT LWORK,
-                           MXLAPACK_INT *IWORK,
-                           MXLAPACK_INT INFO )
+                           MXLAPACK_INT *IWORK
+                            )
 {
+    MXLAPACK_INT INFO;
+
     sgesdd_( &JOBZ,
              &M,
              &N,
@@ -442,9 +444,12 @@ MXLAPACK_INT gesdd<double>( char JOBZ,
                             MXLAPACK_INT LDVT,
                             double *WORK,
                             MXLAPACK_INT LWORK,
-                            MXLAPACK_INT *IWORK,
-                            MXLAPACK_INT INFO )
+                            MXLAPACK_INT *IWORK
+                        )
 {
+
+    MXLAPACK_INT INFO;
+    
     dgesdd_( &JOBZ,
              &M,
              &N,

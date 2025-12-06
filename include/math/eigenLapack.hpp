@@ -664,15 +664,15 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT, -1, -1> &U,  ///< [out] the A.rows(
     MXLAPACK_INT *IWORK = new MXLAPACK_INT[8 * M];
     MXLAPACK_INT INFO;
 
-    math::gesdd<
-        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK, INFO );
+    INFO = math::gesdd<
+        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK);
 
     LWORK = wkOpt;
     // delete WORK;
     dataT *WORK = new dataT[LWORK];
 
     INFO = math::gesdd<
-        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK, INFO );
+        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK);
 
     delete[] WORK;
     delete[] IWORK;

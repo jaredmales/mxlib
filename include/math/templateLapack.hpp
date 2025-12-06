@@ -701,25 +701,10 @@ MXLAPACK_INT gesdd( char JOBZ,
                     MXLAPACK_INT LDVT,
                     dataT *WORK,
                     MXLAPACK_INT LWORK,
-                    MXLAPACK_INT *IWORK,
-                    MXLAPACK_INT INFO )
+                    MXLAPACK_INT *IWORK )
 {
-    return -1;
+    return -100;
 }
-
-/*
-//Declarations of the lapack calls
-extern "C"
-{
-   void sgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, float *A,
-MKL_CONST_PTR MXLAPACK_INT *LDA, float *S, float * U, MKL_CONST_PTR MXLAPACK_INT *LDU, float * VT, MKL_CONST_PTR
-MXLAPACK_INT *LDVT, float *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
-
-   void dgesdd_(MKL_CONST_PTR char * JOBZ, MKL_CONST_PTR MXLAPACK_INT *M, MKL_CONST_PTR MXLAPACK_INT *N, double *A,
-MKL_CONST_PTR MXLAPACK_INT *LDA, double *S, double * U, MKL_CONST_PTR MXLAPACK_INT *LDU, double * VT, MKL_CONST_PTR
-MXLAPACK_INT *LDVT, double *WORK, MKL_CONST_PTR MXLAPACK_INT * LWORK, MXLAPACK_INT * IWORK, MXLAPACK_INT *INFO);
-
-}*/
 
 // float specialization of gesdd
 template <>
@@ -735,8 +720,8 @@ MXLAPACK_INT gesdd<float>( char JOBZ,
                            MXLAPACK_INT LDVT,
                            float *WORK,
                            MXLAPACK_INT LWORK,
-                           MXLAPACK_INT *IWORK,
-                           MXLAPACK_INT INFO );
+                           MXLAPACK_INT *IWORK
+                        );
 
 // double specialization of gesdd
 template <>
@@ -752,8 +737,8 @@ MXLAPACK_INT gesdd<double>( char JOBZ,
                             MXLAPACK_INT LDVT,
                             double *WORK,
                             MXLAPACK_INT LWORK,
-                            MXLAPACK_INT *IWORK,
-                            MXLAPACK_INT INFO );
+                            MXLAPACK_INT *IWORK
+                           );
 
 } // namespace math
 } // namespace mx
