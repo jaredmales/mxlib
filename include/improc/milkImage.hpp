@@ -402,6 +402,12 @@ class milkImage
      * \throws if the image is not opened
      */
     void post();
+
+    /// Get the value of cnt0 (the frame counter)
+    /**
+     * \returns the current value of cnt0
+     */
+    uint64_t cnt0();
 };
 
 template <typename dataT>
@@ -783,6 +789,12 @@ void milkImage<dataT>::post()
         m_image->md->write = 0;
         ImageStreamIO_sempost( m_image, -1 );
     }
+}
+
+template <typename dataT>
+uint64_t milkImage<dataT>::cnt0()
+{
+    return m_image->md->cnt0;
 }
 
 } // namespace improc
