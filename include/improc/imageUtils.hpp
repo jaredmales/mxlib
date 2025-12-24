@@ -78,6 +78,8 @@ constexpr T invalidNumber()
 }
 
 /// Check if the number is nan, using several different methods
+/**
+ */
 inline bool IsNan( float value )
 {
     return ( ( ( ( *(uint32_t *)&value ) & 0x7fffffff ) > 0x7f800000 ) || ( value == invalidNumber<float>() ) ||
@@ -102,9 +104,13 @@ int reflectImageCoords( int &x1,  ///< [out] the reflected x coordinate
     return 0;
 }
 
+/// @}
+
 /// Zero any NaNs in an image
 /**
  * \overload
+ *
+ * \ingroup eigen_image_processing
  */
 template <class imageT, typename valueT>
 void zeroNaNs( imageT &im, ///< [in.out] image which will have any NaN pixels set to zero
@@ -124,6 +130,9 @@ void zeroNaNs( imageT &im, ///< [in.out] image which will have any NaN pixels se
 }
 
 /// Zero any NaNs in an image
+/**
+ * \ingroup eigen_image_processing
+ */
 template <class imageT>
 void zeroNaNs( imageT &im /**< [in.out] image which will have any NaN pixels set to zero */ )
 {
@@ -134,6 +143,7 @@ void zeroNaNs( imageT &im /**< [in.out] image which will have any NaN pixels set
 /// Zero any NaNs in an image cube
 /** This version fills in a mask with 1s where there were nans, 0s elsewhere.
  *
+ * \ingroup eigen_image_processing
  */
 template <class cubeT, class maskCubeT>
 void zeroNaNCube( cubeT &imc,     /**< [in.out] cube which will have any NaN pixels set to zero */
@@ -166,6 +176,9 @@ void zeroNaNCube( cubeT &imc,     /**< [in.out] cube which will have any NaN pix
 }
 
 /// Zero any NaNs in an image cube
+/**
+ * \ingroup eigen_image_processing
+ */
 template <class cubeT>
 void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels set to zero */ )
 {
@@ -176,6 +189,8 @@ void zeroNaNCube( cubeT &imc /**< [in.out] cube which will have any NaN pixels s
 /**
  *
  * \returns the mean of the input image
+ *
+ * \ingroup eigen_image_processing
  */
 template <class calcT, class imageT>
 calcT imageMean( imageT &im /**< [in] the image of which to calculate the mean*/ )
@@ -185,8 +200,9 @@ calcT imageMean( imageT &im /**< [in] the image of which to calculate the mean*/
 
 /// Calculate the mean value of an image over a mask
 /**
- *
  * \returns the mean of the input image in the masked region
+ *
+ * \ingroup eigen_image_processing
  */
 template <class calcT, class imageT, class maskT>
 calcT imageMean( imageT &im, /**< [in] the image of which to calculate the mean*/
@@ -199,6 +215,8 @@ calcT imageMean( imageT &im, /**< [in] the image of which to calculate the mean*
 /**
  *
  * \returns the variance of the input image
+ *
+ * \ingroup eigen_image_processing
  */
 template <typename calcT, class imageT>
 calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
@@ -212,6 +230,8 @@ calcT imageVariance( imageT &im /**< [in] the image of which to calculate the va
 /**
  *
  * \returns the variance of the input image
+ *
+ * \ingroup eigen_image_processing
  */
 template <typename calcT, class imageT, class maskT>
 calcT imageVariance( imageT &im /**< [in] the image of which to calculate the variance*/,
@@ -222,9 +242,108 @@ calcT imageVariance( imageT &im /**< [in] the image of which to calculate the va
     return ( im.template cast<calcT>() * mask - mn ).square().sum() / ( mask.sum() );
 }
 
+/// Calculate the median of an Eigen-like array.
+/** Calculates the median of the entire array, allowing for some pixels to be ignored using a mask.
+ * Working memory can be retained between calls.
+ *
+ * \tparam imageT is an Eigen-like type
+ * \tparam maskT is an Eigen-like type
+ *
+ * \returns the median of the unmasked pixels of mat, using \ref vectorMedianInPlace().
+ *
+ * \ingroup eigen_image_processing
+ *
+ */
+template <typename imageT, typename maskT = imageT>
+typename imageT::Scalar
+imageMedian( const imageT &mat,                             /**< [in] the image to take the median of*/
+             const maskT *mask,                             /**< [in] if non-0, a 1/0 mask where 0 pixels are ignored.*/
+             std::vector<typename imageT::Scalar> *work = 0 /**< [in] [optional] working memory
+                                                                                 can be retained
+                                                                       and re-passed. Is resized.*/
+)
+{
+    typename imageT::Scalar med;
+
+    bool localWork = false;
+    if( work == 0 )
+    {
+        work = new std::vector<typename imageT::Scalar>;
+        localWork = true;
+    }
+
+    int sz = mat.size();
+
+    if( mask )
+    {
+        sz = mask->sum();
+    }
+
+    work->resize( sz );
+
+    if( mask )
+    {
+        int ii = 0;
+        for( int i = 0; i < mat.rows(); ++i )
+        {
+            for( int j = 0; j < mat.cols(); ++j )
+            {
+                if( ( *mask )( i, j ) == 0 )
+                {
+                    continue;
+                }
+                ( *work )[ii] = mat( i, j );
+                ++ii;
+            }
+        }
+    }
+    else
+    {
+        int ii = 0;
+        for( int i = 0; i < mat.rows(); ++i )
+        {
+            for( int j = 0; j < mat.cols(); ++j )
+            {
+                ( *work )[ii] = mat( i, j );
+                ++ii;
+            }
+        }
+    }
+
+    med = math::vectorMedianInPlace( *work );
+
+    if( localWork )
+    {
+        delete work;
+    }
+
+    return med;
+}
+
+/// Calculate the median of an Eigen-like array.
+/** Calculates the median of the entire array.
+ * Working memory can be retained between calls.
+ *
+ * \tparam imageT is an Eigen-like type
+ *
+ * \returns the median of the unmasked pixels of mat, using \ref vectorMedianInPlace().
+ *
+ * \ingroup eigen_image_processing
+ *
+ */
+template <typename imageT>
+typename imageT::Scalar imageMedian( const imageT &mat, /**< [in] the image to take the median of*/
+                                     std::vector<typename imageT::Scalar> *work = 0 /**< [in] [optional] working memory can
+                                                                                               be retained and re-passed.*/
+)
+{
+    return imageMedian( mat, reinterpret_cast<Eigen::Array<typename imageT::Scalar, -1, -1> *>(nullptr), work );
+}
+
 /// Calculate the center of light of an image
 /** Note that the sum of the image should be > 0.
  *
+ * \ingroup eigen_image_processing
  */
 template <typename imageT>
 int imageCenterOfLight( typename imageT::Scalar &x, ///< [out] the x coordinate of the center of light [pixels]
@@ -264,6 +383,7 @@ int imageCenterOfLight( typename imageT::Scalar &x, ///< [out] the x coordinate 
  * scaling used in imageMagnify, the desired scale may not be exact.  As a result
  * the actual scale is returned in scale_x and scale_y.
  *
+ * \ingroup eigen_image_processing
  */
 template <typename floatT, typename imageT, typename magImageT, typename transformT>
 int imageMaxInterp( floatT &x,        ///< [out] the x-position of the maximum, in pixels of the input image
@@ -303,6 +423,7 @@ int imageMaxInterp( floatT &x,        ///< [out] the x-position of the maximum, 
  * scaling used in imageMagnify, the desired scale may not be exact.  As a result
  * the actual scale is returned in scale_x and scale_y.
  *
+ * \ingroup eigen_image_processing
  */
 template <typename floatT, typename imageT, typename magImageT>
 int imageMaxInterp( floatT &x,        ///< [out] the x-position of the maximum, in pixels of the input image
@@ -330,6 +451,8 @@ int imageMaxInterp( floatT &x,        ///< [out] the x-position of the maximum, 
  * \tparam imageT2 the eigen-like array type of mask 1
  * \tparam imageT3 the eigen-like array type of image 2
  * \tparam imageT4 the eigen-like array type of mask 2
+ *
+ * \ingroup eigen_image_processing
  */
 template <typename imageT, typename imageT1, typename imageT2, typename imageT3, typename imageT4>
 void combine2ImagesMasked( imageT &combo,        ///< [out] the combined image.  will be resized.
@@ -357,10 +480,13 @@ void combine2ImagesMasked( imageT &combo,        ///< [out] the combined image. 
     }
 }
 
+/// Remove rows and columns
+/**
+ * \ingroup eigen_image_processing
+ */
 template <typename eigenT, typename eigenTin>
 void removeRowsAndCols( eigenT &out, const eigenTin &in, int st, int w )
 {
-
     out.resize( in.rows() - w, in.cols() - w );
 
     out.topLeftCorner( st, st ) = in.topLeftCorner( st, st );
@@ -373,10 +499,13 @@ void removeRowsAndCols( eigenT &out, const eigenTin &in, int st, int w )
         in.bottomRightCorner( in.rows() - ( st + w ), in.cols() - ( st + w ) );
 }
 
+/// Remove rows
+/**
+ * \ingroup eigen_image_processing
+ */
 template <typename eigenT, typename eigenTin>
 void removeRows( eigenT &out, const eigenTin &in, int st, int w )
 {
-
     out.resize( in.rows() - w, in.cols() );
 
     out.topLeftCorner( st, in.cols() ) = in.topLeftCorner( st, in.cols() );
@@ -385,16 +514,24 @@ void removeRows( eigenT &out, const eigenTin &in, int st, int w )
         in.bottomLeftCorner( in.rows() - ( st + w ), in.cols() );
 }
 
+/// Remove columns
+/**
+ * \ingroup eigen_image_processing
+ */
 template <typename eigenT, typename eigenTin>
 void removeCols( eigenT &out, const eigenTin &in, int st, int w )
 {
-
     out.resize( in.rows(), in.cols() - w );
 
     out.topLeftCorner( in.rows(), st ) = in.topLeftCorner( in.rows(), st );
 
     out.topRightCorner( in.rows(), in.cols() - ( st + w ) ) = in.topRightCorner( in.rows(), in.cols() - ( st + w ) );
 }
+
+
+/** \ingroup image_utils
+ *@{
+ */
 
 /// Copy one image to another, with no transformation
 /** This is merely memcpy
@@ -444,7 +581,7 @@ void *imcpy_flipUDLR( void *dest,    ///< [out] the address of the first pixel i
                       size_t szof    ///< [in] the size in bytes of a one pixel
 );
 
-///@}
+
 
 } // namespace improc
 } // namespace mx
