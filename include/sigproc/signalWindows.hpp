@@ -525,7 +525,7 @@ void tukey2dAnnulus( arrT &filt,                  ///< [in,out] a pre-allocated 
                      typename arrT::Scalar yc     ///< [in] the desired y center of the window.
 )
 {
-    return tukey2dAnnulus( filt, filt.rows(), filt.cols(), D, eps, alpha, xc, yc );
+    return tukey2dAnnulus( filt.data(), filt.rows(), filt.cols(), D, eps, alpha, xc, yc );
 }
 
 /** \brief Create a 2-D Tukey window on a rectangle
