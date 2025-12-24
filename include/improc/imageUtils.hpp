@@ -337,7 +337,7 @@ typename imageT::Scalar imageMedian( const imageT &mat, /**< [in] the image to t
                                                                                                be retained and re-passed.*/
 )
 {
-    return imageMedian( mat, reinterpret_cast<Eigen::Array<typename imageT::Scalar, -1, -1> *>(nullptr), work );
+    return imageMedian( mat, static_cast<Eigen::Array<typename imageT::Scalar, -1, -1> *>(nullptr), work );
 }
 
 /// Calculate the center of light of an image
