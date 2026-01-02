@@ -27,7 +27,7 @@ OBJS = \
 	improc/imageUtils.o \
 	ipc/processInterface.o \
 	ipc/sharedMemSegment.o \
-	math/gslInterpolator.cpp \
+	math/gslInterpolator.o \
 	math/templateBLAS.o \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
