@@ -26,7 +26,7 @@
 # Usage: gengithead.sh directory output_path prefix
 #
 #        directory = directory of git repo, optional default is './'
-#        output_path = optional ouput path, default './git_version.h'
+#        output_path = optional output path, default './git_version.h'
 #        prefix = optional prefix for #define variable names, default is GIT
 #
 #        note: the arguments are positional, so to change output_path you must
@@ -40,18 +40,25 @@ centerName(){
   textsize=${#1}
   width=42
   span=$(((width + textsize) / 2 ))
-  espan=$((span - textsize))
+  espan=$((span - textsize+2))
   if [ $((espan % 2)) -eq 1 ]; then espan=$((espan - 1)); fi
-  printf "    #pragma message (\"*%${span}s%${espan}s\")\n" "$1" "*"
+  printf "                     \"*\033[33m%${span}s\033[39m%${espan}s\"%s\n" "$1" "*\n" "\\"
 }
 
 #defaults for args
 GITPATH=${1:-'./'}
-HEADPATH=${2:-'./git_version.h'}
-PREFIX=${3:-'GIT'}
+REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
+REPO_PATH=$(realpath $GITPATH)
+
+#default PREFIX is the repo name
+PREFIX=${3:-$REPO_NAME}
+
+#default output path is PREFIX_git_version.h
+HEADPATH=${2:-"./"$PREFIX"_git_version.h"}
+
 
 GIT_HEADER="$HEADPATH"
-
+GIT_URL=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH remote get-url origin)
 GIT_BRANCH=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH rev-parse --abbrev-ref HEAD)
 GIT_VERSION=$(git --git-dir=$GITPATH/.git --work-tree=$GITPATH log -1 --format=%H)
 
@@ -60,12 +67,15 @@ git --git-dir=$GITPATH/.git --work-tree=$GITPATH diff-index --quiet HEAD --
 GIT_MODIFIED=$?
 set -e
 
-REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
 
-echo "#ifndef $PREFIX""_VERSION_H" > $GIT_HEADER
-echo "#define $PREFIX""_VERSION_H" >> $GIT_HEADER
+
+echo "#ifndef $PREFIX""_GIT_VERSION_H" > $GIT_HEADER
+echo "#define $PREFIX""_GIT_VERSION_H" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
+echo "#define $PREFIX""_REPO \"$REPO_NAME\"" >> $GIT_HEADER
+echo "#define $PREFIX""_URL \"$GIT_URL\"" >> $GIT_HEADER
 echo "#define $PREFIX""_BRANCH \"$GIT_BRANCH\"" >> $GIT_HEADER
+echo "#define $PREFIX""_SRCPATH \"$REPO_PATH\"" >> $GIT_HEADER
 echo "#define $PREFIX""_CURRENT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
 echo "#define $PREFIX""_REPO_MODIFIED  $GIT_MODIFIED"  >> $GIT_HEADER
 echo "" >> $GIT_HEADER
@@ -74,13 +84,15 @@ if [ $GIT_MODIFIED = 1 ]; then
 echo "#if $PREFIX""_REPO_MODIFIED == 1" >> $GIT_HEADER
 echo "  #ifndef GITHEAD_NOWARNING" >> $GIT_HEADER
 echo "    #define GITHEAD_NOWARNING" >> $GIT_HEADER
-echo "    #pragma message (\"******************************************\")" >> $GIT_HEADER
-echo "    #pragma message (\"*                                        *\")" >> $GIT_HEADER
+echo "    #pragma message (\"\n\"\\" >> $GIT_HEADER
+echo "                     \"******************************************\n\"\\" >> $GIT_HEADER
+echo "                     \"*                                        *\n\"\\" >> $GIT_HEADER
 centerName "WARNING: repository modified" >> $GIT_HEADER
 centerName "changes not committed for"  >> $GIT_HEADER
 centerName $REPO_NAME >> $GIT_HEADER
-echo "    #pragma message (\"*                                        *\")" >> $GIT_HEADER
-echo "    #pragma message (\"******************************************\")" >> $GIT_HEADER
+echo "                     \"*                                        *\n\"\\" >> $GIT_HEADER
+echo "                     \"******************************************\n\"\\" >> $GIT_HEADER
+echo "                    )" >> $GIT_HEADER
 echo "  #endif" >> $GIT_HEADER
 echo "#endif" >> $GIT_HEADER
 fi
