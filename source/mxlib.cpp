@@ -53,14 +53,29 @@ const char *mxlib_comp_git_sha1()
     return MXLIB_COMP_GIT_SHA1;
 }
 
-const bool mxlib_comp_repo_modified()
+const bool mxlib_comp_git_modified()
 {
-    return MXLIB_COMP_REPO_MODIFIED;
+    return MXLIB_COMP_GIT_MODIFIED;
 }
 
-const bool mxlib_comp_repo_untracked()
+const bool mxlib_comp_git_untracked()
 {
-    return MXLIB_COMP_REPO_UNTRACKED;
+    return MXLIB_COMP_GIT_UNTRACKED;
+}
+
+const char *mxlib_comp_current_branch()
+{
+    return mxlib_comp_git_branch();
+}
+
+const char *mxlib_comp_current_sha1()
+{
+    return mxlib_comp_git_sha1();
+}
+
+const bool mxlib_comp_repo_modified()
+{
+    return mxlib_comp_git_modified();
 }
 
 } // namespace mx

@@ -70,13 +70,22 @@ const char *mxlib_comp_git_sha1();
 /**
  * \returns the git repo modified state from when mxlib was compiled
  */
-const bool mxlib_comp_repo_modified();
+const bool mxlib_comp_git_modified();
 
 /// Get the git repo untracked files flag for the compiled portion of mxlib
 /**
  * \returns the git repo untracked files flag from when mxlib was compiled
  */
-const bool mxlib_comp_repo_untracked();
+const bool mxlib_comp_git_untracked();
+
+[[deprecated("use mxlib_comp_git_branch()")]]
+const char *mxlib_comp_current_branch();
+
+[[deprecated("use mxlib_comp_git_sha1()")]]
+const char *mxlib_comp_current_sha1();
+
+[[deprecated("use mxlib_comp_git_modified()")]]
+const bool mxlib_comp_repo_modified();
 
 /// Dump the git status of a repository to a stream
 /** Prints the provided SHA1 hash and whether or not the library
