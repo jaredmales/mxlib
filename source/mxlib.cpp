@@ -28,19 +28,39 @@
 namespace mx
 {
 
-const char *mxlib_comp_current_branch()
+const char *mxlib_comp_git_repo()
 {
-    return MXLIB_COMP_BRANCH;
+    return MXLIB_COMP_GIT_REPO;
 }
 
-const char *mxlib_comp_current_sha1()
+const char *mxlib_comp_git_url()
 {
-    return MXLIB_COMP_CURRENT_SHA1;
+    return MXLIB_COMP_GIT_URL;
+}
+
+const char *mxlib_comp_git_branch()
+{
+    return MXLIB_COMP_GIT_BRANCH;
+}
+
+const char *mxlib_comp_source_path()
+{
+    return MXLIB_COMP_SOURCE_PATH;
+}
+
+const char *mxlib_comp_git_sha1()
+{
+    return MXLIB_COMP_GIT_SHA1;
 }
 
 const bool mxlib_comp_repo_modified()
 {
     return MXLIB_COMP_REPO_MODIFIED;
+}
+
+const bool mxlib_comp_repo_untracked()
+{
+    return MXLIB_COMP_REPO_UNTRACKED;
 }
 
 } // namespace mx

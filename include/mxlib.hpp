@@ -36,11 +36,47 @@
 namespace mx
 {
 
-const char *mxlib_comp_current_branch();
+/// Get the git repo name for the compiled portion of mxlib
+/**
+ * \returns the git repo name from when mxlib was compiled
+ */
+const char *mxlib_comp_git_repo();
 
-const char *mxlib_comp_current_sha1();
+/// Get the git repo url for the compiled portion of mxlib
+/**
+ * \returns the git repo url from when mxlib was compiled
+ */
+const char *mxlib_comp_git_url();
 
+/// Get the git repo branch for the compiled portion of mxlib
+/**
+ * \returns the git repo branch from when mxlib was compiled
+ */
+const char *mxlib_comp_git_branch();
+
+/// Get the source path for the compiled portion of mxlib
+/**
+ * \returns the path to the source from when mxlib was compiled
+ */
+const char *mxlib_comp_source_path();
+
+/// Get the git repo sha1 hash for the compiled portion of mxlib
+/**
+ * \returns the git repo sha1 hash from when mxlib was compiled
+ */
+const char *mxlib_comp_git_sha1();
+
+/// Get the git repo modified state the compiled portion of mxlib
+/**
+ * \returns the git repo modified state from when mxlib was compiled
+ */
 const bool mxlib_comp_repo_modified();
+
+/// Get the git repo untracked files flag for the compiled portion of mxlib
+/**
+ * \returns the git repo untracked files flag from when mxlib was compiled
+ */
+const bool mxlib_comp_repo_untracked();
 
 /// Dump the git status of a repository to a stream
 /** Prints the provided SHA1 hash and whether or not the library
@@ -91,8 +127,8 @@ iosT &dumpGitStatus( iosT &ios /**< [in] a std::ostream-like stream. */ )
 {
     return dumpGitStatus( ios,
                           "mxlib",
-                          mxlib_comp_current_branch(),
-                          mxlib_comp_current_sha1(),
+                          mxlib_comp_git_branch(),
+                          mxlib_comp_git_sha1(),
                           mxlib_comp_repo_modified() );
 }
 

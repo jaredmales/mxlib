@@ -81,11 +81,11 @@ fi
 echo "#ifndef $PREFIX""_GIT_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_GIT_VERSION_H" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
-echo "#define $PREFIX""_REPO \"$REPO_NAME\"" >> $GIT_HEADER
-echo "#define $PREFIX""_URL \"$GIT_URL\"" >> $GIT_HEADER
-echo "#define $PREFIX""_BRANCH \"$GIT_BRANCH\"" >> $GIT_HEADER
-echo "#define $PREFIX""_SRCPATH \"$REPO_PATH\"" >> $GIT_HEADER
-echo "#define $PREFIX""_CURRENT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
+echo "#define $PREFIX""_GIT_REPO \"$REPO_NAME\"" >> $GIT_HEADER
+echo "#define $PREFIX""_GIT_URL \"$GIT_URL\"" >> $GIT_HEADER
+echo "#define $PREFIX""_GIT_BRANCH \"$GIT_BRANCH\"" >> $GIT_HEADER
+echo "#define $PREFIX""_SOURCE_PATH \"$REPO_PATH\"" >> $GIT_HEADER
+echo "#define $PREFIX""_GIT_SHA1 \"$GIT_VERSION\"" >> $GIT_HEADER
 echo "#define $PREFIX""_REPO_MODIFIED  $GIT_MODIFIED"  >> $GIT_HEADER
 echo "#define $PREFIX""_REPO_UNTRACKED  $GIT_UNTRACKED"  >> $GIT_HEADER
 
