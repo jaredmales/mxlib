@@ -45,6 +45,8 @@ centerName(){
   printf "                     \"*\033[33m%${span}s\033[39m%${espan}s\"%s\n" "$1" "*\n" "\\"
 }
 
+DATESTRING="$(date -u --iso-8601=seconds)"
+
 #defaults for args
 GITPATH=${1:-'./'}
 REPO_NAME=$(basename $(git --exec-path=$GITPATH rev-parse --show-toplevel))
@@ -81,6 +83,7 @@ fi
 echo "#ifndef $PREFIX""_GIT_VERSION_H" > $GIT_HEADER
 echo "#define $PREFIX""_GIT_VERSION_H" >> $GIT_HEADER
 echo "" >> $GIT_HEADER
+echo "#define $PREFIX""_BUILD_DATE \"$DATESTRING\"" >> $GIT_HEADER
 echo "#define $PREFIX""_GIT_REPO \"$REPO_NAME\"" >> $GIT_HEADER
 echo "#define $PREFIX""_GIT_URL \"$GIT_URL\"" >> $GIT_HEADER
 echo "#define $PREFIX""_GIT_BRANCH \"$GIT_BRANCH\"" >> $GIT_HEADER
