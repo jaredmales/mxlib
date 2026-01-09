@@ -12,7 +12,7 @@ conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/ma
 conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 conda create -y -n mxlib_env
 conda activate mxlib_env
-bash ./setup/conda_setup_Linux.sh
+bash ./setup/conda_env_setup_Linux.bash
 
 Need to install make, gcc, g++, pkg-config cmake
 
