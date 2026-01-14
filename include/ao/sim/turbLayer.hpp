@@ -42,7 +42,7 @@ namespace AO
 namespace sim
 {
 
-template <typename _aoSystemT>
+template <typename _aoSystemT, class _verboseT>
 struct turbAtmosphere;
 
 /// Simulation of a single turbulent layer
@@ -51,14 +51,16 @@ struct turbAtmosphere;
  *
  * \ingroup mxAOSim
  */
-template <typename _aoSystemT>
+template <typename _aoSystemT, class _verboseT = mx::verbose::d>
 struct turbLayer
 {
     typedef _aoSystemT aoSystemT;
+    typedef _verboseT verboseT;
+
     typedef typename aoSystemT::realT realT;
     typedef Eigen::Array<realT, -1, -1> imageT;
 
-    turbAtmosphere<aoSystemT> *m_parent{ nullptr };
+    turbAtmosphere<aoSystemT, verboseT> *m_parent{ nullptr };
 
     uint32_t m_layerNo;
 
@@ -83,7 +85,7 @@ struct turbLayer
 
     mx::math::uniDistT<realT> uniVar; ///< Uniform deviate, used in shiftRandom.
 
-    void setLayer( turbAtmosphere<aoSystemT> *parent, int layerNo, uint32_t scrnSz );
+    void setLayer( turbAtmosphere<aoSystemT, verboseT> *parent, int layerNo, uint32_t scrnSz );
 
     uint32_t layerNo();
 
@@ -115,12 +117,14 @@ struct turbLayer
 };
 
 // template<typename aoSystemT>
-// turbLayer<aoSystemT>::turbLayer()
+// turbLayer<aoSystemT, verboseT>::turbLayer()
 // {
 // }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::setLayer( turbAtmosphere<aoSystemT> *parent, int layerNo, uint32_t scrnSz )
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::setLayer( turbAtmosphere<aoSystemT, verboseT> *parent,
+                                               int layerNo,
+                                               uint32_t scrnSz )
 {
     m_parent = parent;
     m_layerNo = layerNo;
@@ -129,15 +133,12 @@ void turbLayer<aoSystemT>::setLayer( turbAtmosphere<aoSystemT> *parent, int laye
 
     if( m_parent == nullptr )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbLayer::setLayer", "parent is not set (m_parent is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "parent is not set (m_parent is nullptr)" );
     }
 
     if( m_parent->aosys() == nullptr )
     {
-        mxThrowException( err::paramnotset,
-                          "mx::AO::sim::turbLayer::setLayer",
-                          "parent ao system is not set (m_parent->aosys() is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "parent is not set (m_parent->aosys() is nullptr)" );
     }
 
     realT vwind = m_parent->aosys()->atm.layer_v_wind( m_layerNo );
@@ -151,32 +152,29 @@ void turbLayer<aoSystemT>::setLayer( turbAtmosphere<aoSystemT> *parent, int laye
     alloc();
 }
 
-template <typename aoSystemT>
-uint32_t turbLayer<aoSystemT>::layerNo()
+template <typename aoSystemT, class verboseT>
+uint32_t turbLayer<aoSystemT, verboseT>::layerNo()
 {
     return m_layerNo;
 }
 
-template <typename aoSystemT>
-uint32_t turbLayer<aoSystemT>::scrnSz()
+template <typename aoSystemT, class verboseT>
+uint32_t turbLayer<aoSystemT, verboseT>::scrnSz()
 {
     return m_scrnSz;
 }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::alloc()
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::alloc()
 {
     if( m_parent == nullptr )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbLayer::alloc", "parent is not set (m_parent is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "parent is not set (m_parent is nullptr)" );
     }
 
     if( m_parent->aosys() == nullptr )
     {
-        mxThrowException( err::paramnotset,
-                          "mx::AO::sim::turbLayer::alloc",
-                          "parent ao system is not set (m_parent->aosys() is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "parent is not set (m_parent->aosys() is nullptr)" );
     }
 
     m_phase.resize( m_scrnSz, m_scrnSz );
@@ -213,11 +211,16 @@ void turbLayer<aoSystemT>::alloc()
 
     realT L02;
     if( L0 > 0 )
+    {
         L02 = 1.0 / ( L0 * L0 );
+    }
     else
+    {
         L02 = 0;
+    }
 
-#pragma omp parallel for
+    // clang-format off
+    #pragma omp parallel for // clang-format on
     for( size_t jj = 0; jj < m_scrnSz; ++jj )
     {
         for( size_t ii = 0; ii < m_scrnSz; ++ii )
@@ -231,7 +234,9 @@ void turbLayer<aoSystemT>::alloc()
             {
                 p = beta / pow( pow( m_freq( ii, jj ), 2 ) + L02, sqrt_alpha );
                 if( l0 > 0 )
+                {
                     p *= exp( -1 * pow( m_freq( ii, jj ) * l0, 2 ) );
+                }
             }
 
             realT Ppiston = 0;
@@ -272,15 +277,15 @@ void turbLayer<aoSystemT>::alloc()
     }
 }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::genDealloc()
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::genDealloc()
 {
     m_freq.resize( 0, 0 );
     m_psd.resize( 0, 0 );
 }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::shift( realT dt )
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::shift( realT dt )
 {
     int wdx, wdy;
     realT ddx, ddy;
@@ -297,28 +302,35 @@ void turbLayer<aoSystemT>::shift( realT dt )
     wdx %= m_scrnSz;
     wdy %= m_scrnSz;
 
-    // Check for a new whole-pixel shift
-    if( wdx != m_last_wdx || wdy != m_last_wdy )
+    if( dt == 0 )
     {
-        // Need a whole pixel shift (this also extracts the m_wfSz + m_buffSz subarray)
-        improc::imageShiftWP( m_shiftPhaseWP, m_phase, wdx, wdy );
+        m_shiftPhase = m_phase;
     }
+    else
+    {
+        // Check for a new whole-pixel shift
+        if( wdx != m_last_wdx || wdy != m_last_wdy )
+        {
+            // Need a whole pixel shift (this also extracts the m_wfSz + m_buffSz subarray)
+            improc::imageShiftWP( m_shiftPhaseWP, m_phase, wdx, wdy );
+        }
 
-    // Do the sub-pixel shift
-    improc::imageShift( m_shiftPhase, m_shiftPhaseWP, ddx, ddy, improc::cubicConvolTransform<realT>( -0.5 ) );
+        // Do the sub-pixel shift
+        improc::imageShift( m_shiftPhase, m_shiftPhaseWP, ddx, ddy, improc::cubicConvolTransform<realT>( -0.5 ) );
+    }
 
     m_last_wdx = wdx;
     m_last_wdy = wdy;
 }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::initRandom()
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::initRandom()
 {
     uniVar.seed();
 }
 
-template <typename aoSystemT>
-void turbLayer<aoSystemT>::shiftRandom( bool nofract )
+template <typename aoSystemT, class verboseT>
+void turbLayer<aoSystemT, verboseT>::shiftRandom( bool nofract )
 {
     int wdx, wdy;
     realT ddx, ddy;

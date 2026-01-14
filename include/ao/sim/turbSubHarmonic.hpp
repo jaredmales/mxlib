@@ -54,12 +54,14 @@ namespace sim
  *
  * \ingroup mxAOSim
  */
-template <typename _turbAtmosphereT>
+template <typename _turbAtmosphereT, class _verboseT = mx::verbose::d>
 class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT>>
 {
 
   public:
     typedef _turbAtmosphereT turbAtmosphereT;
+    typedef _verboseT verboseT;
+
     typedef typename turbAtmosphereT::realT realT;
 
   protected:
@@ -69,11 +71,11 @@ class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT
 
     turbAtmosphereT *m_turbAtmo{ nullptr }; ///< Pointer to the parent atmosphere object.
 
-    unsigned m_level{ 1 }; ///< The subharmonic level to apply.
+    unsigned m_level{ 1 };                  ///< The subharmonic level to apply.
 
-    bool m_outerSubHarmonics{ true }; ///< Whether or not to include the outer subharmonics
+    bool m_outerSubHarmonics{ true };       ///< Whether or not to include the outer subharmonics
 
-    bool m_preCalc{ false }; ///< whether or not the modes are pre-calculated.
+    bool m_preCalc{ false };                ///< whether or not the modes are pre-calculated.
 
     ///@}
 
@@ -81,18 +83,18 @@ class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT
      * @{
      */
 
-    uint32_t m_scrnSz; ///< The wavefront screen size from the layer being simulated.
+    uint32_t m_scrnSz;                ///< The wavefront screen size from the layer being simulated.
 
-    std::vector<realT> m_noise; ///< Vector of Gaussian deviates prepared for each screen generation.
+    std::vector<realT> m_noise;       ///< Vector of Gaussian deviates prepared for each screen generation.
 
-    std::vector<realT> m_m; ///< m-coordinate fractional spatial frequency indices of the subharmonics
-    std::vector<realT> m_n; ///< n-coordinate fractional spatial frequency indices of the subharmonics
+    std::vector<realT> m_m;           ///< m-coordinate fractional spatial frequency indices of the subharmonics
+    std::vector<realT> m_n;           ///< n-coordinate fractional spatial frequency indices of the subharmonics
 
-    std::vector<realT> m_sqrtPSD; // the square-root of the PSD at each point
+    std::vector<realT> m_sqrtPSD;     // the square-root of the PSD at each point
 
     improc::eigenCube<realT> m_modes; ///< the pre-calculated modes
 
-    ///@}
+                                      ///@}
 
   public:
     /** \name Construction
@@ -160,13 +162,13 @@ class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT
     ///@}
 };
 
-template <typename turbAtmosphereT>
-turbSubHarmonic<turbAtmosphereT>::turbSubHarmonic()
+template <typename turbAtmosphereT, class verboseT>
+turbSubHarmonic<turbAtmosphereT, verboseT>::turbSubHarmonic()
 {
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::turbAtmo( turbAtmosphereT *turbatm )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::turbAtmo( turbAtmosphereT *turbatm )
 {
     if( turbatm != m_turbAtmo )
     {
@@ -175,14 +177,14 @@ void turbSubHarmonic<turbAtmosphereT>::turbAtmo( turbAtmosphereT *turbatm )
     }
 }
 
-template <typename turbAtmosphereT>
-turbAtmosphereT *turbSubHarmonic<turbAtmosphereT>::turbAtmo()
+template <typename turbAtmosphereT, class verboseT>
+turbAtmosphereT *turbSubHarmonic<turbAtmosphereT, verboseT>::turbAtmo()
 {
     return m_turbAtmo;
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::level( uint32_t ml )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::level( uint32_t ml )
 {
     if( ml != m_level )
     {
@@ -191,14 +193,14 @@ void turbSubHarmonic<turbAtmosphereT>::level( uint32_t ml )
     }
 }
 
-template <typename turbAtmosphereT>
-uint32_t turbSubHarmonic<turbAtmosphereT>::level()
+template <typename turbAtmosphereT, class verboseT>
+uint32_t turbSubHarmonic<turbAtmosphereT, verboseT>::level()
 {
     return m_level;
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::outerSubHarmonics( bool osh )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::outerSubHarmonics( bool osh )
 {
     if( osh != m_outerSubHarmonics )
     {
@@ -207,14 +209,14 @@ void turbSubHarmonic<turbAtmosphereT>::outerSubHarmonics( bool osh )
     }
 }
 
-template <typename turbAtmosphereT>
-bool turbSubHarmonic<turbAtmosphereT>::outerSubHarmonics()
+template <typename turbAtmosphereT, class verboseT>
+bool turbSubHarmonic<turbAtmosphereT, verboseT>::outerSubHarmonics()
 {
     return m_outerSubHarmonics;
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::preCalc( bool pc )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::preCalc( bool pc )
 {
     if( pc != m_preCalc )
     {
@@ -223,36 +225,31 @@ void turbSubHarmonic<turbAtmosphereT>::preCalc( bool pc )
     }
 }
 
-template <typename turbAtmosphereT>
-bool turbSubHarmonic<turbAtmosphereT>::preCalc()
+template <typename turbAtmosphereT, class verboseT>
+bool turbSubHarmonic<turbAtmosphereT, verboseT>::preCalc()
 {
     return m_preCalc;
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
 {
     int N;
 
     if( m_turbAtmo == nullptr )
     {
-        mxThrowException( err::paramnotset,
-                          "mx::AO::sim::turbSubHarmonic::initGrid",
-                          "atmosphere is not set (m_turbAtmo is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "atmosphere is not set (m_turbAtmo is nullptr)" );
     }
 
     if( m_turbAtmo->aosys() == nullptr )
     {
-        mxThrowException( err::paramnotset,
-                          "mx::AO::sim::turbSubHarmonic::initGrid",
-                          "ao system is not set (m_turbAtmo->m_aosys is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "ao system is not set (m_turbAtmo->m_aosys is nullptr)" );
     }
 
     if( m_turbAtmo->nLayers() <= layerNo )
     {
-        mxThrowException( err::invalidconfig,
-                          "mx::AO::sim::turbSubHarmonic::initGrid",
-                          "atmosphere is not setup (m_turbAtmo->m_layers size is <= layerNo)" );
+        throw mx::exception<verboseT>( error_t::invalidconfig,
+                                       "atmosphere is not setup (m_turbAtmo->m_layers size is <= layerNo)" );
     }
 
     if( m_level == 0 )
@@ -386,8 +383,8 @@ void turbSubHarmonic<turbAtmosphereT>::initGrid( uint32_t layerNo )
     this->setChangePoint();
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::screen( improc::eigenImage<realT> &scrn )
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::screen( improc::eigenImage<realT> &scrn )
 {
     if( m_level == 0 )
     {
@@ -396,20 +393,17 @@ void turbSubHarmonic<turbAtmosphereT>::screen( improc::eigenImage<realT> &scrn )
 
     if( m_turbAtmo == nullptr )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbSubHarmonic::screen", "atmosphere is not set (m_turbAtmo is nullptr)" );
+        throw mx::exception<verboseT>( error_t::paramnotset, "atmosphere is not set (m_turbAtmo is nullptr)" );
     }
 
     if( this->isChanged() )
     {
-        mxThrowException( err::invalidconfig,
-                          "mx::AO::sim::turbSubHarmonic::screen",
-                          "configuration has changed but not re-initialized" );
+        throw mx::exception<verboseT>( error_t::invalidconfig, "configuration has changed but not re-initialized" );
     }
 
     if( scrn.rows() != m_scrnSz || scrn.cols() != m_scrnSz )
     {
-        mxThrowException( err::sizeerr, "mx::AO::sim::turbSubHarmonic::screen", "input screen is not the right size" );
+        throw mx::exception<verboseT>( error_t::sizeerr, "input screen is not the right size" );
     }
 
     // Check that we're allocated
@@ -417,16 +411,14 @@ void turbSubHarmonic<turbAtmosphereT>::screen( improc::eigenImage<realT> &scrn )
     {
         if( m_modes.rows() != scrn.rows() || m_modes.cols() != scrn.cols() || m_modes.planes() != m_noise.size() )
         {
-            mxThrowException(
-                err::sizeerr, "mx::AO::sim::turbSubHarmonic::screen", "modes cube wrong size, call initGrid()." );
+            throw mx::exception<verboseT>( error_t::sizeerr, "modes cube wrong size, call initGrid()." );
         }
     }
     else
     {
         if( m_noise.size() != m_m.size() || m_noise.size() != m_n.size() || m_sqrtPSD.size() != m_noise.size() )
         {
-            mxThrowException(
-                err::sizeerr, "mx::AO::sim::turbSubHarmonic::screen", "vectors not allocated, call initGrid()." );
+            throw mx::exception<verboseT>( error_t::sizeerr, "vectors not allocated, call initGrid()." );
         }
     }
 
@@ -463,8 +455,8 @@ void turbSubHarmonic<turbAtmosphereT>::screen( improc::eigenImage<realT> &scrn )
     }
 }
 
-template <typename turbAtmosphereT>
-void turbSubHarmonic<turbAtmosphereT>::deinit()
+template <typename turbAtmosphereT, class verboseT>
+void turbSubHarmonic<turbAtmosphereT, verboseT>::deinit()
 {
     m_m.clear();
     m_n.clear();

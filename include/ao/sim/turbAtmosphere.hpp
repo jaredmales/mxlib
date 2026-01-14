@@ -77,12 +77,14 @@ namespace sim
  *
  * \ingroup mxAOSim
  */
-template <typename _aoSystemT>
-struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
+template <typename _aoSystemT, class _verboseT = mx::verbose::d>
+struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT, _verboseT>>
 {
 
   public:
     typedef _aoSystemT aoSystemT;
+    typedef _verboseT verboseT;
+
     typedef typename aoSystemT::realT realT;
     typedef Eigen::Array<realT, -1, -1> imageT;
 
@@ -90,28 +92,29 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
     /** \name Configuration Data
      * @{
      */
-    uint32_t m_wfSz{ 0 }; ///< Size of the wavefront in pixels.
+    uint32_t m_wfSz{ 0 };             ///< Size of the wavefront in pixels.
 
-    uint32_t m_buffSz{ 0 }; ///< Buffer to apply around wavefront for interpolation.
+    uint32_t m_buffSz{ 0 };           ///< Buffer to apply around wavefront for interpolation.
 
-    aoSystemT *m_aosys{ nullptr }; ///< The AO system object containing all system parameters.  See \ref aoSystem.
+    aoSystemT *m_aosys{ nullptr };    ///< The AO system object containing all system parameters.  See \ref aoSystem.
 
-    uint32_t m_shLevel{ 0 }; /**< Number of subharmonic levels.  0 means no subharmonics.  Generally only
-                              *  1 level is needed to obtain good Tip/Tilt results.  See \ref turbSubHarmonic.
-                              */
+    uint32_t m_shLevel{ 0 };          /**< Number of subharmonic levels.  0 means no subharmonics.  Generally only
+                                       *  1 level is needed to obtain good Tip/Tilt results.  See \ref turbSubHarmonic.
+                                       */
 
     bool m_outerSubHarmonics{ true }; /**< Whether or not the outer subharmonics are included.
                                        *  See \ref m_turbSubHarmonic.
                                        */
+
     bool m_shPreCalc{ true };         /**< Whether or not to pre-calculate the subharmonic modes.  This is a
                                        *  trade of speed vs. memory use. See \ref turbSubHarmonic.
                                        */
 
-    bool m_retain{ false }; /**< Whether or not to retain working memory after screen generation.  One
-                             *  would set to true if many screens will be calculated in monte carlo fashion.
-                             *  For a standard case of one set of screens being shifted by wind velocity,
-                             *  this should be false to minimize memory use.
-                             */
+    bool m_retain{ false };           /**< Whether or not to retain working memory after screen generation.  One
+                                       *  would set to true if many screens will be calculated in monte carlo fashion.
+                                       *  For a standard case of one set of screens being shifted by wind velocity,
+                                       *  this should be false to minimize memory use.
+                                       */
 
     bool m_forceGen{ true }; /**< Force generation of new screens if true.  Note that this class does not presently
                               *  do any checks of saved screens to verify they match the current configuration.
@@ -124,7 +127,7 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
                             * to \ref m_forceGen` == true`.
                             */
 
-    imageT *m_pupil{ 0 }; ///< A pointer to the pupil mask.
+    imageT *m_pupil{ 0 };  ///< A pointer to the pupil mask.
 
     realT m_timeStep{ 0 }; ///< Length of each iteration, in seconds.
 
@@ -133,13 +136,13 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
     /** \name Internal State
      * @{
      */
-    std::vector<turbLayer<aoSystemT>> m_layers; ///< Vector of turbulent layers.
+    std::vector<turbLayer<aoSystemT>> m_layers;              ///< Vector of turbulent layers.
 
     std::vector<turbSubHarmonic<turbAtmosphere>> m_subHarms; ///< Sub-harmonic layers
 
-    size_t m_frames{ 0 }; ///< Length of the turbulence sequence.
+    size_t m_frames{ 0 };                                    ///< Length of the turbulence sequence.
 
-    int m_nWf{ 0 }; ///< Number of iterations which have occurred.
+    int m_nWf{ 0 };                                          ///< Number of iterations which have occurred.
 
     math::normDistT<realT> m_normVar; ///< Normal random deviate generator.  This seeded in the constructor.
 
@@ -154,11 +157,11 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
     /// Setup the overall atmosphere.
     /**
      */
-    void setup(
-        uint32_t wfSz,    ///< [in] The size of the wavefront in pixels.
-        uint32_t buffSz,  ///< [in] The size of the interpolation buffer to use.
-        aoSystemT *aosys, ///< [in] Pointer to an AO System.  See \ref m_aosys.
-        uint32_t shLevel  ///< [in] number of subharmonic levels to use.  0 turns off subharmonics.  See \ref m_shLevel.
+    void setup( uint32_t wfSz,    ///< [in] The size of the wavefront in pixels.
+                uint32_t buffSz,  ///< [in] The size of the interpolation buffer to use.
+                aoSystemT *aosys, ///< [in] Pointer to an AO System.  See \ref m_aosys.
+                uint32_t shLevel  /**< [in] number of subharmonic levels to use.  0 turns off subharmonics.
+                                            See \ref m_shLevel.*/
     );
 
     /// Set the wavefront size
@@ -338,14 +341,14 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT>>
     void nextWF( wavefront<realT> &wf );
 };
 
-template <typename aoSystemT>
-turbAtmosphere<aoSystemT>::turbAtmosphere()
+template <typename aoSystemT, class verboseT>
+turbAtmosphere<aoSystemT, verboseT>::turbAtmosphere()
 {
     m_normVar.seed();
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::setup( uint32_t ws, uint32_t bs, aoSystemT *aos, uint32_t shl )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::setup( uint32_t ws, uint32_t bs, aoSystemT *aos, uint32_t shl )
 {
     wfSz( ws );
     buffSz( bs );
@@ -353,8 +356,8 @@ void turbAtmosphere<aoSystemT>::setup( uint32_t ws, uint32_t bs, aoSystemT *aos,
     shLevel( shl );
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::wfSz( uint32_t ws )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::wfSz( uint32_t ws )
 {
     if( ws != m_wfSz )
     {
@@ -363,14 +366,14 @@ void turbAtmosphere<aoSystemT>::wfSz( uint32_t ws )
     }
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::wfSz()
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::wfSz()
 {
     return m_wfSz;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::buffSz( uint32_t bs )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::buffSz( uint32_t bs )
 {
     if( bs != m_buffSz )
     {
@@ -379,14 +382,14 @@ void turbAtmosphere<aoSystemT>::buffSz( uint32_t bs )
     }
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::buffSz()
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::buffSz()
 {
     return m_buffSz;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::aosys( aoSystemT *aos )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::aosys( aoSystemT *aos )
 {
     if( aos != m_aosys )
     {
@@ -395,14 +398,14 @@ void turbAtmosphere<aoSystemT>::aosys( aoSystemT *aos )
     }
 }
 
-template <typename aoSystemT>
-aoSystemT *turbAtmosphere<aoSystemT>::aosys()
+template <typename aoSystemT, class verboseT>
+aoSystemT *turbAtmosphere<aoSystemT, verboseT>::aosys()
 {
     return m_aosys;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::shLevel( uint32_t shl )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::shLevel( uint32_t shl )
 {
     if( shl != m_shLevel )
     {
@@ -411,14 +414,14 @@ void turbAtmosphere<aoSystemT>::shLevel( uint32_t shl )
     }
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::shLevel()
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::shLevel()
 {
     return m_shLevel;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::outerSubHarmonics( bool osh )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::outerSubHarmonics( bool osh )
 {
     if( osh != m_outerSubHarmonics )
     {
@@ -427,14 +430,14 @@ void turbAtmosphere<aoSystemT>::outerSubHarmonics( bool osh )
     }
 }
 
-template <typename aoSystemT>
-bool turbAtmosphere<aoSystemT>::outerSubHarmonics()
+template <typename aoSystemT, class verboseT>
+bool turbAtmosphere<aoSystemT, verboseT>::outerSubHarmonics()
 {
     return m_outerSubHarmonics;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::shPreCalc( bool shp )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::shPreCalc( bool shp )
 {
     if( shp != m_shPreCalc )
     {
@@ -443,14 +446,14 @@ void turbAtmosphere<aoSystemT>::shPreCalc( bool shp )
     }
 }
 
-template <typename aoSystemT>
-bool turbAtmosphere<aoSystemT>::shPreCalc()
+template <typename aoSystemT, class verboseT>
+bool turbAtmosphere<aoSystemT, verboseT>::shPreCalc()
 {
     return m_shPreCalc;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::retain( bool rtn )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::retain( bool rtn )
 {
     if( rtn != m_retain )
     {
@@ -459,14 +462,14 @@ void turbAtmosphere<aoSystemT>::retain( bool rtn )
     }
 }
 
-template <typename aoSystemT>
-bool turbAtmosphere<aoSystemT>::retain()
+template <typename aoSystemT, class verboseT>
+bool turbAtmosphere<aoSystemT, verboseT>::retain()
 {
     return m_retain;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::forceGen( bool fg )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::forceGen( bool fg )
 {
     if( fg != m_forceGen )
     {
@@ -476,14 +479,14 @@ void turbAtmosphere<aoSystemT>::forceGen( bool fg )
     m_forceGen = fg;
 }
 
-template <typename aoSystemT>
-bool turbAtmosphere<aoSystemT>::forceGen()
+template <typename aoSystemT, class verboseT>
+bool turbAtmosphere<aoSystemT, verboseT>::forceGen()
 {
     return m_forceGen;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::dataDir( const std::string &dd )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::dataDir( const std::string &dd )
 {
     if( dd != m_dataDir )
     {
@@ -493,28 +496,27 @@ void turbAtmosphere<aoSystemT>::dataDir( const std::string &dd )
     m_dataDir = dd;
 }
 
-template <typename aoSystemT>
-std::string turbAtmosphere<aoSystemT>::dataDir()
+template <typename aoSystemT, class verboseT>
+std::string turbAtmosphere<aoSystemT, verboseT>::dataDir()
 {
     return m_dataDir;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> &scrnSz )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::setLayers( const std::vector<size_t> &scrnSz )
 {
     if( m_aosys == nullptr )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbAtmosphere::setLayers", "ao system is not set (m_aosys is nullptr)" );
+        throw mx::exception( error_t::paramnotset, "ao system is not set (m_aosys is nullptr)" );
     }
 
     size_t nLayers = scrnSz.size();
 
     if( nLayers != m_aosys->atm.n_layers() )
     {
-        mxThrowException( err::invalidarg,
-                          "mx::AO::sim::turbAtmosphere::setLayers",
-                          "Size of scrnSz vector does not match atmosphere." );
+        throw mx::exception( error_t::invalidarg,
+
+                             "Size of scrnSz vector does not match atmosphere." );
     }
 
     if( nLayers != m_layers.size() )
@@ -549,13 +551,14 @@ void turbAtmosphere<aoSystemT>::setLayers( const std::vector<size_t> &scrnSz )
     }
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::setLayers( const size_t scrnSz )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::setLayers( const size_t scrnSz )
 {
     if( m_aosys == nullptr )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbAtmosphere::setLayers", "atmosphere is not set (m_atm is nullptr)" );
+        throw mx::exception( error_t::paramnotset,
+
+                             "atmosphere is not set (m_atm is nullptr)" );
     }
 
     size_t n = m_aosys->atm.n_layers();
@@ -563,37 +566,37 @@ void turbAtmosphere<aoSystemT>::setLayers( const size_t scrnSz )
     setLayers( std::vector<size_t>( n, scrnSz ) );
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::nLayers()
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::nLayers()
 {
     return m_layers.size();
 }
 
-template <typename aoSystemT>
-turbLayer<aoSystemT> &turbAtmosphere<aoSystemT>::layer( uint32_t n )
+template <typename aoSystemT, class verboseT>
+turbLayer<aoSystemT> &turbAtmosphere<aoSystemT, verboseT>::layer( uint32_t n )
 {
     if( n >= m_layers.size() )
     {
-        mxThrowException( err::invalidarg, "mx::AO::sim::turbAtmosphere::layer", "n too large for number of layers." );
+        throw mx::exception( error_t::invalidarg, "n too large for number of layers." );
     }
 
     return m_layers[n];
 }
 
-template <typename aoSystemT>
-math::normDistT<typename aoSystemT::realT> &turbAtmosphere<aoSystemT>::normVar()
+template <typename aoSystemT, class verboseT>
+math::normDistT<typename aoSystemT::realT> &turbAtmosphere<aoSystemT, verboseT>::normVar()
 {
     return m_normVar;
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::scrnLengthPixels()
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::scrnLengthPixels()
 {
     return 0;
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::scrnLengthPixels( uint32_t n )
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::scrnLengthPixels( uint32_t n )
 {
 
     return 0;
@@ -603,32 +606,32 @@ uint32_t turbAtmosphere<aoSystemT>::scrnLengthPixels( uint32_t n )
         */
 }
 
-template <typename aoSystemT>
-realT turbAtmosphere<aoSystemT>::scrnLength()
+template <typename aoSystemT, class verboseT>
+turbAtmosphere<aoSystemT, verboseT>::realT turbAtmosphere<aoSystemT, verboseT>::scrnLength()
 {
     return 0;
 }
 
-template <typename aoSystemT>
-realT turbAtmosphere<aoSystemT>::scrnLength( uint32_t n )
+template <typename aoSystemT, class verboseT>
+turbAtmosphere<aoSystemT, verboseT>::realT turbAtmosphere<aoSystemT, verboseT>::scrnLength( uint32_t n )
 {
     return 0;
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::maxShift( realT dt )
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::maxShift( realT dt )
 {
     return 0;
 }
 
-template <typename aoSystemT>
-uint32_t turbAtmosphere<aoSystemT>::maxShift( uint32_t n, realT dt )
+template <typename aoSystemT, class verboseT>
+uint32_t turbAtmosphere<aoSystemT, verboseT>::maxShift( uint32_t n, realT dt )
 {
     return 0;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::genLayers()
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::genLayers()
 {
     if( m_dataDir != "" && !m_forceGen )
     {
@@ -655,17 +658,17 @@ void turbAtmosphere<aoSystemT>::genLayers()
     {
         if( m_layers[i].m_phase.rows() != m_layers[i].scrnSz() || m_layers[i].m_phase.cols() != m_layers[i].scrnSz() )
         {
-            mxThrowException( err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer phase not allocated." );
+            throw mx::exception( error_t::sizeerr, "layer phase not allocated." );
         }
 
         if( m_layers[i].m_freq.rows() != m_layers[i].scrnSz() || m_layers[i].m_freq.cols() != m_layers[i].scrnSz() )
         {
-            mxThrowException( err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer freq not allocated." );
+            throw mx::exception( error_t::sizeerr, "layer freq not allocated." );
         }
 
         if( m_layers[i].m_psd.rows() != m_layers[i].scrnSz() || m_layers[i].m_psd.cols() != m_layers[i].scrnSz() )
         {
-            mxThrowException( err::sizeerr, "mx::AO::sim::turbAtmosphere::genLayers", "layer psd not allocated." );
+            throw mx::exception( error_t::sizeerr, "layer psd not allocated." );
         }
 
         for( size_t jj = 0; jj < m_layers[i].m_scrnSz; ++jj )
@@ -719,14 +722,12 @@ void turbAtmosphere<aoSystemT>::genLayers()
     this->setChangePoint();
 }
 
-template <typename aoSystemT>
-int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> &milkPhase, realT dt )
+template <typename aoSystemT, class verboseT>
+int turbAtmosphere<aoSystemT, verboseT>::shift( improc::milkImage<realT> &milkPhase, realT dt )
 {
     if( this->isChanged() )
     {
-        mxThrowException( err::invalidconfig,
-                          "mx::AO::sim::turbAtmosphere::shift",
-                          "configuration has changed but genLayers has not been run." );
+        throw mx::exception( error_t::invalidconfig, "configuration has changed but genLayers has not been run." );
     }
 
     improc::eigenMap<realT> phase( milkPhase );
@@ -738,7 +739,8 @@ int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> &milkPhase, realT
     // Don't use OMP if no multiple layers b/c it seems to make it use multiple threads in some awful way
     if( m_layers.size() > 1 )
     {
-#pragma omp parallel for
+        // clang-format off
+        #pragma omp parallel for // clang-format on
         for( size_t j = 0; j < m_layers.size(); ++j )
         {
             m_layers[j].shift( dt );
@@ -764,40 +766,38 @@ int turbAtmosphere<aoSystemT>::shift( improc::milkImage<realT> &milkPhase, realT
     return 0;
 }
 
-template <typename aoSystemT>
-int turbAtmosphere<aoSystemT>::frames( int f )
+template <typename aoSystemT, class verboseT>
+int turbAtmosphere<aoSystemT, verboseT>::frames( int f )
 {
     m_frames = f;
 
     return 0;
 }
 
-template <typename aoSystemT>
-size_t turbAtmosphere<aoSystemT>::frames()
+template <typename aoSystemT, class verboseT>
+size_t turbAtmosphere<aoSystemT, verboseT>::frames()
 {
     return m_frames;
 }
 
-template <typename aoSystemT>
-int turbAtmosphere<aoSystemT>::wfPS( realT ps )
+template <typename aoSystemT, class verboseT>
+int turbAtmosphere<aoSystemT, verboseT>::wfPS( realT ps )
 {
     static_cast<void>( ps );
     return 0;
 }
 
-template <typename aoSystemT>
-void turbAtmosphere<aoSystemT>::nextWF( wavefront<realT> &wf )
+template <typename aoSystemT, class verboseT>
+void turbAtmosphere<aoSystemT, verboseT>::nextWF( wavefront<realT> &wf )
 {
     if( !m_aosys )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbAtmosphere<aoSystemT>::nextWF", "the AO system pointer is not set" );
+        throw mx::exception( error_t::paramnotset, "the AO system pointer is not set" );
     }
 
     if( !m_pupil )
     {
-        mxThrowException(
-            err::paramnotset, "mx::AO::sim::turbAtmosphere<aoSystemT>::nextWF", "the m_pupil pointer is not set" );
+        throw mx::exception( error_t::paramnotset, "the m_pupil pointer is not set" );
     }
 
     shift( wf.phase, m_nWf * m_timeStep );

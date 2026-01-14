@@ -41,7 +41,6 @@
 #include "../math/func/sign.hpp"
 #include "../math/constants.hpp"
 
-
 namespace mx
 {
 namespace sigproc
@@ -109,7 +108,7 @@ int zernikeRCoeffs(
 
     if( n < m )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "n cannot be less than m in the Zernike polynomials" );
+        internal::mxlib_error_report( error_t::invalidarg, "n cannot be less than m in the Zernike polynomials" );
         return -1;
     }
 
@@ -155,11 +154,11 @@ extern template int zernikeRCoeffs<__float128>( std::vector<__float128> &c, int 
  * \tparam calcRealT is a real floating type used for internal calcs, should be at least double.
  */
 template <typename realT, typename calcRealT>
-realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
-                int n,     ///< [in] the radial index of the Zernike polynomial.
-                int m,     ///< [in] the azimuthal index of the Zernike polynomial.
-                std::vector<calcRealT>
-                    &c ///< [in] contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
+realT zernikeR( realT rho,                ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
+                int n,                    ///< [in] the radial index of the Zernike polynomial.
+                int m,                    ///< [in] the azimuthal index of the Zernike polynomial.
+                std::vector<calcRealT> &c /**< [in] contains the radial polynomial coeeficients,
+                                                    and must be of length \f$ 0.5(n-m)+1\f$. */
 )
 {
     m = abs( m );
@@ -173,7 +172,7 @@ realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1
 
     if( c.size() != 0.5 * ( n - m ) + 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "c vector has incorrect length for n and m." );
+        internal::mxlib_error_report( error_t::invalidarg, "c vector has incorrect length for n and m." );
         return -9999;
     }
 
@@ -239,12 +238,6 @@ extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int
 
 /// Calculate the value of a Zernike radial polynomial at a given radius and angle.
 /**
- * \param[in] rho is the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
- * \param[in] phi is the azimuthal angle (in radians)
- * \param[in] n is the radial index of the Zernike polynomial.
- * \param[in] m is the azimuthal index of the Zernike polynomial.
- * \param[in] c is contains the radial polynomial coeeficients, and must be of length \f$ 0.5(n-m)+1\f$.
- *
  * \retval -9999 indicates a possible error
  * \retval R the value of the Zernike radial polynomial otherwise
  *
@@ -252,7 +245,13 @@ extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename realT, typename calcRealT>
-realT zernike( realT rho, realT phi, int n, int m, std::vector<calcRealT> &c )
+realT zernike( realT rho,                /**< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.*/
+               realT phi,                /**< [in] the azimuthal angle (in radians)*/
+               int n,                    /**< [in] the radial index of the Zernike polynomial.*/
+               int m,                    /**< [in] the azimuthal index of the Zernike polynomial.*/
+               std::vector<calcRealT> &c /**< [in] contains the radial polynomial coeeficients, and
+                                                   must be of length \f$ 0.5(n-m)+1\f$.*/
+)
 {
     realT azt;
 
@@ -360,22 +359,21 @@ extern template __float128 zernike<__float128, __float128>( __float128 rho, __fl
 /// Fill in an Eigen-like array with a Zernike polynomial
 /** Sets any pixel which is at rad \<= r \< rad+0.5 pixels to rho = 1, to be consistent with mx::circularPupil
  *
- * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size
- * the polynomial. \param[in] n is the radial index of the polynomial \param[in] m is the azimuthal index of the
- * polynomial \param[in] xcen is the x coordinate of the desired center of the polynomial, in pixels \param[in] ycen is
- * the y coordinate of the desired center of the polynomial, in pixels \param[in] rad [optional] is the desired radius.
- * If rad \<= 0, then the maximum radius based on dimensions of m is used.
- *
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename arrayT, typename calcRealT, int overscan = 2>
-int zernike( arrayT &arr,
-             int n,
-             int m,
-             typename arrayT::Scalar xcen,
-             typename arrayT::Scalar ycen,
-             typename arrayT::Scalar rad = -1 )
+int zernike( arrayT &arr,                     /**< [out] allocated array with an Eigen-like interface. The rows()
+                                                         and cols() members are used to size the polynomial. */
+             int n,                           /**< [in] the radial index of the polynomial*/
+             int m,                           /**< [in] the azimuthal index of the polynomial*/
+             typename arrayT::Scalar xcen,    /**< [in] the x coordinate of the desired center of the polynomial,
+                                                        in pixels*/
+             typename arrayT::Scalar ycen,    /**< [in] the y coordinate of the desired center of the polynomial,
+                                                        in pixels*/
+             typename arrayT::Scalar rad = -1 /**< [in] the desired radius. If rad \<= 0, then the maximum radius
+                                                        based on dimensions of m is used.*/
+)
 {
     typedef typename arrayT::Scalar realT;
     realT x;
@@ -426,18 +424,20 @@ int zernike( arrayT &arr,
 /// Fill in an Eigen-like array with a Zernike polynomial
 /** Sets any pixel which is at rad \<= r \<= rad+0.5 pixels to rho = 1, to be consistent with mx::circularPupil
  *
- * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size
- * the polynomial. \param[in] j is the Noll index of the polynomial \param[in] xcen is the x coordinate of the desired
- * center of the polynomial, in pixels \param[in] ycen is the y coordinate of the desired center of the polynomial, in
- * pixels \param[in] rad [optional] is the desired radius. If rad \<= 0, then the maximum radius based on dimensions of
- * m is used.
  *
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename arrayT, typename calcRealT>
 int zernike(
-    arrayT &arr, int j, typename arrayT::Scalar xcen, typename arrayT::Scalar ycen, typename arrayT::Scalar rad = -1 )
+    arrayT &arr,                     /**< [out] is the allocated array with an Eigen-like interface. The rows() and
+                                                cols() members are used to size the polynomial.*/
+    int j,                           /**< [in] is the Noll index of the polynomial*/
+    typename arrayT::Scalar xcen,    /**< [in] is the x coordinate of the desired center of the polynomial, in pixels */
+    typename arrayT::Scalar ycen,    /**< [in] is the y coordinate of the desired center of the polynomial, in pixels*/
+    typename arrayT::Scalar rad = -1 /**< [in] is the desired radius. If rad \<= 0, then the maximum radius
+    based on dimensions of m is used.*/
+)
 {
     typedef typename arrayT::Scalar realT;
 
@@ -453,15 +453,18 @@ int zernike(
 /** The geometric center of the array, 0.5*(arr.rows()-1), 0.5*(arr.cols()-1), is used as the center.
  * Sets any pixel which is at rad \<= r \< rad+0.5 pixels to rho = 1, to be consistent with mx::circularPupil
  *
- * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size
- * the polynomial. \param[in] j is the Noll index of the polynomial \param[in] rad [optional] is the desired radius. If
- * rad \<= 0, then the maximum radius based on dimensions of m is used.
- *
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename arrayT, typename calcRealT>
-int zernike( arrayT &arr, int n, int m, typename arrayT::Scalar rad = -1 )
+int zernike( arrayT &arr,                     /**< [out] allocated array with an Eigen-like interface.
+                                                         The rows() and cols() members are used to size
+                                                         the polynomial.*/
+             int n,                           /**< [in] the radial index of the polynomial*/
+             int m,                           /**< [in] the azimuthal index of the polynomial*/
+             typename arrayT::Scalar rad = -1 /**< [in] [opt] the desired radius. If rad \<= 0, then the
+                                                              maximum radius based on dimensions of m is used.*/
+)
 {
     typename arrayT::Scalar xcen = 0.5 * ( arr.rows() - 1.0 );
     typename arrayT::Scalar ycen = 0.5 * ( arr.cols() - 1.0 );
@@ -473,15 +476,17 @@ int zernike( arrayT &arr, int n, int m, typename arrayT::Scalar rad = -1 )
 /** The geometric center of the array, 0.5*(arr.rows()-1), 0.5*(arr.cols()-1), is used as the center.
  * Sets any pixel which is at rad \<= r \< rad+0.5 pixels to rho = 1, to be consistent with mx::circularPupil
  *
- * \param[out] arr is the allocated array with an Eigen-like interface. The rows() and cols() members are used to size
- * the polynomial. \param[in] j is the Noll index of the polynomial \param[in] rad [optional] is the desired radius. If
- * rad \<= 0, then the maximum radius based on dimensions of m is used.
- *
  * \tparam arrayT is an Eigen-like array of real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename arrayT, typename calcRealT>
-int zernike( arrayT &arr, int j, typename arrayT::Scalar rad = -1 )
+int zernike( arrayT &arr,                     /**< [out] the allocated array with an Eigen-like interface.
+                                                         The rows() and cols() members are used to size
+                                                         the polynomial.*/
+             int j,                           /**< [in] the Noll index of the polynomial*/
+             typename arrayT::Scalar rad = -1 /**< [in] [opt] the desired radius. If rad \<= 0, then the maximum
+                                                              radius based on dimensions of m is used.*/
+)
 {
     typename arrayT::Scalar xcen = 0.5 * ( arr.rows() - 1.0 );
     typename arrayT::Scalar ycen = 0.5 * ( arr.cols() - 1.0 );
@@ -499,11 +504,12 @@ int zernike( arrayT &arr, int j, typename arrayT::Scalar rad = -1 )
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
 template <typename cubeT, typename calcRealT>
-int zernikeBasis(
-    cubeT &cube, ///< [in.out] the pre-allocated cube which will be filled with the Zernike basis
-    typename cubeT::Scalar rad =
-        -1,      ///< [in] [optional] the radius of the aperture.  If -1 then the full image size is used.
-    int minj = 2 ///< [in] [optional] the minimum j value to include.  The default is j=2, which skips piston (j=1).
+int zernikeBasis( cubeT &cube,                     /**< [in/out] the pre-allocated cube which will be filled
+                                                                 with the Zernike basis*/
+                  typename cubeT::Scalar rad = -1, /**< [in] [opt] the radius of the aperture.  If -1 then the full
+                                                                   image size is used.*/
+                  int minj = 2                     /**< [in] [opt] the minimum j value to include. The default is j=2,
+                                                                   which skips piston (j=1).*/
 )
 {
     typedef typename cubeT::imageT arrayT;
@@ -540,8 +546,7 @@ int zernikeBasis(
  */
 template <typename realT>
 std::complex<realT> zernikeQ( realT k,   /**< [in] the radial coordinate of normalized spatial frequency. This is in the
-                                          *       \cite noll_1976 convention of cycles-per-radius.
-                                          */
+                                                  \cite noll_1976 convention of cycles-per-radius.*/
                               realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                               int n,     ///< [in] the Zernike polynomial n
                               int m      ///< [in] the Zernike polynomial m
@@ -593,8 +598,8 @@ std::complex<realT> zernikeQ( realT k,   /**< [in] the radial coordinate of norm
  * \tparam realT is the floating point type used for arithmetic
  */
 template <typename realT>
-realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency. This is in the \cite
-                               ///< noll_1976 convention of cycles-per-radius.
+realT zernikeQNorm( realT k,   /**< [in] the radial coordinate of normalized spatial frequency. This is in the
+                                         \cite noll_1976 convention of cycles-per-radius.*/
                     realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                     int n,     ///< [in] the Zernike polynomial n
                     int m      ///< [in] the Zernike polynomial m
@@ -607,9 +612,13 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
     if( k < 0.00001 )
     {
         if( n == 0 )
+        {
             B = 1.0;
+        }
         else
+        {
             B = 0.0;
+        }
     }
     else
     {
@@ -649,8 +658,8 @@ extern template __float128 zernikeQNorm<__float128>( __float128 k, __float128 ph
  *
  */
 template <typename realT>
-realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spatial frequency. This is in the \cite
-                               ///< noll_1976 convention of cycles-per-radius.
+realT zernikeQNorm( realT k,   /**< [in] the radial coordinate of normalized spatial frequency. This is in the
+                                         \cite noll_1976 convention of cycles-per-radius.*/
                     realT phi, ///< [in] the azimuthal coordinate of normalized spatial frequency
                     int j      ///< [in] the Zernike polynomial index j (Noll convention)
 )
@@ -673,23 +682,23 @@ realT zernikeQNorm( realT k,   ///< [in] the radial coordinate of normalized spa
  * \tparam arrayT is the Eigen-like array type.  Arithmetic will be done in arrayT::Scalar.
  */
 template <typename arrayT>
-int zernikeQNorm(
-    arrayT &arr, ///< [out] the allocated array. The rows() and cols() members are used to size the transform.
-    arrayT &k,   ///< [in] the normalized spatial frequency magnitude at each pixel.  This is in the \cite noll_1976
-                 ///< convention of cycles-per-radius.
-    arrayT &phi, ///< [in] the spatial frequency angle at each pixel
-    int j        ///< [in] the polynomial index in the Noll convention \cite noll_1976
+int zernikeQNorm( arrayT &arr, /**< [out] the allocated array. The rows() and cols() members are used to size
+                                          the transform.*/
+                  arrayT &k,   /**< [in] the normalized spatial frequency magnitude at each pixel.  This is in the \cite
+                                         noll_1976   convention of cycles-per-radius.*/
+                  arrayT &phi, ///< [in] the spatial frequency angle at each pixel
+                  int j        ///< [in] the polynomial index in the Noll convention \cite noll_1976
 )
 {
     if( arr.rows() != k.rows() || arr.cols() != k.cols() )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "output array and input k are not the same size" );
+        internal::mxlib_error_report( error_t::invalidarg, "output array and input k are not the same size" );
         return -1;
     }
 
     if( arr.rows() != phi.rows() || arr.cols() != phi.cols() )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "output array and input phi are not the same size" );
+        internal::mxlib_error_report( error_t::invalidarg, "output array and input phi are not the same size" );
         return -1;
     }
 
