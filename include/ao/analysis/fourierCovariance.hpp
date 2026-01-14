@@ -646,7 +646,7 @@ void calcKLCoeffs( const std::string &outFile, const std::string &cvFile )
 
     double t0 = sys::get_curr_time();
 
-    int info = math::eigenSYEVR<double, double>( evecs, evals, cv, 0, -1, 'U', &mem );
+    int info = math::eigenSYEVR( evecs, evals, cv, 0, -1, 'U', &mem );
 
     double t1 = sys::get_curr_time();
 
