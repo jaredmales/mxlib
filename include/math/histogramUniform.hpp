@@ -42,12 +42,14 @@ namespace math
 template <typename realT>
 class histogramUniform
 {
-  public:
-    realT m_min{ 0 };   ///< The mininum bin location
-    realT m_max{ 0 };   ///< The maximum bin location
-    realT m_width{ 0 }; ///< The bin width
+  protected:
+    realT m_min{ 0 };          ///< The mininum bin location
+    realT m_max{ 0 };          ///< The maximum bin location
+    realT m_width{ 0 };        ///< The bin width
 
-    std::vector<realT> _freqs; ///< The frequencies, one for each bin.
+    std::vector<realT> m_freqs; ///< The frequencies, one for each bin.
+
+  public:
 
     /// Default c'tor, does not allocate.
     /** Must call setup before use */
@@ -55,14 +57,34 @@ class histogramUniform
     {
     }
 
-    /// Setup the histogram, performing allocations.
-    histogramUniform( realT mn, ///< [in] the new minimum bin location
-                      realT mx, ///< [in] the new maximum bin location
+    /// C'tor to setup the histogram, performing allocations.
+    histogramUniform( realT mn, ///< [in] the minimum bin location
+                      realT mx, ///< [in] the maximum bin location
                       realT w   ///< [in] the bin width
                       )
         : m_min( mn ), m_max( mx ), m_width( w )
     {
         reset();
+    }
+
+    /// C'tor to setup the histogram, performing allocations, and accumulate from a vector of values.
+    /**
+     * Optionally normalizes the histogram
+     */
+    histogramUniform( realT mn,                       ///< [in] the minimum bin location
+                      realT mx,                       ///< [in] the maximum bin location
+                      realT w,                        ///< [in] the bin width
+                      const std::vector<realT> &vals, ///< [in] The vector of values to accumulate
+                      bool normalize = false          ///< [in] [opt] whether or not to normalize after accumulation
+                      )
+        : m_min( mn ), m_max( mx ), m_width( w )
+    {
+        reset();
+        accum( vals );
+        if( normalize )
+        {
+            this->normalize();
+        }
     }
 
     /// Setup the histogram, performing allocations.
@@ -81,7 +103,7 @@ class histogramUniform
     /// Resize and 0 the frequency vector.  Assumes m_min, m_max, and m_width are set.
     void reset()
     {
-        _freqs.resize( ( m_max - m_min ) / m_width + 1, 0 );
+        m_freqs.resize( ( m_max - m_min ) / m_width + 1, 0 );
     }
 
     /// Accumulate a value in the appropriate bin.
@@ -89,30 +111,36 @@ class histogramUniform
     {
         int i = ( val - m_min ) / m_width;
         if( i < 0 )
+        {
             i = 0;
-        if( i >= _freqs.size() )
-            i = _freqs.size() - 1;
+        }
+        if( i >= m_freqs.size() )
+        {
+            i = m_freqs.size() - 1;
+        }
 
-        ++_freqs[i];
+        ++m_freqs[i];
     }
 
     /// Accumulate a vector of values.
     void accum( const std::vector<realT> &vals /**< [in] The vector of values to accumulate */ )
     {
         for( int i = 0; i < vals.size(); ++i )
+        {
             accum( vals[i] );
+        }
     }
 
     /// Get the frequency in the i-th bin.
     realT freq( int i /**< [in] the bin number */ )
     {
-        return _freqs[i]; ///\returns the current value of _freqs[i].
+        return m_freqs[i]; ///\returns the current value of m_freqs[i].
     }
 
     /// Get the number of bins
     int bins()
     {
-        return _freqs.size(); ///\returns the size of the frequency vector.
+        return m_freqs.size(); ///\returns the size of the frequency vector.
     }
 
     /// Get the value of the left-edge of the i-th bin.
@@ -137,20 +165,20 @@ class histogramUniform
     /** This normalizes the histogram so that it is a probability distribution, such that the sum
      * \f$ \sum_i P_i \Delta x = 1 \f$ where \f$ \Delta x \f$ is the bin width.
      */
-    void normalize(
-        int excludeTop =
-            0 /**< [in] [optional] specifies a number of bins at the top of the range to exclude from the sum */ )
+    void normalize( int excludeTop = 0 /**< [in] [optional] specifies a number of bins at the
+                                                            top of the range to exclude from the sum */
+    )
     {
         realT sum = 0;
 
-        for( int i = 0; i < _freqs.size() - excludeTop; ++i )
+        for( int i = 0; i < m_freqs.size() - excludeTop; ++i )
         {
-            sum += _freqs[i];
+            sum += m_freqs[i];
         }
 
-        for( int i = 0; i < _freqs.size(); ++i )
+        for( int i = 0; i < m_freqs.size(); ++i )
         {
-            _freqs[i] /= ( sum * m_width );
+            m_freqs[i] /= ( sum * m_width );
         }
     }
 };

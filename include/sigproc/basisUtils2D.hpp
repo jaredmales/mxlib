@@ -147,15 +147,20 @@ int basisNormalize( improc::eigenCube<realT> &modes, ///< [in.out] the basis to 
  * \ingroup signal_processing
  */
 template <typename realT>
-int basisAmplitudes(
-    std::vector<realT> &amps,        ///< [out] the amplitudes of each mode fit to the image (will be resized).
-    improc::eigenImage<realT> &im,   ///< [in.out] the image to fit.  Is subtracted in place if desired.
-    improc::eigenCube<realT> &modes, ///< [in] the modes to fit.
-    improc::eigenImage<realT> &mask, ///< [in] the 1/0 mask which defines the domain of the fit.
-    bool subtract = false, ///< [in] [optional] if true then the modes are subtracted as they are fit to the image
-    int meanIgnore = 0, ///< [in] [optional] if 1 then the mean, or if 2 the median, value is subtracted before fitting.
-                        ///< If subtract  is false, this value is added back after the subtraction.
-    int N = -1          ///< [in] [optional] the number of modes to actually fit.  If N < 0 then all modes are fit.
+int basisAmplitudes( std::vector<realT> &amps,        /**< [out] the amplitudes of each mode fit to
+                                                                 the image (will be resized).*/
+                     improc::eigenImage<realT> &im,   /**< [in.out] the image to fit.  Is subtracted in
+                                                                    place if desired.*/
+                     improc::eigenCube<realT> &modes, ///< [in] the modes to fit.
+                     improc::eigenImage<realT> &mask, ///< [in] the 1/0 mask which defines the domain of the fit.
+                     bool subtract = false,           /**< [in] [opt] if true then the modes are
+                                                                      subtracted as they are fit to the image */
+                     int meanIgnore = 0,              /**< [in] [opt] if 1 then the mean, or if 2 the median,
+                                                                      value is subtracted before fitting. If subtract
+                                                                      is false, this value is added
+                                                                      back after the subtraction. */
+                     int N = -1                       /**< [in] [opt] the number of modes to actually fit.
+                                                                      If N < 0 then all modes are fit. */
 )
 {
     if( N < 0 )

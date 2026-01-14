@@ -86,8 +86,8 @@ class aoSystem
     wfs<realT, iosT> *m_wfsBeta{ nullptr }; ///< The WFS beta_p class.
     bool m_ownWfsBeta{ false };             ///< Flag indicating if the WFS beta_p pointer is owned by this instance.
 
-    realT m_opticalGain{
-        1 }; ///< The optical gain of the WFS, 0-1. Treated as a sensitivity reduction in measurement noise.  Default 1.
+    realT m_opticalGain{ 1 };               /**< The optical gain of the WFS, 0-1. Treated as a sensitivity
+                                                 reduction in measurement noise.  Default 1.*/
 
   protected:
     realT m_lam_wfs{ 0 }; ///< WFS wavelength [m]
@@ -100,23 +100,23 @@ class aoSystem
 
     bool m_bin_npix{ true }; ///< Flag controlling whether or not to bin WFS pixels according to the actuator spacing.
 
-    int m_bin_opt{
-        0 }; ///< The optimum binning factor.  If WFS modes are used, this is the mode index (0 to N-1).  If not, it is
-             ///< 1 minus the pixel binning factor. It is always 1 minus the actuator binning factor.
+    int m_bin_opt{ 0 };      /**< The optimum binning factor.  If WFS modes are used, this is the mode
+                                  index (0 to N-1).  If not, it is 1 minus the pixel binning factor.
+                                  It is always 1 minus the actuator binning factor. */
 
-    realT m_tauWFS{ 0 };           ///< Actual WFS exposure time [sec]
+    realT m_tauWFS{ 0 };     ///< Actual WFS exposure time [sec]
 
-    realT m_deltaTau{ 0 };         ///< Loop latency [sec]
+    realT m_deltaTau{ 0 };   ///< Loop latency [sec]
 
-    bool m_optTau{ true };         ///< Flag controlling whether optimum integration time is calculated (true) enforcing
-                                   ///< m_minTauWFS, or if m_tauWFS is used (false). Default: true.
+    bool m_optTau{ true };   ///< Flag controlling whether optimum integration time is calculated (true) enforcing
+                             ///< m_minTauWFS, or if m_tauWFS is used (false). Default: true.
 
-    realT m_lam_sci{ 0 };          ///< Science wavelength [m]
+    realT m_lam_sci{ 0 };    ///< Science wavelength [m]
 
-    realT m_zeta{ 0 };             ///<  Zenith angle [radians]
-    realT m_secZeta{ 1 };          ///< Secant of the Zenith angle (calculated)
+    realT m_zeta{ 0 };       ///<  Zenith angle [radians]
+    realT m_secZeta{ 1 };    ///< Secant of the Zenith angle (calculated)
 
-    int m_fit_mn_max{ 100 };       ///< Maximum spatial frequency index to use for fitting error calculation.
+    int m_fit_mn_max{ 100 }; ///< Maximum spatial frequency index to use for fitting error calculation.
 
     bool m_circularLimit{ false }; ///< Flag to indicate that the spatial frequency limit is circular, not square.
 
@@ -2038,13 +2038,13 @@ realT aoSystem<realT, inputSpectT, iosT>::optimumTauWFS(
 {
     if( m_D == 0 )
     {
-        internal::mxlib_error_report(error_t::paramnotset, "Diameter (D) not set." );
+        internal::mxlib_error_report( error_t::paramnotset, "Diameter (D) not set." );
         return -1;
     }
 
     if( m_F0 == 0 )
     {
-        internal::mxlib_error_report(error_t::paramnotset, "0-mag photon flux (F0) not set." );
+        internal::mxlib_error_report( error_t::paramnotset, "0-mag photon flux (F0) not set." );
         return -1;
     }
 
@@ -3096,7 +3096,7 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator &confi
         }
         else
         {
-            throw(mx::exception<verboseT>(error_t::invalidarg, "unknown WFS " + wfsStr + " specified"));
+            throw( mx::exception<verboseT>( error_t::invalidarg, "unknown WFS " + wfsStr + " specified" ) );
         }
     }
 
