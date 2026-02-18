@@ -8,7 +8,6 @@
 #ifndef __imageFilters_hpp__
 #define __imageFilters_hpp__
 
-
 #include <cstdlib>
 #include <format>
 
@@ -541,8 +540,8 @@ template <typename imageOutT, typename imageInT, typename kernelT>
 void medianFilterImage( imageOutT &fim,        /**< [out] Contains the filtered image, will be resized*/
                         imageInT im,           /**< [in] the image to be filtered*/
                         const kernelT &kernel, /**< [in] a fully configured kernel object*/
-                        int maxr = 0, /**< [in] [opt] the maximum radius from the image center to apply the kernel.
-                                                     pixels outside this radius are set to 0.*/
+                        int maxr = 0,          /**< [in] [opt] the maximum radius from the image center to apply
+                                                               the kernel. Psixels outside this radius are set to 0.*/
                         int maxrproc = 1 )
 {
     fim.resize( im.rows(), im.cols() );
@@ -852,7 +851,7 @@ int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocate
 
 /// Smooth an image using the median in a rectangular box.  Also Determines the location and value of the highest pixel
 /// in the smoothed image.
-/** Calculates the median value in a rectangular box of imIn, of size medianFullSidth X medianFullWidth and stores it in
+/** Calculates the median value in a rectangular box of imIn, of size medianFullWidth X medianFullWidth and stores it in
  * the corresonding center pixel of imOut. Does not smooth the 0.5*medianFullwidth rows and columns of the input image,
  * and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
  *
