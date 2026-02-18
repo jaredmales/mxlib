@@ -221,7 +221,7 @@ typeT stoT( const std::string &str, /**< [in] the string to convert*/
  * \deprecated
  */
 template <typename typeT>
-[[deprecated( "Use mx::stoT<typeT> instead" )]]
+[[deprecated( "Use mx::ioutils::stoT<typeT> instead" )]]
 typeT convertFromString( const std::string &str, /**< [in] the string to convert*/
                          error_t *errc = nullptr /**< [out] [optional] mxlib error code */ )
 {
