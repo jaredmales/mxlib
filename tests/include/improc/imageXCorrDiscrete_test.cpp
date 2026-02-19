@@ -10,7 +10,6 @@
 #include "../../../include/math/func/gaussian.hpp"
 #include "../../../include/improc/imageXCorrDiscrete.hpp"
 #include "../../../include/improc/eigenCube.hpp"
-#include "../../../include/ioutils/fits/fitsFile.hpp"
 
 /** Scenario: centroiding Gaussians with center of light
  *
@@ -40,14 +39,10 @@ SCENARIO( "Verify X-Corr with center of light calculation", "[improc::imageXCorr
 
             xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.m_refIm );
-            ff.write( "ccIm.fits", xcf.m_ccIm );
-
             std::cerr << x << " " << y << "\n";
 
-            REQUIRE( fabs( x - 2 ) < 1e-8 );
-            REQUIRE( fabs( y - 2 ) < 1e-8 );
+            REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 2, 1e-8 ) );
+            REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 2, 1e-8 ) );
         }
         WHEN( "geometric quarter" )
         {
@@ -59,8 +54,8 @@ SCENARIO( "Verify X-Corr with center of light calculation", "[improc::imageXCorr
             double x, y;
             mx::improc::imageCenterOfLight( x, y, im );
 
-            REQUIRE( fabs( x - 15.5 ) < 1e-8 );
-            REQUIRE( fabs( y - 15.5 ) < 1e-8 );
+            REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 15.5, 1e-8 ) );
+            REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 15.5, 1e-8 ) );
         }
     }
 }

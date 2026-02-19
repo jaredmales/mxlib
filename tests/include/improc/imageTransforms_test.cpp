@@ -43,33 +43,35 @@ SCENARIO( "Verify direction and accuracy of various image shifts", "[improc::ima
 
             mx::improc::imageShift( shift, im, -0.5, -0.5, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 127.0 ) < 1e-4 ); // should be much better than this, but this is a test
-            REQUIRE( fabs( fit.y0() - 127.0 ) < 1e-4 );
+            REQUIRE_THAT(
+                fit.x0(),
+                Catch::Matchers::WithinAbs( 127.0, 1e-4 ) ); // should be much better than this, but this is a test
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 127.0, 1e-4 ) );
 
             mx::improc::imageShift( shift, im, +0.5, +0.5, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.0 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 128.0 ) < 1e-4 );
+            REQUIRE_THAT( fit.x0(), Catch::Matchers::WithinAbs( 128.0, 1e-4 ) );
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 128.0, 1e-4 ) );
 
             mx::improc::imageShift( shift, im, +1.0, +1.0, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.5 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 128.5 ) < 1e-4 );
+            REQUIRE_THAT( fit.x0(), Catch::Matchers::WithinAbs( 128.5, 1e-4 ) );
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 128.5, 1e-4 ) );
 
             mx::improc::imageShift( shift, im, +0.5, -0.5, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.0 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 127.0 ) < 1e-4 );
+            REQUIRE_THAT( fit.x0(), Catch::Matchers::WithinAbs( 128.0, 1e-4 ) );
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 127.0, 1e-4 ) );
 
             mx::improc::imageShift( shift, im, -0.3, +0.7, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 127.2 ) < 1e-3 ); // non-0.5 pixel shifts are harder
-            REQUIRE( fabs( fit.y0() - 128.2 ) < 1e-3 );
+            REQUIRE_THAT( fit.x0(), Catch::Matchers::WithinAbs( 127.2, 1e-3 ) ); // non-0.5 pixel shifts are harder
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 128.2, 1e-3 ) );
 
             mx::improc::imageShift( shift, im, 1.3, -0.7, mx::improc::cubicConvolTransform<double>() );
             fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.8 ) < 1e-3 );
-            REQUIRE( fabs( fit.y0() - 126.8 ) < 1e-3 );
+            REQUIRE_THAT( fit.x0(), Catch::Matchers::WithinAbs( 128.8, 1e-3 ) );
+            REQUIRE_THAT( fit.y0(), Catch::Matchers::WithinAbs( 126.8, 1e-3 ) );
         }
     }
 }

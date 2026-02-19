@@ -173,6 +173,7 @@ option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other librari
 
 option(MXLIB_USE_CUDA  "Whether or not to use CUDA library for mxlib" ON)
 option(MXLIB_USE_ISIO  "Whether or not to use the ImageStreamIO library for mxlib" ON)
+option(MXLIB_BUILD_TESTS "Whether or not to build mxlib tests" OFF)
 
 set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface in mxlib")
 
@@ -784,5 +785,20 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig )
 
 install( PROGRAMS gengithead.sh DESTINATION bin)
+
+############################################
+# Tests
+############################################
+
+if(MXLIB_BUILD_TESTS)
+    include(CTest)
+    add_subdirectory(tests)
+else()
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
+endif()
+
+add_custom_target(tests
+    DEPENDS mxlibTest
+)
 
 #dump_cmake_variables(".")

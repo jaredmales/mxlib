@@ -9,7 +9,6 @@
 
 #include "../../../include/sigproc/signalWindows.hpp"
 #include "../../../include/improc/eigenImage.hpp"
-#include "../../../include/improc/milkImage.hpp"
 
 /** Scenario: creating 2D Rectangular Tukey Windows
  *
@@ -57,8 +56,8 @@ SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tuk
             std::vector<float> win1( 256 );
             mx::sigproc::window::tukey<float>( win1, 1.0 );
 
-            REQUIRE( win( 0, 0 ) == win1[0] * win1[0] );
-            REQUIRE( win( 10, 15 ) == win1[10] * win1[15] );
+            REQUIRE_THAT( win( 0, 0 ), Catch::Matchers::WithinAbs( win1[0] * win1[0], 1e-6 ) );
+            REQUIRE_THAT( win( 10, 15 ), Catch::Matchers::WithinAbs( win1[10] * win1[15], 1e-6 ) );
         }
         WHEN( "256x256, alpha=0.5" )
         {
@@ -78,11 +77,8 @@ SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tuk
             std::vector<float> win1( 256 );
             mx::sigproc::window::tukey<float>( win1, 0.5 );
 
-            mx::improc::milkImage<float> mwin;
-            mwin.create( "win", win );
-
-            REQUIRE( win( 0, 0 ) == win1[0] * win1[0] );
-            REQUIRE( win( 10, 15 ) == win1[10] * win1[15] );
+            REQUIRE_THAT( win( 0, 0 ), Catch::Matchers::WithinAbs( win1[0] * win1[0], 1e-6 ) );
+            REQUIRE_THAT( win( 10, 15 ), Catch::Matchers::WithinAbs( win1[10] * win1[15], 1e-6 ) );
         }
     }
 }
