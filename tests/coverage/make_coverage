@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# Configure default build tree, then run the CMake coverage workflow.
+cmake -S . -B _build
+cmake --build _build --target coverage
