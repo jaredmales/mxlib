@@ -1,0 +1,90 @@
+#################################################################
+#                      cmake configuration for mxlib tests
+#################################################################
+
+set(MXLIB_TEST_MAIN_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/testMain.cpp)
+
+set(MXLIB_TEST_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoAtmosphere_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoSystem_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoPSDs_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/astro/astroDynamics_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fileUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsHeaderCard_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsFile_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/geo_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/func/moffat_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateBLAS_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateLapack_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/randomT_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/psdUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/psdFilter_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/zernike_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/signalWindows_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageTransforms_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sys/timeUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageXCorrFFT_test.cpp
+)
+
+if(MXLIB_USE_CUDA)
+    list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/math/cuda/templateCublas_test.cpp)
+endif()
+
+add_executable(mxlibTest ${MXLIB_TEST_MAIN_SOURCE} ${MXLIB_TEST_SOURCES})
+target_link_libraries(mxlibTest PRIVATE mxlib-shared)
+if(NOT MXLIB_BUILD_TESTS)
+    set_target_properties(mxlibTest PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+endif()
+
+add_custom_target(mxlibTestRun
+    COMMAND $<TARGET_FILE:mxlibTest>
+    DEPENDS mxlibTest
+    USES_TERMINAL
+)
+
+if(BUILD_TESTING)
+    add_test(NAME mxlibTest COMMAND mxlibTest)
+endif()
+
+set(MXLIB_ONE_TEST
+    ""
+    CACHE STRING
+          "Single test source to build, relative to tests/ (e.g. include/math/geo_test.cpp), similar to tests/Makefile.one"
+)
+
+if(MXLIB_ONE_TEST)
+    if(IS_ABSOLUTE "${MXLIB_ONE_TEST}")
+        set(MXLIB_ONE_TEST_SOURCE "${MXLIB_ONE_TEST}")
+    else()
+        set(MXLIB_ONE_TEST_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${MXLIB_ONE_TEST}")
+    endif()
+
+    if(MXLIB_ONE_TEST_SOURCE MATCHES "\\.o$")
+        string(REGEX REPLACE "\\.o$" ".cpp" MXLIB_ONE_TEST_SOURCE "${MXLIB_ONE_TEST_SOURCE}")
+    elseif(MXLIB_ONE_TEST_SOURCE MATCHES "\\.hpp$")
+        string(REGEX REPLACE "\\.hpp$" ".cpp" MXLIB_ONE_TEST_SOURCE "${MXLIB_ONE_TEST_SOURCE}")
+    elseif(NOT MXLIB_ONE_TEST_SOURCE MATCHES "\\.cpp$")
+        string(APPEND MXLIB_ONE_TEST_SOURCE ".cpp")
+    endif()
+
+    if(NOT EXISTS "${MXLIB_ONE_TEST_SOURCE}")
+        message(FATAL_ERROR "MXLIB_ONE_TEST source does not exist: ${MXLIB_ONE_TEST_SOURCE}")
+    endif()
+
+    add_executable(mxlibTestOne ${MXLIB_TEST_MAIN_SOURCE} ${MXLIB_ONE_TEST_SOURCE})
+    target_link_libraries(mxlibTestOne PRIVATE mxlib-shared)
+    if(NOT MXLIB_BUILD_TESTS)
+        set_target_properties(mxlibTestOne PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+    endif()
+
+    add_custom_target(mxlibTestOneRun
+        COMMAND $<TARGET_FILE:mxlibTestOne>
+        DEPENDS mxlibTestOne
+        USES_TERMINAL
+    )
+
+    if(BUILD_TESTING)
+        add_test(NAME mxlibTestOne COMMAND mxlibTestOne)
+    endif()
+endif()

@@ -262,7 +262,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / 10000 );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, 0.02 ) );
         }
         WHEN( "alpha=-1.5, df arbitrary, var = 2.2" )
         {
@@ -307,7 +307,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / 10000 );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.2 ) ) < 0.02 * sqrt( 2.2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), 0.02 * sqrt( 2.2 ) ) );
         }
     }
     GIVEN( "a rank 2 psd" )
@@ -366,7 +366,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / 10000 );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, 0.02 ) );
         }
         WHEN( "alpha=-1.5, dk arb, var=2.2" )
         {
@@ -422,7 +422,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / 10000 );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.2 ) ) < 0.02 * sqrt( 2.2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), 0.02 * sqrt( 2.2 ) ) );
         }
     }
     GIVEN( "a rank 3 psd" )
@@ -516,7 +516,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / 10000 );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, 0.02 ) );
         }
         WHEN( "k-alpha=-3.5, f-alph=-1.5, dk arb, df arb, var=2" )
         {
@@ -607,7 +607,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / 10000 );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.0 ) ) < 0.02 * sqrt( 2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.0 ), 0.02 * sqrt( 2 ) ) );
         }
     }
 }

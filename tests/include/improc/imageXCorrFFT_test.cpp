@@ -10,7 +10,6 @@
 #include "../../../include/math/func/gaussian.hpp"
 #include "../../../include/improc/imageXCorrFFT.hpp"
 #include "../../../include/improc/eigenCube.hpp"
-#include "../../../include/ioutils/fits/fitsFile.hpp"
 
 /** Scenario: centroiding Gaussians with center of light
  *
@@ -37,24 +36,27 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
             xcf.maxLag( 20 );
             xcf.refIm( refIm );
-            xcf( x, y, im2 );
-
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
@@ -71,24 +73,29 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
 
-            double x, y;
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
+
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
+            xcf.maxLag( 20 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
-            xcf.maxLag( 20 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
         {
@@ -105,24 +112,28 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
+            xcf.maxLag( 20 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
-            xcf.maxLag( 20 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
@@ -139,24 +150,28 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
+            xcf.maxLag( 20 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::centerOfLight );
-            xcf.maxLag( 20 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
     }
 }
@@ -186,24 +201,28 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
-
-            mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.peakMethod( mx::improc::xcorrPeakMethod::interpPeak );
             xcf.maxLag( 5 );
-            xcf.refIm( refIm );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
+
+            xcf.refIm( refIm );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
@@ -220,10 +239,16 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
@@ -232,14 +257,11 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             xcf.maxLag( 5 );
 
             xcf.refIm( refIm );
-            xcf( x, y, im2 );
-
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.3)" )
         {
@@ -256,24 +278,28 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::interpPeak );
+            xcf.tol( 0.1 );
 
             mx::improc::eigenImage<double> refIm = im0;
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::interpPeak );
-            xcf.tol( 0.1 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
@@ -290,24 +316,28 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::interpPeak );
+            xcf.maxLag( 5 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::interpPeak );
-            xcf.maxLag( 5 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
     }
 }
@@ -331,24 +361,27 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
 
             mx::improc::eigenImage<double> refIm = im0;
             xcf.peakMethod( mx::improc::xcorrPeakMethod::gaussFit );
             xcf.maxLag( 32 );
             xcf.refIm( refIm );
-            xcf( x, y, im2 );
-
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
@@ -365,24 +398,28 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::gaussFit );
+            xcf.maxLag( 32 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::gaussFit );
-            xcf.maxLag( 32 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
         {
@@ -399,10 +436,16 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
@@ -410,14 +453,11 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             xcf.maxLag( 32 );
             xcf.refIm( refIm );
 
-            xcf( x, y, im2 );
-
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
         WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
@@ -434,24 +474,28 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             double ycen = 0.5 * ( im0.cols() - 1 );
 
             mx::math::func::gaussian2D<double>( im0.data(), im0.rows(), im0.cols(), 0., 1.0, xcen, ycen, 2 );
-            mx::math::func::gaussian2D<double>(
-                im2.data(), im2.rows(), im2.cols(), 0., 1.0, xcen + xshift, ycen + yshift, 2 );
+            mx::math::func::gaussian2D<double>( im2.data(),
+                                                im2.rows(),
+                                                im2.cols(),
+                                                0.,
+                                                1.0,
+                                                xcen + xshift,
+                                                ycen + yshift,
+                                                2 );
 
-            double x, y;
+            double x, y, peak;
             mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+            xcf.peakMethod( mx::improc::xcorrPeakMethod::gaussFit );
+            xcf.maxLag( 32 );
 
             mx::improc::eigenImage<double> refIm = im0; //.block(10,10, im0.rows()-11, im0.cols()-11);
             xcf.refIm( refIm );
-            xcf.peakMethod( mx::improc::xcorrPeakMethod::gaussFit );
-            xcf.maxLag( 32 );
-            xcf( x, y, im2 );
 
-            mx::fits::fitsFile<double> ff;
-            ff.write( "refIm.fits", xcf.refIm() );
-            ff.write( "ccIm.fits", xcf.ccIm() );
+            xcf( x, y, peak, im2 );
 
             REQUIRE( x == Approx( xshift ) );
             REQUIRE( y == Approx( yshift ) );
+            REQUIRE( peak > 0 );
         }
     }
 }

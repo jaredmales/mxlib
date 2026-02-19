@@ -31,8 +31,8 @@ SCENARIO( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
             double x, y;
             mx::improc::imageCenterOfLight( x, y, im );
 
-            REQUIRE( fabs( x - 31.5 ) < 1e-8 );
-            REQUIRE( fabs( y - 31.5 ) < 1e-8 );
+            REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 31.5, 1e-8 ) );
+            REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 31.5, 1e-8 ) );
         }
         WHEN( "geometric quarter" )
         {
@@ -44,8 +44,8 @@ SCENARIO( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
             double x, y;
             mx::improc::imageCenterOfLight( x, y, im );
 
-            REQUIRE( fabs( x - 15.5 ) < 1e-8 );
-            REQUIRE( fabs( y - 15.5 ) < 1e-8 );
+            REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 15.5, 1e-8 ) );
+            REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 15.5, 1e-8 ) );
         }
     }
 }

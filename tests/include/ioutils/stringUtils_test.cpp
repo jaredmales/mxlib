@@ -583,16 +583,14 @@ TEST_CASE( "Converting strings to numbers", "[ioutils::stringUtils]" )
         SECTION( "string valid, positive, no error check" )
         {
             long double val = stoT<long double>( "22.2567" );
-            REQUIRE( fabs( val - static_cast<long double>( 22.2567 ) ) <
-                     fabs( 1e-9 * static_cast<long double>( 22.2567 ) ) );
+            REQUIRE_THAT( static_cast<double>( val ), Catch::Matchers::WithinRel( 22.2567, 1e-9 ) );
         }
 
         SECTION( "string valid, negative, w/ error check" )
         {
             mx::error_t errc;
             long double val = stoT<long double>( "-2300000.897987", &errc );
-            REQUIRE( fabs( val - static_cast<long double>( -2300000.897987 ) ) <
-                     fabs( 1e-9 * static_cast<long double>( -2300000.897987 ) ) );
+            REQUIRE_THAT( static_cast<double>( val ), Catch::Matchers::WithinRel( -2300000.897987, 1e-9 ) );
             REQUIRE( errc == mx::error_t::noerror );
         }
 
