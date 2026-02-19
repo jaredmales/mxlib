@@ -31,20 +31,40 @@ if(MXLIB_USE_CUDA)
     list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/math/cuda/templateCublas_test.cpp)
 endif()
 
-add_executable(mxlibTest ${MXLIB_TEST_MAIN_SOURCE} ${MXLIB_TEST_SOURCES})
-target_link_libraries(mxlibTest PRIVATE mxlib-shared)
-if(NOT MXLIB_BUILD_TESTS)
-    set_target_properties(mxlibTest PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
-endif()
+set(MXLIB_TEST_TARGETS)
 
-add_custom_target(mxlibTestRun
-    COMMAND $<TARGET_FILE:mxlibTest>
-    DEPENDS mxlibTest
-    USES_TERMINAL
-)
+function(mxlib_add_test_executable TEST_SOURCE)
+    file(RELATIVE_PATH _mxlib_test_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${TEST_SOURCE}")
+    string(REPLACE "/" "_" _mxlib_test_name "${_mxlib_test_rel}")
+    string(REPLACE "." "_" _mxlib_test_name "${_mxlib_test_name}")
+    set(_mxlib_test_target "mxlibTest_${_mxlib_test_name}")
 
-if(BUILD_TESTING)
-    add_test(NAME mxlibTest COMMAND mxlibTest)
+    add_executable(${_mxlib_test_target} ${MXLIB_TEST_MAIN_SOURCE} ${TEST_SOURCE})
+    target_link_libraries(${_mxlib_test_target} PRIVATE mxlib-shared)
+
+    if(NOT MXLIB_BUILD_TESTS)
+        set_target_properties(${_mxlib_test_target} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+    endif()
+
+    if(MXLIB_BUILD_TESTS AND BUILD_TESTING)
+        add_test(NAME ${_mxlib_test_target} COMMAND ${_mxlib_test_target})
+    endif()
+
+    set(MXLIB_TEST_TARGETS ${MXLIB_TEST_TARGETS} ${_mxlib_test_target} PARENT_SCOPE)
+endfunction()
+
+foreach(_mxlib_test_source IN LISTS MXLIB_TEST_SOURCES)
+    mxlib_add_test_executable("${_mxlib_test_source}")
+endforeach()
+
+add_custom_target(mxlibTests DEPENDS ${MXLIB_TEST_TARGETS})
+
+if(MXLIB_BUILD_TESTS AND BUILD_TESTING)
+    add_custom_target(mxlibTestRun
+        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${CMAKE_BINARY_DIR} --output-on-failure
+        DEPENDS mxlibTests
+        USES_TERMINAL
+    )
 endif()
 
 set(MXLIB_ONE_TEST
@@ -84,7 +104,7 @@ if(MXLIB_ONE_TEST)
         USES_TERMINAL
     )
 
-    if(BUILD_TESTING)
+    if(MXLIB_BUILD_TESTS AND BUILD_TESTING)
         add_test(NAME mxlibTestOne COMMAND mxlibTestOne)
     endif()
 endif()

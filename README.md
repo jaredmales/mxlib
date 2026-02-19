@@ -24,12 +24,12 @@ cmake -S . -B _build -DMXLIB_BUILD_TESTS=ON
 ```
 
 With `MXLIB_BUILD_TESTS=ON`, test executables are part of the default build.
-With `MXLIB_BUILD_TESTS=OFF`, they are skipped by default and built only via `tests`/`mxlibTest` targets.
+With `MXLIB_BUILD_TESTS=OFF`, they are skipped by default and built only via `tests`/`mxlibTests` targets.
 
-Build the aggregate test executable:
+Build all test executables:
 
 ```bash
-cmake --build _build --target mxlibTest -j
+cmake --build _build --target mxlibTests -j
 ```
 
 Run tests:
@@ -38,7 +38,7 @@ Run tests:
 ctest --test-dir _build --output-on-failure
 ```
 
-Run the aggregate test executable directly:
+Run the CTest test suite directly:
 
 ```bash
 cmake --build _build --target mxlibTestRun
@@ -51,3 +51,44 @@ cmake -S . -B _build -DMXLIB_BUILD_TESTS=ON -DMXLIB_ONE_TEST=include/math/geo_te
 cmake --build _build --target mxlibTestOne -j
 cmake --build _build --target mxlibTestOneRun
 ```
+
+## Coverage
+
+Coverage generation is integrated into CMake and modeled after the MagAOX flow.
+
+Prerequisites:
+
+```bash
+lcov --version
+genhtml --version
+```
+
+Generate an HTML report:
+
+```bash
+cmake -S . -B _build
+cmake --build _build --target coverage
+```
+
+Optional: tune coverage test timeout (default `300` seconds):
+
+```bash
+cmake -S . -B _build -DMXLIB_COVERAGE_TEST_TIMEOUT=600
+```
+
+Coverage artifacts are written under `_build/`:
+
+- `_build/coverage.info`
+- `_build/coverage_filtered.info`
+- `_build/coverage_report/index.html`
+
+Clean coverage artifacts:
+
+```bash
+cmake --build _build --target coverage_clean
+```
+
+Convenience scripts are also available:
+
+- `tests/coverage/make_coverage`
+- `tests/coverage/update_coverage`
