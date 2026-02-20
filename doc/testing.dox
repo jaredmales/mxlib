@@ -1,0 +1,7 @@
+/** \addtogroup mxlib_testing
+  * @{
+  *
+  * This section documents how to build and run the mxlib tests, and how to generate coverage reports.
+  *
+  * @}
+  */
