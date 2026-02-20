@@ -14,7 +14,13 @@
 
 #include "../../../include/improc/imageTransforms.hpp"
 
-#include "../../../include/math/fit/fitGaussian.hpp"
+namespace
+{
+double imageMSE( const mx::improc::eigenImage<double> &a, const mx::improc::eigenImage<double> &b )
+{
+    return ( a - b ).square().mean();
+}
+} // namespace
 
 /** Scenario: Verify direction and accuracy of various image shifts
  *
@@ -28,48 +34,38 @@ SCENARIO( "Verify direction and accuracy of various image shifts", "[improc::ima
     {
         WHEN( "shifting" )
         {
-            mx::improc::eigenImage<double> im, shift;
-            mx::math::fit::fitGaussian2Dsym<double> fit;
-            double x, y;
+            mx::improc::eigenImage<double> im, shift, ref;
 
             im.resize( 256, 256 );
             shift.resize( im.rows(), im.cols() );
-
-            fit.setArray( shift.data(), shift.rows(), shift.cols() );
+            ref.resize( im.rows(), im.cols() );
 
             // Use sigma = 8 to get a well oversampled image, making shifts more accurate
             mx::math::func::gaussian2D<double>( im.data(), im.rows(), im.cols(), 0., 1.0, 127.5, 127.5, 8 );
-            fit.setGuess( 0.0, 1.0, 127.5, 127.5, 8.0 );
 
             mx::improc::imageShift( shift, im, -0.5, -0.5, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 127.0 ) < 1e-4 ); // should be much better than this, but this is a test
-            REQUIRE( fabs( fit.y0() - 127.0 ) < 1e-4 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 127.0, 127.0, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
 
             mx::improc::imageShift( shift, im, +0.5, +0.5, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.0 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 128.0 ) < 1e-4 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 128.0, 128.0, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
 
             mx::improc::imageShift( shift, im, +1.0, +1.0, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.5 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 128.5 ) < 1e-4 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 128.5, 128.5, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
 
             mx::improc::imageShift( shift, im, +0.5, -0.5, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.0 ) < 1e-4 );
-            REQUIRE( fabs( fit.y0() - 127.0 ) < 1e-4 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 128.0, 127.0, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
 
             mx::improc::imageShift( shift, im, -0.3, +0.7, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 127.2 ) < 1e-3 ); // non-0.5 pixel shifts are harder
-            REQUIRE( fabs( fit.y0() - 128.2 ) < 1e-3 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 127.2, 128.2, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
 
             mx::improc::imageShift( shift, im, 1.3, -0.7, mx::improc::cubicConvolTransform<double>() );
-            fit.fit();
-            REQUIRE( fabs( fit.x0() - 128.8 ) < 1e-3 );
-            REQUIRE( fabs( fit.y0() - 126.8 ) < 1e-3 );
+            mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 128.8, 126.8, 8 );
+            REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
         }
     }
 }

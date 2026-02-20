@@ -8,3 +8,5 @@ The documentation is located here: https://jaredmales.github.io/mxlib-doc/
 
 See the [User's Guide](https://jaredmales.github.io/mxlib-doc/modules.html) for [installation instructions](https://jaredmales.github.io/mxlib-doc/group__installation.html)
 
+See the [Testing](https://jaredmales.github.io/mxlib-doc/group__mxlib__testing.html)
+section for test build, test execution, and coverage instructions.

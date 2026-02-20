@@ -14,8 +14,8 @@ SCENARIO( "testing scal", "[templateBLAS]" )
             float x[] = { 1., 2. };
             int incX = 1;
             mx::math::scal( N, alpha, x, incX );
-            REQUIRE( x[0] == 2.0 );
-            REQUIRE( x[1] == 4.0 );
+            REQUIRE_THAT( x[0], Catch::Matchers::WithinAbs( 2.0, 1e-6 ) );
+            REQUIRE_THAT( x[1], Catch::Matchers::WithinAbs( 4.0, 1e-6 ) );
         }
 
         WHEN( "precision is double" )
@@ -25,8 +25,8 @@ SCENARIO( "testing scal", "[templateBLAS]" )
             double x[] = { 1., 2. };
             int incX = 1;
             mx::math::scal( N, alpha, x, incX );
-            REQUIRE( x[0] == 2.0 );
-            REQUIRE( x[1] == 4.0 );
+            REQUIRE_THAT( x[0], Catch::Matchers::WithinAbs( 2.0, 1e-12 ) );
+            REQUIRE_THAT( x[1], Catch::Matchers::WithinAbs( 4.0, 1e-12 ) );
         }
     }
 }

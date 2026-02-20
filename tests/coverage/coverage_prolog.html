@@ -1,0 +1,41 @@
+<div id="side-nav" class="ui-resizable side-nav-resizable coverage-side-nav">
+  <div id="coverage-nav-tree">
+    <div class="coverage-nav-title">Documentation</div>
+    <ul class="coverage-nav-list">
+      <li><a id="cov-link-doc-home" href="../index.html">Home</a></li>
+      <li><a id="cov-link-doc-guide" href="../modules.html">User's Guide</a></li>
+      <li><a id="cov-link-cov-home" href="index.html">Coverage Report</a></li>
+    </ul>
+  </div>
+</div>
+<div id="doc-content">
+<script type="text/javascript">
+(function () {
+  var path = window.location.pathname;
+  var marker = "/coverage/";
+  var idx = path.indexOf(marker);
+  if (idx < 0) return;
+  var tail = path.slice(idx + marker.length);
+  var depth = (tail.match(/\//g) || []).length;
+  var up = "";
+  for (var i = 0; i < depth; ++i) up += "../";
+
+  var docRoot = up + "../";
+  var covRoot = up;
+
+  // genhtml prolog/epilog mode does not emit a full HTML <head>.
+  // Inject the shared stylesheet explicitly so coverage pages inherit Doxygen UI.
+  var css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.type = "text/css";
+  css.href = covRoot + "gcov.css";
+  document.head.appendChild(css);
+
+  var docHome = document.getElementById("cov-link-doc-home");
+  var docGuide = document.getElementById("cov-link-doc-guide");
+  var covHome = document.getElementById("cov-link-cov-home");
+  if (docHome) docHome.href = docRoot + "index.html";
+  if (docGuide) docGuide.href = docRoot + "modules.html";
+  if (covHome) covHome.href = covRoot + "index.html";
+})();
+</script>

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# Re-run coverage workflow in the configured build tree.
+cmake --build _build --target coverage

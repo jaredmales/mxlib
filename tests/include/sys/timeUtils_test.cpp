@@ -218,7 +218,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
 
             REQUIRE( hr == 1 );
             REQUIRE( mn == 2 );
-            REQUIRE( fabs( sec - 3.23 ) < 1e-7 );
+            REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( 3.23, 1e-7 ) );
         }
 
         WHEN( "negative hour" )
@@ -231,7 +231,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
 
             REQUIRE( hr == -1 );
             REQUIRE( mn == -2 );
-            REQUIRE( fabs( sec - -3.23 ) < 1e-7 );
+            REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( -3.23, 1e-7 ) );
         }
 
         WHEN( "0 pads" )
@@ -244,7 +244,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
 
             REQUIRE( hr == 1 );
             REQUIRE( mn == 2 );
-            REQUIRE( fabs( sec - 3.23 ) < 1e-7 );
+            REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( 3.23, 1e-7 ) );
         }
     }
 }
@@ -269,7 +269,7 @@ SCENARIO( "Verify calculation of MJD", "[timeutils]" )
         WHEN( "floating seconds" )
         {
             double mjd = mx::sys::Cal2mjd( 2020, 12, 31, 0, 0, 10.2357 );
-            REQUIRE( fabs( mjd - 59214.00011846875 ) < 1e-14 );
+            REQUIRE_THAT( mjd, Catch::Matchers::WithinAbs( 59214.00011846875, 1e-14 ) );
         }
     }
 }
@@ -311,7 +311,7 @@ SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
             REQUIRE( day == 31 );
             REQUIRE( hr == 0 );
             REQUIRE( min == 0 );
-            REQUIRE( fabs( sec - 10.2357 ) < 1e-14 );
+            REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( 10.2357, 1e-14 ) );
         }
     }
 
@@ -348,7 +348,7 @@ SCENARIO( "Verify conversion of an ISO 8601 time string to MJD", "[timeutils]" )
         {
             double mjd = mx::sys::ISO8601date2mjd( "2020-12-31T00:00:10.2357" );
 
-            REQUIRE( fabs( mjd - 59214.00011846875 ) < 1e-14 );
+            REQUIRE_THAT( mjd, Catch::Matchers::WithinAbs( 59214.00011846875, 1e-14 ) );
         }
     }
 }

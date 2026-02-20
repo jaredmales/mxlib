@@ -108,7 +108,8 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
 
             mx::sigproc::normPSD( psd, f, 1.0 );
             // Now have a 1/f^2 PSD with total 1-sided variance of 1.0.
-            REQUIRE( fabs( mx::sigproc::psdVar( f, psd, 1.0 ) - 1.0 ) < 1e-10 ); // handles epsilon
+            REQUIRE_THAT( mx::sigproc::psdVar( f, psd, 1.0 ),
+                          Catch::Matchers::WithinAbs( 1.0, 1e-10 ) ); // handles epsilon
 
             // proceed to augment:
             std::vector<double> f2s, psd2s;
@@ -128,17 +129,17 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
             REQUIRE( f2s[7] == -1 );
 
             // Should now have 1.0 in bin 0, 0.5 in all other bins.
-            REQUIRE( psd2s[0] == psd[0] );
-            REQUIRE( psd2s[1] == 0.5 * psd[1] );
-            REQUIRE( psd2s[2] == 0.5 * psd[2] );
-            REQUIRE( psd2s[3] == 0.5 * psd[3] );
-            REQUIRE( psd2s[4] == psd[4] );
-            REQUIRE( psd2s[5] == 0.5 * psd[3] );
-            REQUIRE( psd2s[6] == 0.5 * psd[2] );
-            REQUIRE( psd2s[7] == 0.5 * psd[1] );
+            REQUIRE_THAT( psd2s[0], Catch::Matchers::WithinAbs( psd[0], 1e-12 ) );
+            REQUIRE_THAT( psd2s[1], Catch::Matchers::WithinAbs( 0.5 * psd[1], 1e-12 ) );
+            REQUIRE_THAT( psd2s[2], Catch::Matchers::WithinAbs( 0.5 * psd[2], 1e-12 ) );
+            REQUIRE_THAT( psd2s[3], Catch::Matchers::WithinAbs( 0.5 * psd[3], 1e-12 ) );
+            REQUIRE_THAT( psd2s[4], Catch::Matchers::WithinAbs( psd[4], 1e-12 ) );
+            REQUIRE_THAT( psd2s[5], Catch::Matchers::WithinAbs( 0.5 * psd[3], 1e-12 ) );
+            REQUIRE_THAT( psd2s[6], Catch::Matchers::WithinAbs( 0.5 * psd[2], 1e-12 ) );
+            REQUIRE_THAT( psd2s[7], Catch::Matchers::WithinAbs( 0.5 * psd[1], 1e-12 ) );
 
             // handle machine precision
-            REQUIRE( fabs( mx::sigproc::psdVar( f2s, psd2s, 1.0 ) - 1.0 ) < 1e-10 );
+            REQUIRE_THAT( mx::sigproc::psdVar( f2s, psd2s, 1.0 ), Catch::Matchers::WithinAbs( 1.0, 1e-10 ) );
         }
     }
 }
@@ -157,16 +158,16 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::frequencyGrid( f, 1.0 ) == 0 );
 
-            REQUIRE( fabs( f[0] - 0 ) < 1e-10 );
-            REQUIRE( fabs( f[1] - 0.1 ) < 1e-10 );
-            REQUIRE( fabs( f[2] - 0.2 ) < 1e-10 );
-            REQUIRE( fabs( f[3] - 0.3 ) < 1e-10 );
-            REQUIRE( fabs( f[4] - 0.4 ) < 1e-10 );
-            REQUIRE( fabs( f[5] - 0.5 ) < 1e-10 );
-            REQUIRE( fabs( f[6] - -0.4 ) < 1e-10 );
-            REQUIRE( fabs( f[7] - -0.3 ) < 1e-10 );
-            REQUIRE( fabs( f[8] - -0.2 ) < 1e-10 );
-            REQUIRE( fabs( f[9] - -0.1 ) < 1e-10 );
+            REQUIRE_THAT( f[0], Catch::Matchers::WithinAbs( 0, 1e-10 ) );
+            REQUIRE_THAT( f[1], Catch::Matchers::WithinAbs( 0.1, 1e-10 ) );
+            REQUIRE_THAT( f[2], Catch::Matchers::WithinAbs( 0.2, 1e-10 ) );
+            REQUIRE_THAT( f[3], Catch::Matchers::WithinAbs( 0.3, 1e-10 ) );
+            REQUIRE_THAT( f[4], Catch::Matchers::WithinAbs( 0.4, 1e-10 ) );
+            REQUIRE_THAT( f[5], Catch::Matchers::WithinAbs( 0.5, 1e-10 ) );
+            REQUIRE_THAT( f[6], Catch::Matchers::WithinAbs( -0.4, 1e-10 ) );
+            REQUIRE_THAT( f[7], Catch::Matchers::WithinAbs( -0.3, 1e-10 ) );
+            REQUIRE_THAT( f[8], Catch::Matchers::WithinAbs( -0.2, 1e-10 ) );
+            REQUIRE_THAT( f[9], Catch::Matchers::WithinAbs( -0.1, 1e-10 ) );
         }
 
         WHEN( "dt = 2" )
@@ -175,16 +176,16 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::frequencyGrid( f, 2.5 ) == 0 );
 
-            REQUIRE( fabs( f[0] - 0 ) < 1e-10 );
-            REQUIRE( fabs( f[1] - 0.04 ) < 1e-10 );
-            REQUIRE( fabs( f[2] - 0.08 ) < 1e-10 );
-            REQUIRE( fabs( f[3] - 0.12 ) < 1e-10 );
-            REQUIRE( fabs( f[4] - 0.16 ) < 1e-10 );
-            REQUIRE( fabs( f[5] - 0.2 ) < 1e-10 );
-            REQUIRE( fabs( f[6] - -0.16 ) < 1e-10 );
-            REQUIRE( fabs( f[7] - -0.12 ) < 1e-10 );
-            REQUIRE( fabs( f[8] - -0.08 ) < 1e-10 );
-            REQUIRE( fabs( f[9] - -0.04 ) < 1e-10 );
+            REQUIRE_THAT( f[0], Catch::Matchers::WithinAbs( 0, 1e-10 ) );
+            REQUIRE_THAT( f[1], Catch::Matchers::WithinAbs( 0.04, 1e-10 ) );
+            REQUIRE_THAT( f[2], Catch::Matchers::WithinAbs( 0.08, 1e-10 ) );
+            REQUIRE_THAT( f[3], Catch::Matchers::WithinAbs( 0.12, 1e-10 ) );
+            REQUIRE_THAT( f[4], Catch::Matchers::WithinAbs( 0.16, 1e-10 ) );
+            REQUIRE_THAT( f[5], Catch::Matchers::WithinAbs( 0.2, 1e-10 ) );
+            REQUIRE_THAT( f[6], Catch::Matchers::WithinAbs( -0.16, 1e-10 ) );
+            REQUIRE_THAT( f[7], Catch::Matchers::WithinAbs( -0.12, 1e-10 ) );
+            REQUIRE_THAT( f[8], Catch::Matchers::WithinAbs( -0.08, 1e-10 ) );
+            REQUIRE_THAT( f[9], Catch::Matchers::WithinAbs( -0.04, 1e-10 ) );
         }
     }
 
@@ -196,11 +197,11 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::frequencyGrid( f, 1.0, false ) == 0 );
 
-            REQUIRE( fabs( f[0] - 0.1 ) < 1e-10 );
-            REQUIRE( fabs( f[1] - 0.2 ) < 1e-10 );
-            REQUIRE( fabs( f[2] - 0.3 ) < 1e-10 );
-            REQUIRE( fabs( f[3] - 0.4 ) < 1e-10 );
-            REQUIRE( fabs( f[4] - 0.5 ) < 1e-10 );
+            REQUIRE_THAT( f[0], Catch::Matchers::WithinAbs( 0.1, 1e-10 ) );
+            REQUIRE_THAT( f[1], Catch::Matchers::WithinAbs( 0.2, 1e-10 ) );
+            REQUIRE_THAT( f[2], Catch::Matchers::WithinAbs( 0.3, 1e-10 ) );
+            REQUIRE_THAT( f[3], Catch::Matchers::WithinAbs( 0.4, 1e-10 ) );
+            REQUIRE_THAT( f[4], Catch::Matchers::WithinAbs( 0.5, 1e-10 ) );
         }
 
         WHEN( "dt = 1, even size" )
@@ -209,12 +210,12 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::frequencyGrid( f, 1.0, false ) == 0 );
 
-            REQUIRE( fabs( f[0] - 0.0 ) < 1e-10 );
-            REQUIRE( fabs( f[1] - 0.1 ) < 1e-10 );
-            REQUIRE( fabs( f[2] - 0.2 ) < 1e-10 );
-            REQUIRE( fabs( f[3] - 0.3 ) < 1e-10 );
-            REQUIRE( fabs( f[4] - 0.4 ) < 1e-10 );
-            REQUIRE( fabs( f[5] - 0.5 ) < 1e-10 );
+            REQUIRE_THAT( f[0], Catch::Matchers::WithinAbs( 0.0, 1e-10 ) );
+            REQUIRE_THAT( f[1], Catch::Matchers::WithinAbs( 0.1, 1e-10 ) );
+            REQUIRE_THAT( f[2], Catch::Matchers::WithinAbs( 0.2, 1e-10 ) );
+            REQUIRE_THAT( f[3], Catch::Matchers::WithinAbs( 0.3, 1e-10 ) );
+            REQUIRE_THAT( f[4], Catch::Matchers::WithinAbs( 0.4, 1e-10 ) );
+            REQUIRE_THAT( f[5], Catch::Matchers::WithinAbs( 0.5, 1e-10 ) );
         }
     }
 }

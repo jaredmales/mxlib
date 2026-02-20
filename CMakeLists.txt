@@ -173,6 +173,10 @@ option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other librari
 
 option(MXLIB_USE_CUDA  "Whether or not to use CUDA library for mxlib" ON)
 option(MXLIB_USE_ISIO  "Whether or not to use the ImageStreamIO library for mxlib" ON)
+option(MXLIB_BUILD_TESTS "Whether or not to build mxlib tests" OFF)
+option(MXLIB_BUILD_COVERAGE "Whether or not to enable coverage instrumentation for C/C++ builds" OFF)
+set(MXLIB_COVERAGE_TEST_TIMEOUT 300 CACHE STRING "CTest timeout (seconds) for coverage target")
+option(MXLIB_BUILD_DOCS "Whether or not to build Doxygen docs as part of the default build" OFF)
 
 set(MXLIB_USE_FFT_FROM "fftw" CACHE STRING "Which library to use for the FFT interface in mxlib")
 
@@ -359,6 +363,18 @@ set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
+
+if(MXLIB_BUILD_COVERAGE)
+    # Match the legacy Make coverage behavior: --coverage and -O0 for instrumented builds.
+    add_compile_definitions(MXLIB_BUILD_COVERAGE=1)
+    add_compile_options(
+        $<$<COMPILE_LANGUAGE:C>:--coverage>
+        $<$<COMPILE_LANGUAGE:C>:-O0>
+        $<$<COMPILE_LANGUAGE:CXX>:--coverage>
+        $<$<COMPILE_LANGUAGE:CXX>:-O0>
+    )
+    add_link_options(--coverage)
+endif()
 
 ############################################
 # OpenMP setup
@@ -784,5 +800,94 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
          DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig )
 
 install( PROGRAMS gengithead.sh DESTINATION bin)
+
+############################################
+# Tests
+############################################
+
+if(MXLIB_BUILD_TESTS)
+    include(CTest)
+    add_subdirectory(tests)
+else()
+    add_subdirectory(tests EXCLUDE_FROM_ALL)
+endif()
+
+add_custom_target(tests
+    DEPENDS mxlibTests
+)
+
+set(MXLIB_COVERAGE_BUILD_DIR ${CMAKE_BINARY_DIR}/coverage-build)
+set(MXLIB_COVERAGE_INFO ${CMAKE_BINARY_DIR}/coverage.info)
+set(MXLIB_COVERAGE_FILTERED_INFO ${CMAKE_BINARY_DIR}/coverage_filtered.info)
+set(MXLIB_DOC_OUTPUT_DIR ${CMAKE_BINARY_DIR}/doc)
+set(MXLIB_DOC_HTML_DIR ${MXLIB_DOC_OUTPUT_DIR}/html)
+set(MXLIB_COVERAGE_REPORT_DIR ${MXLIB_DOC_HTML_DIR}/coverage)
+
+find_package(Doxygen QUIET)
+
+if(Doxygen_FOUND)
+    set(MXLIB_DOXYGEN_CONFIG_IN ${CMAKE_SOURCE_DIR}/doc/mxlib_doxygen.in)
+    set(MXLIB_DOXYGEN_CONFIG ${CMAKE_BINARY_DIR}/mxlib_doxygen)
+    set(MXLIB_DOXYGEN_OUTPUT_DIRECTORY ${MXLIB_DOC_OUTPUT_DIR})
+
+    configure_file(${MXLIB_DOXYGEN_CONFIG_IN} ${MXLIB_DOXYGEN_CONFIG} @ONLY)
+
+    if(MXLIB_BUILD_DOCS)
+        set(_mxlib_docs_all ALL)
+    else()
+        set(_mxlib_docs_all)
+    endif()
+
+    add_custom_target(docs ${_mxlib_docs_all}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${MXLIB_DOC_OUTPUT_DIR}
+        COMMAND ${DOXYGEN_EXECUTABLE} ${MXLIB_DOXYGEN_CONFIG}
+        COMMAND ${CMAKE_COMMAND} -DCOVERAGE_REPORT_DIR=${MXLIB_COVERAGE_REPORT_DIR} -P ${CMAKE_SOURCE_DIR}/cmake/ensure_coverage_placeholder.cmake
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc
+        DEPENDS ${MXLIB_DOXYGEN_CONFIG}
+                ${CMAKE_SOURCE_DIR}/doc/mxlib_header.html
+                ${CMAKE_SOURCE_DIR}/doc/mxlibDoxygenLayout.xml
+                ${CMAKE_SOURCE_DIR}/doc/main.dox
+                ${CMAKE_SOURCE_DIR}/doc/coverage_report.dox
+                ${CMAKE_SOURCE_DIR}/cmake/ensure_coverage_placeholder.cmake
+        USES_TERMINAL
+    )
+else()
+    message(WARNING "doxygen not found. The docs target will not be available.")
+endif()
+
+find_program(MXLIB_LCOV_EXECUTABLE lcov)
+find_program(MXLIB_GENHTML_EXECUTABLE genhtml)
+
+if(MXLIB_LCOV_EXECUTABLE AND MXLIB_GENHTML_EXECUTABLE)
+    add_custom_target(coverage
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR} -B ${MXLIB_COVERAGE_BUILD_DIR} -DMXLIB_BUILD_TESTS=ON -DMXLIB_BUILD_COVERAGE=ON -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_OPENMP=${MXLIB_USE_OPENMP} -DMXLIB_USE_ISIO=${MXLIB_USE_ISIO} -DMXLIB_USE_FFT_FROM=${MXLIB_USE_FFT_FROM} -DMXLIB_USE_BLAS_FROM=${MXLIB_USE_BLAS_FROM}
+        COMMAND ${CMAKE_COMMAND} --build ${MXLIB_COVERAGE_BUILD_DIR} --target mxlibTests -j
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --zerocounters
+        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${MXLIB_COVERAGE_BUILD_DIR} --output-on-failure --timeout ${MXLIB_COVERAGE_TEST_TIMEOUT}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_INFO} ${CMAKE_SOURCE_DIR}/tests/* /usr/* /sys/* /tty/* --ignore-errors unused,unused --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${MXLIB_COVERAGE_REPORT_DIR}
+        COMMAND ${MXLIB_GENHTML_EXECUTABLE} ${MXLIB_COVERAGE_FILTERED_INFO} --output-directory ${MXLIB_COVERAGE_REPORT_DIR} --title mxlib --hierarchical --merge-aliases --suppress-aliases --filter function --demangle-cpp --css-file ${CMAKE_SOURCE_DIR}/tests/coverage/gcov.css
+        USES_TERMINAL
+    )
+    if(TARGET docs)
+        add_dependencies(coverage docs)
+    endif()
+else()
+    message(WARNING "lcov/genhtml not found. The coverage target will not be available.")
+endif()
+
+add_custom_target(coverage_clean
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_INFO}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_FILTERED_INFO}
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_COVERAGE_REPORT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_COVERAGE_BUILD_DIR}
+)
+
+if(TARGET docs)
+    add_custom_target(docs_clean
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_DOC_OUTPUT_DIR}
+    )
+endif()
 
 #dump_cmake_variables(".")

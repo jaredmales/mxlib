@@ -13,6 +13,14 @@
 #include "../../../include/math/randomT.hpp"
 #include "../../../include/math/vectorUtils.hpp"
 
+#ifdef MXLIB_BUILD_COVERAGE
+constexpr int psdFilterTrials = 100;
+constexpr double psdFilterTol = 0.09;
+#else
+constexpr int psdFilterTrials = 10000;
+constexpr double psdFilterTol = 0.02;
+#endif
+
 /** Scenario: compiling psdFilter
  *
  * Verify compilation and initilization of the 3 ranks for psdFilter.
@@ -252,7 +260,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( size_t n = 0; n < noise.size(); ++n )
                     noise[n] = normVar;
@@ -260,9 +268,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 avgRms += ( mx::math::vectorVariance( noise, 0.0 ) );
             }
 
-            avgRms = sqrt( avgRms / 10000 );
+            avgRms = sqrt( avgRms / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
         WHEN( "alpha=-1.5, df arbitrary, var = 2.2" )
         {
@@ -297,7 +305,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( size_t n = 0; n < noise.size(); ++n )
                     noise[n] = normVar;
@@ -305,9 +313,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 avgRms += ( mx::math::vectorVariance( noise, 0.0 ) );
             }
 
-            avgRms = sqrt( avgRms / 10000 );
+            avgRms = sqrt( avgRms / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.2 ) ) < 0.02 * sqrt( 2.2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), psdFilterTol * sqrt( 2.2 ) ) );
         }
     }
     GIVEN( "a rank 2 psd" )
@@ -350,7 +358,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( int cc = 0; cc < psd.cols(); ++cc )
                 {
@@ -364,9 +372,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 avgRms += noise.square().sum(); //(mx::math::vectorVariance(noise,0.0));
             }
 
-            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / 10000 );
+            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
         WHEN( "alpha=-1.5, dk arb, var=2.2" )
         {
@@ -406,7 +414,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( int cc = 0; cc < psd.cols(); ++cc )
                 {
@@ -420,9 +428,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 avgRms += noise.square().sum(); //(mx::math::vectorVariance(noise,0.0));
             }
 
-            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / 10000 );
+            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.2 ) ) < 0.02 * sqrt( 2.2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), psdFilterTol * sqrt( 2.2 ) ) );
         }
     }
     GIVEN( "a rank 3 psd" )
@@ -496,7 +504,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( int pp = 0; pp < psd.planes(); ++pp )
                 {
@@ -514,9 +522,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                     avgRms += noise.image( pp ).square().sum();
             }
 
-            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / 10000 );
+            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - 1.0 ) < 0.02 );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
         WHEN( "k-alpha=-3.5, f-alph=-1.5, dk arb, df arb, var=2" )
         {
@@ -587,7 +595,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             double avgRms = 0;
 
-            for( int k = 0; k < 10000; ++k )
+            for( int k = 0; k < psdFilterTrials; ++k )
             {
                 for( int pp = 0; pp < psd.planes(); ++pp )
                 {
@@ -605,9 +613,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                     avgRms += noise.image( pp ).square().sum();
             }
 
-            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / 10000 );
+            avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / psdFilterTrials );
 
-            REQUIRE( fabs( avgRms - sqrt( 2.0 ) ) < 0.02 * sqrt( 2 ) );
+            REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.0 ), psdFilterTol * sqrt( 2 ) ) );
         }
     }
 }

@@ -1,0 +1,100 @@
+/** \addtogroup testing_building
+ * @{
+ *
+ * Build tests on demand (always available, even if `MXLIB_BUILD_TESTS=OFF`):
+ *
+ * \code{.sh}
+ * cmake -S . -B _build
+ * cmake --build _build --target tests -j
+ * \endcode
+ *
+ * Configure with tests enabled:
+ *
+ * \code{.sh}
+ * cmake -S . -B _build -DMXLIB_BUILD_TESTS=ON
+ * \endcode
+ *
+ * With `MXLIB_BUILD_TESTS=ON`, test executables are part of the default build.
+ * With `MXLIB_BUILD_TESTS=OFF`, they are skipped by default and built only via
+ * `tests`/`mxlibTests` targets.
+ *
+ * Build all test executables:
+ *
+ * \code{.sh}
+ * cmake --build _build --target mxlibTests -j
+ * \endcode
+ *
+ * Run tests:
+ *
+ * \code{.sh}
+ * ctest --test-dir _build --output-on-failure
+ * \endcode
+ *
+ * Run the CTest test suite directly:
+ *
+ * \code{.sh}
+ * cmake --build _build --target mxlibTestRun
+ * \endcode
+ *
+ * Build and run a single test source (Makefile.one equivalent):
+ *
+ * \code{.sh}
+ * cmake -S . -B _build -DMXLIB_BUILD_TESTS=ON -DMXLIB_ONE_TEST=include/math/geo_test.cpp
+ * cmake --build _build --target mxlibTestOne -j
+ * cmake --build _build --target mxlibTestOneRun
+ * \endcode
+ *
+ * Coverage generation is integrated into CMake and modeled after the MagAOX flow.
+ *
+ * Prerequisites:
+ *
+ * \code{.sh}
+ * lcov --version
+ * genhtml --version
+ * \endcode
+ *
+ * Generate an HTML coverage report:
+ *
+ * \code{.sh}
+ * cmake -S . -B _build
+ * cmake --build _build --target coverage
+ * \endcode
+ *
+ * Build Doxygen docs directly from CMake:
+ *
+ * \code{.sh}
+ * cmake --build _build --target docs
+ * \endcode
+ *
+ * Optionally include docs in the default build:
+ *
+ * \code{.sh}
+ * cmake -S . -B _build -DMXLIB_BUILD_DOCS=ON
+ * \endcode
+ *
+ * Optional: tune coverage test timeout (default `300` seconds):
+ *
+ * \code{.sh}
+ * cmake -S . -B _build -DMXLIB_COVERAGE_TEST_TIMEOUT=600
+ * \endcode
+ *
+ * Coverage artifacts are written under `_build/`:
+ *
+ * - `_build/coverage.info`
+ * - `_build/coverage_filtered.info`
+ * - `_build/doc/html/coverage/index.html`
+ * - `_build/doc/html/index.html`
+ *
+ * Clean coverage artifacts:
+ *
+ * \code{.sh}
+ * cmake --build _build --target coverage_clean
+ * \endcode
+ *
+ * Convenience scripts are also available:
+ *
+ * - `tests/coverage/make_coverage`
+ * - `tests/coverage/update_coverage`
+ *
+ * @}
+ */

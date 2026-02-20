@@ -20,7 +20,7 @@ SCENARIO( "compiling 1D Moffat function", "[math::func::moffat]" )
         WHEN( "compiling" )
         {
             double mv = mx::math::func::moffat<double>( 0., 0., 1., 0., 1., 1. );
-            REQUIRE( mv == 1.0 );
+            REQUIRE_THAT( mv, Catch::Matchers::WithinAbs( 1.0, 1e-12 ) );
         }
     }
 }
@@ -37,7 +37,7 @@ SCENARIO( "compiling 2D Moffat function", "[math::func::moffat]" )
         WHEN( "compiling" )
         {
             double mv = mx::math::func::moffat2D<double>( 0., 0., 0., 1., 0., 0., 1., 1. );
-            REQUIRE( mv == 1.0 );
+            REQUIRE_THAT( mv, Catch::Matchers::WithinAbs( 1.0, 1e-12 ) );
         }
     }
 }
@@ -54,7 +54,7 @@ SCENARIO( "compiling Moffat FWHM", "[math::func::moffat]" )
         WHEN( "compiling" )
         {
             double mv = mx::math::func::moffatFWHM<double>( 1., 1. );
-            REQUIRE( mv == 2.0 );
+            REQUIRE_THAT( mv, Catch::Matchers::WithinAbs( 2.0, 1e-12 ) );
         }
     }
 }

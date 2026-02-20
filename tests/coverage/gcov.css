@@ -1,0 +1,63 @@
+/* Match coverage pages to mxlib Doxygen theme. */
+@import url("../doxygen.css");
+@import url("../tabs.css");
+@import url("../doxygen-awesome.css");
+@import url("../doxygen-awesome-sidebar-only.css");
+@import url("../doxygen-awesome-sidebar-only-darkmode-toggle.css");
+
+body {
+  margin: 0;
+  padding: 1rem;
+}
+
+body > table:first-child,
+body > center > table {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+}
+
+th,
+td {
+  padding: 0.3rem 0.45rem;
+}
+
+/* Keep lcov source readability aligned with Doxygen mono typography. */
+.source,
+.source a {
+  font-family: var(--font-family-monospace, monospace);
+  font-size: 0.92rem;
+}
+
+/* Core line hit/miss coloring used by genhtml.
+   Newer lcov/genhtml uses tla* classes on source rows/spans. */
+td.lineCov,
+span.lineCov,
+td.tlaGNC,
+span.tlaGNC,
+a.tlaGNC {
+  background-color: #1a4f78 !important;
+}
+
+td.lineNoCov,
+span.lineNoCov,
+td.tlaUNC,
+span.tlaUNC,
+a.tlaUNC {
+  background-color: #5a2222 !important;
+}
+
+/* Ensure source line numbers/counters remain readable over highlight colors. */
+.source,
+.source * {
+  color: var(--page-foreground-color, #d2dbde) !important;
+}
+
+.lineNum {
+  color: var(--page-secondary-foreground-color, #9aa6ad) !important;
+}
+
+/* Keep bar cells neutral; doxygen tables handle borders/background. */
+td.coverBar > table {
+  background: transparent;
+  border: 0;
+}
