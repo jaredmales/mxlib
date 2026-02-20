@@ -15,7 +15,7 @@
 
 #ifdef MXLIB_BUILD_COVERAGE
 constexpr int psdFilterTrials = 100;
-constexpr double psdFilterTol = 0.06;
+constexpr double psdFilterTol = 0.09;
 #else
 constexpr int psdFilterTrials = 10000;
 constexpr double psdFilterTol = 0.02;

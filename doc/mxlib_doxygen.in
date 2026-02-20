@@ -68,7 +68,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       =
+OUTPUT_DIRECTORY       = @MXLIB_DOXYGEN_OUTPUT_DIRECTORY@
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create up to 4096
 # sub-directories (in 2 levels) under the output directory of each output format
@@ -935,6 +935,9 @@ WARN_LOGFILE           =
 
 INPUT                  = ./groupdefs.dox \
                          ./main.dox \
+                         ./testing.dox \
+                         ./building_tests.dox \
+                         ./coverage_report.dox \
                          ./install.dox \
                          ./sofa.dox \
                          ./sofa_constants.h \
@@ -1047,7 +1050,9 @@ RECURSIVE              = NO
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = ../source/vendor
+EXCLUDE                = ../source/vendor \
+                         ../agent_context.md \
+                         ../README.md
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

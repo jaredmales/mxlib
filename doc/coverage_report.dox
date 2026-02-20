@@ -1,0 +1,26 @@
+/** \addtogroup testing_coverage
+ * @{
+ *
+ * \htmlonly
+ * <style>
+ * /* Coverage page: use full available content width (to the right of Doxygen sidebar) */
+ * .contents,
+ * .textblock {
+ *   max-width: none !important;
+ *   width: 100% !important;
+ * }
+ * .mxlib-coverage-embed {
+ *   display: block;
+ *   width: 100%;
+ *   height: calc(100vh - 220px);
+ *   min-height: 700px;
+ *   border: 1px solid var(--separator-color, #2b3035);
+ *   border-radius: 6px;
+ *   background: var(--page-background-color, #1f2428);
+ * }
+ * </style>
+ * <iframe class="mxlib-coverage-embed" src="coverage/index.html" title="mxlib coverage report"></iframe>
+ * \endhtmlonly
+ *
+ * @}
+ */

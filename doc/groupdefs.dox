@@ -32,7 +32,6 @@
   * Various miscellaneous utilities
   */
 
-
 //------------------ error_handling -----------------------
 
 /** \defgroup error_handling_codes Error Codes
@@ -563,6 +562,14 @@
 
 /** \defgroup mxlib_testing Testing
   */
+
+    /** \defgroup testing_building Building Tests
+      * \ingroup mxlib_testing
+      */
+
+    /** \defgroup testing_coverage Coverage Report
+      * \ingroup mxlib_testing
+      */
 
     /** \defgroup unit_tests Unit Tests
       * \ingroup mxlib_testing
