@@ -23,6 +23,7 @@ set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/signalWindows_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageTransforms_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageFilters_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sys/timeUtils_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageXCorrFFT_test.cpp
 )
