@@ -8,6 +8,7 @@
 #ifndef __imageFilters_hpp__
 #define __imageFilters_hpp__
 
+#include <algorithm>
 #include <cstdlib>
 #include <format>
 
@@ -329,7 +330,7 @@ struct precalcKernel
 
     std::vector<arrayT> m_kernels;
 
-    precalKernel() = delete;
+    precalcKernel() = delete;
 
     precalcKernel( const kernelT &kernel, /**< [in] A fully initialized kernel.  Is copied.*/
                    uint32_t rows,         /**< [in] The rows in the images to be filtered*/
@@ -409,7 +410,7 @@ error_t filterImage( imageOutT &fim,        /**< [out] Contains the filtered ima
 
     if( maxr == 0 )
     {
-        maxr = 0.5 * im.rows() - kernel.maxWidth();
+        maxr = 0.5 * std::min( im.rows(), im.cols() ) - kernel.maxWidth();
     }
 
     int mini = 0.5 * im.rows() - maxr;
@@ -550,7 +551,7 @@ void medianFilterImage( imageOutT &fim,        /**< [out] Contains the filtered 
     float ycen = 0.5 * ( im.cols() - 1 );
 
     if( maxr == 0 )
-        maxr = 0.5 * im.rows() - kernel.maxWidth();
+        maxr = 0.5 * std::min( im.rows(), im.cols() ) - kernel.maxWidth();
 
     int mini = 0.5 * im.rows() - maxr;
     int maxi = 0.5 * im.rows() + maxr;

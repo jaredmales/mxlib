@@ -2,6 +2,7 @@
  */
 #include "../../catch2/catch.hpp"
 
+#include <cmath>
 #include <vector>
 #include <Eigen/Dense>
 
@@ -85,6 +86,31 @@ TEST_CASE( "Verify precalcKernel filter", "[improc::imageFilters]" )
 
         REQUIRE(alleq);
     }
+}
+
+TEST_CASE( "Gaussian filter handles non-square image dimensions", "[improc::imageFilters]" )
+{
+    mx::improc::eigenImage<float> im;
+    mx::improc::eigenImage<float> fim;
+
+    im.resize( 640, 480 );
+    for( int r = 0; r < im.rows(); ++r )
+    {
+        for( int c = 0; c < im.cols(); ++c )
+        {
+            im( r, c ) = static_cast<float>( ( r + 2 * c ) % 17 );
+        }
+    }
+
+    mx::improc::gaussKernel<mx::improc::eigenImage<float>, 2> kernel( 10.0f );
+    auto err = mx::improc::filterImage( fim, im, kernel );
+
+    REQUIRE( err == mx::error_t::noerror );
+    REQUIRE( fim.rows() == im.rows() );
+    REQUIRE( fim.cols() == im.cols() );
+    REQUIRE( std::isfinite( fim( 0, 0 ) ) );
+    REQUIRE( std::isfinite( fim( fim.rows() - 1, fim.cols() - 1 ) ) );
+    REQUIRE( std::isfinite( fim( fim.rows() / 2, fim.cols() / 2 ) ) );
 }
 
 } // namespace imageFiltersTest
