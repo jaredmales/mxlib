@@ -894,13 +894,13 @@ if(MXLIB_LCOV_EXECUTABLE AND MXLIB_GENHTML_EXECUTABLE)
         COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR} -B ${MXLIB_COVERAGE_BUILD_DIR} -DMXLIB_BUILD_TESTS=ON -DMXLIB_BUILD_COVERAGE=ON -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_OPENMP=${MXLIB_USE_OPENMP} -DMXLIB_USE_ISIO=${MXLIB_USE_ISIO} -DMXLIB_USE_FFT_FROM=${MXLIB_USE_FFT_FROM} -DMXLIB_USE_BLAS_FROM=${MXLIB_USE_BLAS_FROM}
         COMMAND ${CMAKE_COMMAND} --build ${MXLIB_COVERAGE_BUILD_DIR} --target mxlibTests -j
         COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --zerocounters
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --initial --output-file ${MXLIB_COVERAGE_BASELINE_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --initial --ignore-errors inconsistent,inconsistent --ignore-errors corrupt,corrupt --ignore-errors range,range --output-file ${MXLIB_COVERAGE_BASELINE_INFO}
         COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${MXLIB_COVERAGE_BUILD_DIR} --output-on-failure --timeout ${MXLIB_COVERAGE_TEST_TIMEOUT}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_RUN_INFO}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --add-tracefile ${MXLIB_COVERAGE_BASELINE_INFO} --add-tracefile ${MXLIB_COVERAGE_RUN_INFO} --ignore-errors inconsistent,inconsistent --ignore-errors corrupt,corrupt --output-file ${MXLIB_COVERAGE_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --ignore-errors inconsistent,inconsistent --ignore-errors corrupt,corrupt --ignore-errors range,range --output-file ${MXLIB_COVERAGE_RUN_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --add-tracefile ${MXLIB_COVERAGE_BASELINE_INFO} --add-tracefile ${MXLIB_COVERAGE_RUN_INFO} --ignore-errors inconsistent,inconsistent --ignore-errors corrupt,corrupt --ignore-errors range,range --output-file ${MXLIB_COVERAGE_INFO}
         COMMAND ${MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_INFO} ${CMAKE_SOURCE_DIR}/tests/* /usr/* /sys/* /tty/* --ignore-errors unused,unused --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${MXLIB_COVERAGE_REPORT_DIR}
-        COMMAND ${MXLIB_GENHTML_EXECUTABLE} ${MXLIB_COVERAGE_FILTERED_INFO} --output-directory ${MXLIB_COVERAGE_REPORT_DIR} --title mxlib --hierarchical --merge-aliases --suppress-aliases --filter function --demangle-cpp --css-file ${CMAKE_SOURCE_DIR}/tests/coverage/gcov.css
+        COMMAND ${MXLIB_GENHTML_EXECUTABLE} ${MXLIB_COVERAGE_FILTERED_INFO} --output-directory ${MXLIB_COVERAGE_REPORT_DIR} --title mxlib --hierarchical --merge-aliases --suppress-aliases --filter function --demangle-cpp --ignore-errors range --css-file ${CMAKE_SOURCE_DIR}/tests/coverage/gcov.css
         USES_TERMINAL
     )
     if(TARGET docs)
