@@ -8,15 +8,27 @@ set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoAtmosphere_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoSystem_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoPSDs_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/app/appConfigurator_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/astro/astroDynamics_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/error/error_t_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/error/error_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/error/exception_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageMasks_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fileUtils_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/readColumns_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/stringUtils_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsHeaderCard_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsFile_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsHeader_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/geo_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/func/moffat_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/ft/fftT_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/ft/fftwEnvironment_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/ft/ftTypes_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateBLAS_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateLapack_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/randomT_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/circularBuffer_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/psdUtils_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/psdFilter_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sigproc/zernike_test.cpp
@@ -28,8 +40,12 @@ set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/improc/imageXCorrFFT_test.cpp
 )
 
-if(MXLIB_USE_CUDA)
+if(MXLIB_USE_CUDA AND MXLIB_ENABLE_GPU_RUNTIME_TESTS)
+    list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/sim/pyramidSensor_test.cpp)
+    list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/wfp/fraunhoferPropagator_test.cpp)
+    list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/wfp/imagingUtils_test.cpp)
     list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/math/cuda/templateCublas_test.cpp)
+    list(APPEND MXLIB_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/include/math/ft/fftTcuda_test.cpp)
 endif()
 
 set(MXLIB_TEST_TARGETS)

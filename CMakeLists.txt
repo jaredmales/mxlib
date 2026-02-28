@@ -173,6 +173,25 @@ option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other librari
 
 option(MXLIB_USE_CUDA  "Whether or not to use CUDA library for mxlib" ON)
 option(MXLIB_USE_ISIO  "Whether or not to use the ImageStreamIO library for mxlib" ON)
+set(_mxlib_gpu_runtime_tests_default OFF)
+if(MXLIB_USE_CUDA)
+    find_program(MXLIB_NVIDIA_SMI_EXECUTABLE nvidia-smi)
+    if(MXLIB_NVIDIA_SMI_EXECUTABLE)
+        execute_process(
+            COMMAND ${MXLIB_NVIDIA_SMI_EXECUTABLE} --query-gpu=name --format=csv,noheader
+            RESULT_VARIABLE _mxlib_nvidia_smi_result
+            OUTPUT_VARIABLE _mxlib_nvidia_smi_output
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(_mxlib_nvidia_smi_result EQUAL 0 AND NOT _mxlib_nvidia_smi_output STREQUAL "")
+            set(_mxlib_gpu_runtime_tests_default ON)
+        endif()
+    endif()
+endif()
+option(MXLIB_ENABLE_GPU_RUNTIME_TESTS
+       "Enable tests that require a working CUDA runtime/device (and in some cases ImageStreamIO shared memory)"
+       ${_mxlib_gpu_runtime_tests_default})
 option(MXLIB_BUILD_TESTS "Whether or not to build mxlib tests" OFF)
 option(MXLIB_BUILD_COVERAGE "Whether or not to enable coverage instrumentation for C/C++ builds" OFF)
 set(MXLIB_COVERAGE_TEST_TIMEOUT 300 CACHE STRING "CTest timeout (seconds) for coverage target")

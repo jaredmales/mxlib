@@ -69,7 +69,7 @@ struct gaussKernel
 {
     typedef _arrayT arrayT;
     typedef typename _arrayT::Scalar arithT;
-    static const int kernW = _kernW;
+    static constexpr int kernW = static_cast<int>( _kernW );
 
     typedef _verboseT verboseT;
 
@@ -137,7 +137,7 @@ struct azBoxKernel
     typedef _arrayT arrayT;
     typedef typename _arrayT::Scalar arithT;
 
-    static const int kernW = _kernW;
+    static constexpr int kernW = static_cast<int>( _kernW );
 
     typedef _verboseT verboseT;
 

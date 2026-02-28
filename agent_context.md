@@ -59,6 +59,14 @@ Follow these code style and documentation rules exactly.
   - `This work was performed by GPT-5.3-Codex in response to the prompt: "...".`
 - Include the primary user prompt verbatim (or a faithful condensed version if it is extremely long).
 
+12) Unit Test Doxygen Structure
+- For files under `tests/include/...`, attach each `TEST_CASE` to the matching `*_unit_tests` Doxygen group so test docs mirror the `include/...` folder hierarchy.
+- If a needed subgroup is missing, add it to `doc/groupdefs.dox` under `\defgroup unit_tests` in the same hierarchy style as neighboring groups.
+- When Doxygen misses a symbol used only in templated/overloaded contexts, add a guarded reference block using `MXLIBTEST_DOXYGEN_REF` near the relevant test case:
+  - reference only the target API symbols
+  - keep it side-effect free
+  - match existing project pattern (`#if` or `#ifdef`) used in nearby tests.
+
 When you finish:
 - Summarize what changed.
 - List affected files.

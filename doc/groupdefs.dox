@@ -573,6 +573,10 @@
 
     /** \defgroup unit_tests Unit Tests
       * \ingroup mxlib_testing
+      *
+      * Organization convention:
+      * - Unit-test subgroups mirror the `include/` folder hierarchy.
+      * - Example: `include/error/exception.hpp` maps to `error_exception_unit_tests`.
       */
 
         /** \defgroup error_unit_tests Error Handling Unit Tests
@@ -583,6 +587,10 @@
               */
 
             /** \defgroup error_error_t_unit_tests error_t Utilities Unit Tests
+              * \ingroup error_unit_tests
+              */
+
+            /** \defgroup error_exception_unit_tests exception Class Unit Tests
               * \ingroup error_unit_tests
               */
 

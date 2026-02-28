@@ -117,6 +117,8 @@ TEST_CASE( "Test FITS error conversions", "[error::error_t]" )
 
     REQUIRE(fitserrs.size() > 0);
 
+    fitserrs.push_back(0);
+
     size_t fail = 0;
     for(auto & fe : fitserrs)
     {
