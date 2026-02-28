@@ -10,6 +10,7 @@ namespace errorTest
 {
 namespace errorTest
 {
+
 /// Test error_t boolean operators and functions
 /**
  * \ingroup error_error_unit_tests
@@ -68,7 +69,6 @@ TEST_CASE( "Test error_t boolean operators and functions", "[error::error]" )
         REQUIRE(mx::isError(errc));
     }
 }
-
 /// Internal error messages
 /**
  * \ingroup error_error_unit_tests
@@ -139,7 +139,6 @@ TEST_CASE( "Internal error messages", "[error::error]" )
         REQUIRE(msg != "");
     }
 }
-
 /// Internal error reports
 /**
  * \ingroup error_error_unit_tests
@@ -210,7 +209,6 @@ TEST_CASE( "Internal error reports", "[error::error]" )
         REQUIRE(errc == mx::error_t::error);
     }
 }
-
 /// Error messages
 /**
  * \ingroup error_error_unit_tests
@@ -281,7 +279,6 @@ TEST_CASE( "Error messages", "[error::error]" )
         REQUIRE(msg != "");
     }
 }
-
 /// Error reports
 /**
  * \ingroup error_error_unit_tests
@@ -412,7 +409,6 @@ mx::error_t mx_error_return_code_test(mx::error_t errc)
 }
 
 /// \endcond
-
 /// Error macros
 /**
  * \ingroup error_error_unit_tests

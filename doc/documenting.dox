@@ -9,11 +9,12 @@ mxlib uses doxygen.
 
 mxlib uses the Catch2 unit testing framework.
 
-To document a test and link it to the entity being tested:
+To document tests:
 
-1. Document the test SCENARIO like a function, but include an \verbatim \anchor \endverbatim.
-2. In the documentation for the tested entity, add a \verbatim \test \endverbatim, which includes a reference to the anchor.
-3. Be sure that the directory containing the file containing the test is included in mxlib_doxygen.in
+1. Group each test case/scenario using the appropriate `*_unit_tests` doxygen group.
+2. Organize test groups to mirror the `include/` folder hierarchy.
+3. Avoid explicit anchor/test command links between source and tests.
+4. Be sure that the directory containing the test file is included in mxlib_doxygen.in.
 
 
 @}

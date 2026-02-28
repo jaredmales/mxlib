@@ -17,10 +17,12 @@ namespace fitsTest
 {
 namespace fitsHeaderTest
 {
+/**
+ *
+ *//// Test functionality of headersToValues
 
 /// Test functionality of headersToValues
 /**
- *
  * \ingroup fitsHeader_unit_tests
  */
 TEST_CASE( "Test functionality of headersToValues", "[ioutils::fits::fitsHeader]" )

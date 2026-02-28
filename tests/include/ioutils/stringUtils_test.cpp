@@ -19,7 +19,6 @@ namespace ioutilsTest
 {
 namespace stringUtilsTest
 {
-
 /// Converting strings to numbers
 /**
  * \ingroup stringUtils_unit_tests

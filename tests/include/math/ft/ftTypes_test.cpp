@@ -7,11 +7,13 @@
 #define MX_NO_ERROR_REPORTS
 
 #include "../../../../include/math/ft/ftTypes.hpp"
-
-/// Test the ftTypes
 /** This is just a compilation check.
  *
- * \ingroup math_ft_ftTypes_tests
+ *//// Test the ftTypes
+
+/// Test the ftTypes
+/**
+ * \ingroup ftTypes_unit_tests
  */
 TEST_CASE( "Test the ftTypes", "[math::ft]" )
 {

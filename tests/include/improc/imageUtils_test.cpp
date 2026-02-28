@@ -9,19 +9,18 @@
 
 #include "../../../include/math/func/gaussian.hpp"
 #include "../../../include/improc/imageUtils.hpp"
-#include "../../../include/improc/eigenCube.hpp"
+#include "../../../include/improc/eigenCube.hpp"/// Verify center of light calculation
 
-/** Scenario: centroiding Gaussians with center of light
- *
- * Verify center of light calculation
- *
- * \anchor tests_improc_imageUtils_imageCenterOfLight
+
+/// Verify center of light calculation
+/**
+ * \ingroup imageUtils_unit_tests
  */
-SCENARIO( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
+TEST_CASE( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
 {
-    GIVEN( "a Gaussian" )
+    SECTION( "a Gaussian" )
     {
-        WHEN( "geometric center" )
+        SECTION( "geometric center" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 64, 64 );
@@ -34,7 +33,7 @@ SCENARIO( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
             REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 31.5, 1e-8 ) );
             REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 31.5, 1e-8 ) );
         }
-        WHEN( "geometric quarter" )
+        SECTION( "geometric quarter" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 64, 64 );

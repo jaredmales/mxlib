@@ -12,10 +12,9 @@
 #include "../../../include/improc/eigenImage.hpp"
 #include "../../../include/improc/imageMasks.hpp"
 #include "../../../include/math/constants.hpp"
-
 /// Make an Airy pattern and go back to pupil on CPU
 /**
- * \ingroup math_wfp_fraunhoferPropagator_test
+ * \ingroup fraunhoferPropagator_unit_tests
  */
 TEST_CASE( "Make an Airy pattern and go back to pupil on CPU", "[wfp]" )
 {
@@ -57,10 +56,9 @@ TEST_CASE( "Make an Airy pattern and go back to pupil on CPU", "[wfp]" )
 
     REQUIRE_THAT( realPupil.sum(), Catch::Matchers::WithinAbs( pupil.sum(), pupil.sum() * 1e-4 ) );
 }
-
 /// Make an Airy pattern and go back to pupil on GPU
 /**
- * \ingroup math_wfp_fraunhoferPropagator_test
+ * \ingroup fraunhoferPropagator_unit_tests
  */
 TEST_CASE( "Make an Airy pattern and go back to pupil on GPU", "[wfp]" )
 {

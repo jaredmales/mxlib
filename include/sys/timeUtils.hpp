@@ -56,8 +56,6 @@ namespace sys
  *
  * \retval typeT containing the current time in seconds
  *
- * Tests:
- *     - Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -84,8 +82,6 @@ double get_curr_time<double, CLOCK_REALTIME>( timespec &tsp );
  *
  * \retval typeT containing the current time in seconds
  *
- * Tests:
- *     - Verify operation of get_curr_time. \ref tests_sys_timeUtils_get_curr_time "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -102,8 +98,6 @@ double get_curr_time<double, CLOCK_REALTIME>();
 
 /// Sleep for a specified period in seconds.
 /**
- * Tests:
- *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -111,8 +105,6 @@ void sleep( unsigned sec /**< [in] the number of seconds to sleep. */ );
 
 /// Sleep for a specified period in milliseconds.
 /**
- * Tests:
- *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -120,8 +112,6 @@ void milliSleep( unsigned msec /**< [in] the number of milliseconds to sleep. */
 
 /// Sleep for a specified period in microseconds.
 /**
- * Tests:
- *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -129,8 +119,6 @@ void microSleep( unsigned usec /**< [in] the number of microseconds to sleep. */
 
 /// Sleep for a specified period in nanoseconds.
 /**
- * Tests
- *     - Verify operation of thread sleep functions. \ref tests_sys_timeUtils_sleep "[test doc]"
  *
  * \ingroup timeutils_sleep
  */
@@ -139,8 +127,6 @@ void nanoSleep( unsigned nsec /**< [in] the number of microseconds to sleep. */ 
 /// Adds a time offset to an existing timespec
 /** The offset is specified in nanoseconds, which can be greater than 1e9.
  *
- * Tests:
- *     - Verify operation of timespecAddNsec. \ref tests_sys_timeUtils_timespecAddNsec "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -153,8 +139,6 @@ void timespecAddNsec( timespec &ts, ///< [in.out] the time to add to
  *
  * \tparam floatT is a floating point type
  *
- * Tests
- *     - Verify parsing of a formatted time string. \ref tests_sys_timeUtils_parse_hms "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -196,8 +180,6 @@ void parse_hms( floatT &h,                ///< [out] the hour component coverted
  * \retval double containing the MJD
  * \retval <0 on error (-1 = bad year, -2 = bad month, -3 = bad day)
  *
- * Tests:
- *     - Verify calculation of MJD. \ref tests_sys_timeUtils_Cal2mjd "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -216,8 +198,6 @@ double Cal2mjd( int yr,    ///< [in] Gregorian calendar year
  * \returns 0 on success
  * \returns -4 if fdate is not long enough
  *
- * Tests:
- *     - Verify parsing of an ISO 8601 time string \ref tests_sys_timeUtils_ISO8601dateBreakdown "[test doc]"
  *
  * \ingroup timeutils
  */
@@ -235,8 +215,6 @@ int ISO8601dateBreakdown( int &yr,                 ///< [out] Gregorian calendar
  * See https://en.wikipedia.org/?title=ISO_8601.
  * After parsing calls Cal2mjd.
  *
- * Tests:
- *     - Verify conversion of an ISO 8601 time string to MJD. \ref tests_sys_timeUtils_ISO8601date2mjd "[test doc]"
  *
  * \ingroup timeutils
  */

@@ -20,19 +20,18 @@ double imageMSE( const mx::improc::eigenImage<double> &a, const mx::improc::eige
 {
     return ( a - b ).square().mean();
 }
-} // namespace
+} // namespace/// Verify direction and accuracy of various image shifts
 
-/** Scenario: Verify direction and accuracy of various image shifts
- *
- * Tests image shifts by fractional pixels.
- *
- * \anchor tests_improc_imageTransforms_imageShift
+
+/// Verify direction and accuracy of various image shifts
+/**
+ * \ingroup imageTransforms_unit_tests
  */
-SCENARIO( "Verify direction and accuracy of various image shifts", "[improc::imageTransforms]" )
+TEST_CASE( "Verify direction and accuracy of various image shifts", "[improc::imageTransforms]" )
 {
-    GIVEN( "a Gaussian image" )
+    SECTION( "a Gaussian image" )
     {
-        WHEN( "shifting" )
+        SECTION( "shifting" )
         {
             mx::improc::eigenImage<double> im, shift, ref;
 

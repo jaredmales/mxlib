@@ -232,7 +232,6 @@ int calcAzEl( realT &az, ///< [out] the calculated azimuth [degrees]
 /**
  * \returns the  parallactic angle in radians.
  *
- * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
  *
  * \ingroup posastro
  */
@@ -270,7 +269,6 @@ realT parAngDeg( realT sinHA,  ///< [in] the sine of the target hour angle
 /**
  * \return the parallactic angle in radians.
  *
- * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
  *
  * \ingroup posastro
  */
@@ -287,7 +285,6 @@ realT parAngRad( realT ha,  ///< [in] the hour angle, in radians, negative to th
 /**
  * \return the parallactic angle in degrees.
  *
- * \test Scenario: calculating parallactic angles \ref tests_astrodynamics_parang "[test doc]"
  *
  * \ingroup posastro
  *

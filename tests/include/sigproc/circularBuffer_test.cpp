@@ -7,19 +7,18 @@
 
 #define MX_NO_ERROR_REPORTS
 
-#include "../../../include/sigproc/circularBuffer.hpp"
+#include "../../../include/sigproc/circularBuffer.hpp"/// creating a circular buffer with branching
 
-/** Scenario: using a circular buffer with branch-wrapping
- *
- * Verify circular buffer operation with branch-wrapping
- *
- * \anchor tests_sigproc_circularBuffer_branch
+
+/// creating a circular buffer with branching
+/**
+ * \ingroup circularBuffer_unit_tests
  */
-SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer::circularBufferBranch]" )
+TEST_CASE( "creating a circular buffer with branching", "[sigproc::circularBuffer::circularBufferBranch]" )
 {
-    GIVEN( "a circular buffer" )
+    SECTION( "a circular buffer" )
     {
-        WHEN( "adding exactly max entries worth" )
+        SECTION( "adding exactly max entries worth" )
         {
             mx::sigproc::circularBufferBranch<int, int> cb;
             cb.maxEntries(5);
@@ -45,7 +44,7 @@ SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer
             REQUIRE( cb.at(cb.latest(),0) == 4 );
         }
 
-        WHEN( "adding new values past the end" )
+        SECTION( "adding new values past the end" )
         {
             mx::sigproc::circularBufferBranch<int, int> cb;
             cb.maxEntries(5);
@@ -73,7 +72,7 @@ SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer
             REQUIRE( cb.at(cb.latest(),0) == 6 );
         }
 
-        WHEN( "wrapping when not full" )
+        SECTION( "wrapping when not full" )
         {
             mx::sigproc::circularBufferBranch<int, int> cb;
             cb.maxEntries(5);
@@ -95,19 +94,18 @@ SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer
             REQUIRE( cb[-4] == 0 );
         }
     }
-}
+}/// creating a circular buffer with indexing
 
-/** Scenario: using a circular buffer with index-wrapping
- *
- * Verify circular buffer operation with index-wrapping
- *
- * \anchor tests_sigproc_circularBuffer_branch
+
+/// creating a circular buffer with indexing
+/**
+ * \ingroup circularBuffer_unit_tests
  */
-SCENARIO( "creating a circular buffer with indexing", "[sigproc::circularBuffer::circularBufferIndex]" )
+TEST_CASE( "creating a circular buffer with indexing", "[sigproc::circularBuffer::circularBufferIndex]" )
 {
-    GIVEN( "a circular buffer" )
+    SECTION( "a circular buffer" )
     {
-        WHEN( "adding exactly max entries worth" )
+        SECTION( "adding exactly max entries worth" )
         {
             mx::sigproc::circularBufferIndex<int, int> cb;
             cb.maxEntries(5);
@@ -133,7 +131,7 @@ SCENARIO( "creating a circular buffer with indexing", "[sigproc::circularBuffer:
             REQUIRE( cb.at(cb.latest(),0) == 4 );
         }
 
-        WHEN( "adding new values past the end" )
+        SECTION( "adding new values past the end" )
         {
             mx::sigproc::circularBufferIndex<int, int> cb;
             cb.maxEntries(5);

@@ -15,10 +15,9 @@ using namespace mx::AO::sim;
 // #include <mx/improc/milkImage.hpp>
 // #include <mx/improc/eigenCube.hpp>
 using namespace mx::improc;
-
 /// Simulate a pyramid sensor on CPU
 /**
- * \ingroup ao_sim_pyramidSensor_tests
+ * \ingroup pyramidSensor_unit_tests
  */
 TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
 {
@@ -76,10 +75,9 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
 
     REQUIRE( s > 9.9e9 );
 }
-
 /// Simulate a pyramid sensor on GPU
 /**
- * \ingroup ao_sim_pyramidSensor_tests
+ * \ingroup pyramidSensor_unit_tests
  */
 TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
 {

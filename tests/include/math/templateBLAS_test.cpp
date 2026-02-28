@@ -1,13 +1,18 @@
 #include "../../catch2/catch.hpp"
 
-#include "../../../include/math/templateBLAS.hpp"
+#include "../../../include/math/templateBLAS.hpp"/// testing scal
 
-SCENARIO( "testing scal", "[templateBLAS]" )
+
+/// testing scal
+/**
+ * \ingroup templateBLAS_unit_tests
+ */
+TEST_CASE( "testing scal", "[templateBLAS]" )
 {
-    GIVEN( "a precision" )
+    SECTION( "a precision" )
     {
 
-        WHEN( "precision is float" )
+        SECTION( "precision is float" )
         {
             int N = 2;
             float alpha = 2.;
@@ -18,7 +23,7 @@ SCENARIO( "testing scal", "[templateBLAS]" )
             REQUIRE_THAT( x[1], Catch::Matchers::WithinAbs( 4.0, 1e-6 ) );
         }
 
-        WHEN( "precision is double" )
+        SECTION( "precision is double" )
         {
             int N = 2;
             double alpha = 2.;

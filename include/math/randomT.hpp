@@ -52,11 +52,6 @@ namespace math
     double d2 = norm_distd; //get the next normally distributed value
    \endcode
   *
-  * Tests:
-  *     - Verify compilation and basic operation of randomT with std::distributions \ref tests_math_randomT_basic "[test doc]"
-  *     - Verify compilation and basic operation of randomT with the Laplace distribution \ref
-  tests_math_randomT_basic_laplace "[test doc]"
-  *
   * \ingroup random
   */
 template <class typeT, class _ranengT, class _randistT>
@@ -132,9 +127,6 @@ class randomT
  *
  * This is based on the implementation of the exponential distribution in the GNU ISO C++ Library version 4.6.
  *
- * Tests:
- *     - Verify compilation and basic operation of randomT with the Laplace distribution \ref tests_math_randomT_basic_laplace "[test doc]"
- *     -
  * \ingroup random
  */
 template <typename _RealType = double>

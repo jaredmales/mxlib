@@ -7,13 +7,17 @@
 
 /// Tests cublasTscal, as well as basic cudaPtr operations.
 /**
- * \test
+ * *//// scaling a vector with cublas
+
+/// scaling a vector with cublas
+/**
+ * \ingroup templateCublas_unit_tests
  */
-SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
+TEST_CASE( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
 {
-    GIVEN( "a vector" )
+    SECTION( "a vector" )
     {
-        WHEN( "type is single precision real" )
+        SECTION( "type is single precision real" )
         {
             std::vector<float> hx;
             mx::cuda::cudaPtr<float> dx;
@@ -47,7 +51,7 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is double precision real" )
+        SECTION( "type is double precision real" )
         {
             std::vector<double> hx;
             mx::cuda::cudaPtr<double> dx;
@@ -81,7 +85,7 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is single precision complex" )
+        SECTION( "type is single precision complex" )
         {
             std::vector<std::complex<float>> hx;
             mx::cuda::cudaPtr<std::complex<float>> dx;
@@ -115,7 +119,7 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is double precision complex" )
+        SECTION( "type is double precision complex" )
         {
             std::vector<std::complex<double>> hx;
             mx::cuda::cudaPtr<std::complex<double>> dx;
@@ -149,18 +153,18 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
     }
-}
+}/// scaling and accumulating a vector with cublas
 
-/** \test Scenario: scaling and accumulating a vector with cublas
- * Tests cublasTaxpy, as well as basic cudaPtr operations.
- *
- * \anchor test_math_templateCublas_axpy
+
+/// scaling and accumulating a vector with cublas
+/**
+ * \ingroup templateCublas_unit_tests
  */
-SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templateCublas]" )
+TEST_CASE( "scaling and accumulating a vector with cublas", "[math::cuda::templateCublas]" )
 {
-    GIVEN( "a vector" )
+    SECTION( "a vector" )
     {
-        WHEN( "type is single precision real" )
+        SECTION( "type is single precision real" )
         {
             std::vector<float> hx, hy;
             mx::cuda::cudaPtr<float> dx, dy;
@@ -201,7 +205,7 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is double precision real" )
+        SECTION( "type is double precision real" )
         {
             std::vector<double> hx, hy;
             mx::cuda::cudaPtr<double> dx, dy;
@@ -242,7 +246,7 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is single precision complex" )
+        SECTION( "type is single precision complex" )
         {
             std::vector<std::complex<float>> hx, hy;
             mx::cuda::cudaPtr<std::complex<float>> dx, dy;
@@ -283,7 +287,7 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "type is double precision complex" )
+        SECTION( "type is double precision complex" )
         {
             std::vector<std::complex<double>> hx, hy;
             mx::cuda::cudaPtr<std::complex<double>> dx, dy;
@@ -324,18 +328,18 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
     }
-}
+}/// multiplying two vectors element by element
 
-/** \test Scenario: multiplying two vectors element by element
- * Tests mx::cuda::elementwiseXxY, as well as basic cudaPtr operations.
- *
- * \anchor test_math_templateCublas_elementwiseXxY
+
+/// multiplying two vectors element by element
+/**
+ * \ingroup templateCublas_unit_tests
  */
-SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCublas]" )
+TEST_CASE( "multiplying two vectors element by element", "[math::cuda::templateCublas]" )
 {
-    GIVEN( "a vector" )
+    SECTION( "a vector" )
     {
-        WHEN( "both types are single precision real" )
+        SECTION( "both types are single precision real" )
         {
             std::vector<float> hx, hy;
             mx::cuda::cudaPtr<float> dx, dy;
@@ -367,7 +371,7 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == 32 );
         }
 
-        WHEN( "type1 is complex-float, and type2 is float" )
+        SECTION( "type1 is complex-float, and type2 is float" )
         {
             std::vector<std::complex<float>> hx;
             mx::cuda::cudaPtr<std::complex<float>> dx;
@@ -402,7 +406,7 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == std::complex<float>( 32, 32 ) );
         }
 
-        WHEN( "type1 is complex-float, and type2 is complex-float" )
+        SECTION( "type1 is complex-float, and type2 is complex-float" )
         {
             std::vector<std::complex<float>> hx;
             mx::cuda::cudaPtr<std::complex<float>> dx;
@@ -437,7 +441,7 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == std::complex<float>( -32, 32 ) );
         }
 
-        WHEN( "both types are double precision real" )
+        SECTION( "both types are double precision real" )
         {
             std::vector<double> hx, hy;
             mx::cuda::cudaPtr<double> dx, dy;
@@ -469,7 +473,7 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == 32 );
         }
 
-        WHEN( "type1 is complex-double, and type2 is double" )
+        SECTION( "type1 is complex-double, and type2 is double" )
         {
             std::vector<std::complex<double>> hx;
             mx::cuda::cudaPtr<std::complex<double>> dx;
@@ -504,7 +508,7 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == std::complex<double>( 32, 32 ) );
         }
 
-        WHEN( "type1 is complex-double, and type2 is complex-double" )
+        SECTION( "type1 is complex-double, and type2 is complex-double" )
         {
             std::vector<std::complex<double>> hx;
             mx::cuda::cudaPtr<std::complex<double>> dx;
@@ -539,18 +543,18 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
             REQUIRE( hx[4] == std::complex<double>( -28, 36 ) );
         }
     }
-}
+}/// multiplying a vector by a matrix giving increments
 
-/** Scenario: multiplying a vector by a matrix
- * Tests mx::cuda::cublasTgemv, as well as basic cudaPtr operations.
- *
- * \anchor test_math_templateCublas_cublasTgemv_inc
+
+/// multiplying a vector by a matrix giving increments
+/**
+ * \ingroup templateCublas_unit_tests
  */
-SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::templateCublas]" )
+TEST_CASE( "multiplying a vector by a matrix giving increments", "[math::cuda::templateCublas]" )
 {
-    GIVEN( "a 2x2 matrix, float" )
+    SECTION( "a 2x2 matrix, float" )
     {
-        WHEN( "float precision, beta is 0" )
+        SECTION( "float precision, beta is 0" )
         {
             std::vector<float> hA; // This will actually be a vector
             mx::cuda::cudaPtr<float> dA;
@@ -605,7 +609,7 @@ SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::te
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "float precision, beta is 1, but y is all 0" )
+        SECTION( "float precision, beta is 1, but y is all 0" )
         {
             std::vector<float> hA; // This will actually be a vector
             mx::cuda::cudaPtr<float> dA;
@@ -659,7 +663,7 @@ SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::te
             stat = cublasDestroy( handle );
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
-        WHEN( "float precision, beta is 1, y is [1,2]" )
+        SECTION( "float precision, beta is 1, y is [1,2]" )
         {
             std::vector<float> hA; // This will actually be a vector
             mx::cuda::cudaPtr<float> dA;
@@ -717,9 +721,9 @@ SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::te
         }
     }
 
-    GIVEN( "a 2x2 matrix, double" )
+    SECTION( "a 2x2 matrix, double" )
     {
-        WHEN( "double precision, beta is 0" )
+        SECTION( "double precision, beta is 0" )
         {
             std::vector<double> hA; // This will actually be a vector
             mx::cuda::cudaPtr<double> dA;
@@ -774,7 +778,7 @@ SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::te
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
 
-        WHEN( "double precision, beta is 1, but y is all 0" )
+        SECTION( "double precision, beta is 1, but y is all 0" )
         {
             std::vector<double> hA; // This will actually be a vector
             mx::cuda::cudaPtr<double> dA;
@@ -828,7 +832,7 @@ SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::te
             stat = cublasDestroy( handle );
             REQUIRE( stat == CUBLAS_STATUS_SUCCESS );
         }
-        WHEN( "double precision, beta is 1, y is [1,2]" )
+        SECTION( "double precision, beta is 1, y is [1,2]" )
         {
             std::vector<double> hA; // This will actually be a vector
             mx::cuda::cudaPtr<double> dA;

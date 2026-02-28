@@ -293,8 +293,6 @@ struct gaussian2D_gen_fitter_bgfixed;
  *
  * \ingroup gaussian_peak_fit
  *
- * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift
- * "[test doc]"
  *
  */
 template <typename fitterT>
@@ -519,8 +517,6 @@ class fitGaussian2D : public levmarInterface<fitterT>
 ///\ref levmarInterface fitter structure for the symmetric Gaussian.
 /** \ingroup gaussian_peak_fit
  *
- * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift
- * "[test doc]"
  */
 template <typename _realT>
 struct gaussian2D_sym_fitter

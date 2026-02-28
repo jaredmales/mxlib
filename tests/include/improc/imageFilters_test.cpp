@@ -16,7 +16,6 @@ namespace improcTest
 {
 namespace imageFiltersTest
 {
-
 /// Verify precalcKernel filter
 /**
  * \ingroup imageFilters_unit_tests
@@ -86,8 +85,13 @@ TEST_CASE( "Verify precalcKernel filter", "[improc::imageFilters]" )
 
         REQUIRE(alleq);
     }
-}
+}/// Gaussian filter handles non-square image dimensions
 
+
+/// Gaussian filter handles non-square image dimensions
+/**
+ * \ingroup imageFilters_unit_tests
+ */
 TEST_CASE( "Gaussian filter handles non-square image dimensions", "[improc::imageFilters]" )
 {
     mx::improc::eigenImage<float> im;

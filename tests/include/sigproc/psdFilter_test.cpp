@@ -2,6 +2,9 @@
  */
 #include "../../catch2/catch.hpp"
 
+#include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <vector>
 #include <Eigen/Dense>
 
@@ -19,19 +22,56 @@ constexpr double psdFilterTol = 0.09;
 #else
 constexpr int psdFilterTrials = 10000;
 constexpr double psdFilterTol = 0.02;
-#endif
+#endif/// compiling psdFilter
 
-/** Scenario: compiling psdFilter
- *
- * Verify compilation and initilization of the 3 ranks for psdFilter.
- *
- * \anchor tests_sigproc_psdFilter_compile
- */
-SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
+namespace
 {
-    GIVEN( "a psdFilter, sqrt pointer" )
+class TrialProgressLogger
+{
+  public:
+    TrialProgressLogger( const char *label, int totalTrials )
+        : m_label( label ),
+          m_totalTrials( totalTrials ),
+          m_reportInterval( std::max( 1, totalTrials / 4 ) ),
+          m_start( std::chrono::steady_clock::now() )
     {
-        WHEN( "rank==1" )
+        std::cerr << "[psdFilter_test] " << m_label << ": starting " << m_totalTrials << " trials" << std::endl;
+    }
+
+    void update( int trialIndex )
+    {
+        const int trialCount = trialIndex + 1;
+        if( trialCount % m_reportInterval != 0 && trialCount != m_totalTrials )
+            return;
+
+        std::cerr << "[psdFilter_test] " << m_label << ": " << trialCount << "/" << m_totalTrials
+                  << " trials complete, elapsed " << elapsedSeconds() << " s" << std::endl;
+    }
+
+  private:
+    double elapsedSeconds() const
+    {
+        return std::chrono::duration_cast<std::chrono::duration<double>>( std::chrono::steady_clock::now() - m_start )
+            .count();
+    }
+
+    const char *m_label{ nullptr };
+    int m_totalTrials{ 0 };
+    int m_reportInterval{ 1 };
+    std::chrono::steady_clock::time_point m_start;
+};
+} // namespace
+
+
+/// compiling psdFilter
+/**
+ * \ingroup psdFilter_unit_tests
+ */
+TEST_CASE( "compiling psdFilter", "[sigproc::psdFilter]" )
+{
+    SECTION( "a psdFilter, sqrt pointer" )
+    {
+        SECTION( "rank==1" )
         {
             mx::sigproc::psdFilter<double, 1> psdF;
 
@@ -49,7 +89,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==2" )
+        SECTION( "rank==2" )
         {
             mx::sigproc::psdFilter<double, 2> psdF;
 
@@ -69,7 +109,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==3" )
+        SECTION( "rank==3" )
         {
             mx::sigproc::psdFilter<double, 3> psdF;
 
@@ -91,9 +131,9 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
         }
     }
 
-    GIVEN( "a psdFilter, sqrt reference" )
+    SECTION( "a psdFilter, sqrt reference" )
     {
-        WHEN( "rank==1" )
+        SECTION( "rank==1" )
         {
             mx::sigproc::psdFilter<double, 1> psdF;
 
@@ -111,7 +151,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==2" )
+        SECTION( "rank==2" )
         {
             mx::sigproc::psdFilter<double, 2> psdF;
 
@@ -131,7 +171,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==3" )
+        SECTION( "rank==3" )
         {
             mx::sigproc::psdFilter<double, 3> psdF;
 
@@ -153,9 +193,9 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
         }
     }
 
-    GIVEN( "a psdFilter, psd reference" )
+    SECTION( "a psdFilter, psd reference" )
     {
-        WHEN( "rank==1" )
+        SECTION( "rank==1" )
         {
             mx::sigproc::psdFilter<double, 1> psdF;
 
@@ -173,7 +213,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==2" )
+        SECTION( "rank==2" )
         {
             mx::sigproc::psdFilter<double, 2> psdF;
 
@@ -193,7 +233,7 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
             REQUIRE( psdF.cols() == 0 );
             REQUIRE( psdF.planes() == 0 );
         }
-        WHEN( "rank==3" )
+        SECTION( "rank==3" )
         {
             mx::sigproc::psdFilter<double, 3> psdF;
 
@@ -220,13 +260,17 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
  * Conducts random noise tests, verifying that the resultant rms is within 2% of expected value on average over many
  * trials. Results are usually better than 1%, but 2% makes sure we don't get false failures.
  *
- * \anchor tests_sigproc_psdFilter_filter
+ *//// filtering with psdFilter
+
+/// filtering with psdFilter
+/**
+ * \ingroup psdFilter_unit_tests
  */
-SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
+TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 {
-    GIVEN( "a rank 1 psd" )
+    SECTION( "a rank 1 psd" )
     {
-        WHEN( "alpha=-2.5, df Nyquist matched to array size, var=1" )
+        SECTION( "alpha=-2.5, df Nyquist matched to array size, var=1" )
         {
             mx::sigproc::psdFilter<double, 1> psdF;
 
@@ -259,6 +303,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank1 alpha=-2.5 var=1", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -266,13 +311,14 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                     noise[n] = normVar;
                 psdF( noise );
                 avgRms += ( mx::math::vectorVariance( noise, 0.0 ) );
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / psdFilterTrials );
 
             REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
-        WHEN( "alpha=-1.5, df arbitrary, var = 2.2" )
+        SECTION( "alpha=-1.5, df arbitrary, var = 2.2" )
         {
             mx::sigproc::psdFilter<double, 1> psdF;
 
@@ -304,6 +350,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank1 alpha=-1.5 var=2.2", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -311,6 +358,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                     noise[n] = normVar;
                 psdF( noise );
                 avgRms += ( mx::math::vectorVariance( noise, 0.0 ) );
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / psdFilterTrials );
@@ -318,9 +366,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), psdFilterTol * sqrt( 2.2 ) ) );
         }
     }
-    GIVEN( "a rank 2 psd" )
+    SECTION( "a rank 2 psd" )
     {
-        WHEN( "alpha=-2.5, dk Nyquist matched to array size, var=1" )
+        SECTION( "alpha=-2.5, dk Nyquist matched to array size, var=1" )
         {
             mx::sigproc::psdFilter<double, 2> psdF;
 
@@ -357,6 +405,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank2 alpha=-2.5 var=1", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -370,13 +419,14 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
                 psdF( noise );
                 avgRms += noise.square().sum(); //(mx::math::vectorVariance(noise,0.0));
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / psdFilterTrials );
 
             REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
-        WHEN( "alpha=-1.5, dk arb, var=2.2" )
+        SECTION( "alpha=-1.5, dk arb, var=2.2" )
         {
             mx::sigproc::psdFilter<double, 2> psdF;
 
@@ -413,6 +463,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank2 alpha=-1.5 var=2.2", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -426,6 +477,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
                 psdF( noise );
                 avgRms += noise.square().sum(); //(mx::math::vectorVariance(noise,0.0));
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() ) / psdFilterTrials );
@@ -433,9 +485,9 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( sqrt( 2.2 ), psdFilterTol * sqrt( 2.2 ) ) );
         }
     }
-    GIVEN( "a rank 3 psd" )
+    SECTION( "a rank 3 psd" )
     {
-        WHEN( "k-alpha=-2.5, f-alph=-2.5, dk Nyquist matched to array size, df Nyquist matched to array size, var=1" )
+        SECTION( "k-alpha=-2.5, f-alph=-2.5, dk Nyquist matched to array size, df Nyquist matched to array size, var=1" )
         {
             mx::sigproc::psdFilter<double, 3> psdF;
 
@@ -503,6 +555,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank3 kalpha=-2.5 falpha=-2.5 var=1", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -520,13 +573,14 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 psdF( noise );
                 for( int pp = 0; pp < noise.planes(); ++pp )
                     avgRms += noise.image( pp ).square().sum();
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / psdFilterTrials );
 
             REQUIRE_THAT( avgRms, Catch::Matchers::WithinAbs( 1.0, psdFilterTol ) );
         }
-        WHEN( "k-alpha=-3.5, f-alph=-1.5, dk arb, df arb, var=2" )
+        SECTION( "k-alpha=-3.5, f-alph=-1.5, dk arb, df arb, var=2" )
         {
             mx::sigproc::psdFilter<double, 3> psdF;
 
@@ -594,6 +648,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
             mx::math::normDistT<double> normVar;
 
             double avgRms = 0;
+            TrialProgressLogger trialLogger( "rank3 kalpha=-3.5 falpha=-1.5 var=2", psdFilterTrials );
 
             for( int k = 0; k < psdFilterTrials; ++k )
             {
@@ -611,6 +666,7 @@ SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
                 psdF( noise );
                 for( int pp = 0; pp < noise.planes(); ++pp )
                     avgRms += noise.image( pp ).square().sum();
+                trialLogger.update( k );
             }
 
             avgRms = sqrt( avgRms / ( psd.rows() * psd.cols() * psd.planes() ) / psdFilterTrials );

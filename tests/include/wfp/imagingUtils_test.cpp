@@ -7,10 +7,9 @@
 #include <iostream>
 
 #include "../../../include/wfp/imagingUtils.hpp"
-
 /// Make a complex wavefront and extract it as an intensity image on CPU
 /**
- * \ingroup math_wfp_imagingUtils_test
+ * \ingroup imagingUtils_unit_tests
  */
 TEST_CASE( "Make a complex wavefront and extract it as an intensity image on CPU", "[wfp]" )
 {
@@ -59,10 +58,9 @@ TEST_CASE( "Make a complex wavefront and extract it as an intensity image on CPU
 
     REQUIRE(fail == false);
 }
-
 /// Make a complex wavefront and extract it as an intensity image on GPU
 /**
- * \ingroup math_wfp_imagingUtils_test
+ * \ingroup imagingUtils_unit_tests
  */
 TEST_CASE( "Make a complex wavefront and extract it as an intensity image on GPU", "[wfp]" )
 {

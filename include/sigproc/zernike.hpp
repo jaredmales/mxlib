@@ -61,7 +61,6 @@ namespace sigproc
  * \retval 0 on success
  * \retval -1 on error (j < 1)
  *
- * \test Scenario: testing noll_nm \ref tests_sigproc_zernike_noll_nm "[test doc]"
  */
 int noll_nm( int &n, ///< [out] n the radial index of the Zernike polynomial
              int &m, ///< [out] m the azimuthal index of the Zernnike polynomial.  m < 0 if j odd.
@@ -538,7 +537,6 @@ int zernikeBasis( cubeT &cube,                     /**< [in/out] the pre-allocat
  *
  * \todo need a more robust jinc_n function for n > 1
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns the value of |Q(k,phi)|^2
  *
@@ -591,7 +589,6 @@ std::complex<realT> zernikeQ( realT k,   /**< [in] the radial coordinate of norm
  *
  * \todo need a more robust jinc_n function for n > 1
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns the value of |Q(k,phi)|^2
  *
@@ -674,7 +671,6 @@ realT zernikeQNorm( realT k,   /**< [in] the radial coordinate of normalized spa
 /// Fill in an Eigen-like array with the square-normed Fourier transform of a Zernike polynomial
 /** The array is filled in with the values of |Q(k,phi)|^2 according to Equation (8) of Noll (1976) \cite noll_1976.
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns 0 on success
  * \returns -1 on error

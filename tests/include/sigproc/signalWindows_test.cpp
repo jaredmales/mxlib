@@ -8,19 +8,18 @@
 #define MX_NO_ERROR_REPORTS
 
 #include "../../../include/sigproc/signalWindows.hpp"
-#include "../../../include/improc/eigenImage.hpp"
+#include "../../../include/improc/eigenImage.hpp"/// creating 2D Rectangular Tukey Windows
 
-/** Scenario: creating 2D Rectangular Tukey Windows
- *
- * Verify creation of a 2D rectangular Tukey window
- *
- * \anchor tests_sigproc_signalWindows_Tukey2DSquare
+
+/// creating 2D Rectangular Tukey Windows
+/**
+ * \ingroup signalWindows_unit_tests
  */
-SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tukey2dSquare]" )
+TEST_CASE( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tukey2dSquare]" )
 {
-    GIVEN( "a centered square array" )
+    SECTION( "a centered square array" )
     {
-        WHEN( "256x256, alpha=0" )
+        SECTION( "256x256, alpha=0" )
         {
 
             mx::improc::eigenImage<float> win;
@@ -38,7 +37,7 @@ SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tuk
             REQUIRE( win.sum() == 256 * 256 );
         }
 
-        WHEN( "256x256, alpha=1" )
+        SECTION( "256x256, alpha=1" )
         {
 
             mx::improc::eigenImage<float> win;
@@ -59,7 +58,7 @@ SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tuk
             REQUIRE_THAT( win( 0, 0 ), Catch::Matchers::WithinAbs( win1[0] * win1[0], 1e-6 ) );
             REQUIRE_THAT( win( 10, 15 ), Catch::Matchers::WithinAbs( win1[10] * win1[15], 1e-6 ) );
         }
-        WHEN( "256x256, alpha=0.5" )
+        SECTION( "256x256, alpha=0.5" )
         {
 
             mx::improc::eigenImage<float> win;

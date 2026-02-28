@@ -9,21 +9,20 @@
 typedef double realT;
 
 using namespace mx::app;
-using namespace mx::AO::analysis;
+using namespace mx::AO::analysis;/// Loading aoAtmosphere config settings
 
-/** \test Scenario: Loading aoAtmosphere config settings
- *
- * Verify parsing of config
- *
- * \anchor tests_ao_analysis_aoAtmosphere_config
+
+/// Loading aoAtmosphere config settings
+/**
+ * \ingroup aoAtmosphere_unit_tests
  */
-SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]" )
+TEST_CASE( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]" )
 {
-    GIVEN( "a valid config vile" )
+    SECTION( "a valid config vile" )
     {
         aoAtmosphere<realT> atm; // This will be cumulative
 
-        WHEN( "all normal settings" )
+        SECTION( "all normal settings" )
         {
             appConfigurator config;
 
@@ -82,7 +81,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
 
             REQUIRE( atm.nonKolmogorov() == false );
         }
-        WHEN( "setting v_wind and z_mean" )
+        SECTION( "setting v_wind and z_mean" )
         {
             appConfigurator config;
 
@@ -100,7 +99,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
 
             REQUIRE( atm.nonKolmogorov() == false );
         }
-        WHEN( "setting nonKolmogorov to false" )
+        SECTION( "setting nonKolmogorov to false" )
         {
             appConfigurator config;
 
@@ -112,7 +111,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
 
             REQUIRE( atm.nonKolmogorov() == false );
         }
-        WHEN( "setting nonKolmogorov to true" )
+        SECTION( "setting nonKolmogorov to true" )
         {
             appConfigurator config;
 
@@ -125,7 +124,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
             REQUIRE( atm.nonKolmogorov() == true );
         }
 
-        WHEN( "setting nonKolmogorov alpha" )
+        SECTION( "setting nonKolmogorov alpha" )
         {
             atm.nonKolmogorov( false );
             REQUIRE( atm.nonKolmogorov() == false );
@@ -142,7 +141,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
             REQUIRE( atm.nonKolmogorov() == true );
         }
 
-        WHEN( "setting nonKolmogorov beta" )
+        SECTION( "setting nonKolmogorov beta" )
         {
             atm.nonKolmogorov( false );
             REQUIRE( atm.nonKolmogorov() == false );
@@ -159,7 +158,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
             REQUIRE( atm.nonKolmogorov() == true );
         }
 
-        WHEN( "setting nonKolmogorov beta_0" )
+        SECTION( "setting nonKolmogorov beta_0" )
         {
             atm.nonKolmogorov( false );
             REQUIRE( atm.nonKolmogorov() == false );
@@ -176,11 +175,11 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
             REQUIRE( atm.nonKolmogorov() == true );
         }
     }
-    GIVEN( "command line options" )
+    SECTION( "command line options" )
     {
         aoAtmosphere<realT> atm; // This will be cumulative
 
-        WHEN( "setting nonKolmogorov to true" )
+        SECTION( "setting nonKolmogorov to true" )
         {
             appConfigurator config;
             std::vector<std::string> argvs( 2 );
@@ -199,7 +198,7 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
             REQUIRE( atm.nonKolmogorov() == true );
         }
 
-        WHEN( "setting nonKolmogorov to true" )
+        SECTION( "setting nonKolmogorov to true" )
         {
             appConfigurator config;
             std::vector<std::string> argvs( 2 );

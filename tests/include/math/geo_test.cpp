@@ -11,34 +11,38 @@
 /** Verify compilation and calculations of math::angleMod.
  * Tests that various angle modulos are calculated correctly for both radians and degrees.
  *
- * \anchor tests_math_geo_angleMod
+ *//// Verify compilation and calculations of math::angleMod
+
+/// Verify compilation and calculations of math::angleMod
+/**
+ * \ingroup geo_unit_tests
  */
-SCENARIO( "Verify compilation and calculations of math::angleMod", "[math::angleMod]" )
+TEST_CASE( "Verify compilation and calculations of math::angleMod", "[math::angleMod]" )
 {
-    GIVEN( "angles in degrees" )
+    SECTION( "angles in degrees" )
     {
-        WHEN( "positive angle, no changes" )
+        SECTION( "positive angle, no changes" )
         {
             double q = mx::math::angleMod<mx::math::degreesT<double>>( 43.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 43.2 ) );
         }
 
-        WHEN( "positive angle, no changes" )
+        SECTION( "positive angle, no changes" )
         {
             double q = mx::math::angleMod<mx::math::degreesT<double>>( 353.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 353.2 ) );
         }
 
-        WHEN( "positive angle, exactly 360" )
+        SECTION( "positive angle, exactly 360" )
         {
             double q = mx::math::angleMod<mx::math::degreesT<double>>( 360.0 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 0.0 ) );
         }
 
-        WHEN( "positive angle, mod needed" )
+        SECTION( "positive angle, mod needed" )
         {
             double q = mx::math::angleMod<mx::math::degreesT<double>>( 362.0 );
 
@@ -46,30 +50,30 @@ SCENARIO( "Verify compilation and calculations of math::angleMod", "[math::angle
         }
     }
 
-    GIVEN( "angles in radians" )
+    SECTION( "angles in radians" )
     {
-        WHEN( "positive angle, no changes" )
+        SECTION( "positive angle, no changes" )
         {
             double q = mx::math::angleMod<mx::math::radiansT<double>>( mx::math::dtor( 43.2 ) );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor( 43.2 ) ) );
         }
 
-        WHEN( "positive angle, no changes" )
+        SECTION( "positive angle, no changes" )
         {
             double q = mx::math::angleMod<mx::math::radiansT<double>>( mx::math::dtor( 353.2 ) );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor( 353.2 ) ) );
         }
 
-        WHEN( "positive angle, exactly 2pi" )
+        SECTION( "positive angle, exactly 2pi" )
         {
             double q = mx::math::angleMod<mx::math::radiansT<double>>( mx::math::dtor( 360.0 ) );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor( 0.0 ) ) );
         }
 
-        WHEN( "positive angle, mod needed" )
+        SECTION( "positive angle, mod needed" )
         {
             double q = mx::math::angleMod<mx::math::radiansT<double>>( mx::math::dtor( 362.0 ) );
 
@@ -81,62 +85,66 @@ SCENARIO( "Verify compilation and calculations of math::angleMod", "[math::angle
 /** Verify compilation and calculations of math::angleDiff.
  * Tests that various angle differences are calculated correctly for both radians and degrees.
  *
- * \anchor tests_math_geo_angleDiff
+ *//// Verify compilation and calculations of math::angleDiff
+
+/// Verify compilation and calculations of math::angleDiff
+/**
+ * \ingroup geo_unit_tests
  */
-SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angleDiff]" )
+TEST_CASE( "Verify compilation and calculations of math::angleDiff", "[math::angleDiff]" )
 {
-    GIVEN( "angles in degrees" )
+    SECTION( "angles in degrees" )
     {
-        WHEN( "positive, first angle is 0, not crossing 180/360" )
+        SECTION( "positive, first angle is 0, not crossing 180/360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 0.0, 43.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 43.2 ) );
         }
 
-        WHEN( "negative, second angle is 0, not crossing 180/360" )
+        SECTION( "negative, second angle is 0, not crossing 180/360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 43.2, 0.0 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( -43.2 ) );
         }
 
-        WHEN( "positive, first angle is 360, not crossing 180/360" )
+        SECTION( "positive, first angle is 360, not crossing 180/360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 360.0, 43.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 43.2 ) );
         }
 
-        WHEN( "negative, second angle is 3600, not crossing 180/360" )
+        SECTION( "negative, second angle is 3600, not crossing 180/360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 43.2, 360.0 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( -43.2 ) );
         }
 
-        WHEN( "positive, crossing 360" )
+        SECTION( "positive, crossing 360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 340.0, 23.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 43.2 ) );
         }
 
-        WHEN( "negative, crossing 180/360" )
+        SECTION( "negative, crossing 180/360" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 23.2, 340.0 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( -43.2 ) );
         }
 
-        WHEN( "positive, crossing 180" )
+        SECTION( "positive, crossing 180" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 160.0, 206.2 );
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 46.2 ) );
         }
 
-        WHEN( "negative, crossing 180" )
+        SECTION( "negative, crossing 180" )
         {
             double q = mx::math::angleDiff<mx::math::degreesT<double>>( 206.2, 160.0 );
 
@@ -144,9 +152,9 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
         }
     }
 
-    GIVEN( "angles in radians" )
+    SECTION( "angles in radians" )
     {
-        WHEN( "positive, first angle is 0, not crossing pi/2pi" )
+        SECTION( "positive, first angle is 0, not crossing pi/2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 0.0 ),
                                                                         mx::math::dtor<double>( 43.2 ) );
@@ -154,7 +162,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( 43.2 ) ) );
         }
 
-        WHEN( "negative, second angle is 0, not crossing pi/2pi" )
+        SECTION( "negative, second angle is 0, not crossing pi/2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 43.2 ),
                                                                         mx::math::dtor<double>( 0.0 ) );
@@ -162,7 +170,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( -43.2 ) ) );
         }
 
-        WHEN( "positive, first angle is 360, not crossing pi/2pi" )
+        SECTION( "positive, first angle is 360, not crossing pi/2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 360.0 ),
                                                                         mx::math::dtor<double>( 43.2 ) );
@@ -170,7 +178,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( 43.2 ) ) );
         }
 
-        WHEN( "negative, second angle is 3600, not crossing pi/2pi" )
+        SECTION( "negative, second angle is 3600, not crossing pi/2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 43.2 ),
                                                                         mx::math::dtor<double>( 360.0 ) );
@@ -178,7 +186,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( -43.2 ) ) );
         }
 
-        WHEN( "positive, crossing 2pi" )
+        SECTION( "positive, crossing 2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 340.0 ),
                                                                         mx::math::dtor<double>( 23.2 ) );
@@ -186,7 +194,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( 43.2 ) ) );
         }
 
-        WHEN( "negative, crossing 2pi" )
+        SECTION( "negative, crossing 2pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 23.2 ),
                                                                         mx::math::dtor<double>( 340.0 ) );
@@ -194,7 +202,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( -43.2 ) ) );
         }
 
-        WHEN( "positive, crossing pi" )
+        SECTION( "positive, crossing pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 160.0 ),
                                                                         mx::math::dtor<double>( 206.2 ) );
@@ -202,7 +210,7 @@ SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angl
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( mx::math::dtor<double>( 46.2 ) ) );
         }
 
-        WHEN( "negative, crossing pi" )
+        SECTION( "negative, crossing pi" )
         {
             double q = mx::math::angleDiff<mx::math::radiansT<double>>( mx::math::dtor<double>( 206.2 ),
                                                                         mx::math::dtor<double>( 160.0 ) );

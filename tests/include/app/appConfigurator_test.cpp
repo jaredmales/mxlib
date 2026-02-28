@@ -11,13 +11,18 @@ using namespace mx::app;
 namespace appTest
 {
 namespace appConfigurator_test
-{*/
+{*//// config file parsing
 
-SCENARIO( "config file parsing", "[appConfigurator]" )
+
+/// config file parsing
+/**
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "config file parsing", "[appConfigurator]" )
 {
-    GIVEN( "a basic config file" )
+    SECTION( "a basic config file" )
     {
-        WHEN( "no sections" )
+        SECTION( "no sections" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "", "", "", "" },
@@ -55,7 +60,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
             REQUIRE( val == "val5" );
         }
 
-        WHEN( "sections, unique keys" )
+        SECTION( "sections, unique keys" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "sect1", "sect1", "sect2", "sect2" },
@@ -93,7 +98,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
             REQUIRE( val == "val5" );
         }
 
-        WHEN( "sections, repeated keys still unique within sections" )
+        SECTION( "sections, repeated keys still unique within sections" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "sect1", "sect1", "sect2", "sect2" },
@@ -132,10 +137,10 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
         }
     }
 
-    GIVEN( "a config file with unused entries" )
+    SECTION( "a config file with unused entries" )
     {
 
-        WHEN( "no sections, unused entry in middle" )
+        SECTION( "no sections, unused entry in middle" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "", "", "", "" },
@@ -180,7 +185,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
             REQUIRE( config.m_unusedConfigs[iniFile::makeKey( "", "key3" )].used == true );
         }
 
-        WHEN( "sections, repeated keys, unused sections" )
+        SECTION( "sections, repeated keys, unused sections" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "sect1", "sect1", "sect2", "sect2", "sect3" },
@@ -227,9 +232,9 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
     }
 
 #if 1
-    GIVEN( "a config file with repeated keys within the same section" )
+    SECTION( "a config file with repeated keys within the same section" )
     {
-        WHEN( "no sections" )
+        SECTION( "no sections" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "", "", "", "" },
@@ -255,7 +260,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
             REQUIRE( val == "val4val5" );
         }
 
-        WHEN( "repeated sections and keys" )
+        SECTION( "repeated sections and keys" )
         {
             writeConfigFile( "/tmp/test7.conf",
                              { "", "sect1", "sect2", "sect1", "sect2", "sect2", "sect3" },
@@ -285,7 +290,7 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
             REQUIRE( val == "val5" );
         }
 
-        WHEN( "multi-line keys" )
+        SECTION( "multi-line keys" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "sect1", "sect2", "sect1", "sect2", "sect3" },
@@ -316,9 +321,9 @@ SCENARIO( "config file parsing", "[appConfigurator]" )
         }
     }
 
-    GIVEN( "a config file with vectors" )
+    SECTION( "a config file with vectors" )
     {
-        WHEN( "no sections" )
+        SECTION( "no sections" )
         {
             writeConfigFile( "/tmp/test.conf",
                              { "", "", "" },

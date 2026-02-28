@@ -15,8 +15,7 @@ namespace fitsTest
 {
 namespace fitsHeaderCardTest
 {
-
-/// Verify conversion of types
+/// fitsHeaderCard setting types
 /**
  * \ingroup fitsHeaderCard_unit_tests
  */
@@ -101,7 +100,6 @@ TEST_CASE( "fitsHeaderCard setting types", "[ioutils::fits::fitsHeaderCard]" )
         }
     }
 }
-
 /// Removing white space around string values
 /**
  * \ingroup fitsHeaderCard_unit_tests
@@ -212,7 +210,6 @@ TEST_CASE( "Removing white space around string values", "[ioutils::fits::fitsHea
         REQUIRE( fhc.String() == "  'z   " );
     }
 }
-
 /// CONTINUE-ing a card
 /**
  * \ingroup fitsHeaderCard_unit_tests

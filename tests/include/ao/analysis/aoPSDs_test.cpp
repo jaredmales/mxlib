@@ -9,21 +9,20 @@
 typedef double realT;
 
 using namespace mx::app;
-using namespace mx::AO::analysis;
+using namespace mx::AO::analysis;/// Loading aoPSD config settings
 
-/** Scenario: Loading aoAtmosphere config settings
- *
- * Verify parsing of config
- *
- * \anchor tests_ao_analysis_aoAtmosphere_config
+
+/// Loading aoPSD config settings
+/**
+ * \ingroup aoPSDs_unit_tests
  */
-SCENARIO( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
+TEST_CASE( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
 {
-    GIVEN( "a valid config file" )
+    SECTION( "a valid config file" )
     {
         vonKarmanSpectrum<realT> psd; // This will be cumulative
 
-        WHEN( "all normal settings: phase" )
+        SECTION( "all normal settings: phase" )
         {
             appConfigurator config;
 
@@ -42,7 +41,7 @@ SCENARIO( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
             REQUIRE( psd.scintillation() == true );
             REQUIRE( psd.component() == PSDComponent::phase );
         }
-        WHEN( "all normal settings: amplitude" )
+        SECTION( "all normal settings: amplitude" )
         {
             appConfigurator config;
 
@@ -61,7 +60,7 @@ SCENARIO( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
             REQUIRE( psd.scintillation() == false );
             REQUIRE( psd.component() == PSDComponent::amplitude );
         }
-        WHEN( "all normal settings: dispPhase" )
+        SECTION( "all normal settings: dispPhase" )
         {
             appConfigurator config;
 
@@ -80,7 +79,7 @@ SCENARIO( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
             REQUIRE( psd.scintillation() == true );
             REQUIRE( psd.component() == PSDComponent::dispPhase );
         }
-        WHEN( "all normal settings: dispAmplitude" )
+        SECTION( "all normal settings: dispAmplitude" )
         {
             appConfigurator config;
 

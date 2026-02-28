@@ -10,10 +10,9 @@
 #include "../../../../include/math/ft/fftwEnvironment.hpp"
 #include "../../../../include/math/ft/fftwTemplates.hpp"
 #include "../../../../include/ioutils/fileUtils.hpp"
-
 /// Create and destroy fftwEnvironment, no threads, environment set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[math::ft]" )
 {
@@ -107,10 +106,9 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[
     // clang-format off
     #endif // clang-format on
 }
-
 /// Create and destroy fftwEnvironment, no threads, environment not set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set", "[math::ft]" )
 {
@@ -200,10 +198,9 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set"
     // clang-format off
     #endif // clang-format on
 }
-
 /// Create and destroy fftwEnvironment, with threads, environment set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", "[math::ft]" )
 {
@@ -297,10 +294,9 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", 
     // clang-format off
     #endif // clang-format on
 }
-
 /// Create and destroy fftwEnvironment, with threads, environment not set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment not set", "[math::ft]" )
 {

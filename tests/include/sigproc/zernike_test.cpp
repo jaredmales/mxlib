@@ -6,28 +6,26 @@
 
 #define MX_NO_ERROR_REPORTS
 
-#include "../../../include/sigproc/zernike.hpp"
+#include "../../../include/sigproc/zernike.hpp"/// testing noll_nm
 
-/** Scenario: testing noll_nm
- *
- * Verify calculation of Noll nm values from j.
- * Goes through each of the cases in Table 1 of \cite noll_1976
- *
- * \anchor tests_sigproc_zernike_noll_nm
+
+/// testing noll_nm
+/**
+ * \ingroup zernike_unit_tests
  */
-SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
+TEST_CASE( "testing noll_nm", "[sigproc::zernike]" )
 {
 
-    GIVEN( "a j value" )
+    SECTION( "a j value" )
     {
-        WHEN( "j==0" )
+        SECTION( "j==0" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 0 );
             REQUIRE( rv == -1 );
         }
 
-        WHEN( "j==1" )
+        SECTION( "j==1" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 1 );
@@ -36,7 +34,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 0 );
         }
 
-        WHEN( "j==2" )
+        SECTION( "j==2" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 2 );
@@ -45,7 +43,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 1 );
         }
 
-        WHEN( "j==3" )
+        SECTION( "j==3" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 3 );
@@ -54,7 +52,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -1 );
         }
 
-        WHEN( "j==4" )
+        SECTION( "j==4" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 4 );
@@ -63,7 +61,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 0 );
         }
 
-        WHEN( "j==5" )
+        SECTION( "j==5" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 5 );
@@ -72,7 +70,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -2 );
         }
 
-        WHEN( "j==6" )
+        SECTION( "j==6" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 6 );
@@ -81,7 +79,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 2 );
         }
 
-        WHEN( "j==7" )
+        SECTION( "j==7" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 7 );
@@ -90,7 +88,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -1 );
         }
 
-        WHEN( "j==8" )
+        SECTION( "j==8" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 8 );
@@ -99,7 +97,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 1 );
         }
 
-        WHEN( "j==9" )
+        SECTION( "j==9" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 9 );
@@ -108,7 +106,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -3 );
         }
 
-        WHEN( "j==10" )
+        SECTION( "j==10" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 10 );
@@ -117,7 +115,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 3 );
         }
 
-        WHEN( "j==11" )
+        SECTION( "j==11" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 11 );
@@ -126,7 +124,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 0 );
         }
 
-        WHEN( "j==12" )
+        SECTION( "j==12" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 12 );
@@ -135,7 +133,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 2 );
         }
 
-        WHEN( "j==13" )
+        SECTION( "j==13" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 13 );
@@ -144,7 +142,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -2 );
         }
 
-        WHEN( "j==14" )
+        SECTION( "j==14" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 14 );
@@ -153,7 +151,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 4 );
         }
 
-        WHEN( "j==15" )
+        SECTION( "j==15" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 15 );
@@ -162,7 +160,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -4 );
         }
 
-        WHEN( "j==16" )
+        SECTION( "j==16" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 16 );
@@ -171,7 +169,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 1 );
         }
 
-        WHEN( "j==17" )
+        SECTION( "j==17" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 17 );
@@ -180,7 +178,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -1 );
         }
 
-        WHEN( "j==18" )
+        SECTION( "j==18" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 18 );
@@ -189,7 +187,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 3 );
         }
 
-        WHEN( "j==19" )
+        SECTION( "j==19" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 19 );
@@ -198,7 +196,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -3 );
         }
 
-        WHEN( "j==20" )
+        SECTION( "j==20" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 20 );
@@ -207,7 +205,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 5 );
         }
 
-        WHEN( "j==21" )
+        SECTION( "j==21" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 21 );
@@ -216,7 +214,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -5 );
         }
 
-        WHEN( "j==22" )
+        SECTION( "j==22" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 22 );
@@ -225,7 +223,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 0 );
         }
 
-        WHEN( "j==23" )
+        SECTION( "j==23" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 23 );
@@ -234,7 +232,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -2 );
         }
 
-        WHEN( "j==24" )
+        SECTION( "j==24" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 24 );
@@ -243,7 +241,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 2 );
         }
 
-        WHEN( "j==25" )
+        SECTION( "j==25" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 25 );
@@ -252,7 +250,7 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == -4 );
         }
 
-        WHEN( "j==26" )
+        SECTION( "j==26" )
         {
             int m, n;
             int rv = mx::sigproc::noll_nm( n, m, 26 );
@@ -261,18 +259,18 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
             REQUIRE( m == 4 );
         }
     }
-}
+}/// testing zernikeQNorm
 
-/** Scenario: testing zernikeQNorm
- * Verify compilation and execution of zernikeQNorm.
- * This does not validate the output.
- * \anchor tests_sigproc_zernike_zernikeQNorm
+
+/// testing zernikeQNorm
+/**
+ * \ingroup zernike_unit_tests
  */
-SCENARIO( "testing zernikeQNorm", "[sigproc::zernike]" )
+TEST_CASE( "testing zernikeQNorm", "[sigproc::zernike]" )
 {
-    GIVEN( "an array" )
+    SECTION( "an array" )
     {
-        WHEN( "j==1" )
+        SECTION( "j==1" )
         {
             Eigen::Array<double, -1, -1> arr, k, phi;
             arr.resize( 32, 32 );

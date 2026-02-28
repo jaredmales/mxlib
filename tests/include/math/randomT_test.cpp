@@ -6,21 +6,18 @@
 
 #define MX_NO_ERROR_REPORTS
 
-#include "../../../include/math/randomT.hpp"
+#include "../../../include/math/randomT.hpp"/// Verify compilation and basic operation of randomT with std::distributions
 
-/** \test Scenario: Verify compilation and basic operation of randomT with std::distributions.
- *
- * Basic tests include verification that seeding works.  Note that there is the very slight
- * possibility that normal operation could return two consecutive variates with the same value
- * which would cause some of the below tests to fail.  Will probably never happen . . .
- *
- * \anchor tests_math_randomT_basic
+
+/// Verify compilation and basic operation of randomT with std::distributions
+/**
+ * \ingroup randomT_unit_tests
  */
-SCENARIO( "Verify compilation and basic operation of randomT with std::distributions", "[math::randomT]" )
+TEST_CASE( "Verify compilation and basic operation of randomT with std::distributions", "[math::randomT]" )
 {
-    GIVEN( "a uniform distribution is desired" )
+    SECTION( "a uniform distribution is desired" )
     {
-        WHEN( "two double random numbers from same generator requested" )
+        SECTION( "two double random numbers from same generator requested" )
         {
             mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist;
 
@@ -30,7 +27,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
             REQUIRE( r1 != r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with same seed" )
+        SECTION( "two double random numbers requested from different generators with same seed" )
         {
             mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist1( false );
             mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist2( false );
@@ -43,7 +40,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
             REQUIRE( r1 == r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with different seed" )
+        SECTION( "two double random numbers requested from different generators with different seed" )
         {
             mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist1( false );
             mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist2( false );
@@ -57,9 +54,9 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
         }
     }
 
-    GIVEN( "a normal distribution is desired" )
+    SECTION( "a normal distribution is desired" )
     {
-        WHEN( "two double random numbers from same generator requested" )
+        SECTION( "two double random numbers from same generator requested" )
         {
             mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist;
 
@@ -69,7 +66,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
             REQUIRE( r1 != r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with same seed" )
+        SECTION( "two double random numbers requested from different generators with same seed" )
         {
             mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist1( false );
             mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist2( false );
@@ -82,7 +79,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
             REQUIRE( r1 == r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with different seed" )
+        SECTION( "two double random numbers requested from different generators with different seed" )
         {
             mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist1( false );
             mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist2( false );
@@ -95,22 +92,19 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
             REQUIRE( r1 != r2 );
         }
     }
-}
+}/// Verify compilation and basic operation of randomT with the Laplace distribution
 
-/** \test Scenario: Verify compilation and basic operation of randomT with the Laplace distribution
- *
- * Basic tests include verification that seeding works.  Note that there is the very slight
- * possibility that normal operation could return two consecutive variates with the same value
- * which would cause some of the below tests to fail.  Will probably never happen . . .
- *
- * \anchor tests_math_randomT_basic_laplace
+
+/// Verify compilation and basic operation of randomT with the Laplace distribution
+/**
+ * \ingroup randomT_unit_tests
  */
-SCENARIO( "Verify compilation and basic operation of randomT with the Laplace distribution",
+TEST_CASE( "Verify compilation and basic operation of randomT with the Laplace distribution",
           "[math::laplace_distribution]" )
 {
-    GIVEN( "a laplace distribution is desired" )
+    SECTION( "a laplace distribution is desired" )
     {
-        WHEN( "two double random numbers from same generator requested" )
+        SECTION( "two double random numbers from same generator requested" )
         {
             mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist;
 
@@ -120,7 +114,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with the Laplace di
             REQUIRE( r1 != r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with same seed" )
+        SECTION( "two double random numbers requested from different generators with same seed" )
         {
             mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist1( false );
             mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist2( false );
@@ -133,7 +127,7 @@ SCENARIO( "Verify compilation and basic operation of randomT with the Laplace di
             REQUIRE( r1 == r2 );
         }
 
-        WHEN( "two double random numbers requested from different generators with different seed" )
+        SECTION( "two double random numbers requested from different generators with different seed" )
         {
             mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist1( false );
             mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist2( false );

@@ -27,7 +27,6 @@ namespace ioutilsTest
 {
 namespace fileUtilsTest
 {
-
 /// Checking existence and whether or not a path is a directory
 /**
  * \ingroup fileUtils_unit_tests
@@ -90,8 +89,7 @@ TEST_CASE( "Checking existence and whether or not a path is a directory", "[iout
         REQUIRE( isdir == false );
     }
 }
-
-/// Verify creation of sequential file names
+/// creating sequential filenames
 /**
  * \ingroup fileUtils_unit_tests
  */
@@ -169,6 +167,10 @@ void createfiles( const std::string &basedir )
 /**
  * Tests that files are read according to the specification and sorted.  Also tests basic errors.
  *
+ *//// Getting a list of files
+
+/// Getting a list of files
+/**
  * \ingroup fileUtils_unit_tests
  */
 TEST_CASE( "Getting a list of files", "[ioutils::fileUtils]" )

@@ -2,19 +2,18 @@
  */
 #include "../../catch2/catch.hpp"
 
-#include "../../../include/sys/timeUtils.hpp"
+#include "../../../include/sys/timeUtils.hpp"/// Verify operation of get_curr_time
 
-/** \test Scenario: Verify operation of get_curr_time.
- *
- * This only checks for increasing time on subsequent calls.
- *
- *  \anchor tests_sys_timeUtils_get_curr_time
+
+/// Verify operation of get_curr_time
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify operation of get_curr_time", "[timeutils]" )
+TEST_CASE( "Verify operation of get_curr_time", "[timeutils]" )
 {
-    GIVEN( "getting the time" )
+    SECTION( "getting the time" )
     {
-        WHEN( "the same timespec is used" )
+        SECTION( "the same timespec is used" )
         {
             timespec ts;
             double t0 = mx::sys::get_curr_time( ts );
@@ -25,7 +24,7 @@ SCENARIO( "Verify operation of get_curr_time", "[timeutils]" )
             REQUIRE( t1 > t0 );
         }
 
-        WHEN( "no timespec is provided" )
+        SECTION( "no timespec is provided" )
         {
             double t0 = mx::sys::get_curr_time();
             REQUIRE( t0 > 0 );
@@ -35,19 +34,18 @@ SCENARIO( "Verify operation of get_curr_time", "[timeutils]" )
             REQUIRE( t1 > t0 );
         }
     }
-}
+}/// Verify operation of thread sleep functions
 
-/** \test Scenario: Verify operation of thread sleep functions
- *
- * Uses mx::sys::get_curr_time to verify duration of sleep.
- *
- *  \anchor tests_sys_timeUtils_sleep
+
+/// Verify operation of thread sleep functions
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
+TEST_CASE( "Verify operation of thread sleep functions", "[timeutils]" )
 {
-    GIVEN( "sleeping for 1 second" )
+    SECTION( "sleeping for 1 second" )
     {
-        WHEN( "sleeping in seconds" )
+        SECTION( "sleeping in seconds" )
         {
             double t0 = mx::sys::get_curr_time();
             mx::sys::sleep( 1 );
@@ -55,7 +53,7 @@ SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
 
             REQUIRE( t1 >= t0 + 1.0 );
         }
-        WHEN( "sleeping in milliseconds" )
+        SECTION( "sleeping in milliseconds" )
         {
             double t0 = mx::sys::get_curr_time();
             mx::sys::milliSleep( 1000 );
@@ -63,7 +61,7 @@ SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
 
             REQUIRE( t1 >= t0 + 1.0 );
         }
-        WHEN( "sleeping in microseconds" )
+        SECTION( "sleeping in microseconds" )
         {
             double t0 = mx::sys::get_curr_time();
             mx::sys::microSleep( 1000000 );
@@ -71,7 +69,7 @@ SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
 
             REQUIRE( t1 >= t0 + 1.0 );
         }
-        WHEN( "sleeping in nanoseconds" )
+        SECTION( "sleeping in nanoseconds" )
         {
             double t0 = mx::sys::get_curr_time();
             mx::sys::nanoSleep( 1000000000 );
@@ -80,17 +78,18 @@ SCENARIO( "Verify operation of thread sleep functions", "[timeutils]" )
             REQUIRE( t1 >= t0 + 1.0 );
         }
     }
-}
+}/// Verify operation of timespecAddNsec
 
-/** \test Scenario: Verify operation of timespecAddNsec
- *
- *  \anchor tests_sys_timeUtils_timespecAddNsec
+
+/// Verify operation of timespecAddNsec
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify operation of timespecAddNsec", "[timeutils]" )
+TEST_CASE( "Verify operation of timespecAddNsec", "[timeutils]" )
 {
-    GIVEN( "a timespec" )
+    SECTION( "a timespec" )
     {
-        WHEN( "adding less than 1e9 nanoseconds" )
+        SECTION( "adding less than 1e9 nanoseconds" )
         {
             timespec ts;
             ts.tv_sec = 1;
@@ -129,7 +128,7 @@ SCENARIO( "Verify operation of timespecAddNsec", "[timeutils]" )
             REQUIRE( ts.tv_nsec == 111111110 );
         }
 
-        WHEN( "adding more than 1e9 nanoseconds but less than 2e9" )
+        SECTION( "adding more than 1e9 nanoseconds but less than 2e9" )
         {
             timespec ts;
             ts.tv_sec = 1;
@@ -172,7 +171,7 @@ SCENARIO( "Verify operation of timespecAddNsec", "[timeutils]" )
             REQUIRE( ts.tv_nsec == 111111110 );
         }
 
-        WHEN( "adding more than 2e9" )
+        SECTION( "adding more than 2e9" )
         {
             timespec ts;
             ts.tv_sec = 1;
@@ -183,19 +182,18 @@ SCENARIO( "Verify operation of timespecAddNsec", "[timeutils]" )
             REQUIRE( ts.tv_nsec == 10 );
         }
     }
-}
+}/// Verify parsing of a formatted time string
 
-/** \test Scenario: Verify parsing of a formatted time string
- *
- *  Tests parsing of a string of format hh:mm:ss.s
- *
- *  \anchor tests_sys_timeUtils_parse_hms
+
+/// Verify parsing of a formatted time string
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
+TEST_CASE( "Verify parsing of a formatted time string", "[timeutils]" )
 {
-    GIVEN( "a valid time string" )
+    SECTION( "a valid time string" )
     {
-        WHEN( "integer seconds" )
+        SECTION( "integer seconds" )
         {
             float hr;
             float mn;
@@ -208,7 +206,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
             REQUIRE( sec == 3 );
         }
 
-        WHEN( "floating seconds" )
+        SECTION( "floating seconds" )
         {
             float hr;
             float mn;
@@ -221,7 +219,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
             REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( 3.23, 1e-7 ) );
         }
 
-        WHEN( "negative hour" )
+        SECTION( "negative hour" )
         {
             float hr;
             float mn;
@@ -234,7 +232,7 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
             REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( -3.23, 1e-7 ) );
         }
 
-        WHEN( "0 pads" )
+        SECTION( "0 pads" )
         {
             float hr;
             float mn;
@@ -247,42 +245,44 @@ SCENARIO( "Verify parsing of a formatted time string", "[timeutils]" )
             REQUIRE_THAT( sec, Catch::Matchers::WithinAbs( 3.23, 1e-7 ) );
         }
     }
-}
+}/// Verify calculation of MJD
 
-/** \test Scenario: Verify calculation of MJD
- *
- *  \anchor tests_sys_timeUtils_Cal2mjd
+
+/// Verify calculation of MJD
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify calculation of MJD", "[timeutils]" )
+TEST_CASE( "Verify calculation of MJD", "[timeutils]" )
 {
-    GIVEN( "a valid Gregorian date" )
+    SECTION( "a valid Gregorian date" )
     {
-        WHEN( "integer seconds" )
+        SECTION( "integer seconds" )
         {
             double mjd = mx::sys::Cal2mjd( 2020, 12, 31, 0, 0, 0 );
             REQUIRE( mjd == 59214.0 );
         }
     }
 
-    GIVEN( "a valid Gregorian date" )
+    SECTION( "a valid Gregorian date" )
     {
-        WHEN( "floating seconds" )
+        SECTION( "floating seconds" )
         {
             double mjd = mx::sys::Cal2mjd( 2020, 12, 31, 0, 0, 10.2357 );
             REQUIRE_THAT( mjd, Catch::Matchers::WithinAbs( 59214.00011846875, 1e-14 ) );
         }
     }
-}
+}/// Verify parsing of an ISO 8601 time string
 
-/** \test Scenario: Verify parsing of an ISO 8601 time string
- *
- *  \anchor tests_sys_timeUtils_ISO8601dateBreakdown
+
+/// Verify parsing of an ISO 8601 time string
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
+TEST_CASE( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
 {
-    GIVEN( "a valid ISO 8601 time string" )
+    SECTION( "a valid ISO 8601 time string" )
     {
-        WHEN( "integer seconds" )
+        SECTION( "integer seconds" )
         {
             int yr, mon, day, hr, min;
             double sec;
@@ -298,7 +298,7 @@ SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
             REQUIRE( sec == 0 );
         }
 
-        WHEN( "fractional seconds" )
+        SECTION( "fractional seconds" )
         {
             int yr, mon, day, hr, min;
             double sec;
@@ -315,9 +315,9 @@ SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
         }
     }
 
-    GIVEN( "an invalid ISO 8601 time string" )
+    SECTION( "an invalid ISO 8601 time string" )
     {
-        WHEN( "string too short" )
+        SECTION( "string too short" )
         {
             int yr, mon, day, hr, min;
             double sec;
@@ -327,24 +327,25 @@ SCENARIO( "Verify parsing of an ISO 8601 time string", "[timeutils]" )
             REQUIRE( rv == -4 );
         }
     }
-}
+}/// Verify conversion of an ISO 8601 time string to MJD
 
-/** \test Scenario: Verify conversion of an ISO 8601 time string to MJD
- *
- *  \anchor tests_sys_timeUtils_ISO8601date2mjd
+
+/// Verify conversion of an ISO 8601 time string to MJD
+/**
+ * \ingroup timeUtils_unit_tests
  */
-SCENARIO( "Verify conversion of an ISO 8601 time string to MJD", "[timeutils]" )
+TEST_CASE( "Verify conversion of an ISO 8601 time string to MJD", "[timeutils]" )
 {
-    GIVEN( "a valid ISO 8601 time string" )
+    SECTION( "a valid ISO 8601 time string" )
     {
-        WHEN( "integer seconds" )
+        SECTION( "integer seconds" )
         {
             double mjd = mx::sys::ISO8601date2mjd( "2020-12-31T00:00:00" );
 
             REQUIRE( mjd == 59214.0 );
         }
 
-        WHEN( "fractional seconds" )
+        SECTION( "fractional seconds" )
         {
             double mjd = mx::sys::ISO8601date2mjd( "2020-12-31T00:00:10.2357" );
 

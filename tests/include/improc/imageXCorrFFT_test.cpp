@@ -9,19 +9,18 @@
 
 #include "../../../include/math/func/gaussian.hpp"
 #include "../../../include/improc/imageXCorrFFT.hpp"
-#include "../../../include/improc/eigenCube.hpp"
+#include "../../../include/improc/eigenCube.hpp"/// Image cross-correlation with FFT using center of light
 
-/** Scenario: centroiding Gaussians with center of light
- *
- * Verify center of light calculation
- *
- * \anchor tests_improc_imageUtils_imageXCorrFFT
+
+/// Image cross-correlation with FFT using center of light
+/**
+ * \ingroup imageXCorrFFT_unit_tests
  */
-SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::imageXCorrFFT]" )
+TEST_CASE( "Image cross-correlation with FFT using center of light", "[improc::imageXCorrFFT]" )
 {
-    GIVEN( "two Gaussians" )
+    SECTION( "two Gaussians" )
     {
-        WHEN( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -58,7 +57,7 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -97,7 +96,7 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
         {
             double xshift = -3.6;
             double yshift = 2.25;
@@ -135,7 +134,7 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
             double xshift = 1.3;
             double yshift = -0.6;
@@ -174,19 +173,18 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
             REQUIRE( peak > 0 );
         }
     }
-}
+}/// Image cross-correlation with FFT using magnification peak finding
 
-/** Scenario: centroiding by magnification
- *
- * Verify magnification peak finding
- *
- * \anchor tests_improc_imageUtils_imageXCorrFFT
+
+/// Image cross-correlation with FFT using magnification peak finding
+/**
+ * \ingroup imageXCorrFFT_unit_tests
  */
-SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "[improc::imageXCorrFFT]" )
+TEST_CASE( "Image cross-correlation with FFT using magnification peak finding", "[improc::imageXCorrFFT]" )
 {
-    GIVEN( "two Gaussians" )
+    SECTION( "two Gaussians" )
     {
-        WHEN( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -224,7 +222,7 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -263,7 +261,7 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.3)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(-3.6,+2.3)" )
         {
             double xshift = -3.6;
             double yshift = 2.3;
@@ -301,7 +299,7 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
             double xshift = 1.3;
             double yshift = -0.6;
@@ -340,13 +338,18 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
             REQUIRE( peak > 0 );
         }
     }
-}
+}/// Image cross-correlation with FFT using Gaussian peak fit
 
-SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::imageXCorrFFT]" )
+
+/// Image cross-correlation with FFT using Gaussian peak fit
+/**
+ * \ingroup imageXCorrFFT_unit_tests
+ */
+TEST_CASE( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::imageXCorrFFT]" )
 {
-    GIVEN( "two Gaussians" )
+    SECTION( "two Gaussians" )
     {
-        WHEN( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -383,7 +386,7 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+4,+4)" )
         {
             double xshift = 4;
             double yshift = 4;
@@ -421,7 +424,7 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
+        SECTION( "ref at geometric center, equal even sizes, shift=(-3.6,+2.25)" )
         {
             double xshift = -3.6;
             double yshift = 2.25;
@@ -459,7 +462,7 @@ SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::
             REQUIRE( y == Approx( yshift ) );
             REQUIRE( peak > 0 );
         }
-        WHEN( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
+        SECTION( "ref at geometric center, equal odd sizes, shift=(+1.3,-0.6)" )
         {
             double xshift = 1.3;
             double yshift = -0.6;

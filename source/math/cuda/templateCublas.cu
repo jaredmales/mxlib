@@ -248,7 +248,6 @@ __global__ void elwiseMulAccum( dataT0 *c, dataT1 *a, dataT2 *b, int size )
 
 // Calculates the element-wise product of two vectors, storing the result in the first.
 /* Calculates z = x * y element by element, a.k.a. the Hadamard product.
- * \test Scenario: multiplying two vector element by element \ref test_math_templateCublas_elementwiseXxY "[test doc]"
  */
 template <typename dataT0, typename dataT1, typename dataT2>
 cudaError_t elementwiseXxY_impl( dataT0 *z, dataT1 *x, dataT2 *y, int size )

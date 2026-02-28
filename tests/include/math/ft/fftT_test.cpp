@@ -8,10 +8,9 @@
 
 #include "../../../../include/math/ft/fftT.hpp"
 #include "../../../../include/improc/eigenImage.hpp"
-
-/// 1D FFT with FFTW
+/// 1D c2c FFT with FFTW, float
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
 {
@@ -131,10 +130,9 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
     }
 }
-
-/// 2D FFT with FFTW
+/// 2D c2c FFT with FFTW, float
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "2D c2c FFT with FFTW, float", "[math::ft]" )
 {

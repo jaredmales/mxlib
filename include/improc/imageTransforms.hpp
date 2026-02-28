@@ -83,8 +83,6 @@ typedef bilinearTransform<double> bilinearTransd;
  *
  * \tparam _arithT is the type in which to do all calculations.  Should be a floating point type.
  *
- * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift
- * "[test doc]"
  *
  * \ingroup image_transforms
  */
@@ -295,8 +293,6 @@ void imageRotate( arrT &transim,   ///< [out] The rotated image.  Must be pre-al
  * \tparam outputArrT is the eigen array type of the output [will be resolved by compiler]
  * \tparam inputArrT is the eigen array type of the input [will be resolved by compiler]
  *
- * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift
- * "[test doc]"
  */
 template <typename outputArrT, typename inputArrT>
 void imageShiftWP( outputArrT &out, ///< [out] contains the shifted image.  Must be pre-allocated, but can be smaller
@@ -469,8 +465,6 @@ void imageShiftWPScale( outputArrT &out,  /**< [out] contains the shifted image.
  * \tparam floatT2 is a floating point type [will be resolved by compiler]
  * \tparam transformT specifies the transformation to use [will be resolved by compiler]
  *
- * \test Scenario: Verify direction and accuracy of various image shifts \ref tests_improc_imageTransforms_imageShift
- * "[test doc]"
  */
 template <typename arrOutT, typename arrInT, typename floatT1, typename floatT2, typename transformT>
 void imageShift( arrOutT &transim, ///< [out] Will contain the shifted image.  Will be allocated.

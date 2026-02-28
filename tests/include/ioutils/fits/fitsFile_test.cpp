@@ -76,6 +76,10 @@ class fitsFile_test : public fitsFile<dataT>
 /// Calculating subimage sizes
 /** Verify calculation of subimage sizes
  *
+ *//// Calculating subimage sizes
+
+/// Calculating subimage sizes
+/**
  * \ingroup fitsFile_unit_tests
  */
 TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
@@ -182,7 +186,7 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
 
     SECTION( "a 3D image to read" )
     {
-        WHEN( "reading the whole image with default setup" )
+        SECTION( "reading the whole image with default setup" )
         {
             fitsFile_test<float> fft;
 
@@ -239,7 +243,6 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
         }
     }
 }
-
 /// Basic writing and reading
 /**
  * \ingroup fitsFile_unit_tests
@@ -275,7 +278,6 @@ TEST_CASE( "Basic writing and reading", "[ioutils::fits::fitsFile]" )
         REQUIRE( im.cols() == 1024 );
     }
 }
-
 /// Cube writing and reading
 /**
  * \ingroup fitsFile_unit_tests
@@ -320,6 +322,10 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
 /// Reading headers
 /**
  *
+ *//// Reading headers
+
+/// Reading headers
+/**
  * \ingroup fitsFile_unit_tests
  */
 TEST_CASE( "Reading headers", "[ioutils::fits::fitsFile]" )

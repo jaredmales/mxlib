@@ -9,19 +9,18 @@
 
 #include "../../../include/math/func/gaussian.hpp"
 #include "../../../include/improc/imageXCorrDiscrete.hpp"
-#include "../../../include/improc/eigenCube.hpp"
+#include "../../../include/improc/eigenCube.hpp"/// Verify X-Corr with center of light calculation
 
-/** Scenario: centroiding Gaussians with center of light
- *
- * Verify center of light calculation
- *
- * \anchor tests_improc_imageUtils_imageXCorrDiscrete
+
+/// Verify X-Corr with center of light calculation
+/**
+ * \ingroup imageXCorrDiscrete_unit_tests
  */
-SCENARIO( "Verify X-Corr with center of light calculation", "[improc::imageXCorrDiscrete]" )
+TEST_CASE( "Verify X-Corr with center of light calculation", "[improc::imageXCorrDiscrete]" )
 {
-    GIVEN( "two Gaussians" )
+    SECTION( "two Gaussians" )
     {
-        WHEN( "1 at geometric center" )
+        SECTION( "1 at geometric center" )
         {
             mx::improc::eigenImage<double> im0, im2;
             im0.resize( 64, 64 );
@@ -44,7 +43,7 @@ SCENARIO( "Verify X-Corr with center of light calculation", "[improc::imageXCorr
             REQUIRE_THAT( x, Catch::Matchers::WithinAbs( 2, 1e-8 ) );
             REQUIRE_THAT( y, Catch::Matchers::WithinAbs( 2, 1e-8 ) );
         }
-        WHEN( "geometric quarter" )
+        SECTION( "geometric quarter" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 64, 64 );

@@ -65,7 +65,6 @@ namespace func
   *
   * \tparam realT is type to use for arithmetic
   *
-  * \test Scenario: compiling 1D Moffat function \ref tests_math_func_moffat1D "[test doc]"
   *
   * \ingroup gen_math_moffats
   */
@@ -119,7 +118,6 @@ extern template __float128 moffat<__float128>( const __float128 x,
   *
   * \tparam realT is type to use for arithmetic
   *
-  * \test Scenario: compiling 2D Moffat function \ref tests_math_func_moffat2D "[test doc]"
   *
   * \ingroup gen_math_moffats
   */
@@ -185,7 +183,6 @@ extern template __float128 moffat2D<__float128>( const __float128 x,
  *
  * \tparam realT is the type to use for arithmetic
  *
- * \test Scenario: compiling Moffat FWHM \ref tests_math_func_moffatFWHM "[test doc]"
  *
  * \ingroup gen_math_moffats
  */

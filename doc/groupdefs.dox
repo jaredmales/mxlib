@@ -594,6 +594,72 @@
               * \ingroup error_unit_tests
               */
 
+        /** \defgroup ao_unit_tests Adaptive Optics Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup ao_analysis_unit_tests AO Analysis Unit Tests
+              * \ingroup ao_unit_tests
+              */
+                /** \defgroup aoAtmosphere_unit_tests aoAtmosphere Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup aoPSDs_unit_tests aoPSDs Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup aoSystem_unit_tests aoSystem Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+            /** \defgroup ao_sim_unit_tests AO Simulation Unit Tests
+              * \ingroup ao_unit_tests
+              */
+                /** \defgroup pyramidSensor_unit_tests pyramidSensor Unit Tests
+                  * \ingroup ao_sim_unit_tests
+                  */
+
+        /** \defgroup app_unit_tests Application Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup appConfigurator_unit_tests appConfigurator Unit Tests
+              * \ingroup app_unit_tests
+              */
+
+        /** \defgroup astro_unit_tests Astronomy Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup astroDynamics_unit_tests astroDynamics Unit Tests
+              * \ingroup astro_unit_tests
+              */
+
+        /** \defgroup improc_unit_tests Image Processing Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup imageFilters_unit_tests imageFilters Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageMasks_unit_tests imageMasks Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageTransforms_unit_tests imageTransforms Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageUtils_unit_tests imageUtils Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageXCorrDiscrete_unit_tests imageXCorrDiscrete Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageXCorrFFT_unit_tests imageXCorrFFT Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
         /** \defgroup ioutils_unit_tests I/O Utilities Unit Tests
           * \ingroup unit_tests
           */
@@ -625,6 +691,99 @@
                     /** \defgroup fitsHeaderCard_unit_tests fitsHeaderCard Unit Tests
                       * \ingroup fits_unit_tests
                       */
+
+        /** \defgroup math_unit_tests Math Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup math_cuda_unit_tests CUDA Math Unit Tests
+              * \ingroup math_unit_tests
+              */
+                /** \defgroup templateCublas_unit_tests templateCublas Unit Tests
+                  * \ingroup math_cuda_unit_tests
+                  */
+
+            /** \defgroup math_ft_unit_tests Fourier Transform Unit Tests
+              * \ingroup math_unit_tests
+              */
+                /** \defgroup fftT_unit_tests fftT Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+                /** \defgroup fftTcuda_unit_tests fftTcuda Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+                /** \defgroup fftwEnvironment_unit_tests fftwEnvironment Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+                /** \defgroup ftTypes_unit_tests ftTypes Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+            /** \defgroup math_func_unit_tests Math Function Unit Tests
+              * \ingroup math_unit_tests
+              */
+                /** \defgroup moffat_unit_tests moffat Unit Tests
+                  * \ingroup math_func_unit_tests
+                  */
+
+            /** \defgroup geo_unit_tests geo Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup randomT_unit_tests randomT Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup templateBLAS_unit_tests templateBLAS Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup templateLapack_unit_tests templateLapack Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+        /** \defgroup sigproc_unit_tests Signal Processing Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup circularBuffer_unit_tests circularBuffer Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup psdFilter_unit_tests psdFilter Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup psdUtils_unit_tests psdUtils Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup signalWindows_unit_tests signalWindows Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup zernike_unit_tests zernike Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+        /** \defgroup sys_unit_tests System Utility Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup timeUtils_unit_tests timeUtils Unit Tests
+              * \ingroup sys_unit_tests
+              */
+
+        /** \defgroup wfp_unit_tests Wavefront Propagation Unit Tests
+          * \ingroup unit_tests
+          */
+            /** \defgroup fraunhoferPropagator_unit_tests fraunhoferPropagator Unit Tests
+              * \ingroup wfp_unit_tests
+              */
+
+            /** \defgroup imagingUtils_unit_tests imagingUtils Unit Tests
+              * \ingroup wfp_unit_tests
+              */
 
 
 //-----------------------------------------------------------------------

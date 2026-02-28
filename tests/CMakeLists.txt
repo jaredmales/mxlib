@@ -65,6 +65,11 @@ function(mxlib_add_test_executable TEST_SOURCE)
 
     if(MXLIB_BUILD_TESTS AND BUILD_TESTING)
         add_test(NAME ${_mxlib_test_target} COMMAND ${_mxlib_test_target})
+        if(_mxlib_test_target STREQUAL "mxlibTest_include_sigproc_psdFilter_test_cpp" AND MXLIB_BUILD_COVERAGE)
+            # psdFilter coverage runtime can vary with system load; allow extra time to avoid transient timeouts.
+            math(EXPR _mxlib_psd_filter_timeout "${MXLIB_COVERAGE_TEST_TIMEOUT} * 3")
+            set_tests_properties(${_mxlib_test_target} PROPERTIES TIMEOUT ${_mxlib_psd_filter_timeout})
+        endif()
     endif()
 
     set(MXLIB_TEST_TARGETS ${MXLIB_TEST_TARGETS} ${_mxlib_test_target} PARENT_SCOPE)

@@ -67,6 +67,19 @@ Follow these code style and documentation rules exactly.
   - keep it side-effect free
   - match existing project pattern (`#if` or `#ifdef`) used in nearby tests.
 
+13) Test Doc Cleanup Rules
+- Do not use `\test` commands or `\anchor` tags in headers/sources for unit-test linkage.
+- Remove legacy test-reference text that only existed to support `\test` entries (including dangling list items like `Tests:` or `[test docs]` notes).
+- In test files, Doxygen `\brief` text for a `TEST_CASE` should exactly match the Catch2 test name string; do not prefix with `Scenario:` or `Test Case`.
+
+14) Catch2 Structure for This Repo
+- Use `TEST_CASE` + `SECTION`; do not introduce or keep `SCENARIO`, `GIVEN`, `WHEN`, `AND_GIVEN`, or `AND_WHEN`.
+- When converting existing tests, preserve behavior and assertion intent; only reshape the structure/macros.
+
+15) Long-Running Coverage Tests
+- For known long stochastic tests (for example `psdFilter_test`), include lightweight periodic progress output so timeout failures show where runtime was spent.
+- Prefer a per-test CTest timeout override in `tests/CMakeLists.txt` for coverage builds instead of globally increasing all test timeouts.
+
 When you finish:
 - Summarize what changed.
 - List affected files.

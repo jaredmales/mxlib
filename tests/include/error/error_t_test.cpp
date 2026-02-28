@@ -44,7 +44,7 @@ TEST_CASE( "Test error_t code names", "[error::error_t]" )
     REQUIRE(mx::errorName(static_cast<mx::error_t>(std::numeric_limits<int>::max())) == "unknown error_t (bug)");
 
 
-}
+}/// Test error_t messages
 
 /// Test error_t messages
 /**
@@ -74,7 +74,7 @@ TEST_CASE( "Test error_t messages", "[error::error_t]" )
     REQUIRE(nv != std::numeric_limits<int>::max()); //if this fails it means the following test is invalid
 
     REQUIRE(mx::errorMessage(static_cast<mx::error_t>(std::numeric_limits<int>::max())) == "unknown error_t (bug)");
-}
+}/// Test errno conversions
 
 /// Test errno conversions
 /**
@@ -104,7 +104,7 @@ TEST_CASE( "Test errno conversions", "[error::error_t]" )
     REQUIRE(nv != std::numeric_limits<int>::max()); //if this fails it means the following test is invalid
 
     REQUIRE(mx::errno2error_t(std::numeric_limits<int>::max()) == mx::error_t::error);
-}
+}/// Test FITS error conversions
 
 /// Test FITS error conversions
 /**

@@ -14,7 +14,6 @@ namespace ioutilsTest
 {
 namespace readColumnsTest
 {
-
 /// Reading space delimited numeric data
 /**
  * \ingroup readColumns_unit_tests
@@ -118,7 +117,6 @@ TEST_CASE( "Reading space delimited numeric data", "[ioutils::readColumns]" )
         }
     }
 }
-
 /// Reading space delimited numeric data with errors
 /**
  * \ingroup readColumns_unit_tests
@@ -159,7 +157,6 @@ TEST_CASE( "Reading space delimited numeric data with errors", "[ioutils::readCo
     mx::ioutils::readColumns( fname, data0, data1 );
 #endif
 }
-
 /// Reading combined type data
 /**
  * \ingroup readColumns_unit_tests

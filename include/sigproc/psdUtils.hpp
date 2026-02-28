@@ -60,7 +60,6 @@ namespace sigproc
  *
  * \tparam realT the real floating point type
  *
- * \test Scenario: calculating variance from a 1D PSD \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]"
  */
 template <typename realT>
 realT psdVar1sided( realT df,         ///< [in] the frequency scale of the PSD
@@ -95,7 +94,6 @@ realT psdVar1sided( realT df,         ///< [in] the frequency scale of the PSD
  *
  * \tparam realT the real floating point type
  *
- * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]"
  */
 template <typename realT>
 realT psdVar2sided( realT df,         ///< [in] the frequency scale of the PSD
@@ -132,7 +130,6 @@ realT psdVar2sided( realT df,         ///< [in] the frequency scale of the PSD
  *
  * \tparam realT the real floating point type
  *
- * \test Scenario: calculating variance from a 1D PSD. \ref tests_sigproc_psdUtils_psdVar_1D "[test doc]"
  */
 template <typename realT>
 realT psdVar( const std::vector<realT> &f,   ///< [in] the frequency scale of the PSD.
@@ -256,7 +253,6 @@ void frequency_grid1D( eigenArr & vec,
  * \tparam realT a real floating point type
  * \tparam realParamT a real floating point type, convenience to avoid double-float confusion.
  *
- * \test Verify creation of a 1D frequency grid \ref tests_sigproc_psdUtils_frequencyGrid_1D "[test doc]"
  */
 template <typename realT, typename realParamT>
 int frequencyGrid(
@@ -447,7 +443,6 @@ realT oneoverk_norm( realT kmin, realT kmax, realT alpha )
  * \tparam floatT the floating point type of the PSD.
  * \tparam floatParamT a floating point type, convenience to avoid double-float cofusion.
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename floatT, typename floatParamT>
 int normPSD( std::vector<floatT> &psd, ///< [in.out] the PSD to normalize, will be altered.
@@ -496,7 +491,6 @@ int normPSD( std::vector<floatT> &psd, ///< [in.out] the PSD to normalize, will 
  * \tparam floatT the floating point type of the PSD.
  * \tparam floatParamT a floating point type, convenience to avoid double-float cofusion.
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename floatT, typename floatParamT>
 floatT
@@ -828,7 +822,6 @@ void vonKarmanPSD( eigenArrp &psd, eigenArrf &freq, alphaT alpha, L0T L0 = 0, l0
  * Entries in psdOneSided are cast to the value_type of psdTwoSided,
  * for instance to allow for conversion to complex type.
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename vectorTout, typename vectorTin>
 void augment1SidedPSD(
@@ -887,7 +880,6 @@ void augment1SidedPSD(
  *
  * {1,2,3,4,5} --> {0,1,2,3,4,5,-4,-3,-2,-1}
  *
- * \test Verify scaling and normalization of augment1SidedPSD \ref tests_sigproc_psdUtils_augment1SidedPSD "[test doc]"
  */
 template <typename T>
 void augment1SidedPSDFreq(

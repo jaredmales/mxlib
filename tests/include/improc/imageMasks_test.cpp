@@ -8,19 +8,18 @@
 #define MX_NO_ERROR_REPORTS
 
 #include "../../../include/improc/imageMasks.hpp"
-#include "../../../include/improc/eigenImage.hpp"
+#include "../../../include/improc/eigenImage.hpp"/// Masking wedges in an image
 
-/** Scenario: Masking wedges in an image
- *
- * Verify wedge masking, including that all pixels are masked for continuous rotations of the wedge
- *
- * \anchor tests_improc_imageMasks_maskWedge
+
+/// Masking wedges in an image
+/**
+ * \ingroup imageMasks_unit_tests
  */
-SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
+TEST_CASE( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 {
-    GIVEN( "a single wedge" )
+    SECTION( "a single wedge" )
     {
-        WHEN( "geometric center, 0-90 degrees" )
+        SECTION( "geometric center, 0-90 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -33,7 +32,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 90-180 degrees" )
+        SECTION( "geometric center, 90-180 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -46,7 +45,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 180-270 degrees" )
+        SECTION( "geometric center, 180-270 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -59,7 +58,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 270-360 degrees" )
+        SECTION( "geometric center, 270-360 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -72,7 +71,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 45-135 degrees" )
+        SECTION( "geometric center, 45-135 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -85,7 +84,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 135-225 degrees" )
+        SECTION( "geometric center, 135-225 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -98,7 +97,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 225-315 degrees" )
+        SECTION( "geometric center, 225-315 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -111,7 +110,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 315-45 degrees" )
+        SECTION( "geometric center, 315-45 degrees" )
         {
             mx::improc::eigenImage<double> im;
             im.resize( 1024, 1024 );
@@ -124,7 +123,7 @@ SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 
             REQUIRE( im.sum() == 512 * 512 );
         }
-        WHEN( "geometric center, 3 wedges of 120 degrees" )
+        SECTION( "geometric center, 3 wedges of 120 degrees" )
         {
             mx::improc::eigenImage<double> im60;
             im60.resize( 1024, 1024 );

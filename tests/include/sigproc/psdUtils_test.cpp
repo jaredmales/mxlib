@@ -11,19 +11,18 @@
 #include "../../../include/sigproc/psdUtils.hpp"
 #include "../../../include/improc/eigenCube.hpp"
 #include "../../../include/math/randomT.hpp"
-#include "../../../include/math/vectorUtils.hpp"
+#include "../../../include/math/vectorUtils.hpp"/// calculating variance from a 1D PSD
 
-/** Scenario: calculating variance from a 1D PSD
- *
- * Verify calculations of psdVar1sided, psdVar2sided, and psdVar.
- *
- * \anchor tests_sigproc_psdUtils_psdVar_1D
+
+/// calculating variance from a 1D PSD
+/**
+ * \ingroup psdUtils_unit_tests
  */
-SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
+TEST_CASE( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 {
-    GIVEN( "a 1 sided PSD," )
+    SECTION( "a 1 sided PSD," )
     {
-        WHEN( "a flat PSD, midpoint rule" )
+        SECTION( "a flat PSD, midpoint rule" )
         {
             std::vector<double> f( 5 ), psd( 5 );
             for( size_t n = 0; n < f.size(); ++n )
@@ -34,7 +33,7 @@ SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::psdVar( f, psd, 1.0 ) == 5 );
         }
-        WHEN( "a flat PSD, trapezoid rule by default" )
+        SECTION( "a flat PSD, trapezoid rule by default" )
         {
             std::vector<double> f( 5 ), psd( 5 );
             for( size_t n = 0; n < f.size(); ++n )
@@ -46,9 +45,9 @@ SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
             REQUIRE( mx::sigproc::psdVar( f, psd ) == 4 );
         }
     }
-    GIVEN( "a 2 sided PSD," )
+    SECTION( "a 2 sided PSD," )
     {
-        WHEN( "a flat PSD, midpoint rule" )
+        SECTION( "a flat PSD, midpoint rule" )
         {
             std::vector<double> f( 6 ), psd( 6 );
             f[0] = 0;
@@ -66,7 +65,7 @@ SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 
             REQUIRE( mx::sigproc::psdVar( f, psd, 1.0 ) == 7 );
         }
-        WHEN( "a flat PSD, trapezoid rule by default" )
+        SECTION( "a flat PSD, trapezoid rule by default" )
         {
             std::vector<double> f( 6 ), psd( 6 );
             f[0] = 0;
@@ -89,13 +88,17 @@ SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 
 /** Verify scaling and normalization of augment1SidedPSD
  *
- * \anchor tests_sigproc_psdUtils_augment1SidedPSD
+ *//// augmenting a 1 sided PSD
+
+/// augmenting a 1 sided PSD
+/**
+ * \ingroup psdUtils_unit_tests
  */
-SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
+TEST_CASE( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
 {
-    GIVEN( "a 1 sided PSD, with a 0 freq value" )
+    SECTION( "a 1 sided PSD, with a 0 freq value" )
     {
-        WHEN( "1/f^2" )
+        SECTION( "1/f^2" )
         {
             std::vector<double> f( 5 ), psd( 5 );
 
@@ -146,13 +149,17 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
 
 /** Verify creation of a 1D frequency grid
  *
- * \anchor tests_sigproc_psdUtils_frequencyGrid_1D
+ *//// creating a 1D frequency grid
+
+/// creating a 1D frequency grid
+/**
+ * \ingroup psdUtils_unit_tests
  */
-SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
+TEST_CASE( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 {
-    GIVEN( "2 sided FFT-order frequency grid" )
+    SECTION( "2 sided FFT-order frequency grid" )
     {
-        WHEN( "dt = 1" )
+        SECTION( "dt = 1" )
         {
             std::vector<double> f( 10 );
 
@@ -170,7 +177,7 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
             REQUIRE_THAT( f[9], Catch::Matchers::WithinAbs( -0.1, 1e-10 ) );
         }
 
-        WHEN( "dt = 2" )
+        SECTION( "dt = 2" )
         {
             std::vector<double> f( 10 );
 
@@ -189,9 +196,9 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
         }
     }
 
-    GIVEN( "1 sided frequency grid" )
+    SECTION( "1 sided frequency grid" )
     {
-        WHEN( "dt = 1, odd size" )
+        SECTION( "dt = 1, odd size" )
         {
             std::vector<double> f( 5 );
 
@@ -204,7 +211,7 @@ SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
             REQUIRE_THAT( f[4], Catch::Matchers::WithinAbs( 0.5, 1e-10 ) );
         }
 
-        WHEN( "dt = 1, even size" )
+        SECTION( "dt = 1, even size" )
         {
             std::vector<double> f( 6 );
 

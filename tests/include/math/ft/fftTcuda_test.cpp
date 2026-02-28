@@ -10,9 +10,9 @@
 #include "../../../../include/improc/eigenImage.hpp"
 
 #if 0
-/// 1D FFT with FFTW
+/// 1D c2c FFT with FFTW, float
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftTcuda_unit_tests
  */
 TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
 {
@@ -134,10 +134,9 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
     }
 }
 #endif
-
-/// 2D c2c FFT with cuFFT
+/// 2D c2c FFT with cuFFT, float
 /**
- * \ingroup math_ft_fftTcuda_test
+ * \ingroup fftTcuda_unit_tests
  */
 TEST_CASE( "2D c2c FFT with cuFFT, float", "[math::ft]" )
 {

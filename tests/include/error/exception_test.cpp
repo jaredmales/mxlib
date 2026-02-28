@@ -64,7 +64,7 @@ TEST_CASE( "Test exception constructors and accessors", "[error::exception]" )
         REQUIRE( ex.message() == "" );
         REQUIRE( std::string( ex.what() ).find( mx::errorName( mx::error_t::notimpl ) ) != std::string::npos );
     }
-}
+}/// Test exception location forwarding
 
 /// Test exception location forwarding
 /**
@@ -77,7 +77,7 @@ TEST_CASE( "Test exception location forwarding", "[error::exception]" )
 
     REQUIRE( ex.file_name() == loc.file_name() );
     REQUIRE( ex.line() == static_cast<int>( loc.line() ) );
-}
+}/// Test unwind_exceptions
 
 /// Test unwind_exceptions
 /**
@@ -187,7 +187,7 @@ TEST_CASE( "Test unwind_exceptions", "[error::exception]" )
             REQUIRE( whats[1].find( "middle exception" ) != std::string::npos );
         }
     }
-}
+}/// Test print_exceptions
 
 /// Test print_exceptions
 /**

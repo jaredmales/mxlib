@@ -9,19 +9,19 @@
 typedef double realT;
 
 using namespace mx::app;
-using namespace mx::AO::analysis;
+using namespace mx::AO::analysis;/// Loading aoSystem config settings
 
-/** Scenario: Loading aoSystem config settings
- *
- * Verify parsing of config
- * \anchor tests_ao_analysis_aoSystem_config
+
+/// Loading aoSystem config settings
+/**
+ * \ingroup aoSystem_unit_tests
  */
-SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
+TEST_CASE( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 {
-    GIVEN( "no config file" )
+    SECTION( "no config file" )
     {
         aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aosys; // This will be cumulative
-        WHEN( "verifying the defaults" )
+        SECTION( "verifying the defaults" )
         {
 
             REQUIRE( aosys.D() == 0.0 );
@@ -59,11 +59,11 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
         }
     }
 
-    GIVEN( "a valid config file" )
+    SECTION( "a valid config file" )
     {
         aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aosys; // This will be cumulative
 
-        WHEN( "setting wfs to ideal" )
+        SECTION( "setting wfs to ideal" )
         {
             appConfigurator config;
 
@@ -75,7 +75,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 
             REQUIRE( aosys.wfsBeta()->_id == "Ideal WFS" );
         }
-        WHEN( "setting wfs to unmodPyWFS" )
+        SECTION( "setting wfs to unmodPyWFS" )
         {
             appConfigurator config;
 
@@ -88,7 +88,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 
             REQUIRE( aosys.wfsBeta()->_id == "Unmodulated Pyramid" );
         }
-        WHEN( "setting wfs to asympModPyWFS" )
+        SECTION( "setting wfs to asympModPyWFS" )
         {
             appConfigurator config;
 
@@ -100,7 +100,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 
             REQUIRE( aosys.wfsBeta()->_id == "Asymptotic Modulated Pyramid" );
         }
-        WHEN( "setting wfs to SHWFS" )
+        SECTION( "setting wfs to SHWFS" )
         {
             appConfigurator config;
 
@@ -112,7 +112,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 
             REQUIRE( aosys.wfsBeta()->_id == "Shack Hartmann" );
         }
-        WHEN( "typical settings part 1" ) // These are broken into parts just to keep things <  1 line
+        SECTION( "typical settings part 1" ) // These are broken into parts just to keep things <  1 line
         {
             appConfigurator config;
 
@@ -131,7 +131,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.optd_delta() == Approx( 0.0037 ) );
             REQUIRE( aosys.lam_wfs() == Approx( 800e-9 ) );
         }
-        WHEN( "typical settings part 2" )
+        SECTION( "typical settings part 2" )
         {
             appConfigurator config;
 
@@ -154,7 +154,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.minTauWFS( 1 ) == 0.0005 );
             REQUIRE( aosys.bin_npix() == false );
         }
-        WHEN( "typical settings part 3" )
+        SECTION( "typical settings part 3" )
         {
             appConfigurator config;
 
@@ -186,7 +186,7 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.spatialFilter_ku() == 50 );
             REQUIRE( aosys.spatialFilter_kv() == 53 );
         }
-        WHEN( "typical settings part 4" )
+        SECTION( "typical settings part 4" )
         {
             appConfigurator config;
 
