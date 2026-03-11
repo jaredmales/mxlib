@@ -6,7 +6,7 @@
  */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2025 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -403,11 +403,35 @@ class milkImage
      */
     void post();
 
+    /// Get the creation time
+    /** 
+    * \returns the ImageStream creationtime
+    */
+    const timespec & creationtime() const;
+
+    /// Get the last access time
+    /** 
+    * \returns ImageStream lastaccesstime
+    */
+    const timespec & lastaccesstime() const;
+
+    /// Get the acquisition time
+    /** 
+    * \returns ImageStream acquisition time
+    */
+    const timespec & atime() const;
+
+    /// Get the write time
+    /** 
+    * \returns ImageStream writetime
+    */
+    const timespec & writetime() const;
+
     /// Get the value of cnt0 (the frame counter)
     /**
      * \returns the current value of cnt0
      */
-    uint64_t cnt0();
+    const uint64_t & cnt0() const;
 };
 
 template <typename dataT>
@@ -792,10 +816,35 @@ void milkImage<dataT>::post()
 }
 
 template <typename dataT>
-uint64_t milkImage<dataT>::cnt0()
+const timespec & milkImage<dataT>::creationtime() const
+{
+    return m_image->md->creationtime;
+}
+
+template <typename dataT>
+const timespec & milkImage<dataT>::lastaccesstime() const
+{
+    return m_image->md->lastaccesstime;
+}
+
+template <typename dataT>
+const timespec & milkImage<dataT>::atime() const
+{
+    return m_image->md->atime;
+}
+
+template <typename dataT>
+const timespec & milkImage<dataT>::writetime() const
+{
+    return m_image->md->writetime;
+}
+
+template <typename dataT>
+const uint64_t & milkImage<dataT>::cnt0() const
 {
     return m_image->md->cnt0;
 }
+
 
 } // namespace improc
 } // namespace mx
