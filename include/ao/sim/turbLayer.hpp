@@ -293,23 +293,32 @@ void turbLayer<aoSystemT, verboseT>::shift( realT dt )
     ddx = m_x0 + m_dx * dt;
     ddy = m_y0 + m_dy * dt;
 
-    wdx = (int)trunc( ddx );
+    wdx = static_cast<int>( std::floor( ddx ) );
     ddx -= wdx;
 
-    wdy = (int)trunc( ddy );
+    wdy = static_cast<int>( std::floor( ddy ) );
     ddy -= wdy;
 
-    wdx %= m_scrnSz;
-    wdy %= m_scrnSz;
+    wdx %= static_cast<int>( m_scrnSz );
+    wdy %= static_cast<int>( m_scrnSz );
+
+    if( wdx < 0 )
+        wdx += m_scrnSz;
+    if( wdy < 0 )
+        wdy += m_scrnSz;
 
     if( dt == 0 )
     {
         m_shiftPhase = m_phase;
+        // Prime both the whole-pixel and shifted buffers so the first
+        // subsequent sub-pixel shift has valid input data.
+        improc::imageShiftWP( m_shiftPhaseWP, m_phase, wdx, wdy );
+        m_shiftPhase = m_shiftPhaseWP;
     }
     else
     {
         // Check for a new whole-pixel shift
-        if( wdx != m_last_wdx || wdy != m_last_wdy )
+        if( wdx != m_last_wdx || wdy != m_last_wdy || m_last_wdx == m_scrnSz + 1 || m_last_wdy == m_scrnSz + 1 )
         {
             // Need a whole pixel shift (this also extracts the m_wfSz + m_buffSz subarray)
             improc::imageShiftWP( m_shiftPhaseWP, m_phase, wdx, wdy );
