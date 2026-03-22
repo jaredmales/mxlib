@@ -109,6 +109,26 @@ make
 sudo make install
 \endcode
 
+\subsubsection conda_install_macos_arm macOS Apple Silicon with Conda
+
+On Apple Silicon Macs using a conda environment, `cmake` may sometimes pick up a stale or incompatible compiler
+configuration from a previous cache or an x86 toolchain wrapper. If the compiler check fails near the `project(...)`
+line with x86-specific flags such as `-march=core2` or `-mssse3`, remove the build directory and configure with the
+compiler and architecture specified explicitly:
+
+\code{.bash}
+rm -rf _build
+unset CC CXX CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+cmake -S . -B _build \
+  -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
+  -DCMAKE_C_COMPILER="$(which clang)" \
+  -DCMAKE_CXX_COMPILER="$(which clang++)" \
+  -DCMAKE_OSX_ARCHITECTURES=arm64
+\endcode
+
+This has been needed in some `osx-arm64` conda environments even when `clang++ --version` reports an Apple Silicon
+target correctly.
+
 
 \section cmake_build Configuring mxlib with cmake
 

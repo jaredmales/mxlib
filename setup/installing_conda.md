@@ -17,3 +17,16 @@ bash ./setup/conda_env_setup_Linux.bash
 Need to install make, gcc, g++, pkg-config cmake
 
 cmake -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX ..
+
+On macOS Apple Silicon, if CMake fails its initial compiler test with x86 flags such as `-march=core2` or `-mssse3`,
+start from a clean build directory and configure explicitly with the active arm64 conda compiler:
+
+```bash
+rm -rf _build
+unset CC CXX CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+cmake -S . -B _build \
+  -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
+  -DCMAKE_C_COMPILER="$(which clang)" \
+  -DCMAKE_CXX_COMPILER="$(which clang++)" \
+  -DCMAKE_OSX_ARCHITECTURES=arm64
+```
