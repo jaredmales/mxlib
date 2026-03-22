@@ -45,6 +45,7 @@ namespace func
  *
  * \ingroup gen_math_bessel
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T1, typename T2>
 T2 bessel_j( T1 v, ///< [in]
              T2 x  ///< [in]
@@ -74,11 +75,14 @@ double bessel_j<int, double>( int v, double x );
 
 template <>
 long double bessel_j<long double, long double>( long double v, long double x );
+#endif
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 long double bessel_j<int, long double>( int v, long double x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 bessel_j<__float128, __float128>( __float128 v, __float128 x );
 

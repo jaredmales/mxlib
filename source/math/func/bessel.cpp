@@ -10,6 +10,7 @@ namespace math
 namespace func
 {
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 float bessel_j<float, float>( float v, float x )
 {
@@ -38,15 +39,18 @@ template <>
 long double bessel_j<long double, long double>( long double v, long double x )
 {
     return boost::math::cyl_bessel_j<long double, long double>( v, x );
+#endif
 }
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 long double bessel_j<int, long double>( int v, long double x )
 {
     return boost::math::cyl_bessel_j<int, long double>( v, x );
+#endif
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 bessel_j<__float128, __float128>( __float128 v, __float128 x )
 {

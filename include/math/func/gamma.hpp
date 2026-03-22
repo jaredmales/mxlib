@@ -49,6 +49,7 @@ namespace func
  *
  * \ingroup gen_math_gamma
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T>
 T tgamma( T x /**< [in] the argument of the gamma function*/ )
 {
@@ -70,8 +71,9 @@ double tgamma<double>( double x );
 
 template <>
 long double tgamma<long double>( long double x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 tgamma<__float128>( __float128 x );
 #endif

@@ -259,6 +259,7 @@ int appConfigurator::verbosity( const std::string &name )
 // Explicit instants:
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<char>( char &v,
                                          const std::string &name,
                                          size_t i,
@@ -328,8 +329,10 @@ template int appConfigurator::get<long double>( long double &v,
                                                 const std::string &name,
                                                 size_t i,
                                                 std::unordered_map<std::string, configTarget> &targets );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( __float128 &v,
                                                const std::string &name,
                                                size_t i,
@@ -375,8 +378,10 @@ template int appConfigurator::get<float>( float &v, const std::string &name, siz
 template int appConfigurator::get<double>( double &v, const std::string &name, size_t i );
 
 template int appConfigurator::get<long double>( long double &v, const std::string &name, size_t i );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( __float128 &v, const std::string &name, size_t i );
 #endif
 
@@ -438,8 +443,10 @@ template int appConfigurator::get<double>( double &v,
 template int appConfigurator::get<long double>( long double &v,
                                                 const std::string &name,
                                                 std::unordered_map<std::string, configTarget> &targets );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( __float128 &v,
                                                const std::string &name,
                                                std::unordered_map<std::string, configTarget> &targets );
@@ -481,8 +488,10 @@ template int appConfigurator::get<float>( float &v, const std::string &name );
 template int appConfigurator::get<double>( double &v, const std::string &name );
 
 template int appConfigurator::get<long double>( long double &v, const std::string &name );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( __float128 &v, const std::string &name );
 #endif
 
@@ -561,8 +570,10 @@ template int appConfigurator::get<long double>( std::vector<long double> &v,
                                                 const std::string &name,
                                                 size_t i,
                                                 std::unordered_map<std::string, configTarget> &targets );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( std::vector<__float128> &v,
                                                const std::string &name,
                                                size_t i,
@@ -609,8 +620,10 @@ template int appConfigurator::get<float>( std::vector<float> &v, const std::stri
 template int appConfigurator::get<double>( std::vector<double> &v, const std::string &name, size_t i );
 
 template int appConfigurator::get<long double>( std::vector<long double> &v, const std::string &name, size_t i );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( std::vector<__float128> &v, const std::string &name, size_t i );
 #endif
 
@@ -674,8 +687,10 @@ template int appConfigurator::get<double>( std::vector<double> &v,
 template int appConfigurator::get<long double>( std::vector<long double> &v,
                                                 const std::string &name,
                                                 std::unordered_map<std::string, configTarget> &targets );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( std::vector<__float128> &v,
                                                const std::string &name,
                                                std::unordered_map<std::string, configTarget> &targets );
@@ -717,8 +732,10 @@ template int appConfigurator::get<float>( std::vector<float> &v, const std::stri
 template int appConfigurator::get<double>( std::vector<double> &v, const std::string &name );
 
 template int appConfigurator::get<long double>( std::vector<long double> &v, const std::string &name );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::get<__float128>( std::vector<__float128> &v, const std::string &name );
 #endif
 
@@ -755,8 +772,10 @@ template int appConfigurator::operator()<float>( float &v, const std::string &na
 template int appConfigurator::operator()<double>( double &v, const std::string &name );
 
 template int appConfigurator::operator()<long double>( long double &v, const std::string &name );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::operator()<__float128>( __float128 &v, const std::string &name );
 #endif
 
@@ -793,8 +812,10 @@ template int appConfigurator::configUnused<float>( float &v, const std::string &
 template int appConfigurator::configUnused<double>( double &v, const std::string &key );
 
 template int appConfigurator::configUnused<long double>( long double &v, const std::string &key );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int appConfigurator::configUnused<__float128>( __float128 &v, const std::string &key );
 #endif
 
@@ -843,8 +864,9 @@ template int appConfigurator::configUnused<double>( double &v, const std::string
 
 template int
 appConfigurator::configUnused<long double>( long double &v, const std::string &section, const std::string &keyword );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template int
 appConfigurator::configUnused<__float128>( __float128 &v, const std::string &section, const std::string &keyword );
 #endif

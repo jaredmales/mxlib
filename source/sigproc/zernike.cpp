@@ -36,7 +36,8 @@ int noll_nm( int &n, int &m, int j )
 {
     if( j < 1 )
     {
-        internal::mxlib_error_report(error_t::invalidarg, "The Noll index j cannot be less than 1 in the Zernike polynomials" );
+        internal::mxlib_error_report( error_t::invalidarg,
+                                      "The Noll index j cannot be less than 1 in the Zernike polynomials" );
         return -1;
     }
 
@@ -80,13 +81,16 @@ int nZernRadOrd( unsigned int n )
 }
 
 // Explicit instantiations:
+#ifdef MXLIB_USE_LONGDOUBLE
 template int zernikeRCoeffs<float>( std::vector<float> &c, int n, int m );
 
 template int zernikeRCoeffs<double>( std::vector<double> &c, int n, int m );
 
 template int zernikeRCoeffs<long double>( std::vector<long double> &c, int n, int m );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template int zernikeRCoeffs<__float128>( std::vector<__float128> &c, int n, int m );
 #endif
 
@@ -95,8 +99,10 @@ template float zernikeR<float, double>( float rho, int n, int m, std::vector<dou
 template double zernikeR<double, double>( double rho, int n, int m, std::vector<double> &c );
 
 template long double zernikeR<long double, long double>( long double rho, int n, int m, std::vector<long double> &c );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 zernikeR<__float128, __float128>( __float128 rho, int n, int m, std::vector<__float128> &c );
 #endif
 
@@ -105,8 +111,10 @@ template float zernikeR<float, double>( float rho, int n, int m );
 template double zernikeR<double, double>( double rho, int n, int m );
 
 template long double zernikeR<long double, long double>( long double rho, int n, int m );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 zernikeR<__float128, __float128>( __float128 rho, int n, int m );
 #endif
 
@@ -116,8 +124,10 @@ template double zernike<double, double>( double rho, double phi, int n, int m, s
 
 template long double
 zernike<long double, long double>( long double rho, long double phi, int n, int m, std::vector<long double> &c );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128
 zernike<__float128, __float128>( __float128 rho, __float128 phi, int n, int m, std::vector<__float128> &c );
 #endif
@@ -127,8 +137,10 @@ template float zernike<float, double>( float rho, float phi, int n, int m );
 template double zernike<double, double>( double rho, double phi, int n, int m );
 
 template long double zernike<long double, long double>( long double rho, long double phi, int n, int m );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 zernike<__float128, __float128>( __float128 rho, __float128 phi, int n, int m );
 #endif
 
@@ -137,8 +149,10 @@ template float zernike<float, double>( float rho, float phi, int j );
 template double zernike<double, double>( double rho, double phi, int j );
 
 template long double zernike<long double, long double>( long double rho, long double phi, int j );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 zernike<__float128, __float128>( __float128 rho, __float128 phi, int j );
 #endif
 
@@ -147,8 +161,9 @@ template float zernikeQNorm<float>( float k, float phi, int n, int m );
 template double zernikeQNorm<double>( double k, double phi, int n, int m );
 
 template long double zernikeQNorm<long double>( long double k, long double phi, int n, int m );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template __float128 zernikeQNorm<__float128>( __float128 k, __float128 phi, int n, int m );
 #endif
 

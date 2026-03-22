@@ -1,55 +1,54 @@
-#################################################################
-#                      cmake configuration for mxlib
+################################################################ #
+#cmake configuration for mxlib
 #
-#################################################################
-## TODO
-#    - make FFT optional
-#    - make BLAS & Lapack optional
-#    - make CFITSIO optional
-#    - deal with HASQUAD (should be MXLIB_HASQUAD)
-#    - enable build without GSL
-#    - enable build without CFITSIO
-#    - test build without fftw
-#    - test build without BLAS
-#    - test build without ISIO
-#    - test build without CUDA
-# (i.o.w. minimum depends should be boost and Eigen.  maybe we don't even need Eigen)
+    ################################################################ # ##TODO
+#- make FFT optional
+#- make BLAS & Lapack optional
+#- make CFITSIO optional
+#- standardize feature macro naming
+#- enable build without GSL
+#- enable build without CFITSIO
+#- test build without fftw
+#- test build without BLAS
+#- test build without ISIO
+#- test build without CUDA
+#( i.o.w.minimum depends should be boost and Eigen.maybe we don't even need Eigen)
 #
 #
-## Compliance with Makefile build;
-#                    linux   darwin
-#  OPTIMIZATIONS      X
-#  CXXFLAGS           X
-#  CXXVERSION         X
-#  CFLAGS             X
-#  EIGEN              X
-#  CFITSIO            X
-#  GSL                X
-#  levmar             X
-#  SOFA               X
+    ##Compliance with Makefile build;
+#linux darwin
+#OPTIMIZATIONS X
+#CXXFLAGS X
+#CXXVERSION X
+#CFLAGS X
+#EIGEN X
+#CFITSIO X
+#GSL X
+#levmar X
+#SOFA X
 #
-# Options to implement:
-#                     linux   darwin
-#  NEED_CUDA            X
-#  NEED_ISIO            X       ?
-#  USE_FFT_FROM         X
-#  USE_BLAS_FROM:      ------------
-#       MKL             X       -
-#       openblas        X       -
-#       openblas-serial -       -
-#       openblas-openmp -       -
+#Options to implement:
+#linux darwin
+#NEED_CUDA X
+#NEED_ISIO X ?
+#USE_FFT_FROM X
+#USE_BLAS_FROM : -- -- -- -- -- --
+#MKL X -
+#openblas X -
+#openblas - serial - -
+#openblas - openmp - -
 #
-# New Todos:
+#New Todos:
 #
 
 #########################################
-# basic setup
+#basic setup
 #
 #########################################
 
 cmake_minimum_required(VERSION 3.24)
 
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FindPkgConfig)
@@ -61,67 +60,82 @@ project(mxlib LANGUAGES CXX C
               DESCRIPTION "c++ library for astronomy signal processing"
               HOMEPAGE_URL "https://jaredmales.github.io/mxlib-doc/")
 
+add_compile_definitions("-DMXLIB_USE_LONGDOUBLE")
+
 ## macro linklibdirs_from_list
- # Turn list of library directories into a -L delimited string for linking
- #
- # First: LINK_LIBDIRS: output string
- # Second: LIB_DIRS_LIST: input list to process
- #
+#Turn list of library directories into a - L delimited string for linking
+#
+#First : LINK_LIBDIRS : output string
+#Second : LIB_DIRS_LIST : input list to process
+#
 macro(linklibdirs_from_list LINK_LIBDIRS LIBDIR_LIST)
 
-    string(REPLACE ";" " -L" ${LINK_LIBDIRS} "${${LIBDIR_LIST}}")
-    set(${LINK_LIBDIRS} "-L${${LINK_LIBDIRS}}")
+    string(REPLACE ";" " -L" ${
+    LINK_LIBDIRS} "${${LIBDIR_LIST}}")
+    set(${
+    LINK_LIBDIRS} "-L${${LINK_LIBDIRS}}")
 
 endmacro()
 
 ## Extract the library name from a path
- # e.g. /path/to/libname.so produces name
- #
- # LIBNAME: output contains the library name
- # LIBPATH: the path to the library
- #
+#e.g./ path / to / libname.so produces name
+#
+#LIBNAME : output contains the library name
+#LIBPATH : the path to the library
+#
 macro(libname_from_path LIBNAME LIBPATH)
 
-    get_filename_component(${LIBNAME} ${${LIBPATH}} NAME)
-    get_filename_component(LIBEXT ${${LIBPATH}} LAST_EXT)
+    get_filename_component(${LIBNAME} ${
+    $
+    {
+        LIBPATH
+    }} NAME)
+    get_filename_component(LIBEXT ${
+    $
+    {
+        LIBPATH
+    }} LAST_EXT)
 
     string(REPLACE "lib" "" ${LIBNAME} ${${LIBNAME}})
-    string(REPLACE ${LIBEXT} "" ${LIBNAME} ${${LIBNAME}})
+    string(REPLACE ${
+    LIBEXT} "" ${LIBNAME} ${${LIBNAME}})
 
 endmacro()
 
 ## macro liblist_strip_namespace
- # Strip namespace from library names in a list and add a prefix
- # assumes that the same prefix is added to all libs in the list
- # E.g. this can be used to strip Boost:: and replace it with boost_
- #
- # LIBRARY_LIST: input/output list of libraries
- # prefix: input the prefix to add
- #
+#Strip namespace from library names in a list and add a prefix
+#assumes that the same prefix is added to all libs in the list
+#E.g.this can be used to strip Boost::and replace it with boost_
+#
+#LIBRARY_LIST : input / output list of libraries
+#prefix : input the prefix to add
+#
 macro(liblist_strip_namespace LIBRARY_LIST prefix)
 
-    #strip namespace from beginning
-    string(REGEX REPLACE "^[^;]*::" "${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
+#strip namespace from beginning
+    string(REGEX REPLACE "^[^;]*::" "${prefix}" ${
+    LIBRARY_LIST} "${${LIBRARY_LIST}}")
 
-    #strip remaining namespaces
-    string(REGEX REPLACE "[ ;].*::" ";${prefix}" ${LIBRARY_LIST} "${${LIBRARY_LIST}}")
+#strip remaining namespaces
+    string(REGEX REPLACE "[ ;].*::" ";${prefix}" ${
+    LIBRARY_LIST} "${${LIBRARY_LIST}}")
 
 endmacro()
 
 ## Function linklibs_from_list
- # Turn list of library names into a -l delimited string for linking
- # If the library is specified with a full path we don't mess with it
- #
- # First: LINK_LIBRARIES: output string
- # Second: LIBRARY_LIST: input list to process
- #
+#Turn list of library names into a - l delimited string for linking
+#If the library is specified with a full path we don't mess with it
+#
+#First : LINK_LIBRARIES : output string
+#Second : LIBRARY_LIST : input list to process
+#
 macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
 
     foreach(lib ${${LIBRARY_LIST}})
 
          cmake_path(HAS_PARENT_PATH lib LIB_IS_PATH)
 
-         #message("lib: ${lib} ${LIB_IS_PATH}")
+#message( "lib: ${lib} ${LIB_IS_PATH}" )
 
          if(NOT LIB_IS_PATH)
             string(PREPEND lib "-l")
@@ -131,17 +145,18 @@ macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
 
     endforeach()
 
-    #message("LIBRARY_LIST_OUT: ${LIBRARY_LIST_OUT}")
+#message( "LIBRARY_LIST_OUT: ${LIBRARY_LIST_OUT}" )
 
-    set(${LINK_LIBRARIES} "${LIBRARY_LIST_OUT}")
+    set(${
+    LINK_LIBRARIES} "${LIBRARY_LIST_OUT}")
 
-    #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
+#message( "LINK_LIBRARIES: ${${LINK_LIBRARIES}}" )
 
 endmacro()
 
 ## Function dump_cmake_variables
- # Dump all the current variables for debugging
- #
+#Dump all the current variables for debugging
+#
 function(dump_cmake_variables)
     get_cmake_property(_variableNames VARIABLES)
     list (SORT _variableNames)
@@ -153,9 +168,9 @@ function(dump_cmake_variables)
 endfunction()
 
 #########################################
-# mxlib settings
+#mxlib settings
 #
-# each setting is prefixed with MXLIB_
+#each setting is prefixed with MXLIB_
 #########################################
 
 set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
@@ -193,12 +208,12 @@ set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE S
 set(MXLIB_CUDA_ARCH "native" CACHE STRING "the cuda architecture")
 
 #########################################
-# Validate config settings
+#Validate config settings
 #
-# Only things needed for conditional includes
+#Only things needed for conditional includes
 #########################################
 
-# CUDA
+#CUDA
 if(MXLIB_USE_CUDA)
 
     check_language(CUDA)
@@ -223,7 +238,7 @@ endif()
 
 
 #########################################
-# header files
+#header files
 #
 #
 #########################################
@@ -236,7 +251,7 @@ add_custom_command(
     COMMAND generate_errno_info
     DEPENDS generate_errno_info include/error/generators/c++11_errnos.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+#DEPENDS_EXPLICIT_ONLY
 )
 
 #then generate the FITS header
@@ -247,7 +262,7 @@ add_custom_command(
     COMMAND generate_fits_status_info
     DEPENDS generate_fits_status_info include/error/generators/fits_error_codes.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+#DEPENDS_EXPLICIT_ONLY
 )
 
 #then generate the CUDA header
@@ -259,7 +274,7 @@ if(MXLIB_USE_CUDA)
         OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp
         COMMAND generate_cudaError_info
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-        #DEPENDS_EXPLICIT_ONLY
+#DEPENDS_EXPLICIT_ONLY
         )
 endif()
 
@@ -280,7 +295,7 @@ add_custom_command(
     COMMAND generate_error_t
     DEPENDS generate_error_t include/error/generators/errno_info.hpp include/error/generators/error_t_list.txt
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+#DEPENDS_EXPLICIT_ONLY
 )
 
 include_directories(include)
@@ -289,25 +304,25 @@ add_subdirectory(include)
 
 
 #########################################
-# Build the list of source files
+#Build the list of source files
 #
-# Each subdirectory populates OBJLIB_SOURCES with its contents
+#Each subdirectory populates OBJLIB_SOURCES with its contents
 #########################################
 add_subdirectory(source)
 
 #########################################
-# Generate GIT status headers
+#Generate GIT status headers
 #########################################
 
-# UNCOMP is git status of the headers
+#UNCOMP is git status of the headers
 add_custom_command(
   OUTPUT include/mxlib_uncomp_version.h
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh ${CMAKE_CURRENT_SOURCE_DIR} include/mxlib_uncomp_version.h MXLIB_UNCOMP
   DEPENDS ${OBJLIB_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh
-  #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#WORKING_DIRECTORY ${ CMAKE_SOURCE_DIR }
 )
 
-# COMP is git status of the compiled source
+#COMP is git status of the compiled source
 add_custom_command(
   OUTPUT source/mxlib_comp_version.h
   COMMAND bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
@@ -316,25 +331,25 @@ add_custom_command(
 )
 
 ##########################################################################
-# The Object Library
+#The Object Library
 #
-# In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
+#In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
 ##########################################################################
 add_library(objlib OBJECT ${OBJLIB_SOURCES} ${OBJLIB_INCLUDES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h include/error/error_t.hpp)
 
-# shared libraries need PIC
+#shared libraries need PIC
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 
 
 ###############################################################
-# The actual library
+#The actual library
 ###############################################################
-# shared and static libraries built from the same object files
+#shared and static libraries built from the same object files
 add_library(mxlib-shared SHARED $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar> $<TARGET_OBJECTS:sofa>)
 add_library(mxlib-static STATIC $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar> $<TARGET_OBJECTS:sofa>)
 
-#This makes it so we have libmxlib.so and libmxlib.a, without the -shared/-static
+#This makes it so we have libmxlib.so and libmxlib.a, without the - shared / -static
 SET_TARGET_PROPERTIES(mxlib-shared PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 
@@ -354,7 +369,7 @@ install(
     DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/mxlib"
 )
 ############################################
-# Compiler Setup
+#Compiler Setup
 ############################################
 
 add_compile_definitions(${MXLIB_DEFINES})
@@ -365,7 +380,7 @@ set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
 
 if(MXLIB_BUILD_COVERAGE)
-    # Match the legacy Make coverage behavior: --coverage and -O0 for instrumented builds.
+#Match the legacy Make coverage behavior : --coverage and -O0 for instrumented builds.
     add_compile_definitions(MXLIB_BUILD_COVERAGE=1)
     add_compile_options(
         $<$<COMPILE_LANGUAGE:C>:--coverage>
@@ -377,7 +392,7 @@ if(MXLIB_BUILD_COVERAGE)
 endif()
 
 ############################################
-# OpenMP setup
+#OpenMP setup
 ############################################
 
 if(MXLIB_USE_OPENMP)
@@ -398,15 +413,15 @@ if(MXLIB_USE_OPENMP)
         set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OpenMP_CXX_FLAGS}")
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
-        #this is so dumb, the following does not produce a linkable system:
-        # linklibdirs_from_list(OpenMP_LIBDIRS_FLAGS OpenMP_CXX_LIBRARY)
-        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBDIRS_FLAGS}")
+#this is so dumb, the following does not produce a linkable system:
+#linklibdirs_from_list( OpenMP_LIBDIRS_FLAGS OpenMP_CXX_LIBRARY )
+#set( MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBDIRS_FLAGS}" )
 
-        # linklibs_from_list(OpenMP_LIBRARIES_FLAGS OpenMP_CXX_LIB_NAMES)
-        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBRARIES_FLAGS}")
-        #but this does
+#linklibs_from_list( OpenMP_LIBRARIES_FLAGS OpenMP_CXX_LIB_NAMES )
+#set( MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBRARIES_FLAGS}" )
+#but this does
         set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -fopenmp")
-        #which does not appear to be supported by any variable produced in FindOpenMP
+#which does not appear to be supported by any variable produced in FindOpenMP
 
         message("mxlib: OpenMP support enabled")
 
@@ -417,7 +432,7 @@ else()
 endif()
 
 ############################################
-# boost setup
+#boost setup
 ############################################
 
 find_package(Boost REQUIRED COMPONENTS system) # filesystem)
@@ -427,7 +442,7 @@ target_link_libraries(objlib PUBLIC ${Boost_LIBRARIES})
 target_link_libraries (mxlib-shared PUBLIC ${Boost_LIBRARIES})
 target_link_libraries (mxlib-static PUBLIC ${Boost_LIBRARIES})
 
-# don't add anything to MXLIB_PC_CFLAGS b/c we don't link boost for apps
+#don 't add anything to MXLIB_PC_CFLAGS b/c we don' t link boost for apps
 
 linklibdirs_from_list(Boost_LIBDIRS_FLAGS Boost_LIBRARY_DIRS)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBDIRS_FLAGS}")
@@ -438,7 +453,7 @@ set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBRARIES_FLAGS}")
 
 
 ############################################
-# Eigen setup
+#Eigen setup
 ############################################
 
 pkg_check_modules(EIGEN3 REQUIRED IMPORTED_TARGET eigen3)
@@ -455,11 +470,11 @@ set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${EIGEN3_LDFLAGS}")
 
 ############################################
-# FFTW setup
+#FFTW setup
 ############################################
 if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
 
-    #double
+#double
     pkg_check_modules(FFTW3 REQUIRED IMPORTED_TARGET fftw3)
     include_directories(${FFTW3_INCLUDE_DIRS})
     target_link_libraries(objlib PUBLIC PkgConfig::FFTW3)
@@ -475,7 +490,7 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     linklibs_from_list(FFTW3_LIBRARIES_FLAGS FFTW3_LIBRARIES)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3_LIBRARIES_FLAGS}")
 
-    #float
+#float
     pkg_check_modules(FFTW3F REQUIRED IMPORTED_TARGET fftw3f)
     include_directories(${FFTW3F_INCLUDE_DIRS})
     target_link_libraries(objlib PUBLIC PkgConfig::FFTW3F)
@@ -491,34 +506,41 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     linklibs_from_list(FFTW3F_LIBRARIES_FLAGS FFTW3F_LIBRARIES)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3F_LIBRARIES_FLAGS}")
 
-    #long double
-    pkg_check_modules(FFTW3L REQUIRED IMPORTED_TARGET fftw3l)
-    include_directories(${FFTW3L_INCLUDE_DIRS})
-    target_link_libraries(objlib PUBLIC PkgConfig::FFTW3L)
-    target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3L)
-    target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3L)
+#long double
+    pkg_check_modules(FFTW3L IMPORTED_TARGET fftw3l)
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3L_CFLAGS} ${FFTW3L_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3L_INCLUDE_DIRS}")
+    if(FFTW3L_FOUND)
+        add_compile_definitions("-DMXLIB_USE_FFTW_LONGDOUBLE")
+        include_directories(${FFTW3L_INCLUDE_DIRS})
+        target_link_libraries(objlib PUBLIC PkgConfig::FFTW3L)
+        target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3L)
+        target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3L)
 
-    linklibdirs_from_list(FFTW3L_LIBDIRS_FLAGS FFTW3L_LIBRARY_DIRS)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTWL_LIBDIRS_FLAGS}")
+        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3L_CFLAGS} ${FFTW3L_CFLAGS_OTHER}")
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DMXLIB_USE_FFTW_LONGDOUBLE -I${FFTW3L_INCLUDE_DIRS}")
 
-    linklibs_from_list(FFTW3L_LIBRARIES_FLAGS FFTW3L_LIBRARIES)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBRARIES_FLAGS}")
+        linklibdirs_from_list(FFTW3L_LIBDIRS_FLAGS FFTW3L_LIBRARY_DIRS)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBDIRS_FLAGS}")
 
-    #quad/f128
+        linklibs_from_list(FFTW3L_LIBRARIES_FLAGS FFTW3L_LIBRARIES)
+        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBRARIES_FLAGS}")
+    else()
+        message("mxlib: long double support in FFTW not found")
+    endif()
+
+#quad / f128
     pkg_check_modules(FFTW3Q IMPORTED_TARGET fftw3q)
 
     if(FFTW3Q_FOUND)
-        add_compile_definitions("-DHAS_QUAD")
+        add_compile_definitions("-DMXLIB_HAS_QUAD")
+        add_compile_definitions("-DMXLIB_USE_FFTW_QUAD")
         include_directories(${FFTW3Q_INCLUDE_DIRS})
         target_link_libraries(objlib PUBLIC PkgConfig::FFTW3Q)
         target_link_libraries(mxlib-shared PUBLIC PkgConfig::FFTW3Q)
         target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
 
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
-        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DHAS_QUAD -I${FFTW3Q_INCLUDE_DIRS}")
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DMXLIB_HAS_QUAD -DMXLIB_USE_FFTW_QUAD -I${FFTW3Q_INCLUDE_DIRS}")
 
         linklibdirs_from_list(FFTW3Q_LIBDIRS_FLAGS FFTW3Q_LIBRARY_DIRS)
         set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBDIRS_FLAGS}")
@@ -542,11 +564,11 @@ endif()
 
 
 ############################################
-# BLAS & Lapack setup
+#BLAS &Lapack setup
 ############################################
 
 if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
-    #MKL has a cmake config but it is hard to customize, so we do it manually
+#MKL has a cmake config but it is hard to customize, so we do it manually
     include_directories(${MXLIB_MKL_INCLUDE_DIRECTORY})
     add_compile_definitions(${MXLIB_MKL_DEFINITIONS})
     add_compile_options(${MXLIB_MKL_CFLAGS})
@@ -612,9 +634,9 @@ else()
 endif()
 
 ############################################
-# GSL setup
+#GSL setup
 #
-# After Blas to ensure gslcblas is used as last restort
+#After Blas to ensure gslcblas is used as last restort
 ############################################
 
 pkg_check_modules(GSL REQUIRED IMPORTED_TARGET gsl)
@@ -634,7 +656,7 @@ set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${GSL_LIBRARIES_FLAGS}")
 
 
 ############################################
-# cfitsio setup
+#cfitsio setup
 ############################################
 
 pkg_check_modules(CFITSIO REQUIRED IMPORTED_TARGET cfitsio)
@@ -654,7 +676,7 @@ linklibs_from_list(CFITSIO_LIBRARIES_FLAGS CFITSIO_LIBRARIES)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${CFITSIO_LIBRARIES_FLAGS}")
 
 ############################################
-# ImageStreamIO (ISIO) setup
+#ImageStreamIO( ISIO ) setup
 ############################################
 if(MXLIB_USE_ISIO)
 
@@ -689,7 +711,7 @@ else()
 endif()
 
 ############################################
-# CUDA setup
+#CUDA setup
 ############################################
 if(MXLIB_USE_CUDA)
 
@@ -734,18 +756,18 @@ if(MXLIB_USE_CUDA)
     add_compile_definitions(-DMXLIB_CUDA)
     add_compile_definitions(-DMXLIB_MILK)
 
-    #Strip the includes, extra spaces, and prepend -Xcompiler
+#Strip the includes, extra spaces, and prepend - Xcompiler
     string(REGEX REPLACE "-I[^ ]*" "" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
     string(REGEX REPLACE "[ ]+" " " MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
     string(REPLACE " " " -Xcompiler=" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
 
-    #and add to the CUDA flags
+#and add to the CUDA flags
 
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${MXLIB_NVCCXX_FLAGS}")
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std c++20")
 
     set(CMAKE_CUDA_STANDARD 20)
-    #set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
@@ -757,7 +779,7 @@ if(MXLIB_USE_CUDA)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cusolver_LIBNAME}")
 
     if(MXLIB_USE_ISIO)
-        # add flag so that MILK gets CUDA support
+#add flag so that MILK gets CUDA support
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DHAVE_CUDA")
         set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DHAVE_CUDA")
     endif()
@@ -771,10 +793,10 @@ endif(MXLIB_USE_CUDA)
 
 
 ###############################################################
-# Generate PC file CFLAGS and LDFLAGS
+#Generate PC file CFLAGS and LDFLAGS
 ###############################################################
 
-#list-ify to remove duplicates then de-list-ify
+#list - ify to remove duplicates then de - list - ify
 string(REPLACE " " ";" MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
 list(REMOVE_DUPLICATES MXLIB_PC_CFLAGS)
 string(REPLACE ";" " " MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS}")
@@ -802,7 +824,7 @@ install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
 install( PROGRAMS gengithead.sh DESTINATION bin)
 
 ############################################
-# Tests
+#Tests
 ############################################
 
 if(MXLIB_BUILD_TESTS)
@@ -830,7 +852,8 @@ if(Doxygen_FOUND)
     set(MXLIB_DOXYGEN_CONFIG ${CMAKE_BINARY_DIR}/mxlib_doxygen)
     set(MXLIB_DOXYGEN_OUTPUT_DIRECTORY ${MXLIB_DOC_OUTPUT_DIR})
 
-    configure_file(${MXLIB_DOXYGEN_CONFIG_IN} ${MXLIB_DOXYGEN_CONFIG} @ONLY)
+    configure_file(${MXLIB_DOXYGEN_CONFIG_IN} ${
+    MXLIB_DOXYGEN_CONFIG} @ONLY)
 
     if(MXLIB_BUILD_DOCS)
         set(_mxlib_docs_all ALL)
@@ -861,11 +884,20 @@ find_program(MXLIB_GENHTML_EXECUTABLE genhtml)
 if(MXLIB_LCOV_EXECUTABLE AND MXLIB_GENHTML_EXECUTABLE)
     add_custom_target(coverage
         COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR} -B ${MXLIB_COVERAGE_BUILD_DIR} -DMXLIB_BUILD_TESTS=ON -DMXLIB_BUILD_COVERAGE=ON -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_OPENMP=${MXLIB_USE_OPENMP} -DMXLIB_USE_ISIO=${MXLIB_USE_ISIO} -DMXLIB_USE_FFT_FROM=${MXLIB_USE_FFT_FROM} -DMXLIB_USE_BLAS_FROM=${MXLIB_USE_BLAS_FROM}
-        COMMAND ${CMAKE_COMMAND} --build ${MXLIB_COVERAGE_BUILD_DIR} --target mxlibTests -j
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --zerocounters
-        COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${MXLIB_COVERAGE_BUILD_DIR} --output-on-failure --timeout ${MXLIB_COVERAGE_TEST_TIMEOUT}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_INFO}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_INFO} ${CMAKE_SOURCE_DIR}/tests/* /usr/* /sys/* /tty/* --ignore-errors unused,unused --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
+        COMMAND ${
+    CMAKE_COMMAND} --build ${
+    MXLIB_COVERAGE_BUILD_DIR} --target mxlibTests -j
+        COMMAND ${
+    MXLIB_LCOV_EXECUTABLE} --directory ${
+    MXLIB_COVERAGE_BUILD_DIR} --zerocounters
+        COMMAND ${
+    CMAKE_CTEST_COMMAND} --test-dir ${
+    MXLIB_COVERAGE_BUILD_DIR} --output-on-failure --timeout ${MXLIB_COVERAGE_TEST_TIMEOUT}
+        COMMAND ${
+    MXLIB_LCOV_EXECUTABLE} --directory ${
+    MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_INFO}
+        COMMAND ${
+    MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_INFO} ${CMAKE_SOURCE_DIR}/tests/* /usr/* /sys/* /tty/* --ignore-errors unused,unused --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${MXLIB_COVERAGE_REPORT_DIR}
         COMMAND ${MXLIB_GENHTML_EXECUTABLE} ${MXLIB_COVERAGE_FILTERED_INFO} --output-directory ${MXLIB_COVERAGE_REPORT_DIR} --title mxlib --hierarchical --merge-aliases --suppress-aliases --filter function --demangle-cpp --css-file ${CMAKE_SOURCE_DIR}/tests/coverage/gcov.css
         USES_TERMINAL

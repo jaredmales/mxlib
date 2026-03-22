@@ -70,9 +70,11 @@ template struct vonKarmanSpectrum<float>;
 
 template struct vonKarmanSpectrum<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template struct vonKarmanSpectrum<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template struct vonKarmanSpectrum<__float128>;
 #endif
 

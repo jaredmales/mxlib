@@ -380,6 +380,7 @@ struct appConfigurator
     int numUnknownOptions();
 };
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( typeT &v,
                           const std::string &name,
@@ -392,7 +393,7 @@ int appConfigurator::get( typeT &v,
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format( "{}", v ), "default" );
         }
 
         return 0;
@@ -421,6 +422,7 @@ int appConfigurator::get( typeT &v,
     return 0;
 }
 // explicits
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<char>( char &v,
                                                 const std::string &name,
                                                 size_t i,
@@ -490,8 +492,11 @@ extern template int appConfigurator::get<long double>( long double &v,
                                                        const std::string &name,
                                                        size_t i,
                                                        std::unordered_map<std::string, configTarget> &targets );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( __float128 &v,
                                                       const std::string &name,
                                                       size_t i,
@@ -510,6 +515,7 @@ extern template int appConfigurator::get<std::string>( std::string &v,
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( typeT &v, const std::string &name, size_t i )
 {
@@ -545,8 +551,11 @@ extern template int appConfigurator::get<float>( float &v, const std::string &na
 extern template int appConfigurator::get<double>( double &v, const std::string &name, size_t i );
 
 extern template int appConfigurator::get<long double>( long double &v, const std::string &name, size_t i );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( __float128 &v, const std::string &name, size_t i );
 #endif
 
@@ -556,6 +565,7 @@ extern template int appConfigurator::get<std::string>( std::string &v, const std
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( typeT &v, const std::string &name, std::unordered_map<std::string, configTarget> &targets )
 {
@@ -565,7 +575,7 @@ int appConfigurator::get( typeT &v, const std::string &name, std::unordered_map<
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format( "{}", v ), "default" );
         }
 
         return 0;
@@ -632,8 +642,11 @@ extern template int appConfigurator::get<double>( double &v,
 extern template int appConfigurator::get<long double>( long double &v,
                                                        const std::string &name,
                                                        std::unordered_map<std::string, configTarget> &targets );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( __float128 &v,
                                                       const std::string &name,
                                                       std::unordered_map<std::string, configTarget> &targets );
@@ -648,6 +661,7 @@ extern template int appConfigurator::get<std::string>( std::string &v,
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( typeT &v, const std::string &name )
 {
@@ -682,8 +696,11 @@ extern template int appConfigurator::get<float>( float &v, const std::string &na
 extern template int appConfigurator::get<double>( double &v, const std::string &name );
 
 extern template int appConfigurator::get<long double>( long double &v, const std::string &name );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( __float128 &v, const std::string &name );
 #endif
 
@@ -692,6 +709,7 @@ extern template int appConfigurator::get<bool>( bool &v, const std::string &name
 extern template int appConfigurator::get<std::string>( std::string &v, const std::string &name );
 
 //+++++++++++++++++++++++++++++++++++++
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( std::vector<typeT> &v,
                           const std::string &name,
@@ -847,8 +865,11 @@ extern template int appConfigurator::get<long double>( std::vector<long double> 
                                                        const std::string &name,
                                                        size_t i,
                                                        std::unordered_map<std::string, configTarget> &targets );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( std::vector<__float128> &v,
                                                       const std::string &name,
                                                       size_t i,
@@ -867,6 +888,7 @@ extern template int appConfigurator::get<std::string>( std::vector<std::string> 
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( std::vector<typeT> &v, const std::string &name, size_t i )
 {
@@ -907,8 +929,11 @@ extern template int appConfigurator::get<float>( std::vector<float> &v, const st
 extern template int appConfigurator::get<double>( std::vector<double> &v, const std::string &name, size_t i );
 
 extern template int appConfigurator::get<long double>( std::vector<long double> &v, const std::string &name, size_t i );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( std::vector<__float128> &v, const std::string &name, size_t i );
 #endif
 
@@ -917,6 +942,7 @@ extern template int appConfigurator::get<bool>( std::vector<bool> &v, const std:
 extern template int appConfigurator::get<std::string>( std::vector<std::string> &v, const std::string &name, size_t i );
 
 //+++++++++++++++++++++++++++++++++++++
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( std::vector<typeT> &v,
                           const std::string &name,
@@ -996,8 +1022,11 @@ extern template int appConfigurator::get<double>( std::vector<double> &v,
 extern template int appConfigurator::get<long double>( std::vector<long double> &v,
                                                        const std::string &name,
                                                        std::unordered_map<std::string, configTarget> &targets );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( std::vector<__float128> &v,
                                                       const std::string &name,
                                                       std::unordered_map<std::string, configTarget> &targets );
@@ -1013,6 +1042,7 @@ extern template int appConfigurator::get<std::string>( std::vector<std::string> 
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::get( std::vector<typeT> &v, const std::string &name )
 {
@@ -1048,8 +1078,11 @@ extern template int appConfigurator::get<float>( std::vector<float> &v, const st
 extern template int appConfigurator::get<double>( std::vector<double> &v, const std::string &name );
 
 extern template int appConfigurator::get<long double>( std::vector<long double> &v, const std::string &name );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::get<__float128>( std::vector<__float128> &v, const std::string &name );
 #endif
 
@@ -1059,6 +1092,7 @@ extern template int appConfigurator::get<std::string>( std::vector<std::string> 
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::operator()( typeT &v, const std::string &name )
 {
@@ -1094,8 +1128,11 @@ extern template int appConfigurator::operator()<float>( float &v, const std::str
 extern template int appConfigurator::operator()<double>( double &v, const std::string &name );
 
 extern template int appConfigurator::operator()<long double>( long double &v, const std::string &name );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::operator()<__float128>( __float128 &v, const std::string &name );
 #endif
 
@@ -1105,6 +1142,7 @@ extern template int appConfigurator::operator()<std::string>( std::string &v, co
 
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::configUnused( typeT &v, const std::string &key )
 {
@@ -1138,8 +1176,11 @@ extern template int appConfigurator::configUnused<float>( float &v, const std::s
 extern template int appConfigurator::configUnused<double>( double &v, const std::string &key );
 
 extern template int appConfigurator::configUnused<long double>( long double &v, const std::string &key );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int appConfigurator::configUnused<__float128>( __float128 &v, const std::string &key );
 #endif
 
@@ -1148,6 +1189,7 @@ extern template int appConfigurator::configUnused<bool>( bool &v, const std::str
 extern template int appConfigurator::configUnused<std::string>( std::string &v, const std::string &key );
 //+++++++++++++++++++++++++++++++++++++
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT>
 int appConfigurator::configUnused( typeT &v, const std::string &section, const std::string &keyword )
 {
@@ -1199,8 +1241,10 @@ appConfigurator::configUnused<double>( double &v, const std::string &section, co
 
 extern template int
 appConfigurator::configUnused<long double>( long double &v, const std::string &section, const std::string &keyword );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template int
 appConfigurator::configUnused<__float128>( __float128 &v, const std::string &section, const std::string &keyword );
 #endif

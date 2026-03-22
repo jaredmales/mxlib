@@ -57,6 +57,7 @@ namespace func
  *
  * \ingroup gen_math_bessel
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T>
 T jinc( const T &x /**< [in] the argument */ )
 {
@@ -83,13 +84,17 @@ T jinc( const T &x /**< [in] the argument */ )
     }
 }
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template float jinc<float>( const float &x );
 
 extern template double jinc<double>( const double &x );
 
 extern template long double jinc<long double>( const long double &x );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 jinc<__float128>( const __float128 &x );
 #endif
 
@@ -108,6 +113,7 @@ extern template __float128 jinc<__float128>( const __float128 &x );
  *
  * \ingroup gen_math_bessel
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T1, typename T2>
 T2 jincN( const T1 &v, ///< [in] the Bessel function order
           const T2 &x  ///< [in] the argument
@@ -137,10 +143,14 @@ extern template double jincN<double, double>( const double &v, const double &x )
 extern template double jincN<int, double>( const int &v, const double &x );
 
 extern template long double jincN<long double, long double>( const long double &v, const long double &x );
+#endif
+#endif
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template long double jincN<int, long double>( const int &v, const long double &x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template
 
     __float128

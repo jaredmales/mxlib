@@ -44,6 +44,7 @@ namespace func
 /**
  * \ingroup functions
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T>
 T factorial( T x /**< [in] the argument */ )
 {
@@ -65,8 +66,9 @@ double factorial<double>( double x );
 
 template <>
 long double factorial<long double>( long double x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 factorial<__float128>( __float128 x );
 #endif

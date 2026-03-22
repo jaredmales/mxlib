@@ -33,6 +33,7 @@ namespace math
 namespace func
 {
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template float
 moffat<float>( const float x, const float I0, const float Ipk, const float x0, const float alpha, const float beta );
 
@@ -45,8 +46,10 @@ template long double moffat<long double>( const long double x,
                                           const long double x0,
                                           const long double alpha,
                                           const long double beta );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 moffat<__float128>( const __float128 x,
                                         const __float128 I0,
                                         const __float128 Ipk,
@@ -81,8 +84,10 @@ template long double moffat2D<long double>( const long double x,
                                             const long double y0,
                                             const long double alpha,
                                             const long double beta );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 moffat2D<__float128>( const __float128 x,
                                           const __float128 y,
                                           const __float128 I0,
@@ -98,8 +103,9 @@ template float moffatFWHM( float alpha, float beta );
 template double moffatFWHM( double alpha, double beta );
 
 template long double moffatFWHM( long double alpha, long double beta );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template __float128 moffatFWHM( __float128 alpha, __float128 beta );
 #endif
 } // namespace func

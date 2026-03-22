@@ -296,7 +296,7 @@ TEST_CASE( "2D c2c FFT with cuFFT, float", "[math::ft]" )
         }
             */
 }
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 
 SECTION( "quad" )
 {

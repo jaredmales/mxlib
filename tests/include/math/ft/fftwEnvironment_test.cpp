@@ -61,6 +61,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[
         REQUIRE( ex == true );
     }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
     SECTION( "long double" )
     {
         // first remove any existing file
@@ -80,9 +81,10 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[
 
         REQUIRE( ex == true );
     }
+#endif
 
     // clang-format off
-    #ifdef HASQUAD // clang-format on
+    #ifdef MXLIB_USE_FFTW_QUAD // clang-format on
 
     SECTION( "quad" )
     {
@@ -156,6 +158,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set"
         REQUIRE( ex == true );
     }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
     SECTION( "long double" )
     {
         // first remove any existing file
@@ -174,9 +177,10 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set"
 
         REQUIRE( ex == true );
     }
+#endif
 
     // clang-format off
-    #ifdef HASQUAD // clang-format on
+    #ifdef MXLIB_USE_FFTW_QUAD // clang-format on
 
     SECTION( "quad" )
     {
@@ -251,6 +255,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", 
         REQUIRE( ex == true );
     }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
     SECTION( "long double" )
     {
         // first remove any existing file
@@ -270,9 +275,10 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", 
 
         REQUIRE( ex == true );
     }
+#endif
 
     // clang-format off
-    #ifdef HASQUAD // clang-format on
+    #ifdef MXLIB_USE_FFTW_QUAD // clang-format on
 
     SECTION( "quad" )
     {
@@ -346,6 +352,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment not se
         REQUIRE( ex == true );
     }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
     SECTION( "long double" )
     {
         // first remove any existing file
@@ -364,9 +371,10 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment not se
 
         REQUIRE( ex == true );
     }
+#endif
 
     // clang-format off
-    #ifdef HASQUAD // clang-format on
+    #ifdef MXLIB_USE_FFTW_QUAD // clang-format on
 
     SECTION( "quad" )
     {

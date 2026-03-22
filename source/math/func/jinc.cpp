@@ -33,13 +33,16 @@ namespace math
 namespace func
 {
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template float jinc<float>( const float &x );
 
 template double jinc<double>( const double &x );
 
 template long double jinc<long double>( const long double &x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 template __float128 jinc<__float128>( const __float128 &x );
 #endif
 
@@ -52,10 +55,13 @@ template double jincN<double, double>( const double &v, const double &x );
 template double jincN<int, double>( const int &v, const double &x );
 
 template long double jincN<long double, long double>( const long double &v, const long double &x );
+#endif
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template long double jincN<int, long double>( const int &v, const long double &x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template __float128 jincN<__float128, __float128>( const __float128 &v, const __float128 &x );
 
 template __float128 jincN<int, __float128>( const int &v, const __float128 &x );

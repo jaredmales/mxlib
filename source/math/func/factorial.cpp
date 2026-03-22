@@ -10,6 +10,7 @@ namespace math
 namespace func
 {
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 float factorial<float>( float x )
 {
@@ -26,9 +27,10 @@ template <>
 long double factorial<long double>( long double x )
 {
     return boost::math::factorial<long double>( x );
+#endif
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 factorial<__float128>( __float128 x )
 {

@@ -493,9 +493,11 @@ extern template struct vonKarmanSpectrum<float>;
 
 extern template struct vonKarmanSpectrum<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template struct vonKarmanSpectrum<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template struct vonKarmanSpectrum<__float128>;
 #endif
 

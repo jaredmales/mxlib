@@ -62,7 +62,7 @@ typedef std::complex<double> complexDT;
 /// The complex long double data type.
 typedef std::complex<long double> complexLT;
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 /// The complex __float128 data type.
 typedef std::complex<__float128> complexQT;
 #endif
@@ -111,6 +111,7 @@ struct fftwPlanSpec<double>
     typedef fftw_plan planT; /// Specifies fftwf_plan as planT
 };
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 /// Specialization of fftwPlanSpec for long double
 template <>
 struct fftwPlanSpec<long double>
@@ -118,8 +119,9 @@ struct fftwPlanSpec<long double>
     /// Specifies fftwl_plan as planT
     typedef fftwl_plan planT;
 };
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 /// Specialization of fftwPlanSpec for __float128
 template <>
 struct fftwPlanSpec<__float128>
@@ -246,6 +248,7 @@ struct fftwTypeSpec<complexDT, double>
     typedef fftwPlanSpec<double>::planT planT;
 };
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 /// Specialization of fftwTypeSpec for complex-long-double input and complex-long-double output
 template <>
 struct fftwTypeSpec<complexLT, complexLT>
@@ -278,8 +281,9 @@ struct fftwTypeSpec<complexLT, long double>
     typedef long double outputDataT;
     typedef fftwPlanSpec<long double>::planT planT;
 };
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 /// Specialization of fftwTypeSpec for complex-quad input and complex-quad output
 template <>
 struct fftwTypeSpec<complexQT, complexQT>
@@ -346,10 +350,12 @@ template <>
 int fftw_import_system_wisdom<double>();
 
 // Template wrapper for fftwl_import_system_wisdom();
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_import_system_wisdom<long double>();
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 // Template wrapper for fftwq_import_system_wisdom();
 template <>
 int fftw_import_system_wisdom<__float128>();
@@ -373,10 +379,12 @@ int fftw_import_wisdom_from_filename<float>( const char *filename );
 template <>
 int fftw_import_wisdom_from_filename<double>( const char *filename );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_import_wisdom_from_filename<long double>( const char *filename );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 int fftw_import_wisdom_from_filename<__float128>( const char *filename );
 #endif
@@ -399,10 +407,12 @@ int fftw_export_wisdom_to_filename<float>( const char *filename );
 template <>
 int fftw_export_wisdom_to_filename<double>( const char *filename );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_export_wisdom_to_filename<long double>( const char *filename );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 int fftw_export_wisdom_to_filename<__float128>( const char *filename );
 #endif
@@ -442,13 +452,15 @@ double *fftw_malloc<double>( size_t n );
 template <>
 complexDT *fftw_malloc<complexDT>( size_t n );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 long double *fftw_malloc<long double>( size_t n );
 
 template <>
 complexLT *fftw_malloc<complexLT>( size_t n );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 __float128 *fftw_malloc<__float128>( size_t n );
 
@@ -477,13 +489,15 @@ void fftw_free<double>( double *p );
 template <>
 void fftw_free<complexDT>( complexDT *p );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_free<long double>( long double *p );
 
 template <>
 void fftw_free<complexLT>( complexLT *p );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_free<__float128>( __float128 *p );
 
@@ -514,10 +528,12 @@ void fftw_make_planner_thread_safe<float>();
 template <>
 void fftw_make_planner_thread_safe<double>();
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_make_planner_thread_safe<long double>();
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_make_planner_thread_safe<__float128>();
 #endif
@@ -536,10 +552,12 @@ void fftw_plan_with_nthreads<float>( int nthreads );
 template <>
 void fftw_plan_with_nthreads<double>( int nthreads );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_plan_with_nthreads<long double>( int nthreads );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_plan_with_nthreads<__float128>( int nthreads );
 #endif
@@ -587,6 +605,7 @@ template <>
 fftwTypeSpec<complexDT, double>::planT
 fftw_plan_dft<complexDT, double>( std::vector<int> n, complexDT *in, double *out, int sign, unsigned flags );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 fftwTypeSpec<complexLT, complexLT>::planT
 fftw_plan_dft<complexLT, complexLT>( std::vector<int> n, complexLT *in, complexLT *out, int sign, unsigned flags );
@@ -598,8 +617,9 @@ fftw_plan_dft<long double, complexLT>( std::vector<int> n, long double *in, comp
 template <>
 fftwTypeSpec<complexLT, long double>::planT
 fftw_plan_dft<complexLT, long double>( std::vector<int> n, complexLT *in, long double *out, int sign, unsigned flags );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 fftwTypeSpec<complexQT, complexQT>::planT
 fftw_plan_dft<complexQT, complexQT>( std::vector<int> n, complexQT *in, complexQT *out, int sign, unsigned flags );
@@ -625,10 +645,12 @@ void fftw_cleanup<float>();
 template <>
 void fftw_cleanup<double>();
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_cleanup<long double>();
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_cleanup<__float128>();
 #endif
@@ -645,10 +667,12 @@ void fftw_cleanup_threads<float>();
 template <>
 void fftw_cleanup_threads<double>();
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_cleanup_threads<long double>();
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_cleanup_threads<__float128>();
 #endif
@@ -716,17 +740,19 @@ void fftw_destroy_plan<float>( fftwPlanSpec<float>::planT plan );
 template <>
 void fftw_destroy_plan<double>( fftwPlanSpec<double>::planT plan );
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_destroy_plan<long double>( fftwPlanSpec<long double>::planT plan );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan );
 #endif
 
 ///@} fftw_template_exec
 
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx
 

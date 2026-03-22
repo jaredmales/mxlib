@@ -97,6 +97,7 @@ int nZernRadOrd( unsigned n /**< [n] the radial order */ );
  *
  * \tparam realT is a real floating type
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT>
 int zernikeRCoeffs(
     std::vector<realT> &c, ///< [out] allocated to length \f$ 0.5(n-m)+1\f$ and filled with the coefficients.
@@ -134,13 +135,17 @@ int zernikeRCoeffs(
 }
 
 // Explicit instantiations:
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int zernikeRCoeffs<float>( std::vector<float> &c, int n, int m );
 
 extern template int zernikeRCoeffs<double>( std::vector<double> &c, int n, int m );
 
 extern template int zernikeRCoeffs<long double>( std::vector<long double> &c, int n, int m );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template int zernikeRCoeffs<__float128>( std::vector<__float128> &c, int n, int m );
 #endif
 
@@ -153,6 +158,7 @@ extern template int zernikeRCoeffs<__float128>( std::vector<__float128> &c, int 
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calcs, should be at least double.
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename calcRealT>
 realT zernikeR( realT rho,                ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                 int n,                    ///< [in] the radial index of the Zernike polynomial.
@@ -191,8 +197,11 @@ extern template double zernikeR<double, double>( double rho, int n, int m, std::
 
 extern template long double
 zernikeR<long double, long double>( long double rho, int n, int m, std::vector<long double> &c );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int n, int m, std::vector<__float128> &c );
 #endif
 
@@ -204,6 +213,7 @@ extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename calcRealT>
 realT zernikeR( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                 int n,     ///< [in] the radial index of the Zernike polynomial.
@@ -231,8 +241,11 @@ extern template float zernikeR<float, double>( float rho, int n, int m );
 extern template double zernikeR<double, double>( double rho, int n, int m );
 
 extern template long double zernikeR<long double, long double>( long double rho, int n, int m );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int n, int m );
 #endif
 
@@ -244,6 +257,7 @@ extern template __float128 zernikeR<__float128, __float128>( __float128 rho, int
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename calcRealT>
 realT zernike( realT rho,                /**< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.*/
                realT phi,                /**< [in] the azimuthal angle (in radians)*/
@@ -282,8 +296,11 @@ extern template double zernike<double, double>( double rho, double phi, int n, i
 
 extern template long double
 zernike<long double, long double>( long double rho, long double phi, int n, int m, std::vector<long double> &c );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128
 zernike<__float128, __float128>( __float128 rho, __float128 phi, int n, int m, std::vector<__float128> &c );
 #endif
@@ -297,6 +314,7 @@ zernike<__float128, __float128>( __float128 rho, __float128 phi, int n, int m, s
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename calcRealT>
 realT zernike( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                realT phi, ///< [in] the azimuthal angle (in radians)
@@ -318,8 +336,11 @@ extern template float zernike<float, double>( float rho, float phi, int n, int m
 extern template double zernike<double, double>( double rho, double phi, int n, int m );
 
 extern template long double zernike<long double, long double>( long double rho, long double phi, int n, int m );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 zernike<__float128, __float128>( __float128 rho, __float128 phi, int n, int m );
 #endif
 
@@ -331,6 +352,7 @@ extern template __float128 zernike<__float128, __float128>( __float128 rho, __fl
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename calcRealT>
 realT zernike( realT rho, ///< [in] the radial coordinate, \f$ 0 \le \rho \le 1 \f$.
                realT phi, ///< [in] the azimuthal angle (in radians)
@@ -351,8 +373,11 @@ extern template float zernike<float, double>( float rho, float phi, int j );
 extern template double zernike<double, double>( double rho, double phi, int j );
 
 extern template long double zernike<long double, long double>( long double rho, long double phi, int j );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 zernike<__float128, __float128>( __float128 rho, __float128 phi, int j );
 #endif
 
@@ -362,6 +387,7 @@ extern template __float128 zernike<__float128, __float128>( __float128 rho, __fl
  * \tparam realT is a real floating type
  * \tparam calcRealT is a real floating type used for internal calculations, should be at least double
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename arrayT, typename calcRealT, int overscan = 2>
 int zernike( arrayT &arr,                     /**< [out] allocated array with an Eigen-like interface. The rows()
                                                          and cols() members are used to size the polynomial. */
@@ -644,8 +670,10 @@ extern template float zernikeQNorm<float>( float k, float phi, int n, int m );
 extern template double zernikeQNorm<double>( double k, double phi, int n, int m );
 
 extern template long double zernikeQNorm<long double>( long double k, long double phi, int n, int m );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template __float128 zernikeQNorm<__float128>( __float128 k, __float128 phi, int n, int m );
 #endif
 

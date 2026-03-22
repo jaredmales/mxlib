@@ -56,8 +56,11 @@ realT _optGainOpenLoop( clGainOptOptGain_OL<realT> &olgo,
     try
     {
         std::pair<realT, realT> brack;
-        brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(
-            olgo, minFindMin, minFindMaxFact * gmax, minFindBits, iters );
+        brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>( olgo,
+                                                                                          minFindMin,
+                                                                                          minFindMaxFact * gmax,
+                                                                                          minFindBits,
+                                                                                          iters );
         gopt = brack.first;
         var = brack.second;
     }
@@ -107,11 +110,17 @@ long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo
                                           uintmax_t minFindMaxIter,
                                           uintmax_t &iters )
 {
-    return _optGainOpenLoop<long double>(
-        olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<long double>( olgo,
+                                          var,
+                                          gmax,
+                                          minFindMin,
+                                          minFindMaxFact,
+                                          minFindBits,
+                                          minFindMaxIter,
+                                          iters );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> &olgo,
                                         __float128 &var,
@@ -122,8 +131,14 @@ __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> &olgo,
                                         uintmax_t minFindMaxIter,
                                         uintmax_t iters )
 {
-    return _optGainOpenLoop<__float128>(
-        olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<__float128>( olgo,
+                                         var,
+                                         gmax,
+                                         minFindMin,
+                                         minFindMaxFact,
+                                         minFindBits,
+                                         minFindMaxIter,
+                                         iters );
 }
 #endif
 
@@ -134,9 +149,11 @@ template class clGainOpt<float>;
 
 template class clGainOpt<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template class clGainOpt<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template class clGainOpt<__float128>;
 #endif
 

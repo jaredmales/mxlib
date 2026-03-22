@@ -45,13 +45,15 @@ int fftw_import_system_wisdom<double>()
     return ::fftw_import_system_wisdom();
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_import_system_wisdom<long double>()
 {
     return ::fftwl_import_system_wisdom();
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 int fftw_import_system_wisdom<__float128>()
 {
@@ -71,13 +73,15 @@ int fftw_import_wisdom_from_filename<double>( const char *filename )
     return ::fftw_import_wisdom_from_filename( filename );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_import_wisdom_from_filename<long double>( const char *filename )
 {
     return ::fftwl_import_wisdom_from_filename( filename );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 int fftw_import_wisdom_from_filename<__float128>( const char *filename )
 {
@@ -97,13 +101,15 @@ int fftw_export_wisdom_to_filename<double>( const char *filename )
     return ::fftw_export_wisdom_to_filename( filename );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 int fftw_export_wisdom_to_filename<long double>( const char *filename )
 {
     return ::fftwl_export_wisdom_to_filename( filename );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 int fftw_export_wisdom_to_filename<__float128>( const char *filename )
 {
@@ -135,6 +141,7 @@ complexDT *fftw_malloc<complexDT>( size_t n )
     return (complexDT *)::fftw_malloc( n * sizeof( complexDT ) );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 long double *fftw_malloc<long double>( size_t n )
 {
@@ -146,8 +153,9 @@ complexLT *fftw_malloc<complexLT>( size_t n )
 {
     return (complexLT *)::fftwl_malloc( n * sizeof( complexLT ) );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 __float128 *fftw_malloc<__float128>( size_t n )
 {
@@ -185,6 +193,7 @@ void fftw_free<complexDT>( complexDT *p )
     ::fftw_free( p );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_free<long double>( long double *p )
 {
@@ -196,8 +205,9 @@ void fftw_free<complexLT>( complexLT *p )
 {
     ::fftwl_free( p );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_free<__float128>( __float128 *p )
 {
@@ -223,13 +233,15 @@ void fftw_make_planner_thread_safe<double>()
     //::fftw_make_planner_thread_safe();
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_make_planner_thread_safe<long double>()
 {
     //::fftwl_make_planner_thread_safe();
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_make_planner_thread_safe<__float128>()
 {
@@ -249,13 +261,15 @@ void fftw_plan_with_nthreads<double>( int nthreads )
     //::fftw_plan_with_nthreads(nthreads);
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_plan_with_nthreads<long double>( int nthreads )
 {
     //::fftwl_plan_with_nthreads(nthreads);
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_plan_with_nthreads<__float128>( int nthreads )
 {
@@ -319,6 +333,7 @@ fftw_plan_dft<complexDT, double>( std::vector<int> n, complexDT *in, double *out
     return ::fftw_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftw_complex *>( in ), out, flags );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 fftwTypeSpec<complexLT, complexLT>::planT
 fftw_plan_dft<complexLT, complexLT>( std::vector<int> n, complexLT *in, complexLT *out, int sign, unsigned flags )
@@ -346,8 +361,9 @@ fftw_plan_dft<complexLT, long double>( std::vector<int> n, complexLT *in, long d
     static_cast<void>( sign );
     return ::fftwl_plan_dft_c2r( n.size(), n.data(), reinterpret_cast<fftwl_complex *>( in ), out, flags );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 fftwTypeSpec<complexQT, complexQT>::planT
 fftw_plan_dft<complexQT, complexQT>( std::vector<int> n, complexQT *in, complexQT *out, int sign, unsigned flags )
@@ -388,13 +404,15 @@ void fftw_cleanup<double>()
     ::fftw_cleanup();
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_cleanup<long double>()
 {
     ::fftwl_cleanup();
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_cleanup<__float128>()
 {
@@ -414,13 +432,15 @@ void fftw_cleanup_threads<double>()
     //::fftw_cleanup_threads();
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_cleanup_threads<long double>()
 {
     //::fftwl_cleanup_threads();
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_cleanup_threads<__float128>()
 {
@@ -480,13 +500,15 @@ void fftw_destroy_plan<double>( fftwPlanSpec<double>::planT plan )
     ::fftw_destroy_plan( plan );
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 void fftw_destroy_plan<long double>( fftwPlanSpec<long double>::planT plan )
 {
     ::fftwl_destroy_plan( plan );
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan )
 {
@@ -495,6 +517,6 @@ void fftw_destroy_plan<__float128>( fftwPlanSpec<__float128>::planT plan )
 
 #endif
 
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx

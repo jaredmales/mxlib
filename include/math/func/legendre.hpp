@@ -48,6 +48,7 @@ namespace func
  *
  * \ingroup functions
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename T>
 T legendre_p( int n, ///< [in] the order of the Legendre polynomial, n>=0.
               T x    ///< [in] the argument, -1 <= x <= 1.
@@ -71,8 +72,9 @@ double legendre_p<double>( int n, double x );
 
 template <>
 long double legendre_p<long double>( int n, long double x );
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 legendre_p<__float128>( int n, __float128 x );
 #endif

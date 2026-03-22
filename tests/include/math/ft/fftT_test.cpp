@@ -261,7 +261,7 @@ TEST_CASE( "2D c2c FFT with FFTW, float", "[math::ft]" )
         REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, ( sin ) * ( 1e-3 ) ) );
     }
 }
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 
 SECTION( "quad" )
 {

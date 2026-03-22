@@ -34,6 +34,7 @@ namespace ioutils
 {
 
 // Specialization of convertToString to avoid converting a string to a string
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 std::string convertToString<std::string>( const std::string &value, int precision )
 {
@@ -260,7 +261,7 @@ bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> )
 {
     char c = str[0];
     size_t i = 0;
-    while( i < str.length()-1 && isspace( c ) )
+    while( i < str.length() - 1 && isspace( c ) )
     {
         ++i;
         c = str[i];
@@ -268,7 +269,7 @@ bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> )
 
     if( c == '0' || c == 'f' || c == 'F' )
     {
-        if(errc)
+        if( errc )
         {
             *errc = error_t::noerror;
         }
@@ -277,7 +278,7 @@ bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> )
     }
     else if( c == '1' || c == 't' || c == 'T' )
     {
-        if(errc)
+        if( errc )
         {
             *errc = error_t::noerror;
         }
@@ -353,6 +354,7 @@ double stoT( const std::string &str, error_t *errc, meta::tagT<double> )
 long double stoT( const std::string &str, error_t *errc, meta::tagT<long double> )
 {
     error_t _errc;
+#endif
 
     char *end;
 
@@ -381,7 +383,7 @@ long double stoT( const std::string &str, error_t *errc, meta::tagT<long double>
     return val;
 }
 
-#ifdef HAS_QUAD
+#ifdef MXLIB_HAS_QUAD
 __float128 stoT( const std::string &str, error_t *errc, meta::tagT<__float128> )
 {
     error_t _errc;
@@ -417,7 +419,7 @@ __float128 stoT( const std::string &str, error_t *errc, meta::tagT<__float128> )
 
 std::string stoT( const std::string &str, error_t *errc, meta::tagT<std::string> )
 {
-    if(errc)
+    if( errc )
     {
         *errc = mx::error_t::noerror;
     }

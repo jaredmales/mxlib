@@ -3246,9 +3246,11 @@ extern template class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>;
 
 extern template class aoSystem<double, vonKarmanSpectrum<double>, std::ostream>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template class aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template class aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>;
 #endif
 

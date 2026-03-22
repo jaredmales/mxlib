@@ -45,13 +45,15 @@ std::string fftw_typename<double>()
     return "double";
 }
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 std::string fftw_typename<long double>()
 {
     return "long_double";
 }
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 std::string fftw_typename<__float128>()
 {
@@ -59,6 +61,6 @@ std::string fftw_typename<__float128>()
 }
 #endif
 
-} // namespace fft
+} // namespace ft
 } // namespace math
 } // namespace mx

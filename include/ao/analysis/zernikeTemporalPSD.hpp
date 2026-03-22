@@ -79,6 +79,7 @@ namespace analysis
 #endif
 
 // Forward declaration
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename aosysT>
 realT F_zernike( realT kv, void *params );
 
@@ -119,16 +120,16 @@ struct zernikeTemporalPSD
         return m_apertureRatio4;
     }
 
-    realT m_f{ 0 };      ///< the current temporal frequency
-    realT m_zern_j{ 0 }; ///< the current mode number
-    int m_zern_m{ 0 };   ///< The current mode m
-    int m_zern_n{ 0 };   ///< The current mode n
+    realT m_f{ 0 };                 ///< the current temporal frequency
+    realT m_zern_j{ 0 };            ///< the current mode number
+    int m_zern_m{ 0 };              ///< The current mode m
+    int m_zern_n{ 0 };              ///< The current mode n
 
     realT m_cq{ 0 };                ///< The cosine of the wind direction
     realT m_sq{ 0 };                ///< The sine of the wind direction
     realT m_spatialFilter{ false }; ///< Flag indicating if a spatial filter is applied
 
-    int _layer_i; ///< The index of the current layer.
+    int _layer_i;                   ///< The index of the current layer.
 
     /// Worskspace for the gsl integrators, allocated to WSZ if constructed as worker (with allocate == true).
     gsl_integration_workspace *_w;
@@ -499,8 +500,12 @@ realT F_zernike( realT kv, void *params )
 
     realT Q2norm = apertureRatio4 * sigproc::zernikeQNorm( k * D / 2.0, phi, Fp->m_zern_n, Fp->m_zern_m );
 
-    realT P = Fp->m_aosys->psd(
-        Fp->m_aosys->atm, Fp->_layer_i, k, Fp->m_aosys->lam_sci(), Fp->m_aosys->lam_wfs(), Fp->m_aosys->secZeta() );
+    realT P = Fp->m_aosys->psd( Fp->m_aosys->atm,
+                                Fp->_layer_i,
+                                k,
+                                Fp->m_aosys->lam_sci(),
+                                Fp->m_aosys->lam_wfs(),
+                                Fp->m_aosys->secZeta() );
 
     return P * Q2norm;
 }
@@ -514,8 +519,9 @@ struct zernikeTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::
 /*
 extern template
 struct zernikeTemporalPSD<long double, aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template
 struct zernikeTemporalPSD<__float128, aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>>;
 #endif

@@ -10,6 +10,7 @@ namespace math
 namespace func
 {
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template <>
 float legendre_p<float>( int n, float x )
 {
@@ -26,9 +27,10 @@ template <>
 long double legendre_p<long double>( int n, long double x )
 {
     return boost::math::legendre_p<long double>( n, x );
+#endif
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 __float128 legendre_p<__float128>( int n, __float128 x )
 {

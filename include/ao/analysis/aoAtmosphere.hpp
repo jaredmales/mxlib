@@ -50,43 +50,43 @@ class aoAtmosphere
     aoAtmosphere();
 
   protected:
-    realT m_r_0; ///< Fried's parameter, in m
+    realT m_r_0;                       ///< Fried's parameter, in m
 
-    realT m_lam_0{ 0.5e-6 }; ///< Wavelength of Fried's parameter, in m
+    realT m_lam_0{ 0.5e-6 };           ///< Wavelength of Fried's parameter, in m
 
-    std::vector<realT> m_layer_Cn2; ///< Vector of layer strengths.
+    std::vector<realT> m_layer_Cn2;    ///< Vector of layer strengths.
 
-    std::vector<realT> m_L_0; ///< The outer scale, in m
+    std::vector<realT> m_L_0;          ///< The outer scale, in m
 
-    std::vector<realT> m_l_0; ///< The inner scale of each layer, in m
+    std::vector<realT> m_l_0;          ///< The inner scale of each layer, in m
 
-    bool m_nonKolmogorov{ false }; ///< Flag indicating if non-Kolmogorov PSD parameters are used.
+    bool m_nonKolmogorov{ false };     ///< Flag indicating if non-Kolmogorov PSD parameters are used.
 
-    std::vector<realT> m_beta{ 1 }; ///< The PSD normalization when in non-Kolmogorov mode.
+    std::vector<realT> m_beta{ 1 };    ///< The PSD normalization when in non-Kolmogorov mode.
 
-    std::vector<realT> m_alpha{ 0 }; ///< The PSD exponent when in non-Kolmogorov mode.
+    std::vector<realT> m_alpha{ 0 };   ///< The PSD exponent when in non-Kolmogorov mode.
 
-    std::vector<realT> m_beta_0{ 0 }; ///< The PSD constant when in non-Kolmogorov mode.
+    std::vector<realT> m_beta_0{ 0 };  ///< The PSD constant when in non-Kolmogorov mode.
 
-    std::vector<realT> m_layer_z; ///< Vector of layer heights, in m, above the observatory.
+    std::vector<realT> m_layer_z;      ///< Vector of layer heights, in m, above the observatory.
 
-    realT m_h_obs{ 0 }; ///< Height of the observatory above sea level, in m.
+    realT m_h_obs{ 0 };                ///< Height of the observatory above sea level, in m.
 
-    realT m_H{ 8000 }; ///< The atmospheric scale height, in m.
+    realT m_H{ 8000 };                 ///< The atmospheric scale height, in m.
 
     std::vector<realT> m_layer_v_wind; ///< Vector of layer wind speeds, in m/s.
 
-    std::vector<realT> m_layer_dir; ///< Vector of layer wind directions, in radians.
+    std::vector<realT> m_layer_dir;    ///< Vector of layer wind directions, in radians.
 
-    bool m_v_wind_updated{ false }; ///< whether or not m_v_wind has been updated after changes
+    bool m_v_wind_updated{ false };    ///< whether or not m_v_wind has been updated after changes
 
-    realT m_v_wind; ///< \f$ C_n^2 \f$ averaged windspeed
+    realT m_v_wind;                    ///< \f$ C_n^2 \f$ averaged windspeed
 
-    realT m_dir_wind; ///< \f$ C_n^2 \f$ averaged direction
+    realT m_dir_wind;                  ///< \f$ C_n^2 \f$ averaged direction
 
-    bool m_z_mean_updated{ false }; ///< whether or not m_z_mean has been updated after changes
+    bool m_z_mean_updated{ false };    ///< whether or not m_z_mean has been updated after changes
 
-    realT m_z_mean; ///< \f$ C_n^2 \f$ averaged layer height
+    realT m_z_mean;                    ///< \f$ C_n^2 \f$ averaged layer height
 
     /// Checks if layer vectors have consistent length.
     /**
@@ -627,31 +627,31 @@ int aoAtmosphere<realT>::checkLayers()
 
     if( m_l_0.size() != n )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (inner scale vs. outer scale)");
+        internal::mxlib_error_report( error_t::sizeerr, "mismatched layer numbers (inner scale vs. outer scale)" );
         return -1;
     }
 
     if( m_layer_z.size() != n )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_z  vs. outer scale)");
+        internal::mxlib_error_report( error_t::sizeerr, "mismatched layer numbers (layer_z  vs. outer scale)" );
         return -1;
     }
 
     if( m_layer_Cn2.size() != n )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_Cn2  vs. outer scale)" );
+        internal::mxlib_error_report( error_t::sizeerr, "mismatched layer numbers (layer_Cn2  vs. outer scale)" );
         return -1;
     }
 
     if( m_layer_dir.size() != n )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_dir  vs. outer scale)");
+        internal::mxlib_error_report( error_t::sizeerr, "mismatched layer numbers (layer_dir  vs. outer scale)" );
         return -1;
     }
 
     if( m_layer_v_wind.size() != n )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_v_wind vs. outer scale)");
+        internal::mxlib_error_report( error_t::sizeerr, "mismatched layer numbers (layer_v_wind vs. outer scale)" );
         return -1;
     }
 
@@ -1329,10 +1329,24 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator &config )
                 false,
                 "real",
                 "The reference wavlength for r_0 [m]" );
-    config.add(
-        "atm.L_0", "", "atm.L_0", argType::Required, "atm", "L_0", false, "vector<real>", "Layer outer scales [m]" );
-    config.add(
-        "atm.l_0", "", "atm.l_0", argType::Required, "atm", "l_0", false, "vector<real>", "Layer inner scales [m]" );
+    config.add( "atm.L_0",
+                "",
+                "atm.L_0",
+                argType::Required,
+                "atm",
+                "L_0",
+                false,
+                "vector<real>",
+                "Layer outer scales [m]" );
+    config.add( "atm.l_0",
+                "",
+                "atm.l_0",
+                argType::Required,
+                "atm",
+                "l_0",
+                false,
+                "vector<real>",
+                "Layer inner scales [m]" );
     config.add( "atm.layer_z",
                 "",
                 "atm.layer_z",
@@ -1342,8 +1356,15 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator &config )
                 false,
                 "vector<real>",
                 "layer heights [m]" );
-    config.add(
-        "atm.h_obs", "", "atm.h_obs", argType::Required, "atm", "h_obs", false, "real", "height of observatory [m]" );
+    config.add( "atm.h_obs",
+                "",
+                "atm.h_obs",
+                argType::Required,
+                "atm",
+                "h_obs",
+                false,
+                "real",
+                "height of observatory [m]" );
     config.add( "atm.H", "", "atm.H", argType::Required, "atm", "H", false, "real", "atmospheric scale heights [m]" );
     config.add( "atm.layer_Cn2",
                 "",
@@ -1467,7 +1488,7 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     std::vector<realT> layz = m_layer_z;
     config( layz, "atm.layer_z" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_z" ) )
-        layer_z( layz ); // but only call this if changed
+        layer_z( layz );           // but only call this if changed
 
     config( m_h_obs, "atm.h_obs" );
     config( m_H, "atm.H" );
@@ -1476,18 +1497,18 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     std::vector<realT> lvw = m_layer_v_wind;
     config( lvw, "atm.layer_v_wind" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_v_wind" ) )
-        layer_v_wind( lvw ); // but only call this if changed
+        layer_v_wind( lvw );           // but only call this if changed
 
     // Has side effects:
     std::vector<realT> ld = m_layer_dir;
     config( ld, "atm.layer_dir" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_dir" ) )
-        layer_dir( ld ); // but only call this if changed
+        layer_dir( ld );           // but only call this if changed
 
     realT vw = m_v_wind;
     config( vw, "atm.v_wind" ); // Do this no matter what to record source
     if( config.isSet( "atm.v_wind" ) )
-        v_wind( vw ); // but only call this if changed
+        v_wind( vw );           // but only call this if changed
 
     realT t0 = tau_0();
     config( t0, "atm.tau_0" ); // Do this no matter what to record source
@@ -1499,7 +1520,7 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     realT zm = m_z_mean;
     config( zm, "atm.z_mean" ); // Do this no matter what to record source
     if( config.isSet( "atm.z_mean" ) )
-        z_mean( zm ); // but only call this if changed
+        z_mean( zm );           // but only call this if changed
 
     config( m_nonKolmogorov, "atm.nonKolmogorov" );
 
@@ -1523,9 +1544,11 @@ extern template class aoAtmosphere<float>;
 
 extern template class aoAtmosphere<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template class aoAtmosphere<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template class aoAtmosphere<__float128>;
 #endif
 

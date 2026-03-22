@@ -80,6 +80,7 @@ namespace ioutils
   * \returns a string representation of value
   *
   */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename typeT, unsigned width = 0, char pad = ' '>
 [[deprecated( "Use std::format instead" )]]
 std::string convertToString(
@@ -146,10 +147,11 @@ bool stoT( const std::string &str, error_t *errc, meta::tagT<bool> );
 float stoT( const std::string &str, error_t *errc, meta::tagT<float> );
 double stoT( const std::string &str, error_t *errc, meta::tagT<double> );
 long double stoT( const std::string &str, error_t *errc, meta::tagT<long double> );
+#endif
 
 std::string stoT( const std::string &str, error_t *errc, meta::tagT<std::string> );
 
-#ifdef HAS_QUAD
+#ifdef MXLIB_HAS_QUAD
 __float128 stoT( const std::string &str, error_t *errc, meta::tagT<__float128> );
 #endif
 

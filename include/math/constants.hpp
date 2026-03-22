@@ -82,7 +82,7 @@ constexpr long double pi<long double>()
     return static_cast<long double>( MX_INTERNAL_PI_100 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 pi<__float128>()
 {
@@ -127,7 +127,7 @@ constexpr long double two_pi<long double>()
     return static_cast<long double>( 2 * MX_INTERNAL_PI_100 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 two_pi<__float128>()
 {
@@ -172,7 +172,7 @@ constexpr long double half_pi<long double>()
     return static_cast<long double>( MX_INTERNAL_PI_100 ) / static_cast<long double>( 2 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 half_pi<__float128>()
 {
@@ -218,7 +218,7 @@ constexpr long double rad2deg<long double>()
     return static_cast<long double>( 180 ) / static_cast<long double>( MX_INTERNAL_PI_100 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 rad2deg<__float128>()
 {
@@ -263,7 +263,7 @@ constexpr long double root_two<long double>()
     return static_cast<long double>( MX_INTERNAL_ROOT2_100 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 root_two<__float128>()
 {
@@ -308,7 +308,7 @@ constexpr long double ln_two<long double>()
     return static_cast<long double>( MX_INTERNAL_LN2_100 );
 }
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 constexpr __float128 ln_two<__float128>()
 {

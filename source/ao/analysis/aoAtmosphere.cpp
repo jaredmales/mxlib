@@ -18,9 +18,11 @@ template class aoAtmosphere<float>;
 
 template class aoAtmosphere<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 template class aoAtmosphere<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template class aoAtmosphere<__float128>;
 #endif
 

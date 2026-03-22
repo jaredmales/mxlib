@@ -28,7 +28,7 @@
 #define clGainOpt_hpp
 
 #ifdef MX_INCLUDE_BOOST
-    #include <boost/math/tools/minima.hpp>
+#include <boost/math/tools/minima.hpp>
 #endif
 
 #include <type_traits>
@@ -170,8 +170,8 @@ struct clGainOpt
 
     /// Get a single FIR coefficient
     /**
-       * \returns a single FIR coefficient
-      */
+     * \returns a single FIR coefficient
+     */
     realT b( size_t i /**< [in] the index of the FIR coefficient*/ )
     {
         return m_b[i];
@@ -199,8 +199,8 @@ struct clGainOpt
                                                               coefficients, which is copied to m_a.*/ );
     /// Get a single IIR coefficient
     /**
-       * \returns a single IIR coefficient
-      */
+     * \returns a single IIR coefficient
+     */
     realT a( size_t i )
     {
         return m_a[i];
@@ -558,14 +558,14 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1> &newB )
 
 template <typename realT>
 void clGainOpt<realT>::bScale( realT scale )
+{
+    for( size_t n = 0; n < m_b.size(); ++n )
     {
-        for( size_t n = 0; n < m_b.size(); ++n )
-        {
-            m_b[n] *= scale;
-        }
-
-        m_changed = true;
+        m_b[n] *= scale;
     }
+
+    m_changed = true;
+}
 
 template <typename realT>
 void clGainOpt<realT>::a( const std::vector<realT> &newA )
@@ -611,14 +611,12 @@ void clGainOpt<realT>::aScale( realT scale )
 template <typename realT>
 void clGainOpt<realT>::remember( const realT &rem )
 {
-    if(m_remember != rem)
+    if( m_remember != rem )
     {
         m_remember = rem;
 
         m_changed = true;
     }
-
-
 }
 
 template <typename realT>
@@ -630,9 +628,9 @@ realT clGainOpt<realT>::remember()
 template <typename realT>
 void clGainOpt<realT>::setLeakyIntegrator( realT remember )
 {
-    if(m_b.size() != 1 || m_a.size() != 1 || m_b[0] != 1.0 || m_a[0] != 1.0 || m_remember != remember)
+    if( m_b.size() != 1 || m_a.size() != 1 || m_b[0] != 1.0 || m_a[0] != 1.0 || m_remember != remember )
     {
-        if(m_b.size() != 1)
+        if( m_b.size() != 1 )
         {
             m_b.resize( 1 );
             m_fChanged = true;
@@ -640,7 +638,7 @@ void clGainOpt<realT>::setLeakyIntegrator( realT remember )
 
         m_b[0] = 1.0;
 
-        if(m_a.size() != 1)
+        if( m_a.size() != 1 )
         {
             m_a.resize( 1 );
             m_fChanged = true;
@@ -1089,8 +1087,8 @@ realT optGainOpenLoop( clGainOptOptGain_OL<realT> &olgo,
     return gopt;
 #else
     static_assert( std::is_fundamental<realT>::value || !std::is_fundamental<realT>::value,
-                    "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not "
-                    "defined, so I can't just use boost." );
+                   "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not "
+                   "defined, so I can't just use boost." );
     return 0;
 #endif
 }
@@ -1125,7 +1123,7 @@ long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo
                                           uintmax_t minFindMaxIter,
                                           uintmax_t &iters );
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 template <>
 _m_float128 optGainOpenLoop<_m_float128>( clGainOptOptGain_OL<_m_float128> &olgo,
                                           _m_float128 &var,
@@ -1263,9 +1261,11 @@ extern template class clGainOpt<float>;
 
 extern template class clGainOpt<double>;
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template class clGainOpt<long double>;
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template class clGainOpt<_m_float128>;
 #endif
 

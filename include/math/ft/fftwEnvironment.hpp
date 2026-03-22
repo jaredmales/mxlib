@@ -90,10 +90,12 @@ std::string fftw_typename<float>();
 template <>
 std::string fftw_typename<double>();
 
+#ifdef MXLIB_USE_FFTW_LONGDOUBLE
 template <>
 std::string fftw_typename<long double>();
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_USE_FFTW_QUAD
 template <>
 std::string fftw_typename<__float128>();
 #endif

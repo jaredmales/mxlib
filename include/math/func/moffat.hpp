@@ -69,6 +69,7 @@ namespace func
   *
   * \ingroup gen_math_moffats
   */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT>
 realT moffat( const realT x,     ///< [in] is the x-position at which to evaluate the Moffat function
               const realT I0,    ///< [in] is the constant to add to the Moffat function
@@ -81,6 +82,7 @@ realT moffat( const realT x,     ///< [in] is the x-position at which to evaluat
     return I0 + Ipk * pow( static_cast<realT>( 1 ) + pow( x - x0, 2 ) / pow( alpha, 2 ), -beta );
 }
 
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template float
 moffat<float>( const float x, const float I0, const float Ipk, const float x0, const float alpha, const float beta );
 
@@ -93,8 +95,11 @@ extern template long double moffat<long double>( const long double x,
                                                  const long double x0,
                                                  const long double alpha,
                                                  const long double beta );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 moffat<__float128>( const __float128 x,
                                                const __float128 I0,
                                                const __float128 Ipk,
@@ -123,6 +128,7 @@ extern template __float128 moffat<__float128>( const __float128 x,
   *
   * \ingroup gen_math_moffats
   */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT>
 realT moffat2D( const realT x,     ///< [in] the x-position at which to evaluate the Moffat function
                 const realT y,     ///< [in] the y-positoin at which to evaluate the Moffat function
@@ -163,8 +169,11 @@ extern template long double moffat2D<long double>( const long double x,
                                                    const long double y0,
                                                    const long double alpha,
                                                    const long double beta );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
+#ifdef MXLIB_USE_LONGDOUBLE
 extern template __float128 moffat2D<__float128>( const __float128 x,
                                                  const __float128 y,
                                                  const __float128 I0,
@@ -189,6 +198,7 @@ extern template __float128 moffat2D<__float128>( const __float128 x,
  *
  * \ingroup gen_math_moffats
  */
+#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT>
 realT moffatFWHM( realT alpha, ///< [in] the width parameter of the Moffat function.
                   realT beta   ///< [in] the shape parameter of the Moffat function.
@@ -202,8 +212,10 @@ extern template float moffatFWHM( float alpha, float beta );
 extern template double moffatFWHM( double alpha, double beta );
 
 extern template long double moffatFWHM( long double alpha, long double beta );
+#endif
+#endif
 
-#ifdef HASQUAD
+#ifdef MXLIB_HAS_QUAD
 extern template __float128 moffatFWHM( __float128 alpha, __float128 beta );
 #endif
 
