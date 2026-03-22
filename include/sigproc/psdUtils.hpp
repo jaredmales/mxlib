@@ -41,6 +41,7 @@
 
 #include "../mxlib.hpp"
 
+#include "../math/constants.hpp"
 #include "../math/ft/fftT.hpp"
 #include "../math/vectorUtils.hpp"
 
