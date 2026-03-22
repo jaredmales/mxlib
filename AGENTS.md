@@ -41,6 +41,7 @@ Follow these code style and documentation rules exactly.
 
 8) Formatting and Verification
 - Run `clang-format` on touched files.
+- Do not run `clang-format` on `CMakeLists.txt` or other CMake files; preserve their existing manual formatting.
 - Ensure docs and naming are consistent after formatting.
 - Report any places where project style is ambiguous before making assumptions.
 
