@@ -736,7 +736,7 @@ int turbAtmosphere<aoSystemT, verboseT>::shift( improc::milkImage<realT> &milkPh
     {
     }
 
-    // Don't use OMP if no multiple layers b/c it seems to make it use multiple threads in some awful way
+    // Don't use OMP if not multiple layers b/c it seems to make it use multiple threads in some awful way
     if( m_layers.size() > 1 )
     {
         // clang-format off
@@ -748,10 +748,7 @@ int turbAtmosphere<aoSystemT, verboseT>::shift( improc::milkImage<realT> &milkPh
     }
     else
     {
-        for( size_t j = 0; j < m_layers.size(); ++j )
-        {
-            m_layers[j].shift( dt );
-        }
+        m_layers[0].shift( dt );
     }
 
     milkPhase.setWrite();
