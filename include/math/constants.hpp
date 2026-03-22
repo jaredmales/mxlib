@@ -27,16 +27,51 @@
 #ifndef math_constants_hpp
 #define math_constants_hpp
 
+#include <cmath>
 #include <type_traits>
 
 #ifdef MX_INCLUDE_BOOST
 #include <boost/math/constants/constants.hpp>
 #endif
 
+#ifdef MXLIB_HAS_QUAD
+#include <quadmath.h>
+#endif
+
 namespace mx
 {
 namespace math
 {
+/// Wrapper for atan2 with quad-precision support.
+template <typename realT>
+inline realT atan2( realT y, realT x )
+{
+    using std::atan2;
+    return atan2( y, x );
+}
+
+/// Wrapper for abs/fabs with quad-precision support.
+template <typename realT>
+inline realT abs( realT x )
+{
+    using std::abs;
+    return abs( x );
+}
+
+#ifdef MXLIB_HAS_QUAD
+template <>
+inline __float128 atan2<__float128>( __float128 y, __float128 x )
+{
+    return ::atan2q( y, x );
+}
+
+template <>
+inline __float128 abs<__float128>( __float128 x )
+{
+    return ::fabsq( x );
+}
+#endif
+
 //                             0         1         2         3         4         5         6         7         8 9 1
 #define MX_INTERNAL_PI_100                                                                                             \
     ( 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679 )

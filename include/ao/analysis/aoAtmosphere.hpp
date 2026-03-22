@@ -1514,7 +1514,6 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     config( t0, "atm.tau_0" ); // Do this no matter what to record source
     if( config.isSet( "atm.tau_0" ) )
     {
-        std::cerr << "setting tau_0 " << t0 << "\n";
         tau_0( t0, m_lam_0 ); // but only call this if changed
     }
     realT zm = m_z_mean;

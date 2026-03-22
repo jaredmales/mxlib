@@ -218,7 +218,7 @@ int calcAzEl( realT &az, ///< [out] the calculated azimuth [degrees]
     dec_rad = dec * math::pi<realT>() / static_cast<realT>( 180 );
     lat_rad = lat * math::pi<realT>() / static_cast<realT>( 180 );
 
-    az_rad = atan2( sin( ha_rad ), cos( ha_rad ) * sin( lat_rad ) - tan( dec_rad ) * cos( lat_rad ) );
+    az_rad = math::atan2( sin( ha_rad ), cos( ha_rad ) * sin( lat_rad ) - tan( dec_rad ) * cos( lat_rad ) );
 
     el_rad = asin( sin( lat_rad ) * sin( dec_rad ) + cos( lat_rad ) * cos( dec_rad ) * cos( ha_rad ) );
 
@@ -244,7 +244,7 @@ realT parAngRad( realT sinHA,  ///< [in] the sine of the target hour angle
                  realT tanLat  ///< [in] the tangent of the observer latitude
 )
 {
-    return atan2( sinHA, cosDec * tanLat - sinDec * cosHA );
+    return math::atan2( sinHA, cosDec * tanLat - sinDec * cosHA );
 }
 
 /// Calculate the Parallactic Angle from the pre-calculated trig functions.  Result in degrees.

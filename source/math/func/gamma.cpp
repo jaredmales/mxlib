@@ -3,6 +3,10 @@
 
 #include <boost/math/special_functions/gamma.hpp>
 
+#ifdef MXLIB_HAS_QUAD
+#include <quadmath.h>
+#endif
+
 namespace mx
 {
 namespace math
@@ -34,7 +38,7 @@ long double tgamma<long double>( long double x )
 template <>
 __float128 tgamma<__float128>( __float128 x )
 {
-    return boost::math::tgamma<__float128>( x );
+    return tgammaq( x );
 }
 #endif
 

@@ -30,6 +30,7 @@
 #include <limits>
 #include <cmath>
 
+#include "../constants.hpp"
 #include "bessel.hpp"
 #include "precision.hpp"
 
@@ -64,7 +65,7 @@ T jinc( const T &x /**< [in] the argument */ )
     T const taylor_0_bound = std::numeric_limits<T>::epsilon();
     T const taylor_2_bound = root_epsilon<T>();
 
-    if( std::fabs( x ) > taylor_2_bound )
+    if( math::abs( x ) > taylor_2_bound )
     {
         return bessel_j<int, T>( 1, x ) / ( x );
     }
@@ -72,7 +73,7 @@ T jinc( const T &x /**< [in] the argument */ )
     {
         // approximation by taylor series in x at 0
         T result = static_cast<T>( 0.5 );
-        if( std::fabs( x ) >= taylor_0_bound )
+        if( math::abs( x ) >= taylor_0_bound )
         {
             T x2 = x * x;
 
@@ -124,7 +125,7 @@ T2 jincN( const T1 &v, ///< [in] the Bessel function order
 
     T2 const taylor_2_bound = root_epsilon<T2>();
 
-    if( std::fabs( x ) > taylor_2_bound )
+    if( math::abs( x ) > taylor_2_bound )
     {
         return bessel_j<T1, T2>( v, x ) / ( x );
     }
@@ -156,7 +157,7 @@ extern template
     __float128
     jincN<__float128, __float128>( const __float128 &v, const __float128 &x );
 
-__float128 jincN<int, __float128>( const int &v, const __float128 &x );
+extern template __float128 jincN<int, __float128>( const int &v, const __float128 &x );
 #endif
 
 } // namespace func

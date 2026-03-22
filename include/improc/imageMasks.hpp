@@ -116,7 +116,7 @@ void angleImage( eigenT &m,                 /**< [out] the allocated angle array
         {
             realT f_x = ( static_cast<realT>( i ) - xc );
 
-            m( i, j ) = fmod( atan2( f_y, f_x ) + math::two_pi<realT>(), math::two_pi<realT>() ) * angleT::scale;
+            m( i, j ) = fmod( math::atan2( f_y, f_x ) + math::two_pi<realT>(), math::two_pi<realT>() ) * angleT::scale;
         }
     }
 }
@@ -171,7 +171,7 @@ void radAngImage( eigenT1 &rIm,                     /**< [out] the allocated rad
             realT f_x = ( ( static_cast<realT>( rr ) ) - xc );
 
             rIm( rr, cc ) = std::sqrt( f_x * f_x + f_y * f_y ) * rscale;
-            qIm( rr, cc ) = fmod( atan2( f_y, f_x ) + math::two_pi<realT>(), math::two_pi<realT>() ) * angleT::scale;
+            qIm( rr, cc ) = fmod( math::atan2( f_y, f_x ) + math::two_pi<realT>(), math::two_pi<realT>() ) * angleT::scale;
         }
     }
 }
@@ -690,7 +690,7 @@ void maskWedge( arrayT &m,                      ///< [in.out] the image to be ma
         for( size_t r = 0; r < m.rows(); r++ )
         {
 
-            dang = math::angleDiff<math::degreesT<angleT>>( math::rtod( atan2( c - ycen, r - xcen ) ), angCen );
+            dang = math::angleDiff<math::degreesT<angleT>>( math::rtod( math::atan2( c - ycen, r - xcen ) ), angCen );
 
             if( dang > -angHW && dang <= angHW )
             {

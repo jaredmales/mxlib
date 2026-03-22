@@ -85,7 +85,6 @@ enum basis : unsigned int
 };
 
 // Forward declaration
-#ifdef MXLIB_USE_LONGDOUBLE
 template <typename realT, typename aosysT>
 realT F_basic( realT kv, void *params );
 
@@ -2433,20 +2432,7 @@ realT F_mod( realT kv, void *params )
 /*extern template
 struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/
 
-#ifdef MXLIB_USE_LONGDOUBLE
 extern template struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
-
-/*
-extern template
-struct fourierTemporalPSD<long double, aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>>;
-#endif
-#endif
-
-#ifdef MXLIB_HAS_QUAD
-extern template
-struct fourierTemporalPSD<__float128, aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>>;
-#endif
-*/
 
 } // namespace analysis
 } // namespace AO

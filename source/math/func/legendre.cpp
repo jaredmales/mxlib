@@ -34,7 +34,28 @@ long double legendre_p<long double>( int n, long double x )
 template <>
 __float128 legendre_p<__float128>( int n, __float128 x )
 {
-    return boost::math::legendre_p<__float128>( n, x );
+    if( n == 0 )
+    {
+        return static_cast<__float128>( 1 );
+    }
+
+    if( n == 1 )
+    {
+        return x;
+    }
+
+    __float128 pnm2 = static_cast<__float128>( 1 );
+    __float128 pnm1 = x;
+
+    for( int i = 2; i <= n; ++i )
+    {
+        __float128 pn = ( static_cast<__float128>( 2 * i - 1 ) * x * pnm1 - static_cast<__float128>( i - 1 ) * pnm2 ) /
+                        static_cast<__float128>( i );
+        pnm2 = pnm1;
+        pnm1 = pn;
+    }
+
+    return pnm1;
 }
 #endif
 

@@ -37,19 +37,7 @@ namespace analysis
 /*template
 struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/
 
-#ifdef MXLIB_USE_LONGDOUBLE
 template struct fourierTemporalPSD<double, aoSystem<double, vonKarmanSpectrum<double>, std::ostream>>;
-
-/*
-template
-struct fourierTemporalPSD<long double, aoSystem<long double, vonKarmanSpectrum<long double>, std::ostream>>;
-#endif
-
-#ifdef MXLIB_HAS_QUAD
-template
-struct fourierTemporalPSD<__float128, aoSystem<__float128, vonKarmanSpectrum<__float128>, std::ostream>>;
-#endif
-*/
 
 } // namespace analysis
 } // namespace AO

@@ -3,6 +3,10 @@
 
 #include <boost/math/special_functions/factorials.hpp>
 
+#ifdef MXLIB_HAS_QUAD
+#include <quadmath.h>
+#endif
+
 namespace mx
 {
 namespace math
@@ -34,7 +38,7 @@ long double factorial<long double>( long double x )
 template <>
 __float128 factorial<__float128>( __float128 x )
 {
-    return boost::math::factorial<__float128>( x );
+    return floorq( tgammaq( x + static_cast<__float128>( 1 ) ) + static_cast<__float128>( 0.5 ) );
 }
 #endif
 

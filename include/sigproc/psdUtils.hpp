@@ -468,7 +468,7 @@ int normPSD( std::vector<floatT> &psd, ///< [in.out] the PSD to normalize, will 
     {
         for( size_t i = 0; i < psd.size(); ++i )
         {
-            if( fabs( f[i] ) < fmin || fabs( f[i] ) > fmax )
+            if( math::abs( f[i] ) < fmin || math::abs( f[i] ) > fmax )
                 continue;
             s += psd[i];
         }

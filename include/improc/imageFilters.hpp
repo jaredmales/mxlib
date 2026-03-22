@@ -205,7 +205,7 @@ struct azBoxKernel
         arithT q = 0;
         if( m_maxAz > 0 )
         {
-            q = atan2( sinq, cosq );
+            q = math::atan2( sinq, cosq );
         }
 
         int w = kernW * ( (int)( fabs( m_azWidth * sinq ) + fabs( m_radWidth * cosq ) ) + 1 );
@@ -280,7 +280,7 @@ struct azBoxKernel
                 {
                     if( m_maxAz > 0 ) // Only check this if needed.
                     {
-                        q2 = atan2( y + yP - ycen, x + xP - xcen );
+                        q2 = math::atan2( y + yP - ycen, x + xP - xcen );
                         dq = math::angleDiff<math::radiansT<arithT>>( q, q2 );
                         if( fabs( dq ) > m_maxAz )
                         {

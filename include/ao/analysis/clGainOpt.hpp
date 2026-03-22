@@ -763,9 +763,10 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
                 }
             #endif // clang-format on
 
-            complexT s = complexT( 0.0, math::two_pi<realT>() * m_f[i] );
+            realT omega = math::two_pi<realT>() * m_f[i];
+            complexT s = complexT( 0.0, omega );
 
-            complexT expsT = exp( -s * m_Ti );
+            complexT expsT = complexT( cos( omega * m_Ti ), -sin( omega * m_Ti ) );
 
             if( m_f[i] == 0 )
             {
@@ -780,7 +781,7 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
 
             m_H_ma[i] = 1; // realT(1./m_N)*(realT(1) - pow(expsT,m_N))/(realT(1) - expsT);
 
-            m_H_del[i] = exp( -s * m_tau );
+            m_H_del[i] = complexT( cos( omega * m_tau ), -sin( omega * m_tau ) );
 
             complexT FIR = complexT( m_b[0], 0 );
 
@@ -870,7 +871,8 @@ realT clGainOpt<realT>::clETFPhase( int fi, realT g )
         return 0;
 #endif
 
-    return std::arg( ( realT( 1 ) / ( realT( 1 ) + g * olXfer( fi ) ) ) );
+    complexT etf = realT( 1 ) / ( realT( 1 ) + g * olXfer( fi ) );
+    return math::atan2( etf.imag(), etf.real() );
 }
 
 template <typename realT>
@@ -1125,14 +1127,14 @@ long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo
 
 #ifdef MXLIB_HAS_QUAD
 template <>
-_m_float128 optGainOpenLoop<_m_float128>( clGainOptOptGain_OL<_m_float128> &olgo,
-                                          _m_float128 &var,
-                                          const _m_float128 &gmax,
-                                          const _m_float128 &minFindMin,
-                                          const _m_float128 &minFindMaxFact,
-                                          int minFindBits,
-                                          uintmax_t minFindMaxIter,
-                                          uintmax_t &iters );
+__float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> &olgo,
+                                        __float128 &var,
+                                        const __float128 &gmax,
+                                        const __float128 &minFindMin,
+                                        const __float128 &minFindMaxFact,
+                                        int minFindBits,
+                                        uintmax_t minFindMaxIter,
+                                        uintmax_t &iters );
 #endif
 
 } // namespace impl
@@ -1266,7 +1268,7 @@ extern template class clGainOpt<long double>;
 #endif
 
 #ifdef MXLIB_HAS_QUAD
-extern template class clGainOpt<_m_float128>;
+extern template class clGainOpt<__float128>;
 #endif
 
 } // namespace analysis

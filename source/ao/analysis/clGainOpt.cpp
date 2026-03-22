@@ -124,21 +124,44 @@ long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo
 template <>
 __float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> &olgo,
                                         __float128 &var,
-                                        __float128 &gmax,
-                                        __float128 &minFindMin,
-                                        __float128 &minFindMaxFact,
+                                        const __float128 &gmax,
+                                        const __float128 &minFindMin,
+                                        const __float128 &minFindMaxFact,
                                         int minFindBits,
                                         uintmax_t minFindMaxIter,
-                                        uintmax_t iters )
+                                        uintmax_t &iters )
 {
-    return _optGainOpenLoop<__float128>( olgo,
-                                         var,
-                                         gmax,
-                                         minFindMin,
-                                         minFindMaxFact,
-                                         minFindBits,
-                                         minFindMaxIter,
-                                         iters );
+    long double var_ld{ 0 };
+    long double gopt_ld;
+
+    iters = minFindMaxIter;
+
+    auto olgo_ld = [&olgo]( const long double &g ) -> long double
+    {
+        return static_cast<long double>( olgo( static_cast<__float128>( g ) ) );
+    };
+
+    try
+    {
+        std::pair<long double, long double> brack;
+        brack = boost::math::tools::brent_find_minima<decltype( olgo_ld ), long double>(
+            olgo_ld,
+            static_cast<long double>( minFindMin ),
+            static_cast<long double>( minFindMaxFact * gmax ),
+            minFindBits,
+            iters );
+        gopt_ld = brack.first;
+        var_ld = brack.second;
+    }
+    catch( ... )
+    {
+        std::cerr << "optGainOpenLoop: No root found\n";
+        gopt_ld = static_cast<long double>( minFindMaxFact * gmax );
+        var_ld = 0;
+    }
+
+    var = static_cast<__float128>( var_ld );
+    return static_cast<__float128>( gopt_ld );
 }
 #endif
 

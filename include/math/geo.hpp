@@ -245,7 +245,7 @@ angleMean( const std::vector<typename angleT::realT> &q /**< [in] vector of angl
     s /= q.size();
     c /= q.size();
 
-    return atan2( s, c ) * angleT::scale;
+    return math::atan2( s, c ) * angleT::scale;
 }
 
 /// Make a vector of angles continuous, fixing the 0/360 crossing.

@@ -160,6 +160,36 @@ void quarticRoots( std::vector<std::complex<realT>> &x, ///< [out] On exit conta
 
 } // quarticRoots
 
+#ifdef MXLIB_HAS_QUAD
+/// Find the roots of the general quartic equation for quad precision.
+[[deprecated("mx::math::quarticRoots<__float128> currently falls back to long double arithmetic and does not provide true quad precision.")]]
+inline void quarticRoots( std::vector<std::complex<__float128>> &x, ///< [out] On exit contains the 4 roots, is resized to length 4.
+                          __float128 a,                             ///< [in] the coefficient of the \f$x^4\f$ term.
+                          __float128 b,                             ///< [in] the coefficient of the \f$x^3\f$ term.
+                          __float128 c,                             ///< [in] the coefficient of the \f$x^2\f$ term.
+                          __float128 d,                             ///< [in] the coefficient of the \f$x^1\f$ term.
+                          __float128 e                              ///< [in] the coefficient of the \f$x^0\f$ term.
+)
+{
+    std::vector<std::complex<long double>> xld;
+
+    quarticRoots( xld,
+                  static_cast<long double>( a ),
+                  static_cast<long double>( b ),
+                  static_cast<long double>( c ),
+                  static_cast<long double>( d ),
+                  static_cast<long double>( e ) );
+
+    x.resize( xld.size() );
+
+    for( size_t i = 0; i < xld.size(); ++i )
+    {
+        x[i] = std::complex<__float128>( static_cast<__float128>( xld[i].real() ),
+                                         static_cast<__float128>( xld[i].imag() ) );
+    }
+}
+#endif
+
 } // namespace math
 } // namespace mx
 

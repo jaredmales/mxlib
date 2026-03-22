@@ -435,7 +435,7 @@ int zernike( arrayT &arr,                     /**< [out] allocated array with an
 
             if( rho <= 1.0 )
             {
-                phi = std::atan2( y, x );
+                phi = math::atan2( y, x );
                 arr( i, j ) = zernike( rho, phi, n, m, c );
             }
             else

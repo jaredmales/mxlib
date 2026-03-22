@@ -291,7 +291,7 @@ int get_W_1pt_z0(arithT &W, arithT x, arithT y, arithT r, arithT f, arithT w)
    }
    else return -1;
    
-   W = atan2(sinW, cosW);
+   W = math::atan2(sinW, cosW);
    return 0;
 }
 

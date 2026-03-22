@@ -141,7 +141,7 @@ void ar1PSD( std::vector<realT> &psd, ///< [out] the PSD, will be resized and fi
              std::complex<realT> alpha    ///< [in] the complex AR1 constant
 )
 {
-    realT fpole = atan2( alpha.imag(), alpha.real() ) * ( 2 * f.back() ) / math::two_pi<realT>();
+    realT fpole = math::atan2( alpha.imag(), alpha.real() ) * ( 2 * f.back() ) / math::two_pi<realT>();
 
     return ar1PSD( psd, f, beta, abs( alpha ), fpole );
 }

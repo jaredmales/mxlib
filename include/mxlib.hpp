@@ -27,11 +27,28 @@
 #define mxlib_hpp
 
 #include <ios>
+#include <ostream>
+
+#ifdef MXLIB_HAS_QUAD
+#include <cstdio>
+#include <quadmath.h>
+#endif
 
 #include "mxlib_uncomp_version.h"
 
 #include "error/error.hpp"
 #include "error/exception.hpp"
+
+#ifdef MXLIB_HAS_QUAD
+/// Stream a quad-precision floating-point value.
+inline std::ostream &operator<<( std::ostream &ios, __float128 value )
+{
+    char buffer[128];
+    quadmath_snprintf( buffer, sizeof( buffer ), "%Qg", value );
+    ios << buffer;
+    return ios;
+}
+#endif
 
 namespace mx
 {
