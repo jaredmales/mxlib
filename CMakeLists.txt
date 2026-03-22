@@ -136,14 +136,24 @@ endfunction()
 # each setting is prefixed with MXLIB_
 #########################################
 
-set(MXLIB_CVERSION "--std=c99" CACHE STRING "mxlib c version")
-set(MXLIB_CXXVERSION "--std=c++20" CACHE STRING "mxlib c++ version (minimum is c++20)")
+set(_MXLIB_DEFAULT_CVERSION "-std=c99")
+set(_MXLIB_DEFAULT_CXXVERSION "-std=c++20")
 
-#Jared's setup: "-march=native -mfma -DNDEBUG"
-set(MXLIB_CFLAGS "-march=native" CACHE STRING "mxlib c compiler flags")
-set(MXLIB_CXXFLAGS "-march=native" CACHE STRING "mxlib c++ compiler flags")
+# Keep architecture tuning conservative on Apple Silicon; clang there already
+# gets the target architecture from CMAKE_OSX_ARCHITECTURES.
+set(_MXLIB_DEFAULT_ARCH_FLAGS "-march=native")
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    set(_MXLIB_DEFAULT_ARCH_FLAGS "")
+endif()
 
-set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
+set(MXLIB_CVERSION "${_MXLIB_DEFAULT_CVERSION}" CACHE STRING "mxlib c version")
+set(MXLIB_CXXVERSION "${_MXLIB_DEFAULT_CXXVERSION}" CACHE STRING "mxlib c++ version (minimum is c++20)")
+
+# Jared's historical setup was "-march=native -mfma -DNDEBUG".
+set(MXLIB_CFLAGS "${_MXLIB_DEFAULT_ARCH_FLAGS}" CACHE STRING "mxlib c compiler flags")
+set(MXLIB_CXXFLAGS "${_MXLIB_DEFAULT_ARCH_FLAGS}" CACHE STRING "mxlib c++ compiler flags")
+
+set(MXLIB_OPTIMIZE "-O3 -ffast-math" CACHE STRING "mxlib optimization settings")
 
 set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
 
@@ -165,7 +175,11 @@ set(MXLIB_MKL_INCLUDE_DIRECTORY "$ENV{MKLROOT}/include" CACHE STRING "MKL includ
 set(MXLIB_MKL_DEFINITIONS "-DMXLIB_MKL" CACHE STRING "MKL compiler defines")
 set(MXLIB_MKL_CFLAGS "-m64" CACHE STRING "MKL compiiler cflags (used for cxx too)")
 set(MXLIB_MKL_LIBDIRS "$ENV{MKLROOT}/lib/intel64" CACHE STRING "list of MKL link directories")
-set(MXLIB_MKL_LDFLAGS "-Wl,--no-as-needed" CACHE STRING "MKL linker flags")
+set(_MXLIB_DEFAULT_MKL_LDFLAGS "-Wl,--no-as-needed")
+if(APPLE)
+    set(_MXLIB_DEFAULT_MKL_LDFLAGS "")
+endif()
+set(MXLIB_MKL_LDFLAGS "${_MXLIB_DEFAULT_MKL_LDFLAGS}" CACHE STRING "MKL linker flags")
 set(MXLIB_MKL_LIBS "mkl_intel_lp64;mkl_sequential;mkl_core;pthread;m;dl" CACHE STRING "list of MKL libraries")
 
 set(MXLIB_CUDA_ARCH "native" CACHE STRING "the cuda architecture")
@@ -373,18 +387,25 @@ if(MXLIB_USE_OPENMP)
         target_link_libraries(mxlib-shared PUBLIC OpenMP::OpenMP_C OpenMP::OpenMP_CXX)
         target_link_libraries(mxlib-static PUBLIC OpenMP::OpenMP_C OpenMP::OpenMP_CXX)
 
-        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OpenMP_CXX_FLAGS}")
-        set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        if(OpenMP_CXX_FLAGS AND NOT OpenMP_CXX_FLAGS STREQUAL "NOTFOUND")
+            set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${OpenMP_CXX_FLAGS}")
+            set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        endif()
 
-        #this is so dumb, the following does not produce a linkable system:
-        # linklibdirs_from_list(OpenMP_LIBDIRS_FLAGS OpenMP_CXX_LIBRARY)
-        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBDIRS_FLAGS}")
+        if(OpenMP_CXX_INCLUDE_DIR)
+            set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${OpenMP_CXX_INCLUDE_DIR}")
+        endif()
 
-        # linklibs_from_list(OpenMP_LIBRARIES_FLAGS OpenMP_CXX_LIB_NAMES)
-        # set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBRARIES_FLAGS}")
-        #but this does
-        set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -fopenmp")
-        #which does not appear to be supported by any variable produced in FindOpenMP
+        if(OpenMP_CXX_LIB_NAMES AND NOT OpenMP_CXX_LIB_NAMES STREQUAL "NOTFOUND")
+            linklibs_from_list(OpenMP_LIBRARIES_FLAGS OpenMP_CXX_LIB_NAMES)
+            set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${OpenMP_LIBRARIES_FLAGS}")
+        endif()
+
+        if(OpenMP_libomp_LIBRARY AND NOT OpenMP_libomp_LIBRARY STREQUAL "OpenMP_libomp_LIBRARY-NOTFOUND")
+            get_filename_component(OpenMP_libomp_LIBRARY_DIR ${OpenMP_libomp_LIBRARY} DIRECTORY)
+            libname_from_path(OpenMP_libomp_LIBNAME OpenMP_libomp_LIBRARY)
+            set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -L${OpenMP_libomp_LIBRARY_DIR} -l${OpenMP_libomp_LIBNAME}")
+        endif()
 
         message("mxlib: OpenMP support enabled")
 
