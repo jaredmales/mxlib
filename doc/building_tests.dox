@@ -36,7 +36,7 @@
  * cmake --build _build --target mxlibTestRun
  * \endcode
  *
- * Build and run a single test source (Makefile.one equivalent):
+ * Build and run a single test source:
  *
  * \code{.sh}
  * cmake -S . -B _build -DMXLIB_BUILD_TESTS=ON -DMXLIB_ONE_TEST=include/math/geo_test.cpp

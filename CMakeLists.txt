@@ -16,31 +16,7 @@
 # (i.o.w. minimum depends should be boost and Eigen.  maybe we don't even need Eigen)
 #
 #
-## Compliance with Makefile build;
-#                    linux   darwin
-#  OPTIMIZATIONS      X
-#  CXXFLAGS           X
-#  CXXVERSION         X
-#  CFLAGS             X
-#  EIGEN              X
-#  CFITSIO            X
-#  GSL                X
-#  levmar             X
-#  SOFA               X
-#
-# Options to implement:
-#                     linux   darwin
-#  NEED_CUDA            X
-#  NEED_ISIO            X       ?
-#  USE_FFT_FROM         X
-#  USE_BLAS_FROM:      ------------
-#       MKL             X       -
-#       openblas        X       -
-#       openblas-serial -       -
-#       openblas-openmp -       -
-#
-# New Todos:
-#
+## Feature parity / cleanup notes
 
 #########################################
 # basic setup
