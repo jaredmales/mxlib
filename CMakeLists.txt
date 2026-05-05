@@ -167,7 +167,7 @@ set(MXLIB_CXXFLAGS "-march=native" CACHE STRING "mxlib c++ compiler flags")
 
 set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
 
-set(MXLIB_DEFINES "D_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
+set(MXLIB_DEFINES "_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
 
 option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other libraries" ON )
 
@@ -362,7 +362,7 @@ add_compile_definitions(${MXLIB_DEFINES})
 set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} -${MXLIB_DEFINES}")
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} -D${MXLIB_DEFINES}")
 
 if(MXLIB_BUILD_COVERAGE)
     # Match the legacy Make coverage behavior: --coverage and -O0 for instrumented builds.
@@ -447,11 +447,11 @@ target_link_libraries (mxlib-shared PUBLIC PkgConfig::EIGEN3)
 target_link_libraries (mxlib-static PUBLIC PkgConfig::EIGEN3)
 
 #Don't let Eigen use openmp
-add_compile_definitions(DEIGEN_DONT_PARALLELIZE)
+add_compile_definitions(EIGEN_DONT_PARALLELIZE)
 
 set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER} -DDEIGEN_DONT_PARALLELIZE")
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER} -DEIGEN_DONT_PARALLELIZE")
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${EIGEN3_LDFLAGS}")
 
 ############################################
