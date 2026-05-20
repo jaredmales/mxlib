@@ -167,7 +167,7 @@ set(MXLIB_CXXFLAGS "-march=native" CACHE STRING "mxlib c++ compiler flags")
 
 set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
 
-set(MXLIB_DEFINES "-D_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
+set(MXLIB_DEFINES "_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
 
 option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other libraries" ON )
 
@@ -362,7 +362,7 @@ add_compile_definitions(${MXLIB_DEFINES})
 set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} ${MXLIB_DEFINES}")
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} -D${MXLIB_DEFINES}")
 
 if(MXLIB_BUILD_COVERAGE)
     # Match the legacy Make coverage behavior: --coverage and -O0 for instrumented builds.
@@ -447,7 +447,7 @@ target_link_libraries (mxlib-shared PUBLIC PkgConfig::EIGEN3)
 target_link_libraries (mxlib-static PUBLIC PkgConfig::EIGEN3)
 
 #Don't let Eigen use openmp
-add_compile_definitions(-DEIGEN_DONT_PARALLELIZE)
+add_compile_definitions(EIGEN_DONT_PARALLELIZE)
 
 set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER}")
 
@@ -666,7 +666,7 @@ if(MXLIB_USE_ISIO)
         target_link_libraries(mxlib-static PUBLIC PkgConfig::ISIO)
 
         include_directories(${ISIO_INCLUDE_DIRS})
-        add_compile_definitions("-DMXLIB_MILK")
+        add_compile_definitions("MXLIB_MILK")
 
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${ISIO_CFLAGS} ${ISIO_CFLAGS_OTHER} -DMXLIB_MILK")
         set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${ISIO_CFLAGS} -DMXLIB_MILK")
@@ -730,9 +730,9 @@ if(MXLIB_USE_CUDA)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
-    add_compile_definitions(-DEIGEN_NO_CUDA)
-    add_compile_definitions(-DMXLIB_CUDA)
-    add_compile_definitions(-DMXLIB_MILK)
+    add_compile_definitions(EIGEN_NO_CUDA)
+    add_compile_definitions(MXLIB_CUDA)
+    add_compile_definitions(MXLIB_MILK)
 
     #Strip the includes, extra spaces, and prepend -Xcompiler
     string(REGEX REPLACE "-I[^ ]*" "" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
