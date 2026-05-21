@@ -74,6 +74,19 @@ macro(linklibdirs_from_list LINK_LIBDIRS LIBDIR_LIST)
 
 endmacro()
 
+## macro include_dirs_to_cflags
+ # Turn list of include directories into a -I delimited string for compilation
+ #
+ # First: INCLUDE_CFLAGS: output string
+ # Second: INCLUDE_DIRS_LIST: input list to process
+ #
+macro(include_dirs_to_cflags INCLUDE_CFLAGS INCLUDE_DIRS_LIST)
+
+    string(REPLACE ";" " -I" ${INCLUDE_CFLAGS} "${${INCLUDE_DIRS_LIST}}")
+    set(${INCLUDE_CFLAGS} "-I${${INCLUDE_CFLAGS}}")
+
+endmacro()
+
 ## Extract the library name from a path
  # e.g. /path/to/libname.so produces name
  #
@@ -108,6 +121,34 @@ macro(liblist_strip_namespace LIBRARY_LIST prefix)
 
 endmacro()
 
+## macro liblist_strip_paths
+ # Strip path and library filename decorations from a list.
+ # E.g. /path/to/libname.so becomes name
+ #
+ # LIBRARY_LIST: input/output list of libraries
+ #
+macro(liblist_strip_paths LIBRARY_LIST)
+
+    set(LIBLIST_STRIP_PATHS_OUT "")
+
+    foreach(lib ${${LIBRARY_LIST}})
+
+         cmake_path(HAS_PARENT_PATH lib LIB_IS_PATH)
+
+         if(LIB_IS_PATH)
+            get_filename_component(lib ${lib} NAME)
+            string(REGEX REPLACE "^lib" "" lib "${lib}")
+            string(REGEX REPLACE "(\\.so(\\..*)?|\\.a)$" "" lib "${lib}")
+         endif()
+
+         list(APPEND LIBLIST_STRIP_PATHS_OUT "${lib}")
+
+    endforeach()
+
+    set(${LIBRARY_LIST} "${LIBLIST_STRIP_PATHS_OUT}")
+
+endmacro()
+
 ## Function linklibs_from_list
  # Turn list of library names into a -l delimited string for linking
  # If the library is specified with a full path we don't mess with it
@@ -116,6 +157,8 @@ endmacro()
  # Second: LIBRARY_LIST: input list to process
  #
 macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
+
+    set(LINKLIBS_FROM_LIST_OUT "")
 
     foreach(lib ${${LIBRARY_LIST}})
 
@@ -127,13 +170,13 @@ macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
             string(PREPEND lib "-l")
          endif()
 
-         set(LIBRARY_LIST_OUT "${LIBRARY_LIST_OUT} ${lib}")
+         set(LINKLIBS_FROM_LIST_OUT "${LINKLIBS_FROM_LIST_OUT} ${lib}")
 
     endforeach()
 
     #message("LIBRARY_LIST_OUT: ${LIBRARY_LIST_OUT}")
 
-    set(${LINK_LIBRARIES} "${LIBRARY_LIST_OUT}")
+    set(${LINK_LIBRARIES} "${LINKLIBS_FROM_LIST_OUT}")
 
     #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
 
@@ -433,6 +476,7 @@ linklibdirs_from_list(Boost_LIBDIRS_FLAGS Boost_LIBRARY_DIRS)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBDIRS_FLAGS}")
 
 liblist_strip_namespace(Boost_LIBRARIES "boost_")
+liblist_strip_paths(Boost_LIBRARIES)
 linklibs_from_list(Boost_LIBRARIES_FLAGS Boost_LIBRARIES)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBRARIES_FLAGS}")
 
@@ -451,7 +495,8 @@ add_compile_definitions(EIGEN_DONT_PARALLELIZE)
 
 set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${EIGEN3_INCLUDE_DIRS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER} -DEIGEN_DONT_PARALLELIZE")
+include_dirs_to_cflags(EIGEN3_INCLUDE_CFLAGS EIGEN3_INCLUDE_DIRS)
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${EIGEN3_INCLUDE_CFLAGS} ${EIGEN3_CFLAGS} ${EIGEN3_CFLAGS_OTHER} -DEIGEN_DONT_PARALLELIZE")
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${EIGEN3_LDFLAGS}")
 
 ############################################
@@ -467,7 +512,8 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3_CFLAGS} ${FFTW3_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3_INCLUDE_DIRS}")
+    include_dirs_to_cflags(FFTW3_INCLUDE_CFLAGS FFTW3_INCLUDE_DIRS)
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${FFTW3_INCLUDE_CFLAGS}")
 
     linklibdirs_from_list(FFTW3_LIBDIRS_FLAGS FFTW3_LIBRARY_DIRS)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3_LIBDIRS_FLAGS}")
@@ -483,7 +529,8 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3F)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3F_CFLAGS} ${FFTW3F_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3F_INCLUDE_DIRS}")
+    include_dirs_to_cflags(FFTW3F_INCLUDE_CFLAGS FFTW3F_INCLUDE_DIRS)
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${FFTW3F_INCLUDE_CFLAGS}")
 
     linklibdirs_from_list(FFTW3F_LIBDIRS_FLAGS FFTW3F_LIBRARY_DIRS)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3F_LIBDIRS_FLAGS}")
@@ -499,7 +546,8 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3L)
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3L_CFLAGS} ${FFTW3L_CFLAGS_OTHER}")
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${FFTW3L_INCLUDE_DIRS}")
+    include_dirs_to_cflags(FFTW3L_INCLUDE_CFLAGS FFTW3L_INCLUDE_DIRS)
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${FFTW3L_INCLUDE_CFLAGS}")
 
     linklibdirs_from_list(FFTW3L_LIBDIRS_FLAGS FFTW3L_LIBRARY_DIRS)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTWL_LIBDIRS_FLAGS}")
@@ -518,7 +566,8 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
         target_link_libraries(mxlib-static PUBLIC PkgConfig::FFTW3Q)
 
         set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${FFTW3Q_CFLAGS} ${FFTW3Q_CFLAGS_OTHER}")
-        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DHAS_QUAD -I${FFTW3Q_INCLUDE_DIRS}")
+        include_dirs_to_cflags(FFTW3Q_INCLUDE_CFLAGS FFTW3Q_INCLUDE_DIRS)
+        set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DHAS_QUAD ${FFTW3Q_INCLUDE_CFLAGS}")
 
         linklibdirs_from_list(FFTW3Q_LIBDIRS_FLAGS FFTW3Q_LIBRARY_DIRS)
         set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3Q_LIBDIRS_FLAGS}")
@@ -562,7 +611,8 @@ if(${MXLIB_USE_BLAS_FROM} STREQUAL "mkl")
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_MKL_CFLAGS}")
 
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -I${MXLIB_MKL_INCLUDE_DIRECTORY} ${MXLIB_MKL_DEFINITIONS} ${MXLIB_MKL_CFLAGS}" )
+    include_dirs_to_cflags(MXLIB_MKL_INCLUDE_CFLAGS MXLIB_MKL_INCLUDE_DIRECTORY)
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${MXLIB_MKL_INCLUDE_CFLAGS} ${MXLIB_MKL_DEFINITIONS} ${MXLIB_MKL_CFLAGS}" )
 
     linklibdirs_from_list(MXLIB_MKL_LIBDIRS_FLAGS MXLIB_MKL_LIBDIRS)
     linklibs_from_list(MXLIB_MKL_LIBS_FLAGS MXLIB_MKL_LIBS)
@@ -726,7 +776,7 @@ if(MXLIB_USE_CUDA)
 
     libname_from_path(CUDA_cusolver_LIBNAME CUDA_cusolver_LIBRARY)
 
-    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXVERSION} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} ${MXLIB_DEFINES}")
+    set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} ${MXLIB_CXXFLAGS} ${MXLIB_OPTIMIZE} -D${MXLIB_DEFINES}")
 
     set(MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
@@ -737,6 +787,7 @@ if(MXLIB_USE_CUDA)
     #Strip the includes, extra spaces, and prepend -Xcompiler
     string(REGEX REPLACE "-I[^ ]*" "" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
     string(REGEX REPLACE "[ ]+" " " MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
+    string(STRIP "${MXLIB_NVCCXX_FLAGS}" MXLIB_NVCCXX_FLAGS)
     string(REPLACE " " " -Xcompiler=" MXLIB_NVCCXX_FLAGS "${MXLIB_NVCCXX_FLAGS}")
 
     #and add to the CUDA flags
@@ -747,7 +798,8 @@ if(MXLIB_USE_CUDA)
     set(CMAKE_CUDA_STANDARD 20)
     #set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA -I${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+    include_dirs_to_cflags(CUDA_INCLUDE_CFLAGS CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES)
+    set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} -DEIGEN_NO_CUDA -DMXLIB_CUDA ${CUDA_INCLUDE_CFLAGS}")
 
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -L${CUDAToolkit_LIBRARY_DIR}")
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} -l${CUDA_cudart_LIBNAME}")
