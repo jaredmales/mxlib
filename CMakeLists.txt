@@ -108,6 +108,34 @@ macro(liblist_strip_namespace LIBRARY_LIST prefix)
 
 endmacro()
 
+## macro liblist_strip_paths
+ # Strip path and library filename decorations from a list.
+ # E.g. /path/to/libname.so becomes name
+ #
+ # LIBRARY_LIST: input/output list of libraries
+ #
+macro(liblist_strip_paths LIBRARY_LIST)
+
+    set(LIBLIST_STRIP_PATHS_OUT "")
+
+    foreach(lib ${${LIBRARY_LIST}})
+
+         cmake_path(HAS_PARENT_PATH lib LIB_IS_PATH)
+
+         if(LIB_IS_PATH)
+            get_filename_component(lib ${lib} NAME)
+            string(REGEX REPLACE "^lib" "" lib "${lib}")
+            string(REGEX REPLACE "(\\.so(\\..*)?|\\.a)$" "" lib "${lib}")
+         endif()
+
+         list(APPEND LIBLIST_STRIP_PATHS_OUT "${lib}")
+
+    endforeach()
+
+    set(${LIBRARY_LIST} "${LIBLIST_STRIP_PATHS_OUT}")
+
+endmacro()
+
 ## Function linklibs_from_list
  # Turn list of library names into a -l delimited string for linking
  # If the library is specified with a full path we don't mess with it
@@ -116,6 +144,8 @@ endmacro()
  # Second: LIBRARY_LIST: input list to process
  #
 macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
+
+    set(LINKLIBS_FROM_LIST_OUT "")
 
     foreach(lib ${${LIBRARY_LIST}})
 
@@ -127,13 +157,13 @@ macro(linklibs_from_list LINK_LIBRARIES LIBRARY_LIST)
             string(PREPEND lib "-l")
          endif()
 
-         set(LIBRARY_LIST_OUT "${LIBRARY_LIST_OUT} ${lib}")
+         set(LINKLIBS_FROM_LIST_OUT "${LINKLIBS_FROM_LIST_OUT} ${lib}")
 
     endforeach()
 
     #message("LIBRARY_LIST_OUT: ${LIBRARY_LIST_OUT}")
 
-    set(${LINK_LIBRARIES} "${LIBRARY_LIST_OUT}")
+    set(${LINK_LIBRARIES} "${LINKLIBS_FROM_LIST_OUT}")
 
     #message("LINK_LIBRARIES: ${${LINK_LIBRARIES}}")
 
@@ -433,6 +463,7 @@ linklibdirs_from_list(Boost_LIBDIRS_FLAGS Boost_LIBRARY_DIRS)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBDIRS_FLAGS}")
 
 liblist_strip_namespace(Boost_LIBRARIES "boost_")
+liblist_strip_paths(Boost_LIBRARIES)
 linklibs_from_list(Boost_LIBRARIES_FLAGS Boost_LIBRARIES)
 set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${Boost_LIBRARIES_FLAGS}")
 
