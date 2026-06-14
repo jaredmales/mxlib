@@ -6,10 +6,9 @@
 
 These are instructions for installing the `mxlib` c/c++ library.  This is my personal library which I have built up over
 many years.  Along the way I have tried to keep it organized and documented.  I have installed it on several different
-linux systems (running Rocky or Ubuntu). Installation on Mac O/S is also possible using Conda.
+linux systems (running Rocky, Fedora, or Ubuntu). Installation on Mac O/S is also possible using Conda.
 
-The below instructions were updated in July 2025 after implementing the CMake build system.  The original `make` build
-system still works (July, 2025) but will not be maintained going forward.
+`mxlib` now uses a `CMake` build system, the original `make` build system has been removed.
 
 \section quick_start Quick Start
 
@@ -53,12 +52,12 @@ You will need to make sure to install the `dev` packages.
 -# You need a basic build system:
     -# You need a c compiler supporting C99.
     -# You need a c++17 compatible c++ compiler.  c++20 is preferred and is the default.
-    -# You need `make`
-    -# To use the `cmake`  build system you need `cmake`  and `pkg-config`
+    -# You need `cmake`  and `pkg-config`
 
 -# You need the `boost` c++ system library (this is probably obtainable from the linux distro package manager, fine to install with
    apt or yum).
-  - On Ubuntu you can just install `libboost-system-dev`.
+  - On Ubuntu 26 you can just install `sudo apt install libboost-dev`.
+  - On earlier Ubuntus you can install `libboost-system-dev`.
 
 -# You need the `Eigen` matrix library (http://eigen.tuxfamily.org/index.php).
   - It is best to use `cmake` to configure Eigen and install it. This will ensure that the package config is updated.
@@ -201,46 +200,6 @@ This installs the `myProgram` binary to `$PREFIX/bin`.
 
 For more complicated applications, you can create a local `Makefile` which specifies the `TARGET` and additional objects with
 `OTHER_OBJS`, and finally includes `MxApp.mk`. See `MxApp.mk` for additional options.
-
-\section The Old Makefile Build System
-
-Configuring the old makefile build system requires editing files in the `mxlib/local` directory. To avoid getting the
-modification warning due to makefile modifications, the only files you should edit during
-installation are the local/Common.mk, local/MxLib.mk, and local/mxApp.mk.  Do not edit these in the mk folder.
-
-\subsection building_make Configuring and Building mxlib
-
-Once you have met all the dependencies:
-
--# clone `mxlib` from https://github.com/jaredmales/mxlib
-
--# If you need to customize the build (e.g. switch the BLAS or FFT library used or modify paths), run `make setup`.
-   This will create three Makefiles in `local/` for you to customize.
-
--# To further configure `mxlib` edit the files in the `local/` directory only.  Some options are:
-  - Any variable set with `?=` in the files in `mk/` can be overridden in the corresponding `local/` one. The files in
-    `local/` are not tracked in git and editing them will not cause compile warnings.
-  - If you want to change the install path from `$HOME` to something else, set `PREFIX=` in `local/Common.mk`.
-  - `USE_BLAS_FROM` can be set to `mkl`, `ATLAS`, or `Accelerate` (macOS only). You may also need to override `BLAS_INCLUDES`,
-    `BLAS_LDFLAGS`, and/or `BLAS_LDLIBS` to set paths and flags. (See `mk/MxApp.mk` for examples.)
-
--# You can also pass config options to make, as in `make PREFIX=/path/to/libs`.
-
--# Build `mxlib` by running `make` at the top level.
-
--# Install `mxlib` with `make install`.  `sudo` may be required depending on the `PREFIX`.  Possibly `sudo -E`.
-
-\subsection building_make_conda Makefile build with Conda
-
-If you have used `conda` to install the dependencies you should set `PREFIX=$CONDA_PREFIX` and `NEED_CUDA=no`.
-It is recommended that you do this in `local/Common.mk` but it can be done on the command line as:
-
-\code{.bash}
-make install PREFIX=$CONDA_PREFIX NEED_CUDA=no
-\endcode
-
-Now `mxlib` headers and libraries are in $CONDA_PREFIX/include and $CONDA_PREFIX/lib and should be found by default as long as "conda activate mxlib_env" is always run after you open a new terminal and before you compile things that use mxlib.
-
 
 
 @}
