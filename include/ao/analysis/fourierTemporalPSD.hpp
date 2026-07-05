@@ -770,14 +770,61 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
                                                        bool writeXfer )
 {
 
+    if( m_aosys == nullptr )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: m_aosys is null.\n";
+        return -1;
+    }
+
+    if( mnMax <= 0 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: mnMax must be > 0.\n";
+        return -1;
+    }
+
+    if( mnCon < 0 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: mnCon must be >= 0.\n";
+        return -1;
+    }
+
+    if( lpNc < 0 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: lpNc must be >= 0.\n";
+        return -1;
+    }
+
+    if( lifetimeTrials < 0 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: lifetimeTrials must be >= 0.\n";
+        return -1;
+    }
+
+    if( mags.empty() )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: at least one guide star magnitude is required.\n";
+        return -1;
+    }
+
+    if( m_aosys->tauWFS() <= 0 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: tauWFS must be > 0.\n";
+        return -1;
+    }
+
     std::string dir = psdDir + "/" + subDir;
 
     /*** Dump Params to file ***/
-    mkdir( dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    ioutils::createDirectories( dir );
 
     std::ofstream fout;
     std::string fn = dir + '/' + "params.txt";
     fout.open( fn );
+    if( !fout.good() )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: could not open " << fn << " for writing.\n";
+        return -1;
+    }
 
     fout << "#---------------------------\n";
     m_aosys->dumpAOSystem( fout );
@@ -787,9 +834,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     fout << "#    mnCon    = " << mnCon << '\n';
     fout << "#    lpNc     = " << lpNc << '\n';
     fout << "#    mags     = ";
-    for( size_t i = 0; i < mags.size() - 1; ++i )
-        fout << mags[i] << ",";
-    fout << mags[mags.size() - 1] << '\n';
+    for( size_t i = 0; i < mags.size(); ++i )
+    {
+        if( i > 0 )
+        {
+            fout << ",";
+        }
+        fout << mags[i];
+    }
+    fout << '\n';
     fout << "#    lifetimeTrials = " << lifetimeTrials << '\n';
     fout << "#    uncontrolledLifetimes = " << uncontrolledLifetimes << '\n';
     fout << "#    writePSDs = " << std::boolalpha << writePSDs << '\n';
@@ -803,6 +856,35 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     realT tauWFS = m_aosys->tauWFS();
     realT deltaTau = m_aosys->deltaTau();
 
+    std::vector<realT> gridFreq;
+    if( getGridFreq( gridFreq, psdDir ) < 0 )
+    {
+        return -1;
+    }
+
+    if( gridFreq.size() < 2 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: PSD frequency grid must have at least two samples.\n";
+        return -1;
+    }
+
+    size_t imax = 0;
+    while( imax < gridFreq.size() && gridFreq[imax] <= 0.5 * fs )
+    {
+        ++imax;
+    }
+
+    if( imax < gridFreq.size() - 1 && gridFreq[imax] <= 0.5 * fs * ( 1.0 + 1e-7 ) )
+    {
+        ++imax;
+    }
+
+    if( imax < 2 )
+    {
+        std::cerr << "fourierTemporalPSD::analyzePSDGrid: PSD frequency grid has fewer than two samples below the loop Nyquist frequency.\n";
+        return -1;
+    }
+
     std::vector<sigproc::fourierModeDef> fms;
 
     sigproc::makeFourierModeFreqs_Rect( fms, 2 * mnMax );
@@ -813,18 +895,16 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     gains.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
     vars.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
     speckleLifetimes.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
-
-    gains( mnMax, mnMax ) = 0;
-    vars( mnMax, mnMax ) = 0;
-    speckleLifetimes( mnMax, mnMax ) = 0;
+    gains.setZero();
+    vars.setZero();
+    speckleLifetimes.setZero();
 
     gains_lp.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
     vars_lp.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
     speckleLifetimes_lp.resize( 2 * mnMax + 1, 2 * mnMax + 1 );
-
-    gains_lp( mnMax, mnMax ) = 0;
-    vars_lp( mnMax, mnMax ) = 0;
-    speckleLifetimes_lp( mnMax, mnMax ) = 0;
+    gains_lp.setZero();
+    vars_lp.setZero();
+    speckleLifetimes_lp.setZero();
 
     bool doLP = false;
     if( lpNc > 1 )
@@ -843,15 +923,15 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     {
         for( size_t s = 0; s < mags.size(); ++s )
         {
-            std::string psdOutDir = std::format("{}/outputPSDS_{}_si",dir, mags[s]);
+            std::string psdOutDir = std::format("{}/outputPSDs_{}_si",dir, mags[s]);
             //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si";
-            mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+            ioutils::createDirectories( psdOutDir );
 
             if( doLP )
             {
-                std::string psdOutDir = std::format("{}/outputPSDS_{}_lp",dir, mags[s]);
+                std::string psdOutDir = std::format("{}/outputPSDs_{}_lp",dir, mags[s]);
                 //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp";
-                mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+                ioutils::createDirectories( psdOutDir );
             }
         }
     }
@@ -898,6 +978,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
         m_aosys->optd( m_aosys->optd() ); // just trigger a re-calc
         realT strehl = m_aosys->strehl();
 
+        bool gridReadFailed = false;
+
 #pragma omp parallel
         {
             realT localMag = mags[s];
@@ -918,27 +1000,12 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
                                         // PSDs.
 
             //**< Get the frequency grid, and nyquist limit it to f_s/2
-            getGridPSD( tfreq, tPSDp, psdDir, 0, 1 ); // To get the freq grid
-
-            size_t imax = 0;
-            while( tfreq[imax] <= 0.5 * fs )
-            {
-                ++imax;
-                if( imax > tfreq.size() - 1 )
-                    break;
-            }
-
-            if( imax < tfreq.size() - 1 && tfreq[imax] <= 0.5 * fs * ( 1.0 + 1e-7 ) )
-            {
-                ++imax;
-            }
+            tfreq.assign( gridFreq.begin(), gridFreq.begin() + imax );
 
             if( writePSDs )
             {
-                tfreqHF.assign( tfreq.begin(), tfreq.end() );
+                tfreqHF.assign( gridFreq.begin(), gridFreq.end() );
             }
-
-            tfreq.erase( tfreq.begin() + imax, tfreq.end() );
 
             tPSDpPOL.resize( tfreq.size() ); // pre=allocate
             //**>
@@ -969,26 +1036,23 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
             std::vector<std::complex<realT>> ETFxn;
             std::vector<std::complex<realT>> NTFxn;
 
-            if( lifetimeTrials > 0 )
+            if( lifetimeTrials > 0 || writeXfer )
             {
                 ETFxn.resize( tfreq.size() );
                 NTFxn.resize( tfreq.size() );
+            }
 
-                if( writeXfer )
-                {
-                    std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
-                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
-                    ioutils::createDirectories( tfOutFile );
-                }
+            if( writeXfer )
+            {
+                std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
+                //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
+                ioutils::createDirectories( tfOutFile );
 
                 if( doLP )
                 {
-                    if( writeXfer )
-                    {
-                        std::string tfOutFile = std::format("{}/outputTF_{}_lp", dir, mags[s]);
-                        //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
-                        ioutils::createDirectories( tfOutFile );
-                    }
+                    tfOutFile = std::format("{}/outputTF_{}_lp", dir, mags[s]);
+                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                    ioutils::createDirectories( tfOutFile );
                 }
             }
 
@@ -1028,10 +1092,29 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                 else
                 {
 
-                    realT k = sqrt( m * m + n * n ) / m_aosys->D();
-
                     //**< Get the open-loop turb. PSD
-                    getGridPSD( tPSDp, psdDir, m, n );
+                    if( getGridPSD( tPSDp, psdDir, m, n ) < 0 )
+                    {
+#pragma omp critical
+                        {
+                            gridReadFailed = true;
+                        }
+                        watcher.incrementAndOutputStatus();
+                        continue;
+                    }
+
+                    if( tPSDp.size() != gridFreq.size() )
+                    {
+#pragma omp critical
+                        {
+                            std::cerr << "fourierTemporalPSD::analyzePSDGrid: PSD size mismatch for mode ("
+                                      << m << ", " << n << "). Expected " << gridFreq.size()
+                                      << " samples, got " << tPSDp.size() << ".\n";
+                            gridReadFailed = true;
+                        }
+                        watcher.incrementAndOutputStatus();
+                        continue;
+                    }
 
                     // Get integral of entire open-loop PSD
                     var0 = sigproc::psdVar( tfreq, tPSDp );
@@ -1174,6 +1257,7 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         else
                         {
                             gopt_lp = 0;
+                            var_lp = var;
                         }
                     }
                     else
@@ -1260,23 +1344,36 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( i == 0 ) // Write freq on the first one
                             {
-                                std::string fOutFile = tfOutFile + "freq.binv";
+                                std::string fOutFile = tfOutFile + "/freq.binv";
                                 ioutils::writeBinVector( fOutFile, tfreq );
                             }
                         }
 
                         if( lifetimeTrials > 0 )
                         {
-                            speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials );
-                            realT spvar = sigproc::psdVar( spfreq, sppsd );
+                            if( speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials ) < 0 )
+                            {
+#pragma omp critical
+                                {
+                                    gridReadFailed = true;
+                                }
+                            }
+                            else
+                            {
+                                realT spvar = sigproc::psdVar( spfreq, sppsd );
 
-                            realT splifeT = 100.0;
-                            realT error;
+                                realT splifeT = 100.0;
+                                realT error;
 
-                            realT tau = pvm( error, spfreq, sppsd, splifeT ) * ( splifeT ) / spvar;
+                                realT tau = 0;
+                                if( spvar > 0 )
+                                {
+                                    tau = pvm( error, spfreq, sppsd, splifeT ) * ( splifeT ) / spvar;
+                                }
 
-                            speckleLifetimes( mnMax + m, mnMax + n ) = tau;
-                            speckleLifetimes( mnMax - m, mnMax - n ) = tau;
+                                speckleLifetimes( mnMax + m, mnMax + n ) = tau;
+                                speckleLifetimes( mnMax - m, mnMax - n ) = tau;
+                            }
                         }
 
                         if( doLP )
@@ -1315,23 +1412,36 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                                 if( i == 0 ) // Write freq on the first one
                                 {
-                                    std::string fOutFile = tfOutFile + "freq.binv";
+                                    std::string fOutFile = tfOutFile + "/freq.binv";
                                     ioutils::writeBinVector( fOutFile, tfreq );
                                 }
                             }
 
                             if( lifetimeTrials > 0 )
                             {
-                                speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials );
-                                realT spvar = sigproc::psdVar( spfreq, sppsd );
+                                if( speckleAmpPSD( spfreq, sppsd, tfreq, tPSDp, ETFxn, tPSDn, NTFxn, lifetimeTrials ) < 0 )
+                                {
+#pragma omp critical
+                                    {
+                                        gridReadFailed = true;
+                                    }
+                                }
+                                else
+                                {
+                                    realT spvar = sigproc::psdVar( spfreq, sppsd );
 
-                                realT splifeT = 100.0;
-                                realT error;
+                                    realT splifeT = 100.0;
+                                    realT error;
 
-                                realT tau = pvm( error, spfreq, sppsd, splifeT ) * ( splifeT ) / spvar;
+                                    realT tau = 0;
+                                    if( spvar > 0 )
+                                    {
+                                        tau = pvm( error, spfreq, sppsd, splifeT ) * ( splifeT ) / spvar;
+                                    }
 
-                                speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
-                                speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+                                    speckleLifetimes_lp( mnMax + m, mnMax + n ) = tau;
+                                    speckleLifetimes_lp( mnMax - m, mnMax - n ) = tau;
+                                }
                             }
                         } // if(doLP)
                     } // if( (lifetimeTrials > 0 || writeXfer) && ( uncontrolledLifetimes || inside ))
@@ -1438,6 +1548,11 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
             } // omp for i..nModes
         } // omp Parallel
+
+        if( gridReadFailed )
+        {
+            return -1;
+        }
 
         Eigen::Array<realT, -1, -1> cim;
 
@@ -1780,7 +1895,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
             }
             else
             {
-                for( int q = 0; q < ETFsi.size(); ++q )
+                for( size_t q = 0; q < ETFsi[i].size(); ++q )
                 {
                     ETFsi[i][q] = 1;
                     NTFsi[i][q] = 0;
@@ -1791,7 +1906,8 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
         }
 
         sigproc::averagePeriodogram<realT> tavgPgram(
-            sz2Sided / 1.,
+            sz2Sided,
+            0,
             1 / fs ); // this is just to get the size right, per-thread instances below
         std::vector<std::vector<realT>> spPSDs;
         spPSDs.resize( nModes );
@@ -1862,7 +1978,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
             N_nm.resize( sz2Sided );
 
             // Periodogram averager
-            sigproc::averagePeriodogram<realT> avgPgram( sz2Sided / 1., 1 / fs ); //, 0, 1);
+            sigproc::averagePeriodogram<realT> avgPgram( sz2Sided, 0, 1 / fs ); //, 0, 1);
             avgPgram.win( sigproc::window::hann );
 
             // The periodogram output
@@ -1987,7 +2103,7 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
 
                     // Filter it
                     // Set sqrt(PSD), just a pointer switch
-                    pfilt.psdSqrt( &sqrtNPSD[pp], tfreq[1] - tfreq[0] );
+                    nfilt.psdSqrt( &sqrtNPSD[pp], tfreq[1] - tfreq[0] );
                     nfilt.filter( N_n );
                     nfilt.filter( N_nm );
 

@@ -405,6 +405,11 @@ void averagePeriodogram<realT>::operator()( realT *pgram, const realT *ts, size_
         std::cerr << "averagePeriodogram: Window size not correct.\n";
     }
 
+    for( size_t j = 0; j < m_size; ++j )
+    {
+        pgram[j] = 0;
+    }
+
     int Navg = sz / m_nOver;
 
     while( Navg * m_nOver + m_avgLen > sz )

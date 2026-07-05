@@ -8,7 +8,13 @@
 #ifndef speckleAmpPSD_hpp
 #define speckleAmpPSD_hpp
 
+#include <algorithm>
+#include <iostream>
 #include <vector>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <Eigen/Dense>
 
@@ -64,6 +70,25 @@ int speckleAmpPSD(
 )
 {
 
+    if( N <= 0 )
+    {
+        std::cerr << "speckleAmpPSD: N must be > 0.\n";
+        return -1;
+    }
+
+    if( freq.size() < 2 )
+    {
+        std::cerr << "speckleAmpPSD: frequency grid must have at least two samples.\n";
+        return -1;
+    }
+
+    if( fmPSD.size() != freq.size() || nPSD.size() != freq.size() || fmXferFxn.size() != freq.size() ||
+        nXferFxn.size() != freq.size() )
+    {
+        std::cerr << "speckleAmpPSD: input vectors must all match the frequency grid size.\n";
+        return -1;
+    }
+
     std::vector<realT> psd2, npsd2;
     std::vector<std::complex<realT>> xfer2, nxfer2;
 
@@ -89,7 +114,9 @@ int speckleAmpPSD(
     int Nsamp = 1.0 * psd2.size();
     int NsampStart = 0.5 * Nwd - 0.5 * Nsamp;
 
-    sigproc::averagePeriodogram<realT> globalAvgPgram( Nsamp * 0.1, dt );
+    size_t avgLen = std::max<size_t>( 1, static_cast<size_t>( Nsamp * 0.1 ) );
+
+    sigproc::averagePeriodogram<realT> globalAvgPgram( avgLen, 0, dt );
     spPSD.resize( globalAvgPgram.size() );
     for( size_t n = 0; n < spPSD.size(); ++n )
         spPSD[n] = 0;
@@ -103,7 +130,11 @@ int speckleAmpPSD(
     // and the noise variance
     realT nVar = sigproc::psdVar( freq, nPSD );
 
+#ifdef _OPENMP
+#pragma omp parallel if( !omp_in_parallel() )
+#else
 #pragma omp parallel
+#endif
     {
         // Filters for imposing the PSDs
         mx::sigproc::psdFilter<realT, 1> filt;
@@ -140,7 +171,7 @@ int speckleAmpPSD(
         std::vector<realT> vn( Nsamp );
 
         // Periodogram averager
-        sigproc::averagePeriodogram<realT> avgPgram( Nsamp * 0.1, dt ); //, 0, 1);
+        sigproc::averagePeriodogram<realT> avgPgram( avgLen, 0, dt ); //, 0, 1);
         avgPgram.win( sigproc::window::hann );
 
         // The temporary periodogram
@@ -161,9 +192,16 @@ int speckleAmpPSD(
             filt( fm_n );
             math::vectorMeanSub( fm_n );
             realT actvar = math::vectorVariance( fm_n );
-            realT norm = sqrt( fmVar / actvar );
-            for( size_t q = 0; q < fm_n.size(); ++q )
-                fm_n[q] *= norm;
+            if( actvar > 0 && fmVar > 0 )
+            {
+                realT norm = sqrt( fmVar / actvar );
+                for( size_t q = 0; q < fm_n.size(); ++q )
+                    fm_n[q] *= norm;
+            }
+            else
+            {
+                std::fill( fm_n.begin(), fm_n.end(), 0 );
+            }
 
             // And move it to the Fourier domain
             fft( tform1.data(), fm_n.data() );
@@ -173,11 +211,19 @@ int speckleAmpPSD(
             nfilt.filter( N_nm );
 
             realT Nactvar = 0.5 * ( math::vectorVariance( N_n ) + math::vectorVariance( N_nm ) );
-            norm = sqrt( nVar / Nactvar );
-            for( size_t q = 0; q < fm_n.size(); ++q )
-                N_n[q] *= norm;
-            for( size_t q = 0; q < fm_n.size(); ++q )
-                N_nm[q] *= norm;
+            if( Nactvar > 0 && nVar > 0 )
+            {
+                realT norm = sqrt( nVar / Nactvar );
+                for( size_t q = 0; q < fm_n.size(); ++q )
+                    N_n[q] *= norm;
+                for( size_t q = 0; q < fm_n.size(); ++q )
+                    N_nm[q] *= norm;
+            }
+            else
+            {
+                std::fill( N_n.begin(), N_n.end(), 0 );
+                std::fill( N_nm.begin(), N_nm.end(), 0 );
+            }
 
             // And move them to the Fourier domain
             fft( Ntform1.data(), N_n.data() );
@@ -225,7 +271,10 @@ int speckleAmpPSD(
 
             // Calculate PSD of the speckle amplitude
             if( !noPSD )
+            {
+                std::fill( tpgram.begin(), tpgram.end(), 0 );
                 avgPgram( tpgram, vn );
+            }
 
 // Accumulate
 #pragma omp critical

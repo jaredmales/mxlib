@@ -240,7 +240,14 @@ void fftT<inputT, outputT, rank, 0>::destroyPlan()
 {
     if( m_plan )
     {
+#ifndef MX_FFTW_NOOMP
+#pragma omp critical
+        {
+#endif
         fftw_destroy_plan<realT>( m_plan );
+#ifndef MX_FFTW_NOOMP
+        }
+#endif
     }
 
     m_plan = 0;
