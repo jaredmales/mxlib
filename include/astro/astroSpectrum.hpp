@@ -119,7 +119,7 @@ struct baseSpectrum
       * \f[
         \lambda_0 = \frac{1}{\Delta\lambda_{0}}\int \frac{S(\lambda )}{S_{max}} \lambda d\lambda
         \f]
-      * which Equation A14 of Bessel 2012.
+      * which is Equation A14 of Bessel 2012.
       *
       * where the effective width is defined by
         \f[
@@ -155,7 +155,9 @@ struct baseSpectrum
 
         lambda0 = half * lambda[0] * _spectrum[0];
         for( int i = 1; i < N - 1; ++i )
+        {
             lambda0 += lambda[i] * _spectrum[i];
+        }
         lambda0 += half * lambda[N - 1] * _spectrum[N - 1];
         lambda0 *= dl / max / weff;
 
@@ -242,13 +244,17 @@ struct baseSpectrum
 
         realT denom = half * trans[0] * lambda[0];
         for( int i = 1; i < N - 1; ++i )
+        {
             denom += trans[i] * lambda[i];
+        }
         denom += half * trans[N - 1] * lambda[N - 1];
         denom *= dl;
 
         realT num = half * _spectrum[0] * trans[0] * lambda[0];
         for( int i = 1; i < N - 1; ++i )
+        {
             num += _spectrum[i] * trans[i] * lambda[i];
+        }
         num += half * _spectrum[N - 1] * trans[N - 1] * lambda[N - 1];
         num *= dl;
 
@@ -258,7 +264,9 @@ struct baseSpectrum
 
         denom = half * trans[0] / lambda[0];
         for( int i = 1; i < N - 1; ++i )
+        {
             denom += trans[i] / lambda[i];
+        }
         denom += half * trans[N - 1] / lambda[N - 1];
         denom *= dl * c;
 
@@ -280,12 +288,13 @@ struct baseSpectrum
  * "baseSpectrum".
  *
  * \tparam _spectrumT is the underlying spectrum type, which provides (through static interfaces) the specifications of
- * how to read or calculate the spectrum. \tparam freq specify whether this spectrum uses frequency instead of
+ * how to read or calculate the spectrum.
+ * \tparam freq specify whether this spectrum uses frequency instead of
  * wavelength.  Default is false.
  *
  * \ingroup astrophot
  */
-template <typename _spectrumT, bool freq = false>
+template <typename _spectrumT, bool freq = false, typename verboseT = verbose::d>
 struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 {
     typedef _spectrumT spectrumT;
@@ -347,7 +356,9 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 
     /// Load the spectrum and interpolate it onto a wavelength scale.
     template <typename gridT>
-    int setSpectrum( gridT &lambda )
+    error_t setSpectrum( gridT &lambda /**< [in] the wavelength scale on which to interpolate.
+                                                 Same units as in source file. */
+    )
     {
         std::vector<realT> rawLambda;
         std::vector<realT> rawSpectrum;
@@ -358,8 +369,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
 
         if( fileName.size() < 1 )
         {
-            mxError( "astroSpectrum", MXE_PARAMNOTSET, "fileName is empty" );
-            return -1;
+            return internal::mxlib_error_report<verboseT>( error_t::paramnotset, "filename is empty" );
         }
 
         if( _dataDir == "" && fileName[0] == '/' )
@@ -374,9 +384,10 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
             path = _dataDir + "/" + fileName;
         }
 
-        if( spectrumT::readSpectrum( rawLambda, rawSpectrum, path, _params ) != error_t::noerror )
+        error_t rv = spectrumT::readSpectrum( rawLambda, rawSpectrum, path, _params );
+        if( rv != error_t::noerror )
         {
-            return -1; ///\returns -1 on an error reading the spectrum.
+            return internal::mxlib_error_report<verboseT>( rv );
         }
 
         // Unit conversions
@@ -395,7 +406,7 @@ struct astroSpectrum : public baseSpectrum<typename _spectrumT::units::realT>
                 this->_spectrum[i] = 0;
         }
 
-        return 0; ///\returns 0 on success.
+        return error_t::noerror;
     }
 };
 

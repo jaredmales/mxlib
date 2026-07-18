@@ -49,11 +49,13 @@ struct basicSpectrum
     /// This function reads the spectrum, returning its raw wavelength and spectrum points.
     /** No unit conversions or interpolations should take place.
      */
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         return mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
@@ -87,15 +89,17 @@ struct astroFilter
         return name + ".dat";
     }
 
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         mx::error_t errc = mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
-        if(!!errc)
+        if( !!errc )
         {
             return errc;
         }
@@ -169,11 +173,13 @@ struct sqWaveFilter
         return " "; // must not be empty to avoid error
     }
 
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         rawLambda.resize( 4 );
@@ -231,11 +237,13 @@ struct calspecSpectrum
     }
 
     /// Read a CALSPEC spectrum, which is a simple two column ASCII format.
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         return mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
@@ -272,11 +280,13 @@ struct picklesSpectrum
     }
 
     /// Read a Pickles spectrum, which for these purposes is a simple two column ASCII format.
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         return mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
@@ -292,7 +302,7 @@ struct picklesSpectrum
  *
  * \ingroup astrophot_spectra
  */
-template <typename _units>
+template <typename _units, typename verboseT = verbose::d>
 struct earthAlbedo
 {
     typedef _units units;
@@ -321,17 +331,19 @@ struct earthAlbedo
         if( name == "RawEarthshine" )
             return "Earthshine/F7_opt_NIR_ES_data.txt";
 
-        mxError( "earthAlbeo::fileName", MXE_INVALIDARG, "name not recognized." );
+        internal::mxlib_error_report<verboseT>( error_t::invalidarg, "name not recognized." );
 
         return "";
     }
 
     /// Read the Earthshine albedo spectrum, which is a simple two column ASCII format.
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         return mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
@@ -343,7 +355,7 @@ struct earthAlbedo
  *
  * \ingroup astrophot_spectra
  */
-template <typename _units>
+template <typename _units, typename verboseT = verbose::d>
 struct venusAlbedo
 {
     typedef _units units;
@@ -368,17 +380,19 @@ struct venusAlbedo
         if( name == "Venus" )
             return "venus_combined_albedo.dat";
 
-        mxError( "venusAlbeo::fileName", MXE_INVALIDARG, "name not recognized." );
+        mxlib_error_report<verboseT>( error_t::invalidarg, "name not recognized." );
 
         return "";
     }
 
     /// Read the Earthshine albedo spectrum, which is a simple two column ASCII format.
-    static error_t readSpectrum(
-        std::vector<realT> &rawLambda,   ///< [out] the raw wavelength vector.  This should be an empty vector on input.
-        std::vector<realT> &rawSpectrum, ///< [out] the raw spectrum.  This should be an empty vector on input.
-        const std::string &path,         ///< [in] the full path to the file.
-        const paramsT &params            ///< [in] the parameters are passed in case needed to construct the spectrum
+    static error_t readSpectrum( std::vector<realT> &rawLambda,   /**< [out] the raw wavelength.  Should be empty on
+                                                                             input. */
+                                 std::vector<realT> &rawSpectrum, /**< [out] the raw spectrum.  Should be empty on
+                                                                             input. */
+                                 const std::string &path,         /**< [in] the full path to the file. */
+                                 const paramsT &params            /**< [in] the parameters needed to construct the
+                                                                            spectrum */
     )
     {
         return mx::ioutils::readColumns( path, rawLambda, rawSpectrum );
