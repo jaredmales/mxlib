@@ -1139,20 +1139,20 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         if( doLP )
                         {
                             realT min_sc;
-                            int rv = tflp.regularizeCoefficients( gmax_lp,
-                                                                  gopt_lp,
-                                                                  var_lp,
-                                                                  min_sc,
-                                                                  go_lp,
-                                                                  tPSDpPOL,
-                                                                  tPSDn,
-                                                                  lpNc );
+                            error_t rv = tflp.regularizeCoefficients( gmax_lp,
+                                                                      gopt_lp,
+                                                                      var_lp,
+                                                                      min_sc,
+                                                                      go_lp,
+                                                                      tPSDpPOL,
+                                                                      tPSDn,
+                                                                      lpNc );
 
-                            if( rv < 0 )
+                            if( rv != error_t::noerror )
                             {
                                 std::cerr
                                     << "fourierTemporalPSD::analyzePSDGrid: regularizeCoefficients returned error ";
-                                std::cerr << rv << ' ';
+                                std::cerr << errorName( rv ) << ' ';
                                 std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
                             }
 

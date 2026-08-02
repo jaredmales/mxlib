@@ -27,8 +27,9 @@
 #ifndef improc_imageUtils_hpp
 #define improc_imageUtils_hpp
 
-#include <cstdint>
 #include <cmath>
+
+#include "../math/floatUtils.hpp"
 
 #include "imageTransforms.hpp"
 
@@ -77,13 +78,14 @@ constexpr T invalidNumber()
     return -3e38;
 }
 
-/// Check if the number is nan, using several different methods
-/**
+/// Check whether a value represents an invalid image pixel.
+/** Detects the mxlib invalid-number sentinel as well as NaN and positive or negative infinity.
+ *
+ * \returns true if value is invalid, otherwise false.
  */
-inline bool IsNan( float value )
+inline bool isInvalidPixel( float value /**< [in] value to test */ )
 {
-    return ( ( ( ( *(uint32_t *)&value ) & 0x7fffffff ) > 0x7f800000 ) || ( value == invalidNumber<float>() ) ||
-             !std::isfinite( value ) );
+    return value == invalidNumber<float>() || !math::isFinite( value );
 }
 
 /// Reflect pixel coordinates across the given center pixel.
@@ -121,7 +123,7 @@ void zeroNaNs( imageT &im, ///< [in.out] image which will have any NaN pixels se
     {
         for( int r = 0; r < im.rows(); ++r )
         {
-            if( IsNan( im( r, c ) ) )
+            if( isInvalidPixel( im( r, c ) ) )
             {
                 im( r, c ) = val;
             }
@@ -162,7 +164,7 @@ void zeroNaNCube( cubeT &imc,     /**< [in.out] cube which will have any NaN pix
         {
             for( int r = 0; r < imc.rows(); ++r )
             {
-                if( IsNan( imc.image( p )( r, c ) ) )
+                if( isInvalidPixel( imc.image( p )( r, c ) ) )
                 {
                     imc.image( p )( r, c ) = 0;
                     if( mask )
@@ -333,11 +335,11 @@ imageMedian( const imageT &mat,                             /**< [in] the image 
  */
 template <typename imageT>
 typename imageT::Scalar imageMedian( const imageT &mat, /**< [in] the image to take the median of*/
-                                     std::vector<typename imageT::Scalar> *work = 0 /**< [in] [optional] working memory can
-                                                                                               be retained and re-passed.*/
+                                     std::vector<typename imageT::Scalar> *work = 0 /**< [in] [optional] working memory
+                                                                                       can be retained and re-passed.*/
 )
 {
-    return imageMedian( mat, static_cast<Eigen::Array<typename imageT::Scalar, -1, -1> *>(nullptr), work );
+    return imageMedian( mat, static_cast<Eigen::Array<typename imageT::Scalar, -1, -1> *>( nullptr ), work );
 }
 
 /// Calculate the center of light of an image
@@ -528,7 +530,6 @@ void removeCols( eigenT &out, const eigenTin &in, int st, int w )
     out.topRightCorner( in.rows(), in.cols() - ( st + w ) ) = in.topRightCorner( in.rows(), in.cols() - ( st + w ) );
 }
 
-
 /** \ingroup image_utils
  *@{
  */
@@ -580,8 +581,6 @@ void *imcpy_flipUDLR( void *dest,    ///< [out] the address of the first pixel i
                       size_t height, ///< [in] the height in pixels of size szof
                       size_t szof    ///< [in] the size in bytes of a one pixel
 );
-
-
 
 } // namespace improc
 } // namespace mx

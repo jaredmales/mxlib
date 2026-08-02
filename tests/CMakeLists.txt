@@ -6,6 +6,7 @@ set(MXLIB_TEST_MAIN_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/testMain.cpp)
 
 set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoAtmosphere_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/clAOLinearPredictor_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoSystem_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoPSDs_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/astro/astroDynamics_test.cpp
@@ -13,6 +14,7 @@ set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsHeaderCard_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ioutils/fits/fitsFile_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/geo_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/math/floatUtils_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/func/moffat_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateBLAS_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/math/templateLapack_test.cpp
