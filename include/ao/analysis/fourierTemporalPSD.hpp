@@ -27,6 +27,7 @@
 #ifndef fourierTemporalPSD_hpp
 #define fourierTemporalPSD_hpp
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 
@@ -237,12 +238,14 @@ struct fourierTemporalPSD
     realT fastestPeak( int m, int n );
 
     /// Calculate the temporal PSD for a Fourier mode for a single layer.
-    /**
+    /** When extending beyond `fmax`, up to the last 50 exactly integrated bins are averaged after projection to the
+     * first tail frequency. If fewer than 50 exact bins are available, all available exact bins are used. At least one
+     * exact bin is required to initialize the tail.
      *
      * \todo implement error checking.
      * \todo need a way to track convergence failures in integral without throwing an error.
-     * \todo need better handling of averaging for the -17/3 extension.
      *
+     * \returns 0 on success, or -1 if no exact bin is available or the basis is invalid.
      */
     int
     singleLayerPSD( std::vector<realT> &PSD,  ///< [out] the calculated PSD
@@ -497,6 +500,13 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     if( fmax == 0 )
         fmax = freq[freq.size() - 1];
 
+    if( freq[0] > fmax )
+    {
+        internal::mxlib_error_report( error_t::invalidarg,
+                                      "at least one exact frequency bin is required to initialize the PSD tail" );
+        return -1;
+    }
+
     realT v_wind = m_aosys->atm.layer_v_wind( layer_i );
     realT q_wind = m_aosys->atm.layer_dir( layer_i );
 
@@ -576,15 +586,16 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     if( j == freq.size() )
         return 0;
 
-    // First average result for last 50.
-    PSD[j] =
-        PSD[i - 50] * pow( freq[i - 50] / freq[j], m_aosys->atm.alpha( layer_i ) + 2 ); // seventeen_thirds<realT>());
-    for( size_t k = 49; k > 0; --k )
+    // First average up to the last 50 exactly integrated bins after projecting them to the first tail frequency.
+    constexpr size_t maximumTailAverageCount = 50;
+    const size_t tailAverageCount = std::min( i, maximumTailAverageCount );
+    PSD[j] = 0;
+    for( size_t k = tailAverageCount; k > 0; --k )
     {
         PSD[j] +=
             PSD[i - k] * pow( freq[i - k] / freq[j], m_aosys->atm.alpha( layer_i ) + 2 ); // seventeen_thirds<realT>());
     }
-    PSD[j] /= 50.0;
+    PSD[j] /= static_cast<realT>( tailAverageCount );
     ++j;
     ++i;
     if( j == freq.size() )
