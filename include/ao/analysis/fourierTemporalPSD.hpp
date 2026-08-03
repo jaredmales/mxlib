@@ -28,8 +28,12 @@
 #define fourierTemporalPSD_hpp
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <fstream>
+#include <limits>
+#include <map>
+#include <mutex>
 
 #include <sys/stat.h>
 
@@ -40,6 +44,7 @@
 
 #include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
+#include "../../math/floatUtils.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../math/func/airyPattern.hpp"
 #include "../../math/vectorUtils.hpp"
@@ -85,6 +90,230 @@ enum basis : unsigned int
     modified ///< The modified Fourier basis from \cite males_guyon_2017
 };
 
+/// Policy for handling GSL quadrature non-convergence statuses.
+enum class fourierTemporalPSDPolicy
+{
+    permissive, ///< Retain the best finite approximation and record the status.
+    strict      ///< Record every status and return an error if any integration does not converge.
+};
+
+/// Aggregated GSL quadrature diagnostics for a Fourier temporal PSD calculation.
+template <typename realT>
+struct fourierTemporalPSDReport
+{
+    /// Summary of one GSL status code.
+    struct statusSummary
+    {
+        size_t count{ 0 };                     ///< Number of occurrences of this status.
+        std::map<size_t, size_t> countByLayer; ///< Number of occurrences in each atmospheric layer.
+        realT maximumAbsoluteError{ 0 };        ///< Largest GSL absolute-error estimate.
+        realT maximumToleranceRatio{ 0 };       ///< Largest error estimate relative to the requested tolerance.
+        size_t worstLayer{ 0 };                 ///< Layer containing the largest tolerance ratio.
+        realT worstFrequency{ 0 };              ///< Frequency containing the largest tolerance ratio.
+    };
+
+    size_t integrationsAttempted{ 0 };      ///< Total number of quadrature calls.
+    size_t integrationsConverged{ 0 };      ///< Number of quadrature calls returning `GSL_SUCCESS`.
+    std::map<int, statusSummary> gslStatus; ///< Summaries keyed by the raw GSL status code.
+
+    /// Reset all accumulated diagnostics.
+    void clear();
+
+    /// Record one quadrature result.
+    void record( int status,              /**< [in] raw GSL status code */
+                 size_t layer,            /**< [in] atmospheric layer index */
+                 realT frequency,         /**< [in] temporal frequency */
+                 realT result,            /**< [in] quadrature result */
+                 realT absoluteError,     /**< [in] GSL absolute-error estimate */
+                 realT absoluteTolerance, /**< [in] requested absolute tolerance */
+                 realT relativeTolerance  /**< [in] requested relative tolerance */ );
+
+    /// Merge another report into this report.
+    void merge( const fourierTemporalPSDReport &other /**< [in] report to merge */ );
+
+    /// Return the total number of non-successful integrations.
+    [[nodiscard]] size_t failureCount() const;
+
+    /// Write a human-readable summary of the accumulated quadrature diagnostics.
+    void write( std::ostream &output /**< [out] stream receiving the summary */ ) const;
+};
+
+/// \cond fourierTemporalPSD_detail
+namespace fourierTemporalPSD_detail
+{
+
+/// Return whether a GSL status represents a potentially usable non-converged approximation.
+inline bool isConvergenceStatus( int status )
+{
+    return status == GSL_EMAXITER || status == GSL_EROUND || status == GSL_ESING || status == GSL_EDIVERGE;
+}
+
+/// Convert a fatal GSL status to an mxlib status.
+inline error_t gslStatusToError( int status )
+{
+    if( status == GSL_ENOMEM )
+    {
+        return error_t::allocerr;
+    }
+
+    if( status == GSL_EDOM || status == GSL_EINVAL )
+    {
+        return error_t::invalidconfig;
+    }
+
+    return error_t::liberr;
+}
+
+/// Apply the configured non-convergence policy to one GSL status.
+inline error_t applyPolicy( int status, fourierTemporalPSDPolicy policy )
+{
+    if( status == GSL_SUCCESS )
+    {
+        return error_t::noerror;
+    }
+
+    if( isConvergenceStatus( status ) )
+    {
+        return policy == fourierTemporalPSDPolicy::permissive ? error_t::noerror : error_t::liberr;
+    }
+
+    return gslStatusToError( status );
+}
+
+/// Mutex serializing scoped changes to GSL's process-global error handler.
+inline std::mutex &gslErrorHandlerMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+/// Disable the GSL error handler for a complete top-level PSD calculation and restore it on exit.
+/** The mutex serializes handler changes made by this implementation. Unrelated code cannot be protected from GSL's
+ * process-global handler state unless it coordinates with the same mutex.
+ */
+class scopedGslErrorHandlerOff
+{
+  public:
+    /// Lock handler management and retain the previously installed handler.
+    scopedGslErrorHandlerOff() : m_lock( gslErrorHandlerMutex() ), m_previous( gsl_set_error_handler_off() )
+    {
+    }
+
+    /// Disallow copying ownership of the saved handler.
+    scopedGslErrorHandlerOff( const scopedGslErrorHandlerOff & ) = delete;
+
+    /// Disallow copy assignment of the handler guard.
+    scopedGslErrorHandlerOff &operator=( const scopedGslErrorHandlerOff & ) = delete;
+
+    /// Restore the previously installed handler before releasing the lock.
+    ~scopedGslErrorHandlerOff()
+    {
+        static_cast<void>( gsl_set_error_handler( m_previous ) );
+    }
+
+  private:
+    std::unique_lock<std::mutex> m_lock;        ///< Lock held while the handler is disabled.
+    gsl_error_handler_t *m_previous{ nullptr }; ///< Handler restored on destruction.
+};
+
+} // namespace fourierTemporalPSD_detail
+/// \endcond
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::clear()
+{
+    integrationsAttempted = 0;
+    integrationsConverged = 0;
+    gslStatus.clear();
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::record( int status,
+                                              size_t layer,
+                                              realT frequency,
+                                              realT result,
+                                              realT absoluteError,
+                                              realT absoluteTolerance,
+                                              realT relativeTolerance )
+{
+    ++integrationsAttempted;
+    if( status == GSL_SUCCESS )
+    {
+        ++integrationsConverged;
+        return;
+    }
+
+    statusSummary &summary = gslStatus[status];
+    ++summary.count;
+    ++summary.countByLayer[layer];
+    summary.maximumAbsoluteError = std::max( summary.maximumAbsoluteError, std::abs( absoluteError ) );
+
+    const realT requestedTolerance =
+        std::max( std::abs( absoluteTolerance ), std::abs( relativeTolerance * result ) );
+    const realT toleranceRatio = requestedTolerance > 0 ? std::abs( absoluteError ) / requestedTolerance
+                                                        : std::numeric_limits<realT>::infinity();
+    if( toleranceRatio >= summary.maximumToleranceRatio )
+    {
+        summary.maximumToleranceRatio = toleranceRatio;
+        summary.worstLayer = layer;
+        summary.worstFrequency = frequency;
+    }
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::merge( const fourierTemporalPSDReport &other )
+{
+    integrationsAttempted += other.integrationsAttempted;
+    integrationsConverged += other.integrationsConverged;
+
+    for( const auto &[status, otherSummary] : other.gslStatus )
+    {
+        statusSummary &summary = gslStatus[status];
+        summary.count += otherSummary.count;
+        for( const auto &[layer, count] : otherSummary.countByLayer )
+        {
+            summary.countByLayer[layer] += count;
+        }
+        summary.maximumAbsoluteError = std::max( summary.maximumAbsoluteError, otherSummary.maximumAbsoluteError );
+        if( otherSummary.maximumToleranceRatio >= summary.maximumToleranceRatio )
+        {
+            summary.maximumToleranceRatio = otherSummary.maximumToleranceRatio;
+            summary.worstLayer = otherSummary.worstLayer;
+            summary.worstFrequency = otherSummary.worstFrequency;
+        }
+    }
+}
+
+template <typename realT>
+size_t fourierTemporalPSDReport<realT>::failureCount() const
+{
+    return integrationsAttempted - integrationsConverged;
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::write( std::ostream &output ) const
+{
+    output << "GSL quadrature: " << integrationsConverged << '/' << integrationsAttempted << " converged\n";
+    for( const auto &[status, summary] : gslStatus )
+    {
+        output << "  " << gsl_strerror( status ) << " (" << status << "): " << summary.count
+               << ", max absolute error " << summary.maximumAbsoluteError << ", max tolerance ratio "
+               << summary.maximumToleranceRatio << " at layer " << summary.worstLayer << ", frequency "
+               << summary.worstFrequency << ", layers {";
+        bool firstLayer = true;
+        for( const auto &[layer, count] : summary.countByLayer )
+        {
+            if( !firstLayer )
+            {
+                output << ", ";
+            }
+            output << layer << ": " << count;
+            firstLayer = false;
+        }
+        output << "}\n";
+    }
+}
+
 // Forward declaration
 template <typename realT, typename aosysT>
 realT F_basic( realT kv, void *params );
@@ -102,8 +331,6 @@ realT F_mod( realT kv, void *params );
  *
  * \todo Split off the integration parameters in a separate structure.
  * \todo once integration parameters are in a separate structure, make this a class with protected members.
- * \todo GSL error handling
- *
  * \ingroup mxAOAnalytic
  */
 template <typename _realT, typename aosysT>
@@ -114,6 +341,9 @@ struct fourierTemporalPSD
 
     /// The complex type for arithmetic
     typedef std::complex<realT> complexT;
+
+    /// Quadrature report type used by this specialization.
+    typedef fourierTemporalPSDReport<realT> reportT;
 
     /// Pointer to an AO system structure.
     aosysT *m_aosys{ nullptr };
@@ -237,27 +467,42 @@ struct fourierTemporalPSD
      */
     realT fastestPeak( int m, int n );
 
+  protected:
+    /// Calculate a single-layer temporal PSD while the caller manages the GSL error handler.
+    error_t singleLayerPSDImpl( std::vector<realT> &PSD,  /**< [out] calculated PSD */
+                              std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                              realT m,                  /**< [in] first spatial-frequency index */
+                              realT n,                  /**< [in] second spatial-frequency index */
+                              int layer_i,              /**< [in] atmospheric-layer index */
+                              int p,                    /**< [in] Fourier-mode parity */
+                              realT fmax,               /**< [in] maximum exactly integrated frequency */
+                              reportT &report,          /**< [out] accumulated quadrature report */
+                              fourierTemporalPSDPolicy policy /**< [in] non-convergence policy */ );
+
+  public:
     /// Calculate the temporal PSD for a Fourier mode for a single layer.
     /** When extending beyond `fmax`, up to the last 50 exactly integrated bins are averaged after projection to the
      * first tail frequency. If fewer than 50 exact bins are available, all available exact bins are used. At least one
      * exact bin is required to initialize the tail.
      *
-     * \todo implement error checking.
-     * \todo need a way to track convergence failures in integral without throwing an error.
+     * In permissive mode, finite best approximations returned with `GSL_EMAXITER`, `GSL_EROUND`, `GSL_ESING`, or
+     * `GSL_EDIVERGE` are retained and summarized in `report`. In strict mode the calculation continues to characterize
+     * all such failures but returns `error_t::liberr` and the output PSD must be discarded.
      *
-     * \returns 0 on success, or -1 if no exact bin is available or the basis is invalid.
+     * \returns `error_t::noerror` on success, an argument/configuration error for invalid inputs, or
+     * `error_t::liberr` when strict quadrature handling detects non-convergence.
      */
-    int
-    singleLayerPSD( std::vector<realT> &PSD,  ///< [out] the calculated PSD
-                    std::vector<realT> &freq, ///< [in] the populated temporal frequency grid defining the frequencies
-                                              ///< at which the PSD is calculated
-                    realT m,                  ///< [in] the first index of the spatial frequency
-                    realT n,                  ///< [in] the second index of the spatial frequency
-                    int layer_i,              ///< [in] the index of the layer, for accessing the atmosphere parameters
-                    int p, ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-                    realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation.  The PSD
-                                   ///< is filled in with a -17/3 power law past this frequency.
-    );
+    error_t singleLayerPSD(
+        std::vector<realT> &PSD,  /**< [out] calculated PSD */
+        std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+        realT m,                  /**< [in] first spatial-frequency index */
+        realT n,                  /**< [in] second spatial-frequency index */
+        int layer_i,              /**< [in] atmospheric-layer index */
+        int p,                    /**< [in] Fourier-mode parity */
+        realT fmax = 0,           /**< [in] maximum exactly integrated frequency, or 0 for the grid maximum */
+        reportT *report = nullptr, /**< [out] optional quadrature report */
+        fourierTemporalPSDPolicy policy =
+            fourierTemporalPSDPolicy::permissive /**< [in] non-convergence policy */ );
 
     ///\cond multilayerm_parallel
     // Conditional to exclude from Doxygen.
@@ -270,22 +515,26 @@ struct fourierTemporalPSD
     };
 
     // Parallelized version of multiLayerPSD, with OMP directives.
-    int m_multiLayerPSD( std::vector<realT> &PSD,
-                         std::vector<realT> &freq,
-                         realT m,
-                         realT n,
-                         int p,
-                         realT fmax,
-                         isParallel<true> parallel );
+    error_t multiLayerPSDImpl( std::vector<realT> &PSD,  /**< [out] calculated PSD */
+                             std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                             realT m,                  /**< [in] first spatial-frequency index */
+                             realT n,                  /**< [in] second spatial-frequency index */
+                             int p,                    /**< [in] Fourier-mode parity */
+                             realT fmax,               /**< [in] maximum exactly integrated frequency */
+                             reportT &report,          /**< [out] accumulated quadrature report */
+                             fourierTemporalPSDPolicy policy, /**< [in] non-convergence policy */
+                             isParallel<true> parallel        /**< [in] parallel dispatch tag */ );
 
     // Non-Parallelized version of multiLayerPSD, without OMP directives.
-    int m_multiLayerPSD( std::vector<realT> &PSD,
-                         std::vector<realT> &freq,
-                         realT m,
-                         realT n,
-                         int p,
-                         realT fmax,
-                         isParallel<false> parallel );
+    error_t multiLayerPSDImpl( std::vector<realT> &PSD,  /**< [out] calculated PSD */
+                             std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                             realT m,                  /**< [in] first spatial-frequency index */
+                             realT n,                  /**< [in] second spatial-frequency index */
+                             int p,                    /**< [in] Fourier-mode parity */
+                             realT fmax,               /**< [in] maximum exactly integrated frequency */
+                             reportT &report,          /**< [out] accumulated quadrature report */
+                             fourierTemporalPSDPolicy policy, /**< [in] non-convergence policy */
+                             isParallel<false> parallel       /**< [in] sequential dispatch tag */ );
 
     ///\endcond
 
@@ -296,22 +545,23 @@ struct fourierTemporalPSD
      * \tparam parallel controls whether layers are calculated in parallel.  Default is true.  Set to false if this is
      * called inside a parallelized loop, as in \ref makePSDGrid.
      *
-     * \todo implement error checking
-     * \todo handle reports of convergence failures form singleLayerPSD when implemented.
+     * In permissive mode, recognized convergence failures are retained and summarized in `report`. Strict mode returns
+     * `error_t::liberr` if any layer has such a failure; the output PSD is incomplete and must be discarded whenever
+     * this function returns an error.
      *
+     * \returns `error_t::noerror` on success, or the first layer error in atmospheric-layer order.
      */
     template <bool parallel = true>
-    int multiLayerPSD(
-        std::vector<realT> &PSD, ///< [out] the calculated PSD
-        std::vector<realT>
-            &freq, ///< [in] the populated temporal frequency grid defining at which frequencies the PSD is calculated
-        realT m,   ///< [in] the first index of the spatial frequency
-        realT n,   ///< [in] the second index of the spatial frequency
-        int p,     ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-        realT fmax =
-            0      ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
-              /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
-    );
+    error_t multiLayerPSD(
+        std::vector<realT> &PSD,  /**< [out] calculated PSD */
+        std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+        realT m,                  /**< [in] first spatial-frequency index */
+        realT n,                  /**< [in] second spatial-frequency index */
+        int p,                    /**< [in] Fourier-mode parity */
+        realT fmax = 0,           /**< [in] maximum exactly integrated frequency, or 0 for the default cutoff */
+        reportT *report = nullptr, /**< [out] optional quadrature report */
+        fourierTemporalPSDPolicy policy =
+            fourierTemporalPSDPolicy::permissive /**< [in] non-convergence policy */ );
 
     /// Calculate PSDs over a grid of spatial frequencies.
     /** The grid of spatial frequencies is square, set by the maximum value of m and n.
@@ -494,17 +744,42 @@ realT fourierTemporalPSD<realT, aosysT>::fastestPeak( int m, int n )
 }
 
 template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int layer_i, int p, realT fmax )
+error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
+                                                          std::vector<realT> &freq,
+                                                          realT m,
+                                                          realT n,
+                                                          int layer_i,
+                                                          int p,
+                                                          realT fmax,
+                                                          reportT *report,
+                                                          fourierTemporalPSDPolicy policy )
+{
+    reportT localReport;
+    reportT &activeReport = report == nullptr ? localReport : *report;
+    activeReport.clear();
+
+    fourierTemporalPSD_detail::scopedGslErrorHandlerOff handlerGuard;
+    return singleLayerPSDImpl( PSD, freq, m, n, layer_i, p, fmax, activeReport, policy );
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSDImpl( std::vector<realT> &PSD,
+                                                            std::vector<realT> &freq,
+                                                            realT m,
+                                                            realT n,
+                                                            int layer_i,
+                                                            int p,
+                                                            realT fmax,
+                                                            reportT &report,
+                                                            fourierTemporalPSDPolicy policy )
 {
     if( fmax == 0 )
         fmax = freq[freq.size() - 1];
 
     if( freq[0] > fmax )
     {
-        internal::mxlib_error_report( error_t::invalidarg,
-                                      "at least one exact frequency bin is required to initialize the PSD tail" );
-        return -1;
+        return internal::mxlib_error_report(
+            error_t::invalidarg, "at least one exact frequency bin is required to initialize the PSD tail" );
     }
 
     realT v_wind = m_aosys->atm.layer_v_wind( layer_i );
@@ -515,9 +790,6 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     realT sq = sin( q_wind );
 
     realT scale = 2 * ( 1 / v_wind ); // Factor of 2 for negative frequencies.
-
-    // We'll get the occasional failure to reach tolerance error, just ignore them all for now.
-    gsl_set_error_handler_off();
 
     // Create a local instance so that we're reentrant
     fourierTemporalPSD<realT, aosysT> params( true );
@@ -539,7 +811,9 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     params.m_modeCoeffs = m_modeCoeffs;
     params.m_minCoeffVal = m_minCoeffVal;
 
-    realT result, error;
+    realT result{ 0 };
+    realT error{ 0 };
+    error_t returnStatus = error_t::noerror;
 
     // Setup the GSL calculation
     gsl_function func;
@@ -552,8 +826,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         func.function = &F_mod<realT, aosysT>;
         break;
     default:
-        internal::mxlib_error_report(error_t::invalidarg,"value of _useBasis is not valid." );
-        return -1;
+        return internal::mxlib_error_report( error_t::invalidarg, "value of _useBasis is not valid." );
     }
 
     func.params = &params;
@@ -564,13 +837,26 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     {
         params.m_f = freq[i];
 
-        int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params._w, &result, &error );
+        const int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params._w, &result, &error );
+        report.record( ec, static_cast<size_t>( layer_i ), freq[i], result, error, _absTol, _relTol );
 
-        if( ec == GSL_EDIVERGE )
+        const error_t integrationStatus = fourierTemporalPSD_detail::applyPolicy( ec, policy );
+        if( integrationStatus != error_t::noerror )
         {
-            std::cerr << "GSL_EDIVERGE:" << p << " " << freq[i] << " " << v_wind << " " << m << " " << n << " " << m_m
-                      << " " << m_n << "\n";
-            std::cerr << "ignoring . . .\n";
+            if( !fourierTemporalPSD_detail::isConvergenceStatus( ec ) )
+            {
+                return internal::mxlib_error_report( integrationStatus,
+                                                      std::string( "gsl_integration_qagi failed: " ) +
+                                                          gsl_strerror( ec ) );
+            }
+
+            returnStatus = integrationStatus;
+        }
+
+        if( !math::isFinite( result ) || !math::isFinite( error ) )
+        {
+            return internal::mxlib_error_report( error_t::liberr,
+                                                  "gsl_integration_qagi returned a nonfinite result or error estimate" );
         }
 
         PSD[i] = scale * result;
@@ -584,7 +870,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     size_t j = i;
 
     if( j == freq.size() )
-        return 0;
+        return returnStatus;
 
     // First average up to the last 50 exactly integrated bins after projecting them to the first tail frequency.
     constexpr size_t maximumTailAverageCount = 50;
@@ -599,7 +885,7 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     ++j;
     ++i;
     if( j == freq.size() )
-        return 0;
+        return returnStatus;
     while( j < freq.size() )
     {
         PSD[j] =
@@ -607,14 +893,25 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         ++j;
     }
 
-    return 0;
+    return returnStatus;
 }
 
 template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax, isParallel<true> parallel )
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSDImpl( std::vector<realT> &PSD,
+                                                           std::vector<realT> &freq,
+                                                           realT m,
+                                                           realT n,
+                                                           int p,
+                                                           realT fmax,
+                                                           reportT &report,
+                                                           fourierTemporalPSDPolicy policy,
+                                                           isParallel<true> parallel )
 {
     static_cast<void>( parallel );
+
+    const size_t layerCount = m_aosys->atm.n_layers();
+    std::vector<error_t> layerStatus( layerCount, error_t::noerror );
+    std::vector<reportT> layerReport( layerCount );
 
 #pragma omp parallel
     {
@@ -624,10 +921,67 @@ int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
 #pragma omp for
         for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
         {
-            singleLayerPSD( single_PSD, freq, m, n, i, p, fmax );
+            std::fill( single_PSD.begin(), single_PSD.end(), 0 );
+            layerStatus[i] = singleLayerPSDImpl(
+                single_PSD, freq, m, n, static_cast<int>( i ), p, fmax, layerReport[i], policy );
 
 // Now add the single layer PSD to the overall PSD, weighted by Cn2
 #pragma omp critical
+            if( layerStatus[i] == error_t::noerror )
+            {
+                for( size_t j = 0; j < freq.size(); ++j )
+                {
+                    PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
+                }
+            }
+        }
+    }
+
+    error_t returnStatus = error_t::noerror;
+    for( size_t i = 0; i < layerCount; ++i )
+    {
+        report.merge( layerReport[i] );
+        if( returnStatus == error_t::noerror && layerStatus[i] != error_t::noerror )
+        {
+            returnStatus = layerStatus[i];
+        }
+    }
+
+    return returnStatus;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSDImpl( std::vector<realT> &PSD,
+                                                           std::vector<realT> &freq,
+                                                           realT m,
+                                                           realT n,
+                                                           int p,
+                                                           realT fmax,
+                                                           reportT &report,
+                                                           fourierTemporalPSDPolicy policy,
+                                                           isParallel<false> parallel )
+{
+    static_cast<void>( parallel );
+
+    // Records each layer PSD
+    std::vector<realT> single_PSD( freq.size() );
+    error_t returnStatus = error_t::noerror;
+
+    for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
+    {
+        std::fill( single_PSD.begin(), single_PSD.end(), 0 );
+        reportT layerReport;
+        const error_t layerStatus = singleLayerPSDImpl(
+            single_PSD, freq, m, n, static_cast<int>( i ), p, fmax, layerReport, policy );
+        report.merge( layerReport );
+        if( returnStatus == error_t::noerror && layerStatus != error_t::noerror )
+        {
+            returnStatus = layerStatus;
+        }
+
+        // Now add the single layer PSD to the overall PSD, weighted by Cn2
+        if( layerStatus == error_t::noerror )
+        {
             for( size_t j = 0; j < freq.size(); ++j )
             {
                 PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
@@ -635,37 +989,24 @@ int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
         }
     }
 
-    return 0;
-}
-
-template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax, isParallel<false> parallel )
-{
-    static_cast<void>( parallel );
-
-    // Records each layer PSD
-    std::vector<realT> single_PSD( freq.size() );
-
-    for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
-    {
-        singleLayerPSD( single_PSD, freq, m, n, i, p, fmax );
-
-        // Now add the single layer PSD to the overall PSD, weighted by Cn2
-        for( size_t j = 0; j < freq.size(); ++j )
-        {
-            PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
-        }
-    }
-
-    return 0;
+    return returnStatus;
 }
 
 template <typename realT, typename aosysT>
 template <bool parallel>
-int fourierTemporalPSD<realT, aosysT>::multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax )
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> &PSD,
+                                                         std::vector<realT> &freq,
+                                                         realT m,
+                                                         realT n,
+                                                         int p,
+                                                         realT fmax,
+                                                         reportT *report,
+                                                         fourierTemporalPSDPolicy policy )
 {
+    reportT localReport;
+    reportT &activeReport = report == nullptr ? localReport : *report;
+    activeReport.clear();
+
     // PSD is zeroed every time to make sure we don't accumulate on repeated calls
     for( size_t j = 0; j < PSD.size(); ++j )
         PSD[j] = 0;
@@ -675,7 +1016,8 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD(
         fmax = 150 + 2 * fastestPeak( m, n );
     }
 
-    return m_multiLayerPSD( PSD, freq, m, n, p, fmax, isParallel<parallel>() );
+    fourierTemporalPSD_detail::scopedGslErrorHandlerOff handlerGuard;
+    return multiLayerPSDImpl( PSD, freq, m, n, p, fmax, activeReport, policy, isParallel<parallel>() );
 }
 
 template <typename realT, typename aosysT>
