@@ -7,6 +7,7 @@ INCLUDES += -I../include
 OBJS = testMain.o \
        include/ao/analysis/aoAtmosphere_test.o \
        include/ao/analysis/clAOLinearPredictor_test.o \
+       include/ao/analysis/clGainOpt_test.o \
        include/ao/analysis/fourierTemporalPSD_test.o \
        include/ao/analysis/aoSystem_test.o \
        include/ao/analysis/aoPSDs_test.o \

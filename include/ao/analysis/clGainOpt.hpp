@@ -76,7 +76,8 @@ struct clGainOpt
 
     std::vector<realT> m_f;  ///< Vector of frequencies
 
-    bool m_fChanged{ true }; ///< True if frequency or max size of m_a and m_b changes
+    /// True when frequency, sampling interval, or required controller tap count invalidates m_cs and m_ss.
+    bool m_trigCacheChanged{ true };
 
     bool m_changed{ true };  ///< True if any of the members which make up the basic transfer functions are changed
 
@@ -468,7 +469,7 @@ void clGainOpt<realT>::init()
     m_minFindBits = std::numeric_limits<realT>::digits;
     m_minFindMaxIter = 10000;
 
-    m_fChanged = true;
+    m_trigCacheChanged = true;
     m_changed = true;
 }
 
@@ -505,6 +506,7 @@ void clGainOpt<realT>::Ti( realT newTi )
     }
 
     m_Ti = newTi;
+    m_trigCacheChanged = true;
     m_changed = true;
 }
 
@@ -531,7 +533,7 @@ void clGainOpt<realT>::b( const std::vector<realT> &newB )
 {
     if( newB.size() > (size_t)m_cs.cols() )
     {
-        m_fChanged = true;
+        m_trigCacheChanged = true;
     }
 
     m_b = newB;
@@ -543,7 +545,7 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1> &newB )
 {
     if( newB.cols() > m_cs.cols() )
     {
-        m_fChanged = true;
+        m_trigCacheChanged = true;
     }
 
     m_b.resize( newB.cols() );
@@ -572,7 +574,7 @@ void clGainOpt<realT>::a( const std::vector<realT> &newA )
 {
     if( newA.size() + 1 > (size_t)m_cs.cols() )
     {
-        m_fChanged = true;
+        m_trigCacheChanged = true;
     }
 
     m_a = newA;
@@ -584,7 +586,7 @@ void clGainOpt<realT>::a( const Eigen::Array<realT, -1, -1> &newA )
 {
     if( newA.cols() + 1 > m_cs.cols() )
     {
-        m_fChanged = true;
+        m_trigCacheChanged = true;
     }
 
     m_a.resize( newA.cols() );
@@ -635,7 +637,7 @@ void clGainOpt<realT>::setLeakyIntegrator( realT remember )
         if(m_b.size() != 1)
         {
             m_b.resize( 1 );
-            m_fChanged = true;
+            m_trigCacheChanged = true;
         }
 
         m_b[0] = 1.0;
@@ -643,7 +645,7 @@ void clGainOpt<realT>::setLeakyIntegrator( realT remember )
         if(m_a.size() != 1)
         {
             m_a.resize( 1 );
-            m_fChanged = true;
+            m_trigCacheChanged = true;
         }
 
         m_a[0] = 1.0;
@@ -663,7 +665,7 @@ void clGainOpt<realT>::f( realT *newF, size_t nF )
         m_f[i] = newF[i];
     }
 
-    m_fChanged = true;
+    m_trigCacheChanged = true;
     m_changed = true;
 }
 
@@ -671,7 +673,7 @@ template <typename realT>
 void clGainOpt<realT>::f( const std::vector<realT> &newF )
 {
     m_f = newF;
-    m_fChanged = true;
+    m_trigCacheChanged = true;
 
     m_changed = true;
 }
@@ -716,7 +718,7 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
     }
 
 #ifdef PRECALC_TRIG
-    if( m_fChanged )
+    if( m_trigCacheChanged )
     {
         size_t jmax = std::max( m_a.size() + 1, m_b.size() );
 
@@ -735,7 +737,7 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
             }
         }
 
-        m_fChanged = false;
+        m_trigCacheChanged = false;
     }
 #endif
 
