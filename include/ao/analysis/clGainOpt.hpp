@@ -361,41 +361,10 @@ struct clGainOpt
     );
 
     /// Find the maximum stable gain for the loop parameters
-    /**
-     *
-     * \returns the maximum stable gain for the loop parameters
-     */
-
-    /// Find the maximum stable gain for the loop parameters
     /** Conducts a search along the Nyquist contour of the open-loop transfer function to find
      * the most-negative crossing of the real axis.
      *
-     * \returns the maximum stable gain for the loop parameters
-     */
-    realT maxStableGain( realT &ll, ///< [in.out] the lower limit used for the search
-                         realT &ul  ///< [in.out] the upper limit used for hte search
-    );
-
-    /// Find the maximum stable gain for the loop parameters
-    /** Conducts a search along the Nyquist contour of the open-loop transfer function to find
-     * the most-negative crossing of the real axis.
-     *
-     * This version allows constant arguments.
-     * \overload
-     *
-     * \returns the maximum stable gain for the loop parameters
-     */
-    realT maxStableGain( const realT &ll, ///< [in] the lower limit used for the search
-                         const realT &ul  ///< [in] the upper limit used for hte search
-    );
-
-    /// Find the maximum stable gain for the loop parameters
-    /** Conducts a search along the Nyquist contour of the open-loop transfer function to find
-     * the most-negative crossing of the real axis.
-     *
-     * This version uses m_maxFindMin for the lower limit and no upper limit.
-     *
-     * \overload
+     * Crossings below m_maxFindMin are ignored.
      *
      * \returns the maximum stable gain for the loop parameters
      */
@@ -1005,14 +974,9 @@ realT clGainOpt<realT>::clVariance( const std::vector<realT> &PSDerr, const std:
 }
 
 template <typename realT>
-realT clGainOpt<realT>::maxStableGain( realT &ll, realT &ul )
+realT clGainOpt<realT>::maxStableGain()
 {
-    static_cast<void>( ul );
-
     std::vector<realT> re, im;
-
-    if( ll == 0 )
-        ll = m_maxFindMin;
 
     nyquist( re, im, 1.0 );
 
@@ -1020,7 +984,7 @@ realT clGainOpt<realT>::maxStableGain( realT &ll, realT &ul )
 
     for( int gi = re.size() - 2; gi >= 0; --gi )
     {
-        if( -1.0 / re[gi] < ll )
+        if( -1.0 / re[gi] < m_maxFindMin )
             continue;
 
         if( ( re[gi] < 0 ) && ( im[gi + 1] >= 0 && im[gi] < 0 ) )
@@ -1032,24 +996,6 @@ realT clGainOpt<realT>::maxStableGain( realT &ll, realT &ul )
     }
 
     return -1.0 / re[gi_c];
-}
-
-template <typename realT>
-realT maxStableGain( const realT &ll, const realT &ul )
-{
-    realT rll = ll;
-    realT rul = ul;
-
-    maxStableGain( rll, rul );
-}
-
-template <typename realT>
-realT clGainOpt<realT>::maxStableGain()
-{
-    realT ul = 0;
-    realT ll = m_maxFindMin;
-
-    return maxStableGain( ll, ul );
 }
 
 // Implement the minimization, allowing pre-compiled specializations

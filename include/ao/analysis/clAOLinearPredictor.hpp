@@ -218,8 +218,7 @@ struct clAOLinearPredictor
             go_lp.b( m_lp.m_c );
 
             CLAOLP_BREADCRUMB;
-            realT ll = 0, ul = 0;
-            gmax_lp = go_lp.maxStableGain( ll, ul );
+            gmax_lp = go_lp.maxStableGain();
             if( gmax_lp > m_gmax_lp )
             {
                 gmax_lp = m_gmax_lp;
@@ -361,8 +360,7 @@ struct clAOLinearPredictor
         go_lp.b( m_lp.m_c );
 
         CLAOLP_BREADCRUMB;
-        realT ll = 0, ul = 0;
-        gmax_lp = go_lp.maxStableGain( ll, ul );
+        gmax_lp = go_lp.maxStableGain();
         gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
 
         CLAOLP_BREADCRUMB;

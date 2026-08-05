@@ -8,7 +8,9 @@
 
 #include "../../../../include/ao/analysis/clGainOpt.hpp"
 
+#include <cmath>
 #include <complex>
+#include <numbers>
 #include <vector>
 
 namespace
@@ -117,4 +119,23 @@ TEST_CASE( "Gain optimizer recomputes transfer functions after changing Ti", "[a
 
     REQUIRE( retimedOptimalGain == Approx( freshOptimalGain ).epsilon( 1e-12 ).margin( 1e-14 ) );
     REQUIRE( retimedOptimalVariance == Approx( freshOptimalVariance ).epsilon( 1e-12 ).margin( 1e-14 ) );
+}
+
+/// Verify the maximum stable gain for a pure integrator with a sampled Nyquist crossing.
+/** Exercises mx::AO::analysis::clGainOpt::maxStableGain through its supported zero-argument interface. */
+TEST_CASE( "Gain optimizer finds the pure-integrator stability limit", "[ao::analysis::clGainOpt]" )
+{
+    optimizerT optimizer( 0.001, 0.0015 );
+
+    std::vector<double> frequency;
+    for( int index = 1; index <= 500; ++index )
+    {
+        frequency.push_back( static_cast<double>( index ) );
+    }
+    optimizer.f( frequency );
+
+    const double crossingPhase = std::numbers::pi_v<double> / 4.0;
+    const double expectedGain = crossingPhase * crossingPhase / ( 2.0 * std::sin( crossingPhase / 2.0 ) );
+
+    REQUIRE( optimizer.maxStableGain() == Approx( expectedGain ).epsilon( 1e-12 ) );
 }
