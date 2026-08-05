@@ -28,6 +28,7 @@
 #define fourierTemporalPSD_hpp
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -1209,6 +1210,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     m_aosys->beta_p( 1, 1 );
 
     ipc::ompLoopWatcher<> watcher( nModes * mags.size(), std::cout );
+    std::atomic<int> analysisStatus{ static_cast<int>( error_t::noerror ) };
 
     for( size_t s = 0; s < mags.size(); ++s )
     {
@@ -1453,7 +1455,14 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         else
                         {
                             // Calculate gain using the POL PSD
-                            gopt = go_si.optGainOpenLoop( var, tPSDpPOL, tPSDn, gmax, true );
+                            error_t gainStatus = go_si.optGainOpenLoop( gopt, var, tPSDpPOL, tPSDn, true );
+                            if( gainStatus != error_t::noerror )
+                            {
+                                int expected = static_cast<int>( error_t::noerror );
+                                analysisStatus.compare_exchange_strong( expected, static_cast<int>( gainStatus ) );
+                                gopt = 0;
+                                var = go_si.clVariance( tPSDp, tPSDn, gopt );
+                            }
 
                             if( m_uncorrectedOG )
                             {
@@ -1500,10 +1509,8 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( rv != error_t::noerror )
                             {
-                                std::cerr
-                                    << "fourierTemporalPSD::analyzePSDGrid: regularizeCoefficients returned error ";
-                                std::cerr << errorName( rv ) << ' ';
-                                std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
+                                int expected = static_cast<int>( error_t::noerror );
+                                analysisStatus.compare_exchange_strong( expected, static_cast<int>( rv ) );
                             }
 
                             for( int n = 0; n < lpNc; ++n )
@@ -1792,6 +1799,11 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
             } // omp for i..nModes
         } // omp Parallel
+
+        if( analysisStatus.load() != static_cast<int>( error_t::noerror ) )
+        {
+            return analysisStatus.load();
+        }
 
         Eigen::Array<realT, -1, -1> cim;
 

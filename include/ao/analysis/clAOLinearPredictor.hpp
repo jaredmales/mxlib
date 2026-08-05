@@ -218,14 +218,24 @@ struct clAOLinearPredictor
             go_lp.b( m_lp.m_c );
 
             CLAOLP_BREADCRUMB;
-            gmax_lp = go_lp.maxStableGain();
+            rv = go_lp.maxStableGain( gmax_lp );
+            if( rv != error_t::noerror )
+            {
+                m_regularizationReport.status = regularizationStatus::calculationFailure;
+                return rv;
+            }
             if( gmax_lp > m_gmax_lp )
             {
                 gmax_lp = m_gmax_lp;
             }
 
             CLAOLP_BREADCRUMB;
-            gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
+            rv = go_lp.optGainOpenLoop( gopt_lp, var_lp, PSDt, PSDn, gmax_lp, false );
+            if( rv != error_t::noerror )
+            {
+                m_regularizationReport.status = regularizationStatus::calculationFailure;
+                return rv;
+            }
 
             if( telem )
             {
@@ -360,8 +370,19 @@ struct clAOLinearPredictor
         go_lp.b( m_lp.m_c );
 
         CLAOLP_BREADCRUMB;
-        gmax_lp = go_lp.maxStableGain();
-        gopt_lp = go_lp.optGainOpenLoop( var_lp, PSDt, PSDn, gmax_lp, false );
+        rv = go_lp.maxStableGain( gmax_lp );
+        if( rv != error_t::noerror )
+        {
+            m_regularizationReport.status = regularizationStatus::calculationFailure;
+            return rv;
+        }
+
+        rv = go_lp.optGainOpenLoop( gopt_lp, var_lp, PSDt, PSDn, gmax_lp, false );
+        if( rv != error_t::noerror )
+        {
+            m_regularizationReport.status = regularizationStatus::calculationFailure;
+            return rv;
+        }
 
         CLAOLP_BREADCRUMB;
         return error_t::noerror;

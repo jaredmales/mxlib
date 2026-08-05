@@ -108,34 +108,117 @@ TEST_CASE( "Gain optimizer recomputes transfer functions after changing Ti", "[a
              Approx( fresh.clVariance( disturbancePsd, noisePsd, gain ) ).epsilon( 1e-12 ).margin( 1e-14 ) );
 
     double retimedOptimalVariance = 0;
-    double retimedMaximumGain = 0.5;
-    const double retimedOptimalGain =
-        retimed.optGainOpenLoop( retimedOptimalVariance, disturbancePsd, noisePsd, retimedMaximumGain, false );
+    double retimedOptimalGain = 0;
+    REQUIRE(
+        retimed.optGainOpenLoop( retimedOptimalGain, retimedOptimalVariance, disturbancePsd, noisePsd, 0.5, false ) ==
+        mx::error_t::noerror );
 
     double freshOptimalVariance = 0;
-    double freshMaximumGain = 0.5;
-    const double freshOptimalGain =
-        fresh.optGainOpenLoop( freshOptimalVariance, disturbancePsd, noisePsd, freshMaximumGain, false );
+    double freshOptimalGain = 0;
+    REQUIRE( fresh.optGainOpenLoop( freshOptimalGain, freshOptimalVariance, disturbancePsd, noisePsd, 0.5, false ) ==
+             mx::error_t::noerror );
 
     REQUIRE( retimedOptimalGain == Approx( freshOptimalGain ).epsilon( 1e-12 ).margin( 1e-14 ) );
     REQUIRE( retimedOptimalVariance == Approx( freshOptimalVariance ).epsilon( 1e-12 ).margin( 1e-14 ) );
 }
 
-/// Verify the maximum stable gain for a pure integrator with a sampled Nyquist crossing.
-/** Exercises mx::AO::analysis::clGainOpt::maxStableGain through its supported zero-argument interface. */
-TEST_CASE( "Gain optimizer finds the pure-integrator stability limit", "[ao::analysis::clGainOpt]" )
+/// Verify that maximum-stable-gain calculation interpolates a bracketed pure-integrator Nyquist crossing.
+/** Exercises mx::AO::analysis::clGainOpt::maxStableGain and its crossing diagnostics. */
+TEST_CASE( "Gain optimizer interpolates a pure-integrator stability crossing", "[ao::analysis::clGainOpt]" )
 {
     optimizerT optimizer( 0.001, 0.0015 );
-
-    std::vector<double> frequency;
-    for( int index = 1; index <= 500; ++index )
-    {
-        frequency.push_back( static_cast<double>( index ) );
-    }
+    const std::vector<double> frequency{ 100.0, 124.0, 126.0, 150.0 };
     optimizer.f( frequency );
 
     const double crossingPhase = std::numbers::pi_v<double> / 4.0;
     const double expectedGain = crossingPhase * crossingPhase / ( 2.0 * std::sin( crossingPhase / 2.0 ) );
+    const double lowerSampleGain = -1.0 / optimizer.olXfer( 1 ).real();
 
-    REQUIRE( optimizer.maxStableGain() == Approx( expectedGain ).epsilon( 1e-12 ) );
+    double maximumGain = 0;
+    optimizerT::maxStableGainReport report;
+    REQUIRE( optimizer.maxStableGain( maximumGain, &report ) == mx::error_t::noerror );
+
+    REQUIRE( report.status == optimizerT::maxStableGainStatus::crossingFound );
+    REQUIRE( report.lowerIndex == 1 );
+    REQUIRE( report.upperIndex == 2 );
+    REQUIRE( report.lowerFrequency == 124.0 );
+    REQUIRE( report.upperFrequency == 126.0 );
+    REQUIRE( report.crossingFrequency == Approx( 125.0 ).margin( 0.02 ) );
+    REQUIRE( maximumGain == report.gain );
+    REQUIRE( std::abs( maximumGain - expectedGain ) < std::abs( lowerSampleGain - expectedGain ) );
+}
+
+/// Verify that maximum-stable-gain calculation reports invalid grids and missing crossings.
+/** Exercises mx::AO::analysis::clGainOpt::maxStableGain failure statuses without sentinel gain values. */
+TEST_CASE( "Gain optimizer reports missing stability crossings", "[ao::analysis::clGainOpt]" )
+{
+    optimizerT optimizer( 0.001, 0.0015 );
+    double maximumGain = 0;
+    optimizerT::maxStableGainReport report;
+
+    optimizer.f( std::vector<double>{ 1.0 } );
+    REQUIRE( optimizer.maxStableGain( maximumGain, &report ) == mx::error_t::sizeerr );
+    REQUIRE( report.status == optimizerT::maxStableGainStatus::invalidInput );
+    REQUIRE( mx::math::isNan( maximumGain ) );
+
+    optimizer.f( std::vector<double>{ 1.0, 2.0, 3.0 } );
+    REQUIRE( optimizer.maxStableGain( maximumGain, &report ) == mx::error_t::notfound );
+    REQUIRE( report.status == optimizerT::maxStableGainStatus::noCrossing );
+    REQUIRE( mx::math::isNan( maximumGain ) );
+}
+
+/// Verify that optimum-gain calculation enforces its interval and reports termination state.
+/** Exercises both mx::AO::analysis::clGainOpt::optGainOpenLoop overloads for small intervals, invalid intervals,
+ * stability failure, and forced iteration exhaustion.
+ */
+TEST_CASE( "Gain optimizer reports minimizer termination", "[ao::analysis::clGainOpt]" )
+{
+    optimizerT optimizer( 0.001, 0.0015 );
+    std::vector<double> frequency;
+    std::vector<double> disturbance;
+    std::vector<double> noise;
+    for( int index = 1; index <= 500; ++index )
+    {
+        const double value = static_cast<double>( index );
+        frequency.push_back( value );
+        disturbance.push_back( 1.0 / ( 1.0 + value * value ) );
+        noise.push_back( 1e-6 );
+    }
+    optimizer.f( frequency );
+
+    double optimalGain = 0;
+    double variance = 0;
+    optimizerT::optGainReport report;
+    constexpr double smallMaximumGain = 1e-3;
+    REQUIRE( optimizer.optGainOpenLoop( optimalGain, variance, disturbance, noise, smallMaximumGain, true, &report ) ==
+             mx::error_t::noerror );
+    REQUIRE( ( report.status == optimizerT::optGainStatus::converged ||
+               report.status == optimizerT::optGainStatus::boundaryLimited ) );
+    REQUIRE( report.minimumEvaluatedGain >= optimizer.m_minFindMin );
+    REQUIRE( report.maximumEvaluatedGain <= optimizer.m_minFindMaxFact * smallMaximumGain );
+    REQUIRE( mx::math::isFinite( optimalGain ) );
+    REQUIRE( mx::math::isFinite( variance ) );
+
+    REQUIRE( optimizer.optGainOpenLoop( optimalGain, variance, disturbance, noise, 1e-10, false, &report ) ==
+             mx::error_t::invalidconfig );
+    REQUIRE( report.status == optimizerT::optGainStatus::invalidInput );
+    REQUIRE( mx::math::isNan( optimalGain ) );
+    REQUIRE( mx::math::isNan( variance ) );
+
+    optimizer.f( std::vector<double>{ 1.0, 2.0, 3.0 } );
+    disturbance.resize( 3 );
+    noise.resize( 3 );
+    REQUIRE( optimizer.optGainOpenLoop( optimalGain, variance, disturbance, noise, false, &report ) ==
+             mx::error_t::notfound );
+    REQUIRE( report.status == optimizerT::optGainStatus::stabilityFailure );
+    REQUIRE( report.stability.status == optimizerT::maxStableGainStatus::noCrossing );
+
+    optimizer.f( frequency );
+    disturbance.resize( frequency.size(), 1e-3 );
+    noise.resize( frequency.size(), 1e-6 );
+    optimizer.m_minFindMaxIter = 1;
+    REQUIRE( optimizer.optGainOpenLoop( optimalGain, variance, disturbance, noise, 0.5, false, &report ) ==
+             mx::error_t::timeout );
+    REQUIRE( report.status == optimizerT::optGainStatus::iterationLimit );
+    REQUIRE( report.iterations == 1 );
 }

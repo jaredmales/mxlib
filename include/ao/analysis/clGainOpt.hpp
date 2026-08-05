@@ -28,9 +28,12 @@
 #define clGainOpt_hpp
 
 #ifdef MX_INCLUDE_BOOST
-    #include <boost/math/tools/minima.hpp>
+#include <boost/math/tools/minima.hpp>
 #endif
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <type_traits>
 
 #include <Eigen/Dense>
@@ -38,6 +41,8 @@
 #include "../../sys/timeUtils.hpp"
 
 #include "../../math/constants.hpp"
+#include "../../math/floatUtils.hpp"
+#include "../../error/error_t.hpp"
 
 // #define ALLOW_F_ZERO
 
@@ -65,6 +70,56 @@ struct clGainOpt
     typedef _realT realT;                  ///< The real data type
     typedef std::complex<_realT> complexT; ///< The complex data type
 
+    /// Termination state of a maximum-stable-gain search.
+    enum class maxStableGainStatus
+    {
+        notRun,        ///< No search has been attempted.
+        crossingFound, ///< A qualifying Nyquist crossing was found.
+        invalidInput,  ///< The frequency grid or derived Nyquist values were invalid.
+        noCrossing     ///< No qualifying Nyquist crossing was found.
+    };
+
+    /// Diagnostic summary of a maximum-stable-gain search.
+    struct maxStableGainReport
+    {
+        maxStableGainStatus status{ maxStableGainStatus::notRun };          ///< Search termination state.
+        size_t lowerIndex{ std::numeric_limits<size_t>::max() };            ///< Index below the selected crossing.
+        size_t upperIndex{ std::numeric_limits<size_t>::max() };            ///< Index above the selected crossing.
+        realT lowerFrequency{ std::numeric_limits<realT>::quiet_NaN() };    ///< Frequency below the crossing.
+        realT upperFrequency{ std::numeric_limits<realT>::quiet_NaN() };    ///< Frequency above the crossing.
+        realT crossingFrequency{ std::numeric_limits<realT>::quiet_NaN() }; ///< Interpolated crossing frequency.
+        realT crossingReal{ std::numeric_limits<realT>::quiet_NaN() };      ///< Interpolated real Nyquist value.
+        realT gain{ std::numeric_limits<realT>::quiet_NaN() };              ///< Maximum stable gain at the crossing.
+    };
+
+    /// Termination state of an open-loop optimum-gain search.
+    enum class optGainStatus
+    {
+        notRun,            ///< No search has been attempted.
+        converged,         ///< The minimizer converged inside the search interval.
+        boundaryLimited,   ///< The reported minimum lies on a search boundary.
+        invalidInput,      ///< The PSDs, search controls, or requested interval were invalid.
+        stabilityFailure,  ///< The automatic maximum-stable-gain search failed.
+        iterationLimit,    ///< The minimizer exhausted its iteration limit.
+        calculationFailure ///< The minimizer threw or returned invalid output.
+    };
+
+    /// Diagnostic summary of an open-loop optimum-gain search.
+    struct optGainReport
+    {
+        optGainStatus status{ optGainStatus::notRun };                         ///< Search termination state.
+        uintmax_t iterations{ 0 };                                             ///< Minimizer iterations attempted.
+        size_t evaluations{ 0 };                                               ///< Objective evaluations performed.
+        realT requestedMaximumGain{ std::numeric_limits<realT>::quiet_NaN() }; ///< Caller-supplied gain limit.
+        realT searchMinimumGain{ std::numeric_limits<realT>::quiet_NaN() };    ///< Final minimizer lower bound.
+        realT searchMaximumGain{ std::numeric_limits<realT>::quiet_NaN() };    ///< Final minimizer upper bound.
+        realT minimumEvaluatedGain{ std::numeric_limits<realT>::quiet_NaN() }; ///< Smallest evaluated gain.
+        realT maximumEvaluatedGain{ std::numeric_limits<realT>::quiet_NaN() }; ///< Largest evaluated gain.
+        realT gain{ std::numeric_limits<realT>::quiet_NaN() };                 ///< Best gain returned by the minimizer.
+        realT variance{ std::numeric_limits<realT>::quiet_NaN() };             ///< Variance at the best gain.
+        maxStableGainReport stability; ///< Automatic stability-search diagnostics, when requested.
+    };
+
   protected:
     int m_N;                 ///< Number of integrations in the (optional) moving average.  Default is 1.
     realT m_Ti;              ///< The loop sampling interval
@@ -79,7 +134,7 @@ struct clGainOpt
     /// True when frequency, sampling interval, or required controller tap count invalidates m_cs and m_ss.
     bool m_trigCacheChanged{ true };
 
-    bool m_changed{ true };  ///< True if any of the members which make up the basic transfer functions are changed
+    bool m_changed{ true }; ///< True if any of the members which make up the basic transfer functions are changed
 
     Eigen::Array<realT, -1, -1> m_cs;
     Eigen::Array<realT, -1, -1> m_ss;
@@ -171,8 +226,8 @@ struct clGainOpt
 
     /// Get a single FIR coefficient
     /**
-       * \returns a single FIR coefficient
-      */
+     * \returns a single FIR coefficient
+     */
     realT b( size_t i /**< [in] the index of the FIR coefficient*/ )
     {
         return m_b[i];
@@ -200,8 +255,8 @@ struct clGainOpt
                                                               coefficients, which is copied to m_a.*/ );
     /// Get a single IIR coefficient
     /**
-       * \returns a single IIR coefficient
-      */
+     * \returns a single IIR coefficient
+     */
     realT a( size_t i )
     {
         return m_a[i];
@@ -366,32 +421,34 @@ struct clGainOpt
      *
      * Crossings below m_maxFindMin are ignored.
      *
-     * \returns the maximum stable gain for the loop parameters
+     * \returns `error_t::noerror` when a crossing is found, `error_t::notfound` when none is found, or an input error.
      */
-    realT maxStableGain();
+    mx::error_t maxStableGain( realT &gain, /**< [out] maximum stable gain; NaN on failure */
+                               maxStableGainReport *report = nullptr /**< [out] optional search diagnostics */ );
 
     /// Return the optimum closed loop gain given an open loop PSD
-    /** Uses _gmax for the upper limit.
-     * \returns the optimum gain
+    /** Determines the maximum stable gain before minimizing the variance.
+     * \returns `error_t::noerror` on convergence or a boundary-limited result, otherwise an explicit failure status.
      */
-    realT optGainOpenLoop( realT &var,                         ///< [out] the variance at the optimum gain
-                           const std::vector<realT> &PSDerr,   ///< [in] open loop error PSD
-                           const std::vector<realT> &PSDnoise, ///< [in] open loop measurement noise PSD
-                           bool gridSearch                     /**< [in] flag controlling whether an initial grid
-                                                                         search is done to find the global minimum*/
+    mx::error_t optGainOpenLoop( realT &gain, ///< [out] optimum gain; NaN on failure
+                                 realT &var,  ///< [out] variance at the optimum gain; NaN on failure
+                                 const std::vector<realT> &PSDerr,   ///< [in] open-loop error PSD
+                                 const std::vector<realT> &PSDnoise, ///< [in] open-loop measurement-noise PSD
+                                 bool gridSearch,                ///< [in] whether to perform a coarse initial search
+                                 optGainReport *report = nullptr ///< [out] optional search diagnostics
     );
 
     /// Return the optimum closed loop gain given an open loop PSD
     /**
-     * \returns the optimum gain.
+     * \returns `error_t::noerror` on convergence or a boundary-limited result, otherwise an explicit failure status.
      */
-    realT optGainOpenLoop( realT &var,                         ///< [out] the variance at the optimum gain
-                           const std::vector<realT> &PSDerr,   ///< [in] open loop error PSD
-                           const std::vector<realT> &PSDnoise, ///< [in] open loop measurement noise PSD
-                           realT &gmax,                        /**< [in] maximum gain to consider.
-                                                                         If 0, then _gmax is used.*/
-                           bool gridSearch                     /**< [in] flag controlling whether an initial grid
-                                                                         search is done to find the global minimum*/
+    mx::error_t optGainOpenLoop( realT &gain,                        ///< [out] optimum gain; best estimate on timeout
+                                 realT &var,                         ///< [out] variance at the optimum gain
+                                 const std::vector<realT> &PSDerr,   ///< [in] open-loop error PSD
+                                 const std::vector<realT> &PSDnoise, ///< [in] open-loop measurement-noise PSD
+                                 realT maximumGain,                  ///< [in] maximum stable gain bounding the search
+                                 bool gridSearch,                ///< [in] whether to perform a coarse initial search
+                                 optGainReport *report = nullptr ///< [out] optional search diagnostics
     );
 
     /// Calculate the pseudo open-loop PSD given a closed loop PSD
@@ -529,14 +586,14 @@ void clGainOpt<realT>::b( const Eigen::Array<realT, -1, -1> &newB )
 
 template <typename realT>
 void clGainOpt<realT>::bScale( realT scale )
+{
+    for( size_t n = 0; n < m_b.size(); ++n )
     {
-        for( size_t n = 0; n < m_b.size(); ++n )
-        {
-            m_b[n] *= scale;
-        }
-
-        m_changed = true;
+        m_b[n] *= scale;
     }
+
+    m_changed = true;
+}
 
 template <typename realT>
 void clGainOpt<realT>::a( const std::vector<realT> &newA )
@@ -582,14 +639,12 @@ void clGainOpt<realT>::aScale( realT scale )
 template <typename realT>
 void clGainOpt<realT>::remember( const realT &rem )
 {
-    if(m_remember != rem)
+    if( m_remember != rem )
     {
         m_remember = rem;
 
         m_changed = true;
     }
-
-
 }
 
 template <typename realT>
@@ -601,9 +656,9 @@ realT clGainOpt<realT>::remember()
 template <typename realT>
 void clGainOpt<realT>::setLeakyIntegrator( realT remember )
 {
-    if(m_b.size() != 1 || m_a.size() != 1 || m_b[0] != 1.0 || m_a[0] != 1.0 || m_remember != remember)
+    if( m_b.size() != 1 || m_a.size() != 1 || m_b[0] != 1.0 || m_a[0] != 1.0 || m_remember != remember )
     {
-        if(m_b.size() != 1)
+        if( m_b.size() != 1 )
         {
             m_b.resize( 1 );
             m_trigCacheChanged = true;
@@ -611,7 +666,7 @@ void clGainOpt<realT>::setLeakyIntegrator( realT remember )
 
         m_b[0] = 1.0;
 
-        if(m_a.size() != 1)
+        if( m_a.size() != 1 )
         {
             m_a.resize( 1 );
             m_trigCacheChanged = true;
@@ -974,28 +1029,81 @@ realT clGainOpt<realT>::clVariance( const std::vector<realT> &PSDerr, const std:
 }
 
 template <typename realT>
-realT clGainOpt<realT>::maxStableGain()
+mx::error_t clGainOpt<realT>::maxStableGain( realT &gain, maxStableGainReport *report )
 {
+    maxStableGainReport localReport;
+    maxStableGainReport &activeReport = report == nullptr ? localReport : *report;
+    activeReport = {};
+    gain = std::numeric_limits<realT>::quiet_NaN();
+
+    if( m_f.size() < 2 )
+    {
+        activeReport.status = maxStableGainStatus::invalidInput;
+        return error_t::sizeerr;
+    }
+
+    for( size_t index = 0; index < m_f.size(); ++index )
+    {
+        if( !math::isFinite( m_f[index] ) || m_f[index] < 0 || ( index > 0 && m_f[index] <= m_f[index - 1] ) )
+        {
+            activeReport.status = maxStableGainStatus::invalidInput;
+            return error_t::invalidarg;
+        }
+    }
+
     std::vector<realT> re, im;
 
     nyquist( re, im, 1.0 );
 
-    int gi_c = re.size() - 1;
-
-    for( int gi = re.size() - 2; gi >= 0; --gi )
+    for( size_t index = 0; index < re.size(); ++index )
     {
-        if( -1.0 / re[gi] < m_maxFindMin )
-            continue;
-
-        if( ( re[gi] < 0 ) && ( im[gi + 1] >= 0 && im[gi] < 0 ) )
+        if( !math::isFinite( re[index] ) || !math::isFinite( im[index] ) )
         {
-            // Check for loop back in Nyquist diagram
-            if( re[gi] <= re[gi_c] )
-                gi_c = gi;
+            activeReport.status = maxStableGainStatus::invalidInput;
+            return error_t::error;
         }
     }
 
-    return -1.0 / re[gi_c];
+    bool crossingFound = false;
+    for( size_t index = 0; index + 1 < re.size(); ++index )
+    {
+        if( !( im[index] < 0 && im[index + 1] >= 0 ) )
+        {
+            continue;
+        }
+
+        const realT fraction = -im[index] / ( im[index + 1] - im[index] );
+        const realT crossingReal = re[index] + fraction * ( re[index + 1] - re[index] );
+        const realT crossingGain = -realT( 1 ) / crossingReal;
+        if( crossingReal >= 0 || !math::isFinite( crossingGain ) || crossingGain < m_maxFindMin )
+        {
+            continue;
+        }
+
+        if( crossingFound && crossingReal >= activeReport.crossingReal )
+        {
+            continue;
+        }
+
+        crossingFound = true;
+        activeReport.lowerIndex = index;
+        activeReport.upperIndex = index + 1;
+        activeReport.lowerFrequency = m_f[index];
+        activeReport.upperFrequency = m_f[index + 1];
+        activeReport.crossingFrequency = m_f[index] + fraction * ( m_f[index + 1] - m_f[index] );
+        activeReport.crossingReal = crossingReal;
+        activeReport.gain = crossingGain;
+    }
+
+    if( !crossingFound )
+    {
+        activeReport.status = maxStableGainStatus::noCrossing;
+        return error_t::notfound;
+    }
+
+    activeReport.status = maxStableGainStatus::crossingFound;
+    gain = activeReport.gain;
+    return error_t::noerror;
 }
 
 // Implement the minimization, allowing pre-compiled specializations
@@ -1003,158 +1111,263 @@ namespace impl
 {
 
 template <typename realT>
-realT optGainOpenLoop( clGainOptOptGain_OL<realT> &olgo,
-                       realT &var,
-                       const realT &gmax,
-                       const realT &minFindMin,
-                       const realT &minFindMaxFact,
-                       int minFindBits,
-                       uintmax_t minFindMaxIter,
-                       uintmax_t &iters )
+/// Minimize an open-loop variance objective on a bounded gain interval.
+mx::error_t optGainOpenLoop( realT &gain,                      ///< [out] best gain estimate
+                             realT &var,                       ///< [out] variance at the best gain estimate
+                             clGainOptOptGain_OL<realT> &olgo, ///< [in,out] variance objective and diagnostics
+                             const realT &minimumGain,         ///< [in] lower gain bound
+                             const realT &maximumGain,         ///< [in] upper gain bound
+                             int minFindBits,                  ///< [in] requested precision in binary digits
+                             uintmax_t minFindMaxIter,         ///< [in] maximum minimizer iterations
+                             uintmax_t &iters                  ///< [out] minimizer iterations used
+)
 {
 #ifdef MX_INCLUDE_BOOST
-    realT gopt;
+    gain = std::numeric_limits<realT>::quiet_NaN();
+    var = std::numeric_limits<realT>::quiet_NaN();
 
     try
     {
         std::pair<realT, realT> brack;
         brack = boost::math::tools::brentm_findm_minima<clGainOptOptGain_OL<realT>, realT>( olgo,
-                                                                                            minFindMin,
-                                                                                            minFindMaxFact * gmax,
+                                                                                            minimumGain,
+                                                                                            maximumGain,
                                                                                             minFindBits,
                                                                                             minFindMaxIter,
                                                                                             iters );
-        gopt = brack.first;
+        gain = brack.first;
         var = brack.second;
     }
     catch( ... )
     {
-        std::cerr << "optGainOpenLoop: No root found\n";
-        gopt = minFindMaxFact * gmax;
-        var = 0;
+        return error_t::exception;
     }
 
-    return gopt;
+    if( iters >= minFindMaxIter )
+    {
+        return error_t::timeout;
+    }
+
+    return error_t::noerror;
 #else
     static_assert( std::is_fundamental<realT>::value || !std::is_fundamental<realT>::value,
-                    "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not "
-                    "defined, so I can't just use boost." );
-    return 0;
+                   "impl::optGainOpenLoop<realT> is not specialized for type realT, and MX_INCLUDE_BOOST is not "
+                   "defined, so I can't just use boost." );
+    return error_t::notimpl;
 #endif
 }
 
 template <>
-float optGainOpenLoop<float>( clGainOptOptGain_OL<float> &olgo,
-                              float &var,
-                              const float &gmax,
-                              const float &minFindMin,
-                              const float &minFindMaxFact,
-                              int minFindBits,
-                              uintmax_t minFindMaxIter,
-                              uintmax_t &iters );
+/// Float specialization of the bounded open-loop gain minimizer.
+mx::error_t optGainOpenLoop<float>( float &gain,                      ///< [out] best gain estimate
+                                    float &var,                       ///< [out] variance at the best gain estimate
+                                    clGainOptOptGain_OL<float> &olgo, ///< [in,out] variance objective and diagnostics
+                                    const float &minimumGain,         ///< [in] lower gain bound
+                                    const float &maximumGain,         ///< [in] upper gain bound
+                                    int minFindBits,                  ///< [in] requested precision in binary digits
+                                    uintmax_t minFindMaxIter,         ///< [in] maximum minimizer iterations
+                                    uintmax_t &iters                  ///< [out] minimizer iterations used
+);
 
 template <>
-double optGainOpenLoop<double>( clGainOptOptGain_OL<double> &olgo,
-                                double &var,
-                                const double &gmax,
-                                const double &minFindMin,
-                                const double &minFindMaxFact,
-                                int minFindBits,
-                                uintmax_t minFindMaxIter,
-                                uintmax_t &iters );
+/// Double specialization of the bounded open-loop gain minimizer.
+mx::error_t optGainOpenLoop<double>( double &gain,                      ///< [out] best gain estimate
+                                     double &var,                       ///< [out] variance at the best gain estimate
+                                     clGainOptOptGain_OL<double> &olgo, ///< [in,out] variance objective and diagnostics
+                                     const double &minimumGain,         ///< [in] lower gain bound
+                                     const double &maximumGain,         ///< [in] upper gain bound
+                                     int minFindBits,                   ///< [in] requested precision in binary digits
+                                     uintmax_t minFindMaxIter,          ///< [in] maximum minimizer iterations
+                                     uintmax_t &iters                   ///< [out] minimizer iterations used
+);
 
 template <>
-long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo,
-                                          long double &var,
-                                          const long double &gmax,
-                                          const long double &minFindMin,
-                                          const long double &minFindMaxFact,
-                                          int minFindBits,
-                                          uintmax_t minFindMaxIter,
-                                          uintmax_t &iters );
+/// Long-double specialization of the bounded open-loop gain minimizer.
+mx::error_t
+optGainOpenLoop<long double>( long double &gain,                      ///< [out] best gain estimate
+                              long double &var,                       ///< [out] variance at the best gain estimate
+                              clGainOptOptGain_OL<long double> &olgo, ///< [in,out] variance objective and diagnostics
+                              const long double &minimumGain,         ///< [in] lower gain bound
+                              const long double &maximumGain,         ///< [in] upper gain bound
+                              int minFindBits,                        ///< [in] requested precision in binary digits
+                              uintmax_t minFindMaxIter,               ///< [in] maximum minimizer iterations
+                              uintmax_t &iters                        ///< [out] minimizer iterations used
+);
 
 #ifdef HASQUAD
 template <>
-_m_float128 optGainOpenLoop<_m_float128>( clGainOptOptGain_OL<_m_float128> &olgo,
-                                          _m_float128 &var,
-                                          const _m_float128 &gmax,
-                                          const _m_float128 &minFindMin,
-                                          const _m_float128 &minFindMaxFact,
-                                          int minFindBits,
-                                          uintmax_t minFindMaxIter,
-                                          uintmax_t &iters );
+/// Quad-precision specialization of the bounded open-loop gain minimizer.
+mx::error_t
+optGainOpenLoop<_m_float128>( _m_float128 &gain,                      ///< [out] best gain estimate
+                              _m_float128 &var,                       ///< [out] variance at the best gain estimate
+                              clGainOptOptGain_OL<_m_float128> &olgo, ///< [in,out] variance objective and diagnostics
+                              const _m_float128 &minimumGain,         ///< [in] lower gain bound
+                              const _m_float128 &maximumGain,         ///< [in] upper gain bound
+                              int minFindBits,                        ///< [in] requested precision in binary digits
+                              uintmax_t minFindMaxIter,               ///< [in] maximum minimizer iterations
+                              uintmax_t &iters                        ///< [out] minimizer iterations used
+);
 #endif
 
 } // namespace impl
 
 template <typename realT>
-realT clGainOpt<realT>::optGainOpenLoop( realT &var,
-                                         const std::vector<realT> &PSDerr,
-                                         const std::vector<realT> &PSDnoise,
-                                         bool gridSearch )
+mx::error_t clGainOpt<realT>::optGainOpenLoop( realT &gain,
+                                               realT &var,
+                                               const std::vector<realT> &PSDerr,
+                                               const std::vector<realT> &PSDnoise,
+                                               bool gridSearch,
+                                               optGainReport *report )
 {
-    realT gmax = 0;
-    return optGainOpenLoop( var, PSDerr, PSDnoise, gmax, gridSearch );
+    maxStableGainReport stabilityReport;
+    realT maximumGain;
+    error_t rv = maxStableGain( maximumGain, &stabilityReport );
+    if( rv != error_t::noerror )
+    {
+        gain = std::numeric_limits<realT>::quiet_NaN();
+        var = std::numeric_limits<realT>::quiet_NaN();
+        if( report != nullptr )
+        {
+            *report = {};
+            report->status = optGainStatus::stabilityFailure;
+            report->stability = stabilityReport;
+        }
+        return rv;
+    }
+
+    optGainReport optimizationReport;
+    rv = optGainOpenLoop( gain, var, PSDerr, PSDnoise, maximumGain, gridSearch, &optimizationReport );
+    optimizationReport.stability = stabilityReport;
+    if( report != nullptr )
+    {
+        *report = optimizationReport;
+    }
+    return rv;
 }
 
 template <typename realT>
-realT clGainOpt<realT>::optGainOpenLoop(
-    realT &var, const std::vector<realT> &PSDerr, const std::vector<realT> &PSDnoise, realT &gmax, bool gridSearch )
+mx::error_t clGainOpt<realT>::optGainOpenLoop( realT &gain,
+                                               realT &var,
+                                               const std::vector<realT> &PSDerr,
+                                               const std::vector<realT> &PSDnoise,
+                                               realT maximumGain,
+                                               bool gridSearch,
+                                               optGainReport *report )
 {
+    optGainReport localReport;
+    optGainReport &activeReport = report == nullptr ? localReport : *report;
+    activeReport = {};
+    activeReport.requestedMaximumGain = maximumGain;
+    gain = std::numeric_limits<realT>::quiet_NaN();
+    var = std::numeric_limits<realT>::quiet_NaN();
+
+    if( m_f.size() < 2 || PSDerr.size() != m_f.size() || PSDnoise.size() != m_f.size() )
+    {
+        activeReport.status = optGainStatus::invalidInput;
+        return error_t::sizeerr;
+    }
+
+    if( !math::isFinite( maximumGain ) || maximumGain <= 0 || !math::isFinite( m_minFindMin ) || m_minFindMin < 0 ||
+        !math::isFinite( m_minFindMaxFact ) || m_minFindMaxFact <= 0 || m_minFindMaxFact > 1 || m_minFindBits <= 0 ||
+        m_minFindMaxIter == 0 )
+    {
+        activeReport.status = optGainStatus::invalidInput;
+        return error_t::invalidconfig;
+    }
+
+    const realT requestedMinimum = m_minFindMin;
+    const realT requestedMaximum = m_minFindMaxFact * maximumGain;
+    if( !math::isFinite( requestedMaximum ) || requestedMaximum <= requestedMinimum )
+    {
+        activeReport.status = optGainStatus::invalidInput;
+        return error_t::invalidconfig;
+    }
+
     clGainOptOptGain_OL<realT> olgo;
     olgo.go = this;
     olgo.PSDerr = &PSDerr;
     olgo.PSDnoise = &PSDnoise;
 
-    if( gmax <= 0 )
-    {
-        gmax = maxStableGain();
-    }
-
-    realT ming = m_minFindMin;
-    realT maxg = gmax;
+    realT minimumGain = requestedMinimum;
+    realT maximumSearchGain = requestedMaximum;
+    bool searchBoundarySelected = false;
 
     if( gridSearch )
     {
-        realT gstpsz = 0.05;
-        realT gg = m_minFindMaxFact * gmax;
-        realT var0 = clVariance( PSDerr, PSDnoise, gg );
-        realT mingg = gg;
+        const realT gainStep = std::min( realT( 0.05 ), requestedMaximum - requestedMinimum );
+        realT currentGain = requestedMaximum;
+        realT minimumVariance = olgo( currentGain );
+        realT gainAtMinimum = currentGain;
 
-        while( gg > m_minFindMin )
+        while( currentGain > requestedMinimum )
         {
-            gg -= gstpsz;
-            realT var1 = clVariance( PSDerr, PSDnoise, gg );
-
-            if( var1 < var0 )
+            const realT nextGain = std::max( requestedMinimum, currentGain - gainStep );
+            if( nextGain >= currentGain )
             {
-                var0 = var1;
-                mingg = gg;
+                break;
+            }
+
+            currentGain = nextGain;
+            const realT candidateVariance = olgo( currentGain );
+
+            if( candidateVariance < minimumVariance )
+            {
+                minimumVariance = candidateVariance;
+                gainAtMinimum = currentGain;
             }
         }
 
-        ming = mingg - gstpsz;
-        maxg = mingg + gstpsz;
-
-        if( ming < m_minFindMin )
-            ming = m_minFindMin;
-        if( maxg > gmax )
-            maxg = gmax;
+        minimumGain = std::max( requestedMinimum, gainAtMinimum - gainStep );
+        maximumSearchGain = std::min( requestedMaximum, gainAtMinimum + gainStep );
+        searchBoundarySelected = gainAtMinimum == requestedMinimum || gainAtMinimum == requestedMaximum;
     }
 
-    uintmax_t iters;
-    realT val =
-        impl::optGainOpenLoop( olgo, var, maxg, ming, m_minFindMaxFact, m_minFindBits, m_minFindMaxIter, iters );
+    activeReport.searchMinimumGain = minimumGain;
+    activeReport.searchMaximumGain = maximumSearchGain;
 
-    if( iters >= m_minFindMaxIter )
+    uintmax_t iterations = m_minFindMaxIter;
+    error_t rv = impl::optGainOpenLoop( gain,
+                                        var,
+                                        olgo,
+                                        minimumGain,
+                                        maximumSearchGain,
+                                        m_minFindBits,
+                                        m_minFindMaxIter,
+                                        iterations );
+
+    activeReport.iterations = iterations;
+    activeReport.evaluations = olgo.evaluations;
+    activeReport.minimumEvaluatedGain = olgo.minimumEvaluatedGain;
+    activeReport.maximumEvaluatedGain = olgo.maximumEvaluatedGain;
+    activeReport.gain = gain;
+    activeReport.variance = var;
+
+    if( rv == error_t::timeout )
     {
-        // #pragma omp critical
-        {
-            std::cerr << "\nclGainOpt<realT>::optGainOpenLoop: minFindMaxIter (" << m_minFindMaxIter << ") reached\n";
-        }
+        activeReport.status = optGainStatus::iterationLimit;
+        return rv;
     }
 
-    return val;
+    if( rv != error_t::noerror || !math::isFinite( gain ) || !math::isFinite( var ) )
+    {
+        activeReport.status = optGainStatus::calculationFailure;
+        gain = std::numeric_limits<realT>::quiet_NaN();
+        var = std::numeric_limits<realT>::quiet_NaN();
+        activeReport.gain = gain;
+        activeReport.variance = var;
+        return rv == error_t::noerror ? error_t::error : rv;
+    }
+
+    if( searchBoundarySelected || gain <= minimumGain || gain >= maximumSearchGain )
+    {
+        activeReport.status = optGainStatus::boundaryLimited;
+    }
+    else
+    {
+        activeReport.status = optGainStatus::converged;
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT>
@@ -1196,12 +1409,19 @@ int clGainOpt<realT>::nyquist( std::vector<realT> &re, std::vector<realT> &im, r
 template <typename realT>
 struct clGainOptOptGain_OL
 {
-    clGainOpt<realT> *go;
-    const std::vector<realT> *PSDerr;
-    const std::vector<realT> *PSDnoise;
+    clGainOpt<realT> *go{ nullptr };                                    ///< Gain optimizer used to evaluate variance.
+    const std::vector<realT> *PSDerr{ nullptr };                        ///< Open-loop disturbance PSD.
+    const std::vector<realT> *PSDnoise{ nullptr };                      ///< Measurement-noise PSD.
+    size_t evaluations{ 0 };                                            ///< Objective evaluations performed.
+    realT minimumEvaluatedGain{ std::numeric_limits<realT>::max() };    ///< Smallest gain evaluated.
+    realT maximumEvaluatedGain{ std::numeric_limits<realT>::lowest() }; ///< Largest gain evaluated.
 
-    realT operator()( const realT &g )
+    /// Evaluate closed-loop variance at a candidate gain and update diagnostics.
+    realT operator()( const realT &g /**< [in] candidate gain */ )
     {
+        ++evaluations;
+        minimumEvaluatedGain = std::min( minimumEvaluatedGain, g );
+        maximumEvaluatedGain = std::max( maximumEvaluatedGain, g );
         return go->clVariance( *PSDerr, *PSDnoise, g );
     }
 };
