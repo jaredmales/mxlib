@@ -10,8 +10,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <sstream>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 using aoSystemBaseT = mx::AO::analysis::aoSystem<double, mx::AO::analysis::vonKarmanSpectrum<double>>;
@@ -25,6 +28,7 @@ using temporalPsdT = mx::AO::analysis::fourierTemporalPSD<double, aoSystemT>;
 
 namespace
 {
+/// \cond fourierTemporalPSD_test_detail
 
 /// Sentinel GSL error handler used to verify restoration after PSD calculations.
 void testGslErrorHandler( const char *reason, /**< [in] GSL diagnostic text */
@@ -38,7 +42,208 @@ void testGslErrorHandler( const char *reason, /**< [in] GSL diagnostic text */
     static_cast<void>( errorNumber );
 }
 
+/// Return a null workspace to exercise allocation-failure propagation.
+gsl_integration_workspace *failWorkspaceAllocation( size_t size /**< [in] requested workspace size */ )
+{
+    static_cast<void>( size );
+    return nullptr;
+}
+
+/// Test evaluator exposing the protected allocator-injection constructor.
+struct allocationFailureTemporalPsdT : public temporalPsdT
+{
+    /// Construct an evaluator whose workspace allocation always fails.
+    allocationFailureTemporalPsdT() : temporalPsdT( &failWorkspaceAllocation )
+    {
+    }
+};
+
+/// Test evaluator exposing workspace allocation and ownership state.
+struct workspaceOwnershipTemporalPsdT : public temporalPsdT
+{
+    /// Preserve move construction for the derived test evaluator.
+    workspaceOwnershipTemporalPsdT( workspaceOwnershipTemporalPsdT && ) noexcept = default;
+
+    /// Construct a test evaluator without allocating a workspace.
+    workspaceOwnershipTemporalPsdT() = default;
+
+    /// Allocate the workspace through the production helper.
+    mx::error_t allocateTestWorkspace()
+    {
+        return allocateWorkspace();
+    }
+
+    /// Return whether this evaluator currently owns a workspace.
+    bool ownsWorkspace() const
+    {
+        return m_workspace != nullptr;
+    }
+};
+
+/// \endcond
+
 } // namespace
+
+/// Verify that Fourier temporal PSD evaluators uniquely own movable GSL workspaces.
+/** Exercises the ownership contract of mx::AO::analysis::fourierTemporalPSD. */
+TEST_CASE( "Fourier temporal PSD workspace ownership is move-only", "[ao::analysis::fourierTemporalPSD]" )
+{
+    STATIC_REQUIRE_FALSE( std::is_copy_constructible_v<temporalPsdT> );
+    STATIC_REQUIRE_FALSE( std::is_copy_assignable_v<temporalPsdT> );
+    STATIC_REQUIRE( std::is_nothrow_move_constructible_v<temporalPsdT> );
+    STATIC_REQUIRE( std::is_nothrow_move_assignable_v<temporalPsdT> );
+
+    workspaceOwnershipTemporalPsdT source;
+    REQUIRE( source.allocateTestWorkspace() == mx::error_t::noerror );
+    REQUIRE( source.ownsWorkspace() );
+
+    workspaceOwnershipTemporalPsdT destination( std::move( source ) );
+    REQUIRE_FALSE( source.ownsWorkspace() );
+    REQUIRE( destination.ownsWorkspace() );
+    REQUIRE( destination.m_aosys == nullptr );
+}
+
+/// Verify that public Fourier temporal PSD calculations reject malformed inputs before modifying output.
+/** Exercises mx::AO::analysis::fourierTemporalPSD::singleLayerPSD and
+ * mx::AO::analysis::fourierTemporalPSD::multiLayerPSD precondition handling. */
+TEST_CASE( "Fourier temporal PSD validates public calculation inputs", "[ao::analysis::fourierTemporalPSD]" )
+{
+    aoSystemT aoSystem;
+    aoSystem.D( 6.5 );
+    aoSystem.lam_sci( 1.0e-6 );
+    aoSystem.lam_wfs( 0.8e-6 );
+    aoSystem.atm.setSingleLayer( 0.16, 500e-9, 25.0, 0.0, 0.0, 10.0, 0.0 );
+
+    temporalPsdT temporalPsd;
+    temporalPsd.m_aosys = &aoSystem;
+    temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+
+    std::vector<double> frequency{ 0.0, 1.0 };
+    std::vector<double> psd( frequency.size(), 7.0 );
+    const std::vector<double> unchanged = psd;
+    temporalPsdT::reportT report;
+    report.record( GSL_SUCCESS, 0, 0.0, 0.0, 0.0, 1.0, 1.0 );
+
+    SECTION( "null AO system" )
+    {
+        temporalPsd.m_aosys = nullptr;
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, frequency.back(), &report ) ==
+                 mx::error_t::invalidconfig );
+    }
+
+    SECTION( "empty vectors" )
+    {
+        std::vector<double> empty;
+        REQUIRE( temporalPsd.singleLayerPSD( empty, empty, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::sizeerr );
+    }
+
+    SECTION( "mismatched vector sizes" )
+    {
+        std::vector<double> undersizedPsd{ 7.0 };
+        REQUIRE( temporalPsd.singleLayerPSD( undersizedPsd, frequency, 1.0, 0.0, 0, 1, frequency.back(), &report ) ==
+                 mx::error_t::sizeerr );
+        REQUIRE( undersizedPsd == std::vector<double>{ 7.0 } );
+    }
+
+    SECTION( "nonmonotone frequency grid" )
+    {
+        frequency[1] = frequency[0];
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "negative frequency" )
+    {
+        frequency[0] = -1.0;
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonfinite frequency grid" )
+    {
+        frequency[1] = std::numeric_limits<double>::quiet_NaN();
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonfinite mode" )
+    {
+        REQUIRE(
+            temporalPsd
+                .singleLayerPSD( psd, frequency, std::numeric_limits<double>::infinity(), 0.0, 0, 1, 0, &report ) ==
+            mx::error_t::invalidarg );
+    }
+
+    SECTION( "invalid parity" )
+    {
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 0, 0, &report ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "negative cutoff" )
+    {
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, -1.0, &report ) ==
+                 mx::error_t::invalidarg );
+    }
+
+    SECTION( "invalid layer index" )
+    {
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 1, 1, 0, &report ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "invalid tolerance" )
+    {
+        temporalPsd.absTol( 0 );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) ==
+                 mx::error_t::invalidconfig );
+    }
+
+    SECTION( "invalid relative tolerance" )
+    {
+        temporalPsd.relTol( 1 );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) ==
+                 mx::error_t::invalidconfig );
+    }
+
+    SECTION( "nonpositive aperture" )
+    {
+        aoSystem.D( 0 );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) ==
+                 mx::error_t::invalidconfig );
+    }
+
+    SECTION( "zero wind" )
+    {
+        aoSystem.atm.layer_v_wind( std::vector<double>{ 0.0 } );
+        REQUIRE( temporalPsd.multiLayerPSD<false>( psd, frequency, 1.0, 0.0, 1, 0, &report ) ==
+                 mx::error_t::invalidconfig );
+    }
+
+    SECTION( "mismatched atmosphere vectors" )
+    {
+        aoSystem.atm.layer_dir( std::vector<double>{} );
+        REQUIRE( temporalPsd.multiLayerPSD<false>( psd, frequency, 1.0, 0.0, 1, 0, &report ) == mx::error_t::sizeerr );
+    }
+
+    REQUIRE( psd == unchanged );
+    REQUIRE( report.integrationsAttempted == 0 );
+}
+
+/// Verify that GSL workspace allocation failure is returned without evaluating or modifying the PSD.
+/** Exercises mx::AO::analysis::fourierTemporalPSD::singleLayerPSD with an injected failing workspace allocator. */
+TEST_CASE( "Fourier temporal PSD reports workspace allocation failure", "[ao::analysis::fourierTemporalPSD]" )
+{
+    aoSystemT aoSystem;
+    aoSystem.D( 6.5 );
+    aoSystem.atm.setSingleLayer( 0.16, 500e-9, 25.0, 0.0, 0.0, 10.0, 0.0 );
+
+    allocationFailureTemporalPsdT temporalPsd;
+    temporalPsd.m_aosys = &aoSystem;
+    temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+
+    std::vector<double> frequency{ 1.0 };
+    std::vector<double> psd{ 7.0 };
+    temporalPsdT::reportT report;
+    REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::allocerr );
+    REQUIRE( psd == std::vector<double>{ 7.0 } );
+    REQUIRE( report.integrationsAttempted == 0 );
+}
 
 /// Verify temporal-PSD tail initialization at and below its nominal averaging width.
 /** Exercises zero, one, 49, and 50 exactly integrated frequency bins. */

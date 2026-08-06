@@ -34,6 +34,7 @@
 #include <fstream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <mutex>
 
 #include <sys/stat.h>
@@ -142,6 +143,25 @@ struct fourierTemporalPSDReport
 /// \cond fourierTemporalPSD_detail
 namespace fourierTemporalPSD_detail
 {
+
+/// Function type used to allocate a GSL integration workspace.
+using gslWorkspaceAllocator = gsl_integration_workspace *(*)( size_t );
+
+/// Deleter providing RAII ownership for a GSL integration workspace.
+struct gslWorkspaceDeleter
+{
+    /// Free an allocated GSL integration workspace.
+    void operator()( gsl_integration_workspace *workspace /**< [in] workspace to free */ ) const noexcept
+    {
+        if( workspace != nullptr )
+        {
+            gsl_integration_workspace_free( workspace );
+        }
+    }
+};
+
+/// Unique ownership handle for a GSL integration workspace.
+using gslWorkspacePtr = std::unique_ptr<gsl_integration_workspace, gslWorkspaceDeleter>;
 
 /// Return whether a GSL status represents a potentially usable non-converged approximation.
 inline bool isConvergenceStatus( int status )
@@ -365,9 +385,14 @@ struct fourierTemporalPSD
     int _useBasis; ///< Set to  MXAO_FTPSD_BASIS_BASIC/MODIFIED/PROJECTED_* to use the basic sin/cos modes, the modified
                    ///< Fourier modes, or a projection of them.
 
-    /// Workspace for the gsl integrators, allocated to WSZ if constructed as worker (with allocate == true).
-    gsl_integration_workspace *_w;
+  protected:
+    /// Unique ownership of the GSL integration workspace used by worker instances.
+    fourierTemporalPSD_detail::gslWorkspacePtr m_workspace;
 
+    /// Allocation function used when a worker lazily creates its GSL workspace.
+    fourierTemporalPSD_detail::gslWorkspaceAllocator m_workspaceAllocator{ gsl_integration_workspace_alloc };
+
+  public:
     realT _absTol;                            ///< The absolute tolerance to use in the GSL integrator
     realT _relTol;                            ///< The relative tolerance to use in the GSL integrator
 
@@ -404,20 +429,44 @@ struct fourierTemporalPSD
     /// Default c'tor
     fourierTemporalPSD();
 
-    /// Constructor with workspace allocation
-    /**
-     * \param allocate if true, then the workspace for GSL integrators is allocated.
-     */
-    explicit fourierTemporalPSD( bool allocate );
+    /// Disallow copying unique workspace ownership.
+    fourierTemporalPSD( const fourierTemporalPSD & ) = delete;
 
-    /// Destructor
-    /** Frees GSL workspace if it was allocated.
-     */
-    ~fourierTemporalPSD();
+    /// Disallow copy assignment of unique workspace ownership.
+    fourierTemporalPSD &operator=( const fourierTemporalPSD & ) = delete;
+
+    /// Move workspace ownership and evaluator state.
+    fourierTemporalPSD( fourierTemporalPSD && ) noexcept = default;
+
+    /// Move-assign workspace ownership and evaluator state.
+    fourierTemporalPSD &operator=( fourierTemporalPSD && ) noexcept = default;
+
+    /// Release owned resources.
+    ~fourierTemporalPSD() = default;
 
   protected:
+    /// Construct with a custom workspace allocator.
+    explicit fourierTemporalPSD(
+        fourierTemporalPSD_detail::gslWorkspaceAllocator allocator /**< [in] workspace allocation function */ );
+
     /// Initialize parameters to default values.
     void initialize();
+
+    /// Allocate the worker workspace if it is not already available.
+    error_t allocateWorkspace();
+
+    /// Validate state and arguments shared by single- and multilayer calculations.
+    error_t validatePsdInputs( const std::vector<realT> &PSD,  /**< [in] output storage to validate */
+                               const std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                               realT m,                        /**< [in] first spatial-frequency index */
+                               realT n,                        /**< [in] second spatial-frequency index */
+                               int p,                          /**< [in] Fourier-mode parity */
+                               realT fmax,                     /**< [in] maximum exactly integrated frequency */
+                               int layer_i,                    /**< [in] layer index, or -1 to validate all layers */
+                               fourierTemporalPSDPolicy policy /**< [in] non-convergence policy */ );
+
+    /// Validate the configured atmosphere and optionally a requested layer.
+    error_t validateAtmosphere( int layer_i /**< [in] layer index, or -1 to validate all layers */ );
 
   public:
     /** \name GSL Integration Tolerances
@@ -479,7 +528,11 @@ struct fourierTemporalPSD
 
   public:
     /// Calculate the temporal PSD for a Fourier mode for a single layer.
-    /** When extending beyond `fmax`, up to the last 50 exactly integrated bins are averaged after projection to the
+    /** `PSD` and `freq` must have the same nonzero size. Frequencies must be finite, nonnegative, and strictly
+     * increasing. The AO system, integration controls, requested layer, and atmosphere are validated before
+     * calculation. A precondition or allocation failure leaves `PSD` unchanged and clears `report` when supplied.
+     *
+     * When extending beyond `fmax`, up to the last 50 exactly integrated bins are averaged after projection to the
      * first tail frequency. If fewer than 50 exact bins are available, all available exact bins are used. At least one
      * exact bin is required to initialize the tail.
      *
@@ -537,7 +590,9 @@ struct fourierTemporalPSD
 
   public:
     /// Calculate the temporal PSD for a Fourier mode in a multi-layer model.
-    /**
+    /** `PSD` and `freq` must have the same nonzero size. Frequencies must be finite, nonnegative, and strictly
+     * increasing. The AO system, integration controls, and complete atmosphere are validated before calculation. A
+     * precondition failure leaves `PSD` unchanged and clears `report` when supplied.
      *
      * \tparam parallel controls whether layers are calculated in parallel.  Default is true.  Set to false if this is
      * called inside a parallelized loop, as in \ref makePSDGrid.
@@ -662,34 +717,221 @@ fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD()
 }
 
 template <typename realT, typename aosysT>
-fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD( bool allocate )
+fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD( fourierTemporalPSD_detail::gslWorkspaceAllocator allocator )
+    : m_workspaceAllocator( allocator )
 {
     m_aosys = nullptr;
     initialize();
-
-    if( allocate )
-    {
-        _w = gsl_integration_workspace_alloc( WSZ );
-    }
 }
 
 template <typename realT, typename aosysT>
-fourierTemporalPSD<realT, aosysT>::~fourierTemporalPSD()
+error_t fourierTemporalPSD<realT, aosysT>::allocateWorkspace()
 {
-    if( _w )
+    if( m_workspace != nullptr )
     {
-        gsl_integration_workspace_free( _w );
+        return error_t::noerror;
     }
+
+    if( m_workspaceAllocator == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig, "GSL workspace allocator is null" );
+    }
+
+    m_workspace.reset( m_workspaceAllocator( WSZ ) );
+    if( m_workspace == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::allocerr, "could not allocate GSL integration workspace" );
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::initialize()
 {
     _useBasis = basis::modified;
-    _w = 0;
 
     _absTol = 1e-10;
     _relTol = 1e-4;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::validateAtmosphere( int layer_i )
+{
+    if( m_aosys == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig, "AO system pointer is null" );
+    }
+
+    if( !math::isFinite( m_aosys->D() ) || m_aosys->D() <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "AO system aperture diameter must be finite and positive" );
+    }
+
+    auto &atmosphere = m_aosys->atm;
+    const size_t layerCount = atmosphere.n_layers();
+    if( layerCount == 0 )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere must contain at least one layer" );
+    }
+
+    const std::vector<realT> outerScale = atmosphere.L_0();
+    const std::vector<realT> innerScale = atmosphere.l_0();
+    const std::vector<realT> altitude = atmosphere.layer_z();
+    const std::vector<realT> strength = atmosphere.layer_Cn2();
+    const std::vector<realT> windSpeed = atmosphere.layer_v_wind();
+    const std::vector<realT> windDirection = atmosphere.layer_dir();
+    if( outerScale.size() != layerCount || innerScale.size() != layerCount || altitude.size() != layerCount ||
+        strength.size() != layerCount || windSpeed.size() != layerCount || windDirection.size() != layerCount )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere layer-vector sizes do not match" );
+    }
+
+    if( atmosphere.nonKolmogorov() )
+    {
+        const std::vector<realT> alpha = atmosphere.alpha();
+        const std::vector<realT> beta = atmosphere.beta();
+        const std::vector<realT> beta0 = atmosphere.beta_0();
+        if( alpha.size() != layerCount || beta.size() != layerCount || beta0.size() != layerCount )
+        {
+            return internal::mxlib_error_report( error_t::sizeerr,
+                                                 "non-Kolmogorov atmosphere vector sizes do not match" );
+        }
+
+        for( size_t index = 0; index < layerCount; ++index )
+        {
+            if( !math::isFinite( alpha[index] ) || !math::isFinite( beta[index] ) || beta[index] <= 0 ||
+                !math::isFinite( beta0[index] ) || beta0[index] < 0 )
+            {
+                return internal::mxlib_error_report( error_t::invalidconfig,
+                                                     "non-Kolmogorov atmosphere parameters are invalid" );
+            }
+        }
+    }
+    else if( !math::isFinite( atmosphere.r_0() ) || atmosphere.r_0() <= 0 || !math::isFinite( atmosphere.lam_0() ) ||
+             atmosphere.lam_0() <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "atmosphere Fried parameter and wavelength must be finite and positive" );
+    }
+
+    bool hasPositiveStrength = false;
+    realT totalStrength = 0;
+    for( size_t index = 0; index < layerCount; ++index )
+    {
+        if( !math::isFinite( outerScale[index] ) || outerScale[index] <= 0 || !math::isFinite( innerScale[index] ) ||
+            innerScale[index] < 0 || !math::isFinite( altitude[index] ) || altitude[index] < 0 ||
+            !math::isFinite( strength[index] ) || strength[index] < 0 || !math::isFinite( windSpeed[index] ) ||
+            windSpeed[index] <= 0 || !math::isFinite( windDirection[index] ) )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig, "atmosphere layer parameters are invalid" );
+        }
+        hasPositiveStrength = hasPositiveStrength || strength[index] > 0;
+        totalStrength += strength[index];
+    }
+
+    if( !hasPositiveStrength || !math::isFinite( totalStrength ) || totalStrength <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "atmosphere must contain a positive layer strength" );
+    }
+
+    if( layer_i < -1 || ( layer_i >= 0 && static_cast<size_t>( layer_i ) >= layerCount ) )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "atmosphere layer index is out of range" );
+    }
+
+    return error_t::noerror;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::validatePsdInputs( const std::vector<realT> &PSD,
+                                                              const std::vector<realT> &freq,
+                                                              realT m,
+                                                              realT n,
+                                                              int p,
+                                                              realT fmax,
+                                                              int layer_i,
+                                                              fourierTemporalPSDPolicy policy )
+{
+    if( freq.empty() || PSD.size() != freq.size() )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr,
+                                             "PSD and frequency vectors must have the same nonzero size" );
+    }
+
+    for( size_t index = 0; index < freq.size(); ++index )
+    {
+        if( !math::isFinite( freq[index] ) || freq[index] < 0 || ( index > 0 && freq[index] <= freq[index - 1] ) )
+        {
+            return internal::mxlib_error_report(
+                error_t::invalidarg,
+                "frequency grid must be finite, nonnegative, and strictly increasing" );
+        }
+    }
+
+    if( !math::isFinite( m ) || !math::isFinite( n ) || !math::isFinite( fmax ) || fmax < 0 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidarg,
+            "mode coordinates must be finite and frequency cutoff must be finite and nonnegative" );
+    }
+
+    if( p != -1 && p != 1 )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "Fourier-mode parity must be -1 or +1" );
+    }
+
+    if( _useBasis != basis::basic && _useBasis != basis::modified )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "value of _useBasis is not valid" );
+    }
+
+    if( policy != fourierTemporalPSDPolicy::permissive && policy != fourierTemporalPSDPolicy::strict )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "quadrature policy is not valid" );
+    }
+
+    if( !math::isFinite( _absTol ) || _absTol <= 0 || !math::isFinite( _relTol ) || _relTol <= 0 || _relTol >= 1 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidconfig,
+            "GSL absolute tolerance must be positive and relative tolerance must be between zero and one" );
+    }
+
+    if( !math::isFinite( m_f0 ) || m_f0 < 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "turbulence boiling parameter must be finite and nonnegative" );
+    }
+
+    const error_t atmosphereStatus = validateAtmosphere( layer_i );
+    if( atmosphereStatus != error_t::noerror )
+    {
+        return atmosphereStatus;
+    }
+
+    if( _useBasis == basis::modified )
+    {
+        if( !math::isFinite( m_aosys->lam_sci() ) || m_aosys->lam_sci() <= 0 || !math::isFinite( m_aosys->lam_wfs() ) ||
+            m_aosys->lam_wfs() <= 0 || !math::isFinite( m_aosys->zeta() ) ||
+            std::abs( m_aosys->zeta() ) >= math::half_pi<realT>() )
+        {
+            return internal::mxlib_error_report(
+                error_t::invalidconfig,
+                "AO wavelengths must be positive and zenith angle must lie strictly between -pi/2 and pi/2" );
+        }
+    }
+
+    if( !math::isFinite( m_aosys->spatialFilter_ku() ) || m_aosys->spatialFilter_ku() <= 0 ||
+        !math::isFinite( m_aosys->spatialFilter_kv() ) || m_aosys->spatialFilter_kv() <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "AO spatial-filter limits must be finite and positive" );
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>
@@ -754,6 +996,12 @@ error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &P
     reportT &activeReport = report == nullptr ? localReport : *report;
     activeReport.clear();
 
+    const error_t status = validatePsdInputs( PSD, freq, m, n, p, fmax, layer_i, policy );
+    if( status != error_t::noerror )
+    {
+        return status;
+    }
+
     fourierTemporalPSD_detail::scopedGslErrorHandlerOff handlerGuard;
     return singleLayerPSDImpl( PSD, freq, m, n, layer_i, p, fmax, activeReport, policy );
 }
@@ -789,7 +1037,12 @@ error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSDImpl( std::vector<realT
     realT scale = 2 * ( 1 / v_wind ); // Factor of 2 for negative frequencies.
 
     // Create a local instance so that we're reentrant
-    fourierTemporalPSD<realT, aosysT> params( true );
+    fourierTemporalPSD<realT, aosysT> params( m_workspaceAllocator );
+    const error_t workspaceStatus = params.allocateWorkspace();
+    if( workspaceStatus != error_t::noerror )
+    {
+        return workspaceStatus;
+    }
 
     params.m_aosys = m_aosys;
     params._layer_i = layer_i;
@@ -834,7 +1087,7 @@ error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSDImpl( std::vector<realT
     {
         params.m_f = freq[i];
 
-        const int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params._w, &result, &error );
+        const int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params.m_workspace.get(), &result, &error );
         report.record( ec, static_cast<size_t>( layer_i ), freq[i], result, error, _absTol, _relTol );
 
         const error_t integrationStatus = fourierTemporalPSD_detail::applyPolicy( ec, policy );
@@ -1003,6 +1256,12 @@ error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> &PS
     reportT localReport;
     reportT &activeReport = report == nullptr ? localReport : *report;
     activeReport.clear();
+
+    const error_t validationStatus = validatePsdInputs( PSD, freq, m, n, p, fmax, -1, policy );
+    if( validationStatus != error_t::noerror )
+    {
+        return validationStatus;
+    }
 
     // PSD is zeroed every time to make sure we don't accumulate on repeated calls
     for( size_t j = 0; j < PSD.size(); ++j )
