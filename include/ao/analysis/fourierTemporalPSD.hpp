@@ -621,14 +621,20 @@ struct fourierTemporalPSD
      * this adds overhead and cfitisio handles parallelization poorly due to the limitation on number of created file
      * pointers.
      *
+     * Inputs and AO-system state are validated before any output is created. A positive `fmax` switches each PSD to
+     * its asymptotic power-law tail above that frequency; zero selects the multilayer default cutoff. Calculation and
+     * write failures are collected by spatial-mode index and the first failure in grid order is returned after the
+     * parallel loop. Files completed before a calculation or write failure are retained.
+     *
+     * \returns `error_t::noerror` when the complete grid is written, or a typed validation, calculation, or output
+     * error.
+     *
      */
-    void makePSDGrid( const std::string &dir, ///< [in] the directory for output of the PSDs
-                      int mnMax,              ///< [in] the maximum value of m and n in the grid.
-                      realT dFreq,            ///< [in] the temporal frequency spacing.
-                      realT maxFreq,          ///< [in] the maximum temporal frequency to calculate
-                      realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The
-                                     ///< PSD is filled in with a -17/3 power law past
-                                     /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+    error_t makePSDGrid( const std::string &dir, ///< [in] the directory for output of the PSDs
+                         int mnMax,              ///< [in] the positive maximum value of m and n in the grid
+                         realT dFreq,            ///< [in] the positive temporal frequency spacing
+                         realT maxFreq,          ///< [in] the positive maximum temporal frequency to calculate
+                         realT fmax = 0 ///< [in] maximum exactly calculated frequency, or 0 for the default cutoff
     );
 
     /// Analyze a PSD grid under closed-loop control.
@@ -1277,9 +1283,43 @@ error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> &PS
 }
 
 template <typename realT, typename aosysT>
-void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
+error_t fourierTemporalPSD<realT, aosysT>::makePSDGrid(
     const std::string &dir, int mnMax, realT dFreq, realT maxFreq, realT fmax )
 {
+    if( dir.empty() )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "PSD grid output directory must not be empty" );
+    }
+
+    if( mnMax <= 0 || !math::isFinite( dFreq ) || dFreq <= 0 || !math::isFinite( maxFreq ) || maxFreq <= 0 ||
+        !math::isFinite( fmax ) || fmax < 0 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidarg,
+            "PSD grid extent and frequency controls must be finite and positive, with a nonnegative cutoff" );
+    }
+
+    const realT sampleCount = maxFreq / dFreq;
+    if( !math::isFinite( sampleCount ) || sampleCount > static_cast<realT>( std::numeric_limits<int>::max() ) )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr, "PSD grid sample count exceeds the supported range" );
+    }
+
+    const std::vector<realT> validationFrequency{ 0 };
+    const std::vector<realT> validationPsd{ 0 };
+    const error_t validationStatus = validatePsdInputs( validationPsd,
+                                                        validationFrequency,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        fmax,
+                                                        -1,
+                                                        fourierTemporalPSDPolicy::permissive );
+    if( validationStatus != error_t::noerror )
+    {
+        return validationStatus;
+    }
+
     std::vector<realT> freq;
 
     std::vector<sigproc::fourierModeDef> spf;
@@ -1294,11 +1334,19 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
         N += 1;
 
     /*** Dump Params to file ***/
-    mkdir( dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    error_t status = ioutils::createDirectories( dir );
+    if( status != error_t::noerror )
+    {
+        return internal::mxlib_error_report( status, "could not create PSD grid output directory" );
+    }
 
     std::ofstream fout;
     fn = dir + '/' + "params.txt";
     fout.open( fn );
+    if( !fout.is_open() )
+    {
+        return internal::mxlib_error_report( error_t::fileoerr, "could not open PSD grid parameter file" );
+    }
 
     fout << "#---------------------------\n";
     m_aosys->dumpAOSystem( fout );
@@ -1315,19 +1363,31 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
     fout << "#---------------------------\n";
 
     fout.close();
+    if( !fout )
+    {
+        return internal::mxlib_error_report( error_t::filewerr, "could not write PSD grid parameter file" );
+    }
 
     // Make directory
     std::string psddir = dir + "/psds";
-    mkdir( psddir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    status = ioutils::createDirectories( psddir );
+    if( status != error_t::noerror )
+    {
+        return internal::mxlib_error_report( status, "could not create PSD output directory" );
+    }
 
     // Create frequency scale.
     math::vectorScale( freq, N, dFreq, 0 ); // dFreq); //offset from 0 by dFreq, so f=0 not included
 
     fn = psddir + '/' + "freq.binv";
 
-    ioutils::writeBinVector( fn, freq );
+    if( ioutils::writeBinVector( fn, freq ) != 0 )
+    {
+        return internal::mxlib_error_report( error_t::filewerr, "could not write PSD frequency grid" );
+    }
 
     size_t nLoops = 0.5 * spf.size();
+    std::vector<error_t> modeStatus( nLoops, error_t::noerror );
 
     ipc::ompLoopWatcher<> watcher( nLoops, std::cout );
 
@@ -1352,17 +1412,35 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
                 continue;
             }
 
-            multiLayerPSD<false>( PSD, freq, m, n, 1, fmax );
+            modeStatus[i] = multiLayerPSD<false>( PSD, freq, m, n, 1, fmax );
+            if( modeStatus[i] != error_t::noerror )
+            {
+                watcher.incrementAndOutputStatus();
+                continue;
+            }
 
             fname = std::format( "{}/psd_{}_{}.binv", psddir, m, n );
             //    psddir + '/' + "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) +
             //    ".binv";
 
-            ioutils::writeBinVector( fname, PSD );
+            if( ioutils::writeBinVector( fname, PSD ) != 0 )
+            {
+                modeStatus[i] = error_t::filewerr;
+            }
 
             watcher.incrementAndOutputStatus();
         }
     }
+
+    for( size_t index = 0; index < modeStatus.size(); ++index )
+    {
+        if( modeStatus[index] != error_t::noerror )
+        {
+            return modeStatus[index];
+        }
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>

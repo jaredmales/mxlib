@@ -10,12 +10,15 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+#include <unistd.h>
 
 using aoSystemBaseT = mx::AO::analysis::aoSystem<double, mx::AO::analysis::vonKarmanSpectrum<double>>;
 
@@ -243,6 +246,114 @@ TEST_CASE( "Fourier temporal PSD reports workspace allocation failure", "[ao::an
     REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, 0, &report ) == mx::error_t::allocerr );
     REQUIRE( psd == std::vector<double>{ 7.0 } );
     REQUIRE( report.integrationsAttempted == 0 );
+}
+
+/// Verify that PSD-grid generation validates its public inputs before creating output.
+/** Exercises mx::AO::analysis::fourierTemporalPSD::makePSDGrid precondition handling. */
+TEST_CASE( "Fourier temporal PSD validates grid-generation inputs", "[ao::analysis::fourierTemporalPSD]" )
+{
+    aoSystemT aoSystem;
+    aoSystem.D( 6.5 );
+    aoSystem.atm.setSingleLayer( 0.16, 500e-9, 25.0, 0.0, 0.0, 10.0, 0.0 );
+
+    temporalPsdT temporalPsd;
+    temporalPsd.m_aosys = &aoSystem;
+    temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+
+    const std::filesystem::path outputDirectory =
+        std::filesystem::temp_directory_path() /
+        ( "mxlib_fourierTemporalPSD_invalid_grid_" + std::to_string( static_cast<long long>( getpid() ) ) );
+    std::error_code filesystemError;
+    std::filesystem::remove_all( outputDirectory, filesystemError );
+    REQUIRE_FALSE( filesystemError );
+
+    SECTION( "empty output directory" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( "", 1, 1.0, 1.0 ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonpositive spatial extent" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 0, 1.0, 1.0 ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonpositive frequency spacing" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 1, 0.0, 1.0 ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonfinite frequency spacing" )
+    {
+        REQUIRE(
+            temporalPsd.makePSDGrid( outputDirectory.string(), 1, std::numeric_limits<double>::quiet_NaN(), 1.0 ) ==
+            mx::error_t::invalidarg );
+    }
+
+    SECTION( "nonpositive maximum frequency" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 1, 1.0, 0.0 ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "negative exact-calculation cutoff" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 1, 1.0, 1.0, -1.0 ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "unrepresentable sample count" )
+    {
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 1, std::numeric_limits<double>::min(), 1.0 ) ==
+                 mx::error_t::sizeerr );
+    }
+
+    SECTION( "invalid AO system" )
+    {
+        temporalPsd.m_aosys = nullptr;
+        REQUIRE( temporalPsd.makePSDGrid( outputDirectory.string(), 1, 1.0, 1.0 ) == mx::error_t::invalidconfig );
+    }
+
+    REQUIRE_FALSE( std::filesystem::exists( outputDirectory ) );
+}
+
+/// Verify that PSD-grid generation propagates calculation and output failures.
+/** Exercises mx::AO::analysis::fourierTemporalPSD::makePSDGrid failure handling after successful preflight. */
+TEST_CASE( "Fourier temporal PSD reports grid-generation failures", "[ao::analysis::fourierTemporalPSD]" )
+{
+    aoSystemT aoSystem;
+    aoSystem.D( 6.5 );
+    aoSystem.atm.setSingleLayer( 0.16, 500e-9, 25.0, 0.0, 0.0, 10.0, 0.0 );
+
+    const std::filesystem::path outputPath =
+        std::filesystem::temp_directory_path() /
+        ( "mxlib_fourierTemporalPSD_grid_failure_" + std::to_string( static_cast<long long>( getpid() ) ) );
+    std::error_code filesystemError;
+    std::filesystem::remove_all( outputPath, filesystemError );
+    REQUIRE_FALSE( filesystemError );
+
+    SECTION( "mode calculation failure" )
+    {
+        allocationFailureTemporalPsdT temporalPsd;
+        temporalPsd.m_aosys = &aoSystem;
+        temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+
+        REQUIRE( temporalPsd.makePSDGrid( outputPath.string(), 1, 1.0, 1.0 ) == mx::error_t::allocerr );
+        REQUIRE( std::filesystem::exists( outputPath / "params.txt" ) );
+        REQUIRE( std::filesystem::exists( outputPath / "psds" / "freq.binv" ) );
+    }
+
+    SECTION( "output path is a regular file" )
+    {
+        std::ofstream outputFile( outputPath );
+        REQUIRE( outputFile.is_open() );
+        outputFile.close();
+
+        temporalPsdT temporalPsd;
+        temporalPsd.m_aosys = &aoSystem;
+        temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+        REQUIRE( temporalPsd.makePSDGrid( outputPath.string(), 1, 1.0, 1.0 ) == mx::error_t::enotdir );
+    }
+
+    std::filesystem::remove_all( outputPath, filesystemError );
+    REQUIRE_FALSE( filesystemError );
 }
 
 /// Verify temporal-PSD tail initialization at and below its nominal averaging width.
