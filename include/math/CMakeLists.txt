@@ -6,6 +6,7 @@ add_subdirectory(plot)
 
 set(OBJLIB_INCLUDES ${OBJLIB_INCLUDES} include/math/constants.hpp
                                        include/math/eigenLapack.hpp
+                                       include/math/floatUtils.hpp
                                        include/math/geo.hpp
                                        include/math/gslInterpolation.hpp
                                        include/math/gslInterpolator.hpp

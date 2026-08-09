@@ -59,6 +59,19 @@ Follow these code style and documentation rules exactly.
   - `This work was performed by GPT-5.3-Codex in response to the prompt: "...".`
 - Include the primary user prompt verbatim (or a faithful condensed version if it is extremely long).
 
+12) Unit Test Documentation
+- Add a brief Doxygen block immediately before every Catch2 `TEST_CASE` or `SCENARIO`.
+- State the behavior being verified and identify the real production API under test.
+- Let Doxygen discover real calls in the test body so the test appears in each production API's `Referenced by` list.
+- Do not use `\test` or prose-only `\ref` commands to manufacture test-to-API links.
+
+13) Preserve Doxygen Links Through Test Harnesses
+- Preserve Doxygen links to the real production APIs when test fixtures, wrappers, namespaces, macros, or private-access techniques prevent automatic symbol linking.
+- Add explicit Doxygen-only code references to the production symbols inside the relevant test body when direct calls are otherwise hidden.
+- Guard reference-only code with `#ifdef __DOXY_ONLY__` so it need not compile, and use raw calls or member references that Doxygen can add to the production symbol's `Referenced by` list.
+- Hide harness-only helpers from generated documentation with `\cond` and `\endcond` when they would dominate or obscure production API links.
+- Disable `clang-format` around non-compiling Doxygen-only reference blocks when necessary.
+
 When you finish:
 - Summarize what changed.
 - List affected files.

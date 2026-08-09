@@ -6,6 +6,7 @@ INCLUDES += -I../include
 
 OBJS = testMain.o \
        include/ao/analysis/aoAtmosphere_test.o \
+       include/ao/analysis/clAOLinearPredictor_test.o \
        include/ao/analysis/aoSystem_test.o \
        include/ao/analysis/aoPSDs_test.o \
        include/astro/astroDynamics_test.o \
@@ -13,6 +14,7 @@ OBJS = testMain.o \
        include/ioutils/fits/fitsHeaderCard_test.o \
        include/ioutils/fits/fitsFile_test.o \
        include/math/geo_test.o \
+       include/math/floatUtils_test.o \
        include/math/func/moffat_test.o \
        include/math/templateBLAS_test.o \
        include/math/templateLapack_test.o \

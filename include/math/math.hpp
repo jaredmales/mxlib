@@ -53,6 +53,7 @@
 #include "plot/gnuPlot.hpp"
 #include "constants.hpp"
 #include "eigenLapack.hpp"
+#include "floatUtils.hpp"
 #include "geo.hpp"
 #include "gslInterpolation.hpp"
 #include "gslInterpolator.hpp"
