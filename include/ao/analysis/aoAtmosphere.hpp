@@ -12,6 +12,7 @@
 #include <numeric>
 #include <cmath>
 #include <cstdlib>
+#include <utility>
 #include <vector>
 #include <algorithm>
 
@@ -20,6 +21,7 @@
 #include "aoConstants.hpp"
 
 #include "../../math/constants.hpp"
+#include "../../math/floatUtils.hpp"
 
 #include "../../app/appConfigurator.hpp"
 
@@ -49,51 +51,52 @@ class aoAtmosphere
     /// Constructor
     aoAtmosphere();
 
+    /// Validate the complete atmosphere configuration for calculation.
+    /** Incremental setters may temporarily leave layer vectors incomplete. Call this at configuration and calculation
+     * boundaries before using indexed or derived atmosphere values.
+     *
+     * \returns `error_t::noerror` when all scalar and layer invariants are satisfied, or a typed configuration error.
+     */
+    error_t validate() const;
+
   protected:
-    realT m_r_0; ///< Fried's parameter, in m
+    realT m_r_0{ 0 };                  ///< Fried's parameter, in m
 
-    realT m_lam_0{ 0.5e-6 }; ///< Wavelength of Fried's parameter, in m
+    realT m_lam_0{ 0.5e-6 };           ///< Wavelength of Fried's parameter, in m
 
-    std::vector<realT> m_layer_Cn2; ///< Vector of layer strengths.
+    std::vector<realT> m_layer_Cn2;    ///< Vector of layer strengths.
 
-    std::vector<realT> m_L_0; ///< The outer scale, in m
+    std::vector<realT> m_L_0;          ///< The outer scale, in m
 
-    std::vector<realT> m_l_0; ///< The inner scale of each layer, in m
+    std::vector<realT> m_l_0;          ///< The inner scale of each layer, in m
 
-    bool m_nonKolmogorov{ false }; ///< Flag indicating if non-Kolmogorov PSD parameters are used.
+    bool m_nonKolmogorov{ false };     ///< Flag indicating if non-Kolmogorov PSD parameters are used.
 
-    std::vector<realT> m_beta{ 1 }; ///< The PSD normalization when in non-Kolmogorov mode.
+    std::vector<realT> m_beta{ 1 };    ///< The PSD normalization when in non-Kolmogorov mode.
 
-    std::vector<realT> m_alpha{ 0 }; ///< The PSD exponent when in non-Kolmogorov mode.
+    std::vector<realT> m_alpha{ 0 };   ///< The PSD exponent when in non-Kolmogorov mode.
 
-    std::vector<realT> m_beta_0{ 0 }; ///< The PSD constant when in non-Kolmogorov mode.
+    std::vector<realT> m_beta_0{ 0 };  ///< The PSD constant when in non-Kolmogorov mode.
 
-    std::vector<realT> m_layer_z; ///< Vector of layer heights, in m, above the observatory.
+    std::vector<realT> m_layer_z;      ///< Vector of layer heights, in m, above the observatory.
 
-    realT m_h_obs{ 0 }; ///< Height of the observatory above sea level, in m.
+    realT m_h_obs{ 0 };                ///< Height of the observatory above sea level, in m.
 
-    realT m_H{ 8000 }; ///< The atmospheric scale height, in m.
+    realT m_H{ 8000 };                 ///< The atmospheric scale height, in m.
 
     std::vector<realT> m_layer_v_wind; ///< Vector of layer wind speeds, in m/s.
 
-    std::vector<realT> m_layer_dir; ///< Vector of layer wind directions, in radians.
+    std::vector<realT> m_layer_dir;    ///< Vector of layer wind directions, in radians.
 
-    bool m_v_wind_updated{ false }; ///< whether or not m_v_wind has been updated after changes
+    bool m_v_wind_updated{ false };    ///< whether or not m_v_wind has been updated after changes
 
-    realT m_v_wind; ///< \f$ C_n^2 \f$ averaged windspeed
+    realT m_v_wind{ 0 };               ///< \f$ C_n^2 \f$ averaged windspeed
 
-    realT m_dir_wind; ///< \f$ C_n^2 \f$ averaged direction
+    realT m_dir_wind{ 0 };             ///< \f$ C_n^2 \f$ averaged direction
 
-    bool m_z_mean_updated{ false }; ///< whether or not m_z_mean has been updated after changes
+    bool m_z_mean_updated{ false };    ///< whether or not m_z_mean has been updated after changes
 
-    realT m_z_mean; ///< \f$ C_n^2 \f$ averaged layer height
-
-    /// Checks if layer vectors have consistent length.
-    /**
-     * \returns 0 if all layer vectors are the same length
-     * \returns -1 if not, and prints an error.
-     */
-    int checkLayers();
+    realT m_z_mean{ 0 };               ///< \f$ C_n^2 \f$ averaged layer height
 
   public:
     /** \name PSD Parameters
@@ -150,8 +153,8 @@ class aoAtmosphere
      * \f$ \sum_n C_n^2 = 1 \f$.
      *
      */
-    void layer_Cn2( const std::vector<realT> &cn2, ///<  [in] is a vector containing the layer strengths
-                    const realT l0 = 0 ///< [in] [optional] if l0 > 0, then r_0 is set from the layer strengths.
+    error_t layer_Cn2( const std::vector<realT> &cn2, ///< [in] vector containing the layer strengths
+                       const realT l0 = 0             ///< [in] reference wavelength; if positive, also calculate r_0
     );
 
     /// Get the value of the outer scale for a single layer.
@@ -598,19 +601,15 @@ class aoAtmosphere
     /** @{
      */
 
-    /// Setup the configurator to configure this class
-    /**
-     * Tests:
-     *     - Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
-     */
+    /// Setup the configurator to configure this class.
     void setupConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
-    /// Load the configuration of this class from a configurator
-    /**
-     * Tests:
-     *     - Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
+    /// Load the configuration of this class from a configurator.
+    /** The complete atmosphere is validated before derived rescalings are applied and again before returning.
+     *
+     * \returns `error_t::noerror` for a valid loaded atmosphere, or a typed configuration error.
      */
-    void loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
+    error_t loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
     /// @}
 };
@@ -621,41 +620,63 @@ aoAtmosphere<realT>::aoAtmosphere()
 }
 
 template <typename realT>
-int aoAtmosphere<realT>::checkLayers()
+error_t aoAtmosphere<realT>::validate() const
 {
-    size_t n = m_L_0.size();
-
-    if( m_l_0.size() != n )
+    const size_t layerCount = m_layer_Cn2.size();
+    if( layerCount == 0 )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (inner scale vs. outer scale)");
-        return -1;
+        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere must contain at least one layer" );
     }
 
-    if( m_layer_z.size() != n )
+    if( m_L_0.size() != layerCount || m_l_0.size() != layerCount || m_layer_z.size() != layerCount ||
+        m_layer_v_wind.size() != layerCount || m_layer_dir.size() != layerCount )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_z  vs. outer scale)");
-        return -1;
+        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere layer-vector sizes do not match" );
     }
 
-    if( m_layer_Cn2.size() != n )
+    if( m_nonKolmogorov &&
+        ( m_alpha.size() != layerCount || m_beta.size() != layerCount || m_beta_0.size() != layerCount ) )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_Cn2  vs. outer scale)" );
-        return -1;
+        return internal::mxlib_error_report( error_t::sizeerr, "non-Kolmogorov atmosphere vector sizes do not match" );
     }
 
-    if( m_layer_dir.size() != n )
+    if( !math::isFinite( m_h_obs ) || m_h_obs < 0 || !math::isFinite( m_H ) || m_H <= 0 ||
+        ( !m_nonKolmogorov &&
+          ( !math::isFinite( m_r_0 ) || m_r_0 <= 0 || !math::isFinite( m_lam_0 ) || m_lam_0 <= 0 ) ) )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_dir  vs. outer scale)");
-        return -1;
+        return internal::mxlib_error_report( error_t::invalidconfig, "atmosphere scalar parameters are invalid" );
     }
 
-    if( m_layer_v_wind.size() != n )
+    realT totalStrength = 0;
+    bool hasPositiveStrength = false;
+    for( size_t index = 0; index < layerCount; ++index )
     {
-        internal::mxlib_error_report(error_t::sizeerr,"mismatched layer numbers (layer_v_wind vs. outer scale)");
-        return -1;
+        if( !math::isFinite( m_layer_Cn2[index] ) || m_layer_Cn2[index] < 0 || !math::isFinite( m_L_0[index] ) ||
+            !math::isFinite( m_l_0[index] ) || m_l_0[index] < 0 || !math::isFinite( m_layer_z[index] ) ||
+            m_layer_z[index] < 0 || !math::isFinite( m_layer_v_wind[index] ) || m_layer_v_wind[index] < 0 ||
+            !math::isFinite( m_layer_dir[index] ) )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig, "atmosphere layer parameters are invalid" );
+        }
+
+        totalStrength += m_layer_Cn2[index];
+        hasPositiveStrength = hasPositiveStrength || m_layer_Cn2[index] > 0;
+
+        if( m_nonKolmogorov && ( !math::isFinite( m_alpha[index] ) || !math::isFinite( m_beta[index] ) ||
+                                 m_beta[index] <= 0 || !math::isFinite( m_beta_0[index] ) || m_beta_0[index] < 0 ) )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "non-Kolmogorov atmosphere parameters are invalid" );
+        }
     }
 
-    return 0;
+    if( !hasPositiveStrength || !math::isFinite( totalStrength ) || totalStrength <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "atmosphere must contain a finite positive layer-strength sum" );
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT>
@@ -704,28 +725,54 @@ std::vector<realT> aoAtmosphere<realT>::layer_Cn2()
 }
 
 template <typename realT>
-void aoAtmosphere<realT>::layer_Cn2( const std::vector<realT> &cn2, const realT l0 )
+error_t aoAtmosphere<realT>::layer_Cn2( const std::vector<realT> &cn2, const realT l0 )
 {
-    m_layer_Cn2 = cn2;
+    if( cn2.empty() || !math::isFinite( l0 ) || l0 < 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg,
+                                             "layer strengths must be nonempty and reference wavelength nonnegative" );
+    }
 
     realT layer_norm = 0;
-
-    for( size_t i = 0; i < m_layer_Cn2.size(); ++i )
+    for( size_t i = 0; i < cn2.size(); ++i )
     {
+        if( !math::isFinite( cn2[i] ) || cn2[i] < 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidarg,
+                                                 "layer strengths must be finite and nonnegative" );
+        }
         layer_norm += cn2[i];
     }
 
-    for( size_t i = 0; i < m_layer_Cn2.size(); ++i )
-        m_layer_Cn2[i] = m_layer_Cn2[i] / layer_norm;
+    if( !math::isFinite( layer_norm ) || layer_norm <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "layer strengths must have a finite positive sum" );
+    }
+
+    std::vector<realT> normalized = cn2;
+    for( size_t i = 0; i < normalized.size(); ++i )
+    {
+        normalized[i] /= layer_norm;
+    }
 
     if( l0 > 0 )
     {
-        m_r_0 = 1.0 / pow( layer_norm * 5.520e13, math::three_fifths<realT>() );
+        const realT r0 = 1.0 / pow( layer_norm * 5.520e13, math::three_fifths<realT>() );
+        if( !math::isFinite( r0 ) || r0 <= 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidarg,
+                                                 "layer strengths produce an invalid Fried parameter" );
+        }
+        m_r_0 = r0;
         m_lam_0 = l0;
     }
 
+    m_layer_Cn2 = std::move( normalized );
+
     m_v_wind_updated = false;
     m_z_mean_updated = false;
+
+    return error_t::noerror;
 }
 
 template <typename realT>
@@ -1211,6 +1258,8 @@ void aoAtmosphere<realT>::loadGuyon2005()
     layer_z( { 500, 1000, 2000, 4000, 8000, 16000 } );
     layer_v_wind( { 10., 10., 10., 10., 10., 10. } );
     layer_dir( { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } );
+    L_0( { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } );
+    l_0( { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } );
 
     r_0( 0.2, 0.5e-6 );
 
@@ -1329,10 +1378,24 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator &config )
                 false,
                 "real",
                 "The reference wavlength for r_0 [m]" );
-    config.add(
-        "atm.L_0", "", "atm.L_0", argType::Required, "atm", "L_0", false, "vector<real>", "Layer outer scales [m]" );
-    config.add(
-        "atm.l_0", "", "atm.l_0", argType::Required, "atm", "l_0", false, "vector<real>", "Layer inner scales [m]" );
+    config.add( "atm.L_0",
+                "",
+                "atm.L_0",
+                argType::Required,
+                "atm",
+                "L_0",
+                false,
+                "vector<real>",
+                "Layer outer scales [m]" );
+    config.add( "atm.l_0",
+                "",
+                "atm.l_0",
+                argType::Required,
+                "atm",
+                "l_0",
+                false,
+                "vector<real>",
+                "Layer inner scales [m]" );
     config.add( "atm.layer_z",
                 "",
                 "atm.layer_z",
@@ -1342,8 +1405,15 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator &config )
                 false,
                 "vector<real>",
                 "layer heights [m]" );
-    config.add(
-        "atm.h_obs", "", "atm.h_obs", argType::Required, "atm", "h_obs", false, "real", "height of observatory [m]" );
+    config.add( "atm.h_obs",
+                "",
+                "atm.h_obs",
+                argType::Required,
+                "atm",
+                "h_obs",
+                false,
+                "real",
+                "height of observatory [m]" );
     config.add( "atm.H", "", "atm.H", argType::Required, "atm", "H", false, "real", "atmospheric scale heights [m]" );
     config.add( "atm.layer_Cn2",
                 "",
@@ -1438,7 +1508,7 @@ void aoAtmosphere<realT>::setupConfig( app::appConfigurator &config )
 }
 
 template <typename realT>
-void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
+error_t aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
 {
     // Here "has side effecs" means that the set function does more than simply copy the value.
 
@@ -1452,7 +1522,13 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     std::vector<realT> lcn2 = m_layer_Cn2;
     config( lcn2, "atm.layer_Cn2" );
     if( config.isSet( "atm.layer_Cn2" ) )
-        layer_Cn2( lcn2 );
+    {
+        const error_t strengthStatus = layer_Cn2( lcn2 );
+        if( strengthStatus != error_t::noerror )
+        {
+            return strengthStatus;
+        }
+    }
 
     realT r0 = r_0();
     config( r0, "atm.r_0" );
@@ -1467,7 +1543,7 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     std::vector<realT> layz = m_layer_z;
     config( layz, "atm.layer_z" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_z" ) )
-        layer_z( layz ); // but only call this if changed
+        layer_z( layz );           // but only call this if changed
 
     config( m_h_obs, "atm.h_obs" );
     config( m_H, "atm.H" );
@@ -1476,30 +1552,21 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     std::vector<realT> lvw = m_layer_v_wind;
     config( lvw, "atm.layer_v_wind" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_v_wind" ) )
-        layer_v_wind( lvw ); // but only call this if changed
+        layer_v_wind( lvw );           // but only call this if changed
 
     // Has side effects:
     std::vector<realT> ld = m_layer_dir;
     config( ld, "atm.layer_dir" ); // Do this no matter what to record source
     if( config.isSet( "atm.layer_dir" ) )
-        layer_dir( ld ); // but only call this if changed
+        layer_dir( ld );           // but only call this if changed
 
-    realT vw = m_v_wind;
+    realT vw = 0;
     config( vw, "atm.v_wind" ); // Do this no matter what to record source
-    if( config.isSet( "atm.v_wind" ) )
-        v_wind( vw ); // but only call this if changed
 
-    realT t0 = tau_0();
-    config( t0, "atm.tau_0" ); // Do this no matter what to record source
-    if( config.isSet( "atm.tau_0" ) )
-    {
-        std::cerr << "setting tau_0 " << t0 << "\n";
-        tau_0( t0, m_lam_0 ); // but only call this if changed
-    }
-    realT zm = m_z_mean;
+    realT t0 = 0;
+    config( t0, "atm.tau_0" );  // Do this no matter what to record source
+    realT zm = 0;
     config( zm, "atm.z_mean" ); // Do this no matter what to record source
-    if( config.isSet( "atm.z_mean" ) )
-        z_mean( zm ); // but only call this if changed
 
     config( m_nonKolmogorov, "atm.nonKolmogorov" );
 
@@ -1517,6 +1584,66 @@ void aoAtmosphere<realT>::loadConfig( app::appConfigurator &config )
     config( b0, "atm.beta_0" );
     if( config.isSet( "atm.beta_0" ) )
         beta_0( b0 ); // this sets m_nonKolmogorov
+
+    error_t status = validate();
+    if( status != error_t::noerror )
+    {
+        return status;
+    }
+
+    if( config.isSet( "atm.v_wind" ) )
+    {
+        if( !math::isFinite( vw ) || vw <= 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "configured mean wind speed must be finite and positive" );
+        }
+
+        if( v_wind() <= 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "a static atmosphere cannot be rescaled to positive mean wind" );
+        }
+        v_wind( vw );
+    }
+
+    if( config.isSet( "atm.tau_0" ) )
+    {
+        if( !math::isFinite( t0 ) || t0 <= 0 || !math::isFinite( m_r_0 ) || m_r_0 <= 0 || !math::isFinite( m_lam_0 ) ||
+            m_lam_0 <= 0 || v_wind() <= 0 )
+        {
+            return internal::mxlib_error_report(
+                error_t::invalidconfig,
+                "configured atmosphere time constant requires valid Fried, wavelength, and wind values" );
+        }
+        tau_0( t0, m_lam_0 );
+    }
+
+    if( config.isSet( "atm.z_mean" ) )
+    {
+        if( !math::isFinite( zm ) || zm < 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "configured mean layer height must be finite and nonnegative" );
+        }
+
+        const realT currentHeight = z_mean();
+        if( currentHeight == 0 )
+        {
+            if( zm != 0 )
+            {
+                return internal::mxlib_error_report(
+                    error_t::invalidconfig,
+                    "a zero-height atmosphere cannot be rescaled to a positive mean height" );
+            }
+        }
+        else
+        {
+            z_mean( zm );
+        }
+    }
+
+    return validate();
 }
 
 extern template class aoAtmosphere<float>;

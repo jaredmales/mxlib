@@ -11,11 +11,8 @@ typedef double realT;
 using namespace mx::app;
 using namespace mx::AO::analysis;
 
-/** Scenario: Loading aoSystem config settings
- *
- * Verify parsing of config
- * \anchor tests_ao_analysis_aoSystem_config
- */
+/// Verify parsing of AO-system configuration settings.
+/** Exercises mx::AO::analysis::aoSystem::setupConfig and mx::AO::analysis::aoSystem::loadConfig. */
 SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 {
     GIVEN( "no config file" )
@@ -208,5 +205,25 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.Fg( 9.0 ) == Approx( 5e9 * pow( 10, -0.4 * 9.0 ) ) );
             REQUIRE( aosys.atm.r_0() == Approx( 0.25 ) );
         }
+    }
+}
+
+/// Verify that AO-system configuration loading propagates atmosphere validity.
+/** Exercises mx::AO::analysis::aoSystem::loadConfig and mx::AO::analysis::aoAtmosphere::setSingleLayer. */
+TEST_CASE( "AO-system configuration reports atmosphere validity", "[ao::analysis::aoSystem]" )
+{
+    aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aoSystem;
+    appConfigurator config;
+    aoSystem.setupConfig( config );
+
+    SECTION( "default atmosphere" )
+    {
+        REQUIRE( aoSystem.loadConfig( config ) == mx::error_t::sizeerr );
+    }
+
+    SECTION( "complete atmosphere" )
+    {
+        aoSystem.atm.setSingleLayer( 0.2, 0.5e-6, 25.0, 0.0, 0.0, 10.0, 0.0 );
+        REQUIRE( aoSystem.loadConfig( config ) == mx::error_t::noerror );
     }
 }

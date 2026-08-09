@@ -7,6 +7,8 @@ set(MXLIB_TEST_MAIN_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/testMain.cpp)
 set(MXLIB_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoAtmosphere_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/clAOLinearPredictor_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/clGainOpt_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/fourierTemporalPSD_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoSystem_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ao/analysis/aoPSDs_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/astro/astroDynamics_test.cpp

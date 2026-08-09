@@ -40,90 +40,108 @@ namespace impl
 {
 
 template <typename realT>
-realT _optGainOpenLoop( clGainOptOptGain_OL<realT> &olgo,
-                        realT &var,
-                        const realT &gmax,
-                        const realT &minFindMin,
-                        const realT &minFindMaxFact,
-                        int minFindBits,
-                        uintmax_t minFindMaxIter,
-                        uintmax_t &iters )
+mx::error_t _optGainOpenLoop( realT &gain,
+                              realT &var,
+                              clGainOptOptGain_OL<realT> &olgo,
+                              const realT &minimumGain,
+                              const realT &maximumGain,
+                              int minFindBits,
+                              uintmax_t minFindMaxIter,
+                              uintmax_t &iters )
 {
-    realT gopt;
-
+    gain = std::numeric_limits<realT>::quiet_NaN();
+    var = std::numeric_limits<realT>::quiet_NaN();
     iters = minFindMaxIter;
 
     try
     {
         std::pair<realT, realT> brack;
-        brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>(
-            olgo, minFindMin, minFindMaxFact * gmax, minFindBits, iters );
-        gopt = brack.first;
+        brack = boost::math::tools::brent_find_minima<clGainOptOptGain_OL<realT>, realT>( olgo,
+                                                                                          minimumGain,
+                                                                                          maximumGain,
+                                                                                          minFindBits,
+                                                                                          iters );
+        gain = brack.first;
         var = brack.second;
     }
     catch( ... )
     {
-        std::cerr << "optGainOpenLoop: No root found\n";
-        gopt = minFindMaxFact * gmax;
-        var = 0;
+        return error_t::exception;
     }
 
-    return gopt;
+    if( iters >= minFindMaxIter )
+    {
+        return error_t::timeout;
+    }
+
+    return error_t::noerror;
 }
 
 template <>
-float optGainOpenLoop<float>( clGainOptOptGain_OL<float> &olgo,
-                              float &var,
-                              const float &gmax,
-                              const float &minFindMin,
-                              const float &minFindMaxFact,
-                              int minFindBits,
-                              uintmax_t minFindMaxIter,
-                              uintmax_t &iters )
+mx::error_t optGainOpenLoop<float>( float &gain,
+                                    float &var,
+                                    clGainOptOptGain_OL<float> &olgo,
+                                    const float &minimumGain,
+                                    const float &maximumGain,
+                                    int minFindBits,
+                                    uintmax_t minFindMaxIter,
+                                    uintmax_t &iters )
 {
-    return _optGainOpenLoop<float>( olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<float>( gain, var, olgo, minimumGain, maximumGain, minFindBits, minFindMaxIter, iters );
 }
 
 template <>
-double optGainOpenLoop<double>( clGainOptOptGain_OL<double> &olgo,
-                                double &var,
-                                const double &gmax,
-                                const double &minFindMin,
-                                const double &minFindMaxFact,
-                                int minFindBits,
-                                uintmax_t minFindMaxIter,
-                                uintmax_t &iters )
+mx::error_t optGainOpenLoop<double>( double &gain,
+                                     double &var,
+                                     clGainOptOptGain_OL<double> &olgo,
+                                     const double &minimumGain,
+                                     const double &maximumGain,
+                                     int minFindBits,
+                                     uintmax_t minFindMaxIter,
+                                     uintmax_t &iters )
 {
-    return _optGainOpenLoop<double>( olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<double>( gain, var, olgo, minimumGain, maximumGain, minFindBits, minFindMaxIter, iters );
 }
 
 template <>
-long double optGainOpenLoop<long double>( clGainOptOptGain_OL<long double> &olgo,
+mx::error_t optGainOpenLoop<long double>( long double &gain,
                                           long double &var,
-                                          const long double &gmax,
-                                          const long double &minFindMin,
-                                          const long double &minFindMaxFact,
+                                          clGainOptOptGain_OL<long double> &olgo,
+                                          const long double &minimumGain,
+                                          const long double &maximumGain,
                                           int minFindBits,
                                           uintmax_t minFindMaxIter,
                                           uintmax_t &iters )
 {
-    return _optGainOpenLoop<long double>(
-        olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<long double>( gain,
+                                          var,
+                                          olgo,
+                                          minimumGain,
+                                          maximumGain,
+                                          minFindBits,
+                                          minFindMaxIter,
+                                          iters );
 }
 
 #ifdef HASQUAD
 template <>
-__float128 optGainOpenLoop<__float128>( clGainOptOptGain_OL<__float128> &olgo,
-                                        __float128 &var,
-                                        __float128 &gmax,
-                                        __float128 &minFindMin,
-                                        __float128 &minFindMaxFact,
-                                        int minFindBits,
-                                        uintmax_t minFindMaxIter,
-                                        uintmax_t iters )
+mx::error_t optGainOpenLoop<__float128>( __float128 &gain,
+                                         __float128 &var,
+                                         clGainOptOptGain_OL<__float128> &olgo,
+                                         const __float128 &minimumGain,
+                                         const __float128 &maximumGain,
+                                         int minFindBits,
+                                         uintmax_t minFindMaxIter,
+                                         uintmax_t &iters )
 {
-    return _optGainOpenLoop<__float128>(
-        olgo, var, gmax, minFindMin, minFindMaxFact, minFindBits, minFindMaxIter, iters );
+    return _optGainOpenLoop<__float128>( gain,
+                                         var,
+                                         olgo,
+                                         minimumGain,
+                                         maximumGain,
+                                         minFindBits,
+                                         minFindMaxIter,
+                                         iters );
 }
 #endif
 

@@ -27,8 +27,15 @@
 #ifndef fourierTemporalPSD_hpp
 #define fourierTemporalPSD_hpp
 
+#include <algorithm>
+#include <atomic>
+#include <cmath>
 #include <iostream>
 #include <fstream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <mutex>
 
 #include <sys/stat.h>
 
@@ -39,6 +46,7 @@
 
 #include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
+#include "../../math/floatUtils.hpp"
 #include "../../math/func/jinc.hpp"
 #include "../../math/func/airyPattern.hpp"
 #include "../../math/vectorUtils.hpp"
@@ -71,18 +79,259 @@ namespace analysis
 
 #ifndef WSZ
 
-    /** \def WFZ
-     * \brief Size of the GSL integration workspace
-     */
-    #define WSZ 100000
+/** \def WFZ
+ * \brief Size of the GSL integration workspace
+ */
+#define WSZ 100000
 
 #endif
 
 enum basis : unsigned int
 {
-    basic,    ///< The basic sine and cosine Fourier modes
+    basic,   ///< The basic sine and cosine Fourier modes
     modified ///< The modified Fourier basis from \cite males_guyon_2017
 };
+
+/// Policy for handling GSL quadrature non-convergence statuses.
+enum class fourierTemporalPSDPolicy
+{
+    permissive, ///< Retain the best finite approximation and record the status.
+    strict      ///< Record every status and return an error if any integration does not converge.
+};
+
+/// Aggregated GSL quadrature diagnostics for a Fourier temporal PSD calculation.
+template <typename realT>
+struct fourierTemporalPSDReport
+{
+    /// Summary of one GSL status code.
+    struct statusSummary
+    {
+        size_t count{ 0 };                     ///< Number of occurrences of this status.
+        std::map<size_t, size_t> countByLayer; ///< Number of occurrences in each atmospheric layer.
+        realT maximumAbsoluteError{ 0 };       ///< Largest GSL absolute-error estimate.
+        realT maximumToleranceRatio{ 0 };      ///< Largest error estimate relative to the requested tolerance.
+        size_t worstLayer{ 0 };                ///< Layer containing the largest tolerance ratio.
+        realT worstFrequency{ 0 };             ///< Frequency containing the largest tolerance ratio.
+    };
+
+    size_t integrationsAttempted{ 0 };      ///< Total number of quadrature calls.
+    size_t integrationsConverged{ 0 };      ///< Number of quadrature calls returning `GSL_SUCCESS`.
+    std::map<int, statusSummary> gslStatus; ///< Summaries keyed by the raw GSL status code.
+
+    /// Reset all accumulated diagnostics.
+    void clear();
+
+    /// Record one quadrature result.
+    void record( int status,              /**< [in] raw GSL status code */
+                 size_t layer,            /**< [in] atmospheric layer index */
+                 realT frequency,         /**< [in] temporal frequency */
+                 realT result,            /**< [in] quadrature result */
+                 realT absoluteError,     /**< [in] GSL absolute-error estimate */
+                 realT absoluteTolerance, /**< [in] requested absolute tolerance */
+                 realT relativeTolerance /**< [in] requested relative tolerance */ );
+
+    /// Merge another report into this report.
+    void merge( const fourierTemporalPSDReport &other /**< [in] report to merge */ );
+
+    /// Return the total number of non-successful integrations.
+    [[nodiscard]] size_t failureCount() const;
+
+    /// Write a human-readable summary of the accumulated quadrature diagnostics.
+    void write( std::ostream &output /**< [out] stream receiving the summary */ ) const;
+};
+
+/// \cond fourierTemporalPSD_detail
+namespace fourierTemporalPSD_detail
+{
+
+/// Function type used to allocate a GSL integration workspace.
+using gslWorkspaceAllocator = gsl_integration_workspace *(*)( size_t );
+
+/// Deleter providing RAII ownership for a GSL integration workspace.
+struct gslWorkspaceDeleter
+{
+    /// Free an allocated GSL integration workspace.
+    void operator()( gsl_integration_workspace *workspace /**< [in] workspace to free */ ) const noexcept
+    {
+        if( workspace != nullptr )
+        {
+            gsl_integration_workspace_free( workspace );
+        }
+    }
+};
+
+/// Unique ownership handle for a GSL integration workspace.
+using gslWorkspacePtr = std::unique_ptr<gsl_integration_workspace, gslWorkspaceDeleter>;
+
+/// Return whether a GSL status represents a potentially usable non-converged approximation.
+inline bool isConvergenceStatus( int status )
+{
+    return status == GSL_EMAXITER || status == GSL_EROUND || status == GSL_ESING || status == GSL_EDIVERGE;
+}
+
+/// Convert a fatal GSL status to an mxlib status.
+inline error_t gslStatusToError( int status )
+{
+    if( status == GSL_ENOMEM )
+    {
+        return error_t::allocerr;
+    }
+
+    if( status == GSL_EDOM || status == GSL_EINVAL )
+    {
+        return error_t::invalidconfig;
+    }
+
+    return error_t::liberr;
+}
+
+/// Apply the configured non-convergence policy to one GSL status.
+inline error_t applyPolicy( int status, fourierTemporalPSDPolicy policy )
+{
+    if( status == GSL_SUCCESS )
+    {
+        return error_t::noerror;
+    }
+
+    if( isConvergenceStatus( status ) )
+    {
+        return policy == fourierTemporalPSDPolicy::permissive ? error_t::noerror : error_t::liberr;
+    }
+
+    return gslStatusToError( status );
+}
+
+/// Mutex serializing scoped changes to GSL's process-global error handler.
+inline std::mutex &gslErrorHandlerMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+/// Disable the GSL error handler for a complete top-level PSD calculation and restore it on exit.
+/** The mutex serializes handler changes made by this implementation. Unrelated code cannot be protected from GSL's
+ * process-global handler state unless it coordinates with the same mutex.
+ */
+class scopedGslErrorHandlerOff
+{
+  public:
+    /// Lock handler management and retain the previously installed handler.
+    scopedGslErrorHandlerOff() : m_lock( gslErrorHandlerMutex() ), m_previous( gsl_set_error_handler_off() )
+    {
+    }
+
+    /// Disallow copying ownership of the saved handler.
+    scopedGslErrorHandlerOff( const scopedGslErrorHandlerOff & ) = delete;
+
+    /// Disallow copy assignment of the handler guard.
+    scopedGslErrorHandlerOff &operator=( const scopedGslErrorHandlerOff & ) = delete;
+
+    /// Restore the previously installed handler before releasing the lock.
+    ~scopedGslErrorHandlerOff()
+    {
+        static_cast<void>( gsl_set_error_handler( m_previous ) );
+    }
+
+  private:
+    std::unique_lock<std::mutex> m_lock;        ///< Lock held while the handler is disabled.
+    gsl_error_handler_t *m_previous{ nullptr }; ///< Handler restored on destruction.
+};
+
+} // namespace fourierTemporalPSD_detail
+/// \endcond
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::clear()
+{
+    integrationsAttempted = 0;
+    integrationsConverged = 0;
+    gslStatus.clear();
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::record( int status,
+                                              size_t layer,
+                                              realT frequency,
+                                              realT result,
+                                              realT absoluteError,
+                                              realT absoluteTolerance,
+                                              realT relativeTolerance )
+{
+    ++integrationsAttempted;
+    if( status == GSL_SUCCESS )
+    {
+        ++integrationsConverged;
+        return;
+    }
+
+    statusSummary &summary = gslStatus[status];
+    ++summary.count;
+    ++summary.countByLayer[layer];
+    summary.maximumAbsoluteError = std::max( summary.maximumAbsoluteError, std::abs( absoluteError ) );
+
+    const realT requestedTolerance = std::max( std::abs( absoluteTolerance ), std::abs( relativeTolerance * result ) );
+    const realT toleranceRatio = requestedTolerance > 0 ? std::abs( absoluteError ) / requestedTolerance
+                                                        : std::numeric_limits<realT>::infinity();
+    if( toleranceRatio >= summary.maximumToleranceRatio )
+    {
+        summary.maximumToleranceRatio = toleranceRatio;
+        summary.worstLayer = layer;
+        summary.worstFrequency = frequency;
+    }
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::merge( const fourierTemporalPSDReport &other )
+{
+    integrationsAttempted += other.integrationsAttempted;
+    integrationsConverged += other.integrationsConverged;
+
+    for( const auto &[status, otherSummary] : other.gslStatus )
+    {
+        statusSummary &summary = gslStatus[status];
+        summary.count += otherSummary.count;
+        for( const auto &[layer, count] : otherSummary.countByLayer )
+        {
+            summary.countByLayer[layer] += count;
+        }
+        summary.maximumAbsoluteError = std::max( summary.maximumAbsoluteError, otherSummary.maximumAbsoluteError );
+        if( otherSummary.maximumToleranceRatio >= summary.maximumToleranceRatio )
+        {
+            summary.maximumToleranceRatio = otherSummary.maximumToleranceRatio;
+            summary.worstLayer = otherSummary.worstLayer;
+            summary.worstFrequency = otherSummary.worstFrequency;
+        }
+    }
+}
+
+template <typename realT>
+size_t fourierTemporalPSDReport<realT>::failureCount() const
+{
+    return integrationsAttempted - integrationsConverged;
+}
+
+template <typename realT>
+void fourierTemporalPSDReport<realT>::write( std::ostream &output ) const
+{
+    output << "GSL quadrature: " << integrationsConverged << '/' << integrationsAttempted << " converged\n";
+    for( const auto &[status, summary] : gslStatus )
+    {
+        output << "  " << gsl_strerror( status ) << " (" << status << "): " << summary.count << ", max absolute error "
+               << summary.maximumAbsoluteError << ", max tolerance ratio " << summary.maximumToleranceRatio
+               << " at layer " << summary.worstLayer << ", frequency " << summary.worstFrequency << ", layers {";
+        bool firstLayer = true;
+        for( const auto &[layer, count] : summary.countByLayer )
+        {
+            if( !firstLayer )
+            {
+                output << ", ";
+            }
+            output << layer << ": " << count;
+            firstLayer = false;
+        }
+        output << "}\n";
+    }
+}
 
 // Forward declaration
 template <typename realT, typename aosysT>
@@ -92,7 +341,6 @@ realT F_basic( realT kv, void *params );
 template <typename realT, typename aosysT>
 realT F_mod( realT kv, void *params );
 
-
 /// Class to manage the calculation of temporal PSDs of the Fourier modes in atmospheric turbulence.
 /** Works with both basic (sines/cosines) and modified Fourier modes.
  *
@@ -101,8 +349,6 @@ realT F_mod( realT kv, void *params );
  *
  * \todo Split off the integration parameters in a separate structure.
  * \todo once integration parameters are in a separate structure, make this a class with protected members.
- * \todo GSL error handling
- *
  * \ingroup mxAOAnalytic
  */
 template <typename _realT, typename aosysT>
@@ -113,6 +359,9 @@ struct fourierTemporalPSD
 
     /// The complex type for arithmetic
     typedef std::complex<realT> complexT;
+
+    /// Quadrature report type used by this specialization.
+    typedef fourierTemporalPSDReport<realT> reportT;
 
     /// Pointer to an AO system structure.
     aosysT *m_aosys{ nullptr };
@@ -136,9 +385,14 @@ struct fourierTemporalPSD
     int _useBasis; ///< Set to  MXAO_FTPSD_BASIS_BASIC/MODIFIED/PROJECTED_* to use the basic sin/cos modes, the modified
                    ///< Fourier modes, or a projection of them.
 
-    /// Workspace for the gsl integrators, allocated to WSZ if constructed as worker (with allocate == true).
-    gsl_integration_workspace *_w;
+  protected:
+    /// Unique ownership of the GSL integration workspace used by worker instances.
+    fourierTemporalPSD_detail::gslWorkspacePtr m_workspace;
 
+    /// Allocation function used when a worker lazily creates its GSL workspace.
+    fourierTemporalPSD_detail::gslWorkspaceAllocator m_workspaceAllocator{ gsl_integration_workspace_alloc };
+
+  public:
     realT _absTol;                            ///< The absolute tolerance to use in the GSL integrator
     realT _relTol;                            ///< The relative tolerance to use in the GSL integrator
 
@@ -175,20 +429,44 @@ struct fourierTemporalPSD
     /// Default c'tor
     fourierTemporalPSD();
 
-    /// Constructor with workspace allocation
-    /**
-     * \param allocate if true, then the workspace for GSL integrators is allocated.
-     */
-    explicit fourierTemporalPSD( bool allocate );
+    /// Disallow copying unique workspace ownership.
+    fourierTemporalPSD( const fourierTemporalPSD & ) = delete;
 
-    /// Destructor
-    /** Frees GSL workspace if it was allocated.
-     */
-    ~fourierTemporalPSD();
+    /// Disallow copy assignment of unique workspace ownership.
+    fourierTemporalPSD &operator=( const fourierTemporalPSD & ) = delete;
+
+    /// Move workspace ownership and evaluator state.
+    fourierTemporalPSD( fourierTemporalPSD && ) noexcept = default;
+
+    /// Move-assign workspace ownership and evaluator state.
+    fourierTemporalPSD &operator=( fourierTemporalPSD && ) noexcept = default;
+
+    /// Release owned resources.
+    ~fourierTemporalPSD() = default;
 
   protected:
+    /// Construct with a custom workspace allocator.
+    explicit fourierTemporalPSD(
+        fourierTemporalPSD_detail::gslWorkspaceAllocator allocator /**< [in] workspace allocation function */ );
+
     /// Initialize parameters to default values.
     void initialize();
+
+    /// Allocate the worker workspace if it is not already available.
+    error_t allocateWorkspace();
+
+    /// Validate state and arguments shared by single- and multilayer calculations.
+    error_t validatePsdInputs( const std::vector<realT> &PSD,  /**< [in] output storage to validate */
+                               const std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                               realT m,                        /**< [in] first spatial-frequency index */
+                               realT n,                        /**< [in] second spatial-frequency index */
+                               int p,                          /**< [in] Fourier-mode parity */
+                               realT fmax,                     /**< [in] maximum exactly integrated frequency */
+                               int layer_i,                    /**< [in] layer index, or -1 to validate all layers */
+                               fourierTemporalPSDPolicy policy /**< [in] non-convergence policy */ );
+
+    /// Validate the configured atmosphere and optionally a requested layer.
+    error_t validateAtmosphere( int layer_i /**< [in] layer index, or -1 to validate all layers */ );
 
   public:
     /** \name GSL Integration Tolerances
@@ -236,25 +514,45 @@ struct fourierTemporalPSD
      */
     realT fastestPeak( int m, int n );
 
+  protected:
+    /// Calculate a single-layer temporal PSD while the caller manages the GSL error handler.
+    error_t singleLayerPSDImpl( std::vector<realT> &PSD,  /**< [out] calculated PSD */
+                                std::vector<realT> &freq, /**< [in] temporal-frequency grid */
+                                realT m,                  /**< [in] first spatial-frequency index */
+                                realT n,                  /**< [in] second spatial-frequency index */
+                                int layer_i,              /**< [in] atmospheric-layer index */
+                                int p,                    /**< [in] Fourier-mode parity */
+                                realT fmax,               /**< [in] maximum exactly integrated frequency */
+                                reportT &report,          /**< [out] accumulated quadrature report */
+                                fourierTemporalPSDPolicy policy /**< [in] non-convergence policy */ );
+
+  public:
     /// Calculate the temporal PSD for a Fourier mode for a single layer.
-    /**
+    /** `PSD` and `freq` must have the same nonzero size. Frequencies must be finite, nonnegative, and strictly
+     * increasing. The AO system, integration controls, requested layer, and atmosphere are validated before
+     * calculation. A precondition or allocation failure leaves `PSD` unchanged and clears `report` when supplied.
      *
-     * \todo implement error checking.
-     * \todo need a way to track convergence failures in integral without throwing an error.
-     * \todo need better handling of averaging for the -17/3 extension.
+     * When extending beyond `fmax`, up to the last 50 exactly integrated bins are averaged after projection to the
+     * first tail frequency. If fewer than 50 exact bins are available, all available exact bins are used. At least one
+     * exact bin is required to initialize the tail.
      *
+     * In permissive mode, finite best approximations returned with `GSL_EMAXITER`, `GSL_EROUND`, `GSL_ESING`, or
+     * `GSL_EDIVERGE` are retained and summarized in `report`. In strict mode the calculation continues to characterize
+     * all such failures but returns `error_t::liberr` and the output PSD must be discarded.
+     *
+     * \returns `error_t::noerror` on success, an argument/configuration error for invalid inputs, or
+     * `error_t::liberr` when strict quadrature handling detects non-convergence.
      */
-    int
-    singleLayerPSD( std::vector<realT> &PSD,  ///< [out] the calculated PSD
-                    std::vector<realT> &freq, ///< [in] the populated temporal frequency grid defining the frequencies
-                                              ///< at which the PSD is calculated
-                    realT m,                  ///< [in] the first index of the spatial frequency
-                    realT n,                  ///< [in] the second index of the spatial frequency
-                    int layer_i,              ///< [in] the index of the layer, for accessing the atmosphere parameters
-                    int p, ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-                    realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation.  The PSD
-                                   ///< is filled in with a -17/3 power law past this frequency.
-    );
+    error_t singleLayerPSD(
+        std::vector<realT> &PSD,   /**< [out] calculated PSD */
+        std::vector<realT> &freq,  /**< [in] temporal-frequency grid */
+        realT m,                   /**< [in] first spatial-frequency index */
+        realT n,                   /**< [in] second spatial-frequency index */
+        int layer_i,               /**< [in] atmospheric-layer index */
+        int p,                     /**< [in] Fourier-mode parity */
+        realT fmax = 0,            /**< [in] maximum exactly integrated frequency, or 0 for the grid maximum */
+        reportT *report = nullptr, /**< [out] optional quadrature report */
+        fourierTemporalPSDPolicy policy = fourierTemporalPSDPolicy::permissive /**< [in] non-convergence policy */ );
 
     ///\cond multilayerm_parallel
     // Conditional to exclude from Doxygen.
@@ -267,48 +565,54 @@ struct fourierTemporalPSD
     };
 
     // Parallelized version of multiLayerPSD, with OMP directives.
-    int m_multiLayerPSD( std::vector<realT> &PSD,
-                         std::vector<realT> &freq,
-                         realT m,
-                         realT n,
-                         int p,
-                         realT fmax,
-                         isParallel<true> parallel );
+    error_t multiLayerPSDImpl( std::vector<realT> &PSD,         /**< [out] calculated PSD */
+                               std::vector<realT> &freq,        /**< [in] temporal-frequency grid */
+                               realT m,                         /**< [in] first spatial-frequency index */
+                               realT n,                         /**< [in] second spatial-frequency index */
+                               int p,                           /**< [in] Fourier-mode parity */
+                               realT fmax,                      /**< [in] maximum exactly integrated frequency */
+                               reportT &report,                 /**< [out] accumulated quadrature report */
+                               fourierTemporalPSDPolicy policy, /**< [in] non-convergence policy */
+                               isParallel<true> parallel /**< [in] parallel dispatch tag */ );
 
     // Non-Parallelized version of multiLayerPSD, without OMP directives.
-    int m_multiLayerPSD( std::vector<realT> &PSD,
-                         std::vector<realT> &freq,
-                         realT m,
-                         realT n,
-                         int p,
-                         realT fmax,
-                         isParallel<false> parallel );
+    error_t multiLayerPSDImpl( std::vector<realT> &PSD,         /**< [out] calculated PSD */
+                               std::vector<realT> &freq,        /**< [in] temporal-frequency grid */
+                               realT m,                         /**< [in] first spatial-frequency index */
+                               realT n,                         /**< [in] second spatial-frequency index */
+                               int p,                           /**< [in] Fourier-mode parity */
+                               realT fmax,                      /**< [in] maximum exactly integrated frequency */
+                               reportT &report,                 /**< [out] accumulated quadrature report */
+                               fourierTemporalPSDPolicy policy, /**< [in] non-convergence policy */
+                               isParallel<false> parallel /**< [in] sequential dispatch tag */ );
 
     ///\endcond
 
   public:
     /// Calculate the temporal PSD for a Fourier mode in a multi-layer model.
-    /**
+    /** `PSD` and `freq` must have the same nonzero size. Frequencies must be finite, nonnegative, and strictly
+     * increasing. The AO system, integration controls, and complete atmosphere are validated before calculation. A
+     * precondition failure leaves `PSD` unchanged and clears `report` when supplied.
      *
      * \tparam parallel controls whether layers are calculated in parallel.  Default is true.  Set to false if this is
      * called inside a parallelized loop, as in \ref makePSDGrid.
      *
-     * \todo implement error checking
-     * \todo handle reports of convergence failures form singleLayerPSD when implemented.
+     * In permissive mode, recognized convergence failures are retained and summarized in `report`. Strict mode returns
+     * `error_t::liberr` if any layer has such a failure; the output PSD is incomplete and must be discarded whenever
+     * this function returns an error.
      *
+     * \returns `error_t::noerror` on success, or the first layer error in atmospheric-layer order.
      */
     template <bool parallel = true>
-    int multiLayerPSD(
-        std::vector<realT> &PSD, ///< [out] the calculated PSD
-        std::vector<realT>
-            &freq, ///< [in] the populated temporal frequency grid defining at which frequencies the PSD is calculated
-        realT m,   ///< [in] the first index of the spatial frequency
-        realT n,   ///< [in] the second index of the spatial frequency
-        int p,     ///< [in] sets which mode is calculated (if basic modes, p = -1 for sine, p = +1 for cosine)
-        realT fmax =
-            0      ///< [in] [optional] set the maximum temporal frequency for the calculation. The PSD is filled in
-              /// with a -17/3 power law past this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
-    );
+    error_t multiLayerPSD(
+        std::vector<realT> &PSD,   /**< [out] calculated PSD */
+        std::vector<realT> &freq,  /**< [in] temporal-frequency grid */
+        realT m,                   /**< [in] first spatial-frequency index */
+        realT n,                   /**< [in] second spatial-frequency index */
+        int p,                     /**< [in] Fourier-mode parity */
+        realT fmax = 0,            /**< [in] maximum exactly integrated frequency, or 0 for the default cutoff */
+        reportT *report = nullptr, /**< [out] optional quadrature report */
+        fourierTemporalPSDPolicy policy = fourierTemporalPSDPolicy::permissive /**< [in] non-convergence policy */ );
 
     /// Calculate PSDs over a grid of spatial frequencies.
     /** The grid of spatial frequencies is square, set by the maximum value of m and n.
@@ -317,14 +621,20 @@ struct fourierTemporalPSD
      * this adds overhead and cfitisio handles parallelization poorly due to the limitation on number of created file
      * pointers.
      *
+     * Inputs and AO-system state are validated before any output is created. A positive `fmax` switches each PSD to
+     * its asymptotic power-law tail above that frequency; zero selects the multilayer default cutoff. Calculation and
+     * write failures are collected by spatial-mode index and the first failure in grid order is returned after the
+     * parallel loop. Files completed before a calculation or write failure are retained.
+     *
+     * \returns `error_t::noerror` when the complete grid is written, or a typed validation, calculation, or output
+     * error.
+     *
      */
-    void makePSDGrid( const std::string &dir, ///< [in] the directory for output of the PSDs
-                      int mnMax,              ///< [in] the maximum value of m and n in the grid.
-                      realT dFreq,            ///< [in] the temporal frequency spacing.
-                      realT maxFreq,          ///< [in] the maximum temporal frequency to calculate
-                      realT fmax = 0 ///< [in] [optional] set the maximum temporal frequency for the calculation. The
-                                     ///< PSD is filled in with a -17/3 power law past
-                                     /// this frequency.  If 0, then it is taken to be 150 Hz + 2*fastestPeak(m,n).
+    error_t makePSDGrid( const std::string &dir, ///< [in] the directory for output of the PSDs
+                         int mnMax,              ///< [in] the positive maximum value of m and n in the grid
+                         realT dFreq,            ///< [in] the positive temporal frequency spacing
+                         realT maxFreq,          ///< [in] the positive maximum temporal frequency to calculate
+                         realT fmax = 0 ///< [in] maximum exactly calculated frequency, or 0 for the default cutoff
     );
 
     /// Analyze a PSD grid under closed-loop control.
@@ -413,34 +723,170 @@ fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD()
 }
 
 template <typename realT, typename aosysT>
-fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD( bool allocate )
+fourierTemporalPSD<realT, aosysT>::fourierTemporalPSD( fourierTemporalPSD_detail::gslWorkspaceAllocator allocator )
+    : m_workspaceAllocator( allocator )
 {
     m_aosys = nullptr;
     initialize();
-
-    if( allocate )
-    {
-        _w = gsl_integration_workspace_alloc( WSZ );
-    }
 }
 
 template <typename realT, typename aosysT>
-fourierTemporalPSD<realT, aosysT>::~fourierTemporalPSD()
+error_t fourierTemporalPSD<realT, aosysT>::allocateWorkspace()
 {
-    if( _w )
+    if( m_workspace != nullptr )
     {
-        gsl_integration_workspace_free( _w );
+        return error_t::noerror;
     }
+
+    if( m_workspaceAllocator == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig, "GSL workspace allocator is null" );
+    }
+
+    m_workspace.reset( m_workspaceAllocator( WSZ ) );
+    if( m_workspace == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::allocerr, "could not allocate GSL integration workspace" );
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>
 void fourierTemporalPSD<realT, aosysT>::initialize()
 {
     _useBasis = basis::modified;
-    _w = 0;
 
     _absTol = 1e-10;
     _relTol = 1e-4;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::validateAtmosphere( int layer_i )
+{
+    if( m_aosys == nullptr )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig, "AO system pointer is null" );
+    }
+
+    if( !math::isFinite( m_aosys->D() ) || m_aosys->D() <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "AO system aperture diameter must be finite and positive" );
+    }
+
+    auto &atmosphere = m_aosys->atm;
+    const error_t atmosphereStatus = atmosphere.validate();
+    if( atmosphereStatus != error_t::noerror )
+    {
+        return atmosphereStatus;
+    }
+
+    const size_t layerCount = atmosphere.n_layers();
+    for( size_t index = 0; index < layerCount; ++index )
+    {
+        if( atmosphere.layer_v_wind( static_cast<int>( index ) ) <= 0 )
+        {
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "Fourier temporal PSD layers require positive wind speed" );
+        }
+    }
+
+    if( layer_i < -1 || ( layer_i >= 0 && static_cast<size_t>( layer_i ) >= layerCount ) )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "atmosphere layer index is out of range" );
+    }
+
+    return error_t::noerror;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::validatePsdInputs( const std::vector<realT> &PSD,
+                                                              const std::vector<realT> &freq,
+                                                              realT m,
+                                                              realT n,
+                                                              int p,
+                                                              realT fmax,
+                                                              int layer_i,
+                                                              fourierTemporalPSDPolicy policy )
+{
+    if( freq.empty() || PSD.size() != freq.size() )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr,
+                                             "PSD and frequency vectors must have the same nonzero size" );
+    }
+
+    for( size_t index = 0; index < freq.size(); ++index )
+    {
+        if( !math::isFinite( freq[index] ) || freq[index] < 0 || ( index > 0 && freq[index] <= freq[index - 1] ) )
+        {
+            return internal::mxlib_error_report(
+                error_t::invalidarg,
+                "frequency grid must be finite, nonnegative, and strictly increasing" );
+        }
+    }
+
+    if( !math::isFinite( m ) || !math::isFinite( n ) || !math::isFinite( fmax ) || fmax < 0 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidarg,
+            "mode coordinates must be finite and frequency cutoff must be finite and nonnegative" );
+    }
+
+    if( p != -1 && p != 1 )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "Fourier-mode parity must be -1 or +1" );
+    }
+
+    if( _useBasis != basis::basic && _useBasis != basis::modified )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "value of _useBasis is not valid" );
+    }
+
+    if( policy != fourierTemporalPSDPolicy::permissive && policy != fourierTemporalPSDPolicy::strict )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "quadrature policy is not valid" );
+    }
+
+    if( !math::isFinite( _absTol ) || _absTol <= 0 || !math::isFinite( _relTol ) || _relTol <= 0 || _relTol >= 1 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidconfig,
+            "GSL absolute tolerance must be positive and relative tolerance must be between zero and one" );
+    }
+
+    if( !math::isFinite( m_f0 ) || m_f0 < 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "turbulence boiling parameter must be finite and nonnegative" );
+    }
+
+    const error_t atmosphereStatus = validateAtmosphere( layer_i );
+    if( atmosphereStatus != error_t::noerror )
+    {
+        return atmosphereStatus;
+    }
+
+    if( _useBasis == basis::modified )
+    {
+        if( !math::isFinite( m_aosys->lam_sci() ) || m_aosys->lam_sci() <= 0 || !math::isFinite( m_aosys->lam_wfs() ) ||
+            m_aosys->lam_wfs() <= 0 || !math::isFinite( m_aosys->zeta() ) ||
+            std::abs( m_aosys->zeta() ) >= math::half_pi<realT>() )
+        {
+            return internal::mxlib_error_report(
+                error_t::invalidconfig,
+                "AO wavelengths must be positive and zenith angle must lie strictly between -pi/2 and pi/2" );
+        }
+    }
+
+    if( !math::isFinite( m_aosys->spatialFilter_ku() ) || m_aosys->spatialFilter_ku() <= 0 ||
+        !math::isFinite( m_aosys->spatialFilter_kv() ) || m_aosys->spatialFilter_kv() <= 0 )
+    {
+        return internal::mxlib_error_report( error_t::invalidconfig,
+                                             "AO spatial-filter limits must be finite and positive" );
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>
@@ -491,11 +937,50 @@ realT fourierTemporalPSD<realT, aosysT>::fastestPeak( int m, int n )
 }
 
 template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int layer_i, int p, realT fmax )
+error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSD( std::vector<realT> &PSD,
+                                                           std::vector<realT> &freq,
+                                                           realT m,
+                                                           realT n,
+                                                           int layer_i,
+                                                           int p,
+                                                           realT fmax,
+                                                           reportT *report,
+                                                           fourierTemporalPSDPolicy policy )
+{
+    reportT localReport;
+    reportT &activeReport = report == nullptr ? localReport : *report;
+    activeReport.clear();
+
+    const error_t status = validatePsdInputs( PSD, freq, m, n, p, fmax, layer_i, policy );
+    if( status != error_t::noerror )
+    {
+        return status;
+    }
+
+    fourierTemporalPSD_detail::scopedGslErrorHandlerOff handlerGuard;
+    return singleLayerPSDImpl( PSD, freq, m, n, layer_i, p, fmax, activeReport, policy );
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::singleLayerPSDImpl( std::vector<realT> &PSD,
+                                                               std::vector<realT> &freq,
+                                                               realT m,
+                                                               realT n,
+                                                               int layer_i,
+                                                               int p,
+                                                               realT fmax,
+                                                               reportT &report,
+                                                               fourierTemporalPSDPolicy policy )
 {
     if( fmax == 0 )
         fmax = freq[freq.size() - 1];
+
+    if( freq[0] > fmax )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidarg,
+            "at least one exact frequency bin is required to initialize the PSD tail" );
+    }
 
     realT v_wind = m_aosys->atm.layer_v_wind( layer_i );
     realT q_wind = m_aosys->atm.layer_dir( layer_i );
@@ -506,11 +991,13 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
 
     realT scale = 2 * ( 1 / v_wind ); // Factor of 2 for negative frequencies.
 
-    // We'll get the occasional failure to reach tolerance error, just ignore them all for now.
-    gsl_set_error_handler_off();
-
     // Create a local instance so that we're reentrant
-    fourierTemporalPSD<realT, aosysT> params( true );
+    fourierTemporalPSD<realT, aosysT> params( m_workspaceAllocator );
+    const error_t workspaceStatus = params.allocateWorkspace();
+    if( workspaceStatus != error_t::noerror )
+    {
+        return workspaceStatus;
+    }
 
     params.m_aosys = m_aosys;
     params._layer_i = layer_i;
@@ -529,21 +1016,22 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     params.m_modeCoeffs = m_modeCoeffs;
     params.m_minCoeffVal = m_minCoeffVal;
 
-    realT result, error;
+    realT result{ 0 };
+    realT error{ 0 };
+    error_t returnStatus = error_t::noerror;
 
     // Setup the GSL calculation
     gsl_function func;
     switch( _useBasis )
     {
-    case basis::basic: // MXAO_FTPSD_BASIS_BASIC:
-        func.function = &F_basic<realT, aosysT>;
-        break;
-    case basis::modified: // MXAO_FTPSD_BASIS_MODIFIED:
-        func.function = &F_mod<realT, aosysT>;
-        break;
-    default:
-        internal::mxlib_error_report(error_t::invalidarg,"value of _useBasis is not valid." );
-        return -1;
+        case basis::basic: // MXAO_FTPSD_BASIS_BASIC:
+            func.function = &F_basic<realT, aosysT>;
+            break;
+        case basis::modified: // MXAO_FTPSD_BASIS_MODIFIED:
+            func.function = &F_mod<realT, aosysT>;
+            break;
+        default:
+            return internal::mxlib_error_report( error_t::invalidarg, "value of _useBasis is not valid." );
     }
 
     func.params = &params;
@@ -554,13 +1042,26 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     {
         params.m_f = freq[i];
 
-        int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params._w, &result, &error );
+        const int ec = gsl_integration_qagi( &func, _absTol, _relTol, WSZ, params.m_workspace.get(), &result, &error );
+        report.record( ec, static_cast<size_t>( layer_i ), freq[i], result, error, _absTol, _relTol );
 
-        if( ec == GSL_EDIVERGE )
+        const error_t integrationStatus = fourierTemporalPSD_detail::applyPolicy( ec, policy );
+        if( integrationStatus != error_t::noerror )
         {
-            std::cerr << "GSL_EDIVERGE:" << p << " " << freq[i] << " " << v_wind << " " << m << " " << n << " " << m_m
-                      << " " << m_n << "\n";
-            std::cerr << "ignoring . . .\n";
+            if( !fourierTemporalPSD_detail::isConvergenceStatus( ec ) )
+            {
+                return internal::mxlib_error_report( integrationStatus,
+                                                     std::string( "gsl_integration_qagi failed: " ) +
+                                                         gsl_strerror( ec ) );
+            }
+
+            returnStatus = integrationStatus;
+        }
+
+        if( !math::isFinite( result ) || !math::isFinite( error ) )
+        {
+            return internal::mxlib_error_report( error_t::liberr,
+                                                 "gsl_integration_qagi returned a nonfinite result or error estimate" );
         }
 
         PSD[i] = scale * result;
@@ -574,21 +1075,22 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
     size_t j = i;
 
     if( j == freq.size() )
-        return 0;
+        return returnStatus;
 
-    // First average result for last 50.
-    PSD[j] =
-        PSD[i - 50] * pow( freq[i - 50] / freq[j], m_aosys->atm.alpha( layer_i ) + 2 ); // seventeen_thirds<realT>());
-    for( size_t k = 49; k > 0; --k )
+    // First average up to the last 50 exactly integrated bins after projecting them to the first tail frequency.
+    constexpr size_t maximumTailAverageCount = 50;
+    const size_t tailAverageCount = std::min( i, maximumTailAverageCount );
+    PSD[j] = 0;
+    for( size_t k = tailAverageCount; k > 0; --k )
     {
         PSD[j] +=
             PSD[i - k] * pow( freq[i - k] / freq[j], m_aosys->atm.alpha( layer_i ) + 2 ); // seventeen_thirds<realT>());
     }
-    PSD[j] /= 50.0;
+    PSD[j] /= static_cast<realT>( tailAverageCount );
     ++j;
     ++i;
     if( j == freq.size() )
-        return 0;
+        return returnStatus;
     while( j < freq.size() )
     {
         PSD[j] =
@@ -596,14 +1098,25 @@ int fourierTemporalPSD<realT, aosysT>::singleLayerPSD(
         ++j;
     }
 
-    return 0;
+    return returnStatus;
 }
 
 template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax, isParallel<true> parallel )
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSDImpl( std::vector<realT> &PSD,
+                                                              std::vector<realT> &freq,
+                                                              realT m,
+                                                              realT n,
+                                                              int p,
+                                                              realT fmax,
+                                                              reportT &report,
+                                                              fourierTemporalPSDPolicy policy,
+                                                              isParallel<true> parallel )
 {
     static_cast<void>( parallel );
+
+    const size_t layerCount = m_aosys->atm.n_layers();
+    std::vector<error_t> layerStatus( layerCount, error_t::noerror );
+    std::vector<reportT> layerReport( layerCount );
 
 #pragma omp parallel
     {
@@ -613,10 +1126,67 @@ int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
 #pragma omp for
         for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
         {
-            singleLayerPSD( single_PSD, freq, m, n, i, p, fmax );
+            std::fill( single_PSD.begin(), single_PSD.end(), 0 );
+            layerStatus[i] =
+                singleLayerPSDImpl( single_PSD, freq, m, n, static_cast<int>( i ), p, fmax, layerReport[i], policy );
 
 // Now add the single layer PSD to the overall PSD, weighted by Cn2
 #pragma omp critical
+            if( layerStatus[i] == error_t::noerror )
+            {
+                for( size_t j = 0; j < freq.size(); ++j )
+                {
+                    PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
+                }
+            }
+        }
+    }
+
+    error_t returnStatus = error_t::noerror;
+    for( size_t i = 0; i < layerCount; ++i )
+    {
+        report.merge( layerReport[i] );
+        if( returnStatus == error_t::noerror && layerStatus[i] != error_t::noerror )
+        {
+            returnStatus = layerStatus[i];
+        }
+    }
+
+    return returnStatus;
+}
+
+template <typename realT, typename aosysT>
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSDImpl( std::vector<realT> &PSD,
+                                                              std::vector<realT> &freq,
+                                                              realT m,
+                                                              realT n,
+                                                              int p,
+                                                              realT fmax,
+                                                              reportT &report,
+                                                              fourierTemporalPSDPolicy policy,
+                                                              isParallel<false> parallel )
+{
+    static_cast<void>( parallel );
+
+    // Records each layer PSD
+    std::vector<realT> single_PSD( freq.size() );
+    error_t returnStatus = error_t::noerror;
+
+    for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
+    {
+        std::fill( single_PSD.begin(), single_PSD.end(), 0 );
+        reportT layerReport;
+        const error_t layerStatus =
+            singleLayerPSDImpl( single_PSD, freq, m, n, static_cast<int>( i ), p, fmax, layerReport, policy );
+        report.merge( layerReport );
+        if( returnStatus == error_t::noerror && layerStatus != error_t::noerror )
+        {
+            returnStatus = layerStatus;
+        }
+
+        // Now add the single layer PSD to the overall PSD, weighted by Cn2
+        if( layerStatus == error_t::noerror )
+        {
             for( size_t j = 0; j < freq.size(); ++j )
             {
                 PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
@@ -624,37 +1194,30 @@ int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
         }
     }
 
-    return 0;
-}
-
-template <typename realT, typename aosysT>
-int fourierTemporalPSD<realT, aosysT>::m_multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax, isParallel<false> parallel )
-{
-    static_cast<void>( parallel );
-
-    // Records each layer PSD
-    std::vector<realT> single_PSD( freq.size() );
-
-    for( size_t i = 0; i < m_aosys->atm.n_layers(); ++i )
-    {
-        singleLayerPSD( single_PSD, freq, m, n, i, p, fmax );
-
-        // Now add the single layer PSD to the overall PSD, weighted by Cn2
-        for( size_t j = 0; j < freq.size(); ++j )
-        {
-            PSD[j] += m_aosys->atm.layer_Cn2( i ) * single_PSD[j];
-        }
-    }
-
-    return 0;
+    return returnStatus;
 }
 
 template <typename realT, typename aosysT>
 template <bool parallel>
-int fourierTemporalPSD<realT, aosysT>::multiLayerPSD(
-    std::vector<realT> &PSD, std::vector<realT> &freq, realT m, realT n, int p, realT fmax )
+error_t fourierTemporalPSD<realT, aosysT>::multiLayerPSD( std::vector<realT> &PSD,
+                                                          std::vector<realT> &freq,
+                                                          realT m,
+                                                          realT n,
+                                                          int p,
+                                                          realT fmax,
+                                                          reportT *report,
+                                                          fourierTemporalPSDPolicy policy )
 {
+    reportT localReport;
+    reportT &activeReport = report == nullptr ? localReport : *report;
+    activeReport.clear();
+
+    const error_t validationStatus = validatePsdInputs( PSD, freq, m, n, p, fmax, -1, policy );
+    if( validationStatus != error_t::noerror )
+    {
+        return validationStatus;
+    }
+
     // PSD is zeroed every time to make sure we don't accumulate on repeated calls
     for( size_t j = 0; j < PSD.size(); ++j )
         PSD[j] = 0;
@@ -664,13 +1227,48 @@ int fourierTemporalPSD<realT, aosysT>::multiLayerPSD(
         fmax = 150 + 2 * fastestPeak( m, n );
     }
 
-    return m_multiLayerPSD( PSD, freq, m, n, p, fmax, isParallel<parallel>() );
+    fourierTemporalPSD_detail::scopedGslErrorHandlerOff handlerGuard;
+    return multiLayerPSDImpl( PSD, freq, m, n, p, fmax, activeReport, policy, isParallel<parallel>() );
 }
 
 template <typename realT, typename aosysT>
-void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
+error_t fourierTemporalPSD<realT, aosysT>::makePSDGrid(
     const std::string &dir, int mnMax, realT dFreq, realT maxFreq, realT fmax )
 {
+    if( dir.empty() )
+    {
+        return internal::mxlib_error_report( error_t::invalidarg, "PSD grid output directory must not be empty" );
+    }
+
+    if( mnMax <= 0 || !math::isFinite( dFreq ) || dFreq <= 0 || !math::isFinite( maxFreq ) || maxFreq <= 0 ||
+        !math::isFinite( fmax ) || fmax < 0 )
+    {
+        return internal::mxlib_error_report(
+            error_t::invalidarg,
+            "PSD grid extent and frequency controls must be finite and positive, with a nonnegative cutoff" );
+    }
+
+    const realT sampleCount = maxFreq / dFreq;
+    if( !math::isFinite( sampleCount ) || sampleCount > static_cast<realT>( std::numeric_limits<int>::max() ) )
+    {
+        return internal::mxlib_error_report( error_t::sizeerr, "PSD grid sample count exceeds the supported range" );
+    }
+
+    const std::vector<realT> validationFrequency{ 0 };
+    const std::vector<realT> validationPsd{ 0 };
+    const error_t validationStatus = validatePsdInputs( validationPsd,
+                                                        validationFrequency,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        fmax,
+                                                        -1,
+                                                        fourierTemporalPSDPolicy::permissive );
+    if( validationStatus != error_t::noerror )
+    {
+        return validationStatus;
+    }
+
     std::vector<realT> freq;
 
     std::vector<sigproc::fourierModeDef> spf;
@@ -685,11 +1283,19 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
         N += 1;
 
     /*** Dump Params to file ***/
-    mkdir( dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    error_t status = ioutils::createDirectories( dir );
+    if( status != error_t::noerror )
+    {
+        return internal::mxlib_error_report( status, "could not create PSD grid output directory" );
+    }
 
     std::ofstream fout;
     fn = dir + '/' + "params.txt";
     fout.open( fn );
+    if( !fout.is_open() )
+    {
+        return internal::mxlib_error_report( error_t::fileoerr, "could not open PSD grid parameter file" );
+    }
 
     fout << "#---------------------------\n";
     m_aosys->dumpAOSystem( fout );
@@ -706,19 +1312,31 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
     fout << "#---------------------------\n";
 
     fout.close();
+    if( !fout )
+    {
+        return internal::mxlib_error_report( error_t::filewerr, "could not write PSD grid parameter file" );
+    }
 
     // Make directory
     std::string psddir = dir + "/psds";
-    mkdir( psddir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    status = ioutils::createDirectories( psddir );
+    if( status != error_t::noerror )
+    {
+        return internal::mxlib_error_report( status, "could not create PSD output directory" );
+    }
 
     // Create frequency scale.
     math::vectorScale( freq, N, dFreq, 0 ); // dFreq); //offset from 0 by dFreq, so f=0 not included
 
     fn = psddir + '/' + "freq.binv";
 
-    ioutils::writeBinVector( fn, freq );
+    if( ioutils::writeBinVector( fn, freq ) != 0 )
+    {
+        return internal::mxlib_error_report( error_t::filewerr, "could not write PSD frequency grid" );
+    }
 
     size_t nLoops = 0.5 * spf.size();
+    std::vector<error_t> modeStatus( nLoops, error_t::noerror );
 
     ipc::ompLoopWatcher<> watcher( nLoops, std::cout );
 
@@ -743,16 +1361,35 @@ void fourierTemporalPSD<realT, aosysT>::makePSDGrid(
                 continue;
             }
 
-            multiLayerPSD<false>( PSD, freq, m, n, 1, fmax );
+            modeStatus[i] = multiLayerPSD<false>( PSD, freq, m, n, 1, fmax );
+            if( modeStatus[i] != error_t::noerror )
+            {
+                watcher.incrementAndOutputStatus();
+                continue;
+            }
 
-            fname = std::format("{}/psd_{}_{}.binv",psddir,m,n);
-            //    psddir + '/' + "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+            fname = std::format( "{}/psd_{}_{}.binv", psddir, m, n );
+            //    psddir + '/' + "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) +
+            //    ".binv";
 
-            ioutils::writeBinVector( fname, PSD );
+            if( ioutils::writeBinVector( fname, PSD ) != 0 )
+            {
+                modeStatus[i] = error_t::filewerr;
+            }
 
             watcher.incrementAndOutputStatus();
         }
     }
+
+    for( size_t index = 0; index < modeStatus.size(); ++index )
+    {
+        if( modeStatus[index] != error_t::noerror )
+        {
+            return modeStatus[index];
+        }
+    }
+
+    return error_t::noerror;
 }
 
 template <typename realT, typename aosysT>
@@ -843,14 +1480,14 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     {
         for( size_t s = 0; s < mags.size(); ++s )
         {
-            std::string psdOutDir = std::format("{}/outputPSDS_{}_si",dir, mags[s]);
-            //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si";
+            std::string psdOutDir = std::format( "{}/outputPSDS_{}_si", dir, mags[s] );
+            // dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si";
             mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
             if( doLP )
             {
-                std::string psdOutDir = std::format("{}/outputPSDS_{}_lp",dir, mags[s]);
-                //dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp";
+                std::string psdOutDir = std::format( "{}/outputPSDS_{}_lp", dir, mags[s] );
+                // dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp";
                 mkdir( psdOutDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
             }
         }
@@ -859,6 +1496,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
     m_aosys->beta_p( 1, 1 );
 
     ipc::ompLoopWatcher<> watcher( nModes * mags.size(), std::cout );
+    std::atomic<int> analysisStatus{ static_cast<int>( error_t::noerror ) };
 
     for( size_t s = 0; s < mags.size(); ++s )
     {
@@ -976,8 +1614,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
 
                 if( writeXfer )
                 {
-                    std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
-                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
+                    std::string tfOutFile = std::format( "{}/outputTF_{}_si", dir, mags[s] );
+                    // dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
                     ioutils::createDirectories( tfOutFile );
                 }
 
@@ -985,8 +1623,8 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
                 {
                     if( writeXfer )
                     {
-                        std::string tfOutFile = std::format("{}/outputTF_{}_lp", dir, mags[s]);
-                        //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                        std::string tfOutFile = std::format( "{}/outputTF_{}_lp", dir, mags[s] );
+                        // dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
                         ioutils::createDirectories( tfOutFile );
                     }
                 }
@@ -1103,7 +1741,14 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                         else
                         {
                             // Calculate gain using the POL PSD
-                            gopt = go_si.optGainOpenLoop( var, tPSDpPOL, tPSDn, gmax, true );
+                            error_t gainStatus = go_si.optGainOpenLoop( gopt, var, tPSDpPOL, tPSDn, true );
+                            if( gainStatus != error_t::noerror )
+                            {
+                                int expected = static_cast<int>( error_t::noerror );
+                                analysisStatus.compare_exchange_strong( expected, static_cast<int>( gainStatus ) );
+                                gopt = 0;
+                                var = go_si.clVariance( tPSDp, tPSDn, gopt );
+                            }
 
                             if( m_uncorrectedOG )
                             {
@@ -1150,10 +1795,8 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( rv != error_t::noerror )
                             {
-                                std::cerr
-                                    << "fourierTemporalPSD::analyzePSDGrid: regularizeCoefficients returned error ";
-                                std::cerr << errorName( rv ) << ' ';
-                                std::cerr << __FILE__ << ' ' << __LINE__ << '\n';
+                                int expected = static_cast<int>( error_t::noerror );
+                                analysisStatus.compare_exchange_strong( expected, static_cast<int>( rv ) );
                             }
 
                             for( int n = 0; n < lpNc; ++n )
@@ -1199,7 +1842,7 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                     if( gopt_lp > gopt && var_lp > var )
                     {
-                        //Set LP to SI (or off if SI is off)
+                        // Set LP to SI (or off if SI is off)
                         gopt_lp = gopt;
                         var_lp = var;
                         go_lp.a( std::vector<realT>( { 1 } ) );
@@ -1245,17 +1888,17 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                         if( writeXfer )
                         {
-                            std::string tfOutFile = std::format("{}/outputTF_{}_si", dir, mags[s]);
+                            std::string tfOutFile = std::format( "{}/outputTF_{}_si", dir, mags[s] );
                             //    dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
 
-                            std::string etfOutFile = std::format("{}/etf_{}_{}.binv", tfOutFile,m, n);
-                            //tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
-                            //                         ioutils::convert ToString( n ) + ".binv";
+                            std::string etfOutFile = std::format( "{}/etf_{}_{}.binv", tfOutFile, m, n );
+                            // tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
+                            //                          ioutils::convert ToString( n ) + ".binv";
                             ioutils::writeBinVector( etfOutFile, ETFxn );
 
-                            std::string ntfOutFile = std::format("{}/ntf_{}_{}.binv",tfOutFile, m, n);
-                            //tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
-                            //                         ioutils::convert ToString( n ) + ".binv";
+                            std::string ntfOutFile = std::format( "{}/ntf_{}_{}.binv", tfOutFile, m, n );
+                            // tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
+                            //                          ioutils::convert ToString( n ) + ".binv";
                             ioutils::writeBinVector( ntfOutFile, NTFxn );
 
                             if( i == 0 ) // Write freq on the first one
@@ -1300,17 +1943,17 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( writeXfer )
                             {
-                                std::string tfOutFile = std::format("{}/outputTF_{}_lp",dir,mags[s]);
-                                    //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                                std::string tfOutFile = std::format( "{}/outputTF_{}_lp", dir, mags[s] );
+                                // dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
 
-                                std::string etfOutFile = std::format("{}/etf_{}_{}.binv", tfOutFile, m, n);
-                                //tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
-                                                 //        ioutils::convert ToString( n ) + ".binv";
+                                std::string etfOutFile = std::format( "{}/etf_{}_{}.binv", tfOutFile, m, n );
+                                // tfOutFile + "etf_" + ioutils::convert ToString( m ) + '_' +
+                                //         ioutils::convert ToString( n ) + ".binv";
                                 ioutils::writeBinVector( etfOutFile, ETFxn );
 
-                                std::string ntfOutFile = std::format("{}/ntf_{}_{}.binv", tfOutFile, m, n);
-                                //tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
-                                  //                       ioutils::convert ToString( n ) + ".binv";
+                                std::string ntfOutFile = std::format( "{}/ntf_{}_{}.binv", tfOutFile, m, n );
+                                // tfOutFile + "ntf_" + ioutils::convert ToString( m ) + '_' +
+                                //                        ioutils::convert ToString( n ) + ".binv";
                                 ioutils::writeBinVector( ntfOutFile, NTFxn );
 
                                 if( i == 0 ) // Write freq on the first one
@@ -1340,11 +1983,12 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
                     // Calculate the controlled PSDs and output
                     if( writePSDs )
                     {
-                        std::string psdOutFile = std::format("{}/outputPSDs_{}_si/psd_{}_{}.binv",dir,mags[s],m,n);
+                        std::string psdOutFile =
+                            std::format( "{}/outputPSDs_{}_si/psd_{}_{}.binv", dir, mags[s], m, n );
 
-                         //   dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si/";
-                        //psdOutFile +=
-                         //   "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                        //   dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si/";
+                        // psdOutFile +=
+                        //    "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
 
                         std::vector<realT> psdOut( tPSDp.size() + tPSDpHF.size() );
 
@@ -1381,18 +2025,20 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                         if( i == 0 ) // Write freq on the first one
                         {
-                            psdOutFile = std::format("{}/outputPSDs_{}_si/freq.binv", dir, mags[s]);
+                            psdOutFile = std::format( "{}/outputPSDs_{}_si/freq.binv", dir, mags[s] );
                             //    dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_si/freq.binv";
-                            //ioutils::writeBinVector( psdOutFile, tfreqHF );
+                            // ioutils::writeBinVector( psdOutFile, tfreqHF );
                         }
 
                         if( doLP )
                         {
-                            std::string psdOutFile = std::format("{}/outputPSDs_{}_lp/psd_{}_{}.binv",dir,mags[s],m,n);
+                            std::string psdOutFile =
+                                std::format( "{}/outputPSDs_{}_lp/psd_{}_{}.binv", dir, mags[s], m, n );
 
-                            //psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp/";
-                            //psdOutFile +=
-                            //    "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                            // psdOutFile = dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                            // psdOutFile +=
+                            //     "psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) +
+                            //     ".binv";
 
                             // Calculate the output PSD if gains are applied
                             if( gopt_lp > 0 )
@@ -1426,10 +2072,11 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
 
                             if( i == 0 )
                             {
-                                psdOutFile = std::format("{}/outputPSDs_{}_lp/freq.binv", dir, mags[s]);
-                                //psdOutFile =
-                                //    dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) + "_lp/freq.binv";
-                                //ioutils::writeBinVector( psdOutFile, tfreq );
+                                psdOutFile = std::format( "{}/outputPSDs_{}_lp/freq.binv", dir, mags[s] );
+                                // psdOutFile =
+                                //     dir + "/" + "outputPSDs_" + ioutils::convert ToString( mags[s] ) +
+                                //     "_lp/freq.binv";
+                                // ioutils::writeBinVector( psdOutFile, tfreq );
                             }
                         }
                     }
@@ -1439,15 +2086,20 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
             } // omp for i..nModes
         } // omp Parallel
 
+        if( analysisStatus.load() != static_cast<int>( error_t::noerror ) )
+        {
+            return analysisStatus.load();
+        }
+
         Eigen::Array<realT, -1, -1> cim;
 
         fits::fitsFile<realT> ff;
-        std::string fn = std::format("{}/gainmap_{}_si.fits",dir, mags[s]);
-        //dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+        std::string fn = std::format( "{}/gainmap_{}_si.fits", dir, mags[s] );
+        // dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, gains );
 
-        fn = std::format("{}/varmap_{}_si.fits",dir, mags[s]);
-        //dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+        fn = std::format( "{}/varmap_{}_si.fits", dir, mags[s] );
+        // dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, vars );
 
         cim = vars;
@@ -1456,29 +2108,29 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
         S_si.push_back( strehl );
         cim /= strehl;
 
-        fn = std::format("{}/contrast_{}_si.fits",dir, mags[s]);
-        //dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+        fn = std::format( "{}/contrast_{}_si.fits", dir, mags[s] );
+        // dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, cim );
 
         if( lifetimeTrials > 0 )
         {
-            fn = std::format("{}/speckleLifetimes_{}_si.fits",dir, mags[s]);
-            //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+            fn = std::format( "{}/speckleLifetimes_{}_si.fits", dir, mags[s] );
+            // dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
             ff.write( fn, speckleLifetimes );
         }
 
         if( doLP )
         {
-            fn = std::format("{}/gainmap_{}_lp.fits",dir, mags[s]);
-            //dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+            fn = std::format( "{}/gainmap_{}_lp.fits", dir, mags[s] );
+            // dir + "/gainmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, gains_lp );
 
-            fn = std::format("{}/lpcmap_{}_lp.fits",dir, mags[s]);
-            //dir + "/lpcmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+            fn = std::format( "{}/lpcmap_{}_lp.fits", dir, mags[s] );
+            // dir + "/lpcmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, lpC );
 
-            fn = std::format("{}/varmap_{}_lp.fits",dir, mags[s]);
-            //dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+            fn = std::format( "{}/varmap_{}_lp.fits", dir, mags[s] );
+            // dir + "/varmap_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, vars_lp );
 
             cim = vars_lp;
@@ -1489,14 +2141,14 @@ std::cerr << __FILE__ << " " << __LINE__ << "\n";
             S_lp.push_back( Slp );
             cim /= Slp;
 
-            fn = std::format("{}/contrast_{}_lp.fits",dir, mags[s]);
-            //dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+            fn = std::format( "{}/contrast_{}_lp.fits", dir, mags[s] );
+            // dir + "/contrast_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, cim );
 
             if( lifetimeTrials > 0 )
             {
-                fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
-                //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+                fn = std::format( "{}/speckleLifetimes_{}_lp.fits", dir, mags[s] );
+                // dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
                 ff.write( fn, speckleLifetimes_lp );
             }
         }
@@ -1744,35 +2396,35 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
 
             if( inside )
             {
-                tfInFile = std::format("{}/outputTF_{}_si",dir, mags[s]);
-                //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
+                tfInFile = std::format( "{}/outputTF_{}_si", dir, mags[s] );
+                // dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_si/";
 
-                etfInFile = std::format("{}/etf_{}_{}.binv",tfInFile, m, n);
-                    //tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                etfInFile = std::format( "{}/etf_{}_{}.binv", tfInFile, m, n );
+                // tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, etfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     ETFsi[i][j] = psd2sidedc[j];
 
-                ntfInFile = std::format("{}/ntf_{}_{}.binv",tfInFile, m, n);
-                    //tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                ntfInFile = std::format( "{}/ntf_{}_{}.binv", tfInFile, m, n );
+                // tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, ntfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     NTFsi[i][j] = psd2sidedc[j];
 
-                tfInFile = std::format("{}/outputTF_{}_lp",dir, mags[s]);
-                //dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
+                tfInFile = std::format( "{}/outputTF_{}_lp", dir, mags[s] );
+                // dir + "/" + "outputTF_" + ioutils::convert ToString( mags[s] ) + "_lp/";
 
-                etfInFile = std::format("{}/etf_{}_{}.binv",tfInFile, m, n);
-                    //tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                etfInFile = std::format( "{}/etf_{}_{}.binv", tfInFile, m, n );
+                // tfInFile + "etf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, etfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
                     ETFlp[i][j] = psd2sidedc[j];
 
-                ntfInFile = std::format("{}/ntf_{}_{}.binv",tfInFile, m, n);
-                    //tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+                ntfInFile = std::format( "{}/ntf_{}_{}.binv", tfInFile, m, n );
+                // tfInFile + "ntf_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
                 ioutils::readBinVector( tPSDc, ntfInFile );
                 sigproc::augment1SidedPSD( psd2sidedc, tPSDc, !( tfreq[0] == 0 ), 1 ); // Convert to FFT storage order
                 for( size_t j = 0; j < psd2sidedc.size(); ++j )
@@ -2195,22 +2847,22 @@ int fourierTemporalPSD<realT, aosysT>::intensityPSD(
         /*********************************************************************/
         // 4.0)  Write the results to disk
         /*********************************************************************/
-        fn = std::format("{}/speckleLifetimes_{}_si.fits",dir, mags[s]);
-        //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+        fn = std::format( "{}/speckleLifetimes_{}_si.fits", dir, mags[s] );
+        // dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
         ff.write( fn, taus );
 
-        fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
-        //dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+        fn = std::format( "{}/speckleLifetimes_{}_lp.fits", dir, mags[s] );
+        // dir + "/speckleLifetimes_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
         ff.write( fn, tauslp );
 
         if( writePSDs )
         {
-            fn = std::format("{}/specklePSDs_{}_si.fits",dir, mags[s]);
-            //dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
+            fn = std::format( "{}/specklePSDs_{}_si.fits", dir, mags[s] );
+            // dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_si.fits";
             ff.write( fn, imc );
 
-            fn = std::format("{}/speckleLifetimes_{}_lp.fits",dir, mags[s]);
-            //dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
+            fn = std::format( "{}/speckleLifetimes_{}_lp.fits", dir, mags[s] );
+            // dir + "/specklePSDs_" + ioutils::convert ToString( mags[s] ) + "_lp.fits";
             ff.write( fn, imclp );
         }
 
@@ -2231,8 +2883,8 @@ template <typename realT, typename aosysT>
 int fourierTemporalPSD<realT, aosysT>::getGridPSD( std::vector<realT> &psd, const std::string &dir, int m, int n )
 {
     std::string fn;
-    fn = std::format("{}/psds/psd_{}_{}.binv",dir,m,n);
-    //dir + "/psds/psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
+    fn = std::format( "{}/psds/psd_{}_{}.binv", dir, m, n );
+    // dir + "/psds/psd_" + ioutils::convert ToString( m ) + '_' + ioutils::convert ToString( n ) + ".binv";
     return ioutils::readBinVector( psd, fn );
 }
 
@@ -2421,10 +3073,9 @@ realT F_mod( realT kv, void *params )
 
         P2 *= QQ;
 
-        return 0.5*(P1 + P2);
+        return 0.5 * ( P1 + P2 );
     }
 }
-
 
 /*extern template
 struct fourierTemporalPSD<float, aoSystem<float, vonKarmanSpectrum<float>, std::ostream>>;*/
