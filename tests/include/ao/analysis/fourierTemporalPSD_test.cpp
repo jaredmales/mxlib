@@ -356,6 +356,57 @@ TEST_CASE( "Fourier temporal PSD reports grid-generation failures", "[ao::analys
     REQUIRE_FALSE( filesystemError );
 }
 
+/// Verify that Fourier PSD calculation requires a valid atmosphere and accepts every complete preset.
+/** Exercises mx::AO::analysis::aoAtmosphere::validate,
+ * mx::AO::analysis::aoAtmosphere::loadGuyon2005, mx::AO::analysis::aoAtmosphere::loadLCO,
+ * mx::AO::analysis::aoAtmosphere::setSingleLayer, and
+ * mx::AO::analysis::fourierTemporalPSD::singleLayerPSD. */
+TEST_CASE( "Fourier temporal PSD enforces atmosphere validity at calculation", "[ao::analysis::fourierTemporalPSD]" )
+{
+    aoSystemT aoSystem;
+    aoSystem.D( 6.5 );
+
+    temporalPsdT temporalPsd;
+    temporalPsd.m_aosys = &aoSystem;
+    temporalPsd._useBasis = mx::AO::analysis::basis::basic;
+
+    std::vector<double> frequency{ 1.0 };
+    std::vector<double> psd{ 7.0 };
+
+    SECTION( "default atmosphere" )
+    {
+        REQUIRE( aoSystem.atm.validate() == mx::error_t::sizeerr );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, frequency.back() ) ==
+                 mx::error_t::sizeerr );
+        REQUIRE( psd == std::vector<double>{ 7.0 } );
+    }
+
+    SECTION( "Guyon 2005 preset with infinite outer scale" )
+    {
+        aoSystem.atm.loadGuyon2005();
+        REQUIRE( aoSystem.atm.L_0( 0 ) == 0.0 );
+        REQUIRE( aoSystem.atm.validate() == mx::error_t::noerror );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, frequency.back() ) ==
+                 mx::error_t::noerror );
+    }
+
+    SECTION( "LCO preset" )
+    {
+        aoSystem.atm.loadLCO();
+        REQUIRE( aoSystem.atm.validate() == mx::error_t::noerror );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, frequency.back() ) ==
+                 mx::error_t::noerror );
+    }
+
+    SECTION( "single-layer preset" )
+    {
+        aoSystem.atm.setSingleLayer( 0.2, 0.5e-6, 25.0, 0.0, 0.0, 10.0, 0.0 );
+        REQUIRE( aoSystem.atm.validate() == mx::error_t::noerror );
+        REQUIRE( temporalPsd.singleLayerPSD( psd, frequency, 1.0, 0.0, 0, 1, frequency.back() ) ==
+                 mx::error_t::noerror );
+    }
+}
+
 /// Verify temporal-PSD tail initialization at and below its nominal averaging width.
 /** Exercises zero, one, 49, and 50 exactly integrated frequency bins. */
 TEST_CASE( "Fourier temporal PSD handles short exact tails", "[ao::analysis::fourierTemporalPSD]" )

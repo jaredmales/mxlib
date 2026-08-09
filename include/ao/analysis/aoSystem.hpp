@@ -1159,17 +1159,14 @@ class aoSystem
      */
     iosT &dumpAOSystem( iosT &ios /**< [in] a std::ostream-like stream. */ );
 
-    /// Setup the configurator to configure this class
-    /**
-     * todo: "\test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]"
-     */
+    /// Setup the configurator to configure this class.
     void setupConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 
-    /// Load the configuration of this class from a configurator
+    /// Load the configuration of this class from a configurator.
     /**
-     * \todo: "\test Loading aoAtmosphere config settings \ref tests_ao_analysis_aoAtmosphere_config "[test doc]""
+     * \returns `error_t::noerror` when the configured atmosphere is valid, or its typed validation error.
      */
-    void loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
+    error_t loadConfig( app::appConfigurator &config /**< [in] the app::configurator object*/ );
 };
 
 template <typename realT, class inputSpectT, typename iosT>
@@ -3056,7 +3053,7 @@ void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator &conf
 }
 
 template <typename realT, class inputSpectT, typename iosT>
-void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator &config )
+error_t aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator &config )
 {
     // WFS
     if( config.isSet( "aosys.wfs" ) )
@@ -3238,8 +3235,10 @@ void aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator &confi
     if( config.isSet( "aosys.starMag" ) )
         starMag( smag );
 
-    atm.loadConfig( config );
+    const error_t atmosphereStatus = atm.loadConfig( config );
     psd.loadConfig( config );
+
+    return atmosphereStatus;
 }
 
 extern template class aoSystem<float, vonKarmanSpectrum<float>, std::ostream>;

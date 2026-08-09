@@ -776,71 +776,20 @@ error_t fourierTemporalPSD<realT, aosysT>::validateAtmosphere( int layer_i )
     }
 
     auto &atmosphere = m_aosys->atm;
+    const error_t atmosphereStatus = atmosphere.validate();
+    if( atmosphereStatus != error_t::noerror )
+    {
+        return atmosphereStatus;
+    }
+
     const size_t layerCount = atmosphere.n_layers();
-    if( layerCount == 0 )
-    {
-        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere must contain at least one layer" );
-    }
-
-    const std::vector<realT> outerScale = atmosphere.L_0();
-    const std::vector<realT> innerScale = atmosphere.l_0();
-    const std::vector<realT> altitude = atmosphere.layer_z();
-    const std::vector<realT> strength = atmosphere.layer_Cn2();
-    const std::vector<realT> windSpeed = atmosphere.layer_v_wind();
-    const std::vector<realT> windDirection = atmosphere.layer_dir();
-    if( outerScale.size() != layerCount || innerScale.size() != layerCount || altitude.size() != layerCount ||
-        strength.size() != layerCount || windSpeed.size() != layerCount || windDirection.size() != layerCount )
-    {
-        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere layer-vector sizes do not match" );
-    }
-
-    if( atmosphere.nonKolmogorov() )
-    {
-        const std::vector<realT> alpha = atmosphere.alpha();
-        const std::vector<realT> beta = atmosphere.beta();
-        const std::vector<realT> beta0 = atmosphere.beta_0();
-        if( alpha.size() != layerCount || beta.size() != layerCount || beta0.size() != layerCount )
-        {
-            return internal::mxlib_error_report( error_t::sizeerr,
-                                                 "non-Kolmogorov atmosphere vector sizes do not match" );
-        }
-
-        for( size_t index = 0; index < layerCount; ++index )
-        {
-            if( !math::isFinite( alpha[index] ) || !math::isFinite( beta[index] ) || beta[index] <= 0 ||
-                !math::isFinite( beta0[index] ) || beta0[index] < 0 )
-            {
-                return internal::mxlib_error_report( error_t::invalidconfig,
-                                                     "non-Kolmogorov atmosphere parameters are invalid" );
-            }
-        }
-    }
-    else if( !math::isFinite( atmosphere.r_0() ) || atmosphere.r_0() <= 0 || !math::isFinite( atmosphere.lam_0() ) ||
-             atmosphere.lam_0() <= 0 )
-    {
-        return internal::mxlib_error_report( error_t::invalidconfig,
-                                             "atmosphere Fried parameter and wavelength must be finite and positive" );
-    }
-
-    bool hasPositiveStrength = false;
-    realT totalStrength = 0;
     for( size_t index = 0; index < layerCount; ++index )
     {
-        if( !math::isFinite( outerScale[index] ) || outerScale[index] <= 0 || !math::isFinite( innerScale[index] ) ||
-            innerScale[index] < 0 || !math::isFinite( altitude[index] ) || altitude[index] < 0 ||
-            !math::isFinite( strength[index] ) || strength[index] < 0 || !math::isFinite( windSpeed[index] ) ||
-            windSpeed[index] <= 0 || !math::isFinite( windDirection[index] ) )
+        if( atmosphere.layer_v_wind( static_cast<int>( index ) ) <= 0 )
         {
-            return internal::mxlib_error_report( error_t::invalidconfig, "atmosphere layer parameters are invalid" );
+            return internal::mxlib_error_report( error_t::invalidconfig,
+                                                 "Fourier temporal PSD layers require positive wind speed" );
         }
-        hasPositiveStrength = hasPositiveStrength || strength[index] > 0;
-        totalStrength += strength[index];
-    }
-
-    if( !hasPositiveStrength || !math::isFinite( totalStrength ) || totalStrength <= 0 )
-    {
-        return internal::mxlib_error_report( error_t::invalidconfig,
-                                             "atmosphere must contain a positive layer strength" );
     }
 
     if( layer_i < -1 || ( layer_i >= 0 && static_cast<size_t>( layer_i ) >= layerCount ) )
