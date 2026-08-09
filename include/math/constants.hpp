@@ -37,13 +37,20 @@ namespace mx
 {
 namespace math
 {
-//                             0         1         2         3         4         5         6         7         8 9 1
+// Constants to 100 digits for casting
+//                                                                                                        1
+//              1         2         3         4         5         6         7         8         9         0
+//    01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 #define MX_INTERNAL_PI_100                                                                                             \
     ( 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679 )
 #define MX_INTERNAL_ROOT2_100                                                                                          \
     ( 1.4142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727 )
 #define MX_INTERNAL_LN2_100                                                                                            \
     ( 0.6931471805599453094172321214581765680755001343602552541206800094933936219696947156058633269964186875 )
+#define MX_INTERNAL_ROOT3_100                                                                                          \
+    ( 1.732050807568877293527446341505872366942805253810380628055806979451933016908800037081146186757248576 )
+#define MX_INTERNAL_HALF_ROOT3_100                                                                                     \
+    ( 0.8660254037844386467637231707529361834714026269051903140279034897259665084544000185405730933786242878 )
 
 /// Get the value of pi
 /** Specializations provided for float, double, long double, and quad if supported. Can default to boost for other types
@@ -313,6 +320,93 @@ template <>
 constexpr __float128 ln_two<__float128>()
 {
     return static_cast<__float128>( MX_INTERNAL_LN2_100 );
+}
+#endif
+
+/// Get the value of sqrt(3)
+/** Specializations provided for float, double, long double, and quad (if supported).  Can default to boost for other
+ * types if MX_INCLUDE_BOOST is defined.
+ *
+ * \ingroup genconstants
+ */
+template <typename T>
+constexpr T root_three()
+{
+#ifdef MX_INCLUDE_BOOST
+    return boost::math::constants::root_three<T>();
+#else
+    static_assert(
+        std::is_fundamental<T>::value || !std::is_fundamental<T>::value,
+        "root_three<T> not specialized for type T, and MX_INCLUDE_BOOST is not defined, so I can't just use boost." );
+    return 0;
+#endif
+}
+
+template <>
+constexpr float root_three<float>()
+{
+    return static_cast<float>( MX_INTERNAL_ROOT3_100 );
+}
+
+template <>
+constexpr double root_three<double>()
+{
+    return static_cast<double>( MX_INTERNAL_ROOT3_100 );
+}
+
+template <>
+constexpr long double root_three<long double>()
+{
+    return static_cast<long double>( MX_INTERNAL_ROOT3_100 );
+}
+
+#ifdef HASQUAD
+template <>
+constexpr __float128 root_three<__float128>()
+{
+    return static_cast<__float128>( MX_INTERNAL_ROOT3_100 );
+}
+#endif
+
+/// Get the value of sqrt(3)/2
+/** Specializations provided for float, double, long double, and quad (if supported).  
+ * 
+ * Note there is no boost equivalent.
+ *
+ * \ingroup genconstants
+ */
+template <typename T>
+constexpr T half_root_three()
+{
+    static_assert(
+        std::is_fundamental<T>::value || !std::is_fundamental<T>::value,
+        "half_root_three<T> not specialized for type T, and there is no boost equivalent." );
+    return 0;
+}
+
+template <>
+constexpr float half_root_three<float>()
+{
+    return static_cast<float>( MX_INTERNAL_HALF_ROOT3_100 );
+}
+
+template <>
+constexpr double half_root_three<double>()
+{
+    return static_cast<double>( MX_INTERNAL_HALF_ROOT3_100 );
+}
+
+template <>
+constexpr long double half_root_three<long double>()
+{
+    return static_cast<long double>( MX_INTERNAL_HALF_ROOT3_100 );
+}
+
+#ifdef HASQUAD
+template <>
+constexpr __float128 half_root_three<__float128>()
+{
+    return static_cast<__float128>( MX_INTERNAL_HALF_ROOT3_100 );
 }
 #endif
 

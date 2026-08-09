@@ -758,6 +758,243 @@ realT zernikePTrefoil( const realT &kD /**< [in] Spatial frequency in diameter u
     return 32 * pow( math::func::jincN( 4, math::pi<realT>() * kD ), 2 );
 }
 
+/// Get the degrees of correction coefficient for Zernike polynomials in Kolmogorov turbulence.
+/** Returns the coefficient from Table IV of Noll (1976) \cite noll_1976 for the given index.
+ * Given this, the total variance in radians at wavelength $\lambda$ for a diameter $D$
+ * aperture after correcting $j$ modes can be calculated from
+ * \f[
+ * realT c = zernikeModeDOCKolmogorov( j );
+ * var_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)
+ * \f]
+ * \returns 0 if noll_j is 0, indicating an error
+ * \returns the coefficient
+ */
+template <typename realT>
+realT zernikeModeDOCKolmogorov( unsigned noll_j /**< [in] the mode index, must be greater than 0 */ )
+{
+    realT c;
+
+    switch( noll_j )
+    {
+        case 1:
+            c = 1.0299;
+            break;
+        case 2:
+            c = 0.582;
+            break;
+        case 3:
+            c = 0.134;
+            break;
+        case 4:
+            c = 0.111;
+            break;
+        case 5:
+            c = 0.0880;
+            break;
+        case 6:
+            c = 0.0648;
+            break;
+        case 7:
+            c = 0.0587;
+            break;
+        case 8:
+            c = 0.0525;
+            break;
+        case 9:
+            c = 0.0463;
+            break;
+        case 10:
+            c = 0.0401;
+            break;
+        case 11:
+            c = 0.0377;
+            break;
+        case 12:
+            c = 0.0352;
+            break;
+        case 13:
+            c = 0.0328;
+            break;
+        case 14:
+            c = 0.0304;
+            break;
+        case 15:
+            c = 0.0279;
+            break;
+        case 16:
+            c = 0.0267;
+            break;
+        case 17:
+            c = 0.0255;
+            break;
+        case 18:
+            c = 0.0243;
+            break;
+        case 19:
+            c = 0.0232;
+            break;
+        case 20:
+            c = 0.0220;
+            break;
+        case 21:
+            c = 0.0208;
+            break;
+        default:
+            if( noll_j == 0 )
+            {
+                return 0;
+            }
+
+            c = 0.2944 * pow( static_cast<realT>( noll_j ), -1 * math::half_root_three<realT>() );
+    }
+
+    return c;
+}
+
+/// Get the degrees of correction for Zernike polynomials in Kolmogorov turbulence.
+/** Returns the degree of correction from Table IV of Noll (1976) \cite noll_1976 for the given index.
+ * This is the total variance in radians for Fried parameter $r_0$ for a diameter $D$.
+ * Equivalent to:
+ * \f[
+ * realT c = zernikeModeDOCKolmogorov( j );
+ * var_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)
+ * \f]
+ * \returns 0 if noll_j is 0, indicating an error
+ * \returns the coefficient
+ */
+template <typename realT>
+realT zernikeModeDOCKolmogorov( unsigned noll_j, /**< [in] the mode index, must be greater than 0 */
+                                realT D,         /**< [in] the aperture diameter, in same units as r_0 */
+                                realT r_0        /** <[in] the Fried parameter, in same units as D */
+)
+{
+    if( noll_j == 0 )
+    {
+        return 0;
+    }
+
+    return zernikeModeDOCKolmogorov<realT>( noll_j ) * pow( D / r_0, math::five_thirds<realT>() );
+}
+
+/// Get the difference in degrees of correction coefficient for Zernike polynomials in Kolmogorov turbulence.
+/** Returns the difference in coefficients from Table IV of Noll (1976) \cite noll_1976 for the given index
+ * from the previous mode. Given this, the variance in radians-squared at wavelength $\lambda$ for a
+ * diameter $D$ aperture in the $j$-th mode can be calculated from
+ * \f[
+ * realT c = zernikeModeDOCDiffKolmogorov( j );
+ * var_j_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)
+ * \f]
+ *
+ * \returns 0 if noll_j is 0 or 1, indicating an error
+ * \returns the coefficient difference
+ */
+template <typename realT>
+realT zernikeModeDOCDiffKolmogorov( unsigned noll_j /**< [in] the mode index, must be greater than 1 */ )
+{
+    realT c;
+
+    switch( noll_j )
+    {
+        case 2:
+            c = 1.0299 - 0.582;
+            break;
+        case 3:
+            c = 0.582 - 0.134;
+            break;
+        case 4:
+            c = 0.134 - 0.111;
+            break;
+        case 5:
+            c = 0.111 - 0.0880;
+            break;
+        case 6:
+            c = 0.0880 - 0.0648;
+            break;
+        case 7:
+            c = 0.0648 - 0.0587;
+            break;
+        case 8:
+            c = 0.0587 - 0.0525;
+            break;
+        case 9:
+            c = 0.0525 - 0.0463;
+            break;
+        case 10:
+            c = 0.0463 - 0.0401;
+            break;
+        case 11:
+            c = 0.0401 - 0.0377;
+            break;
+        case 12:
+            c = 0.0377 - 0.0352;
+            break;
+        case 13:
+            c = 0.0352 - 0.0328;
+            break;
+        case 14:
+            c = 0.0328 - 0.0304;
+            break;
+        case 15:
+            c = 0.0304 - 0.0279;
+            break;
+        case 16:
+            c = 0.0279 - 0.0267;
+            break;
+        case 17:
+            c = 0.0267 - 0.0255;
+            break;
+        case 18:
+            c = 0.0255 - 0.0243;
+            break;
+        case 19:
+            c = 0.0243 - 0.0232;
+            break;
+        case 20:
+            c = 0.0232 - 0.0220;
+            break;
+        case 21:
+            c = 0.0220 - 0.0208;
+            break;
+        case 22:
+            c = 0.0208 - 0.2944 * pow( static_cast<realT>( 22 ), -1 * math::half_root_three<realT>() );
+            break;
+        default:
+            if( noll_j < 2 )
+            {
+                return 0;
+            }
+
+            c = 0.2944 * ( pow( static_cast<realT>( noll_j - 1 ), -1 * math::half_root_three<realT>() ) -
+                           pow( static_cast<realT>( noll_j ), -1 * math::half_root_three<realT>() ) );
+    }
+
+    return c;
+}
+
+/// Get the variance for a single Zernike polynomial in Kolmogorov turbulence.
+/** Returns the variance from Table IV of Noll (1976) \cite noll_1976 for the given mode index.
+ * For the $j$-th mode on a diameter $D$ aperture and Fried parameter $r_0$ this is equivalent to calculating
+ * \f[
+ * realT c = zernikeModeDOCDiffKolmogorov( j );
+ * var_j_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)
+ * \f]
+ *
+ * \returns 0 if noll_j is 0 or 1, indicating an error
+ * \returns the variance for the \param noll_j mode in radians squared.
+ */
+template <typename realT>
+realT zernikeModeDOCDiffKolmogorov( unsigned noll_j, /**< [in] the mode index, must be greater than 0 */
+                                    realT D,         /**< [in] the aperture diameter, in same units as r_0 */
+                                    realT r_0 /** <[in] the Fried parameter, in same units as D */ )
+{
+    if( noll_j < 2 )
+    {
+        return 0;
+    }
+
+    return zernikeModeDOCDiffKolmogorov<realT>( noll_j ) * pow( D / r_0, math::five_thirds<realT>() );
+}
+
 ///@} signal_processing
 
 } // namespace sigproc

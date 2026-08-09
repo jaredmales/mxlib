@@ -22,6 +22,7 @@ int main()
     floatT twosqrt2log2 =
         static_cast<floatT>( 2.0 ) * sqrt( static_cast<floatT>( 2.0 ) * log( static_cast<floatT>( 2.0 ) ) );
 
+
     std::cout << "              "; // label buffer
     for( int i = 0; i < 10; ++i )  // print digit scale
     {
@@ -31,7 +32,9 @@ int main()
     }
     std::cout << "1\n";
 
-    std::cout << "tan_arcsec:   " << tan_arcsec << "\n";
-    std::cout << "twosqrt2log2: " << twosqrt2log2 << "\n";
-    std::cout << "ln_two:       " << ln_two<floatT>() << "\n";
+    std::cout << "tan_arcsec:      " << tan_arcsec << "\n";
+    std::cout << "twosqrt2log2:    " << twosqrt2log2 << "\n";
+    std::cout << "ln_two:          " << ln_two<floatT>() << "\n";
+    std::cout << "root_three:      " << sqrt(static_cast<floatT>(3)) << '\n';
+    std::cout << "half_root_three: " << sqrt(static_cast<floatT>(3))/static_cast<floatT>(2) << '\n';
 }
