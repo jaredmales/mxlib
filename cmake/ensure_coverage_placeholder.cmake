@@ -25,15 +25,15 @@ file(WRITE "${_coverage_index}" "<!doctype html>
   <style>
     body {
       font-family: var(--font-family, sans-serif);
-      color: var(--primary-foreground-color, #d0d7de);
-      background: var(--page-background-color, #1f2428);
+      color: var(--page-foreground-color, #2f4153);
+      background: var(--page-background-color, #ffffff);
       margin: 2rem;
     }
     h1 { margin: 0 0 0.75rem 0; }
     p { margin: 0.5rem 0; }
     code {
       font-family: var(--font-family-monospace, monospace);
-      color: var(--primary-foreground-color, #d0d7de);
+      color: var(--page-foreground-color, #2f4153);
     }
   </style>
 </head>

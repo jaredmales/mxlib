@@ -75,7 +75,8 @@
 #define AULT 499.004782
 
 /// Speed of light (AU per day) SEE BELOW
-/** Though defined in the \ref astro_sofa "SOFA" library sofam.h, this is undefined by \ref sofa.hpp to avoid a collision with Eigen.  You can use \ref mx::astro::c() instead.
+/** Though defined in the \ref astro_sofa "SOFA" library sofam.h, this is undefined by \ref sofa.hpp to avoid a
+ * collision with Eigen. You can use \ref mx::astro::constants::c instead.
  */
 #define DC (DAYSEC / AULT)
 

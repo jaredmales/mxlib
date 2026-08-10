@@ -207,9 +207,9 @@ class aoAtmosphere
     /** Satifies the requirements of psdParamsT.
       *
       * If m_nonKolmogorov is false, this returns
-      * \[
+      * \f[
         \alpha = \frac{11}{3}
-        \]
+        \f]
       * Otherwise it returns the current value of m_alpha[n].
       *
       * \returns the PSD index.
@@ -231,9 +231,9 @@ class aoAtmosphere
     /** Satifies the requirements of psdParamsT.
       *
       * If m_nonKolmogorov is false, this returns
-      * \[
+      * \f[
         \beta = \frac{0.0218}{r_0^{5/3}}
-        \]
+        \f]
       * Otherwise it returns the current value of m_beta[n].
       *
       * \returns the PSD normalization.
@@ -255,9 +255,9 @@ class aoAtmosphere
     /** Satifies the requirements of psdParamsT.
       *
       * If m_nonKolmogorov is false, this returns
-      * \[
+      * \f[
         \beta_0 = 0
-        \]
+        \f]
       * Otherwise it returns the current value of m_beta_0[n].
       *
       * \returns the PSD constant.
@@ -340,9 +340,6 @@ class aoAtmosphere
     std::vector<realT> layer_v_wind();
 
     /// Set the vector of layer windspeeds.
-    /**
-     * \param
-     */
     void layer_v_wind( const std::vector<realT> &spd /**< [in] the new vector, which is copied to m_layer_v_wind. */ );
 
     /// Get the wind direction of a single layer.
@@ -358,9 +355,6 @@ class aoAtmosphere
     std::vector<realT> layer_dir();
 
     /// Set the vector of layer wind directions.
-    /**
-     * \param
-     */
     void layer_dir( const std::vector<realT>
                         &d /**< [in] the new vector of wind directions in radians, which is copied to m_layer_dir. */ );
 
@@ -513,8 +507,8 @@ class aoAtmosphere
 
     /// Calculate the full-width at half-maximum of a seeing limited image for this atmosphere for a small telescope
     /// (ignoring L_0)
-    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite
-      floyd_2010 \f[ \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}. \f]
+    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010)
+      \cite floyd_2010 \f[ \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}. \f]
       *
       * \returns the value of the FWHM for the current atmosphere parameters.
       */
@@ -522,10 +516,10 @@ class aoAtmosphere
 
     /// Calculate the full-width at half-maximum of a seeing limited image for this atmosphere for a large telescope
     /// (including L_0)
-    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010) \cite
-      floyd_2010 \f[ \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}. \f]
-      * If there is an outer scale (_L_0 > 0), then a correction is applied according to Tokovinin (2002) \cite
-      tokovinin_2002 \f[ \left( \frac{\epsilon_{vK}}{\epsilon_0}\right)^2 = 1 - 2.183\left(
+    /** Calculate the FWHM of a seeing limited image with the current parameters according to Floyd et al. (2010)
+      \cite floyd_2010 \f[ \epsilon_0 = 0.98\frac{\lambda_{sci}}{r_0(\lambda_sci)}. \f]
+      * If there is an outer scale (_L_0 > 0), then a correction is applied according to Tokovinin (2002)
+      \cite tokovinin_2002 \f[ \left( \frac{\epsilon_{vK}}{\epsilon_0}\right)^2 = 1 - 2.183\left(
       \frac{r_0(\lambda_{sci}}{L_0}\right)^{0.356} \f]
       *
       *

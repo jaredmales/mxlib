@@ -1,4 +1,7 @@
-
+/** \file generate_fits_status_info.cpp
+ * \brief Generates fits_status_info.hpp from the configured CFITSIO status list.
+ * \author Jared Males
+ */
 
 #include <cerrno>
 #include <cstring>

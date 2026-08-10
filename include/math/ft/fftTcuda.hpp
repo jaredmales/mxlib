@@ -40,7 +40,7 @@ namespace ft
 {
 
 /// Fast Fourier Transforms using the \ref cuda "CUDA library"
-/** The \ref cufft_templates "CUFFT Templates" type resolution system is used to allow the compiler
+/** The \ref cufft_templates "CUFFT Templates" type-resolution system is used to allow the compiler
  * to access the right plan and types for the transforms based on inputT and outputT.
  *
  *

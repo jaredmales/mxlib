@@ -151,7 +151,7 @@ class fitGammaDistribution : public levmarInterface<fitterT>
 
     void theta( realT na )
     {
-        arr.lambda = na;
+        arr.theta = na;
         this->p[1] = na;
     }
 

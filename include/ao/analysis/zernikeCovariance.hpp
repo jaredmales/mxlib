@@ -18,6 +18,7 @@
 #include "../../improc/eigenImage.hpp"
 #include "../../improc/eigenCube.hpp"
 #include "../../mxlib.hpp"
+#include "../../error/mxExceptionOld.hpp"
 #include "../../ipc/ompLoopWatcher.hpp"
 #include "../../sys/timeUtils.hpp"
 #include "../../math/eigenLapack.hpp"

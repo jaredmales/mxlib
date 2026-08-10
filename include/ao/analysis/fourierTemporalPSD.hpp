@@ -1,7 +1,7 @@
 /** \file fourierTemporalPSD.hpp
  * \author Jared R. Males (jaredmales@gmail.com)
  * \brief Calculation of the temporal PSD of Fourier modes.
- * \ingroup mxAOm_files
+ * \ingroup mxAO_analysis_files
  *
  */
 
@@ -79,7 +79,7 @@ namespace analysis
 
 #ifndef WSZ
 
-/** \def WFZ
+/** \def WSZ
  * \brief Size of the GSL integration workspace
  */
 #define WSZ 100000
@@ -89,7 +89,7 @@ namespace analysis
 enum basis : unsigned int
 {
     basic,   ///< The basic sine and cosine Fourier modes
-    modified ///< The modified Fourier basis from \cite males_guyon_2017
+    modified ///< The modified Fourier basis from \cite males_guyon_2018
 };
 
 /// Policy for handling GSL quadrature non-convergence statuses.

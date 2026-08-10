@@ -36,6 +36,7 @@
 
 #include "../ioutils/fits/fitsFile.hpp"
 #include "../ioutils/fits/fitsUtils.hpp"
+#include "../error/mxErrorOld.hpp"
 #include "../improc/imagePads.hpp"
 
 namespace mx
@@ -45,8 +46,9 @@ namespace wfp
 {
 
 /// The Ideal Coronagraph
-/** A simple toy coronagraph which operates only the pupil plane, subtracting the energy-minimizing wavefront \cite
- * cavarroc_2006.  For an on-axis source with a perfectly flat wavefront this results in perfect extinction.  This
+/** A simple toy coronagraph which operates only the pupil plane, subtracting the energy-minimizing wavefront described
+ * by Cavarroc et al. \cite cavarroc_2006
+ * For an on-axis source with a perfectly flat wavefront this results in perfect extinction.  This
  * coronagraph is not physically realizable, but it is often useful for modeling and analysis, and it has been shown
  * that real-world optimized coronagraphs often approach ideal performance \cite sauvage_2010 [and Males in prep].
  *

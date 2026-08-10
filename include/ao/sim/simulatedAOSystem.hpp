@@ -376,8 +376,8 @@ int simulatedAOSystem<realT, wfsT, reconT, filterT, dmT, turbSeqT, coronT>::init
 
     ff.read( _pupil, head, pupilFile );
 
-    m_D = head["PUPILD"].Value<realT>(); // pupilD;
-    m_wfPS = head["SCALE"].Value<realT>();
+    m_D = head["PUPILD"].value<realT>(); // pupilD;
+    m_wfPS = head["SCALE"].value<realT>();
 
     // Set the wavefront size.
     m_wfSz = wfSz;

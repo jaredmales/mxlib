@@ -1,6 +1,10 @@
 /** \file fraunhoferPropagator_test.cpp
+ * \brief Tests CPU and CUDA Fraunhofer propagation.
  */
 #include "../../catch2/catch.hpp"
+#ifdef MXLIB_CUDA
+#include "../../cudaTestUtils.hpp"
+#endif
 
 #define MX_NO_ERROR_REPORTS
 
@@ -15,7 +19,7 @@
 
 /// Make an Airy pattern and go back to pupil on CPU
 /**
- * \ingroup math_wfp_fraunhoferPropagator_test
+ * \ingroup fraunhoferPropagator_unit_tests
  */
 TEST_CASE( "Make an Airy pattern and go back to pupil on CPU", "[wfp]" )
 {
@@ -58,12 +62,19 @@ TEST_CASE( "Make an Airy pattern and go back to pupil on CPU", "[wfp]" )
     REQUIRE_THAT( realPupil.sum(), Catch::Matchers::WithinAbs( pupil.sum(), pupil.sum() * 1e-4 ) );
 }
 
+#if defined( MXLIB_CUDA ) || defined( __DOXY_ONLY__ )
 /// Make an Airy pattern and go back to pupil on GPU
 /**
- * \ingroup math_wfp_fraunhoferPropagator_test
+ * \ingroup fraunhoferPropagator_unit_tests
  */
 TEST_CASE( "Make an Airy pattern and go back to pupil on GPU", "[wfp]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     typedef float realT;
     typedef std::complex<realT> complexT;
     typedef mx::improc::eigenImage<std::complex<realT>> complexFieldT;
@@ -123,3 +134,4 @@ TEST_CASE( "Make an Airy pattern and go back to pupil on GPU", "[wfp]" )
 
     REQUIRE_THAT( realPupil.sum(), Catch::Matchers::WithinAbs( pupil.sum(), pupil.sum() * 1e-4 ) );
 }
+#endif // MXLIB_CUDA

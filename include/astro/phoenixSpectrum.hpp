@@ -1,4 +1,4 @@
-/** \file phoenixSpectra.hpp
+/** \file phoenixSpectrum.hpp
  * \author Jared R. Males
  * \brief Utilities for working with spectra from phoenix code.
  * \ingroup astrophot
@@ -8,8 +8,14 @@
 #ifndef phoenixSpectrum_hpp
 #define phoenixSpectrum_hpp
 
+#include <fstream>
+#include <iostream>
+
+#include "constants.hpp"
 #include "../math/vectorUtils.hpp"
 #include "../ioutils/fileUtils.hpp"
+#include "../ioutils/readColumns.hpp"
+#include "../ioutils/stringUtils.hpp"
 
 namespace mx
 {
@@ -43,20 +49,22 @@ struct phoenixSpectrum
         return name;
     }
 
-    static int
+    static error_t
     readSpectrum( std::vector<realT> &rawLambda,
                   std::vector<realT> &rawSpectrum,
                   const std::string &path,
                   const paramsT &params ///< [in] the parameters are passed in case needed to construct the spectrum
     )
     {
-        if( ioutils::readColumns( path, rawSpectrum ) < 0 )
-            return -1;
+        error_t errc = ioutils::readColumns( path, rawSpectrum );
+        if( errc != error_t::noerror )
+            return errc;
 
-        if( ioutils::readColumns( ioutils::parentPath( path ) + "/wavelength.dat", rawLambda ) < 0 )
-            return -1;
+        errc = ioutils::readColumns( ioutils::parentPath( path ) + "/wavelength.dat", rawLambda );
+        if( errc != error_t::noerror )
+            return errc;
 
-        return 0;
+        return error_t::noerror;
     }
 
     static void scaleSpectrum( std::vector<realT> &spectrum, realT radius, realT distance )
@@ -211,12 +219,13 @@ void rewritePhoenixSpectrum(
 } // rewritePhoenixSpectrum
 
 /// Call rewritePhoenixSpectrum for all files in a directory.
-/** \ingroup astropho_spectra
+/** \ingroup astrophot_spectra
  */
 template <typename floatT>
 void rewritePhoenixSpectrumBatch( const std::string &dir, floatT lmin, floatT lmax, floatT DF = -8.0 )
 {
-    std::vector<std::string> flist = ioutils::getFileNames( dir, "lte", "", ".7" );
+    std::vector<std::string> flist;
+    ioutils::getFileNames( flist, dir, "lte", "", ".7" );
 
     int sepWavelength = 1;
     for( int i = 0; i < flist.size(); ++i )

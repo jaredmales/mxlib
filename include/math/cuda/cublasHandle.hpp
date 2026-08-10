@@ -29,8 +29,14 @@
 
 #ifdef MXLIB_CUDA
 
+#include <format>
+#include <iostream>
+#include <string>
+
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+
+#include "../../error/exception.hpp"
 
 namespace mx
 {
@@ -71,10 +77,10 @@ struct cublasHandle
             if( cbec != CUBLAS_STATUS_SUCCESS )
             {
                 std::string msg = std::format( "cublasHandle::cublasHandle error from create: [{}] {}\n",
-                                          cublasGetStatusName( cbec ),
-                                          cublasGetStatusString( cbec ) );
+                                               cublasGetStatusName( cbec ),
+                                               cublasGetStatusString( cbec ) );
 
-                throw mx::exception<verbose::d>( mx::error_t::liberr, msg);
+                throw mx::exception<verbose::d>( mx::error_t::liberr, msg );
             }
         }
     }

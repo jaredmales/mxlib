@@ -27,6 +27,8 @@
 #ifndef math_histogramUniform_hpp
 #define math_histogramUniform_hpp
 
+#include <vector>
+
 namespace mx
 {
 namespace math

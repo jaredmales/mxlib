@@ -8,8 +8,11 @@
 #ifndef mx_astro_cahoyAlbedos_hpp
 #define mx_astro_cahoyAlbedos_hpp
 
+#include "astroSpectrum.hpp"
 #include "units.hpp"
+#include "../error/mxErrorOld.hpp"
 #include "../ioutils/readColumns.hpp"
+#include "../math/constants.hpp"
 
 namespace mx
 {
@@ -88,9 +91,9 @@ struct cahoySpectrumRaw
 
     /// Read the spectrum from the file specified by path.  Extra columns are discarded.
     static error_t readSpectrum( std::vector<realT> &rawLambda,
-                             std::vector<realT> &rawSpectrum,
-                             const std::string &path,
-                             const paramsT &params )
+                                 std::vector<realT> &rawSpectrum,
+                                 const std::string &path,
+                                 const paramsT &params )
     {
         ioutils::skipCol sk;
 
@@ -98,8 +101,8 @@ struct cahoySpectrumRaw
     }
 };
 
-/// A class to manage interpolation in separation and phase on the albedo spectrum grid from Cahoy et al (2010) \cite
-/// cahoy_2010.
+/// A class to manage interpolation in separation and phase on the albedo spectrum grid from Cahoy et al. (2010)
+/// \cite cahoy_2010
 /** Usage:
   \code
   std::vector<double> lambda;
@@ -173,7 +176,7 @@ struct cahoyGrid : public baseSpectrum<typename _units::realT>
             for( int j = 0; j < _phase.size(); ++j )
             {
                 rawSpect.setParameters( { _sep[i], metal, _phase[j] } );
-                if( rawSpect.setSpectrum( lambda ) < 0 )
+                if( rawSpect.setSpectrum( lambda ) != error_t::noerror )
                 {
                     mxError( "cahoGrid::loadGrid", MXE_FILERERR, "Error reading albedo spectrum." );
                     return -1;

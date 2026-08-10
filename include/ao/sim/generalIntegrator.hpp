@@ -8,6 +8,26 @@
 #ifndef __generalIntegrator_hpp__
 #define __generalIntegrator_hpp__
 
+#include <complex>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include <Eigen/Dense>
+
+#include "../../error/mxErrorOld.hpp"
+#include "../../ioutils/stringUtils.hpp"
+
+#ifndef BREAD_CRUMB
+#define MXLIB_GENERAL_INTEGRATOR_LOCAL_BREAD_CRUMB
+#ifdef DEBUG
+#define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
+#else
+#define BREAD_CRUMB
+#endif
+#endif
+
 namespace mx
 {
 namespace AO
@@ -688,5 +708,10 @@ int generalIntegrator<realT>::filterCommands( commandT &filtAmps, commandT &rawA
 } // namespace sim
 } // namespace AO
 } // namespace mx
+
+#ifdef MXLIB_GENERAL_INTEGRATOR_LOCAL_BREAD_CRUMB
+#undef BREAD_CRUMB
+#undef MXLIB_GENERAL_INTEGRATOR_LOCAL_BREAD_CRUMB
+#endif
 
 #endif //__generalIntegrator_hpp__

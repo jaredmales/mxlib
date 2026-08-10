@@ -32,7 +32,7 @@
 #include <vector>
 #include <complex>
 
-#include <mx/math/constants.hpp>
+#include "../math/constants.hpp"
 
 namespace mx
 {

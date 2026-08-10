@@ -1224,7 +1224,7 @@ appConfigurator::configUnused<std::string>( std::string &v, const std::string &s
                                       {"val0", "val1", "val2",  "val3",  "val4",  "val5"} );
 
   *\endcode
-  *results in the file `/tmp/test.conf' containing
+  * results in the file `/tmp/test.conf` containing
   * \verbatim
   key0=val0
   key1=val1

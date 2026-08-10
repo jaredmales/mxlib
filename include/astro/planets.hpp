@@ -36,7 +36,7 @@ namespace astro
   * Fortney et al. (2007) \cite fortney_2007.  Above 3591.1 \f$ M_\oplus \f$ (\f$\sim 11 M_{jup}\f$) we scale as \f$
   M^{-1/8} \f$ based on the curve shown in Fortney et al. (2011) \cite fortney_2010.
   *
-  * \f$
+  * \f[
     \frac{R}{R_\oplus} =
     \begin{cases}
       \left(\frac{M}{M_\oplus}\right)^{1/3}, & M < 4.1 M_\oplus \\
@@ -44,7 +44,7 @@ namespace astro
       14.0211 - 44.8414 \log_{10}\left(\frac{M}{M_\oplus}\right) + 53.6554 \log_{10}^2\left(\frac{M}{M_\oplus}\right)
         -25.3289\log_{10}^3\left(\frac{M}{M_\oplus}\right) + 5.4920\log_{10}^4\left(\frac{M}{M_\oplus}\right) - 0.4586
   \log_{10}^5\left(\frac{M}{M_\oplus}\right), & 15.84 \le M < 3591.1 M_\oplus \\ 32.03
-  \left(\frac{M}{M_\oplus}\right)^{-1/8}, & 3591.1 M_\oplus \le M \end{cases} \f$
+  \left(\frac{M}{M_\oplus}\right)^{-1/8}, & 3591.1 M_\oplus \le M \end{cases} \f]
   *
   * \image html planet_mrdiag_2020.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
   circles are the Solar system.  Black circles indicate expoplanets with Teq below that of a blackbody at Mercury's
@@ -96,16 +96,16 @@ typename units::realT planetMass2Radius( typename units::realT mass /**< The mas
  * \cite rogers_2015 (see also Marcy et al. (2014) \cite marcy_2014).  Below this radius we assume Earth composition and
  * so \f$ R \propto M^{1/3}\f$.
  *
- * Above \f$ 15 M_\oplus\f$ we use the empirical relationship of Thorngren et al (2019) \cite{Thorngren_2019}.
+ * Above \f$ 15 M_\oplus\f$ we use the empirical relationship of Thorngren et al (2019) \cite Thorngren_2019.
  *
  * Between these two cases we scale with a power law matched to the endpoints.
  *
- * Above  \f$ 12 M_{Jup} we scale as \f$ M^{-1/8} \f$ based on the curve shown in Fortney et al. (2011) \cite
- * fortney_2010.
+ * Above \f$ 12 M_{Jup} \f$ we scale as \f$ M^{-1/8} \f$ based on the curve shown in Fortney et al. (2011)
+ * \cite fortney_2010
  *
  * \image html planet_mrdiag_2020.png "The ad-hoc mass-to-radius relationship compared to known planets.  Blue
  * circles are the Solar system.  Points with error bars are from the NASA exoplanet catalog, selected for \f$T_{eq} <
- * 1000\f$ K
+ * 1000\f$ K."
  *
  * This function makes use of the units type system (\ref astrounits) so it can be used with Earth masses, Jupiter
  * masses, kg (SI units), etc.
@@ -165,16 +165,16 @@ typename units::realT planetMass2RadiusThorngren( typename units::realT mass /**
 }
 
 /// The planetary mass-to-radius of Fabrycky et al. (2014)..
-/** A broken power law for low mass planets from Fabrycky et al. (2014)\cite fabrycky_2014 (see also \cite
-  lissauer_2011}.
+/** A broken power law for low mass planets from Fabrycky et al. (2014) \cite fabrycky_2014 (see also
+  * \cite lissauer_2011).
   *
-  * \f$
+  * \f[
     \frac{R}{R_e} =
     \begin{cases}
       \left(\frac{M}{M_e}\right)^{1/3}, & M < 1 M_e \\
       \left(\frac{M}{M_e}\right)^{1/2.06}, & 1 M_e \le M
       \end{cases}
-     \f$
+     \f]
   *
   * This makes use of the units type system (\ref astrounits) so it can be used with Earth masses, Jupiter masses, kg
   (SI units), etc.

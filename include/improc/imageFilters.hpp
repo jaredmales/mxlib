@@ -9,9 +9,12 @@
 #define __imageFilters_hpp__
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <format>
+#include <limits>
 
+#include "../math/floatUtils.hpp"
 #include "../math/gslInterpolator.hpp"
 #include "../math/vectorUtils.hpp"
 #include "../math/geo.hpp"
@@ -23,7 +26,8 @@ namespace mx
 namespace improc
 {
 
-/** \addtogroup image_filters_kernels *
+/** \addtogroup image_filters_kernels
+ * @{
  * The filter function use a kernel that specifies how to filter the image.  Filter kernels, usually
  * denoted as type kernelT below, must have the following interface:
  * \code
@@ -59,7 +63,7 @@ namespace improc
  * \endcode
  * Additionally `kernelT` must be copyable.
  *
- * /
+ */
 /// Symetric Gaussian smoothing kernel
 /** \ingroup image_filters_kernels
  *
@@ -137,17 +141,17 @@ struct azBoxKernel
     typedef _arrayT arrayT;
     typedef typename _arrayT::Scalar arithT;
 
-    static const int kernW = _kernW;
+    inline static constexpr int kernW = static_cast<int>( _kernW ); ///< kernel sampling factor.
 
     typedef _verboseT verboseT;
 
     arithT m_radWidth{ 0 }; ///< the half-width of the averaging box, in the radial direction, in pixels.
     arithT m_azWidth{ 0 };  ///< the half-width of the averaging box, in the azimuthal direction, in pixels.
-    arithT m_maxAz{ 0 }; ///< the maximum half-width of the averging box in the azimuthal direction, in degrees. \>= 0.
-                         ///< If 0 or \>= 180, then no maximum is enforced.
+    arithT m_maxAz{ 0 };    ///< maximum azimuthal half-width in radians; 0 means no angular limit.
 
-    int m_maxWidth;
+    int m_maxWidth{ 0 };    ///< maximum kernel half-width needed to keep every generated kernel in bounds.
 
+    /// Construct a kernel without an angular-position limit.
     azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
                  arithT azWidth   ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
                  )
@@ -156,6 +160,7 @@ struct azBoxKernel
         setMaxWidth();
     }
 
+    /// Construct a kernel with an optional angular-position limit.
     azBoxKernel( arithT radWidth, ///< [in] the half-width of the averaging box, in the radial direction, in pixels.
                  arithT azWidth,  ///< [in] the half-width of the averaging box, in the azimuthal direction, in pixels.
                  arithT maxAz     ///< [in] the maximum half-width of the averaging box in the azimuthal direction, in
@@ -164,6 +169,12 @@ struct azBoxKernel
         : m_radWidth( fabs( radWidth ) ), m_azWidth( fabs( azWidth ) )
     {
         setMaxWidth();
+
+        if( !math::isFinite( maxAz ) )
+        {
+            m_maxAz = maxAz;
+            return;
+        }
 
         maxAz = fabs( maxAz );
         if( maxAz >= 180 )
@@ -175,46 +186,94 @@ struct azBoxKernel
     /// Sets the max width based on the configured az and rad widths.
     void setMaxWidth()
     {
-        // atan is where derivative of width/height is 0.
+        m_maxWidth = 0;
 
-        arithT qmax = atan( m_azWidth / m_radWidth );
-        arithT mx1 = kernW * ( (int)( fabs( m_azWidth * sin( qmax ) ) + fabs( m_radWidth * cos( qmax ) ) ) + 1 );
+        if( kernW <= 0 || !math::isFinite( m_radWidth ) || !math::isFinite( m_azWidth ) ||
+            ( m_radWidth == 0 && m_azWidth == 0 ) )
+        {
+            return;
+        }
 
-        qmax = atan( m_radWidth / m_azWidth );
-        arithT mx2 = kernW * ( (int)( fabs( m_azWidth * cos( qmax ) ) + fabs( m_radWidth * sin( qmax ) ) ) + 1 );
+        const arithT maximumDimension =
+            kernW * ( std::floor( std::hypot( m_radWidth, m_azWidth ) ) + static_cast<arithT>( 1 ) );
 
-        m_maxWidth = 0.5 * std::max( mx1, mx2 );
+        if( !math::isFinite( maximumDimension ) || maximumDimension > std::numeric_limits<int>::max() )
+        {
+            return;
+        }
+
+        m_maxWidth = static_cast<int>( maximumDimension / static_cast<arithT>( 2 ) );
     }
 
+    /// Get the maximum kernel half-width in either image dimension.
     int maxWidth() const
     {
         return m_maxWidth;
     }
 
+    /// Generate a normalized kernel at the requested image-relative coordinate.
     error_t setKernel( arithT x,      /**< [in] x-coordinate relative to image center */
                        arithT y,      /**< [in] x-coordinate relative to image center */
                        arrayT &kernel /**< [in] the array to populate with the kernel, resized */
     ) const
     {
-        arithT rad0 = sqrt( (arithT)( x * x + y * y ) );
+        kernel.resize( 0, 0 );
 
-        arithT sinq = y / rad0;
-        arithT cosq = x / rad0;
+        if( kernW <= 0 || !math::isFinite( m_radWidth ) || !math::isFinite( m_azWidth ) || !math::isFinite( m_maxAz ) ||
+            m_maxWidth < 0 )
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidconfig,
+                                                           "kernel widths and maxAz must be finite" );
+        }
+
+        if( !math::isFinite( x ) || !math::isFinite( y ) )
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "kernel coordinates must be finite" );
+        }
+
+        if( m_radWidth == 0 && m_azWidth == 0 )
+        {
+            kernel.resize( 1, 1 );
+            kernel( 0, 0 ) = 1;
+            return error_t::noerror;
+        }
+
+        const arithT rad0 = std::hypot( x, y );
+
+        arithT sinq = 0;
+        arithT cosq = 1;
+        if( rad0 > 0 )
+        {
+            sinq = y / rad0;
+            cosq = x / rad0;
+        }
 
         // Only calc q if we're going to use it.
         arithT q = 0;
-        if( m_maxAz > 0 )
+        if( m_maxAz > 0 && rad0 > 0 )
         {
-            q = atan2( sinq, cosq );
+            q = std::atan2( y, x );
         }
 
-        int w = kernW * ( (int)( fabs( m_azWidth * sinq ) + fabs( m_radWidth * cosq ) ) + 1 );
-        int h = kernW * ( (int)( fabs( m_azWidth * cosq ) + fabs( m_radWidth * sinq ) ) + 1 );
+        const arithT width =
+            kernW * ( std::floor( std::fabs( m_azWidth * sinq ) + std::fabs( m_radWidth * cosq ) ) + 1 );
+        const arithT height =
+            kernW * ( std::floor( std::fabs( m_azWidth * cosq ) + std::fabs( m_radWidth * sinq ) ) + 1 );
 
-        if( w > m_maxWidth * 2 )
+        if( !math::isFinite( width ) || !math::isFinite( height ) || width > std::numeric_limits<int>::max() ||
+            height > std::numeric_limits<int>::max() )
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidconfig,
+                                                           "kernel dimensions exceed the supported size" );
+        }
+
+        const int w = static_cast<int>( width );
+        const int h = static_cast<int>( height );
+
+        if( w / 2 > m_maxWidth )
         {
             return internal::mxlib_error_report<verboseT>( error_t::sizeerr,
-                                                           std::format( "Width bigger than 2*maxWidth. "
+                                                           std::format( "Width half-width bigger than maxWidth. "
                                                                         "This is a bug. Details: "
                                                                         "|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|",
                                                                         kernW,
@@ -230,10 +289,10 @@ struct azBoxKernel
                                                                         h ) );
         }
 
-        if( h > m_maxWidth * 2 )
+        if( h / 2 > m_maxWidth )
         {
             return internal::mxlib_error_report<verboseT>( error_t::sizeerr,
-                                                           std::format( "Height bigger than 2*maxWidth. "
+                                                           std::format( "Height half-width bigger than maxWidth. "
                                                                         "This is a bug. Details: "
                                                                         "|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|",
                                                                         kernW,
@@ -251,38 +310,38 @@ struct azBoxKernel
 
         kernel.resize( w, h );
 
-        arithT xcen = 0.5 * ( w - 1.0 );
-        arithT ycen = 0.5 * ( h - 1.0 );
+        const arithT xcen = 0.5 * ( w - 1.0 );
+        const arithT ycen = 0.5 * ( h - 1.0 );
 
-        arithT xP, yP;
-        arithT rad, radP;
-        arithT sinq2, cosq2, sindq, q2, dq;
         for( int j = 0; j < h; ++j )
         {
-            yP = j;
             for( int i = 0; i < w; ++i )
             {
-                xP = i;
-                rad = sqrt( pow( xP - xcen, 2 ) + pow( yP - ycen, 2 ) );
-                radP = sqrt( pow( x + xP - xcen, 2 ) + pow( y + yP - ycen, 2 ) );
+                const arithT dx = i - xcen;
+                const arithT dy = j - ycen;
+                const arithT sampleX = x + dx;
+                const arithT sampleY = y + dy;
+                const arithT radP = std::hypot( sampleX, sampleY );
 
-                if( fabs( radP - rad0 ) > m_radWidth )
+                if( std::fabs( radP - rad0 ) > m_radWidth )
                 {
                     kernel( i, j ) = 0;
                     continue;
                 }
 
-                sinq2 = ( yP - ycen ) / rad;
-                cosq2 = ( xP - xcen ) / rad;
-
-                sindq = sinq2 * cosq - cosq2 * sinq;
-                if( fabs( rad * sindq ) <= m_azWidth )
+                const arithT tangentialOffset = dy * cosq - dx * sinq;
+                if( std::fabs( tangentialOffset ) <= m_azWidth )
                 {
                     if( m_maxAz > 0 ) // Only check this if needed.
                     {
-                        q2 = atan2( y + yP - ycen, x + xP - xcen );
-                        dq = math::angleDiff<math::radiansT<arithT>>( q, q2 );
-                        if( fabs( dq ) > m_maxAz )
+                        arithT q2 = 0;
+                        if( radP > 0 )
+                        {
+                            q2 = std::atan2( sampleY, sampleX );
+                        }
+
+                        const arithT dq = math::angleDiff<math::radiansT<arithT>>( q, q2 );
+                        if( std::fabs( dq ) > m_maxAz )
                         {
                             kernel( i, j ) = 0;
                             continue;
@@ -295,9 +354,10 @@ struct azBoxKernel
             }
         }
 
-        arithT ksum = kernel.sum();
-        if( ksum == 0 )
+        const arithT ksum = kernel.sum();
+        if( !math::isFinite( ksum ) || ksum <= 0 )
         {
+            kernel.resize( 0, 0 );
             return internal::mxlib_error_report<verboseT>( error_t::invalidconfig,
                                                            std::format( "kernel sum 0 at {},{}", x, y ) );
         }
@@ -319,19 +379,22 @@ struct precalcKernel
     typedef kernelT::arrayT::Scalar arithT;
     typedef kernelT::verboseT verboseT;
 
-    kernelT m_kernel;
+    kernelT m_kernel;              ///< copied production kernel used to populate the cache.
 
-    uint32_t m_rows;
-    uint32_t m_cols;
-    arithT m_xcen;
-    arithT m_ycen;
+    uint32_t m_rows;               ///< number of image rows represented by the cache.
+    uint32_t m_cols;               ///< number of image columns represented by the cache.
+    arithT m_xcen;                 ///< pixel x-coordinate of the image center.
+    arithT m_ycen;                 ///< pixel y-coordinate of the image center.
 
-    int m_maxWidth;
+    int m_maxWidth;                ///< maximum half-width reported by the copied production kernel.
 
-    std::vector<arrayT> m_kernels;
+    std::vector<arrayT> m_kernels; ///< generated kernels in column-major image-coordinate order.
 
+    /// Disallow construction without a production kernel and image geometry.
     precalcKernel() = delete;
 
+    /// Pre-calculate a production kernel for every coordinate in an image.
+    /** \throws mx::exception when the production kernel cannot generate any cache entry. */
     precalcKernel( const kernelT &kernel, /**< [in] A fully initialized kernel.  Is copied.*/
                    uint32_t rows,         /**< [in] The rows in the images to be filtered*/
                    uint32_t cols,         /**< [in] The columns in the images to be filtered*/
@@ -342,40 +405,51 @@ struct precalcKernel
     {
         m_maxWidth = kernel.maxWidth();
 
-        m_kernels.resize( m_rows * m_cols );
+        m_kernels.resize( static_cast<size_t>( m_rows ) * static_cast<size_t>( m_cols ) );
         size_t n = 0;
-        for( int cc = 0; cc < m_cols; ++cc )
+        for( uint32_t cc = 0; cc < m_cols; ++cc )
         {
-            for( int rr = 0; rr < m_rows; ++rr )
+            for( uint32_t rr = 0; rr < m_rows; ++rr )
             {
-                m_kernel.setKernel( rr - xcen, cc - ycen, m_kernels[n] );
+                const error_t result = m_kernel.setKernel( rr - xcen, cc - ycen, m_kernels[n] );
+                if( result != error_t::noerror )
+                {
+                    throw mx::exception<verboseT>(
+                        result,
+                        std::format( "failed to pre-calculate kernel at row {}, column {}", rr, cc ) );
+                }
                 ++n;
             }
         }
     }
 
+    /// Get the maximum half-width reported by the cached production kernel.
     int maxWidth() const
     {
         return m_maxWidth;
     }
 
+    /// Retrieve the cached kernel at an integral image-relative coordinate.
     error_t setKernel( arithT x,      /**< [in] x-coordinate relative to image center */
                        arithT y,      /**< [in] x-coordinate relative to image center */
                        arrayT &kernel /**< [in] the array to populate with the kernel, resized */
     ) const
     {
-        size_t n = ( y + m_ycen ) * m_rows + ( x + m_xcen );
-
         if( m_kernels.size() == 0 )
         {
             return error_t::invalidconfig;
         }
 
-        if( n > m_kernels.size() - 1 )
+        const arithT row = x + m_xcen;
+        const arithT column = y + m_ycen;
+
+        if( !math::isFinite( row ) || !math::isFinite( column ) || row < 0 || column < 0 || row >= m_rows ||
+            column >= m_cols || std::floor( row ) != row || std::floor( column ) != column )
         {
             return error_t::invalidarg;
         }
 
+        const size_t n = static_cast<size_t>( column ) * m_rows + static_cast<size_t>( row );
         kernel = m_kernels[n];
 
         return error_t::noerror;
@@ -669,8 +743,9 @@ void medianFilterImage( imageOutT &fim,        /**< [out] Contains the filtered 
 
 /// Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
 /** Calculates the mean value in a rectangular box of imIn, of size meanFullWidth X meanFullWidth and stores it in the
- * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns on the edge of the input
- * image, and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+ * corresponding center pixel of imOut. For even widths, the window is associated with the higher-index member of the
+ * central pair: it contains meanFullWidth/2 pixels before the output pixel and one fewer after it. Pixels without a
+ * complete window are not changed in imOut (i.e. you should initialize them before the call).
  *
  * imOut is not re-allocated.
  *
@@ -687,38 +762,49 @@ void medianFilterImage( imageOutT &fim,        /**< [out] Contains the filtered 
  */
 template <typename imageTout, typename imageTin>
 int meanSmooth( imageTout &imOut,         /**< [out] the smoothed image. Not re-allocated, and the edge
-                                                     pixels are not modified.*/
-                const imageTin &imIn,     ///< [in] the image to smooth
-                int meanFullWidth,        ///< [in] the full-width of the smoothing box
-                bool rejectMinMax = false ///< [in] whether or not to reject the min and max value.
+                                                     pixels are not modified */
+                const imageTin &imIn,     /**< [in] the image to smooth */
+                int meanFullWidth,        /**< [in] the full width of the smoothing box */
+                bool rejectMinMax = false /**< [in] whether to reject the minimum and maximum values */
 )
 {
     typedef typename imageTout::Scalar scalarT;
 
-    int buff = 0.5 * meanFullWidth;
+    if( meanFullWidth <= 0 || meanFullWidth > imIn.rows() || meanFullWidth > imIn.cols() ||
+        imOut.rows() != imIn.rows() || imOut.cols() != imIn.cols() )
+    {
+        return -1;
+    }
 
+    const int before = meanFullWidth / 2;
+    const int after = meanFullWidth - before - 1;
     int nPix = meanFullWidth * meanFullWidth;
+
+    if( rejectMinMax && nPix <= 2 )
+    {
+        return -1;
+    }
 
     if( rejectMinMax ) // avoid the branch on every pixel
     {
         nPix -= 2;
-        for( int jj = buff; jj < imIn.cols() - buff; ++jj )
+        for( int jj = before; jj < imIn.cols() - after; ++jj )
         {
-            for( int ii = buff; ii < imIn.rows() - buff; ++ii )
+            for( int ii = before; ii < imIn.rows() - after; ++ii )
             {
                 scalarT sum = 0;
-                scalarT max = sum;
-                scalarT min = sum;
-                for( int ll = jj - buff; ll < jj + buff + 1; ++ll )
+                scalarT max = std::numeric_limits<scalarT>::lowest();
+                scalarT min = std::numeric_limits<scalarT>::max();
+                for( int ll = 0; ll < meanFullWidth; ++ll )
                 {
-                    for( int kk = ii - buff; kk < ii + buff + 1; ++kk )
+                    for( int kk = 0; kk < meanFullWidth; ++kk )
                     {
-                        // scalarT val = imIn(kk,ll);
-                        sum += imIn( kk, ll );
-                        if( imIn( kk, ll ) > max )
-                            max = imIn( kk, ll );
-                        if( imIn( kk, ll ) < min )
-                            min = imIn( kk, ll );
+                        const scalarT value = imIn( ii - before + kk, jj - before + ll );
+                        sum += value;
+                        if( value > max )
+                            max = value;
+                        if( value < min )
+                            min = value;
                     }
                 }
                 imOut( ii, jj ) = ( sum - max - min ) / nPix;
@@ -727,16 +813,16 @@ int meanSmooth( imageTout &imOut,         /**< [out] the smoothed image. Not re-
     }
     else
     {
-        for( int jj = buff; jj < imIn.cols() - buff; ++jj )
+        for( int jj = before; jj < imIn.cols() - after; ++jj )
         {
-            for( int ii = buff; ii < imIn.rows() - buff; ++ii )
+            for( int ii = before; ii < imIn.rows() - after; ++ii )
             {
                 scalarT sum = 0;
-                for( int ll = jj - buff; ll < jj + buff + 1; ++ll )
+                for( int ll = 0; ll < meanFullWidth; ++ll )
                 {
-                    for( int kk = ii - buff; kk < ii + buff + 1; ++kk )
+                    for( int kk = 0; kk < meanFullWidth; ++kk )
                     {
-                        sum += imIn( kk, ll );
+                        sum += imIn( ii - before + kk, jj - before + ll );
                     }
                 }
                 imOut( ii, jj ) = sum / nPix;
@@ -750,9 +836,10 @@ int meanSmooth( imageTout &imOut,         /**< [out] the smoothed image. Not re-
 /** \brief Smooth an image using the mean in a rectangular box, optionally rejecting the highest and lowest values.
  * Determines  the location and value of the highest pixel.
  *
- * Calculates the mean value in a rectangular box of imIn, of size meanFullSidth X meanFullWidth and stores it in the
- * corresonding center pixel of imOut. Does not smooth the 0.5*meanFullwidth rows and columns on the edge of the input
- * image, and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+ * Calculates the mean value in a rectangular box of imIn, of size meanFullWidth X meanFullWidth and stores it in the
+ * corresponding center pixel of imOut. For even widths, the window is associated with the higher-index member of the
+ * central pair: it contains meanFullWidth/2 pixels before the output pixel and one fewer after it. Pixels without a
+ * complete window are not changed in imOut (i.e. you should initialize them before the call).
  *
  * imOut is not re-allocated.
  *
@@ -773,43 +860,57 @@ int meanSmooth( imageTout &imOut,         /**< [out] the smoothed image. Not re-
  * \ingroup image_filters_average
  */
 template <typename imageTout, typename imageTin>
-int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
-                int &xMax,        ///< [out] the x-locatioin of the max pixel
-                int &yMax,        ///< [out] the y-locatioin of the max pixel
-                typename imageTout::Scalar &pMax, ///< [out] the value of the max pixel
-                const imageTin &imIn,             ///< [in] the image to smooth
-                int meanFullWidth,                ///< [in] the full-width of the smoothing box
-                bool rejectMinMax = false         ///< [in] whether or not to reject the min and max value.
+int meanSmooth(
+    imageTout &imOut, /**< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified */
+    int &xMax,        /**< [out] the x location of the maximum pixel */
+    int &yMax,        /**< [out] the y location of the maximum pixel */
+    typename imageTout::Scalar &pMax, /**< [out] the value of the maximum pixel */
+    const imageTin &imIn,             /**< [in] the image to smooth */
+    int meanFullWidth,                /**< [in] the full width of the smoothing box */
+    bool rejectMinMax = false         /**< [in] whether to reject the minimum and maximum values */
 )
 {
     typedef typename imageTout::Scalar scalarT;
 
-    int buff = 0.5 * meanFullWidth;
+    xMax = -1;
+    yMax = -1;
+    pMax = std::numeric_limits<scalarT>::lowest();
 
+    if( meanFullWidth <= 0 || meanFullWidth > imIn.rows() || meanFullWidth > imIn.cols() ||
+        imOut.rows() != imIn.rows() || imOut.cols() != imIn.cols() )
+    {
+        return -1;
+    }
+
+    const int before = meanFullWidth / 2;
+    const int after = meanFullWidth - before - 1;
     int nPix = meanFullWidth * meanFullWidth;
 
-    pMax = std::numeric_limits<scalarT>::lowest();
+    if( rejectMinMax && nPix <= 2 )
+    {
+        return -1;
+    }
 
     if( rejectMinMax ) // avoid the branch on every pixel.
     {
         nPix -= 2;
-        for( int jj = buff; jj < imIn.cols() - buff; ++jj )
+        for( int jj = before; jj < imIn.cols() - after; ++jj )
         {
-            for( int ii = buff; ii < imIn.rows() - buff; ++ii )
+            for( int ii = before; ii < imIn.rows() - after; ++ii )
             {
                 scalarT sum = 0;
-                scalarT max = sum;
-                scalarT min = sum;
-                for( int ll = jj - buff; ll < jj + buff + 1; ++ll )
+                scalarT max = std::numeric_limits<scalarT>::lowest();
+                scalarT min = std::numeric_limits<scalarT>::max();
+                for( int ll = 0; ll < meanFullWidth; ++ll )
                 {
-                    for( int kk = ii - buff; kk < ii + buff + 1; ++kk )
+                    for( int kk = 0; kk < meanFullWidth; ++kk )
                     {
-                        // scalarT val = imIn(kk,ll);
-                        sum += imIn( kk, ll );
-                        if( imIn( kk, ll ) > max )
-                            max = imIn( kk, ll );
-                        if( imIn( kk, ll ) < min )
-                            min = imIn( kk, ll );
+                        const scalarT value = imIn( ii - before + kk, jj - before + ll );
+                        sum += value;
+                        if( value > max )
+                            max = value;
+                        if( value < min )
+                            min = value;
                     }
                 }
                 imOut( ii, jj ) = ( sum - max - min ) / nPix;
@@ -824,16 +925,16 @@ int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocate
     }
     else
     {
-        for( int jj = buff; jj < imIn.cols() - buff; ++jj )
+        for( int jj = before; jj < imIn.cols() - after; ++jj )
         {
-            for( int ii = buff; ii < imIn.rows() - buff; ++ii )
+            for( int ii = before; ii < imIn.rows() - after; ++ii )
             {
                 scalarT sum = 0;
-                for( int ll = jj - buff; ll < jj + buff + 1; ++ll )
+                for( int ll = 0; ll < meanFullWidth; ++ll )
                 {
-                    for( int kk = ii - buff; kk < ii + buff + 1; ++kk )
+                    for( int kk = 0; kk < meanFullWidth; ++kk )
                     {
-                        sum += imIn( kk, ll );
+                        sum += imIn( ii - before + kk, jj - before + ll );
                     }
                 }
                 imOut( ii, jj ) = sum / nPix;
@@ -853,8 +954,10 @@ int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocate
 /// Smooth an image using the median in a rectangular box.  Also Determines the location and value of the highest pixel
 /// in the smoothed image.
 /** Calculates the median value in a rectangular box of imIn, of size medianFullWidth X medianFullWidth and stores it in
- * the corresonding center pixel of imOut. Does not smooth the 0.5*medianFullwidth rows and columns of the input image,
- * and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+ * the corresponding center pixel of imOut. For even widths, the window is associated with the higher-index member of
+ * the central pair: it contains medianFullWidth/2 pixels before the output pixel and one fewer after it. The median of
+ * an even-sized window is the arithmetic mean of its two central samples. Pixels without a complete window are not
+ * changed in imOut (i.e. you should initialize them before the call).
  *
  * imOut is not re-allocated.
  *
@@ -872,32 +975,41 @@ int meanSmooth( imageTout &imOut, ///< [out] the smoothed image. Not re-allocate
  */
 template <typename imageTout, typename imageTin>
 int medianSmooth(
-    imageTout &imOut, ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
-    int &xMax,        ///< [out] the x-locatioin of the max pixel
-    int &yMax,        ///< [out] the y-locatioin of the max pixel
-    typename imageTout::Scalar &pMax, ///< [out] the value of the max pixel
-    const imageTin &imIn,             ///< [in] the image to smooth
-    int medianFullWidth               ///< [in] the full-width of the smoothing box
+    imageTout &imOut, /**< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified */
+    int &xMax,        /**< [out] the x location of the maximum pixel */
+    int &yMax,        /**< [out] the y location of the maximum pixel */
+    typename imageTout::Scalar &pMax, /**< [out] the value of the maximum pixel */
+    const imageTin &imIn,             /**< [in] the image to smooth */
+    int medianFullWidth               /**< [in] the full width of the smoothing box */
 )
 {
     typedef typename imageTout::Scalar scalarT;
 
-    int buff = 0.5 * medianFullWidth;
-
-    std::vector<scalarT> pixs( medianFullWidth * medianFullWidth );
-
+    xMax = -1;
+    yMax = -1;
     pMax = std::numeric_limits<scalarT>::lowest();
 
-    for( int jj = buff; jj < imIn.cols() - buff; ++jj )
+    if( medianFullWidth <= 0 || medianFullWidth > imIn.rows() || medianFullWidth > imIn.cols() ||
+        imOut.rows() != imIn.rows() || imOut.cols() != imIn.cols() )
     {
-        for( int ii = buff; ii < imIn.rows() - buff; ++ii )
+        return -1;
+    }
+
+    const int before = medianFullWidth / 2;
+    const int after = medianFullWidth - before - 1;
+    const size_t sampleCount = static_cast<size_t>( medianFullWidth ) * static_cast<size_t>( medianFullWidth );
+    std::vector<scalarT> pixs( sampleCount );
+
+    for( int jj = before; jj < imIn.cols() - after; ++jj )
+    {
+        for( int ii = before; ii < imIn.rows() - after; ++ii )
         {
-            int n = 0;
-            for( int ll = jj - buff; ll < jj + buff + 1; ++ll )
+            size_t n = 0;
+            for( int ll = 0; ll < medianFullWidth; ++ll )
             {
-                for( int kk = ii - buff; kk < ii + buff + 1; ++kk )
+                for( int kk = 0; kk < medianFullWidth; ++kk )
                 {
-                    pixs[n] = imIn( kk, ll );
+                    pixs[n] = imIn( ii - before + kk, jj - before + ll );
                     ++n;
                 }
             }
@@ -916,9 +1028,9 @@ int medianSmooth(
 }
 
 /// Smooth an image using the median in a rectangular box.
-/** Calculates the median value in a rectangular box of imIn, of size medianFullSidth X medianFullWidth and stores it in
- * the corresponding center pixel of imOut. Does not smooth the outer 0.5*medianFullwidth rows and columns of the input
- * image, and the values of these pixels are not changed in imOut (i.e. you should 0 them before the call).
+/** Calculates the median value in a rectangular box of imIn, of size medianFullWidth X medianFullWidth and stores it in
+ * the corresponding center pixel of imOut. Even widths use the higher-index member of the central pair as the output
+ * pixel. Pixels without a complete window are not changed in imOut (i.e. you should initialize them before the call).
  *
  * imOut is not re-allocated.
  *
@@ -934,9 +1046,9 @@ int medianSmooth(
  */
 template <typename imageTout, typename imageTin>
 int medianSmooth(
-    imageTout &imOut,     ///< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified.
-    const imageTin &imIn, ///< [in] the image to smooth
-    int medianFullWidth   ///< [in] the full-width of the smoothing box
+    imageTout &imOut,     /**< [out] the smoothed image. Not re-allocated, and the edge pixels are not modified */
+    const imageTin &imIn, /**< [in] the image to smooth */
+    int medianFullWidth   /**< [in] the full width of the smoothing box */
 )
 {
     int xMax, yMax;

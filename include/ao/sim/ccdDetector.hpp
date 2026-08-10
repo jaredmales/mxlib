@@ -18,6 +18,15 @@
 #include <fcntl.h>
 #include <iostream>
 
+#ifndef BREAD_CRUMB
+#define MXLIB_CCD_DETECTOR_LOCAL_BREAD_CRUMB
+#ifdef DEBUG
+#define BREAD_CRUMB std::cout << "DEBUG: " << __FILE__ << " " << __LINE__ << "\n";
+#else
+#define BREAD_CRUMB
+#endif
+#endif
+
 namespace mx
 {
 namespace AO
@@ -57,7 +66,7 @@ class ccdDetector
     realT m_qe{ 1 }; ///< The quantum efficiency.
 
     realT m_darkCurrent{ 0 }; ///< The dark current, per pixel per second
-    realT m_ron{ 0 };         ///< The readout noise, electrons per pixel per read #include "mx/randomT.hpp"
+    realT m_ron{ 0 };         ///< The readout noise, electrons per pixel per read.
 
     realT m_cic{ 0 };  ///< EMCCD clock induced charge, electrons per pixel per read.
     realT m_gain{ 1 }; ///< Electron multiplication gain.  If >1, then EMCCD is modeled.
@@ -343,5 +352,10 @@ void ccdDetector<realT>::exposeImage( imageTout &out, imageTin &in )
 } // namespace sim
 } // namespace AO
 } // namespace mx
+
+#ifdef MXLIB_CCD_DETECTOR_LOCAL_BREAD_CRUMB
+#undef BREAD_CRUMB
+#undef MXLIB_CCD_DETECTOR_LOCAL_BREAD_CRUMB
+#endif
 
 #endif // ccdDetector_hpp

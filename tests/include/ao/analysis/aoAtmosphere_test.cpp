@@ -1,4 +1,5 @@
 /** \file aoAtmosphere_test.cpp
+ * \brief Tests adaptive-optics atmosphere configuration and validation.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -16,7 +17,10 @@ using namespace mx::AO::analysis;
 /// Verify parsing and validation of atmosphere configuration settings.
 /** Exercises mx::AO::analysis::aoAtmosphere::setupConfig and
  * mx::AO::analysis::aoAtmosphere::loadConfig. */
-SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]" )
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
+TEST_CASE( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]" )
 {
     GIVEN( "a valid config file" )
     {
@@ -226,6 +230,9 @@ SCENARIO( "Loading aoAtmosphere config settings", "[ao::analysis::aoAtmosphere]"
 
 /// Verify that layer-strength normalization rejects invalid inputs without changing state.
 /** Exercises mx::AO::analysis::aoAtmosphere::layer_Cn2. */
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
 TEST_CASE( "Atmosphere layer-strength normalization is transactional", "[ao::analysis::aoAtmosphere]" )
 {
     aoAtmosphere<realT> atmosphere;
@@ -269,6 +276,9 @@ TEST_CASE( "Atmosphere layer-strength normalization is transactional", "[ao::ana
 
 /// Verify that complete atmosphere validation rejects every layer-vector mismatch.
 /** Exercises mx::AO::analysis::aoAtmosphere::validate with each core and non-Kolmogorov vector setter. */
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
 TEST_CASE( "Atmosphere validation rejects mismatched layer vectors", "[ao::analysis::aoAtmosphere]" )
 {
     aoAtmosphere<realT> atmosphere;
@@ -324,6 +334,9 @@ TEST_CASE( "Atmosphere validation rejects mismatched layer vectors", "[ao::analy
 
 /// Verify that atmosphere validation rejects nonphysical scalar and layer values.
 /** Exercises mx::AO::analysis::aoAtmosphere::validate after mutation through its public setters. */
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
 TEST_CASE( "Atmosphere validation rejects invalid physical values", "[ao::analysis::aoAtmosphere]" )
 {
     aoAtmosphere<realT> atmosphere;
@@ -381,6 +394,9 @@ TEST_CASE( "Atmosphere validation rejects invalid physical values", "[ao::analys
 /// Verify that atmosphere validation preserves model-specific physical conventions.
 /** Exercises mx::AO::analysis::aoAtmosphere::validate for static layers, infinite outer scale, and explicit
  * non-Kolmogorov normalization. */
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
 TEST_CASE( "Atmosphere validation accepts supported physical conventions", "[ao::analysis::aoAtmosphere]" )
 {
     aoAtmosphere<realT> atmosphere;
@@ -408,6 +424,9 @@ TEST_CASE( "Atmosphere validation accepts supported physical conventions", "[ao:
 /// Verify that configuration loading returns layer-strength validation failures.
 /** Exercises mx::AO::analysis::aoAtmosphere::loadConfig and
  * mx::AO::analysis::aoAtmosphere::layer_Cn2. */
+/**
+ * \ingroup aoAtmosphere_unit_tests
+ */
 TEST_CASE( "Atmosphere configuration propagates invalid layer strengths", "[ao::analysis::aoAtmosphere]" )
 {
     aoAtmosphere<realT> atmosphere;

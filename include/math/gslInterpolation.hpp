@@ -29,9 +29,11 @@
 #ifndef gslInterpolation_hpp
 #define gslInterpolation_hpp
 
-#include <vector>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_errno.h>
+
+#include <iostream>
+#include <vector>
 
 namespace mx
 {
@@ -110,7 +112,7 @@ int gsl_interpolate(
  * interpolation types</a>. \param [in] xin the input x-axis \param [in] yin the input y-values \param [in] xout the
  * desired x-axis \param [out] yout the output interpolated y-values, does not need to be allocated
  *
- * \retval
+ * \returns 0 on success or -1 if GSL reports an interpolation error.
  *
  * \ingroup interpolation
  */

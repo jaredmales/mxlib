@@ -15,5 +15,4 @@ add_subdirectory(wfp)
 set(OBJLIB_INCLUDES ${OBJLIB_INCLUDES} include/mxlib.hpp
                                        include/mxError.hpp
                                        include/mxException.hpp
-                                       include/mxlib_uncomp_version.h
                                        PARENT_SCOPE )

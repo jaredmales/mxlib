@@ -690,9 +690,9 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT, -1, -1> &U,  ///< [out] the A.rows(
  * calculated as \f$ A^+ = V S^+ U^T\f$.
  *
  * The parameter \p interact is intepreted as a bitmask.  The values can be
- * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values
- * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
- * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using
+ * - `MX_PINV_PLOT`, which will cause a plot to be displayed of the singular values
+ * - `MX_PINV_ASK`, which will ask the user for a max. condition number using stdin
+ * - `MX_PINV_ASK_NMODES`, which will ask the user for a max number of modes to include using
  * stdin.  Overrides MX_PINV_ASK. If \p interact is 0 then no interaction is used and \p
  * maxCondition controls the inversion.
  *
@@ -882,9 +882,9 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
  * calculated as \f$ A^+ = V S^+ U^T\f$.
  *
  * The parameter \p interact is intepreted as a bitmask.  The values can be
- * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values
- * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
- * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using
+ * - `MX_PINV_PLOT`, which will cause a plot to be displayed of the singular values
+ * - `MX_PINV_ASK`, which will ask the user for a max. condition number using stdin
+ * - `MX_PINV_ASK_NMODES`, which will ask the user for a max number of modes to include using
  * stdin.  Overrides MX_PINV_ASK. If \p interact is 0 then no interaction is used and \p
  * maxCondition controls the inversion.
  *
@@ -936,9 +936,9 @@ int eigenPseudoInverse( Eigen::Array<dataT, -1, -1> &PInv, ///< [out] The pseudo
  * calculated as \f$ A^+ = V S^+ U^T\f$. This interface does not provide access to U, S and VT.
  *
  * The parameter \p interact is intepreted as a bitmask.  The values can be
- * - \ref MX_PINV_PLOT which will cause a plot to be displayed of the singular values
- * - \ref MX_PINV_ASK which will ask the user for a max. condition number using stdin
- * - \ref MX_PINV_ASK_NMODES which will ask the user for a max number of modes to include using
+ * - `MX_PINV_PLOT`, which will cause a plot to be displayed of the singular values
+ * - `MX_PINV_ASK`, which will ask the user for a max. condition number using stdin
+ * - `MX_PINV_ASK_NMODES`, which will ask the user for a max number of modes to include using
  * stdin.  Overrides MX_PINV_ASK. If \p interact is 0 then no interaction is used and maxCondition
  * controls the inversion.
  *   *

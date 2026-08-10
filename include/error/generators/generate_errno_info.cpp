@@ -1,4 +1,7 @@
-
+/** \file generate_errno_info.cpp
+ * \brief Generates errno_info.hpp from the configured errno name list.
+ * \author Jared Males
+ */
 
 #include <cerrno>
 #include <cstring>

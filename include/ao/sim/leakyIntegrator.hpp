@@ -8,6 +8,17 @@
 #ifndef __leakyIntegrator_hpp__
 #define __leakyIntegrator_hpp__
 
+#include <fstream>
+#include <string>
+#include <vector>
+
+#include <Eigen/Dense>
+
+#include "../../error/mxErrorOld.hpp"
+#include "../../ioutils/stringUtils.hpp"
+
+#include "wavefront.hpp"
+
 namespace mx
 {
 namespace AO
@@ -339,7 +350,7 @@ int leakyIntegrator<realT>::gains( const std::string &ogainf )
     for( int i = 0; i < _gains.cols(); ++i )
     {
         fin >> tmpstr;
-        g = mx::convertFromString<realT>( tmpstr );
+        g = mx::ioutils::convertFromString<realT>( tmpstr );
         gain( i, g );
     }
 
@@ -350,6 +361,8 @@ template <typename realT>
 int leakyIntegrator<realT>::leak( int i, realT l )
 {
     _leaks( 0, i ) = l;
+
+    return 0;
 }
 
 template <typename realT>

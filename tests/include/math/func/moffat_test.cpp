@@ -1,4 +1,5 @@
 /** \file moffat_test.cpp
+ * \brief Tests Moffat profile functions.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -8,12 +9,14 @@
 
 #include "../../../../include/math/func/moffat.hpp"
 
-/** Scenario: compiling 1D Moffat function.
+/** compiling 1D Moffat function.
  *
  *
- * \anchor tests_math_func_moffat1D
  */
-SCENARIO( "compiling 1D Moffat function", "[math::func::moffat]" )
+/**
+ * \ingroup moffat_unit_tests
+ */
+TEST_CASE( "compiling 1D Moffat function", "[math::func::moffat]" )
 {
     GIVEN( "the 1D Moffat function" )
     {
@@ -25,12 +28,14 @@ SCENARIO( "compiling 1D Moffat function", "[math::func::moffat]" )
     }
 }
 
-/** Scenario: compiling 2D Moffat function.
+/** compiling 2D Moffat function.
  *
  *
- * \anchor tests_math_func_moffat2D
  */
-SCENARIO( "compiling 2D Moffat function", "[math::func::moffat]" )
+/**
+ * \ingroup moffat_unit_tests
+ */
+TEST_CASE( "compiling 2D Moffat function", "[math::func::moffat]" )
 {
     GIVEN( "the 2D Moffat function" )
     {
@@ -42,12 +47,14 @@ SCENARIO( "compiling 2D Moffat function", "[math::func::moffat]" )
     }
 }
 
-/** Scenario: compiling Moffat FWHM
+/** compiling Moffat FWHM
  *
  *
- * \anchor tests_math_func_moffatFWHM
  */
-SCENARIO( "compiling Moffat FWHM", "[math::func::moffat]" )
+/**
+ * \ingroup moffat_unit_tests
+ */
+TEST_CASE( "compiling Moffat FWHM", "[math::func::moffat]" )
 {
     GIVEN( "the Moffat FWHM" )
     {

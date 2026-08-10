@@ -1,8 +1,16 @@
+/** \file templateLapack_test.cpp
+ *  \brief Tests the typed LAPACK wrappers.
+ */
+
 #include "../../catch2/catch.hpp"
 
 #include "../../../include/math/templateLapack.hpp"
 
-SCENARIO( "getting lamch values", "[templateLapack]" )
+/// Verify typed lamch wrappers for supported real precisions.
+/**
+ * \ingroup templateLapack_unit_tests
+ */
+TEST_CASE( "getting lamch values", "[templateLapack]" )
 {
     GIVEN( "a precision" )
     {

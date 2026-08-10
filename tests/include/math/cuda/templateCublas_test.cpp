@@ -1,16 +1,25 @@
 /** \file templateCublas_test.cpp
+ * \brief Tests templated cuBLAS wrappers.
  */
 #include "../../../catch2/catch.hpp"
+#include "../../../cudaTestUtils.hpp"
 
 #include "../../../../include/math/cuda/cudaPtr.hpp"
 #include "../../../../include/math/cuda/templateCublas.hpp"
 
 /// Tests cublasTscal, as well as basic cudaPtr operations.
+/** Exercises cudaPtr upload/download and mx::cuda::cublasTscal. */
 /**
- * \test
+ * \ingroup templateCublas_unit_tests
  */
-SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
+TEST_CASE( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     GIVEN( "a vector" )
     {
         WHEN( "type is single precision real" )
@@ -151,13 +160,21 @@ SCENARIO( "scaling a vector with cublas", "[math::cuda::templateCublas]" )
     }
 }
 
-/** \test Scenario: scaling and accumulating a vector with cublas
+/** scaling and accumulating a vector with cublas
  * Tests cublasTaxpy, as well as basic cudaPtr operations.
  *
- * \anchor test_math_templateCublas_axpy
  */
-SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templateCublas]" )
+/**
+ * \ingroup templateCublas_unit_tests
+ */
+TEST_CASE( "scaling and accumulating a vector with cublas", "[math::cuda::templateCublas]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     GIVEN( "a vector" )
     {
         WHEN( "type is single precision real" )
@@ -326,13 +343,21 @@ SCENARIO( "scaling and accumulating a vector with cublas", "[math::cuda::templat
     }
 }
 
-/** \test Scenario: multiplying two vectors element by element
+/** multiplying two vectors element by element
  * Tests mx::cuda::elementwiseXxY, as well as basic cudaPtr operations.
  *
- * \anchor test_math_templateCublas_elementwiseXxY
  */
-SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCublas]" )
+/**
+ * \ingroup templateCublas_unit_tests
+ */
+TEST_CASE( "multiplying two vectors element by element", "[math::cuda::templateCublas]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     GIVEN( "a vector" )
     {
         WHEN( "both types are single precision real" )
@@ -541,13 +566,21 @@ SCENARIO( "multiplying two vectors element by element", "[math::cuda::templateCu
     }
 }
 
-/** Scenario: multiplying a vector by a matrix
+/** multiplying a vector by a matrix
  * Tests mx::cuda::cublasTgemv, as well as basic cudaPtr operations.
  *
- * \anchor test_math_templateCublas_cublasTgemv_inc
  */
-SCENARIO( "multiplying a vector by a matrix giving increments", "[math::cuda::templateCublas]" )
+/**
+ * \ingroup templateCublas_unit_tests
+ */
+TEST_CASE( "multiplying a vector by a matrix giving increments", "[math::cuda::templateCublas]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     GIVEN( "a 2x2 matrix, float" )
     {
         WHEN( "float precision, beta is 0" )

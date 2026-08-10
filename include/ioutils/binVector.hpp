@@ -51,7 +51,7 @@ namespace ioutils
  */
 
 /// The type used for binVector sizes.
-/** \ingroup binVector
+/** \ingroup binvector
  */
 typedef uint64_t binVSizeT;
 

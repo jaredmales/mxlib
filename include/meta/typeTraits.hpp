@@ -27,6 +27,11 @@
 #ifndef typeTraits_hpp
 #define typeTraits_hpp
 
+#include <type_traits>
+#include <vector>
+
+#include "trueFalseT.hpp"
+
 namespace mx
 {
 

@@ -61,7 +61,6 @@ namespace sigproc
  * \retval 0 on success
  * \retval -1 on error (j < 1)
  *
- * \test Scenario: testing noll_nm \ref tests_sigproc_zernike_noll_nm "[test doc]"
  */
 int noll_nm( int &n, ///< [out] n the radial index of the Zernike polynomial
              int &m, ///< [out] m the azimuthal index of the Zernnike polynomial.  m < 0 if j odd.
@@ -538,7 +537,6 @@ int zernikeBasis( cubeT &cube,                     /**< [in/out] the pre-allocat
  *
  * \todo need a more robust jinc_n function for n > 1
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns the value of |Q(k,phi)|^2
  *
@@ -591,7 +589,6 @@ std::complex<realT> zernikeQ( realT k,   /**< [in] the radial coordinate of norm
  *
  * \todo need a more robust jinc_n function for n > 1
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns the value of |Q(k,phi)|^2
  *
@@ -672,9 +669,8 @@ realT zernikeQNorm( realT k,   /**< [in] the radial coordinate of normalized spa
 }
 
 /// Fill in an Eigen-like array with the square-normed Fourier transform of a Zernike polynomial
-/** The array is filled in with the values of |Q(k,phi)|^2 according to Equation (8) of Noll (1976) \cite noll_1976.
+/** The array is filled in with \f$\lvert Q(k,\phi)\rvert^2\f$ according to Equation (8) of Noll (1976).
  *
- * \test Scenario: testing zernikeQNorm \ref tests_sigproc_zernike_zernikeQNorm "[test doc]"
  *
  * \returns 0 on success
  * \returns -1 on error
@@ -684,8 +680,8 @@ realT zernikeQNorm( realT k,   /**< [in] the radial coordinate of normalized spa
 template <typename arrayT>
 int zernikeQNorm( arrayT &arr, /**< [out] the allocated array. The rows() and cols() members are used to size
                                           the transform.*/
-                  arrayT &k,   /**< [in] the normalized spatial frequency magnitude at each pixel.  This is in the \cite
-                                         noll_1976   convention of cycles-per-radius.*/
+                  arrayT &k,   /**< [in] the normalized spatial frequency magnitude at each pixel, in the Noll (1976)
+                                         convention of cycles-per-radius.*/
                   arrayT &phi, ///< [in] the spatial frequency angle at each pixel
                   int j        ///< [in] the polynomial index in the Noll convention \cite noll_1976
 )
@@ -760,8 +756,8 @@ realT zernikePTrefoil( const realT &kD /**< [in] Spatial frequency in diameter u
 
 /// Get the degrees of correction coefficient for Zernike polynomials in Kolmogorov turbulence.
 /** Returns the coefficient from Table IV of Noll (1976) \cite noll_1976 for the given index.
- * Given this, the total variance in radians at wavelength $\lambda$ for a diameter $D$
- * aperture after correcting $j$ modes can be calculated from
+ * Given this, the total variance in radians at wavelength \f$\lambda\f$ for a diameter \f$D\f$
+ * aperture after correcting \f$j\f$ modes can be calculated from
  * \f[
  * realT c = zernikeModeDOCKolmogorov( j );
  * var_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)
@@ -878,8 +874,8 @@ realT zernikeModeDOCKolmogorov( unsigned noll_j, /**< [in] the mode index, must 
 
 /// Get the difference in degrees of correction coefficient for Zernike polynomials in Kolmogorov turbulence.
 /** Returns the difference in coefficients from Table IV of Noll (1976) \cite noll_1976 for the given index
- * from the previous mode. Given this, the variance in radians-squared at wavelength $\lambda$ for a
- * diameter $D$ aperture in the $j$-th mode can be calculated from
+ * from the previous mode. Given this, the variance in radians-squared at wavelength \f$\lambda\f$ for a
+ * diameter \f$D\f$ aperture in the \f$j\f$-th mode can be calculated from
  * \f[
  * realT c = zernikeModeDOCDiffKolmogorov( j );
  * var_j_lambda = c * pow(D/r_0_lambda, math::five_thirds<realT>)

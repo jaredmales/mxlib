@@ -1,4 +1,5 @@
 /** \file imageXCorrFFT_test.cpp
+ * \brief Tests FFT-based image cross-correlation.
  */
 #include "../../catch2/catch.hpp"
 
@@ -11,13 +12,22 @@
 #include "../../../include/improc/imageXCorrFFT.hpp"
 #include "../../../include/improc/eigenCube.hpp"
 
-/** Scenario: centroiding Gaussians with center of light
+/** \cond
+ * Explicit instantiation compile-checks FFT correlation with the canonical double-precision Eigen image and emits
+ * its header-defined methods for coverage accounting in this test translation unit.
+ */
+template class mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>>;
+/** \endcond */
+
+/** centroiding Gaussians with center of light
  *
  * Verify center of light calculation
  *
- * \anchor tests_improc_imageUtils_imageXCorrFFT
  */
-SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::imageXCorrFFT]" )
+/**
+ * \ingroup imageXCorrFFT_unit_tests
+ */
+TEST_CASE( "Image cross-correlation with FFT using center of light", "[improc::imageXCorrFFT]" )
 {
     GIVEN( "two Gaussians" )
     {
@@ -176,13 +186,15 @@ SCENARIO( "Image cross-correlation with FFT using center of light", "[improc::im
     }
 }
 
-/** Scenario: centroiding by magnification
+/** centroiding by magnification
  *
  * Verify magnification peak finding
  *
- * \anchor tests_improc_imageUtils_imageXCorrFFT
  */
-SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "[improc::imageXCorrFFT]" )
+/**
+ * \ingroup imageXCorrFFT_unit_tests
+ */
+TEST_CASE( "Image cross-correlation with FFT using magnification peak finding", "[improc::imageXCorrFFT]" )
 {
     GIVEN( "two Gaussians" )
     {
@@ -342,7 +354,11 @@ SCENARIO( "Image cross-correlation with FFT using magnification peak finding", "
     }
 }
 
-SCENARIO( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::imageXCorrFFT]" )
+/// Verify imageXCorrFFT displacement recovery with Gaussian peak fitting.
+/**
+ * \ingroup imageXCorrFFT_unit_tests
+ */
+TEST_CASE( "Image cross-correlation with FFT using Gaussian peak fit", "[improc::imageXCorrFFT]" )
 {
     GIVEN( "two Gaussians" )
     {

@@ -1,4 +1,5 @@
 /** \file imageMasks_test.cpp
+ * \brief Tests image-mask generation.
  */
 #include "../../catch2/catch.hpp"
 
@@ -10,13 +11,15 @@
 #include "../../../include/improc/imageMasks.hpp"
 #include "../../../include/improc/eigenImage.hpp"
 
-/** Scenario: Masking wedges in an image
+/** Masking wedges in an image
  *
  * Verify wedge masking, including that all pixels are masked for continuous rotations of the wedge
  *
- * \anchor tests_improc_imageMasks_maskWedge
  */
-SCENARIO( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
+/**
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
 {
     GIVEN( "a single wedge" )
     {

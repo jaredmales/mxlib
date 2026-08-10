@@ -683,8 +683,7 @@ class fitsHeaderCard
      */
     //@{
 
-    /// Writes this card to a FITS file, using \ref mx::improc::fits_write_key<typename typeT>(fitsfile * fptr, char *
-    /// keyword, void * value, char * comment).
+    /// Writes this card to a FITS file using \ref mx::fits::fits_write_key "fits_write_key".
     /**
      */
     mx::error_t write( fitsfile *fptr );

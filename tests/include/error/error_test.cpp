@@ -1,4 +1,5 @@
 /** \file error_test.cpp
+ * \brief Tests error reporting and macros.
  */
 #include "../../catch2/catch.hpp"
 

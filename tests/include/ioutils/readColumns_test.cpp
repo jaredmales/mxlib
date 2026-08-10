@@ -1,4 +1,5 @@
 /** \file readColumns_test.cpp
+ * \brief Tests delimited-column input.
  */
 #include "../../catch2/catch.hpp"
 

@@ -1,6 +1,10 @@
 /** \file pyramidSensor_test.cpp
+ * \brief Tests CPU and CUDA pyramid-sensor simulations.
  */
 #include "../../../catch2/catch.hpp"
+#ifdef MXLIB_CUDA
+#include "../../../cudaTestUtils.hpp"
+#endif
 
 #define MX_NO_ERROR_REPORTS
 
@@ -18,7 +22,7 @@ using namespace mx::improc;
 
 /// Simulate a pyramid sensor on CPU
 /**
- * \ingroup ao_sim_pyramidSensor_tests
+ * \ingroup pyramidSensor_unit_tests
  */
 TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
 {
@@ -77,18 +81,23 @@ TEST_CASE( "Simulate a pyramid sensor on CPU", "[ao::sim]" )
     REQUIRE( s > 9.9e9 );
 }
 
+#if defined( MXLIB_CUDA ) || defined( __DOXY_ONLY__ )
 /// Simulate a pyramid sensor on GPU
 /**
- * \ingroup ao_sim_pyramidSensor_tests
+ * \ingroup pyramidSensor_unit_tests
  */
 TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     typedef float realT;
 
     uint32_t pupSz = 56.0;
     uint32_t wfSz = 256.0;
-
-    omp_set_num_threads( 4 );
 
     pyramidSensor<realT, ccdDetector<realT>, 1> pwfs;
 
@@ -139,3 +148,4 @@ TEST_CASE( "Simulate a pyramid sensor on GPU", "[ao::sim]" )
 
     REQUIRE( s > 9.9e9 );
 }
+#endif // MXLIB_CUDA

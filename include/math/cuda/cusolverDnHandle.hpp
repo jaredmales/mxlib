@@ -29,6 +29,9 @@
 
 #ifdef MXLIB_CUDA
 
+#include <cstdlib>
+#include <iostream>
+
 #include <cuda_runtime.h>
 #include <cusolverDn.h>
 

@@ -107,10 +107,9 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
     }
 
     /// Set the data aray.
-    void setArray( const eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
-                   const eigenImage<realT> *ref,   ///< [in] pointer to the empirical function to fit
-                   const eigenImage<realT> *weights
-    )
+    void setArray( const improc::eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
+                   const improc::eigenImage<realT> *ref,  ///< [in] pointer to the empirical function to fit
+                   const improc::eigenImage<realT> *weights )
     {
         arr.setup( data, ref, weights );
 
@@ -118,11 +117,11 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
     }
 
     /// Set the data aray.
-    void setArray( const eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
-                   const eigenImage<realT> *ref   ///< [in] pointer to the empirical function to fit
+    void setArray( const improc::eigenImage<realT> *data, ///< [in] pointer to an nx X ny array of data to be fit
+                   const improc::eigenImage<realT> *ref   ///< [in] pointer to the empirical function to fit
     )
     {
-        setArray( data, ref, nullptr);
+        setArray( data, ref, nullptr );
     }
 
     /// Get the current value of the scale factor.
@@ -159,13 +158,13 @@ class fitEmpirical2DGen : public levmarInterface<fitterT>
 template <typename realT>
 struct array2FitEmpirical
 {
-    const eigenImage<realT> *m_data{ nullptr };    ///< Pointer to the data array
-    const eigenImage<realT> *m_ref{ nullptr };     ///< Pointer to the reference image to fit to the data
-    const eigenImage<realT> *m_weights{ nullptr }; ///< Pointer to the weight image
-    eigenImage<realT> m_refShifted;                ///< Working memory for the shifted reference image
+    const improc::eigenImage<realT> *m_data{ nullptr };    ///< Pointer to the data array
+    const improc::eigenImage<realT> *m_ref{ nullptr };     ///< Pointer to the reference image to fit to the data
+    const improc::eigenImage<realT> *m_weights{ nullptr }; ///< Pointer to the weight image
+    improc::eigenImage<realT> m_refShifted;                ///< Working memory for the shifted reference image
 
-    size_t m_nx{ 0 };                              ///< X dimension of the array
-    size_t m_ny{ 0 };                              ///< Y dimension of the array
+    size_t m_nx{ 0 };                                      ///< X dimension of the array
+    size_t m_ny{ 0 };                                      ///< Y dimension of the array
 
     realT m_scale{ 0 };
     realT m_dx{ 0 };
@@ -177,7 +176,9 @@ struct array2FitEmpirical
 
     int m_nparams = 3;
 
-    void setup( const eigenImage<realT> *data, const eigenImage<realT> *ref, const eigenImage<realT> *weights )
+    void setup( const improc::eigenImage<realT> *data,
+                const improc::eigenImage<realT> *ref,
+                const improc::eigenImage<realT> *weights )
     {
         m_nx = data->rows();
         m_ny = data->cols();
@@ -203,7 +204,7 @@ struct array2FitEmpirical
         m_refShifted.resize( m_nx, m_ny );
     }
 
-    void setup( const eigenImage<realT> *data, const eigenImage<realT> *ref )
+    void setup( const improc::eigenImage<realT> *data, const improc::eigenImage<realT> *ref )
     {
         setup( data, ref, nullptr );
     }
@@ -334,7 +335,7 @@ struct empirical2D_fitter
         realT dx = arr->dx( p );
         realT dy = arr->dy( p );
 
-        imageShift( arr->m_refShifted, *( arr->m_ref ), dx, dy, cubicConvolTransform<realT>() );
+        improc::imageShift( arr->m_refShifted, *( arr->m_ref ), dx, dy, improc::cubicConvolTransform<realT>() );
 
         arr->m_refShifted *= scale;
 
@@ -344,7 +345,8 @@ struct empirical2D_fitter
             {
                 for( int rr = 0; rr < arr->m_nx; ++rr )
                 {
-                    hx[idx_dat] =(*arr->m_weights)(rr,cc)*( ( *arr->m_data)( rr, cc ) - arr->m_refShifted( rr, cc ) );
+                    hx[idx_dat] =
+                        ( *arr->m_weights )( rr, cc ) * ( ( *arr->m_data )( rr, cc ) - arr->m_refShifted( rr, cc ) );
 
                     ++idx_dat;
                 }

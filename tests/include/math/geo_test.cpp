@@ -1,4 +1,5 @@
 /** \file geo_test.cpp
+ * \brief Tests angular geometry utilities.
  */
 #include "../../catch2/catch.hpp"
 
@@ -11,9 +12,11 @@
 /** Verify compilation and calculations of math::angleMod.
  * Tests that various angle modulos are calculated correctly for both radians and degrees.
  *
- * \anchor tests_math_geo_angleMod
  */
-SCENARIO( "Verify compilation and calculations of math::angleMod", "[math::angleMod]" )
+/**
+ * \ingroup geo_unit_tests
+ */
+TEST_CASE( "Verify compilation and calculations of math::angleMod", "[math::angleMod]" )
 {
     GIVEN( "angles in degrees" )
     {
@@ -81,9 +84,11 @@ SCENARIO( "Verify compilation and calculations of math::angleMod", "[math::angle
 /** Verify compilation and calculations of math::angleDiff.
  * Tests that various angle differences are calculated correctly for both radians and degrees.
  *
- * \anchor tests_math_geo_angleDiff
  */
-SCENARIO( "Verify compilation and calculations of math::angleDiff", "[math::angleDiff]" )
+/**
+ * \ingroup geo_unit_tests
+ */
+TEST_CASE( "Verify compilation and calculations of math::angleDiff", "[math::angleDiff]" )
 {
     GIVEN( "angles in degrees" )
     {

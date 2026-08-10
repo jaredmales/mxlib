@@ -1,9 +1,18 @@
 /** \addtogroup testing_coverage
  * @{
  *
+ * The coverage target captures an initial zero-counter baseline so every compiled, instrumented translation unit
+ * remains in the denominator even before a test exercises it. Header and template lines appear only when the
+ * compiler emits counters through a real instantiation or API use; include-only placeholder tests establish inventory
+ * ownership and parsing in that test's include context, but do not create synthetic numeric line entries. The turnkey
+ * GCC coverage build excludes CUDA, so CUDA code requires a separate coverage workflow.
+ * Headers whose explicit instantiations must contribute counters are listed in
+ * \c tests/coverage/expected_coverage_records.txt. Before generating HTML, the coverage target verifies that every
+ * listed header survives the final filters with source, line, and function records; a missing or empty record fails
+ * the target.
+ *
  * \htmlonly
  * <style>
- * /* Coverage page: use full available content width (to the right of Doxygen sidebar) */
  * .contents,
  * .textblock {
  *   max-width: none !important;
@@ -19,7 +28,28 @@
  *   background: var(--page-background-color, #1f2428);
  * }
  * </style>
- * <iframe class="mxlib-coverage-embed" src="coverage/index.html" title="mxlib coverage report"></iframe>
+ * <iframe id="mxlib-coverage-embed" class="mxlib-coverage-embed" src="coverage/index.html" title="mxlib coverage report"></iframe>
+ * <script>
+ * (function () {
+ *   var frame = document.getElementById("mxlib-coverage-embed");
+ *   if (!frame) return;
+ *
+ *   function syncCoverageTheme() {
+ *     try {
+ *       var frameRoot = frame.contentDocument.documentElement;
+ *       frameRoot.classList.toggle("dark-mode", document.documentElement.classList.contains("dark-mode"));
+ *     } catch (error) {
+ *       // The generated report is normally same-origin; leave its own theme untouched otherwise.
+ *     }
+ *   }
+ *
+ *   frame.addEventListener("load", syncCoverageTheme);
+ *   new MutationObserver(syncCoverageTheme).observe(document.documentElement, {
+ *     attributes: true,
+ *     attributeFilter: ["class"]
+ *   });
+ * })();
+ * </script>
  * \endhtmlonly
  *
  * @}

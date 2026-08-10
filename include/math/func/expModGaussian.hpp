@@ -28,7 +28,10 @@
 #define expModGaussian_hpp
 
 #include <boost/math/tools/minima.hpp>
+#include <iostream>
 #include <limits>
+
+#include "../constants.hpp"
 
 namespace mx
 {

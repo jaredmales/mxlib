@@ -35,15 +35,18 @@ struct wooferTweeterDMSpec
     }
 };
 
-// template<typename floatT>
-// struct wooferTweeterCommand
-// {
-//    bool woofer;
-//    Eigen::Array< floatT, Eigen::Dynamic, Eigen::Dynamic> wooferVect;
-//
-//    bool tweeter;
-//    Eigen::Array< floatT, Eigen::Dynamic, Eigen::Dynamic> tweeterVect;
-// };
+/// A paired command for woofer and tweeter deformable mirrors.
+template <typename floatT>
+struct wooferTweeterCommand
+{
+    bool woofer{ false }; ///< Whether the woofer command is active.
+
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> wooferVect; ///< Woofer modal command vector.
+
+    bool tweeter{ false }; ///< Whether the tweeter command is active.
+
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> tweeterVect; ///< Tweeter modal command vector.
+};
 
 template <typename _floatT>
 class wooferTweeterDM

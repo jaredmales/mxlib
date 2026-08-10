@@ -211,7 +211,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
  *
  * Columns can be skipped using mx::ioutils::skipCol.
  *
- * \tparam delimT specifies the delimiters.  By default this is \ref readColSpaceDelim
+ * \tparam delimT specifies the delimiters.  By default this is `mx::ioutils::readColSpaceDelim`.
  * \tparam verbose specifies the error reporting verbosity.  See \ref mx::verbose
  *
  *

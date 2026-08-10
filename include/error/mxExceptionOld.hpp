@@ -39,7 +39,7 @@ namespace err
 
 /// The mxlib exception class
 /** Provides a rich error report via the standard what().
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class mxException : public std::exception
 {
@@ -177,7 +177,7 @@ class mxException : public std::exception
 
 /// mxException for invalid arguments
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class invalidarg : public mxException
 {
@@ -194,7 +194,7 @@ class invalidarg : public mxException
 
 /// mxException for invalid config settings
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class invalidconfig : public mxException
 {
@@ -212,7 +212,7 @@ class invalidconfig : public mxException
 
 /// mxException for not implemented features
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class notimpl : public mxException
 {
@@ -229,7 +229,7 @@ class notimpl : public mxException
 
 /// mxException for parameters which aren't set
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class paramnotset : public mxException
 {
@@ -246,7 +246,7 @@ class paramnotset : public mxException
 
 /// mxException for not found
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class notfound : public mxException
 {
@@ -263,7 +263,7 @@ class notfound : public mxException
 
 /// mxException for a size error
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class sizeerr : public mxException
 {
@@ -280,7 +280,7 @@ class sizeerr : public mxException
 
 /// mxException for an allocation error
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class allocerr : public mxException
 {
@@ -297,7 +297,7 @@ class allocerr : public mxException
 
 /// mxException for errors on opening a file
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class fileoerr : public mxException
 {
@@ -323,7 +323,7 @@ class fileoerr : public mxException
 
 /// mxException for errors reading from a file
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class filererr : public mxException
 {
@@ -349,7 +349,7 @@ class filererr : public mxException
 
 /// mxException for errors writing to a file
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class filewerr : public mxException
 {
@@ -375,7 +375,7 @@ class filewerr : public mxException
 
 /// mxException for errors closing a file
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class filecerr : public mxException
 {
@@ -401,7 +401,7 @@ class filecerr : public mxException
 
 /// mxException for errors returned by a library call
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class liberr : public mxException
 {
@@ -418,7 +418,7 @@ class liberr : public mxException
 
 /// mxException for an exception
 /**
- * \ingroup exceptions_old
+ * \ingroup exceptions
  */
 class exceptthrown : public mxException
 {
@@ -434,7 +434,7 @@ class exceptthrown : public mxException
 };
 
 /// Throw an exception.  This macro takes care of the file and line.
-/** \ingroup exceptions_old
+/** \ingroup exceptions
  */
 #define mxThrowException( extype, src, expl ) throw extype( src, __FILE__, __LINE__, expl );
 

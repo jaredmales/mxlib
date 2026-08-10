@@ -9,11 +9,18 @@ mxlib uses doxygen.
 
 mxlib uses the Catch2 unit testing framework.
 
-To document a test and link it to the entity being tested:
+To document a test and link it to the production API being tested:
 
-1. Document the test SCENARIO like a function, but include an \verbatim \anchor \endverbatim.
-2. In the documentation for the tested entity, add a \verbatim \test \endverbatim, which includes a reference to the anchor.
-3. Be sure that the directory containing the file containing the test is included in mxlib_doxygen.in
+1. Use a Catch2 `TEST_CASE` for each top-level test.
+2. Put a brief Doxygen block immediately before the `TEST_CASE` and name the real production API and behavior under test.
+3. Put each `TEST_CASE` in its production component's leaf unit-test group, such as `stringUtils_unit_tests`.
+4. Call the production API directly in the test body so Doxygen can add the test to the API's `Referenced by` list.
+5. If a fixture, wrapper, or macro hides the production call, add a reference-only call guarded by `#ifdef __DOXY_ONLY__`.
+6. Ensure the directory containing the test source is included in `mxlib_doxygen.in`.
+7. For a header-only class-template placeholder, explicitly instantiate an unambiguous supported specialization in a
+   Doxygen-hidden block so non-template member bodies are compile checked and can emit coverage counters. Do not
+   duplicate a specialization already owned by a production translation unit, and do not present this compile check as
+   a behavioral assertion.
 
 
 @}

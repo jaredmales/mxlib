@@ -32,6 +32,9 @@ void requireComplexEqual( const std::complex<double> &actual, /**< [in] value pr
 /** Exercises mx::AO::analysis::clGainOpt::Ti and the public transfer-function calculations after the trigonometric
  * cache has already been populated.
  */
+/**
+ * \ingroup clGainOpt_unit_tests
+ */
 TEST_CASE( "Gain optimizer recomputes transfer functions after changing Ti", "[ao::analysis::clGainOpt]" )
 {
     constexpr double initialTi = 0.001;
@@ -124,6 +127,9 @@ TEST_CASE( "Gain optimizer recomputes transfer functions after changing Ti", "[a
 
 /// Verify that maximum-stable-gain calculation interpolates a bracketed pure-integrator Nyquist crossing.
 /** Exercises mx::AO::analysis::clGainOpt::maxStableGain and its crossing diagnostics. */
+/**
+ * \ingroup clGainOpt_unit_tests
+ */
 TEST_CASE( "Gain optimizer interpolates a pure-integrator stability crossing", "[ao::analysis::clGainOpt]" )
 {
     optimizerT optimizer( 0.001, 0.0015 );
@@ -150,6 +156,9 @@ TEST_CASE( "Gain optimizer interpolates a pure-integrator stability crossing", "
 
 /// Verify that maximum-stable-gain calculation reports invalid grids and missing crossings.
 /** Exercises mx::AO::analysis::clGainOpt::maxStableGain failure statuses without sentinel gain values. */
+/**
+ * \ingroup clGainOpt_unit_tests
+ */
 TEST_CASE( "Gain optimizer reports missing stability crossings", "[ao::analysis::clGainOpt]" )
 {
     optimizerT optimizer( 0.001, 0.0015 );
@@ -170,6 +179,9 @@ TEST_CASE( "Gain optimizer reports missing stability crossings", "[ao::analysis:
 /// Verify that optimum-gain calculation enforces its interval and reports termination state.
 /** Exercises both mx::AO::analysis::clGainOpt::optGainOpenLoop overloads for small intervals, invalid intervals,
  * stability failure, and forced iteration exhaustion.
+ */
+/**
+ * \ingroup clGainOpt_unit_tests
  */
 TEST_CASE( "Gain optimizer reports minimizer termination", "[ao::analysis::clGainOpt]" )
 {

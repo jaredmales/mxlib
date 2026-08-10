@@ -1,8 +1,16 @@
+/** \file templateBLAS_test.cpp
+ *  \brief Tests the typed BLAS wrappers.
+ */
+
 #include "../../catch2/catch.hpp"
 
 #include "../../../include/math/templateBLAS.hpp"
 
-SCENARIO( "testing scal", "[templateBLAS]" )
+/// Verify typed scal wrappers for supported real and complex precisions.
+/**
+ * \ingroup templateBLAS_unit_tests
+ */
+TEST_CASE( "testing scal", "[templateBLAS]" )
 {
     GIVEN( "a precision" )
     {

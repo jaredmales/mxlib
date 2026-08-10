@@ -1,7 +1,17 @@
+/** \file pywfsSlopeReconstructor.hpp
+ * \brief Declares the pyramid-wavefront-sensor slope reconstructor.
+ * \author Jared R. Males (jaredmales@gmail.com)
+ */
+
 #ifndef __pywfsSlopeReconstructor_hpp__
 #define __pywfsSlopeReconstructor_hpp__
 
-#include <mx/improc/eigenCube.hpp>
+#include <string>
+
+#include "../../ao/aoPaths.hpp"
+#include "../../improc/eigenCube.hpp"
+#include "../../ioutils/fits/fitsFile.hpp"
+#include "../../wfp/imagingUtils.hpp"
 
 namespace mx
 {
@@ -282,24 +292,24 @@ void pywfsSlopeReconstructor<floatT>::detCols( int dc )
 template <typename floatT>
 void pywfsSlopeReconstructor<floatT>::loadRecon( std::string fname )
 {
-    improc::fitsFile<floatT> ff;
-    improc::fitsHeader head;
+    fits::fitsFile<floatT> ff;
+    fits::fitsHeader<> head;
 
-    ff.read( fname, _recon, head );
+    ff.read( _recon, head, fname );
 
-    _maskRadius = head["MASKRAD"].Value<floatT>();
-    _maskObscuration = head["MASKOBS"].Value<floatT>();
-    _maskFile = head["MASKFILE"].String();
+    _maskRadius = head["MASKRAD"].value<floatT>();
+    _maskObscuration = head["MASKOBS"].value<floatT>();
+    _maskFile = head["MASKFILE"].value<std::string>();
 
     if( _maskFile != "" )
         _maskType = 1;
 
-    _calAmp = head["CALAMP"].Value<floatT>();
+    _calAmp = head["CALAMP"].value<floatT>();
 
-    _nModes = head["NMODES"].Value<int>();
+    _nModes = head["NMODES"].value<int>();
 
-    _detRows = head["DETROWS"].Int();
-    _detCols = head["DETCOLS"].Int();
+    _detRows = head["DETROWS"].value<int>();
+    _detCols = head["DETCOLS"].value<int>();
 
     _maskMade = false;
 }
@@ -309,10 +319,10 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
 {
     if( _maskType == 1 )
     {
-        improc::fitsFile<floatT> ff;
+        fits::fitsFile<floatT> ff;
 
         std::cerr << "Loading Mask: " << _maskFile << "\n";
-        ff.read( _maskFile, _quadMask );
+        ff.read( _quadMask, _maskFile );
     }
     {
         _quadMask.resize( 0.5 * _detRows / _binFact, 0.5 * _detCols / _binFact );
@@ -323,7 +333,7 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
 
     _maskMade = true;
 
-    improc::fitsFile<floatT> ff;
+    fits::fitsFile<floatT> ff;
     ff.write( "quadMask.fits", _quadMask );
 }
 
@@ -460,8 +470,8 @@ void pywfsSlopeReconstructor<floatT>::accumulateRMat( int i, measurementT &measu
 template <typename floatT>
 void pywfsSlopeReconstructor<floatT>::saveRMat( std::string fname )
 {
-    improc::fitsFile<floatT> ff;
-    improc::fitsHeader head;
+    fits::fitsFile<floatT> ff;
+    fits::fitsHeader<> head;
 
     if( _maskType == 1 )
     {
@@ -485,8 +495,8 @@ void pywfsSlopeReconstructor<floatT>::saveRMat( std::string fname )
 template <typename floatT>
 void pywfsSlopeReconstructor<floatT>::saveRImages( std::string fname )
 {
-    improc::fitsFile<floatT> ff;
-    improc::fitsHeader head;
+    fits::fitsFile<floatT> ff;
+    fits::fitsHeader<> head;
 
     if( _maskType == 1 )
     {

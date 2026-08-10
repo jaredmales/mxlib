@@ -1,4 +1,5 @@
-/** \file fitsFile_test.cpp
+/** \file fitsHeader_test.cpp
+ * \brief Tests FITS-header value extraction.
  */
 #include "../../../catch2/catch.hpp"
 

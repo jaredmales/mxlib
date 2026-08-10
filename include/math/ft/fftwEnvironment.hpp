@@ -44,7 +44,7 @@ namespace ft
 
 mxlib will manage the FFTW environment for you, which really means importing and exporting
 wisdom and cleaning up memory.  This can be done in a simple way using
-\ref mx::math::fft::fftwEnvironment.
+\ref mx::math::ft::fftwEnvironment.
 To make the best use of this, create a directory to store FFTW wisdom.  The typical choice is
 `$(HOME)/.fftw`
 
@@ -53,7 +53,7 @@ Then add the environment variable to your bash profile (i.e. in `.bash_profile` 
 export MXFFTW_WISDOM=/path/to/.fftw
 \endverbatim
 
-Using this facility requires only that you create an object of type \ref mx::math::fft::fftwEnvironment
+Using this facility requires only that you create an object of type \ref mx::math::ft::fftwEnvironment
 at the beginning of the program for the real floating point type you are using. E.g.:
 \code
 

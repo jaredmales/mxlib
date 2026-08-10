@@ -50,7 +50,6 @@ namespace func
  *
  * \tparam realT is the floating point type used for arithmetic.
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>
@@ -66,7 +65,6 @@ realT airyPattern( realT x /**< [in] is the separation in units of \f$ \lambda/D
  *
  * \tparam realT is the floating point type used for arithmetic.
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>
@@ -86,7 +84,6 @@ realT airyPattern( realT x,  ///< [in] is the separation in units of  \f$ \lambd
  *
  * \tparam realT is the floating point type used for arithmetic.
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>
@@ -148,7 +145,6 @@ void airyPattern2D( realT *arr,     ///< [out] is the allocated array to fill in
  *
  * \returns the value of the profile at x, in units of fractional flux per unit area.
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>
@@ -165,7 +161,6 @@ realT seeingHalo(
  *
  * \returns the fraction of enclosed power at radius x
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>
@@ -198,7 +193,6 @@ realT apeInt( realT x, void *params )
  *
  * \returns the fraction of enclosed power at radius x
  *
- * \ingroup psfs
  * \ingroup gen_math_airy_pattern
  */
 template <typename realT>

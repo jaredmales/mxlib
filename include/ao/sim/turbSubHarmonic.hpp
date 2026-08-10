@@ -1,4 +1,4 @@
-/** \file turbSubHarm.hpp
+/** \file turbSubHarmonic.hpp
  * \brief A class to manage low-frequency sub-harmonic phase screen generation in atmospheric turbulence.
  *
  * \author Jared R. Males (jaredmales@gmail.com)
@@ -30,8 +30,6 @@
 #define mx_AO_sim_turbSubHarm_hpp
 
 #include <vector>
-
-#include "turbAtmosphere.hpp"
 
 #include "../../base/changeable.hpp"
 

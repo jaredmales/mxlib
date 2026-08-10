@@ -1,4 +1,5 @@
 /** \file randomT_test.cpp
+ * \brief Tests random-number generators and distributions.
  */
 #include "../../catch2/catch.hpp"
 
@@ -8,15 +9,17 @@
 
 #include "../../../include/math/randomT.hpp"
 
-/** \test Scenario: Verify compilation and basic operation of randomT with std::distributions.
+/** Verify compilation and basic operation of randomT with std::distributions.
  *
  * Basic tests include verification that seeding works.  Note that there is the very slight
  * possibility that normal operation could return two consecutive variates with the same value
  * which would cause some of the below tests to fail.  Will probably never happen . . .
  *
- * \anchor tests_math_randomT_basic
  */
-SCENARIO( "Verify compilation and basic operation of randomT with std::distributions", "[math::randomT]" )
+/**
+ * \ingroup randomT_unit_tests
+ */
+TEST_CASE( "Verify compilation and basic operation of randomT with std::distributions", "[math::randomT]" )
 {
     GIVEN( "a uniform distribution is desired" )
     {
@@ -97,16 +100,18 @@ SCENARIO( "Verify compilation and basic operation of randomT with std::distribut
     }
 }
 
-/** \test Scenario: Verify compilation and basic operation of randomT with the Laplace distribution
+/** Verify compilation and basic operation of randomT with the Laplace distribution
  *
  * Basic tests include verification that seeding works.  Note that there is the very slight
  * possibility that normal operation could return two consecutive variates with the same value
  * which would cause some of the below tests to fail.  Will probably never happen . . .
  *
- * \anchor tests_math_randomT_basic_laplace
  */
-SCENARIO( "Verify compilation and basic operation of randomT with the Laplace distribution",
-          "[math::laplace_distribution]" )
+/**
+ * \ingroup randomT_unit_tests
+ */
+TEST_CASE( "Verify compilation and basic operation of randomT with the Laplace distribution",
+           "[math::laplace_distribution]" )
 {
     GIVEN( "a laplace distribution is desired" )
     {

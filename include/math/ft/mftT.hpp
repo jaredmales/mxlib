@@ -30,6 +30,7 @@
 #pragma GCC system_header
 #include <Eigen/Dense>
 
+#include "fftwTemplates.hpp"
 #include "ftTypes.hpp"
 #include "../../math/constants.hpp"
 

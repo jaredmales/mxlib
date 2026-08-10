@@ -350,7 +350,6 @@ MXLAPACK_INT syevr<double>( char JOBZ,
   * \tparam dataT is the data type of the arrays, and determines which underlying Lapack routine is called.
   *
   * \param[in] JOBU
-  * \parblock
     (char) Specifies options for computing all or part of the matrix U: <br />
      = 'A':  all M columns of U are returned in array U  <br />
      = 'S':  the first min(m,n) columns of U (the left singular vectors)
@@ -361,7 +360,6 @@ MXLAPACK_INT syevr<double>( char JOBZ,
            computed.
 
   * \param[in] JOBVT
-  * \parblock
     (char) Specifies options for computing all or part of the matrix  V**T:
     = 'A':  all N rows of V**T are returned in the array VT <br />
     = 'S':  the first min(m,n) rows of V**T (the right singular
@@ -374,17 +372,14 @@ MXLAPACK_INT syevr<double>( char JOBZ,
     JOBVT and JOBU cannot both be 'O'.
   *
   * \param[in] M
-  * \parblock
     (MXLAPACK_INT)
     The number of rows of the input matrix A.  M >= 0.
   *
   * \param[in] N
-  * \parblock
     (MXLAPACK_INT)
     The number of columns of the input matrix A.  N >= 0.
   *
   * \param[in,out] A
-  * \parblock
      (dataT *, dimension (LDA,N))
      On entry: the M-by-N matrix A.<br />
      On exit:<br />
@@ -398,17 +393,14 @@ MXLAPACK_INT syevr<double>( char JOBZ,
                      are destroyed.
   *
   * \param[in] LDA
-  * \parblock
     (MXLAPACK_INT)
     The leading dimension of the array A.  LDA >= max(1,M).
   *
   * \param[out] S
-  * \parblock
      (dataT *, dimension (min(M,N))
      The singular values of A, sorted so that S(i) >= S(i+1).
   *
   * \param[out] U
-  * \parblock
      (dataT *, dimension (LDU,UCOL))
      (LDU,M) if JOBU = 'A' or (LDU,min(M,N)) if JOBU = 'S'.<br />
      If JOBU = 'A', U contains the M-by-M orthogonal matrix U<br />
@@ -417,14 +409,12 @@ MXLAPACK_INT syevr<double>( char JOBZ,
      if JOBU = 'N' or 'O', U is not referenced.
   *
   * \param[in] LDU
-  * \parblock
      (MXLAPACK_INT)
      The leading dimension of the array U.  <br />
      LDU >= 1<br />
      if JOBU == 'S' or 'A', LDU >= M.
   *
   * \param[out] VT
-  * \parblock
      (dataT *, dimension (LDVT,N))
      If JOBVT = 'A', VT contains the N-by-N orthogonal matrix
      V**T <br />
@@ -433,7 +423,6 @@ MXLAPACK_INT syevr<double>( char JOBZ,
      if JOBVT = 'N' or 'O', VT is not referenced.
   *
   * \param[in] LDVT
-  * \parblock
      (MXLAPACK_INT)
      The leading dimension of the array VT. <br />
      LDVT >= 1<br />
@@ -441,7 +430,6 @@ MXLAPACK_INT syevr<double>( char JOBZ,
      if JOBVT = 'S', LDVT >= min(M,N).
   *
   * \param[out] WORK
-   \parblock
      (dataT *, dimension (MAX(1,LWORK)) )<br />
      On exit, if INFO = 0, WORK[1] returns the optimal LWORK<br />
      if INFO > 0, WORK(2:MIN(M,N)) contains the unconverged
@@ -451,7 +439,6 @@ MXLAPACK_INT syevr<double>( char JOBZ,
      as A, and singular vectors related by U and VT.
   *
   * \param[in] LWORK
-  \parblock
      (MXLAPACK_INT)
      The dimension of the array WORK.<br />
      LWORK >= MAX(1,5*MIN(M,N)) for the paths (see comments inside code):
@@ -464,16 +451,13 @@ MXLAPACK_INT syevr<double>( char JOBZ,
      only calculates the optimal size of the WORK array, returns
      this value as the first entry of the WORK array, and no error
      message related to LWORK is issued by XERBLA.
-  * \endparblock
   * \returns
-  * \parblock
      =0:  successful exit. <br />
      <0:  if INFO = -i, the i-th argument had an illegal value. <br />
      >0:  if SBDSQR did not converge, INFO specifies how many
            superdiagonals of an MXLAPACK_INTermediate bidiagonal form B
            did not converge to zero. See the description of WORK
           above for details.
-    \endparblock
   *
   * \ingroup template_lapack
   */
@@ -558,7 +542,7 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
 
  where \f$ \Sigma \f$ is an M-by-N matrix which is zero except for its
  min(m,n) diagonal elements, \f$ U \f$ is an M-by-M orthogonal matrix, and
- \f$ V  is an N-by-N orthogonal matrix.  The diagonal elements of \f$ \Sigma \f$
+ \f$ V \f$ is an N-by-N orthogonal matrix.  The diagonal elements of \f$ \Sigma \f$
  are the singular values of A; they are real and non-negative, and
  are returned in descending order.  The first min(m,n) columns of
  U and V are the left and right singular vectors of A.
@@ -571,10 +555,8 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
  digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
  Cray-2. It could conceivably fail on hexadecimal or decimal machines
  without guard digits, but the authors know of none.
- \endparblock
 
  \param[in] JOBZ
- \parblock
           JOBZ is CHARACTER*1
           Specifies options for computing all or part of the matrix U:
           = 'A':  all M columns of U and all N rows of V**T are
@@ -590,15 +572,12 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
                   in the array A;
           = 'N':  no columns of U or rows of V**T are computed.
  \param[in] M
- \parblock
           M is INTEGER
           The number of rows of the input matrix A.  M >= 0.
  \param[in] N
- \parblock
           N is INTEGER
           The number of columns of the input matrix A.  N >= 0.
  \param[in,out] A
- \parblock
           A is REAL array, dimension (LDA,N)
           On entry, the M-by-N matrix A.
           On exit,
@@ -610,18 +589,15 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
                           rowwise) otherwise.
           if JOBZ .ne. 'O', the contents of A are destroyed.
  \param[in] LDA
- \parblock
           LDA is INTEGER
           The leading dimension of the array A.  LDA >= max(1,M).
 
 
  \param[out] S
- \parblock
           S is REAL array, dimension (min(M,N))
           The singular values of A, sorted so that S(i) >= S(i+1).
 
  \param[out] U
- \parblock
           U is REAL array, dimension (LDU,UCOL)
           UCOL = M if JOBZ = 'A' or JOBZ = 'O' and M < N;
           UCOL = min(M,N) if JOBZ = 'S'.
@@ -632,13 +608,11 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
           if JOBZ = 'O' and M >= N, or JOBZ = 'N', U is not referenced.
 
  \param[in] LDU
- \parblock
           LDU is INTEGER
           The leading dimension of the array U.  LDU >= 1; if
           JOBZ = 'S' or 'A' or JOBZ = 'O' and M < N, LDU >= M.
 
  \param[out] VT
- \parblock
           VT is REAL array, dimension (LDVT,N)
           If JOBZ = 'A' or JOBZ = 'O' and M >= N, VT contains the
           N-by-N orthogonal matrix V**T;
@@ -647,19 +621,16 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
           if JOBZ = 'O' and M < N, or JOBZ = 'N', VT is not referenced.
 
  \param[in] LDVT
- \parblock
           LDVT is INTEGER
           The leading dimension of the array VT.  LDVT >= 1; if
           JOBZ = 'A' or JOBZ = 'O' and M >= N, LDVT >= N;
           if JOBZ = 'S', LDVT >= min(M,N).
 
  \param[out] WORK
- \parblock
           WORK is REAL array, dimension (MAX(1,LWORK))
           On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
 
  \param[in] LWORK
- \parblock
           LWORK is INTEGER
           The dimension of the array WORK. LWORK >= 1.
           If JOBZ = 'N',
@@ -674,16 +645,12 @@ href="http://www.netlib.org/lapack/explore-html/d4/dca/group__real_g_esing.html#
           returns the optimal LWORK.
 
  \param[out] IWORK
- \parblock
           IWORK is INTEGER array, dimension (8*min(M,N))
- \endparblock
 
  \returns
- \parblock
           = 0:  successful exit.<br />
           < 0:  if INFO = -i, the i-th argument had an illegal value.<br />
           > 0:  SBDSDC did not converge, updating process failed.
- \endparblock
 
 \ingroup template_lapack
 

@@ -89,6 +89,9 @@ struct workspaceOwnershipTemporalPsdT : public temporalPsdT
 
 /// Verify that Fourier temporal PSD evaluators uniquely own movable GSL workspaces.
 /** Exercises the ownership contract of mx::AO::analysis::fourierTemporalPSD. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD workspace ownership is move-only", "[ao::analysis::fourierTemporalPSD]" )
 {
     STATIC_REQUIRE_FALSE( std::is_copy_constructible_v<temporalPsdT> );
@@ -109,6 +112,9 @@ TEST_CASE( "Fourier temporal PSD workspace ownership is move-only", "[ao::analys
 /// Verify that public Fourier temporal PSD calculations reject malformed inputs before modifying output.
 /** Exercises mx::AO::analysis::fourierTemporalPSD::singleLayerPSD and
  * mx::AO::analysis::fourierTemporalPSD::multiLayerPSD precondition handling. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD validates public calculation inputs", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -230,6 +236,9 @@ TEST_CASE( "Fourier temporal PSD validates public calculation inputs", "[ao::ana
 
 /// Verify that GSL workspace allocation failure is returned without evaluating or modifying the PSD.
 /** Exercises mx::AO::analysis::fourierTemporalPSD::singleLayerPSD with an injected failing workspace allocator. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD reports workspace allocation failure", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -250,6 +259,9 @@ TEST_CASE( "Fourier temporal PSD reports workspace allocation failure", "[ao::an
 
 /// Verify that PSD-grid generation validates its public inputs before creating output.
 /** Exercises mx::AO::analysis::fourierTemporalPSD::makePSDGrid precondition handling. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD validates grid-generation inputs", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -316,6 +328,9 @@ TEST_CASE( "Fourier temporal PSD validates grid-generation inputs", "[ao::analys
 
 /// Verify that PSD-grid generation propagates calculation and output failures.
 /** Exercises mx::AO::analysis::fourierTemporalPSD::makePSDGrid failure handling after successful preflight. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD reports grid-generation failures", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -361,6 +376,9 @@ TEST_CASE( "Fourier temporal PSD reports grid-generation failures", "[ao::analys
  * mx::AO::analysis::aoAtmosphere::loadGuyon2005, mx::AO::analysis::aoAtmosphere::loadLCO,
  * mx::AO::analysis::aoAtmosphere::setSingleLayer, and
  * mx::AO::analysis::fourierTemporalPSD::singleLayerPSD. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD enforces atmosphere validity at calculation", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -409,6 +427,9 @@ TEST_CASE( "Fourier temporal PSD enforces atmosphere validity at calculation", "
 
 /// Verify temporal-PSD tail initialization at and below its nominal averaging width.
 /** Exercises zero, one, 49, and 50 exactly integrated frequency bins. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD handles short exact tails", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;
@@ -471,6 +492,9 @@ TEST_CASE( "Fourier temporal PSD handles short exact tails", "[ao::analysis::fou
 /// Verify aggregation and formatting of Fourier temporal-PSD quadrature diagnostics.
 /** Exercises `fourierTemporalPSDReport::record`, `fourierTemporalPSDReport::merge`, and
  * `fourierTemporalPSDReport::write` with multiple GSL statuses and atmospheric layers. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD aggregates quadrature diagnostics", "[ao::analysis::fourierTemporalPSD]" )
 {
     temporalPsdT::reportT report;
@@ -504,6 +528,9 @@ TEST_CASE( "Fourier temporal PSD aggregates quadrature diagnostics", "[ao::analy
 
 /// Verify permissive and strict handling of GSL quadrature statuses.
 /** Exercises the status policy used by `fourierTemporalPSD::singleLayerPSD`. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD applies quadrature policy", "[ao::analysis::fourierTemporalPSD]" )
 {
     using mx::AO::analysis::fourierTemporalPSDPolicy;
@@ -523,6 +550,9 @@ TEST_CASE( "Fourier temporal PSD applies quadrature policy", "[ao::analysis::fou
 
 /// Verify multilayer error propagation and restoration of the caller's GSL handler.
 /** Exercises `fourierTemporalPSD::multiLayerPSD` with an invalid basis. */
+/**
+ * \ingroup fourierTemporalPSD_unit_tests
+ */
 TEST_CASE( "Fourier temporal PSD propagates multilayer errors", "[ao::analysis::fourierTemporalPSD]" )
 {
     aoSystemT aoSystem;

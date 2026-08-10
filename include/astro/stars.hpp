@@ -12,6 +12,8 @@
 #ifndef mx_astro_stars_hpp
 #define mx_astro_stars_hpp
 
+#include <cmath>
+
 #include "../ioutils/stringUtils.hpp"
 #include "../ioutils/readColumns.hpp"
 
@@ -475,7 +477,7 @@ struct mainSequence
             return -999;
         }
 
-        return floor( 2 * interpSpTfmT( Teff ) + 0.5 ) / 2; // round to nearest 0.5 types.
+        return std::floor( 2 * interpSpTfmT( Teff ) + 0.5 ) / 2; // round to nearest 0.5 types.
     }
 };
 

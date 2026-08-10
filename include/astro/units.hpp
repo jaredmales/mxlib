@@ -21,7 +21,7 @@ namespace units
 
 /** \defgroup astrounits Unit Conversions
  * \brief Definitions of unit coversions for physical constants.
- * \ingroup phyconstants
+ * \ingroup constants
  *
  * These types provide the ratios to convert from SI units to the desired system.
  *

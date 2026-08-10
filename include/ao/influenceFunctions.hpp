@@ -12,10 +12,10 @@
 #include "../math/func/gaussian.hpp"
 #include "../ioutils/fits/fitsFile.hpp"
 
-#include <mx/math/eigenLapack.hpp>
+#include "../math/eigenLapack.hpp"
 // #include <mx/gnuPlot.hpp>
-#include <mx/ioutils/pout.hpp>
-#include <mx/math/randomT.hpp>
+#include "../ioutils/pout.hpp"
+#include "../math/randomT.hpp"
 
 #include <vector>
 
@@ -457,7 +457,7 @@ void m2cMatrix( Eigen::Array<realT, -1, -1> &M2c, Eigen::Array<realT, -1, -1> &A
 
 /// Calculate the modes-to-commands matrix for a set of modes
 /**
- * A wrapper for \ref m2cMatrix, where the various matrices are here specified with names, which
+ * A wrapper for \ref mx::AO::m2cMatrix, where the various matrices are here specified with names, which
  * in turn generate mx::AO paths
  *
  * \param[in] dmName is the name of the deformable mirror

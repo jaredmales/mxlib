@@ -1,6 +1,8 @@
-/** \file ffTcuda_test.cpp
+/** \file fftTcuda_test.cpp
+ * \brief Tests CUDA FFT transforms.
  */
 #include "../../../catch2/catch.hpp"
+#include "../../../cudaTestUtils.hpp"
 
 #define MX_NO_ERROR_REPORTS
 
@@ -12,7 +14,7 @@
 #if 0
 /// 1D FFT with FFTW
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
 {
@@ -135,12 +137,21 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
 }
 #endif
 
+namespace unitTest::math::ft::fftTcudaTest
+{
+
 /// 2D c2c FFT with cuFFT
 /**
- * \ingroup math_ft_fftTcuda_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "2D c2c FFT with cuFFT, float", "[math::ft]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     srand( time( 0 ) );
 
     SECTION( "out-of-place, forward, default constructed, raw interface" )
@@ -296,10 +307,5 @@ TEST_CASE( "2D c2c FFT with cuFFT, float", "[math::ft]" )
         }
             */
 }
-#ifdef HASQUAD
 
-SECTION( "quad" )
-{
-}
-
-#endif // HASQUD
+} // namespace unitTest::math::ft::fftTcudaTest

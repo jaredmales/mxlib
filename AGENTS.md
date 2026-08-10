@@ -60,7 +60,8 @@ Follow these code style and documentation rules exactly.
 - Include the primary user prompt verbatim (or a faithful condensed version if it is extremely long).
 
 12) Unit Test Documentation
-- Add a brief Doxygen block immediately before every Catch2 `TEST_CASE` or `SCENARIO`.
+- Use Catch2 `TEST_CASE` for every top-level test. Do not add or retain `SCENARIO` or `SCENARIO_METHOD` declarations.
+- Add a brief Doxygen block immediately before every Catch2 `TEST_CASE`.
 - State the behavior being verified and identify the real production API under test.
 - Let Doxygen discover real calls in the test body so the test appears in each production API's `Referenced by` list.
 - Do not use `\test` or prose-only `\ref` commands to manufacture test-to-API links.

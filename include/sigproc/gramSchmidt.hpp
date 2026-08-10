@@ -29,6 +29,8 @@
 #ifndef gramSchmidt_hpp
 #define gramSchmidt_hpp
 
+#include <iostream>
+
 namespace mx
 {
 namespace sigproc

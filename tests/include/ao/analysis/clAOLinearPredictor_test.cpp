@@ -55,7 +55,10 @@ mx::error_t runSearch( predictorT &predictor,            /**< [in,out] predictor
 
 /// Verify that invalid linear-predictor regularization controls are rejected before evaluation.
 /** Exercises validation of the regularization interval, spacing, refinement divisor, and iteration limit. */
-SCENARIO( "Linear-predictor regularization rejects invalid search controls", "[ao::analysis::clAOLinearPredictor]" )
+/**
+ * \ingroup clAOLinearPredictor_unit_tests
+ */
+TEST_CASE( "Linear-predictor regularization rejects invalid search controls", "[ao::analysis::clAOLinearPredictor]" )
 {
     // clang-format off
 #ifdef __DOXY_ONLY__
@@ -147,7 +150,10 @@ SCENARIO( "Linear-predictor regularization rejects invalid search controls", "[a
 
 /// Verify that linear-predictor regularization reports how its search terminated.
 /** Exercises completed, boundary-limited, and iteration-limited regularization searches. */
-SCENARIO( "Linear-predictor regularization reports search termination", "[ao::analysis::clAOLinearPredictor]" )
+/**
+ * \ingroup clAOLinearPredictor_unit_tests
+ */
+TEST_CASE( "Linear-predictor regularization reports search termination", "[ao::analysis::clAOLinearPredictor]" )
 {
     // clang-format off
 #ifdef __DOXY_ONLY__

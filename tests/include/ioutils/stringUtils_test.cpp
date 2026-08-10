@@ -1,4 +1,5 @@
 /** \file stringUtils_test.cpp
+ * \brief Tests string-conversion utilities.
  */
 #include "../../catch2/catch.hpp"
 

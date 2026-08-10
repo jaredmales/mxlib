@@ -27,6 +27,10 @@
 #ifndef imageXCorrDiscrete_hpp
 #define imageXCorrDiscrete_hpp
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 #include "../mxlib.hpp"
 #include "../math/fit/fitGaussian.hpp"
 #include "imageUtils.hpp"
@@ -57,7 +61,7 @@ enum class xcorrPeakMethod
  * reference at the center of the array.
  *
  * Three peak finding methods are provided.  xcorrPeakMethod::centroid uses center of light,
- * xcorrPeakMethod::centroid uses Gaussian centroiding, and xcorrPeakMethod::interp uses interpolation
+ * xcorrPeakMethod::gaussfit uses Gaussian centroiding, and xcorrPeakMethod::interp uses interpolation
  * to find the peak to a given tolerance.
  *
  * \tparam _ccImT is the Eigen-like array type used for image processing.  See typedefs.
@@ -87,7 +91,7 @@ class imageXCorrDiscrete
 
     ccImT m_ccIm; ///< The cross-correlation image
 
-    ccImT m_magIm; ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interp
+    ccImT m_magIm; ///< The magnified image, or empty when interpolation falls back to the discrete peak.
 
     ///@}
 
@@ -184,7 +188,12 @@ class imageXCorrDiscrete
     const ccImT &magIm();
 
     /// Conduct the cross correlation to a specified tolerance
-    /**
+    /** Cubic interpolation requires at least five correlation samples in each
+     * dimension and cannot interpolate a maximum on the outer boundary. It
+     * also pads unsupported magnified borders with zero, which would dominate
+     * a non-positive correlation surface. In these cases, this falls back to
+     * the discrete correlation maximum and leaves `magIm()` empty.
+     *
      * \returns 0 on success
      * \returns -1 on error
      */
@@ -228,6 +237,13 @@ typename ccImT::Scalar imageXCorrDiscrete<ccImT>::tol()
 template <class ccImT>
 void imageXCorrDiscrete<ccImT>::tol( Scalar nt )
 {
+    m_tol = nt;
+    m_magSize = 0;
+
+    if( !math::isFinite( nt ) || nt <= 0 || m_maxLag <= 0 )
+    {
+        return;
+    }
 
     m_magSize = ceil( ( ( 2. * m_maxLag + 1 ) - 1.0 ) / nt ) + 1;
 
@@ -257,9 +273,9 @@ int imageXCorrDiscrete<ccImT>::refIm( const ccImT &im )
     ccImT im0;
     if( m_haveMask )
     {
-        if( im.rows() != m_maskIm.rows() && im.cols() != m_maskIm.cols() )
+        if( im.rows() != m_maskIm.rows() || im.cols() != m_maskIm.cols() )
         {
-            internal::mxlib_error_report(error_t::sizeerr, "reference and mask are not the same size" );
+            internal::mxlib_error_report( error_t::sizeerr, "reference and mask are not the same size" );
             return -1;
         }
 
@@ -270,7 +286,7 @@ int imageXCorrDiscrete<ccImT>::refIm( const ccImT &im )
         im0 = im;
     }
 
-    Scalar m = imageMean( im0 );
+    Scalar m = imageMean<Scalar>( im0 );
     Scalar v = imageVariance( im0, m );
     m_refIm = ( im0 - m ) / sqrt( v );
 
@@ -317,8 +333,8 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar &xShift, Scalar &yShift, const
         return -1;
     }
     // 16/4    15/4   16/3   15/3
-    int maxLag_r = ( im.rows() - m_refIm.rows() ); // 6       5       6      6
-    int maxLag_c = ( im.cols() - m_refIm.cols() );
+    int maxLag_r = ( im.rows() - m_refIm.rows() ) / 2; // 6       5       6      6
+    int maxLag_c = ( im.cols() - m_refIm.cols() ) / 2;
 
     if( maxLag_r > m_maxLag && m_maxLag != 0 )
         maxLag_r = m_maxLag;
@@ -344,7 +360,7 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar &xShift, Scalar &yShift, const
                 m_normIm = im.block( r0, c0, m_refIm.rows(), m_refIm.cols() );
             }
 
-            Scalar m = imageMean( m_normIm );
+            Scalar m = imageMean<Scalar>( m_normIm );
             Scalar sv = sqrt( imageVariance( m_normIm, m ) );
             if( sv <= 0 )
             {
@@ -373,19 +389,81 @@ int imageXCorrDiscrete<ccImT>::operator()( Scalar &xShift, Scalar &yShift, const
     }
     else if( m_peakMethod == xcorrPeakMethod::interp )
     {
-        m_magIm.resize( m_magSize, m_magSize );
+        if( !math::isFinite( m_tol ) || m_tol <= 0 )
+        {
+            internal::mxlib_error_report( error_t::invalidarg, "interpolation tolerance must be finite and positive" );
+            return -1;
+        }
+
+        int xPeak, yPeak;
+        const Scalar peakValue = m_ccIm.maxCoeff( &xPeak, &yPeak );
+        if( m_ccIm.rows() < 5 || m_ccIm.cols() < 5 || !( peakValue > 0 ) || !math::isFinite( peakValue ) ||
+            xPeak == 0 || yPeak == 0 || xPeak == m_ccIm.rows() - 1 || yPeak == m_ccIm.cols() - 1 )
+        {
+            m_magIm.resize( 0, 0 );
+            m_magSize = 0;
+            xShift = xPeak - maxLag_r;
+            yShift = yPeak - maxLag_c;
+            return 0;
+        }
+
+        const Scalar magRowsScalar = ceil( ( m_ccIm.rows() - 1.0 ) / m_tol ) + 1.0;
+        const Scalar magColsScalar = ceil( ( m_ccIm.cols() - 1.0 ) / m_tol ) + 1.0;
+        if( !math::isFinite( magRowsScalar ) || !math::isFinite( magColsScalar ) || magRowsScalar <= 1 ||
+            magColsScalar <= 1 || magRowsScalar > std::numeric_limits<int>::max() ||
+            magColsScalar > std::numeric_limits<int>::max() )
+        {
+            internal::mxlib_error_report( error_t::sizeerr, "invalid interpolated cross-correlation dimensions" );
+            return -1;
+        }
+
+        const int magRows = static_cast<int>( magRowsScalar );
+        const int magCols = static_cast<int>( magColsScalar );
+        m_magSize = std::max( magRows, magCols );
+        m_magIm.resize( magRows, magCols );
         imageMagnify( m_magIm, m_ccIm, cubicConvolTransform<Scalar>() );
         int x, y;
         m_magIm.maxCoeff( &x, &y );
-        xShift = x * m_tol - maxLag_r;
-        yShift = y * m_tol - maxLag_c;
+        const Scalar xScale = ( m_ccIm.rows() - 1.0 ) / ( m_magIm.rows() - 1.0 );
+        const Scalar yScale = ( m_ccIm.cols() - 1.0 ) / ( m_magIm.cols() - 1.0 );
+        xShift = x * xScale - maxLag_r;
+        yShift = y * yScale - maxLag_c;
     }
     else
     {
+        int xPeak, yPeak;
+        m_ccIm.maxCoeff( &xPeak, &yPeak );
+
+        int centroidHalfWidth = std::min( xPeak, static_cast<int>( m_ccIm.rows() ) - 1 - xPeak );
+        centroidHalfWidth = std::min( centroidHalfWidth, yPeak );
+        centroidHalfWidth =
+            std::min( centroidHalfWidth, static_cast<int>( m_ccIm.cols() ) - 1 - yPeak );
+
+        if( centroidHalfWidth == 0 )
+        {
+            xShift = xPeak - maxLag_r;
+            yShift = yPeak - maxLag_c;
+            return 0;
+        }
+
+        const int centroidWidth = 2 * centroidHalfWidth + 1;
+        const int x0 = xPeak - centroidHalfWidth;
+        const int y0 = yPeak - centroidHalfWidth;
+        m_magIm = m_ccIm.block( x0, y0, centroidWidth, centroidWidth );
+        m_magIm -= m_magIm.minCoeff();
+
+        const Scalar centroidWeight = m_magIm.sum();
+        if( !( centroidWeight > 0 ) || !math::isFinite( centroidWeight ) )
+        {
+            xShift = xPeak - maxLag_r;
+            yShift = yPeak - maxLag_c;
+            return 0;
+        }
+
         Scalar x, y;
-        imageCenterOfLight( x, y, m_ccIm );
-        xShift = x - maxLag_r;
-        yShift = y - maxLag_c;
+        imageCenterOfLight( x, y, m_magIm );
+        xShift = x + x0 - maxLag_r;
+        yShift = y + y0 - maxLag_c;
     }
 
     return 0;

@@ -234,6 +234,8 @@ struct calspecSpectrum
             return "1740346_nic_002.ascii";
         else if( name == "sun" || name == "sun_reference" )
             return "sun_reference_stis.002.asc";
+
+        return "";
     }
 
     /// Read a CALSPEC spectrum, which is a simple two column ASCII format.
@@ -296,8 +298,8 @@ struct picklesSpectrum
 /// Earth Albedo Spectra
 /** The spectra can be one of:
  * - "EPOXI" returns the apparent albedo spectrum from Cowan and Strait (2013) \cite cowan_2013.
- * - "RawEarthshine" returns the unormalized albedo spectrum measured using Earthshine by Turnbull et al (2006) \cite
- * turnbull_20016.
+ * - "RawEarthshine" returns the unnormalized albedo spectrum measured using Earthshine by Turnbull et al. (2006)
+ *   \cite turnbull_20016
  * - "Earthshine" returns the Earthshine spectrum normalized to match the EPOXI result of 0.27 in the 550 nm band.
  *
  * \ingroup astrophot_spectra
@@ -380,7 +382,7 @@ struct venusAlbedo
         if( name == "Venus" )
             return "venus_combined_albedo.dat";
 
-        mxlib_error_report<verboseT>( error_t::invalidarg, "name not recognized." );
+        internal::mxlib_error_report<verboseT>( error_t::invalidarg, "name not recognized." );
 
         return "";
     }

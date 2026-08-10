@@ -12,6 +12,9 @@
 /** Exercises the NaN and finite-value classifiers for float, double, and long double.
  * The same test applies to standard and fast-math builds.
  */
+/**
+ * \ingroup floatUtils_unit_tests
+ */
 TEST_CASE( "Floating-point classification handles finite and nonfinite values", "[math::floatUtils]" )
 {
     REQUIRE( mx::math::isFinite( std::numeric_limits<float>::max() ) );

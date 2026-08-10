@@ -1,4 +1,7 @@
-
+/** \file generate_error_t.cpp
+ * \brief Generates error_t.hpp from the configured mxlib error list.
+ * \author Jared Males
+ */
 
 #include <cerrno>
 #include <cstring>
@@ -9,11 +12,11 @@
 #include <format>
 #include <algorithm>
 
-#include "errno_info.hpp"
-#include "fits_status_info.hpp"
+#include <errno_info.hpp>
+#include <fits_status_info.hpp>
 
 #ifdef MXLIB_CUDA
-#include "cudaError_info.hpp"
+#include <cudaError_info.hpp>
 #endif
 
 int main()

@@ -42,7 +42,7 @@
 
 #include "../../math/constants.hpp"
 #include "../../math/floatUtils.hpp"
-#include "../../error/error_t.hpp"
+#include <error/error_t.hpp>
 
 // #define ALLOW_F_ZERO
 
@@ -860,7 +860,7 @@ std::complex<realT> clGainOpt<realT>::olXfer( int fi, complexT &H_dm, complexT &
             " "
             << m_H_con[i] << " " << m_H_del[i] << "\n";
                //exit(0);
-            }/**/
+            }*/
         }
 
         m_changed = false;

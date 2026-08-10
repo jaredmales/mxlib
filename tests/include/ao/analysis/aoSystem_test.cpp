@@ -1,4 +1,5 @@
 /** \file aoSystem_test.cpp
+ * \brief Tests adaptive-optics system configuration.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -13,7 +14,10 @@ using namespace mx::AO::analysis;
 
 /// Verify parsing of AO-system configuration settings.
 /** Exercises mx::AO::analysis::aoSystem::setupConfig and mx::AO::analysis::aoSystem::loadConfig. */
-SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
+/**
+ * \ingroup aoSystem_unit_tests
+ */
+TEST_CASE( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 {
     GIVEN( "no config file" )
     {
@@ -210,6 +214,9 @@ SCENARIO( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
 
 /// Verify that AO-system configuration loading propagates atmosphere validity.
 /** Exercises mx::AO::analysis::aoSystem::loadConfig and mx::AO::analysis::aoAtmosphere::setSingleLayer. */
+/**
+ * \ingroup aoSystem_unit_tests
+ */
 TEST_CASE( "AO-system configuration reports atmosphere validity", "[ao::analysis::aoSystem]" )
 {
     aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aoSystem;

@@ -1,4 +1,5 @@
 /** \file fitsFile_test.cpp
+ * \brief Tests FITS file I/O.
  */
 #include "../../../catch2/catch.hpp"
 

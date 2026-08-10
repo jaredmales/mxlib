@@ -1,4 +1,7 @@
-#define CATCH_CONFIG_MAIN
+/** \file appConfigurator_test.cpp
+ *  \brief Tests application configuration parsing.
+ */
+
 #include "../../catch2/catch.hpp"
 
 #include <fstream>
@@ -7,14 +10,11 @@
 
 using namespace mx::app;
 
-/*namespace test_unit
-{
-namespace appTest
-{
-namespace appConfigurator_test
-{*/
-
-SCENARIO( "config file parsing", "[appConfigurator]" )
+/// Verify that appConfigurator parses global, sectioned, and unused configuration entries.
+/**
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "config file parsing", "[appConfigurator]" )
 {
     GIVEN( "a basic config file" )
     {

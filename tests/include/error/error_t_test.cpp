@@ -1,11 +1,12 @@
 /** \file error_t_test.cpp
+ * \brief Tests error-code names, messages, and conversions.
  */
 #include "../../catch2/catch.hpp"
 
 #include "../../../include/error/error.hpp"
 
 #define MXLIBTEST_ERROR_T_TESTS
-#include "../../../include/error/error_t.hpp"
+#include <error/error_t.hpp>
 
 namespace unitTest
 {

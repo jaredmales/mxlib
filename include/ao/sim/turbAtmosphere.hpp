@@ -96,14 +96,14 @@ struct turbAtmosphere : public base::changeable<turbAtmosphere<_aoSystemT, _verb
 
     uint32_t m_buffSz{ 0 };           ///< Buffer to apply around wavefront for interpolation.
 
-    aoSystemT *m_aosys{ nullptr };    ///< The AO system object containing all system parameters.  See \ref aoSystem.
+    aoSystemT *m_aosys{ nullptr };    ///< The AO system object containing all system parameters.
 
     uint32_t m_shLevel{ 0 };          /**< Number of subharmonic levels.  0 means no subharmonics.  Generally only
                                        *  1 level is needed to obtain good Tip/Tilt results.  See \ref turbSubHarmonic.
                                        */
 
     bool m_outerSubHarmonics{ true }; /**< Whether or not the outer subharmonics are included.
-                                       *  See \ref m_turbSubHarmonic.
+                                       *  See \ref turbSubHarmonic.
                                        */
 
     bool m_shPreCalc{ true };         /**< Whether or not to pre-calculate the subharmonic modes.  This is a

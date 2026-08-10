@@ -1,4 +1,5 @@
-/** \file fileAtmosphere_test.cpp
+/** \file aoPSDs_test.cpp
+ * \brief Tests adaptive-optics PSD configuration.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -11,13 +12,15 @@ typedef double realT;
 using namespace mx::app;
 using namespace mx::AO::analysis;
 
-/** Scenario: Loading aoAtmosphere config settings
+/** Loading aoAtmosphere config settings
  *
  * Verify parsing of config
  *
- * \anchor tests_ao_analysis_aoAtmosphere_config
  */
-SCENARIO( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
+/**
+ * \ingroup aoPSDs_unit_tests
+ */
+TEST_CASE( "Loading aoPSD config settings", "[ao::analysis::aoPSD]" )
 {
     GIVEN( "a valid config file" )
     {

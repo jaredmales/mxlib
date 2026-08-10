@@ -1,4 +1,5 @@
 /** \file zernike_test.cpp
+ * \brief Tests Zernike-index and normalization utilities.
  */
 #include "../../catch2/catch.hpp"
 
@@ -8,14 +9,16 @@
 
 #include "../../../include/sigproc/zernike.hpp"
 
-/** Scenario: testing noll_nm
+/** testing noll_nm
  *
  * Verify calculation of Noll nm values from j.
  * Goes through each of the cases in Table 1 of \cite noll_1976
  *
- * \anchor tests_sigproc_zernike_noll_nm
  */
-SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
+/**
+ * \ingroup zernike_unit_tests
+ */
+TEST_CASE( "testing noll_nm", "[sigproc::zernike]" )
 {
 
     GIVEN( "a j value" )
@@ -263,12 +266,14 @@ SCENARIO( "testing noll_nm", "[sigproc::zernike]" )
     }
 }
 
-/** Scenario: testing zernikeQNorm
+/** testing zernikeQNorm
  * Verify compilation and execution of zernikeQNorm.
  * This does not validate the output.
- * \anchor tests_sigproc_zernike_zernikeQNorm
  */
-SCENARIO( "testing zernikeQNorm", "[sigproc::zernike]" )
+/**
+ * \ingroup zernike_unit_tests
+ */
+TEST_CASE( "testing zernikeQNorm", "[sigproc::zernike]" )
 {
     GIVEN( "an array" )
     {

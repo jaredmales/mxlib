@@ -9,7 +9,13 @@
 #define deformableMirror_hpp
 
 #include <cmath>
+#include <complex>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
 
+#include "../../improc/eigenCube.hpp"
 #include "../../wfp/imagingUtils.hpp"
 #include "../../sys/timeUtils.hpp"
 #include "../../ioutils/fits/fitsFile.hpp"
@@ -17,6 +23,7 @@
 #include "../../ioutils/readColumns.hpp"
 
 #include "../../math/constants.hpp"
+#include "../../sigproc/psdFilter.hpp"
 
 #include "../../math/cuda/cudaPtr.hpp"
 #include "../../math/cuda/templateCublas.hpp"
@@ -704,7 +711,7 @@ void deformableMirror<_realT>::setFilter( int width )
     int nr = _shape.rows();
     int nc = _shape.cols();
 
-    typename wfsImageT<_realT>::imageT filterMask;
+    imageT filterMask;
 
     filterMask.resize( nr, nc );
     filterMask.setZero();

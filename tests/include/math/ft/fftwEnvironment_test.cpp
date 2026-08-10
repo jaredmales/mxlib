@@ -1,4 +1,5 @@
 /** \file fftwEnvironment_test.cpp
+ * \brief Tests FFTW environment lifecycle management.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -13,7 +14,7 @@
 
 /// Create and destroy fftwEnvironment, no threads, environment set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[math::ft]" )
 {
@@ -110,7 +111,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment set", "[
 
 /// Create and destroy fftwEnvironment, no threads, environment not set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set", "[math::ft]" )
 {
@@ -203,7 +204,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, no threads, environment not set"
 
 /// Create and destroy fftwEnvironment, with threads, environment set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", "[math::ft]" )
 {
@@ -300,7 +301,7 @@ TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment set", 
 
 /// Create and destroy fftwEnvironment, with threads, environment not set
 /**
- * \ingroup math_ft_fftwEnvironment_test
+ * \ingroup fftwEnvironment_unit_tests
  */
 TEST_CASE( "Create and destroy fftwEnvironment, with threads, environment not set", "[math::ft]" )
 {

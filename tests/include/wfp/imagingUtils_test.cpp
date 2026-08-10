@@ -1,6 +1,10 @@
 /** \file imagingUtils_test.cpp
+ * \brief Tests CPU and CUDA imaging utilities.
  */
 #include "../../catch2/catch.hpp"
+#ifdef MXLIB_CUDA
+#include "../../cudaTestUtils.hpp"
+#endif
 
 #define MX_NO_ERROR_REPORTS
 
@@ -10,7 +14,7 @@
 
 /// Make a complex wavefront and extract it as an intensity image on CPU
 /**
- * \ingroup math_wfp_imagingUtils_test
+ * \ingroup imagingUtils_unit_tests
  */
 TEST_CASE( "Make a complex wavefront and extract it as an intensity image on CPU", "[wfp]" )
 {
@@ -60,12 +64,19 @@ TEST_CASE( "Make a complex wavefront and extract it as an intensity image on CPU
     REQUIRE(fail == false);
 }
 
+#if defined( MXLIB_CUDA ) || defined( __DOXY_ONLY__ )
 /// Make a complex wavefront and extract it as an intensity image on GPU
 /**
- * \ingroup math_wfp_imagingUtils_test
+ * \ingroup imagingUtils_unit_tests
  */
 TEST_CASE( "Make a complex wavefront and extract it as an intensity image on GPU", "[wfp]" )
 {
+    if( !mxlibTest::cudaDeviceAvailable() )
+    {
+        WARN( "CUDA runtime is available but no CUDA device is present" );
+        return;
+    }
+
     typedef float realT;
     typedef std::complex<realT> complexT;
 
@@ -119,3 +130,4 @@ TEST_CASE( "Make a complex wavefront and extract it as an intensity image on GPU
 
     REQUIRE(fail == false);
 }
+#endif // MXLIB_CUDA

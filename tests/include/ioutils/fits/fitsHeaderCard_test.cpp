@@ -1,4 +1,5 @@
 /** \file fitsHeaderCard_test.cpp
+ * \brief Tests FITS header-card parsing and formatting.
  */
 #include "../../../catch2/catch.hpp"
 

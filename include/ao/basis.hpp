@@ -131,11 +131,11 @@ int orthogonalizeBasis( eigenCube<realT> &ortho,
 
 /// Calculate an orthogonal projection of a basis on a pupil.
 /** Can use either the stabilized Gramm Schmidt (SGS) procedure, or Singular Value Decomposition (SVD).
- * This calls \ref applyPupil2Basis as a first step..
+ * This calls \ref mx::AO::applyPupil2Basis as a first step.
  *
  * \param [in] basisName the name of the basis to orthogonalize
  * \param [in] pupilName the name of the pupil on which to orthogonalize.
- * \param [in] method either \ref MXAO_ORTHO_METHOD_SGS (for SGS) or \ref MXAO_ORTHO_METHOD_SVD (for SVD)
+ * \param [in] method either `MXAO_ORTHO_METHOD_SGS` (for SGS) or `MXAO_ORTHO_METHOD_SVD` (for SVD)
  *
  * \tparam realT
  */

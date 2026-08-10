@@ -133,11 +133,8 @@ class directPhaseSensor
      */
     int detRows();
 
-    /// Set the detector rows in pixels.
-    /**
-     * \param sz is the new size
-     */
-    void detRows( int sz );
+    /// Set the detector rows in pixels while preserving the current column count.
+    void detRows( int sz /**< [in] The new row count. */ );
 
     /// Get the detector Cols  in pixels
     /**
@@ -145,17 +142,12 @@ class directPhaseSensor
      */
     int detCols();
 
-    /// Set the detector columns in pixels.
-    /**
-     * \param sz is the new size
-     */
-    void detCols( int sz );
+    /// Set the detector columns in pixels while preserving the current row count.
+    void detCols( int sz /**< [in] The new column count. */ );
 
-    /// Set the detector columns in pixels.
-    /**
-     * \param sz is the new size
-     */
-    void detSize( int nrows, int ncols );
+    /// Set both detector dimensions in pixels.
+    void detSize( int nrows, /**< [in] The new row count. */
+                  int ncols  /**< [in] The new column count. */ );
 
     /// Get the PyWFS central wavelength
     /**
@@ -359,9 +351,21 @@ int directPhaseSensor<_realT, _detectorT>::detRows()
 }
 
 template <typename _realT, typename _detectorT>
+void directPhaseSensor<_realT, _detectorT>::detRows( int sz )
+{
+    detSize( sz, m_detCols );
+}
+
+template <typename _realT, typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::detCols()
 {
     return m_detCols;
+}
+
+template <typename _realT, typename _detectorT>
+void directPhaseSensor<_realT, _detectorT>::detCols( int sz )
+{
+    detSize( m_detRows, sz );
 }
 
 template <typename _realT, typename _detectorT>
@@ -422,7 +426,7 @@ void directPhaseSensor<_realT, _detectorT>::iTime( int it )
 template <typename _realT, typename _detectorT>
 int directPhaseSensor<_realT, _detectorT>::roTime()
 {
-    return roTime;
+    return m_roTime;
 }
 
 template <typename _realT, typename _detectorT>
@@ -440,7 +444,7 @@ void directPhaseSensor<_realT, _detectorT>::roTime( int rt )
 template <typename _realT, typename _detectorT>
 _realT directPhaseSensor<_realT, _detectorT>::simStep()
 {
-    return simStep;
+    return m_simStep;
 }
 
 template <typename _realT, typename _detectorT>

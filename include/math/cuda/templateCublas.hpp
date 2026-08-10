@@ -67,7 +67,6 @@ cublasStatus_t cublasTscal( cublasHandle_t handle, ///< [in] The cublas context 
  *
  * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
  *
- * \test Scenario: scaling and accumulating a vector with cublas \ref test_math_templateCublas_axpy "[test doc]"
  *
  * \ingroup cublas
  */
@@ -167,9 +166,6 @@ cudaError_t elementwiseXxYAccum( dataT0 *z, /**< [out] device pointer for the re
  * Specializations are provided for float, double, complex-float, and complex-double
  *
  * \tparam floatT a floating-point type, either float, double, complex-float, or complex-double
- *
- * Tests:
- *     - Multiplying a vectory by a matrix \ref test_math_templateCublas_cublasTgemv_inc "[code doc]"
  *
  * \ingroup cublas
  */

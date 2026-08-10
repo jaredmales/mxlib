@@ -10,9 +10,12 @@
 #ifndef eigenCube_hpp
 #define eigenCube_hpp
 
+#include <vector>
+
 #pragma GCC system_header
 #include <Eigen/Dense>
 
+#include "../error/exception.hpp"
 #include "../math/vectorUtils.hpp"
 #include "eigenImage.hpp"
 #include "imageUtils.hpp"
@@ -46,6 +49,23 @@ class eigenCube
     dataT *m_data{ nullptr };
 
     bool _owner;
+
+    /// Validate a mask and good-pixel threshold for a masked combination.
+    template <typename eigenCubeT>
+    void
+    validateMaskedCombination( const eigenCubeT &mask, /**< [in] mask cube whose dimensions must match this cube. */
+                               double minGoodFract     /**< [in] inclusive minimum fraction of good pixels in [0, 1]. */
+    ) const;
+
+    /// Validate the number of weights for a weighted combination.
+    void
+    validateWeights( const std::vector<dataT> &weights /**< [in] weights whose count must match the number of planes. */
+    ) const;
+
+    /// Test whether a nonempty set of good pixels meets the requested fraction.
+    bool hasEnoughGoodPixels( size_t goodPixels,  /**< [in] number of unmasked pixels. */
+                              double minGoodFract /**< [in] inclusive minimum fraction of good pixels. */
+    ) const;
 
   public:
     eigenCube();
@@ -131,20 +151,27 @@ class eigenCube
 
     /// Calculate the mean image of the cube with a mask.
     /**
+     * A nonempty pixel sample is accepted when its good-pixel fraction is greater than or equal to
+     * \p minGoodFract. Rejected pixels are set to invalidNumber<Scalar>().
+     *
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the mask dimensions do not match the cube.
+     * \throws mx::exception with error_t::invalidarg if \p minGoodFract is not finite or is outside [0, 1].
      */
     template <typename eigenT, typename eigenCubeT>
     void mean( eigenT &mim,              ///< [out] the resultant mean image.  Is resized.
                eigenCubeT &mask,         /**< [in] a mask cube.  Only pixels with value 1 are included in the
                                                    mean calculation. */
-               double minGoodFract = 0.0 /**< [in] [optional] the minimum fraction of good pixels, if not met
-                                                              then the pixel is NaN-ed. */
+               double minGoodFract = 0.0 /**< [in] inclusive minimum fraction of good pixels in [0, 1]. */
     );
 
     /// Calculate the weighted mean image of the cube
     /**
      * \tparam eigenT an Eigen-like type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the weight count does not match the cube planes.
      */
     template <typename eigenT>
     void mean( eigenT &mim,                ///< [out] the resultant mean image. Is resized.
@@ -153,15 +180,20 @@ class eigenCube
 
     /// Calculate the weighted mean image of the cube, with a mask cube.
     /**
+     * A nonempty pixel sample is accepted when its good-pixel fraction is greater than or equal to
+     * \p minGoodFract. Rejected pixels are set to invalidNumber<Scalar>().
+     *
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the mask dimensions or weight count do not match the cube.
+     * \throws mx::exception with error_t::invalidarg if \p minGoodFract is not finite or is outside [0, 1].
      */
     template <typename eigenT, typename eigenCubeT>
     void mean( eigenT &mim,                 ///< [out] the resultant mean image. Is resized.
                std::vector<dataT> &weights, ///< [in] a vector of weights to use for calculating the mean
                eigenCubeT &mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
-               double minGoodFract =
-                   0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
+               double minGoodFract = 0.0 ///< [in] inclusive minimum fraction of good pixels in [0, 1].
     );
 
     /// Calculate the median image of the cube
@@ -170,6 +202,23 @@ class eigenCube
      */
     template <typename eigenT>
     void median( eigenT &mim /**< [out] the resultant median image. Is resized. */ );
+
+    /// Calculate the median image of the cube with a mask.
+    /**
+     * A nonempty pixel sample is accepted when its good-pixel fraction is greater than or equal to
+     * \p minGoodFract. Rejected pixels are set to invalidNumber<Scalar>().
+     *
+     * \tparam eigenT an Eigen-like type.
+     * \tparam eigenCubeT an eigenCube type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the mask dimensions do not match the cube.
+     * \throws mx::exception with error_t::invalidarg if \p minGoodFract is not finite or is outside [0, 1].
+     */
+    template <typename eigenT, typename eigenCubeT>
+    void median( eigenT &mim,              ///< [out] the resultant median image. Is resized.
+                 eigenCubeT &mask,         ///< [in] a mask cube. Only pixels with value 1 are included.
+                 double minGoodFract = 0.0 /**< [in] the inclusive minimum fraction of good pixels. */
+    );
 
     /// Calculate the sigma clipped mean image of the cube
     /**
@@ -182,21 +231,28 @@ class eigenCube
 
     /// Calculate the sigma clipped mean image of the cube, with a mask cube
     /**
+     * A nonempty pixel sample is accepted when its good-pixel fraction is greater than or equal to
+     * \p minGoodFract. Rejected pixels are set to invalidNumber<Scalar>().
+     *
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the mask dimensions do not match the cube.
+     * \throws mx::exception with error_t::invalidarg if \p minGoodFract is not finite or is outside [0, 1].
      */
     template <typename eigenT, typename eigenCubeT>
     void
     sigmaMean( eigenT &mim,      ///< [out] the resultant mean image.  Is resized.
                eigenCubeT &mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
                Scalar sigma,     ///< [in] the sigma value at which to clip.
-               double minGoodFract =
-                   0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
+               double minGoodFract = 0.0 ///< [in] inclusive minimum fraction of good pixels in [0, 1].
     );
 
     /// Calculate the sigma clipped weighted mean image of the cube
     /**
      * \tparam eigenT an Eigen-like type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the weight count does not match the cube planes.
      */
     template <typename eigenT>
     void sigmaMean( eigenT &mim,                 ///< [out] the resultant mean image. Is resized.
@@ -206,8 +262,14 @@ class eigenCube
 
     /// Calculate the sigma clipped weighted mean image of the cube, with a mask cube.
     /**
+     * A nonempty pixel sample is accepted when its good-pixel fraction is greater than or equal to
+     * \p minGoodFract. Rejected pixels are set to invalidNumber<Scalar>().
+     *
      * \tparam eigenT an Eigen-like type.
      * \tparam eigenCubeT an eigenCube type.
+     *
+     * \throws mx::exception with error_t::sizeerr if the mask dimensions or weight count do not match the cube.
+     * \throws mx::exception with error_t::invalidarg if \p minGoodFract is not finite or is outside [0, 1].
      */
     template <typename eigenT, typename eigenCubeT>
     void
@@ -215,10 +277,39 @@ class eigenCube
                std::vector<dataT> &weights, ///< [in] a vector of weights to use for calculating the mean
                eigenCubeT &mask, ///< [in] a mask cube.  Only pixels with value 1 are included in the mean calculation.
                Scalar sigma,     ///< [in] the sigma value at which to clip.
-               double minGoodFract =
-                   0.0 ///< [in] [optional] the minimum fraction of good pixels, if not met then the pixel is NaN-ed.
+               double minGoodFract = 0.0 ///< [in] inclusive minimum fraction of good pixels in [0, 1].
     );
 };
+
+template <typename dataT>
+template <typename eigenCubeT>
+void eigenCube<dataT>::validateMaskedCombination( const eigenCubeT &mask, double minGoodFract ) const
+{
+    if( mask.rows() != _rows || mask.cols() != _cols || mask.planes() != _planes )
+    {
+        throw mx::exception( error_t::sizeerr, "mask dimensions must match cube dimensions" );
+    }
+
+    if( !math::isFinite( minGoodFract ) || minGoodFract < 0.0 || minGoodFract > 1.0 )
+    {
+        throw mx::exception( error_t::invalidarg, "minGoodFract must be finite and in [0, 1]" );
+    }
+}
+
+template <typename dataT>
+void eigenCube<dataT>::validateWeights( const std::vector<dataT> &weights ) const
+{
+    if( weights.size() != static_cast<size_t>( _planes ) )
+    {
+        throw mx::exception( error_t::sizeerr, "weights size must match cube planes" );
+    }
+}
+
+template <typename dataT>
+bool eigenCube<dataT>::hasEnoughGoodPixels( size_t goodPixels, double minGoodFract ) const
+{
+    return goodPixels > 0 && static_cast<double>( goodPixels ) >= minGoodFract * static_cast<double>( _planes );
+}
 
 template <typename dataT>
 eigenCube<dataT>::eigenCube()
@@ -453,6 +544,8 @@ template <typename dataT>
 template <typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::mean( eigenT &mim, eigenCubeT &mask, double minGoodFract )
 {
+    validateMaskedCombination( mask, minGoodFract );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel
@@ -475,13 +568,13 @@ void eigenCube<dataT>::mean( eigenT &mim, eigenCubeT &mask, double minGoodFract 
                     }
                 }
 
-                if( work.size() > minGoodFract * _planes )
+                if( hasEnoughGoodPixels( work.size(), minGoodFract ) )
                 {
                     mim( i, j ) = math::vectorMean( work );
                 }
                 else
                 {
-                    mim( i, j ) = invalidNumber<float>();
+                    mim( i, j ) = invalidNumber<Scalar>();
                 }
             }
         }
@@ -492,6 +585,8 @@ template <typename dataT>
 template <typename eigenT>
 void eigenCube<dataT>::mean( eigenT &mim, std::vector<dataT> &weights )
 {
+    validateWeights( weights );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel num_threads( Eigen::nbThreads() )
@@ -518,6 +613,9 @@ template <typename dataT>
 template <typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::mean( eigenT &mim, std::vector<dataT> &weights, eigenCubeT &mask, double minGoodFract )
 {
+    validateMaskedCombination( mask, minGoodFract );
+    validateWeights( weights );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel num_threads( Eigen::nbThreads() )
@@ -542,12 +640,12 @@ void eigenCube<dataT>::mean( eigenT &mim, std::vector<dataT> &weights, eigenCube
                         wwork.push_back( weights[k] );
                     }
                 }
-                if( work.size() > minGoodFract * _planes )
+                if( hasEnoughGoodPixels( work.size(), minGoodFract ) )
                 {
                     mim( i, j ) = math::vectorMean( work, wwork );
                 }
                 else
-                    mim( i, j ) = invalidNumber<float>();
+                    mim( i, j ) = invalidNumber<Scalar>();
             }
         }
     }
@@ -567,6 +665,46 @@ void eigenCube<dataT>::median( eigenT &mim )
         for( Index j = 0; j < _cols; ++j )
         {
             mim( i, j ) = imageMedian( pixel( i, j ), &work );
+        }
+    }
+}
+
+template <typename dataT>
+template <typename eigenT, typename eigenCubeT>
+void eigenCube<dataT>::median( eigenT &mim, eigenCubeT &mask, double minGoodFract )
+{
+    validateMaskedCombination( mask, minGoodFract );
+
+    mim.resize( _rows, _cols );
+
+#pragma omp parallel
+    {
+        std::vector<Scalar> work;
+
+#pragma omp for
+        for( Index i = 0; i < _rows; ++i )
+        {
+            for( Index j = 0; j < _cols; ++j )
+            {
+                work.clear();
+
+                for( Index k = 0; k < _planes; ++k )
+                {
+                    if( ( mask.pixel( i, j ) )( k, 0 ) == 1 )
+                    {
+                        work.push_back( ( pixel( i, j ) )( k, 0 ) );
+                    }
+                }
+
+                if( hasEnoughGoodPixels( work.size(), minGoodFract ) )
+                {
+                    mim( i, j ) = math::vectorMedianInPlace( work );
+                }
+                else
+                {
+                    mim( i, j ) = invalidNumber<Scalar>();
+                }
+            }
         }
     }
 }
@@ -604,6 +742,8 @@ template <typename dataT>
 template <typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, double minGoodFract )
 {
+    validateMaskedCombination( mask, minGoodFract );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel
@@ -616,8 +756,6 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, do
             for( Index j = 0; j < _cols; ++j )
             {
                 work.clear();
-                int ii = 0;
-
                 for( Index k = 0; k < _planes; ++k )
                 {
                     if( ( mask.pixel( i, j ) )( k, 0 ) == 1 )
@@ -626,13 +764,13 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, eigenCubeT &mask, dataT sigma, do
                     }
                 }
 
-                if( work.size() > minGoodFract * _planes )
+                if( hasEnoughGoodPixels( work.size(), minGoodFract ) )
                 {
                     mim( i, j ) = math::vectorSigmaMean( work, sigma );
                 }
                 else
                 {
-                    mim( i, j ) = invalidNumber<float>();
+                    mim( i, j ) = invalidNumber<Scalar>();
                 }
             }
         }
@@ -643,6 +781,8 @@ template <typename dataT>
 template <typename eigenT>
 void eigenCube<dataT>::sigmaMean( eigenT &mim, std::vector<dataT> &weights, dataT sigma )
 {
+    validateWeights( weights );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel num_threads( Eigen::nbThreads() )
@@ -655,7 +795,6 @@ void eigenCube<dataT>::sigmaMean( eigenT &mim, std::vector<dataT> &weights, data
             for( Index j = 0; j < _cols; ++j )
             {
                 work.resize( _planes ); // work could be smaller after sigmaMean
-                int ii = 0;
                 for( int k = 0; k < _planes; ++k )
                     work[k] = ( pixel( i, j ) )( k, 0 );
 
@@ -670,6 +809,9 @@ template <typename eigenT, typename eigenCubeT>
 void eigenCube<dataT>::sigmaMean(
     eigenT &mim, std::vector<dataT> &weights, eigenCubeT &mask, dataT sigma, double minGoodFract )
 {
+    validateMaskedCombination( mask, minGoodFract );
+    validateWeights( weights );
+
     mim.resize( _rows, _cols );
 
 #pragma omp parallel num_threads( Eigen::nbThreads() )
@@ -684,8 +826,6 @@ void eigenCube<dataT>::sigmaMean(
                 work.clear();
                 wwork.clear();
 
-                int ii = 0;
-
                 for( Index k = 0; k < _planes; ++k )
                 {
                     if( ( mask.pixel( i, j ) )( k, 0 ) == 1 )
@@ -694,12 +834,12 @@ void eigenCube<dataT>::sigmaMean(
                         wwork.push_back( weights[k] );
                     }
                 }
-                if( work.size() > minGoodFract * _planes )
+                if( hasEnoughGoodPixels( work.size(), minGoodFract ) )
                 {
                     mim( i, j ) = math::vectorSigmaMean( work, wwork, sigma );
                 }
                 else
-                    mim( i, j ) = invalidNumber<float>();
+                    mim( i, j ) = invalidNumber<Scalar>();
             }
         }
     }

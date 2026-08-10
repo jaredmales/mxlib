@@ -16,6 +16,9 @@
 
 /// Verify image invalid-pixel classification for the sentinel and nonfinite values.
 /** Preserves the established invalid-pixel contract. */
+/**
+ * \ingroup imageUtils_unit_tests
+ */
 TEST_CASE( "Image invalid-pixel detection handles sentinel and nonfinite values", "[improc::isInvalidPixel]" )
 {
     REQUIRE_FALSE( mx::improc::isInvalidPixel( 0.0F ) );
@@ -25,13 +28,15 @@ TEST_CASE( "Image invalid-pixel detection handles sentinel and nonfinite values"
     REQUIRE( mx::improc::isInvalidPixel( mx::improc::invalidNumber<float>() ) );
 }
 
-/** Scenario: centroiding Gaussians with center of light
+/** centroiding Gaussians with center of light
  *
  * Verify center of light calculation
  *
- * \anchor tests_improc_imageUtils_imageCenterOfLight
  */
-SCENARIO( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
+/**
+ * \ingroup imageUtils_unit_tests
+ */
+TEST_CASE( "Verify center of light calculation", "[improc::imageCenterOfLight]" )
 {
     GIVEN( "a Gaussian" )
     {

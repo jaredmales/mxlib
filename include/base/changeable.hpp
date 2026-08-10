@@ -10,6 +10,9 @@
 #ifndef mx_base_changeable_hpp
 #define mx_base_changeable_hpp
 
+#include <cstdint>
+#include <limits>
+
 namespace mx
 {
 namespace base

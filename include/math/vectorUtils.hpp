@@ -653,28 +653,40 @@ int vectorSmoothMean(
     return 0;
 }
 
-/// Smooth a vector using the median in a window specified by its full-width
+/// Smooth a vector using the median in a window specified by its full width.
+/** For even widths, the window is associated with the higher-index member of the central pair: it contains win/2
+ * samples before the output sample and one fewer after it. Windows are truncated at the vector boundaries.
+ *
+ * \returns 0 on success
+ * \returns -1 if win is not positive
+ */
 template <typename realT>
-int vectorSmoothMedian( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
-                        std::vector<realT> &vec,   ///< [in] the input vector, unaltered.
-                        int win                    ///< [in] the full-width of the smoothing window
+int vectorSmoothMedian( std::vector<realT> &smVec, /**< [out] the smoothed version of the vector */
+                        std::vector<realT> &vec,   /**< [in] the input vector, unaltered */
+                        int win                    /**< [in] the full width of the smoothing window */
 )
 {
+    if( win <= 0 )
+    {
+        return -1;
+    }
+
     smVec = vec;
 
+    const int before = win / 2;
+    const int after = win - before - 1;
     std::vector<realT> tvec;
-    int n;
+    tvec.reserve( std::min<size_t>( static_cast<size_t>( win ), vec.size() ) );
+
     for( int i = 0; i < vec.size(); ++i )
     {
-        int j = i - 0.5 * win;
-        if( j < 0 )
-            j = 0;
+        const int first = std::max( 0, i - before );
+        const int last = std::min<int>( vec.size(), i + after + 1 );
 
         tvec.clear();
-        while( j <= i + 0.5 * win && j < vec.size() )
+        for( int j = first; j < last; ++j )
         {
             tvec.push_back( vec[j] );
-            ++j;
         }
 
         smVec[i] = vectorMedianInPlace( tvec );

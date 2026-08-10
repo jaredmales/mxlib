@@ -1,4 +1,5 @@
 /** \file imageTransforms_test.cpp
+ * \brief Tests image transformations.
  */
 #include "../../catch2/catch.hpp"
 
@@ -14,6 +15,14 @@
 
 #include "../../../include/improc/imageTransforms.hpp"
 
+/** \cond
+ * Explicit instantiations compile-check the double-precision bilinear and cubic-convolution transform policies and
+ * emit their header-defined methods for coverage accounting in this test translation unit.
+ */
+template struct mx::improc::bilinearTransform<double>;
+template struct mx::improc::cubicConvolTransform<double>;
+/** \endcond */
+
 namespace
 {
 double imageMSE( const mx::improc::eigenImage<double> &a, const mx::improc::eigenImage<double> &b )
@@ -22,13 +31,15 @@ double imageMSE( const mx::improc::eigenImage<double> &a, const mx::improc::eige
 }
 } // namespace
 
-/** Scenario: Verify direction and accuracy of various image shifts
+/** Verify direction and accuracy of various image shifts
  *
  * Tests image shifts by fractional pixels.
  *
- * \anchor tests_improc_imageTransforms_imageShift
  */
-SCENARIO( "Verify direction and accuracy of various image shifts", "[improc::imageTransforms]" )
+/**
+ * \ingroup imageTransforms_unit_tests
+ */
+TEST_CASE( "Verify direction and accuracy of various image shifts", "[improc::imageTransforms]" )
 {
     GIVEN( "a Gaussian image" )
     {

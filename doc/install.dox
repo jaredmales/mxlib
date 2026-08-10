@@ -111,8 +111,10 @@ sudo make install
 
 \section cmake_build Configuring mxlib with cmake
 
-The `cmake` build system will (in most cases) automatically configure mxlib for you, and install it along with a `pkg-config`
-and a `cmake` configuration file to asssist with linking to `mxlib`. The above \ref quick_start "Quick Start" section gives the basic recipe for building mxlib.
+The `cmake` build system will (in most cases) automatically configure mxlib for you and install a `pkg-config`
+file to assist with linking to `mxlib`. `pkg-config` is the supported downstream discovery interface; mxlib does not
+currently install a CMake package configuration file. The above \ref quick_start "Quick Start" section gives the basic
+recipe for building mxlib.
 
 If you want or need to modify things, `cmake` has many options and `mxlib` adds its own. You can use them like
 \code{.bash}
@@ -178,6 +180,17 @@ a given point so that previous results can be reproduced.  The library will issu
 there are any modifications to it that aren't yet committed, meaning that they aren't trackable.
 
 \subsection linking Linking to mxlib
+For CMake applications, import the installed `pkg-config` metadata and link the resulting target:
+
+\code{.cmake}
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MXLIB REQUIRED IMPORTED_TARGET mxlib)
+target_link_libraries(myProgram PRIVATE PkgConfig::MXLIB)
+\endcode
+
+For a direct compiler invocation, use `pkg-config --cflags --libs mxlib` so the same required definitions,
+include paths, and dependency libraries are applied.
+
 Once `mxlib` is built and installed, set the `$MXMAKEFILE` variable in your shell (and/or shell profile files):
 
 \code

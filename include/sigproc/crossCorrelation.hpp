@@ -1,5 +1,12 @@
+/** \file crossCorrelation.hpp
+ * \brief Declares direct discrete cross-correlation utilities.
+ * \author Jared R. Males (jaredmales@gmail.com)
+ */
+
 #ifndef __crossCorrelation_hpp__
 #define __crossCorrelation_hpp__
+
+#include "../math/fit/fitGaussian.hpp"
 
 namespace mx
 {
@@ -139,7 +146,7 @@ void discreteCrossCorrelation( typename eigenT::Scalar &xlag,
                                int min_y_lag = 0,
                                int max_y_lag = 0 )
 {
-    fitGaussian2D<gaussian2D_gen_fitter<float>> fitG;
+    math::fit::fitGaussian2D<math::fit::gaussian2D_gen_fitter<float>> fitG;
 
     size_t dim1 = m1.rows();
     size_t dim2 = m1.cols();

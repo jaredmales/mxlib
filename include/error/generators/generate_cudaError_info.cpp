@@ -1,4 +1,7 @@
-
+/** \file generate_cudaError_info.cpp
+ * \brief Generates cudaError_info.hpp from the CUDA runtime error catalog.
+ * \author Jared Males
+ */
 
 #ifdef MXLIB_CUDA
 

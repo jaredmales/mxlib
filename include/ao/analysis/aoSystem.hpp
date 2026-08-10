@@ -907,8 +907,8 @@ class aoSystem
     );
 
     /// Calculate the contrast due to uncorrected phase, C0.
-    /** Contrast C0 is the uncorrected phase, with the effects of scintillation included.  See Guyon (2005) \cite
-     * guyon_2005, and the updated derivation in Males \& Guyon (2018) \cite males_guyon_2018.
+    /** Contrast C0 is the uncorrected phase, with the effects of scintillation included.  See Guyon (2005)
+     * \cite guyon_2005 and the updated derivation in Males \& Guyon (2018) \cite males_guyon_2018
      *
      * \note this is the raw PSD, it must be convolved with the PSF for the true contrast.
      *
@@ -1131,7 +1131,7 @@ class aoSystem
 
     /// Calculate the contrast due to dispersive anisoplanatism.
     /** Contrast C7 is due to atmospheric dispersion causing light at different wavelengths to take different paths
-     * through atmospheric turbulence. See Fitzgerald (2017, in prep) \cite fitzgerald_2017
+     * through atmospheric turbulence. See Fitzgerald (2017, in prep).
      *
      * \returns C7.
      */

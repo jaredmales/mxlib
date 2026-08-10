@@ -1,17 +1,20 @@
 /** \file astroDynamics_test.cpp
+ * \brief Tests astrodynamics calculations.
  */
 
 #include "../../catch2/catch.hpp"
 
 #include "../../../include/astro/astroDynamics.hpp"
 
-/** Scenario: calculating parallactic angles
+/** calculating parallactic angles
  *
  * Compares par. ang. calc vs. an actual observation.
  *
- * \anchor tests_astrodynamics_parang
  */
-SCENARIO( "calculating parallactic angles", "[astroDynamics::parang]" )
+/**
+ * \ingroup astroDynamics_unit_tests
+ */
+TEST_CASE( "calculating parallactic angles", "[astroDynamics::parang]" )
 {
     GIVEN( "a typical target" )
     {

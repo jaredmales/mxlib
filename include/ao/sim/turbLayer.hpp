@@ -33,7 +33,14 @@
 
 #include <Eigen/Dense>
 
+#include "../../error/error.hpp"
+#include "../../error/exception.hpp"
 #include "../../improc/imageTransforms.hpp"
+#include "../../math/constants.hpp"
+#include "../../math/func/jinc.hpp"
+#include "../../math/randomT.hpp"
+#include "../../sigproc/psdFilter.hpp"
+#include "../../sigproc/psdUtils.hpp"
 
 namespace mx
 {

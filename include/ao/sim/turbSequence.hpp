@@ -10,11 +10,13 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include <Eigen/Dense>
 
 #include "../../ioutils/fileUtils.hpp"
 #include "../../ioutils/fits/fitsFile.hpp"
+#include "../../error/mxErrorOld.hpp"
 #include "../../improc/eigenCube.hpp"
 
 #include "wavefront.hpp"
@@ -166,8 +168,8 @@ struct turbSequence
 template <typename realT>
 int turbSequence<realT>::turbFnames( std::string dir, int max )
 {
-    _phaseFnames = ioutils::getFileNames( dir, "", ".pha", ".fits" );
-    _ampFnames = ioutils::getFileNames( dir, "", ".amp", ".fits" );
+    ioutils::getFileNames( _phaseFnames, dir, "", ".pha", ".fits" );
+    ioutils::getFileNames( _ampFnames, dir, "", ".amp", ".fits" );
 
     if( _phaseFnames.size() == 0 )
     {
@@ -184,9 +186,13 @@ int turbSequence<realT>::turbFnames( std::string dir, int max )
 
     if( max > 0 )
     {
-        _phaseFnames.erase( _phaseFnames.begin() + max, _phaseFnames.end() );
-        if( _phaseOnly == false )
-            _ampFnames.erase( _ampFnames.begin() + max, _ampFnames.end() );
+        const size_t maxFiles = static_cast<size_t>( max );
+
+        if( _phaseFnames.size() > maxFiles )
+            _phaseFnames.erase( _phaseFnames.begin() + maxFiles, _phaseFnames.end() );
+
+        if( _phaseOnly == false && _ampFnames.size() > maxFiles )
+            _ampFnames.erase( _ampFnames.begin() + maxFiles, _ampFnames.end() );
     }
 
     _files = _phaseFnames.size();
@@ -197,6 +203,8 @@ int turbSequence<realT>::turbFnames( std::string dir, int max )
     _nPerCube = _currPhase.planes();
 
     _frames = _nPerCube * _phaseFnames.size();
+
+    return 0;
 }
 
 template <typename realT>
@@ -206,12 +214,12 @@ void turbSequence<realT>::openPhaseFrame( int fn )
 
     std::cout << _phaseFnames[fn] << "\n";
 
-    ff.read( _phaseFnames[fn], _currPhase );
+    ff.read( _currPhase, _phaseFnames[fn] );
     ff.close();
 
     if( _phaseOnly == false )
     {
-        ff.read( _ampFnames[fn], _currAmp );
+        ff.read( _currAmp, _ampFnames[fn] );
         ff.close();
     }
 

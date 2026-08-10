@@ -1,0 +1,36 @@
+/* mxlib-specific compatibility and layout adjustments for Doxygen Awesome. */
+
+/* Preserve mxlib's established single-sidebar documentation layout. */
+#page-nav {
+    display: none;
+}
+
+#container {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Keep long C++ return types from collapsing member names and descriptions. */
+@media screen and (min-width: 768px) {
+    table.memberdecls {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    table.memberdecls .memItemLeft,
+    table.memberdecls .memTemplItemLeft,
+    table.memberdecls .mdescLeft {
+        width: 38%;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    table.memberdecls .memItemRight,
+    table.memberdecls .memTemplItemRight,
+    table.memberdecls .mdescRight {
+        width: 62%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}

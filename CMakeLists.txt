@@ -271,26 +271,38 @@ endif()
 #
 #########################################
 
+set(MXLIB_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/include)
+set(MXLIB_GENERATED_ERROR_DIR ${MXLIB_GENERATED_INCLUDE_DIR}/error)
+set(MXLIB_GENERATOR_WORK_DIR ${MXLIB_GENERATED_ERROR_DIR}/generators)
+
+file(MAKE_DIRECTORY ${MXLIB_GENERATOR_WORK_DIR})
+configure_file(include/error/generators/c++11_errnos.txt
+               ${MXLIB_GENERATOR_WORK_DIR}/c++11_errnos.txt COPYONLY)
+configure_file(include/error/generators/fits_error_codes.txt
+               ${MXLIB_GENERATOR_WORK_DIR}/fits_error_codes.txt COPYONLY)
+configure_file(include/error/generators/error_t_list.txt
+               ${MXLIB_GENERATOR_WORK_DIR}/error_t_list.txt COPYONLY)
+
 #first generate the errno header
 add_executable(generate_errno_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_errno_info.cpp)
 
 add_custom_command(
-    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
+    OUTPUT  ${MXLIB_GENERATOR_WORK_DIR}/errno_info.hpp
     COMMAND generate_errno_info
-    DEPENDS generate_errno_info include/error/generators/c++11_errnos.txt
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+    DEPENDS generate_errno_info ${MXLIB_GENERATOR_WORK_DIR}/c++11_errnos.txt
+    WORKING_DIRECTORY ${MXLIB_GENERATOR_WORK_DIR}
+    VERBATIM
 )
 
 #then generate the FITS header
 add_executable(generate_fits_status_info ${CMAKE_SOURCE_DIR}/include/error/generators/generate_fits_status_info.cpp)
 
 add_custom_command(
-    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
+    OUTPUT  ${MXLIB_GENERATOR_WORK_DIR}/fits_status_info.hpp
     COMMAND generate_fits_status_info
-    DEPENDS generate_fits_status_info include/error/generators/fits_error_codes.txt
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+    DEPENDS generate_fits_status_info ${MXLIB_GENERATOR_WORK_DIR}/fits_error_codes.txt
+    WORKING_DIRECTORY ${MXLIB_GENERATOR_WORK_DIR}
+    VERBATIM
 )
 
 #then generate the CUDA header
@@ -299,34 +311,39 @@ if(MXLIB_USE_CUDA)
     target_link_libraries(generate_cudaError_info PUBLIC CUDA::cudart)
 
     add_custom_command(
-        OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp
+        OUTPUT  ${MXLIB_GENERATOR_WORK_DIR}/cudaError_info.hpp
         COMMAND generate_cudaError_info
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-        #DEPENDS_EXPLICIT_ONLY
-        )
+        DEPENDS generate_cudaError_info
+        WORKING_DIRECTORY ${MXLIB_GENERATOR_WORK_DIR}
+        VERBATIM
+    )
 endif()
 
 
 set(ERROR_T_SRCS ${CMAKE_SOURCE_DIR}/include/error/generators/generate_error_t.cpp
-                                ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
-                                ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
-                                )
+                 ${MXLIB_GENERATOR_WORK_DIR}/errno_info.hpp
+                 ${MXLIB_GENERATOR_WORK_DIR}/fits_status_info.hpp)
 if(MXLIB_USE_CUDA)
-set(ERROR_T_SRCS ${ERROR_T_SRCS} ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp)
+    list(APPEND ERROR_T_SRCS ${MXLIB_GENERATOR_WORK_DIR}/cudaError_info.hpp)
 endif()
 
 #now generate errno_t.hpp
 add_executable(generate_error_t ${ERROR_T_SRCS})
+target_include_directories(generate_error_t BEFORE PRIVATE ${MXLIB_GENERATOR_WORK_DIR})
 
 add_custom_command(
-    OUTPUT  ${CMAKE_SOURCE_DIR}/include/error/error_t.hpp
+    OUTPUT  ${MXLIB_GENERATED_ERROR_DIR}/error_t.hpp
     COMMAND generate_error_t
-    DEPENDS generate_error_t include/error/generators/errno_info.hpp include/error/generators/error_t_list.txt
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/include/error/generators/
-    #DEPENDS_EXPLICIT_ONLY
+    DEPENDS generate_error_t
+            ${MXLIB_GENERATOR_WORK_DIR}/errno_info.hpp
+            ${MXLIB_GENERATOR_WORK_DIR}/fits_status_info.hpp
+            ${MXLIB_GENERATOR_WORK_DIR}/error_t_list.txt
+    WORKING_DIRECTORY ${MXLIB_GENERATOR_WORK_DIR}
+    VERBATIM
 )
 
-include_directories(include)
+include_directories(BEFORE ${MXLIB_GENERATED_INCLUDE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_subdirectory(include)
 
@@ -343,19 +360,24 @@ add_subdirectory(source)
 #########################################
 
 # UNCOMP is git status of the headers
-add_custom_command(
-  OUTPUT include/mxlib_uncomp_version.h
-  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh ${CMAKE_CURRENT_SOURCE_DIR} include/mxlib_uncomp_version.h MXLIB_UNCOMP
-  DEPENDS ${OBJLIB_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh
-  #WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+set(MXLIB_UNCOMP_VERSION_HEADER ${MXLIB_GENERATED_INCLUDE_DIR}/mxlib_uncomp_version.h)
+set(MXLIB_COMP_VERSION_HEADER ${MXLIB_GENERATED_INCLUDE_DIR}/mxlib_comp_version.h)
 
-# COMP is git status of the compiled source
-add_custom_command(
-  OUTPUT source/mxlib_comp_version.h
-  COMMAND bash ./gengithead.sh ./ ./source/mxlib_comp_version.h MXLIB_COMP
-  DEPENDS ${OBJLIB_SOURCES} ./gengithead.sh
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+# Git state can change without changing a source-file timestamp (for example,
+# when committing an already-built tree). Recheck it on every library build,
+# but update the generated headers only when their contents actually change so
+# unchanged builds do not recompile the library. Declaring the headers as
+# byproducts and as file-level object dependencies ensures generators evaluate
+# the refreshed files before deciding whether an object is up to date.
+add_custom_target(refresh_mxlib_version_headers
+  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh ${CMAKE_CURRENT_SOURCE_DIR} ${MXLIB_UNCOMP_VERSION_HEADER}.check MXLIB_UNCOMP
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MXLIB_UNCOMP_VERSION_HEADER}.check ${MXLIB_UNCOMP_VERSION_HEADER}
+  COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_UNCOMP_VERSION_HEADER}.check
+  COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/gengithead.sh ${CMAKE_CURRENT_SOURCE_DIR} ${MXLIB_COMP_VERSION_HEADER}.check MXLIB_COMP
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MXLIB_COMP_VERSION_HEADER}.check ${MXLIB_COMP_VERSION_HEADER}
+  COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COMP_VERSION_HEADER}.check
+  BYPRODUCTS ${MXLIB_UNCOMP_VERSION_HEADER} ${MXLIB_COMP_VERSION_HEADER}
+  VERBATIM
 )
 
 ##########################################################################
@@ -363,7 +385,18 @@ add_custom_command(
 #
 # In addition to the sources, this depends on both the COMP and UNCOMP GIT status headers
 ##########################################################################
-add_library(objlib OBJECT ${OBJLIB_SOURCES} ${OBJLIB_INCLUDES} source/mxlib_comp_version.h include/mxlib_uncomp_version.h include/error/error_t.hpp)
+add_library(objlib OBJECT
+    ${OBJLIB_SOURCES}
+    ${OBJLIB_INCLUDES}
+    ${MXLIB_COMP_VERSION_HEADER}
+    ${MXLIB_UNCOMP_VERSION_HEADER}
+    ${MXLIB_GENERATED_ERROR_DIR}/error_t.hpp
+)
+
+set_property(SOURCE ${OBJLIB_SOURCES} APPEND PROPERTY
+  OBJECT_DEPENDS "${MXLIB_COMP_VERSION_HEADER};${MXLIB_UNCOMP_VERSION_HEADER}"
+)
+add_dependencies(objlib refresh_mxlib_version_headers)
 
 # shared libraries need PIC
 set_property(TARGET objlib PROPERTY POSITION_INDEPENDENT_CODE 1)
@@ -381,21 +414,16 @@ add_library(mxlib-static STATIC $<TARGET_OBJECTS:objlib> $<TARGET_OBJECTS:levmar
 SET_TARGET_PROPERTIES(mxlib-shared PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 SET_TARGET_PROPERTIES(mxlib-static PROPERTIES OUTPUT_NAME mxlib CLEAN_DIRECT_OUTPUT 1)
 
-install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc" PATTERN "generators" EXCLUDE)
+install (DIRECTORY include/ DESTINATION include/mx FILES_MATCHING PATTERN "CMakeLists.txt" EXCLUDE PATTERN "*.hpp" PATTERN "*.h" PATTERN "*.inc" PATTERN "generators" EXCLUDE PATTERN "error_t.hpp" EXCLUDE PATTERN "mxlib_uncomp_version.h" EXCLUDE)
 install (FILES include/mxlib.hpp include/mxError.hpp include/mxException.hpp DESTINATION include/mx)
-install (FILES include/error/error_t.hpp DESTINATION include/mx/error)
+install (FILES ${MXLIB_GENERATED_ERROR_DIR}/error_t.hpp DESTINATION include/mx/error)
 
-#We install the generated version behind cmake's back so it does get treated as a changed depend
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/include/mxlib_uncomp_version.h DESTINATION include/mx)
+install (FILES ${MXLIB_UNCOMP_VERSION_HEADER} DESTINATION include/mx)
 
-install (TARGETS mxlib-shared EXPORT mxlib-sharedTargets DESTINATION lib)
-install (TARGETS mxlib-static EXPORT mxlib-staticTargets DESTINATION lib)
-
-install(
-    EXPORT mxlib-sharedTargets
-    FILE mxlib-sharedTargets.cmake
-    DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/mxlib"
-)
+install(TARGETS mxlib-shared mxlib-static
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)
 ############################################
 # Compiler Setup
 ############################################
@@ -405,16 +433,58 @@ add_compile_definitions(${MXLIB_DEFINES})
 set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
-set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${CMAKE_CXX_FLAGS} -D${MXLIB_DEFINES}")
+# Consumers need the language level and public definitions, but mxlib's
+# optimization and host-architecture policy must remain private to mxlib.
+set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${MXLIB_CXXVERSION} -D${MXLIB_DEFINES}")
 
 if(MXLIB_BUILD_COVERAGE)
-    # Match the legacy Make coverage behavior: --coverage and -O0 for instrumented builds.
+    if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU" OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        message(FATAL_ERROR "MXLIB_BUILD_COVERAGE currently requires GCC/gcov")
+    endif()
+
+    # Instrument targets that were created above as well as tests and other
+    # targets created below. Keep these options after mxlib's optimization
+    # flags so coverage builds are genuinely unoptimized.
     add_compile_definitions(MXLIB_BUILD_COVERAGE=1)
+    target_compile_options(objlib PRIVATE
+        $<$<COMPILE_LANGUAGE:C>:--coverage>
+        $<$<COMPILE_LANGUAGE:C>:-O0>
+        $<$<COMPILE_LANGUAGE:C>:-fno-fast-math>
+        $<$<COMPILE_LANGUAGE:CXX>:--coverage>
+        $<$<COMPILE_LANGUAGE:CXX>:-O0>
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-fast-math>
+    )
+    target_link_options(mxlib-shared PUBLIC --coverage)
+    target_link_options(mxlib-static INTERFACE --coverage)
+
+    # Generator tools are authored project sources but are created before the
+    # directory-wide coverage options below. Instrument them explicitly so the
+    # initial tracefile includes their zero-count baseline after build-time
+    # generator executions are cleared by lcov --zerocounters.
+    set(_mxlib_coverage_generator_targets
+        generate_errno_info
+        generate_fits_status_info
+        generate_error_t
+    )
+    if(TARGET generate_cudaError_info)
+        list(APPEND _mxlib_coverage_generator_targets generate_cudaError_info)
+    endif()
+    foreach(_mxlib_coverage_generator_target IN LISTS _mxlib_coverage_generator_targets)
+        target_compile_options(${_mxlib_coverage_generator_target} PRIVATE
+            $<$<COMPILE_LANGUAGE:CXX>:--coverage>
+            $<$<COMPILE_LANGUAGE:CXX>:-O0>
+            $<$<COMPILE_LANGUAGE:CXX>:-fno-fast-math>
+        )
+        target_link_options(${_mxlib_coverage_generator_target} PRIVATE --coverage)
+    endforeach()
+
     add_compile_options(
         $<$<COMPILE_LANGUAGE:C>:--coverage>
         $<$<COMPILE_LANGUAGE:C>:-O0>
+        $<$<COMPILE_LANGUAGE:C>:-fno-fast-math>
         $<$<COMPILE_LANGUAGE:CXX>:--coverage>
         $<$<COMPILE_LANGUAGE:CXX>:-O0>
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-fast-math>
     )
     add_link_options(--coverage)
 endif()
@@ -550,7 +620,7 @@ if(${MXLIB_USE_FFT_FROM} STREQUAL "fftw")
     set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${FFTW3L_INCLUDE_CFLAGS}")
 
     linklibdirs_from_list(FFTW3L_LIBDIRS_FLAGS FFTW3L_LIBRARY_DIRS)
-    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTWL_LIBDIRS_FLAGS}")
+    set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBDIRS_FLAGS}")
 
     linklibs_from_list(FFTW3L_LIBRARIES_FLAGS FFTW3L_LIBRARIES)
     set(MXLIB_PC_LDFLAGS "${MXLIB_PC_LDFLAGS} ${FFTW3L_LIBRARIES_FLAGS}")
@@ -869,8 +939,13 @@ add_custom_target(tests
 )
 
 set(MXLIB_COVERAGE_BUILD_DIR ${CMAKE_BINARY_DIR}/coverage-build)
+set(MXLIB_COVERAGE_BASELINE_INFO ${CMAKE_BINARY_DIR}/coverage_baseline.info)
+set(MXLIB_COVERAGE_RUNTIME_INFO ${CMAKE_BINARY_DIR}/coverage_runtime.info)
 set(MXLIB_COVERAGE_INFO ${CMAKE_BINARY_DIR}/coverage.info)
+set(MXLIB_COVERAGE_PROJECT_INFO ${CMAKE_BINARY_DIR}/coverage_project.info)
 set(MXLIB_COVERAGE_FILTERED_INFO ${CMAKE_BINARY_DIR}/coverage_filtered.info)
+set(MXLIB_COVERAGE_RECORD_MANIFEST ${CMAKE_SOURCE_DIR}/tests/coverage/expected_coverage_records.txt)
+set(MXLIB_COVERAGE_RECORD_VERIFIER ${CMAKE_SOURCE_DIR}/cmake/verify_coverage_records.cmake)
 set(MXLIB_DOC_OUTPUT_DIR ${CMAKE_BINARY_DIR}/doc)
 set(MXLIB_DOC_HTML_DIR ${MXLIB_DOC_OUTPUT_DIR}/html)
 set(MXLIB_COVERAGE_REPORT_DIR ${MXLIB_DOC_HTML_DIR}/coverage)
@@ -881,6 +956,29 @@ if(Doxygen_FOUND)
     set(MXLIB_DOXYGEN_CONFIG_IN ${CMAKE_SOURCE_DIR}/doc/mxlib_doxygen.in)
     set(MXLIB_DOXYGEN_CONFIG ${CMAKE_BINARY_DIR}/mxlib_doxygen)
     set(MXLIB_DOXYGEN_OUTPUT_DIRECTORY ${MXLIB_DOC_OUTPUT_DIR})
+    set(MXLIB_DOXYGEN_GENERATED_TAGFILE ${MXLIB_DOC_OUTPUT_DIR}/mxlib.tag.xml)
+    find_path(MXLIB_DOXYGEN_SYSTEM_INCLUDE_DIR math.h)
+    if(MXLIB_DOXYGEN_SYSTEM_INCLUDE_DIR)
+        set(MXLIB_DOXYGEN_INCLUDE_PATH "\"${MXLIB_DOXYGEN_SYSTEM_INCLUDE_DIR}\"")
+    else()
+        set(MXLIB_DOXYGEN_INCLUDE_PATH "")
+    endif()
+    set(MXLIB_CPPREFERENCE_TAGFILE "" CACHE FILEPATH
+        "Optional path to a local cppreference Doxygen tag file")
+    set(MXLIB_CPPREFERENCE_TAG_URL "https://en.cppreference.com/w/" CACHE STRING
+        "URL prefix used with MXLIB_CPPREFERENCE_TAGFILE")
+    set(MXLIB_DOXYGEN_TAGFILES "")
+
+    if(MXLIB_CPPREFERENCE_TAGFILE)
+        if(EXISTS "${MXLIB_CPPREFERENCE_TAGFILE}")
+            set(MXLIB_DOXYGEN_TAGFILES
+                "\"${MXLIB_CPPREFERENCE_TAGFILE}=${MXLIB_CPPREFERENCE_TAG_URL}\"")
+        else()
+            message(WARNING
+                "MXLIB_CPPREFERENCE_TAGFILE does not exist; cppreference links will be omitted: "
+                "${MXLIB_CPPREFERENCE_TAGFILE}")
+        endif()
+    endif()
 
     configure_file(${MXLIB_DOXYGEN_CONFIG_IN} ${MXLIB_DOXYGEN_CONFIG} @ONLY)
 
@@ -897,6 +995,7 @@ if(Doxygen_FOUND)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/doc
         DEPENDS ${MXLIB_DOXYGEN_CONFIG}
                 ${CMAKE_SOURCE_DIR}/doc/mxlib_header.html
+                ${CMAKE_SOURCE_DIR}/doc/mxlib-custom.css
                 ${CMAKE_SOURCE_DIR}/doc/mxlibDoxygenLayout.xml
                 ${CMAKE_SOURCE_DIR}/doc/main.dox
                 ${CMAKE_SOURCE_DIR}/doc/coverage_report.dox
@@ -912,15 +1011,44 @@ find_program(MXLIB_GENHTML_EXECUTABLE genhtml)
 
 if(MXLIB_LCOV_EXECUTABLE AND MXLIB_GENHTML_EXECUTABLE)
     add_custom_target(coverage
-        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR} -B ${MXLIB_COVERAGE_BUILD_DIR} -DMXLIB_BUILD_TESTS=ON -DMXLIB_BUILD_COVERAGE=ON -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_OPENMP=${MXLIB_USE_OPENMP} -DMXLIB_USE_ISIO=${MXLIB_USE_ISIO} -DMXLIB_USE_FFT_FROM=${MXLIB_USE_FFT_FROM} -DMXLIB_USE_BLAS_FROM=${MXLIB_USE_BLAS_FROM}
+        COMMAND ${CMAKE_COMMAND} -S ${CMAKE_SOURCE_DIR} -B ${MXLIB_COVERAGE_BUILD_DIR} -G ${CMAKE_GENERATOR} -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DMXLIB_BUILD_TESTS=ON -DMXLIB_BUILD_COVERAGE=ON -DMXLIB_USE_CUDA=OFF -DMXLIB_USE_OPENMP=${MXLIB_USE_OPENMP} -DMXLIB_USE_ISIO=${MXLIB_USE_ISIO} -DMXLIB_USE_FFT_FROM=${MXLIB_USE_FFT_FROM} -DMXLIB_USE_BLAS_FROM=${MXLIB_USE_BLAS_FROM}
         COMMAND ${CMAKE_COMMAND} --build ${MXLIB_COVERAGE_BUILD_DIR} --target mxlibTests -j
         COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --zerocounters
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --initial --output-file ${MXLIB_COVERAGE_BASELINE_INFO}
         COMMAND ${CMAKE_CTEST_COMMAND} --test-dir ${MXLIB_COVERAGE_BUILD_DIR} --output-on-failure --timeout ${MXLIB_COVERAGE_TEST_TIMEOUT}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_INFO}
-        COMMAND ${MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_INFO} ${CMAKE_SOURCE_DIR}/tests/* /usr/* /sys/* /tty/* --ignore-errors unused,unused --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --directory ${MXLIB_COVERAGE_BUILD_DIR} --capture --output-file ${MXLIB_COVERAGE_RUNTIME_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --add-tracefile ${MXLIB_COVERAGE_BASELINE_INFO} --add-tracefile ${MXLIB_COVERAGE_RUNTIME_INFO} --ignore-errors inconsistent,inconsistent --output-file ${MXLIB_COVERAGE_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --extract ${MXLIB_COVERAGE_INFO}
+                ${CMAKE_SOURCE_DIR}/include/*
+                ${CMAKE_SOURCE_DIR}/source/*
+                --ignore-errors unused,unused
+                --ignore-errors inconsistent,inconsistent
+                --output-file ${MXLIB_COVERAGE_PROJECT_INFO}
+        COMMAND ${MXLIB_LCOV_EXECUTABLE} --remove ${MXLIB_COVERAGE_PROJECT_INFO}
+                ${CMAKE_SOURCE_DIR}/tests/*
+                ${CMAKE_SOURCE_DIR}/include/app/inih/*
+                ${CMAKE_SOURCE_DIR}/include/app/optionparser/*
+                ${CMAKE_SOURCE_DIR}/include/astro/sofa/*
+                ${CMAKE_SOURCE_DIR}/include/error/generators/errno_info.hpp
+                ${CMAKE_SOURCE_DIR}/include/error/generators/fits_status_info.hpp
+                ${CMAKE_SOURCE_DIR}/include/error/generators/cudaError_info.hpp
+                ${CMAKE_SOURCE_DIR}/source/app/optionparser.cpp
+                ${CMAKE_SOURCE_DIR}/source/vendor/*
+                --ignore-errors unused,unused
+                --ignore-errors inconsistent,inconsistent
+                --output-file ${MXLIB_COVERAGE_FILTERED_INFO}
+        COMMAND ${CMAKE_COMMAND}
+                "-DTRACEFILE=${MXLIB_COVERAGE_FILTERED_INFO}"
+                "-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+                "-DMANIFEST=${MXLIB_COVERAGE_RECORD_MANIFEST}"
+                -P ${MXLIB_COVERAGE_RECORD_VERIFIER}
+        COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_COVERAGE_REPORT_DIR}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${MXLIB_COVERAGE_REPORT_DIR}
         COMMAND ${MXLIB_GENHTML_EXECUTABLE} ${MXLIB_COVERAGE_FILTERED_INFO} --output-directory ${MXLIB_COVERAGE_REPORT_DIR} --title mxlib --hierarchical --merge-aliases --suppress-aliases --filter function --demangle-cpp --css-file ${CMAKE_SOURCE_DIR}/tests/coverage/gcov.css
+        DEPENDS ${MXLIB_COVERAGE_RECORD_MANIFEST}
+                ${MXLIB_COVERAGE_RECORD_VERIFIER}
         USES_TERMINAL
+        VERBATIM
     )
     if(TARGET docs)
         add_dependencies(coverage docs)
@@ -930,7 +1058,10 @@ else()
 endif()
 
 add_custom_target(coverage_clean
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_BASELINE_INFO}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_RUNTIME_INFO}
     COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_INFO}
+    COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_PROJECT_INFO}
     COMMAND ${CMAKE_COMMAND} -E rm -f ${MXLIB_COVERAGE_FILTERED_INFO}
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_COVERAGE_REPORT_DIR}
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${MXLIB_COVERAGE_BUILD_DIR}

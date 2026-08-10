@@ -1,4 +1,5 @@
 /** \file psdUtils_test.cpp
+ * \brief Tests power-spectral-density utilities.
  */
 #include "../../catch2/catch.hpp"
 
@@ -13,13 +14,15 @@
 #include "../../../include/math/randomT.hpp"
 #include "../../../include/math/vectorUtils.hpp"
 
-/** Scenario: calculating variance from a 1D PSD
+/** calculating variance from a 1D PSD
  *
  * Verify calculations of psdVar1sided, psdVar2sided, and psdVar.
  *
- * \anchor tests_sigproc_psdUtils_psdVar_1D
  */
-SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
+/**
+ * \ingroup psdUtils_unit_tests
+ */
+TEST_CASE( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 {
     GIVEN( "a 1 sided PSD," )
     {
@@ -89,9 +92,11 @@ SCENARIO( "calculating variance from a 1D PSD", "[sigproc::psdUtils]" )
 
 /** Verify scaling and normalization of augment1SidedPSD
  *
- * \anchor tests_sigproc_psdUtils_augment1SidedPSD
  */
-SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
+/**
+ * \ingroup psdUtils_unit_tests
+ */
+TEST_CASE( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
 {
     GIVEN( "a 1 sided PSD, with a 0 freq value" )
     {
@@ -146,9 +151,11 @@ SCENARIO( "augmenting a 1 sided PSD", "[sigproc::psdUtils]" )
 
 /** Verify creation of a 1D frequency grid
  *
- * \anchor tests_sigproc_psdUtils_frequencyGrid_1D
  */
-SCENARIO( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
+/**
+ * \ingroup psdUtils_unit_tests
+ */
+TEST_CASE( "creating a 1D frequency grid", "[sigproc::psdUtils]" )
 {
     GIVEN( "2 sided FFT-order frequency grid" )
     {

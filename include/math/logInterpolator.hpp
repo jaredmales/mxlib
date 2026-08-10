@@ -29,6 +29,8 @@
 #ifndef mx_math_logInterpolator_hpp
 #define mx_math_logInterpolator_hpp
 
+#include <cmath>
+
 #include "../mxlib.hpp"
 #include "gslInterpolator.hpp"
 
@@ -107,8 +109,8 @@ class logInterpolator
                 throw(mx::exception(error_t::invalidarg, "y values must > 0" ));
             }
 
-            m_logx[n] = log10( x[n] );
-            m_logy[n] = log10( y[n] );
+            m_logx[n] = std::log10( x[n] );
+            m_logy[n] = std::log10( y[n] );
         }
 
         m_interp.setup( m_logx, m_logy );
@@ -120,7 +122,7 @@ class logInterpolator
      */
     realT operator()( const realT &x )
     {
-        return pow( static_cast<realT>( 10 ), m_interp( log10( x ) ) );
+        return std::pow( static_cast<realT>( 10 ), m_interp( std::log10( x ) ) );
     }
 };
 

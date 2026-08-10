@@ -1,6 +1,6 @@
 /** \file array2FitGaussian2D.hpp
  * \author Jared R. Males
- * \brief Wrapper for a native array to pass to \ref levmarInterface, with 2D Gaussian details.
+ * \brief Wrapper for a native array to pass to \ref mx::math::fit::levmarInterface, with 2D Gaussian details.
  * \ingroup fitting_files
  *
  */

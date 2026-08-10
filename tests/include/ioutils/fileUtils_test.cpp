@@ -1,4 +1,5 @@
 /** \file fileUtils_test.cpp
+ * \brief Tests filesystem utilities.
  */
 #include "../../catch2/catch.hpp"
 

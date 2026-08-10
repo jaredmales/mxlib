@@ -730,7 +730,7 @@ GENERATE_TODOLIST      = YES
 # list. This list is created by putting \test commands in the documentation.
 # The default value is: YES.
 
-GENERATE_TESTLIST      = YES
+GENERATE_TESTLIST      = NO
 
 # The GENERATE_BUGLIST tag can be used to enable (YES) or disable (NO) the bug
 # list. This list is created by putting \bug commands in the documentation.
@@ -946,7 +946,6 @@ INPUT                  = ./groupdefs.dox \
                          ./mkl.dox \
                          ./fftw.dox \
                          ./documenting.dox \
-                         ../ \
                          ../include \
                          ../include/ao \
                          ../include/ao/analysis \
@@ -983,19 +982,29 @@ INPUT                  = ./groupdefs.dox \
                          ../source/math \
                          ../source/sigproc \
                          ../source/sys \
+                         ../tests/include \
                          ../tests/include/ao \
                          ../tests/include/ao/analysis \
+                         ../tests/include/ao/sim \
                          ../tests/include/app \
                          ../tests/include/astro \
+                         ../tests/include/base \
                          ../tests/include/error \
+                         ../tests/include/error/generators \
                          ../tests/include/improc \
                          ../tests/include/ioutils \
                          ../tests/include/ioutils/fits \
+                         ../tests/include/ipc \
                          ../tests/include/math \
                          ../tests/include/math/cuda \
+                         ../tests/include/math/fit \
+                         ../tests/include/math/ft \
                          ../tests/include/math/func \
+                         ../tests/include/math/plot \
+                         ../tests/include/meta \
                          ../tests/include/sigproc \
-                         ../tests/include/sys
+                         ../tests/include/sys \
+                         ../tests/include/wfp
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1408,6 +1417,7 @@ HTML_STYLESHEET        =
 HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css \
                          doxygen-awesome-css/doxygen-awesome-sidebar-only.css \
                          doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css \
+                         mxlib-custom.css
 
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
@@ -1420,6 +1430,10 @@ HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css \
 
 HTML_EXTRA_FILES       = doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
                          doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js
+
+# Doxygen Awesome supplies the copy button used for code fragments.
+
+HTML_COPY_CLIPBOARD    = NO
 
 # The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
 # should be rendered with a dark or light theme.
@@ -1741,6 +1755,11 @@ DISABLE_INDEX          = NO
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 GENERATE_TREEVIEW      = YES
+
+# Keep the documentation's established single navigation sidebar. Doxygen 1.14
+# and newer otherwise add a second page-outline panel on the right.
+
+PAGE_OUTLINE_PANEL     = NO
 
 # When both GENERATE_TREEVIEW and DISABLE_INDEX are set to YES, then the
 # FULL_SIDEBAR option determines if the side bar is limited to only the treeview
@@ -2416,7 +2435,7 @@ EXPAND_ONLY_PREDEF     = NO
 # The default value is: YES.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-SEARCH_INCLUDES        = YES
+SEARCH_INCLUDES        = NO
 
 # The INCLUDE_PATH tag can be used to specify one or more directories that
 # contain include files that are not input files but should be processed by the
@@ -2424,7 +2443,7 @@ SEARCH_INCLUDES        = YES
 # RECURSIVE has no effect here.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           =
+INCLUDE_PATH           = @MXLIB_DOXYGEN_INCLUDE_PATH@
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
@@ -2480,13 +2499,13 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = "/home/jaredmales/Documents/References/cppreference/cppreference-doxygen-local.tag.xml=/home/jaredmales/Documents/References/cppreference/reference/en"
+TAGFILES               = @MXLIB_DOXYGEN_TAGFILES@
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       = mxlib.tag.xml
+GENERATE_TAGFILE       = @MXLIB_DOXYGEN_GENERATED_TAGFILE@
 
 # If the ALLEXTERNALS tag is set to YES, all external classes and namespaces
 # will be listed in the class and namespace index. If set to NO, only the

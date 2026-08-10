@@ -1,4 +1,5 @@
-/** \file fftTT_test.cpp
+/** \file fftT_test.cpp
+ * \brief Tests CPU FFT transforms.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -11,11 +12,11 @@
 
 /// 1D FFT with FFTW
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
 {
-    srand( time( 0 ) );
+    srand( 1 );
 
     SECTION( "out-of-place, forward, default constructed, raw interface" )
     {
@@ -32,7 +33,7 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         float sout = out.abs2().sum() / out.rows();
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 
     SECTION( "out-of-place, forward, default constructed, eigen interface" )
@@ -50,7 +51,7 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         float sout = out.abs2().sum() / out.rows();
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 
     SECTION( "out-of-place, forward, plan constructor" )
@@ -66,7 +67,7 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         float sout = out.abs2().sum() / out.rows();
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 
     SECTION( "out-of-place, backward" )
@@ -82,7 +83,7 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         float sout = out.abs2().sum();
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 
     SECTION( "in-place, forward" )
@@ -104,7 +105,7 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         REQUIRE( rmsdiff > 0 );
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 
     SECTION( "in-place, backward" )
@@ -128,17 +129,17 @@ TEST_CASE( "1D c2c FFT with FFTW, float", "[math::ft]" )
         REQUIRE( rmsdiff > 0 );
 
         // Test by Parsevals
-        REQUIRE_THAT( sin, Catch::Matchers::WithinAbs( sout, 1e-3 ) );
+        REQUIRE_THAT( sin, Catch::Matchers::WithinRel( sout, 5e-6f ) );
     }
 }
 
 /// 2D FFT with FFTW
 /**
- * \ingroup math_ft_fftT_test
+ * \ingroup fftT_unit_tests
  */
 TEST_CASE( "2D c2c FFT with FFTW, float", "[math::ft]" )
 {
-    srand( time( 0 ) );
+    srand( 1 );
 
     SECTION( "out-of-place, forward, default constructed, raw interface" )
     {

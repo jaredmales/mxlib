@@ -213,7 +213,7 @@ class averagePeriodogram
 
     /// Set the window vector using a function.
     /** This will resize m_win, and then call the function with m_win as the argument.
-      * For example to use the hann window defined \ref signal_windows1D:
+      * For example, to use the Hann window from the \ref signal_windows1D "1-D window functions":
       * \code
         avgPgram.win( window::hann );
         \endcode

@@ -28,7 +28,7 @@
 
 #include <ios>
 
-#include "mxlib_uncomp_version.h"
+#include <mxlib_uncomp_version.h>
 
 #include "error/error.hpp"
 #include "error/exception.hpp"

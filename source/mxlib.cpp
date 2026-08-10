@@ -23,7 +23,7 @@
 // along with mxlib.  If not, see <http://www.gnu.org/licenses/>.
 //***********************************************************************//
 
-#include "mxlib_comp_version.h"
+#include <mxlib_comp_version.h>
 
 namespace mx
 {

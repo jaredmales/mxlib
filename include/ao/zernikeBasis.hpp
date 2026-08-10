@@ -8,8 +8,10 @@
 #ifndef __zernikeBasis_hpp__
 #define __zernikeBasis_hpp__
 
+#include "aoPaths.hpp"
+#include "../improc/eigenCube.hpp"
 #include "../sigproc/zernike.hpp"
-#include "../improc/fitsFile.hpp"
+#include "../ioutils/fits/fitsFile.hpp"
 
 namespace mx
 {
@@ -31,12 +33,12 @@ void makeZernikeBasis( const std::string &basisName, const std::string &pupilNam
     improc::eigenCube<realT> rawModes;
 
     rawModes.resize( dim, dim, N );
-    zernikeBasis( rawModes );
+    sigproc::zernikeBasis<improc::eigenCube<realT>, realT>( rawModes );
 
     std::string pupilFName = mx::AO::path::pupil::pupilFile( pupilName );
     Eigen::Array<realT, -1, -1> pupil;
 
-    mx::improc::fitsFile<realT> ff;
+    mx::fits::fitsFile<realT> ff;
     ff.read( pupil, pupilFName );
 
     realT psum = pupil.sum();

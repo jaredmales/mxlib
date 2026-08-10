@@ -41,7 +41,7 @@ namespace ft
  * aout.cols() == ain.cols() + padCols
  * aout.rows() == ain.rows() + padRows
  * \endverbatim
- * where `padRows` and `padCols are the desired amount of padding. \p aout will be in
+ * where `padRows` and `padCols` are the desired amount of padding. \p aout will be in
  * FFT order and suitable for input to the inverse transform (complext-to-real).
  *
  * \ingroup ft
@@ -65,7 +65,7 @@ void padR2CFFTOutput( eigenArrOutT &aout, /**< [out] The padded array.  Must be 
  * aout.row() ==  ain.rows() + padRows
  * aout.cols() == ain.cols() + padCols
  * \endverbatim
- * where `padRows` and `padCols are the desired amount of padding. \p aout will be in
+ * where `padRows` and `padCols` are the desired amount of padding. \p aout will be in
  * FFT order and suitable for input to the inverse transform (complex-to-complex).
  *
  * \ingroup ft

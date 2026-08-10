@@ -1,4 +1,5 @@
 /** \file ftTypes_test.cpp
+ * \brief Tests Fourier-transform type traits.
  */
 #include "../../../catch2/catch.hpp"
 
@@ -11,7 +12,7 @@
 /// Test the ftTypes
 /** This is just a compilation check.
  *
- * \ingroup math_ft_ftTypes_tests
+ * \ingroup ftTypes_unit_tests
  */
 TEST_CASE( "Test the ftTypes", "[math::ft]" )
 {

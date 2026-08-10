@@ -36,6 +36,8 @@
 #include "../ioutils/fits/fitsFile.hpp"
 #include "../ioutils/fits/fitsUtils.hpp"
 
+#include "../error/mxErrorOld.hpp"
+
 #include "../improc/eigenImage.hpp"
 #include "../improc/eigenCube.hpp"
 
@@ -280,7 +282,10 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadApodizer( const std::string &apo
 {
     fits::fitsFile<_realT> ff;
 
-    return ff.read( m_pupilApodizer, apodName );
+    if( !!ff.read( m_pupilApodizer, apodName ) )
+        return -1;
+
+    return 0;
 }
 
 template <typename _realT, typename _fpmaskFloatT>
@@ -289,7 +294,7 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadFocalMask( const std::string &fp
     fits::fitsFile<_realT> ff;
     improc::eigenCube<fpmaskFloatT> fpm;
 
-    if( ff.read( fpm, fpmName ) < 0 )
+    if( !!ff.read( fpm, fpmName ) )
         return -1;
 
     if( fpm.planes() == 1 )
@@ -328,7 +333,10 @@ int lyotCoronagraph<_realT, _fpmaskFloatT>::loadLyotStop( const std::string &lyo
 {
     fits::fitsFile<_realT> ff;
 
-    return ff.read( m_lyotStop, lyotName );
+    if( !!ff.read( m_lyotStop, lyotName ) )
+        return -1;
+
+    return 0;
 }
 
 template <typename _realT, typename _fpmaskFloatT>

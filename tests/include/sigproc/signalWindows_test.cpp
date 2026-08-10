@@ -1,4 +1,5 @@
-/** \file psdFilter_test.cpp
+/** \file signalWindows_test.cpp
+ * \brief Tests signal-window generation.
  */
 #include "../../catch2/catch.hpp"
 
@@ -10,13 +11,15 @@
 #include "../../../include/sigproc/signalWindows.hpp"
 #include "../../../include/improc/eigenImage.hpp"
 
-/** Scenario: creating 2D Rectangular Tukey Windows
+/** creating 2D Rectangular Tukey Windows
  *
  * Verify creation of a 2D rectangular Tukey window
  *
- * \anchor tests_sigproc_signalWindows_Tukey2DSquare
  */
-SCENARIO( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tukey2dSquare]" )
+/**
+ * \ingroup signalWindows_unit_tests
+ */
+TEST_CASE( "creating 2D Rectangular Tukey Windows", "[sigproc::signalWindows::tukey2dSquare]" )
 {
     GIVEN( "a centered square array" )
     {

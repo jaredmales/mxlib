@@ -81,6 +81,7 @@
    /** \defgroup gen_math_airy_pattern The Airy Pattern
      * Utilities for working with the Airy Pattern.
      * \ingroup functions
+     * \ingroup psfs
      */
 
    /** \defgroup gen_math_bessel Bessel Functions
@@ -234,6 +235,12 @@
   * \ingroup template_blaslap
   */
 
+/** \defgroup cufft_templates CUFFT Templates
+  * Template type-resolution utilities for the NVIDIA CUFFT library.
+  * \ingroup cuda
+  * \ingroup fft
+  */
+
 
 //see gen_math_files
 
@@ -360,7 +367,7 @@
 /** \defgroup coronagraphs Coronagraphs
   * Modeling and optimizing coronagraphs
   * \ingroup imaging
-  /
+  */
 
 /** \defgroup mxAO Adaptive Optics
   * All sorts of things related to astronomical adaptive optics
@@ -396,6 +403,16 @@
 /** \defgroup mxAO_files Adaptive Optics Files
   * Files related to astronomical adaptive optics
   * \ingroup mxAO
+  */
+
+/** \defgroup mxAO_analysis_files Adaptive Optics Analysis Files
+  * Files for analytical evaluation of adaptive-optics systems.
+  * \ingroup mxAO_files
+  */
+
+/** \defgroup mxAO_sim_files Adaptive Optics Simulation Files
+  * Files for simulation of adaptive-optics systems.
+  * \ingroup mxAO_files
   */
 
 //see imaging_files
@@ -495,7 +512,7 @@
   */
 
 /** \defgroup fits_processing_typedefs fitsFile typedefs
-  * Typedefs of \ref mx::improc::fitsFile for standard types
+  * Typedefs of \ref mx::fits::fitsFile for standard types
   * \ingroup fits_processing
   */
 
@@ -575,6 +592,66 @@
       * \ingroup mxlib_testing
       */
 
+        /** \defgroup ao_unit_tests Adaptive Optics Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup ao_analysis_unit_tests Adaptive Optics Analysis Unit Tests
+              * \ingroup ao_unit_tests
+              */
+
+                /** \defgroup aoAtmosphere_unit_tests aoAtmosphere Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup aoPSDs_unit_tests aoPSDs Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup aoSystem_unit_tests aoSystem Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup clAOLinearPredictor_unit_tests clAOLinearPredictor Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup clGainOpt_unit_tests clGainOpt Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+                /** \defgroup fourierTemporalPSD_unit_tests fourierTemporalPSD Unit Tests
+                  * \ingroup ao_analysis_unit_tests
+                  */
+
+            /** \defgroup ao_sim_unit_tests Adaptive Optics Simulation Unit Tests
+              * \ingroup ao_unit_tests
+              */
+
+                /** \defgroup pyramidSensor_unit_tests pyramidSensor Unit Tests
+                  * \ingroup ao_sim_unit_tests
+                  */
+
+        /** \defgroup app_unit_tests Application Framework Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup appConfigurator_unit_tests appConfigurator Unit Tests
+              * \ingroup app_unit_tests
+              */
+
+        /** \defgroup astro_unit_tests Astronomy Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup astroDynamics_unit_tests astroDynamics Unit Tests
+              * \ingroup astro_unit_tests
+              */
+
+        /** \defgroup base_unit_tests Base Utility Unit Tests
+          * \ingroup unit_tests
+          */
+
         /** \defgroup error_unit_tests Error Handling Unit Tests
           * \ingroup unit_tests
           */
@@ -584,6 +661,42 @@
 
             /** \defgroup error_error_t_unit_tests error_t Utilities Unit Tests
               * \ingroup error_unit_tests
+              */
+
+            /** \defgroup error_generators_unit_tests Error Generator Tool Unit Tests
+              * \ingroup error_unit_tests
+              */
+
+        /** \defgroup improc_unit_tests Image Processing Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup eigenCube_unit_tests eigenCube Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageFilters_unit_tests Image Filters Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageMasks_unit_tests Image Masks Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageTransforms_unit_tests Image Transforms Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageUtils_unit_tests Image Utilities Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageXCorrDiscrete_unit_tests Discrete Image Cross-Correlation Unit Tests
+              * \ingroup improc_unit_tests
+              */
+
+            /** \defgroup imageXCorrFFT_unit_tests FFT Image Cross-Correlation Unit Tests
+              * \ingroup improc_unit_tests
               */
 
         /** \defgroup ioutils_unit_tests I/O Utilities Unit Tests
@@ -617,6 +730,126 @@
                     /** \defgroup fitsHeaderCard_unit_tests fitsHeaderCard Unit Tests
                       * \ingroup fits_unit_tests
                       */
+
+        /** \defgroup ipc_unit_tests Interprocess Communication Unit Tests
+          * \ingroup unit_tests
+          */
+
+        /** \defgroup math_unit_tests Mathematics Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup floatUtils_unit_tests Floating-Point Utilities Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup geo_unit_tests Geometry Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup randomT_unit_tests Random Number Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup templateBLAS_unit_tests Templatized BLAS Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup templateLapack_unit_tests Templatized LAPACK Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup vectorUtils_unit_tests Vector Utilities Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup math_cuda_unit_tests CUDA Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+                /** \defgroup templateCublas_unit_tests Templatized cuBLAS Unit Tests
+                  * \ingroup math_cuda_unit_tests
+                  */
+
+            /** \defgroup math_fit_unit_tests Mathematical Fitting Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+            /** \defgroup math_ft_unit_tests Fourier Transform Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+                /** \defgroup fftT_unit_tests fftT Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+                /** \defgroup fftwEnvironment_unit_tests FFTW Environment Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+                /** \defgroup ftTypes_unit_tests Fourier Transform Types Unit Tests
+                  * \ingroup math_ft_unit_tests
+                  */
+
+            /** \defgroup math_func_unit_tests Mathematical Function Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+                /** \defgroup moffat_unit_tests Moffat Function Unit Tests
+                  * \ingroup math_func_unit_tests
+                  */
+
+            /** \defgroup math_plot_unit_tests Mathematical Plotting Unit Tests
+              * \ingroup math_unit_tests
+              */
+
+        /** \defgroup meta_unit_tests Meta-programming Unit Tests
+          * \ingroup unit_tests
+          */
+
+        /** \defgroup sigproc_unit_tests Signal Processing Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup circularBuffer_unit_tests Circular Buffer Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup psdFilter_unit_tests PSD Filter Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup psdUtils_unit_tests PSD Utilities Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup signalWindows_unit_tests Signal Window Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+            /** \defgroup zernike_unit_tests Zernike Unit Tests
+              * \ingroup sigproc_unit_tests
+              */
+
+        /** \defgroup sys_unit_tests System Programming Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup timeUtils_unit_tests Time Utilities Unit Tests
+              * \ingroup sys_unit_tests
+              */
+
+        /** \defgroup wfp_unit_tests Wavefront Propagation Unit Tests
+          * \ingroup unit_tests
+          */
+
+            /** \defgroup fraunhoferPropagator_unit_tests Fraunhofer Propagator Unit Tests
+              * \ingroup wfp_unit_tests
+              */
+
+            /** \defgroup imagingUtils_unit_tests Imaging Utilities Unit Tests
+              * \ingroup wfp_unit_tests
+              */
 
 
 //-----------------------------------------------------------------------

@@ -1,4 +1,5 @@
-/** \file psdFilter_test.cpp
+/** \file circularBuffer_test.cpp
+ * \brief Tests circular-buffer wrapping and indexing.
  */
 #include "../../catch2/catch.hpp"
 
@@ -9,13 +10,15 @@
 
 #include "../../../include/sigproc/circularBuffer.hpp"
 
-/** Scenario: using a circular buffer with branch-wrapping
+/** using a circular buffer with branch-wrapping
  *
  * Verify circular buffer operation with branch-wrapping
  *
- * \anchor tests_sigproc_circularBuffer_branch
  */
-SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer::circularBufferBranch]" )
+/**
+ * \ingroup circularBuffer_unit_tests
+ */
+TEST_CASE( "creating a circular buffer with branching", "[sigproc::circularBuffer::circularBufferBranch]" )
 {
     GIVEN( "a circular buffer" )
     {
@@ -97,13 +100,15 @@ SCENARIO( "creating a circular buffer with branching", "[sigproc::circularBuffer
     }
 }
 
-/** Scenario: using a circular buffer with index-wrapping
+/** using a circular buffer with index-wrapping
  *
  * Verify circular buffer operation with index-wrapping
  *
- * \anchor tests_sigproc_circularBuffer_branch
  */
-SCENARIO( "creating a circular buffer with indexing", "[sigproc::circularBuffer::circularBufferIndex]" )
+/**
+ * \ingroup circularBuffer_unit_tests
+ */
+TEST_CASE( "creating a circular buffer with indexing", "[sigproc::circularBuffer::circularBufferIndex]" )
 {
     GIVEN( "a circular buffer" )
     {
@@ -162,4 +167,3 @@ SCENARIO( "creating a circular buffer with indexing", "[sigproc::circularBuffer:
         }
     }
 }
-

@@ -1,4 +1,5 @@
 /** \file psdFilter_test.cpp
+ * \brief Tests PSD-filter construction and filtering.
  */
 #include "../../catch2/catch.hpp"
 
@@ -21,13 +22,15 @@ constexpr int psdFilterTrials = 10000;
 constexpr double psdFilterTol = 0.02;
 #endif
 
-/** Scenario: compiling psdFilter
+/** compiling psdFilter
  *
  * Verify compilation and initilization of the 3 ranks for psdFilter.
  *
- * \anchor tests_sigproc_psdFilter_compile
  */
-SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
+/**
+ * \ingroup psdFilter_unit_tests
+ */
+TEST_CASE( "compiling psdFilter", "[sigproc::psdFilter]" )
 {
     GIVEN( "a psdFilter, sqrt pointer" )
     {
@@ -220,9 +223,11 @@ SCENARIO( "compiling psdFilter", "[sigproc::psdFilter]" )
  * Conducts random noise tests, verifying that the resultant rms is within 2% of expected value on average over many
  * trials. Results are usually better than 1%, but 2% makes sure we don't get false failures.
  *
- * \anchor tests_sigproc_psdFilter_filter
  */
-SCENARIO( "filtering with psdFilter", "[sigproc::psdFilter]" )
+/**
+ * \ingroup psdFilter_unit_tests
+ */
+TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 {
     GIVEN( "a rank 1 psd" )
     {

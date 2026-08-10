@@ -1,7 +1,7 @@
 /** \file zernikeTemporalPSD.hpp
  * \author Jared R. Males (jaredmales@gmail.com)
  * \brief Calculation of the temporal PSD of Zernike modes.
- * \ingroup mxAOm_files
+ * \ingroup mxAO_analysis_files
  *
  */
 
@@ -71,7 +71,7 @@ namespace analysis
 
 #ifndef WSZ
 
-/** \def WFZ
+/** \def WSZ
  * \brief Size of the GSL integration workspace
  */
 #define WSZ 100000
@@ -240,7 +240,7 @@ struct zernikeTemporalPSD
     /**
      *
      * \tparam parallel controls whether layers are calculated in parallel.  Default is true.  Set to false if this is
-     * called inside a parallelized loop, as in \ref makePSDGrid.
+     * called inside a parallelized loop.
      *
      * \todo implement error checking
      * \todo handle reports of convergence failures form singleLayerPSD when implemented.

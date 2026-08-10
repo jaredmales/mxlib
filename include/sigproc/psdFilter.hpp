@@ -138,7 +138,6 @@ class psdFilter;
  *
  * \todo once fftT has a plan interface with pointers for working memory, use it.
  *
- * \test Scenario: compiling psdFilter. \ref tests_sigproc_psdFilter_compile "[test doc]"
  */
 template <typename _realT, size_t _rank>
 class psdFilter<_realT, _rank, 0>
@@ -178,8 +177,6 @@ class psdFilter<_realT, _rank, 0>
   public:
     /// C'tor.
     /**
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     psdFilter();
 
@@ -199,8 +196,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     int psdSqrt( realArrayT *npsdSqrt /**< [in] a pointer to an array containing the square root of the PSD. */ );
 
@@ -214,8 +209,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     int psdSqrt( const realArrayT &npsdSqrt /**< [in] an array containing the square root of the PSD. */ );
 
@@ -226,8 +219,6 @@ class psdFilter<_realT, _rank, 0>
      *
      * This version compiles when rank==1
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int setSize( typename std::enable_if<crank == 1>::type * = 0 );
@@ -239,8 +230,6 @@ class psdFilter<_realT, _rank, 0>
      *
      * This version compiles when rank==2
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int setSize( typename std::enable_if<crank == 2>::type * = 0 );
@@ -252,8 +241,6 @@ class psdFilter<_realT, _rank, 0>
      *
      * This version compiles when rank==3
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int setSize( typename std::enable_if<crank == 3>::type * = 0 );
@@ -263,8 +250,6 @@ class psdFilter<_realT, _rank, 0>
     /**
      * \returns the current value of m_rows.
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     int rows();
 
@@ -272,8 +257,6 @@ class psdFilter<_realT, _rank, 0>
     /**
      * \returns the current value of m_cols.
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     int cols();
 
@@ -281,8 +264,6 @@ class psdFilter<_realT, _rank, 0>
     /**
      * \returns the current value of m_planes.
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     int planes();
 
@@ -298,8 +279,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( realArrayT *npsdSqrt, ///< [in] a pointer to an array containing the square root of the PSD.
@@ -318,8 +297,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( realArrayT *npsdSqrt, ///< [in] a pointer to an array containing the square root of the PSD.
@@ -339,8 +316,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( realArrayT *npsdSqrt, ///< [in] a pointer to an array containing the square root of the PSD.
@@ -359,8 +334,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( const realArrayT &npsdSqrt, ///< [in] an array containing the square root of the PSD.
@@ -377,8 +350,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( const realArrayT &npsdSqrt, ///< [in] an array containing the square root of the PSD.
@@ -396,8 +367,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psdSqrt( const realArrayT &npsdSqrt, ///< [in] an array containing the square root of the PSD.
@@ -416,8 +385,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psd( const realArrayT &npsd, ///< [in] an array containing the PSD
@@ -434,8 +401,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psd( const realArrayT &npsd, ///< [in] an array containing the PSD
@@ -453,8 +418,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     template <size_t crank = rank>
     int psd( const realArrayT &npsd, ///< [in] an array containing the PSD
@@ -466,8 +429,6 @@ class psdFilter<_realT, _rank, 0>
     /// De-allocate all working memory and reset to initial state.
     /**
      *
-     * \test Verify compilation and initialization of the 3 ranks for psdFilter. \ref tests_sigproc_psdFilter_compile
-     * "[test doc]"
      */
     void clear();
 
@@ -478,7 +439,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     template <size_t crank = rank>
     int filter( realArrayT &noise, ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place.
@@ -493,7 +453,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     template <size_t crank = rank>
     int filter( realArrayT &noise, ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place.
@@ -522,7 +481,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     template <size_t crank = rank>
     int filter( realArrayT &noise, ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place.
@@ -535,7 +493,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     int operator()(
         realArrayT &noise /**< [in.out] the noise field of size rows() X cols(), which is filtered in-place. */ ) const;
@@ -547,7 +504,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     int operator()(
         realArrayMapT noise /**< [in.out] the noise field of size rows() X cols(), which is filtered in-place. */ )
@@ -558,7 +514,6 @@ class psdFilter<_realT, _rank, 0>
      * \returns 0 on success
      * \returns -1 on error
      *
-     * \test Verify filtering and noise normalization. \ref tests_sigproc_psdFilter_filter "[test doc]"
      */
     int
     operator()( realArrayT &noise,  ///< [in.out] the noise field of size rows() X cols(), which is filtered in-place.

@@ -305,7 +305,7 @@ constexpr typename units::realT massMercury()
 
 /// Radius of Mercury.
 /**
- * \f$ = 2.4397 \times 10^{6}
+ * \f$ = 2.4397 \times 10^{6} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *
@@ -345,7 +345,7 @@ constexpr typename units::realT massVenus()
 
 /// Radius of Venus.
 /**
- * \f$ = 6.0518 \times 10^{6}
+ * \f$ = 6.0518 \times 10^{6} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *
@@ -384,7 +384,7 @@ constexpr typename units::realT massMars()
 
 /// Radius of Mars.
 /**
- * \f$ = 3.39619 \times 10^{6}
+ * \f$ = 3.39619 \times 10^{6} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *
@@ -423,7 +423,7 @@ constexpr typename units::realT massSaturn()
 
 /// Radius of Saturn.
 /**
- * \f$ = 6.0268 \times 10^{7}
+ * \f$ = 6.0268 \times 10^{7} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *
@@ -462,7 +462,7 @@ constexpr typename units::realT massUranus()
 
 /// Radius of Uranus.
 /**
- * \f$ = 2.5559 \times 10^{7}
+ * \f$ = 2.5559 \times 10^{7} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *
@@ -501,7 +501,7 @@ constexpr typename units::realT massNeptune()
 
 /// Radius of Neptune.
 /**
- * \f$ = 2.4764 \times 10^{7}
+ * \f$ = 2.4764 \times 10^{7} \f$
  *
  * Source: Seidelmann et al. (2007) \cite seidelmann_2007
  *

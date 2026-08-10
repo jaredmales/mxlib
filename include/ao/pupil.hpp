@@ -8,12 +8,12 @@
 #ifndef pupil_hpp
 #define pupil_hpp
 
-#include <mx/ioutils/fits/fitsFile.hpp>
-#include <mx/improc/eigenImage.hpp>
+#include "../ioutils/fits/fitsFile.hpp"
+#include "../improc/eigenImage.hpp"
 
-#include <mx/wfp/imagingUtils.hpp>
+#include "../wfp/imagingUtils.hpp"
 
-#include <mx/sigproc/signalWindows.hpp>
+#include "../sigproc/signalWindows.hpp"
 
 #include "aoPaths.hpp"
 

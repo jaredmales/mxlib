@@ -28,8 +28,9 @@
 #define improc_aperturePhotometer_hpp
 
 #include <map>
-#include <mx/improc/eigenImage.hpp>
-#include <mx/improc/imageMasks.hpp>
+
+#include "eigenImage.hpp"
+#include "imageMasks.hpp"
 
 namespace mx
 {
@@ -47,7 +48,7 @@ namespace improc
  *
  * Then call cumPhot with the image, which will sum the flux contained within each radius.
  *
- * \ingroup improc
+ * \ingroup image_processing
  *
  * \tparam realT the real floating point type of the data
  */
@@ -355,6 +356,10 @@ int aperturePhotometer<realT>::cumPhotWork( std::vector<realT> &cumPhot,
 
     return 0;
 }
+
+extern template class aperturePhotometer<float>;
+
+extern template class aperturePhotometer<double>;
 
 } // namespace improc
 } // namespace mx

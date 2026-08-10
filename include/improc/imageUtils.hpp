@@ -251,7 +251,7 @@ calcT imageVariance( imageT &im /**< [in] the image of which to calculate the va
  * \tparam imageT is an Eigen-like type
  * \tparam maskT is an Eigen-like type
  *
- * \returns the median of the unmasked pixels of mat, using \ref vectorMedianInPlace().
+ * \returns the median of the unmasked pixels of mat, using \ref mx::math::vectorMedianInPlace().
  *
  * \ingroup eigen_image_processing
  *
@@ -328,7 +328,7 @@ imageMedian( const imageT &mat,                             /**< [in] the image 
  *
  * \tparam imageT is an Eigen-like type
  *
- * \returns the median of the unmasked pixels of mat, using \ref vectorMedianInPlace().
+ * \returns the median of the unmasked pixels of mat, using \ref mx::math::vectorMedianInPlace().
  *
  * \ingroup eigen_image_processing
  *

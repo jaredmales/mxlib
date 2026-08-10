@@ -72,13 +72,11 @@ namespace math
 
 /// Type specifying angles in radians
 /**
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  */
 struct radians;
 
 /// Type specifying angles in degrees
 /**
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  */
 struct degrees;
 
@@ -88,7 +86,6 @@ struct degradT;
 
 /// Type holding constants related to angle calculations in degrees
 /**
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  */
 template <typename _realT>
 struct degradT<degrees, _realT>
@@ -107,7 +104,6 @@ using degreesT = degradT<degrees, realT>;
 
 /// Type holding constants related to angle calculations in radians
 /**
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  */
 template <typename _realT>
 struct degradT<radians, _realT>
@@ -130,7 +126,6 @@ using radiansT = degradT<radians, realT>;
  *
  * \return the angle q converted to radians
  *
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  *
  * \ingroup geo
  */
@@ -189,7 +184,6 @@ typename angleT::realT angleMod( typename angleT::realT q /**< [in] the angle */
  * \tparam angleT controls whether this is in degrees (0, default) or radians (1)
  * \tparam realT is the type in which to do arithmetic
  *
- * \test Verify compilation and calculations of math::angleDiff \ref tests_math_geo_angleDiff "[test doc]"
  *
  * \ingroup geo
  */
