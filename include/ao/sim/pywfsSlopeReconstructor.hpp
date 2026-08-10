@@ -324,6 +324,7 @@ void pywfsSlopeReconstructor<floatT>::calcMask()
         std::cerr << "Loading Mask: " << _maskFile << "\n";
         ff.read( _quadMask, _maskFile );
     }
+    else
     {
         _quadMask.resize( 0.5 * _detRows / _binFact, 0.5 * _detCols / _binFact );
         wfp::circularPupil( _quadMask, _maskObscuration, _maskRadius / _binFact );

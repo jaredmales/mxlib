@@ -88,11 +88,21 @@ class eigenCube
                size_t nplanes ///< [in] Number of planes in the cube
     );
 
+    /// Copy a cube into independently owned storage.
+    eigenCube( const eigenCube<dataT> &ec /**< [in] cube to copy. */ );
+
+    /// Move a cube, transferring any owned storage.
+    eigenCube( eigenCube<dataT> &&ec /**< [in,out] cube to move from. */ ) noexcept;
+
     ~eigenCube();
 
     void setZero();
 
-    eigenCube<dataT> &operator=( const eigenCube<dataT> &ec );
+    /// Copy a cube into independently owned storage.
+    eigenCube<dataT> &operator=( const eigenCube<dataT> &ec /**< [in] cube to copy. */ );
+
+    /// Move a cube, transferring any owned storage.
+    eigenCube<dataT> &operator=( eigenCube<dataT> &&ec /**< [in,out] cube to move from. */ ) noexcept;
 
     void shallowCopy( eigenCube<dataT> &src, bool takeOwner = false );
 
@@ -343,6 +353,23 @@ eigenCube<dataT>::eigenCube( dataT *ndata, size_t nrows, size_t ncols, size_t np
 }
 
 template <typename dataT>
+eigenCube<dataT>::eigenCube( const eigenCube<dataT> &ec ) : eigenCube()
+{
+    *this = ec;
+}
+
+template <typename dataT>
+eigenCube<dataT>::eigenCube( eigenCube<dataT> &&ec ) noexcept
+    : _rows( ec._rows ), _cols( ec._cols ), _planes( ec._planes ), m_data( ec.m_data ), _owner( ec._owner )
+{
+    ec._rows = 0;
+    ec._cols = 0;
+    ec._planes = 0;
+    ec.m_data = nullptr;
+    ec._owner = false;
+}
+
+template <typename dataT>
 eigenCube<dataT>::~eigenCube()
 {
     if( _owner && m_data )
@@ -363,6 +390,11 @@ void eigenCube<dataT>::setZero()
 template <typename dataT>
 eigenCube<dataT> &eigenCube<dataT>::operator=( const eigenCube<dataT> &ec )
 {
+    if( this == &ec )
+    {
+        return *this;
+    }
+
     resize( ec.rows(), ec.cols(), ec.planes() );
 
     int N = _rows * _cols * _planes;
@@ -374,13 +406,39 @@ eigenCube<dataT> &eigenCube<dataT>::operator=( const eigenCube<dataT> &ec )
 }
 
 template <typename dataT>
+eigenCube<dataT> &eigenCube<dataT>::operator=( eigenCube<dataT> &&ec ) noexcept
+{
+    if( this == &ec )
+    {
+        return *this;
+    }
+
+    clear();
+
+    _rows = ec._rows;
+    _cols = ec._cols;
+    _planes = ec._planes;
+    m_data = ec.m_data;
+    _owner = ec._owner;
+
+    ec._rows = 0;
+    ec._cols = 0;
+    ec._planes = 0;
+    ec.m_data = nullptr;
+    ec._owner = false;
+
+    return *this;
+}
+
+template <typename dataT>
 void eigenCube<dataT>::shallowCopy( eigenCube<dataT> &src, bool takeOwner )
 {
-    if( _owner && m_data )
+    if( this == &src )
     {
-        delete m_data;
-        _owner = false;
+        return;
     }
+
+    clear();
 
     _rows = src._rows;
     _cols = src._cols;
@@ -389,7 +447,11 @@ void eigenCube<dataT>::shallowCopy( eigenCube<dataT> &src, bool takeOwner )
 
     if( takeOwner == true )
     {
-        _owner = true;
+        _owner = src._owner;
+        src._rows = 0;
+        src._cols = 0;
+        src._planes = 0;
+        src.m_data = nullptr;
         src._owner = false;
     }
     else
@@ -409,15 +471,14 @@ void eigenCube<dataT>::clear()
     _rows = 0;
     _cols = 0;
     _planes = 0;
+    m_data = nullptr;
+    _owner = false;
 }
 
 template <typename dataT>
 void eigenCube<dataT>::resize( int r, int c, int p )
 {
-    if( _owner && m_data )
-    {
-        delete[] m_data;
-    }
+    clear();
 
     _rows = r;
     _cols = c;

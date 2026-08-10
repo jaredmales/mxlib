@@ -6,6 +6,7 @@
 #include "../../catch2/catch.hpp"
 
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "../../../include/improc/eigenCube.hpp"
@@ -237,6 +238,50 @@ TEST_CASE( "eigenCube combinations validate masks weights and thresholds", "[imp
     {
         REQUIRE( error.code() == mx::error_t::invalidarg );
     }
+}
+
+/// Verify eigenCube copies own independent storage and moves transfer ownership safely.
+/** Exercises mx::improc::eigenCube copy construction, assignment, move construction, move assignment, and shallowCopy.
+ */
+/**
+ * \ingroup eigenCube_unit_tests
+ */
+TEST_CASE( "eigenCube copy and move operations preserve ownership", "[improc::eigenCube]" )
+{
+    mx::improc::eigenCube<double> source( 1, 2, 2 );
+    source.image( 0 ) << 1.0, 2.0;
+    source.image( 1 ) << 3.0, 4.0;
+
+    mx::improc::eigenCube<double> copied( source );
+    REQUIRE( copied.data() != source.data() );
+    REQUIRE( copied.image( 1 )( 0, 1 ) == 4.0 );
+    copied.image( 0 )( 0, 0 ) = 10.0;
+    REQUIRE( source.image( 0 )( 0, 0 ) == 1.0 );
+
+    mx::improc::eigenCube<double> assigned;
+    assigned = source;
+    REQUIRE( assigned.data() != source.data() );
+    REQUIRE( assigned.image( 1 )( 0, 0 ) == 3.0 );
+
+    mx::improc::eigenCube<double> moved( std::move( copied ) );
+    REQUIRE( copied.data() == nullptr );
+    REQUIRE( copied.rows() == 0 );
+    REQUIRE( moved.image( 0 )( 0, 0 ) == 10.0 );
+
+    mx::improc::eigenCube<double> moveAssigned;
+    moveAssigned = std::move( assigned );
+    REQUIRE( assigned.data() == nullptr );
+    REQUIRE( assigned.planes() == 0 );
+    REQUIRE( moveAssigned.image( 1 )( 0, 1 ) == 4.0 );
+
+    mx::improc::eigenCube<double> transferred;
+    transferred.shallowCopy( source, true );
+    REQUIRE( source.data() == nullptr );
+    REQUIRE( source.cols() == 0 );
+    REQUIRE( transferred.image( 0 )( 0, 1 ) == 2.0 );
+
+    transferred.shallowCopy( transferred, true );
+    REQUIRE( transferred.image( 1 )( 0, 0 ) == 3.0 );
 }
 
 } // namespace eigenCubeTest

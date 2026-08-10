@@ -3,6 +3,8 @@
  */
 #include "../../../catch2/catch.hpp"
 
+#include <filesystem>
+
 using namespace Catch::Matchers;
 
 #include "../../../../include/ioutils/fits/fitsFile.hpp"
@@ -73,6 +75,32 @@ class fitsFile_test : public fitsFile<dataT>
         return this->write( std::format( "{}{}.fits", fname, n ), im, fh );
     }
 };
+
+/** \cond */
+class temporaryDirectory
+{
+  public:
+    temporaryDirectory( const std::string &name ) : m_path( std::filesystem::temp_directory_path() / name )
+    {
+        std::filesystem::remove_all( m_path );
+        std::filesystem::create_directories( m_path );
+    }
+
+    ~temporaryDirectory()
+    {
+        std::error_code error;
+        std::filesystem::remove_all( m_path, error );
+    }
+
+    const std::filesystem::path &path() const
+    {
+        return m_path;
+    }
+
+  private:
+    std::filesystem::path m_path;
+};
+/** \endcond */
 
 /// Calculating subimage sizes
 /** Verify calculation of subimage sizes
@@ -304,8 +332,11 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
         REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 4 ) == mx::error_t::noerror );
         REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 5 ) == mx::error_t::noerror );
 
-        std::vector<std::string> flist({"/tmp/fitsFile_test1.fits","/tmp/fitsFile_test2.fits",
-            "/tmp/fitsFile_test3.fits","/tmp/fitsFile_test4.fits","/tmp/fitsFile_test5.fits"});
+        std::vector<std::string> flist( { "/tmp/fitsFile_test1.fits",
+                                         "/tmp/fitsFile_test2.fits",
+                                         "/tmp/fitsFile_test3.fits",
+                                         "/tmp/fitsFile_test4.fits",
+                                         "/tmp/fitsFile_test5.fits" } );
 
         fitsFile<float> ff;
         mx::improc::eigenCube<float> imc;
@@ -316,6 +347,67 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
         REQUIRE( imc.cols() == 1024 );
         REQUIRE( imc.planes() == 5 );
     }
+}
+
+/// Verify hciReduce's float Eigen image and cube writes round-trip with optional FITS headers.
+/** Exercises mx::fits::fitsFile::write Eigen-array overloads with mx::verbose::vv. */
+/**
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFile][hciReduce]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-write-test" );
+    fitsFile<float, verbose::vv> fitsFile;
+
+    mx::improc::eigenImage<float> image( 2, 3 );
+    image << 1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F;
+
+    const std::filesystem::path imagePath = testDirectory.path() / "image.fits";
+    REQUIRE( fitsFile.write( imagePath.string(), image ) == mx::error_t::noerror );
+
+    mx::improc::eigenImage<float> readImage;
+    REQUIRE( fitsFile.read( readImage, imagePath.string() ) == mx::error_t::noerror );
+    REQUIRE( readImage.isApprox( image ) );
+
+    REQUIRE( fitsFile.open( imagePath.string() ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.write( imagePath.string(), image ) == mx::error_t::noerror );
+
+    const std::filesystem::path unavailablePath = testDirectory.path() / "missing" / "image.fits";
+    REQUIRE( fitsFile.write( unavailablePath.string(), image ) != mx::error_t::noerror );
+
+    fitsHeader<verbose::vv> header;
+    header.append( "TESTKEY", 17, "test header value" );
+
+    const std::filesystem::path headerImagePath = testDirectory.path() / "image-with-header.fits";
+    REQUIRE( fitsFile.write( headerImagePath.string(), image, header ) == mx::error_t::noerror );
+
+    fitsHeader<verbose::vv> readHeader;
+    REQUIRE( fitsFile.read( readImage, readHeader, headerImagePath.string() ) == mx::error_t::noerror );
+    REQUIRE( readImage.isApprox( image ) );
+    REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
+
+    mx::improc::eigenCube<float> cube( 2, 3, 2 );
+    cube.image( 0 ) = image;
+    cube.image( 1 ) = image + 10.0F;
+
+    const std::filesystem::path cubePath = testDirectory.path() / "cube.fits";
+    REQUIRE( fitsFile.write( cubePath.string(), cube ) == mx::error_t::noerror );
+
+    mx::improc::eigenCube<float> readCube;
+    REQUIRE( fitsFile.read( readCube, cubePath.string() ) == mx::error_t::noerror );
+    REQUIRE( readCube.rows() == cube.rows() );
+    REQUIRE( readCube.cols() == cube.cols() );
+    REQUIRE( readCube.planes() == cube.planes() );
+    REQUIRE( readCube.image( 0 ).isApprox( cube.image( 0 ) ) );
+    REQUIRE( readCube.image( 1 ).isApprox( cube.image( 1 ) ) );
+
+    const std::filesystem::path headerCubePath = testDirectory.path() / "cube-with-header.fits";
+    REQUIRE( fitsFile.write( headerCubePath.string(), cube, header ) == mx::error_t::noerror );
+
+    REQUIRE( fitsFile.read( readCube, readHeader, headerCubePath.string() ) == mx::error_t::noerror );
+    REQUIRE( readCube.image( 0 ).isApprox( cube.image( 0 ) ) );
+    REQUIRE( readCube.image( 1 ).isApprox( cube.image( 1 ) ) );
+    REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
 }
 
 /// Reading headers
