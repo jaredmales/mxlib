@@ -81,18 +81,24 @@ class turbSubHarmonic : public base::changeable<turbSubHarmonic<_turbAtmosphereT
      * @{
      */
 
-    uint32_t m_scrnSz;                ///< The wavefront screen size from the layer being simulated.
+    uint32_t m_scrnSz; ///< The wavefront screen size from the layer being simulated.
 
-    std::vector<realT> m_noise;       ///< Vector of Gaussian deviates prepared for each screen generation.
+    /// Gaussian cosine coefficients prepared for each screen generation.
+    std::vector<realT> m_cosNoise;
 
-    std::vector<realT> m_m;           ///< m-coordinate fractional spatial frequency indices of the subharmonics
-    std::vector<realT> m_n;           ///< n-coordinate fractional spatial frequency indices of the subharmonics
+    /// Gaussian sine coefficients prepared for each screen generation.
+    std::vector<realT> m_sinNoise;
 
-    std::vector<realT> m_sqrtPSD;     // the square-root of the PSD at each point
+    std::vector<realT> m_m; ///< m-coordinate fractional spatial frequency indices of the subharmonics
+    std::vector<realT> m_n; ///< n-coordinate fractional spatial frequency indices of the subharmonics
 
-    improc::eigenCube<realT> m_modes; ///< the pre-calculated modes
+    /// Square root of the PSD-cell variance for each unique conjugate pair.
+    std::vector<realT> m_sqrtPSD;
 
-                                      ///@}
+    /// Pre-calculated cosine modes followed by their sine counterparts.
+    improc::eigenCube<realT> m_modes;
+
+    ///@}
 
   public:
     /** \name Construction
@@ -232,8 +238,6 @@ bool turbSubHarmonic<turbAtmosphereT, verboseT>::preCalc()
 template <typename turbAtmosphereT, class verboseT>
 void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
 {
-    int N;
-
     if( m_turbAtmo == nullptr )
     {
         throw mx::exception<verboseT>( error_t::paramnotset, "atmosphere is not set (m_turbAtmo is nullptr)" );
@@ -250,28 +254,15 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
                                        "atmosphere is not setup (m_turbAtmo->m_layers size is <= layerNo)" );
     }
 
-    if( m_level == 0 )
-    {
-        N = 0;
-    }
-    else
-    {
-        N = 36.0 + 32.0 * ( m_level - 1 );
-
-        if( m_outerSubHarmonics )
-        {
-            N += 20;
-        }
-    }
-
     m_m.resize( 0 ); // resized dynamically below
     m_n.resize( 0 );
-    m_sqrtPSD.resize( N );
-    m_noise.resize( N );
+    m_sqrtPSD.resize( 0 );
+    m_cosNoise.resize( 0 );
+    m_sinNoise.resize( 0 );
 
     m_scrnSz = m_turbAtmo->layer( layerNo ).scrnSz();
 
-    if( N == 0 )
+    if( m_level == 0 )
     {
 
         m_modes.clear();
@@ -294,11 +285,6 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
         L02 = 1.0 / pow( L0, 2 );
     else
         L02 = 0;
-
-    if( m_preCalc )
-    {
-        m_modes.resize( m_scrnSz, m_scrnSz, N );
-    }
 
     std::vector<realT> scs;
 
@@ -342,8 +328,34 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
         }
     }
 
-    int n = 0;
-    for( int n = 0; n < m_m.size(); ++n )
+    // Retain one member of each +/-k pair.  A real phase screen requires both
+    // quadratures for that pair, rather than two identical cosine modes.
+    std::vector<realT> uniqueM;
+    std::vector<realT> uniqueN;
+    std::vector<realT> uniqueScs;
+    for( size_t n = 0; n < m_m.size(); ++n )
+    {
+        if( m_m[n] > 0 || ( m_m[n] == 0 && m_n[n] > 0 ) )
+        {
+            uniqueM.push_back( m_m[n] );
+            uniqueN.push_back( m_n[n] );
+            uniqueScs.push_back( scs[n] );
+        }
+    }
+
+    m_m.swap( uniqueM );
+    m_n.swap( uniqueN );
+    scs.swap( uniqueScs );
+    m_sqrtPSD.resize( m_m.size() );
+    m_cosNoise.resize( m_m.size() );
+    m_sinNoise.resize( m_m.size() );
+
+    if( m_preCalc )
+    {
+        m_modes.resize( m_scrnSz, m_scrnSz, 2 * m_m.size() );
+    }
+
+    for( size_t n = 0; n < m_m.size(); ++n )
     {
         realT k = sqrt( ( pow( m_m[n], 2 ) + pow( m_n[n], 2 ) ) ) / ( ( D / wfSz ) * m_scrnSz );
 
@@ -361,7 +373,10 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
             Ptiptilt = pow( 4 * math::func::jincN( 2, math::pi<realT>() * k * D ), 2 );
         }
 
-        m_sqrtPSD[n] = scs[n] * sqrt( tpsd * ( 1 - Ppiston - Ptiptilt ) );
+        // The representative stands for both members of its conjugate pair.
+        // The factor sqrt(2) gives the pair's total PSD-cell variance when
+        // independent unit-variance cosine and sine coefficients are used.
+        m_sqrtPSD[n] = sqrt( 2 ) * scs[n] * sqrt( tpsd * ( 1 - Ppiston - Ptiptilt ) );
 
         if( m_preCalc )
         {
@@ -373,6 +388,8 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::initGrid( uint32_t layerNo )
                     realT mp = rr - 0.5 * m_scrnSz;
                     m_modes.image( n )( rr, cc ) =
                         m_sqrtPSD[n] * cos( math::two_pi<realT>() * ( m_m[n] * mp + m_n[n] * np ) / m_scrnSz );
+                    m_modes.image( n + m_m.size() )( rr, cc ) =
+                        m_sqrtPSD[n] * sin( math::two_pi<realT>() * ( m_m[n] * mp + m_n[n] * np ) / m_scrnSz );
                 }
             }
         }
@@ -407,23 +424,26 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::screen( improc::eigenImage<real
     // Check that we're allocated
     if( m_preCalc )
     {
-        if( m_modes.rows() != scrn.rows() || m_modes.cols() != scrn.cols() || m_modes.planes() != m_noise.size() )
+        if( m_modes.rows() != scrn.rows() || m_modes.cols() != scrn.cols() ||
+            m_modes.planes() != 2 * m_cosNoise.size() )
         {
             throw mx::exception<verboseT>( error_t::sizeerr, "modes cube wrong size, call initGrid()." );
         }
     }
     else
     {
-        if( m_noise.size() != m_m.size() || m_noise.size() != m_n.size() || m_sqrtPSD.size() != m_noise.size() )
+        if( m_cosNoise.size() != m_m.size() || m_sinNoise.size() != m_m.size() || m_m.size() != m_n.size() ||
+            m_sqrtPSD.size() != m_m.size() )
         {
             throw mx::exception<verboseT>( error_t::sizeerr, "vectors not allocated, call initGrid()." );
         }
     }
 
     // Now fill in the noise
-    for( size_t n = 0; n < m_noise.size(); ++n )
+    for( size_t n = 0; n < m_cosNoise.size(); ++n )
     {
-        m_noise[n] = 2 * m_turbAtmo->normVar();
+        m_cosNoise[n] = m_turbAtmo->normVar();
+        m_sinNoise[n] = m_turbAtmo->normVar();
     }
 
 #pragma omp parallel for
@@ -436,17 +456,18 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::screen( improc::eigenImage<real
 
             if( m_preCalc )
             {
-                for( unsigned n = 0; n < m_noise.size(); ++n )
+                for( unsigned n = 0; n < m_cosNoise.size(); ++n )
                 {
-                    scrn( rr, cc ) += m_noise[n] * m_modes.image( n )( rr, cc );
+                    scrn( rr, cc ) += m_cosNoise[n] * m_modes.image( n )( rr, cc ) +
+                                      m_sinNoise[n] * m_modes.image( n + m_cosNoise.size() )( rr, cc );
                 }
             }
             else
             {
                 for( unsigned n = 0; n < m_m.size(); ++n )
                 {
-                    scrn( rr, cc ) += m_noise[n] * m_sqrtPSD[n] *
-                                      cos( math::two_pi<realT>() * ( m_m[n] * mp + m_n[n] * np ) / m_scrnSz );
+                    realT arg = math::two_pi<realT>() * ( m_m[n] * mp + m_n[n] * np ) / m_scrnSz;
+                    scrn( rr, cc ) += m_sqrtPSD[n] * ( m_cosNoise[n] * cos( arg ) + m_sinNoise[n] * sin( arg ) );
                 }
             }
         }
@@ -459,7 +480,8 @@ void turbSubHarmonic<turbAtmosphereT, verboseT>::deinit()
     m_m.clear();
     m_n.clear();
     m_sqrtPSD.clear();
-    m_noise.clear();
+    m_cosNoise.clear();
+    m_sinNoise.clear();
     m_modes.resize( 0, 0, 0 );
 
     this->changed();
