@@ -143,6 +143,16 @@ class lifecycleApplication : public mx::app::application
         setDefaults( 0, nullptr );
     }
 
+    int reRead()
+    {
+        return reReadConfig();
+    }
+
+    int configuredValueCount()
+    {
+        return config.count( "value" );
+    }
+
     const std::string &globalPath() const
     {
         return m_configPathGlobal;
@@ -353,6 +363,27 @@ TEST_CASE( "application renders default help", "[app::application]" )
     REQUIRE( app.main( 2, argv ) == 1 );
     REQUIRE( help.str().find( "usage: lifecycleApplication" ) != std::string::npos );
     REQUIRE( help.str().find( "--value" ) != std::string::npos );
+}
+
+/** \brief Verifies that mx::app::application re-reads registered configuration sources without rebuilding targets.
+ *
+ * \ingroup application_unit_tests
+ */
+TEST_CASE( "application re-reads its configuration stack", "[app::application]" )
+{
+    temporaryConfigFile configFile{ "[test]\nvalue=29\n" };
+    lifecycleApplication app;
+    app.preserveConfig( true );
+    char invokedName[] = "lifecycleApplication";
+    std::string configOption = "--config=" + configFile.string();
+    char *argv[] = { invokedName, configOption.data() };
+
+    REQUIRE( app.main( 2, argv ) == 29 );
+    REQUIRE( app.configuredValueCount() == 1 );
+    REQUIRE( app.reRead() == 0 );
+    REQUIRE( app.configuredValueCount() == 2 );
+    REQUIRE( app.m_setupCalls == 1 );
+    REQUIRE( app.m_loadCalls == 1 );
 }
 
 } // namespace unitTest::app_application_test
