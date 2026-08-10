@@ -352,6 +352,47 @@ TEST_CASE( "config file parsing", "[appConfigurator]" )
 #endif
 }
 
+/** \brief Verifies command-line target metadata and typed retrieval used by hciReduce configuration loading.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "command-line configuration targets preserve metadata and typed values", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.add( "images", "i", "images", mx::app::argType::Required, "files", "images", true, "string", "" );
+    config.add( "threshold", "t", "threshold", mx::app::argType::Required, "quality", "threshold", false, "float", "" );
+    config.add( "enabled", "", "enabled", mx::app::argType::True, "preProcess", "enabled", false, "bool", "" );
+
+    char invokedName[] = "configTest";
+    char imagesOption[] = "--images=target.fits";
+    char thresholdOption[] = "--threshold=0.75";
+    char enabledOption[] = "--enabled";
+    char *argv[] = { invokedName, imagesOption, thresholdOption, enabledOption };
+    config.parseCommandLine( 4, argv );
+
+    REQUIRE( config.nAdded == 3 );
+    REQUIRE( config.m_targets.at( "images" ).section == "files" );
+    REQUIRE( config.m_targets.at( "images" ).keyword == "images" );
+    REQUIRE( config.m_targets.at( "images" ).isRequired );
+    REQUIRE( config.isSet( "images" ) );
+    REQUIRE( config.isSet( "threshold" ) );
+    REQUIRE( config.isSet( "enabled" ) );
+
+    std::string images;
+    float threshold{ 0 };
+    bool enabled{ false };
+    REQUIRE( config( images, "images" ) == 0 );
+    REQUIRE( config( threshold, "threshold" ) == 0 );
+    REQUIRE( config( enabled, "enabled" ) == 0 );
+    REQUIRE( images == "target.fits" );
+    REQUIRE( threshold == 0.75f );
+    REQUIRE( enabled );
+
+    int unset{ 19 };
+    REQUIRE( config( unset, "not-added" ) == 0 );
+    REQUIRE( unset == 19 );
+}
+
 /*
 } // namespace appConfiguratorTest
 } // namespace appTest
