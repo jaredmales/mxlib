@@ -5,6 +5,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <cstdlib>
+#include <sstream>
 
 #include "../../../include/app/application.hpp"
 
@@ -40,6 +42,54 @@ class temporaryConfigFile
     std::filesystem::path m_path;
 };
 
+class scopedEnvironment
+{
+  public:
+    scopedEnvironment( const std::string &name, const std::string &value ) : m_name( name )
+    {
+        if( const char *oldValue = std::getenv( m_name.c_str() ) )
+        {
+            m_oldValue = oldValue;
+            m_hadOldValue = true;
+        }
+
+        setenv( m_name.c_str(), value.c_str(), 1 );
+    }
+
+    ~scopedEnvironment()
+    {
+        if( !m_hadOldValue )
+        {
+            unsetenv( m_name.c_str() );
+        }
+        else
+        {
+            setenv( m_name.c_str(), m_oldValue.c_str(), 1 );
+        }
+    }
+
+  private:
+    std::string m_name;
+    std::string m_oldValue;
+    bool m_hadOldValue{ false };
+};
+
+class scopedCerr
+{
+  public:
+    explicit scopedCerr( std::ostream &stream ) : m_oldBuffer( std::cerr.rdbuf( stream.rdbuf() ) )
+    {
+    }
+
+    ~scopedCerr()
+    {
+        std::cerr.rdbuf( m_oldBuffer );
+    }
+
+  private:
+    std::streambuf *m_oldBuffer;
+};
+
 class lifecycleApplication : public mx::app::application
 {
   public:
@@ -72,6 +122,47 @@ class lifecycleApplication : public mx::app::application
         m_requireConfigPathGlobal = require;
     }
 
+    void useDefaultHelp( bool useDefault )
+    {
+        m_useDefaultHelp = useDefault;
+    }
+
+    void setPathEnvironmentNames( const std::string &global,
+                                  const std::string &user,
+                                  const std::string &local,
+                                  const std::string &configBase )
+    {
+        m_configPathGlobal_env = global;
+        m_configPathUser_env = user;
+        m_configPathLocal_env = local;
+        m_configPathCLBase_env = configBase;
+    }
+
+    void applyDefaults()
+    {
+        setDefaults( 0, nullptr );
+    }
+
+    const std::string &globalPath() const
+    {
+        return m_configPathGlobal;
+    }
+
+    const std::string &userPath() const
+    {
+        return m_configPathUser;
+    }
+
+    const std::string &localPath() const
+    {
+        return m_configPathLocal;
+    }
+
+    const std::string &configBasePath() const
+    {
+        return m_configPathCLBase;
+    }
+
   protected:
     void setupConfig() override
     {
@@ -95,7 +186,14 @@ class lifecycleApplication : public mx::app::application
     void help() override
     {
         ++m_helpCalls;
+        if( m_useDefaultHelp )
+        {
+            application::help();
+        }
     }
+
+  private:
+    bool m_useDefaultHelp{ false };
 };
 
 } // namespace unitTest::app_application_test
@@ -209,6 +307,52 @@ TEST_CASE( "application loads configuration files", "[app::application]" )
         REQUIRE( app.m_helpCalls == 1 );
         REQUIRE( app.m_executeCalls == 0 );
     }
+}
+
+/** \brief Verifies that mx::app::application resolves environment-selected configuration search paths.
+ *
+ * \ingroup application_unit_tests
+ */
+TEST_CASE( "application resolves configuration paths from the environment", "[app::application]" )
+{
+    scopedEnvironment global{ "MXLIB_APPLICATION_TEST_GLOBAL", "/tmp/global.conf" };
+    scopedEnvironment user{ "MXLIB_APPLICATION_TEST_USER", "/tmp/user.conf" };
+    scopedEnvironment local{ "MXLIB_APPLICATION_TEST_LOCAL", "/tmp/local-config" };
+    scopedEnvironment configBase{ "MXLIB_APPLICATION_TEST_CONFIG_BASE", "/tmp/config-base" };
+
+    lifecycleApplication app;
+    app.setConfigPathGlobal( "ignored-global" );
+    app.setConfigPathUser( "ignored-user" );
+    app.setConfigPathLocal( "ignored-local" );
+    app.setPathEnvironmentNames( "MXLIB_APPLICATION_TEST_GLOBAL",
+                                 "MXLIB_APPLICATION_TEST_USER",
+                                 "MXLIB_APPLICATION_TEST_LOCAL",
+                                 "MXLIB_APPLICATION_TEST_CONFIG_BASE" );
+    app.applyDefaults();
+
+    REQUIRE( app.globalPath() == "/tmp/global.conf" );
+    REQUIRE( app.userPath() == "/tmp/user.conf" );
+    REQUIRE( app.localPath() == "/tmp/local-config/" );
+    REQUIRE( app.configBasePath() == "/tmp/config-base/" );
+}
+
+/** \brief Verifies that mx::app::application emits its default help for registered options.
+ *
+ * \ingroup application_unit_tests
+ */
+TEST_CASE( "application renders default help", "[app::application]" )
+{
+    lifecycleApplication app;
+    app.useDefaultHelp( true );
+    char invokedName[] = "lifecycleApplication";
+    char helpOption[] = "--help";
+    char *argv[] = { invokedName, helpOption };
+    std::ostringstream help;
+    scopedCerr capture{ help };
+
+    REQUIRE( app.main( 2, argv ) == 1 );
+    REQUIRE( help.str().find( "usage: lifecycleApplication" ) != std::string::npos );
+    REQUIRE( help.str().find( "--value" ) != std::string::npos );
 }
 
 } // namespace unitTest::app_application_test
