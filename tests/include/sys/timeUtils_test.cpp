@@ -377,4 +377,9 @@ TEST_CASE( "Verify conversion of an ISO 8601 time string to MJD", "[timeutils]" 
             REQUIRE_THAT( mjd, Catch::Matchers::WithinAbs( 59214.00011846875, 1e-14 ) );
         }
     }
+
+    GIVEN( "an invalid ISO 8601 time string" )
+    {
+        REQUIRE( mx::sys::ISO8601date2mjd( "2020-12-31" ) == -4 );
+    }
 }

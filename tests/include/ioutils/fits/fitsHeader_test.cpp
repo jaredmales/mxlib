@@ -103,6 +103,37 @@ TEST_CASE( "Appending HCI-style FITS provenance", "[ioutils::fits::fitsHeader][h
     REQUIRE( header.size() == 7 );
 }
 
+/** \brief Verifies HCI coadd updates of midpoint, start, end, and delta metadata cards.
+ *
+ * \ingroup fitsHeader_unit_tests
+ */
+TEST_CASE( "Updating HCI coadd time and keyword cards", "[ioutils::fits::fitsHeader][hciReduce]" )
+{
+    fitsHeader<mx::verbose::vv> header;
+    REQUIRE( header.append( "MJD-OBS", "2000-01-01T00:00:00.000000000Z", "coadd midpoint" ) ==
+             mx::error_t::noerror );
+    REQUIRE( header.append( "ANGLE", 10.0, "derotation angle" ) == mx::error_t::noerror );
+
+    REQUIRE( header["MJD-OBS"].value( "2000-01-01T12:00:00.000000000Z" ) == mx::error_t::noerror );
+    REQUIRE( header["START MJD-OBS"].value( "2000-01-01T00:00:00.000000000Z" ) == mx::error_t::noerror );
+    REQUIRE( header["END MJD-OBS"].value( "2000-01-01T12:00:00.000000000Z" ) == mx::error_t::noerror );
+    REQUIRE( header["DELTA MJD-OBS"].value( 0.5 ) == mx::error_t::noerror );
+
+    REQUIRE( header["ANGLE"].value( 15.0 ) == mx::error_t::noerror );
+    REQUIRE( header["START ANGLE"].value( 10.0 ) == mx::error_t::noerror );
+    REQUIRE( header["END ANGLE"].value( 20.0 ) == mx::error_t::noerror );
+    REQUIRE( header["DELTA ANGLE"].value( 10.0 ) == mx::error_t::noerror );
+
+    REQUIRE( header["MJD-OBS"].String() == "2000-01-01T12:00:00.000000000Z" );
+    REQUIRE( header["START MJD-OBS"].String() == "2000-01-01T00:00:00.000000000Z" );
+    REQUIRE( header["END MJD-OBS"].String() == "2000-01-01T12:00:00.000000000Z" );
+    REQUIRE( header["DELTA MJD-OBS"].value<double>() == 0.5 );
+    REQUIRE( header["ANGLE"].value<double>() == 15.0 );
+    REQUIRE( header["START ANGLE"].value<double>() == 10.0 );
+    REQUIRE( header["END ANGLE"].value<double>() == 20.0 );
+    REQUIRE( header["DELTA ANGLE"].value<double>() == 10.0 );
+}
+
 } // namespace fitsHeaderTest
 } // namespace fitsTest
 } // namespace unitTest
