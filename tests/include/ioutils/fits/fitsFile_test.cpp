@@ -356,6 +356,22 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
         {
             REQUIRE_THAT( headers[index][std::format( "FLOAT{}", index + 1 )].Float(), WithinAbs( 1.1, 1e-5 ) );
         }
+
+        std::vector<float> rawImages( 1024 * 1024 * flist.size() );
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> rawHeaders( flist.size() );
+        for( size_t index = 0; index < rawHeaders.size(); ++index )
+        {
+            rawHeaders[index].append( std::format( "INT{}", index + 1 ) );
+        }
+
+        REQUIRE( ff.read( rawImages.data(), rawHeaders, flist ) == mx::error_t::noerror );
+        REQUIRE( rawImages.front() == 0.0F );
+        REQUIRE( rawImages[1024 * 1024 - 1] == 1048575.0F );
+        REQUIRE( rawImages[1024 * 1024] == 0.0F );
+        for( size_t index = 0; index < rawHeaders.size(); ++index )
+        {
+            REQUIRE( rawHeaders[index][std::format( "INT{}", index + 1 )].Int() == 2 );
+        }
     }
 }
 
