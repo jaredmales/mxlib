@@ -7,6 +7,7 @@ include/ao/sim/leakyIntegrator.hpp
 include/ao/sim/pywfsSlopeReconstructor.hpp
 include/ao/sim/turbSequence.hpp
 include/ao/sim/wavefront.hpp
+include/app/appConfigurator.hpp
 include/astro/astroSpectra.hpp
 include/astro/astroSpectrum.hpp
 include/astro/blackbody.hpp

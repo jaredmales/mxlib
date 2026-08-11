@@ -10,6 +10,34 @@
 
 using namespace mx::app;
 
+/// \cond appConfiguratorTestHelpers
+namespace
+{
+
+std::string logName;
+int logCode;
+std::string logValue;
+std::string logSource;
+
+void captureConfigLog( const std::string &name, const int &code, const std::string &value, const std::string &source )
+{
+    logName = name;
+    logCode = code;
+    logValue = value;
+    logSource = source;
+}
+
+void resetConfigLog()
+{
+    logName.clear();
+    logCode = 0;
+    logValue.clear();
+    logSource.clear();
+}
+
+} // namespace
+/// \endcond
+
 /// Verify that appConfigurator parses global, sectioned, and unused configuration entries.
 /**
  * \ingroup appConfigurator_unit_tests
@@ -451,6 +479,167 @@ TEST_CASE( "command-line-only targets retain duplicate names", "[appConfigurator
     REQUIRE( config.m_targets.at( "verbosity" ).orderAdded == 0 );
     REQUIRE( config.clOnlyTargets.begin()->orderAdded == 1 );
     REQUIRE( config.clOnlyTargets.begin()->longOpt == "very-verbose" );
+}
+
+/** \brief Verifies scalar configuration defaults, typed conversions, indexed access, and source logging.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "scalar configuration access covers HCI value types", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.configLog = captureConfigLog;
+
+    resetConfigLog();
+    int defaultValue{ 42 };
+    REQUIRE( config( defaultValue, "unset" ) == 0 );
+    REQUIRE( defaultValue == 42 );
+    REQUIRE( logName == "unset" );
+    REQUIRE( logCode == mx::meta::typeDescription<int>::code() );
+    REQUIRE( logValue == "42" );
+    REQUIRE( logSource == "default" );
+
+    resetConfigLog();
+    REQUIRE( config.get( defaultValue, "unset-indexed", 0 ) == 0 );
+    REQUIRE( defaultValue == 42 );
+    REQUIRE( logName == "unset-indexed" );
+    REQUIRE( logValue == "42" );
+    REQUIRE( logSource == "default" );
+
+    config.add( "integer", "", "", 0, "", "integer" );
+    config.m_targets.at( "integer" ).set = true;
+    config.m_targets.at( "integer" ).values = { "11", "23" };
+    config.m_targets.at( "integer" ).sources = { "first.conf", "second.conf" };
+
+    int integerValue{ 0 };
+    resetConfigLog();
+    REQUIRE( config.get( integerValue, "integer", 0 ) == 0 );
+    REQUIRE( integerValue == 11 );
+    REQUIRE( logValue == "11" );
+    REQUIRE( logSource.empty() );
+    REQUIRE( config.get( integerValue, "integer", 2 ) == -1 );
+
+    config.m_sources = true;
+    resetConfigLog();
+    REQUIRE( config.get( integerValue, "integer" ) == 0 );
+    REQUIRE( integerValue == 23 );
+    REQUIRE( logValue == "23" );
+    REQUIRE( logSource == "second.conf" );
+
+    config.m_sources = false;
+
+    config.add( "empty", "", "", 0, "", "empty" );
+    config.m_targets.at( "empty" ).set = true;
+    REQUIRE( config.get( integerValue, "empty" ) == -1 );
+
+    config.add( "string", "", "", 0, "", "string" );
+    config.add( "boolean", "", "", 0, "", "boolean" );
+    config.add( "float", "", "", 0, "", "float" );
+    config.add( "double", "", "", 0, "", "double" );
+    config.m_targets.at( "string" ).set = true;
+    config.m_targets.at( "boolean" ).set = true;
+    config.m_targets.at( "float" ).set = true;
+    config.m_targets.at( "double" ).set = true;
+    config.m_targets.at( "string" ).values = { "target.fits" };
+    config.m_targets.at( "boolean" ).values = { "true" };
+    config.m_targets.at( "float" ).values = { "1.25" };
+    config.m_targets.at( "double" ).values = { "2.5" };
+
+    std::string stringValue;
+    bool boolValue{ false };
+    float floatValue{ 0 };
+    double doubleValue{ 0 };
+    REQUIRE( config( stringValue, "string" ) == 0 );
+    REQUIRE( config( boolValue, "boolean" ) == 0 );
+    REQUIRE( config( floatValue, "float" ) == 0 );
+    REQUIRE( config( doubleValue, "double" ) == 0 );
+    REQUIRE( stringValue == "target.fits" );
+    REQUIRE( boolValue );
+    REQUIRE( floatValue == 1.25f );
+    REQUIRE( doubleValue == 2.5 );
+}
+
+/** \brief Verifies vector configuration defaults, empty values, delimiters, typed conversions, and source logging.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "vector configuration access covers HCI value types", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.configLog = captureConfigLog;
+
+    std::vector<int> defaultValues{ 7, 8 };
+    resetConfigLog();
+    REQUIRE( config( defaultValues, "unset-vector" ) == 0 );
+    REQUIRE( defaultValues == ( std::vector<int>{ 7, 8 } ) );
+    REQUIRE( logName == "unset-vector" );
+    REQUIRE( logValue == "[need a vector to string]" );
+    REQUIRE( logSource == "default" );
+
+    resetConfigLog();
+    REQUIRE( config.get( defaultValues, "unset-vector-indexed", 0 ) == 0 );
+    REQUIRE( defaultValues == ( std::vector<int>{ 7, 8 } ) );
+    REQUIRE( logName == "unset-vector-indexed" );
+    REQUIRE( logValue == "[need a vector to string]" );
+    REQUIRE( logSource == "default" );
+
+    config.add( "empty-vector", "", "", 0, "", "empty-vector" );
+    config.m_targets.at( "empty-vector" ).set = true;
+    config.m_targets.at( "empty-vector" ).values = { "" };
+    config.m_targets.at( "empty-vector" ).sources = { "empty.conf" };
+    config.m_sources = true;
+    resetConfigLog();
+    REQUIRE( config.get( defaultValues, "empty-vector", 0 ) == 0 );
+    REQUIRE( defaultValues.empty() );
+    REQUIRE( logValue.empty() );
+    REQUIRE( logSource == "empty.conf" );
+
+    config.m_sources = false;
+    defaultValues = { 9 };
+    resetConfigLog();
+    REQUIRE( config.get( defaultValues, "empty-vector", 0 ) == 0 );
+    REQUIRE( defaultValues.empty() );
+    REQUIRE( logSource.empty() );
+    REQUIRE( config.get( defaultValues, "empty-vector", 1 ) == -1 );
+
+    config.add( "integer-vector", "", "", 0, "", "integer-vector" );
+    config.m_targets.at( "integer-vector" ).set = true;
+    config.m_targets.at( "integer-vector" ).values = { " 1,  2,3", "4,5,6" };
+    config.m_targets.at( "integer-vector" ).sources = { "first.conf", "second.conf" };
+
+    std::vector<int> integerValues;
+    resetConfigLog();
+    REQUIRE( config.get( integerValues, "integer-vector", 0 ) == 0 );
+    REQUIRE( integerValues == ( std::vector<int>{ 1, 2, 3 } ) );
+    REQUIRE( logValue == " 1,  2,3" );
+    REQUIRE( logSource.empty() );
+
+    config.m_sources = true;
+    resetConfigLog();
+    REQUIRE( config.get( integerValues, "integer-vector" ) == 0 );
+    REQUIRE( integerValues == ( std::vector<int>{ 4, 5, 6 } ) );
+    REQUIRE( logValue == "4,5,6" );
+    REQUIRE( logSource == "second.conf" );
+
+    config.m_sources = false;
+
+    config.add( "float-vector", "", "", 0, "", "float-vector" );
+    config.m_targets.at( "float-vector" ).set = true;
+    config.m_targets.at( "float-vector" ).values = { "1.5,2.5" };
+    std::vector<float> floatValues;
+    REQUIRE( config( floatValues, "float-vector" ) == 0 );
+    REQUIRE( floatValues == ( std::vector<float>{ 1.5f, 2.5f } ) );
+
+    config.add( "string-vector", "", "", 0, "", "string-vector" );
+    config.m_targets.at( "string-vector" ).set = true;
+    config.m_targets.at( "string-vector" ).values = { "alpha, beta," };
+    std::vector<std::string> stringValues;
+    REQUIRE( config( stringValues, "string-vector" ) == 0 );
+    REQUIRE( stringValues == ( std::vector<std::string>{ "alpha", "beta", "" } ) );
+
+    config.add( "empty-values", "", "", 0, "", "empty-values" );
+    config.m_targets.at( "empty-values" ).set = true;
+    REQUIRE( config.get( integerValues, "empty-values" ) == -1 );
 }
 
 /*

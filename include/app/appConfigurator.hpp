@@ -743,7 +743,7 @@ int appConfigurator::get( std::vector<typeT> &v,
 
     st = 0;
 
-    while( ::isspace( s[st] ) && st < s.size() - 1 )
+    while( st < s.size() && ::isspace( static_cast<unsigned char>( s[st] ) ) )
         ++st;
 
     com = s.find( ',', st );
@@ -754,7 +754,7 @@ int appConfigurator::get( std::vector<typeT> &v,
     {
         v.push_back( ioutils::stoT<typeT>( s.substr( st, com - st ) ) );
         st = com + 1;
-        while( ::isspace( s[st] ) && st < s.size() - 1 )
+        while( st < s.size() && ::isspace( static_cast<unsigned char>( s[st] ) ) )
             ++st;
 
         com = s.find( ',', st );
