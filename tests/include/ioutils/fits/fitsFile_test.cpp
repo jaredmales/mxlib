@@ -3,6 +3,7 @@
  */
 #include "../../../catch2/catch.hpp"
 
+#include <algorithm>
 #include <filesystem>
 
 using namespace Catch::Matchers;
@@ -490,6 +491,72 @@ TEST_CASE( "Validating HCI batch image and header reads", "[ioutils::fits::fitsF
 
         REQUIRE( fitsFile.read( cube, headers, files ) != mx::error_t::noerror );
     }
+}
+
+/** \brief Verifies raw-array overloads, one-dimensional images, subimages, and headerless batch reads.
+ *
+ * Exercises mx::fits::fitsFile::read through its raw pointer overloads, Eigen one-dimensional resize path,
+ * configured two-dimensional subset, and raw multi-file overload without headers.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Reading raw FITS arrays and configured subsets", "[ioutils::fits::fitsFile]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-raw-read-test" );
+    fitsFile<float> fitsFile;
+
+    const std::filesystem::path vectorPath = testDirectory.path() / "vector.fits";
+    std::vector<float> vectorData{ 1.0F, 2.0F, 3.0F, 4.0F };
+    REQUIRE( fitsFile.write( vectorPath.string(), vectorData.data(), 4, 0, 0 ) == mx::error_t::noerror );
+
+    mx::improc::eigenImage<float> vectorImage;
+    REQUIRE( fitsFile.read( vectorImage, vectorPath.string() ) == mx::error_t::noerror );
+    REQUIRE( vectorImage.rows() == 4 );
+    REQUIRE( vectorImage.cols() == 1 );
+    REQUIRE( vectorImage( 3, 0 ) == 4.0F );
+
+    mx::improc::eigenImage<float> image( 2, 3 );
+    image << 1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F;
+    fitsHeader<> header;
+    REQUIRE( header.append( "TESTKEY", 23, "raw read header" ) == mx::error_t::noerror );
+
+    const std::filesystem::path firstPath = testDirectory.path() / "first.fits";
+    const std::filesystem::path secondPath = testDirectory.path() / "second.fits";
+    REQUIRE( fitsFile.write( firstPath.string(), image.data(), image.rows(), image.cols(), 1, header ) ==
+             mx::error_t::noerror );
+    REQUIRE( fitsFile.write( secondPath.string(), image.data(), image.rows(), image.cols(), 1 ) ==
+             mx::error_t::noerror );
+
+    std::vector<float> raw( 6 );
+    REQUIRE( fitsFile.fileName( firstPath.string(), false ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.read( raw.data() ) == mx::error_t::noerror );
+    REQUIRE( std::equal( image.data(), image.data() + image.size(), raw.data() ) );
+
+    fitsHeader<> readHeader;
+    readHeader.append( "TESTKEY" );
+    REQUIRE( fitsFile.read( raw.data(), readHeader ) == mx::error_t::noerror );
+    REQUIRE( readHeader["TESTKEY"].value<int>() == 23 );
+    REQUIRE( fitsFile.read( raw.data(), secondPath.string() ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.read( raw.data(), readHeader, firstPath.string() ) == mx::error_t::noerror );
+    REQUIRE( readHeader["TESTKEY"].value<int>() == 23 );
+
+    fitsFile.setReadSize( 1, 0, 1, 2 );
+    mx::improc::eigenImage<float> subset;
+    REQUIRE( fitsFile.read( subset, firstPath.string() ) == mx::error_t::noerror );
+    REQUIRE( subset.rows() == 1 );
+    REQUIRE( subset.cols() == 2 );
+    REQUIRE( subset( 0, 0 ) == image( 1, 0 ) );
+    REQUIRE( subset( 0, 1 ) == image( 1, 1 ) );
+    fitsFile.setReadSize();
+
+    std::vector<float> batch( 12 );
+    const std::vector<std::string> files{ firstPath.string(), secondPath.string() };
+    REQUIRE( fitsFile.read( batch.data(), files ) == mx::error_t::noerror );
+    REQUIRE( std::equal( image.data(), image.data() + image.size(), batch.data() ) );
+    REQUIRE( std::equal( image.data(), image.data() + image.size(), batch.data() + image.size() ) );
+
+    const std::vector<std::string> noFiles;
+    REQUIRE( fitsFile.read( batch.data(), noFiles ) == mx::error_t::invalidarg );
 }
 
 /// Verify hciReduce's float Eigen image and cube writes round-trip with optional FITS headers.
