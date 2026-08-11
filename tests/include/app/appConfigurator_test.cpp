@@ -436,6 +436,23 @@ TEST_CASE( "command-line configuration tracks selected and unknown options", "[a
     REQUIRE( config.m_unusedConfigs.empty() );
 }
 
+/** \brief Verifies that repeated command-line-only names retain their separate target registrations.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "command-line-only targets retain duplicate names", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.add( "verbosity", "v", "verbose", mx::app::argType::True, "", "", false, "", "" );
+    config.add( "verbosity", "V", "very-verbose", mx::app::argType::True, "", "", false, "", "" );
+
+    REQUIRE( config.m_targets.size() == 1 );
+    REQUIRE( config.clOnlyTargets.size() == 1 );
+    REQUIRE( config.m_targets.at( "verbosity" ).orderAdded == 0 );
+    REQUIRE( config.clOnlyTargets.begin()->orderAdded == 1 );
+    REQUIRE( config.clOnlyTargets.begin()->longOpt == "very-verbose" );
+}
+
 /*
 } // namespace appConfiguratorTest
 } // namespace appTest
