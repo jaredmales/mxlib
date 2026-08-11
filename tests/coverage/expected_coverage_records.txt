@@ -27,6 +27,7 @@ include/ioutils/fits/fitsFile.hpp
 include/ioutils/fits/fitsHeader.hpp
 include/ioutils/fits/fitsHeaderCard.hpp
 include/ioutils/fileUtils.hpp
+include/ioutils/readColumns.hpp
 include/ipc/ompLoopWatcher.hpp
 include/math/eigenLapack.hpp
 include/math/fit/array2FitGaussian1D.hpp

@@ -7,7 +7,110 @@
 
 #include "../../../include/ioutils/readColumns.hpp"
 
+#undef __readColumns_hpp__
+#define MXLIBTEST_NAMESPACE MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns
+#define MXLIB_CATCH_ALL_EXCEPTIONS
+#include "../../../include/ioutils/readColumns.hpp"
+#undef MXLIBTEST_NAMESPACE
+#undef MXLIB_CATCH_ALL_EXCEPTIONS
+
 using namespace Catch::Matchers;
+
+/** \cond */
+namespace
+{
+
+enum class injectedReadColumnsFailure
+{
+    none,
+    invalidArgument,
+    outOfRange,
+    badAlloc,
+    standard,
+    unknown,
+    streamErrno,
+    streamFallback
+};
+
+mx::ioutils::readColumnsDetail::operation failingOperation = mx::ioutils::readColumnsDetail::operation::afterReadLine;
+injectedReadColumnsFailure injectedFailure = injectedReadColumnsFailure::none;
+
+void injectReadColumnsFailure( mx::ioutils::readColumnsDetail::operation operation, std::ifstream &stream )
+{
+    if( operation != failingOperation )
+    {
+        return;
+    }
+
+    switch( injectedFailure )
+    {
+        case injectedReadColumnsFailure::badAlloc:
+            throw std::bad_alloc();
+        case injectedReadColumnsFailure::standard:
+            throw std::runtime_error( "injected readColumns failure" );
+        case injectedReadColumnsFailure::unknown:
+            throw 1;
+        case injectedReadColumnsFailure::streamErrno:
+            errno = EIO;
+            stream.setstate( operation == mx::ioutils::readColumnsDetail::operation::afterReadLine
+                                 ? std::ios::badbit
+                                 : std::ios::failbit );
+            return;
+        case injectedReadColumnsFailure::streamFallback:
+            errno = 0;
+            stream.setstate( operation == mx::ioutils::readColumnsDetail::operation::afterReadLine
+                                 ? std::ios::badbit
+                                 : std::ios::failbit );
+            return;
+        default:
+            return;
+    }
+}
+
+class readColumnsHookGuard
+{
+  public:
+    readColumnsHookGuard() : m_saved( mx::ioutils::readColumnsDetail::operationHook() )
+    {
+        injectedFailure = injectedReadColumnsFailure::none;
+        mx::ioutils::readColumnsDetail::operationHook() = injectReadColumnsFailure;
+    }
+
+    ~readColumnsHookGuard()
+    {
+        mx::ioutils::readColumnsDetail::operationHook() = m_saved;
+    }
+
+  private:
+    mx::ioutils::readColumnsDetail::operationHookT m_saved;
+};
+
+struct throwingColumn
+{
+    using value_type = std::string;
+
+    void push_back( const std::string & )
+    {
+        switch( injectedFailure )
+        {
+            case injectedReadColumnsFailure::invalidArgument:
+                throw std::invalid_argument( "injected readcol failure" );
+            case injectedReadColumnsFailure::outOfRange:
+                throw std::out_of_range( "injected readcol failure" );
+            case injectedReadColumnsFailure::badAlloc:
+                throw std::bad_alloc();
+            case injectedReadColumnsFailure::standard:
+                throw std::runtime_error( "injected readcol failure" );
+            case injectedReadColumnsFailure::unknown:
+                throw 1;
+            default:
+                return;
+        }
+    }
+};
+
+} // namespace
+/** \endcond */
 
 namespace unitTest
 {
@@ -243,6 +346,216 @@ TEST_CASE( "Reading filename and double metadata columns", "[ioutils::readColumn
     REQUIRE( filenames ==
              std::vector<std::string>{ "existing.fits", "target/frame001.fits", "reference/frame002.fits" } );
     REQUIRE( values == std::vector<double>{ -1.0, 0.25, 1.5 } );
+}
+
+/** \brief Verifies direct column parsing handles empty, missing, terminated, and skipped fields.
+ *
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Parsing column edge cases", "[ioutils::readColumns]" )
+{
+    SECTION( "empty input" )
+    {
+        std::vector<std::string> values;
+        int column = 0;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "", 0, column, values ) ==
+                 mx::error_t::noerror );
+        REQUIRE( values.empty() );
+    }
+
+    SECTION( "whitespace-only final field" )
+    {
+        std::vector<std::string> values;
+        int column = 0;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "   ", 3, column, values ) ==
+                 mx::error_t::noerror );
+        REQUIRE( values == std::vector<std::string>{ "" } );
+    }
+
+    SECTION( "invalid whitespace-only numeric final field" )
+    {
+        std::vector<double> values;
+        int column = 0;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "   ", 3, column, values ) ==
+                 mx::error_t::invalidarg );
+    }
+
+    SECTION( "missing comma-delimited field" )
+    {
+        std::vector<int> values;
+        int column = 0;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColCommaDelim, mx::verbose::vv>( ",value", 6, column, values ) ==
+                 mx::error_t::noerror );
+        REQUIRE( values == std::vector<int>{ -99 } );
+    }
+
+    SECTION( "terminated direct field" )
+    {
+        std::vector<std::string> values;
+        int column = 0;
+        REQUIRE(
+            mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value\n", 6, column, values ) ==
+            mx::error_t::noerror );
+        REQUIRE( values == std::vector<std::string>{ "value" } );
+    }
+
+    SECTION( "skipped field" )
+    {
+        const std::string filename{ "/tmp/readcol_test_skip.dat" };
+        std::ofstream fout{ filename };
+        fout << "first ignored 2.5\n";
+        fout.close();
+
+        std::vector<std::string> names;
+        mx::ioutils::skipCol skipped;
+        std::vector<double> values;
+        REQUIRE( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename,
+                                                                                            names,
+                                                                                            skipped,
+                                                                                            values ) ==
+                 mx::error_t::noerror );
+        REQUIRE( names == std::vector<std::string>{ "first" } );
+        REQUIRE( values == std::vector<double>{ 2.5 } );
+    }
+}
+
+/** \brief Verifies per-column conversion exceptions follow the configured propagation policy.
+ *
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Handling column conversion exceptions", "[ioutils::readColumns]" )
+{
+    throwingColumn values;
+    int column = 3;
+
+    SECTION( "always-translated conversion exceptions" )
+    {
+        injectedFailure = injectedReadColumnsFailure::invalidArgument;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value", 5, column, values ) ==
+                 mx::error_t::std_invalid_argument );
+
+        injectedFailure = injectedReadColumnsFailure::outOfRange;
+        REQUIRE( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value", 5, column, values ) ==
+                 mx::error_t::std_out_of_range );
+    }
+
+    SECTION( "allocation failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::badAlloc;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value", 5, column, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readcol<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( "value", 5, column, values ) == mx::error_t::std_bad_alloc );
+    }
+
+    SECTION( "standard failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::standard;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value", 5, column, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readcol<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( "value", 5, column, values ) == mx::error_t::std_exception );
+    }
+
+    SECTION( "unknown failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::unknown;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readcol<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( "value", 5, column, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readcol<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( "value", 5, column, values ) == mx::error_t::exception );
+    }
+}
+
+/** \brief Verifies line-read exceptions follow the configured propagation policy.
+ *
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Handling line-read exceptions", "[ioutils::readColumns]" )
+{
+    const std::string filename{ "/tmp/readcol_test_line_exceptions.dat" };
+    std::ofstream fout{ filename };
+    fout << "value 1.5\n";
+    fout.close();
+
+    readColumnsHookGuard guard;
+    failingOperation = mx::ioutils::readColumnsDetail::operation::afterReadLine;
+    std::vector<std::string> names;
+    std::vector<double> values;
+
+    SECTION( "allocation failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::badAlloc;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, names, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColumns<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( filename, names, values ) == mx::error_t::std_bad_alloc );
+    }
+
+    SECTION( "standard failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::standard;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, names, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColumns<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( filename, names, values ) == mx::error_t::std_exception );
+    }
+
+    SECTION( "unknown failure" )
+    {
+        injectedFailure = injectedReadColumnsFailure::unknown;
+        REQUIRE_THROWS_AS(
+            ( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, names, values ) ),
+            mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColumns<
+                     mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::readColSpaceDelim,
+                     mx::verbose::vv>( filename, names, values ) == mx::error_t::exception );
+    }
+}
+
+/** \brief Verifies open, read, and close stream errors retain errno or use the documented fallback code.
+ *
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Handling column file stream errors", "[ioutils::readColumns]" )
+{
+    const std::string filename{ "/tmp/readcol_test_stream_errors.dat" };
+    std::ofstream fout{ filename };
+    fout << "value 1.5\n";
+    fout.close();
+
+    readColumnsHookGuard guard;
+    std::vector<std::string> names;
+    std::vector<double> values;
+
+    for( auto operation : { mx::ioutils::readColumnsDetail::operation::afterOpen,
+                            mx::ioutils::readColumnsDetail::operation::afterReadLine,
+                            mx::ioutils::readColumnsDetail::operation::afterClose } )
+    {
+        failingOperation = operation;
+
+        injectedFailure = injectedReadColumnsFailure::streamErrno;
+        REQUIRE( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, names, values ) ==
+                 mx::error_t::eio );
+
+        injectedFailure = injectedReadColumnsFailure::streamFallback;
+        const mx::error_t expected =
+            operation == mx::ioutils::readColumnsDetail::operation::afterOpen       ? mx::error_t::fileoerr
+            : operation == mx::ioutils::readColumnsDetail::operation::afterReadLine ? mx::error_t::filererr
+                                                                                    : mx::error_t::filecerr;
+        REQUIRE( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, names, values ) ==
+                 expected );
+    }
 }
 
 } // namespace readColumnsTest

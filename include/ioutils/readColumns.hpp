@@ -26,10 +26,11 @@
 #ifndef __readColumns_hpp__
 #define __readColumns_hpp__
 
+#include <cctype>
 #include <cstring>
-#include <string>
 #include <fstream>
 #include <format>
+#include <string>
 
 #include "../mxlib.hpp"
 
@@ -41,6 +42,44 @@ namespace mx
 {
 namespace ioutils
 {
+
+#ifndef ioutils_readColumns_detail_hpp
+#define ioutils_readColumns_detail_hpp
+namespace readColumnsDetail
+{
+
+/** \cond */
+/// File-stream stages exposed to deterministic exception and error tests.
+enum class operation
+{
+    afterOpen,
+    afterReadLine,
+    afterClose
+};
+
+/// Signature of the resettable file-stream operation hook.
+using operationHookT = void ( * )( operation, std::ifstream & );
+
+/// Production no-op for the file-stream operation hook.
+inline void noOperationFailure( operation, std::ifstream & )
+{
+}
+
+/// Access the process-wide file-stream operation hook.
+inline operationHookT &operationHook()
+{
+    static operationHookT hook = noOperationFailure;
+    return hook;
+}
+/** \endcond */
+
+} // namespace readColumnsDetail
+#endif // ioutils_readColumns_detail_hpp
+
+#ifdef MXLIBTEST_NAMESPACE
+namespace MXLIBTEST_NAMESPACE
+{
+#endif
 
 struct readColSpaceDelim
 {
@@ -82,7 +121,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
         }
 
         // Eat white space
-        while( isspace( sin[i] ) && sin[i] != delimT::eol && i < l )
+        while( i < l && std::isspace( static_cast<unsigned char>( sin[i] ) ) && sin[i] != delimT::eol )
         {
             ++i;
         }
@@ -108,7 +147,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
         std::getline( sinstr, str, delimT::delim );
 
         // Last entry in line might contain eol
-        if( str[str.size() - 1] == delimT::eol )
+        if( !str.empty() && str[str.size() - 1] == delimT::eol )
         {
             str.erase( str.size() - 1 );
         }
@@ -170,7 +209,7 @@ error_t readcol( const char *sin, int sz, int &colno, arrT &array, arrTs &...arr
         #endif
         // clang-format on
     }
-    catch(...)
+    catch( ... )
     {
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
@@ -228,6 +267,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
     errno = 0;
     std::ifstream fin;
     fin.open( fname );
+    readColumnsDetail::operationHook()( readColumnsDetail::operation::afterOpen, fin );
 
     if( !fin.good() )
     {
@@ -254,6 +294,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
         try
         {
             std::getline( fin, line, delimT::eol );
+            readColumnsDetail::operationHook()( readColumnsDetail::operation::afterReadLine, fin );
         }
         catch( const std::bad_alloc &e )
         {
@@ -307,6 +348,11 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
             // clang-format on
         }
 
+        if( fin.bad() )
+        {
+            break;
+        }
+
         if( line.size() == 0 )
         {
             continue;
@@ -317,7 +363,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
         bool nonspace = false; // record if we find a non-space character before the comment
         while( i < line.size() && line[i] != delimT::comment )
         {
-            if( !nonspace && !isspace( line[i] ) )
+            if( !nonspace && !std::isspace( static_cast<unsigned char>( line[i] ) ) )
             {
                 nonspace = true;
             }
@@ -347,7 +393,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
     }
 
     // getline will have set fail if there was no new line on the last line.
-    if( fin.bad() && !fin.fail() )
+    if( fin.bad() )
     {
         error_t errc;
         if( errno != 0 )
@@ -365,6 +411,7 @@ error_t readColumns( const std::string &fname, ///< [in] is the file name to rea
     fin.clear(); // Clear the fail bit which may have been set by getline
     errno = 0;
     fin.close();
+    readColumnsDetail::operationHook()( readColumnsDetail::operation::afterClose, fin );
 
     if( fin.fail() )
     {
@@ -405,6 +452,10 @@ struct skipCol
         return;
     }
 };
+
+#ifdef MXLIBTEST_NAMESPACE
+} // namespace MXLIBTEST_NAMESPACE
+#endif
 
 } // namespace ioutils
 } // namespace mx
