@@ -5,8 +5,10 @@
 MXLIB_CFLAGS=$(shell pkg-config --cflags mxlib)
 MXLIB_LIBS=$(shell pkg-config --libs mxlib)
 
-CFLAGS+=$(MXLIB_CFLAGS)
-CXXFLAGS+=$(MXLIB_CFLAGS)
+OPTIMIZE ?= -O3 -ffast-math
+
+CFLAGS+=$(MXLIB_CFLAGS) $(OPTIMIZE)
+CXXFLAGS+=$(MXLIB_CFLAGS) $(OPTIMIZE)
 
 # Single-file app name can be supplied as `TARGET=`,
 # or `t=` for short
