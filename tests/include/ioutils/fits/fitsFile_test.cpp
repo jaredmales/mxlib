@@ -455,6 +455,14 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
     REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
     REQUIRE( readHeader["PREPROC MASK"].String() == "1" );
 
+    const std::filesystem::path rawImagePath = testDirectory.path() / "raw-image-with-header.fits";
+    REQUIRE( fitsFile.write( rawImagePath.string(), image.data(), image.rows(), image.cols(), 1, header )
+             == mx::error_t::noerror );
+    REQUIRE( fitsFile.read( readImage, readHeader, rawImagePath.string() ) == mx::error_t::noerror );
+    REQUIRE( readImage.isApprox( image ) );
+    REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
+    REQUIRE( readHeader["PREPROC MASK"].String() == "1" );
+
     mx::improc::eigenCube<float> cube( 2, 3, 2 );
     cube.image( 0 ) = image;
     cube.image( 1 ) = image + 10.0F;
