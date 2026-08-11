@@ -315,6 +315,56 @@ TEST_CASE( "eigenCube copy and move operations preserve ownership", "[improc::ei
     REQUIRE( transferred.image( 1 )( 0, 0 ) == 3.0 );
 }
 
+/** \brief Verifies non-owning storage, self-assignment, resized views, and covariance operations.
+ *
+ * Exercises mx::improc::eigenCube's external-storage constructor, non-owning shallowCopy, two-dimensional resize,
+ * cube, asVectors, Covar, and self copy/move assignment paths.
+ *
+ * \ingroup eigenCube_unit_tests
+ */
+TEST_CASE( "eigenCube storage views and covariance preserve layout", "[improc::eigenCube]" )
+{
+    double externalData[4]{ 1.0, 2.0, 3.0, 4.0 };
+    mx::improc::eigenCube<double> externalCube( externalData, 1, 2, 2 );
+    REQUIRE( externalCube.data() == externalData );
+    REQUIRE( externalCube.image( 1 )( 0, 1 ) == 4.0 );
+
+    mx::improc::eigenCube<double> borrowed;
+    borrowed.shallowCopy( externalCube, false );
+    REQUIRE( borrowed.data() == externalData );
+    REQUIRE( externalCube.data() == externalData );
+
+    externalCube = externalCube;
+    externalCube = std::move( externalCube );
+    REQUIRE( externalCube.data() == externalData );
+    REQUIRE( externalCube.rows() == 1 );
+    REQUIRE( externalCube.cols() == 2 );
+    REQUIRE( externalCube.planes() == 2 );
+
+    REQUIRE( externalCube.cube().rows() == 2 );
+    REQUIRE( externalCube.cube().cols() == 2 );
+    REQUIRE( externalCube.asVectors()( 1, 1 ) == 4.0 );
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> covariance;
+    externalCube.Covar( covariance );
+    REQUIRE( covariance.rows() == 2 );
+    REQUIRE( covariance.cols() == 2 );
+    REQUIRE( covariance( 0, 0 ) == 5.0 );
+    REQUIRE( covariance( 0, 1 ) == 11.0 );
+    REQUIRE( covariance( 1, 0 ) == 11.0 );
+    REQUIRE( covariance( 1, 1 ) == 25.0 );
+
+    borrowed.clear();
+    REQUIRE( borrowed.data() == nullptr );
+    REQUIRE( externalData[3] == 4.0 );
+
+    mx::improc::eigenCube<double> resized;
+    resized.resize( 2, 3 );
+    REQUIRE( resized.rows() == 2 );
+    REQUIRE( resized.cols() == 3 );
+    REQUIRE( resized.planes() == 1 );
+}
+
 } // namespace eigenCubeTest
 } // namespace improcTest
 } // namespace unitTest
