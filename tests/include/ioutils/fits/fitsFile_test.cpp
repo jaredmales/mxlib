@@ -442,6 +442,9 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
     fitsHeader<verbose::vv> header;
     header.append( "TESTKEY", 17, "test header value" );
     header.append( "PREPROC MASK", true, "apply preprocessing mask" );
+    header.append( "QTHRESH", 0.75F, "quality threshold" );
+    header.append( "", fitsCommentType(), "HCI preprocessing parameters" );
+    header.append( "HISTORY", fitsHistoryType(), "coadded target000001.fits" );
 
     const std::filesystem::path headerImagePath = testDirectory.path() / "image-with-header.fits";
     REQUIRE( fitsFile.write( headerImagePath.string(), image, header ) == mx::error_t::noerror );
@@ -454,6 +457,17 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
     REQUIRE( readImage.isApprox( image ) );
     REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
     REQUIRE( readHeader["PREPROC MASK"].String() == "1" );
+    REQUIRE_THAT( readHeader["QTHRESH"].value<float>(), WithinAbs( 0.75F, 1e-6F ) );
+
+    bool foundHistory = false;
+    for( auto &card : readHeader )
+    {
+        if( card.type() == fitsType<fitsHistoryType>() && card.comment() == "coadded target000001.fits" )
+        {
+            foundHistory = true;
+        }
+    }
+    REQUIRE( foundHistory );
 
     const std::filesystem::path rawImagePath = testDirectory.path() / "raw-image-with-header.fits";
     REQUIRE( fitsFile.write( rawImagePath.string(), image.data(), image.rows(), image.cols(), 1, header )
