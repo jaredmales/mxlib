@@ -126,6 +126,18 @@ TEST_CASE( "Reading space delimited numeric data", "[ioutils::readColumns]" )
  */
 TEST_CASE( "Reading space delimited numeric data with errors", "[ioutils::readColumns]" )
 {
+    SECTION( "a missing file" )
+    {
+        std::vector<std::string> filenames;
+        std::vector<double> values;
+        REQUIRE( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>(
+                     "/tmp/readcol_test_missing_file.dat",
+                     filenames,
+                     values ) == mx::error_t::enoent );
+        REQUIRE( filenames.empty() );
+        REQUIRE( values.empty() );
+    }
+
     SECTION( "two columns of floating point numbers" )
     {
         std::string fname = "/tmp/readcol_test_two_col_float_intoverflow.dat";
