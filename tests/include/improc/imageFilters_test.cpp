@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 
 #include "../../../include/improc/imageFilters.hpp"
+#include "../../../include/improc/imageUtils.hpp"
 
 /** \cond
  * Explicit instantiations compile-check the default Gaussian and azimuthal box kernels with the canonical
@@ -340,6 +341,55 @@ TEST_CASE( "precalcKernel propagates errors and validates lookup bounds", "[impr
 
     mx::improc::precalcKernel<kernelT> emptyCache( validKernel, 0, 0, 0.0, 0.0 );
     REQUIRE( emptyCache.setKernel( 0.0, 0.0, kernel ) == mx::error_t::invalidconfig );
+}
+
+/** \brief Verifies the radial-profile subtraction used by HCI preprocessing.
+ *
+ * Exercises mx::improc::radprofim with its centered-radius overload and subtraction enabled, followed by the
+ * mx::improc::zeroNaNs cleanup used by HCI.
+ *
+ * \ingroup imageFilters_unit_tests
+ */
+TEST_CASE( "radprofim subtracts a centered radial background", "[improc::radprofim][hciReduce]" )
+{
+    mx::improc::eigenImage<double> image( 9, 9 );
+    image.setConstant( 5.0 );
+    mx::improc::eigenImage<double> profile;
+
+    mx::improc::radprofim( profile, image, true );
+    mx::improc::zeroNaNs( image );
+
+    REQUIRE( profile.rows() == image.rows() );
+    REQUIRE( profile.cols() == image.cols() );
+    REQUIRE( arrayAllFinite( image ) );
+    REQUIRE( image.abs().maxCoeff() < 1e-12 );
+}
+
+/** \brief Verifies HCI azimuthal median filtering through a precomputed azimuthal kernel.
+ *
+ * Exercises mx::improc::medianFilterImage with mx::improc::precalcKernel and mx::improc::azBoxKernel.
+ *
+ * \ingroup imageFilters_unit_tests
+ */
+TEST_CASE( "medianFilterImage handles HCI azimuthal kernels", "[improc::medianFilterImage][hciReduce]" )
+{
+    typedef mx::improc::azBoxKernel<mx::improc::eigenImage<double>, 1, mx::verbose::o> kernelT;
+
+    kernelT kernelGenerator( 2.0, 2.0 );
+    mx::improc::precalcKernel<kernelT> kernelCache( kernelGenerator, 9, 9, 4.0, 4.0 );
+
+    mx::improc::eigenImage<double> image( 9, 9 );
+    image.setConstant( 5.0 );
+    image( 4, 4 ) = 100.0;
+
+    mx::improc::eigenImage<double> filtered;
+    mx::improc::medianFilterImage( filtered, image, kernelCache );
+
+    REQUIRE( filtered.rows() == image.rows() );
+    REQUIRE( filtered.cols() == image.cols() );
+    REQUIRE( arrayAllFinite( filtered ) );
+    REQUIRE( filtered( 4, 4 ) == 5.0 );
+    REQUIRE( filtered( 0, 0 ) == 5.0 );
 }
 
 /// Verify that filterImage preserves non-square dimensions with a Gaussian kernel.
