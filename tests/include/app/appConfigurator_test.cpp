@@ -393,6 +393,49 @@ TEST_CASE( "command-line configuration targets preserve metadata and typed value
     REQUIRE( unset == 19 );
 }
 
+/** \brief Verifies command-line filtering, indexed retrieval, unknown options, and reusable configuration state.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "command-line configuration tracks selected and unknown options", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.m_sources = true;
+    config.add( "first", "", "first", mx::app::argType::Required, "", "first", false, "int", "" );
+    config.add( "second", "", "second", mx::app::argType::Required, "", "second", false, "int", "" );
+    char invokedName[] = "configTest";
+    char firstOption[] = "--first=5";
+    char secondOption[] = "--second=7";
+    char unknownOption[] = "--unknown=value";
+    char *argv[] = { invokedName, firstOption, secondOption, unknownOption };
+
+    config.parseCommandLine( 4, argv, "first" );
+    REQUIRE( config.isSet( "first" ) );
+    REQUIRE_FALSE( config.isSet( "second" ) );
+    REQUIRE( config.m_targets.at( "first" ).sources.at( 0 ) == "command line" );
+    REQUIRE( config.m_unusedConfigs.size() == 1 );
+    REQUIRE( config.m_unusedConfigs.begin()->second.set );
+    REQUIRE( config.m_unusedConfigs.begin()->second.sources.at( 0 ) == "command line" );
+
+    int first{ 0 };
+    REQUIRE( config.get( first, "first", 0 ) == 0 );
+    REQUIRE( first == 5 );
+    REQUIRE( config.get( first, "first", 1 ) == -1 );
+
+    config.parseCommandLine( 4, argv );
+    int second{ 0 };
+    REQUIRE( config( second, "second" ) == 0 );
+    REQUIRE( second == 7 );
+    REQUIRE( config.verbosity( "first" ) == 1 );
+    REQUIRE( config.count( "first" ) == 2 );
+
+    config.clear();
+    REQUIRE( config.m_targets.empty() );
+    REQUIRE( config.clOnlyTargets.empty() );
+    REQUIRE( config.nonOptions.empty() );
+    REQUIRE( config.m_unusedConfigs.empty() );
+}
+
 /*
 } // namespace appConfiguratorTest
 } // namespace appTest
