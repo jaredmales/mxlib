@@ -43,6 +43,7 @@ include/sigproc/autocorrelation.hpp
 include/sigproc/averagePeriodogram.hpp
 include/sigproc/linearPredictor.hpp
 include/sigproc/psdVarMean.hpp
+include/sys/timeUtils.hpp
 include/wfp/idealCoronagraph.hpp
 include/wfp/imagingArray.hpp
 include/wfp/lyotCoronagraph.hpp

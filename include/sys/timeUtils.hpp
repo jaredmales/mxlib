@@ -41,11 +41,40 @@
 #include "../ioutils/stringUtils.hpp"
 #include "../astro/sofa.hpp"
 
-
 namespace mx
 {
 namespace sys
 {
+
+namespace timeUtilsDetail
+{
+
+/** \cond */
+/// Function signature for the broken-down UTC time operation used by time utilities.
+using gmtimeRT = tm *(*)( const time_t *, tm * );
+
+/// Function signature for the SOFA TAI-minus-UTC operation used by time utilities.
+using iauDatT = int ( * )( int, int, int, double, double * );
+
+/// Function signature for the SOFA calendar-to-Julian-date operation used by time utilities.
+using iauCal2jdT = int ( * )( int, int, int, double *, double * );
+
+/// Resettable external operations used to exercise time-conversion failures deterministically.
+struct operations
+{
+    gmtimeRT gmtimeR;     ///< Broken-down UTC time operation.
+    iauDatT iauDat;       ///< TAI-minus-UTC operation.
+    iauCal2jdT iauCal2jd; ///< Calendar-to-Julian-date operation.
+};
+
+/// Access the process-wide time utility operation table.
+operations &operationsInstance();
+
+/// Restore the time utility operation table to its production functions.
+void resetOperations();
+/** \endcond */
+
+} // namespace timeUtilsDetail
 
 /// Get the current system time in seconds.
 /** Uses timespec, so nanosecond resolution is possible.
@@ -216,6 +245,7 @@ double ISO8601date2mjd( const std::string &fdate /**<[in] a standard ISO8601 dat
  * \tparam timeT is the time type
  *
  * \retval std::string containing the format date/time
+ * \retval empty string if the input cannot be converted to broken-down UTC time
  *
  * \ingroup timeutils
  */
@@ -230,6 +260,7 @@ std::string ISO8601DateTimeStr( const timeT &timeIn, ///< [in] the input time
  * YYYY-MM-DDYHH:MM:SS, with optional timezone designation such as Z or +00:00.
  *
  * \retval std::string containing the format date/time
+ * \retval empty string if the input cannot be converted to broken-down UTC time
  *
  * \ingroup timeutils
  */
@@ -244,6 +275,7 @@ std::string ISO8601DateTimeStr<time_t>( const time_t &timeIn, ///< [in] the inpu
  * YYYY-MM-DDYHH:MM:SS.SSSSSSSSS, with optional timezone designation such as Z or +00:00.
  *
  * \retval std::string containing the format date/time
+ * \retval empty string if the input cannot be converted to broken-down UTC time
  *
  * \ingroup timeutils
  */
@@ -260,6 +292,7 @@ std::string ISO8601DateTimeStr<timespec>( const timespec &timeIn, ///< [in] the 
  * \overload
  *
  * \retval std::string containing the format date/time
+ * \retval empty string if the current time cannot be converted to broken-down UTC time
  *
  * \ingroup timeutils
  */

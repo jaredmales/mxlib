@@ -33,6 +33,22 @@ namespace mx
 namespace sys
 {
 
+namespace timeUtilsDetail
+{
+
+operations &operationsInstance()
+{
+    static operations ops = { ::gmtime_r, sofa::iauDat, sofa::iauCal2jd };
+    return ops;
+}
+
+void resetOperations()
+{
+    operationsInstance() = { ::gmtime_r, sofa::iauDat, sofa::iauCal2jd };
+}
+
+} // namespace timeUtilsDetail
+
 template <>
 double get_curr_time<double, CLOCK_REALTIME>( timespec &tsp )
 {
@@ -85,7 +101,7 @@ double Cal2mjd( int yr, int mon, int day, int hr, int min, double sec )
     double djm0;
     double djm;
 
-    int rv = sofa::iauCal2jd( yr, mon, day, &djm0, &djm );
+    int rv = timeUtilsDetail::operationsInstance().iauCal2jd( yr, mon, day, &djm0, &djm );
 
     if( rv < 0 )
         return (double)rv;
@@ -131,7 +147,10 @@ template <>
 std::string ISO8601DateTimeStr<time_t>( const time_t &timeIn, int timeZone )
 {
     tm bdt;
-    gmtime_r( &timeIn, &bdt );
+    if( timeUtilsDetail::operationsInstance().gmtimeR( &timeIn, &bdt ) == nullptr )
+    {
+        return {};
+    }
 
     char tstr[25];
 
@@ -151,6 +170,10 @@ template <>
 std::string ISO8601DateTimeStr<timespec>( const timespec &timeIn, int timeZone )
 {
     std::string result = ISO8601DateTimeStr<time_t>( timeIn.tv_sec, 0 );
+    if( result.empty() )
+    {
+        return result;
+    }
 
     char tstr[20];
 
@@ -164,7 +187,7 @@ std::string ISO8601DateTimeStr<timespec>( const timespec &timeIn, int timeZone )
         result += "+00:00";
 
     return result;
-}
+} // LCOV_EXCL_LINE
 
 std::string ISO8601DateTimeStr( int timeZone )
 {
@@ -199,7 +222,7 @@ std::string ISO8601DateTimeStrMJD( const double &timeIn, int timeZone )
         result += "+00:00";
 
     return result;
-}
+} // LCOV_EXCL_LINE
 
 int timeStamp( std::string &tstamp, timespec &ts )
 {
@@ -207,7 +230,7 @@ int timeStamp( std::string &tstamp, timespec &ts )
 
     time_t t0 = ts.tv_sec;
 
-    if( gmtime_r( &t0, &uttime ) == 0 )
+    if( timeUtilsDetail::operationsInstance().gmtimeR( &t0, &uttime ) == nullptr )
     {
         std::cerr << "Error getting UT time (gmtime_r returned 0). At: " << __FILE__ << " " << __LINE__ << "\n";
         return -1;
@@ -234,21 +257,31 @@ int timeStamp( std::string &tstamp, timespec &ts )
 int timespecUTC2TAIMJD( double &djm, double &djmf, const timespec &tsp, tm *tm0 )
 {
     double dat, djm0;
+    tm localTm;
     tm *tmrv;
     int rv1, rv2;
 
+    if( tm0 == nullptr )
+    {
+        tm0 = &localTm;
+    }
+
     // Get the broken down time corresponding to tsp0
-    tmrv = gmtime_r( &tsp.tv_sec, tm0 );
+    tmrv = timeUtilsDetail::operationsInstance().gmtimeR( &tsp.tv_sec, tm0 );
     if( tmrv == 0 )
         return -10;
 
     // Then determine deltaAT = TAI-UTC
-    rv1 = sofa::iauDat( 1900 + tm0->tm_year, 1 + tm0->tm_mon, tm0->tm_mday, 0.0, &dat );
+    rv1 = timeUtilsDetail::operationsInstance().iauDat( 1900 + tm0->tm_year, 1 + tm0->tm_mon, tm0->tm_mday, 0.0, &dat );
     if( rv1 < 0 )
         return rv1;
 
     // And get the MJD
-    rv2 = sofa::iauCal2jd( 1900 + tm0->tm_year, 1 + tm0->tm_mon, tm0->tm_mday, &djm0, &djm );
+    rv2 = timeUtilsDetail::operationsInstance().iauCal2jd( 1900 + tm0->tm_year,
+                                                           1 + tm0->tm_mon,
+                                                           tm0->tm_mday,
+                                                           &djm0,
+                                                           &djm );
     if( rv2 < 0 )
         return rv2;
 
