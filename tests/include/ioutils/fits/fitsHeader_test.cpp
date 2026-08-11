@@ -134,6 +134,42 @@ TEST_CASE( "Updating HCI coadd time and keyword cards", "[ioutils::fits::fitsHea
     REQUIRE( header["DELTA ANGLE"].value<double>() == 10.0 );
 }
 
+/** \brief Verifies FITS HISTORY provenance for HCI final-image outputs.
+ *
+ * \ingroup fitsHeader_unit_tests
+ */
+TEST_CASE( "Appending HCI Git status provenance", "[ioutils::fits::fitsHeader][hciReduce]" )
+{
+    fitsHeader<mx::verbose::vv> cleanHeader;
+    fitsHeaderGitStatus( cleanHeader, "mxlib_uncomp", "abc123", 0 );
+
+    std::vector<std::string> cleanHistory;
+    for( auto &card : cleanHeader )
+    {
+        if( card.type() == fitsType<fitsHistoryType>() )
+        {
+            cleanHistory.push_back( card.comment() );
+        }
+    }
+
+    REQUIRE( cleanHistory == std::vector<std::string>{ "Git status for mxlib_uncomp:", "   sha1=abc123" } );
+
+    fitsHeader<mx::verbose::vv> modifiedHeader;
+    fitsHeaderGitStatus( modifiedHeader, "mxlib_uncomp", "abc123", 1 );
+
+    std::vector<std::string> modifiedHistory;
+    for( auto &card : modifiedHeader )
+    {
+        if( card.type() == fitsType<fitsHistoryType>() )
+        {
+            modifiedHistory.push_back( card.comment() );
+        }
+    }
+
+    REQUIRE( modifiedHistory ==
+             std::vector<std::string>{ "Git status for mxlib_uncomp:", "   sha1=abc123, modified" } );
+}
+
 } // namespace fitsHeaderTest
 } // namespace fitsTest
 } // namespace unitTest
