@@ -8,6 +8,7 @@
 #include "../../../include/ioutils/stringUtils.hpp"
 
 #include <cmath>
+#include <vector>
 
 using namespace Catch::Matchers;
 
@@ -619,6 +620,32 @@ TEST_CASE( "Converting strings to numbers", "[ioutils::stringUtils]" )
             REQUIRE( errc == mx::error_t::invalidarg );
         }
     }
+}
+
+/** \brief Verifies numeric vector parsing for the delimiter forms used by HCI reduction headers.
+ *
+ * \ingroup stringUtils_unit_tests
+ */
+TEST_CASE( "Parsing delimited numeric vectors", "[ioutils::stringUtils::parseStringVector]" )
+{
+    std::vector<int> modes{ 99 };
+    parseStringVector( modes, "5,10,15", "," );
+    REQUIRE( modes == std::vector<int>{ 5, 10, 15 } );
+
+    std::vector<double> bounds{ 99.0 };
+    parseStringVector( bounds, "-1.5,0,2.25", "," );
+    REQUIRE( bounds == std::vector<double>{ -1.5, 0.0, 2.25 } );
+
+    std::vector<int> defaultDelimiter;
+    parseStringVector( defaultDelimiter, "1,2,3" );
+    REQUIRE( defaultDelimiter == std::vector<int>{ 1, 2, 3 } );
+
+    std::vector<int> delimiterSet;
+    parseStringVector( delimiterSet, "1:2 3", ": " );
+    REQUIRE( delimiterSet == std::vector<int>{ 1, 2, 3 } );
+
+    parseStringVector( delimiterSet, "42", "," );
+    REQUIRE( delimiterSet == std::vector<int>{ 42 } );
 }
 
 } // namespace stringUtilsTest

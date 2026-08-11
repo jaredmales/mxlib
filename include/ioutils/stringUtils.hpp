@@ -342,11 +342,11 @@ void parseStringVector(
 
     while( com != std::string::npos )
     {
-        v.push_back( convertFromString<typeT>( s.substr( st, com - st ) ) );
+        v.push_back( stoT<typeT>( s.substr( st, com - st ) ) );
         st = com + 1;
         com = s.find( delim, st );
     }
-    v.push_back( convertFromString<typeT>( s.substr( st, s.size() - st ) ) );
+    v.push_back( stoT<typeT>( s.substr( st, s.size() - st ) ) );
 }
 
 /// Parses a string into a vector of tokens delimited by a set of characters
@@ -380,11 +380,11 @@ void parseStringVector(
 
     while( com != std::string::npos )
     {
-        v.push_back( convertFromString<typeT>( s.substr( st, com - st ) ) );
+        v.push_back( stoT<typeT>( s.substr( st, com - st ) ) );
         st = com + 1;
         com = s.find_first_of( delims, st );
     }
-    v.push_back( convertFromString<typeT>( s.substr( st, s.size() - st ) ) );
+    v.push_back( stoT<typeT>( s.substr( st, s.size() - st ) ) );
 }
 /// @}
 
