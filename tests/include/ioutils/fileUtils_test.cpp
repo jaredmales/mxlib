@@ -155,6 +155,28 @@ TEST_CASE( "decomposing and transforming file paths", "[ioutils::fileUtils]" )
     REQUIRE( mx::ioutils::fileNamePrepend( filename, "rdi_" ) == "/tmp/hciReduce/list/rdi_science.frame.fits" );
 }
 
+/** \brief Verifies nested output-directory creation used before HCI preprocessed-image writes.
+ *
+ * Exercises mx::ioutils::parentPath and mx::ioutils::createDirectories with a new nested directory and an
+ * idempotent repeat call.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "creating HCI output directories", "[ioutils::fileUtils][hciReduce]" )
+{
+    const std::filesystem::path root = std::filesystem::temp_directory_path() / "mxlib-hciReduce-output-directory";
+    const std::filesystem::path prefix = root / "preprocessed" / "target";
+
+    std::filesystem::remove_all( root );
+
+    const std::string directory = mx::ioutils::parentPath( prefix.string() );
+    REQUIRE( mx::ioutils::createDirectories( directory ) == mx::error_t::noerror );
+    REQUIRE( std::filesystem::is_directory( directory ) );
+    REQUIRE( mx::ioutils::createDirectories( directory ) == mx::error_t::noerror );
+
+    std::filesystem::remove_all( root );
+}
+
 void createfiles( const std::string &basedir )
 {
     std::filesystem::create_directories( basedir );
