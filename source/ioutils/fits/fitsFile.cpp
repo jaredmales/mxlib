@@ -31,17 +31,59 @@ namespace mx
 namespace fits
 {
 
-template class fitsFile<short,verbose::d>;
+namespace fitsFileDetail
+{
 
-template class fitsFile<unsigned short,verbose::d>;
+namespace
+{
 
-template class fitsFile<int,verbose::d>;
+int openFile( fitsfile **fptr, const char *fileName, int mode, int *status )
+{
+    return fits_open_file( fptr, fileName, mode, status );
+}
 
-template class fitsFile<unsigned int,verbose::d>;
+long *allocateLongs( size_t count )
+{
+    return new long[count];
+}
 
-template class fitsFile<float,verbose::d>;
+} // namespace
 
-template class fitsFile<double,verbose::d>;
+fitsFileCfitsioOps &fitsFileCfitsioOpsInstance()
+{
+    static fitsFileCfitsioOps
+        operations{ openFile, ffgidm, ffgisz, ffclos, ffgsv, ffghsp, ffgkyn, ffinit, ffcrim, ffppx, allocateLongs };
+    return operations;
+}
+
+void resetFitsFileCfitsioOps()
+{
+    fitsFileCfitsioOpsInstance() = fitsFileCfitsioOps{ openFile,
+                                                       ffgidm,
+                                                       ffgisz,
+                                                       ffclos,
+                                                       ffgsv,
+                                                       ffghsp,
+                                                       ffgkyn,
+                                                       ffinit,
+                                                       ffcrim,
+                                                       ffppx,
+                                                       allocateLongs };
+}
+
+} // namespace fitsFileDetail
+
+template class fitsFile<short, verbose::d>;
+
+template class fitsFile<unsigned short, verbose::d>;
+
+template class fitsFile<int, verbose::d>;
+
+template class fitsFile<unsigned int, verbose::d>;
+
+template class fitsFile<float, verbose::d>;
+
+template class fitsFile<double, verbose::d>;
 
 } // namespace fits
 } // namespace mx

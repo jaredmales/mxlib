@@ -31,9 +31,9 @@ class fitsFile_test : public fitsFile<dataT>
     typedef fitsFile<dataT>::pixarrT pixarrTT;
 
     // Interface to protected calcPixarrs
-    void calcPixarrs( pixarrTT &pixarrs )
+    mx::error_t calcPixarrs( pixarrTT &pixarrs )
     {
-        fitsFile<dataT>::calcPixarrs( pixarrs );
+        return fitsFile<dataT>::calcPixarrs( pixarrs );
     }
 
     mx::error_t allocatePixarrs( pixarrTT &pixarrs, int naxis )
@@ -44,6 +44,11 @@ class fitsFile_test : public fitsFile<dataT>
     void noComment( bool noComment )
     {
         fitsFile<dataT>::m_noComment = noComment;
+    }
+
+    bool isOpen() const
+    {
+        return fitsFile<dataT>::m_isOpen;
     }
 
     // Interface to set protected axis dimensions
@@ -150,6 +155,159 @@ struct throwingImage
         throwResizeException<exceptionKind>();
     }
 };
+
+class fitsFileOpsGuard
+{
+  public:
+    fitsFileOpsGuard() : m_saved( fitsFileDetail::fitsFileCfitsioOpsInstance() )
+    {
+    }
+
+    ~fitsFileOpsGuard()
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance() = m_saved;
+    }
+
+  private:
+    fitsFileDetail::fitsFileCfitsioOps m_saved;
+};
+
+int failOpen( fitsfile **, const char *, int, int *status )
+{
+    *status = FILE_NOT_OPENED;
+    return *status;
+}
+
+int failGetImageDim( fitsfile *, int *, int *status )
+{
+    *status = BAD_NAXIS;
+    return *status;
+}
+
+int failGetImageSize( fitsfile *, int, long *, int *status )
+{
+    *status = BAD_DIMEN;
+    return *status;
+}
+
+int failClose( fitsfile *, int *status )
+{
+    *status = FILE_NOT_CLOSED;
+    return *status;
+}
+
+int failGetHeaderSpace( fitsfile *, int *, int *, int *status )
+{
+    *status = READ_ERROR;
+    return *status;
+}
+
+int getHeaderSpaceCall = 0;
+int failGetHeaderSpaceOnCall = 1;
+
+int controlledGetHeaderSpace( fitsfile *file, int *keysExist, int *moreKeys, int *status )
+{
+    ++getHeaderSpaceCall;
+    if( getHeaderSpaceCall == failGetHeaderSpaceOnCall )
+    {
+        *status = READ_ERROR;
+        return *status;
+    }
+
+    return ffghsp( file, keysExist, moreKeys, status );
+}
+
+int failReadKey( fitsfile *, int, char *, char *, char *, int *status )
+{
+    *status = READ_ERROR;
+    return *status;
+}
+
+int failCreateFile( fitsfile **, const char *, int *status )
+{
+    *status = FILE_NOT_CREATED;
+    return *status;
+}
+
+int failCreateImage( fitsfile *file, int bitpix, int naxis, long *naxes, int *status )
+{
+    ffcrim( file, bitpix, naxis, naxes, status );
+    if( *status != 0 )
+    {
+        return *status;
+    }
+    *status = BAD_NAXIS;
+    return *status;
+}
+
+int failWritePixels( fitsfile *, int, long *, LONGLONG, void *, int *status )
+{
+    *status = WRITE_ERROR;
+    return *status;
+}
+
+int readSubsetCall = 0;
+int failReadSubsetOnCall = 1;
+int readSubsetStatus = READ_ERROR;
+
+int controlledReadSubset( fitsfile *file,
+                          int dataType,
+                          long *firstPixel,
+                          long *lastPixel,
+                          long *increment,
+                          void *nullValue,
+                          void *data,
+                          int *anyNull,
+                          int *status )
+{
+    ++readSubsetCall;
+    if( readSubsetCall == failReadSubsetOnCall )
+    {
+        *status = readSubsetStatus;
+        return *status;
+    }
+
+    return ffgsv( file, dataType, firstPixel, lastPixel, increment, nullValue, data, anyNull, status );
+}
+
+enum class allocationFailure
+{
+    none,
+    badAllocation,
+    standardException,
+    unknownException,
+    nullPointer
+};
+
+allocationFailure allocationFailureKind = allocationFailure::none;
+int allocationCall = 0;
+int failAllocationOnCall = 1;
+
+long *controlledAllocateLongs( size_t count )
+{
+    ++allocationCall;
+    if( allocationCall == failAllocationOnCall )
+    {
+        if( allocationFailureKind == allocationFailure::badAllocation )
+        {
+            throw std::bad_alloc();
+        }
+        if( allocationFailureKind == allocationFailure::standardException )
+        {
+            throw std::runtime_error( "coordinate allocation failure" );
+        }
+        if( allocationFailureKind == allocationFailure::unknownException )
+        {
+            throw 1;
+        }
+        if( allocationFailureKind == allocationFailure::nullPointer )
+        {
+            return nullptr;
+        }
+    }
+
+    return new long[count];
+}
 /** \endcond */
 
 /// Calculating subimage sizes
@@ -454,6 +612,331 @@ TEST_CASE( "Propagating FITS destination resize exceptions", "[ioutils::fits::fi
     REQUIRE_THROWS_AS( unknownExceptionImageResize.resize( unknownExceptionImage, 1, 1, 1 ), int );
 }
 
+/** \brief Verifies fitsFile reports CFITSIO open, dimension, size, and close failures and remains recoverable.
+ *
+ * Exercises mx::fits::fitsFile::open and mx::fits::fitsFile::close with deterministic CFITSIO failures.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Propagating FITS file lifecycle failures", "[ioutils::fits::fitsFile]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-lifecycle-failure-test" );
+    const std::filesystem::path imagePath = testDirectory.path() / "image.fits";
+    mx::improc::eigenImage<float> image( 2, 2 );
+    image.setOnes();
+    fitsFile<float> writer;
+    REQUIRE( writer.write( imagePath.string(), image ) == mx::error_t::noerror );
+
+    SECTION( "open failure" )
+    {
+        fitsFileOpsGuard operationsGuard;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().openFile = failOpen;
+        fitsFile_test<float> reader;
+        REQUIRE( reader.open( imagePath.string() ) == mx::error_t::fits_file_not_opened );
+        REQUIRE_FALSE( reader.isOpen() );
+    }
+
+    SECTION( "image-axis count failure" )
+    {
+        fitsFileOpsGuard operationsGuard;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getImageDim = failGetImageDim;
+        fitsFile_test<float> reader;
+        REQUIRE( reader.open( imagePath.string() ) == mx::error_t::fits_bad_naxis );
+        REQUIRE_FALSE( reader.isOpen() );
+    }
+
+    SECTION( "image-axis size failure" )
+    {
+        fitsFileOpsGuard operationsGuard;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getImageSize = failGetImageSize;
+        fitsFile_test<float> reader;
+        REQUIRE( reader.open( imagePath.string() ) == mx::error_t::fits_bad_dimen );
+        REQUIRE_FALSE( reader.isOpen() );
+    }
+
+    SECTION( "close failure" )
+    {
+        fitsFile_test<float> reader;
+        REQUIRE( reader.open( imagePath.string() ) == mx::error_t::noerror );
+        {
+            fitsFileOpsGuard operationsGuard;
+            fitsFileDetail::fitsFileCfitsioOpsInstance().closeFile = failClose;
+            REQUIRE( reader.close() == mx::error_t::fits_file_not_closed );
+            REQUIRE( reader.isOpen() );
+        }
+        REQUIRE( reader.close() == mx::error_t::noerror );
+        REQUIRE_FALSE( reader.isOpen() );
+    }
+
+    fitsFileDetail::resetFitsFileCfitsioOps();
+}
+
+/** \brief Verifies fitsFile preserves allocation failures and rejects null pixel-coordinate arrays.
+ *
+ * Exercises the protected pixel-coordinate allocation used by mx::fits::fitsFile::read.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Propagating FITS pixel-coordinate allocation failures", "[ioutils::fits::fitsFile]" )
+{
+    fitsFileOpsGuard operationsGuard;
+    fitsFileDetail::fitsFileCfitsioOpsInstance().allocateLongs = controlledAllocateLongs;
+    allocationCall = 0;
+    failAllocationOnCall = 1;
+
+    fitsFile_test<float> fixture;
+    fitsFile_test<float>::pixarrTT pixelArrays;
+
+    SECTION( "bad allocation" )
+    {
+        allocationFailureKind = allocationFailure::badAllocation;
+        REQUIRE_THROWS_AS( fixture.allocatePixarrs( pixelArrays, 2 ), std::bad_alloc );
+    }
+
+    SECTION( "standard exception" )
+    {
+        allocationFailureKind = allocationFailure::standardException;
+        REQUIRE_THROWS_AS( fixture.allocatePixarrs( pixelArrays, 2 ), std::runtime_error );
+    }
+
+    SECTION( "unknown exception" )
+    {
+        allocationFailureKind = allocationFailure::unknownException;
+        REQUIRE_THROWS_AS( fixture.allocatePixarrs( pixelArrays, 2 ), int );
+    }
+
+    SECTION( "null first-pixel array" )
+    {
+        allocationFailureKind = allocationFailure::nullPointer;
+        failAllocationOnCall = 1;
+        REQUIRE( fixture.allocatePixarrs( pixelArrays, 2 ) == mx::error_t::allocerr );
+    }
+
+    SECTION( "null last-pixel array" )
+    {
+        allocationFailureKind = allocationFailure::nullPointer;
+        failAllocationOnCall = 2;
+        REQUIRE( fixture.allocatePixarrs( pixelArrays, 2 ) == mx::error_t::allocerr );
+    }
+
+    SECTION( "null increment array" )
+    {
+        allocationFailureKind = allocationFailure::nullPointer;
+        failAllocationOnCall = 3;
+        REQUIRE( fixture.allocatePixarrs( pixelArrays, 2 ) == mx::error_t::allocerr );
+    }
+
+    SECTION( "allocation error propagates through read-coordinate calculation" )
+    {
+        allocationFailureKind = allocationFailure::nullPointer;
+        failAllocationOnCall = 1;
+        fixture.setnax( 2, 2, 2, 0 );
+        REQUIRE( fixture.calcPixarrs( pixelArrays ) == mx::error_t::allocerr );
+    }
+}
+
+/** \brief Verifies raw, Eigen, cube, and header reads propagate deterministic CFITSIO failures.
+ *
+ * Exercises mx::fits::fitsFile::read and mx::fits::fitsFile::readHeader error paths.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Propagating FITS read failures", "[ioutils::fits::fitsFile]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-read-failure-test" );
+    const std::filesystem::path imagePath = testDirectory.path() / "image.fits";
+    mx::improc::eigenImage<float> image( 2, 2 );
+    image << 1.0F, 2.0F, 3.0F, 4.0F;
+    fitsHeader<> writeHeader;
+    REQUIRE( writeHeader.append( "TESTKEY", 42, "test value" ) == mx::error_t::noerror );
+    fitsFile<float> writer;
+    REQUIRE( writer.write( imagePath.string(), image, writeHeader ) == mx::error_t::noerror );
+
+    fitsFileOpsGuard operationsGuard;
+
+    SECTION( "raw and Eigen subset failures" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset = controlledReadSubset;
+        readSubsetCall = 0;
+        failReadSubsetOnCall = 1;
+        readSubsetStatus = READ_ERROR;
+
+        std::vector<float> raw( 4 );
+        fitsFile<float> rawReader( imagePath.string(), false );
+        REQUIRE( rawReader.read( raw.data() ) == mx::error_t::fits_read_error );
+
+        readSubsetCall = 0;
+        mx::improc::eigenImage<float> readImage;
+        fitsFile<float> eigenReader;
+        REQUIRE( eigenReader.read( readImage, imagePath.string() ) == mx::error_t::fits_read_error );
+
+        readSubsetCall = 0;
+        fitsHeader<> readHeader;
+        REQUIRE( eigenReader.read( readImage, readHeader, imagePath.string() ) == mx::error_t::fits_read_error );
+    }
+
+    SECTION( "end-of-file status is accepted" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset = controlledReadSubset;
+        readSubsetCall = 0;
+        failReadSubsetOnCall = 1;
+        readSubsetStatus = END_OF_FILE;
+        std::vector<float> raw( 4 );
+        fitsFile<float> reader;
+        REQUIRE( reader.read( raw.data(), imagePath.string() ) == mx::error_t::noerror );
+    }
+
+    SECTION( "first and later cube plane failures" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset = controlledReadSubset;
+        const std::vector<std::string> files{ imagePath.string(), imagePath.string() };
+        mx::improc::eigenCube<float> cube;
+        fitsFile<float> reader;
+
+        readSubsetCall = 0;
+        failReadSubsetOnCall = 1;
+        readSubsetStatus = READ_ERROR;
+        REQUIRE( reader.read( cube, files ) == mx::error_t::fits_read_error );
+
+        readSubsetCall = 0;
+        failReadSubsetOnCall = 2;
+        REQUIRE( reader.read( cube, files ) == mx::error_t::fits_read_error );
+    }
+
+    SECTION( "cube coordinate allocation failure" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().allocateLongs = controlledAllocateLongs;
+        allocationCall = 0;
+        failAllocationOnCall = 1;
+        allocationFailureKind = allocationFailure::nullPointer;
+        mx::improc::eigenCube<float> cube;
+        fitsFile<float> reader;
+        REQUIRE( reader.read( cube, std::vector<std::string>{ imagePath.string() } ) == mx::error_t::allocerr );
+    }
+
+    SECTION( "first and later cube header failures" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getHeaderSpace = controlledGetHeaderSpace;
+        const std::vector<std::string> files{ imagePath.string(), imagePath.string() };
+        std::vector<fitsHeader<>> headers( files.size() );
+        mx::improc::eigenCube<float> cube;
+        fitsFile<float> reader;
+
+        getHeaderSpaceCall = 0;
+        failGetHeaderSpaceOnCall = 1;
+        REQUIRE( reader.read( cube, headers, files ) == mx::error_t::fits_read_error );
+
+        getHeaderSpaceCall = 0;
+        failGetHeaderSpaceOnCall = 2;
+        REQUIRE( reader.read( cube, headers, files ) == mx::error_t::fits_read_error );
+    }
+
+    SECTION( "header-space and header-card failures" )
+    {
+        fitsHeader<> readHeader;
+        fitsFile<float> reader;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getHeaderSpace = failGetHeaderSpace;
+        REQUIRE( reader.readHeader( readHeader, imagePath.string() ) == mx::error_t::fits_read_error );
+
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getHeaderSpace = ffghsp;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readKey = failReadKey;
+        REQUIRE( reader.readHeader( readHeader, imagePath.string() ) == mx::error_t::fits_read_error );
+    }
+
+    SECTION( "header failure after a successful Eigen read" )
+    {
+        fitsFileDetail::fitsFileCfitsioOpsInstance().getHeaderSpace = failGetHeaderSpace;
+        mx::improc::eigenImage<float> readImage;
+        fitsHeader<> readHeader;
+        fitsFile<float> reader;
+        REQUIRE( reader.read( readImage, readHeader, imagePath.string() ) == mx::error_t::fits_read_error );
+    }
+
+    SECTION( "header open failure" )
+    {
+        fitsHeader<> readHeader;
+        fitsFile<float> reader;
+        REQUIRE( reader.fileName( imagePath.string(), false ) == mx::error_t::noerror );
+        fitsFileDetail::fitsFileCfitsioOpsInstance().openFile = failOpen;
+        REQUIRE( reader.readHeader( readHeader ) == mx::error_t::fits_file_not_opened );
+    }
+}
+
+/** \brief Verifies FITS writes propagate creation, image, pixel, header, and close failures.
+ *
+ * Exercises mx::fits::fitsFile::write error paths.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Propagating FITS write failures", "[ioutils::fits::fitsFile]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-write-failure-test" );
+    mx::improc::eigenImage<float> image( 2, 2 );
+    image.setOnes();
+
+    SECTION( "file creation failure" )
+    {
+        fitsFileOpsGuard operationsGuard;
+        fitsFileDetail::fitsFileCfitsioOpsInstance().createFile = failCreateFile;
+        fitsFile_test<float> writer;
+        REQUIRE( writer.write( ( testDirectory.path() / "create.fits" ).string(), image ) ==
+                 mx::error_t::fits_file_not_created );
+        REQUIRE_FALSE( writer.isOpen() );
+    }
+
+    SECTION( "image creation failure" )
+    {
+        fitsFile_test<float> writer;
+        {
+            fitsFileOpsGuard operationsGuard;
+            fitsFileDetail::fitsFileCfitsioOpsInstance().createImage = failCreateImage;
+            REQUIRE( writer.write( ( testDirectory.path() / "image.fits" ).string(), image ) ==
+                     mx::error_t::fits_bad_naxis );
+            REQUIRE( writer.isOpen() );
+        }
+        REQUIRE( writer.close() == mx::error_t::noerror );
+    }
+
+    SECTION( "pixel write failure" )
+    {
+        fitsFile_test<float> writer;
+        {
+            fitsFileOpsGuard operationsGuard;
+            fitsFileDetail::fitsFileCfitsioOpsInstance().writePixels = failWritePixels;
+            REQUIRE( writer.write( ( testDirectory.path() / "pixels.fits" ).string(), image ) ==
+                     mx::error_t::fits_write_error );
+            REQUIRE( writer.isOpen() );
+        }
+        REQUIRE( writer.close() == mx::error_t::noerror );
+    }
+
+    SECTION( "close failure" )
+    {
+        fitsFile_test<float> writer;
+        {
+            fitsFileOpsGuard operationsGuard;
+            fitsFileDetail::fitsFileCfitsioOpsInstance().closeFile = failClose;
+            REQUIRE( writer.write( ( testDirectory.path() / "close.fits" ).string(), image ) ==
+                     mx::error_t::fits_file_not_closed );
+            REQUIRE( writer.isOpen() );
+        }
+        REQUIRE( writer.close() == mx::error_t::noerror );
+    }
+
+    SECTION( "header-card failure" )
+    {
+        fitsHeader<> header;
+        REQUIRE( header.append( "UNTYPED" ) == mx::error_t::noerror );
+        fitsFile_test<float> writer;
+        REQUIRE( writer.write( ( testDirectory.path() / "header.fits" ).string(), image, header ) !=
+                 mx::error_t::noerror );
+        if( writer.isOpen() )
+        {
+            REQUIRE( writer.close() == mx::error_t::noerror );
+        }
+    }
+}
+
 /// Basic writing and reading
 /**
  * \ingroup fitsFile_unit_tests
@@ -616,6 +1099,16 @@ TEST_CASE( "Reading raw FITS arrays and configured subsets", "[ioutils::fits::fi
     const std::filesystem::path vectorPath = testDirectory.path() / "vector.fits";
     std::vector<float> vectorData{ 1.0F, 2.0F, 3.0F, 4.0F };
     REQUIRE( fitsFile.write( vectorPath.string(), vectorData.data(), 4, 0, 0 ) == mx::error_t::noerror );
+
+    mx::error_t vectorSizeError = mx::error_t::error;
+    REQUIRE( fitsFile.open( vectorPath.string() ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.getSize( vectorSizeError ) == 4 );
+    REQUIRE( vectorSizeError == mx::error_t::noerror );
+    fitsFile.setReadSize( 1, 0, 2, 0 );
+    REQUIRE( fitsFile.getSize( vectorSizeError ) == 2 );
+    REQUIRE( fitsFile.getSize( 0, vectorSizeError ) == 2 );
+    fitsFile.setReadSize();
+    REQUIRE( fitsFile.close() == mx::error_t::noerror );
 
     mx::improc::eigenImage<float> vectorImage;
     REQUIRE( fitsFile.read( vectorImage, vectorPath.string() ) == mx::error_t::noerror );

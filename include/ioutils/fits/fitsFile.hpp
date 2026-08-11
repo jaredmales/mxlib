@@ -27,6 +27,8 @@
 #ifndef ioutils_fits_fitsFile_hpp
 #define ioutils_fits_fitsFile_hpp
 
+#include <memory>
+
 #include "../../mxlib.hpp"
 
 #include "../../improc/eigenImage.hpp"
@@ -38,6 +40,35 @@ namespace mx
 {
 namespace fits
 {
+
+namespace fitsFileDetail
+{
+
+/** \cond */
+/// Resettable CFITSIO operation table used by fitsFile and its deterministic failure tests.
+struct fitsFileCfitsioOps
+{
+    int ( *openFile )( fitsfile **, const char *, int, int * ); ///< Open an existing FITS file.
+    decltype( &ffgidm ) getImageDim;                            ///< Read the number of image axes.
+    decltype( &ffgisz ) getImageSize;                           ///< Read image-axis sizes.
+    decltype( &ffclos ) closeFile;                              ///< Close a FITS file.
+    decltype( &ffgsv ) readSubset;                              ///< Read a FITS pixel subset.
+    decltype( &ffghsp ) getHeaderSpace;                         ///< Read the number of FITS header cards.
+    decltype( &ffgkyn ) readKey;                                ///< Read one FITS header card.
+    decltype( &ffinit ) createFile;                             ///< Create a FITS file.
+    decltype( &ffcrim ) createImage;                            ///< Create the primary FITS image.
+    decltype( &ffppx ) writePixels;                             ///< Write FITS pixels.
+    long *( *allocateLongs )( size_t );                         ///< Allocate a pixel-coordinate array.
+};
+
+/// Access the process-wide CFITSIO operation table.
+fitsFileCfitsioOps &fitsFileCfitsioOpsInstance();
+
+/// Restore every CFITSIO operation to its production implementation.
+void resetFitsFileCfitsioOps();
+/** \endcond */
+
+} // namespace fitsFileDetail
 
 /// Class to manage interactions with a FITS file
 /** This class wraps the functionality of cfitsio.
@@ -68,7 +99,7 @@ class fitsFile
     int m_naxis{ 0 };
 
     /// The size of each dimension
-    long m_naxes [3];
+    long m_naxes[3];
 
     /// Flag indicating whether the file is open or not
     bool m_isOpen{ false };
@@ -243,9 +274,9 @@ class fitsFile
 
             try
             {
-                fpix = new long[naxis];
-                lpix = new long[naxis];
-                inc = new long[naxis];
+                fpix = fitsFileDetail::fitsFileCfitsioOpsInstance().allocateLongs( naxis );
+                lpix = fitsFileDetail::fitsFileCfitsioOpsInstance().allocateLongs( naxis );
+                inc = fitsFileDetail::fitsFileCfitsioOpsInstance().allocateLongs( naxis );
             }
             catch( const std::bad_alloc &e )
             {
@@ -718,7 +749,6 @@ fitsFile<dataT, verboseT>::~fitsFile()
     {
         internal::mxlib_error_report<verboseT>( close() );
     }
-
 }
 
 template <typename dataT, class verboseT>
@@ -754,7 +784,7 @@ int fitsFile<dataT, verboseT>::naxis()
 template <typename dataT, class verboseT>
 long fitsFile<dataT, verboseT>::naxes( int dim )
 {
-    if( dim >= m_naxis || dim > 2)
+    if( dim >= m_naxis || dim > 2 )
     {
         return -1;
     }
@@ -777,7 +807,7 @@ error_t fitsFile<dataT, verboseT>::open()
 
     int fstatus = 0;
 
-    fits_open_file( &m_fptr, m_fileName.c_str(), READONLY, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().openFile( &m_fptr, m_fileName.c_str(), READONLY, &fstatus );
 
     if( fstatus )
     {
@@ -785,23 +815,23 @@ error_t fitsFile<dataT, verboseT>::open()
     }
 
     fstatus = 0;
-    fits_get_img_dim( m_fptr, &m_naxis, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().getImageDim( m_fptr, &m_naxis, &fstatus );
     if( fstatus )
     {
+        int closeStatus = 0;
+        ffclos( m_fptr, &closeStatus );
+        m_fptr = nullptr;
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
                                                        "Getting number of axes in file " + m_fileName );
     }
 
-    //Currently can't be true since it's declared [3].
-    if( m_naxes == nullptr )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
-    }
-
     fstatus = 0;
-    fits_get_img_size( m_fptr, m_naxis, m_naxes, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().getImageSize( m_fptr, m_naxis, m_naxes, &fstatus );
     if( fstatus )
     {
+        int closeStatus = 0;
+        ffclos( m_fptr, &closeStatus );
+        m_fptr = nullptr;
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
                                                        "Getting dimensions in file " + m_fileName );
     }
@@ -826,16 +856,15 @@ error_t fitsFile<dataT, verboseT>::close()
     }
 
     int fstatus = 0;
-    fits_close_file( m_fptr, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().closeFile( m_fptr, &fstatus );
 
     if( fstatus )
     {
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Closing file " + m_fileName );
     }
 
-    m_isOpen = 0;
-    fstatus = 0;
-
+    m_fptr = nullptr;
+    m_isOpen = false;
 
     return error_t::noerror;
 }
@@ -865,7 +894,15 @@ long fitsFile<dataT, verboseT>::getSize( error_t &errc )
 
     errc = error_t::noerror;
 
-    if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
+    if( m_naxis == 1 )
+    {
+        if( m_x0 > -1 && m_xpix > -1 )
+        {
+            return m_xpix;
+        }
+        return m_naxes[0];
+    }
+    else if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
         return m_xpix * m_ypix;
     }
@@ -897,7 +934,11 @@ long fitsFile<dataT, verboseT>::getSize( size_t axis, error_t &errc )
 
     errc = error_t::noerror;
 
-    if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
+    if( m_naxis == 1 && m_x0 > -1 && m_xpix > -1 )
+    {
+        return m_xpix;
+    }
+    else if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
         if( axis == 0 )
         {
@@ -915,14 +956,26 @@ template <typename dataT, class verboseT>
 error_t fitsFile<dataT, verboseT>::calcPixarrs( pixarrT &pixarr )
 {
     error_t errc = pixarr.allocate( m_naxis );
-
-    //This currently can't be trude since it is declared as [3]
-    if( m_naxes == nullptr )
+    if( errc != error_t::noerror )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::paramnotset, "m_naxes" );
+        return internal::mxlib_error_report<verboseT>( errc );
     }
 
-    if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
+    if( m_naxis == 1 )
+    {
+        if( m_x0 > -1 && m_xpix > -1 )
+        {
+            pixarr.fpix[0] = m_x0 + 1;
+            pixarr.lpix[0] = pixarr.fpix[0] + m_xpix - 1;
+        }
+        else
+        {
+            pixarr.fpix[0] = 1;
+            pixarr.lpix[0] = m_naxes[0];
+        }
+        pixarr.inc[0] = 1;
+    }
+    else if( m_x0 > -1 && m_y0 > -1 && m_xpix > -1 && m_ypix > -1 && m_naxis == 2 )
     {
         pixarr.fpix[0] = m_x0 + 1;
         pixarr.lpix[0] = pixarr.fpix[0] + m_xpix - 1;
@@ -1004,15 +1057,15 @@ error_t fitsFile<dataT, verboseT>::read( dataT *data )
 
     int fstatus = 0;
 
-    fits_read_subset( m_fptr,
-                      fitsType<dataT>(),
-                      pixarrs.fpix,
-                      pixarrs.lpix,
-                      pixarrs.inc,
-                      (void *)&m_nulval,
-                      (void *)data,
-                      &m_anynul,
-                      &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset( m_fptr,
+                                                             fitsType<dataT>(),
+                                                             pixarrs.fpix,
+                                                             pixarrs.lpix,
+                                                             pixarrs.inc,
+                                                             (void *)&m_nulval,
+                                                             (void *)data,
+                                                             &m_anynul,
+                                                             &fstatus );
 
     if( fstatus && fstatus != END_OF_FILE )
     {
@@ -1240,15 +1293,15 @@ error_t fitsFile<dataT, verboseT>::read( arrT &im )
         mxlib_error_check( arrresz.resize( im, pixarrs.lpix[0] - pixarrs.fpix[0] + 1, 1, 1 ) );
     }
 
-    fits_read_subset( m_fptr,
-                      fitsType<typename arrT::Scalar>(),
-                      pixarrs.fpix,
-                      pixarrs.lpix,
-                      pixarrs.inc,
-                      (void *)&m_nulval,
-                      (void *)im.data(),
-                      &m_anynul,
-                      &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset( m_fptr,
+                                                             fitsType<typename arrT::Scalar>(),
+                                                             pixarrs.fpix,
+                                                             pixarrs.lpix,
+                                                             pixarrs.inc,
+                                                             (void *)&m_nulval,
+                                                             (void *)im.data(),
+                                                             &m_anynul,
+                                                             &fstatus );
 
     if( fstatus && fstatus != END_OF_FILE )
     {
@@ -1354,7 +1407,7 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
     pixarrT pixarrs;
     errc = calcPixarrs( pixarrs );
 
-    if(!!errc)
+    if( !!errc )
     {
         return internal::mxlib_error_report<verboseT>( errc );
     }
@@ -1362,15 +1415,15 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
     cube.resize( pixarrs.lpix[0] - pixarrs.fpix[0] + 1, pixarrs.lpix[1] - pixarrs.fpix[1] + 1, flist.size() );
 
     // Now read first image.
-    fits_read_subset( m_fptr,
-                      fitsType<typename cubeT::Scalar>(),
-                      pixarrs.fpix,
-                      pixarrs.lpix,
-                      pixarrs.inc,
-                      (void *)&m_nulval,
-                      (void *)cube.image( 0 ).data(),
-                      &m_anynul,
-                      &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset( m_fptr,
+                                                             fitsType<typename cubeT::Scalar>(),
+                                                             pixarrs.fpix,
+                                                             pixarrs.lpix,
+                                                             pixarrs.inc,
+                                                             (void *)&m_nulval,
+                                                             (void *)cube.image( 0 ).data(),
+                                                             &m_anynul,
+                                                             &fstatus );
 
     if( fstatus && fstatus != END_OF_FILE )
     {
@@ -1397,15 +1450,15 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
         }
 
         // Now read image.
-        fits_read_subset( m_fptr,
-                          fitsType<typename cubeT::Scalar>(),
-                          pixarrs.fpix,
-                          pixarrs.lpix,
-                          pixarrs.inc,
-                          (void *)&m_nulval,
-                          (void *)cube.image( i ).data(),
-                          &m_anynul,
-                          &fstatus );
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readSubset( m_fptr,
+                                                                 fitsType<typename cubeT::Scalar>(),
+                                                                 pixarrs.fpix,
+                                                                 pixarrs.lpix,
+                                                                 pixarrs.inc,
+                                                                 (void *)&m_nulval,
+                                                                 (void *)cube.image( i ).data(),
+                                                                 &m_anynul,
+                                                                 &fstatus );
 
         if( fstatus && fstatus != END_OF_FILE )
         {
@@ -1442,7 +1495,8 @@ error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head )
 
     char keyword[FLEN_KEYWORD];
     char value[FLEN_VALUE];
-    char *comment;
+    std::unique_ptr<char[]> commentStorage;
+    char *comment = nullptr;
 
     // The keys to look for if head is already populated
     typename std::list<headerIteratorT> head_keys;
@@ -1465,11 +1519,12 @@ error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head )
     // If m_noComment is set, then we don't read in the comment
     if( m_noComment )
     {
-        comment = 0;
+        comment = nullptr;
     }
     else
     {
-        comment = new char[FLEN_COMMENT];
+        commentStorage = std::make_unique<char[]>( FLEN_COMMENT );
+        comment = commentStorage.get();
     }
 
     int keysexist;
@@ -1481,30 +1536,20 @@ error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head )
     }
 
     // This gets the number of header keys to read
-    fits_get_hdrspace( m_fptr, &keysexist, &morekeys, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().getHeaderSpace( m_fptr, &keysexist, &morekeys, &fstatus );
 
     if( fstatus )
     {
-        if( comment )
-        {
-            delete[] comment;
-        }
-
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
                                                        "Reading header from " + m_fileName );
     }
 
     for( int i = 0; i < keysexist; i++ )
     {
-        fits_read_keyn( m_fptr, i + 1, keyword, value, comment, &fstatus );
+        fitsFileDetail::fitsFileCfitsioOpsInstance().readKey( m_fptr, i + 1, keyword, value, comment, &fstatus );
 
         if( fstatus )
         {
-            if( comment )
-            {
-                delete[] comment;
-            }
-
             return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
                                                            "Reading header from " + m_fileName );
         }
@@ -1553,11 +1598,6 @@ error_t fitsFile<dataT, verboseT>::readHeader( fitsHeader<verboseT> &head )
         }
     }
 
-    if( comment )
-    {
-        delete[] comment;
-    }
-
     return error_t::noerror;
 }
 
@@ -1574,14 +1614,15 @@ template <typename dataT, class verboseT>
 error_t fitsFile<dataT, verboseT>::readHeader( std::vector<fitsHeader<verboseT>> &heads,
                                                const std::vector<std::string> &flist )
 {
-    if(heads.size() != 0 && heads.size() != flist.size())
+    if( heads.size() != 0 && heads.size() != flist.size() )
     {
-        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "head vector is not empty and not same size as file list");
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                       "head vector is not empty and not same size as file list" );
     }
 
-    if(heads.size() == 0)
+    if( heads.size() == 0 )
     {
-        heads.resize(flist.size());
+        heads.resize( flist.size() );
     }
 
     error_t errc;
@@ -1618,12 +1659,6 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
         }
     }
 
-    //currently can't be true since declared [3]
-    if( m_naxes == nullptr )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::allocerr, "m_naxes is nullptr" );
-    }
-
     m_naxes[0] = d1;
     if( m_naxis > 1 )
     {
@@ -1636,7 +1671,7 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
 
     std::string forceFileName = "!" + m_fileName;
 
-    fits_create_file( &m_fptr, forceFileName.c_str(), &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().createFile( &m_fptr, forceFileName.c_str(), &fstatus );
     if( fstatus )
     {
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Creating " + m_fileName );
@@ -1644,7 +1679,7 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
     m_isOpen = true;
 
     fstatus = 0;
-    fits_create_img( m_fptr, fitsBITPIX<dataT>(), m_naxis, m_naxes, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance().createImage( m_fptr, fitsBITPIX<dataT>(), m_naxis, m_naxes, &fstatus );
     if( fstatus )
     {
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
@@ -1664,7 +1699,8 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
     }
 
     fstatus = 0;
-    fits_write_pix( m_fptr, fitsType<dataT>(), fpixel, nelements, (void *)im, &fstatus );
+    fitsFileDetail::fitsFileCfitsioOpsInstance()
+        .writePixels( m_fptr, fitsType<dataT>(), fpixel, nelements, (void *)im, &fstatus );
     if( fstatus )
     {
         return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ), "Writing data " + m_fileName );
@@ -1679,8 +1715,7 @@ error_t fitsFile<dataT, verboseT>::write( const dataT *im, int d1, int d2, int d
             error_t errc = it->write( m_fptr );
             if( errc != error_t::noerror )
             {
-                return internal::mxlib_error_report<verboseT>( fits_status2error_t( fstatus ),
-                                                               "Writing keyword " + m_fileName );
+                return internal::mxlib_error_report<verboseT>( errc, "Writing keyword " + m_fileName );
             }
         }
     }
