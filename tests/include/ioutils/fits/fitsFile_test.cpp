@@ -35,6 +35,11 @@ class fitsFile_test : public fitsFile<dataT>
         fitsFile<dataT>::calcPixarrs( pixarrs );
     }
 
+    mx::error_t allocatePixarrs( pixarrTT &pixarrs, int naxis )
+    {
+        return pixarrs.allocate( naxis );
+    }
+
     // Interface to set protected axis dimensions
     void setnax( int naxis, long naxes0, long naxes1, long naxes2 )
     {
@@ -269,6 +274,77 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
     }
 }
 
+/** \brief Verifies fitsFile construction, state transitions, dimensions, and read-window resets.
+ *
+ * Exercises mx::fits::fitsFile constructors, fileName, open, close, getDimensions, getSize, setReadSize,
+ * setCubeReadSize, and repeated protected pixel-array allocation through the test fixture.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Managing FITS file state and dimensions", "[ioutils::fits::fitsFile]" )
+{
+    temporaryDirectory testDirectory( "mxlib-fitsFile-state-test" );
+    const std::filesystem::path imagePath = testDirectory.path() / "image.fits";
+
+    mx::improc::eigenImage<float> image( 2, 3 );
+    image << 1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F;
+    fitsFile<float> writer;
+    REQUIRE( writer.write( imagePath.string(), image ) == mx::error_t::noerror );
+
+    mx::error_t error = mx::error_t::error;
+    fitsFile<float> defaultWithError( error );
+    REQUIRE( error == mx::error_t::noerror );
+    REQUIRE( defaultWithError.fileName().empty() );
+    REQUIRE( defaultWithError.open() == mx::error_t::invalidconfig );
+    REQUIRE( defaultWithError.close() == mx::error_t::noerror );
+    REQUIRE( defaultWithError.getDimensions( error ) == -1 );
+    REQUIRE( error == mx::error_t::invalidconfig );
+    REQUIRE( defaultWithError.getSize( error ) == -1 );
+    REQUIRE( error == mx::error_t::invalidconfig );
+    REQUIRE( defaultWithError.getSize( 0, error ) == -1 );
+    REQUIRE( error == mx::error_t::invalidconfig );
+
+    fitsFile<float> named( imagePath.string(), error );
+    REQUIRE( error == mx::error_t::noerror );
+    REQUIRE( named.fileName() == imagePath.string() );
+
+    fitsFile<float> namedClosed( imagePath.string(), false );
+    REQUIRE( namedClosed.fileName() == imagePath.string() );
+    REQUIRE( namedClosed.open() == mx::error_t::noerror );
+    REQUIRE( namedClosed.open() == mx::error_t::noerror );
+    REQUIRE( namedClosed.getDimensions( error ) == 2 );
+    REQUIRE( namedClosed.getSize( error ) == 6 );
+    REQUIRE( namedClosed.getSize( 0, error ) == 2 );
+    REQUIRE( namedClosed.getSize( 1, error ) == 3 );
+    REQUIRE( namedClosed.getSize( 2, error ) == -1 );
+    REQUIRE( error == mx::error_t::invalidarg );
+
+    namedClosed.setReadSize( 0, 0, 1, 2 );
+    REQUIRE( namedClosed.getSize( error ) == 2 );
+    REQUIRE( namedClosed.getSize( 0, error ) == 1 );
+    REQUIRE( namedClosed.getSize( 1, error ) == 2 );
+    namedClosed.setReadSize();
+    REQUIRE( namedClosed.getSize( error ) == 6 );
+    namedClosed.setCubeReadSize( 0, 1 );
+    namedClosed.setCubeReadSize();
+
+    REQUIRE( namedClosed.fileName( imagePath.string(), false ) == mx::error_t::noerror );
+    REQUIRE( namedClosed.close() == mx::error_t::noerror );
+
+    fitsFile<float> opened( imagePath.string(), true, error );
+    REQUIRE( error == mx::error_t::noerror );
+    REQUIRE( opened.getDimensions( error ) == 2 );
+
+    fitsFile<float> missing( ( testDirectory.path() / "missing.fits" ).string(), true );
+    REQUIRE( missing.naxis() == 0 );
+
+    fitsFile_test<float> fixture;
+    fitsFile_test<float>::pixarrTT pixelArrays;
+    REQUIRE( fixture.allocatePixarrs( pixelArrays, 0 ) == mx::error_t::paramnotset );
+    REQUIRE( fixture.allocatePixarrs( pixelArrays, 2 ) == mx::error_t::noerror );
+    REQUIRE( fixture.allocatePixarrs( pixelArrays, 3 ) == mx::error_t::noerror );
+}
+
 /// Basic writing and reading
 /**
  * \ingroup fitsFile_unit_tests
@@ -470,8 +546,8 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
     REQUIRE( foundHistory );
 
     const std::filesystem::path rawImagePath = testDirectory.path() / "raw-image-with-header.fits";
-    REQUIRE( fitsFile.write( rawImagePath.string(), image.data(), image.rows(), image.cols(), 1, header )
-             == mx::error_t::noerror );
+    REQUIRE( fitsFile.write( rawImagePath.string(), image.data(), image.rows(), image.cols(), 1, header ) ==
+             mx::error_t::noerror );
     REQUIRE( fitsFile.read( readImage, readHeader, rawImagePath.string() ) == mx::error_t::noerror );
     REQUIRE( readImage.isApprox( image ) );
     REQUIRE( readHeader["TESTKEY"].value<int>() == 17 );
