@@ -111,6 +111,45 @@ class temporaryDirectory
   private:
     std::filesystem::path m_path;
 };
+
+template <int exceptionKind>
+void throwResizeException()
+{
+    if constexpr( exceptionKind == 0 )
+    {
+        throw std::bad_alloc();
+    }
+    else if constexpr( exceptionKind == 1 )
+    {
+        throw std::runtime_error( "resize failure" );
+    }
+    else
+    {
+        throw 1;
+    }
+}
+
+template <int exceptionKind>
+struct throwingCube
+{
+    using Scalar = float;
+
+    void resize( int, int, int )
+    {
+        throwResizeException<exceptionKind>();
+    }
+};
+
+template <int exceptionKind>
+struct throwingImage
+{
+    using Scalar = float;
+
+    void resize( int, int )
+    {
+        throwResizeException<exceptionKind>();
+    }
+};
 /** \endcond */
 
 /// Calculating subimage sizes
@@ -381,6 +420,38 @@ TEST_CASE( "Managing FITS file state and dimensions", "[ioutils::fits::fitsFile]
     REQUIRE( fixture.allocatePixarrs( pixelArrays, 0 ) == mx::error_t::paramnotset );
     REQUIRE( fixture.allocatePixarrs( pixelArrays, 2 ) == mx::error_t::noerror );
     REQUIRE( fixture.allocatePixarrs( pixelArrays, 3 ) == mx::error_t::noerror );
+}
+
+/** \brief Verifies Eigen image and cube resize adapters preserve each exception category.
+ *
+ * Exercises mx::fits::eigenArrResize for bad allocation, standard, and non-standard exceptions from both supported
+ * resize signatures.
+ *
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Propagating FITS destination resize exceptions", "[ioutils::fits::fitsFile]" )
+{
+    throwingCube<0> badAllocationCube;
+    throwingCube<1> standardExceptionCube;
+    throwingCube<2> unknownExceptionCube;
+    eigenArrResize<throwingCube<0>, verbose::vv, true> badAllocationCubeResize;
+    eigenArrResize<throwingCube<1>, verbose::vv, true> standardExceptionCubeResize;
+    eigenArrResize<throwingCube<2>, verbose::vv, true> unknownExceptionCubeResize;
+
+    REQUIRE_THROWS_AS( badAllocationCubeResize.resize( badAllocationCube, 1, 1, 1 ), std::bad_alloc );
+    REQUIRE_THROWS_AS( standardExceptionCubeResize.resize( standardExceptionCube, 1, 1, 1 ), std::runtime_error );
+    REQUIRE_THROWS_AS( unknownExceptionCubeResize.resize( unknownExceptionCube, 1, 1, 1 ), int );
+
+    throwingImage<0> badAllocationImage;
+    throwingImage<1> standardExceptionImage;
+    throwingImage<2> unknownExceptionImage;
+    eigenArrResize<throwingImage<0>, verbose::vv> badAllocationImageResize;
+    eigenArrResize<throwingImage<1>, verbose::vv> standardExceptionImageResize;
+    eigenArrResize<throwingImage<2>, verbose::vv> unknownExceptionImageResize;
+
+    REQUIRE_THROWS_AS( badAllocationImageResize.resize( badAllocationImage, 1, 1, 1 ), std::bad_alloc );
+    REQUIRE_THROWS_AS( standardExceptionImageResize.resize( standardExceptionImage, 1, 1, 1 ), std::runtime_error );
+    REQUIRE_THROWS_AS( unknownExceptionImageResize.resize( unknownExceptionImage, 1, 1, 1 ), int );
 }
 
 /// Basic writing and reading
