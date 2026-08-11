@@ -3,8 +3,9 @@
  */
 #include "../../catch2/catch.hpp"
 
-#include <vector>
 #include <Eigen/Dense>
+#include <numbers>
+#include <vector>
 
 #define MX_NO_ERROR_REPORTS
 
@@ -79,4 +80,26 @@ TEST_CASE( "Verify direction and accuracy of various image shifts", "[improc::im
             REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
         }
     }
+}
+
+/** \brief Verifies cubic-convolution image rotation direction, flux, allocation, and edge handling.
+ *
+ * \ingroup imageTransforms_unit_tests
+ */
+TEST_CASE( "imageRotate rotates an impulse counterclockwise", "[improc::imageRotate]" )
+{
+    mx::improc::eigenImage<double> image = mx::improc::eigenImage<double>::Zero( 33, 33 );
+    image( 10, 16 ) = 1.0;
+
+    mx::improc::eigenImage<double> rotated;
+    mx::improc::imageRotate( rotated,
+                             image,
+                             0.5 * std::numbers::pi_v<double>,
+                             mx::improc::cubicConvolTransform<double>() );
+
+    REQUIRE( rotated.rows() == image.rows() );
+    REQUIRE( rotated.cols() == image.cols() );
+    REQUIRE( rotated( 16, 10 ) == Approx( 1.0 ) );
+    REQUIRE( rotated.sum() == Approx( 1.0 ).margin( 1e-12 ) );
+    REQUIRE( rotated( 0, 0 ) == 0.0 );
 }
