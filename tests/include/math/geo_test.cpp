@@ -47,6 +47,13 @@ TEST_CASE( "Verify compilation and calculations of math::angleMod", "[math::angl
 
             REQUIRE_THAT( q, Catch::Matchers::WithinRel( 2.0 ) );
         }
+
+        WHEN( "negative angle, mod needed" )
+        {
+            double q = mx::math::angleMod<mx::math::degreesT<double>>( -2.0 );
+
+            REQUIRE_THAT( q, Catch::Matchers::WithinRel( 358.0 ) );
+        }
     }
 
     GIVEN( "angles in radians" )

@@ -303,7 +303,7 @@ vecT annulusCoordsWorker( const eigenT1 &rIm,               /**< [in] a radius i
     }
 
     return idx;
-}
+} // LCOV_EXCL_LINE
 
 /// Get the array coordinates of an annular region in an image
 /**

@@ -160,3 +160,69 @@ TEST_CASE( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
         }
     }
 }
+
+/** \brief Verifies radius and degree-angle images for a centered rectangular grid.
+ *
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "radAngImage produces HCI radius and angle coordinates", "[improc::imageMasks::radAngImage]" )
+{
+    mx::improc::eigenImage<double> radius( 3, 5 );
+    mx::improc::eigenImage<double> angle;
+
+    mx::improc::radAngImage<mx::math::degreesT<double>>( radius, angle, 1.0, 2.0 );
+
+    REQUIRE( angle.rows() == 3 );
+    REQUIRE( angle.cols() == 5 );
+    REQUIRE( radius( 1, 2 ) == Approx( 0.0 ) );
+    REQUIRE( angle( 1, 2 ) == Approx( 0.0 ) );
+    REQUIRE( radius( 2, 2 ) == Approx( 1.0 ) );
+    REQUIRE( angle( 2, 2 ) == Approx( 0.0 ) );
+    REQUIRE( radius( 1, 3 ) == Approx( 1.0 ) );
+    REQUIRE( angle( 1, 3 ) == Approx( 90.0 ) );
+    REQUIRE( radius( 0, 2 ) == Approx( 1.0 ) );
+    REQUIRE( angle( 0, 2 ) == Approx( 180.0 ) );
+    REQUIRE( radius( 1, 1 ) == Approx( 1.0 ) );
+    REQUIRE( angle( 1, 1 ) == Approx( 270.0 ) );
+
+    mx::improc::radAngImage<mx::math::degreesT<double>>( radius, angle, 1.0, 2.0, 2.0 );
+    REQUIRE( radius( 2, 2 ) == Approx( 2.0 ) );
+}
+
+/** \brief Verifies HCI annulus indices for radial, angular, image-boundary, and mask constraints.
+ *
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "annulusIndices selects bounded and masked HCI regions", "[improc::imageMasks::annulusIndices]" )
+{
+    using angleT = mx::math::degreesT<double>;
+
+    mx::improc::eigenImage<double> radius( 5, 5 );
+    mx::improc::eigenImage<double> angle;
+    mx::improc::radAngImage<angleT>( radius, angle, 2.0, 2.0 );
+
+    const std::vector<size_t> full =
+        mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 1.0, 2.0, 0.0, 360.0 );
+    REQUIRE( full == std::vector<size_t>{ 6, 7, 8, 11, 13, 16, 17, 18 } );
+
+    mx::improc::eigenImage<double> mask( 5, 5 );
+    mask.setOnes();
+    mask( 1, 1 ) = 0;
+    const std::vector<size_t> masked =
+        mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 1.0, 2.0, 0.0, 360.0, &mask );
+    REQUIRE( masked == std::vector<size_t>{ 7, 8, 11, 13, 16, 17, 18 } );
+
+    const std::vector<size_t> clipped =
+        mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 0.0, 10.0, -360.0, 360.0 );
+    REQUIRE( clipped.size() == 25 );
+
+    const std::vector<size_t> half =
+        mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 0.0, 10.0, 0.0, 180.0 );
+    REQUIRE_FALSE( half.empty() );
+    REQUIRE( half.size() < clipped.size() );
+
+    const std::vector<size_t> wrapped =
+        mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 0.0, 10.0, 300.0, 60.0 );
+    REQUIRE_FALSE( wrapped.empty() );
+    REQUIRE( wrapped.size() < clipped.size() );
+}

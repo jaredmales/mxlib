@@ -20,6 +20,7 @@ include/improc/aperturePhotometer.hpp
 include/improc/eigenCube.hpp
 include/improc/imCenterCircleSym.hpp
 include/improc/imageFilters.hpp
+include/improc/imageMasks.hpp
 include/improc/imageTransforms.hpp
 include/improc/imageXCorrDiscrete.hpp
 include/improc/imageXCorrFFT.hpp
