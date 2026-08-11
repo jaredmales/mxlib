@@ -52,7 +52,8 @@ namespace fileUtilsDetail
 enum class operation
 {
     stringToPath,
-    getFileNames
+    getFileNames,
+    createDirectories
 };
 
 /// Signature of the resettable file-utility operation hook.
@@ -60,6 +61,12 @@ using operationHookT = void ( * )( operation );
 
 /// Access the process-wide file-utility operation hook.
 operationHookT &operationHook();
+
+/// Signature of the resettable file-utility error-code hook.
+using errorCodeHookT = void ( * )( operation, std::error_code & );
+
+/// Access the process-wide file-utility error-code hook.
+errorCodeHookT &errorCodeHook();
 /** \endcond */
 
 } // namespace fileUtilsDetail

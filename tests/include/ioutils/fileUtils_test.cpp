@@ -44,6 +44,7 @@ enum class injectedException
 
 mx::ioutils::fileUtilsDetail::operation failingOperation = mx::ioutils::fileUtilsDetail::operation::stringToPath;
 injectedException injectedFailure = injectedException::none;
+std::error_code injectedErrorCode;
 
 void injectFileUtilsFailure( mx::ioutils::fileUtilsDetail::operation operation )
 {
@@ -68,22 +69,36 @@ void injectFileUtilsFailure( mx::ioutils::fileUtilsDetail::operation operation )
     }
 }
 
+void injectFileUtilsErrorCode( mx::ioutils::fileUtilsDetail::operation operation, std::error_code &errorCode )
+{
+    if( operation == mx::ioutils::fileUtilsDetail::operation::createDirectories && injectedErrorCode )
+    {
+        errorCode = injectedErrorCode;
+    }
+}
+
 class fileUtilsHookGuard
 {
   public:
-    fileUtilsHookGuard() : m_saved( mx::ioutils::fileUtilsDetail::operationHook() )
+    fileUtilsHookGuard()
+        : m_saved( mx::ioutils::fileUtilsDetail::operationHook() ),
+          m_savedErrorCode( mx::ioutils::fileUtilsDetail::errorCodeHook() )
     {
         injectedFailure = injectedException::none;
+        injectedErrorCode.clear();
         mx::ioutils::fileUtilsDetail::operationHook() = injectFileUtilsFailure;
+        mx::ioutils::fileUtilsDetail::errorCodeHook() = injectFileUtilsErrorCode;
     }
 
     ~fileUtilsHookGuard()
     {
         mx::ioutils::fileUtilsDetail::operationHook() = m_saved;
+        mx::ioutils::fileUtilsDetail::errorCodeHook() = m_savedErrorCode;
     }
 
   private:
     mx::ioutils::fileUtilsDetail::operationHookT m_saved;
+    mx::ioutils::fileUtilsDetail::errorCodeHookT m_savedErrorCode;
 };
 
 } // namespace
@@ -231,6 +246,7 @@ TEST_CASE( "decomposing and transforming file paths", "[ioutils::fileUtils]" )
  */
 TEST_CASE( "creating HCI output directories", "[ioutils::fileUtils][hciReduce]" )
 {
+    fileUtilsHookGuard hookGuard;
     const std::filesystem::path root = std::filesystem::temp_directory_path() / "mxlib-hciReduce-output-directory";
     const std::filesystem::path prefix = root / "preprocessed" / "target";
 
@@ -240,6 +256,9 @@ TEST_CASE( "creating HCI output directories", "[ioutils::fileUtils][hciReduce]" 
     REQUIRE( mx::ioutils::createDirectories( directory ) == mx::error_t::noerror );
     REQUIRE( std::filesystem::is_directory( directory ) );
     REQUIRE( mx::ioutils::createDirectories( directory ) == mx::error_t::noerror );
+
+    injectedErrorCode = std::error_code( 9999, std::generic_category() );
+    REQUIRE( mx::ioutils::createDirectories( directory ) == mx::error_t::filesystem );
 
     std::filesystem::remove_all( root );
 }

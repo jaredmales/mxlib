@@ -56,11 +56,21 @@ void noOperationFailure( operation )
 {
 }
 
+void noErrorCodeFailure( operation, std::error_code & )
+{
+}
+
 } // namespace
 
 operationHookT &operationHook()
 {
     static operationHookT hook = noOperationFailure;
+    return hook;
+}
+
+errorCodeHookT &errorCodeHook()
+{
+    static errorCodeHookT hook = noErrorCodeFailure;
     return hook;
 }
 
@@ -75,6 +85,7 @@ error_t createDirectories( const std::string &path )
     // Use the non throwing version and silently ignore EEXIST errors
     std::error_code ec;
     std::filesystem::create_directories( path, ec );
+    fileUtilsDetail::errorCodeHook()( fileUtilsDetail::operation::createDirectories, ec );
     if( ec.value() != 0 && ec.value() != EEXIST )
     {
         mx::error_t errc = errno2error_t( ec.value() );
