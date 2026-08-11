@@ -260,6 +260,25 @@ TEST_CASE( "CONTINUE-ing a card", "[ioutils::fits::fitsHeaderCard]" )
     }
 }
 
+/** \brief Verifies the typed card updates used for HCI coadd provenance.
+ *
+ * \ingroup fitsHeaderCard_unit_tests
+ */
+TEST_CASE( "Updating HCI coadd header cards", "[ioutils::fits::fitsHeaderCard][hciReduce]" )
+{
+    fitsHeaderCard date( "MJD-OBS", "2000-01-01T00:00:00.000000000Z", "mean observation time" );
+
+    REQUIRE( date.value( "2000-01-01T12:00:00.000000000Z" ) == error_t::noerror );
+    REQUIRE( date.String() == "2000-01-01T12:00:00.000000000Z" );
+    REQUIRE( date.comment() == "mean observation time" );
+
+    fitsHeaderCard angle( "ANGLE", 10.0, "derotation angle" );
+    REQUIRE( angle.value( 15.5 ) == error_t::noerror );
+    REQUIRE( angle.value<double>() == Approx( 15.5 ) );
+    REQUIRE( angle.comment( "mean derotation angle" ) == error_t::noerror );
+    REQUIRE( angle.comment() == "mean derotation angle" );
+}
+
 } // namespace fitsHeaderCardTest
 } // namespace fitsTest
 } // namespace unitTest
