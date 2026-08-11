@@ -263,6 +263,42 @@ TEST_CASE( "azBoxKernel validates widths coordinates and maxAz", "[improc::azBox
             }
         }
     }
+
+    SECTION( "finite dimension overflow is rejected" )
+    {
+        kernelT oversizedKernel( std::numeric_limits<double>::max(), 1.0 );
+
+        REQUIRE( oversizedKernel.maxWidth() == 0 );
+        REQUIRE( oversizedKernel.setKernel( 1.0, 0.0, kernel ) == mx::error_t::invalidconfig );
+        REQUIRE( kernel.size() == 0 );
+    }
+
+    SECTION( "inconsistent cached width bounds are rejected" )
+    {
+        kernelT widthKernel( 3.0, 1.0 );
+        widthKernel.m_maxWidth = 0;
+        REQUIRE( widthKernel.setKernel( 1.0, 0.0, kernel ) == mx::error_t::sizeerr );
+
+        kernelT heightKernel( 1.0, 3.0 );
+        heightKernel.m_maxWidth = 2;
+        REQUIRE( heightKernel.setKernel( 1.0, 0.0, kernel ) == mx::error_t::sizeerr );
+    }
+
+    SECTION( "a kernel with no accepted samples is rejected" )
+    {
+        kernelT emptyKernel( 1.0, 1.0 );
+        emptyKernel.m_radWidth = -1.0;
+        REQUIRE( emptyKernel.setKernel( 1.0, 0.0, kernel ) == mx::error_t::invalidconfig );
+        REQUIRE( kernel.size() == 0 );
+    }
+
+    SECTION( "maxAz is evaluated away from the image center" )
+    {
+        kernelT limitedKernel( 2.0, 5.0, 30.0 );
+        REQUIRE( limitedKernel.setKernel( 3.0, 2.0, kernel ) == mx::error_t::noerror );
+        REQUIRE( arrayAllFinite( kernel ) );
+        REQUIRE( kernel.sum() == Approx( 1.0 ).margin( 1e-12 ) );
+    }
 }
 
 /// Verify precalcKernel handles odd, even, and non-square image centers without invalid cached kernels.
@@ -363,6 +399,36 @@ TEST_CASE( "radprofim subtracts a centered radial background", "[improc::radprof
     REQUIRE( profile.cols() == image.cols() );
     REQUIRE( arrayAllFinite( image ) );
     REQUIRE( image.abs().maxCoeff() < 1e-12 );
+}
+
+/** \brief Verifies that masked pixels are excluded from and preserved by radial-profile subtraction.
+ *
+ * Exercises the masked mx::improc::radprofim overload used when preprocessing must omit invalid pixels.
+ *
+ * \ingroup imageFilters_unit_tests
+ */
+TEST_CASE( "radprofim excludes masked pixels", "[improc::radprofim][hciReduce]" )
+{
+    mx::improc::eigenImage<double> image( 9, 9 );
+    image.setConstant( 5.0 );
+
+    mx::improc::eigenImage<double> radius( 9, 9 );
+    mx::improc::radiusImage( radius );
+
+    mx::improc::eigenImage<double> mask( 9, 9 );
+    mask.setOnes();
+    mask( 4, 4 ) = 0;
+
+    mx::improc::eigenImage<double> profile;
+    mx::improc::radprofim( profile, image, radius, &mask, true );
+
+    REQUIRE( profile.rows() == image.rows() );
+    REQUIRE( profile.cols() == image.cols() );
+    REQUIRE( profile( 4, 4 ) == 0.0 );
+    REQUIRE( image( 4, 4 ) == 5.0 );
+
+    mx::improc::zeroNaNs( image );
+    REQUIRE( image( 4, 5 ) == Approx( 0.0 ).margin( 1e-12 ) );
 }
 
 /** \brief Verifies HCI azimuthal median filtering through a precomputed azimuthal kernel.
