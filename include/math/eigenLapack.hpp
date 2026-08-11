@@ -34,6 +34,7 @@
 
 #include <cmath>
 
+#include "floatUtils.hpp"
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 
@@ -205,7 +206,8 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
 {
     typedef typename arrT::Scalar calcT;
 
-    MXLAPACK_INT numeig, info;
+    MXLAPACK_INT numeig{ 0 };
+    MXLAPACK_INT info;
     char RANGE = 'A';
 
     MXLAPACK_INT localMem = 0;
@@ -230,8 +232,7 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
     eigvec.resize( n, IU - IL + 1 );
     eigval.resize( n, 1 );
 
-    if( UPLO != mem->UPLO || n != mem->n || RANGE != mem->RANGE || mem->numeig != numeig || mem->IL != IL ||
-        mem->IU != IU )
+    if( UPLO != mem->UPLO || n != mem->n || RANGE != mem->RANGE || mem->IL != IL || mem->IU != IU )
     {
         if( mem->sizeISuppZ < 2 * n )
         {
@@ -489,9 +490,9 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
                     std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
                     evecs.col( i ) *= 0;
                 }
-                else if( !std::isnormal( evals( i ) ) )
+                else if( !math::isFinite( evals( i ) ) )
                 {
-                    std::cerr << "got not-normal eigenvalue (# " << i << ")\n";
+                    std::cerr << "got non-finite eigenvalue (# " << i << ")\n";
                     evecs.col( i ) *= 0;
                 }
                 else
@@ -501,9 +502,9 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
 
                 for( int r = 0; r < evecs.rows(); ++r )
                 {
-                    if( !std::isnormal( evecs.col( i )( r ) ) )
+                    if( !math::isFinite( evecs.col( i )( r ) ) )
                     {
-                        std::cerr << "got not-normal eigenvector entry (# " << i << "," << r << ")\n";
+                        std::cerr << "got non-finite eigenvector entry (# " << i << "," << r << ")\n";
                         evecs.col( i ) *= 0;
                         continue;
                     }
@@ -563,6 +564,10 @@ MXLAPACK_INT calcKLModes( eigenT &klModes,             /**< [out] on exit contai
     if( cv.rows() != Rims.cols() )
     {
         std::cerr << "Covariance matrix - reference image size mismatch in calcKLModes\n";
+        if( localMem )
+        {
+            delete mem;
+        }
         return -1;
     }
 
@@ -583,6 +588,10 @@ MXLAPACK_INT calcKLModes( eigenT &klModes,             /**< [out] on exit contai
     if( info != 0 )
     {
         std::cerr << "calckKLModes: eigenSYEVR returned an error (info = " << info << ")\n";
+        if( localMem )
+        {
+            delete mem;
+        }
         return -1;
     }
 
@@ -600,18 +609,20 @@ MXLAPACK_INT calcKLModes( eigenT &klModes,             /**< [out] on exit contai
     /*
      *  KL = E^T * R  ==> C = A^T * B
      */
+    constexpr realT alpha{ 1 };
+    constexpr realT beta{ 0 };
     gemm<realT>( CblasColMajor,
                  CblasTrans,
                  CblasTrans,
                  n_modes,
                  tNpix,
                  tNims,
-                 1.,
+                 alpha,
                  evecs.data(),
                  cv.rows(),
                  Rims.data(),
                  Rims.rows(),
-                 0.,
+                 beta,
                  klModes.data(),
                  klModes.rows() );
 
