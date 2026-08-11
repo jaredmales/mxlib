@@ -210,6 +210,29 @@ TEST_CASE( "Reading combined type data", "[ioutils::readColumns]" )
     }
 }
 
+/** \brief Verifies filename and double-valued metadata columns used by HCI quality and weight lists.
+ *
+ * \ingroup readColumns_unit_tests
+ */
+TEST_CASE( "Reading filename and double metadata columns", "[ioutils::readColumns]" )
+{
+    const std::string filename{ "/tmp/readcol_test_hci_metadata.dat" };
+    std::ofstream fout{ filename };
+    fout << "# image quality or weight\\n";
+    fout << "target/frame001.fits 0.25\\n";
+    fout << "reference/frame002.fits 1.5 # retained inline comment\\n";
+    fout.close();
+
+    std::vector<std::string> filenames{ "existing.fits" };
+    std::vector<double> values{ -1.0 };
+    REQUIRE( mx::ioutils::readColumns<mx::ioutils::readColSpaceDelim, mx::verbose::vv>( filename, filenames, values ) ==
+             mx::error_t::noerror );
+
+    REQUIRE( filenames ==
+             std::vector<std::string>{ "existing.fits", "target/frame001.fits", "reference/frame002.fits" } );
+    REQUIRE( values == std::vector<double>{ -1.0, 0.25, 1.5 } );
+}
+
 } // namespace readColumnsTest
 } // namespace ioutilsTest
 } // namespace unitTest
