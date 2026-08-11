@@ -77,6 +77,37 @@ TEST_CASE( "Masked eigenCube means use an inclusive good-pixel threshold", "[imp
     REQUIRE( result( 0, 0 ) == 7.5 );
 }
 
+/** \brief Verifies unmasked and weighted image combinations used when HCI masking is disabled.
+ *
+ * \ingroup eigenCube_unit_tests
+ */
+TEST_CASE( "Unmasked eigenCube combinations use every plane", "[improc::eigenCube]" )
+{
+    mx::improc::eigenCube<double> cube( 1, 1, 4 );
+    cube.image( 0 )( 0, 0 ) = 1.0;
+    cube.image( 1 )( 0, 0 ) = 2.0;
+    cube.image( 2 )( 0, 0 ) = 3.0;
+    cube.image( 3 )( 0, 0 ) = 100.0;
+
+    mx::improc::eigenImage<double> result;
+    std::vector<double> weights{ 1.0, 1.0, 1.0, 3.0 };
+
+    cube.mean( result );
+    REQUIRE( result( 0, 0 ) == 26.5 );
+
+    cube.mean( result, weights );
+    REQUIRE( result( 0, 0 ) == 51.0 );
+
+    cube.median( result );
+    REQUIRE( result( 0, 0 ) == 2.5 );
+
+    cube.sigmaMean( result, 100.0 );
+    REQUIRE( result( 0, 0 ) == 26.5 );
+
+    cube.sigmaMean( result, weights, 100.0 );
+    REQUIRE( result( 0, 0 ) == 51.0 );
+}
+
 /// Verify masked median combination honors the mask and inclusive good-pixel fraction.
 /** Exercises mx::improc::eigenCube::median, including its even-sample median behavior. */
 /**
