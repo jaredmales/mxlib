@@ -333,10 +333,10 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
         REQUIRE( fft.writeTestFrame( "/tmp/fitsFile_test", 5 ) == mx::error_t::noerror );
 
         std::vector<std::string> flist( { "/tmp/fitsFile_test1.fits",
-                                         "/tmp/fitsFile_test2.fits",
-                                         "/tmp/fitsFile_test3.fits",
-                                         "/tmp/fitsFile_test4.fits",
-                                         "/tmp/fitsFile_test5.fits" } );
+                                          "/tmp/fitsFile_test2.fits",
+                                          "/tmp/fitsFile_test3.fits",
+                                          "/tmp/fitsFile_test4.fits",
+                                          "/tmp/fitsFile_test5.fits" } );
 
         fitsFile<float> ff;
         mx::improc::eigenCube<float> imc;
@@ -372,14 +372,14 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
     REQUIRE( fitsFile.open( imagePath.string() ) == mx::error_t::noerror );
     REQUIRE( fitsFile.write( imagePath.string(), image ) == mx::error_t::noerror );
 
-    const std::filesystem::path unavailablePath = testDirectory.path() / "missing" / "image.fits";
-    REQUIRE( fitsFile.write( unavailablePath.string(), image ) != mx::error_t::noerror );
-
     fitsHeader<verbose::vv> header;
     header.append( "TESTKEY", 17, "test header value" );
 
     const std::filesystem::path headerImagePath = testDirectory.path() / "image-with-header.fits";
     REQUIRE( fitsFile.write( headerImagePath.string(), image, header ) == mx::error_t::noerror );
+    const std::filesystem::path unavailableImagePath = testDirectory.path() / "missing" / "image.fits";
+    REQUIRE( fitsFile.write( unavailableImagePath.string(), image ) != mx::error_t::noerror );
+    REQUIRE( fitsFile.write( unavailableImagePath.string(), image, header ) != mx::error_t::noerror );
 
     fitsHeader<verbose::vv> readHeader;
     REQUIRE( fitsFile.read( readImage, readHeader, headerImagePath.string() ) == mx::error_t::noerror );
@@ -403,6 +403,8 @@ TEST_CASE( "Verbose float Eigen FITS writes round-trip", "[ioutils::fits::fitsFi
 
     const std::filesystem::path headerCubePath = testDirectory.path() / "cube-with-header.fits";
     REQUIRE( fitsFile.write( headerCubePath.string(), cube, header ) == mx::error_t::noerror );
+    const std::filesystem::path unavailableCubePath = testDirectory.path() / "missing" / "cube.fits";
+    REQUIRE( fitsFile.write( unavailableCubePath.string(), cube, header ) != mx::error_t::noerror );
 
     REQUIRE( fitsFile.read( readCube, readHeader, headerCubePath.string() ) == mx::error_t::noerror );
     REQUIRE( readCube.image( 0 ).isApprox( cube.image( 0 ) ) );
