@@ -40,6 +40,17 @@ TEST_CASE( "Verify operation of get_curr_time", "[timeutils]" )
     }
 }
 
+/** \brief Verifies MJD-to-ISO8601 formatting used for HCI coadd header timestamps.
+ *
+ * \ingroup timeUtils_unit_tests
+ */
+TEST_CASE( "Formatting MJD timestamps as ISO8601", "[timeutils][hciReduce]" )
+{
+    REQUIRE( mx::sys::ISO8601DateTimeStrMJD( 51544.0, 0 ) == "2000-01-01T00:00:00.000000000" );
+    REQUIRE( mx::sys::ISO8601DateTimeStrMJD( 51544.5, 1 ) == "2000-01-01T12:00:00.000000000Z" );
+    REQUIRE( mx::sys::ISO8601DateTimeStrMJD( 51545.0, 2 ) == "2000-01-02T00:00:00.000000000+00:00" );
+}
+
 /** Verify operation of thread sleep functions
  *
  * Uses mx::sys::get_curr_time to verify duration of sleep.
