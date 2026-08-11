@@ -41,6 +41,11 @@ class fitsFile_test : public fitsFile<dataT>
         return pixarrs.allocate( naxis );
     }
 
+    void noComment( bool noComment )
+    {
+        fitsFile<dataT>::m_noComment = noComment;
+    }
+
     // Interface to set protected axis dimensions
     void setnax( int naxis, long naxes0, long naxes1, long naxes2 )
     {
@@ -271,6 +276,38 @@ TEST_CASE( "Calculating subimage sizes", "[ioutils::fits::fitsFile]" )
             REQUIRE( pixarrs.inc[0] == 1 );
             REQUIRE( pixarrs.inc[1] == 1 );
             REQUIRE( pixarrs.inc[2] == 1 );
+        }
+
+        SECTION( "reading complete images from selected cube planes" )
+        {
+            fitsFile_test<float> fft;
+            fft.setnax( 3, 64, 32, 8 );
+            fft.setCubeReadSize( 2, 3 );
+
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
+            REQUIRE( pixarrs.fpix[0] == 1 );
+            REQUIRE( pixarrs.lpix[0] == 64 );
+            REQUIRE( pixarrs.fpix[1] == 1 );
+            REQUIRE( pixarrs.lpix[1] == 32 );
+            REQUIRE( pixarrs.fpix[2] == 3 );
+            REQUIRE( pixarrs.lpix[2] == 5 );
+        }
+
+        SECTION( "reading subimages from every cube plane" )
+        {
+            fitsFile_test<float> fft;
+            fft.setnax( 3, 64, 32, 8 );
+            fft.setReadSize( 10, 5, 7, 4 );
+
+            fitsFile_test<float>::pixarrTT pixarrs;
+            fft.calcPixarrs( pixarrs );
+            REQUIRE( pixarrs.fpix[0] == 11 );
+            REQUIRE( pixarrs.lpix[0] == 17 );
+            REQUIRE( pixarrs.fpix[1] == 6 );
+            REQUIRE( pixarrs.lpix[1] == 9 );
+            REQUIRE( pixarrs.fpix[2] == 1 );
+            REQUIRE( pixarrs.lpix[2] == 8 );
         }
     }
 }
@@ -527,6 +564,12 @@ TEST_CASE( "Reading raw FITS arrays and configured subsets", "[ioutils::fits::fi
     REQUIRE( fitsFile.write( secondPath.string(), image.data(), image.rows(), image.cols(), 1 ) ==
              mx::error_t::noerror );
 
+    const std::filesystem::path directPath = testDirectory.path() / "direct.fits";
+    REQUIRE( fitsFile.fileName( directPath.string(), false ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.write( image.data(), image.rows(), image.cols(), 1 ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.open() == mx::error_t::noerror );
+    REQUIRE( fitsFile.write( image.data(), image.rows(), image.cols(), 1, header ) == mx::error_t::noerror );
+
     std::vector<float> raw( 6 );
     REQUIRE( fitsFile.fileName( firstPath.string(), false ) == mx::error_t::noerror );
     REQUIRE( fitsFile.read( raw.data() ) == mx::error_t::noerror );
@@ -557,6 +600,39 @@ TEST_CASE( "Reading raw FITS arrays and configured subsets", "[ioutils::fits::fi
 
     const std::vector<std::string> noFiles;
     REQUIRE( fitsFile.read( batch.data(), noFiles ) == mx::error_t::invalidarg );
+    std::vector<fitsHeader<>> noHeaders;
+    REQUIRE( fitsFile.read( batch.data(), noHeaders, noFiles ) == mx::error_t::invalidarg );
+
+    mx::fits::fitsFile<float> lazyReader( firstPath.string(), false );
+    mx::improc::eigenImage<float> lazyImage;
+    REQUIRE( lazyReader.read( lazyImage ) == mx::error_t::noerror );
+    REQUIRE( lazyImage.isApprox( image ) );
+
+    const std::string missingPath = ( testDirectory.path() / "missing.fits" ).string();
+    REQUIRE( fitsFile.read( lazyImage, missingPath ) != mx::error_t::noerror );
+    REQUIRE( fitsFile.read( lazyImage, readHeader, missingPath ) != mx::error_t::noerror );
+
+    mx::improc::eigenCube<float> imageCube;
+    REQUIRE( fitsFile.read( imageCube, std::vector<std::string>{ missingPath } ) != mx::error_t::noerror );
+
+    fitsFile.setReadSize( 100, 100, 1, 1 );
+    REQUIRE( fitsFile.read( imageCube, std::vector<std::string>{ firstPath.string() } ) != mx::error_t::noerror );
+    fitsFile.setReadSize();
+
+    mx::improc::eigenImage<float> smallImage( 1, 1 );
+    smallImage.setConstant( 9.0F );
+    const std::filesystem::path smallPath = testDirectory.path() / "small.fits";
+    REQUIRE( fitsFile.write( smallPath.string(), smallImage ) == mx::error_t::noerror );
+    REQUIRE( fitsFile.read( imageCube, std::vector<std::string>{ firstPath.string(), smallPath.string() } ) !=
+             mx::error_t::noerror );
+
+    fitsFile_test<float> noCommentReader;
+    noCommentReader.noComment( true );
+    fitsHeader<> headerWithoutComments;
+    headerWithoutComments.append( "TESTKEY" );
+    REQUIRE( noCommentReader.readHeader( headerWithoutComments, firstPath.string() ) == mx::error_t::noerror );
+    REQUIRE( headerWithoutComments["TESTKEY"].value<int>() == 23 );
+    REQUIRE( headerWithoutComments["TESTKEY"].comment().empty() );
 }
 
 /// Verify hciReduce's float Eigen image and cube writes round-trip with optional FITS headers.
