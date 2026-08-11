@@ -218,9 +218,9 @@ TEST_CASE( "Reading filename and double metadata columns", "[ioutils::readColumn
 {
     const std::string filename{ "/tmp/readcol_test_hci_metadata.dat" };
     std::ofstream fout{ filename };
-    fout << "# image quality or weight\\n";
-    fout << "target/frame001.fits 0.25\\n";
-    fout << "reference/frame002.fits 1.5 # retained inline comment\\n";
+    fout << "# image quality or weight\n";
+    fout << "target/frame001.fits 0.25\n";
+    fout << "reference/frame002.fits 1.5 # retained inline comment\n";
     fout.close();
 
     std::vector<std::string> filenames{ "existing.fits" };
