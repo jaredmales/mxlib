@@ -341,11 +341,21 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
         fitsFile<float> ff;
         mx::improc::eigenCube<float> imc;
 
-        REQUIRE( ff.read( imc, flist ) == mx::error_t::noerror );
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> headers( flist.size() );
+        for( size_t index = 0; index < headers.size(); ++index )
+        {
+            headers[index].append( std::format( "FLOAT{}", index + 1 ) );
+        }
+
+        REQUIRE( ff.read( imc, headers, flist ) == mx::error_t::noerror );
 
         REQUIRE( imc.rows() == 1024 );
         REQUIRE( imc.cols() == 1024 );
         REQUIRE( imc.planes() == 5 );
+        for( size_t index = 0; index < headers.size(); ++index )
+        {
+            REQUIRE_THAT( headers[index][std::format( "FLOAT{}", index + 1 )].Float(), WithinAbs( 1.1, 1e-5 ) );
+        }
     }
 }
 
