@@ -41,15 +41,34 @@
 
 #include <filesystem>
 
-
 namespace mx
 {
 namespace ioutils
 {
 
-template bool exists<verbose::d>( const std::string &, error_t &);
+namespace fileUtilsDetail
+{
 
-template bool dir_exists_is<verbose::d>( const std::string &, error_t &);
+namespace
+{
+
+void noOperationFailure( operation )
+{
+}
+
+} // namespace
+
+operationHookT &operationHook()
+{
+    static operationHookT hook = noOperationFailure;
+    return hook;
+}
+
+} // namespace fileUtilsDetail
+
+template bool exists<verbose::d>( const std::string &, error_t & );
+
+template bool dir_exists_is<verbose::d>( const std::string &, error_t & );
 
 error_t createDirectories( const std::string &path )
 {
@@ -58,8 +77,8 @@ error_t createDirectories( const std::string &path )
     std::filesystem::create_directories( path, ec );
     if( ec.value() != 0 && ec.value() != EEXIST )
     {
-        mx::error_t errc = errno2error_t(ec.value());
-        if(errc == error_t::error)
+        mx::error_t errc = errno2error_t( ec.value() );
+        if( errc == error_t::error )
         {
             errc = error_t::filesystem;
         }
@@ -87,17 +106,11 @@ std::string parentPath( const std::string &fname )
     return p.parent_path().string();
 }
 
-
-
-
-template
-error_t getFileNames<verbose::d>( std::vector<std::string> &fileNames,
-                                  const std::string &directory,
-                                  const std::string &prefix,
-                                  const std::string &substr,
-                                  const std::string &extension );
-
-
+template error_t getFileNames<verbose::d>( std::vector<std::string> &fileNames,
+                                           const std::string &directory,
+                                           const std::string &prefix,
+                                           const std::string &substr,
+                                           const std::string &extension );
 
 std::string fileNamePrependAppend( const std::string &fname, const std::string &prepend, const std::string &append )
 {

@@ -42,6 +42,29 @@ namespace mx
 namespace ioutils
 {
 
+#ifndef ioutils_fileUtils_detail_hpp
+#define ioutils_fileUtils_detail_hpp
+namespace fileUtilsDetail
+{
+
+/** \cond */
+/// File-utility stages exposed to deterministic exception tests.
+enum class operation
+{
+    stringToPath,
+    getFileNames
+};
+
+/// Signature of the resettable file-utility operation hook.
+using operationHookT = void ( * )( operation );
+
+/// Access the process-wide file-utility operation hook.
+operationHookT &operationHook();
+/** \endcond */
+
+} // namespace fileUtilsDetail
+#endif // ioutils_fileUtils_detail_hpp
+
 #ifdef MXLIBTEST_NAMESPACE
 namespace MXLIBTEST_NAMESPACE
 {
@@ -63,7 +86,7 @@ namespace MXLIBTEST_NAMESPACE
  * \throws a nested mx::exception for any uncaught exceptions.
  */
 template <class verboseT>
-error_t string2path( std::filesystem::path & path, const std::string &str);
+error_t string2path( std::filesystem::path &path, const std::string &str );
 
 /// Check if a path exists
 /**
@@ -216,10 +239,11 @@ off_t fileSize( FILE *f /**< [in] an open file */ );
 /*                       implementations                                 */
 
 template <class verboseT>
-error_t string2path( std::filesystem::path & path, const std::string &str)
+error_t string2path( std::filesystem::path &path, const std::string &str )
 {
     try
     {
+        fileUtilsDetail::operationHook()( fileUtilsDetail::operation::stringToPath );
         path = str;
 
         return error_t::noerror;
@@ -254,7 +278,7 @@ error_t string2path( std::filesystem::path & path, const std::string &str)
         #endif
         // clang-format on
     }
-    catch(...)
+    catch( ... )
     {
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined(MXLIB_CATCH_NONALLOC_EXCEPTIONS)
@@ -275,17 +299,17 @@ bool exists( const std::string &strpath, mx::error_t &errc )
 
     try
     {
-        errc = string2path<verboseT>(path, strpath);
+        errc = string2path<verboseT>( path, strpath );
 
-        if(!!errc)
+        if( !!errc )
         {
             internal::mxlib_error_report<verboseT>( errc, "converting path" );
             return false;
         }
     }
-    catch(const mx::exception<verboseT> & e)
+    catch( const mx::exception<verboseT> &e )
     {
-        std::throw_with_nested(mx::exception<verboseT>(e.code()));
+        std::throw_with_nested( mx::exception<verboseT>( e.code() ) );
     }
 
     bool ex = std::filesystem::exists( path, ec );
@@ -316,17 +340,17 @@ bool dir_exists_is( const std::string &dir, mx::error_t &errc )
 
     try
     {
-        errc = string2path<verboseT>(path, dir);
+        errc = string2path<verboseT>( path, dir );
 
-        if(!!errc)
+        if( !!errc )
         {
             internal::mxlib_error_report<verboseT>( errc, "converting path" );
             return false;
         }
     }
-    catch(const mx::exception<verboseT> & e)
+    catch( const mx::exception<verboseT> &e )
     {
-        std::throw_with_nested(mx::exception<verboseT>(e.code()));
+        std::throw_with_nested( mx::exception<verboseT>( e.code() ) );
     }
 
     bool exists = std::filesystem::exists( path, ec );
@@ -389,6 +413,7 @@ error_t getFileNames( std::vector<std::string> &fileNames,
 {
     try // there are several things that can throw here
     {
+        fileUtilsDetail::operationHook()( fileUtilsDetail::operation::getFileNames );
         fileNames.clear();
 
         if( std::filesystem::exists( directory ) )
@@ -505,7 +530,7 @@ error_t getFileNames( std::vector<std::string> &fileNames,
     {
         // clang-format off
         #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return internal::mxlib_error_report<verboseT>( error_t::exception, e.what() );
+            return internal::mxlib_error_report<verboseT>( error_t::std_exception, e.what() );
         #else
             std::throw_with_nested(mx::exception<verboseT>(error_t::std_exception));
         #endif

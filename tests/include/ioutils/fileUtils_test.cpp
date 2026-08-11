@@ -22,6 +22,73 @@
 #undef MXLIBTEST_NAMESPACE
 #undef MXLIBTEST_DIREXISTSIS_ISDIRERR
 
+#undef ioutils_fileUtils_hpp
+#define MXLIBTEST_NAMESPACE MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns
+#define MXLIB_CATCH_ALL_EXCEPTIONS
+#include "../../../include/ioutils/fileUtils.hpp"
+#undef MXLIBTEST_NAMESPACE
+#undef MXLIB_CATCH_ALL_EXCEPTIONS
+
+/** \cond */
+namespace
+{
+
+enum class injectedException
+{
+    none,
+    badAlloc,
+    filesystem,
+    standard,
+    unknown
+};
+
+mx::ioutils::fileUtilsDetail::operation failingOperation = mx::ioutils::fileUtilsDetail::operation::stringToPath;
+injectedException injectedFailure = injectedException::none;
+
+void injectFileUtilsFailure( mx::ioutils::fileUtilsDetail::operation operation )
+{
+    if( operation != failingOperation )
+    {
+        return;
+    }
+
+    switch( injectedFailure )
+    {
+        case injectedException::badAlloc:
+            throw std::bad_alloc();
+        case injectedException::filesystem:
+            throw std::filesystem::filesystem_error( "injected fileUtils failure",
+                                                     std::make_error_code( std::errc::io_error ) );
+        case injectedException::standard:
+            throw std::runtime_error( "injected fileUtils failure" );
+        case injectedException::unknown:
+            throw 1;
+        case injectedException::none:
+            return;
+    }
+}
+
+class fileUtilsHookGuard
+{
+  public:
+    fileUtilsHookGuard() : m_saved( mx::ioutils::fileUtilsDetail::operationHook() )
+    {
+        injectedFailure = injectedException::none;
+        mx::ioutils::fileUtilsDetail::operationHook() = injectFileUtilsFailure;
+    }
+
+    ~fileUtilsHookGuard()
+    {
+        mx::ioutils::fileUtilsDetail::operationHook() = m_saved;
+    }
+
+  private:
+    mx::ioutils::fileUtilsDetail::operationHookT m_saved;
+};
+
+} // namespace
+/** \endcond */
+
 namespace unitTest
 {
 namespace ioutilsTest
@@ -458,6 +525,136 @@ TEST_CASE( "Filtering short filenames", "[ioutils::fileUtils]" )
 
     REQUIRE( mx::ioutils::getFileNames( filenames, directory, "", "sub", "" ) == mx::error_t::noerror );
     REQUIRE( filenames.empty() );
+}
+
+/** \brief Verifies path conversion translates or propagates each documented exception category.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "Handling path conversion exceptions", "[ioutils::fileUtils]" )
+{
+    fileUtilsHookGuard guard;
+    failingOperation = mx::ioutils::fileUtilsDetail::operation::stringToPath;
+    std::filesystem::path path;
+
+    SECTION( "allocation failure" )
+    {
+        injectedFailure = injectedException::badAlloc;
+        REQUIRE_THROWS_AS( mx::ioutils::string2path<mx::verbose::vv>( path, "unused" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::string2path<mx::verbose::vv>( path, "unused" ) ==
+                 mx::error_t::std_bad_alloc );
+    }
+
+    SECTION( "filesystem failure" )
+    {
+        injectedFailure = injectedException::filesystem;
+        REQUIRE_THROWS_AS( mx::ioutils::string2path<mx::verbose::vv>( path, "unused" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::string2path<mx::verbose::vv>( path, "unused" ) ==
+                 mx::error_t::std_filesystem_error );
+    }
+
+    SECTION( "standard failure" )
+    {
+        injectedFailure = injectedException::standard;
+        REQUIRE_THROWS_AS( mx::ioutils::string2path<mx::verbose::vv>( path, "unused" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::string2path<mx::verbose::vv>( path, "unused" ) ==
+                 mx::error_t::std_exception );
+    }
+
+    SECTION( "unknown failure" )
+    {
+        injectedFailure = injectedException::unknown;
+        REQUIRE_THROWS_AS( mx::ioutils::string2path<mx::verbose::vv>( path, "unused" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::string2path<mx::verbose::vv>( path, "unused" ) ==
+                 mx::error_t::exception );
+    }
+}
+
+/** \brief Verifies existence helpers preserve path-conversion failures.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "Propagating path conversion failures through existence helpers", "[ioutils::fileUtils]" )
+{
+    fileUtilsHookGuard guard;
+    failingOperation = mx::ioutils::fileUtilsDetail::operation::stringToPath;
+    injectedFailure = injectedException::badAlloc;
+    mx::error_t errc = mx::error_t::noerror;
+
+    REQUIRE_THROWS_AS( mx::ioutils::exists<mx::verbose::vv>( "unused", errc ), mx::exception<mx::verbose::vv> );
+    REQUIRE_FALSE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::exists<mx::verbose::vv>( "unused", errc ) );
+    REQUIRE( errc == mx::error_t::std_bad_alloc );
+
+    REQUIRE_THROWS_AS( mx::ioutils::dir_exists_is<mx::verbose::vv>( "unused", errc ), mx::exception<mx::verbose::vv> );
+    REQUIRE_FALSE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::dir_exists_is<mx::verbose::vv>( "unused", errc ) );
+    REQUIRE( errc == mx::error_t::std_bad_alloc );
+}
+
+/** \brief Verifies file discovery translates or propagates each documented exception category.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "Handling file discovery exceptions", "[ioutils::fileUtils]" )
+{
+    fileUtilsHookGuard guard;
+    failingOperation = mx::ioutils::fileUtilsDetail::operation::getFileNames;
+    std::vector<std::string> filenames;
+
+    SECTION( "allocation failure" )
+    {
+        injectedFailure = injectedException::badAlloc;
+        REQUIRE_THROWS_AS( mx::ioutils::getFileNames<mx::verbose::vv>( filenames, "unused", "", "", "" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::getFileNames<mx::verbose::vv>( filenames,
+                                                                                                "unused",
+                                                                                                "",
+                                                                                                "",
+                                                                                                "" ) ==
+                 mx::error_t::std_bad_alloc );
+    }
+
+    SECTION( "filesystem failure" )
+    {
+        injectedFailure = injectedException::filesystem;
+        REQUIRE_THROWS_AS( mx::ioutils::getFileNames<mx::verbose::vv>( filenames, "unused", "", "", "" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::getFileNames<mx::verbose::vv>( filenames,
+                                                                                                "unused",
+                                                                                                "",
+                                                                                                "",
+                                                                                                "" ) ==
+                 mx::error_t::std_filesystem_error );
+    }
+
+    SECTION( "standard failure" )
+    {
+        injectedFailure = injectedException::standard;
+        REQUIRE_THROWS_AS( mx::ioutils::getFileNames<mx::verbose::vv>( filenames, "unused", "", "", "" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::getFileNames<mx::verbose::vv>( filenames,
+                                                                                                "unused",
+                                                                                                "",
+                                                                                                "",
+                                                                                                "" ) ==
+                 mx::error_t::std_exception );
+    }
+
+    SECTION( "unknown failure" )
+    {
+        injectedFailure = injectedException::unknown;
+        REQUIRE_THROWS_AS( mx::ioutils::getFileNames<mx::verbose::vv>( filenames, "unused", "", "", "" ),
+                           mx::exception<mx::verbose::vv> );
+        REQUIRE( mx::ioutils::MXLIBTEST_CATCH_ALL_EXCEPTIONS_ns::getFileNames<mx::verbose::vv>( filenames,
+                                                                                                "unused",
+                                                                                                "",
+                                                                                                "",
+                                                                                                "" ) ==
+                 mx::error_t::exception );
+    }
 }
 
 } // namespace fileUtilsTest
