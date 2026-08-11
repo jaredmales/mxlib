@@ -398,6 +398,24 @@ TEST_CASE( "Getting a list of files", "[ioutils::fileUtils]" )
     }
 }
 
+/** \brief Verifies that filename filters safely reject names shorter than their search term.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "Filtering short filenames", "[ioutils::fileUtils]" )
+{
+    const std::string directory{ "/tmp/fileUtils_test/short_names" };
+    std::filesystem::create_directories( directory );
+    std::ofstream{ directory + "/a" }.close();
+
+    std::vector<std::string> filenames;
+    REQUIRE( mx::ioutils::getFileNames( filenames, directory, "prefix", "", "" ) == mx::error_t::noerror );
+    REQUIRE( filenames.empty() );
+
+    REQUIRE( mx::ioutils::getFileNames( filenames, directory, "", "sub", "" ) == mx::error_t::noerror );
+    REQUIRE( filenames.empty() );
+}
+
 } // namespace fileUtilsTest
 } // namespace ioutilsTest
 } // namespace unitTest
