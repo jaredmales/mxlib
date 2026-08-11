@@ -170,6 +170,29 @@ TEST_CASE( "Appending HCI Git status provenance", "[ioutils::fits::fitsHeader][h
              std::vector<std::string>{ "Git status for mxlib_uncomp:", "   sha1=abc123, modified" } );
 }
 
+/** \brief Verifies the scalar and string FITS metadata types emitted by HCI stdFitsHeader.
+ *
+ * \ingroup fitsHeader_unit_tests
+ */
+TEST_CASE( "Appending HCI reduction parameter metadata", "[ioutils::fits::fitsHeader][hciReduce]" )
+{
+    fitsHeader<mx::verbose::vv> header;
+    char modes[] = "1,5,10";
+
+    REQUIRE( header.append<int>( "NUMIMS", 5, "images processed" ) == mx::error_t::noerror );
+    REQUIRE( header.append<float>( "QTHRESH", 0.75F, "quality threshold" ) == mx::error_t::noerror );
+    REQUIRE( header.append<bool>( "PREPROC MASK", true, "apply preprocessing mask" ) == mx::error_t::noerror );
+    REQUIRE( header.append<std::string>( "COADMTHD", "mean", "coadd method" ) == mx::error_t::noerror );
+    REQUIRE( header.append<char *>( "NMODES", modes, "number of modes" ) == mx::error_t::noerror );
+
+    REQUIRE( header["NUMIMS"].value<int>() == 5 );
+    REQUIRE_THAT( header["QTHRESH"].value<float>(), WithinAbs( 0.75F, 1e-6F ) );
+    REQUIRE( header["PREPROC MASK"].type() == fitsType<bool>() );
+    REQUIRE( header["PREPROC MASK"].valueGood() );
+    REQUIRE( header["COADMTHD"].String() == "mean" );
+    REQUIRE( header["NMODES"].String() == "1,5,10" );
+}
+
 } // namespace fitsHeaderTest
 } // namespace fitsTest
 } // namespace unitTest
