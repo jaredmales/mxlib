@@ -177,6 +177,28 @@ TEST_CASE( "creating HCI output directories", "[ioutils::fileUtils][hciReduce]" 
     std::filesystem::remove_all( root );
 }
 
+/** \brief Verifies HCI final-image filename selection skips existing numbered outputs.
+ *
+ * Exercises mx::ioutils::getSequentialFilename over existing FITS outputs as used when HCI does not request an
+ * exact final-image name.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "selecting sequential HCI final-image filenames", "[ioutils::fileUtils][hciReduce]" )
+{
+    const std::filesystem::path root = std::filesystem::temp_directory_path() / "mxlib-hciReduce-final-output";
+    const std::string basename = ( root / "final" ).string();
+
+    std::filesystem::remove_all( root );
+    std::filesystem::create_directories( root );
+    std::ofstream( basename + "0000.fits" ).close();
+    std::ofstream( basename + "0001.fits" ).close();
+
+    REQUIRE( mx::ioutils::getSequentialFilename( basename, ".fits" ) == basename + "0002.fits" );
+
+    std::filesystem::remove_all( root );
+}
+
 void createfiles( const std::string &basedir )
 {
     std::filesystem::create_directories( basedir );
