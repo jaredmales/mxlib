@@ -138,6 +138,23 @@ TEST_CASE( "creating sequential filenames", "[ioutils::fileUtils]" )
     }
 }
 
+/** \brief Verifies path decomposition and basename transformations used by file-list consumers.
+ *
+ * \ingroup fileUtils_unit_tests
+ */
+TEST_CASE( "decomposing and transforming file paths", "[ioutils::fileUtils]" )
+{
+    const std::string filename{ "/tmp/hciReduce/list/science.frame.fits" };
+
+    REQUIRE( mx::ioutils::pathStem( filename ) == "science.frame" );
+    REQUIRE( mx::ioutils::pathFilename( filename ) == "science.frame.fits" );
+    REQUIRE( mx::ioutils::parentPath( filename ) == "/tmp/hciReduce/list" );
+    REQUIRE( mx::ioutils::fileNamePrependAppend( filename, "pre_", "_post" ) ==
+             "/tmp/hciReduce/list/pre_science.frame_post.fits" );
+    REQUIRE( mx::ioutils::fileNameAppend( filename, "_coadd" ) == "/tmp/hciReduce/list/science.frame_coadd.fits" );
+    REQUIRE( mx::ioutils::fileNamePrepend( filename, "rdi_" ) == "/tmp/hciReduce/list/rdi_science.frame.fits" );
+}
+
 void createfiles( const std::string &basedir )
 {
     std::filesystem::create_directories( basedir );
