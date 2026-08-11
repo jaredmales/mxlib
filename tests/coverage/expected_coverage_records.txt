@@ -43,6 +43,7 @@ include/math/func/expModGaussian.hpp
 include/math/histogramUniform.hpp
 include/math/logInterpolator.hpp
 include/math/point2D.hpp
+include/math/vectorUtils.hpp
 include/meta/typeDescription.hpp
 include/sigproc/autocorrelation.hpp
 include/sigproc/averagePeriodogram.hpp

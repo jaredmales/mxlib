@@ -1,21 +1,25 @@
 /** \file vectorUtils_test.cpp
- * \brief Placeholder tests for APIs declared in include/math/vectorUtils.hpp.
+ * \brief Tests vector statistics used by HCI preprocessing.
  */
 #include "../../catch2/catch.hpp"
 
 #include "../../../include/math/vectorUtils.hpp"
 
-namespace unitTest::placeholder::math_vectorUtils_test
+#include <vector>
+
+namespace unitTest::math_vectorUtils_test
 {
 
-/** \brief Verifies that APIs declared in include/math/vectorUtils.hpp remain available to the unit-test target.
+/** \brief Verifies the sample-variance overload used by HCI time-series normalization.
  *
  * \ingroup vectorUtils_unit_tests
- * \todo Add behavioral assertions for the APIs declared in include/math/vectorUtils.hpp.
  */
-TEST_CASE( "vectorUtils API has a test placeholder", "[math::vectorUtils][placeholder]" )
+TEST_CASE( "vectorVariance computes sample variance", "[math::vectorUtils::vectorVariance]" )
 {
-    SUCCEED( "vectorUtils behavioral assertions are pending." );
+    const std::vector<double> values{ 1.0, 3.0 };
+
+    REQUIRE( mx::math::vectorVariance( values ) == Approx( 2.0 ) );
+    REQUIRE( mx::math::vectorVariance( values, 0.0 ) == Approx( 10.0 ) );
 }
 
-} // namespace unitTest::placeholder::math_vectorUtils_test
+} // namespace unitTest::math_vectorUtils_test
