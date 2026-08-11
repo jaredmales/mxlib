@@ -68,3 +68,26 @@ TEST_CASE( "Verify center of light calculation", "[improc::imageCenterOfLight]" 
         }
     }
 }
+
+/** \brief Verifies masked and unmasked image medians with internal and caller-owned workspaces.
+ *
+ * \ingroup imageUtils_unit_tests
+ */
+TEST_CASE( "imageMedian selects valid image samples", "[improc::imageMedian]" )
+{
+    mx::improc::eigenImage<double> image( 2, 3 );
+    image << 1.0, 9.0, 3.0, 7.0, 5.0, 11.0;
+
+    REQUIRE( mx::improc::imageMedian( image ) == Approx( 6.0 ) );
+
+    std::vector<double> work;
+    REQUIRE( mx::improc::imageMedian( image, &work ) == Approx( 6.0 ) );
+    REQUIRE( work.size() == static_cast<size_t>( image.size() ) );
+
+    Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic> mask( 2, 3 );
+    mask << 1, 0, 0, 0, 1, 1;
+
+    REQUIRE( mx::improc::imageMedian( image, &mask, &work ) == Approx( 5.0 ) );
+    REQUIRE( work.size() == 3 );
+    REQUIRE( mx::improc::imageMedian( image, &mask ) == Approx( 5.0 ) );
+}
