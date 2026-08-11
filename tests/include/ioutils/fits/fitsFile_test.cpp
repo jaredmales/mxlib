@@ -359,6 +359,47 @@ TEST_CASE( "Cube writing and reading", "[ioutils::fits::fitsFile]" )
     }
 }
 
+/// Validate HCI bulk image/header read arguments and later-file failures.
+/**
+ * \ingroup fitsFile_unit_tests
+ */
+TEST_CASE( "Validating HCI batch image and header reads", "[ioutils::fits::fitsFile][hciReduce]" )
+{
+    fitsFile_test<float> fixture;
+    REQUIRE( fixture.writeTestFrame( "/tmp/fitsFile-batch-validation", 1 ) == mx::error_t::noerror );
+
+    const std::vector<std::string> oneFile{ "/tmp/fitsFile-batch-validation1.fits" };
+    fitsFile<float> fitsFile;
+
+    SECTION( "empty file lists are rejected" )
+    {
+        mx::improc::eigenCube<float> cube;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> headers;
+        const std::vector<std::string> noFiles;
+
+        REQUIRE( fitsFile.read( cube, headers, noFiles ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "header vectors must contain one header per input image" )
+    {
+        std::vector<float> data( 1024 * 1024 );
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> headers;
+        REQUIRE( fitsFile.read( data.data(), headers, oneFile ) == mx::error_t::invalidarg );
+
+        mx::improc::eigenCube<float> cube;
+        REQUIRE( fitsFile.read( cube, headers, oneFile ) == mx::error_t::invalidarg );
+    }
+
+    SECTION( "a missing later input file is returned as an error" )
+    {
+        mx::improc::eigenCube<float> cube;
+        std::vector<mx::fits::fitsHeader<mx::verbose::d>> headers( 2 );
+        const std::vector<std::string> files{ oneFile.front(), "/tmp/fitsFile-batch-validation-missing.fits" };
+
+        REQUIRE( fitsFile.read( cube, headers, files ) != mx::error_t::noerror );
+    }
+}
+
 /// Verify hciReduce's float Eigen image and cube writes round-trip with optional FITS headers.
 /** Exercises mx::fits::fitsFile::write Eigen-array overloads with mx::verbose::vv. */
 /**

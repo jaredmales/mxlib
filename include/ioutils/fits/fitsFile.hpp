@@ -1086,6 +1086,12 @@ error_t fitsFile<dataT, verboseT>::read( dataT *im,
         return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Empty file list" );
     }
 
+    if( heads.size() != flist.size() )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                       "Header vector is not the same size as the file list" );
+    }
+
     long sz0 = 0, sz1 = 0;
 
     for( size_t i = 0; i < flist.size(); ++i )
@@ -1330,6 +1336,12 @@ error_t fitsFile<dataT, verboseT>::read( cubeT &cube,
     if( flist.size() == 0 )
     {
         return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "Empty file list" );
+    }
+
+    if( heads && heads->size() != flist.size() )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                       "Header vector is not the same size as the file list" );
     }
 
     // Open the first file to get the dimensions.
