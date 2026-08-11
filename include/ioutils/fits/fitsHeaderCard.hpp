@@ -58,11 +58,6 @@ inline void stripApostWS( std::string &str )
     if( ns != std::string::npos && ns != 0 )
     {
         str.erase( 0, ns );
-
-        if( str.size() == 0 )
-        {
-            return;
-        }
     }
     else if( ns == std::string::npos ) // the rare all spaces
     {
@@ -75,11 +70,6 @@ inline void stripApostWS( std::string &str )
     if( ns != std::string::npos && ns != str.size() - 1 )
     {
         str.erase( ns + 1 );
-
-        if( str.size() == 0 )
-        {
-            return;
-        }
     }
 
     if( str[0] == '\'' && str.back() == '\'' )
@@ -676,7 +666,7 @@ class fitsHeaderCard
 
     //@}
 
-    error_t appendContinue( const fitsHeaderCard & card);
+    error_t appendContinue( const fitsHeaderCard &card );
 
     ///\name Output
     /**
@@ -810,6 +800,11 @@ fitsHeaderCard<verboseT>::fitsHeaderCard( const fitsHeaderCard &card )
 template <class verboseT>
 fitsHeaderCard<verboseT> &fitsHeaderCard<verboseT>::operator=( const fitsHeaderCard &card )
 {
+    if( this == &card )
+    {
+        return *this;
+    }
+
     m_keyword = card.m_keyword;
     m_type = card.m_type;
     memcpy( &m_value, &card.m_value, sizeof( values ) );
@@ -1025,12 +1020,6 @@ error_t fitsHeaderCard<verboseT>::convertedValue( typeT &cval )
 template <class verboseT>
 error_t fitsHeaderCard<verboseT>::convertValue( int newtype )
 {
-    if( !m_valueGood )
-    {
-        m_type = newtype;
-        return error_t::noerror;
-    }
-
     mx::error_t errc;
     switch( newtype )
     {
@@ -1202,11 +1191,15 @@ typeT fitsHeaderCard<verboseT>::valueNonString( mx::error_t &errc )
     if( m_valueGood == false )
     {
         errc = convertFromString<typeT>();
+        if( errc != error_t::noerror )
+        {
+            return typeT{};
+        }
     }
 
     if( m_type != fitsType<typeT>() )
     {
-        typeT val;
+        typeT val{};
         errc = convertedValue<typeT>( val );
         return val;
     }
@@ -1328,7 +1321,7 @@ typeT fitsHeaderCard<verboseT>::value( mx::error_t *errc )
     }
 
     return val;
-}
+} // LCOV_EXCL_LINE
 
 template <class verboseT>
 std::string fitsHeaderCard<verboseT>::String( error_t *errc )
@@ -1496,51 +1489,52 @@ error_t fitsHeaderCard<verboseT>::comment( const std::string &c )
 }
 
 template <class verboseT>
-error_t fitsHeaderCard<verboseT>::appendContinue( const fitsHeaderCard<verboseT> & card)
+error_t fitsHeaderCard<verboseT>::appendContinue( const fitsHeaderCard<verboseT> &card )
 {
-    //Check if m_type is string
-    if(m_type != fitsType<char*>() && m_type != fitsType<std::string>())
+    // Check if m_type is string
+    if( m_type != fitsType<char *>() && m_type != fitsType<std::string>() )
     {
-        return internal::mxlib_error_report<verboseT>(error_t::invalidarg, "attempt to continue a non-string card");
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "attempt to continue a non-string card" );
     }
 
-    //Check if m_valueStrGood is true
-    if(!m_valueStrGood)
+    // Check if m_valueStrGood is true
+    if( !m_valueStrGood )
     {
-        return internal::mxlib_error_report<verboseT>(error_t::invalidconfig, "attempt to continue a card with no value");
+        return internal::mxlib_error_report<verboseT>( error_t::invalidconfig,
+                                                       "attempt to continue a card with no value" );
     }
 
     std::string newstr = card.m_comment;
 
-    //Check if this is the last one
-    size_t slash = newstr.find_last_of('\'');
-    if(slash != std::string::npos)
+    // Check if this is the last one
+    size_t slash = newstr.find_last_of( '\'' );
+    if( slash != std::string::npos )
     {
-        slash = newstr.find_first_of('/', slash);
+        slash = newstr.find_first_of( '/', slash );
 
-        if(slash != std::string::npos)
+        if( slash != std::string::npos )
         {
-            //extract comment
-            size_t comm = newstr.find_first_not_of(' ', slash+1);
-            if(comm != std::string::npos)
+            // extract comment
+            size_t comm = newstr.find_first_not_of( ' ', slash + 1 );
+            if( comm != std::string::npos )
             {
-                m_comment = newstr.substr(comm);
+                m_comment = newstr.substr( comm );
             }
 
-            //and then erase it
-            newstr.erase(slash);
+            // and then erase it
+            newstr.erase( slash );
         }
     }
-    stripApostWS(newstr);
+    stripApostWS( newstr );
 
     // have to remove & if needed
     std::string vstr = m_valueStr.str();
-    if(vstr.back() == '&')
+    if( !vstr.empty() && vstr.back() == '&' )
     {
-        vstr.erase(vstr.size()-1);
+        vstr.erase( vstr.size() - 1 );
     }
 
-    m_valueStr.str(vstr + newstr);
+    m_valueStr.str( vstr + newstr );
 
     return error_t::noerror;
 }

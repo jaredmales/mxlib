@@ -31,9 +31,33 @@ namespace mx
 namespace fits
 {
 
+namespace fitsHeaderDetail
+{
+
+namespace
+{
+
+error_t noMutationFailure( mutation )
+{
+    return error_t::noerror;
+}
+
+} // namespace
+
+mutationHookT &mutationHook()
+{
+    static mutationHookT hook = noMutationFailure;
+    return hook;
+}
+
+void resetMutationHook()
+{
+    mutationHook() = noMutationFailure;
+}
+
+} // namespace fitsHeaderDetail
+
 template class fitsHeader<verbose::d>;
-
-
 
 } // namespace fits
 } // namespace mx

@@ -39,6 +39,33 @@ namespace mx
 namespace fits
 {
 
+namespace fitsHeaderDetail
+{
+
+/** \cond */
+/// Mutation stages exposed to deterministic failure tests.
+enum class mutation
+{
+    appendList,
+    appendMap,
+    insertBeforeList,
+    insertBeforeMap,
+    insertAfterList,
+    insertAfterMap
+};
+
+/// Signature of the resettable mutation hook used by fitsHeader.
+using mutationHookT = error_t ( * )( mutation );
+
+/// Access the process-wide fitsHeader mutation hook.
+mutationHookT &mutationHook();
+
+/// Restore the fitsHeader mutation hook to its production no-op.
+void resetMutationHook();
+/** \endcond */
+
+} // namespace fitsHeaderDetail
+
 /// Class to manage a FITS file metadata header and provide fast access to the cards by keyword
 /** Manages tasks such as insertion (avoiding duplicates), and keyword lookup.
  *
@@ -315,7 +342,13 @@ fitsHeader<verboseT>::headerIteratorT fitsHeader<verboseT>::end()
 template <class verboseT>
 fitsHeader<verboseT>::headerIteratorT fitsHeader<verboseT>::iterator( const std::string &keyword )
 {
-    return m_cardMap.find( keyword )->second;
+    auto mit = m_cardMap.find( keyword );
+    if( mit == m_cardMap.end() )
+    {
+        return m_cardList.end();
+    }
+
+    return mit->second;
 }
 
 template <class verboseT>
@@ -366,51 +399,8 @@ error_t fitsHeader<verboseT>::erase( const std::string &keyword )
 
     headerIteratorT it = mit->second;
 
-    size_t nrmv;
-    try
-    {
-        nrmv = m_cardMap.erase( keyword );
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                "exception thrown erasing " + keyword + ": " + e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
-
-    if( nrmv != 1 )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notfound, "keyword not found:" + keyword );
-    }
-
-    if( it == m_cardList.end() )
-    {
-        return internal::mxlib_error_report<verboseT>( error_t::notfound, "keyword not found in list:" + keyword );
-    }
-
-    try
-    {
-        m_cardList.erase( it ); // this doesn't seem to actually throw but just in case
-                                // unclear how to actually test for an error though...
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                "exception thrown erasing " + keyword + ": " + e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
+    m_cardMap.erase( mit );
+    m_cardList.erase( it );
 
     return error_t::noerror;
 }
@@ -425,46 +415,18 @@ error_t fitsHeader<verboseT>::erase( headerIteratorT it )
 
     std::string keyword = it->keyword();
 
-    mapIteratorT mit = m_cardMap.find( keyword );
-
-    if( mit == m_cardMap.end() )
+    auto range = m_cardMap.equal_range( keyword );
+    mapIteratorT mit;
+    for( mit = range.first; mit != range.second; ++mit )
     {
-        return internal::mxlib_error_report<verboseT>( error_t::notfound, "keyword not found in map:" + keyword );
-    }
-
-    if( keyword == "COMMENT" || keyword == "HISTORY" )
-    {
-        while( mit->second->keyword() == keyword && it->comment() != mit->second->comment() )
+        if( mit->second == it )
         {
-            ++mit;
-        }
-
-        if( mit == m_cardMap.end() )
-        {
-            return internal::mxlib_error_report<verboseT>( error_t::notfound,
-                                                           keyword + " with matching comment not found" );
+            break;
         }
     }
 
     m_cardMap.erase( mit ); // does not throw
-
-    try
-    {
-        m_cardList.erase( it ); // this doesn't seem to actually throw but just in case
-                                // unclear how to actually test for an error though...
-    }
-    catch( const std::exception &e )
-    {
-        internal::mxlib_error_report<verboseT>( error_t::std_exception,
-                                                "exception thrown erasing " + keyword + ": " + e.what() );
-        // clang-format off
-        #if defined( MXLIB_CATCH_ALL_EXCEPTIONS ) || defined( MXLIB_CATCH_NONALLOC_EXCEPTIONS )
-            return error_t::std_exception;
-        #else
-            throw;
-        #endif
-        // clang-format on
-    }
+    m_cardList.erase( it );
 
     return error_t::noerror;
 }
@@ -516,6 +478,12 @@ error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
 {
     if( card.keyword() == "CONTINUE" )
     {
+        if( m_cardList.empty() )
+        {
+            return internal::mxlib_error_report<verboseT>( error_t::invalidarg,
+                                                           "CONTINUE card requires a preceding card" );
+        }
+
         headerIteratorT backIt = m_cardList.end();
         --backIt;
         return backIt->appendContinue( card );
@@ -536,6 +504,12 @@ error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
     // Now insert in list
     try
     {
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::appendList );
+        if( errc != error_t::noerror )
+        {
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
+        }
+
         m_cardList.push_back( card );
         insertedIt = m_cardList.end();
         --insertedIt;
@@ -568,15 +542,18 @@ error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
     // Then add to the Map.
     try
     {
-        auto insres = m_cardMap.insert( cardMapValueT( card.keyword(), insertedIt ) );
-
-        if( insres == m_cardMap.end() )
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::appendMap );
+        if( errc != error_t::noerror )
         {
-            internal::mxlib_error_report<verboseT>( error_t::error, "inserting " + card.keyword() + " failed" );
+            m_cardList.erase( insertedIt );
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
         }
+
+        m_cardMap.insert( cardMapValueT( card.keyword(), insertedIt ) );
     }
     catch( const std::bad_alloc &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -589,6 +566,7 @@ error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
     }
     catch( const std::exception &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_exception,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -606,6 +584,12 @@ error_t fitsHeader<verboseT>::append( const fitsHeaderCard<verboseT> &card )
 template <class verboseT>
 error_t fitsHeader<verboseT>::append( fitsHeader &head )
 {
+    if( this == &head )
+    {
+        fitsHeader copy( head );
+        return append( copy );
+    }
+
     headerIteratorT it;
 
     for( it = head.begin(); it != head.end(); ++it )
@@ -639,7 +623,7 @@ template <class verboseT>
 template <typename typeT>
 error_t fitsHeader<verboseT>::append( const std::string &k, const typeT &v )
 {
-    mxlib_error_return( append( fitsHeaderCard<verboseT>( k, v ) ) );
+    mxlib_error_return( append( fitsHeaderCard<verboseT>( k, v, "" ) ) );
 }
 
 template <class verboseT>
@@ -660,6 +644,12 @@ error_t fitsHeader<verboseT>::insert_before( headerIteratorT it, fitsHeaderCard<
 
     try
     {
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::insertBeforeList );
+        if( errc != error_t::noerror )
+        {
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
+        }
+
         insertedIt = m_cardList.insert( it, card );
     }
     catch( const std::bad_alloc &e )
@@ -690,10 +680,18 @@ error_t fitsHeader<verboseT>::insert_before( headerIteratorT it, fitsHeaderCard<
     // Then add to the Map.
     try
     {
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::insertBeforeMap );
+        if( errc != error_t::noerror )
+        {
+            m_cardList.erase( insertedIt );
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
+        }
+
         m_cardMap.insert( cardMapValueT( card.keyword(), insertedIt ) );
     }
     catch( const std::bad_alloc &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -706,6 +704,7 @@ error_t fitsHeader<verboseT>::insert_before( headerIteratorT it, fitsHeaderCard<
     }
     catch( const std::exception &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_exception,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -731,7 +730,7 @@ template <class verboseT>
 template <typename typeT>
 error_t fitsHeader<verboseT>::insert_before( headerIteratorT it, const std::string &k, typeT v )
 {
-    mxlib_error_return( insert_before( it, fitsHeaderCard<verboseT>( k, v ) ) );
+    mxlib_error_return( insert_before( it, fitsHeaderCard<verboseT>( k, v, "" ) ) );
 }
 
 template <class verboseT>
@@ -744,6 +743,11 @@ error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, const std::strin
 template <class verboseT>
 error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, fitsHeaderCard<verboseT> card )
 {
+    if( it == m_cardList.end() )
+    {
+        return internal::mxlib_error_report<verboseT>( error_t::invalidarg, "invalid list iterator" );
+    }
+
     // First check if duplicate key
     if( m_cardMap.count( card.keyword() ) > 0 )
     {
@@ -759,6 +763,12 @@ error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, fitsHeaderCard<v
 
     try
     {
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::insertAfterList );
+        if( errc != error_t::noerror )
+        {
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
+        }
+
         insertedIt = m_cardList.insert( ++it, card );
     }
     catch( const std::bad_alloc &e )
@@ -789,10 +799,18 @@ error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, fitsHeaderCard<v
     // Then add to the Map.
     try
     {
+        error_t errc = fitsHeaderDetail::mutationHook()( fitsHeaderDetail::mutation::insertAfterMap );
+        if( errc != error_t::noerror )
+        {
+            m_cardList.erase( insertedIt );
+            return internal::mxlib_error_report<verboseT>( errc, "inserting " + card.keyword() );
+        }
+
         m_cardMap.insert( cardMapValueT( card.keyword(), insertedIt ) );
     }
     catch( const std::bad_alloc &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_bad_alloc,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -805,6 +823,7 @@ error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, fitsHeaderCard<v
     }
     catch( const std::exception &e )
     {
+        m_cardList.erase( insertedIt );
         internal::mxlib_error_report<verboseT>( error_t::std_exception,
                                                 "inserting " + card.keyword() + " :" + e.what() );
         // clang-format off
@@ -823,7 +842,7 @@ template <class verboseT>
 template <typename typeT>
 error_t fitsHeader<verboseT>::insert_after( headerIteratorT it, const std::string &k, typeT v )
 {
-    mxlib_error_return( insert_after( it, fitsHeaderCard<verboseT>( k, v ) ) );
+    mxlib_error_return( insert_after( it, fitsHeaderCard<verboseT>( k, v, "" ) ) );
 }
 
 template <class verboseT>
@@ -846,11 +865,6 @@ fitsHeaderCard<verboseT> &fitsHeader<verboseT>::operator[]( const std::string &k
 
         // have to do new search
         mit = m_cardMap.find( keyword );
-        if( mit == m_cardMap.end() )
-        {
-            internal::mxlib_error_report<verboseT>( error_t::notfound, "after appending " + keyword );
-            return m_emptyCard;
-        }
     }
 
     it = mit->second;
