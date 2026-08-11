@@ -77,6 +77,32 @@ TEST_CASE( "Test functionality of headersToValues", "[ioutils::fits::fitsHeader]
     }
 }
 
+/** \brief Verifies metadata, repeated provenance cards, and copied headers used by HCI output writers.
+ *
+ * \ingroup fitsHeader_unit_tests
+ */
+TEST_CASE( "Appending HCI-style FITS provenance", "[ioutils::fits::fitsHeader][hciReduce]" )
+{
+    fitsHeader<mx::verbose::vv> header;
+    REQUIRE( header.append( "MJD", 60000.25, "coadd midpoint" ) == mx::error_t::noerror );
+    REQUIRE( header.append( "QFILE", "quality.dat", "quality file" ) == mx::error_t::noerror );
+    REQUIRE( header.append( "", fitsCommentType(), "HCI parameters" ) == mx::error_t::noerror );
+    REQUIRE( header.append( "", fitsCommentType(), "HCI parameters continued" ) == mx::error_t::noerror );
+    REQUIRE( header.append( "HISTORY", fitsHistoryType(), "coadded frame001.fits" ) == mx::error_t::noerror );
+    REQUIRE( header.append( "HISTORY", fitsHistoryType(), "coadded frame002.fits" ) == mx::error_t::noerror );
+
+    fitsHeader<mx::verbose::vv> source;
+    REQUIRE( source.append( "ORIGIN", "hciReduce", "producer" ) == mx::error_t::noerror );
+    REQUIRE( header.append( source ) == mx::error_t::noerror );
+
+    REQUIRE( header.size() == 7 );
+    REQUIRE( header["MJD"].value<double>() == 60000.25 );
+    REQUIRE( header["QFILE"].String() == "quality.dat" );
+    REQUIRE( header["ORIGIN"].String() == "hciReduce" );
+    REQUIRE( header.append( "MJD", 60001.0, "duplicate" ) == mx::error_t::invalidarg );
+    REQUIRE( header.size() == 7 );
+}
+
 } // namespace fitsHeaderTest
 } // namespace fitsTest
 } // namespace unitTest
