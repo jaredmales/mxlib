@@ -226,3 +226,45 @@ TEST_CASE( "annulusIndices selects bounded and masked HCI regions", "[improc::im
     REQUIRE_FALSE( wrapped.empty() );
     REQUIRE( wrapped.size() < clipped.size() );
 }
+
+/** \brief Verifies cutImageRegion and insertImageRegion preserve indexed pixel order and resize policy.
+ *
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "Image regions are cut and inserted by linear index", "[improc::imageMasks][imageRegion]" )
+{
+    mx::improc::eigenImage<double> image( 3, 4 );
+    for( Eigen::Index index = 0; index < image.size(); ++index )
+    {
+        image( index ) = static_cast<double>( 10 + index );
+    }
+    const std::vector<size_t> indices{ 0, 5, 11 };
+
+    mx::improc::eigenImage<double> cut;
+    mx::improc::cutImageRegion( cut, image, indices );
+    REQUIRE( cut.rows() == 3 );
+    REQUIRE( cut.cols() == 1 );
+    REQUIRE( cut( 0 ) == Approx( 10 ) );
+    REQUIRE( cut( 1 ) == Approx( 15 ) );
+    REQUIRE( cut( 2 ) == Approx( 21 ) );
+
+    mx::improc::eigenImage<double> preallocated( 3, 1 );
+    preallocated.setConstant( -1 );
+    mx::improc::cutImageRegion( preallocated, image, indices, false );
+    REQUIRE( preallocated.isApprox( cut ) );
+
+    mx::improc::eigenImage<double> inserted( image.size(), 1 );
+    inserted.setConstant( -1 );
+    auto insertedView = inserted.block( 0, 0, inserted.rows(), 1 );
+    mx::improc::insertImageRegion( insertedView, cut, indices );
+    REQUIRE( inserted( 0 ) == Approx( 10 ) );
+    REQUIRE( inserted( 5 ) == Approx( 15 ) );
+    REQUIRE( inserted( 11 ) == Approx( 21 ) );
+    REQUIRE( inserted( 1 ) == Approx( -1 ) );
+
+    mx::improc::cutImageRegion( cut, image, {} );
+    REQUIRE( cut.rows() == 0 );
+    REQUIRE( cut.cols() == 1 );
+    mx::improc::insertImageRegion( insertedView, cut, {} );
+    REQUIRE( inserted( 0 ) == Approx( 10 ) );
+}
