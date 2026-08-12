@@ -126,6 +126,19 @@ TEST_CASE( "azBoxKernel is finite at centers and neighboring pixels", "[improc::
         REQUIRE( kernel.cols() == 4 );
     }
 
+    SECTION( "an angular limit retains an exact-center sample" )
+    {
+        typedef mx::improc::azBoxKernel<mx::improc::eigenImage<double>, 2, mx::verbose::o> kernelT;
+        kernelT kernelGenerator( 1.0, 2.0, 30.0 );
+        mx::improc::eigenImage<double> kernel;
+
+        REQUIRE( kernelGenerator.setKernel( 0.0, 0.0, kernel ) == mx::error_t::noerror );
+        requireFiniteNormalized( kernel );
+        REQUIRE( kernel.rows() % 2 == 1 );
+        REQUIRE( kernel.cols() % 2 == 1 );
+        REQUIRE( kernel( kernel.rows() / 2, kernel.cols() / 2 ) > 0 );
+    }
+
     SECTION( "an odd kernel includes its finite center sample" )
     {
         typedef mx::improc::azBoxKernel<mx::improc::eigenImage<double>, 1, mx::verbose::o> kernelT;

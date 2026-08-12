@@ -267,8 +267,22 @@ struct azBoxKernel
                                                            "kernel dimensions exceed the supported size" );
         }
 
-        const int w = static_cast<int>( width );
-        const int h = static_cast<int>( height );
+        int w = static_cast<int>( width );
+        int h = static_cast<int>( height );
+
+        // At the exact center, retain an integral sample on the positive x-axis so any valid angular limit has
+        // non-empty support. Increasing an even dimension by one does not change its integer half-width.
+        if( m_maxAz > 0 && rad0 == 0 )
+        {
+            if( w % 2 == 0 )
+            {
+                ++w;
+            }
+            if( h % 2 == 0 )
+            {
+                ++h;
+            }
+        }
 
         if( w / 2 > m_maxWidth )
         {
