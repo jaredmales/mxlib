@@ -270,9 +270,9 @@ struct azBoxKernel
         int w = static_cast<int>( width );
         int h = static_cast<int>( height );
 
-        // At the exact center, retain an integral sample on the positive x-axis so any valid angular limit has
-        // non-empty support. Increasing an even dimension by one does not change its integer half-width.
-        if( m_maxAz > 0 && rad0 == 0 )
+        // Retain the output pixel itself so any valid angular limit has non-empty support. Increasing an even
+        // dimension by one does not change its integer half-width.
+        if( m_maxAz > 0 )
         {
             if( w % 2 == 0 )
             {
