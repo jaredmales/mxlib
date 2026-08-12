@@ -143,12 +143,25 @@ lists the `mxlib` specific options that can be passed to `cmake` .
 <tr><td>MXLIB_CXXFLAGS       <td>string   <td>-march=native -mfma -DNDEBUG    <td>mxlib c++ compiler flags
 <tr><td>MXLIB_OPTIMIZE       <td>string   <td>-O3 --fast-math                 <td>mxlib optimization settings
 <tr><td>MXLIB_DEFINES        <td>string   <td>-D_XOPEN_SOURCE=700             <td>mxlib compiler command line defines
+<tr><td>MXLIB_INVALID_NUMBER_VALUE <td>string <td>empty (quiet NaN)            <td>finite invalid-pixel override exported to consumers
 <tr><td>MXLIB_USE_OPENMP     <td>bool     <td>ON                              <td>Whether or not to use OpenMP in `mxlib` and other libraries
 <tr><td>MXLIB_USE_CUDA       <td>bool     <td>ON                              <td>Whether or not to use CUDA library for mxlib
 <tr><td>MXLIB_USE_ISIO       <td>bool     <td>ON                              <td>Whether or not to use the ImageStreamIO library for mxlib
 <tr><td>MXLIB_USE_FFT_FROM   <td>string   <td>fftw                            <td>Which library to use for the FFT interface in mxlib
 <tr><td>MXLIB_USE_BLAS_FROM  <td>string   <td>openblas                        <td>Which library to use for BLAS and Lapack in mxlib.  Supported choicess: mkl, openblas.
 </table>
+
+By default, `mx::improc::invalidNumber<T>()` returns a quiet NaN. This preserves invalid pixels in a form understood by
+FITS and common image-display tools. Its classification uses mxlib's fast-math-safe floating-point utilities. A build
+that requires a finite sentinel can select one explicitly:
+
+\code{.bash}
+cmake -S . -B _build -DMXLIB_INVALID_NUMBER_VALUE=-3e38
+\endcode
+
+Because the setting affects a header-defined public API, the generated `mxlib.pc` exports the corresponding compile
+definition to pkg-config consumers. Applications that do not use the installed metadata must compile all mxlib-using
+translation units with the same `MXLIB_INVALID_NUMBER_VALUE` definition.
 
 \subsection blas_config Configuring BLAS
 

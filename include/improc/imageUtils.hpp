@@ -28,6 +28,8 @@
 #define improc_imageUtils_hpp
 
 #include <cmath>
+#include <limits>
+#include <type_traits>
 
 #include "../math/floatUtils.hpp"
 
@@ -72,20 +74,41 @@ realT imCenY( const imT &im /**< [in] the image to find the center of */ )
  *@{
  */
 
-template <typename T>
-constexpr T invalidNumber()
+/// Return the configured invalid image-pixel value.
+/** The default is a quiet NaN so FITS and image-display tools recognize invalid pixels. Defining
+ * `MXLIB_INVALID_NUMBER_VALUE` at compile time selects that finite value instead. CMake propagates its
+ * `MXLIB_INVALID_NUMBER_VALUE` cache setting through the installed pkg-config metadata.
+ *
+ * \returns the invalid-pixel value for `realT`
+ */
+template <typename realT>
+constexpr realT invalidNumber()
 {
-    return -3e38;
+    static_assert( std::is_floating_point_v<realT>, "invalidNumber requires a floating-point type" );
+
+#ifdef MXLIB_INVALID_NUMBER_VALUE
+    return static_cast<realT>( MXLIB_INVALID_NUMBER_VALUE );
+#else
+    return std::numeric_limits<realT>::quiet_NaN();
+#endif
 }
 
 /// Check whether a value represents an invalid image pixel.
-/** Detects the mxlib invalid-number sentinel as well as NaN and positive or negative infinity.
+/** Detects the configured mxlib invalid-number value as well as NaN and positive or negative infinity. The
+ * non-finite classification remains reliable under finite-math-only optimization.
  *
  * \returns true if value is invalid, otherwise false.
  */
-inline bool isInvalidPixel( float value /**< [in] value to test */ )
+template <typename realT>
+bool isInvalidPixel( realT value /**< [in] value to test */ )
 {
-    return value == invalidNumber<float>() || !math::isFinite( value );
+    static_assert( std::is_floating_point_v<realT>, "isInvalidPixel requires a floating-point type" );
+
+#ifdef MXLIB_INVALID_NUMBER_VALUE
+    return value == invalidNumber<realT>() || !math::isFinite( value );
+#else
+    return !math::isFinite( value );
+#endif
 }
 
 /// Reflect pixel coordinates across the given center pixel.

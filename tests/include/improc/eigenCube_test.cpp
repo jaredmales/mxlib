@@ -53,8 +53,7 @@ TEST_CASE( "Masked eigenCube means use an inclusive good-pixel threshold", "[imp
     REQUIRE( result( 0, 0 ) == 3.0 );
 
     cube.mean( result, mask, 0.51 );
-    REQUIRE( result( 0, 0 ) == mx::improc::invalidNumber<double>() );
-    REQUIRE( result( 0, 0 ) != static_cast<double>( mx::improc::invalidNumber<float>() ) );
+    REQUIRE( mx::improc::isInvalidPixel( result( 0, 0 ) ) );
 
     std::vector<double> weights{ 1.0, 3.0, 5.0, 7.0 };
     cube.mean( result, weights, mask, 0.5 );
@@ -62,7 +61,7 @@ TEST_CASE( "Masked eigenCube means use an inclusive good-pixel threshold", "[imp
 
     mask.setZero();
     cube.mean( result, mask, 0.0 );
-    REQUIRE( result( 0, 0 ) == mx::improc::invalidNumber<double>() );
+    REQUIRE( mx::improc::isInvalidPixel( result( 0, 0 ) ) );
 
     mask.image( 0 )( 0, 0 ) = 1;
     cube.mean( result, mask, 0.0 );
@@ -133,11 +132,11 @@ TEST_CASE( "Masked eigenCube median honors its mask and threshold", "[improc::ei
     REQUIRE( result( 0, 0 ) == 3.0 );
 
     cube.median( result, mask, 0.5001 );
-    REQUIRE( result( 0, 0 ) == mx::improc::invalidNumber<double>() );
+    REQUIRE( mx::improc::isInvalidPixel( result( 0, 0 ) ) );
 
     mask.setZero();
     cube.median( result, mask, 0.0 );
-    REQUIRE( result( 0, 0 ) == mx::improc::invalidNumber<double>() );
+    REQUIRE( mx::improc::isInvalidPixel( result( 0, 0 ) ) );
 
     for( int plane = 0; plane < mask.planes(); ++plane )
     {
@@ -177,7 +176,7 @@ TEST_CASE( "Masked eigenCube sigma means use an inclusive good-pixel threshold",
     REQUIRE( result( 0, 0 ) == 3.5 );
 
     cube.sigmaMean( result, mask, 100.0, 0.51 );
-    REQUIRE( result( 0, 0 ) == mx::improc::invalidNumber<double>() );
+    REQUIRE( mx::improc::isInvalidPixel( result( 0, 0 ) ) );
 }
 
 /// Verify masked combinations reject invalid masks, weights, and good-pixel thresholds.

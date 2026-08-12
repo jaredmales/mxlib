@@ -14,8 +14,8 @@
 #include "../../../include/improc/imageUtils.hpp"
 #include "../../../include/improc/eigenCube.hpp"
 
-/// Verify image invalid-pixel classification for the sentinel and nonfinite values.
-/** Preserves the established invalid-pixel contract. */
+/// Verify image invalid-pixel generation and classification for floating-point values.
+/** Exercises the default NaN contract or a configured finite override, plus nonfinite classification. */
 /**
  * \ingroup imageUtils_unit_tests
  */
@@ -23,9 +23,19 @@ TEST_CASE( "Image invalid-pixel detection handles sentinel and nonfinite values"
 {
     REQUIRE_FALSE( mx::improc::isInvalidPixel( 0.0F ) );
     REQUIRE( mx::improc::isInvalidPixel( std::numeric_limits<float>::quiet_NaN() ) );
+    REQUIRE( mx::improc::isInvalidPixel( std::numeric_limits<double>::quiet_NaN() ) );
     REQUIRE( mx::improc::isInvalidPixel( std::numeric_limits<float>::infinity() ) );
     REQUIRE( mx::improc::isInvalidPixel( -std::numeric_limits<float>::infinity() ) );
     REQUIRE( mx::improc::isInvalidPixel( mx::improc::invalidNumber<float>() ) );
+    REQUIRE( mx::improc::isInvalidPixel( mx::improc::invalidNumber<double>() ) );
+
+#ifdef MXLIB_INVALID_NUMBER_VALUE
+    REQUIRE( mx::improc::invalidNumber<float>() == static_cast<float>( MXLIB_INVALID_NUMBER_VALUE ) );
+    REQUIRE( mx::improc::invalidNumber<double>() == static_cast<double>( MXLIB_INVALID_NUMBER_VALUE ) );
+#else
+    REQUIRE( mx::math::isNan( mx::improc::invalidNumber<float>() ) );
+    REQUIRE( mx::math::isNan( mx::improc::invalidNumber<double>() ) );
+#endif
 }
 
 /** centroiding Gaussians with center of light

@@ -212,6 +212,9 @@ set(MXLIB_OPTIMIZE "-O3 --fast-math" CACHE STRING "mxlib optimization settings")
 
 set(MXLIB_DEFINES "_XOPEN_SOURCE=700" CACHE STRING "mxlib compiler command line defines")
 
+set(MXLIB_INVALID_NUMBER_VALUE "" CACHE STRING
+    "Finite invalid-pixel sentinel; leave empty to use quiet NaN")
+
 option(MXLIB_USE_OPENMP "Whether or not to use OpenMP in mxlib and other libraries" ON )
 
 option(MXLIB_USE_CUDA  "Whether or not to use CUDA library for mxlib" ON)
@@ -430,12 +433,20 @@ install(TARGETS mxlib-shared mxlib-static
 
 add_compile_definitions(${MXLIB_DEFINES})
 
+if(NOT MXLIB_INVALID_NUMBER_VALUE STREQUAL "")
+    add_compile_definitions(MXLIB_INVALID_NUMBER_VALUE=${MXLIB_INVALID_NUMBER_VALUE})
+endif()
+
 set(CMAKE_C_FLAGS "${MXLIB_CVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${MXLIB_CXXVERSION} ${MXLIB_OPTIMIZE} ${MXLIB_CXXFLAGS}")
 
 # Consumers need the language level and public definitions, but mxlib's
 # optimization and host-architecture policy must remain private to mxlib.
 set(MXLIB_PC_CFLAGS "${MXLIB_PC_CFLAGS} ${MXLIB_CXXVERSION} -D${MXLIB_DEFINES}")
+if(NOT MXLIB_INVALID_NUMBER_VALUE STREQUAL "")
+    set(MXLIB_PC_CFLAGS
+        "${MXLIB_PC_CFLAGS} -DMXLIB_INVALID_NUMBER_VALUE=${MXLIB_INVALID_NUMBER_VALUE}")
+endif()
 
 if(MXLIB_BUILD_COVERAGE)
     if(NOT CMAKE_C_COMPILER_ID STREQUAL "GNU" OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
