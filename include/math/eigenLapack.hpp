@@ -32,7 +32,10 @@
 #pragma GCC system_header
 #include <Eigen/Dense>
 
+#include <cstddef>
 #include <cmath>
+#include <cstdlib>
+#include <limits>
 
 #include "floatUtils.hpp"
 #include "templateBLAS.hpp"
@@ -48,6 +51,170 @@ namespace mx
 {
 namespace math
 {
+
+/// \cond eigenLapack_test_detail
+namespace detail
+{
+
+/// Test-only injection points for deterministic eigensolver failure coverage.
+/** Production code must leave both hooks null so the normal allocator and LAPACK wrapper are used.
+ */
+template <typename floatT>
+struct eigenLapackTestHooks
+{
+    /// Malloc-compatible allocation function used by workspace-growth tests.
+    using allocatorT = void *(*)( std::size_t );
+
+    /// Function signature of the LAPACK SYEVR wrapper.
+    using solverT = MXLAPACK_INT ( * )( char,
+                                        char,
+                                        char,
+                                        MXLAPACK_INT,
+                                        floatT *,
+                                        MXLAPACK_INT,
+                                        floatT,
+                                        floatT,
+                                        MXLAPACK_INT,
+                                        MXLAPACK_INT,
+                                        floatT,
+                                        MXLAPACK_INT *,
+                                        floatT *,
+                                        floatT *,
+                                        MXLAPACK_INT,
+                                        MXLAPACK_INT *,
+                                        floatT *,
+                                        MXLAPACK_INT,
+                                        MXLAPACK_INT *,
+                                        MXLAPACK_INT );
+
+    /// Optional malloc-compatible test allocator; null selects `::malloc`.
+    static inline allocatorT allocator{ nullptr };
+
+    /// Optional test eigensolver; null selects `math::syevr<floatT>`.
+    static inline solverT solver{ nullptr };
+};
+
+/// Allocate or grow a SYEVR workspace buffer without discarding a usable buffer on failure.
+template <typename floatT, typename itemT>
+bool resizeSyevrBuffer( itemT *&buffer,         /**< [in,out] workspace buffer */
+                        MXLAPACK_INT &capacity, /**< [in,out] current item capacity */
+                        MXLAPACK_INT requestedItems /**< [in] required item capacity */ )
+{
+    if( capacity >= requestedItems )
+    {
+        return true;
+    }
+
+    void *rawBuffer{ nullptr };
+    if( eigenLapackTestHooks<floatT>::allocator )
+    {
+        rawBuffer = eigenLapackTestHooks<floatT>::allocator( requestedItems * sizeof( itemT ) );
+    }
+    else
+    {
+        rawBuffer = ::malloc( requestedItems * sizeof( itemT ) );
+    }
+
+    if( rawBuffer == nullptr )
+    {
+        return false;
+    }
+
+    if( buffer )
+    {
+        ::free( buffer );
+    }
+
+    buffer = static_cast<itemT *>( rawBuffer );
+    capacity = requestedItems;
+    return true;
+}
+
+/// Release a SYEVR workspace buffer and reset its ownership state.
+template <typename itemT>
+void releaseSyevrBuffer( itemT *&buffer, /**< [in,out] workspace buffer */
+                         MXLAPACK_INT &capacity /**< [out] reset item capacity */ )
+{
+    if( buffer )
+    {
+        ::free( buffer );
+    }
+
+    buffer = nullptr;
+    capacity = 0;
+}
+
+/// Invoke the injected test eigensolver or the production LAPACK wrapper.
+template <typename floatT>
+MXLAPACK_INT callSyevr( char JOBZ,            /**< [in] eigenvector request */
+                        char RANGE,           /**< [in] eigenvalue selection mode */
+                        char UPLO,            /**< [in] populated input triangle */
+                        MXLAPACK_INT N,       /**< [in] matrix order */
+                        floatT *A,            /**< [in,out] input matrix */
+                        MXLAPACK_INT LDA,     /**< [in] input leading dimension */
+                        floatT VL,            /**< [in] lower value bound */
+                        floatT VU,            /**< [in] upper value bound */
+                        MXLAPACK_INT IL,      /**< [in] one-based lower index */
+                        MXLAPACK_INT IU,      /**< [in] one-based upper index */
+                        floatT ABSTOL,        /**< [in] convergence tolerance */
+                        MXLAPACK_INT *M,      /**< [out] selected eigenvalue count */
+                        floatT *W,            /**< [out] eigenvalues */
+                        floatT *Z,            /**< [out] eigenvectors */
+                        MXLAPACK_INT LDZ,     /**< [in] eigenvector leading dimension */
+                        MXLAPACK_INT *ISUPPZ, /**< [out] eigenvector support */
+                        floatT *WORK,         /**< [in,out] floating workspace */
+                        MXLAPACK_INT LWORK,   /**< [in] floating workspace size */
+                        MXLAPACK_INT *IWORK,  /**< [in,out] integer workspace */
+                        MXLAPACK_INT LIWORK /**< [in] integer workspace size */ )
+{
+    if( eigenLapackTestHooks<floatT>::solver )
+    {
+        return eigenLapackTestHooks<floatT>::solver( JOBZ,
+                                                     RANGE,
+                                                     UPLO,
+                                                     N,
+                                                     A,
+                                                     LDA,
+                                                     VL,
+                                                     VU,
+                                                     IL,
+                                                     IU,
+                                                     ABSTOL,
+                                                     M,
+                                                     W,
+                                                     Z,
+                                                     LDZ,
+                                                     ISUPPZ,
+                                                     WORK,
+                                                     LWORK,
+                                                     IWORK,
+                                                     LIWORK );
+    }
+
+    return math::syevr<floatT>( JOBZ,
+                                RANGE,
+                                UPLO,
+                                N,
+                                A,
+                                LDA,
+                                VL,
+                                VU,
+                                IL,
+                                IU,
+                                ABSTOL,
+                                M,
+                                W,
+                                Z,
+                                LDZ,
+                                ISUPPZ,
+                                WORK,
+                                LWORK,
+                                IWORK,
+                                LIWORK );
+}
+
+} // namespace detail
+/// \endcond
 
 /// Calculates the lower triangular part of the covariance matrix of ims.
 /** Uses cblas_ssyrk.  cv is resized to ims.cols() X ims.cols().
@@ -86,93 +253,89 @@ void eigenSYRK( eigenT1 &cv,       ///< [out] is the eigen matrix/array where to
 template <typename floatT>
 struct syevrMem
 {
+    /// Triangle selection associated with the cached workspace query.
     char UPLO{ 'L' };
+
+    /// Matrix order associated with the cached workspace query.
     MXLAPACK_INT n{ 0 };
+
+    /// Eigenvalue-range selection associated with the cached workspace query.
     char RANGE{ 'A' };
+
+    /// Number of eigenvalues reported by the most recent workspace query.
     MXLAPACK_INT numeig{ 0 };
+
+    /// One-based lower eigenvalue index associated with the cached workspace query.
     MXLAPACK_INT IL{ 0 };
+
+    /// One-based upper eigenvalue index associated with the cached workspace query.
     MXLAPACK_INT IU{ 0 };
 
+    /// Capacity of the eigenvector-support workspace.
     MXLAPACK_INT sizeISuppZ{ 0 };
+
+    /// Capacity of the minimum floating-point query workspace.
     MXLAPACK_INT sizeMinWork{ 0 };
+
+    /// Capacity of the optimized floating-point workspace.
     MXLAPACK_INT sizeWork{ 0 };
+
+    /// Capacity of the minimum integer query workspace.
     MXLAPACK_INT sizeMinIWork{ 0 };
+
+    /// Capacity of the optimized integer workspace.
     MXLAPACK_INT sizeIWork{ 0 };
 
+    /// LAPACK eigenvector-support workspace owned by this object.
     MXLAPACK_INT *iSuppZ{ nullptr };
 
+    /// Minimum floating-point workspace used for LAPACK size queries.
     floatT *minWork{ nullptr };
+
+    /// Optimized floating-point LAPACK workspace owned by this object.
     floatT *work{ nullptr };
 
+    /// Minimum integer workspace used for LAPACK size queries.
     MXLAPACK_INT *minIWork{ nullptr };
+
+    /// Optimized integer LAPACK workspace owned by this object.
     MXLAPACK_INT *iWork{ nullptr };
 
-    // Working memory for the higher level ev calc routines
-    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> cvd, evecsd, evalsd;
+    /// Calculation-type covariance storage used by higher-level eigensolver helpers.
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> cvd;
 
+    /// Calculation-type eigenvector storage used by higher-level eigensolver helpers.
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> evecsd;
+
+    /// Calculation-type eigenvalue storage used by higher-level eigensolver helpers.
+    Eigen::Array<floatT, Eigen::Dynamic, Eigen::Dynamic> evalsd;
+
+    /// Construct an empty reusable SYEVR workspace.
     syevrMem()
     {
     }
 
+    /// Release every allocation owned by this workspace.
     ~syevrMem()
     {
-        if( iSuppZ )
-        {
-            ::free( iSuppZ );
-        }
-
-        if( minWork )
-        {
-            ::free( minWork );
-        }
-
-        if( work )
-        {
-            ::free( work );
-        }
-
-        if( minIWork )
-        {
-            ::free( minIWork );
-        }
-
-        if( iWork )
-        {
-            ::free( iWork );
-        }
+        free();
     }
 
+    /// Release all workspace allocations and reset the cached LAPACK configuration.
     void free()
     {
-        if( iSuppZ )
-        {
-            ::free( iSuppZ );
-        }
-        sizeISuppZ = 0;
+        detail::releaseSyevrBuffer( iSuppZ, sizeISuppZ );
+        detail::releaseSyevrBuffer( minWork, sizeMinWork );
+        detail::releaseSyevrBuffer( work, sizeWork );
+        detail::releaseSyevrBuffer( minIWork, sizeMinIWork );
+        detail::releaseSyevrBuffer( iWork, sizeIWork );
 
-        if( minWork )
-        {
-            ::free( minWork );
-        }
-        sizeMinWork = 0;
-
-        if( work )
-        {
-            ::free( work );
-        }
-        sizeWork = 0;
-
-        if( minIWork )
-        {
-            ::free( minIWork );
-        }
-        sizeMinIWork = 0;
-
-        if( iWork )
-        {
-            ::free( iWork );
-        }
-        sizeIWork = 0;
+        UPLO = 'L';
+        n = 0;
+        RANGE = 'A';
+        numeig = 0;
+        IL = 0;
+        IU = 0;
     }
 };
 
@@ -181,6 +344,7 @@ struct syevrMem
  *
  * \tparam arrT is the eigen-like type containing the data
  *
+ * \returns -1 for invalid matrix/range geometry or invalid workspace-query results.
  * \returns -1000 on an malloc allocation error.
  * \returns the return code from syevr (info) otherwise.
  *
@@ -193,9 +357,8 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
                                                      or lower (default) triangular*/
                          int ev0 = 0,     /**< [in] [opt] is the first desired eigenvalue
                                                           (default = 0)*/
-                         int ev1 = -1,    /**< [in] [opt] if >= ev0 then this is the last desired
-                                                          eigenvalue. If -1 all eigenvalues are
-                                                          returned.*/
+                         int ev1 = -1,    /**< [in] [opt] exclusive upper bound of the desired eigenvalue indices.
+                                                          If -1 all eigenvalues are returned.*/
                          char UPLO = 'L', /**< [in] [opt] specifies whether X is upper ('U')
                                                           or lower ('L') triangular.
                                                           Default is ('L').*/
@@ -210,6 +373,17 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
     MXLAPACK_INT info;
     char RANGE = 'A';
 
+    MXLAPACK_INT n = X.rows();
+    if( n <= 0 || X.cols() != n )
+    {
+        return -1;
+    }
+
+    if( ev1 < -1 || ( ev1 != -1 && ( ev0 < 0 || ev0 >= ev1 || ev1 > n ) ) )
+    {
+        return -1;
+    }
+
     MXLAPACK_INT localMem = 0;
 
     if( mem == 0 )
@@ -218,11 +392,9 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
         localMem = 1;
     }
 
-    MXLAPACK_INT n = X.rows();
-
     MXLAPACK_INT IL = 1;
     MXLAPACK_INT IU = n;
-    if( ev0 >= 0 && ev1 >= ev0 )
+    if( ev1 != -1 )
     {
         RANGE = 'I';
         IL = ev0 + 1; // This is FORTRAN, after all
@@ -234,70 +406,39 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
 
     if( UPLO != mem->UPLO || n != mem->n || RANGE != mem->RANGE || mem->IL != IL || mem->IU != IU )
     {
-        if( mem->sizeISuppZ < 2 * n )
+        if( !detail::resizeSyevrBuffer<calcT>( mem->iSuppZ, mem->sizeISuppZ, 2 * n ) ||
+            !detail::resizeSyevrBuffer<calcT>( mem->minWork, mem->sizeMinWork, 26 * n ) ||
+            !detail::resizeSyevrBuffer<calcT>( mem->minIWork, mem->sizeMinIWork, 10 * n ) )
         {
-            if( mem->iSuppZ )
+            internal::mxlib_error_report( error_t::allocerr, "malloc failed in eigenSYEVR." );
+            if( localMem )
             {
-                free( mem->iSuppZ );
+                delete mem;
             }
-
-            mem->sizeISuppZ = 2 * n;
-            mem->iSuppZ = (MXLAPACK_INT *)malloc( mem->sizeISuppZ * sizeof( MXLAPACK_INT ) );
-
-            if( mem->iSuppZ == NULL )
-            {
-                internal::mxlib_error_report( error_t::allocerr, "malloc failed in eigenSYEVR." );
-                if( localMem )
-                {
-                    delete mem;
-                }
-                return -1000;
-            }
-        }
-
-        //  Allocate minimum allowed sizes for workspace
-        if( mem->sizeMinWork < 26 * n )
-        {
-            if( mem->minWork )
-            {
-                free( mem->minWork );
-            }
-            mem->sizeMinWork = 26 * n;
-            mem->minWork = (calcT *)malloc( mem->sizeMinWork * sizeof( calcT ) );
-        }
-
-        // MXLAPACK_INT sizeIWork = 10 * n;
-        if( mem->sizeMinIWork < 10 * n )
-        {
-            if( mem->minIWork )
-            {
-                free( mem->minIWork );
-            }
-            mem->sizeMinIWork = 10 * n;
-            mem->minIWork = (MXLAPACK_INT *)malloc( mem->sizeMinIWork * sizeof( MXLAPACK_INT ) );
+            return -1000;
         }
 
         //  Query for optimum sizes for workspace
-        info = math::syevr<calcT>( 'V',
-                                   RANGE,
-                                   UPLO,
-                                   n,
-                                   X.data(),
-                                   n,
-                                   0,
-                                   0,
-                                   IL,
-                                   IU,
-                                   math::lamch<calcT>( 'S' ),
-                                   &numeig,
-                                   eigval.data(),
-                                   eigvec.data(),
-                                   n,
-                                   mem->iSuppZ,
-                                   mem->minWork,
-                                   -1,
-                                   mem->minIWork,
-                                   -1 );
+        info = detail::callSyevr<calcT>( 'V',
+                                         RANGE,
+                                         UPLO,
+                                         n,
+                                         X.data(),
+                                         n,
+                                         0,
+                                         0,
+                                         IL,
+                                         IU,
+                                         math::lamch<calcT>( 'S' ),
+                                         &numeig,
+                                         eigval.data(),
+                                         eigvec.data(),
+                                         n,
+                                         mem->iSuppZ,
+                                         mem->minWork,
+                                         -1,
+                                         mem->minIWork,
+                                         -1 );
 
         if( info != 0 )
         {
@@ -310,32 +451,24 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
             return info;
         }
 
-        // Now allocate optimum sizes
-        /* -- tested increasing by x10, didn't improve performance at all
-         */
-        if( mem->sizeWork < ( (MXLAPACK_INT)mem->minWork[0] ) * ( 1 ) )
+        const calcT queriedWork = mem->minWork[0];
+        const MXLAPACK_INT requestedIWork = mem->minIWork[0];
+        if( !math::isFinite( queriedWork ) || queriedWork < 1 ||
+            static_cast<long double>( queriedWork ) >
+                static_cast<long double>( std::numeric_limits<MXLAPACK_INT>::max() ) ||
+            requestedIWork < 1 )
         {
-            if( mem->work )
+            internal::mxlib_error_report( error_t::lapackerr, "invalid workspace sizes returned by SYEVR query" );
+            if( localMem )
             {
-                free( mem->work );
+                delete mem;
             }
-
-            mem->sizeWork = ( (MXLAPACK_INT)mem->minWork[0] ) * 1;
-            mem->work = (calcT *)malloc( ( mem->sizeWork ) * sizeof( calcT ) );
+            return -1;
         }
 
-        if( mem->sizeIWork < mem->minIWork[0] * 1 )
-        {
-            if( mem->iWork )
-            {
-                free( mem->iWork );
-            }
-
-            mem->sizeIWork = mem->minIWork[0] * 1;
-            mem->iWork = (MXLAPACK_INT *)malloc( ( mem->sizeIWork ) * sizeof( MXLAPACK_INT ) );
-        }
-
-        if( ( mem->work == NULL ) || ( mem->iWork == NULL ) )
+        const MXLAPACK_INT requestedWork = static_cast<MXLAPACK_INT>( queriedWork );
+        if( !detail::resizeSyevrBuffer<calcT>( mem->work, mem->sizeWork, requestedWork ) ||
+            !detail::resizeSyevrBuffer<calcT>( mem->iWork, mem->sizeIWork, requestedIWork ) )
         {
             internal::mxlib_error_report( error_t::allocerr, "malloc failed in eigenSYEVR." );
             if( localMem )
@@ -353,27 +486,27 @@ MXLAPACK_INT eigenSYEVR( arrT &eigvec,    /**< [out] will contain the eigenvecto
         mem->IU = IU;
     }
 
-    // Now actually do the calculationg
-    info = math::syevr<calcT>( 'V',
-                               RANGE,
-                               UPLO,
-                               n,
-                               X.data(),
-                               n,
-                               0,
-                               0,
-                               IL,
-                               IU,
-                               math::lamch<calcT>( 'S' ),
-                               &numeig,
-                               eigval.data(),
-                               eigvec.data(),
-                               n,
-                               mem->iSuppZ,
-                               mem->work,
-                               mem->sizeWork,
-                               mem->iWork,
-                               mem->sizeIWork );
+    // Now actually do the calculation
+    info = detail::callSyevr<calcT>( 'V',
+                                     RANGE,
+                                     UPLO,
+                                     n,
+                                     X.data(),
+                                     n,
+                                     0,
+                                     0,
+                                     IL,
+                                     IU,
+                                     math::lamch<calcT>( 'S' ),
+                                     &numeig,
+                                     eigval.data(),
+                                     eigvec.data(),
+                                     n,
+                                     mem->iSuppZ,
+                                     mem->work,
+                                     mem->sizeWork,
+                                     mem->iWork,
+                                     mem->sizeIWork );
 
     /*  Cleanup and exit  */
 
@@ -423,9 +556,9 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
         localMem = true;
     }
 
-    if( cv.rows() != cv.cols() )
+    if( cv.rows() <= 0 || cv.rows() != cv.cols() )
     {
-        std::cerr << "calcEigenVecs: Non-square covariance matrix input to calcKLModes\n";
+        std::cerr << "calcEigenVecs: covariance matrix must be non-empty and square\n";
         if( localMem )
         {
             delete mem;
@@ -480,20 +613,20 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
         {
             for( MXLAPACK_INT i = 0; i < nVecs; ++i )
             {
-                if( evals( i ) == 0 )
+                if( !math::isFinite( evals( i ) ) )
+                {
+                    std::cerr << "got non-finite eigenvalue (# " << i << ")\n";
+                    evecs.col( i ).setZero();
+                }
+                else if( evals( i ) == 0 )
                 {
                     std::cerr << "got 0 eigenvalue (# " << i << ")\n";
-                    evecs.col( i ) *= 0;
+                    evecs.col( i ).setZero();
                 }
                 else if( evals( i ) < 0 )
                 {
                     std::cerr << "got < 0 eigenvalue (# " << i << ")\n";
-                    evecs.col( i ) *= 0;
-                }
-                else if( !math::isFinite( evals( i ) ) )
-                {
-                    std::cerr << "got non-finite eigenvalue (# " << i << ")\n";
-                    evecs.col( i ) *= 0;
+                    evecs.col( i ).setZero();
                 }
                 else
                 {
@@ -505,8 +638,8 @@ MXLAPACK_INT calcEigenVecs( eigenT &evecs,               /**< [out] on exit cont
                     if( !math::isFinite( evecs.col( i )( r ) ) )
                     {
                         std::cerr << "got non-finite eigenvector entry (# " << i << "," << r << ")\n";
-                        evecs.col( i ) *= 0;
-                        continue;
+                        evecs.col( i ).setZero();
+                        break;
                     }
                 }
             }
@@ -675,15 +808,15 @@ MXLAPACK_INT eigenGESDD( Eigen::Array<dataT, -1, -1> &U,  ///< [out] the A.rows(
     MXLAPACK_INT *IWORK = new MXLAPACK_INT[8 * M];
     MXLAPACK_INT INFO;
 
-    INFO = math::gesdd<
-        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK);
+    INFO =
+        math::gesdd<dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, &wkOpt, LWORK, IWORK );
 
     LWORK = wkOpt;
     // delete WORK;
     dataT *WORK = new dataT[LWORK];
 
-    INFO = math::gesdd<
-        dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK);
+    INFO =
+        math::gesdd<dataT>( JOBZ, M, N, A.data(), LDA, S.data(), U.data(), LDU, VT.data(), LDVT, WORK, LWORK, IWORK );
 
     delete[] WORK;
     delete[] IWORK;
