@@ -224,30 +224,32 @@ vecT annulusCoordsWorker( const eigenT1 &rIm,               /**< [in] a radius i
                           eigenT3 *mask = 0,                /**< [in] [optional] pointer to a mask image, only
                                                                                  pixels of value 1 are included
                                                                                  in the indices. */
-                          typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
-                                                                                 rad comparisons */ )
+                          typename angleT::realT pixbuf = 0 /**< [in] [optional] amount subtracted from the inclusive
+                                                                                 inner radius and added to the exclusive
+                                                                                 outer radius */ )
 {
 
     vecT idx;
 
-    int max_x = max_r;
-    int min_x = -max_x;
-    int max_y = max_r;
-    int min_y = -max_y;
+    const typename angleT::realT maxBufferedRadius = max_r + pixbuf;
+    if( maxBufferedRadius <= 0 )
+    {
+        return idx;
+    }
 
-    int x0 = xcen + min_x;
+    int x0 = static_cast<int>( std::floor( xcen - maxBufferedRadius ) );
     if( x0 < 0 )
         x0 = 0;
 
-    int x1 = xcen + max_x + 1;
+    int x1 = static_cast<int>( std::ceil( xcen + maxBufferedRadius ) );
     if( x1 > rIm.rows() )
         x1 = rIm.rows();
 
-    int y0 = ycen + min_y;
+    int y0 = static_cast<int>( std::floor( ycen - maxBufferedRadius ) );
     if( y0 < 0 )
         y0 = 0;
 
-    int y1 = ycen + max_y + 1;
+    int y1 = static_cast<int>( std::ceil( ycen + maxBufferedRadius ) );
     if( y1 > rIm.cols() )
         y1 = rIm.cols();
 
@@ -331,8 +333,10 @@ std::vector<std::vector<int>> annulusCoords( const eigenT1 &rIm, /**< [in] a rad
                                              eigenT3 *mask = 0, /**< [in] [optional] pointer to a mask image, only
                                                                                      pixels of value 1 are included
                                                                                      in the indices. */
-                                             typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
-                                                                                                    rad comparisons */
+                                             typename angleT::realT pixbuf = 0 /**< [in] [optional] amount subtracted
+                                                                                                    from the inclusive
+                                                                                                    inner radius and
+                                                                                  added to the exclusive outer radius */
 
 )
 {
@@ -344,7 +348,8 @@ std::vector<std::vector<int>> annulusCoords( const eigenT1 &rIm, /**< [in] a rad
                                                                                                   max_r,
                                                                                                   min_q,
                                                                                                   max_q,
-                                                                                                  mask );
+                                                                                                  mask,
+                                                                                                  pixbuf );
 }
 
 /// Get the vector indices of an annular region in an image
@@ -373,8 +378,10 @@ std::vector<size_t> annulusIndices( const eigenT1 &rIm,               /**< [in] 
                                     eigenT3 *mask = 0,                /**< [in] [optional] pointer to a mask image, only
                                                                                            pixels of value 1 are included
                                                                                            in the indices. */
-                                    typename angleT::realT pixbuf = 0 /**< [in] [optional] pixel buffer for
-                                                                                           rad comparisons */
+                                    typename angleT::realT pixbuf = 0 /**< [in] [optional] amount subtracted from the
+                                                                                           inclusive inner radius and
+                                                                                           added to the exclusive outer
+                                                                                           radius */
 
 )
 {
@@ -386,7 +393,8 @@ std::vector<size_t> annulusIndices( const eigenT1 &rIm,               /**< [in] 
                                                                                         max_r,
                                                                                         min_q,
                                                                                         max_q,
-                                                                                        mask );
+                                                                                        mask,
+                                                                                        pixbuf );
 }
 
 /// Get the coordinates of the bounding rectangle of an annulus.

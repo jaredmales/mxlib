@@ -3,6 +3,7 @@
  */
 #include "../../catch2/catch.hpp"
 
+#include <algorithm>
 #include <vector>
 #include <Eigen/Dense>
 
@@ -225,6 +226,72 @@ TEST_CASE( "annulusIndices selects bounded and masked HCI regions", "[improc::im
         mx::improc::annulusIndices<angleT>( radius, angle, 2.0, 2.0, 0.0, 10.0, 300.0, 60.0 );
     REQUIRE_FALSE( wrapped.empty() );
     REQUIRE( wrapped.size() < clipped.size() );
+}
+
+/** \brief Verifies annulusCoords and annulusIndices forward radial pixel buffers to their shared worker.
+ *
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "Annulus coordinate wrappers apply radial pixel buffers", "[improc::imageMasks][annulusCoords][pixbuf]" )
+{
+    using angleT = mx::math::degreesT<double>;
+
+    mx::improc::eigenImage<double> radius( 7, 7 );
+    mx::improc::eigenImage<double> angle;
+    mx::improc::radAngImage<angleT>( radius, angle, 3.0, 3.0 );
+    mx::improc::eigenImage<double> *noMask = nullptr;
+
+    const auto coordinates = mx::improc::annulusCoords<angleT>( radius, angle, 3.0, 3.0, 1.5, 2.5, 0.0, 360.0 );
+    const auto bufferedCoordinates =
+        mx::improc::annulusCoords<angleT>( radius, angle, 3.0, 3.0, 1.5, 2.5, 0.0, 360.0, noMask, 0.5 );
+
+    REQUIRE( coordinates.size() == 12 );
+    REQUIRE( bufferedCoordinates.size() == 24 );
+
+    const auto hasCoordinate = []( const std::vector<std::vector<int>> &region, int row, int column )
+    { return std::find( region.begin(), region.end(), std::vector<int>{ row, column } ) != region.end(); };
+
+    REQUIRE_FALSE( hasCoordinate( coordinates, 2, 3 ) );
+    REQUIRE( hasCoordinate( bufferedCoordinates, 2, 3 ) );
+    REQUIRE_FALSE( hasCoordinate( coordinates, 1, 1 ) );
+    REQUIRE( hasCoordinate( bufferedCoordinates, 1, 1 ) );
+    REQUIRE_FALSE( hasCoordinate( bufferedCoordinates, 0, 3 ) );
+
+    mx::improc::eigenImage<double> mask( 7, 7 );
+    mask.setOnes();
+    mask( 2, 3 ) = 0;
+    const auto maskedBufferedCoordinates =
+        mx::improc::annulusCoords<angleT>( radius, angle, 3.0, 3.0, 1.5, 2.5, 0.0, 360.0, &mask, 0.5 );
+    REQUIRE_FALSE( hasCoordinate( maskedBufferedCoordinates, 2, 3 ) );
+
+    const auto indices = mx::improc::annulusIndices<angleT>( radius, angle, 3.0, 3.0, 1.5, 2.5, 0.0, 360.0 );
+    const auto bufferedIndices =
+        mx::improc::annulusIndices<angleT>( radius, angle, 3.0, 3.0, 1.5, 2.5, 0.0, 360.0, noMask, 0.5 );
+
+    REQUIRE( indices.size() == coordinates.size() );
+    REQUIRE( bufferedIndices.size() == bufferedCoordinates.size() );
+    REQUIRE( std::find( indices.begin(), indices.end(), 23 ) == indices.end() );
+    REQUIRE( std::find( bufferedIndices.begin(), bufferedIndices.end(), 23 ) != bufferedIndices.end() );
+    REQUIRE( std::find( indices.begin(), indices.end(), 8 ) == indices.end() );
+    REQUIRE( std::find( bufferedIndices.begin(), bufferedIndices.end(), 8 ) != bufferedIndices.end() );
+
+    mx::improc::eigenImage<double> fractionalRadius( 10, 10 );
+    mx::improc::eigenImage<double> fractionalAngle;
+    mx::improc::radAngImage<angleT>( fractionalRadius, fractionalAngle, 4.5, 4.5 );
+
+    const auto fractionalCoordinates = mx::improc::annulusCoords<
+        angleT>( fractionalRadius, fractionalAngle, 4.5, 4.5, 3.0, 3.5, 0.0, 360.0, noMask, 0.5 );
+    REQUIRE( hasCoordinate( fractionalCoordinates, 1, 4 ) );
+    REQUIRE( hasCoordinate( fractionalCoordinates, 8, 4 ) );
+
+    const auto fractionalIndices = mx::improc::annulusIndices<
+        angleT>( fractionalRadius, fractionalAngle, 4.5, 4.5, 3.0, 3.5, 0.0, 360.0, noMask, 0.5 );
+    REQUIRE( std::find( fractionalIndices.begin(), fractionalIndices.end(), 41 ) != fractionalIndices.end() );
+    REQUIRE( std::find( fractionalIndices.begin(), fractionalIndices.end(), 48 ) != fractionalIndices.end() );
+
+    const auto emptyBufferedCoordinates =
+        mx::improc::annulusCoords<angleT>( radius, angle, 3.0, 3.0, 0.0, 0.5, 0.0, 360.0, noMask, -0.5 );
+    REQUIRE( emptyBufferedCoordinates.empty() );
 }
 
 /** \brief Verifies cutImageRegion and insertImageRegion preserve indexed pixel order and resize policy.
