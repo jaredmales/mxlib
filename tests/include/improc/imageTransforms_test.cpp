@@ -3,6 +3,7 @@
  */
 #include "../../catch2/catch.hpp"
 
+#include <array>
 #include <Eigen/Dense>
 #include <numbers>
 #include <vector>
@@ -78,6 +79,81 @@ TEST_CASE( "Verify direction and accuracy of various image shifts", "[improc::im
             mx::improc::imageShift( shift, im, 1.3, -0.7, mx::improc::cubicConvolTransform<double>() );
             mx::math::func::gaussian2D<double>( ref.data(), ref.rows(), ref.cols(), 0., 1.0, 128.8, 126.8, 8 );
             REQUIRE_THAT( imageMSE( shift, ref ), Catch::Matchers::WithinAbs( 0.0, 1e-5 ) );
+        }
+    }
+}
+
+/** \brief Verifies the default single-precision cubic-convolution kernel and its complete image footprint.
+ *
+ * \ingroup imageTransforms_unit_tests
+ */
+TEST_CASE( "cubicConvolTransform produces normalized four-pixel kernels",
+           "[improc::cubicConvolTransform][improc::imageTransforms]" )
+{
+    using transformT = mx::improc::cubicConvolTransform<float>;
+    constexpr Eigen::Index transformWidth = transformT::width;
+    constexpr Eigen::Index leftBuffer = transformT::lbuff;
+
+    transformT transform;
+
+    REQUIRE( transform.cubic == -0.5F );
+    REQUIRE( transformWidth == 4 );
+    REQUIRE( leftBuffer == 1 );
+
+    REQUIRE( transform.cubicConvolKernel( 0.0F ) == 1.0F );
+    REQUIRE( transform.cubicConvolKernel( 0.25F ) == 0.8671875F );
+    REQUIRE( transform.cubicConvolKernel( 0.5F ) == 0.5625F );
+    REQUIRE( transform.cubicConvolKernel( 0.75F ) == 0.2265625F );
+    REQUIRE( transform.cubicConvolKernel( 1.0F ) == 0.0F );
+    REQUIRE( transform.cubicConvolKernel( 1.25F ) == -0.0703125F );
+    REQUIRE( transform.cubicConvolKernel( 1.5F ) == -0.0625F );
+    REQUIRE( transform.cubicConvolKernel( 1.75F ) == -0.0234375F );
+    REQUIRE( transform.cubicConvolKernel( 2.0F ) == 0.0F );
+
+    const std::array<std::array<float, 2>, 4> phases{
+        { { 0.0F, 0.0F }, { 0.25F, 0.75F }, { 0.5F, 0.5F }, { 0.75F, 0.25F } } };
+
+    mx::improc::eigenImage<float> kernel( transformWidth, transformWidth );
+    for( const auto &phase : phases )
+    {
+        transform( kernel, phase[0], phase[1] );
+        REQUIRE( kernel.sum() == 1.0F );
+    }
+
+    const std::array<float, 4> quarterWeights{ -0.0703125F, 0.8671875F, 0.2265625F, -0.0234375F };
+    const std::array<float, 4> threeQuarterWeights{ -0.0234375F, 0.2265625F, 0.8671875F, -0.0703125F };
+
+    transform( kernel, 0.25F, 0.75F );
+    for( Eigen::Index row = 0; row < kernel.rows(); ++row )
+    {
+        for( Eigen::Index col = 0; col < kernel.cols(); ++col )
+        {
+            REQUIRE( kernel( row, col ) == quarterWeights[row] * threeQuarterWeights[col] );
+        }
+    }
+
+    const mx::improc::eigenImage<float> constantImage = mx::improc::eigenImage<float>::Constant( 8, 8, 3.25F );
+    const Eigen::Index firstAnchor = leftBuffer;
+    const Eigen::Index lastAnchor = constantImage.rows() - transformWidth + leftBuffer;
+    const std::array<Eigen::Index, 2> anchors{ firstAnchor, lastAnchor };
+
+    REQUIRE( firstAnchor - leftBuffer == 0 );
+    REQUIRE( lastAnchor - leftBuffer + transformWidth == constantImage.rows() );
+    REQUIRE( firstAnchor - 1 - leftBuffer < 0 );
+    REQUIRE( lastAnchor + 1 - leftBuffer + transformWidth > constantImage.rows() );
+
+    for( Eigen::Index rowAnchor : anchors )
+    {
+        for( Eigen::Index colAnchor : anchors )
+        {
+            transform( kernel, 0.25F, 0.75F );
+            const float sample = ( constantImage.block( rowAnchor - leftBuffer,
+                                                        colAnchor - leftBuffer,
+                                                        transformWidth,
+                                                        transformWidth ) *
+                                   kernel )
+                                     .sum();
+            REQUIRE( sample == 3.25F );
         }
     }
 }
