@@ -59,9 +59,11 @@ namespace math
   * \ingroup integration
   */
 template <typename vectorScT, typename vectorT>
-typename vectorT::value_type radprofIntegral( vectorScT r, /// [in] the r
-                                              vectorT p,
-                                              bool inczero = false )
+typename vectorT::value_type radprofIntegral( vectorScT r,         ///< [in] the radius vector, same size as \p p
+                                              vectorT p,           ///< [in] radial profile values, same size as \p r
+                                              bool inczero = false /**< [in] [optional] whether or not to include
+                                                                             r=0 in the integral*/
+)
 {
     typedef typename vectorT::value_type floatT;
 
@@ -70,18 +72,20 @@ typename vectorT::value_type radprofIntegral( vectorScT r, /// [in] the r
 
     if( r.size() != p.size() )
     {
-        throw(mx::exception(error_t::sizeerr, "vectors must have same size" ));
+        throw( mx::exception( error_t::sizeerr, "vectors must have same size" ) );
     }
 
     if( r.size() < 2 )
     {
-        throw(mx::exception(error_t::sizeerr, "must be at least 2 elements in radial profile" ));
+        throw( mx::exception( error_t::sizeerr, "must be at least 2 elements in radial profile" ) );
     }
 
     floatT s = 0;
 
     if( inczero )
+    {
         s = p[0] * pow( r[0], 2 );
+    }
 
     size_t n = 0;
     s += 0.5 * p[n] * ( pow( r[n + 1], 2 ) - pow( r[n], 2 ) ); // r[0] * ( r[1] - r[0] );
@@ -92,9 +96,6 @@ typename vectorT::value_type radprofIntegral( vectorScT r, /// [in] the r
     }
 
     s += 0.5 * p[n] * ( pow( r[n], 2 ) - pow( r[n - 1], 2 ) );
-
-    // size_t n = r.size()-1;
-    // s += 2*p[n]*r[n] * ( r[n] - r[n-1] );
 
     return s * pi<floatT>();
 }
