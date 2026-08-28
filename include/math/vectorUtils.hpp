@@ -1,12 +1,12 @@
 /** \file vectorUtils.hpp
- * \author Jared R. Males
- * \brief  Header for the std::vector utilities
- * \ingroup gen_math_files
  *
+ * \brief  Header for the std::vector utilities
+ * 
+ * \ingroup gen_math_files
  */
 
 //***********************************************************************//
-// Copyright 2015, 2016, 2017, 2018 Jared R. Males (jaredmales@gmail.com)
+// Copyright 2015-2026 Jared R. Males (jaredmales@gmail.com)
 //
 // This file is part of mxlib.
 //
@@ -59,13 +59,14 @@ namespace math
   */
 template <typename vectorT>
 void vectorScale(
-    vectorT &vec, ///< [out] the vector to fill in, can be pre-allocated or not
-    size_t N =
-        0, ///< [in] [optional] if specified > 0, then vec is resize()-ed. Default is 0, and vec is not resize()-ed.
-    typename vectorT::value_type scale =
-        0, ///< [in] [optional] if specified !=0, then the points are spaced by this value.  Default spacing is 1.
-    typename vectorT::value_type offset =
-        0 ///< [in] [optional] if specified !=0, then the starting point of the scale is this value.
+    vectorT &vec,                           /**< [out] the vector to fill in, can be
+                                                       pre-allocated or not*/
+    size_t N = 0,                           /**< [in] [optional] if specified > 0, then vec is resize()-ed. Default
+                                                                 is 0, and vec is not resize()-ed.*/
+    typename vectorT::value_type scale = 0, /**< [in] [optional] if specified !=0, then the points are
+                                                                 spaced by this value.  Default spacing is 1.*/
+    typename vectorT::value_type offset = 0 /**< [in] [optional] if specified !=0, then the starting
+                                                                 point of the scale is this value.*/
 )
 {
     if( scale == 0 )
@@ -121,7 +122,9 @@ valueT vectorSum( const valueT *vec, ///< [in] the vector
     valueT sum = 0;
 
     for( size_t i = 0; i < sz; ++i )
+    {
         sum += vec[i];
+    }
 
     return sum;
 }
@@ -140,7 +143,9 @@ typename vectorT::value_type vectorSum( const vectorT &vec /**< [in] the vector 
     typename vectorT::value_type sum = 0;
 
     for( size_t i = 0; i < vec.size(); ++i )
+    {
         sum += vec[i];
+    }
 
     return sum;
 }
@@ -161,7 +166,9 @@ valueT vectorMean( const valueT *vec, ///< [in] the vector
     valueT mean = 0;
 
     for( size_t i = 0; i < sz; ++i )
+    {
         mean += vec[i];
+    }
 
     mean /= sz;
 
@@ -182,7 +189,9 @@ typename vectorT::value_type vectorMean( const vectorT &vec /**< [in] the vector
     typename vectorT::value_type mean = 0;
 
     for( size_t i = 0; i < vec.size(); ++i )
+    {
         mean += vec[i];
+    }
 
     mean /= vec.size();
 
@@ -253,9 +262,9 @@ typename vectorT::value_type vectorMedianInPlace( vectorT &vec /**< [in] the vec
  *
  */
 template <typename vectorT>
-typename vectorT::value_type
-vectorMedian( const vectorT &vec, ///< [in] the vector for which the median is desired
-              vectorT *work = 0 ///< [in] [optional] an optional vector to use as workspace, use to avoid re-allocation
+typename vectorT::value_type vectorMedian( const vectorT &vec, ///< [in] the vector for which the median is desired
+                                           vectorT *work = 0   /**< [in] [optional] an optional vector to use as
+                                                                         workspace,   use to avoid re-allocation*/
 )
 {
     typename vectorT::value_type med;
@@ -277,7 +286,9 @@ vectorMedian( const vectorT &vec, ///< [in] the vector for which the median is d
     med = vectorMedianInPlace( *work );
 
     if( localWork )
+    {
         delete work;
+    }
 
     return med;
 }
@@ -299,7 +310,9 @@ valueT vectorVariance( const valueT *vec, ///< [in] the vector
 
     var = 0;
     for( size_t i = 0; i < sz; ++i )
+    {
         var += pow( vec[i] - mean, 2 );
+    }
 
     var /= ( sz - 1 );
 
@@ -465,7 +478,7 @@ typename vectorT::value_type vectorSigmaMean( const vectorT &vec,     ///< [in] 
  */
 template <typename vectorT>
 typename vectorT::value_type
-vectorSigmaMean( const vectorT &vec,                ///<  [in] the vector (unaltered)
+vectorSigmaMean( const vectorT &vec,                ///< [in] the vector (unaltered)
                  typename vectorT::value_type sigma ///< [in] the standard deviation threshold to apply.
 )
 {
@@ -482,8 +495,8 @@ typename vectorT::value_type
 vectorSigmaMean( const vectorT &vec,                 ///<  [in] the vector (unaltered)
                  const vectorT &weights,             ///<  [in] [optional] the weights (unaltered)
                  typename vectorT::value_type sigma, ///< [in] the standard deviation threshold to apply.
-                 int &maxPasses ///< [in.out] [optional] the maximum number of sigma-clipping passes.  Set to actual
-                                ///< number of passes on return.
+                 int &maxPasses                      /**< [in/out] [optional] the maximum number of sigma-clipping
+                                                                   passes. Set to actual number of passes on return.*/
 )
 {
 
@@ -507,7 +520,7 @@ vectorSigmaMean( const vectorT &vec,                ///< [in] the vector (unalte
 
 /// Subtract a constant value from a vector
 template <typename valueT, typename constT>
-void vectorSub( valueT *vec,    ///< [in.out] the vector, each element will have the constant subtracted from it
+void vectorSub( valueT *vec,    ///< [in/out] the vector, each element will have the constant subtracted from it
                 size_t sz,      ///< [in] the size of the vector
                 const constT &c ///< [in] the constant to subtract from each element
 )
@@ -518,7 +531,7 @@ void vectorSub( valueT *vec,    ///< [in.out] the vector, each element will have
 
 /// Subtract a constant value from a vector
 template <typename vecT, typename constT>
-void vectorSub( vecT &vec,      ///< [in.out] the vector, each element will have the constant subtracted from it
+void vectorSub( vecT &vec,      ///< [in/out] the vector, each element will have the constant subtracted from it
                 const constT &c ///< [in] the constant to subtract from each element
 )
 {
@@ -527,7 +540,7 @@ void vectorSub( vecT &vec,      ///< [in.out] the vector, each element will have
 
 /// Subtract the mean from a vector
 template <typename valueT>
-void vectorMeanSub( valueT *vec, ///< [in.out] the vector, each element will have the mean subtracted from it
+void vectorMeanSub( valueT *vec, ///< [in/out] the vector, each element will have the mean subtracted from it
                     size_t sz    ///< [in] the vector size
 )
 {
@@ -537,14 +550,14 @@ void vectorMeanSub( valueT *vec, ///< [in.out] the vector, each element will hav
 
 /// Subtract the mean from a vector
 template <typename vecT>
-void vectorMeanSub( vecT &vec /**< [in.out] the vector, each element will have the mean subtracted from it*/ )
+void vectorMeanSub( vecT &vec /**< [in/out] the vector, each element will have the mean subtracted from it*/ )
 {
     vectorMeanSub( vec.data(), vec.size() );
 }
 
 /// Subtract the median from a vector
 template <typename vecT>
-void vectorMedianSub( vecT &vec /**<  [in.out] the vector, each element will have the median subtracted from it*/ )
+void vectorMedianSub( vecT &vec /**<  [in/out] the vector, each element will have the median subtracted from it*/ )
 {
     typename vecT::value_type m = vectorMedian( vec );
     vectorSub( vec, m );
@@ -552,11 +565,11 @@ void vectorMedianSub( vecT &vec /**<  [in.out] the vector, each element will hav
 
 /// Smooth a vector using the mean in a window specified by its full-width
 template <typename realT>
-int vectorSmoothMean(
-    realT *smVec,   ///< [out] the smoothed version of the vector.  At least as large as \p vec.
-    realT *vec,     ///< [in] the input vector, unaltered.
-    size_t vecSize, ///< [in] the size of \p vec
-    int win         ///< [in] the full-width of the smoothing window.  Should be even.  0 results in a slow memcpy.
+int vectorSmoothMean( realT *smVec,   ///< [out] the smoothed version of the vector.  At least as large as \p vec.
+                      realT *vec,     ///< [in] the input vector, unaltered.
+                      size_t vecSize, ///< [in] the size of \p vec
+                      int win         /**< [in] the full-width of the smoothing window.
+                                                Should be even.  0 results in a slow memcpy.*/
 )
 {
     realT sum;
@@ -565,7 +578,9 @@ int vectorSmoothMean(
     {
         int j = i - 0.5 * win;
         if( j < 0 )
+        {
             j = 0;
+        }
 
         sum = 0;
         n = 0;
@@ -586,10 +601,10 @@ int vectorSmoothMean(
 /** \overload
  */
 template <typename realT>
-int vectorSmoothMean(
-    std::vector<realT> &smVec, ///< [out] the smoothed version of the vector.  Will be resize()-ed.
-    std::vector<realT> &vec,   ///< [in] the input vector, unaltered.
-    int win ///< [in] the full-width of the smoothing window.  Should be even.  0 results in a slow memcpy.
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector.  Will be resize()-ed.
+                      std::vector<realT> &vec,   ///< [in] the input vector, unaltered.
+                      int win                    /**< [in] the full-width of the smoothing window.
+                                                            Should be even.  0 results in a slow memcpy.*/
 )
 {
     smVec.resize( vec.size() );
@@ -605,11 +620,11 @@ int vectorSmoothMean(
  *
  */
 template <typename realT>
-int vectorSmoothMean(
-    std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
-    std::vector<realT> &vec,   ///< [in] the input vector, unaltered.
-    std::vector<int> &wins,    ///< [in] the full-widths of the smoothing windows, same size as vec.
-    bool norm = false          ///< [in] if true the output will normalized to have the same integral as the input.
+int vectorSmoothMean( std::vector<realT> &smVec, ///< [out] the smoothed version of the vector
+                      std::vector<realT> &vec,   ///< [in] the input vector, unaltered.
+                      std::vector<int> &wins,    ///< [in] the full-widths of the smoothing windows, same size as vec.
+                      bool norm = false          /**< [in] if true the output will normalized to have the same
+                                                           integral as the input.*/
 )
 {
     smVec = vec;
@@ -620,7 +635,9 @@ int vectorSmoothMean(
     {
         int j = i - 0.5 * wins[i];
         if( j < 0 )
+        {
             j = 0;
+        }
 
         sum = 0;
         n = 0;
@@ -708,14 +725,18 @@ int vectorSmoothMax( std::vector<realT> &smVec, ///< [out] the smoothed version 
     {
         int j = i - 0.5 * win;
         if( j < 0 )
+        {
             j = 0;
+        }
 
         smVec[i] = vec[j];
         ++j;
         while( j <= i + 0.5 * win && j < vec.size() )
         {
             if( vec[j] > smVec[i] )
+            {
                 smVec[i] = vec[j];
+            }
             ++j;
         }
     }
@@ -731,15 +752,17 @@ int vectorSmoothMax( std::vector<realT> &smVec, ///< [out] the smoothed version 
  * \tparam vectorT is any vector-like type with resize(), size(), and the operator()[].
  */
 template <typename vectorT>
-int vectorRebin(
-    vectorT &binv,       ///< [out] the re-binned vector.  will be resized.
-    const vectorT &v,    ///< [in] the vector to bin.
-    unsigned n,          ///< [in] the size of the bins, in points
-    bool binMean = false ///< [in] [optional] flag controlling whether sums (false) or means (true) are calculated.
+int vectorRebin( vectorT &binv,       ///< [out] the re-binned vector.  will be resized.
+                 const vectorT &v,    ///< [in] the vector to bin.
+                 unsigned n,          ///< [in] the size of the bins, in points
+                 bool binMean = false /**< [in] [optional] flag controlling whether sums (false) or means
+                                                           (true) are calculated.*/
 )
 {
     if( n == 0 )
+    {
         return -1;
+    }
 
     binv.resize( v.size() / n );
 
@@ -751,7 +774,9 @@ int vectorRebin(
         for( j = 0; j < n; ++j )
         {
             if( i * n + j >= v.size() )
+            {
                 break;
+            }
 
             binv[i] += v[i * n + j];
         }
@@ -759,7 +784,9 @@ int vectorRebin(
         if( binMean )
         {
             if( j > 0 )
+            {
                 binv[i] /= j;
+            }
         }
     }
 
@@ -774,8 +801,8 @@ int vectorRebin(
  * \returns 0 on success.
  */
 template <typename vectorT, typename binVectorT>
-int vectorBinMeans( std::vector<vectorT> &means, ///< [out] the means in each distinct bin.  Not cleared, but Will be
-                                                 ///< resized with new means appended.
+int vectorBinMeans( std::vector<vectorT> &means, /**< [out] the means in each distinct bin.  Not cleared, but Will be
+                                                            resized with new means appended.*/
                     binVectorT &binSzs,          ///< [in] the bin sizes in which to calculate the means
                     const vectorT &v             ///< [in] the input vector to bin .
 )
@@ -790,7 +817,9 @@ int vectorBinMeans( std::vector<vectorT> &means, ///< [out] the means in each di
 
         means[i].resize( means[i].size() + binv.size() );
         for( size_t j = 0; j < binv.size(); ++j )
+        {
             means[i][means[i].size() - binv.size() + j] = binv[j];
+        }
     }
 
     return 0;
@@ -807,13 +836,16 @@ template <typename realT, typename fwhmT, typename winhwT>
 int vectorGaussConvolve( std::vector<realT> &dataOut,      ///< [out] The smoothed data vector.  Resized.
                          const std::vector<realT> &dataIn, ///< [in] The data vector to smooth.
                          const std::vector<realT> &scale,  ///< [in] The scale vector used to calculate the kernel.
-                         const fwhmT fwhm,  ///< [in] The FWHM of the Gaussian kernel, same units as scale.
-                         const winhwT winhw ///< [in] The window half-width in pixels.
+                         const fwhmT fwhm,                 /**< [in] The FWHM of the Gaussian kernel,
+                                                                     same units as scale.*/
+                         const winhwT winhw                ///< [in] The window half-width in pixels.
 )
 {
 
     if( dataIn.size() != scale.size() )
+    {
         return -1;
+    }
 
     realT _fwhm = fwhm;
     int _winhw = winhw;
@@ -830,9 +862,13 @@ int vectorGaussConvolve( std::vector<realT> &dataOut,      ///< [out] The smooth
         for( int j = i - _winhw; j < i + _winhw; ++j )
         {
             if( j < 0 )
+            {
                 continue;
+            }
             if( j > dataIn.size() - 1 )
+            {
                 continue;
+            }
 
             G = func::gaussian<realT>( scale[j], 0.0, 1.0, scale[i], sigma );
 
