@@ -131,9 +131,14 @@
 
 
 
-/** \defgroup template_blaslap Templatized BLAS and Lapack
-  * Templatized interfaces to BLAS and the Lapack librarries
+/** \defgroup linear_algebra Linear Algebra
+  * Matrix factorizations, structured updates, and interfaces to BLAS and LAPACK.
   * \ingroup gen_math
+  */
+
+/** \defgroup template_blaslap Templatized BLAS and LAPACK
+  * Templatized interfaces to BLAS and LAPACK.
+  * \ingroup linear_algebra
   */
 
 /** \defgroup template_blas Templatized BLAS interface
@@ -149,6 +154,122 @@
 /** \defgroup eigen_lapack Eigen Lapack interfaces
   * Interfaces to Lapack and BLAS for Eigen-like arrays.
   * \ingroup template_blaslap
+  */
+
+/** \defgroup svd_downdate SVD Row and Column Deletion
+  * Reusable updates that remove rows or columns from matrices represented by thin singular value decompositions.
+  * \ingroup linear_algebra
+  *
+  * \section svd_deletion_representation Representation and deletion equations
+  *
+  * Let a rank-\f$q\f$ matrix be represented by the thin singular value decomposition
+  *
+  * \f[
+  * A = U \Sigma V^T.
+  * \f]
+  *
+  * To remove physical rows with sorted index set \f$R\f$, form \f$F=U[R,:]\f$. The retained matrix obeys
+  *
+  * \f[
+  * A_{\bar R}^T A_{\bar R}
+  * = V \Sigma \left(I-F^T F\right) \Sigma V^T.
+  * \f]
+  *
+  * If \f$W\f$ contains the eigenvectors or right singular vectors of the resulting rank-\f$q\f$ core, the updated
+  * right singular directions are \f$VW\f$. Column deletion is the transpose dual: use \f$F=V[C,:]\f$ for deleted
+  * columns \f$C\f$, and apply the returned rotation to the unchanged left factor as \f$UW\f$.
+  *
+  * Complete singular factors reproduce a direct SVD of the physically retained matrix. Truncated factors instead
+  * delete rows or columns exactly from the supplied rank-\f$q\f$ approximation; discarded modes cannot be recovered.
+  *
+  * \section svd_deletion_backends Numerical backends
+  *
+  * - mx::math::svdDeletionBackend::stableCore is the default. It uses a complement-preserving rectangular core and
+  *   avoids explicitly squaring the conditioning represented by \f$\Sigma\f$.
+  * - mx::math::svdDeletionBackend::leadingCovariance diagonalizes
+  *   \f$\Sigma(I-F^TF)\Sigma\f$ directly. It is useful when only leading modes matter, but forms normal equations and
+  *   does not promise high relative accuracy for the smallest singular values.
+  *
+  * Both current implementations use dense LAPACK operations and have cubic asymptotic cost in \f$q\f$. The API keeps
+  * the backend selectable so a future structured secular-equation implementation can preserve the same interface.
+  *
+  * \section svd_deletion_contracts Contracts and outputs
+  *
+  * Singular values must be finite, nonnegative, and descending. The deleted-side factor must have orthonormal columns;
+  * call mx::math::validateSvdDeletionFactor once for a new base factorization, outside repeated deletion loops.
+  * Deleted indices must be sorted, unique, and in range, the output rank must be nonzero and no larger than \f$q\f$,
+  * and at least one physical row or column must remain.
+  *
+  * A successful result contains all \f$q\f$ updated singular values and squared singular values. Only the leading
+  * `outputRank()` columns of `rotation()` are published. Both mx::math::svdDeletionStatus::success and
+  * mx::math::svdDeletionStatus::successWithClamping are usable; test them with
+  * mx::math::svdDeletionSucceeded(). The latter records roundoff-scale negative eigenvalues clamped to zero.
+  *
+  * Prepare mx::math::svdDeletionResult and mx::math::svdDeletionWorkspace for the largest planned output rank and
+  * deletion count before a hot loop. Later compatible operations reuse their allocations. Each concurrent worker must
+  * own an independent result and workspace.
+  *
+  * Result and workspace objects are move-only handles whose Eigen and LAPACK storage is opaque and destroyed inside
+  * mxlib. Spectrum and rotation accessors return unaligned read-only views into result-owned storage; a view remains
+  * valid only until its result is prepared, assigned, moved, or destroyed. This ownership boundary permits consumers
+  * with different Eigen alignment/SIMD settings from mxlib's build, but it is not a promise of general binary
+  * compatibility across arbitrary compilers, C++ standard libraries, or Eigen ABIs.
+  *
+  * \section svd_deletion_example Example: delete rows
+  *
+  * The factors below are assumed to have been produced by an earlier thin SVD.
+  *
+  * \code{.cpp}
+  * using realT = double;
+  * using namespace mx::math;
+  *
+  * bool deleteRows( Eigen::MatrixXd &updatedRight,
+  *                  Eigen::VectorXd &updatedSingularValues,
+  *                  const svdDeletionMatrix<realT> &U,
+  *                  const svdDeletionVector<realT> &singularValues,
+  *                  const svdDeletionMatrix<realT> &V,
+  *                  const std::vector<Eigen::Index> &deletedRows,
+  *                  Eigen::Index outputRank )
+  * {
+  *     const svdDeletionStatus factorStatus = validateSvdDeletionFactor( U );
+  *     if( !svdDeletionSucceeded( factorStatus ) )
+  *     {
+  *         return false;
+  *     }
+  *
+  *     svdDeletionResult<realT> result;
+  *     svdDeletionWorkspace<realT> workspace;
+  *     const svdDeletionStatus resultStatus = result.prepare( singularValues.size(), outputRank );
+  *     const svdDeletionStatus workspaceStatus =
+  *         workspace.prepare( singularValues.size(),
+  *                            static_cast<Eigen::Index>( deletedRows.size() ),
+  *                            svdDeletionBackend::stableCore );
+  *     if( !svdDeletionSucceeded( resultStatus ) || !svdDeletionSucceeded( workspaceStatus ) )
+  *     {
+  *         return false;
+  *     }
+  *
+  *     const svdDeletionStatus status = svdRemoveRows( result,
+  *                                                     singularValues,
+  *                                                     U,
+  *                                                     deletedRows,
+  *                                                     outputRank,
+  *                                                     workspace );
+  *     if( !svdDeletionSucceeded( status ) )
+  *     {
+  *         // Inspect status, result.lapackInfo(), and other diagnostics here.
+  *         return false;
+  *     }
+  *
+  *     updatedRight = V.matrix() * result.rotation().matrix();
+  *     updatedSingularValues = result.singularValues().matrix().head( result.outputRank() );
+  *     return true;
+  * }
+  * \endcode
+  *
+  * For column deletion, pass \f$V\f$ to mx::math::svdRemoveColumns() and apply the returned rotation to \f$U\f$.
+  *
+  * \sa svdDowndate_unit_tests
   */
 
 /** \defgroup integration Integration
@@ -763,6 +884,12 @@
               * \ingroup math_unit_tests
               */
 
+            /** \defgroup svdDowndate_unit_tests SVD Row and Column Deletion Unit Tests
+              * Tests of SVD row and column deletion against direct singular value decompositions.
+              * \ingroup math_unit_tests
+              * \sa svd_downdate
+              */
+
             /** \defgroup math_cuda_unit_tests CUDA Unit Tests
               * \ingroup math_unit_tests
               */
@@ -862,9 +989,14 @@
   * \ingroup error_handling
   */
 
-/** \defgroup gen_math_files Gen. Math Files
-  * Source files for General Mathematics
+/** \defgroup gen_math_files Mathematics Source Files
+  * Header and implementation files for mathematical facilities.
   * \ingroup gen_math
+  */
+
+/** \defgroup gen_math_test_files Mathematics Test Files
+  * Source files containing tests of mathematical facilities.
+  * \ingroup gen_math_files
   */
 
 /** \defgroup fitting_files Fitting Files

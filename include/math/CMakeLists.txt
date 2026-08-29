@@ -19,6 +19,7 @@ set(OBJLIB_INCLUDES ${OBJLIB_INCLUDES} include/math/constants.hpp
                                        include/math/randomSeed.hpp
                                        include/math/randomT.hpp
                                        include/math/roots.hpp
+                                       include/math/svdDowndate.hpp
                                        include/math/templateBLAS.hpp
                                        include/math/templateLapack.hpp
                                        include/math/vectorUtils.hpp

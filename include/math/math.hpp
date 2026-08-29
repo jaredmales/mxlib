@@ -63,6 +63,7 @@
 #include "randomSeed.hpp"
 #include "randomT.hpp"
 #include "roots.hpp"
+#include "svdDowndate.hpp"
 #include "templateBLAS.hpp"
 #include "templateLapack.hpp"
 #include "vectorUtils.hpp"

@@ -5,6 +5,6 @@ add_subdirectory(func)
 add_subdirectory(plot)
 
 set(OBJLIB_SOURCES ${OBJLIB_SOURCES} source/math/gslInterpolator.cpp
+                                     source/math/svdDowndate.cpp
                                      source/math/templateBLAS.cpp
                                      source/math/templateLapack.cpp PARENT_SCOPE)
-
