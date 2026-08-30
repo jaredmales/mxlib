@@ -640,6 +640,10 @@ TEST_CASE( "Parsing delimited numeric vectors", "[ioutils::stringUtils::parseStr
     parseStringVector( defaultDelimiter, "1,2,3" );
     REQUIRE( defaultDelimiter == std::vector<int>{ 1, 2, 3 } );
 
+    std::vector<int> characterDelimiter;
+    parseStringVector( characterDelimiter, "4;5;6", ';' );
+    REQUIRE( characterDelimiter == std::vector<int>{ 4, 5, 6 } );
+
     std::vector<int> delimiterSet;
     parseStringVector( delimiterSet, "1:2 3", ": " );
     REQUIRE( delimiterSet == std::vector<int>{ 1, 2, 3 } );

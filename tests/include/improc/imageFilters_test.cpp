@@ -701,6 +701,56 @@ TEST_CASE( "vectorSmoothMedian honors exact even full widths", "[math::vectorSmo
     REQUIRE( output == std::vector<double>{ -99.0 } );
 }
 
+/// Verify stddevImage centers the signal using the annular mean before calculating S/N.
+/** Exercises mx::improc::stddevImage with a masked reference sample and a non-zero radial mean. */
+/**
+ * \ingroup imageFilters_unit_tests
+ */
+TEST_CASE( "stddevImage subtracts the annular mean for S/N", "[improc::stddevImage]" )
+{
+    mx::improc::eigenImage<double> image( 8, 8 );
+    mx::improc::eigenImage<double> radius( 8, 8 );
+    mx::improc::eigenImage<double> mask( 8, 8 );
+    mask.setOnes();
+
+    for( int column = 0; column < image.cols(); ++column )
+    {
+        for( int row = 0; row < image.rows(); ++row )
+        {
+            radius( row, column ) = column + 0.5;
+            image( row, column ) = 10.0 * column + ( row % 2 == 0 ? 2.0 : 4.0 );
+        }
+    }
+    mask( 0, 1 ) = 0;
+
+    mx::improc::eigenImage<double> stddev;
+    mx::improc::stddevImage( stddev, image, radius, mask, 0.0, 6.0, true );
+
+    const double mean = 92.0 / 7.0;
+    const double variance = ( 3.0 * std::pow( 12.0 - mean, 2 ) + 4.0 * std::pow( 14.0 - mean, 2 ) ) / 6.0;
+    REQUIRE( stddev( 2, 1 ) == Approx( ( 12.0 - mean ) / std::sqrt( variance ) ) );
+
+    SECTION( "negative masked radii are skipped before binning" )
+    {
+        radius( 0, 0 ) = -0.5;
+        mask.setOnes();
+
+        mx::improc::stddevImage( stddev, image, radius, mask, 0.0, 6.0, true );
+
+        REQUIRE( std::isfinite( stddev( 2, 1 ) ) );
+    }
+
+    SECTION( "a masked infinite radius finishes the bins" )
+    {
+        radius( 0, 7 ) = std::numeric_limits<double>::infinity();
+        mask( 0, 7 ) = 0;
+
+        mx::improc::stddevImage( stddev, image, radius, mask, 0.0, 6.0, true );
+
+        REQUIRE( std::isfinite( stddev( 2, 1 ) ) );
+    }
+}
+
 } // namespace imageFiltersTest
 } // namespace improcTest
 } // namespace unitTest

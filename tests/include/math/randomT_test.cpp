@@ -11,9 +11,7 @@
 
 /** Verify compilation and basic operation of randomT with std::distributions.
  *
- * Basic tests include verification that seeding works.  Note that there is the very slight
- * possibility that normal operation could return two consecutive variates with the same value
- * which would cause some of the below tests to fail.  Will probably never happen . . .
+ * Basic tests include verification that explicit seeding produces reproducible variates.
  *
  */
 /**
@@ -25,7 +23,8 @@ TEST_CASE( "Verify compilation and basic operation of randomT with std::distribu
     {
         WHEN( "two double random numbers from same generator requested" )
         {
-            mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist;
+            mx::math::randomT<double, std::mt19937_64, std::uniform_real_distribution<double>> uniDist( false );
+            uniDist.seed( 0xA11CE001 );
 
             double r1 = uniDist;
             double r2 = uniDist;
@@ -64,7 +63,8 @@ TEST_CASE( "Verify compilation and basic operation of randomT with std::distribu
     {
         WHEN( "two double random numbers from same generator requested" )
         {
-            mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist;
+            mx::math::randomT<double, std::mt19937_64, std::normal_distribution<double>> normDist( false );
+            normDist.seed( 0xA11CE002 );
 
             double r1 = normDist;
             double r2 = normDist;
@@ -102,9 +102,7 @@ TEST_CASE( "Verify compilation and basic operation of randomT with std::distribu
 
 /** Verify compilation and basic operation of randomT with the Laplace distribution
  *
- * Basic tests include verification that seeding works.  Note that there is the very slight
- * possibility that normal operation could return two consecutive variates with the same value
- * which would cause some of the below tests to fail.  Will probably never happen . . .
+ * Basic tests include verification that explicit seeding produces reproducible variates.
  *
  */
 /**
@@ -117,7 +115,8 @@ TEST_CASE( "Verify compilation and basic operation of randomT with the Laplace d
     {
         WHEN( "two double random numbers from same generator requested" )
         {
-            mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist;
+            mx::math::randomT<double, std::mt19937_64, mx::math::laplace_distribution<double>> lapDist( false );
+            lapDist.seed( 0xA11CE003 );
 
             double r1 = lapDist;
             double r2 = lapDist;

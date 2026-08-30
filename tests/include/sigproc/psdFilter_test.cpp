@@ -261,7 +261,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             std::vector<double> noise( psdF.rows() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00001 );
 
             double avgRms = 0;
 
@@ -306,7 +307,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             std::vector<double> noise( psdF.rows() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00002 );
 
             double avgRms = 0;
 
@@ -359,7 +361,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             Eigen::Array<double, -1, -1> noise( psdF.rows(), psdF.cols() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00003 );
 
             double avgRms = 0;
 
@@ -415,7 +418,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             Eigen::Array<double, -1, -1> noise( psdF.rows(), psdF.cols() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00004 );
 
             double avgRms = 0;
 
@@ -505,7 +509,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             mx::improc::eigenCube<double> noise( psdF.rows(), psdF.cols(), psdF.planes() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00005 );
 
             double avgRms = 0;
 
@@ -596,7 +601,8 @@ TEST_CASE( "filtering with psdFilter", "[sigproc::psdFilter]" )
 
             mx::improc::eigenCube<double> noise( psdF.rows(), psdF.cols(), psdF.planes() );
 
-            mx::math::normDistT<double> normVar;
+            mx::math::normDistT<double> normVar( false );
+            normVar.seed( 0x50D00006 );
 
             double avgRms = 0;
 

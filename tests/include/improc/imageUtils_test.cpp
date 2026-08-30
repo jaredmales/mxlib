@@ -101,3 +101,32 @@ TEST_CASE( "imageMedian selects valid image samples", "[improc::imageMedian]" )
     REQUIRE( work.size() == 3 );
     REQUIRE( mx::improc::imageMedian( image, &mask ) == Approx( 5.0 ) );
 }
+
+/// Verify zeroNaNCube replaces invalid cube pixels and records their locations.
+/** Exercises both mx::improc::zeroNaNCube overloads, including mask allocation and finite pixels. */
+/**
+ * \ingroup imageUtils_unit_tests
+ */
+TEST_CASE( "zeroNaNCube replaces invalid pixels and reports a mask", "[improc::zeroNaNCube]" )
+{
+    mx::improc::eigenCube<float> cube( 2, 3, 2 );
+    cube.cube().setOnes();
+    cube.image( 0 )( 0, 1 ) = std::numeric_limits<float>::quiet_NaN();
+    cube.image( 1 )( 1, 2 ) = std::numeric_limits<float>::infinity();
+
+    mx::improc::eigenCube<float> mask;
+    mx::improc::zeroNaNCube( cube, &mask );
+
+    REQUIRE( cube.image( 0 )( 0, 1 ) == 0.0F );
+    REQUIRE( cube.image( 1 )( 1, 2 ) == 0.0F );
+    REQUIRE( cube.image( 0 )( 1, 1 ) == 1.0F );
+    REQUIRE( mask.rows() == cube.rows() );
+    REQUIRE( mask.cols() == cube.cols() );
+    REQUIRE( mask.planes() == cube.planes() );
+    REQUIRE( mask.image( 0 )( 0, 1 ) == 1.0F );
+    REQUIRE( mask.image( 1 )( 1, 2 ) == 1.0F );
+    REQUIRE( mask.image( 0 )( 1, 1 ) == 0.0F );
+
+    mx::improc::zeroNaNCube( cube );
+    REQUIRE( cube.image( 0 )( 1, 1 ) == 1.0F );
+}

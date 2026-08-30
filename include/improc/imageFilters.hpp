@@ -1411,7 +1411,7 @@ void radprofim(
  * @{
  */
 
-/// Form a standard deviation image, and optionally divide the input by it to form a S/N map.
+/// Form a standard deviation image, and optionally normalize the input relative to the local mean to form a S/N map.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
  *
  * \tparam eigenImT the eigen array type of the output and non-reference images.  Each image input can be a different
@@ -1425,8 +1425,8 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
                   const eigenImT3 &mask, ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
                   typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
                   typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
-                  bool divide ///< [in] if true, the output is the input image is divided by the std-dev profile, i.e. a
-                              ///< S/N map.  default is false.
+                  bool divide ///< [in] if true, the output is the input image minus the interpolated mean profile,
+                              ///< divided by the std-dev profile, i.e. a S/N map. default is false.
 )
 {
     typedef typename eigenImT::Scalar floatT;
@@ -1437,15 +1437,15 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
     floatT mr = rad.maxCoeff();
 
     /* A vector of radvals will be sorted, then binned*/
-    std::vector<radval<floatT>> rv( dim1 * dim2 );
+    std::vector<radval<floatT>> rv;
+    rv.reserve( dim1 * dim2 );
 
-    for( int i = 0; i < rv.size(); ++i )
+    for( int i = 0; i < im.size(); ++i )
     {
         if( mask( i ) == 0 )
             continue;
 
-        rv[i].r = rad( i );
-        rv[i].v = im( i );
+        rv.push_back( { rad( i ), im( i ) } );
     }
 
     sort( rv.begin(), rv.end(), radvalRadComp<floatT>() );
@@ -1454,15 +1454,13 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
     floatT dr = 1;
     floatT r0 = 0;
     floatT r1 = dr;
-    int i1 = 0, i2, n;
+    int i1 = 0, i2;
 
-    floatT stdVal;
-
-    std::vector<double> std_r, std_v;
+    std::vector<double> std_r, std_v, mean_v;
 
     while( r1 < mr )
     {
-        while( rv[i1].r < r0 && i1 < rv.size() )
+        while( i1 < rv.size() && rv[i1].r < r0 )
         {
             ++i1;
         }
@@ -1472,9 +1470,8 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
         }
 
         i2 = i1;
-        while( rv[i2].r <= r1 && i2 < rv.size() )
+        while( i2 < rv.size() && rv[i2].r <= r1 )
             ++i2;
-        n = 0.5 * ( i2 - i1 );
 
         std::vector<double> vals;
 
@@ -1483,9 +1480,10 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
             vals.push_back( rv[i].v );
         }
 
+        const double mean = math::vectorMean( vals );
         std_r.push_back( .5 * ( r0 + r1 ) );
-
-        std_v.push_back( std::sqrt( math::vectorVariance( vals ) ) );
+        mean_v.push_back( mean );
+        std_v.push_back( std::sqrt( math::vectorVariance( vals, mean ) ) );
         i1 = i2;
         r0 += dr;
         r1 += dr;
@@ -1493,7 +1491,8 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
 
     /* And finally, interpolate onto the radius image */
     stdIm.resize( dim1, dim2 );
-    math::gslInterpolator<math::gsl_interp_linear<double>> interp( std_r, std_v );
+    math::gslInterpolator<math::gsl_interp_linear<double>> stdInterp( std_r, std_v );
+    math::gslInterpolator<math::gsl_interp_linear<double>> meanInterp( std_r, mean_v );
 
     for( int i = 0; i < dim1; ++i )
     {
@@ -1505,15 +1504,15 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
             }
             else
             {
-                stdIm( i, j ) = interp( ( (double)rad( i, j ) ) );
+                stdIm( i, j ) = stdInterp( ( (double)rad( i, j ) ) );
                 if( divide )
-                    stdIm( i, j ) = im( i, j ) / stdIm( i, j );
+                    stdIm( i, j ) = ( im( i, j ) - meanInterp( ( (double)rad( i, j ) ) ) ) / stdIm( i, j );
             }
         }
     }
 }
 
-/// Form a standard deviation image, and optionally divide the input by it to form a S/N map.
+/// Form a standard deviation image, and optionally normalize the input relative to the local mean to form a S/N map.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
  *
  * This version creates a radius map on each call, and calls the above version.  This should not
@@ -1525,13 +1524,14 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
  *
  */
 template <typename eigenImT, typename eigenImT1, typename eigenImT2>
-void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image.  This will be resized.
-                  const eigenImT1 &im,   ///< [in] the image to form the standard deviation profile of, never altered.
-                  const eigenImT2 &mask, ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
-                  typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
-                  typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
-                  bool divide = false ///< [in] [optional] if true, the output is the input image is divided by the
-                                      ///< std-dev profile, i.e. a S/N map.  default is false.
+void stddevImage(
+    eigenImT &stdIm,                  ///< [out] the standard deviation image.  This will be resized.
+    const eigenImT1 &im,              ///< [in] the image to form the standard deviation profile of, never altered.
+    const eigenImT2 &mask,            ///< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations.
+    typename eigenImT::Scalar minRad, ///< [in] the minimum radius to analyze
+    typename eigenImT::Scalar maxRad, ///< [in] the maximum radius to analyze
+    bool divide = false               ///< [in] [optional] if true, the output is the input image minus the interpolated
+                        ///< mean profile, divided by the std-dev profile, i.e. a S/N map. default is false.
 )
 {
     int dim1 = im.cols();
@@ -1544,8 +1544,8 @@ void stddevImage( eigenImT &stdIm,       ///< [out] the standard deviation image
     stddevImage( stdIm, im, rad, mask, minRad, maxRad, divide );
 }
 
-/// Form a standard deviation image for each imamge in a cube, and optionally divide the input by it forming a S/N map
-/// cube.
+/// Form a standard deviation image for each image in a cube, and optionally normalize it relative to the local mean
+/// to form a S/N map cube.
 /** The standard deviation profile is calculated using linear interpolation on a 1 pixel grid
  *
  *
@@ -1560,8 +1560,8 @@ void stddevImageCube(
     const eigenCubeT2 &maskCube, /**< [in] a 1/0 mask.  0 pixels are excluded from the std-dev calculations. */
     radT1 minRad,                /**< [in] the minimum radius to analyze */
     radT2 maxRad,                /**< [in] the maximum radius to analyze */
-    bool divide = false          /**< [in] [optional] if true, the output is the input image is divided by the
-                                           std-dev profile, i.e. a S/N map.  default is false.*/
+    bool divide = false          /**< [in] [optional] if true, the output is the input image minus the interpolated
+                                           mean profile, divided by the std-dev profile, i.e. a S/N map. default is false.*/
 )
 {
     int dim1 = imc.cols();
