@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <new>
 #include <stdexcept>
@@ -998,6 +999,195 @@ TEST_CASE( "SVD deletion accepts views and reuses prepared capacity", "[math::sv
                                         3,
                                         workspace,
                                         backendT::stableCore ) == statusT::allocationFailure );
+}
+
+/// SVD deletion accepts under-aligned consumer storage
+/** Verifies that validateSvdDeletionFactor and svdRemoveRows use unaligned raw views at the shared-library boundary
+ * when the consumer's Eigen packet-alignment setting is smaller than mxlib's setting.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "SVD deletion accepts under-aligned consumer storage", "[math::svdDowndate][abi][alignment]" )
+{
+#ifdef MXLIB_SVD_DELETION_TEST_CONSUMER_ALIGNMENT
+    STATIC_REQUIRE( EIGEN_MAX_ALIGN_BYTES == 16 );
+    STATIC_REQUIRE( EIGEN_MAX_STATIC_ALIGN_BYTES == 16 );
+#endif
+
+    constexpr Eigen::Index rows{ 7 };
+    constexpr Eigen::Index rank{ 3 };
+    constexpr std::uintptr_t testedAlignment{ 32 };
+
+    std::vector<realT> factorStorage( static_cast<std::size_t>( rows * rank ) + 4 );
+    realT *factorData = factorStorage.data();
+    while( reinterpret_cast<std::uintptr_t>( factorData ) % testedAlignment != 16 )
+    {
+        ++factorData;
+    }
+    REQUIRE( reinterpret_cast<std::uintptr_t>( factorData ) % testedAlignment == 16 );
+
+    using unalignedMatrixMap = Eigen::Map<matrixT, Eigen::Unaligned>;
+    unalignedMatrixMap factor( factorData, rows, rank );
+    factor = sineFactor( rows, rank );
+    REQUIRE( mx::math::validateSvdDeletionFactor( factor ) == statusT::success );
+
+    std::vector<realT> singularStorage( static_cast<std::size_t>( rank ) + 4 );
+    realT *singularData = singularStorage.data();
+    while( reinterpret_cast<std::uintptr_t>( singularData ) % testedAlignment != 16 )
+    {
+        ++singularData;
+    }
+    REQUIRE( reinterpret_cast<std::uintptr_t>( singularData ) % testedAlignment == 16 );
+
+    using unalignedVectorMap = Eigen::Map<vectorT, Eigen::Unaligned>;
+    unalignedVectorMap singularValues( singularData, rank );
+    singularValues << 5, 3, 1;
+
+    const std::vector<Eigen::Index> deletedRows{ 2 };
+    mx::math::svdDeletionResult<realT> result;
+    mx::math::svdDeletionWorkspace<realT> workspace;
+    REQUIRE(
+        mx::math::svdRemoveRows( result, singularValues, factor, deletedRows, rank, workspace, backendT::stableCore ) ==
+        statusT::success );
+    REQUIRE( result.rotation().rows() == rank );
+    REQUIRE( result.rotation().cols() == rank );
+    REQUIRE( result.rotation().matrix().squaredNorm() == Approx( static_cast<realT>( rank ) ).margin( 1e-12 ) );
+    REQUIRE( result.singularValues().matrix().squaredNorm() > 0 );
+}
+
+/// SVD deletion accepts a default empty ABI index descriptor
+/** Verifies that the raw svdRemoveRowsAbiV2 entry point treats a default-constructed empty index descriptor as an
+ * identity deletion.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "SVD deletion accepts a default empty ABI index descriptor", "[math::svdDowndate][abi][identity]" )
+{
+    vectorT singular( 2 );
+    singular << 4, 1;
+    matrixT factor = identityMatrix( 2 );
+    mx::math::svdDeletionResult<realT> result;
+    mx::math::svdDeletionWorkspace<realT> workspace;
+
+    const mx::math::svdDeletionConstVectorViewV2<realT> singularView{ singular.data(), singular.size() };
+    const mx::math::svdDeletionConstMatrixViewV2<realT> factorView{ factor.data(),
+                                                                    factor.rows(),
+                                                                    factor.cols(),
+                                                                    factor.outerStride() };
+    const mx::math::svdDeletionConstIndexViewV2 noDeletedIndices;
+    REQUIRE( mx::math::detail::svdRemoveRowsAbiV2<realT>( result,
+                                                          singularView,
+                                                          factorView,
+                                                          noDeletedIndices,
+                                                          2,
+                                                          workspace,
+                                                          backendT::stableCore ) == statusT::success );
+    REQUIRE( ( result.singularValues() - singular ).matrix().norm() == Approx( 0.0 ) );
+    REQUIRE( ( result.rotation() - identityMatrix( 2 ) ).matrix().norm() == Approx( 0.0 ) );
+}
+
+/// SVD deletion rejects malformed ABI descriptors
+/** Verifies the ABI-v2 raw entry points reject vector, matrix, and index descriptors whose claimed storage cannot be
+ * addressed safely.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "SVD deletion rejects malformed ABI descriptors", "[math::svdDowndate][abi][errors]" )
+{
+    vectorT singular( 2 );
+    singular << 4, 1;
+    matrixT factor = identityMatrix( 2 );
+    const Eigen::Index deletedIndex{ 0 };
+    mx::math::svdDeletionResult<realT> result;
+    mx::math::svdDeletionWorkspace<realT> workspace;
+
+    const mx::math::svdDeletionConstVectorViewV2<realT> singularView{ singular.data(), singular.size() };
+    const mx::math::svdDeletionConstMatrixViewV2<realT> factorView{ factor.data(),
+                                                                    factor.rows(),
+                                                                    factor.cols(),
+                                                                    factor.outerStride() };
+    const auto *misalignedScalar =
+        reinterpret_cast<const realT *>( reinterpret_cast<const unsigned char *>( singular.data() ) + 1 );
+
+    REQUIRE( result.prepare( -1, 1 ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2( { factor.data(), -1, 2, factor.outerStride() }, 0 ) ==
+             statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2(
+                 mx::math::svdDeletionConstMatrixViewV2<realT>{ nullptr, 2, 2, 2 },
+                 0.0 ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2( { misalignedScalar, 2, 2, 2 }, 0.0 ) ==
+             statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2( { factor.data(), 2, 2, 1 }, 0 ) ==
+             statusT::invalidInput );
+    REQUIRE(
+        mx::math::detail::validateSvdDeletionFactorAbiV2(
+            { factor.data(), std::numeric_limits<std::int64_t>::max(), 1, std::numeric_limits<std::int64_t>::max() },
+            0 ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2(
+                 { factor.data(), 2, 2, std::numeric_limits<std::int64_t>::max() },
+                 0 ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::validateSvdDeletionFactorAbiV2(
+                 mx::math::svdDeletionConstMatrixViewV2<float>{ nullptr, 1, 1, 1 },
+                 0.0F ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdDeletionLeadingCoreAbiV2<realT>(
+                 result,
+                 { singular.data(), std::numeric_limits<std::int64_t>::max() },
+                 factorView,
+                 2,
+                 workspace ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdDeletionLeadingCoreAbiV2<realT>( result,
+                                                                   { misalignedScalar, singular.size() },
+                                                                   factorView,
+                                                                   2,
+                                                                   workspace ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdDeletionStableCoreAbiV2<realT>(
+                 result,
+                 { singular.data(), std::numeric_limits<std::int64_t>::max() },
+                 factorView,
+                 2,
+                 workspace ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdRemoveRowsAbiV2<realT>(
+                 result,
+                 singularView,
+                 factorView,
+                 { &deletedIndex, std::numeric_limits<std::int64_t>::max(), sizeof( deletedIndex ) },
+                 2,
+                 workspace,
+                 backendT::stableCore ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdRemoveRowsAbiV2<realT>( result,
+                                                          singularView,
+                                                          factorView,
+                                                          { &deletedIndex, 1, 3 },
+                                                          2,
+                                                          workspace,
+                                                          backendT::stableCore ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdRemoveRowsAbiV2<realT>( result,
+                                                          singularView,
+                                                          factorView,
+                                                          { nullptr, 1, sizeof( deletedIndex ) },
+                                                          2,
+                                                          workspace,
+                                                          backendT::stableCore ) == statusT::invalidInput );
+    REQUIRE( mx::math::detail::svdRemoveColumnsAbiV2<realT>( result,
+                                                             singularView,
+                                                             factorView,
+                                                             { nullptr, 1, sizeof( deletedIndex ) },
+                                                             2,
+                                                             workspace,
+                                                             backendT::stableCore ) == statusT::invalidInput );
+
+    const std::int8_t deleted8{ 0 };
+    const std::int16_t deleted16{ 0 };
+    const std::int32_t deleted32{ 0 };
+    for( const mx::math::svdDeletionConstIndexViewV2 indices :
+         { mx::math::svdDeletionConstIndexViewV2{ &deleted8, 1, sizeof( deleted8 ) },
+           mx::math::svdDeletionConstIndexViewV2{ &deleted16, 1, sizeof( deleted16 ) },
+           mx::math::svdDeletionConstIndexViewV2{ &deleted32, 1, sizeof( deleted32 ) } } )
+    {
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::detail::svdRemoveRowsAbiV2<
+                realT>( result, singularView, factorView, indices, 2, workspace, backendT::leadingCovariance ) ) );
+    }
 }
 
 /// SVD deletion reports invalid inputs and allocation failures

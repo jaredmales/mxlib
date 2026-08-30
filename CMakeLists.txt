@@ -396,6 +396,48 @@ add_library(objlib OBJECT
     ${MXLIB_GENERATED_ERROR_DIR}/error_t.hpp
 )
 
+# Keep Eigen's header-only allocation helpers local to the one ABI-isolated
+# component that owns storage behind an opaque library boundary.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(MXLIB_SVD_DELETION_COMPILE_OPTIONS
+        -fvisibility-inlines-hidden
+    )
+    set(MXLIB_SVD_DELETION_ALIGNMENT_TEST ${MXLIB_BUILD_TESTS})
+    if(MXLIB_ONE_TEST)
+        if(IS_ABSOLUTE "${MXLIB_ONE_TEST}")
+            set(MXLIB_ONE_TEST_CANDIDATE "${MXLIB_ONE_TEST}")
+        else()
+            set(MXLIB_ONE_TEST_CANDIDATE "${CMAKE_CURRENT_SOURCE_DIR}/tests/${MXLIB_ONE_TEST}")
+        endif()
+        if(MXLIB_ONE_TEST_CANDIDATE MATCHES "\\.o$")
+            string(REGEX REPLACE "\\.o$" ".cpp" MXLIB_ONE_TEST_CANDIDATE "${MXLIB_ONE_TEST_CANDIDATE}")
+        elseif(MXLIB_ONE_TEST_CANDIDATE MATCHES "\\.hpp$")
+            string(REGEX REPLACE "\\.hpp$" ".cpp" MXLIB_ONE_TEST_CANDIDATE "${MXLIB_ONE_TEST_CANDIDATE}")
+        elseif(NOT MXLIB_ONE_TEST_CANDIDATE MATCHES "\\.cpp$")
+            string(APPEND MXLIB_ONE_TEST_CANDIDATE ".cpp")
+        endif()
+        file(REAL_PATH "${MXLIB_ONE_TEST_CANDIDATE}" MXLIB_ONE_TEST_CANDIDATE_REAL)
+        file(REAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tests/include/math/svdDowndate_test.cpp"
+             MXLIB_SVD_DELETION_TEST_REAL)
+        if(MXLIB_ONE_TEST_CANDIDATE_REAL STREQUAL MXLIB_SVD_DELETION_TEST_REAL)
+            set(MXLIB_SVD_DELETION_ALIGNMENT_TEST ON)
+        endif()
+    endif()
+    if(MXLIB_SVD_DELETION_ALIGNMENT_TEST)
+        list(APPEND MXLIB_SVD_DELETION_COMPILE_OPTIONS
+            -UEIGEN_MAX_ALIGN_BYTES
+            -UEIGEN_MAX_STATIC_ALIGN_BYTES
+            -DEIGEN_MAX_ALIGN_BYTES=32
+            -DEIGEN_MAX_STATIC_ALIGN_BYTES=32
+            -DMXLIB_SVD_DELETION_TEST_PRODUCER_ALIGNMENT=32
+        )
+    endif()
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/math/svdDowndate.cpp
+        PROPERTIES COMPILE_OPTIONS "${MXLIB_SVD_DELETION_COMPILE_OPTIONS}"
+    )
+endif()
+
 set_property(SOURCE ${OBJLIB_SOURCES} APPEND PROPERTY
   OBJECT_DEPENDS "${MXLIB_COMP_VERSION_HEADER};${MXLIB_UNCOMP_VERSION_HEADER}"
 )

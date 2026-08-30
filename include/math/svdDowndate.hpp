@@ -28,6 +28,8 @@
 
 #include <Eigen/Dense>
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <span>
 #include <type_traits>
@@ -38,6 +40,12 @@ namespace mx
 {
 namespace math
 {
+
+#if defined( __GNUC__ ) || defined( __clang__ )
+#define MXLIB_SVD_DELETION_HEADER_ADAPTER inline __attribute__( ( visibility( "hidden" ) ) )
+#else
+#define MXLIB_SVD_DELETION_HEADER_ADAPTER inline
+#endif
 
 /** \addtogroup svd_downdate
  * @{
@@ -92,10 +100,65 @@ using svdDeletionConstMatrixRef = Eigen::Ref<const svdDeletionMatrix<realT>>;
 template <typename realT>
 using svdDeletionConstVectorRef = Eigen::Ref<const svdDeletionVector<realT>>;
 
+static_assert( std::is_integral_v<Eigen::Index>, "The SVD-deletion ABI requires Eigen::Index to be an integral type." );
+static_assert( std::is_signed_v<Eigen::Index>, "The SVD-deletion ABI requires Eigen::Index to be signed." );
+static_assert( sizeof( Eigen::Index ) <= sizeof( std::int64_t ),
+               "The SVD-deletion ABI cannot represent an Eigen::Index wider than int64_t." );
+static_assert( sizeof( Eigen::Index ) == sizeof( std::ptrdiff_t ),
+               "The SVD-deletion ABI requires Eigen::Index and ptrdiff_t to have the same width." );
+
+/// ABI-stable borrowed contiguous-vector storage descriptor.
 template <typename realT>
+struct svdDeletionConstVectorViewV2
+{
+    const realT *data{ nullptr }; ///< First scalar, or null for an empty view.
+
+    std::int64_t size{ 0 };       ///< Number of contiguous scalars.
+};
+
+/// ABI-stable borrowed column-major matrix storage descriptor.
+template <typename realT>
+struct svdDeletionConstMatrixViewV2
+{
+    const realT *data{ nullptr };  ///< First scalar, or null for an empty view.
+
+    std::int64_t rows{ 0 };        ///< Matrix row count.
+
+    std::int64_t columns{ 0 };     ///< Matrix column count.
+
+    std::int64_t outerStride{ 0 }; ///< Scalar stride between successive columns.
+};
+
+/// ABI-stable borrowed signed-index storage descriptor.
+struct svdDeletionConstIndexViewV2
+{
+    const void *data{ nullptr };    ///< First signed index, or null for an empty view.
+
+    std::int64_t size{ 0 };         ///< Number of indices.
+
+    std::int64_t elementBytes{ 0 }; ///< Width of each signed integer element.
+};
+
+static_assert( std::is_standard_layout_v<svdDeletionConstVectorViewV2<float>> );
+static_assert( std::is_trivially_copyable_v<svdDeletionConstVectorViewV2<float>> );
+static_assert( std::is_standard_layout_v<svdDeletionConstVectorViewV2<double>> );
+static_assert( std::is_trivially_copyable_v<svdDeletionConstVectorViewV2<double>> );
+static_assert( std::is_standard_layout_v<svdDeletionConstMatrixViewV2<float>> );
+static_assert( std::is_trivially_copyable_v<svdDeletionConstMatrixViewV2<float>> );
+static_assert( std::is_standard_layout_v<svdDeletionConstMatrixViewV2<double>> );
+static_assert( std::is_trivially_copyable_v<svdDeletionConstMatrixViewV2<double>> );
+static_assert( std::is_standard_layout_v<svdDeletionConstIndexViewV2> );
+static_assert( std::is_trivially_copyable_v<svdDeletionConstIndexViewV2> );
+
+/// Type-level ABI tag for the second-generation opaque SVD deletion handles.
+struct svdDeletionAbiV2Tag
+{
+};
+
+template <typename realT, typename abiT = svdDeletionAbiV2Tag>
 class svdDeletionResult;
 
-template <typename realT>
+template <typename realT, typename abiT = svdDeletionAbiV2Tag>
 class svdDeletionWorkspace;
 
 namespace detail
@@ -103,6 +166,61 @@ namespace detail
 
 template <typename realT>
 struct svdDeletionImplementation;
+
+/// \cond svdDeletion_abi_detail
+
+// ABI-v2 entry point for factor validation without Eigen types at the shared-library boundary.
+svdDeletionStatus validateSvdDeletionFactorAbiV2( svdDeletionConstMatrixViewV2<float> factor, float tolerance );
+
+// ABI-v2 entry point for double-precision factor validation.
+svdDeletionStatus validateSvdDeletionFactorAbiV2( svdDeletionConstMatrixViewV2<double> factor, double tolerance );
+
+// ABI-v2 entry point for the leading-covariance deletion core.
+template <typename realT>
+svdDeletionStatus svdDeletionLeadingCoreAbiV2( svdDeletionResult<realT> &result,
+                                               svdDeletionConstVectorViewV2<realT> singularValues,
+                                               svdDeletionConstMatrixViewV2<realT> deletedRows,
+                                               std::int64_t outputRank,
+                                               svdDeletionWorkspace<realT> &workspace );
+
+// ABI-v2 entry point for the stable deletion core.
+template <typename realT>
+svdDeletionStatus svdDeletionStableCoreAbiV2( svdDeletionResult<realT> &result,
+                                              svdDeletionConstVectorViewV2<realT> singularValues,
+                                              svdDeletionConstMatrixViewV2<realT> deletedRows,
+                                              std::int64_t outputRank,
+                                              svdDeletionWorkspace<realT> &workspace );
+
+// ABI-v2 entry point for backend-selected factor deletion.
+template <typename realT>
+svdDeletionStatus svdDeletionCoreAbiV2( svdDeletionResult<realT> &result,
+                                        svdDeletionConstVectorViewV2<realT> singularValues,
+                                        svdDeletionConstMatrixViewV2<realT> deletedRows,
+                                        std::int64_t outputRank,
+                                        svdDeletionWorkspace<realT> &workspace,
+                                        svdDeletionBackend backend );
+
+// ABI-v2 entry point for physical row deletion.
+template <typename realT>
+svdDeletionStatus svdRemoveRowsAbiV2( svdDeletionResult<realT> &result,
+                                      svdDeletionConstVectorViewV2<realT> singularValues,
+                                      svdDeletionConstMatrixViewV2<realT> leftFactor,
+                                      svdDeletionConstIndexViewV2 deletedIndices,
+                                      std::int64_t outputRank,
+                                      svdDeletionWorkspace<realT> &workspace,
+                                      svdDeletionBackend backend );
+
+// ABI-v2 entry point for physical column deletion.
+template <typename realT>
+svdDeletionStatus svdRemoveColumnsAbiV2( svdDeletionResult<realT> &result,
+                                         svdDeletionConstVectorViewV2<realT> singularValues,
+                                         svdDeletionConstMatrixViewV2<realT> rightFactor,
+                                         svdDeletionConstIndexViewV2 deletedIndices,
+                                         std::int64_t outputRank,
+                                         svdDeletionWorkspace<realT> &workspace,
+                                         svdDeletionBackend backend );
+
+/// \endcond
 
 /// \cond svdDeletion_test_detail
 
@@ -187,10 +305,14 @@ svdDeletionTestHooks<realT> &svdDeletionHooks();
  * successful operation.
  *
  * \tparam realT floating-point type; supported explicit instantiations are float and double.
+ * \tparam abiT type-level ABI tag; callers use the default.
  */
-template <typename realT>
+template <typename realT, typename abiT>
 class svdDeletionResult
 {
+    static_assert( std::is_same_v<abiT, svdDeletionAbiV2Tag>,
+                   "svdDeletionResult does not support a caller-selected ABI tag." );
+
   public:
     /// Construct an empty result.
     svdDeletionResult();
@@ -215,8 +337,12 @@ class svdDeletionResult
     /** Storage grows when required but does not shrink while `baseRank` is unchanged. Calling this before a hot loop
      * with the largest planned output rank reserves the rotation capacity for later smaller requests.
      */
+    MXLIB_SVD_DELETION_HEADER_ADAPTER
     svdDeletionStatus prepare( Eigen::Index baseRank, /**< [in] number of supplied singular triplets */
-                               Eigen::Index outputRank /**< [in] number of updated triplets to publish */ );
+                               Eigen::Index outputRank /**< [in] number of updated triplets to publish */ )
+    {
+        return prepareAbiV2( static_cast<std::int64_t>( baseRank ), static_cast<std::int64_t>( outputRank ) );
+    }
 
     /// Return the most recent operation status.
     svdDeletionStatus status() const noexcept;
@@ -226,27 +352,45 @@ class svdDeletionResult
 
     /// Return an unaligned borrowed view of all `baseRank()` descending updated singular values.
     /** The view remains valid until this result is prepared, assigned, moved, or destroyed. */
-    svdDeletionConstVectorRef<realT> singularValues() const noexcept;
+    MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionConstVectorRef<realT> singularValues() const noexcept
+    {
+        const svdDeletionConstVectorViewV2<realT> view = singularValuesViewAbiV2();
+        return Eigen::Map<const svdDeletionVector<realT>, Eigen::Unaligned>( view.data,
+                                                                             static_cast<Eigen::Index>( view.size ) );
+    }
 
     /// Return an unaligned borrowed view of all corresponding descending squared singular values.
     /** The view remains valid until this result is prepared, assigned, moved, or destroyed. */
-    svdDeletionConstVectorRef<realT> squaredSingularValues() const noexcept;
+    MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionConstVectorRef<realT> squaredSingularValues() const noexcept
+    {
+        const svdDeletionConstVectorViewV2<realT> view = squaredSingularValuesViewAbiV2();
+        return Eigen::Map<const svdDeletionVector<realT>, Eigen::Unaligned>( view.data,
+                                                                             static_cast<Eigen::Index>( view.size ) );
+    }
 
     /// Return the preserved-side rotation, with updated directions in columns.
     /** The unaligned borrowed view remains valid until this result is prepared, assigned, moved, or destroyed. */
-    svdDeletionConstMatrixRef<realT> rotation() const noexcept;
+    MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionConstMatrixRef<realT> rotation() const noexcept
+    {
+        const svdDeletionConstMatrixViewV2<realT> view = rotationViewAbiV2();
+        using mapT = Eigen::Map<const svdDeletionMatrix<realT>, Eigen::Unaligned, Eigen::OuterStride<Eigen::Dynamic>>;
+        return mapT( view.data,
+                     static_cast<Eigen::Index>( view.rows ),
+                     static_cast<Eigen::Index>( view.columns ),
+                     Eigen::OuterStride<Eigen::Dynamic>( static_cast<Eigen::Index>( view.outerStride ) ) );
+    }
 
     /// Return the base factorization rank for which storage is prepared.
-    Eigen::Index baseRank() const noexcept;
+    std::int64_t baseRank() const noexcept;
 
     /// Return the requested published rank.
-    Eigen::Index outputRank() const noexcept;
+    std::int64_t outputRank() const noexcept;
 
     /// Return the allocated rotation-column capacity for the current base rank.
-    Eigen::Index maximumOutputRank() const noexcept;
+    std::int64_t maximumOutputRank() const noexcept;
 
     /// Return the number of roundoff-scale negative eigenvalues clamped to zero.
-    Eigen::Index clampedEigenvalues() const noexcept;
+    std::int64_t clampedEigenvalues() const noexcept;
 
     /// Return the smallest pre-clamp eigenvalue from the normalized backend PSD validation core.
     /** A non-positive-semidefinite failure preserves the offending value. An empty stable-core deletion uses one as
@@ -259,6 +403,19 @@ class svdDeletionResult
 
   private:
     friend struct detail::svdDeletionImplementation<realT>;
+
+    /// Prepare output storage through the ABI-v2 integer-only boundary.
+    svdDeletionStatus prepareAbiV2( std::int64_t baseRank, /**< [in] number of supplied singular triplets */
+                                    std::int64_t outputRank /**< [in] number of triplets to publish */ );
+
+    /// Return the singular-value storage through the ABI-v2 POD boundary.
+    svdDeletionConstVectorViewV2<realT> singularValuesViewAbiV2() const noexcept;
+
+    /// Return squared-singular-value storage through the ABI-v2 POD boundary.
+    svdDeletionConstVectorViewV2<realT> squaredSingularValuesViewAbiV2() const noexcept;
+
+    /// Return rotation storage through the ABI-v2 POD boundary.
+    svdDeletionConstMatrixViewV2<realT> rotationViewAbiV2() const noexcept;
 
     /// Allocate private result storage after a move, translating allocation failure to false.
     bool ensureStorage() noexcept;
@@ -275,10 +432,14 @@ class svdDeletionResult
  * to own one independent workspace per worker without sharing in-flight numerical state.
  *
  * \tparam realT floating-point type; supported explicit instantiations are float and double.
+ * \tparam abiT type-level ABI tag; callers use the default.
  */
-template <typename realT>
+template <typename realT, typename abiT>
 class svdDeletionWorkspace
 {
+    static_assert( std::is_same_v<abiT, svdDeletionAbiV2Tag>,
+                   "svdDeletionWorkspace does not support a caller-selected ABI tag." );
+
   public:
     /// Construct an empty workspace.
     svdDeletionWorkspace();
@@ -301,9 +462,15 @@ class svdDeletionWorkspace
     svdDeletionWorkspace &operator=( svdDeletionWorkspace &&other /**< [in,out] workspace to move from */ ) noexcept;
 
     /// Prepare reusable storage and LAPACK work arrays.
+    MXLIB_SVD_DELETION_HEADER_ADAPTER
     svdDeletionStatus prepare( Eigen::Index baseRank,       /**< [in] maximum supplied singular rank */
                                Eigen::Index maximumDeleted, /**< [in] maximum rows of the deleted-side factor */
-                               svdDeletionBackend backend /**< [in] numerical backend to prepare */ );
+                               svdDeletionBackend backend /**< [in] numerical backend to prepare */ )
+    {
+        return prepareAbiV2( static_cast<std::int64_t>( baseRank ),
+                             static_cast<std::int64_t>( maximumDeleted ),
+                             backend );
+    }
 
     /// Release all prepared storage and reset dimensions.
     void clear() noexcept;
@@ -312,10 +479,10 @@ class svdDeletionWorkspace
     bool prepared() const noexcept;
 
     /// Return the prepared base rank.
-    Eigen::Index baseRank() const noexcept;
+    std::int64_t baseRank() const noexcept;
 
     /// Return the prepared maximum deletion count.
-    Eigen::Index maximumDeleted() const noexcept;
+    std::int64_t maximumDeleted() const noexcept;
 
     /// Return the prepared numerical backend.
     svdDeletionBackend backend() const noexcept;
@@ -325,6 +492,11 @@ class svdDeletionWorkspace
 
   private:
     friend struct detail::svdDeletionImplementation<realT>;
+
+    /// Prepare scratch storage through the ABI-v2 integer-only boundary.
+    svdDeletionStatus prepareAbiV2( std::int64_t baseRank,       /**< [in] maximum supplied singular rank */
+                                    std::int64_t maximumDeleted, /**< [in] maximum deleted-factor rows */
+                                    svdDeletionBackend backend /**< [in] numerical backend */ );
 
     /// Allocate private workspace storage after a move, translating allocation failure to false.
     bool ensureStorage() noexcept;
@@ -339,14 +511,28 @@ class svdDeletionWorkspace
 /** This is an optional one-time base-factor check. Hot deletion calls assume the factor contract and do not repeat
  * this `O(n q^2)` operation. A zero tolerance selects a dimension-scaled default.
  */
-svdDeletionStatus
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus
 validateSvdDeletionFactor( svdDeletionConstMatrixRef<float> factor, /**< [in] thin singular-vector factor to validate */
-                           float tolerance = 0 /**< [in] maximum absolute Gram-matrix error, or zero for automatic */ );
+                           float tolerance = 0 /**< [in] maximum absolute Gram-matrix error, or zero for automatic */ )
+{
+    return detail::validateSvdDeletionFactorAbiV2( { factor.data(),
+                                                     static_cast<std::int64_t>( factor.rows() ),
+                                                     static_cast<std::int64_t>( factor.cols() ),
+                                                     static_cast<std::int64_t>( factor.outerStride() ) },
+                                                   tolerance );
+}
 
 /// Validate that a supplied double-precision thin singular-vector factor has orthonormal columns.
-svdDeletionStatus validateSvdDeletionFactor(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus validateSvdDeletionFactor(
     svdDeletionConstMatrixRef<double> factor, /**< [in] thin singular-vector factor to validate */
-    double tolerance = 0 /**< [in] maximum absolute Gram-matrix error, or zero for automatic */ );
+    double tolerance = 0 /**< [in] maximum absolute Gram-matrix error, or zero for automatic */ )
+{
+    return detail::validateSvdDeletionFactorAbiV2( { factor.data(),
+                                                     static_cast<std::int64_t>( factor.rows() ),
+                                                     static_cast<std::int64_t>( factor.cols() ),
+                                                     static_cast<std::int64_t>( factor.outerStride() ) },
+                                                   tolerance );
+}
 
 /// Delete supplied singular-factor rows with the full-spectrum symmetric covariance core.
 /** Given deleted-side rows `F`, this solves
@@ -362,12 +548,23 @@ svdDeletionStatus validateSvdDeletionFactor(
  * they are candidates for a future non-dense backend behind the same interface.
  */
 template <typename realT>
-svdDeletionStatus svdDeletionLeadingCore(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionLeadingCore(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */
     std::type_identity_t<svdDeletionConstVectorRef<realT>> singularValues, /**< [in] descending base singular values */
     std::type_identity_t<svdDeletionConstMatrixRef<realT>> deletedRows,    /**< [in] deleted-side factor rows */
     Eigen::Index outputRank, /**< [in] number of leading updated directions to publish */
-    svdDeletionWorkspace<realT> &workspace /**< [in,out] reusable, worker-private scratch storage */ );
+    svdDeletionWorkspace<realT> &workspace /**< [in,out] reusable, worker-private scratch storage */ )
+{
+    return detail::svdDeletionLeadingCoreAbiV2<realT>(
+        result,
+        { singularValues.data(), static_cast<std::int64_t>( singularValues.size() ) },
+        { deletedRows.data(),
+          static_cast<std::int64_t>( deletedRows.rows() ),
+          static_cast<std::int64_t>( deletedRows.cols() ),
+          static_cast<std::int64_t>( deletedRows.outerStride() ) },
+        static_cast<std::int64_t>( outputRank ),
+        workspace );
+}
 
 /// Delete supplied singular-factor rows with the complement-preserving small-SVD core.
 /** Let `F` contain deleted-side singular-factor rows and choose `B` so that
@@ -385,22 +582,45 @@ svdDeletionStatus svdDeletionLeadingCore(
  * rank. The reusable interface intentionally leaves room for a later structured secular-equation backend.
  */
 template <typename realT>
-svdDeletionStatus svdDeletionStableCore(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionStableCore(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */
     std::type_identity_t<svdDeletionConstVectorRef<realT>> singularValues, /**< [in] descending base singular values */
     std::type_identity_t<svdDeletionConstMatrixRef<realT>> deletedRows,    /**< [in] deleted-side factor rows */
     Eigen::Index outputRank, /**< [in] number of leading updated directions to publish */
-    svdDeletionWorkspace<realT> &workspace /**< [in,out] reusable, worker-private scratch storage */ );
+    svdDeletionWorkspace<realT> &workspace /**< [in,out] reusable, worker-private scratch storage */ )
+{
+    return detail::svdDeletionStableCoreAbiV2<realT>(
+        result,
+        { singularValues.data(), static_cast<std::int64_t>( singularValues.size() ) },
+        { deletedRows.data(),
+          static_cast<std::int64_t>( deletedRows.rows() ),
+          static_cast<std::int64_t>( deletedRows.cols() ),
+          static_cast<std::int64_t>( deletedRows.outerStride() ) },
+        static_cast<std::int64_t>( outputRank ),
+        workspace );
+}
 
 /// Delete supplied singular-factor rows with an explicitly selected backend.
 template <typename realT>
-svdDeletionStatus svdDeletionCore(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionCore(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */
     std::type_identity_t<svdDeletionConstVectorRef<realT>> singularValues, /**< [in] descending base singular values */
     std::type_identity_t<svdDeletionConstMatrixRef<realT>> deletedRows,    /**< [in] deleted-side factor rows */
     Eigen::Index outputRank,                /**< [in] number of leading updated directions to publish */
     svdDeletionWorkspace<realT> &workspace, /**< [in,out] reusable, worker-private scratch storage */
-    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ );
+    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ )
+{
+    return detail::svdDeletionCoreAbiV2<realT>(
+        result,
+        { singularValues.data(), static_cast<std::int64_t>( singularValues.size() ) },
+        { deletedRows.data(),
+          static_cast<std::int64_t>( deletedRows.rows() ),
+          static_cast<std::int64_t>( deletedRows.cols() ),
+          static_cast<std::int64_t>( deletedRows.outerStride() ) },
+        static_cast<std::int64_t>( outputRank ),
+        workspace,
+        backend );
+}
 
 /// Delete physical rows from the matrix represented by a thin SVD.
 /** For `A=U Sigma V^T`, this gathers `U[deletedIndices,:]`. The returned rotation applies to `V`. Supplying complete
@@ -408,14 +628,29 @@ svdDeletionStatus svdDeletionCore(
  * factors deletes rows exactly from that represented low-rank matrix.
  */
 template <typename realT>
-svdDeletionStatus svdRemoveRows(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdRemoveRows(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */
     std::type_identity_t<svdDeletionConstVectorRef<realT>> singularValues, /**< [in] descending base singular values */
     std::type_identity_t<svdDeletionConstMatrixRef<realT>> leftFactor,     /**< [in] thin left factor `U` */
     std::span<const Eigen::Index> deletedIndices, /**< [in] sorted, unique row indices to delete */
     Eigen::Index outputRank,                      /**< [in] number of leading updated directions */
     svdDeletionWorkspace<realT> &workspace,       /**< [in,out] reusable, worker-private scratch */
-    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ );
+    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ )
+{
+    return detail::svdRemoveRowsAbiV2<realT>(
+        result,
+        { singularValues.data(), static_cast<std::int64_t>( singularValues.size() ) },
+        { leftFactor.data(),
+          static_cast<std::int64_t>( leftFactor.rows() ),
+          static_cast<std::int64_t>( leftFactor.cols() ),
+          static_cast<std::int64_t>( leftFactor.outerStride() ) },
+        { deletedIndices.data(),
+          static_cast<std::int64_t>( deletedIndices.size() ),
+          static_cast<std::int64_t>( sizeof( Eigen::Index ) ) },
+        static_cast<std::int64_t>( outputRank ),
+        workspace,
+        backend );
+}
 
 /// Delete physical columns from the matrix represented by a thin SVD.
 /** For `A=U Sigma V^T`, this gathers `V[deletedIndices,:]`. The returned rotation applies to `U`. Supplying complete
@@ -423,88 +658,33 @@ svdDeletionStatus svdRemoveRows(
  * factors deletes columns exactly from that represented low-rank matrix.
  */
 template <typename realT>
-svdDeletionStatus svdRemoveColumns(
+MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdRemoveColumns(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */
     std::type_identity_t<svdDeletionConstVectorRef<realT>> singularValues, /**< [in] descending base singular values */
     std::type_identity_t<svdDeletionConstMatrixRef<realT>> rightFactor,    /**< [in] thin right factor `V` */
     std::span<const Eigen::Index> deletedIndices, /**< [in] sorted, unique column indices to delete */
     Eigen::Index outputRank,                      /**< [in] number of leading updated directions */
     svdDeletionWorkspace<realT> &workspace,       /**< [in,out] reusable, worker-private scratch */
-    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ );
-
-extern template class svdDeletionResult<float>;
-extern template class svdDeletionResult<double>;
-extern template class svdDeletionWorkspace<float>;
-extern template class svdDeletionWorkspace<double>;
-
-extern template svdDeletionStatus svdDeletionLeadingCore<float>( svdDeletionResult<float> &,
-                                                                 std::type_identity_t<svdDeletionConstVectorRef<float>>,
-                                                                 std::type_identity_t<svdDeletionConstMatrixRef<float>>,
-                                                                 Eigen::Index,
-                                                                 svdDeletionWorkspace<float> & );
-extern template svdDeletionStatus
-svdDeletionLeadingCore<double>( svdDeletionResult<double> &,
-                                std::type_identity_t<svdDeletionConstVectorRef<double>>,
-                                std::type_identity_t<svdDeletionConstMatrixRef<double>>,
-                                Eigen::Index,
-                                svdDeletionWorkspace<double> & );
-
-extern template svdDeletionStatus svdDeletionStableCore<float>( svdDeletionResult<float> &,
-                                                                std::type_identity_t<svdDeletionConstVectorRef<float>>,
-                                                                std::type_identity_t<svdDeletionConstMatrixRef<float>>,
-                                                                Eigen::Index,
-                                                                svdDeletionWorkspace<float> & );
-extern template svdDeletionStatus
-svdDeletionStableCore<double>( svdDeletionResult<double> &,
-                               std::type_identity_t<svdDeletionConstVectorRef<double>>,
-                               std::type_identity_t<svdDeletionConstMatrixRef<double>>,
-                               Eigen::Index,
-                               svdDeletionWorkspace<double> & );
-
-extern template svdDeletionStatus svdDeletionCore<float>( svdDeletionResult<float> &,
-                                                          std::type_identity_t<svdDeletionConstVectorRef<float>>,
-                                                          std::type_identity_t<svdDeletionConstMatrixRef<float>>,
-                                                          Eigen::Index,
-                                                          svdDeletionWorkspace<float> &,
-                                                          svdDeletionBackend );
-extern template svdDeletionStatus svdDeletionCore<double>( svdDeletionResult<double> &,
-                                                           std::type_identity_t<svdDeletionConstVectorRef<double>>,
-                                                           std::type_identity_t<svdDeletionConstMatrixRef<double>>,
-                                                           Eigen::Index,
-                                                           svdDeletionWorkspace<double> &,
-                                                           svdDeletionBackend );
-
-extern template svdDeletionStatus svdRemoveRows<float>( svdDeletionResult<float> &,
-                                                        std::type_identity_t<svdDeletionConstVectorRef<float>>,
-                                                        std::type_identity_t<svdDeletionConstMatrixRef<float>>,
-                                                        std::span<const Eigen::Index>,
-                                                        Eigen::Index,
-                                                        svdDeletionWorkspace<float> &,
-                                                        svdDeletionBackend );
-extern template svdDeletionStatus svdRemoveRows<double>( svdDeletionResult<double> &,
-                                                         std::type_identity_t<svdDeletionConstVectorRef<double>>,
-                                                         std::type_identity_t<svdDeletionConstMatrixRef<double>>,
-                                                         std::span<const Eigen::Index>,
-                                                         Eigen::Index,
-                                                         svdDeletionWorkspace<double> &,
-                                                         svdDeletionBackend );
-
-extern template svdDeletionStatus svdRemoveColumns<float>( svdDeletionResult<float> &,
-                                                           std::type_identity_t<svdDeletionConstVectorRef<float>>,
-                                                           std::type_identity_t<svdDeletionConstMatrixRef<float>>,
-                                                           std::span<const Eigen::Index>,
-                                                           Eigen::Index,
-                                                           svdDeletionWorkspace<float> &,
-                                                           svdDeletionBackend );
-extern template svdDeletionStatus svdRemoveColumns<double>( svdDeletionResult<double> &,
-                                                            std::type_identity_t<svdDeletionConstVectorRef<double>>,
-                                                            std::type_identity_t<svdDeletionConstMatrixRef<double>>,
-                                                            std::span<const Eigen::Index>,
-                                                            Eigen::Index,
-                                                            svdDeletionWorkspace<double> &,
-                                                            svdDeletionBackend );
+    svdDeletionBackend backend = svdDeletionBackend::stableCore /**< [in] numerical backend */ )
+{
+    return detail::svdRemoveColumnsAbiV2<realT>(
+        result,
+        { singularValues.data(), static_cast<std::int64_t>( singularValues.size() ) },
+        { rightFactor.data(),
+          static_cast<std::int64_t>( rightFactor.rows() ),
+          static_cast<std::int64_t>( rightFactor.cols() ),
+          static_cast<std::int64_t>( rightFactor.outerStride() ) },
+        { deletedIndices.data(),
+          static_cast<std::int64_t>( deletedIndices.size() ),
+          static_cast<std::int64_t>( sizeof( Eigen::Index ) ) },
+        static_cast<std::int64_t>( outputRank ),
+        workspace,
+        backend );
+}
 
 /** @} */
+
+#undef MXLIB_SVD_DELETION_HEADER_ADAPTER
 
 } // namespace math
 } // namespace mx

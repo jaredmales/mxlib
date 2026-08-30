@@ -216,6 +216,18 @@ list(SORT MXLIB_TEST_SOURCES)
 
 set(MXLIB_TEST_TARGETS)
 
+function(mxlib_configure_svd_deletion_consumer TARGET_NAME)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${TARGET_NAME} PRIVATE
+            -UEIGEN_MAX_ALIGN_BYTES
+            -UEIGEN_MAX_STATIC_ALIGN_BYTES
+            -DEIGEN_MAX_ALIGN_BYTES=16
+            -DEIGEN_MAX_STATIC_ALIGN_BYTES=16
+            -DMXLIB_SVD_DELETION_TEST_CONSUMER_ALIGNMENT=16
+        )
+    endif()
+endfunction()
+
 function(mxlib_add_test_executable TEST_SOURCE)
     file(RELATIVE_PATH _mxlib_test_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${TEST_SOURCE}")
     string(REPLACE "/" "_" _mxlib_test_name "${_mxlib_test_rel}")
@@ -224,6 +236,12 @@ function(mxlib_add_test_executable TEST_SOURCE)
 
     add_executable(${_mxlib_test_target} $<TARGET_OBJECTS:mxlibTestMain> ${TEST_SOURCE})
     target_link_libraries(${_mxlib_test_target} PRIVATE mxlib-shared)
+
+    # Exercise the SVD-deletion shared-library boundary with 16-byte consumer
+    # alignment below the explicit 32-byte test-producer contract.
+    if(_mxlib_test_rel STREQUAL "include/math/svdDowndate_test.cpp")
+        mxlib_configure_svd_deletion_consumer(${_mxlib_test_target})
+    endif()
 
     if(NOT MXLIB_BUILD_TESTS)
         set_target_properties(${_mxlib_test_target} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
@@ -277,6 +295,11 @@ if(MXLIB_ONE_TEST)
 
     add_executable(mxlibTestOne $<TARGET_OBJECTS:mxlibTestMain> ${MXLIB_ONE_TEST_SOURCE})
     target_link_libraries(mxlibTestOne PRIVATE mxlib-shared)
+    file(REAL_PATH "${MXLIB_ONE_TEST_SOURCE}" _mxlib_one_test_real)
+    file(REAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/math/svdDowndate_test.cpp" _mxlib_svd_deletion_test_real)
+    if(_mxlib_one_test_real STREQUAL _mxlib_svd_deletion_test_real)
+        mxlib_configure_svd_deletion_consumer(mxlibTestOne)
+    endif()
     if(NOT MXLIB_BUILD_TESTS)
         set_target_properties(mxlibTestOne PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
     endif()
@@ -290,4 +313,17 @@ if(MXLIB_ONE_TEST)
     if(MXLIB_BUILD_TESTS AND BUILD_TESTING)
         add_test(NAME mxlibTestOne COMMAND mxlibTestOne)
     endif()
+endif()
+
+if(MXLIB_BUILD_TESTS AND BUILD_TESTING AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(NOT CMAKE_NM)
+        message(FATAL_ERROR "CMAKE_NM is required for the Linux SVD-deletion dynamic-symbol test")
+    endif()
+    add_test(
+        NAME mxlibTest_svdDowndate_dynamic_symbols
+        COMMAND ${CMAKE_COMMAND}
+            -DMXLIB_NM_EXECUTABLE=${CMAKE_NM}
+            -DMXLIB_SHARED_LIBRARY=$<TARGET_FILE:mxlib-shared>
+            -P ${PROJECT_SOURCE_DIR}/cmake/verify_svd_downdate_symbols.cmake
+    )
 endif()

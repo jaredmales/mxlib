@@ -28,6 +28,7 @@ OBJS = \
 	ipc/processInterface.o \
 	ipc/sharedMemSegment.o \
 	math/gslInterpolator.o \
+	math/svdDowndate.o \
 	math/templateBLAS.o \
 	math/templateLapack.o \
 	math/fit/templateLevmar.o \
@@ -88,6 +89,8 @@ ioutils/fits/fitsHeader.o: ../include/ioutils/fits/fitsHeader.hpp ioutils/fits/f
 ioutils/fits/fitsFile.o: ../include/ioutils/fits/fitsFile.hpp ioutils/fits/fitsHeader.o
 ipc/processInterface.o: ../include/ipc/processInterface.hpp
 math/gslInterpolator.o: ../include/math/gslInterpolator.hpp
+math/svdDowndate.o: ../include/math/svdDowndate.hpp
+math/svdDowndate.o: CXXFLAGS += -fvisibility-inlines-hidden
 math/cuda/templateCublas.o: ../include/math/cuda/templateCublas.hpp
 math/cuda/templateCufft.o: ../include/math/cuda/templateCufft.hpp
 math/cuda/templateCurand.o: ../include/math/cuda/templateCurand.hpp
