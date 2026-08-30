@@ -1,7 +1,6 @@
 /** \file templateLapack.hpp
  * \brief Declares and defines templatized wrappers for the Lapack library
  * \ingroup gen_math_files
- * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
@@ -228,6 +227,66 @@ MXLAPACK_INT sytrd<double>( char UPLO,
                             double *WORK,
                             MXLAPACK_INT LWORK,
                             MXLAPACK_INT INFO );
+
+/// Solve selected roots of a diagonal-plus-rank-one secular equation and form its eigenvectors.
+/**
+ * This is a typed wrapper for LAPACK xLAED9. The routine computes selected eigenvalues and the associated
+ * eigenvectors for
+ *
+ * \f[ \operatorname{diag}(\mathtt{DLAMDA}) + \mathtt{RHO}\,\mathtt{W}\mathtt{W}^{T}. \f]
+ *
+ * \tparam dataT Floating-point type; supported specializations are `float` and `double`.
+ *
+ * \returns the value of INFO from the LAPACK routine
+ *
+ * \ingroup template_lapack
+ */
+template <typename dataT>
+MXLAPACK_INT laed9( dataT *D,            /**< [out] N-element array of selected updated eigenvalues */
+                    dataT *Q,            /**< [out] LDQ-by-N secular-equation workspace produced by LAPACK */
+                    dataT *S,            /**< [out] LDS-by-K updated eigenvectors, stored column-wise */
+                    MXLAPACK_INT K,      /**< [in] number of terms in the secular equation */
+                    MXLAPACK_INT KSTART, /**< [in] first updated eigenvalue to compute, inclusive and one-based */
+                    MXLAPACK_INT KSTOP,  /**< [in] last updated eigenvalue to compute, inclusive and one-based */
+                    MXLAPACK_INT N,      /**< [in] Q matrix dimension, at least K */
+                    MXLAPACK_INT LDQ,    /**< [in] leading dimension of Q, at least max(1,N) */
+                    dataT RHO,           /**< [in] positive rank-one update weight */
+                    dataT *DLAMDA,       /**< [in] K-element array of strictly increasing diagonal poles */
+                    dataT *W,            /**< [in,out] K deflation-adjusted update components */
+                    MXLAPACK_INT LDS )   /**< [in] leading dimension of S, at least max(1,K) */
+{
+    return -1;
+}
+
+/// Float specialization of laed9, a wrapper for LAPACK SLAED9.
+template <>
+MXLAPACK_INT laed9<float>( float *D,            /**< [out] N-element array of selected updated eigenvalues */
+                           float *Q,            /**< [out] LDQ-by-N secular-equation workspace produced by LAPACK */
+                           float *S,            /**< [out] LDS-by-K updated eigenvectors, stored column-wise */
+                           MXLAPACK_INT K,      /**< [in] number of terms in the secular equation */
+                           MXLAPACK_INT KSTART, /**< [in] first updated eigenvalue, inclusive and one-based */
+                           MXLAPACK_INT KSTOP,  /**< [in] last updated eigenvalue, inclusive and one-based */
+                           MXLAPACK_INT N,      /**< [in] Q matrix dimension, at least K */
+                           MXLAPACK_INT LDQ,    /**< [in] leading dimension of Q, at least max(1,N) */
+                           float RHO,           /**< [in] positive rank-one update weight */
+                           float *DLAMDA,       /**< [in] K-element array of strictly increasing diagonal poles */
+                           float *W,            /**< [in,out] K deflation-adjusted update components */
+                           MXLAPACK_INT LDS );  /**< [in] leading dimension of S, at least max(1,K) */
+
+/// Double specialization of laed9, a wrapper for LAPACK DLAED9.
+template <>
+MXLAPACK_INT laed9<double>( double *D,           /**< [out] N-element array of selected updated eigenvalues */
+                            double *Q,           /**< [out] LDQ-by-N secular-equation workspace produced by LAPACK */
+                            double *S,           /**< [out] LDS-by-K updated eigenvectors, stored column-wise */
+                            MXLAPACK_INT K,      /**< [in] number of terms in the secular equation */
+                            MXLAPACK_INT KSTART, /**< [in] first updated eigenvalue, inclusive and one-based */
+                            MXLAPACK_INT KSTOP,  /**< [in] last updated eigenvalue, inclusive and one-based */
+                            MXLAPACK_INT N,      /**< [in] Q matrix dimension, at least K */
+                            MXLAPACK_INT LDQ,    /**< [in] leading dimension of Q, at least max(1,N) */
+                            double RHO,          /**< [in] positive rank-one update weight */
+                            double *DLAMDA,      /**< [in] K-element array of strictly increasing diagonal poles */
+                            double *W,           /**< [in,out] K deflation-adjusted update components */
+                            MXLAPACK_INT LDS );  /**< [in] leading dimension of S, at least max(1,K) */
 
 /// Compute selected eigenvalues and, optionally, eigenvectors of a real symmetric matrix
 /** xSYEVR computes selected eigenvalues and, optionally, eigenvectors
@@ -687,8 +746,7 @@ MXLAPACK_INT gesdd<float>( char JOBZ,
                            MXLAPACK_INT LDVT,
                            float *WORK,
                            MXLAPACK_INT LWORK,
-                           MXLAPACK_INT *IWORK
-                        );
+                           MXLAPACK_INT *IWORK );
 
 // double specialization of gesdd
 template <>
@@ -704,8 +762,7 @@ MXLAPACK_INT gesdd<double>( char JOBZ,
                             MXLAPACK_INT LDVT,
                             double *WORK,
                             MXLAPACK_INT LWORK,
-                            MXLAPACK_INT *IWORK
-                           );
+                            MXLAPACK_INT *IWORK );
 
 } // namespace math
 } // namespace mx

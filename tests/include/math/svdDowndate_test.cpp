@@ -203,6 +203,9 @@ enum class solverHookMode
     nonFiniteValue,
     nonFiniteVector,
     invalidOrdering,
+    outsideInterlacing,
+    invalidVectorNorm,
+    invalidResidual,
     negativeSpectrum,
     tinySpectrum,
     roundoffClamp,
@@ -211,6 +214,7 @@ enum class solverHookMode
 
 solverHookMode syevrMode = solverHookMode::production;
 solverHookMode gesvdMode = solverHookMode::production;
+solverHookMode laed9Mode = solverHookMode::production;
 
 // Throw a deterministic allocation failure for the selected operation.
 void throwAllocation( mx::math::detail::svdDeletionTestOperation operation /* [in] operation being attempted */ )
@@ -381,6 +385,61 @@ MXLAPACK_INT gesvdHook( char jobu,             /* [in] left-vector request */
     return 0;
 }
 
+// Emulate selected LAED9 failure and malformed-output paths.
+MXLAPACK_INT laed9Hook( realT *eigenvalues,            /* [out] ascending updated eigenvalues */
+                        realT *delta,                  /* [out] secular workspace */
+                        realT *eigenvectors,           /* [out] updated eigenvectors */
+                        MXLAPACK_INT rank,             /* [in] active secular-system dimension */
+                        MXLAPACK_INT leadingDimension, /* [in] output leading dimension */
+                        realT rho,                     /* [in] positive rank-one weight */
+                        realT *poles,                  /* [in,out] ascending diagonal poles */
+                        realT *update /* [in,out] normalized update */ )
+{
+    static_cast<void>( delta );
+    static_cast<void>( rho );
+    static_cast<void>( update );
+
+    if( laed9Mode == solverHookMode::solveFailure )
+    {
+        return 73;
+    }
+
+    for( MXLAPACK_INT column = 0; column < rank; ++column )
+    {
+        eigenvalues[column] = poles[column];
+        for( MXLAPACK_INT row = 0; row < rank; ++row )
+        {
+            eigenvectors[row + column * leadingDimension] = row == column ? realT( 1 ) : realT( 0 );
+        }
+    }
+    if( laed9Mode == solverHookMode::nonFiniteValue )
+    {
+        eigenvalues[0] = std::numeric_limits<realT>::infinity();
+    }
+    else if( laed9Mode == solverHookMode::nonFiniteVector )
+    {
+        eigenvectors[0] = std::numeric_limits<realT>::infinity();
+    }
+    else if( laed9Mode == solverHookMode::invalidOrdering && rank > 1 )
+    {
+        eigenvalues[0] = realT( 1 );
+        eigenvalues[1] = realT( 0 );
+    }
+    else if( laed9Mode == solverHookMode::outsideInterlacing )
+    {
+        eigenvalues[0] = poles[0] - realT( 1 );
+    }
+    else if( laed9Mode == solverHookMode::invalidVectorNorm )
+    {
+        eigenvectors[0] = realT( 2 );
+    }
+    else if( laed9Mode == solverHookMode::roundoffClamp )
+    {
+        eigenvalues[rank - 1] = std::numeric_limits<realT>::epsilon();
+    }
+    return 0;
+}
+
 // Restore production failure hooks at scope exit.
 class hookGuard
 {
@@ -392,6 +451,7 @@ class hookGuard
         mx::math::detail::svdDeletionHooks<float>() = {};
         syevrMode = solverHookMode::production;
         gesvdMode = solverHookMode::production;
+        laed9Mode = solverHookMode::production;
     }
 
     // Restore production hooks after every test exit path.
@@ -401,6 +461,7 @@ class hookGuard
         mx::math::detail::svdDeletionHooks<float>() = {};
         syevrMode = solverHookMode::production;
         gesvdMode = solverHookMode::production;
+        laed9Mode = solverHookMode::production;
     }
 };
 
@@ -551,6 +612,515 @@ TEST_CASE( "SVD deletion core entry points agree", "[math::svdDowndate][core]" )
     const Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic> updatedProjector =
         updatedDirections * updatedDirections.transpose();
     REQUIRE( ( updatedProjector - directProjector ).norm() < 1e-10 );
+}
+
+/// Rank-one secular SVD deletion matches direct row and column SVDs
+/** Verifies that svdRemoveRows and svdRemoveColumns with the rankOneSecular backend reproduce direct full SVDs
+ * while publishing either the complete eigensystem or a requested leading prefix.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "Rank-one secular SVD deletion matches direct row and column SVDs", "[math::svdDowndate][rankOneSecular]" )
+{
+    const Eigen::Index rank{ 4 };
+    const matrixT left = sineFactor( 9, rank );
+    const matrixT right = sineFactor( 7, rank );
+    vectorT singular( rank );
+    singular << 11, 6, 2.5, 0.75;
+    const matrixT matrix = representedMatrix( left, singular, right );
+
+    SECTION( "row deletion" )
+    {
+        const std::vector<Eigen::Index> deleted{ 4 };
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE(
+            mx::math::svdRemoveRows( result, singular, left, deleted, rank, workspace, backendT::rankOneSecular ) ==
+            statusT::success );
+        REQUIRE( result.backend() == backendT::rankOneSecular );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "column deletion" )
+    {
+        const std::vector<Eigen::Index> deleted{ 2 };
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE(
+            mx::math::svdRemoveColumns( result, singular, right, deleted, rank, workspace, backendT::rankOneSecular ) ==
+            statusT::success );
+        REQUIRE( result.backend() == backendT::rankOneSecular );
+        const deletionComparison comparison = compareColumnResult( matrix, left, deleted, result );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "leading output prefix" )
+    {
+        constexpr Eigen::Index outputRank{ 2 };
+        const std::vector<Eigen::Index> deleted{ 4 };
+        const matrixT retained = retainedRows( matrix, deleted );
+        Eigen::JacobiSVD<Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic>> direct( retained.matrix(),
+                                                                                       Eigen::ComputeThinV );
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdRemoveRows( result,
+                                          singular,
+                                          left,
+                                          deleted,
+                                          outputRank,
+                                          workspace,
+                                          backendT::rankOneSecular ) == statusT::success );
+        REQUIRE( result.outputRank() == outputRank );
+        REQUIRE( result.rotation().rows() == rank );
+        REQUIRE( result.rotation().cols() == outputRank );
+        REQUIRE( result.singularValues().size() == rank );
+        REQUIRE( ( result.singularValues().head( outputRank ).matrix() - direct.singularValues().head( outputRank ) )
+                     .norm() < 5e-11 );
+
+        const Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic> expectedDirections =
+            direct.matrixV().leftCols( outputRank );
+        const Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic> actualDirections =
+            right.matrix() * result.rotation().matrix();
+        const Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic> expectedProjector =
+            expectedDirections * expectedDirections.transpose();
+        const Eigen::Matrix<realT, Eigen::Dynamic, Eigen::Dynamic> actualProjector =
+            actualDirections * actualDirections.transpose();
+        REQUIRE( ( actualProjector - expectedProjector ).norm() < 5e-10 );
+    }
+}
+
+/// Rank-one secular SVD deletion handles deflation and leverage edge cases
+/** Verifies exact and clustered repeated singular values, zero singular values, zero-leverage deletion, and
+ * high-leverage deletion through svdRemoveRows with the rankOneSecular backend.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "Rank-one secular SVD deletion handles deflation and leverage edge cases",
+           "[math::svdDowndate][rankOneSecular][conditioning]" )
+{
+    SECTION( "scalar secular system" )
+    {
+        matrixT left( 2, 1 );
+        left << std::sqrt( 0.5 ), std::sqrt( 0.5 );
+        vectorT singular( 1 );
+        singular << std::sqrt( 2.0 );
+        const std::vector<Eigen::Index> deleted{ 0 };
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdRemoveRows( result, singular, left, deleted, 1, workspace, backendT::rankOneSecular ) ==
+                 statusT::success );
+        REQUIRE( result.singularValues()( 0 ) == Approx( 1.0 ).epsilon( 1e-12 ) );
+        REQUIRE( result.squaredSingularValues()( 0 ) == Approx( 1.0 ).epsilon( 1e-12 ) );
+        REQUIRE( std::abs( result.rotation()( 0, 0 ) ) == Approx( 1.0 ).epsilon( 1e-12 ) );
+    }
+
+    SECTION( "exact repeated spectrum" )
+    {
+        const matrixT left = sineFactor( 8, 4 );
+        const matrixT right = sineFactor( 6, 4 );
+        vectorT singular( 4 );
+        singular << 9, 9, 3, 3;
+        const matrixT matrix = representedMatrix( left, singular, right );
+        const std::vector<Eigen::Index> deleted{ 3 };
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 4, workspace, backendT::rankOneSecular ) ) );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result, 2e-10 );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "clustered spectrum" )
+    {
+        const matrixT left = sineFactor( 9, 4 );
+        const matrixT right = sineFactor( 7, 4 );
+        const realT spacing = realT( 8 ) * std::numeric_limits<realT>::epsilon();
+        vectorT singular( 4 );
+        singular << 10, 10 * ( 1 - spacing ), 2, 2 * ( 1 - spacing );
+        const matrixT matrix = representedMatrix( left, singular, right );
+        const std::vector<Eigen::Index> deleted{ 5 };
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 4, workspace, backendT::rankOneSecular ) ) );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result, 5e-10 );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "zero singular spectrum" )
+    {
+        const matrixT left = sineFactor( 8, 4 );
+        const matrixT right = sineFactor( 6, 4 );
+        vectorT singular( 4 );
+        singular << 8, 3, 0, 0;
+        const matrixT matrix = representedMatrix( left, singular, right );
+        const std::vector<Eigen::Index> deleted{ 2 };
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 4, workspace, backendT::rankOneSecular ) ) );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result, 2e-10 );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "zero leverage" )
+    {
+        matrixT left( 5, 4 );
+        left.setZero();
+        left.matrix().topRows( 4 ).setIdentity();
+        const matrixT right = sineFactor( 6, 4 );
+        vectorT singular( 4 );
+        singular << 8, 4, 2, 1;
+        const matrixT matrix = representedMatrix( left, singular, right );
+        const std::vector<Eigen::Index> deleted{ 4 };
+
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 4, workspace, backendT::rankOneSecular ) ) );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+
+    SECTION( "high leverage" )
+    {
+        matrixT left( 6, 3 );
+        left.setZero();
+        const realT residualLeverage = 1e-10;
+        left( 0, 0 ) = std::sqrt( 1 - residualLeverage );
+        left( 3, 0 ) = std::sqrt( residualLeverage );
+        left( 1, 1 ) = std::sqrt( 0.75 );
+        left( 4, 1 ) = 0.5;
+        left( 2, 2 ) = std::sqrt( 0.6 );
+        left( 5, 2 ) = std::sqrt( 0.4 );
+        const matrixT right = sineFactor( 5, 3 );
+        vectorT singular( 3 );
+        singular << 10, 4, 1;
+        const matrixT matrix = representedMatrix( left, singular, right );
+        const std::vector<Eigen::Index> deleted{ 0 };
+
+        REQUIRE( mx::math::validateSvdDeletionFactor( left ) == statusT::success );
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 3, workspace, backendT::rankOneSecular ) ) );
+        const deletionComparison comparison = compareRowResult( matrix, right, deleted, result, 5e-10 );
+        REQUIRE( comparison.squaredSingularError <= comparison.squaredSingularTolerance );
+        REQUIRE( comparison.singularError <= comparison.singularTolerance );
+        REQUIRE( comparison.covarianceError <= comparison.covarianceTolerance );
+    }
+}
+
+/// Rank-one secular SVD deletion supports float and enforces its deletion contract
+/** Verifies float accuracy, the empty identity path, one-row-only rejection in svdDeletionCore and svdRemoveRows,
+ * workspace capacity validation, and stable backend/status names for rankOneSecular.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "Rank-one secular SVD deletion supports float and enforces its deletion contract",
+           "[math::svdDowndate][rankOneSecular][float][errors]" )
+{
+    hookGuard guard;
+    REQUIRE( std::string( mx::math::svdDeletionBackendName( backendT::rankOneSecular ) ) == "rankOneSecular" );
+    REQUIRE( std::string( mx::math::svdDeletionStatusName( statusT::unsupportedDeletionCount ) ) ==
+             "unsupportedDeletionCount" );
+
+    SECTION( "float row deletion" )
+    {
+        using floatMatrixT = mx::math::svdDeletionMatrix<float>;
+        using floatVectorT = mx::math::svdDeletionVector<float>;
+        const floatMatrixT left = sineFactor( 7, 3 ).cast<float>();
+        const floatMatrixT right = sineFactor( 5, 3 ).cast<float>();
+        floatVectorT singular( 3 );
+        singular << 7, 3, 0.5F;
+        const Eigen::MatrixXf matrix = left.matrix() * singular.matrix().asDiagonal() * right.matrix().transpose();
+        Eigen::MatrixXf retained( 6, 5 );
+        retained.topRows( 2 ) = matrix.topRows( 2 );
+        retained.bottomRows( 4 ) = matrix.bottomRows( 4 );
+        Eigen::JacobiSVD<Eigen::MatrixXf> direct( retained, Eigen::ComputeThinV );
+        const std::vector<Eigen::Index> deleted{ 2 };
+
+        mx::math::svdDeletionResult<float> result;
+        mx::math::svdDeletionWorkspace<float> workspace;
+        REQUIRE( mx::math::svdDeletionSucceeded(
+            mx::math::svdRemoveRows( result, singular, left, deleted, 3, workspace, backendT::rankOneSecular ) ) );
+        REQUIRE( result.backend() == backendT::rankOneSecular );
+        REQUIRE( ( result.singularValues().matrix() - direct.singularValues().head( 3 ) ).norm() < 5e-4F );
+    }
+
+    SECTION( "empty deletion is identity" )
+    {
+        vectorT singular( 3 );
+        singular << 7, 2, 0.5;
+        const matrixT factor = identityMatrix( 3 );
+        const std::vector<Eigen::Index> deleted;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdRemoveRows( result, singular, factor, deleted, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::success );
+        REQUIRE( result.backend() == backendT::rankOneSecular );
+        REQUIRE( result.outputRank() == 2 );
+        REQUIRE( ( result.singularValues() - singular ).matrix().norm() == Approx( 0.0 ) );
+        REQUIRE( ( result.rotation() - identityMatrix( 3 ).leftCols( 2 ) ).matrix().norm() == Approx( 0.0 ) );
+        REQUIRE( result.minimumPSDValue() == Approx( 0.25 / 49.0 ) );
+    }
+
+    SECTION( "direct empty deletion is identity" )
+    {
+        vectorT singular( 3 );
+        singular << 7, 2, 0.5;
+        matrixT deletedRows( 0, 3 );
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::success );
+        REQUIRE( result.backend() == backendT::rankOneSecular );
+        REQUIRE( ( result.singularValues() - singular ).matrix().norm() == Approx( 0.0 ) );
+        REQUIRE( ( result.rotation() - identityMatrix( 3 ).leftCols( 2 ) ).matrix().norm() == Approx( 0.0 ) );
+    }
+
+    SECTION( "zero spectrum returns an arbitrary identity basis" )
+    {
+        vectorT singular = vectorT::Zero( 2 );
+        matrixT deletedRows( 1, 2 );
+        deletedRows << 0.25, 0.5;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::success );
+        REQUIRE( result.singularValues().matrix().norm() == Approx( 0.0 ) );
+        REQUIRE( ( result.rotation() - identityMatrix( 2 ) ).matrix().norm() == Approx( 0.0 ) );
+    }
+
+    SECTION( "tiny update is treated as identity" )
+    {
+        vectorT singular( 2 );
+        singular << 1, 0.5;
+        matrixT deletedRows( 1, 2 );
+        deletedRows << 1e-200, 0;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::success );
+        REQUIRE( ( result.singularValues() - singular ).matrix().norm() == Approx( 0.0 ) );
+        REQUIRE( ( result.rotation() - identityMatrix( 2 ) ).matrix().norm() == Approx( 0.0 ) );
+    }
+
+    SECTION( "invalid direct core shape is rejected" )
+    {
+        vectorT singular( 2 );
+        singular << 3, 1;
+        matrixT deletedRows( 1, 1 );
+        deletedRows << 0.25;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidInput );
+        REQUIRE( result.status() == statusT::invalidInput );
+    }
+
+    SECTION( "result preparation failure is propagated" )
+    {
+        vectorT singular( 2 );
+        singular << 3, 1;
+        matrixT deletedRows( 1, 2 );
+        deletedRows << 0.25, 0.1;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        failingOperation = mx::math::detail::svdDeletionTestOperation::prepareResult;
+        mx::math::detail::svdDeletionHooks<double>().operation = throwAllocation;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::allocationFailure );
+        REQUIRE( result.status() == statusT::allocationFailure );
+    }
+
+    SECTION( "multiple deletions are rejected" )
+    {
+        const matrixT factor = sineFactor( 6, 3 );
+        vectorT singular( 3 );
+        singular << 7, 3, 1;
+        const std::vector<Eigen::Index> deleted{ 1, 4 };
+        matrixT deletedRows( 2, 3 );
+        deletedRows.matrix().row( 0 ) = factor.matrix().row( 1 );
+        deletedRows.matrix().row( 1 ) = factor.matrix().row( 4 );
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( workspace.prepare( 3, 2, backendT::rankOneSecular ) == statusT::unsupportedDeletionCount );
+        REQUIRE( !workspace.prepared() );
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::unsupportedDeletionCount );
+        REQUIRE( result.status() == statusT::unsupportedDeletionCount );
+        REQUIRE( mx::math::svdRemoveRows( result, singular, factor, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::unsupportedDeletionCount );
+        REQUIRE( result.status() == statusT::unsupportedDeletionCount );
+    }
+
+    SECTION( "finite oversized update is rejected before squaring" )
+    {
+        vectorT singular( 2 );
+        singular << 1, 0.5;
+        matrixT deletedRows( 1, 2 );
+        deletedRows << std::numeric_limits<realT>::max() / 4, std::numeric_limits<realT>::max() / 4;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidInput );
+        REQUIRE( result.status() == statusT::invalidInput );
+    }
+
+    SECTION( "materially indefinite core is rejected" )
+    {
+        vectorT singular( 2 );
+        singular << 1, 0.5;
+        matrixT deletedRows( 1, 2 );
+        deletedRows << 2, 0;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::nonPositiveSemidefinite );
+        REQUIRE( result.minimumPSDValue() == Approx( -3.0 ) );
+    }
+
+    SECTION( "finite result that cannot be rescaled is rejected" )
+    {
+        const realT scale = realT( 2 ) * std::sqrt( std::numeric_limits<realT>::max() );
+        vectorT singular( 2 );
+        singular << scale, scale / realT( 2 );
+        matrixT deletedRows( 1, 2 );
+        deletedRows << 0.25, 0;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deletedRows, 2, workspace, backendT::rankOneSecular ) ==
+                 statusT::rescalingOverflow );
+        REQUIRE( result.status() == statusT::rescalingOverflow );
+    }
+}
+
+/// Rank-one secular SVD deletion reports solver failures
+/** Verifies LAED9 failure, non-finite output, invalid ordering and interlacing, vector norm and residual validation,
+ * and roundoff clamping through svdDeletionCore with the rankOneSecular backend.
+ *
+ * \ingroup svdDowndate_unit_tests
+ */
+TEST_CASE( "Rank-one secular SVD deletion reports solver failures",
+           "[math::svdDowndate][rankOneSecular][errors][solver]" )
+{
+    hookGuard guard;
+    vectorT singular( 3 );
+    singular << 8, 4, 2;
+    matrixT deleted( 1, 3 );
+    deleted << 0.25, 0.2, 0.1;
+
+    SECTION( "LAED9 solve failure" )
+    {
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::solveFailure;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::solverFailure );
+        REQUIRE( result.lapackInfo() == 73 );
+    }
+
+    SECTION( "LAED9 non-finite values and vectors" )
+    {
+        for( const solverHookMode mode : { solverHookMode::nonFiniteValue, solverHookMode::nonFiniteVector } )
+        {
+            CAPTURE( static_cast<int>( mode ) );
+            mx::math::svdDeletionResult<realT> result;
+            mx::math::svdDeletionWorkspace<realT> workspace;
+            laed9Mode = mode;
+            mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+            REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                     statusT::nonFiniteOutput );
+        }
+    }
+
+    SECTION( "LAED9 invalid ordering" )
+    {
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::invalidOrdering;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidSolverOutput );
+    }
+
+    SECTION( "LAED9 result outside secular interlacing bounds" )
+    {
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::outsideInterlacing;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidSolverOutput );
+    }
+
+    SECTION( "LAED9 non-unit eigenvector" )
+    {
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::invalidVectorNorm;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidSolverOutput );
+    }
+
+    SECTION( "LAED9 eigenvector with a large matrix-free residual" )
+    {
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::invalidResidual;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+        REQUIRE( mx::math::svdDeletionCore( result, singular, deleted, 3, workspace, backendT::rankOneSecular ) ==
+                 statusT::invalidSolverOutput );
+    }
+
+    SECTION( "small positive roundoff eigenvalue is clamped" )
+    {
+        vectorT clampSingular( 2 );
+        clampSingular << 1, 0.5;
+        matrixT clampDeleted( 1, 2 );
+        clampDeleted << 1, 0;
+        mx::math::svdDeletionResult<realT> result;
+        mx::math::svdDeletionWorkspace<realT> workspace;
+        laed9Mode = solverHookMode::roundoffClamp;
+        mx::math::detail::svdDeletionHooks<double>().laed9 = laed9Hook;
+
+        REQUIRE(
+            mx::math::svdDeletionCore( result, clampSingular, clampDeleted, 1, workspace, backendT::rankOneSecular ) ==
+            statusT::successWithClamping );
+        REQUIRE( result.clampedEigenvalues() == 1 );
+        REQUIRE( result.squaredSingularValues()( 1 ) == Approx( 0.0 ) );
+    }
 }
 
 /// SVD deletion preserves the projected-factor contract

@@ -1,7 +1,6 @@
 /** \file templateLapack.cpp
  * \brief Implementation of templatized wrappers for the Lapack library
  * \ingroup gen_math_files
- * \author Jared R. Males (jaredmales@gmail.com)
  *
  */
 
@@ -25,6 +24,40 @@
 //***********************************************************************//
 
 #include "math/templateLapack.hpp"
+
+#ifndef MXLIB_MKL
+// Generic LAPACKE headers do not declare the provider's LAED9 Fortran symbols.
+extern "C"
+{
+    void slaed9_( const MXLAPACK_INT *K,
+                  const MXLAPACK_INT *KSTART,
+                  const MXLAPACK_INT *KSTOP,
+                  const MXLAPACK_INT *N,
+                  float *D,
+                  float *Q,
+                  const MXLAPACK_INT *LDQ,
+                  const float *RHO,
+                  float *DLAMDA,
+                  float *W,
+                  float *S,
+                  const MXLAPACK_INT *LDS,
+                  MXLAPACK_INT *INFO );
+
+    void dlaed9_( const MXLAPACK_INT *K,
+                  const MXLAPACK_INT *KSTART,
+                  const MXLAPACK_INT *KSTOP,
+                  const MXLAPACK_INT *N,
+                  double *D,
+                  double *Q,
+                  const MXLAPACK_INT *LDQ,
+                  const double *RHO,
+                  double *DLAMDA,
+                  double *W,
+                  double *S,
+                  const MXLAPACK_INT *LDS,
+                  MXLAPACK_INT *INFO );
+}
+#endif
 
 namespace mx
 {
@@ -184,6 +217,48 @@ MXLAPACK_INT sytrd<double>( char UPLO,
              1
 #endif
     );
+
+    return INFO;
+}
+
+template <>
+MXLAPACK_INT laed9<float>( float *D,
+                           float *Q,
+                           float *S,
+                           MXLAPACK_INT K,
+                           MXLAPACK_INT KSTART,
+                           MXLAPACK_INT KSTOP,
+                           MXLAPACK_INT N,
+                           MXLAPACK_INT LDQ,
+                           float RHO,
+                           float *DLAMDA,
+                           float *W,
+                           MXLAPACK_INT LDS )
+{
+    MXLAPACK_INT INFO;
+
+    slaed9_( &K, &KSTART, &KSTOP, &N, D, Q, &LDQ, &RHO, DLAMDA, W, S, &LDS, &INFO );
+
+    return INFO;
+}
+
+template <>
+MXLAPACK_INT laed9<double>( double *D,
+                            double *Q,
+                            double *S,
+                            MXLAPACK_INT K,
+                            MXLAPACK_INT KSTART,
+                            MXLAPACK_INT KSTOP,
+                            MXLAPACK_INT N,
+                            MXLAPACK_INT LDQ,
+                            double RHO,
+                            double *DLAMDA,
+                            double *W,
+                            MXLAPACK_INT LDS )
+{
+    MXLAPACK_INT INFO;
+
+    dlaed9_( &K, &KSTART, &KSTOP, &N, D, Q, &LDQ, &RHO, DLAMDA, W, S, &LDS, &INFO );
 
     return INFO;
 }
@@ -402,8 +477,7 @@ MXLAPACK_INT gesdd<float>( char JOBZ,
                            MXLAPACK_INT LDVT,
                            float *WORK,
                            MXLAPACK_INT LWORK,
-                           MXLAPACK_INT *IWORK
-                            )
+                           MXLAPACK_INT *IWORK )
 {
     MXLAPACK_INT INFO;
 
@@ -444,12 +518,11 @@ MXLAPACK_INT gesdd<double>( char JOBZ,
                             MXLAPACK_INT LDVT,
                             double *WORK,
                             MXLAPACK_INT LWORK,
-                            MXLAPACK_INT *IWORK
-                        )
+                            MXLAPACK_INT *IWORK )
 {
 
     MXLAPACK_INT INFO;
-    
+
     dgesdd_( &JOBZ,
              &M,
              &N,

@@ -55,7 +55,8 @@ namespace math
 enum class svdDeletionBackend
 {
     leadingCovariance, ///< Symmetric leading-spectrum core; fastest when small singular values are not required.
-    stableCore         ///< Complement-preserving small SVD; avoids squaring singular-value conditioning.
+    stableCore,        ///< Complement-preserving small SVD; avoids squaring singular-value conditioning.
+    rankOneSecular     ///< Structured covariance eigensolve for deleting exactly one singular-factor row.
 };
 
 /// Completion status for an SVD deletion operation.
@@ -72,7 +73,8 @@ enum class svdDeletionStatus
     invalidSolverOutput,     ///< LAPACK returned a finite spectrum with invalid ordering or sign.
     rescalingOverflow,       ///< A finite normalized result cannot be represented after restoring input scale.
     nonPositiveSemidefinite, ///< A theoretically PSD core has a materially negative eigenvalue.
-    factorNotOrthonormal     ///< A requested singular-factor validation failed.
+    factorNotOrthonormal,    ///< A requested singular-factor validation failed.
+    unsupportedDeletionCount ///< The selected backend cannot process the requested number of deleted rows.
 };
 
 /// Return a stable text representation of an SVD deletion backend.
@@ -274,6 +276,11 @@ using svdDeletionGesvdHookT = MXLAPACK_INT ( * )( char,
                                                   realT *,
                                                   MXLAPACK_INT );
 
+/// Function signature for the structured rank-one secular eigensolver hook.
+template <typename realT>
+using svdDeletionLaed9HookT =
+    MXLAPACK_INT ( * )( realT *, realT *, realT *, MXLAPACK_INT, MXLAPACK_INT, realT, realT *, realT * );
+
 /// Test hooks for one floating-point specialization.
 template <typename realT>
 struct svdDeletionTestHooks
@@ -286,6 +293,9 @@ struct svdDeletionTestHooks
 
     /// Optional GESVD hook; null calls `math::gesvd<realT>`.
     svdDeletionGesvdHookT<realT> gesvd{ nullptr };
+
+    /// Optional LAED9 hook; null calls the LAPACK structured secular eigensolver.
+    svdDeletionLaed9HookT<realT> laed9{ nullptr };
 };
 
 /// Access the process-wide SVD deletion test hooks for one scalar type.
@@ -544,8 +554,7 @@ MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus validateSvdDeletionFactor(
  * The result rotation is `W` and its singular values are `sqrt(diag(Lambda))`. The complete spectrum is evaluated
  * for PSD validation even when only `outputRank` leading directions are published. This backend forms normal
  * equations and therefore does not promise high relative accuracy for the smallest singular values.
- * Classical structured eigensystem downdates are described by \cite bunch_nielsen_1978 and \cite gu_eisenstat_1995;
- * they are candidates for a future non-dense backend behind the same interface.
+ * The `rankOneSecular` backend evaluates this same core in quadratic time when exactly one row is deleted.
  */
 template <typename realT>
 MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionLeadingCore(
@@ -578,8 +587,8 @@ MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionLeadingCore(
  * default generic backend because it avoids explicitly squaring the represented singular values. See
  * \cite brand_2006 and \cite long_males_2021.
  *
- * Both current backends use dense LAPACK eigensolvers or SVDs and therefore have cubic asymptotic cost in the base
- * rank. The reusable interface intentionally leaves room for a later structured secular-equation backend.
+ * This backend and `leadingCovariance` use dense LAPACK solvers and therefore have cubic asymptotic cost in the base
+ * rank. The `rankOneSecular` backend instead uses a structured quadratic-time solve for one-row deletion.
  */
 template <typename realT>
 MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionStableCore(
@@ -601,6 +610,12 @@ MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionStableCore(
 }
 
 /// Delete supplied singular-factor rows with an explicitly selected backend.
+/** `rankOneSecular` accepts either no deleted rows, which returns the identity update, or exactly one deleted row.
+ * It solves the same covariance core as `leadingCovariance` by transforming the diagonal-minus-rank-one problem to a
+ * positive rank-one secular equation. LAPACK-style deflation handles negligible update components and clustered
+ * poles at a roundoff-scaled tolerance; post-solve validation uses dimension-scaled bounds. See
+ * \cite bunch_nielsen_1978 and \cite gu_eisenstat_1995.
+ */
 template <typename realT>
 MXLIB_SVD_DELETION_HEADER_ADAPTER svdDeletionStatus svdDeletionCore(
     svdDeletionResult<realT> &result, /**< [out] updated spectrum, rotation, and diagnostics */

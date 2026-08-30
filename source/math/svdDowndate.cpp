@@ -135,6 +135,45 @@ class svdDeletionWorkspace<realT, abiT>::storage
     /// Singular values returned by GESVD.
     svdDeletionStorageVector<realT> m_stableSingularValues;
 
+    /// Mutable diagonal poles used by the structured rank-one deflation pass.
+    svdDeletionStorageVector<realT> m_secularPoles;
+
+    /// Mutable normalized update components used by structured deflation.
+    svdDeletionStorageVector<realT> m_secularUpdate;
+
+    /// Compact active poles supplied to LAED9.
+    svdDeletionStorageVector<realT> m_secularActivePoles;
+
+    /// Compact active update supplied to and overwritten by LAED9.
+    svdDeletionStorageVector<realT> m_secularActiveUpdate;
+
+    /// Merged active and deflated eigenvalue candidates before sign reversal.
+    svdDeletionStorageVector<realT> m_secularCandidateValues;
+
+    /// One embedded structured eigenvector transformed back through deflation rotations.
+    svdDeletionStorageVector<realT> m_secularVector;
+
+    /// Active coordinate indices after structured deflation.
+    std::vector<Eigen::Index> m_secularActiveIndices;
+
+    /// Deflated coordinate indices after structured deflation.
+    std::vector<Eigen::Index> m_secularDeflatedIndices;
+
+    /// Merge order for active secular roots and deflated diagonal values.
+    std::vector<Eigen::Index> m_secularOrder;
+
+    /// First coordinate of each recorded structured-deflation Givens rotation.
+    std::vector<Eigen::Index> m_secularRotationFirst;
+
+    /// Second coordinate of each recorded structured-deflation Givens rotation.
+    std::vector<Eigen::Index> m_secularRotationSecond;
+
+    /// Cosine of each recorded structured-deflation Givens rotation.
+    std::vector<realT> m_secularRotationCosine;
+
+    /// Sine of each recorded structured-deflation Givens rotation.
+    std::vector<realT> m_secularRotationSine;
+
     /// Eigenvector support indices required by SYEVR.
     std::vector<MXLAPACK_INT> m_support;
 
@@ -492,6 +531,37 @@ MXLAPACK_INT callGesvd( char jobu,         /* [in] left singular-vector request 
     return math::gesvd<realT>( jobu, jobvt, rows, cols, matrix, lda, singular, left, ldu, rightT, ldvt, work, lwork );
 }
 
+// Invoke the injected or production LAED9 structured rank-one eigensolver.
+template <typename realT>
+MXLAPACK_INT callLaed9( realT *eigenvalues,            /* [out] ascending updated eigenvalues */
+                        realT *delta,                  /* [out] LAED9 secular workspace */
+                        realT *eigenvectors,           /* [out] updated eigenvectors in columns */
+                        MXLAPACK_INT rank,             /* [in] active secular-system dimension */
+                        MXLAPACK_INT leadingDimension, /* [in] matrix leading dimension */
+                        realT rho,                     /* [in] positive rank-one update weight */
+                        realT *poles,                  /* [in,out] strictly ascending diagonal poles */
+                        realT *update /* [in,out] normalized update components */ )
+{
+    auto &hooks = svdDeletionHooks<realT>();
+    if( hooks.laed9 )
+    {
+        return hooks.laed9( eigenvalues, delta, eigenvectors, rank, leadingDimension, rho, poles, update );
+    }
+
+    return math::laed9<realT>( eigenvalues,
+                               delta,
+                               eigenvectors,
+                               rank,
+                               1,
+                               rank,
+                               rank,
+                               leadingDimension,
+                               rho,
+                               poles,
+                               update,
+                               leadingDimension );
+}
+
 // Convert a finite LAPACK floating workspace query to an integer size.
 template <typename realT>
 bool querySize( MXLAPACK_INT &size, /* [out] validated integer workspace size */
@@ -554,7 +624,8 @@ struct svdDeletionImplementation
     // Return true for a supported numerical backend value.
     static bool validBackend( svdDeletionBackend backend /* [in] backend value to validate */ )
     {
-        return backend == svdDeletionBackend::leadingCovariance || backend == svdDeletionBackend::stableCore;
+        return backend == svdDeletionBackend::leadingCovariance || backend == svdDeletionBackend::stableCore ||
+               backend == svdDeletionBackend::rankOneSecular;
     }
 
     // Validate singular values and requested rank without checking factor rows.
@@ -716,7 +787,7 @@ struct svdDeletionImplementation
         result.m_storage->m_backend = backend;
         result.m_storage->m_status = svdDeletionStatus::success;
         result.m_storage->m_clampedEigenvalues = 0;
-        if( backend == svdDeletionBackend::leadingCovariance )
+        if( backend == svdDeletionBackend::leadingCovariance || backend == svdDeletionBackend::rankOneSecular )
         {
             const realT scale = singularValues( 0 );
             realT minimumNormalized{ 0 };
@@ -888,6 +959,391 @@ struct svdDeletionImplementation
         }
         loadDeletedRows( workspace, deletedRows );
         return leadingLoaded( result, singularValues, deletedRows.rows(), outputRank, workspace );
+    }
+
+    // Execute the normalized diagonal-minus-rank-one secular solve with one deleted row already loaded.
+    static svdDeletionStatus rankOneLoaded( resultT &result,                                 /* [out] updated system */
+                                            svdDeletionConstVectorRef<realT> singularValues, /* [in] base values */
+                                            Eigen::Index outputRank,                         /* [in] requested rank */
+                                            workspaceT &workspace /* [in,out] scratch */ )
+    {
+        const Eigen::Index rank = singularValues.size();
+        auto &stored = *workspace.m_storage;
+        const realT scale = normalizeSingularValues( workspace, singularValues );
+        if( scale == realT( 0 ) )
+        {
+            return zeroSystem( result, outputRank, svdDeletionBackend::rankOneSecular );
+        }
+
+        realT updateNorm{ 0 };
+        realT maximumPole{ 0 };
+        for( Eigen::Index index = 0; index < rank; ++index )
+        {
+            const realT normalized = stored.m_normalizedSingularValues( index );
+            const realT update = normalized * stored.m_deletedRows( 0, index );
+            const realT pole = -( normalized * normalized );
+            if( !math::isFinite( update ) || !math::isFinite( pole ) )
+            {
+                return fail( result, svdDeletionStatus::invalidInput ); // LCOV_EXCL_LINE -- finite normalized products.
+            }
+            stored.m_scaledDeletedTranspose( index, 0 ) = update;
+            stored.m_secularPoles( index ) = pole;
+            updateNorm = std::hypot( updateNorm, update );
+            maximumPole = std::max( maximumPole, std::abs( pole ) );
+        }
+        if( updateNorm == realT( 0 ) )
+        {
+            return identity( result, singularValues, outputRank, svdDeletionBackend::rankOneSecular );
+        }
+        if( !math::isFinite( updateNorm ) || updateNorm > std::sqrt( std::numeric_limits<realT>::max() ) )
+        {
+            return fail( result, svdDeletionStatus::invalidInput );
+        }
+
+        const realT rho = updateNorm * updateNorm;
+        if( !math::isFinite( rho ) )
+        {
+            // LCOV_EXCL_START -- updateNorm is bounded before squaring.
+            return fail( result, svdDeletionStatus::invalidInput );
+            // LCOV_EXCL_STOP
+        }
+        realT maximumUpdate{ 0 };
+        for( Eigen::Index index = 0; index < rank; ++index )
+        {
+            stored.m_secularUpdate( index ) = stored.m_scaledDeletedTranspose( index, 0 ) / updateNorm;
+            maximumUpdate = std::max( maximumUpdate, std::abs( stored.m_secularUpdate( index ) ) );
+        }
+        const realT deflationTolerance =
+            realT( 8 ) * std::numeric_limits<realT>::epsilon() * std::max( maximumPole, maximumUpdate );
+        if( rho * maximumUpdate <= deflationTolerance )
+        {
+            return identity( result, singularValues, outputRank, svdDeletionBackend::rankOneSecular );
+        }
+
+        Eigen::Index activeCount{ 0 };
+        Eigen::Index deflatedCount{ 0 };
+        Eigen::Index rotationCount{ 0 };
+        Eigen::Index previousActive{ -1 };
+        for( Eigen::Index next = 0; next < rank; ++next )
+        {
+            if( rho * std::abs( stored.m_secularUpdate( next ) ) <= deflationTolerance )
+            {
+                stored.m_secularDeflatedIndices[deflatedCount++] = next;
+                continue;
+            }
+            if( previousActive < 0 )
+            {
+                previousActive = next;
+                continue;
+            }
+
+            const realT previousUpdate = stored.m_secularUpdate( previousActive );
+            const realT nextUpdate = stored.m_secularUpdate( next );
+            const realT rotationNorm = std::hypot( nextUpdate, previousUpdate );
+            const realT cosine = nextUpdate / rotationNorm;
+            const realT sine = -previousUpdate / rotationNorm;
+            const realT poleDifference = stored.m_secularPoles( next ) - stored.m_secularPoles( previousActive );
+            if( std::abs( poleDifference * cosine * sine ) <= deflationTolerance )
+            {
+                stored.m_secularRotationFirst[rotationCount] = previousActive;
+                stored.m_secularRotationSecond[rotationCount] = next;
+                stored.m_secularRotationCosine[rotationCount] = cosine;
+                stored.m_secularRotationSine[rotationCount] = sine;
+                ++rotationCount;
+
+                stored.m_secularUpdate( next ) = rotationNorm;
+                stored.m_secularUpdate( previousActive ) = realT( 0 );
+                const realT previousPole = stored.m_secularPoles( previousActive );
+                const realT nextPole = stored.m_secularPoles( next );
+                stored.m_secularPoles( previousActive ) = previousPole * cosine * cosine + nextPole * sine * sine;
+                stored.m_secularPoles( next ) = previousPole * sine * sine + nextPole * cosine * cosine;
+                stored.m_secularDeflatedIndices[deflatedCount++] = previousActive;
+                previousActive = next;
+            }
+            else
+            {
+                stored.m_secularActiveIndices[activeCount++] = previousActive;
+                previousActive = next;
+            }
+        }
+        if( previousActive >= 0 )
+        {
+            stored.m_secularActiveIndices[activeCount++] = previousActive;
+        }
+        if( activeCount <= 0 || activeCount + deflatedCount != rank )
+        {
+            // LCOV_EXCL_START -- the deflation loop partitions every index and retains an active component.
+            return fail( result, svdDeletionStatus::invalidSolverOutput );
+            // LCOV_EXCL_STOP
+        }
+
+        const auto poleIndexLess = [&]( Eigen::Index left, Eigen::Index right )
+        {
+            const realT leftPole = stored.m_secularPoles( left );
+            const realT rightPole = stored.m_secularPoles( right );
+            return leftPole < rightPole || ( leftPole == rightPole && left < right );
+        };
+        std::sort( stored.m_secularActiveIndices.begin(),
+                   stored.m_secularActiveIndices.begin() + activeCount,
+                   poleIndexLess );
+        std::sort( stored.m_secularDeflatedIndices.begin(),
+                   stored.m_secularDeflatedIndices.begin() + deflatedCount,
+                   poleIndexLess );
+
+        realT activeUpdateNorm{ 0 };
+        for( Eigen::Index active = 0; active < activeCount; ++active )
+        {
+            const Eigen::Index source = stored.m_secularActiveIndices[active];
+            stored.m_secularActivePoles( active ) = stored.m_secularPoles( source );
+            activeUpdateNorm = std::hypot( activeUpdateNorm, stored.m_secularUpdate( source ) );
+            if( active > 0 && !( stored.m_secularActivePoles( active - 1 ) < stored.m_secularActivePoles( active ) ) )
+            {
+                // LCOV_EXCL_START -- the preceding pass deflates clustered poles.
+                return fail( result, svdDeletionStatus::invalidSolverOutput );
+                // LCOV_EXCL_STOP
+            }
+        }
+        if( activeUpdateNorm == realT( 0 ) || !math::isFinite( activeUpdateNorm ) )
+        {
+            // LCOV_EXCL_START -- active updates have already passed the finite nonzero threshold.
+            return fail( result, svdDeletionStatus::invalidSolverOutput );
+            // LCOV_EXCL_STOP
+        }
+
+        const realT activeRho = rho * activeUpdateNorm * activeUpdateNorm;
+        if( !math::isFinite( activeRho ) )
+        {
+            // LCOV_EXCL_START -- orthogonal deflation preserves an active update norm no greater than one.
+            return fail( result, svdDeletionStatus::invalidInput );
+            // LCOV_EXCL_STOP
+        }
+        if( activeRho == realT( 0 ) )
+        {
+            // LCOV_EXCL_START -- the whole-update threshold handles tiny rho before deflation.
+            return identity( result, singularValues, outputRank, svdDeletionBackend::rankOneSecular );
+            // LCOV_EXCL_STOP
+        }
+        for( Eigen::Index active = 0; active < activeCount; ++active )
+        {
+            const Eigen::Index source = stored.m_secularActiveIndices[active];
+            stored.m_secularActiveUpdate( active ) = stored.m_secularUpdate( source ) / activeUpdateNorm;
+        }
+
+        const MXLAPACK_INT lapackActive = static_cast<MXLAPACK_INT>( activeCount );
+        const MXLAPACK_INT leadingDimension = static_cast<MXLAPACK_INT>( rank );
+        const MXLAPACK_INT info = callLaed9<realT>( stored.m_eigenvalues.data(),
+                                                    stored.m_psdCore.data(),
+                                                    stored.m_eigenvectors.data(),
+                                                    lapackActive,
+                                                    leadingDimension,
+                                                    activeRho,
+                                                    stored.m_secularActivePoles.data(),
+                                                    stored.m_secularActiveUpdate.data() );
+        if( info != 0 )
+        {
+            return fail( result, svdDeletionStatus::solverFailure, info );
+        }
+        for( Eigen::Index active = 0; active < activeCount; ++active )
+        {
+            if( !math::isFinite( stored.m_eigenvalues( active ) ) )
+            {
+                return fail( result, svdDeletionStatus::nonFiniteOutput );
+            }
+            for( Eigen::Index row = 0; row < activeCount; ++row )
+            {
+                if( !math::isFinite( stored.m_eigenvectors( row, active ) ) )
+                {
+                    return fail( result, svdDeletionStatus::nonFiniteOutput );
+                }
+            }
+        }
+        if( !validAscendingSpectrum( stored.m_eigenvalues.head( activeCount ) ) )
+        {
+            return fail( result, svdDeletionStatus::invalidSolverOutput );
+        }
+
+        const realT secularTolerance = realT( 64 ) * std::numeric_limits<realT>::epsilon() *
+                                       static_cast<realT>( std::max<Eigen::Index>( 1, rank ) ) *
+                                       ( realT( 1 ) + activeRho );
+        for( Eigen::Index active = 0; active < activeCount; ++active )
+        {
+            const realT lower = stored.m_secularActivePoles( active );
+            const realT upper = active + 1 < activeCount ? stored.m_secularActivePoles( active + 1 )
+                                                         : stored.m_secularActivePoles( active ) + activeRho;
+            if( stored.m_eigenvalues( active ) < lower - secularTolerance ||
+                stored.m_eigenvalues( active ) > upper + secularTolerance )
+            {
+                return fail( result, svdDeletionStatus::invalidSolverOutput );
+            }
+            stored.m_secularCandidateValues( active ) = stored.m_eigenvalues( active );
+        }
+        for( Eigen::Index deflated = 0; deflated < deflatedCount; ++deflated )
+        {
+            stored.m_secularCandidateValues( activeCount + deflated ) =
+                stored.m_secularPoles( stored.m_secularDeflatedIndices[deflated] );
+        }
+
+        Eigen::Index activePosition{ 0 };
+        Eigen::Index deflatedPosition{ 0 };
+        Eigen::Index mergedPosition{ 0 };
+        while( activePosition < activeCount || deflatedPosition < deflatedCount )
+        {
+            const bool takeActive = deflatedPosition >= deflatedCount ||
+                                    ( activePosition < activeCount &&
+                                      stored.m_secularCandidateValues( activePosition ) <=
+                                          stored.m_secularCandidateValues( activeCount + deflatedPosition ) );
+            stored.m_secularOrder[mergedPosition++] = takeActive ? activePosition++ : activeCount + deflatedPosition++;
+        }
+        if( mergedPosition != rank )
+        {
+            // LCOV_EXCL_START -- the merge consumes each member of the checked partition once.
+            return fail( result, svdDeletionStatus::invalidSolverOutput );
+            // LCOV_EXCL_STOP
+        }
+
+        result.m_storage->m_minimumPSDValue = -stored.m_secularCandidateValues( stored.m_secularOrder[rank - 1] );
+        const realT tolerance = psdTolerance<realT>( rank, realT( 1 ) + rho );
+        if( result.m_storage->m_minimumPSDValue < -tolerance )
+        {
+            return fail( result, svdDeletionStatus::nonPositiveSemidefinite );
+        }
+
+        result.m_storage->m_clampedEigenvalues = 0;
+        const realT vectorTolerance = realT( 256 ) * std::numeric_limits<realT>::epsilon() *
+                                      static_cast<realT>( std::max<Eigen::Index>( 1, rank ) );
+        const realT residualTolerance = vectorTolerance * ( realT( 1 ) + rho );
+        for( Eigen::Index output = 0; output < rank; ++output )
+        {
+            const Eigen::Index candidate = stored.m_secularOrder[output];
+            realT normalizedSquaredValue = -stored.m_secularCandidateValues( candidate );
+            if( normalizedSquaredValue < realT( 0 ) )
+            {
+                normalizedSquaredValue = realT( 0 );
+                ++result.m_storage->m_clampedEigenvalues;
+            }
+            if( !rescaleValue( result.m_storage->m_singularValues( output ),
+                               result.m_storage->m_squaredSingularValues( output ),
+                               normalizedSquaredValue,
+                               scale ) )
+            {
+                return fail( result, svdDeletionStatus::rescalingOverflow );
+            }
+            if( output >= outputRank )
+            {
+                continue;
+            }
+
+            stored.m_secularVector.setZero();
+            if( candidate < activeCount )
+            {
+                for( Eigen::Index active = 0; active < activeCount; ++active )
+                {
+                    stored.m_secularVector( stored.m_secularActiveIndices[active] ) =
+                        stored.m_eigenvectors( active, candidate );
+                }
+            }
+            else
+            {
+                const Eigen::Index deflated = candidate - activeCount;
+                stored.m_secularVector( stored.m_secularDeflatedIndices[deflated] ) = realT( 1 );
+            }
+            for( Eigen::Index rotation = rotationCount; rotation-- > 0; )
+            {
+                const Eigen::Index first = stored.m_secularRotationFirst[rotation];
+                const Eigen::Index second = stored.m_secularRotationSecond[rotation];
+                const realT cosine = stored.m_secularRotationCosine[rotation];
+                const realT sine = stored.m_secularRotationSine[rotation];
+                const realT firstValue = stored.m_secularVector( first );
+                const realT secondValue = stored.m_secularVector( second );
+                stored.m_secularVector( first ) = cosine * firstValue - sine * secondValue;
+                stored.m_secularVector( second ) = sine * firstValue + cosine * secondValue;
+            }
+
+            realT vectorNorm{ 0 };
+            Eigen::Index signIndex{ 0 };
+            realT signMagnitude{ 0 };
+            for( Eigen::Index row = 0; row < rank; ++row )
+            {
+                const realT value = stored.m_secularVector( row );
+                if( !math::isFinite( value ) )
+                {
+                    // LCOV_EXCL_START -- finite bounded Givens rotations preserve finite vector entries.
+                    return fail( result, svdDeletionStatus::nonFiniteOutput );
+                    // LCOV_EXCL_STOP
+                }
+                vectorNorm = std::hypot( vectorNorm, value );
+                if( std::abs( value ) > signMagnitude )
+                {
+                    signMagnitude = std::abs( value );
+                    signIndex = row;
+                }
+            }
+            if( !math::isFinite( vectorNorm ) || std::abs( vectorNorm - realT( 1 ) ) > vectorTolerance )
+            {
+                return fail( result, svdDeletionStatus::invalidSolverOutput );
+            }
+            if( stored.m_secularVector( signIndex ) < realT( 0 ) )
+            {
+                stored.m_secularVector = -stored.m_secularVector;
+            }
+
+            realT updateDot{ 0 };
+            for( Eigen::Index row = 0; row < rank; ++row )
+            {
+                updateDot += stored.m_scaledDeletedTranspose( row, 0 ) * stored.m_secularVector( row );
+            }
+            realT residualNorm{ 0 };
+            for( Eigen::Index row = 0; row < rank; ++row )
+            {
+                const realT normalized = stored.m_normalizedSingularValues( row );
+                const realT residual = normalized * normalized * stored.m_secularVector( row ) -
+                                       stored.m_scaledDeletedTranspose( row, 0 ) * updateDot -
+                                       normalizedSquaredValue * stored.m_secularVector( row );
+                residualNorm = std::hypot( residualNorm, residual );
+            }
+            if( !math::isFinite( residualNorm ) || residualNorm > residualTolerance )
+            {
+                return fail( result, svdDeletionStatus::invalidSolverOutput );
+            }
+            result.m_storage->m_rotation.matrix().col( output ) = stored.m_secularVector.matrix();
+        }
+
+        result.m_storage->m_backend = svdDeletionBackend::rankOneSecular;
+        result.m_storage->m_lapackInfo = 0;
+        result.m_storage->m_status = result.m_storage->m_clampedEigenvalues > 0 ? svdDeletionStatus::successWithClamping
+                                                                                : svdDeletionStatus::success;
+        return result.m_storage->m_status;
+    }
+
+    // Execute the structured diagonal-minus-rank-one deletion core.
+    static svdDeletionStatus rankOne( resultT &result,                                 /* [out] updated system */
+                                      svdDeletionConstVectorRef<realT> singularValues, /* [in] base values */
+                                      svdDeletionConstMatrixRef<realT> deletedRows,    /* [in] deleted rows */
+                                      Eigen::Index outputRank,                         /* [in] requested rank */
+                                      workspaceT &workspace /* [in,out] scratch */ )
+    {
+        if( !validCoreInputs( singularValues, deletedRows, outputRank ) )
+        {
+            return fail( result, svdDeletionStatus::invalidInput );
+        }
+        if( deletedRows.rows() == 0 )
+        {
+            return identity( result, singularValues, outputRank, svdDeletionBackend::rankOneSecular );
+        }
+        if( deletedRows.rows() != 1 )
+        {
+            return fail( result, svdDeletionStatus::unsupportedDeletionCount );
+        }
+
+        const Eigen::Index rank = singularValues.size();
+        const svdDeletionStatus status =
+            prepare( result, workspace, rank, 1, outputRank, svdDeletionBackend::rankOneSecular );
+        if( status != svdDeletionStatus::success )
+        {
+            return status;
+        }
+        loadDeletedRows( workspace, deletedRows );
+        return rankOneLoaded( result, singularValues, outputRank, workspace );
     }
 
     // Execute a normalized complement-preserving SVD with deleted rows already loaded.
@@ -1113,6 +1569,11 @@ struct svdDeletionImplementation
             return identity( result, singularValues, outputRank, backend );
         }
 
+        if( backend == svdDeletionBackend::rankOneSecular && indices.size != 1 )
+        {
+            return fail( result, svdDeletionStatus::unsupportedDeletionCount );
+        }
+
         const Eigen::Index deletedCount = static_cast<Eigen::Index>( indices.size );
         const svdDeletionStatus status = prepare( result, workspace, rank, deletedCount, outputRank, backend );
         if( status != svdDeletionStatus::success )
@@ -1134,9 +1595,18 @@ struct svdDeletionImplementation
             }
         }
 
-        return backend == svdDeletionBackend::leadingCovariance
-                   ? leadingLoaded( result, singularValues, deletedCount, outputRank, workspace )
-                   : stableLoaded( result, singularValues, deletedCount, outputRank, workspace );
+        switch( backend )
+        {
+            case svdDeletionBackend::leadingCovariance:
+                return leadingLoaded( result, singularValues, deletedCount, outputRank, workspace );
+            case svdDeletionBackend::stableCore:
+                return stableLoaded( result, singularValues, deletedCount, outputRank, workspace );
+            case svdDeletionBackend::rankOneSecular:
+                return rankOneLoaded( result, singularValues, outputRank, workspace );
+        }
+        // LCOV_EXCL_START -- the backend is validated before the exhaustive switch.
+        return fail( result, svdDeletionStatus::invalidInput );
+        // LCOV_EXCL_STOP
     }
 };
 
@@ -1150,6 +1620,8 @@ const char *svdDeletionBackendName( svdDeletionBackend backend )
             return "leadingCovariance";
         case svdDeletionBackend::stableCore:
             return "stableCore";
+        case svdDeletionBackend::rankOneSecular:
+            return "rankOneSecular";
     }
     return "unknown";
 }
@@ -1182,6 +1654,8 @@ const char *svdDeletionStatusName( svdDeletionStatus status )
             return "nonPositiveSemidefinite";
         case svdDeletionStatus::factorNotOrthonormal:
             return "factorNotOrthonormal";
+        case svdDeletionStatus::unsupportedDeletionCount:
+            return "unsupportedDeletionCount";
     }
     return "unknown";
 }
@@ -1423,12 +1897,15 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
     }
     const Eigen::Index baseRank = static_cast<Eigen::Index>( abiBaseRank );
     const Eigen::Index maximumDeleted = static_cast<Eigen::Index>( abiMaximumDeleted );
-    if( baseRank <= 0 || maximumDeleted < 0 ||
-        ( backend != svdDeletionBackend::leadingCovariance && backend != svdDeletionBackend::stableCore ) ||
+    if( baseRank <= 0 || maximumDeleted < 0 || !detail::svdDeletionImplementation<realT>::validBackend( backend ) ||
         !detail::validLapackDimension( baseRank ) || !detail::validLapackDimension( maximumDeleted ) ||
         maximumDeleted > std::numeric_limits<MXLAPACK_INT>::max() - baseRank )
     {
         return svdDeletionStatus::invalidInput;
+    }
+    if( backend == svdDeletionBackend::rankOneSecular && maximumDeleted > 1 )
+    {
+        return svdDeletionStatus::unsupportedDeletionCount;
     }
     if( stored.m_prepared && stored.m_baseRank == baseRank && stored.m_maximumDeleted >= maximumDeleted &&
         stored.m_backend == backend )
@@ -1436,12 +1913,13 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
         return svdDeletionStatus::success;
     }
 
-    const Eigen::Index eigenSize = backend == svdDeletionBackend::leadingCovariance ? baseRank : maximumDeleted;
-    if( eigenSize > std::numeric_limits<Eigen::Index>::max() / 2 )
+    const Eigen::Index eigenSize = backend == svdDeletionBackend::stableCore ? maximumDeleted : baseRank;
+    const Eigen::Index syevrSize = backend == svdDeletionBackend::rankOneSecular ? 0 : eigenSize;
+    if( syevrSize > std::numeric_limits<Eigen::Index>::max() / 2 )
     {
         return svdDeletionStatus::invalidInput; // LCOV_EXCL_LINE -- requires an Eigen index narrower than LAPACK.
     }
-    const Eigen::Index supportSize = 2 * std::max<Eigen::Index>( 1, eigenSize );
+    const Eigen::Index supportSize = syevrSize > 0 ? 2 * std::max<Eigen::Index>( 1, syevrSize ) : 0;
     Eigen::Index minimumGesvdWork{ 0 };
     bool validShapes =
         detail::validArrayShape<realT>( maximumDeleted, baseRank ) && detail::validArrayShape<realT>( baseRank, 1 ) &&
@@ -1451,7 +1929,7 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
     {
         validShapes = validShapes && detail::validArrayShape<realT>( baseRank, maximumDeleted );
     }
-    else
+    else if( backend == svdDeletionBackend::stableCore )
     {
         validShapes = validShapes && detail::validArrayShape<realT>( maximumDeleted, maximumDeleted ) &&
                       detail::validArrayShape<realT>( baseRank + maximumDeleted, baseRank ) &&
@@ -1466,6 +1944,11 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
             minimumGesvdWork = std::max<Eigen::Index>( 1, std::max( 5 * baseRank, 4 * baseRank + maximumDeleted ) );
             validShapes = detail::validVectorSize<realT>( minimumGesvdWork );
         }
+    }
+    else
+    {
+        validShapes = validShapes && detail::validArrayShape<realT>( baseRank, baseRank ) &&
+                      detail::validVectorSize<realT>( baseRank ) && detail::validVectorSize<Eigen::Index>( baseRank );
     }
     if( !validShapes )
     {
@@ -1483,19 +1966,50 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
         stored.m_stableCore.resize( 0, 0 );
         stored.m_rightTranspose.resize( 0, 0 );
         stored.m_stableSingularValues.resize( 0 );
+        stored.m_secularPoles.resize( 0 );
+        stored.m_secularUpdate.resize( 0 );
+        stored.m_secularActivePoles.resize( 0 );
+        stored.m_secularActiveUpdate.resize( 0 );
+        stored.m_secularCandidateValues.resize( 0 );
+        stored.m_secularVector.resize( 0 );
+        stored.m_secularActiveIndices.clear();
+        stored.m_secularDeflatedIndices.clear();
+        stored.m_secularOrder.clear();
+        stored.m_secularRotationFirst.clear();
+        stored.m_secularRotationSecond.clear();
+        stored.m_secularRotationCosine.clear();
+        stored.m_secularRotationSine.clear();
 
         if( backend == svdDeletionBackend::leadingCovariance )
         {
             stored.m_scaledDeletedTranspose.resize( baseRank, maximumDeleted );
             stored.m_psdCore.resize( baseRank, baseRank );
         }
-        else
+        else if( backend == svdDeletionBackend::stableCore )
         {
             stored.m_psdCore.resize( maximumDeleted, maximumDeleted );
             stored.m_complementRoot.resize( maximumDeleted, maximumDeleted );
             stored.m_stableCore.resize( baseRank + maximumDeleted, baseRank );
             stored.m_rightTranspose.resize( baseRank, baseRank );
             stored.m_stableSingularValues.resize( baseRank );
+        }
+        else
+        {
+            stored.m_scaledDeletedTranspose.resize( baseRank, 1 );
+            stored.m_psdCore.resize( baseRank, baseRank );
+            stored.m_secularPoles.resize( baseRank );
+            stored.m_secularUpdate.resize( baseRank );
+            stored.m_secularActivePoles.resize( baseRank );
+            stored.m_secularActiveUpdate.resize( baseRank );
+            stored.m_secularCandidateValues.resize( baseRank );
+            stored.m_secularVector.resize( baseRank );
+            stored.m_secularActiveIndices.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularDeflatedIndices.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularOrder.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularRotationFirst.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularRotationSecond.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularRotationCosine.resize( static_cast<std::size_t>( baseRank ) );
+            stored.m_secularRotationSine.resize( static_cast<std::size_t>( baseRank ) );
         }
 
         stored.m_eigenvectors.resize( eigenSize, eigenSize );
@@ -1505,7 +2019,7 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
         stored.m_syevrIWork.clear();
         stored.m_gesvdWork.clear();
 
-        if( eigenSize > 0 )
+        if( syevrSize > 0 )
         {
             stored.m_psdCore.matrix().setIdentity();
             stored.m_eigenvectors.setZero();
@@ -1513,7 +2027,7 @@ svdDeletionStatus svdDeletionWorkspace<realT, abiT>::prepareAbiV2( std::int64_t 
             realT workQuery{ 0 };
             MXLAPACK_INT integerWorkQuery{ 0 };
             MXLAPACK_INT found{ 0 };
-            const MXLAPACK_INT lapackEigenSize = static_cast<MXLAPACK_INT>( eigenSize );
+            const MXLAPACK_INT lapackEigenSize = static_cast<MXLAPACK_INT>( syevrSize );
             const MXLAPACK_INT info = detail::callSyevr<realT>( 'V',
                                                                 'A',
                                                                 'L',
@@ -1621,6 +2135,19 @@ void svdDeletionWorkspace<realT, abiT>::clear() noexcept
     m_storage->m_stableCore.resize( 0, 0 );
     m_storage->m_rightTranspose.resize( 0, 0 );
     m_storage->m_stableSingularValues.resize( 0 );
+    m_storage->m_secularPoles.resize( 0 );
+    m_storage->m_secularUpdate.resize( 0 );
+    m_storage->m_secularActivePoles.resize( 0 );
+    m_storage->m_secularActiveUpdate.resize( 0 );
+    m_storage->m_secularCandidateValues.resize( 0 );
+    m_storage->m_secularVector.resize( 0 );
+    m_storage->m_secularActiveIndices.clear();
+    m_storage->m_secularDeflatedIndices.clear();
+    m_storage->m_secularOrder.clear();
+    m_storage->m_secularRotationFirst.clear();
+    m_storage->m_secularRotationSecond.clear();
+    m_storage->m_secularRotationCosine.clear();
+    m_storage->m_secularRotationSine.clear();
     m_storage->m_support.clear();
     m_storage->m_syevrWork.clear();
     m_storage->m_syevrIWork.clear();
@@ -1779,22 +2306,34 @@ svdDeletionStatus detail::svdDeletionCoreAbiV2( svdDeletionResult<realT> &result
                                                 svdDeletionBackend backend )
 {
     if( !detail::validAbiVectorView( singularValues ) || !detail::validAbiMatrixView( deletedRows ) ||
-        !detail::validAbiDimension( outputRank ) ||
-        ( backend != svdDeletionBackend::leadingCovariance && backend != svdDeletionBackend::stableCore ) )
+        !detail::validAbiDimension( outputRank ) || !detail::svdDeletionImplementation<realT>::validBackend( backend ) )
     {
         return detail::svdDeletionImplementation<realT>::fail( result, svdDeletionStatus::invalidInput );
     }
-    return backend == svdDeletionBackend::leadingCovariance
-               ? detail::svdDeletionImplementation<realT>::leading( result,
-                                                                    detail::mapAbiVector( singularValues ),
-                                                                    detail::mapAbiMatrix( deletedRows ),
-                                                                    static_cast<Eigen::Index>( outputRank ),
-                                                                    workspace )
-               : detail::svdDeletionImplementation<realT>::stable( result,
-                                                                   detail::mapAbiVector( singularValues ),
-                                                                   detail::mapAbiMatrix( deletedRows ),
-                                                                   static_cast<Eigen::Index>( outputRank ),
-                                                                   workspace );
+    switch( backend )
+    {
+        case svdDeletionBackend::leadingCovariance:
+            return detail::svdDeletionImplementation<realT>::leading( result,
+                                                                      detail::mapAbiVector( singularValues ),
+                                                                      detail::mapAbiMatrix( deletedRows ),
+                                                                      static_cast<Eigen::Index>( outputRank ),
+                                                                      workspace );
+        case svdDeletionBackend::stableCore:
+            return detail::svdDeletionImplementation<realT>::stable( result,
+                                                                     detail::mapAbiVector( singularValues ),
+                                                                     detail::mapAbiMatrix( deletedRows ),
+                                                                     static_cast<Eigen::Index>( outputRank ),
+                                                                     workspace );
+        case svdDeletionBackend::rankOneSecular:
+            return detail::svdDeletionImplementation<realT>::rankOne( result,
+                                                                      detail::mapAbiVector( singularValues ),
+                                                                      detail::mapAbiMatrix( deletedRows ),
+                                                                      static_cast<Eigen::Index>( outputRank ),
+                                                                      workspace );
+    }
+    // LCOV_EXCL_START -- the backend is validated before the exhaustive switch.
+    return detail::svdDeletionImplementation<realT>::fail( result, svdDeletionStatus::invalidInput );
+    // LCOV_EXCL_STOP
 }
 
 template <typename realT>
