@@ -10,11 +10,19 @@
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 /** \cond */
 /// Compile the symmetric-eigensolver workspace implementation for a representative scalar type.
 template struct mx::math::syevrMem<double>;
+
+/** Verify that the owning mx::math::syevrMem workspace cannot be copied. */
+TEST_CASE( "syevrMem workspaces are non-copyable", "[math::syevrMem]" )
+{
+    REQUIRE_FALSE( std::is_copy_constructible_v<mx::math::syevrMem<double>> );
+    REQUIRE_FALSE( std::is_copy_assignable_v<mx::math::syevrMem<double>> );
+}
 
 using matrixT = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>;
 

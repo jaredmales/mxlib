@@ -12,6 +12,12 @@
 #include "../../../include/improc/imageMasks.hpp"
 #include "../../../include/improc/eigenImage.hpp"
 
+/** \cond */
+/// Emit the binary-mask rotation specialization for LCOV accounting.
+template void mx::improc::rotateMask<mx::improc::eigenImage<double>, mx::improc::cubicConvolTransform<double>>(
+    mx::improc::eigenImage<double> &, mx::improc::eigenImage<double> &, double );
+/** \endcond */
+
 /** Masking wedges in an image
  *
  * Verify wedge masking, including that all pixels are masked for continuous rotations of the wedge
@@ -160,6 +166,29 @@ TEST_CASE( "Masking wedges in an image", "[improc::imageMasks::maskWedge]" )
             REQUIRE( im60.sum() + im180.sum() + im300.sum() == 1024 * 1024 );
         }
     }
+}
+
+/** \brief Verifies mx::improc::rotateMask resizes, rotates, and thresholds binary masks.
+ *
+ * \ingroup imageMasks_unit_tests
+ */
+TEST_CASE( "rotateMask preserves binary masks through interpolation", "[improc::rotateMask]" )
+{
+    mx::improc::eigenImage<double> mask( 9, 9 );
+    mask.setZero();
+    mask( 3, 4 ) = 0.6;
+    mask( 4, 3 ) = 0.49;
+
+    mx::improc::eigenImage<double> rotated( 1, 1 );
+    mx::improc::rotateMask( rotated, mask, 0.0 );
+    REQUIRE( rotated.rows() == mask.rows() );
+    REQUIRE( rotated.cols() == mask.cols() );
+    REQUIRE( rotated( 3, 4 ) == 1.0 );
+    REQUIRE( rotated( 4, 3 ) == 0.0 );
+
+    mx::improc::rotateMask( rotated, mask, mx::math::half_pi<double>() );
+    REQUIRE( rotated( 4, 3 ) == 1.0 );
+    REQUIRE( rotated( 3, 4 ) == 0.0 );
 }
 
 /** \brief Verifies radius and degree-angle images for a centered rectangular grid.

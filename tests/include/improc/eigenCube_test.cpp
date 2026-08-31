@@ -16,6 +16,12 @@
  * methods for coverage accounting in this test translation unit.
  */
 template class mx::improc::eigenCube<double>;
+
+/// Emit the exact float specializations called by HCI observation processing for LCOV accounting.
+template void mx::improc::eigenCube<float>::mean<mx::improc::eigenImage<float>>( mx::improc::eigenImage<float> & );
+template void mx::improc::eigenCube<float>::median<mx::improc::eigenImage<float>>( mx::improc::eigenImage<float> & );
+template void mx::improc::eigenCube<float>::median<mx::improc::eigenImage<float>, mx::improc::eigenCube<int>>(
+    mx::improc::eigenImage<float> &, mx::improc::eigenCube<int> &, double );
 /** \endcond */
 
 namespace unitTest
@@ -105,6 +111,50 @@ TEST_CASE( "Unmasked eigenCube combinations use every plane", "[improc::eigenCub
 
     cube.sigmaMean( result, weights, 100.0 );
     REQUIRE( result( 0, 0 ) == 51.0 );
+}
+
+/** \brief Verifies float cube zeroing and image combinations used by HCI observation processing.
+ *
+ * Exercises mx::improc::eigenCube<float>::setZero, mean, and both median overloads, including all float
+ * mx::improc::imageMedian workspace and mask paths.
+ *
+ * \ingroup eigenCube_unit_tests
+ */
+TEST_CASE( "Float eigenCube combinations clear and combine HCI images", "[improc::eigenCube]" )
+{
+    mx::improc::eigenCube<float> cube( 1, 1, 4 );
+    cube.setZero();
+    for( int plane = 0; plane < cube.planes(); ++plane )
+    {
+        REQUIRE( cube.image( plane )( 0, 0 ) == 0.0F );
+    }
+
+    cube.image( 0 )( 0, 0 ) = 1.0F;
+    cube.image( 1 )( 0, 0 ) = 2.0F;
+    cube.image( 2 )( 0, 0 ) = 7.0F;
+    cube.image( 3 )( 0, 0 ) = 10.0F;
+
+    mx::improc::eigenImage<float> result;
+    cube.mean( result );
+    REQUIRE( result( 0, 0 ) == 5.0F );
+
+    cube.median( result );
+    REQUIRE( result( 0, 0 ) == 4.5F );
+
+    mx::improc::eigenCube<int> mask( 1, 1, 4 );
+    mask.image( 0 )( 0, 0 ) = 1;
+    mask.image( 1 )( 0, 0 ) = 0;
+    mask.image( 2 )( 0, 0 ) = 1;
+    mask.image( 3 )( 0, 0 ) = 0;
+    cube.median( result, mask, 0.5 );
+    REQUIRE( result( 0, 0 ) == 4.0F );
+
+    auto values = cube.pixel( 0, 0 );
+    mx::improc::eigenImage<float> valueMask( 4, 1 );
+    valueMask << 1.0F, 0.0F, 1.0F, 0.0F;
+    std::vector<float> work;
+    REQUIRE( mx::improc::imageMedian( values, &valueMask, &work ) == 4.0F );
+    REQUIRE( mx::improc::imageMedian( values ) == 4.5F );
 }
 
 /// Verify masked median combination honors the mask and inclusive good-pixel fraction.

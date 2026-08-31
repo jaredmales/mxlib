@@ -9,6 +9,20 @@
 
 #include "../../../include/math/geo.hpp"
 
+/** \cond */
+/// Emit the exact float conversion specialization for LCOV accounting.
+template float mx::math::dtor<float>( float );
+/** \endcond */
+
+/** \brief Verifies the float specialization of mx::math::dtor converts degrees to radians.
+ *
+ * \ingroup geo_unit_tests
+ */
+TEST_CASE( "math::dtor converts float degrees to radians", "[math::dtor]" )
+{
+    REQUIRE( mx::math::dtor( 180.0F ) == Approx( mx::math::pi<float>() ) );
+}
+
 /** Verify compilation and calculations of math::angleMod.
  * Tests that various angle modulos are calculated correctly for both radians and degrees.
  *

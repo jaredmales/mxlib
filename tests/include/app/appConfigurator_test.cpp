@@ -35,6 +35,31 @@ void resetConfigLog()
     logSource.clear();
 }
 
+/// Return a deterministic parser allocation failure without changing parser state.
+int allocationFailureParser( iniFile &parser /**< [in,out] parser ignored by the injected failure. */,
+                             const std::string &filename /**< [in] filename ignored by the injected failure. */ )
+{
+    static_cast<void>( parser );
+    static_cast<void>( filename );
+    return -2;
+}
+
+/// Restore the production parser after a readConfig failure-injection test.
+struct parserReset
+{
+    /// Reset the parser hook before the test body runs.
+    parserReset()
+    {
+        mx::app::detail::appConfiguratorParser = nullptr;
+    }
+
+    /// Restore the production parser when the test scope exits.
+    ~parserReset()
+    {
+        mx::app::detail::appConfiguratorParser = nullptr;
+    }
+};
+
 } // namespace
 /// \endcond
 
@@ -378,6 +403,41 @@ TEST_CASE( "config file parsing", "[appConfigurator]" )
         }
     }
 #endif
+}
+
+/** \brief Verifies mx::app::appConfigurator::readConfig handles parser errors and records config sources.
+ *
+ * \ingroup appConfigurator_unit_tests
+ */
+TEST_CASE( "readConfig handles failures and tracks recognized sources", "[appConfigurator]" )
+{
+    mx::app::appConfigurator config;
+    config.m_sources = true;
+    config.add( "known", "", "", 0, "section", "known", false, "", "" );
+
+    REQUIRE( config.readConfig( "" ) == 0 );
+    REQUIRE( config.readConfig( "/tmp/mxlib-missing-config.conf", false ) == -1 );
+    REQUIRE( config.readConfig( "/tmp/mxlib-missing-config.conf" ) == -1 );
+
+    {
+        std::ofstream badConfig( "/tmp/mxlib-invalid-config.conf" );
+        badConfig << "[unterminated\n";
+    }
+    REQUIRE( config.readConfig( "/tmp/mxlib-invalid-config.conf" ) == -1 );
+
+    {
+        std::ofstream goodConfig( "/tmp/mxlib-read-config.conf" );
+        goodConfig << "[section]\nknown = value\n[extra]\nunused = retained\n";
+    }
+    REQUIRE( config.readConfig( "/tmp/mxlib-read-config.conf" ) == 0 );
+    REQUIRE( config.m_targets.at( "known" ).values.at( 0 ) == "value" );
+    REQUIRE( config.m_targets.at( "known" ).sources.at( 0 ) == "/tmp/mxlib-read-config.conf" );
+    REQUIRE( config.m_unusedConfigs.at( "extra=unused" ).values.at( 0 ) == "retained" );
+    REQUIRE( config.m_unusedConfigs.at( "extra=unused" ).sources.at( 0 ) == "/tmp/mxlib-read-config.conf" );
+
+    parserReset reset;
+    mx::app::detail::appConfiguratorParser = allocationFailureParser;
+    REQUIRE( config.readConfig( "/tmp/mxlib-allocation-failure.conf" ) == -1 );
 }
 
 /** \brief Verifies command-line target metadata and typed retrieval used by hciReduce configuration loading.

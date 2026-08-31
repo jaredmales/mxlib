@@ -43,6 +43,16 @@ namespace mx
 namespace app
 {
 
+namespace detail
+{
+
+/// Optional parser override used to deterministically test appConfigurator parser failures.
+inline int ( *appConfiguratorParser )( iniFile &parser /**< [in,out] parser receiving file contents. */,
+                                       const std::string &filename /**< [in] file requested by readConfig. */ ) =
+    nullptr;
+
+} // namespace detail
+
 /// Class to manage a set of configurable values, and read their values from config/ini files and the command line.
 /**
   * The configuration files are TOML/ini-style, with sections.  That is
@@ -392,7 +402,7 @@ int appConfigurator::get( typeT &v,
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format( "{}", v ), "default" );
         }
 
         return 0;
@@ -565,7 +575,7 @@ int appConfigurator::get( typeT &v, const std::string &name, std::unordered_map<
     {
         if( configLog )
         {
-            configLog( name, meta::typeDescription<typeT>::code(), std::format("{}", v ), "default" );
+            configLog( name, meta::typeDescription<typeT>::code(), std::format( "{}", v ), "default" );
         }
 
         return 0;

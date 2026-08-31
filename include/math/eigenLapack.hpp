@@ -315,6 +315,12 @@ struct syevrMem
     {
     }
 
+    /// Copying an owning SYEVR workspace is prohibited.
+    syevrMem( const syevrMem &other /**< [in] workspace that cannot be copied */ ) = delete;
+
+    /// Copy assignment of an owning SYEVR workspace is prohibited.
+    syevrMem &operator=( const syevrMem &other /**< [in] workspace that cannot be copied */ ) = delete;
+
     /// Release every allocation owned by this workspace.
     ~syevrMem()
     {

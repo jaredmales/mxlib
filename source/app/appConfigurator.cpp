@@ -155,7 +155,7 @@ int appConfigurator::readConfig( const std::string &fname, bool reportFileNotFou
     iniFile iF;
 
     ///\todo update error handling to include >0 (line numer of parse error) and -2 memory allocation error.
-    int prv = iF.parse( fname );
+    int prv = detail::appConfiguratorParser ? detail::appConfiguratorParser( iF, fname ) : iF.parse( fname );
 
     if( prv == -1 )
     {
