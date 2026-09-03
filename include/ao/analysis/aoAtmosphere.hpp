@@ -625,7 +625,21 @@ error_t aoAtmosphere<realT>::validate() const
     if( m_L_0.size() != layerCount || m_l_0.size() != layerCount || m_layer_z.size() != layerCount ||
         m_layer_v_wind.size() != layerCount || m_layer_dir.size() != layerCount )
     {
-        return internal::mxlib_error_report( error_t::sizeerr, "atmosphere layer-vector sizes do not match" );
+        std::string message = "atmosphere layer-vector sizes do not match: expected " + std::to_string( layerCount ) +
+                              " entries to match atm.layer_Cn2";
+
+        if( m_L_0.size() != layerCount )
+            message += "; atm.L_0 has " + std::to_string( m_L_0.size() );
+        if( m_l_0.size() != layerCount )
+            message += "; atm.l_0 has " + std::to_string( m_l_0.size() );
+        if( m_layer_z.size() != layerCount )
+            message += "; atm.layer_z has " + std::to_string( m_layer_z.size() );
+        if( m_layer_v_wind.size() != layerCount )
+            message += "; atm.layer_v_wind has " + std::to_string( m_layer_v_wind.size() );
+        if( m_layer_dir.size() != layerCount )
+            message += "; atm.layer_dir has " + std::to_string( m_layer_dir.size() );
+
+        return internal::mxlib_error_report( error_t::sizeerr, message );
     }
 
     if( m_nonKolmogorov &&

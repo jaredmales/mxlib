@@ -201,23 +201,39 @@ inline error_t applyPolicy( int status, fourierTemporalPSDPolicy policy )
     return gslStatusToError( status );
 }
 
-/// Mutex serializing scoped changes to GSL's process-global error handler.
-inline std::mutex &gslErrorHandlerMutex()
+/// Shared state for scoped changes to GSL's process-global error handler.
+struct gslErrorHandlerState
 {
-    static std::mutex mutex;
-    return mutex;
+    std::mutex mutex;
+    size_t depth{ 0 };
+    gsl_error_handler_t *previous{ nullptr };
+};
+
+/// Return the shared state used to manage GSL's process-global error handler.
+inline gslErrorHandlerState &gslErrorHandlerStateInstance()
+{
+    static gslErrorHandlerState state;
+    return state;
 }
 
 /// Disable the GSL error handler for a complete top-level PSD calculation and restore it on exit.
-/** The mutex serializes handler changes made by this implementation. Unrelated code cannot be protected from GSL's
- * process-global handler state unless it coordinates with the same mutex.
+/** The mutex only protects the global-handler transition. The handler remains disabled until the last active scope
+ * exits, allowing independent PSD calculations to run concurrently. Unrelated code cannot be protected from GSL's
+ * process-global handler state unless it coordinates with this implementation.
  */
 class scopedGslErrorHandlerOff
 {
   public:
-    /// Lock handler management and retain the previously installed handler.
-    scopedGslErrorHandlerOff() : m_lock( gslErrorHandlerMutex() ), m_previous( gsl_set_error_handler_off() )
+    /// Disable the handler when entering the first active scope.
+    scopedGslErrorHandlerOff()
     {
+        gslErrorHandlerState &state = gslErrorHandlerStateInstance();
+        std::lock_guard<std::mutex> lock( state.mutex );
+        if( state.depth == 0 )
+        {
+            state.previous = gsl_set_error_handler_off();
+        }
+        ++state.depth;
     }
 
     /// Disallow copying ownership of the saved handler.
@@ -226,15 +242,17 @@ class scopedGslErrorHandlerOff
     /// Disallow copy assignment of the handler guard.
     scopedGslErrorHandlerOff &operator=( const scopedGslErrorHandlerOff & ) = delete;
 
-    /// Restore the previously installed handler before releasing the lock.
+    /// Restore the handler when the final active scope exits.
     ~scopedGslErrorHandlerOff()
     {
-        static_cast<void>( gsl_set_error_handler( m_previous ) );
+        gslErrorHandlerState &state = gslErrorHandlerStateInstance();
+        std::lock_guard<std::mutex> lock( state.mutex );
+        --state.depth;
+        if( state.depth == 0 )
+        {
+            static_cast<void>( gsl_set_error_handler( state.previous ) );
+        }
     }
-
-  private:
-    std::unique_lock<std::mutex> m_lock;        ///< Lock held while the handler is disabled.
-    gsl_error_handler_t *m_previous{ nullptr }; ///< Handler restored on destruction.
 };
 
 } // namespace fourierTemporalPSD_detail
