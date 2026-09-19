@@ -515,3 +515,38 @@ TEST_CASE( "Image cross-correlation with FFT using Gaussian peak fit", "[improc:
         }
     }
 }
+
+/// Image cross-correlation with FFT using bounded MFT peak finding
+/**
+ * \ingroup imageXCorrFFT_unit_tests
+ */
+TEST_CASE( "Image cross-correlation with FFT using bounded MFT peak finding", "[improc::imageXCorrFFT]" )
+{
+    constexpr int size = 64;
+    constexpr double xShift = 2.3;
+    constexpr double yShift = -1.7;
+    constexpr double xCenter = 0.5 * ( size - 1 );
+    constexpr double yCenter = 0.5 * ( size - 1 );
+
+    mx::improc::eigenImage<double> reference, target, distractor;
+    reference.resize( size, size );
+    target.resize( size, size );
+    distractor.resize( size, size );
+    mx::math::func::gaussian2D<double>( reference.data(), size, size, 0., 1.0, xCenter, yCenter, 2 );
+    mx::math::func::gaussian2D<double>( target.data(), size, size, 0., 1.0, xCenter + xShift, yCenter + yShift, 2 );
+    mx::math::func::gaussian2D<double>( distractor.data(), size, size, 0., 3.0, xCenter + 20, yCenter + 18, 2 );
+    target += distractor;
+
+    double x, y, peak;
+    mx::improc::imageXCorrFFT<mx::improc::eigenImage<double>> xcf;
+    xcf.peakMethod( mx::improc::xcorrPeakMethod::mftOversamp );
+    xcf.maxLag( 5 );
+    xcf.tol( 0.01 );
+    xcf.mftLimitPeakSearch( true );
+    xcf.refIm( reference );
+    xcf( x, y, peak, target );
+
+    REQUIRE( x == Approx( xShift ).margin( 0.02 ) );
+    REQUIRE( y == Approx( yShift ).margin( 0.02 ) );
+    REQUIRE( peak > 0 );
+}

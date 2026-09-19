@@ -145,14 +145,16 @@ class imageXCorrFFT
 
     int m_maxLag{ 5 };             ///< The maximum lag to consider in the initial cross-correlation.  Default is 5.
 
-    realT m_tol{ 0.1 };            /**< For xcorrPeakMethod::interpPeak, the tolerance of the
-                                        interpolated-magnified image, in pixels.*/
+    bool m_mftLimitPeakSearch{ false }; ///< Restrict MFT peak selection to m_maxLag about the reference origin.
 
-    realT m_magSize{ 0 };          /**< Magnified size of the ccIm when using interp.
-                                        Set as function of m_tol and m_maxLag.*/
+    realT m_tol{ 0.1 };                 /**< For xcorrPeakMethod::interpPeak, the tolerance of the
+                                             interpolated-magnified image, in pixels.*/
 
-    realT m_mag{ 1 };              /**< The magnification, in principle is 1/m_tol but will vary
-                                        slightly based on integer array sizes*/
+    realT m_magSize{ 0 };               /**< Magnified size of the ccIm when using interp.
+                                             Set as function of m_tol and m_maxLag.*/
+
+    realT m_mag{ 1 };                   /**< The magnification, in principle is 1/m_tol but will vary
+                                             slightly based on integer array sizes*/
 
     /// The peak finding method to use
     xcorrPeakMethod m_peakMethod{ xcorrPeakMethod::interpPeak };
@@ -163,23 +165,25 @@ class imageXCorrFFT
      * @{
      */
 
-    realImageT m_refACIm;  ///< The auto-correlation image of the reference.
+    realImageT m_refACIm;             ///< The auto-correlation image of the reference.
 
-    realT m_refX0{ 0 };    /**< The x-shift of the reference image to itself using the selected
-                                algorithm, used as coordinate origin*/
+    realT m_refX0{ 0 };               /**< The x-shift of the reference image to itself using the selected
+                                           algorithm, used as coordinate origin*/
 
-    realT m_refY0{ 0 };    /**< The x-shift of the reference image to itself using the selected
-                                algorithm, used as coordinate origin*/
+    realT m_refY0{ 0 };               /**< The x-shift of the reference image to itself using the selected
+                                           algorithm, used as coordinate origin*/
 
-    realT m_refPeak{ 0 };  /**< the x-corr peak of the reference shift to itself */
+    realT m_refPeak{ 0 };             /**< the x-corr peak of the reference shift to itself */
 
-    realImageT m_normIm;   ///< The normalized image.
+    bool m_findingReference{ false }; ///< True while the reference auto-correlation is being measured.
 
-    realImageT m_ccIm;     ///< The cross-correlation image
+    realImageT m_normIm;              ///< The normalized image.
 
-    realImageT m_magIm;    ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interpPeak
+    realImageT m_ccIm;                ///< The cross-correlation image
 
-    complexArrayT m_ftIm0; ///< Working memory for the FT of the reference image.
+    realImageT m_magIm;               ///< The magnified image, used if m_peakMethod == xcorrPeakMethod::interpPeak
+
+    complexArrayT m_ftIm0;            ///< Working memory for the FT of the reference image.
 
   public:
     complexArrayT m_ftWork; ///< Working memory for the FFT.
@@ -431,6 +435,19 @@ class imageXCorrFFT
      * \returns the current value of m_maxLag
      */
     int maxLag();
+
+    /// Set whether MFT peak selection is restricted to the configured maximum lag.
+    /** When enabled, xcorrPeakMethod::mftOversamp selects its coarse peak only within m_maxLag of the reference
+     * origin before performing the MFT refinement. The default is false, which preserves the historical global
+     * peak search.
+     */
+    void mftLimitPeakSearch( bool limit /**< [in] true to restrict the MFT coarse peak search */ );
+
+    /// Get whether MFT peak selection is restricted to the configured maximum lag.
+    /**
+     * \returns the value of m_mftLimitPeakSearch
+     */
+    bool mftLimitPeakSearch();
 
     /// Set the tolerance of the interpolated-magnified image, in pixels.
     void tol( realT nt /**< [in] The new value of the interpolation tolerance. */ );
@@ -897,7 +914,9 @@ int imageXCorrFFT<realImageT>::refIm( const realImageT &im, realT padFactor )
     m_refPeak = 0;
     m_refValid = true;
 
+    m_findingReference = true;
     operator()( m_refX0, m_refY0, m_refPeak, m_refIm );
+    m_findingReference = false;
 
     m_refACIm = m_ccIm;
 
@@ -933,6 +952,18 @@ template <class realImageT>
 int imageXCorrFFT<realImageT>::maxLag()
 {
     return m_maxLag;
+}
+
+template <class realImageT>
+void imageXCorrFFT<realImageT>::mftLimitPeakSearch( bool limit )
+{
+    m_mftLimitPeakSearch = limit;
+}
+
+template <class realImageT>
+bool imageXCorrFFT<realImageT>::mftLimitPeakSearch()
+{
+    return m_mftLimitPeakSearch;
 }
 
 template <class realImageT>
@@ -1020,7 +1051,41 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift, realT &x
     m_ccIm = sm;*/
 
     // m_ccIm = m_ccIm.pow(3);
-    realT pk = m_ccIm.maxCoeff( &xLag0, &yLag0 );
+    realT pk;
+    if( m_peakMethod == xcorrPeakMethod::mftOversamp && m_mftLimitPeakSearch && !m_findingReference )
+    {
+        const int xCenter = std::round( m_refX0 * m_padFactorR );
+        const int yCenter = std::round( m_refY0 * m_padFactorC );
+        const int xMaxLag = std::ceil( m_maxLag * m_padFactorR );
+        const int yMaxLag = std::ceil( m_maxLag * m_padFactorC );
+
+        xLag0 = 0;
+        yLag0 = 0;
+        bool first = true;
+        for( int dx = -xMaxLag; dx <= xMaxLag; ++dx )
+        {
+            int x = ( xCenter + dx ) % m_ccIm.rows();
+            if( x < 0 )
+                x += m_ccIm.rows();
+            for( int dy = -yMaxLag; dy <= yMaxLag; ++dy )
+            {
+                int y = ( yCenter + dy ) % m_ccIm.cols();
+                if( y < 0 )
+                    y += m_ccIm.cols();
+                if( first || m_ccIm( x, y ) > pk )
+                {
+                    pk = m_ccIm( x, y );
+                    xLag0 = x;
+                    yLag0 = y;
+                    first = false;
+                }
+            }
+        }
+    }
+    else
+    {
+        pk = m_ccIm.maxCoeff( &xLag0, &yLag0 );
+    }
     realT mn = m_ccIm.minCoeff();
 
     if( xLag0 - m_maxLag < 0 )
@@ -1084,10 +1149,9 @@ void imageXCorrFFT<realImageT>::findPeak( realT &xShift, realT &yShift, realT &x
     }
     else if( m_peakMethod == xcorrPeakMethod::mftOversamp )
     {
-        int x, y;
-        m_ccIm.maxCoeff( &x, &y );
+        int x = xLag0, y = yLag0;
 
-        if( m_refX0 == 0 && m_refY0 == 0 ) // reference finding
+        if( m_findingReference )
         {
             x0 = x;
             y0 = y;
