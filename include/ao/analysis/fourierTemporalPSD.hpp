@@ -1531,6 +1531,10 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
             realT ncp = m_aosys->ncp_wfe(); // save ncp and then set it to zero for this part.
             m_aosys->ncp_wfe( 0 );
 
+            realT vibrationRMS = m_aosys->vibration_rms();
+            std::string vibrationUnits = m_aosys->vibration_units();
+            m_aosys->vibration_rms( 0, vibrationUnits );
+
             realT lam_sci = m_aosys->lam_sci();
             m_aosys->lam_sci( m_aosys->lam_wfs() );
 
@@ -1549,6 +1553,7 @@ int fourierTemporalPSD<realT, aosysT>::analyzePSDGrid( const std::string &subDir
 
             m_aosys->lam_sci( lam_sci );
             m_aosys->ncp_wfe( ncp );
+            m_aosys->vibration_rms( vibrationRMS, vibrationUnits );
         }
 
         m_aosys->optd( m_aosys->optd() ); // just trigger a re-calc

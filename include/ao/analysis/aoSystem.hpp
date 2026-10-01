@@ -29,6 +29,7 @@
 
 #include "../../mxlib.hpp"
 #include "../../math/constants.hpp"
+#include "../../math/floatUtils.hpp"
 #include "../../math/roots.hpp"
 
 #include "aoConstants.hpp"
@@ -129,6 +130,18 @@ class aoSystem
     realT m_F0{ 0 };                             ///< 0 mag flux from star at WFS [photons/sec]
 
     realT m_starMag{ 0 };                        ///< The magnitude of the star.
+
+    /** \name Image Quality - Data
+     * @{
+     */
+
+    realT m_vibrationRMS{ 0 };             ///< RMS on-sky vibration stored internally in radians.
+
+    std::string m_vibrationUnits{ "mas" }; ///< Units used to configure and report the RMS vibration.
+
+    realT m_centralObsK{ 1.03 };           ///< Central-obscuration-dependent diffraction-width factor.
+
+    /// @}
 
     bool m_specsChanged{ true };                 ///< Flag to indicate that a specification has changed.
     bool m_dminChanged{ true };                  ///< Flag to indicate that d_min has changed.
@@ -447,6 +460,62 @@ class aoSystem
      * \returns the current value of m_lam_sci.
      */
     realT lam_sci();
+
+    /** \name Image Quality
+     * Functions describing vibration Strehl and image width.
+     * @{
+     */
+
+    /// Set the RMS on-sky vibration and its units.
+    /** The vibration is stored internally in radians. Accepted units are `mas` and `rad`.
+     */
+    void vibration_rms( realT vibrationRMS, /**< [in] RMS on-sky vibration. */
+                        const std::string &units = "mas" /**< [in] Units of vibrationRMS: `mas` or `rad`. */ );
+
+    /// Get the RMS on-sky vibration in the configured units.
+    /**
+     * \returns the RMS vibration in vibration_units().
+     */
+    realT vibration_rms();
+
+    /// Get the configured units of the RMS on-sky vibration.
+    /**
+     * \returns `mas` or `rad`.
+     */
+    std::string vibration_units();
+
+    /// Set the central-obscuration-dependent diffraction-width factor.
+    void central_obs_k( realT centralObsK /**< [in] Diffraction-width factor, which must be positive. */ );
+
+    /// Get the central-obscuration-dependent diffraction-width factor.
+    /**
+     * \returns the current diffraction-width factor.
+     */
+    realT central_obs_k();
+
+    /// Calculate the Strehl reduction caused by vibration.
+    /** Calculates
+     * \f[
+     * S_{TT} = \frac{1}{1 + \frac{8\ln(2)}{k^2}
+     *                   \left(\frac{\sigma_{TT}}{\lambda/D}\right)^2}.
+     * \f]
+     *
+     * \returns the vibration-only Strehl factor.
+     */
+    realT vibrationStrehl();
+
+    /// Calculate the diffraction-plus-vibration FWHM.
+    /** Calculates
+     * \f[
+     * \mathrm{FWHM} = \sqrt{\left(k\frac{\lambda}{D}\right)^2 + 8\ln(2)\sigma_{TT}^2}.
+     * \f]
+     * The diffraction term is included even when the vibration RMS is zero.
+     *
+     * \returns the FWHM in radians on the sky.
+     */
+    realT fwhm();
+
+    /// @}
 
     /// Set the zenith angle, and its secant.
     /**
@@ -1675,6 +1744,97 @@ realT aoSystem<realT, inputSpectT, iosT>::lam_sci()
 }
 
 template <typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::vibration_rms( realT vibrationRMS, const std::string &units )
+{
+    if( vibrationRMS < 0 || !math::isFinite( vibrationRMS ) )
+    {
+        throw( mx::exception<verboseT>( error_t::invalidarg, "vibration RMS must be finite and non-negative" ) );
+    }
+
+    if( units == "rad" )
+    {
+        m_vibrationRMS = vibrationRMS;
+    }
+    else if( units == "mas" )
+    {
+        m_vibrationRMS = vibrationRMS * math::pi<realT>() / static_cast<realT>( 648000000 );
+    }
+    else
+    {
+        throw( mx::exception<verboseT>( error_t::invalidarg, "vibration units must be 'mas' or 'rad'" ) );
+    }
+
+    m_vibrationUnits = units;
+    m_specsChanged = true;
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::vibration_rms()
+{
+    if( m_vibrationUnits == "mas" )
+    {
+        return m_vibrationRMS * static_cast<realT>( 648000000 ) / math::pi<realT>();
+    }
+
+    return m_vibrationRMS;
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+std::string aoSystem<realT, inputSpectT, iosT>::vibration_units()
+{
+    return m_vibrationUnits;
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+void aoSystem<realT, inputSpectT, iosT>::central_obs_k( realT centralObsK )
+{
+    if( centralObsK <= 0 || !math::isFinite( centralObsK ) )
+    {
+        throw( mx::exception<verboseT>( error_t::invalidarg, "central_obs_k must be finite and positive" ) );
+    }
+
+    m_centralObsK = centralObsK;
+    m_specsChanged = true;
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::central_obs_k()
+{
+    return m_centralObsK;
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::vibrationStrehl()
+{
+    if( m_vibrationRMS == 0 )
+    {
+        return 1;
+    }
+
+    if( m_D <= 0 || m_lam_sci <= 0 )
+    {
+        throw( mx::exception<verboseT>( error_t::invalidconfig,
+                                        "D and lam_sci must be positive to calculate vibration Strehl" ) );
+    }
+
+    realT lambdaD = m_lam_sci / m_D;
+    realT vibrationRatio = m_vibrationRMS / lambdaD;
+
+    return 1 / ( 1 + 8 * math::ln_two<realT>() / pow( m_centralObsK, 2 ) * pow( vibrationRatio, 2 ) );
+}
+
+template <typename realT, class inputSpectT, typename iosT>
+realT aoSystem<realT, inputSpectT, iosT>::fwhm()
+{
+    if( m_D <= 0 || m_lam_sci <= 0 )
+    {
+        throw( mx::exception<verboseT>( error_t::invalidconfig, "D and lam_sci must be positive to calculate FWHM" ) );
+    }
+
+    return sqrt( pow( m_centralObsK * m_lam_sci / m_D, 2 ) + 8 * math::ln_two<realT>() * pow( m_vibrationRMS, 2 ) );
+}
+
+template <typename realT, class inputSpectT, typename iosT>
 void aoSystem<realT, inputSpectT, iosT>::zeta( realT nz )
 {
     m_zeta = nz;
@@ -2353,7 +2513,7 @@ realT aoSystem<realT, inputSpectT, iosT>::strehl( realT d, int b )
     }
 
     wfeVar += ncpError();
-    return exp( -1 * wfeVar );
+    return exp( -1 * wfeVar ) * vibrationStrehl();
 }
 
 template <typename realT, class inputSpectT, typename iosT>
@@ -2435,7 +2595,7 @@ void aoSystem<realT, inputSpectT, iosT>::calcStrehl()
     m_wfeVar = m_wfeMeasurement + m_wfeTimeDelay + m_wfeFitting + m_wfeChromScintOPD + m_wfeChromIndex + m_wfeAnisoOPD +
                m_wfeNCP;
 
-    m_strehl = exp( -1 * m_wfeVar );
+    m_strehl = exp( -1 * m_wfeVar ) * vibrationStrehl();
 
     m_specsChanged = false;
 }
@@ -2780,6 +2940,9 @@ iosT &aoSystem<realT, inputSpectT, iosT>::dumpAOSystem( iosT &ios )
     ios << "#    spatialFilter_kv = " << m_spatialFilter_kv << '\n';
     ios << "#    ncp_wfe = " << m_ncp_wfe << '\n';
     ios << "#    ncp_alpha = " << m_ncp_alpha << '\n';
+    ios << "#    vibration_rms = " << vibration_rms() << '\n';
+    ios << "#    vibration_units = " << vibration_units() << '\n';
+    ios << "#    central_obs_k = " << central_obs_k() << '\n';
 
     if( m_wfsBeta == 0 )
     {
@@ -3047,6 +3210,33 @@ void aoSystem<realT, inputSpectT, iosT>::setupConfig( app::appConfigurator &conf
                 false,
                 "real vector",
                 "A vector of star magnitudes" );
+    config.add( "aosys.vibration_rms",
+                "",
+                "aosys.vibration_rms",
+                argType::Required,
+                "aosys",
+                "vibration_rms",
+                false,
+                "real",
+                "RMS on-sky vibration in vibration_units [default 0]" );
+    config.add( "aosys.vibration_units",
+                "",
+                "aosys.vibration_units",
+                argType::Required,
+                "aosys",
+                "vibration_units",
+                false,
+                "string",
+                "Units of vibration_rms: mas (default) or rad" );
+    config.add( "aosys.central_obs_k",
+                "",
+                "aosys.central_obs_k",
+                argType::Required,
+                "aosys",
+                "central_obs_k",
+                false,
+                "real",
+                "Central-obscuration-dependent diffraction-width factor [default 1.03]" );
 
     atm.setupConfig( config );
     psd.setupConfig( config );
@@ -3234,6 +3424,28 @@ error_t aoSystem<realT, inputSpectT, iosT>::loadConfig( app::appConfigurator &co
     config( smag, "aosys.starMag" );
     if( config.isSet( "aosys.starMag" ) )
         starMag( smag );
+
+    std::string vibrationUnits = vibration_units();
+    config( vibrationUnits, "aosys.vibration_units" );
+
+    realT vibrationRMS = m_vibrationRMS;
+    if( vibrationUnits == "mas" )
+    {
+        vibrationRMS *= static_cast<realT>( 648000000 ) / math::pi<realT>();
+    }
+
+    config( vibrationRMS, "aosys.vibration_rms" );
+    if( config.isSet( "aosys.vibration_rms" ) || config.isSet( "aosys.vibration_units" ) )
+    {
+        vibration_rms( vibrationRMS, vibrationUnits );
+    }
+
+    realT centralObsK = central_obs_k();
+    config( centralObsK, "aosys.central_obs_k" );
+    if( config.isSet( "aosys.central_obs_k" ) )
+    {
+        central_obs_k( centralObsK );
+    }
 
     const error_t atmosphereStatus = atm.loadConfig( config );
     psd.loadConfig( config );

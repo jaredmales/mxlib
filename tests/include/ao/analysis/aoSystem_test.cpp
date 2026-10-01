@@ -7,6 +7,8 @@
 
 #include "../../../../include/ao/analysis/aoSystem.hpp"
 
+#include <sstream>
+
 typedef double realT;
 
 using namespace mx::app;
@@ -53,6 +55,10 @@ TEST_CASE( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.spatialFilter_kv() == std::numeric_limits<realT>::max() );
             REQUIRE( aosys.ncp_wfe() == 0 );
             REQUIRE( aosys.ncp_alpha() == 2.0 );
+            REQUIRE( aosys.vibration_rms() == 0.0 );
+            REQUIRE( aosys.vibration_units() == "mas" );
+            REQUIRE( aosys.central_obs_k() == 1.03 );
+            REQUIRE( aosys.vibrationStrehl() == 1.0 );
             REQUIRE( aosys.F0() == 0.0 );
             REQUIRE( aosys.starMag() == 0 );
             REQUIRE( aosys.Fg() == 0 );
@@ -209,6 +215,40 @@ TEST_CASE( "Loading aoSystem config settings", "[ao::analysis::aoSystem]" )
             REQUIRE( aosys.Fg( 9.0 ) == Approx( 5e9 * pow( 10, -0.4 * 9.0 ) ) );
             REQUIRE( aosys.atm.r_0() == Approx( 0.25 ) );
         }
+        WHEN( "setting image quality in milliarcseconds" )
+        {
+            appConfigurator config;
+
+            writeConfigFile( "aoSystem.conf",
+                             { "aosys", "aosys", "aosys" },
+                             { "vibration_rms", "vibration_units", "central_obs_k" },
+                             { "5.5", "mas", "1.12" } );
+
+            aosys.setupConfig( config );
+            config.readConfig( "aoSystem.conf" );
+            aosys.loadConfig( config );
+
+            REQUIRE( aosys.vibration_rms() == Approx( 5.5 ) );
+            REQUIRE( aosys.vibration_units() == "mas" );
+            REQUIRE( aosys.central_obs_k() == Approx( 1.12 ) );
+        }
+        WHEN( "setting image quality in radians" )
+        {
+            appConfigurator config;
+
+            writeConfigFile( "aoSystem.conf",
+                             { "aosys", "aosys", "aosys" },
+                             { "vibration_rms", "vibration_units", "central_obs_k" },
+                             { "2.5e-8", "rad", "1.08" } );
+
+            aosys.setupConfig( config );
+            config.readConfig( "aoSystem.conf" );
+            aosys.loadConfig( config );
+
+            REQUIRE( aosys.vibration_rms() == Approx( 2.5e-8 ) );
+            REQUIRE( aosys.vibration_units() == "rad" );
+            REQUIRE( aosys.central_obs_k() == Approx( 1.08 ) );
+        }
     }
 }
 
@@ -233,4 +273,137 @@ TEST_CASE( "AO-system configuration reports atmosphere validity", "[ao::analysis
         aoSystem.atm.setSingleLayer( 0.2, 0.5e-6, 25.0, 0.0, 0.0, 10.0, 0.0 );
         REQUIRE( aoSystem.loadConfig( config ) == mx::error_t::noerror );
     }
+}
+
+/** Verify AO-system vibration conversion, image-quality formulas, validation, and setup output.
+ * Exercises mx::AO::analysis::aoSystem::vibration_rms,
+ * mx::AO::analysis::aoSystem::vibrationStrehl, mx::AO::analysis::aoSystem::central_obs_k,
+ * mx::AO::analysis::aoSystem::fwhm, and mx::AO::analysis::aoSystem::dumpAOSystem.
+ *
+ * \ingroup aoSystem_unit_tests
+ */
+TEST_CASE( "AO-system vibration and FWHM calculations", "[ao::analysis::aoSystem]" )
+{
+    aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aosys;
+    constexpr realT diameter = 6.5;
+    constexpr realT wavelength = 656e-9;
+    constexpr realT vibrationMas = 5.0;
+    const realT vibrationRad = vibrationMas * mx::math::pi<realT>() / 648000000.0;
+
+    aosys.D( diameter );
+    aosys.lam_sci( wavelength );
+
+    SECTION( "central obscuration factor is present without vibration" )
+    {
+        REQUIRE( aosys.vibrationStrehl() == 1.0 );
+        REQUIRE( aosys.fwhm() == Approx( aosys.central_obs_k() * wavelength / diameter ) );
+    }
+
+    SECTION( "milliarcseconds and radians are equivalent" )
+    {
+        const realT lambdaD = wavelength / diameter;
+        const realT expectedStrehl = 1.0 / ( 1.0 + 8.0 * mx::math::ln_two<realT>() / pow( aosys.central_obs_k(), 2 ) *
+                                                       pow( vibrationRad / lambdaD, 2 ) );
+        const realT expectedFwhm = sqrt( pow( aosys.central_obs_k() * lambdaD, 2 ) +
+                                         8.0 * mx::math::ln_two<realT>() * pow( vibrationRad, 2 ) );
+
+        aosys.vibration_rms( vibrationMas, "mas" );
+        REQUIRE( aosys.vibration_rms() == Approx( vibrationMas ) );
+        REQUIRE( aosys.vibration_units() == "mas" );
+        REQUIRE( aosys.vibrationStrehl() == Approx( expectedStrehl ) );
+        REQUIRE( aosys.fwhm() == Approx( expectedFwhm ) );
+
+        aosys.vibration_rms( vibrationRad, "rad" );
+        REQUIRE( aosys.vibration_rms() == Approx( vibrationRad ) );
+        REQUIRE( aosys.vibration_units() == "rad" );
+        REQUIRE( aosys.vibrationStrehl() == Approx( expectedStrehl ) );
+        REQUIRE( aosys.fwhm() == Approx( expectedFwhm ) );
+    }
+
+    SECTION( "central obscuration factor is configurable" )
+    {
+        constexpr realT centralObsK = 1.2;
+        aosys.central_obs_k( centralObsK );
+        aosys.vibration_rms( vibrationMas, "mas" );
+
+        const realT lambdaD = wavelength / diameter;
+        const realT expectedStrehl =
+            1.0 / ( 1.0 + 8.0 * mx::math::ln_two<realT>() / pow( centralObsK, 2 ) * pow( vibrationRad / lambdaD, 2 ) );
+        const realT expectedFwhm =
+            sqrt( pow( centralObsK * lambdaD, 2 ) + 8.0 * mx::math::ln_two<realT>() * pow( vibrationRad, 2 ) );
+
+        REQUIRE( aosys.central_obs_k() == Approx( centralObsK ) );
+        REQUIRE( aosys.vibrationStrehl() == Approx( expectedStrehl ) );
+        REQUIRE( aosys.fwhm() == Approx( expectedFwhm ) );
+    }
+
+    SECTION( "invalid image-quality inputs are rejected" )
+    {
+        REQUIRE_THROWS_AS( aosys.vibration_rms( -1, "mas" ), mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.vibration_rms( std::numeric_limits<realT>::infinity(), "mas" ),
+                           mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.vibration_rms( std::numeric_limits<realT>::quiet_NaN(), "rad" ),
+                           mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.vibration_rms( 1, "arcsec" ), mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.central_obs_k( 0 ), mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.central_obs_k( -1 ), mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.central_obs_k( std::numeric_limits<realT>::infinity() ),
+                           mx::exception<mx::verbose::d> );
+        REQUIRE_THROWS_AS( aosys.central_obs_k( std::numeric_limits<realT>::quiet_NaN() ),
+                           mx::exception<mx::verbose::d> );
+    }
+
+    SECTION( "setup output is round-trippable" )
+    {
+        aosys.atm.setSingleLayer( 0.2, 0.5e-6, 25.0, 0.0, 0.0, 10.0, 0.0 );
+        aosys.vibration_rms( vibrationMas, "mas" );
+        aosys.central_obs_k( 1.12 );
+        std::ostringstream output;
+        aosys.dumpAOSystem( output );
+
+        REQUIRE( output.str().find( "#    vibration_rms = 5" ) != std::string::npos );
+        REQUIRE( output.str().find( "#    vibration_units = mas" ) != std::string::npos );
+        REQUIRE( output.str().find( "#    central_obs_k = 1.12" ) != std::string::npos );
+    }
+}
+
+/** Verify vibration multiplies both AO-system Strehl calculations without changing WFE.
+ * Exercises mx::AO::analysis::aoSystem::strehl, mx::AO::analysis::aoSystem::vibrationStrehl,
+ * and mx::AO::analysis::aoSystem::wfeVar.
+ *
+ * \ingroup aoSystem_unit_tests
+ */
+TEST_CASE( "AO-system vibration multiplies final Strehl", "[ao::analysis::aoSystem]" )
+{
+    aoSystem<realT, mx::AO::analysis::vonKarmanSpectrum<realT>> aosys;
+    aosys.loadMagAOX();
+    aosys.fit_mn_max( 2 );
+    aosys.optd( false );
+    aosys.starMag( 0 );
+
+    const realT actuatorPitch = aosys.d_min( 0 );
+    const realT directStrehl = aosys.strehl( actuatorPitch, 0 );
+    const realT cachedStrehl = aosys.strehl();
+    const realT wfeVariance = aosys.wfeVar();
+    const realT measurementVariance = aosys.measurementErrorTotal();
+    const realT timeDelayVariance = aosys.timeDelayErrorTotal();
+    const realT fittingVariance = aosys.fittingErrorTotal();
+    const realT chromScintOPDVariance = aosys.chromScintOPDErrorTotal();
+    const realT chromIndexVariance = aosys.chromIndexErrorTotal();
+    const realT dispAnisoOPDVariance = aosys.dispAnisoOPDErrorTotal();
+    const realT ncpVariance = aosys.ncpError();
+
+    aosys.vibration_rms( 5, "mas" );
+    const realT vibrationStrehl = aosys.vibrationStrehl();
+
+    REQUIRE( aosys.strehl( actuatorPitch, 0 ) == Approx( directStrehl * vibrationStrehl ) );
+    REQUIRE( aosys.strehl() == Approx( cachedStrehl * vibrationStrehl ) );
+    REQUIRE( aosys.wfeVar() == Approx( wfeVariance ) );
+    REQUIRE( aosys.measurementErrorTotal() == Approx( measurementVariance ) );
+    REQUIRE( aosys.timeDelayErrorTotal() == Approx( timeDelayVariance ) );
+    REQUIRE( aosys.fittingErrorTotal() == Approx( fittingVariance ) );
+    REQUIRE( aosys.chromScintOPDErrorTotal() == Approx( chromScintOPDVariance ) );
+    REQUIRE( aosys.chromIndexErrorTotal() == Approx( chromIndexVariance ) );
+    REQUIRE( aosys.dispAnisoOPDErrorTotal() == Approx( dispAnisoOPDVariance ) );
+    REQUIRE( aosys.ncpError() == Approx( ncpVariance ) );
 }
